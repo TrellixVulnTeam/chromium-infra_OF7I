@@ -105,7 +105,11 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """
     page_size = paginator.CoercePageSize(
         request.page_size, api_constants.MAX_ISSUES_PER_PAGE)
-    pager = paginator.Paginator(projects=request.projects, page_size=page_size)
+    pager = paginator.Paginator(
+        page_size=page_size,
+        order_by=request.order_by,
+        query=request.query,
+        projects=request.projects)
 
     project_names = []
     for resource_name in request.projects:
@@ -139,7 +143,6 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     page_size = paginator.CoercePageSize(
         request.page_size, api_constants.MAX_COMMENTS_PER_PAGE)
     pager = paginator.Paginator(parent=request.parent, page_size=page_size)
-    # TODO(crbug/monorail/7187): Parse filter string for approval resource name.
     approval_id = None
     if request.filter:
       match = _APPROVAL_DEF_FILTER_RE.match(request.filter)

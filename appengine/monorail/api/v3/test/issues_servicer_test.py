@@ -267,6 +267,34 @@ class IssuesServicerTest(unittest.TestCase):
         mc.profiler,
         project=None)
 
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  @mock.patch('api.v3.api_constants.MAX_ISSUES_PER_PAGE', 2)
+  def testSearchIssues_PaginationErrorOrderByChanged(self, mock_pipeline):
+    """Error when changing the order_by and using the same page_otoken."""
+    request = issues_pb2.SearchIssuesRequest(
+        projects=['projects/chicken', 'projects/cow'],
+        query='label:find-me',
+        order_by='-pri',
+        page_size=3)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_2.email)
+
+    instance = mock.Mock(
+        spec=True, total_count=3, visible_results=[self.issue_1, self.issue_3])
+    mock_pipeline.return_value = instance
+    instance.SearchForIIDs = mock.Mock()
+    instance.MergeAndSortIssues = mock.Mock()
+    instance.Paginate = mock.Mock()
+
+    actual_response = self.CallWrapped(
+        self.issues_svcr.SearchIssues, mc, request)
+
+    # The request should fail if we use `next_page_token` and change parameters.
+    request.page_token = actual_response.next_page_token
+    request.order_by = 'owner'
+    with self.assertRaises(exceptions.PageTokenException):
+      self.CallWrapped(self.issues_svcr.SearchIssues, mc, request)
+
   # Note the 'empty' case doesn't make sense for ListComments, as one is created
   # for every issue.
   def testListComments(self):

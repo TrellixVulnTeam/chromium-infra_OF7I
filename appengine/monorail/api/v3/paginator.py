@@ -58,7 +58,6 @@ class Paginator(object):
                projects=None):
     # type: (Optional[str], Optional[int], Optional[str], Optional[str],
     #   Optional[Collection[str]]]) -> None
-    # TOD(crbug/monorail/7663): Add `projects` for SearchIssues.
     self.request_contents = secrets_pb2.ListRequestContents(
         parent=parent, page_size=page_size, order_by=order_by, query=query,
         projects=projects)

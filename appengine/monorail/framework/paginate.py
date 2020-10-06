@@ -21,8 +21,6 @@ from framework import framework_helpers
 from services import secrets_svc
 from proto import secrets_pb2
 
-# TODO(crbug/monorail/6988):Create Paginator class in API level to keep
-# code separate and simple.
 
 def GeneratePageToken(request_contents, start):
   # type: (secrets_pb2.ListRequestContents, int) -> str
