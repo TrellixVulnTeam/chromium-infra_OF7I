@@ -25,15 +25,12 @@ type State string
 
 // All DUT states.
 const (
+	// Device ready to run tests.
 	Ready        State = "ready"
 	NeedsRepair  State = "needs_repair"
 	NeedsReset   State = "needs_reset"
 	RepairFailed State = "repair_failed"
-	// TODO(xixuan): https://bugs.chromium.org/p/chromium/issues/detail?id=1025040#c19
-	// This needs_deploy state may be lost and get changed to needs_repair when the
-	// local state file of each bot on drone gets wiped, which usually happens when bots
-	// get restarted. Drone container image upgrade, drone server memory overflow, or
-	// drone server restart can cause the swarming bots to restart.
+	// Device prepared to be deployed to the lab.
 	NeedsDeploy State = "needs_deploy"
 	// Device reserved for analysis or hold by lab
 	Reserved State = "reserved"
@@ -45,7 +42,7 @@ const (
 	NeedsReplacement State = "needs_replacement"
 )
 
-const defaultState = NeedsRepair
+const defaultState = NeedsDeploy
 
 // Info represent information of the state and last updated time.
 type Info struct {

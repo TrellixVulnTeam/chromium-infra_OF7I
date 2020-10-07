@@ -66,7 +66,7 @@ func TestReadState(t *testing.T) {
 		So(r.Time, ShouldNotEqual, 0)
 
 		r = Read(ctx, c, "host3")
-		So(r.State, ShouldEqual, "needs_repair")
+		So(r.State, ShouldEqual, "needs_deploy")
 		So(r.Time, ShouldNotEqual, 0)
 	})
 }
@@ -149,7 +149,7 @@ func TestConvertFromUFSState(t *testing.T) {
 		},
 		{
 			ufsProto.State_STATE_UNSPECIFIED,
-			State("needs_repair"),
+			State("needs_deploy"),
 		},
 	}
 	for _, tc := range testcases {
