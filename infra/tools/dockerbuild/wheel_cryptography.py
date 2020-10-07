@@ -25,6 +25,7 @@ class Cryptography(Builder):
           generated based on standard PyPi expectations, encoded with each
           Platform's "packaged" property.
       arch_map: (See Builder's "arch_map" argument.)
+      pyversions: (See Buidler's "pyversions" argument.)
     """
     self._packaged = packaged or ()
     self._crypt_src = crypt_src

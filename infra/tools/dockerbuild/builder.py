@@ -94,7 +94,8 @@ class Builder(object):
     if not spec.universal:
       pyversion = plat.pyversion
       if spec.pyversions and pyversion not in spec.pyversions:
-        # This indicates an invalid config.
+        # If the declared pyversions doesn't contain the version corresponding
+        # to this platform, then we don't support it.
         raise PlatformNotSupported(
             ("Wheel %s specifies platform [%s] which has version [%s], but its "
              "pyversions '%r' doesn't contain this version") %

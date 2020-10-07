@@ -112,6 +112,7 @@ SPECS.update({
             '1.0',
             packaged=(),
             only_plat=build_platform.ALL_LINUX,
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'MarkupSafe',
@@ -122,7 +123,9 @@ SPECS.update({
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
-            )),
+            ),
+            pyversions=['py2'],
+        ),
         SourceOrPrebuilt(
             'PyYAML',
             '3.12',
@@ -130,12 +133,14 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'SQLAlchemy',
             '1.2.5',
             packaged=(),
             only_plat=['manylinux-x86', 'manylinux-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'bcrypt',
@@ -147,6 +152,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -154,6 +160,7 @@ SPECS.update({
             arch_map={
                 'mac-x64': ['macosx_10_6_intel'],
             },
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -161,6 +168,7 @@ SPECS.update({
             arch_map={
                 'mac-x64': ['macosx_10_6_intel'],
             },
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -171,6 +179,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -181,6 +190,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -191,6 +201,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'crcmod',
@@ -200,6 +211,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'gevent',
@@ -212,6 +224,7 @@ SPECS.update({
                 # so event loop performance shouldn't be a large concern.
                 'GEVENT_NO_LIBUV_BUILD': '1',
             },
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'greenlet',
@@ -222,8 +235,10 @@ SPECS.update({
             ),
             skip_plat=[
                 'windows-x86',
-            ]),
-        SourceOrPrebuilt('grpcio', '1.4.0'),
+            ],
+            pyversions=['py2'],
+        ),
+        SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
         SourceOrPrebuilt(
             'lazy-object-proxy',
             '1.3.1',
@@ -233,6 +248,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'netifaces',
@@ -246,6 +262,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'numpy',
@@ -255,6 +272,7 @@ SPECS.update({
                 'windows-x64': 'none',
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'numpy',
@@ -265,12 +283,14 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             skip_plat=('linux-arm64',),
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'psutil',
             '1.2.1',
             packaged=[],
             only_plat=build_platform.ALL_LINUX + ['mac-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -281,6 +301,7 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -291,6 +312,7 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -301,9 +323,15 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
-            'pyasn', '1.6.0b1', packaged=(), only_plat=['manylinux-x64']),
+            'pyasn',
+            '1.6.0b1',
+            packaged=(),
+            only_plat=['manylinux-x64'],
+            pyversions=['py2'],
+        ),
         # Prefer to use 'cryptography' instead of PyCrypto, if possible. We have
         # to use PyCrypto for GAE dev server (it's the only crypto package
         # available on GAE). Since we support it only on Linux and OSX, build
@@ -313,6 +341,7 @@ SPECS.update({
             '2.6.1',
             packaged=(),
             only_plat=['manylinux-x64', 'mac-x64'],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'scan-build',
@@ -323,6 +352,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'scandir',
@@ -331,6 +361,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'scandir',
@@ -339,6 +370,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'simplejson',
@@ -347,6 +379,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'subprocess32',
@@ -356,6 +389,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
+            pyversions=['py2'],
         ),
         SourceOrPrebuilt(
             'wrapt',

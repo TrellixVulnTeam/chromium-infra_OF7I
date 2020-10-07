@@ -97,7 +97,11 @@ def _main_wheel_build(args, system):
 
     seen = set()
     for plat in platforms:
-      w = build.wheel(system, plat)
+      try:
+        w = build.wheel(system, plat)
+      except PlatformNotSupported:
+        util.LOGGER.warning('Not supported on: %s', plat.name)
+        continue
       package = w.cipd_package(git_revision)
       if package in seen:
         continue
@@ -144,7 +148,10 @@ def _main_wheel_build(args, system):
     build = wheels.SPECS[spec_name]
     seen = set()
     for plat in platforms:
-      w = build.wheel(system, plat)
+      try:
+        w = build.wheel(system, plat)
+      except PlatformNotSupported:
+        continue
       package = w.cipd_package(git_revision)
       if package in seen:
         continue
