@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
 )
 
@@ -57,6 +58,11 @@ func (r *gtestRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResul
 	gtestFormat := &GTestResults{}
 	if err = gtestFormat.ConvertFromJSON(f); err != nil {
 		return nil, errors.Annotate(err, "did not recognize as GTest").Err()
+	}
+
+	if len(gtestFormat.AllTests) == 0 {
+		logging.Warningf(ctx, `"all_tests" field is empty in JSON`)
+		return nil, nil
 	}
 
 	trs, err := gtestFormat.ToProtos(ctx)

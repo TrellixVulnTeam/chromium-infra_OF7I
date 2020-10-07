@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"strings"
 	"testing"
@@ -23,8 +22,7 @@ func TestGTestConversions(t *testing.T) {
 	ctx := context.Background()
 
 	Convey(`From JSON works`, t, func() {
-		buf := []byte(
-			`{
+		str := `{
 				"all_tests": [
 					"FooTest.TestDoBar",
 					"FooTest.TestDoBaz"
@@ -78,12 +76,12 @@ func TestGTestConversions(t *testing.T) {
 						"line": 293
 					}
 				}
-			}`)
+			}`
 
 		results := &GTestResults{
 			buf: &strings.Builder{},
 		}
-		err := results.ConvertFromJSON(bytes.NewReader(buf))
+		err := results.ConvertFromJSON(strings.NewReader(str))
 		So(err, ShouldBeNil)
 		So(results.AllTests, ShouldResemble, []string{"FooTest.TestDoBar", "FooTest.TestDoBaz"})
 		So(results.DisabledTests, ShouldResemble, []string{"FooTest.TestDoBarDisabled"})
@@ -125,6 +123,23 @@ func TestGTestConversions(t *testing.T) {
 			"FooTest.TestDoBar": {File: "../../chrome/browser/foo/test.cc", Line: 287},
 			"FooTest.TestDoBaz": {File: "../../chrome/browser/foo/test.cc", Line: 293},
 		})
+	})
+
+	Convey(`all_tests can be empty`, t, func() {
+		str := `{
+				"all_tests": [],
+				"disabled_tests": [],
+				"global_tags": ["CPU_64_BITS","MODE_RELEASE","OS_WIN"],
+				"per_iteration_data": [{}],
+				"test_locations": {}
+			}`
+
+		results := &GTestResults{
+			buf: &strings.Builder{},
+		}
+		err := results.ConvertFromJSON(strings.NewReader(str))
+		So(err, ShouldBeNil)
+		So(len(results.AllTests), ShouldEqual, 0)
 	})
 
 	Convey("convertTestResult", t, func() {

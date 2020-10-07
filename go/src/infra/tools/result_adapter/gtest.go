@@ -116,10 +116,6 @@ func (r *GTestResults) ConvertFromJSON(reader io.Reader) error {
 		return err
 	}
 
-	if len(r.AllTests) == 0 {
-		return errors.Reason(`missing "all_tests" field in JSON`).Err()
-	}
-
 	return nil
 }
 

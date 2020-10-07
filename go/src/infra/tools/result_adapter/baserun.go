@@ -116,8 +116,11 @@ func (r *baseRun) run(ctx context.Context, args []string, f converter) (ret int)
 	}
 
 	trs, err := f(ctx)
-	if err != nil {
+	switch {
+	case err != nil:
 		return r.done(err)
+	case len(trs) == 0:
+		return ec
 	}
 
 	ctx = metadata.AppendToOutgoingContext(ctx, "Authorization", "ResultSink "+r.sinkCtx.AuthToken)
