@@ -209,6 +209,7 @@ class UserTest(testing.AppengineTestCase):
         user.PERM_BUILDS_GET,
         ['proj:bucket'],
         expected_result=True,
+        admin_group=auth.ADMIN_GROUP,
         tracking_bug='crbug.com/1091604',
     )
 
@@ -236,6 +237,12 @@ class UserTest(testing.AppengineTestCase):
     self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
     self.assertTrue(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
     self.assertFalse(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))
+
+    is_group_member.return_value = False
+    auth.is_admin.return_value = True
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))
 
   def test_has_perm_bad_input(self):
     with self.assertRaises(errors.InvalidInputError):

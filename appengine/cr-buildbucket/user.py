@@ -116,8 +116,24 @@ def has_perm_async(perm, bucket_id):
 
   # In buckets that have realm ACLs configured, enforce them.
   if auth.should_enforce_realm_acl(realm):
-    logging.info('crbug.com/1091604: enforcing realm ACLs for %s', realm)
-    raise ndb.Return(auth.has_permission(perm, [realm]))
+    logging.info('crbug.com/1091604: enforcing realm ACLs for %r', realm)
+    if auth.has_permission(perm, [realm]):
+      raise ndb.Return(True)
+
+    # For compatibility with legacy ALCs, administrators have implicit access to
+    # everything. Log when this rule is invoked, since it's surprising and it
+    # something we might want to get rid of after everything is migrated to
+    # Realms.
+    if auth.is_admin():
+      logging.warning(
+          'ADMIN_ACCESS: %r does not have permission %r in bucket %r, '
+          'but they are in %r group and are allowed to proceed',
+          auth.get_current_identity().to_bytes(), perm, bucket_id,
+          auth.ADMIN_GROUP
+      )
+      raise ndb.Return(True)
+
+    raise ndb.Return(False)
 
   # Get the result of the legacy ACL check.
   role = yield get_role_async_deprecated(bucket_id)
@@ -125,7 +141,11 @@ def has_perm_async(perm, bucket_id):
 
   # Compare it to realm ACLs, logs the difference.
   auth.has_permission_dryrun(
-      perm, [realm], expected_result=outcome, tracking_bug='crbug.com/1091604'
+      perm,
+      [realm],
+      expected_result=outcome,
+      admin_group=auth.ADMIN_GROUP,
+      tracking_bug='crbug.com/1091604',
   )
 
   # But still use legacy ACLs.
