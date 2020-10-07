@@ -144,16 +144,32 @@ def export_lite_tarball(api, version):
 
     for directory in directories:
       try:
-        api.step('prune %s' % directory, [
-            'find', api.path.join(dest_dir, directory), '-type', 'f',
-            '!', '-iname', '*.gyp*',
-            '!', '-iname', '*.gn*',
-            '!', '-iname', '*.isolate*',
-            '!', '-iname', '*.grd*',
-            # This file is required for Linux afdo builds.
-            '!', '-path',
-            api.path.join(dest_dir, 'chrome/android/profiles/afdo.prof'),
-            '-delete'])
+        api.step(
+            'prune %s' % directory,
+            [
+                'find',
+                api.path.join(dest_dir, directory),
+                '-type',
+                'f',
+                '!',
+                '-iname',
+                '*.gyp*',
+                '!',
+                '-iname',
+                '*.gn*',
+                '!',
+                '-iname',
+                '*.isolate*',
+                '!',
+                '-iname',
+                '*.grd*',
+                # This file is required for Linux afdo builds.
+                # This can be removed once M87 becomes stable.
+                '!',
+                '-path',
+                api.path.join(dest_dir, 'chrome/android/profiles/afdo.prof'),
+                '-delete'
+            ])
       except api.step.StepFailure:  # pragma: no cover
         # Ignore failures to delete these directories - they can be inspected
         # later to see whether they have moved to a different location
@@ -199,6 +215,32 @@ def export_nacl_tarball(api, version):
          '--src-dir', dest_dir],
         'chromium-%s.tar.xz' % version,
         'chromium-%s-nacl.tar.xz' % version)
+
+
+@recipe_api.composite_step
+def fetch_pgo_profiles(api):
+  pgo_script_path = api.path['checkout'].join('tools', 'update_pgo_profiles.py')
+  pgo_script_args = [
+      '--target=linux', 'update',
+      '--gs-url-base=chromium-optimization-profiles/pgo_profiles'
+  ]
+  api.python('fetch Linux PGO profiles', pgo_script_path, pgo_script_args)
+
+
+@recipe_api.composite_step
+def fetch_afdo_profile(api):
+  android_profile_path = api.path['checkout'].join('chrome', 'android',
+                                                   'profiles')
+  afdo_script_path = api.path['checkout'].join(
+      'tools', 'download_optimization_profile.py')
+  afdo_script_args = [
+      '--newest_state',
+      android_profile_path.join('newest.txt'), '--local_state',
+      android_profile_path.join('local.txt'), '--output_name',
+      android_profile_path.join('afdo.prof'),
+      '--gs_url_base=chromeos-prebuilt/afdo-job/llvm'
+  ]
+  api.python('fetch android AFDO profile', afdo_script_path, afdo_script_args)
 
 
 def trigger_publish_tarball_jobs(api):
@@ -261,26 +303,10 @@ def publish_tarball(api):
       api.path['checkout'].join('tools', 'clang', 'scripts', update_script)
       ] + update_args)
 
-  # download_cros_provided_profile.py was renamed to
-  # download_optimization_profile.py in M84.
-  android_profile_path = api.path['checkout'].join(
-      'chrome', 'android', 'profiles')
-  old_afdo_script_path = api.path['checkout'].join(
-      'tools', 'download_cros_provided_profile.py')
-  new_afdo_script_path = api.path['checkout'].join(
-      'tools', 'download_optimization_profile.py')
-  if api.path.exists(old_afdo_script_path):
-    afdo_script_path = old_afdo_script_path
+  if [int(x) for x in version.split('.')] >= [87, 0, 4273, 0]:
+    fetch_pgo_profiles(api)
   else:
-    afdo_script_path = new_afdo_script_path
-  afdo_script_args = [
-      '--newest_state',
-      android_profile_path.join('newest.txt'), '--local_state',
-      android_profile_path.join('local.txt'), '--output_name',
-      android_profile_path.join('afdo.prof'),
-      '--gs_url_base=chromeos-prebuilt/afdo-job/llvm'
-  ]
-  api.python('fetch android AFDO profile', afdo_script_path, afdo_script_args)
+    fetch_afdo_profile(api)
 
   node_modules_sha_path = api.path['checkout'].join(
       'third_party', 'node', 'node_modules.tar.gz.sha1')
@@ -378,16 +404,13 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-    api.test('basic') +
-    api.properties.generic(version='74.0.3729.169') +
-    api.platform('linux', 64) +
-    api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
-    api.step_data('get gn version',
-                  stdout=api.raw_io.output('1496 (0790d304)')) +
-    api.path.exists(api.path['checkout'].join(
-        'third_party', 'node', 'node_modules.tar.gz.sha1'))
-  )
+  yield (api.test('basic') + api.properties.generic(version='87.0.4273.0') +
+         api.platform('linux', 64) +
+         api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
+         api.step_data(
+             'get gn version', stdout=api.raw_io.output('1496 (0790d304)')) +
+         api.path.exists(api.path['checkout'].join('third_party', 'node',
+                                                   'node_modules.tar.gz.sha1')))
 
   yield (
     api.test('dupe') +
@@ -412,8 +435,9 @@ def GenTests(api):
         'third_party', 'node', 'node_modules.tar.gz.sha1'))
   )
 
+  # This can be removed once M87 becomes stable.
   yield (api.test('afdo-old-script') +
-         api.properties.generic(version='84.0.4125.0') +
+         api.properties.generic(version='85.0.4125.0') +
          api.platform('linux', 64) +
          api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
          api.step_data(

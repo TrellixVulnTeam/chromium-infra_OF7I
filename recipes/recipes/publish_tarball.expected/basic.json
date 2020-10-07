@@ -29,9 +29,9 @@
       "--output_json",
       "/path/to/tmp/json",
       "--revision",
-      "src@refs/tags/74.0.3729.169",
+      "src@refs/tags/87.0.4273.0",
       "--refs",
-      "refs/tags/74.0.3729.169",
+      "refs/tags/87.0.4273.0",
       "--with_branch_heads",
       "--with_tags"
     ],
@@ -48,18 +48,18 @@
       ]
     },
     "infra_step": true,
-    "name": "bot_update - 74.0.3729.169",
+    "name": "bot_update - 87.0.4273.0",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"src\": \"refs/tags/74.0.3729.169\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"src\": \"refs/tags/87.0.4273.0\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"src\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/src.git\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"188f5b8b6e02f58cda5b80085419b0f2a1572287\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"a29e2efd90e0ab5d3f28d3f52f65c959d8dc4567\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"src/buildtools\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/src/buildtools.git\", @@@",
@@ -105,7 +105,7 @@
       "@@@STEP_LOG_LINE@json.output@    \"got_dawn_revision_cp\": \"refs/heads/master@{#51819}\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_nacl_revision\": \"d998e125e8253980d76e269b7982aeeefc1b9b50\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_nacl_revision_cp\": \"refs/heads/master@{#274981}\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"188f5b8b6e02f58cda5b80085419b0f2a1572287\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"a29e2efd90e0ab5d3f28d3f52f65c959d8dc4567\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#170242}\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_swarming_client_revision\": \"a0ee5d99f1d4b38ddaa4c759c837980b63b99566\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_swarming_client_revision_cp\": \"refs/heads/master@{#276089}\", @@@",
@@ -122,7 +122,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"src\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/src.git\", @@@",
-      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"188f5b8b6e02f58cda5b80085419b0f2a1572287\"@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"a29e2efd90e0ab5d3f28d3f52f65c959d8dc4567\"@@@",
       "@@@STEP_LOG_LINE@json.output@        }@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"src/buildtools\": {@@@",
@@ -187,7 +187,7 @@
       "@@@SET_BUILD_PROPERTY@got_dawn_revision_cp@\"refs/heads/master@{#51819}\"@@@",
       "@@@SET_BUILD_PROPERTY@got_nacl_revision@\"d998e125e8253980d76e269b7982aeeefc1b9b50\"@@@",
       "@@@SET_BUILD_PROPERTY@got_nacl_revision_cp@\"refs/heads/master@{#274981}\"@@@",
-      "@@@SET_BUILD_PROPERTY@got_revision@\"188f5b8b6e02f58cda5b80085419b0f2a1572287\"@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision@\"a29e2efd90e0ab5d3f28d3f52f65c959d8dc4567\"@@@",
       "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#170242}\"@@@",
       "@@@SET_BUILD_PROPERTY@got_swarming_client_revision@\"a0ee5d99f1d4b38ddaa4c759c837980b63b99566\"@@@",
       "@@@SET_BUILD_PROPERTY@got_swarming_client_revision_cp@\"refs/heads/master@{#276089}\"@@@",
@@ -265,16 +265,12 @@
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/src/tools/download_optimization_profile.py",
-      "--newest_state",
-      "[START_DIR]/src/chrome/android/profiles/newest.txt",
-      "--local_state",
-      "[START_DIR]/src/chrome/android/profiles/local.txt",
-      "--output_name",
-      "[START_DIR]/src/chrome/android/profiles/afdo.prof",
-      "--gs_url_base=chromeos-prebuilt/afdo-job/llvm"
+      "[START_DIR]/src/tools/update_pgo_profiles.py",
+      "--target=linux",
+      "update",
+      "--gs-url-base=chromium-optimization-profiles/pgo_profiles"
     ],
-    "name": "fetch android AFDO profile"
+    "name": "fetch Linux PGO profiles"
   },
   {
     "cmd": [
@@ -403,7 +399,7 @@
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/export_tarball.py",
       "--remove-nonessential-files",
-      "chromium-74.0.3729.169",
+      "chromium-87.0.4273.0",
       "--verbose",
       "--progress",
       "--src-dir",
@@ -423,13 +419,13 @@
       "cp",
       "-a",
       "public-read",
-      "[CLEANUP]/export_tarball_tmp_2/chromium-74.0.3729.169.tar.xz",
-      "gs://chromium-browser-official/chromium-74.0.3729.169.tar.xz"
+      "[CLEANUP]/export_tarball_tmp_2/chromium-87.0.4273.0.tar.xz",
+      "gs://chromium-browser-official/chromium-87.0.4273.0.tar.xz"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169.tar.xz",
+    "name": "gsutil upload chromium-87.0.4273.0.tar.xz",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169.tar.xz@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0.tar.xz@@@"
     ]
   },
   {
@@ -437,7 +433,7 @@
       "python",
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/generate_hashes.py",
-      "[CLEANUP]/export_tarball_tmp_2/chromium-74.0.3729.169.tar.xz",
+      "[CLEANUP]/export_tarball_tmp_2/chromium-87.0.4273.0.tar.xz",
       "/path/to/tmp/"
     ],
     "name": "generate_hashes"
@@ -454,12 +450,12 @@
       "-a",
       "public-read",
       "md5  164ebd6889588da166a52ca0d57b9004  bash",
-      "gs://chromium-browser-official/chromium-74.0.3729.169.tar.xz.hashes"
+      "gs://chromium-browser-official/chromium-87.0.4273.0.tar.xz.hashes"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169.tar.xz.hashes",
+    "name": "gsutil upload chromium-87.0.4273.0.tar.xz.hashes",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169.tar.xz.hashes@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0.tar.xz.hashes@@@"
     ]
   },
   {
@@ -485,7 +481,7 @@
     ],
     "infra_step": true,
     "name": "luci-scheduler.EmitTriggers",
-    "stdin": "{\"batches\": [{\"jobs\": [{\"job\": \"Build From Tarball\", \"project\": \"infra\"}], \"trigger\": {\"buildbucket\": {\"properties\": {\"version\": \"74.0.3729.169\"}, \"tags\": [\"parent_buildername:TestBuilder\", \"parent_buildnumber:571\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00001\", \"title\": \"TestBuilder/571\"}}], \"timestamp\": 1337000001500000}",
+    "stdin": "{\"batches\": [{\"jobs\": [{\"job\": \"Build From Tarball\", \"project\": \"infra\"}], \"trigger\": {\"buildbucket\": {\"properties\": {\"version\": \"87.0.4273.0\"}, \"tags\": [\"parent_buildername:TestBuilder\", \"parent_buildnumber:571\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00001\", \"title\": \"TestBuilder/571\"}}], \"timestamp\": 1337000001500000}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@input@{@@@",
       "@@@STEP_LOG_LINE@input@    \"batches\": [@@@",
@@ -499,7 +495,7 @@
       "@@@STEP_LOG_LINE@input@            \"trigger\": {@@@",
       "@@@STEP_LOG_LINE@input@                \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@input@                    \"properties\": {@@@",
-      "@@@STEP_LOG_LINE@input@                        \"version\": \"74.0.3729.169\"@@@",
+      "@@@STEP_LOG_LINE@input@                        \"version\": \"87.0.4273.0\"@@@",
       "@@@STEP_LOG_LINE@input@                    }, @@@",
       "@@@STEP_LOG_LINE@input@                    \"tags\": [@@@",
       "@@@STEP_LOG_LINE@input@                        \"parent_buildername:TestBuilder\", @@@",
@@ -523,7 +519,7 @@
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/export_tarball.py",
       "--test-data",
-      "chromium-74.0.3729.169",
+      "chromium-87.0.4273.0",
       "--verbose",
       "--progress",
       "--src-dir",
@@ -543,13 +539,13 @@
       "cp",
       "-a",
       "public-read",
-      "[CLEANUP]/export_tarball_tmp_3/chromium-74.0.3729.169.tar.xz",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-testdata.tar.xz"
+      "[CLEANUP]/export_tarball_tmp_3/chromium-87.0.4273.0.tar.xz",
+      "gs://chromium-browser-official/chromium-87.0.4273.0-testdata.tar.xz"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-testdata.tar.xz",
+    "name": "gsutil upload chromium-87.0.4273.0-testdata.tar.xz",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-testdata.tar.xz@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-testdata.tar.xz@@@"
     ]
   },
   {
@@ -557,7 +553,7 @@
       "python",
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/generate_hashes.py",
-      "[CLEANUP]/export_tarball_tmp_3/chromium-74.0.3729.169.tar.xz",
+      "[CLEANUP]/export_tarball_tmp_3/chromium-87.0.4273.0.tar.xz",
       "/path/to/tmp/"
     ],
     "name": "generate_hashes (2)"
@@ -574,12 +570,12 @@
       "-a",
       "public-read",
       "md5  164ebd6889588da166a52ca0d57b9004  bash",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-testdata.tar.xz.hashes"
+      "gs://chromium-browser-official/chromium-87.0.4273.0-testdata.tar.xz.hashes"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-testdata.tar.xz.hashes",
+    "name": "gsutil upload chromium-87.0.4273.0-testdata.tar.xz.hashes",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-testdata.tar.xz.hashes@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-testdata.tar.xz.hashes@@@"
     ]
   },
   {
@@ -1078,7 +1074,7 @@
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/export_tarball.py",
       "--remove-nonessential-files",
-      "chromium-74.0.3729.169",
+      "chromium-87.0.4273.0",
       "--verbose",
       "--progress",
       "--src-dir",
@@ -1098,13 +1094,13 @@
       "cp",
       "-a",
       "public-read",
-      "[CLEANUP]/export_tarball_tmp_5/chromium-74.0.3729.169.tar.xz",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-lite.tar.xz"
+      "[CLEANUP]/export_tarball_tmp_5/chromium-87.0.4273.0.tar.xz",
+      "gs://chromium-browser-official/chromium-87.0.4273.0-lite.tar.xz"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-lite.tar.xz",
+    "name": "gsutil upload chromium-87.0.4273.0-lite.tar.xz",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-lite.tar.xz@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-lite.tar.xz@@@"
     ]
   },
   {
@@ -1112,7 +1108,7 @@
       "python",
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/generate_hashes.py",
-      "[CLEANUP]/export_tarball_tmp_5/chromium-74.0.3729.169.tar.xz",
+      "[CLEANUP]/export_tarball_tmp_5/chromium-87.0.4273.0.tar.xz",
       "/path/to/tmp/"
     ],
     "name": "generate_hashes (3)"
@@ -1129,12 +1125,12 @@
       "-a",
       "public-read",
       "md5  164ebd6889588da166a52ca0d57b9004  bash",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-lite.tar.xz.hashes"
+      "gs://chromium-browser-official/chromium-87.0.4273.0-lite.tar.xz.hashes"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-lite.tar.xz.hashes",
+    "name": "gsutil upload chromium-87.0.4273.0-lite.tar.xz.hashes",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-lite.tar.xz.hashes@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-lite.tar.xz.hashes@@@"
     ]
   },
   {
@@ -1196,7 +1192,7 @@
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/export_tarball.py",
       "--remove-nonessential-files",
-      "chromium-74.0.3729.169",
+      "chromium-87.0.4273.0",
       "--verbose",
       "--progress",
       "--src-dir",
@@ -1216,13 +1212,13 @@
       "cp",
       "-a",
       "public-read",
-      "[CLEANUP]/export_tarball_tmp_7/chromium-74.0.3729.169.tar.xz",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-nacl.tar.xz"
+      "[CLEANUP]/export_tarball_tmp_7/chromium-87.0.4273.0.tar.xz",
+      "gs://chromium-browser-official/chromium-87.0.4273.0-nacl.tar.xz"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-nacl.tar.xz",
+    "name": "gsutil upload chromium-87.0.4273.0-nacl.tar.xz",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-nacl.tar.xz@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-nacl.tar.xz@@@"
     ]
   },
   {
@@ -1230,7 +1226,7 @@
       "python",
       "-u",
       "RECIPE_MODULE[build::chromium]/resources/generate_hashes.py",
-      "[CLEANUP]/export_tarball_tmp_7/chromium-74.0.3729.169.tar.xz",
+      "[CLEANUP]/export_tarball_tmp_7/chromium-87.0.4273.0.tar.xz",
       "/path/to/tmp/"
     ],
     "name": "generate_hashes (4)"
@@ -1247,12 +1243,12 @@
       "-a",
       "public-read",
       "md5  164ebd6889588da166a52ca0d57b9004  bash",
-      "gs://chromium-browser-official/chromium-74.0.3729.169-nacl.tar.xz.hashes"
+      "gs://chromium-browser-official/chromium-87.0.4273.0-nacl.tar.xz.hashes"
     ],
     "infra_step": true,
-    "name": "gsutil upload chromium-74.0.3729.169-nacl.tar.xz.hashes",
+    "name": "gsutil upload chromium-87.0.4273.0-nacl.tar.xz.hashes",
     "~followup_annotations": [
-      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-74.0.3729.169-nacl.tar.xz.hashes@@@"
+      "@@@STEP_LINK@gsutil.upload@https://storage.cloud.google.com/chromium-browser-official/chromium-87.0.4273.0-nacl.tar.xz.hashes@@@"
     ]
   },
   {
