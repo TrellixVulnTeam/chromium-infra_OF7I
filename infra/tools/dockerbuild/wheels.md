@@ -1046,12 +1046,15 @@ wheel: <
 
 
 * *linux-arm64*
+* *linux-arm64-py3*
 * *linux-armv6*
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-x64*
+* *mac-x64-cp38*
 * *manylinux-x64*
+* *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
@@ -1069,12 +1072,15 @@ wheel: <
 
 
 * *linux-arm64*
+* *linux-arm64-py3*
 * *linux-armv6*
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-x64*
+* *mac-x64-cp38*
 * *manylinux-x64*
+* *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
@@ -4293,6 +4299,7 @@ wheel: <
 
 
 * *manylinux-x64*
+* *manylinux-x64-py3*
 * *manylinux-x86*
 
 ## **yapf**
