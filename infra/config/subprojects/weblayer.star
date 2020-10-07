@@ -25,7 +25,7 @@ def cron(name, recipe, execution_timeout = None):
         },
         service_account = "chrome-weblayer-builder@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
-        schedule = "with 60s interval",
+        schedule = "with 600s interval",
     )
     luci.list_view_entry(
         builder = name,
