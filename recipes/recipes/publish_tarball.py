@@ -130,15 +130,11 @@ def export_lite_tarball(api, version):
       'third_party/libxml/src',
       'third_party/snappy',
       'third_party/webgl',
-      'third_party/yasm',
       'tools/win',
     ]
-    # We're moving these directories. Try to prune a directory only if
-    # it exists. crbug.com/829695
-    for directory in ['third_party/WebKit/ManualTests',
-                      'third_party/WebKit/PerformanceTests',
-                      'third_party/blink/manual_tests',
-                      'third_party/blink/perf_tests']:
+    for directory in [
+        'third_party/blink/manual_tests', 'third_party/blink/perf_tests'
+    ]:
       if api.path.exists(api.path.join(dest_dir, directory)):
         directories.append(directory)  # pragma: no cover
 

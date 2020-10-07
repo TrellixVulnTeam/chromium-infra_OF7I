@@ -1009,31 +1009,6 @@
   {
     "cmd": [
       "find",
-      "[CLEANUP]/tmp_tmp_4/src/third_party/yasm",
-      "-type",
-      "f",
-      "!",
-      "-iname",
-      "*.gyp*",
-      "!",
-      "-iname",
-      "*.gn*",
-      "!",
-      "-iname",
-      "*.isolate*",
-      "!",
-      "-iname",
-      "*.grd*",
-      "!",
-      "-path",
-      "[CLEANUP]/tmp_tmp_4/src/chrome/android/profiles/afdo.prof",
-      "-delete"
-    ],
-    "name": "prune third_party/yasm"
-  },
-  {
-    "cmd": [
-      "find",
       "[CLEANUP]/tmp_tmp_4/src/tools/win",
       "-type",
       "f",
