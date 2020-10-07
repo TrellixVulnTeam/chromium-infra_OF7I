@@ -436,8 +436,8 @@ func looksLikeFakeServo(hostname string) bool {
 
 // getCrosVersionFromServoHost returns the cros version associated with a particular servo host
 // hostname : hostname of the servo host (e.g. labstation)
-// NOTE: If hostname is "", this indicates the absence of a relevant servo host.
-// This can happen if the DUT in question is already a labstation, for instance.
+// NOTE: If hostname is "", this indicates the absence of a relevant servo host. This can happen if the DUT in question is already a labstation, for instance.
+// NOTE: The cros version will be empty "" if the labstation does not exist. Because we don't re-image labstations as part of repair, the absence of a stable CrOS version for a labstation is not an error.
 func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostname string) (string, error) {
 	if hostname == "" {
 		return "", nil
@@ -445,7 +445,8 @@ func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostna
 	if looksLikeLabstation(hostname) {
 		dut, err := getDUT(ctx, ic, hostname)
 		if err != nil {
-			return "", errors.Annotate(err, "get labstation dut info").Err()
+			logging.Infof(ctx, "get labstation dut info; %s", err)
+			return "", nil
 		}
 		buildTarget := dut.GetCommon().GetLabels().GetBoard()
 		model := dut.GetCommon().GetLabels().GetModel()
