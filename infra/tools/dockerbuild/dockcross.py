@@ -65,6 +65,7 @@ class Builder(object):
       'cffi_relpath',
       'zlib_relpath',
       'ncurses_relpath',
+      'distutilscross_relpath',
       'boost_relpath',
       'mysql_relpath',
   ))
@@ -75,7 +76,11 @@ class Builder(object):
 
   @staticmethod
   def _gen_dockerfile(template):
-    with open(util.resource_path('Dockerfile.template'), 'r') as fd:
+    if template.python27_relpath:
+      template_file = 'Dockerfile.template'
+    else:
+      template_file = 'Dockerfile-py3.template'
+    with open(util.resource_path(template_file), 'r') as fd:
       dockerfile = string.Template(fd.read())
     return dockerfile.safe_substitute(template._asdict())
 
@@ -118,7 +123,8 @@ class Builder(object):
       src = repo.ensure(SOURCES[src_name], src_dir, unpack=False)
       return rp(src)
 
-    python_relpath = ensure_src('python')
+    py3_only = dx.platform.wheel_abi.startswith("cp3")
+    python_relpath = None if py3_only else ensure_src('python')
     python3_relpath = ensure_src('python3')
     perl_relpath = ensure_src('perl')
     libffi_relpath = ensure_src('libffi')
@@ -127,6 +133,7 @@ class Builder(object):
     mysql_relpath = ensure_src('mysql')
     boost_relpath = ensure_src('boost')
     ncurses_relpath = ensure_src('ncurses')
+    distutilscross_relpath = ensure_src('distutilscross')
     get_pip_relpath = ensure_src('get-pip')
 
     ucs4 = not dx.platform.wheel_abi or dx.platform.wheel_abi.endswith('mu')
@@ -156,6 +163,7 @@ class Builder(object):
         cffi_relpath=cffi_relpath,
         zlib_relpath=zlib_relpath,
         ncurses_relpath=ncurses_relpath,
+        distutilscross_relpath=distutilscross_relpath,
         boost_relpath=boost_relpath,
         mysql_relpath=mysql_relpath,
     )
@@ -383,8 +391,8 @@ SOURCES = {
     ),
     'python3': source.remote_archive(
         name='python3',
-        version='3.8.3',
-        url='https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz',
+        version='3.8.5',
+        url='https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz',
     ),
     'perl': source.remote_archive(
         name='perl',
@@ -424,4 +432,5 @@ SOURCES = {
         version='6.1',
         url='http://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz',
     ),
+    'distutilscross': source.pypi_sdist('distutilscross', '0.1'),
 }

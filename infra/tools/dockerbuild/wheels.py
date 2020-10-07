@@ -361,8 +361,8 @@ SPECS.update({
             'wrapt',
             '1.10.11',
             packaged=(),
-            only_plat=['manylinux-x86', 'manylinux-x64'],
-        ),
+            only_plat=['manylinux-x86', 'manylinux-x64', 'manylinux-x64-py3'],
+            pyversions=['py2', 'py3']),
     )
 })
 

@@ -38,6 +38,7 @@ CROSS_C_INCLUDE_PATH="$C_INCLUDE_PATH"
 CROSS_CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH"
 CROSS_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 CROSS_LIBRARY_PATH="$LIBRARY_PATH"
+CROSS_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
 
 toggle_host() {
   AS=
@@ -48,7 +49,9 @@ toggle_host() {
   LD=
 
   CFLAGS=
-  LDFLAGS=
+  # Some tools ignore pkg-config flags, so set this explicitly to make sure
+  # libffi and any other libraries here are locatable.
+  LDFLAGS=-L${LOCAL_PREFIX}/lib64
   PYTHONPATH=
   CMAKE_TOOLCHAIN_FILE=
 
@@ -56,6 +59,7 @@ toggle_host() {
   CPLUS_INCLUDE_PATH=
   LD_LIBRARY_PATH=
   LIBRARY_PATH=
+  PKG_CONFIG_PATH=${LOCAL_PREFIX}/lib/pkgconfig
 }
 
 toggle_cross() {
@@ -75,6 +79,7 @@ toggle_cross() {
   CPLUS_INCLUDE_PATH="${CROSS_CPLUS_INCLUDE_PATH}"
   LD_LIBRARY_PATH="${CROSS_LD_LIBRARY_PATH}"
   LIBRARY_PATH="${CROSS_LIBRARY_PATH}"
+  PKG_CONFIG_PATH="${CROSS_PKG_CONFIG_PATH}"
 }
 
 abspath() {

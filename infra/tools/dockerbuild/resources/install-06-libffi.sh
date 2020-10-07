@@ -31,6 +31,7 @@ toggle_host
 ./autogen.sh
 ./configure \
   --prefix="${LOCAL_PREFIX}" \
-  --disable-shared
+  --disable-shared \
+  --with-pic
 make -j"$(nproc)"
 make install

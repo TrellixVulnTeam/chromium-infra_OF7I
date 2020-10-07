@@ -54,6 +54,10 @@ class Platform(
   def dockcross_image_tag(self):
     return 'infra-dockerbuild-%s' % (self.name,)
 
+  @property
+  def pyversion(self):
+    return 'py2' if self.wheel_abi.startswith('cp2') else 'py3'
+
 
 ALL = {
     p.name: p for p in (
@@ -74,6 +78,17 @@ ALL = {
             manylinux_name=None,
             cross_triple='aarch64-unknown-linux-gnueabi',
             wheel_abi='cp27mu',
+            wheel_plat=('linux_arm64', 'linux_aarch64'),
+            dockcross_base='linux-arm64',
+            openssl_target='linux-aarch64',
+            packaged=False,
+            cipd_platform='linux-arm64',
+        ),
+        Platform(
+            name='linux-arm64-py3',
+            manylinux_name=None,
+            cross_triple='aarch64-unknown-linux-gnueabi',
+            wheel_abi='cp38',
             wheel_plat=('linux_arm64', 'linux_aarch64'),
             dockcross_base='linux-arm64',
             openssl_target='linux-aarch64',
@@ -121,6 +136,17 @@ ALL = {
             manylinux_name='cp27-cp27mu',
             cross_triple='x86_64-linux-gnu',
             wheel_abi='cp27mu',
+            wheel_plat=('manylinux1_x86_64',),
+            dockcross_base='manylinux-x64',
+            openssl_target='linux-x86_64',
+            packaged=True,
+            cipd_platform='linux-amd64',
+        ),
+        Platform(
+            name='manylinux-x64-py3',
+            manylinux_name=None,  # Don't use any built-in Python
+            cross_triple='x86_64-linux-gnu',
+            wheel_abi='cp38',
             wheel_plat=('manylinux1_x86_64',),
             dockcross_base='manylinux-x64',
             openssl_target='linux-x86_64',

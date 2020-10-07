@@ -85,8 +85,24 @@ class Builder(object):
     return self._spec
 
   def wheel(self, system, plat):
+    spec = self.spec._replace(version=self.version_fn(system))
+
+    # Non-universal wheels are built against a specific Python ABI. They can
+    # still be compatible with multiple Python versions, but each version needs
+    # to be built separately. So, we need to set the appropriate value for
+    # `pyversions` on the resulting wheel.
+    if not spec.universal:
+      pyversion = plat.pyversion
+      if spec.pyversions and pyversion not in spec.pyversions:
+        # This indicates an invalid config.
+        raise PlatformNotSupported(
+            ("Wheel %s specifies platform [%s] which has version [%s], but its "
+             "pyversions '%r' doesn't contain this version") %
+            (spec.name, plat.name, pyversion, spec.pyversions))
+      spec = spec._replace(pyversions=[pyversion])
+
     # If the wheel is only for python3, make sure to use newer version.
-    if self._spec.is_py3_only:
+    if spec.is_py3_only:
       # "3.8.0" is the oldest version of python supported by chromium.
       #
       # The value here a filter for pip; it will only find wheels which support
@@ -104,7 +120,7 @@ class Builder(object):
       pyversion = '27'
 
     wheel = Wheel(
-        spec=self._spec._replace(version=self.version_fn(system)),
+        spec=spec,
         plat=plat,
         pyversion=pyversion,
         filename=None,
@@ -129,9 +145,6 @@ class Builder(object):
     if self._only_plat and plat.name not in self._only_plat:
       return False
     if plat.name in self._skip_plat:
-      return False
-    # Python3 build platforms are currently only building py3-only wheels.
-    if plat.wheel_abi.startswith('cp3') and not self._spec.is_py3_only:
       return False
     return True
 

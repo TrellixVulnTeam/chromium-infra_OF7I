@@ -1,8 +1,8 @@
-# Copyright 2017 The Chromium Authors. All rights reserved.
+# Copyright 2020 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Dockerfile to build a Python wheel building Docker image starting from a
+# Dockerfile to build a Python3 wheel building Docker image starting from a
 # dockcross image.
 
 FROM ${dockcross_base}
@@ -26,7 +26,7 @@ ENV \
   PKG_CONFIG_PATH=$${CROSS_PREFIX}/lib/pkgconfig
 RUN \
   mkdir -p $${CROSS_PREFIX}/bin/ && \
-  mkdir -p $${CROSS_PREFIX}/lib/python2.7/site-packages/ && \
+  mkdir -p $${CROSS_PREFIX}/lib/python3.8/site-packages/ && \
   mkdir -p $${CROSS_PREFIX}/include/ && \
   ln -s $${CROSS_PREFIX}/lib $${CROSS_PREFIX}/lib64
 # Edit the $CMAKE_TOOLCHAIN_FILE to add $CROSS_PREFIX and `.` to allow local
@@ -93,28 +93,13 @@ RUN ARCHIVE_PATH=$$(basename ${mysql_relpath}) \
   ./install-05-mysql.sh \
 && rm -rf $${SETUP_ROOT}/mysql
 
-ENV PATH=/usr/local/mysql/bin:$${PATH}
-
-# Configure cross-compile LDFLAGS.
-
-# Build system and cross-compiled Python.
-WORKDIR $${SETUP_ROOT}/python
-COPY \
-  ${resources_relpath}/install-03-python.sh \
-  ${python27_relpath} \
-  ${resources_relpath}/config.site.xcc_python \
-  ./
-RUN ARCHIVE_PATH=$$(basename ${python27_relpath}) \
-  CROSS_UNICODE=${python27_unicode} \
-  CROSS_CONFIG_SITE=config.site.xcc_python \
-  ./install-03-python.sh \
-&& rm -rf $${SETUP_ROOT}/python
 ENV \
-  PYTHONPATH="$${LOCAL_PREFIX}/lib/python2.7/site-packages" \
+  PATH=/usr/local/mysql/bin:$${PATH} \
+  PYTHONPATH="$${LOCAL_PREFIX}/lib/python3.8/site-packages" \
   LDFLAGS="-L${cross_python_prefix}/lib $$LDFLAGS" \
-  CPPFLAGS="-I${cross_python_prefix}/include/python2.7 $$CPPFLAGS" \
+  CPPFLAGS="-I${cross_python_prefix}/include/python3.8 $$CPPFLAGS" \
   PYTHONXCPREFIX="${cross_python_prefix}" \
-  XPYTHONPATH="$${CROSS_PREFIX}/lib/python2.7/site-packages"
+  XPYTHONPATH="$${CROSS_PREFIX}/lib/python3.8/site-packages"
 
 # Install libffi. Currently this only builds a host version, for python3 below.
 WORKDIR $${SETUP_ROOT}/libffi
@@ -126,8 +111,7 @@ RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) \
   ./install-06-libffi.sh \
 && rm -rf $${SETUP_ROOT}/libffi
 
-# Install python3. Currently this only builds a host version, installed
-# as 'python3', that can be used for running setup.py.
+# Build system and cross-compiled Python.
 WORKDIR $${SETUP_ROOT}/python3
 COPY \
   ${resources_relpath}/install-07-python3.sh \
@@ -142,12 +126,6 @@ RUN ARCHIVE_PATH=$$(basename ${python3_relpath}) \
 # Install host "pip", needed to build wheels via "setup.py".
 WORKDIR $${SETUP_ROOT}
 COPY ${get_pip_relpath} ./
-RUN \
-  $${LOCAL_PREFIX}/bin/python \
-    ./$$(basename ${get_pip_relpath}) \
-    --prefix="$$LOCAL_PREFIX"
-
-env PYTHONPATH=""
 RUN \
   $${LOCAL_PREFIX}/bin/python3 \
     ./$$(basename ${get_pip_relpath}) \
@@ -167,9 +145,19 @@ COPY \
   ${resources_relpath}/install-04-cross-cffi.sh \
   ${cffi_relpath} \
   ./
-RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) \
+RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) PYTHON=python3 \
   ./install-04-cross-cffi.sh \
 && rm -rf $${SETUP_ROOT}/x-cffi
+
+WORKDIR $${SETUP_ROOT}/distutilscross
+COPY \
+  ${resources_relpath}/install-08-distutilscross.sh \
+  ${resources_relpath}/distutilscross-py3.patch \
+  ${distutilscross_relpath} \
+  ./
+RUN ARCHIVE_PATH=$$(basename ${distutilscross_relpath}) \
+  ./install-08-distutilscross.sh \
+&& rm -rf $${SETUP_ROOT}/distutilscross
 
 ###
 # CLEANUP
@@ -181,9 +169,7 @@ RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) \
 RUN rm -rf "${SETUP_ROOT}"
 
 # Install auxiliary "pip" wheels into default Python environment.
-RUN pip2 install virtualenv cffi distutilscross auditwheel numpy
-
-env PYTHONPATH="$${LOCAL_PREFIX}/lib/python2.7/site-packages"
+RUN pip3 install virtualenv cffi auditwheel numpy
 
 ### Add helper script, chmod user-accessible scripts.
 COPY ${resources_relpath}/start.sh /
