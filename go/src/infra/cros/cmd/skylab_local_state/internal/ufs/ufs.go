@@ -17,7 +17,7 @@ import (
 )
 
 // prpcOptions is used for UFS PRPC clients.
-var prpcOptions = prpcOptionWithUserAgent("skylab_local_state/3.0.0")
+var prpcOptions = prpcOptionWithUserAgent("skylab_local_state/6.0.0")
 
 // NewClient initialize and return new client to work with UFS service.
 func NewClient(ctx context.Context, ufsService string, authFlags *authcli.Flags) (ufsAPI.FleetClient, error) {
