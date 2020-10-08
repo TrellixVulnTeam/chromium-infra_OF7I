@@ -259,7 +259,7 @@ func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*Device
 		return nil, err
 	}
 
-	id, err := generateRepairRecordID(hostname, assetTag, createdTime)
+	id, err := GenerateRepairRecordID(hostname, assetTag, createdTime)
 	if err != nil {
 		return nil, err
 	}
@@ -307,8 +307,9 @@ func (e *DeviceManualRepairRecordEntity) UpdateDeviceManualRepairRecordEntity(r 
 	return nil
 }
 
-// Returns the predefined ID format of $hostname-$assetTag-$createdTime
-func generateRepairRecordID(hostname string, assetTag string, createdTime string) (string, error) {
+// GenerateRepairRecordID returns the predefined ID format of
+// $hostname-$assetTag-$createdTime
+func GenerateRepairRecordID(hostname string, assetTag string, createdTime string) (string, error) {
 	var err error
 	if hostname == "" {
 		err = errors.Reason("Hostname cannot be empty").Err()

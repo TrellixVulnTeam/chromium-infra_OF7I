@@ -81,12 +81,12 @@ func TestAddRecord(t *testing.T) {
 	record4 := mockDeviceManualRepairRecord("chromeos-addRec-dd", "addRec-444", 1)
 	record5 := mockDeviceManualRepairRecord("", "", 1)
 
-	rec1ID, _ := generateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
-	rec2ID, _ := generateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
+	rec1ID, _ := GenerateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
+	rec2ID, _ := GenerateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
 	ids1 := []string{rec1ID, rec2ID}
 
-	rec3ID, _ := generateRepairRecordID(record3.Hostname, record3.AssetTag, ptypes.TimestampString(record3.CreatedTime))
-	rec4ID, _ := generateRepairRecordID(record4.Hostname, record4.AssetTag, ptypes.TimestampString(record4.CreatedTime))
+	rec3ID, _ := GenerateRepairRecordID(record3.Hostname, record3.AssetTag, ptypes.TimestampString(record3.CreatedTime))
+	rec4ID, _ := GenerateRepairRecordID(record4.Hostname, record4.AssetTag, ptypes.TimestampString(record4.CreatedTime))
 	ids2 := []string{rec3ID, rec4ID}
 	Convey("Add device manual repair record to datastore", t, func() {
 		Convey("Add multiple device manual repair records to datastore", func() {
@@ -166,8 +166,8 @@ func TestGetRecord(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	record1 := mockDeviceManualRepairRecord("chromeos-getRec-aa", "getRec-111", 1)
 	record2 := mockDeviceManualRepairRecord("chromeos-getRec-bb", "getRec-222", 1)
-	rec1ID, _ := generateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
-	rec2ID, _ := generateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
+	rec1ID, _ := GenerateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
+	rec2ID, _ := GenerateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
 	ids1 := []string{rec1ID, rec2ID}
 	Convey("Get device manual repair record from datastore", t, func() {
 		Convey("Get non-existent device manual repair record from datastore", func() {
@@ -289,7 +289,7 @@ func TestUpdateRecord(t *testing.T) {
 	record5 := mockDeviceManualRepairRecord("", "", 1)
 	Convey("Update record in datastore", t, func() {
 		Convey("Update existing record to datastore", func() {
-			rec1ID, _ := generateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
+			rec1ID, _ := GenerateRepairRecordID(record1.Hostname, record1.AssetTag, ptypes.TimestampString(record1.CreatedTime))
 			req := []*invlibs.DeviceManualRepairRecord{record1}
 			res, err := AddDeviceManualRepairRecords(ctx, req)
 			So(err, ShouldBeNil)
@@ -321,7 +321,7 @@ func TestUpdateRecord(t *testing.T) {
 			So(res[0].Entity.UpdatedTime, ShouldResemble, updatedTime1)
 		})
 		Convey("Update non-existent record in datastore", func() {
-			rec2ID, _ := generateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
+			rec2ID, _ := GenerateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
 			reqUpdate := map[string]*invlibs.DeviceManualRepairRecord{rec2ID: record2}
 			res, err := UpdateDeviceManualRepairRecords(ctx, reqUpdate)
 			So(err, ShouldBeNil)
@@ -334,8 +334,8 @@ func TestUpdateRecord(t *testing.T) {
 			So(res[0].Err, ShouldNotBeNil)
 		})
 		Convey("Update multiple records to datastore", func() {
-			rec3ID, _ := generateRepairRecordID(record3.Hostname, record3.AssetTag, ptypes.TimestampString(record3.CreatedTime))
-			rec4ID, _ := generateRepairRecordID(record4.Hostname, record4.AssetTag, ptypes.TimestampString(record4.CreatedTime))
+			rec3ID, _ := GenerateRepairRecordID(record3.Hostname, record3.AssetTag, ptypes.TimestampString(record3.CreatedTime))
+			rec4ID, _ := GenerateRepairRecordID(record4.Hostname, record4.AssetTag, ptypes.TimestampString(record4.CreatedTime))
 			req := []*invlibs.DeviceManualRepairRecord{record3, record4}
 			res, err := AddDeviceManualRepairRecords(ctx, req)
 			So(err, ShouldBeNil)
@@ -368,7 +368,7 @@ func TestUpdateRecord(t *testing.T) {
 			So(res[1].Entity.UpdatedTime, ShouldResemble, updatedTime4)
 		})
 		Convey("Update record without ID to datastore", func() {
-			rec5ID, _ := generateRepairRecordID(record5.Hostname, record5.AssetTag, ptypes.TimestampString(record5.CreatedTime))
+			rec5ID, _ := GenerateRepairRecordID(record5.Hostname, record5.AssetTag, ptypes.TimestampString(record5.CreatedTime))
 			reqUpdate := map[string]*invlibs.DeviceManualRepairRecord{rec5ID: record5}
 			res, err := UpdateDeviceManualRepairRecords(ctx, reqUpdate)
 			So(err, ShouldBeNil)
@@ -414,7 +414,7 @@ func TestManualRepairIndexes(t *testing.T) {
 			rec4Update := mockUpdatedRecord("chromeos-indexTest-dd", "indexTest-444", 1)
 			rec4Update.UpdatedTime, _ = ptypes.TimestampProto(time.Unix(555, 0).UTC())
 
-			rec4ID, _ := generateRepairRecordID(rec4Update.Hostname, rec4Update.AssetTag, ptypes.TimestampString(rec4Update.CreatedTime))
+			rec4ID, _ := GenerateRepairRecordID(rec4Update.Hostname, rec4Update.AssetTag, ptypes.TimestampString(rec4Update.CreatedTime))
 			reqUpdate := map[string]*invlibs.DeviceManualRepairRecord{rec4ID: rec4Update}
 			_, err := UpdateDeviceManualRepairRecords(ctx, reqUpdate)
 			So(err, ShouldBeNil)
