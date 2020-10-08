@@ -47,7 +47,7 @@ func NewUFSClient(ctx context.Context, url string, o auth.Options) (*prpc.Client
 	return &prpc.Client{
 		C:       hc,
 		Host:    url,
-		Options: prpcOptionWithUserAgent("skylab_swarming_worker/3.0.0"),
+		Options: prpcOptionWithUserAgent("skylab_swarming_worker/6.0.0"),
 	}, nil
 }
 
