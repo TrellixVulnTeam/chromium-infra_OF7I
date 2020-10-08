@@ -14,9 +14,11 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/cros/dutstate"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // DutStateCmd subcommand: get State of the DUT from UFS.
@@ -54,6 +56,7 @@ func (c *dutStateCmdRun) innerRun(a subcommands.Application, args []string, env 
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
+	ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

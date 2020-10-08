@@ -81,6 +81,11 @@ func (c *getRack) Run(a subcommands.Application, args []string, env subcommands.
 
 func (c *getRack) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		return err
+	}
+	ctx = utils.SetupContext(ctx, ns)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

@@ -57,7 +57,11 @@ func (c *updateMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		return err
+	}
+	ctx = utils.SetupContext(ctx, ns)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

@@ -88,6 +88,11 @@ func (c *getMachine) Run(a subcommands.Application, args []string, env subcomman
 
 func (c *getMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		return err
+	}
+	ctx = utils.SetupContext(ctx, ns)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

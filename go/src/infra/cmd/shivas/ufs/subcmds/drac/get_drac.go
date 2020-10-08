@@ -88,7 +88,11 @@ func (c *getDrac) Run(a subcommands.Application, args []string, env subcommands.
 
 func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		return err
+	}
+	ctx = utils.SetupContext(ctx, ns)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

@@ -6,17 +6,13 @@ package utils
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/metadata"
-	"infra/cmd/shivas/site"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// ClientVersion used as a key in metadata within context
-const ClientVersion string = "clientversion"
-
-// SetupContext sets up context with client major version number
-func SetupContext(ctx context.Context) context.Context {
-	md := metadata.Pairs(ClientVersion, fmt.Sprintf("%d", site.Major))
+// SetupContext sets up context with namespace
+func SetupContext(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, namespace)
 	return metadata.NewOutgoingContext(ctx, md)
 }

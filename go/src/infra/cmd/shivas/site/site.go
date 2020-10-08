@@ -10,12 +10,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 
-	"go.chromium.org/luci/common/gcloud/gs"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // Environment contains environment specific values.
@@ -98,12 +101,14 @@ func (f *OutputFlags) NoEmit() bool {
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.
 type EnvFlags struct {
-	dev bool
+	dev       bool
+	namespace string
 }
 
 // Register sets up the -dev argument.
 func (f *EnvFlags) Register(fl *flag.FlagSet) {
 	fl.BoolVar(&f.dev, "dev", false, "Run in dev environment.")
+	fl.StringVar(&f.namespace, "namespace", "", fmt.Sprintf("namespace where data resides. Users can also set os env SHIVAS_NAMESPACE. Valid namespaces: [%s]", strings.Join(ufsUtil.ValidClientNamespaceStr(), ", ")))
 }
 
 // Env returns the environment, either dev or prod.
@@ -112,6 +117,21 @@ func (f EnvFlags) Env() Environment {
 		return Dev
 	}
 	return Prod
+}
+
+// Namespace returns the namespace
+func (f EnvFlags) Namespace() (string, error) {
+	ns := strings.ToLower(f.namespace)
+	if ns == "" {
+		ns = strings.ToLower(os.Getenv("SHIVAS_NAMESPACE"))
+	}
+	if ns != "" && ufsUtil.IsClientNamespace(ns) {
+		return ns, nil
+	}
+	if ns == "" {
+		return ns, errors.New(fmt.Sprintf("namespace is a required field. Users can also set os env SHIVAS_NAMESPACE. Valid namespaces: [%s]", strings.Join(ufsUtil.ValidClientNamespaceStr(), ", ")))
+	}
+	return ns, errors.New(fmt.Sprintf("namespace %s is invalid. Users can also set os env SHIVAS_NAMESPACE. Valid namespaces: [%s]", ns, strings.Join(ufsUtil.ValidClientNamespaceStr(), ", ")))
 }
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
@@ -140,7 +160,7 @@ func SecretsDir() string {
 var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
 
 // Major is the Major version number
-const Major = 5
+const Major = 6
 
 // Minor is the Minor version number
 const Minor = 0

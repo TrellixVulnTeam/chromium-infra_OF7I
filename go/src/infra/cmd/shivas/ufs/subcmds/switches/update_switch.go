@@ -76,6 +76,11 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		return err
+	}
+	ctx = utils.SetupContext(ctx, ns)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
