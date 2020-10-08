@@ -1013,7 +1013,7 @@ func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	}
 	if err := ResourceExist(ctx, resourcesNotfound, nil); err != nil {
 		//return err
-		return errors.Annotate(err, "HELLO %s", machinelse.Name).Err()
+		return errors.Annotate(err, "%s", machinelse.Name).Err()
 	}
 
 	// 3. Check if any machine is already associated with another MachineLSE
