@@ -126,6 +126,8 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 func (c *removeDutsRun) deleteFromUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, hostnames []string) error {
 	// Ignore other loggings from other packages, only expose error logging.
 	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
+	// Set the namespace to os in context metadata for UFS api call
+	newCtx = skycmdlib.SetupContext(newCtx, ufsUtil.OSNamespace)
 	for _, hostname := range hostnames {
 		_, err := ufsClient.DeleteMachineLSE(newCtx, &ufsAPI.DeleteMachineLSERequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, hostname),

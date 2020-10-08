@@ -246,6 +246,8 @@ func serializeMany(specs []*inventory.DeviceUnderTest) ([][]byte, error) {
 func (c *addDutRun) deployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, specs []*inventory.DeviceUnderTest) error {
 	// Ignore other loggings from other packages, only expose error logging.
 	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
+	// Set the namespace to os in context metadata for UFS api call
+	newCtx = skycmdlib.SetupContext(newCtx, ufsUtil.OSNamespace)
 	for _, spec := range specs {
 		devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
 		if len(devicesToAdd) != 1 {

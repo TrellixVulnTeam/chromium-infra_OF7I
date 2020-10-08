@@ -199,13 +199,15 @@ func (c *addLabstationRun) getSpecs(a subcommands.Application) (*inventory.Devic
 
 // deployToUFS kicks off the inventory updates to UFS
 func (c *addLabstationRun) deployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, specs []*inventory.DeviceUnderTest) error {
+	// Set the namespace to os in context metadata for UFS api call
+	newCtx := skycmdlib.SetupContext(ctx, ufsUtil.OSNamespace)
 	for _, spec := range specs {
 		_, labstationsToAdd, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
 		if len(labstationsToAdd) != 1 {
 			return errors.Reason("Cannot parse lab config from the labstation %s's spec", spec.GetCommon().GetHostname()).Err()
 		}
 		mlse := ufsUtil.LabstationToLSE(labstationsToAdd[0].GetLabstation(), "", nil)
-		_, err = ufsClient.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
+		_, err = ufsClient.CreateMachineLSE(newCtx, &ufsAPI.CreateMachineLSERequest{
 			MachineLSE:   mlse,
 			MachineLSEId: mlse.GetName(),
 		})

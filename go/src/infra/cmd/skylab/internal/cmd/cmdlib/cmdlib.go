@@ -11,9 +11,11 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/metadata"
 	"infra/cmd/skylab/internal/site"
 
 	lflag "go.chromium.org/luci/common/flag"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // DefaultTaskPriority is the default priority for a swarming task.
@@ -83,4 +85,10 @@ func FixSuspiciousHostname(hostname string) string {
 		return strings.TrimSuffix(hostname, ".cros")
 	}
 	return hostname
+}
+
+// SetupContext sets up context with namespace
+func SetupContext(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, namespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }

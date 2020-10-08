@@ -162,6 +162,8 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 func (c *updateDutRun) redeployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, spec *inventory.DeviceUnderTest) error {
 	// Ignore other loggings from other packages, only expose error logging.
 	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
+	// Set the namespace to os in context metadata for UFS api call
+	newCtx = skycmdlib.SetupContext(newCtx, ufsUtil.OSNamespace)
 	devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
 	if len(devicesToAdd) != 1 {
 		return errors.Reason("Cannot parse lab config from the host %s's spec", spec.GetCommon().GetHostname()).Err()
