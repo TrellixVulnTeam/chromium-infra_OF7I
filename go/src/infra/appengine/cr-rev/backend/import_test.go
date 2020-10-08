@@ -41,7 +41,7 @@ func TestInitialHostImport(t *testing.T) {
 
 	Convey("Skip repos", t, func() {
 		// Setup gitiles
-		fakeGitilesClient := &gitilesProto.GitilesFake{}
+		fakeGitilesClient := &gitilesProto.Fake{}
 		fakeGitilesClient.SetRepository("foo", nil, nil)
 		fakeGitilesClient.SetRepository("bar", nil, nil)
 		ctx := gitiles.SetClient(ctx, fakeGitilesClient)

@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/genproto/protobuf/field_mask"
@@ -83,7 +84,7 @@ func TestFinditRules(t *testing.T) {
 
 		Convey("Culprit age Pass", func() {
 			// Inject gitiles response.
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -108,7 +109,7 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Culprit age Fail", func() {
 			// Inject gitiles response.
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -157,7 +158,7 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Culprit age Error", func() {
 			// Inject gitiles error.
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -267,7 +268,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -346,7 +347,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}

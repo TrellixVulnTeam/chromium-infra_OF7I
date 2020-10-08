@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/gae/impl/memory"
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
@@ -117,7 +118,7 @@ func TestAuditor(t *testing.T) {
 			}()
 
 			escapedRepoURL := url.QueryEscape("https://dummy.googlesource.com/dummy.git/+/refs/heads/master")
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			auditorTestClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}

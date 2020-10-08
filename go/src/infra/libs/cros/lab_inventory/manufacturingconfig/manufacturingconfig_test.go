@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
@@ -43,7 +44,7 @@ func TestUpdateDatastore(t *testing.T) {
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
 
-		gitilesMock := gitiles.NewMockGitilesClient(ctl)
+		gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(
 			&gitiles.DownloadFileResponse{
 				Contents: manufacturingConfigJSON,

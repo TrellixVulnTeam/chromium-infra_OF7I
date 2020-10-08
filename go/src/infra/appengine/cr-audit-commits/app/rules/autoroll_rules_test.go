@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
 
 func TestAutoRollRules(t *testing.T) {
@@ -42,7 +43,7 @@ func TestAutoRollRules(t *testing.T) {
 
 		Convey("Only modifies DEPS", func() {
 			// Inject gitiles log response
-			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -73,7 +74,7 @@ func TestAutoRollRules(t *testing.T) {
 		Convey("Introduces unexpected changes", func() {
 			Convey("Modifies other file", func() {
 				// Inject gitiles log response
-				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
@@ -106,7 +107,7 @@ func TestAutoRollRules(t *testing.T) {
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 			Convey("Renames DEPS", func() {
-				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}

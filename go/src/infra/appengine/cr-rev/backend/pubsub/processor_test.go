@@ -110,7 +110,7 @@ func TestPubsubProcessor(t *testing.T) {
 				Id: "000000000000000000000000000000000000001F",
 			},
 		}
-		c := &gitilesProto.GitilesFake{}
+		c := &gitilesProto.Fake{}
 		c.SetRepository("bar", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
 		err := processor(ctx, m)
@@ -167,7 +167,7 @@ func TestPubsubProcessor(t *testing.T) {
 				Id: "000000000000000000000000000000000000000C",
 			},
 		}
-		c := &gitilesProto.GitilesFake{}
+		c := &gitilesProto.Fake{}
 		c.SetRepository("custom-refs", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
 		err := processor(ctx, m)
@@ -191,7 +191,7 @@ func TestPubsubProcessor(t *testing.T) {
 				commits[i].Parents = []string{commits[i-1].Id}
 			}
 		}
-		c := &gitilesProto.GitilesFake{}
+		c := &gitilesProto.Fake{}
 		c.SetRepository("createref", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
 		m := &SourceRepoEvent{
@@ -255,7 +255,7 @@ func TestPubsubProcessor(t *testing.T) {
 				Id: "0000000000000000000000000000000000000000",
 			},
 		}
-		c := &gitilesProto.GitilesFake{}
+		c := &gitilesProto.Fake{}
 		c.SetRepository("oldid", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
 		err := processor(ctx, m)
