@@ -132,5 +132,24 @@ func UpdateState(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.St
 
 // GetState returns state record for a resource.
 func GetState(ctx context.Context, resourceName string) (*ufspb.StateRecord, error) {
-	return state.GetStateRecord(ctx, resourceName)
+	// First try to find in os namespace, if not find in default namespace
+	// TODO(eshwarn): Remove this - once all state data is migrated to os namespace
+	newCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		logging.Debugf(ctx, "Failed to set os namespace in context", err)
+		return state.GetStateRecord(ctx, resourceName)
+	}
+	record, err := state.GetStateRecord(newCtx, resourceName)
+	if err == nil {
+		return record, err
+	}
+
+	// default namespace
+	newCtx, err = util.SetupDatastoreNamespace(ctx, "")
+	if err != nil {
+		logging.Debugf(ctx, "Failed to set default namespace in context", err)
+		return state.GetStateRecord(ctx, resourceName)
+	}
+
+	return state.GetStateRecord(newCtx, resourceName)
 }

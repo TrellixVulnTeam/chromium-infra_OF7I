@@ -5,8 +5,11 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"go.chromium.org/luci/gae/service/info"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 )
@@ -121,6 +124,11 @@ func ValidClientNamespaceStr() []string {
 func IsClientNamespace(namespace string) bool {
 	_, ok := ClientToDatastoreNamespace[namespace]
 	return ok
+}
+
+// SetupDatastoreNamespace sets the datastore namespace in the context to access the correct namespace in the datastore
+func SetupDatastoreNamespace(ctx context.Context, namespace string) (context.Context, error) {
+	return info.Namespace(ctx, namespace)
 }
 
 // GetPageSize gets the correct page size for List pagination
