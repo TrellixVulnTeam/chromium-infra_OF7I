@@ -408,6 +408,14 @@ SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'Prebuilt',
         Prebuilt(
+            'debugpy',
+            '1.0.0rc2',
+            [
+                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
+                'windows-x64'
+            ],
+        ),
+        Prebuilt(
             'freetype-py',
             '2.1.0.post1',
             [

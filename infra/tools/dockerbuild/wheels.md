@@ -1087,6 +1087,24 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **debugpy**
+
+### 1.0.0rc2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/debugpy/${vpython_platform}"
+  version: "version:1.0.0rc2"
+>
+```
+
+
+* *mac-x64*
+* *manylinux-x64*
+* *manylinux-x86*
+* *windows-x64*
+* *windows-x86*
+
 ## **distlib-py2**
 
 ### 0.3.0
