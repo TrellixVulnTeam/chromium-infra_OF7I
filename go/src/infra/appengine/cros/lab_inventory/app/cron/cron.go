@@ -43,6 +43,7 @@ import (
 	"infra/libs/cros/lab_inventory/hart"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	invprotos "infra/libs/cros/lab_inventory/protos"
+	"infra/libs/cros/lab_inventory/utils"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -379,7 +380,9 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 
 	ids := make([]string, 0, len(assets))
 	for _, a := range assets {
-		ids = append(ids, a.Id)
+		if !utils.MacRegex.MatchString(a.Id) {
+			ids = append(ids, a.Id)
+		}
 	}
 
 	// Filter assets not yet in datastore
