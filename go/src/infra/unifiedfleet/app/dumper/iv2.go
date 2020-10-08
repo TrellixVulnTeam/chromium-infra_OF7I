@@ -75,6 +75,11 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 			"continue sync ignoring hostnames", err)
 	}
 
+	// In UFS write to 'os' namespace
+	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
 	assetsToUpdate := make([]*ufspb.Asset, 0, len(assets))
 	for _, asset := range assets {
 		var iv2Asset *ufspb.Asset
@@ -140,6 +145,12 @@ func registerRacksForAsset(ctx context.Context, asset *ufspb.Asset) error {
 //
 // Checks all the DUT and Labstation assets and creates/updates machines if required.
 func SyncMachinesFromAssets(ctx context.Context) error {
+	// In UFS write to 'os' namespace
+	var err error
+	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
 	logging.Infof(ctx, "SyncMachinesFromAssets")
 	assets, err := registration.GetAllAssets(ctx)
 	if err != nil {

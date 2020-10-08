@@ -40,7 +40,7 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, dumpChangeEvent)
 	})
-	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
+	srv.RunInBackground("ufs.snapshot_msg.BqDump", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, dumpChangeSnapshots)
 	})
 	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
@@ -66,14 +66,14 @@ func dump(ctx context.Context) error {
 	ctx = logging.SetLevel(ctx, logging.Info)
 	// Execute importing before dumping
 	err1 := importCrimson(ctx)
-	err2 := dumpToBQ(ctx)
+	err2 := exportToBQ(ctx, dumpToBQ)
 	if err1 == nil && err2 == nil {
 		return nil
 	}
 	return errors.NewMultiError(err1, err2)
 }
 
-func dumpToBQ(ctx context.Context) (err error) {
+func dumpToBQ(ctx context.Context, bqClient *bigquery.Client) (err error) {
 	defer func() {
 		dumpToBQTick.Add(ctx, 1, err == nil)
 	}()
@@ -86,7 +86,6 @@ func dumpToBQ(ctx context.Context) (err error) {
 	}); err != nil {
 		return err
 	}
-	bqClient := get(ctx)
 	if err := dumpConfigurations(ctx, bqClient, curTimeStr); err != nil {
 		return errors.Annotate(err, "dump configurations").Err()
 	}
@@ -109,7 +108,7 @@ func dumpChangeEvent(ctx context.Context) (err error) {
 	}()
 	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Debugf(ctx, "Dumping change event to BQ")
-	return dumpChangeEventHelper(ctx, get(ctx))
+	return exportToBQ(ctx, dumpChangeEventHelper)
 }
 
 func dumpChangeSnapshots(ctx context.Context) (err error) {
@@ -118,13 +117,18 @@ func dumpChangeSnapshots(ctx context.Context) (err error) {
 	}()
 	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Debugf(ctx, "Dumping change snapshots to BQ")
-	return dumpChangeSnapshotHelper(ctx, get(ctx))
+	return exportToBQ(ctx, dumpChangeSnapshotHelper)
 }
 
 func dumpCrosInventory(ctx context.Context) (err error) {
 	defer func() {
 		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
 	}()
+	// In UFS write to 'os' namespace
+	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
 	ctx = logging.SetLevel(ctx, logging.Info)
 	return importCrosInventory(ctx)
 }
@@ -133,6 +137,11 @@ func dumpCrosNetwork(ctx context.Context) (err error) {
 	defer func() {
 		dumpCrosNetworkTick.Add(ctx, 1, err == nil)
 	}()
+	// In UFS write to 'os' namespace
+	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
 	return importCrosNetwork(ctx)
 }
 
@@ -156,4 +165,28 @@ func UseProject(ctx context.Context, project string) context.Context {
 
 func getProject(ctx context.Context) string {
 	return ctx.Value(projectKey).(string)
+}
+
+func exportToBQ(ctx context.Context, f func(ctx context.Context, bqClient *bigquery.Client) error) (err error) {
+	for _, ns := range util.ClientToDatastoreNamespace {
+		newCtx, err1 := util.SetupDatastoreNamespace(ctx, ns)
+		if ns == "" {
+			// This is only for printing error message for default namespace.
+			ns = "default"
+		}
+		logging.Debugf(newCtx, "Exporting to BQ for namespace %q", ns)
+		if err1 != nil {
+			err1 = errors.Annotate(err, "Setting namespace %q failed. BQ export skipped for the namespace %q", ns, ns).Err()
+			logging.Errorf(ctx, err.Error())
+			err = errors.NewMultiError(err, err1)
+			continue
+		}
+		err1 = f(newCtx, get(newCtx))
+		if err1 != nil {
+			err1 = errors.Annotate(err, "BQ export failed for the namespace %q", ns).Err()
+			logging.Errorf(ctx, err.Error())
+			err = errors.NewMultiError(err, err1)
+		}
+	}
+	return err
 }

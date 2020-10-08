@@ -11,6 +11,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 // SyncAssetInfoFromHaRT publishes the request for asset info to HaRT.
@@ -19,6 +20,12 @@ import (
 // This function only checks for the assets that have Device info missing or
 // the last update on the device was 48 hours ago.
 func SyncAssetInfoFromHaRT(ctx context.Context) error {
+	// In UFS write to 'os' namespace
+	var err error
+	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
 	conf := config.Get(ctx).GetHart()
 	proj := conf.GetProject()
 	topic := conf.GetTopic()
