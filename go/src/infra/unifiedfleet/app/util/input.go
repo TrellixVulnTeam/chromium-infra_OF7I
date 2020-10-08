@@ -91,6 +91,38 @@ var (
 
 const separator string = "/"
 
+// Namespace namespace to be set by clients in context metadata
+// This will be used to set the actual datastore namespace in the context
+var (
+	// OSNamespace os namespace to be set in client context metadata. OS data is stored in os namespace in the datastore.
+	OSNamespace = "os"
+	// BrowserNamespace browser namespace to be set in client context metadata. Browser data is stored in default namespace in the datastore.
+	BrowserNamespace = "browser"
+	//Namespace key in the incoming context metadata
+	Namespace = "namespace"
+)
+
+// ClientToDatastoreNamespace refers a map between client namespace(set in context metadata) to actual datastore namespace
+var ClientToDatastoreNamespace = map[string]string{
+	BrowserNamespace: "",          // browser data is stored in default namespace
+	OSNamespace:      OSNamespace, // os data in os namespace
+}
+
+// ValidClientNamespaceStr returns a valid str list for client namespace(set in incoming context metadata) strings.
+func ValidClientNamespaceStr() []string {
+	ks := make([]string, 0, len(ClientToDatastoreNamespace))
+	for k := range ClientToDatastoreNamespace {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// IsClientNamespace checks if a string refers to a valid client namespace.
+func IsClientNamespace(namespace string) bool {
+	_, ok := ClientToDatastoreNamespace[namespace]
+	return ok
+}
+
 // GetPageSize gets the correct page size for List pagination
 func GetPageSize(pageSize int32) int32 {
 	switch {
