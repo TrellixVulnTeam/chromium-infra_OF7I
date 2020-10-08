@@ -120,7 +120,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  Project,
 			  Bucket,
 			  Builder,
-			  MasterName,
+			  BuilderGroup,
 			  StepName,
 			  TestNamesFingerprint,
 			  TestNamesTrunc,
@@ -155,7 +155,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  Project,
 			  Bucket,
 			  Builder,
-			  MasterName,
+			  BuilderGroup,
 			  StepName,
 			  TestNamesFingerprint,
 			  TestNamesTrunc,
@@ -196,7 +196,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  Project,
 			  Bucket,
 			  Builder,
-			  MasterName,
+			  BuilderGroup,
 			  StepName,
 			  TestNamesFingerprint,
 			  TestNamesTrunc,
@@ -248,8 +248,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "some builder",
@@ -274,8 +274,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "some builder",
@@ -296,8 +296,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "some builder",
@@ -346,8 +346,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 1",
@@ -376,8 +376,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "some step",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 2",
@@ -427,8 +427,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step 1",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 1",
@@ -457,8 +457,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "some step 2",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 2",
@@ -525,8 +525,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step 1",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 1",
@@ -555,8 +555,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "some step 1",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 2",
@@ -625,8 +625,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "performance_test_suite",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "win-10-perf",
@@ -655,8 +655,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "performance_test_suite",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "win-10-perf",
@@ -742,8 +742,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "performance_test_suite",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "win-10-perf",
@@ -772,8 +772,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "performance_test_suite",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "win-10-perf",
@@ -860,8 +860,8 @@ func TestProcessBQResults(t *testing.T) {
 		failureRows := []failureRow{
 			{
 				StepName: "some step 1",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 1",
@@ -890,8 +890,8 @@ func TestProcessBQResults(t *testing.T) {
 			},
 			{
 				StepName: "some step 2",
-				MasterName: bigquery.NullString{
-					StringVal: "some master",
+				BuilderGroup: bigquery.NullString{
+					StringVal: "some builder group",
 					Valid:     true,
 				},
 				Builder: "builder 2",

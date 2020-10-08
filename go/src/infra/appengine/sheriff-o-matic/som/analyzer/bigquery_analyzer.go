@@ -31,7 +31,7 @@ SELECT
   Project,
   Bucket,
   Builder,
-  MasterName,
+  BuilderGroup,
   StepName,
   TestNamesFingerprint,
   TestNamesTrunc,
@@ -75,14 +75,14 @@ var androidFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-	masterName := r.MasterName.String()
-	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, masterName) {
+	builderGroup := r.BuilderGroup.String()
+	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, builderGroup) {
 		return true
 	}
-	if masterName == "chromium" && r.Builder == "Android" {
+	if builderGroup == "chromium" && r.Builder == "Android" {
 		return true
 	}
-	if masterName == "chromium.webkit" && sliceContains([]string{"Android Builder", "Webkit Android (Nexus4)"}, r.Builder) {
+	if builderGroup == "chromium.webkit" && sliceContains([]string{"Android Builder", "Webkit Android (Nexus4)"}, r.Builder) {
 		return true
 	}
 	validBuilders := []string{
@@ -106,9 +106,9 @@ var chromiumFilterFunc = func(r failureRow) bool {
 		return false
 	}
 
-	masterName := r.MasterName.String()
+	builderGroup := r.BuilderGroup.String()
 
-	validMasterNames := []string{
+	validBuilderGroups := []string{
 		"chrome",
 		"chromium",
 		"chromium.chromiumos",
@@ -117,7 +117,7 @@ var chromiumFilterFunc = func(r failureRow) bool {
 		"chromium.memory",
 		"chromium.win",
 	}
-	return sliceContains(validMasterNames, masterName) && r.Bucket == "ci"
+	return sliceContains(validBuilderGroups, builderGroup) && r.Bucket == "ci"
 }
 
 var chromiumGPUFilterFunc = func(r failureRow) bool {
@@ -125,12 +125,12 @@ var chromiumGPUFilterFunc = func(r failureRow) bool {
 		return false
 	}
 
-	validMasterNames := []string{
+	validBuilderGroups := []string{
 		"chromium.gpu",
 		"chromium.gpu.fyi",
 		"chromium.swangle",
 	}
-	return sliceContains(validMasterNames, r.MasterName.String())
+	return sliceContains(validBuilderGroups, r.BuilderGroup.String())
 }
 
 var chromiumPerfFilterFunc = func(r failureRow) bool {
@@ -145,7 +145,7 @@ var chromiumPerfFilterFunc = func(r failureRow) bool {
 	if sliceContains(excludedBuckets, r.Bucket) {
 		return false
 	}
-	return (r.Project == "chromium.perf" || r.MasterName.String() == "chromium.perf") && (!r.MasterName.Valid || !strings.HasSuffix(r.MasterName.String(), ".fyi"))
+	return (r.Project == "chromium.perf" || r.BuilderGroup.String() == "chromium.perf") && (!r.BuilderGroup.Valid || !strings.HasSuffix(r.BuilderGroup.String(), ".fyi"))
 }
 
 var iosFilterFunc = func(r failureRow) bool {
@@ -153,7 +153,7 @@ var iosFilterFunc = func(r failureRow) bool {
 		return false
 	}
 
-	if r.Project == "chrome" && r.MasterName.String() == "internal.bling.main" {
+	if r.Project == "chrome" && r.BuilderGroup.String() == "internal.bling.main" {
 		return true
 	}
 	validBuilders := []string{
@@ -162,7 +162,7 @@ var iosFilterFunc = func(r failureRow) bool {
 		"ios-simulator-full-configs",
 		"ios-simulator-noncq",
 	}
-	if r.Project == "chromium" && r.MasterName.String() == "chromium.mac" && sliceContains(validBuilders, r.Builder) {
+	if r.Project == "chromium" && r.BuilderGroup.String() == "chromium.mac" && sliceContains(validBuilders, r.Builder) {
 		return true
 	}
 	return false
@@ -181,7 +181,7 @@ var chromiumClangFilterFunc = func(r failureRow) bool {
 	if sliceContains(excludedBuckets, r.Bucket) {
 		return false
 	}
-	return (r.Project == "chromium.clang" || r.MasterName.String() == "chromium.clang") && (!r.MasterName.Valid || !strings.HasSuffix(r.MasterName.String(), ".fyi"))
+	return (r.Project == "chromium.clang" || r.BuilderGroup.String() == "chromium.clang") && (!r.BuilderGroup.Valid || !strings.HasSuffix(r.BuilderGroup.String(), ".fyi"))
 }
 
 type failureRow struct {
@@ -189,7 +189,7 @@ type failureRow struct {
 	TestNamesTrunc       bigquery.NullString
 	NumTests             bigquery.NullInt64
 	StepName             string
-	MasterName           bigquery.NullString
+	BuilderGroup         bigquery.NullString
 	Builder              string
 	Bucket               string
 	Project              string
@@ -496,7 +496,7 @@ func generateAlertedBuilder(ctx context.Context, r failureRow) *messages.Alerted
 		Project:                  r.Project,
 		Bucket:                   r.Bucket,
 		Name:                     r.Builder,
-		Master:                   r.MasterName.StringVal,
+		Master:                   r.BuilderGroup.StringVal,
 		FirstFailure:             r.BuildIDBegin.Int64,
 		LatestFailure:            r.BuildIDEnd.Int64,
 		FirstFailureBuildNumber:  r.BuildNumberBegin.Int64,

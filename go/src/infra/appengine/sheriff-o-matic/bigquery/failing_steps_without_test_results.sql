@@ -13,7 +13,7 @@ WITH
     b.builder.project,
     b.builder.bucket,
     b.builder.builder,
-    IFNULL(JSON_EXTRACT_SCALAR(input.properties, "$.mastername"), JSON_EXTRACT_SCALAR(input.properties, "$.builder_group")) as mastername,
+    JSON_EXTRACT_SCALAR(input.properties, "$.builder_group") as buildergroup,
     ARRAY_AGG(b
     ORDER BY
       # Latest, meaning sort by commit position if it exists, otherwise by the build id or number.
@@ -37,7 +37,7 @@ SELECT
   builder,
   latest.number,
   b.latest.id build_id,
-  IFNULL(JSON_EXTRACT_SCALAR(latest.input.properties, "$.mastername"), JSON_EXTRACT_SCALAR(latest.input.properties, "$.builder_group")) as mastername,
+  JSON_EXTRACT_SCALAR(latest.input.properties, "$.builder_group") as buildergroup,
   s.name step,
   ANY_VALUE(b.latest.status) status,
   ANY_VALUE(b.latest.critical) critical,

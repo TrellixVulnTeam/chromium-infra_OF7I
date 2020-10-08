@@ -76,7 +76,7 @@ WITH
     s.project,
     s.bucket,
     s.builder,
-    s.mastername,
+    s.buildergroup,
     s.step_name,
     s.critical,
     # Latest, meaning sort by commit position if it exists, then by build ID (ascending), otherwise by the build number.
@@ -98,14 +98,14 @@ WITH
     project,
     bucket,
     builder,
-    mastername,
+    buildergroup,
     step_name,
     critical)
 SELECT
   s.project AS Project,
   s.bucket AS Bucket,
   s.builder AS Builder,
-  s.mastername AS MasterName,
+  s.buildergroup AS BuilderGroup,
   s.critical AS Critical,
   s.step AS StepName,
   s.test_names_fp as TestNamesFingerprint,
