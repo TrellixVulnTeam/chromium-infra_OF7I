@@ -1,3 +1,20 @@
+# Release Notes sheriff-o-matic 2020-10-08
+
+- 2 commits, 1 bugs affected since 50d0f5e ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Change bigquery analyzer to get rid of MasterName](https://chromium-review.googlesource.com/c/infra/infra/+/2460007) (nqmtuan@google.com)
+- [[SoM] Release note Oct 6](https://chromium-review.googlesource.com/c/infra/infra/+/2449834) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  
+
 # Release Notes sheriff-o-matic 2020-10-06
 
 - 6 commits, 3 bugs affected since f93bc31 ()
