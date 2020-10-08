@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
@@ -25,6 +26,7 @@ import (
 
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend"
+	"infra/unifiedfleet/app/util"
 )
 
 // SupportedClientMajorVersionNumber indicates the minimum client version
@@ -33,6 +35,9 @@ import (
 // any client with major version number lower than this number will get an
 // error to update their client to this major version or above.
 const SupportedClientMajorVersionNumber = 3
+
+// flag to control erroring out if namespace is not provided
+const rejectCallforNamespace = false
 
 func main() {
 	modules := []module.Module{
@@ -52,6 +57,7 @@ func main() {
 
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
 		srv.RegisterUnaryServerInterceptor(versionInterceptor)
+		srv.RegisterUnaryServerInterceptor(namespaceInterceptor)
 		frontend.InstallServices(srv.PRPC)
 
 		// Add authenticator for handling JWT tokens. This is required to
@@ -67,6 +73,49 @@ func main() {
 		frontend.InstallHandlers(srv.Routes, router.NewMiddlewareChain(openIDCheck.GetMiddleware()))
 		return nil
 	})
+}
+
+// namespaceInterceptor interceptor to set namespace for the datastore
+func namespaceInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "Retrieving metadata failed.")
+	}
+
+	// TODO(eshwarn): this is to check http request from device ticketfiler
+	// remove this once verified. Used only for logging messages
+	var v, n string
+	version, ok := md["user-agent"]
+	if ok {
+		v = version[0]
+	}
+
+	namespace, ok := md[util.Namespace]
+	if ok {
+		// TODO(eshwarn): this is to check http request from device ticketfiler
+		// remove this once verified. Used only for logging messages
+		n = namespace[0]
+
+		ns := strings.ToLower(namespace[0])
+		datastoreNamespace, ok := util.ClientToDatastoreNamespace[ns]
+		if ok {
+			ctx, err = util.SetupDatastoreNamespace(ctx, datastoreNamespace)
+			if err != nil {
+				return nil, err
+			}
+		} else if rejectCallforNamespace {
+			return nil, status.Errorf(codes.InvalidArgument, "namespace %s in the context metadata is invalid. Valid namespaces: [%s]", namespace[0], strings.Join(util.ValidClientNamespaceStr(), ", "))
+		}
+	} else if rejectCallforNamespace {
+		return nil, status.Errorf(codes.InvalidArgument, "namespace is not set in the context metadata. Valid namespaces: [%s]", strings.Join(util.ValidClientNamespaceStr(), ", "))
+	}
+
+	// TODO(eshwarn): this is to check http request from device ticketfiler
+	// remove this once verified.
+	logging.Debugf(ctx, "user-agent = %s and namespace = %s", v, n)
+
+	resp, err = handler(ctx, req)
+	return
 }
 
 // versionInterceptor interceptor to handle client version check per RPC call
