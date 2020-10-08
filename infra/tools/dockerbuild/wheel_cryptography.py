@@ -11,8 +11,14 @@ from . import source
 from . import util
 
 class Cryptography(Builder):
-  def __init__(self, name, crypt_src, openssl_src, packaged=None,
-               arch_map=None):
+
+  def __init__(self,
+               name,
+               crypt_src,
+               openssl_src,
+               packaged=None,
+               arch_map=None,
+               pyversions=None):
     """Specialized wheel builder for the "cryptography" package.
 
     Args:
@@ -35,7 +41,7 @@ class Cryptography(Builder):
             name,
             crypt_src.version,
             universal=None,
-            pyversions=None,
+            pyversions=pyversions,
             default=True),
         arch_map=arch_map)
 
@@ -149,4 +155,5 @@ class CryptographyPyPI(Cryptography):
             'windows-x86',
             'windows-x64',
         ],
+        pyversions=['py2'],
     )
