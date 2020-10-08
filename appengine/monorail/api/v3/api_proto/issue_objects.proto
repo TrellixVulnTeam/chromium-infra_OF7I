@@ -74,7 +74,7 @@ message Comment {
   }
 
   option (google.api.resource) = {
-    type: "api.crbug.com/IssueComment"
+    type: "api.crbug.com/Comment"
     pattern: "projects/{project}/issues/{issue}/comments/{comment}"
   };
 

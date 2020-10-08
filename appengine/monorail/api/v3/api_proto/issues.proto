@@ -99,6 +99,18 @@ service Issues {
       (ListApprovalValuesResponse) {}
 
   // status: NOT READY
+  // Changes state for a comment. Supported state transitions:
+  //   - ACTIVE -> DELETED
+  //   - ACTIVE -> SPAM
+  //   - DELETED -> ACTIVE
+  //   - SPAM -> ACTIVE
+  //
+  // Raises:
+  //   TODO(crbug/monorail/7867): Document errors when implemented
+  rpc ModifyCommentState (ModifyCommentStateRequest) returns
+      (ModifyCommentStateResponse) {}
+
+  // status: NOT READY
   // Makes an issue from an IssueTemplate and deltas.
   //
   // Raises:
@@ -382,6 +394,24 @@ message ListApprovalValuesRequest {
 message ListApprovalValuesResponse {
   // The approval values from the specified issue.
   repeated ApprovalValue approval_values = 1;
+}
+
+// The request message for Issues.ModifyCommentState.
+// Next available tag: 3
+message ModifyCommentStateRequest {
+  // Resource name of the comment to modify state.
+  string name = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Comment"},
+    (google.api.field_behavior) = REQUIRED ];
+  // Requested state.
+  IssueContentState state = 2;
+}
+
+// The response message for Issues.ModifyCommentState.
+// Next available tag: 2
+message ModifyCommentStateResponse {
+  // The updated comment after modifying state.
+  Comment comment = 1;
 }
 
 // The request message for MakeIssueFromTemplate.
