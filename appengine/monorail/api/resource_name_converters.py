@@ -47,6 +47,9 @@ ISSUE_PATTERN = (r'projects\/(?P<project>%s)\/issues\/(?P<local_id>\d+)' %
                  project_constants.PROJECT_NAME_PATTERN)
 ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
+COMMENT_PATTERN = (r'%s\/comments\/(?P<comment_id>\d+)' % ISSUE_PATTERN)
+COMMENT_NAME_RE = re.compile(r'%s$' % COMMENT_PATTERN)
+
 USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 APPROVAL_VALUE_RE = re.compile(
     r'%s\/approvalValues\/(?P<approval_id>\d+)$' % ISSUE_PATTERN)
@@ -238,6 +241,43 @@ def ConvertHotlistItemNames(cnxn, hotlist_id, issue_ids, services):
   return issue_ids_to_names
 
 # Issues
+
+
+def IngestCommentName(cnxn, name, services):
+  # type: (MonorailConnection, str, Services) -> Tuple[int, int, int]
+  """Ingests a Comment's resource name.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    name: Resource name of a Comment.
+    services: Services object for connections to backend services.
+
+  Returns:
+    Tuple containing three items:
+        1. Global ID of the parent project.
+        2. Global Issue id of the parent issue.
+        3. Sequence number of the comment. This is not checked for existence.
+
+  Raises:
+    InputException if the given name does not have a valid format.
+    NoSuchIssueException if the parent Issue does not exist.
+    NoSuchProjectException if the parent Project does not exist.
+  """
+  match = _GetResourceNameMatch(name, COMMENT_NAME_RE)
+
+  # Project
+  project_name = match.group('project')
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+  project_id = id_dict.get(project_name)
+  if project_id is None:
+    raise exceptions.NoSuchProjectException(
+        'Project not found: %s.' % project_name)
+  # Issue
+  local_id = int(match.group('local_id'))
+  issue_pair = [(project_name, local_id)]
+  issue_id = _IssueIdsFromLocalIds(cnxn, issue_pair, services)[0]
+
+  return project_id, issue_id, int(match.group('comment_id'))
 
 
 def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):
