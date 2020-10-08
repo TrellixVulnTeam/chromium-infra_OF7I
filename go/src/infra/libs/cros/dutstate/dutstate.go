@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	ufsProto "infra/unifiedfleet/api/v1/proto"
@@ -67,6 +68,7 @@ func (s State) String() string {
 //
 // If state not exist in the UFS the state will be default and time is 0.
 func Read(ctx context.Context, c UFSClient, host string) Info {
+	ctx = setupContext(ctx, ufsUtil.OSNamespace)
 	resourceName := makeUFSResourceName(host)
 
 	log.Printf("dutstate: Try to read state for %s", host)
@@ -92,6 +94,7 @@ func Read(ctx context.Context, c UFSClient, host string) Info {
 
 // Update push new DUT state to UFS.
 func Update(ctx context.Context, c UFSClient, host string, state State) error {
+	ctx = setupContext(ctx, ufsUtil.OSNamespace)
 	ufsState := convertToUFSState(state)
 	resourceName := makeUFSResourceName(host)
 
@@ -124,6 +127,12 @@ func convertFromUFSState(state ufsProto.State) State {
 
 func makeUFSResourceName(host string) string {
 	return ufsUtil.AddPrefix(ufsUtil.HostCollection, host)
+}
+
+// setupContext sets up context with namespace
+func setupContext(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, namespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 var stateToUFS = map[State]ufsProto.State{
