@@ -217,7 +217,7 @@ func TestGTestConversions(t *testing.T) {
 				results := &GTestResults{
 					TestLocations: map[string]*Location{
 						"TestName": {
-							File: "//TestFile",
+							File: "..\\\\TestFile",
 							Line: 54,
 						},
 					},

@@ -331,9 +331,10 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 
 	// Store the test code location.
 	if loc, ok := r.TestLocations[name]; ok {
+		file := normalizePath(loc.File)
 		// For some reason, many file paths start with "../../", followed by
 		// the correct path. Strip the prefix.
-		file := stripRepeatedPrefixes(loc.File, "../")
+		file = stripRepeatedPrefixes(file, "../")
 		file = ensureLeadingDoubleSlash(file)
 		tr.TestLocation = &pb.TestLocation{
 			FileName: file,
