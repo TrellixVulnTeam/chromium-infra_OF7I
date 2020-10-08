@@ -164,9 +164,6 @@ func trimWhiteSpaceInLocation(a *fleet.Location) *fleet.Location {
 	return a
 }
 
-// MacRegex can be used to match/extract mac addresses.
-var MacRegex = regexp.MustCompile(`^([a-zA-Z0-9]{2}[:.-]){5}[a-zA-Z0-9]{2}$`)
-
 /* Regular expressions to match various parts of the input string - START */
 
 var num = regexp.MustCompile(`[0-9]+`)

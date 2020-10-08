@@ -25,7 +25,7 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
-var macAddress = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`)
+var macRegex = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:\.-]){5}([0-9A-Fa-f]{2})$`)
 var chromeoslab = regexp.MustCompile(`chromeos[0-9]{1,2}`)
 
 // List of regexps for recognizing assets stored with googlers or out of lab.
@@ -358,7 +358,7 @@ func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 	// Device can be one of DUT, Labstation, Servo, etc,.
 	if a.Model == "" {
 		// Some servos are recorded using their ethernet mac address
-		if macAddress.MatchString(a.GetName()) {
+		if macRegex.MatchString(a.GetName()) {
 			a.Type = ufspb.AssetType_SERVO
 		} else {
 			a.Type = ufspb.AssetType_UNDEFINED

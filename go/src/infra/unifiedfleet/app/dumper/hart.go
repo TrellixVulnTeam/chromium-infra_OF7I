@@ -45,7 +45,7 @@ func SyncAssetInfoFromHaRT(ctx context.Context) error {
 	for _, r := range res {
 		// Request an update, if we don't have asset info or the last update
 		// was more than 2 days ago.
-		if r.Info == nil || time.Since(r.UpdateTime.AsTime()).Hours() > 48.00 {
+		if !macRegex.MatchString(r.Name) && (r.Info == nil || time.Since(r.UpdateTime.AsTime()).Hours() > 48.00) {
 			ids = append(ids, r.Name)
 		}
 	}
