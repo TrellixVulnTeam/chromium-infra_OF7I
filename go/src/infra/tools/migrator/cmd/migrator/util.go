@@ -63,6 +63,7 @@ func withPlugin(ctx context.Context, proj plugsupport.ProjectDir, cb func(migrat
 	cmd := exec.CommandContext(
 		ctx, "go", "build", "-buildmode=plugin", "-o", plugFile, ".")
 	cmd.Dir = proj.PluginDir()
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=1") // required to compile plugins
 
 	output := bytes.Buffer{}
 	cmd.Stdout = &output

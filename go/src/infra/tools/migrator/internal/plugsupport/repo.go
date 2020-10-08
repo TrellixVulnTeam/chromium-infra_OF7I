@@ -91,10 +91,20 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		return
 	}
 
+	// "sso://" simplifies authenticating into internal repos.
+	remoteURL := strings.Replace(gitLoc.Repo, "https://", "sso://", 1)
+
+	// Bail early with a clear error message if we have no read access.
+	git.run("ls-remote", remoteURL, gitLoc.Ref)
+	if git.err != nil {
+		err = errors.Reason("no read access to %q ref %q", gitLoc.Repo, gitLoc.Ref).Err()
+		return
+	}
+
 	git.run("init")
 	git.run("config", "extensions.PartialClone", "origin")
 	git.run("config", "depot-tools.upstream", originRef)
-	git.run("remote", "add", "origin", gitLoc.Repo)
+	git.run("remote", "add", "origin", remoteURL)
 	git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+originRef)
 	git.run("config", "remote.origin.partialclonefilter", "blob:none")
 	git.run("fetch", "--depth", "1", "origin")
