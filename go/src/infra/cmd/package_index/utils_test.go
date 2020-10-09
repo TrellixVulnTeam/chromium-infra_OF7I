@@ -89,7 +89,7 @@ func TestConvertGnPath(t *testing.T) {
 	t.Parallel()
 	Convey("Convert GN Path", t, func() {
 		ctx := context.Background()
-		gnPath := "//path/to/gn"
+		gnPath := "//path/tests/thing.txt"
 
 		Convey("Bad outDir", func() {
 			So(func() {
@@ -103,7 +103,7 @@ func TestConvertGnPath(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				So(r, ShouldEqual, filepath.Join("..", "out"))
+				So(r, ShouldEqual, filepath.Join("..", "..", "tests", "thing.txt"))
 			})
 		})
 	})

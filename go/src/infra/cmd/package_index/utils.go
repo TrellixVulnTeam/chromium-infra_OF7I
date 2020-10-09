@@ -78,7 +78,7 @@ func convertGnPath(ctx context.Context, gnPath, outDir string) (string, error) {
 
 	paths := strings.Split(gnPath[2:], "/")
 	paths = append([]string{"src"}, paths...)
-	s, err := filepath.Rel(path.Join(paths...), outDir)
+	s, err := filepath.Rel(outDir, path.Join(paths...))
 	if err != nil {
 		logging.Errorf(ctx, "Cannot convert path %v to a relative path", paths)
 		return "", err
