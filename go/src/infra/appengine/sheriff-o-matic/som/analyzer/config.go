@@ -10,18 +10,18 @@ import (
 	"golang.org/x/net/context"
 )
 
-const configURL = "https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/appengine/sheriff-o-matic/config/config.json?format=text"
+const configURL = "https://chromium.googlesource.com/infra/infra/+/HEAD/go/src/infra/appengine/sheriff-o-matic/config/config.json?format=text"
 
 // ConfigRules is a parsed representation of the config.json file, which
 // specifies builders and steps to exclude.
 type ConfigRules struct {
-	IgnoredSteps []string                `json:"ignored_steps"`
-	MasterCfgs   map[string]MasterConfig `json:"masters"`
+	IgnoredSteps     []string                      `json:"ignored_steps"`
+	BuilderGroupCfgs map[string]BuilderGroupConfig `json:"builder_groups"`
 }
 
-// MasterConfig is a parsed representation of the inner per-master value, which
-// contains a list of builders to exclude for that master.
-type MasterConfig struct {
+// BuilderGroupConfig is a parsed representation of the inner per builder group
+// value, which contains a list of builders to exclude for that builder group.
+type BuilderGroupConfig struct {
 	ExcludedBuilders []string `json:"excluded_builders"`
 }
 
@@ -48,8 +48,8 @@ func ParseConfigRules(cfgJSON []byte) (*ConfigRules, error) {
 
 // ExcludeFailure determines whether a particular failure should be ignored,
 // according to the rules in the config.
-func (r *ConfigRules) ExcludeFailure(ctx context.Context, master, builder, step string) bool {
-	if cfg, ok := r.MasterCfgs[master]; ok {
+func (r *ConfigRules) ExcludeFailure(ctx context.Context, builderGroup, builder, step string) bool {
+	if cfg, ok := r.BuilderGroupCfgs[builderGroup]; ok {
 		if contains(cfg.ExcludedBuilders, builder) {
 			return true
 		}

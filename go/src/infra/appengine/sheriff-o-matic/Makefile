@@ -26,6 +26,7 @@ test: test-backend
 
 test-backend: build
 	cd som && go test infra/appengine/sheriff-o-matic/som/... -count 10 -failfast -cover -race
+	cd config && go test infra/appengine/sheriff-o-matic/config/... -count 10 -failfast -cover -race
 
 relnotes:
 	go run ../../tools/relnotes/relnotes.go -app sheriff-o-matic -extra-paths .,../../monitoring/analyzer,../../monitoring/client,../../monitoring/messages

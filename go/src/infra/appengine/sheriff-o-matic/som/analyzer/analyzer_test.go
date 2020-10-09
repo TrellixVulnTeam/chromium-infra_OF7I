@@ -12,27 +12,27 @@ import (
 
 func TestExcludeFailure(t *testing.T) {
 	tests := []struct {
-		name                  string
-		cr                    *ConfigRules
-		master, builder, step string
-		want                  bool
+		name                        string
+		cr                          *ConfigRules
+		buildergroup, builder, step string
+		want                        bool
 	}{
 		{
-			name:    "empty config",
-			master:  "fake.master",
-			builder: "fake.builder",
-			step:    "fake_step",
-			cr:      &ConfigRules{},
-			want:    false,
+			name:         "empty config",
+			buildergroup: "fake.buildergroup",
+			builder:      "fake.builder",
+			step:         "fake_step",
+			cr:           &ConfigRules{},
+			want:         false,
 		},
 		{
-			name:    "specifically excluded builder",
-			master:  "fake.master",
-			builder: "fake.builder",
-			step:    "fake_step",
+			name:         "specifically excluded builder",
+			buildergroup: "fake.buildergroup",
+			builder:      "fake.builder",
+			step:         "fake_step",
 			cr: &ConfigRules{
-				MasterCfgs: map[string]MasterConfig{
-					"fake.master": {
+				BuilderGroupCfgs: map[string]BuilderGroupConfig{
+					"fake.buildergroup": {
 						ExcludedBuilders: []string{"fake.builder"},
 					},
 				},
@@ -40,30 +40,30 @@ func TestExcludeFailure(t *testing.T) {
 			want: true,
 		},
 		{
-			name:    "specifically excluded master step",
-			master:  "fake.master",
-			builder: "fake.builder",
-			step:    "fake_step",
+			name:         "specifically excluded buildergroup step",
+			buildergroup: "fake.buildergroup",
+			builder:      "fake.builder",
+			step:         "fake_step",
 			cr: &ConfigRules{
 				IgnoredSteps: []string{"fake_step"},
 			},
 			want: true,
 		},
 		{
-			name:    "specifically excluded builder step",
-			master:  "fake.master",
-			builder: "fake.builder",
-			step:    "fake_step",
+			name:         "specifically excluded builder step",
+			buildergroup: "fake.buildergroup",
+			builder:      "fake.builder",
+			step:         "fake_step",
 			cr: &ConfigRules{
 				IgnoredSteps: []string{"fake_step"},
 			},
 			want: true,
 		},
 		{
-			name:    "partial glob step excluded",
-			master:  "fake.master",
-			builder: "fake.builder",
-			step:    "fake_step (experimental)",
+			name:         "partial glob step excluded",
+			buildergroup: "fake.buildergroup",
+			builder:      "fake.builder",
+			step:         "fake_step (experimental)",
 			cr: &ConfigRules{
 				IgnoredSteps: []string{"* (experimental)"},
 			},
@@ -74,7 +74,7 @@ func TestExcludeFailure(t *testing.T) {
 	ctx := context.Background()
 
 	for _, test := range tests {
-		got := test.cr.ExcludeFailure(ctx, test.master, test.builder, test.step)
+		got := test.cr.ExcludeFailure(ctx, test.buildergroup, test.builder, test.step)
 		if got != test.want {
 			t.Errorf("%s failed for config rules. Got: %+v, want: %+v", test.name, got, test.want)
 		}

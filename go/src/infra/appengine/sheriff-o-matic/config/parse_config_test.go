@@ -22,8 +22,8 @@ func TestConfigParses(t *testing.T) {
 		return
 	}
 
-	// Basic sanity check - there should be at least one master.
-	if len(cr.MasterCfgs) == 0 {
+	// Basic sanity check - there should be at least one builder group.
+	if len(cr.BuilderGroupCfgs) == 0 {
 		t.Errorf("Expected non-empty config, got %v", cr)
 	}
 }

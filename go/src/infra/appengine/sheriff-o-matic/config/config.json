@@ -6,20 +6,90 @@
   "masters": {
     "chrome": {
       "excluded_builders": [
-		  "chromeos-betty-pi-arc-chrome-beta",
-		  "chromeos-betty-pi-arc-chrome-ltc",
-		  "chromeos-betty-pi-arc-chrome-lts",
-		  "chromeos-betty-pi-arc-chrome-stable",
-		  "chromeos-eve-chrome-beta",
-		  "chromeos-eve-chrome-ltc",
-		  "chromeos-eve-chrome-lts",
-		  "chromeos-eve-chrome-stable",
-		  "chromeos-kevin-chrome-beta",
-		  "chromeos-kevin-chrome-ltc",
-		  "chromeos-kevin-chrome-lts",
-		  "chromeos-kevin-chrome-stable"
-	  ]
-	},
+        "chromeos-betty-pi-arc-chrome-beta",
+        "chromeos-betty-pi-arc-chrome-ltc",
+        "chromeos-betty-pi-arc-chrome-lts",
+        "chromeos-betty-pi-arc-chrome-stable",
+        "chromeos-eve-chrome-beta",
+        "chromeos-eve-chrome-ltc",
+        "chromeos-eve-chrome-lts",
+        "chromeos-eve-chrome-stable",
+        "chromeos-kevin-chrome-beta",
+        "chromeos-kevin-chrome-ltc",
+        "chromeos-kevin-chrome-lts",
+        "chromeos-kevin-chrome-stable"
+	    ]
+	  },
+    "chromium": {
+      "excluded_builders": [
+        "android-official",
+        "fuchsia-official",
+        "linux-official",
+        "win-archive-dbg",
+        "win32-archive-dbg"
+      ]
+    },
+    "chromium.android": {
+      "excluded_builders": [
+        "android-incremental-dbg",
+        "android-nougat-arm64-rel",
+        "Oreo Phone Tester"
+      ]
+    },
+    "chromium.gpu": {
+      "excluded_builders": [
+        "GPU Linux Builder (dbg)",
+        "GPU Mac Builder (dbg)",
+        "GPU Win x64 Builder (dbg)",
+        "Linux Debug (NVIDIA)",
+        "Mac Debug (Intel)"
+      ]
+    },
+    "chromium.linux": {
+      "excluded_builders": [
+        "Leak Detection Linux"
+      ]
+    },
+    "chromium.mac": {
+      "excluded_builders": [
+        "mac-osxbeta-rel"
+      ]
+    },
+    "chromium.memory": {
+      "excluded_builders": [
+        "Android CFI",
+        "android-asan"
+      ]
+    },
+    "chromium.win": {
+      "excluded_builders": [
+        "Win10 Tests x64 (dbg)"
+      ]
+    },
+    "internal.chromeos.fyi": {
+      "excluded_builders": [
+        "chromeos-betty-arc-r-chrome",
+        "chromeos-eve-arc-r-chrome"
+      ]
+    }
+  },
+  "builder_groups": {
+    "chrome": {
+      "excluded_builders": [
+        "chromeos-betty-pi-arc-chrome-beta",
+        "chromeos-betty-pi-arc-chrome-ltc",
+        "chromeos-betty-pi-arc-chrome-lts",
+        "chromeos-betty-pi-arc-chrome-stable",
+        "chromeos-eve-chrome-beta",
+        "chromeos-eve-chrome-ltc",
+        "chromeos-eve-chrome-lts",
+        "chromeos-eve-chrome-stable",
+        "chromeos-kevin-chrome-beta",
+        "chromeos-kevin-chrome-ltc",
+        "chromeos-kevin-chrome-lts",
+        "chromeos-kevin-chrome-stable"
+	    ]
+	  },
     "chromium": {
       "excluded_builders": [
         "android-official",
