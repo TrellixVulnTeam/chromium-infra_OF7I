@@ -109,6 +109,8 @@ func botStateForDUT(d *inventory.DeviceUnderTest) botState {
 		k, v := kv.GetKey(), kv.GetValue()
 		s[k] = append(s[k], v)
 	}
+	s["storage_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetStorageState().String()[len("HARDWARE_"):]}
+	s["servo_usb_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetServoUsbState().String()[len("HARDWARE_"):]}
 	return s
 }
 
