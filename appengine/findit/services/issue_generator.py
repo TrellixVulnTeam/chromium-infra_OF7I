@@ -88,8 +88,6 @@ _FLAKE_DETECTION_BUG_COMMENT = textwrap.dedent("""
 {num_occurrences} new flake occurrences of this test have been detected. List
 of all flake occurrences can be found at:
 {flake_url}.
-
-{back_onto_sheriff_queue_message}
 {previous_tracking_bug_text}
 {footer}""")
 
@@ -132,18 +130,12 @@ List of all flake occurrences can be found at:
 
 {footer}""")
 
-_BACK_ONTO_SHERIFF_QUEUE_MESSAGE = (
-    'Since these tests are still flaky, this issue has been moved back onto the'
-    ' Sheriff Bug Queue if it hasn\'t already.')
-
 _FLAKE_DETECTION_GROUP_BUG_COMMENT = textwrap.dedent("""
 {num_occurrences} new flake occurrences of tests in this bug have been detected
 within the past 24 hours.
 
 List of all flake occurrences can be found at:
 {flake_url}.
-
-{back_onto_sheriff_queue_message}
 {previous_tracking_bug_text}
 {footer}""")
 
@@ -571,16 +563,15 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
         test_name=self._flake.test_label_name,
         num_occurrences=self._num_occurrences,
         flake_url=self._GetLinkForFlake(),
-        back_onto_sheriff_queue_message=_BACK_ONTO_SHERIFF_QUEUE_MESSAGE,
         previous_tracking_bug_text=previous_tracking_bug_text,
         footer=self._GetFooter())
 
     return comment
 
   def ShouldRestoreChromiumSheriffLabel(self):
-    # Flake Detection always requires Chromium Sheriff's attentions to disable
-    # flaky tests when new occurrences are detected.
-    return True
+    # Because of flake exoneration, we no longer require sheriffs to triage
+    # flake bugs.
+    return False
 
   def GetLabels(self):
     flaky_test_labels = self._GetCommonFlakyTestLabel()
@@ -755,7 +746,6 @@ class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
     return _FLAKE_DETECTION_GROUP_BUG_COMMENT.format(
         num_occurrences=self._GetNumOccurrences(),
         flake_url=self._GetLinkForFlakes(),
-        back_onto_sheriff_queue_message=_BACK_ONTO_SHERIFF_QUEUE_MESSAGE,
         previous_tracking_bug_text=previous_tracking_bug_text,
         footer=self._GetFooter())
 

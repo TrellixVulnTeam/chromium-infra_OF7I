@@ -46,8 +46,6 @@ within the past 24 hours.
 List of all flake occurrences can be found at:
 https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}.
 
-{}
-
 If the result above is wrong, please file a bug using this link:
 {}
 
@@ -193,11 +191,8 @@ class IssueGeneratorTest(WaterfallTestCase):
         '12345&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}'
         '%0A%0AIssue%20Description:%0A%0A').format(bug_id)
-    sheriff_queue_message = (
-        'Since these tests are still flaky, this issue has been moved back onto'
-        ' the Sheriff Bug Queue if it hasn\'t already.')
     expected_description = _EXPECTED_GROUP_COMMENT.format(
-        bug_id, sheriff_queue_message, wrong_result_link)
+        bug_id, wrong_result_link)
     self.assertEqual(expected_description, issue_generator_old.GetComment())
 
   def testGetFlakyTestCustomizedFieldGroupWithIssue(self):

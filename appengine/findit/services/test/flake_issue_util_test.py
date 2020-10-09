@@ -491,10 +491,6 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
         '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AIssue%20'
         'Description:%0A%0A').format(flake.key.urlsafe())
 
-    sheriff_queue_message = (
-        'Since these tests are still flaky, this issue has been moved back onto'
-        ' the Sheriff Bug Queue if it hasn\'t already.')
-
     expected_comment = textwrap.dedent("""
 test_label is flaky.
 
@@ -502,13 +498,11 @@ test_label is flaky.
 of all flake occurrences can be found at:
 https://analysis.chromium.org/p/chromium/flake-portal/flakes/occurrences?key={}.
 
-{}
-
 If the result above is wrong, please file a bug using this link:
 {}
 
 Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
-        flake.key.urlsafe(), sheriff_queue_message, expected_wrong_result_link)
+        flake.key.urlsafe(), expected_wrong_result_link)
 
     self.assertFalse(mock_create_bug_fn.called)
     self.assertTrue(mock_update_bug_fn)
