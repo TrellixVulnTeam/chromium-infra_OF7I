@@ -248,7 +248,11 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ],
-            pyversions=['py2'],
+            skip_plat=[
+                'linux-arm64-py3',
+                'mac-x64-cp38',
+            ],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'netifaces',
