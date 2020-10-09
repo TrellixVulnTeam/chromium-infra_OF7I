@@ -46,6 +46,9 @@ func (b *Borrower) Close(ctx context.Context) error {
 		return nil
 	}
 	hi, bi := b.hostInfo, b.botInfo
+	for k := range provisionableLabelKeys {
+		delete(bi.ProvisionableLabels, k)
+	}
 	for _, label := range hi.Labels {
 		parts := strings.SplitN(label, ":", 2)
 		if len(parts) != 2 {
