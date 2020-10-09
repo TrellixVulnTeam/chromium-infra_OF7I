@@ -1,3 +1,21 @@
+# Release Notes sheriff-o-matic 2020-10-09
+
+- 3 commits, 1 bugs affected since 8ce2a47 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Change config to use buildergroup instead of master](https://chromium-review.googlesource.com/c/infra/infra/+/2462787) (nqmtuan@google.com)
+- [[SoM] Remove some master reference](https://chromium-review.googlesource.com/c/infra/infra/+/2462782) (nqmtuan@google.com)
+- [[SoM] Relnotes 8 Oct](https://chromium-review.googlesource.com/c/infra/infra/+/2458954) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  
+
 # Release Notes sheriff-o-matic 2020-10-08
 
 - 2 commits, 1 bugs affected since 50d0f5e ()
