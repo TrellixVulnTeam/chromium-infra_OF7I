@@ -45,7 +45,7 @@ const builderConfigFile = "third_party/blink/tools/blinkpy/common/config/builder
 // LoadBuilderConfigs loads bulders.json from gitiles.
 func LoadBuilderConfigs(c context.Context) (map[string]*BuilderConfig, error) {
 	ret := map[string]*BuilderConfig{}
-	URL := fmt.Sprintf("https://chromium.googlesource.com/chromium/src/+/master/%s?format=TEXT", builderConfigFile)
+	URL := fmt.Sprintf("https://chromium.googlesource.com/chromium/src/+/HEAD/%s?format=TEXT", builderConfigFile)
 	b, err := client.GetGitilesCached(c, URL)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func LoadAll(c context.Context) (*FileSet, error) {
 			r := resp{}
 
 			// TODO: get blamelist for authors of each line too.
-			URL := fmt.Sprintf("https://chromium.googlesource.com/chromium/src/+/master/%s?format=TEXT", path)
+			URL := fmt.Sprintf("https://chromium.googlesource.com/chromium/src/+/HEAD/%s?format=TEXT", path)
 			b, err := client.GetGitilesCached(c, URL)
 			if err != nil {
 				r.err = fmt.Errorf("error reading: %s", err)
@@ -264,7 +264,7 @@ func (es *ExpectationStatement) ModifierMatch(mod string) bool {
 func (es *ExpectationStatement) Overrides(other *ExpectationStatement) bool {
 	// Similarly to CSS selectors, these rules give preference to higher specificity.
 	// First check modifier specificity, then test path specificity.
-	// See https://chromium.googlesource.com/chromium/src/+/master/docs/testing/layout_test_expectations.md
+	// See https://chromium.googlesource.com/chromium/src/+/HEAD/docs/testing/layout_test_expectations.md
 	// for more complete documentation.
 	if len(other.Modifiers) == 0 && len(es.Modifiers) > 0 {
 		// Using any modifiers is more specific than not using any modifiers.

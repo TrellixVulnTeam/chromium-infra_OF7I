@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	gitilesPrefix = "https://chromium.googlesource.com/chromium/src/+/master/"
+	gitilesPrefix = "https://chromium.googlesource.com/chromium/src/+/HEAD/"
 )
 
 // TODO(seanmccullough): Clean up this mocking mess.
@@ -72,7 +72,7 @@ func TestPostLayoutTestExpectationChangeHandler(t *testing.T) {
 		c := gaetesting.TestingContext()
 		gt := &testhelper.MockGitilesTransport{Responses: map[string]string{}}
 		for _, path := range te.LayoutTestExpectations {
-			gt.Responses["https://chromium.googlesource.com/chromium/src/+/master/"+path+"?format=TEXT"] = ""
+			gt.Responses["https://chromium.googlesource.com/chromium/src/+/HEAD/"+path+"?format=TEXT"] = ""
 		}
 
 		c = urlfetch.Set(c, gt)

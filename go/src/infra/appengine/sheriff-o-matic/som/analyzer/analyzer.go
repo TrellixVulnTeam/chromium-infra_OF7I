@@ -22,7 +22,7 @@ const (
 	prodAppID = "sheriff-o-matic"
 )
 
-// Analyzer runs the process of checking masters, builders, test results and so on,
+// Analyzer runs the process of checking builder groups, builders, test results and so on,
 // in order to produce alerts.
 type Analyzer struct {
 	// MaxRecentBuilds is the maximum number of recent builds to check, per builder.

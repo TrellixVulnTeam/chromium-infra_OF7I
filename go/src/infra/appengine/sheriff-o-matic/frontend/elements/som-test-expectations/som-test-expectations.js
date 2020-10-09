@@ -1,7 +1,6 @@
 'use strict';
 
-const MAX_ATTEMPTS = 10;
-const CHROMIUM_PREFIX = "chromium%2Fsrc~master~";
+const CHROMIUM_PREFIX = 'chromium%2Fsrc~HEAD~';
 
 const gerritHost = 'https://chromium-review.googlesource.com';
 
@@ -177,7 +176,7 @@ class SomTestExpectations extends Polymer.Element {
     let changeInput = {
       // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-input
       project: 'chromium/src',
-      branch: 'master',
+      branch: 'HEAD',
       subject: 'update ' + changeInfo.TestName + ' expectations',
       status: 'DRAFT',
       topic: ''
