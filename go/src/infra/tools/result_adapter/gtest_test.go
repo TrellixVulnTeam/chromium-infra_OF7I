@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -61,9 +62,7 @@ func TestGTestConversions(t *testing.T) {
 							"output_snippet_base64": "c29tZSBkYXRhIHdpdGggACBhbmQg77u/",
 							"status": "SUCCESS",
 							"links": {
-								"logcat": {
-									"content": "https://luci-logdog.appspot.com/v/?s=logcat"
-								}
+								"logcat": "https://luci-logdog.appspot.com/v/?s=logcat"
 							}
 						}
 					]
@@ -114,10 +113,9 @@ func TestGTestConversions(t *testing.T) {
 						Status:              "SUCCESS",
 						ElapsedTimeMs:       856,
 						OutputSnippetBase64: "c29tZSBkYXRhIHdpdGggACBhbmQg77u/",
-						Links: map[string]Link{
-							"logcat": {
-								Content: "https://luci-logdog.appspot.com/v/?s=logcat",
-							},
+						Links: map[string]json.RawMessage{
+							"logcat": json.RawMessage(
+								`"https://luci-logdog.appspot.com/v/?s=logcat"`),
 						},
 					},
 				},
@@ -258,13 +256,12 @@ func TestGTestConversions(t *testing.T) {
 				Status:              "SUCCESS",
 				LosslessSnippet:     true,
 				OutputSnippetBase64: "invalid base64",
-				Links: map[string]Link{
-					"logcat": {
-						Content: "https://luci-logdog.appspot.com/v/?s=logcat",
-					},
+				Links: map[string]json.RawMessage{
+					"logcat": json.RawMessage(`{"content": "https://luci-logdog.appspot.com/v/?s=logcat"}`),
 				},
 			})
-			So(tr.SummaryHtml, ShouldContainSubstring, `<a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a>`)
+			So(tr.SummaryHtml, ShouldContainSubstring,
+				`<a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a>`)
 		})
 	})
 
