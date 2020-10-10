@@ -1146,9 +1146,13 @@ function TKR_convertLabels(labelsResponse, fieldDefs = []) {
 /**
  * Convert the object resulting of a monorail.Projects GetVisibleMembers
  * call to the format expected by TKR_populateAutocomplete.
- * @param {object} visibleMembersResponse A pRPC GetVisibleMembersResponse.
+ * @param {object?} visibleMembersResponse A pRPC GetVisibleMembersResponse.
+ * @return {{memberEmails: {name: string}, nonGroupEmails: {name: string}}}
  */
 function TKR_convertVisibleMembers(visibleMembersResponse) {
+  if (!visibleMembersResponse) {
+    visibleMembersResponse = {};
+  }
   const groupRefs = (visibleMembersResponse.groupRefs || []);
   const userRefs = (visibleMembersResponse.userRefs || []);
   const jsonData = {};
