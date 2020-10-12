@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -99,4 +100,13 @@ func getMainJob(c *phosphorus.Config) *atutil.MainJob {
 		ResultsDir: c.GetTask().GetResultsDir(),
 	}
 
+}
+
+// logApplicationError logs the error returned to the entry function of an
+// application.
+func logApplicationError(ctx context.Context, a subcommands.Application, err error) {
+	errors.Log(ctx, err)
+	// Also log to error stream, since logs are directed at the main output
+	// stream.
+	fmt.Fprintf(a.GetErr(), "%s\n", err)
 }

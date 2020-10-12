@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,35 +46,30 @@ type uploadToGSRun struct {
 }
 
 func (c *uploadToGSRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+	ctx := cli.GetContext(a, c, env)
+	if err := c.innerRun(ctx, args, env); err != nil {
+		logApplicationError(ctx, a, err)
 		return 1
 	}
 	return 0
 }
 
-func (c *uploadToGSRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *uploadToGSRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.UploadToGSRequest
 	if err := readJSONPb(c.inputPath, &r); err != nil {
 		return err
 	}
-
 	if err := validateUploadToGSRequest(r); err != nil {
 		return err
 	}
-
-	ctx := logging.SetLevel(cli.GetContext(a, c, env), logging.Debug)
-
-	ctx, err := useSystemAuth(ctx, &c.authFlags, a.GetErr())
+	ctx, err := useSystemAuth(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
-
-	path, err := runGSUploadStep(ctx, c.authFlags, r, a.GetErr())
+	path, err := runGSUploadStep(ctx, c.authFlags, r)
 	if err != nil {
 		return err
 	}
-
 	out := phosphorus.UploadToGSResponse{
 		GsUrl: path,
 	}
@@ -109,7 +103,7 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 }
 
 // runGSUploadStep uploads all files in the specified directory to GS.
-func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest, errorFile io.Writer) (string, error) {
+func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
 	localPath := r.GetLocalDirectory()
 	if localPath == "" {
 		localPath = filepath.Join(
@@ -138,7 +132,7 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 	return r.GetGsDirectory(), nil
 }
 
-func useSystemAuth(ctx context.Context, authFlags *authcli.Flags, errorFile io.Writer) (context.Context, error) {
+func useSystemAuth(ctx context.Context, authFlags *authcli.Flags) (context.Context, error) {
 	authOpts, err := authFlags.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "switching to system auth").Err()
@@ -151,7 +145,7 @@ func useSystemAuth(ctx context.Context, authFlags *authcli.Flags, errorFile io.W
 		authOpts.Method = auth.LUCIContextMethod
 		return authCtx, nil
 	}
-	fmt.Fprintf(errorFile, "System account not found, err %s.\nFalling back to user credentials for auth.\n", err)
+	logging.Warningf(ctx, "System account not found, err %s.\nFalling back to user credentials for auth.\n", err)
 	return ctx, nil
 }
 

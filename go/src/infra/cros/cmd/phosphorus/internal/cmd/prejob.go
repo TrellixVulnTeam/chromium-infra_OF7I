@@ -50,24 +50,22 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 		return 1
 	}
 
-	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintln(a.GetErr(), err.Error())
+	ctx := cli.GetContext(a, c, env)
+	if err := c.innerRun(ctx, args, env); err != nil {
+		logApplicationError(ctx, a, err)
 		return 1
 	}
 	return 0
 }
 
-func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.PrejobRequest
 	if err := readJSONPb(c.inputPath, &r); err != nil {
 		return err
 	}
-
 	if err := validatePrejobRequest(r); err != nil {
 		return err
 	}
-
-	ctx := cli.GetContext(a, c, env)
 
 	if d := google.TimeFromProto(r.Deadline); !d.IsZero() {
 		var c context.CancelFunc

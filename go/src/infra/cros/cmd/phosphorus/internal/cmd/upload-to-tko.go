@@ -38,25 +38,22 @@ type uploadToTKORun struct {
 }
 
 func (c *uploadToTKORun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+	ctx := cli.GetContext(a, c, env)
+	if err := c.innerRun(ctx, args, env); err != nil {
+		logApplicationError(ctx, a, err)
 		return 1
 	}
 	return 0
 }
 
-func (c *uploadToTKORun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *uploadToTKORun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.UploadToTkoRequest
 	if err := readJSONPb(c.inputPath, &r); err != nil {
 		return err
 	}
-
 	if err := validateUploadToTkoRequest(r); err != nil {
 		return err
 	}
-
-	ctx := cli.GetContext(a, c, env)
-
 	return runTKOUploadStep(ctx, r)
 }
 
