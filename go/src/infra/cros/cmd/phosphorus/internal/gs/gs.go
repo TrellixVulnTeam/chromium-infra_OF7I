@@ -12,7 +12,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
+	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/sync/parallel"
 
 	"go.chromium.org/luci/common/errors"
@@ -25,6 +28,7 @@ import (
 type DirWriter struct {
 	client               gsClient
 	maxConcurrentUploads int
+	retryIterator        retry.Iterator
 }
 
 // gsClient is a Google Storage client.
@@ -39,6 +43,16 @@ func NewDirWriter(client gsClient) *DirWriter {
 	return &DirWriter{
 		client:               client,
 		maxConcurrentUploads: maxConcurrentUploads,
+		retryIterator: &concurrencySafeRetryIterator{
+			i: &retry.ExponentialBackoff{
+				Limited: retry.Limited{
+					Delay:   100 * time.Millisecond,
+					Retries: 10,
+				},
+				MaxDelay:   2 * time.Minute,
+				Multiplier: 2,
+			},
+		},
 	}
 }
 
@@ -128,7 +142,25 @@ func discoverFiles(srcDir string, dstDir gcgs.Path) ([]*file, errors.MultiError)
 }
 
 func (w *DirWriter) writeOne(ctx context.Context, f *file) error {
-	return f.Write(ctx, w.client)
+	err := f.Write(ctx, w.client)
+	for err != nil {
+		d := w.retryIterator.Next(ctx, err)
+		if d == retry.Stop {
+			break
+		}
+		logging.Warningf(ctx, "%s failed upload: %s. Will retry after %s", f.Src, err, d.String())
+		// This sleep implies that the worker goroutine trying to upload this
+		// file will block. Because we use parallel.WorkPool(), this means that
+		// one of the fix number of concurrent goroutines will be blocked.
+		//
+		// This is intentional: Most errors are due to transient service
+		// degradation in Google Storage. Blocking the worker goroutines ensures
+		// that our overall upload throughput is throttled in case of such
+		// transient errors.
+		time.Sleep(d)
+		err = f.Write(ctx, w.client)
+	}
+	return err
 }
 
 type file struct {
@@ -199,4 +231,15 @@ func shouldSkipUpload(i os.FileInfo) (bool, string) {
 	default:
 		return true, "file is a non-file of unknown type"
 	}
+}
+
+type concurrencySafeRetryIterator struct {
+	i retry.Iterator
+	m sync.Mutex
+}
+
+func (r *concurrencySafeRetryIterator) Next(ctx context.Context, err error) time.Duration {
+	r.m.Lock()
+	defer r.m.Unlock()
+	return r.i.Next(ctx, err)
 }

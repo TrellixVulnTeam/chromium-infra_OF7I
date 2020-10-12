@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
 	gcgs "go.chromium.org/luci/common/gcloud/gs"
+	"go.chromium.org/luci/common/retry"
 )
 
 // Implements InnerClient interface, writing to provided local directory instead
@@ -91,6 +92,7 @@ func newTestFixture(t *testing.T) (*testFixture, func()) {
 		w: &DirWriter{
 			client:               &fakeInnerClient{},
 			maxConcurrentUploads: 1,
+			retryIterator:        retry.None(),
 		},
 	}, closer
 }
