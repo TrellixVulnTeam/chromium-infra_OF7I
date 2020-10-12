@@ -184,6 +184,17 @@ func pep425TagSelector(tags []*vpython.PEP425Tag) *vpython.PEP425Tag {
 		case !best.HasABI() && t.HasABI():
 			// More specific ABI is preferred.
 			return true
+		case best.Abi != "cp38" && t.Abi == "cp38":
+			// cp38 is preferred over other ABIs. This is a hack to work around
+			// the lack of compatible ABI detection. Without this we'd just
+			// blindly select the first ABI tag our interpreter supports, and
+			// then if there isn't a package built for that specific ABI, fail.
+			//
+			// TODO: Better would be to check which packages are actually
+			// available and select the ABI tag based on that. Until then, we
+			// work around it by just preferring cp38, as that's currently the
+			// only ABI that dockerbuild builds against for Python 3.
+			return true
 		case isPreferredOSPlatform(best.Platform, t.Platform):
 			return true
 		case strings.HasPrefix(best.Python, "py") && !strings.HasPrefix(t.Python, "py"):
