@@ -367,6 +367,9 @@ class MonorailServicer(object):
     elif exc_type == exceptions.ComponentDefAlreadyExists:
       prpc_context.set_code(codes.StatusCode.ALREADY_EXISTS)
       prpc_context.set_details('A component with that path already exists.')
+    elif exc_type == exceptions.ActionNotSupported:
+      prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
+      prpc_context.set_details('Requested action not supported.')
     elif exc_type == exceptions.InvalidComponentNameException:
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details('That component name is invalid.')

@@ -325,3 +325,70 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
               issue_id=issue.issue_id))
     response.approval_values.extend(api_avs)
     return response
+
+  @monorail_servicer.PRPCMethod
+  def ModifyCommentState(self, mc, request):
+    # type: (MonorailContext, ModifyCommentStateRequest) ->
+    #     ModifyCommentStateResponse
+    """pRPC API method that implements ModifyCommentState.
+
+    We do not support changing between DELETED <-> SPAM. User must
+    undelete or unflag-as-spam first.
+
+    Raises:
+      NoSuchProjectException if the parent Project does not exist.
+      NoSuchIssueException: if the issue does not exist.
+      NoSuchCommentException: if the comment does not exist.
+      PermissionException if user lacks sufficient permissions.
+      ActionNotSupported if user requests unsupported state transitions.
+    """
+    (project_id, issue_id,
+     comment_num) = rnc.IngestCommentName(mc.cnxn, request.name, self.services)
+    with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProject(project_id)
+      mc.LookupLoggedInUserPerms(project)
+      issue = we.GetIssue(issue_id, use_cache=False)
+      comments_list = we.SafeListIssueComments(issue_id, 1, comment_num).items
+      try:
+        comment = comments_list[0]
+      except IndexError:
+        raise exceptions.NoSuchCommentException()
+
+      if request.state == issue_objects_pb2.IssueContentState.Value('ACTIVE'):
+        if comment.is_spam:
+          we.FlagComment(issue, comment, False)
+        elif comment.deleted_by != 0:
+          we.DeleteComment(issue, comment, delete=False)
+        else:
+          # No-op if already currently active
+          pass
+      elif request.state == issue_objects_pb2.IssueContentState.Value(
+          'DELETED'):
+        if (not comment.deleted_by) and (not comment.is_spam):
+          we.DeleteComment(issue, comment, delete=True)
+        elif comment.deleted_by and not comment.is_spam:
+          # No-op if already deleted
+          pass
+        else:
+          raise exceptions.ActionNotSupported(
+              'Cannot change comment state from spam to deleted.')
+      elif request.state == issue_objects_pb2.IssueContentState.Value('SPAM'):
+        if (not comment.deleted_by) and (not comment.is_spam):
+          we.FlagComment(issue, comment, True)
+        elif comment.is_spam:
+          # No-op if already spam
+          pass
+        else:
+          raise exceptions.ActionNotSupported(
+              'Cannot change comment state from deleted to spam.')
+      else:
+        raise exceptions.ActionNotSupported('Unsupported target comment state.')
+
+      # FlagComment does not have side effect on comment, must refresh.
+      refreshed_comment = we.SafeListIssueComments(issue_id, 1,
+                                                   comment_num).items[0]
+
+    converted_comment = self.converter.ConvertComments(
+        issue_id, [refreshed_comment])[0]
+    return issues_pb2.ModifyCommentStateResponse(comment=converted_comment)

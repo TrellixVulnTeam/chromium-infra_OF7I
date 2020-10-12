@@ -18,6 +18,7 @@ from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
+from framework import permissions
 from proto import tracker_pb2
 from testing import fake
 from services import service_manager
@@ -666,3 +667,191 @@ class IssuesServicerTest(unittest.TestCase):
     response = self.CallWrapped(
         self.issues_svcr.ModifyIssueApprovalValues, mc, request)
     self.assertEqual(len(response.approval_values), 0)
+
+  @mock.patch(
+      'businesslogic.work_env.WorkEnv.GetIssue',
+      return_value=tracker_pb2.Issue(
+          owner_id=0,
+          project_name='chicken',
+          project_id=789,
+          local_id=1234,
+          issue_id=80134))
+  def testModifyCommentState(self, mocked_get_issue):
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.NoSuchCommentException):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)
+    mocked_get_issue.assert_any_call(self.issue_1.issue_id, use_cache=False)
+
+  def testModifyCommentState_Delete(self):
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment')
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+    self.assertEqual(response.comment.content, 'first actual comment')
+
+    # Test noop
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+    # Test undelete
+    state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+  @mock.patch(
+      'framework.permissions.UpdateIssuePermissions',
+      return_value=permissions.ADMIN_PERMISSIONSET)
+  def testModifyCommentState_Spam(self, _mocked):
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment')
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('SPAM')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+    # Test noop
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+    # Test unflag as spam
+    state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+  def testModifyCommentState_Active(self):
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment')
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyCommentState, mc, request)
+    self.assertEqual(response.comment.state, state)
+
+  def testModifyCommentState_Spam_ActionNotSupported(self):
+    # Cannot transition from deleted to spam
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment',
+        deleted_by=self.owner.user_id)
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('SPAM')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.ActionNotSupported):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)
+
+  def testModifyCommentState_Delete_ActionNotSupported(self):
+    # Cannot transition from spam to deleted
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment',
+        is_spam=True)
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.ActionNotSupported):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)
+
+  def testModifyCommentState_NoSuchComment(self):
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.NoSuchCommentException):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)
+
+  def testModifyCommentState_Delete_PermissionException(self):
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment')
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_2.email)
+    with self.assertRaises(permissions.PermissionException):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)
+
+  @mock.patch(
+      'framework.permissions.UpdateIssuePermissions',
+      return_value=permissions.READ_ONLY_PERMISSIONSET)
+  def testModifyCommentState_Spam_PermissionException(self, _mocked):
+    comment_1 = tracker_pb2.IssueComment(
+        id=124,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='first actual comment')
+    self.services.issue.TestAddComment(comment_1, self.issue_1.local_id)
+
+    name = self.issue_1_resource_name + '/comments/1'
+    state = issue_objects_pb2.IssueContentState.Value('SPAM')
+    request = issues_pb2.ModifyCommentStateRequest(name=name, state=state)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_2.email)
+    with self.assertRaises(permissions.PermissionException):
+      self.CallWrapped(self.issues_svcr.ModifyCommentState, mc, request)

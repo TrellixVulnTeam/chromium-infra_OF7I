@@ -54,7 +54,7 @@ class Error(Exception):
 
 
 class ActionNotSupported(Error):
-  """The user is trying to do something we do not support yet."""
+  """The user is trying to do something we do not support."""
   pass
 
 

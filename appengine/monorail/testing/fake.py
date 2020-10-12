@@ -2320,6 +2320,11 @@ class SpamService(object):
       self, cnxn, issue_service, user_service, comment_id,
       user_id, is_spam):
     self.manual_verdicts_by_comment_id[comment_id][user_id] = is_spam
+    comment = issue_service.GetComment(cnxn, comment_id)
+    comment.is_spam = is_spam
+    issue = issue_service.GetIssue(cnxn, comment.issue_id, use_cache=False)
+    issue_service.SoftDeleteComment(
+        cnxn, issue, comment, user_id, user_service, is_spam, True, is_spam)
 
   def RecordClassifierIssueVerdict(self, cnxn, issue, is_spam, confidence,
         failed_open):

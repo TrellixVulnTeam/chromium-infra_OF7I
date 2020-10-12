@@ -47,7 +47,7 @@ ISSUE_PATTERN = (r'projects\/(?P<project>%s)\/issues\/(?P<local_id>\d+)' %
                  project_constants.PROJECT_NAME_PATTERN)
 ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
-COMMENT_PATTERN = (r'%s\/comments\/(?P<comment_id>\d+)' % ISSUE_PATTERN)
+COMMENT_PATTERN = (r'%s\/comments\/(?P<comment_num>\d+)' % ISSUE_PATTERN)
 COMMENT_NAME_RE = re.compile(r'%s$' % COMMENT_PATTERN)
 
 USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
@@ -277,7 +277,7 @@ def IngestCommentName(cnxn, name, services):
   issue_pair = [(project_name, local_id)]
   issue_id = _IssueIdsFromLocalIds(cnxn, issue_pair, services)[0]
 
-  return project_id, issue_id, int(match.group('comment_id'))
+  return project_id, issue_id, int(match.group('comment_num'))
 
 
 def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):

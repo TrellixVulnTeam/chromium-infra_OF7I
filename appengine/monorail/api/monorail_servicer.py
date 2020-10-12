@@ -340,7 +340,7 @@ class MonorailServicer(object):
     elif exc_type == exceptions.InputException:
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details(
-         'Invalid arguments: %s' % cgi.escape(e.message, quote=True))
+          'Invalid arguments: %s' % cgi.escape(e.message, quote=True))
     elif exc_type == ratelimiter.ApiRateLimitExceeded:
       prpc_context.set_code(codes.StatusCode.PERMISSION_DENIED)
       prpc_context.set_details('The requester has exceeded API quotas limit.')
