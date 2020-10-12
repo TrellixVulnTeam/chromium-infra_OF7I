@@ -58,12 +58,6 @@ func verifyPaths(localPath string, gsPath string) error {
 
 const maxConcurrentUploads = 10
 
-type file struct {
-	Src  string
-	Dest gcgs.Path
-	Info os.FileInfo
-}
-
 // WriteDir writes a local directory to Google Storage.
 //
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
@@ -82,7 +76,7 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 			// Create a loop-local variable for capture in the lambda.
 			f := f
 			item := func() error {
-				return w.writeOne(ctx, f.Src, f.Dest, f.Info)
+				return w.writeOne(ctx, f)
 			}
 			select {
 			case items <- item:
@@ -133,42 +127,52 @@ func discoverFiles(srcDir string, dstDir gcgs.Path) ([]*file, errors.MultiError)
 	return files, merr
 }
 
-func (w *DirWriter) writeOne(ctx context.Context, src string, dest gcgs.Path, info os.FileInfo) error {
-	if info.IsDir() {
+func (w *DirWriter) writeOne(ctx context.Context, f *file) error {
+	return f.Write(ctx, w.client)
+}
+
+type file struct {
+	Src  string
+	Dest gcgs.Path
+	Info os.FileInfo
+}
+
+func (f *file) Write(ctx context.Context, client gsClient) error {
+	if f.Info.IsDir() {
 		return nil
 	}
-	if skip, reason := shouldSkipUpload(info); skip {
-		logging.Debugf(ctx, "Skipped %s because: %s.", src, reason)
+	if skip, reason := shouldSkipUpload(f.Info); skip {
+		logging.Debugf(ctx, "Skipped %s because: %s.", f.Src, reason)
 		return nil
 	}
 
-	f, err := os.Open(src)
+	r, err := os.Open(f.Src)
 	if err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
+		return errors.Annotate(err, "writing from %s to %s", f.Src, f.Dest).Err()
 	}
-	defer f.Close()
+	defer r.Close()
 
-	writer, err := w.client.NewWriter(dest)
+	writer, err := client.NewWriter(f.Dest)
 	if err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
+		return errors.Annotate(err, "writing from %s to %s", f.Src, f.Dest).Err()
 	}
 	// Ignore errors as we may have already closed writer by the time this runs.
 	defer writer.Close()
 
-	bs := make([]byte, info.Size())
-	if _, err = f.Read(bs); err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
+	bs := make([]byte, f.Info.Size())
+	if _, err = r.Read(bs); err != nil {
+		return errors.Annotate(err, "writing from %s to %s", f.Src, f.Dest).Err()
 	}
 	n, err := writer.Write(bs)
 	if err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
+		return errors.Annotate(err, "writing from %s to %s", f.Src, f.Dest).Err()
 	}
-	if int64(n) != info.Size() {
-		return errors.Reason("length written to %s does not match source file size", dest).Err()
+	if int64(n) != f.Info.Size() {
+		return errors.Reason("length written to %s does not match source file size", f.Dest).Err()
 	}
 	err = writer.Close()
 	if err != nil {
-		return errors.Annotate(err, "writer for %s failed to close", dest).Err()
+		return errors.Annotate(err, "writer for %s failed to close", f.Dest).Err()
 	}
 	return nil
 }
