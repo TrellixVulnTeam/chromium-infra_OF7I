@@ -14,7 +14,7 @@ type StubFindIt struct {
 }
 
 // Findit returns Findit results.
-func (fi *StubFindIt) Findit(ctx context.Context, master *messages.MasterLocation, builder string, buildNum int64, failedSteps []string) ([]*messages.FinditResult, error) {
+func (fi *StubFindIt) Findit(ctx context.Context, builderGroup *messages.BuilderGroupLocation, builder string, buildNum int64, failedSteps []string) ([]*messages.FinditResult, error) {
 	return fi.Result, fi.Err
 }
 

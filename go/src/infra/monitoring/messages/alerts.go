@@ -164,9 +164,9 @@ type BuildFailure struct {
 // BuildStep is a step which was run in a particular build. Useful for analyzing
 // and generating additional data for extensions.
 type BuildStep struct {
-	Master *MasterLocation
-	Build  *Build
-	Step   *Step
+	BuilderGroup *BuilderGroupLocation
+	Build        *Build
+	Step         *Step
 }
 
 // Reason is the cause of a build extension failure.

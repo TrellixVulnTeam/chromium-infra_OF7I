@@ -248,7 +248,7 @@ func (b *bqFailure) Title(bses []*messages.BuildStep) string {
 	}
 
 	if len(bses) == 1 {
-		return fmt.Sprintf("%s on %s/%s", prefix, f.Master.Name(), f.Build.BuilderName)
+		return fmt.Sprintf("%s on %s/%s", prefix, f.BuilderGroup.Name(), f.Build.BuilderName)
 	}
 
 	return fmt.Sprintf("%s on multiple builders", prefix)
