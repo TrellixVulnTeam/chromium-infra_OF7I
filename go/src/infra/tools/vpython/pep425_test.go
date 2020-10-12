@@ -6,8 +6,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	"sort"
 	"strings"
 	"testing"
 
@@ -132,44 +130,20 @@ func TestPEP425TagSelector(t *testing.T) {
 	}
 
 	Convey(`Testing PEP425 tag selection`, t, func() {
-		for _, randomized := range []bool{
-			false,
-			true,
-		} {
-			title := "(Ordered)"
-			if randomized {
-				title = "(Randomized)"
+		for i, tc := range testCases {
+			tagsStr := make([]string, len(tc.tags))
+			for i, tag := range tc.tags {
+				tagsStr[i] = tag.TagString()
 			}
+			t.Logf("Test case #%d, using tags: %v", i, tagsStr)
 
-			Convey(title, func() {
-				for i, tc := range testCases {
-					tags := tc.tags
-					if randomized {
-						tags = make([]*vpython.PEP425Tag, len(tc.tags))
-						for i, v := range rand.Perm(len(tc.tags)) {
-							tags[v] = tc.tags[i]
-						}
-					}
+			tagsList := strings.Join(tagsStr, ", ")
+			Convey(fmt.Sprintf(`Generates template for [%s]`, tagsList), func() {
+				tag := pep425TagSelector(tc.tags)
 
-					tagsStr := make([]string, len(tags))
-					for i, tag := range tags {
-						tagsStr[i] = tag.TagString()
-					}
-					t.Logf("Test case #%d, using tags: %v", i, tagsStr)
-
-					// We have to sort the tags list used in the title because Convey
-					// statements must be deterministic.
-					sort.Strings(tagsStr)
-					tagsList := strings.Join(tagsStr, ", ")
-
-					Convey(fmt.Sprintf(`Generates template for [%s]`, tagsList), func() {
-						tag := pep425TagSelector(tags)
-
-						template, err := getPEP425CIPDTemplateForTag(tag)
-						So(err, ShouldBeNil)
-						So(template, ShouldResemble, tc.template)
-					})
-				}
+				template, err := getPEP425CIPDTemplateForTag(tag)
+				So(err, ShouldBeNil)
+				So(template, ShouldResemble, tc.template)
 			})
 		}
 
