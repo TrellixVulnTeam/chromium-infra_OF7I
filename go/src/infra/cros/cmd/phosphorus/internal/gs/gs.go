@@ -69,23 +69,27 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
 	var genErr error
+	var merr errors.MultiError
 	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
 		// genErr is captured.
 		genErr = filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
-			var item func() error
+			relPath, err := filepath.Rel(srcDir, src)
+			if err != nil {
+				// Continue walking the directory tree on errors so that we
+				// upload as many files as possible.
+				merr = append(merr, errors.Annotate(err, "writing from %s to %s", src, dstDir).Err())
+				return nil
+			}
+			dest := dstDir.Concat(relPath)
 
+			var item func() error
 			if err == nil {
 				item = func() error {
-					relPath, err := filepath.Rel(srcDir, src)
-					if err != nil {
-						return errors.Annotate(err, "writing from %s to %s", src, dstDir).Err()
-					}
-					dest := dstDir.Concat(relPath)
 					return w.writeOne(ctx, src, dest, info)
 				}
 			} else {
-				// Continue walking the directory tree on errors so that we upload as
-				// many files as possible.
+				// Continue walking the directory tree on errors so that we
+				// upload as many files as possible.
 				item = func() error {
 					return err
 				}
@@ -99,7 +103,6 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 		})
 	})
 
-	var merr errors.MultiError
 	if err != nil {
 		merr = append(merr, err)
 	}
