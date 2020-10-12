@@ -785,7 +785,7 @@ To build a new package for all platforms:
 
 &mdash; **def [commit\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#128)(hash_value, api):**
 
-&mdash; **def [env\_with\_depot\_tools](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#283)(api):**
+&mdash; **def [env\_with\_depot\_tools](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#282)(api):**
 
 &mdash; **def [generate\_skew\_test\_config\_lines](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#106)(library, version):**
 
@@ -797,7 +797,7 @@ To build a new package for all platforms:
 
 &mdash; **def [is\_higher\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#142)(version, query_version):**
 
-&mdash; **def [maybe\_build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#288)(api, cipd_pkgs_to_create):**
+&mdash; **def [maybe\_build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#287)(api, cipd_pkgs_to_create, existing_cipd_tags):**
 
 &mdash; **def [maybe\_update\_variants\_pyl](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#220)(api, variants_pyl_content, variants_pyl_path):**
 

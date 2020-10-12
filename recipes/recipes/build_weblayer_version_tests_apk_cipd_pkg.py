@@ -262,8 +262,7 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
               lineno += 1
 
           if not contains_recent_milestone_version:
-            if 'version:%s' % version not in existing_cipd_tags:
-              cipd_pkgs_to_create.add(version)
+            cipd_pkgs_to_create.add(version)
             new_variants_lines.extend(
                 generate_skew_test_config_lines(library, version))
           else:
@@ -274,7 +273,7 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
 
   if cipd_pkgs_to_create:
     # Build CIPD packages for new versions that were released in beta
-    maybe_build_cipd_pkgs(api, cipd_pkgs_to_create)
+    maybe_build_cipd_pkgs(api, cipd_pkgs_to_create, existing_cipd_tags)
     # Upload changes to variants.pyl to Gerrit
     upload_changes(api, new_variants_lines, variants_pyl_path,
                    cipd_pkgs_to_create)
@@ -285,7 +284,7 @@ def env_with_depot_tools(api):
       ('%(PATH)s', str(api.depot_tools.root)))}
 
 
-def maybe_build_cipd_pkgs(api, cipd_pkgs_to_create):
+def maybe_build_cipd_pkgs(api, cipd_pkgs_to_create, existing_cipd_tags):
   # Need to save mb_config.pyl for skew tests APK committed at ToT
   curr_path = api.path['checkout'].join(
      'weblayer', 'browser', 'android', 'javatests',
@@ -302,7 +301,8 @@ def maybe_build_cipd_pkgs(api, cipd_pkgs_to_create):
       # If a previous build failed or timed out right after uploading CIPD
       # packages, then this recipe would upload duplicate CIPD packages if
       # there was no check.
-      if api.cipd.search(CIPD_PKG_NAME, 'version:%s' % version):
+      tag = 'version:%s' % version
+      if tag in existing_cipd_tags or api.cipd.search(CIPD_PKG_NAME, tag):
         continue
 
       # Checkout chromium version
@@ -451,6 +451,21 @@ def GenTests(api):
     },
     'identifier': 'M82_Client_Library_Tests',
   },
+  'WEBLAYER_IMPL_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {
+    'args': [
+      '--test-runner-outdir',
+      '.',
+    ],
+    'swarming': {
+      'cipd_packages': [
+        {
+          'cipd_package': 'chromium/testing/weblayer-x86',
+          'revision': 'version:83.0.4103.96',
+        },
+      ],
+    },
+    'identifier': 'M83_Implementation_Library_Tests',
+  },
   'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_TWO_MILESTONE': {
     'args': [
       '--test-runner-outdir',
@@ -518,8 +533,6 @@ def GenTests(api):
           api.file.read_text(TEST_VARIANTS_PYL)) +
       url_lib_json_step_datas(
           ['84.0.4147.89', '84.0.4147.56', '83.0.4103.96', '81.0.1111.40']) +
-      cipd_step_data('83.0.4103.96') +
-      chrome_version_step_data('83.0.4103.96') +
       api.path.exists(api.path['cleanup'].join('binaries')) +
       cipd_step_data('84.0.4147.89') +
       chrome_version_step_data('84.0.4147.89') +
