@@ -12,7 +12,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -40,55 +39,6 @@ var (
 	expvars = expvar.NewMap("client")
 )
 
-// BuilderURLDeprecated returns the builder URL for the given master and builder.
-// TODO(zhangtiff): Delete in favor of using BuilderURL().
-func BuilderURLDeprecated(master *messages.MasterLocation, builder string) *url.URL {
-	newURL := master.URL
-	newURL.Path += fmt.Sprintf("/builders/%s", builder)
-	return &newURL
-}
-
-// BuildURLDeprecated returns the build URL for the given master, builder and build
-// number.
-// TODO(zhangtiff): This should be deprecated.
-func BuildURLDeprecated(master *messages.MasterLocation, builder string, buildNum int64) *url.URL {
-	newURL := master.URL
-	newURL.Path += fmt.Sprintf("/builders/%s/builds/%d", builder, buildNum)
-	return &newURL
-}
-
-// BuilderURL returns the builder URL for the given master and builder.
-func BuilderURL(viewPath string) string {
-	URL := &url.URL{
-		Scheme: miloScheme,
-		Host:   miloHost,
-	}
-
-	r := regexp.MustCompile(`/\d+/?$`)
-	URL.Path = r.ReplaceAllString(viewPath, "")
-	return URL.String()
-}
-
-// BuildURL returns the build URL given a viewPath
-func BuildURL(viewPath string) string {
-	URL := &url.URL{
-		Scheme: miloScheme,
-		Host:   miloHost,
-	}
-	URL.Path = viewPath
-	return URL.String()
-}
-
-// StepURL returns the step URL for the given master, builder, step and build number.
-// NOTE: This cannot be deprecated yet because Milo still uses build.chromium.org
-// pages for steps.
-func StepURL(master *messages.MasterLocation, builder, step string, buildNum int64) *url.URL {
-	newURL := master.URL
-	newURL.Path += fmt.Sprintf("/builders/%s/builds/%d/steps/%s",
-		builder, buildNum, step)
-	return &newURL
-}
-
 // Writer writes out data to other services, most notably sheriff-o-matic.
 type Writer interface {
 	// PostAlerts posts alerts to Sheriff-o-Matic.
@@ -106,24 +56,7 @@ type writer struct {
 	alertsBase string
 }
 
-// BuilderData is the data returned from the GET "/data/builders" endpoint.
-// TODO(martinis): Change this to be imported from test results once these
-// structs have been refactored out of the frontend package. Can't import them
-// now because frontend init() sets up http handlers.
-type BuilderData struct {
-	Masters           []Master `json:"masters"`
-	NoUploadTestTypes []string `json:"no_upload_test_types"`
-}
-
-// Master represents information about a build master.
-type Master struct {
-	Name       string           `json:"name"`
-	Identifier string           `json:"url_name"`
-	Groups     []string         `json:"groups"`
-	Tests      map[string]*Test `json:"tests"`
-}
-
-// Test represents information about Tests in a master.
+// Test represents information about Tests in a builder group.
 type Test struct {
 	Builders []string `json:"builders"`
 }
