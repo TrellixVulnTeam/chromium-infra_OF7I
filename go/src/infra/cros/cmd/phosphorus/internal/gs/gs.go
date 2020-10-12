@@ -76,7 +76,12 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 
 			if err == nil {
 				item = func() error {
-					return w.writeOne(ctx, srcDir, dstDir, src, info)
+					relPath, err := filepath.Rel(srcDir, src)
+					if err != nil {
+						return errors.Annotate(err, "writing from %s to %s", src, dstDir).Err()
+					}
+					dest := dstDir.Concat(relPath)
+					return w.writeOne(ctx, src, dest, info)
 				}
 			} else {
 				// Continue walking the directory tree on errors so that we upload as
@@ -107,7 +112,7 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	return nil
 }
 
-func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Path, src string, info os.FileInfo) error {
+func (w *DirWriter) writeOne(ctx context.Context, src string, dest gcgs.Path, info os.FileInfo) error {
 	if info.IsDir() {
 		return nil
 	}
@@ -116,11 +121,6 @@ func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Pat
 		return nil
 	}
 
-	relPath, err := filepath.Rel(srcDir, src)
-	if err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, dstDir).Err()
-	}
-	dest := dstDir.Concat(relPath)
 	f, err := os.Open(src)
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
