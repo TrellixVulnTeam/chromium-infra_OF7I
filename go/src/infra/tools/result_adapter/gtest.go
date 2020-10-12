@@ -322,7 +322,7 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 			links[lName] = *s
 		default:
 			fmt.Println(json.Unmarshal(link, s))
-			return nil, errors.Reason("unsupported data format for a link: %s", string(link)).Err()
+			return nil, errors.Reason("unsupported data format for a link: %q", string(link)).Err()
 		}
 	}
 
