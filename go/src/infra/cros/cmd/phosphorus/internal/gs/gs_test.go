@@ -110,3 +110,37 @@ func TestUploadSingleFile(t *testing.T) {
 		t.Errorf("Regular file not copied. os.Stat() returned: %s", err)
 	}
 }
+
+func TestConcurrentUploads(t *testing.T) {
+	tf, closer := newTestFixture(t)
+	defer closer()
+
+	const numDirs = 10
+	const numFilesPerDir = 100
+	files := make([]string, numDirs*numFilesPerDir)
+	for i := 0; i < numDirs; i++ {
+		subdir := fmt.Sprintf("d%d", i)
+		if err := os.Mkdir(filepath.Join(tf.src, subdir), 0755); err != nil {
+			t.Fatalf("Failed to create source directory %s: %s", subdir, err)
+		}
+		for j := 0; j < numFilesPerDir; j++ {
+			f := filepath.Join(subdir, fmt.Sprintf("f%d", j))
+			files[i*numFilesPerDir+j] = f
+			s, err := os.Create(filepath.Join(tf.src, f))
+			if err != nil {
+				t.Fatalf("Failed to create source file %s: %s", f, err)
+			}
+			s.Close()
+		}
+	}
+
+	tf.w.maxConcurrentUploads = 5
+	if err := tf.w.WriteDir(context.Background(), tf.src, gcgs.Path(tf.dst)); err != nil {
+		t.Fatalf("Error writing directory: %s", err)
+	}
+	for _, f := range files {
+		if _, err := os.Stat(filepath.Join(tf.dst, f)); os.IsNotExist(err) {
+			t.Errorf("File %s not copied. os.Stat() returned: %s", f, err)
+		}
+	}
+}

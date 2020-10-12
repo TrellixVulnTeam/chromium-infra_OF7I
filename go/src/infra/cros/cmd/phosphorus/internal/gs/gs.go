@@ -58,56 +58,69 @@ func verifyPaths(localPath string, gsPath string) error {
 
 const maxConcurrentUploads = 10
 
+type file struct {
+	Src  string
+	Dest gcgs.Path
+	Info os.FileInfo
+}
+
 // WriteDir writes a local directory to Google Storage.
 //
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
 // skipping remaining contents of the directory and returns ctx.Err().
 func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Path) error {
+	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
 	if err := verifyPaths(srcDir, string(dstDir)); err != nil {
 		return err
 	}
 
-	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
-	var genErr error
 	var merr errors.MultiError
-	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
-		// genErr is captured.
-		genErr = filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
-			relPath, err := filepath.Rel(srcDir, src)
-			if err != nil {
-				// Continue walking the directory tree on errors so that we
-				// upload as many files as possible.
-				merr = append(merr, errors.Annotate(err, "writing from %s to %s", src, dstDir).Err())
-				return nil
-			}
-			dest := dstDir.Concat(relPath)
+	files := []*file{}
+	if err := filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
+		// Continue walking the directory tree on errors so that we upload as
+		// many files as possible.
+		if err != nil {
+			merr = append(merr, errors.Annotate(err, "list files to upload").Err())
+			return nil
+		}
+		relPath, err := filepath.Rel(srcDir, src)
+		if err != nil {
+			merr = append(merr, errors.Annotate(err, "writing from %s to %s", src, dstDir).Err())
+			return nil
+		}
+		files = append(files, &file{
+			Src:  src,
+			Dest: dstDir.Concat(relPath),
+			Info: info,
+		})
+		return nil
+	}); err != nil {
+		panic(fmt.Sprintf("Directory walk leaked error: %s", err))
+	}
 
-			var item func() error
-			if err == nil {
-				item = func() error {
-					return w.writeOne(ctx, src, dest, info)
-				}
-			} else {
-				// Continue walking the directory tree on errors so that we
-				// upload as many files as possible.
-				item = func() error {
-					return err
-				}
+	var terr error
+	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
+		for _, f := range files {
+			// Create a loop-local variable for capture in the lambda.
+			f := f
+			item := func() error {
+				return w.writeOne(ctx, f.Src, f.Dest, f.Info)
 			}
 			select {
 			case items <- item:
-				return nil
+				continue
 			case <-ctx.Done():
-				return ctx.Err()
+				// terr is captured.
+				terr = ctx.Err()
+				break
 			}
-		})
+		}
 	})
-
 	if err != nil {
 		merr = append(merr, err)
 	}
-	if genErr != nil {
-		merr = append(merr, genErr)
+	if terr != nil {
+		merr = append(merr, err)
 	}
 	if len(merr) > 0 {
 		return errors.Annotate(merr, "writing dir %s to %s", srcDir, dstDir).Err()
