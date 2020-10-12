@@ -74,29 +74,7 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 		return err
 	}
 
-	var merr errors.MultiError
-	files := []*file{}
-	if err := filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
-		// Continue walking the directory tree on errors so that we upload as
-		// many files as possible.
-		if err != nil {
-			merr = append(merr, errors.Annotate(err, "list files to upload").Err())
-			return nil
-		}
-		relPath, err := filepath.Rel(srcDir, src)
-		if err != nil {
-			merr = append(merr, errors.Annotate(err, "writing from %s to %s", src, dstDir).Err())
-			return nil
-		}
-		files = append(files, &file{
-			Src:  src,
-			Dest: dstDir.Concat(relPath),
-			Info: info,
-		})
-		return nil
-	}); err != nil {
-		panic(fmt.Sprintf("Directory walk leaked error: %s", err))
-	}
+	files, merr := discoverFiles(srcDir, dstDir)
 
 	var terr error
 	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
@@ -126,6 +104,33 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 		return errors.Annotate(merr, "writing dir %s to %s", srcDir, dstDir).Err()
 	}
 	return nil
+}
+
+func discoverFiles(srcDir string, dstDir gcgs.Path) ([]*file, errors.MultiError) {
+	var merr errors.MultiError
+	files := []*file{}
+	if err := filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
+		// Continue walking the directory tree on errors so that we upload as
+		// many files as possible.
+		if err != nil {
+			merr = append(merr, errors.Annotate(err, "list files to upload").Err())
+			return nil
+		}
+		relPath, err := filepath.Rel(srcDir, src)
+		if err != nil {
+			merr = append(merr, errors.Annotate(err, "writing from %s to %s", src, dstDir).Err())
+			return nil
+		}
+		files = append(files, &file{
+			Src:  src,
+			Dest: dstDir.Concat(relPath),
+			Info: info,
+		})
+		return nil
+	}); err != nil {
+		panic(fmt.Sprintf("Directory walk leaked error: %s", err))
+	}
+	return files, merr
 }
 
 func (w *DirWriter) writeOne(ctx context.Context, src string, dest gcgs.Path, info os.FileInfo) error {
