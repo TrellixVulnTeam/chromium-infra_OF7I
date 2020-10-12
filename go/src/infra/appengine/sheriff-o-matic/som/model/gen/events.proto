@@ -68,11 +68,8 @@ message SOMAlertsEvent {
 
     // BuildBotFaiure describes a range of failing builds on a buildbot builder.
     message BuildbotFailure {
-      // TODO: replace these with a list of build_id once the "master" concept is
-      // completely replaced by buildbucket.
-
-      // Master is the name of the buildbot master.
-      string master = 1;
+      // Builder group is the name of the buildbot builder group.
+      string builder_group = 1;
 
       // Builder is the name of the builder.
       string builder = 2;

@@ -122,7 +122,7 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 			// Some other trees, who also reference chromium.clang builders do *not* want all of them.
 			// This extra tree == "chromium.clang" condition works around this shortcoming of the gatekeeper
 			// tree config format.
-			if tree == "chromium.clang" || !configRules.ExcludeFailure(c, b.Master, b.Name, ba.StepAtFault.Step.Name) {
+			if tree == "chromium.clang" || !configRules.ExcludeFailure(c, b.BuilderGroup, b.Name, ba.StepAtFault.Step.Name) {
 				builders = append(builders, b)
 			}
 		}
@@ -273,7 +273,7 @@ func putAlertsBigQuery(c context.Context, tree string, alertsSummary *messages.A
 		if bf, ok := a.Extension.(messages.BuildFailure); ok {
 			for _, builder := range bf.Builders {
 				newBF := &gen.SOMAlertsEvent_Alert_BuildbotFailure{
-					Master:        builder.Master,
+					BuilderGroup:  builder.BuilderGroup,
 					Builder:       builder.Name,
 					Step:          bf.StepAtFault.Step.Name,
 					FirstFailure:  builder.FirstFailure,

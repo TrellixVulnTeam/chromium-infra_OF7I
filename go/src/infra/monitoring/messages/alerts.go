@@ -208,10 +208,10 @@ type ReasonRaw interface {
 
 // AlertedBuilder represents an individual builder.
 type AlertedBuilder struct {
-	Name      string    `json:"name"`
-	Master    string    `json:"master"`
-	URL       string    `json:"url"`
-	StartTime EpochTime `json:"start_time"`
+	Name         string    `json:"name"`
+	BuilderGroup string    `json:"builder_group"`
+	URL          string    `json:"url"`
+	StartTime    EpochTime `json:"start_time"`
 	// FirstFailure is the build ID of first failure.
 	FirstFailure int64 `json:"first_failure"`
 	// LatestFailure is the build ID of latest failure.

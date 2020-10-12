@@ -496,7 +496,7 @@ func generateAlertedBuilder(ctx context.Context, r failureRow) *messages.Alerted
 		Project:                  r.Project,
 		Bucket:                   r.Bucket,
 		Name:                     r.Builder,
-		Master:                   r.BuilderGroup.StringVal,
+		BuilderGroup:             r.BuilderGroup.StringVal,
 		FirstFailure:             r.BuildIDBegin.Int64,
 		LatestFailure:            r.BuildIDEnd.Int64,
 		FirstFailureBuildNumber:  r.BuildNumberBegin.Int64,
