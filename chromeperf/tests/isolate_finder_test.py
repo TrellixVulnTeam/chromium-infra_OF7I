@@ -23,7 +23,7 @@ from chromeperf.pinpoint.models import isolate as isolate_module
 from chromeperf.pinpoint.models import repository as repository_module
 from chromeperf.pinpoint.models import task as task_module
 
-from . import test_utils
+from . import test_utils # pylint: disable=relative-beyond-top-level
 
 
 @pytest.fixture

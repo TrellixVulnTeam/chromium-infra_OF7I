@@ -21,8 +21,8 @@ from chromeperf.pinpoint.evaluators import test_runner
 from chromeperf.pinpoint.models import change as change_module
 from chromeperf.pinpoint.models import task as task_module
 
-from . import test_utils
-from . import bisection_test_util
+from . import test_utils  # pylint: disable=relative-beyond-top-level
+from . import bisection_test_util  # pylint: disable=relative-beyond-top-level
 
 DIMENSIONS = [
     test_runner_payload_pb2.TestRunnerPayload.Dimension(

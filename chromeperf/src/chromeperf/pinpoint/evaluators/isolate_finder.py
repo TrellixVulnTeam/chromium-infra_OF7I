@@ -202,7 +202,7 @@ class TaskOptions:
 
 
 def change_id(change: change_module.Change) -> str:
-    return '_'.join(change.id_string.split(' '))
+    return change.id_string.replace(' ', '_')
 
 
 def task_id(options: TaskOptions) -> str:

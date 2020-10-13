@@ -1,0 +1,50 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file.
+syntax = "proto3";
+
+import "chromeperf/engine/task.proto";
+import "chromeperf/pinpoint/change.proto";
+
+package chromeperf.pinpoint;
+
+message ResultReaderPayload {
+  message Input {
+    string benchmark = 1;
+    string mode = 2;
+    string results_filename = 3;
+
+    message HistogramOptions {
+      string grouping_label = 1;
+      string story = 2;
+      string statistic = 3;
+      string histogram_name = 4;
+    }
+    HistogramOptions histogram_options = 4;
+
+    message GraphJsonOptions {
+      string chart = 1;
+      string trace = 2;
+    }
+    GraphJsonOptions graph_json_options = 5;
+
+    chromeperf.pinpoint.Change change = 6;
+  }
+
+  message Output {
+    repeated double result_values = 1;
+
+    message TraceUrl {
+      string key = 1;
+      string value = 2;
+      string url = 3;
+    }
+    repeated TraceUrl trace_urls = 2;
+  }
+
+  Input input = 1;
+  Output output = 2;
+  int32 index = 3;
+  int32 tries = 4;
+  repeated chromeperf.engine.ErrorMessage errors = 5;
+}

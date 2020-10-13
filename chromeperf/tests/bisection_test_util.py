@@ -12,9 +12,11 @@ from google.cloud import datastore
 from chromeperf.pinpoint.models import change as change_module
 from chromeperf.engine import evaluator
 from chromeperf.engine import event as event_module
+from chromeperf.engine import task_pb2
 from chromeperf.pinpoint.models import task as task_module
 from chromeperf.pinpoint.actions import updates
 from chromeperf.pinpoint import find_isolate_task_payload_pb2
+from chromeperf.pinpoint import test_runner_payload_pb2
 
 
 @dataclasses.dataclass
@@ -96,13 +98,71 @@ class FakeFindIsolateFailed(task_module.PayloadUnpackingMixin):
         task_payload.buildbucket_build.result = 'FAILURE'
         task_payload.buildbucket_build.result_details_json = '{}'
         task_payload.tries = 1
-        task.payload.Pack(task_payload)
         return [
             UpdateWrapper(
                 self.datastore_client,
                 self.job,
                 task,
                 'failed',
-                task.payload,
+                task_payload,
+            )
+        ]
+
+
+@dataclasses.dataclass
+class FakeSuccessfulRunTest(task_module.PayloadUnpackingMixin):
+    datastore_client: datastore.Client
+    job: typing.Any
+
+    def __call__(self, task, *_):
+        if task.task_type != 'run_test':
+            return None
+
+        if task.state == 'completed':
+            return None
+
+        task_payload = self.unpack(test_runner_payload_pb2.TestRunnerPayload,
+                                   task.payload)
+        task_payload.output.swarming_response.bot_id = 'some_bot'
+        task_payload.output.swarming_response.task_id = 'some_task_id'
+        task_payload.output.task_output.isolate_server = 'https://isolate.server'
+        task_payload.output.task_output.isolate_hash = '12334981aad2304ff1243458'
+        return [
+            UpdateWrapper(
+                self.datastore_client,
+                self.job,
+                task,
+                'completed',
+                task_payload,
+            )
+        ]
+
+
+@dataclasses.dataclass
+class FakeFailedRunTest(task_module.PayloadUnpackingMixin):
+    datastore_client: datastore.Client
+    job: typing.Any
+
+    def __call__(self, task, *_):
+        if task.task_type != 'run_test':
+            return None
+
+        if task.state == 'failed':
+            return None
+
+        task_payload = self.unpack(test_runner_payload_pb2.TestRunnerPayload,
+                                   task.payload)
+        task_payload.errors.append(
+            task_pb2.ErrorMessage(
+                reason='SomeReason',
+                message='There is some message here.',
+            ))
+        return [
+            UpdateWrapper(
+                self.datastore_client,
+                self.job,
+                task,
+                'failed',
+                task_payload,
             )
         ]
