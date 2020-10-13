@@ -19,9 +19,8 @@ def cron(name, recipe, execution_timeout = None):
         },
         properties = {
             "mastername": "chromium.infra.cron",
-            "submit_cl": True,
-            "total_cq_checks": 40,
-            "interval_between_checks_in_secs": 60,
+            "total_cq_checks": 30,
+            "interval_between_checks_in_secs": 120,
         },
         service_account = "chrome-weblayer-builder@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
