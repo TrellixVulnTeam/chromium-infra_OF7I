@@ -25,10 +25,10 @@ def build_event(payload: typing.Optional[message.Message],
                 type: str,
                 target_task: typing.Optional[str] = None) -> Event:
     encoded_payload = any_pb2.Any()
-    encoded_payload.Pack(payload)
+    encoded_payload.Pack(payload or empty_pb2.Empty())
     return Event(id=str(uuid.uuid4()),
                  type=type,
-                 target_task=target_task or '',
+                 target_task=target_task,
                  payload=encoded_payload)
 
 

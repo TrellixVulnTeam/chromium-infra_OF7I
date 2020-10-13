@@ -236,6 +236,7 @@ def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
                 id=task_id(options),
                 vertex_type='find_isolate',
                 payload=encoded_payload,
+                state='pending',
             )
         ],
         edges=[],
