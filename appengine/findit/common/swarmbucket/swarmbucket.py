@@ -36,7 +36,7 @@ def GetDimensionsForBuilder(
     bucket,
     builder,
     service_url=_DEFAULT_SWARMBUCKET_SERVICE_URL,
-    dimensions_whitelist=_DIMENSIONS_TO_MATCH_FOR_TRYBOT):
+    dimensions_allowlist=_DIMENSIONS_TO_MATCH_FOR_TRYBOT):
   """Gets the dimensions for replicating builder's configuration.
 
   Args:
@@ -44,7 +44,7 @@ def GetDimensionsForBuilder(
     builder(str): The name of the builder whose dimensions we're after.
     service_url(str): The url for the swarmbucket service, defaults to the
         production service url.
-    dimensions_whitelist(iterable of str): Which dimensions to return, set None
+    dimensions_allowlist(iterable of str): Which dimensions to return, set None
        to return all.
 
   Returns:
@@ -71,7 +71,7 @@ def GetDimensionsForBuilder(
     return []
   dimensions = task_def['task_slices'][0].get('properties', {}).get(
       'dimensions', [])
-  if dimensions_whitelist is None:
+  if dimensions_allowlist is None:
     return [
         '%s:%s' % (d.get('key', ''), d.get('value', '')) for d in dimensions
     ]
@@ -79,7 +79,7 @@ def GetDimensionsForBuilder(
     return [
         '%s:%s' % (d.get('key', ''), d.get('value', ''))
         for d in dimensions
-        if d.get('key') in dimensions_whitelist
+        if d.get('key') in dimensions_allowlist
     ]
 
 

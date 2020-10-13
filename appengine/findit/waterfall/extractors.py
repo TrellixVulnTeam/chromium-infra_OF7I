@@ -382,7 +382,7 @@ class AndroidJavaTestExtractor(Extractor):
     Note this extractor should not be used directly, but contains shared
     constants and functions to be used by its children classes.
   """
-  # White-list of java packages to consider.
+  # Allowlist of java packages to consider.
   JAVA_PACKAGES_TO_CONSIDER = ['org.chromium.']
 
   JAVA_TEST_NAME_PATTERN = re.compile(
@@ -396,7 +396,7 @@ class AndroidJavaTestExtractor(Extractor):
         return True
     return False
 
-  def _InWhitelist(self, package_filename):
+  def _InAllowlist(self, package_filename):
     if package_filename:  # pragma: no cover
       for package in self.JAVA_PACKAGES_TO_CONSIDER:
         if package_filename.startswith(package):
@@ -409,7 +409,7 @@ class AndroidJavaTestExtractor(Extractor):
     filename = match_dict.get('filename')
     line_number = match_dict.get('line_number')
 
-    if self._InWhitelist(package_classname):
+    if self._InAllowlist(package_classname):
       if filename:
         file_path = os.path.join('/'.join(package_classname.split('.')[:-2]),
                                  filename)

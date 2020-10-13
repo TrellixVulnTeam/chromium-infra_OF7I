@@ -44,7 +44,7 @@ class SwarmbucketTest(testing.AppengineTestCase):
         'Result', ['content', 'status_code', 'headers'])(
             status_code=200, content=_MOCK_TASK_DEF_RESPONSE, headers={})
     dimensions = swarmbucket.GetDimensionsForBuilder(
-        'luci.chromium.ci', 'Linux x64', dimensions_whitelist=None)
+        'luci.chromium.ci', 'Linux x64', dimensions_allowlist=None)
     self.assertEqual(['cpu:x86-64', 'os:Ubuntu-14.04', 'pool:Chrome.LUCI'],
                      dimensions)
     dimensions = swarmbucket.GetDimensionsForBuilder('luci.chromium.ci',

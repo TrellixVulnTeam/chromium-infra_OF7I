@@ -122,7 +122,7 @@ WITH
 
   # Hidden flakes is to find ALL the passed tests due to 2+ retries.
   # This includes ALL test steps with/without patch.
-  # It is possible to limit the data further with a whitelist of master names.
+  # It is possible to limit the data further with a allowlist of master names.
   hidden_flakes AS (
   SELECT
     *
