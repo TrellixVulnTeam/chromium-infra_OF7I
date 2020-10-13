@@ -371,9 +371,9 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
 
 
 def wait_for_cl_to_land(api):
-  total_checks = api.properties.get('total_cq_checks')
+  total_checks = int(api.properties.get('total_cq_checks'))
   # Time sleeping in between CL status checks
-  interval = api.properties.get('interval_between_checks_in_secs')
+  interval = int(api.properties.get('interval_between_checks_in_secs'))
   # Attempt to land the CL in total_cq_checks * interval_between_checks_in_secs
   # seconds
   for _ in range(total_checks):
