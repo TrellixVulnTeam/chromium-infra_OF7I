@@ -26,3 +26,7 @@ dispatch:
   # GetBuild is implemented in Go, so serve it from there.
   - url: "*/prpc/buildbucket.v2.Builds/GetBuild"
     service: default-go
+
+  # SearchBuild is implemented in Go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builds/SearchBuilds"
+    service: default-go
