@@ -35,7 +35,6 @@ type createRunCommon struct {
 	keyvals                  []string
 	qsAccount                string
 	buildBucket              bool
-	statusTopic              string
 	useTestRunner            bool
 	enableSynchronousOffload bool
 }
@@ -65,7 +64,6 @@ specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
 	fl.Var(flagx.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
-	fl.StringVar(&c.statusTopic, "status-topic", "", "Pubsub `topic` on which to send test-status update notifications.")
 	fl.BoolVar(&c.useTestRunner, "use-test-runner", false,
 		`If true, schedule individual tests via buildbucket and run them via
 the test_runner recipe. If false, schedule tests via raw Swarmng calls and run
@@ -113,7 +111,6 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Timeout:                    time.Duration(c.timeoutMins) * time.Minute,
 		MaxRetries:                 c.maxRetries,
 		Keyvals:                    keyvalMap,
-		PubsubTopic:                c.statusTopic,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
 		UseTestRunner:              c.useTestRunner,
