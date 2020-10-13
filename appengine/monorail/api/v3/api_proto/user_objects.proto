@@ -16,7 +16,7 @@ import "google/api/resource.proto";
 import "google/api/field_behavior.proto";
 
 // User represents a user of the Monorail site.
-// Next available tag: 4
+// Next available tag: 5
 message User {
   option (google.api.resource) = {
     type: "api.crbug.com/User"
@@ -28,8 +28,11 @@ message User {
   // To fetch the display_name for any users/<user_id> returned by the API,
   // you can call {Batch}GetUser{s}.
   string name = 1;
-  // Obscured or un-obscured user email or name to show other users using the site.
-  string display_name = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // User display_name to show other users using the site.
+  // By default this is the obscured or un-obscured email.
+  string display_name = 2;
+  // Obscured or un-obscured user email.
+  string email = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
   // User-written indication of their availability or working hours.
   string availability_message = 3;
 }
