@@ -120,45 +120,6 @@ func TestLegacySheriff(t *testing.T) {
 		cfgs       []*rotang.Configuration
 		want       string
 	}{{
-		name: "Success JS",
-		ctx: &router.Context{
-			Context: ctx,
-			Writer:  httptest.NewRecorder(),
-		},
-		file: "sheriff_ios.js",
-		time: midnight,
-		cfgs: []*rotang.Configuration{
-			{
-				Config: rotang.Config{
-					Name: "Chrome iOS Build Sheriff",
-				},
-			},
-		},
-		calShifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight,
-				EndTime:   midnight.Add(5 * fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email: "test1@oncall.com",
-					}, {
-						Email: "test2@oncall.com",
-					},
-				},
-			}, {
-				StartTime: midnight.Add(5 * fullDay),
-				EndTime:   midnight.Add(10 * fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email: "test3@oncall.com",
-					}, {
-						Email: "test4@oncall.com",
-					},
-				},
-			},
-		},
-		want: "document.write('test1, test2');",
-	}, {
 		name: "Success JSON",
 		ctx: &router.Context{
 			Context: ctx,

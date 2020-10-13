@@ -112,9 +112,6 @@ func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) 
 }
 
 var fileToRota = map[string]string{
-	"sheriff_gpu.js": "Chrome GPU Pixel Wrangling",
-	"sheriff_ios.js": "Chrome iOS Build Sheriff",
-
 	"sheriff_perf.json":           "Chromium Perf Regression Sheriff Rotation",
 	"sheriff_gpu.json":            "Chrome GPU Pixel Wrangling",
 	"sheriff_angle.json":          "The ANGLE Wrangle",
@@ -165,41 +162,25 @@ func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) 
 	}
 
 	sp := strings.Split(file, ".")
-	if len(sp) != 2 {
+	if len(sp) != 2 || sp[1] != "json" {
 		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
 	}
 
-	switch sp[1] {
-	case "js":
-		var oc []string
-		for _, o := range entry.OnCall {
-			oc = append(oc, strings.Split(o.Email, "@")[0])
-		}
-		str := "None"
-		if len(oc) > 0 {
-			str = strings.Join(oc, ", ")
-		}
-		return "document.write('" + str + "');", nil
-	case "json":
-		// This makes the JSON encoder produce `[]` instead of `null`
-		// for empty lists.
-		oc := make([]string, 0)
-		for _, o := range entry.OnCall {
-			oc = append(oc, o.Email)
-		}
-		var buf bytes.Buffer
-		enc := json.NewEncoder(&buf)
-		if err := enc.Encode(&sheriffJSON{
-			UnixTS: updated.Unix(),
-			Emails: oc,
-		}); err != nil {
-			return "", err
-		}
-		return buf.String(), nil
-
-	default:
-		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
+	// This makes the JSON encoder produce `[]` instead of `null`
+	// for empty lists.
+	oc := make([]string, 0)
+	for _, o := range entry.OnCall {
+		oc = append(oc, o.Email)
 	}
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(&sheriffJSON{
+		UnixTS: updated.Unix(),
+		Emails: oc,
+	}); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // getCurrentOncall returns the email address of the oncaller for the given rotation name
@@ -226,11 +207,6 @@ var chromeBuildSheriffRotations = []string{
 	"Chrome Build Sheriff EMEA",
 }
 
-var clankBuildSheriffRotations = []string{
-	"Clank Build Sheriff AMER",
-	"Clank Build Sheriff EMEA",
-}
-
 func (h *State) getExternalSheriffs(ctx *router.Context, sheriffRotations []string) (*sheriffJSON, error) {
 	now := clock.Now(ctx.Context)
 	emails := make([]string, 0, len(sheriffRotations))
@@ -252,7 +228,7 @@ func (h *State) getExternalSheriffs(ctx *router.Context, sheriffRotations []stri
 // sheriffJSONFromExternal produces a sheriff.json file containing sheriffs sourced from external calendar events.
 func (h *State) sheriffJSONFromExternal(ctx *router.Context, file string, sheriffRotations []string) (string, error) {
 	sp := strings.Split(file, ".")
-	if len(sp) != 2 {
+	if len(sp) != 2 || sp[1] != "json" {
 		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
 	}
 
@@ -261,36 +237,16 @@ func (h *State) sheriffJSONFromExternal(ctx *router.Context, file string, sherif
 		return "", status.Errorf(codes.Internal, "Unable to fetch sheriffs list")
 	}
 
-	switch sp[1] {
-	case "js":
-		var usernames []string
-		for _, email := range sheriffs.Emails {
-			usernames = append(usernames, strings.Split(email, "@")[0])
-		}
-		str := "None"
-		if len(usernames) > 0 {
-			str = strings.Join(usernames, ", ")
-		}
-		return "document.write('" + str + "');", nil
-	case "json":
-		var buf bytes.Buffer
-		enc := json.NewEncoder(&buf)
-		if err := enc.Encode(sheriffs); err != nil {
-			return "", err
-		}
-		return buf.String(), nil
-
-	default:
-		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(sheriffs); err != nil {
+		return "", err
 	}
+	return buf.String(), nil
 }
 
 func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
 	return h.sheriffJSONFromExternal(ctx, file, chromeBuildSheriffRotations)
-}
-
-func (h *State) androidSheriff(ctx *router.Context, file string) (string, error) {
-	return h.sheriffJSONFromExternal(ctx, file, clankBuildSheriffRotations)
 }
 
 var rotaToName = map[string]string{

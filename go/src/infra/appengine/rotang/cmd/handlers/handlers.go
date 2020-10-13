@@ -196,10 +196,6 @@ func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) 
 		"current_trooper.txt": h.legacyTrooper,
 
 		// Sheriff files.
-		"sheriff.js":                  h.buildSheriff,
-		"sheriff_gpu.js":              h.legacySheriff,
-		"sheriff_android.js":          h.androidSheriff,
-		"sheriff_ios.js":              h.legacySheriff,
 		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,
 		"sheriff_gpu.json":            h.legacySheriff,
