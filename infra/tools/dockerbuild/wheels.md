@@ -3374,6 +3374,18 @@ wheel: <
 
 * *universal*
 
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.6.0"
+>
+```
+
+
+* *universal*
+
 ## **pylint-quotes**
 
 ### 0.1.8

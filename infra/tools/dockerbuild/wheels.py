@@ -717,6 +717,7 @@ SPECS.update({
         Universal('pylint', '2.2.3', pyversions=['py3']),
         Universal('pylint', '2.3.1', pyversions=['py3']),
         Universal('pylint', '2.4.4', pyversions=['py3']),
+        Universal('pylint', '2.6.0', pyversions=['py3']),
         Universal('pylint-quotes', '0.2.1', pyversions=['py3']),
         Universal('pyopenssl', '17.2.0'),
         Universal('pyopenssl', '19.0.0'),
