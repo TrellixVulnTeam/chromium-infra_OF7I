@@ -142,7 +142,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     issue_id = rnc.IngestIssueName(mc.cnxn, request.parent, self.services)
     page_size = paginator.CoercePageSize(
         request.page_size, api_constants.MAX_COMMENTS_PER_PAGE)
-    pager = paginator.Paginator(parent=request.parent, page_size=page_size)
+    pager = paginator.Paginator(
+      parent=request.parent, page_size=page_size, filter_str=request.filter)
     approval_id = None
     if request.filter:
       match = _APPROVAL_DEF_FILTER_RE.match(request.filter)
