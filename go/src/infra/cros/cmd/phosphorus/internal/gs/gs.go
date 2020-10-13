@@ -121,7 +121,7 @@ func discoverFiles(srcDir string, dstDir gcgs.Path) ([]*file, errors.MultiError)
 		// Continue walking the directory tree on errors so that we upload as
 		// many files as possible.
 		if err != nil {
-			merr = append(merr, errors.Annotate(err, "list files to upload").Err())
+			merr = append(merr, errors.Annotate(err, "list files to upload: %s", src).Err())
 			return nil
 		}
 		relPath, err := filepath.Rel(srcDir, src)
