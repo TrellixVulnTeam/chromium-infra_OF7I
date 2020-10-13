@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/maruel/subcommands"
-	"github.com/pkg/errors"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
@@ -141,7 +141,7 @@ func runProvision(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Resu
 	}
 	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
 	if err != nil {
-		return nil, errors.Wrap(err, "run provision")
+		return nil, errors.Annotate(err, "run provision").Err()
 	}
 	return ar, nil
 }
@@ -159,7 +159,7 @@ func runReset(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, 
 	}
 	ar, err := atutil.RunAutoserv(ctx, j, a, os.Stdout)
 	if err != nil {
-		return nil, errors.Wrap(err, "run reset")
+		return nil, errors.Annotate(err, "run reset").Err()
 	}
 	return ar, nil
 }
