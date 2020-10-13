@@ -1039,7 +1039,7 @@
       "upload",
       "--force",
       "--r-owners",
-      "--use-commit-queue",
+      "--cq-dry-run",
       "--message-file",
       "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 83.0.4103.96\n2, 84.0.4147.89\n\nBug:1041619\n"
     ],
@@ -1051,7 +1051,7 @@
   },
   {
     "cmd": [],
-    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Waiting for CL to land",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -1066,7 +1066,7 @@
       "status"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL.git cl status",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Waiting for CL to land.git cl status",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -1081,7 +1081,7 @@
       "status"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL.git cl status (2)",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Waiting for CL to land.git cl status (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]

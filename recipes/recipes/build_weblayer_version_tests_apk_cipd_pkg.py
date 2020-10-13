@@ -359,15 +359,11 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
         '%d, %s' % (idx + 1, ver)
         for idx, ver in enumerate(cipd_pkgs_to_create))
 
-    upload_args = ['--force', '--r-owners']
-    land_cl_arg = '--use-commit-queue'
-    if api.properties.get('submit_cl'):
-      upload_args.append(land_cl_arg)
+    upload_args = ['--force', '--r-owners', '--cq-dry-run']
     api.git_cl.upload(description, upload_args=upload_args)
 
-    if land_cl_arg in upload_args:
-      with api.step.nest('Landing CL'):
-        wait_for_cl_to_land(api)
+    with api.step.nest('Waiting for CL to land'):
+      wait_for_cl_to_land(api)
 
 
 def wait_for_cl_to_land(api):
@@ -500,7 +496,7 @@ def GenTests(api):
   def land_cl_step_datas(statuses):
     def _create_step_data(status, iteration):
       name = ('Submit changes to %s.'
-              'Landing CL.git cl status') % VARIANTS_PYL_PATH
+              'Waiting for CL to land.git cl status') % VARIANTS_PYL_PATH
       if iteration:
         name += ' (%d)' % (iteration + 1)
       return api.step_data(
@@ -526,8 +522,7 @@ def GenTests(api):
 
   yield api.test(
       'basic',
-      api.properties(submit_cl=True,
-                     total_cq_checks=2,
+      api.properties(total_cq_checks=2,
                      interval_between_checks_in_secs=60) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -540,8 +535,7 @@ def GenTests(api):
 
   yield api.test(
       'only-build-new-milestone-released',
-      api.properties(submit_cl=True,
-                     total_cq_checks=2,
+      api.properties(total_cq_checks=2,
                      interval_between_checks_in_secs=60) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -553,8 +547,7 @@ def GenTests(api):
 
   yield api.test(
       'version-already-exists-only-upload-cl',
-      api.properties(submit_cl=True,
-                     total_cq_checks=2,
+      api.properties(total_cq_checks=2,
                      interval_between_checks_in_secs=60) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -564,8 +557,7 @@ def GenTests(api):
 
   yield api.test(
       'build-fails',
-      api.properties(submit_cl=True,
-                     total_cq_checks=2,
+      api.properties(total_cq_checks=2,
                      interval_between_checks_in_secs=60) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -580,8 +572,7 @@ def GenTests(api):
 
   yield api.test(
       'abandon-cl-after-time-out',
-      api.properties(submit_cl=True,
-                     total_cq_checks=2,
+      api.properties(total_cq_checks=2,
                      interval_between_checks_in_secs=60) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
