@@ -13,19 +13,19 @@ def IsPrivilegedUser(user_email, is_admin):
   return is_admin or (user_email and user_email.endswith('@google.com'))
 
 
-def IsWhitelistedClientId(client_id):
-  """Returns True if the given client id is whitelisted."""
+def IsAllowedClientId(client_id):
+  """Returns True if the given client id is allowed."""
   return client_id in constants.WHITELISTED_CLIENT_IDS
 
 
 def CanTriggerNewAnalysis(user_email, is_admin):
   """Returns True if the given email account could trigger a new analysis."""
   if not appengine_util.IsStaging():
-    whitelisted_app_accounts = constants.WHITELISTED_APP_ACCOUNTS
+    allowed_app_accounts = constants.WHITELISTED_APP_ACCOUNTS
   else:
-    whitelisted_app_accounts = constants.WHITELISTED_STAGING_APP_ACCOUNTS
+    allowed_app_accounts = constants.WHITELISTED_STAGING_APP_ACCOUNTS
   return IsPrivilegedUser(user_email,
-                          is_admin) or (user_email in whitelisted_app_accounts)
+                          is_admin) or (user_email in allowed_app_accounts)
 
 
 def ValidateOauthUserForNewAnalysis():
@@ -44,14 +44,14 @@ def ValidateOauthUserForNewAnalysis():
   if not user_email:
     raise exceptions.UnauthorizedException('Unknown user.')
 
-  # For Google service accounts, no need to whitelist client ids for them,
+  # For Google service accounts, no need to allow client ids for them,
   # since email address uniquely identifies credentials used.
   # At some point someone might want to use Findit API from a GCE project
   # (*@developer.gserviceaccount.com accounts) or from some script that use
   # service account keys (*@*.iam.gserviceaccount.com accounts).
   if not user_email.endswith('@appspot.gserviceaccount.com'):
     client_id = auth_util.GetOauthClientId()
-    if not IsWhitelistedClientId(client_id):
+    if not IsAllowedClientId(client_id):
       raise exceptions.UnauthorizedException(
           'Unknown client id %s.' % client_id)
 

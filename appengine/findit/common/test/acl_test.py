@@ -21,11 +21,11 @@ class AclTest(unittest.TestCase):
   def testUnknownUserIsNotPrivilegedUser(self):
     self.assertFalse(acl.IsPrivilegedUser('test@gmail.com', False))
 
-  def testWhitelistedClientId(self):
-    self.assertTrue(acl.IsWhitelistedClientId(constants.API_EXPLORER_CLIENT_ID))
+  def testAllowedClientId(self):
+    self.assertTrue(acl.IsAllowedClientId(constants.API_EXPLORER_CLIENT_ID))
 
-  def testUnknownClientIdIsNotWhitelisted(self):
-    self.assertFalse(acl.IsWhitelistedClientId('unknown_id'))
+  def testUnknownClientIdIsNotAllowed(self):
+    self.assertFalse(acl.IsAllowedClientId('unknown_id'))
 
   def testAdminCanTriggerNewAnalysis(self):
     self.assertTrue(acl.CanTriggerNewAnalysis('test@chromium.org', True))
@@ -34,12 +34,12 @@ class AclTest(unittest.TestCase):
     self.assertTrue(acl.CanTriggerNewAnalysis('test@google.com', False))
 
   @mock.patch.object(acl.appengine_util, 'IsStaging', return_value=False)
-  def testWhitelistedAppAccountCanTriggerNewAnalysis(self, _):
+  def testAllowedAppAccountCanTriggerNewAnalysis(self, _):
     for email in constants.WHITELISTED_APP_ACCOUNTS:
       self.assertTrue(acl.CanTriggerNewAnalysis(email, False))
 
   @mock.patch.object(acl.appengine_util, 'IsStaging', return_value=True)
-  def testWhitelistedStagingAppAccountCanTriggerNewAnalysis(self, _):
+  def testAllowedStagingAppAccountCanTriggerNewAnalysis(self, _):
     for email in constants.WHITELISTED_STAGING_APP_ACCOUNTS:
       self.assertTrue(acl.CanTriggerNewAnalysis(email, False))
 
@@ -70,7 +70,7 @@ class AclTest(unittest.TestCase):
       acl.ValidateOauthUserForNewAnalysis()
 
   @mock.patch.object(acl, 'CanTriggerNewAnalysis', return_value=True)
-  @mock.patch.object(acl, 'IsWhitelistedClientId', return_value=False)
+  @mock.patch.object(acl, 'IsAllowedClientId', return_value=False)
   @mock.patch.object(acl.auth_util, 'GetOauthClientId', return_value='id')
   @mock.patch.object(
       acl.auth_util, 'IsCurrentOauthUserAdmin', return_value=True)
@@ -80,7 +80,7 @@ class AclTest(unittest.TestCase):
       acl.ValidateOauthUserForNewAnalysis()
 
   @mock.patch.object(acl, 'CanTriggerNewAnalysis', return_value=True)
-  @mock.patch.object(acl, 'IsWhitelistedClientId', return_value=True)
+  @mock.patch.object(acl, 'IsAllowedClientId', return_value=True)
   @mock.patch.object(acl.auth_util, 'GetOauthClientId', return_value='id')
   @mock.patch.object(
       acl.auth_util, 'IsCurrentOauthUserAdmin', return_value=True)
@@ -91,7 +91,7 @@ class AclTest(unittest.TestCase):
     self.assertTrue(is_admin)
 
   @mock.patch.object(acl, 'CanTriggerNewAnalysis', return_value=False)
-  @mock.patch.object(acl, 'IsWhitelistedClientId', return_value=True)
+  @mock.patch.object(acl, 'IsAllowedClientId', return_value=True)
   @mock.patch.object(acl.auth_util, 'GetOauthClientId', return_value='id')
   @mock.patch.object(
       acl.auth_util, 'IsCurrentOauthUserAdmin', return_value=False)
