@@ -359,7 +359,7 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
         '%d, %s' % (idx + 1, ver)
         for idx, ver in enumerate(cipd_pkgs_to_create))
 
-    upload_args = ['--force', '--tbr-owners']
+    upload_args = ['--force', '--r-owners']
     land_cl_arg = '--use-commit-queue'
     if api.properties.get('submit_cl'):
       upload_args.append(land_cl_arg)
