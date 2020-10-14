@@ -14,10 +14,16 @@ import (
 	"time"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
 )
@@ -58,6 +64,12 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 	return 0
 }
 
+const (
+	// TODO(pprabhu): Find a configurable way for drone to provide us the port
+	// number.
+	tlsPort = 7142
+)
+
 func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.PrejobRequest
 	if err := readJSONPb(c.inputPath, &r); err != nil {
@@ -73,31 +85,45 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
 	}
-	ar, err := runPrejob(ctx, r)
+
+	if r.UseTls {
+		resp, err := runTLSProvision(ctx, r, tlsConfig{
+			Port: tlsPort,
+		})
+		if err != nil {
+			return err
+		}
+		return writeJSONPb(c.outputPath, resp)
+	}
+
+	resp, err := runPrejobLegacy(ctx, r)
 	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, c.response(ar))
+	return writeJSONPb(c.outputPath, resp)
 }
 
-func (c *prejobRun) response(r *atutil.Result) *phosphorus.PrejobResponse {
-	var s phosphorus.PrejobResponse_State
-	switch {
-	case r.Success():
-		s = phosphorus.PrejobResponse_SUCCEEDED
-	case r.RunResult.Aborted:
-		s = phosphorus.PrejobResponse_ABORTED
-	default:
-		s = phosphorus.PrejobResponse_FAILED
-	}
-	return &phosphorus.PrejobResponse{State: s}
-}
-
-func runPrejob(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+// This function will be obsoleted once runTLSProvision is globally enabled.
+func runPrejobLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	var ar *atutil.Result
+	var err error
 	if contains(r.ExistingProvisionableLabels, r.DesiredProvisionableLabels) {
-		return runReset(ctx, r)
+		ar, err = runResetLegacy(ctx, r)
+	} else {
+		ar, err = runProvisionLegacy(ctx, r)
 	}
-	return runProvision(ctx, r)
+
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case ar.Success():
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+	case ar.RunResult.Aborted:
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, nil
+	default:
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
+	}
 }
 
 func validatePrejobRequest(r phosphorus.PrejobRequest) error {
@@ -124,9 +150,11 @@ func contains(x, y map[string]string) bool {
 	return true
 }
 
-// runProvisions provisions a single host. It is a wrapper around
+// runProvisionLegacy provisions a single host. It is a wrapper around
 // `autoserv --provision`. It cannot modify its point arguments.
-func runProvision(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+//
+// This function will be obsoleted once runTLSProvision is globally enabled.
+func runProvisionLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
 	var labels []string
 	for k, v := range r.DesiredProvisionableLabels {
@@ -146,9 +174,11 @@ func runProvision(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Resu
 	return ar, nil
 }
 
-// runProvisions provisions a single host. It is a wrapper around
+// runResetLegacy resets a single host. It is a wrapper around
 // `autoserv --reset`.
-func runReset(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+//
+// This function will be obsoleted once runTLSProvision is globally enabled.
+func runResetLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
 	subDir := fmt.Sprintf("prejob_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
@@ -162,4 +192,106 @@ func runReset(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, 
 		return nil, errors.Annotate(err, "run reset").Err()
 	}
 	return ar, nil
+}
+
+type tlsConfig struct {
+	Port int
+}
+
+// runTLSProvision provisions a DUT via the TLS API.
+// See go/cros-tls go/cros-prover
+//
+// Errors returned from the actual provision operation are interpreted into
+// the response. An error is returned for failure modes that can not be mapped
+// to a response.
+func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConfig) (*phosphorus.PrejobResponse, error) {
+	p, err := gsPathToImage(r.DesiredProvisionableLabels)
+	if err != nil {
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+	req := tls.ProvisionRequest{
+		Name: r.DutHostname,
+		Image: &tls.ProvisionRequest_ChromeOSImage{
+			PathOneof: &tls.ProvisionRequest_ChromeOSImage_GsPathPrefix{
+				GsPathPrefix: p,
+			},
+		},
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", tc.Port), grpc.WithInsecure())
+	if err != nil {
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+	defer conn.Close()
+
+	c := tls.NewCommonClient(conn)
+
+	op, err := c.Provision(ctx, &req)
+	if err != nil {
+		// Errors here indicate a failure in starting the operation, not failure
+		// in the provision attempt.
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+
+	op, err = waitForOp(ctx, longrunning.NewOperationsClient(conn), op.GetName())
+	if err != nil {
+		// TODO(pprabhu) Cancel operation.
+		// - Create 60 second headroom before deadline for cancellation.
+		// - Cancel operation and wait up to deadline for cancellation to complete.
+		// - Return multi-error with failure to cancel, if cancellation fails.
+		s, isGRPCErr := status.FromError(err)
+		if err == context.DeadlineExceeded || (isGRPCErr && s.Code() == codes.InvalidArgument) {
+			return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, nil
+		}
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+	if s := op.GetError(); s != nil {
+		// Error here is a failure in the provision attempt.
+		// TODO(pprabhu) Surface detailed errors up.
+		// See https://docs.google.com/document/d/12w5pPntorUY1cgDHHxT3Nu6wdhVox288g5_BnyKCPOE/edit#heading=h.fj6zbs6kop08
+		logging.Errorf(ctx, "Provision failed: (code: %s, message: %s, details: %s", s.Code, s.Message, s.Details)
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
+	}
+	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+}
+
+func waitForOp(ctx context.Context, client longrunning.OperationsClient, name string) (*longrunning.Operation, error) {
+	// WaitOperation() can return before the provided timeout even though the
+	// underlying operation is in progress. Thus, we must loop until timeout
+	// ourselves.
+	for {
+		// WaitOperation respects timeout in the RPC Context as well as through
+		// an explicit field in WaitOperationRequest. We depend on Context
+		// cancellation for timeouts (like everywhere else in this codebase).
+		// On timeout, WaitOperation() will return an appropriate error
+		// response.
+		op, err := client.WaitOperation(ctx, &longrunning.WaitOperationRequest{
+			Name: name,
+		})
+		if err != nil {
+			return op, err
+		}
+		if op.Done {
+			return op, nil
+		}
+	}
+}
+
+const (
+	osVersionKey         = "cros-version"
+	gsImageArchivePrefix = "gs://chromeos-image-archive"
+)
+
+// This computation of the GS archive location from OS image version is a hack.
+// Historical note: This computation used to happen inside autoserv before the
+// introduction of a TLS service. The full path to the image location should be
+// hoisted up to the clients of test platform. This hack is a step in the
+// direction of hoisting the computation up through the stack.
+func gsPathToImage(labels map[string]string) (string, error) {
+	for k, v := range labels {
+		if k == osVersionKey {
+			return fmt.Sprintf("%s/%s", gsImageArchivePrefix, v), nil
+		}
+	}
+	return "", errors.Reason("failed to determine GS location for image").Err()
 }
