@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"infra/appengine/rotang"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -249,135 +248,7 @@ func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
 	return h.sheriffJSONFromExternal(ctx, file, chromeBuildSheriffRotations)
 }
 
-var rotaToName = map[string]string{
-	"angle":             "The ANGLE Wrangle",
-	"ios_internal_roll": "Bling Piper Roll",
-	"blink_bug_triage":  "Blink Bug Triage",
-	"android_stability": "Clank Stability Sheriff (go/clankss)",
-	"ecosystem_infra":   "Ecosystem Infra rotation",
-	"gitadmin":          "Chrome Infra Git Admin Rotation",
-	"gpu":               "Chrome GPU Pixel Wrangling",
-	"headless_roll":     "Headless Chrome roll sheriff",
-	"infra_platform":    "Chops Foundation Triage",
-	"infra_triage":      "Chrome Infra Bug Triage Rotation",
-	"monorail":          "Chrome Infra Monorail Triage Rotation",
-	"network":           "Chrome Network Bug Triage",
-	"perfbot":           "Chromium Perf Bot Sheriff Rotation",
-	"ios":               "Chrome iOS Build Sheriff",
-	"perf":              "Chromium Perf Regression Sheriff Rotation",
-	"stability":         "Chromium Stability Sheriff",
-	"v8_infra_triage":   "V8 Infra Bug Triage Rotation",
-	"webview_bugcop":    "WebView Bug Cop",
-	"flutter_engine":    "Flutter Engine Rotation",
-	"webgl_bug_triage":  "WebGL Bug Triage",
-}
-
 const (
 	fullDay   = 24 * time.Hour
 	timeDelta = 90 * fullDay
 )
-
-type allRotations struct {
-	Rotations []string   `json:"rotations"`
-	Calendar  []dayEntry `json:"calendar"`
-}
-
-type dayEntry struct {
-	Date         string     `json:"date"`
-	Participants [][]string `json:"participants"`
-}
-
-func (h *State) legacyAllRotations(ctx *router.Context, _ string) (string, error) {
-	start := clock.Now(ctx.Context).In(mtvTime)
-	end := start.Add(timeDelta)
-	cs := h.configStore(ctx.Context)
-
-	var res allRotations
-	dateMap := make(map[string]map[string][]string)
-
-	// The Sheriff rotations.
-	for k, v := range rotaToName {
-		rs, err := cs.RotaConfig(ctx.Context, v)
-		if err != nil {
-			logging.Errorf(ctx.Context, "Getting configuration for: %q failed: %v", v, err)
-			continue
-		}
-		if len(rs) != 1 {
-			return "", status.Errorf(codes.Internal, "RotaConfig did not return 1 configuration")
-		}
-		cfg := rs[0]
-		cal := h.legacyCalendar
-		if cfg.Config.Enabled {
-			cal = h.calendar
-		}
-		shifts, err := cal.Events(ctx, cfg, start, end)
-		if err != nil {
-			logging.Errorf(ctx.Context, "Fetching calendar events for: %q failed: %v", v[0], err)
-			continue
-		}
-		res.Rotations = append(res.Rotations, k)
-		buildLegacyRotation(dateMap, k, shifts)
-	}
-	// Troopers rotation.
-	ts, err := h.calendar.TrooperShifts(ctx, trooperCal, matchSummary, trooperShift, start, end)
-	if err != nil {
-		logging.Errorf(ctx.Context, "Fetching calendar events for: Troopers failed: %v", err)
-	}
-	buildLegacyRotation(dateMap, trooperRota, ts)
-	res.Rotations = append(res.Rotations, trooperRota)
-
-	for k, v := range dateMap {
-		entry := dayEntry{
-			Date: k,
-		}
-		for _, r := range res.Rotations {
-			p, ok := v[r]
-			// When JSON encoding slices creating a slice with.
-			// var bla []slice -> Produces `null` in the json output.
-			// If instead creating the slice with.
-			// make([]string,0) -> Will produce `[]`.
-			if !ok || len(p) == 0 {
-				p = make([]string, 0)
-			}
-			entry.Participants = append(entry.Participants, p)
-		}
-		res.Calendar = append(res.Calendar, entry)
-	}
-
-	sort.Slice(res.Calendar, func(i, j int) bool {
-		return res.Calendar[i].Date < res.Calendar[j].Date
-	})
-
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(res); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
-}
-
-func buildLegacyRotation(dateMap map[string]map[string][]string, rota string, shifts []rotang.ShiftEntry) {
-	if len(shifts) < 1 {
-		return
-	}
-	for _, s := range shifts {
-		// Truncade to fulldays for go/chromecals
-		date := time.Date(s.StartTime.Year(), s.StartTime.Month(), s.StartTime.Day(), 0, 0, 0, 0, time.UTC)
-		oc := make([]string, 0)
-		for _, o := range s.OnCall {
-			oc = append(oc, strings.Split(o.Email, "@")[0])
-		}
-		for ; ; date = date.Add(fullDay) {
-			s.StartTime = time.Date(s.StartTime.Year(), s.StartTime.Month(), s.StartTime.Day(), 0, 0, 0, 0, time.UTC)
-			s.EndTime = time.Date(s.EndTime.Year(), s.EndTime.Month(), s.EndTime.Day(), 0, 0, 0, 0, time.UTC)
-			if !((date.After(s.StartTime) || date.Equal(s.StartTime)) && date.Before(s.EndTime)) {
-				break
-			}
-			if _, ok := dateMap[date.Format(elementTimeFormat)]; !ok {
-				dateMap[date.Format(elementTimeFormat)] = make(map[string][]string)
-			}
-			dateMap[date.Format(elementTimeFormat)][rota] = append(dateMap[date.Format(elementTimeFormat)][rota], oc...)
-		}
-	}
-}
