@@ -8,6 +8,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
@@ -127,6 +128,36 @@ func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, p
 
 // UpdateState updates state record for a resource.
 func UpdateState(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
+
+	// TODO(eshwarn): Remove this code block - once all state data is migrated to os namespace
+	// First - update in os namespace
+	newCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		logging.Debugf(ctx, "UpdateState - Failed to set os namespace in context", err)
+	} else {
+		// Update in os namespace
+		sros := proto.Clone(stateRecord).(*ufspb.StateRecord)
+		_, err = state.UpdateStateRecord(newCtx, sros)
+		if err != nil {
+			logging.Errorf(ctx, "UpdateState - Failed to update in os namespace", err)
+		}
+	}
+
+	// Second - update in default namespace
+	newCtx, err = util.SetupDatastoreNamespace(ctx, "")
+	if err != nil {
+		logging.Debugf(ctx, "UpdateState - Failed to set default namespace in context", err)
+	} else {
+		// Update in default namespace
+		srdefault := proto.Clone(stateRecord).(*ufspb.StateRecord)
+		_, err = state.UpdateStateRecord(newCtx, srdefault)
+		if err != nil {
+			logging.Errorf(ctx, "UpdateState - Failed to update in default namespace", err)
+		}
+	}
+	// TODO(eshwarn): Remove this code block - once all state data is migrated to os namespace
+
+	// Third - Update in whatever namespace provided by client and return
 	return state.UpdateStateRecord(ctx, stateRecord)
 }
 
@@ -136,7 +167,7 @@ func GetState(ctx context.Context, resourceName string) (*ufspb.StateRecord, err
 	// TODO(eshwarn): Remove this - once all state data is migrated to os namespace
 	newCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	if err != nil {
-		logging.Debugf(ctx, "Failed to set os namespace in context", err)
+		logging.Debugf(ctx, "GetState - Failed to set os namespace in context", err)
 		return state.GetStateRecord(ctx, resourceName)
 	}
 	record, err := state.GetStateRecord(newCtx, resourceName)
@@ -147,7 +178,7 @@ func GetState(ctx context.Context, resourceName string) (*ufspb.StateRecord, err
 	// default namespace
 	newCtx, err = util.SetupDatastoreNamespace(ctx, "")
 	if err != nil {
-		logging.Debugf(ctx, "Failed to set default namespace in context", err)
+		logging.Debugf(ctx, "GetState - Failed to set default namespace in context", err)
 		return state.GetStateRecord(ctx, resourceName)
 	}
 
