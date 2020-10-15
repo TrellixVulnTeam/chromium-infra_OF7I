@@ -552,6 +552,18 @@ wheel: <
 
 * *universal*
 
+### 2.4.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.4.2"
+>
+```
+
+
+* *universal*
+
 ## **astunparse**
 
 ### 1.5.0

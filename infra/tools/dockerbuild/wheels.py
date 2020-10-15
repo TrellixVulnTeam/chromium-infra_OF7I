@@ -600,6 +600,7 @@ SPECS.update({
         Universal('astroid', '2.1.0', pyversions=['py3']),
         Universal('astroid', '2.2.5', pyversions=['py3']),
         Universal('astroid', '2.3.3', pyversions=['py3']),
+        Universal('astroid', '2.4.2', pyversions=['py3']),
         Universal('astunparse', '1.5.0'),
         Universal('atomicwrites', '1.3.0'),
         Universal('attrs', '17.4.0'),
