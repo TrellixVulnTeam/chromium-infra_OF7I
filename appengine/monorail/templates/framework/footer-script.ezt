@@ -30,6 +30,5 @@
   <script type="text/javascript" defer src="[version_base]/static/js/tracker/tracker-update-issues-hotlists.js" nonce="[nonce]"></script>
   <script type="text/javascript" defer src="[version_base]/static/js/tracker/tracker-util.js" nonce="[nonce]"></script>
   <script type="text/javascript" defer src="[version_base]/static/js/tracker/tracker-onload.js" nonce="[nonce]"></script>
-  <script type="text/javascript" defer src="[version_base]/static/js/tracker/predict.js" nonce="[nonce]"></script>
   <script type="text/javascript" defer src="[version_base]/static/js/framework/clientmon.js" nonce="[nonce]"></script>
 [end]

@@ -237,17 +237,6 @@ export class MrEditIssue extends connectStore(LitElement) {
   }
 
   /**
-   * Concatenates all comment text into one long string to be sent to the
-   * component prediction API.
-   * @return {string} All comments in an issue with their text content
-   *   concatenated.
-   */
-  get _commentsText() {
-    return (this.comments || []).map(
-        (comment) => comment.content).join('\n').trim();
-  }
-
-  /**
    * Turns all LabelRef Objects attached to an issue into an Array of strings
    * containing only the names of those labels that aren't derived.
    * @return {Array<string>} Array of label names.
@@ -291,36 +280,11 @@ export class MrEditIssue extends connectStore(LitElement) {
   }
 
   /**
-   * Dispatches an action to predict a component based on comment text.
-   * @param {Object} issueDelta Changes currently present in the edit form.
-   * @param {string} newCommentContent The text for the comment the user
-   *   typed into the edit form.
-   */
-  _predictComponent(issueDelta, newCommentContent) {
-    // Component prediction is only enabled on Chromium issues.
-    if (this.issueRef.projectName !== 'chromium') return;
-
-    let text = this._commentsText;
-    if (issueDelta.summary) {
-      text += '\n' + issueDelta.summary;
-    } else if (this.issue.summary) {
-      text += '\n' + this.issue.summary;
-    }
-    if (newCommentContent) {
-      text += '\n' + newCommentContent.trim();
-    }
-
-    store.dispatch(issueV0.predictComponent(this.issueRef.projectName, text));
-  }
-
-  /**
-   * Form change handler that runs presubmit and component prediction on the
-   * form.
+   * Form change handler that runs presubmit on the form.
    * @param {Event} evt
    */
   _onChange(evt) {
     this._presubmitIssue(evt.detail.delta);
-    this._predictComponent(evt.detail.delta, evt.detail.commentContent);
   }
 
   /**

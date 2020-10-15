@@ -754,32 +754,6 @@ describe('issue', () => {
       );
     });
 
-    it('predictComponent sends prediction request', async () => {
-      prpcCall.callsFake(() => {
-        return {componentRef: {path: 'UI>Test'}};
-      });
-
-      const dispatch = sinon.stub();
-
-      const action = issueV0.predictComponent('chromium',
-          'test comments\nsummary');
-
-      await action(dispatch);
-
-      sinon.assert.calledOnce(prpcCall);
-
-      sinon.assert.calledWith(prpcCall, 'monorail.Features',
-          'PredictComponent', {
-            projectName: 'chromium',
-            text: 'test comments\nsummary',
-          });
-
-      sinon.assert.calledWith(dispatch, {type: 'PREDICT_COMPONENT_START'});
-      sinon.assert.calledWith(dispatch, {
-        type: 'PREDICT_COMPONENT_SUCCESS',
-        component: 'UI>Test',
-      });
-    });
 
     describe('updateApproval', async () => {
       const APPROVAL = {

@@ -305,6 +305,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
 
     return features_pb2.DeleteHotlistResponse()
 
+  # TODO(https://crbug.com/monorail/7515): Replace or delete PredictComponent.
   @monorail_servicer.PRPCMethod
   def PredictComponent(self, mc, request):
     """Predict the component of an issue based on the given text."""

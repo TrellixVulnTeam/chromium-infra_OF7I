@@ -62,10 +62,6 @@ const PRESUBMIT_START = 'PRESUBMIT_START';
 const PRESUBMIT_SUCCESS = 'PRESUBMIT_SUCCESS';
 const PRESUBMIT_FAILURE = 'PRESUBMIT_FAILURE';
 
-const PREDICT_COMPONENT_START = 'PREDICT_COMPONENT_START';
-const PREDICT_COMPONENT_SUCCESS = 'PREDICT_COMPONENT_SUCCESS';
-const PREDICT_COMPONENT_FAILURE = 'PREDICT_COMPONENT_FAILURE';
-
 export const FETCH_IS_STARRED_START = 'FETCH_IS_STARRED_START';
 export const FETCH_IS_STARRED_SUCCESS = 'FETCH_IS_STARRED_SUCCESS';
 const FETCH_IS_STARRED_FAILURE = 'FETCH_IS_STARRED_FAILURE';
@@ -125,7 +121,6 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
   starredIssues: Object<IssueRefString, Boolean>,
   permissions: Array<string>,
   presubmitResponse: Object,
-  predictedComponent: string,
 
   requests: {
     fetch: ReduxRequestState,
@@ -134,7 +129,6 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
     fetchPermissions: ReduxRequestState,
     starringIssues: Object<string, ReduxRequestState>,
     presubmit: ReduxRequestState,
-    predictComponent: ReduxRequestState,
     fetchComments: ReduxRequestState,
     fetchCommentReferences: ReduxRequestState,
     fetchFederatedReferences: ReduxRequestState,
@@ -412,19 +406,6 @@ const presubmitResponseReducer = createReducer({}, {
 });
 
 /**
- * To display the results of our ML component predictor, this reducer updates
- * the store with a recommended component name for the currently viewed issue.
- * @param {string} state The name of the component recommended by the
- *   prediction.
- * @param {AnyAction} action
- * @param {string} action.component Predicted component name.
- * @return {string}
- */
-const predictedComponentReducer = createReducer('', {
-  [PREDICT_COMPONENT_SUCCESS]: (_state, {component}) => component,
-});
-
-/**
  * Stores the user's permissions for a given issue.
  * @param {Array<string>} state Permission list. Each permission is a string
  *   with the name of the permission.
@@ -455,10 +436,6 @@ const requestsReducer = combineReducers({
       STAR_START, STAR_SUCCESS, STAR_FAILURE),
   presubmit: createRequestReducer(
       PRESUBMIT_START, PRESUBMIT_SUCCESS, PRESUBMIT_FAILURE),
-  predictComponent: createRequestReducer(
-      PREDICT_COMPONENT_START,
-      PREDICT_COMPONENT_SUCCESS,
-      PREDICT_COMPONENT_FAILURE),
   fetchComments: createRequestReducer(
       FETCH_COMMENTS_START, FETCH_COMMENTS_SUCCESS, FETCH_COMMENTS_FAILURE),
   fetchCommentReferences: createRequestReducer(
@@ -508,7 +485,6 @@ export const reducer = combineReducers({
   starredIssues: starredIssuesReducer,
   permissions: permissionsReducer,
   presubmitResponse: presubmitResponseReducer,
-  predictedComponent: predictedComponentReducer,
 
   requests: requestsReducer,
 });
@@ -625,7 +601,6 @@ export const issueListLoaded = createSelector(
 
 export const permissions = (state) => state.issue.permissions;
 export const presubmitResponse = (state) => state.issue.presubmitResponse;
-export const predictedComponent = (state) => state.issue.predictedComponent;
 
 const _relatedIssues = (state) => state.issue.relatedIssues || {};
 export const relatedIssues = createSelector(_relatedIssues,
@@ -1336,32 +1311,6 @@ export const presubmit = (issueRef, issueDelta) => async (dispatch) => {
     dispatch({type: PRESUBMIT_SUCCESS, presubmitResponse: resp});
   } catch (error) {
     dispatch({type: PRESUBMIT_FAILURE, error: error});
-  }
-};
-
-/**
- * Sends a request to run ML on a user's edits to guess what component
- * might fit an issue.
- * @param {string} projectName The project this check is happening in.
- * @param {string} text Text to run prediction against.
- * @return {function(function): Promise<void>}
- */
-export const predictComponent = (projectName, text) => async (dispatch) => {
-  dispatch({type: PREDICT_COMPONENT_START});
-
-  const message = {
-    projectName,
-    text,
-  };
-
-  try {
-    const response = await prpcClient.call(
-        'monorail.Features', 'PredictComponent', message);
-    const component = response.componentRef && response.componentRef.path ?
-      response.componentRef.path : '';
-    dispatch({type: PREDICT_COMPONENT_SUCCESS, component});
-  } catch (error) {
-    dispatch({type: PREDICT_COMPONENT_FAILURE, error: error});
   }
 };
 

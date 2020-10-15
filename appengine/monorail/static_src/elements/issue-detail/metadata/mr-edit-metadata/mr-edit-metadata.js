@@ -165,9 +165,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
         mr-issue-star {
           margin-right: 4px;
         }
-        .predicted-component {
-          cursor: pointer;
-        }
       `,
     ];
   }
@@ -440,39 +437,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
         @change=${this._processChanges}
         multi
       ></mr-edit-field>
-      ${this._renderPredictedComponent()}
-    `;
-  }
-
-  /**
-   * @return {TemplateResult}
-   * @private
-   */
-  _renderPredictedComponent() {
-    if (!this.predictedComponent) return '';
-
-    const componentsInput = this.shadowRoot.getElementById('componentsInput');
-    const components = componentsInput ?
-      [...componentsInput.values] :
-      componentRefsToStrings(this.components);
-    if (components.includes(this.predictedComponent)) {
-      return '';
-    }
-
-    return html`
-      <span></span>
-      <div>
-        <i>Suggested:</i>
-        <chops-chip
-          class="predicted-component"
-          title="Click to add ${this.predictedComponent} to components"
-          @keyup=${this._addPredictedComponent}
-          @click=${this._addPredictedComponent}
-          focusable
-        >
-          ${this.predictedComponent}
-        </chops-chip>
-      </div>
     `;
   }
 
@@ -666,7 +630,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
       error: {type: String},
       sendEmail: {type: Boolean},
       presubmitResponse: {type: Object},
-      predictedComponent: {type: String},
       fieldValueMap: {type: Object},
       issueType: {type: String},
       optionsPerEnumField: {type: String},
@@ -781,7 +744,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.issueRef = issueV0.viewedIssueRef(state);
     this._permissions = permissions.byName(state);
     this.presubmitResponse = issueV0.presubmitResponse(state);
-    this.predictedComponent = issueV0.predictedComponent(state);
     this.projectConfig = projectV0.viewedConfig(state);
     this.projectName = issueV0.viewedIssueRef(state).projectName;
     this.issuePermissions = issueV0.permissions(state);
@@ -1086,14 +1048,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
         commentContent: this.getCommentContent(),
       },
     }));
-  }
-
-  _addPredictedComponent(e) {
-    if (e instanceof MouseEvent || e.code === 'Enter') {
-      const components = this.shadowRoot.getElementById('componentsInput');
-      if (!components) return;
-      components.setValue(components.values.concat([this.predictedComponent]));
-    }
   }
 
   // This function exists because <label for="inputId"> doesn't work for custom

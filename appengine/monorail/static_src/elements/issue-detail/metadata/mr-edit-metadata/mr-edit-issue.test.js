@@ -208,45 +208,6 @@ describe('mr-edit-issue', () => {
 
     sinon.assert.notCalled(prpcClient.call);
   });
-
-  it('predicts components for chromium on form change', async () => {
-    element.issueRef = {projectName: 'chromium'};
-    element.comments = [{content: 'comments text'}];
-    element.issue = {summary: 'summary'};
-
-    await element.updateComplete;
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
-    editMetadata.dispatchEvent(new CustomEvent('change', {
-      detail: {
-        delta: {},
-        commentContent: 'commentContent',
-      },
-    }));
-
-    const expectedText = 'comments text\nsummary\ncommentContent';
-    sinon.assert.calledWith(prpcClient.call, 'monorail.Features',
-        'PredictComponent', {text: expectedText, projectName: 'chromium'});
-  });
-
-  it('does not predict components for other projects', () => {
-    element.issueRef = {projectName: 'proj'};
-
-    element._predictComponent({}, 'test');
-
-    sinon.assert.notCalled(prpcClient.call);
-  });
-
-  it('predicts component using edited summary if one exists', () => {
-    element.issueRef = {projectName: 'chromium'};
-    element.comments = [{content: 'comments text'}];
-    element.issue = {summary: 'old summary'};
-
-    element._predictComponent({summary: 'new summary'}, 'new comment');
-
-    const expectedText = 'comments text\nnew summary\nnew comment';
-    sinon.assert.calledWith(prpcClient.call, 'monorail.Features',
-        'PredictComponent', {text: expectedText, projectName: 'chromium'});
-  });
 });
 
 describe('allowRemovedRestrictions', () => {
