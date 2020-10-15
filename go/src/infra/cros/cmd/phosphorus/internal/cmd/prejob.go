@@ -67,7 +67,7 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 const (
 	// TODO(pprabhu): Find a configurable way for drone to provide us the port
 	// number.
-	tlsPort = 7142
+	tlsPort = 7152
 )
 
 func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
