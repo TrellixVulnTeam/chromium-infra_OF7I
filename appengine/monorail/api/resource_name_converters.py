@@ -122,7 +122,16 @@ def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
   issue_ids, misses = services.issue.LookupIssueIDsFollowMoves(
       cnxn, project_id_local_ids)
   if misses:
-    raise exceptions.NoSuchIssueException('Issue(s) %r not found' % misses)
+    # Raise error with resource names rather than backend IDs.
+    project_names_by_id = {
+        p_id: p_name for p_name, p_id in project_ids_by_name.iteritems()
+    }
+    misses_by_resource_name = [
+        _ConstructIssueName(project_names_by_id[p_id], local_id)
+        for (p_id, local_id) in misses
+    ]
+    raise exceptions.NoSuchIssueException(
+        'Issue(s) %r not found' % misses_by_resource_name)
   return issue_ids
 
 # FieldDefs
@@ -481,9 +490,14 @@ def ConvertIssueNames(cnxn, issue_ids, services):
   for issue_id in issue_ids:
     project, local_id = issue_refs_dict.get(issue_id, (None, None))
     if project and local_id:
-      issue_ids_to_names[issue_id] = ISSUE_NAME_TMPL.format(
-          project=project, local_id=local_id)
+      issue_ids_to_names[issue_id] = _ConstructIssueName(project, local_id)
   return issue_ids_to_names
+
+
+def _ConstructIssueName(project, local_id):
+  # type: (str, int) -> str
+  """Takes project name and issue local id returns the Issue resource name."""
+  return ISSUE_NAME_TMPL.format(project=project, local_id=local_id)
 
 
 def ConvertApprovalValueNames(cnxn, issue_id, services):

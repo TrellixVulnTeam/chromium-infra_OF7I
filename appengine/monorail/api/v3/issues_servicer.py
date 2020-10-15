@@ -136,7 +136,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
     Raises:
       InputException: the given name format or page_size are not valid.
-      NoSuchIssue: the parent is not found.
+      NoSuchIssueException: the parent is not found.
       PermissionException: the user is not allowed to view the parent.
     """
     issue_id = rnc.IngestIssueName(mc.cnxn, request.parent, self.services)

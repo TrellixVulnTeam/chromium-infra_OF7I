@@ -80,7 +80,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.services.issue.TestAddIssue(self.issue_1)
 
     self.project_2 = self.services.project.TestAddProject('cow', project_id=788)
-    self.issue_2_resource_name = 'projects/cow/issues/1234'
+    self.issue_2_resource_name = 'projects/cow/issues/1235'
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         1235,
@@ -191,6 +191,19 @@ class IssuesServicerTest(unittest.TestCase):
     with self.assertRaisesRegexp(
         exceptions.InputException,
         'Invalid resource name: projects/cow/badformat/1235.'):
+      self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
+
+  def testBatchGetIssues_NonExistentIssues(self):
+    """We raise an exception with bad input to batch get issues."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/chicken',
+        names=['projects/chicken/issues/1', 'projects/chicken/issues/2'])
+    with self.assertRaisesRegexp(
+        exceptions.NoSuchIssueException,
+        "\['projects/chicken/issues/1', 'projects/chicken/issues/2'\] not found"
+    ):
       self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
 
   @mock.patch('api.v3.api_constants.MAX_BATCH_ISSUES', 2)

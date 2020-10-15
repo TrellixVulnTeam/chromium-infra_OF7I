@@ -341,7 +341,10 @@ class MonorailServicer(object):
       prpc_context.set_details('The template does not exist.')
     elif exc_type == exceptions.NoSuchIssueException:
       prpc_context.set_code(codes.StatusCode.NOT_FOUND)
-      prpc_context.set_details('The issue does not exist.')
+      details = 'The issue does not exist.'
+      if e.message:
+        details = cgi.escape(e.message, quote=True)
+      prpc_context.set_details(details)
     elif exc_type == exceptions.NoSuchIssueApprovalException:
       prpc_context.set_code(codes.StatusCode.NOT_FOUND)
       prpc_context.set_details('The issue approval does not exist.')

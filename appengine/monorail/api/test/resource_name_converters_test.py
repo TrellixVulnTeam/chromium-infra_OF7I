@@ -183,7 +183,7 @@ class ResourceNameConverterTest(unittest.TestCase):
     names = [
         'hotlists/78909/items/proj.1',
         'hotlists/78909/items/goose.5']
-    with self.assertRaises(exceptions.NoSuchIssueException):
+    with self.assertRaisesRegexp(exceptions.NoSuchIssueException, '%r' % names):
       rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
 
   def testConvertHotlistName(self):
@@ -214,7 +214,8 @@ class ResourceNameConverterTest(unittest.TestCase):
           self.cnxn, 'projects/noproj/issues/1/approvalValues/1', self.services)
 
   def testIngestApprovalValueName_IssueDoesNotExist(self):
-    with self.assertRaises(exceptions.NoSuchIssueException):
+    with self.assertRaisesRegexp(exceptions.NoSuchIssueException,
+                                 'projects/proj/issues/404'):
       rnc.IngestApprovalValueName(
           self.cnxn, 'projects/proj/issues/404/approvalValues/1', self.services)
 
@@ -308,6 +309,13 @@ class ResourceNameConverterTest(unittest.TestCase):
           self.cnxn, ['projects/proj/issues/1', 'projects/proj/issues/2'],
           self.services)
 
+  def testIngestIssueNames_ManyDoNotExist(self):
+    """We get an exception if one issue name provided does not exist."""
+    dne_issues = ['projects/proj/issues/2', 'projects/proj/issues/3']
+    with self.assertRaisesRegexp(exceptions.NoSuchIssueException,
+                                 '%r' % dne_issues):
+      rnc.IngestIssueNames(self.cnxn, dne_issues, self.services)
+
   def testIngestIssueNames_ProjectsNotExist(self):
     """Aggregated exceptions raised if projects are not found."""
     with self.assertRaisesRegexp(exceptions.NoSuchProjectException,
@@ -346,7 +354,8 @@ class ResourceNameConverterTest(unittest.TestCase):
           self.cnxn, 'projects/doesnotexist/issues/1/comments/0', self.services)
 
   def testIngestCommentName_NoSuchIssue(self):
-    with self.assertRaises(exceptions.NoSuchIssueException):
+    with self.assertRaisesRegexp(exceptions.NoSuchIssueException,
+                                 "['projects/proj/issues/404']"):
       rnc.IngestCommentName(
           self.cnxn, 'projects/proj/issues/404/comments/0', self.services)
 

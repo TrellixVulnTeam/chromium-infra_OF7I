@@ -81,6 +81,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
       PermissionException if the user is not allowed to rerank the hotlist.
       InputException if request.target_position is invalid or
         request.hotlist_items is empty or contains invalid items.
+      NoSuchIssueException if hotlist item does not exist.
     """
 
     hotlist_id = rnc.IngestHotlistName(request.name)
