@@ -123,6 +123,9 @@ and will be applied with `git apply`).
 
   * `git` - This checks out a semver tag in the repo.
   * `cipd` - This fetches data from a CIPD package.
+  * `url` - This is used for packages that do not provide a stable distribution
+    like git for their source code. An original download url will be passed in
+    this method to download the source artifact from third party distribution.
   * `script` - Used for "weird" packages which are distributed via e.g.
     an HTML download page or an API. The script must be able to return the
     'latest' version of its source, as well as to actually fetch a specified

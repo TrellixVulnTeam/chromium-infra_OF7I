@@ -488,6 +488,9 @@ and will be applied with `git apply`).
 
   * `git` - This checks out a semver tag in the repo.
   * `cipd` - This fetches data from a CIPD package.
+  * `url` - This is used for packages that do not provide a stable distribution
+    like git for their source code. An original download url will be passed in
+    this method to download the source artifact from third party distribution.
   * `script` - Used for "weird" packages which are distributed via e.g.
     an HTML download page or an API. The script must be able to return the
     'latest' version of its source, as well as to actually fetch a specified
@@ -658,9 +661,9 @@ This module uses the following named caches:
   * `osx_sdk` - Cache for `depot_tools/osx_sdk`. Only on Mac.
   * `windows_sdk` - Cache for `depot_tools/windows_sdk`. Only on Windows.
 
-#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#380)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#383)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#620)(self, packages=(), platform='', force_build=False):**
+&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#623)(self, packages=(), platform='', force_build=False):**
 
 Executes entire {fetch,build,package,verify,upload} pipeline for all the
 packages listed, targeting the given platform.
@@ -676,9 +679,9 @@ Args:
 Returns (list[(cipd_pkg, cipd_version)], set[str]) of built CIPD packages
 and their tagged versions, as well as a list of unsupported packages.
 
-&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#405)(self):**
+&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#408)(self):**
 
-&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#531)(self, path):**
+&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#534)(self, path):**
 
 Loads all package definitions from the given path.
 
@@ -704,7 +707,7 @@ whose name is already registered. This could occur if you call
 load_packages_from_path multiple times, and one of the later calls tries to
 load a package which was registered under one of the earlier calls.
 
-&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#409)(self, experimental=False):**
+&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#412)(self, experimental=False):**
 
 Returns the CIPD package name prefix (str), if any is set.
 
@@ -712,7 +715,7 @@ This will prepend 'experimental/' to the currently set prefix if:
   * The recipe is running in experimental mode; OR
   * You pass experimental=True
 
-&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#423)(self, prefix):**
+&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#426)(self, prefix):**
 
 Set the CIPD package name prefix (str).
 

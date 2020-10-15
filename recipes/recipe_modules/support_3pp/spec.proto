@@ -44,6 +44,7 @@ message Spec {
         GitSource git = 1;
         CipdSource cipd = 2;
         ScriptSource script = 3;
+        UrlSource url = 4;
       }
 
       // (optional) Run checkout in this subdirectory of the install script's
@@ -56,7 +57,7 @@ message Spec {
       // source method then the files in the git repo will be checked out to
       // `/path/to/checkout/go/src/repo.com`, but the install script will still
       // run in `/path/to/checkout`.
-      string subdir = 4;
+      string subdir = 5;
 
       // (optional) If set to true, the source checkout will produce a single
       // archive (zip or tar) file in the checkout directory, and the recipe
@@ -74,8 +75,8 @@ message Spec {
       //   with all source files inside that. Pruning these archives makes the
       //   installation scripts easier. If you run into a case where this
       //   behavior is undesired, set `no_archive_prune` to true.
-      bool unpack_archive = 5;
-      bool no_archive_prune = 6;
+      bool unpack_archive = 6;
+      bool no_archive_prune = 7;
 
       // (optional) Directories relative to the project folder holding patches
       // to apply with "git apply".
@@ -86,7 +87,7 @@ message Spec {
       // This is provided as a list option so that different sets of patches can
       // be applied for different values of ${platform}, possibly with some
       // overlapping base patches.
-      repeated string patch_dir = 7;
+      repeated string patch_dir = 8;
 
       // (optional) Used to differentiate from the stock symver during
       // compilation and in the generated CIPD package tags.
@@ -94,7 +95,7 @@ message Spec {
       // For example, if this is `my_org1`, and we were building `1.2.3` of the
       // source, then this would upload with the CIPD tag of
       // `version:1.2.3.my_org1`
-      string patch_version = 8;
+      string patch_version = 9;
     }
 
     message Build {
@@ -415,3 +416,28 @@ message ScriptSource {
   repeated string name = 1;
 }
 
+// This will provide a original download url to fetch sources from third party.
+//
+// This will be used for replacement of CipdSource where packages are manually
+// uploaded to cipd.
+message UrlSource {
+  // (required) The URL to the download page where we obtained this source. This
+  // is required and used to fetch source.
+  string download_url = 1;
+  // (required) The version of the package source fetched from `download_url`.
+  // Please make sure those two are in sync.
+  // TODO(akashmukherjee): Implement a presubmit check to make sure of the sync.
+  //
+  // For example:
+  // source {
+  //   url {
+  //     download_url: "https://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz"
+  //     version: "2.69"
+  //   }
+  // }
+  //
+  // This version may also be used when this package is built without version
+  // specified (e.g. as a dep of other packages). This matches the current
+  // CIPDSource behavior.
+  string version = 2;
+}
