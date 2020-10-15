@@ -15,6 +15,7 @@ DEPS = [
   'recipe_engine/raw_io',
   'recipe_engine/runtime',
   'recipe_engine/step',
+  'recipe_engine/url',
 
   'depot_tools/git',
   'depot_tools/osx_sdk',

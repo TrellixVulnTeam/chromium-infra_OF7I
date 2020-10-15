@@ -247,6 +247,28 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
 
 #### Private stuff
 
+def _download_source(api, spec, url, checkout_path,
+                     source_hash=None): # pragma: no cover
+  """Fetches the raw source from the given remote location.
+
+  Args:
+    * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
+    * spec (ResolvedSpec) - The package we want to build.
+    * url - Remote source URL to download package.
+    * checkout_path - Path to place the downloaded source.
+    * source_hash - Optional source hash, used for git method.
+  """
+  # TODO(akashmukherjee): Add download rule for source:url after updating proto.
+  method_name, _ = spec.source_method
+  # Checkout a raw git source given remote git hash.
+  if method_name == 'git':
+    api.git.checkout(url, source_hash, checkout_path)
+  elif method_name == 'script':
+    api.url.get_file(url, api.path.join(checkout_path, 'raw_source'))
+  else:  # pragma: no cover
+    assert False, 'Unknown source type %r' % (method_name,)
+
+
 
 def _do_checkout(api, workdir, spec, version, source_hash='',
                  source_cipd_spec=None):
