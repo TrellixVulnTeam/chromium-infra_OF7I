@@ -446,13 +446,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=7288577996977909918",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=7288577996975909920",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit 7288577996977909918",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit 7288577996975909920",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

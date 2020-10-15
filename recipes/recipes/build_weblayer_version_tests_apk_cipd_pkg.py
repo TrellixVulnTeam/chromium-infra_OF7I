@@ -204,14 +204,13 @@ def get_chromium_versions_to_add(api):
   return recent_milestone_versions
 
 
-def get_existing_cipd_tags(variants_pyl_content, variant_name_tmpls):
-  variants = ast.literal_eval(variants_pyl_content)
+def get_existing_cipd_tags(variants_pyl_ast, variant_name_tmpls):
   tags = set()
   for tmpl in variant_name_tmpls:
     for lib in [CLIENT, IMPL]:
       variant_name = tmpl % lib
-      if variant_name in variants:
-        cipd_tag = variants[
+      if variant_name in variants_pyl_ast:
+        cipd_tag = variants_pyl_ast[
           variant_name]['swarming']['cipd_packages'][0]['revision']
         tags.add(cipd_tag)
   return tags
@@ -221,7 +220,7 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
   # Get recent milestone versions
   recent_milestone_versions = get_chromium_versions_to_add(api)
   variants_lines = variants_pyl_content.splitlines()
-
+  variants_pyl_ast = ast.literal_eval(variants_pyl_content)
   variants_name_tmpls = [
       WEBLAYER_NTH_TMPL, WEBLAYER_NTH_MINUS_ONE_TMPL,
       WEBLAYER_NTH_MINUS_TWO_TMPL]
@@ -229,7 +228,7 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
   versions_to_variants_id_tmpl = zip(
       recent_milestone_versions, variants_name_tmpls)
 
-  existing_cipd_tags = get_existing_cipd_tags(variants_pyl_content,
+  existing_cipd_tags = get_existing_cipd_tags(variants_pyl_ast,
                                               variants_name_tmpls)
   # TODO(crbug.com/1041619): Add presubmit check for variants.pyl
   # that checks if variants.pyl follows a format which allows the code
@@ -243,6 +242,9 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
         variants_id = tmpl % library
 
         if variants_id in variants_lines[lineno]:
+          variant_cipd_tag = variants_pyl_ast[
+              variants_id]['swarming']['cipd_packages'][0]['revision']
+          variant_version = variant_cipd_tag.replace('version:', '')
           new_variants_lines.append(variants_lines[lineno])
           contains_recent_milestone_version = False
           open_bracket_count = 1
@@ -261,7 +263,8 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
               current_config_lines.append(variants_lines[lineno])
               lineno += 1
 
-          if not contains_recent_milestone_version:
+          if (not contains_recent_milestone_version and
+                  is_higher_version(variant_version, version)):
             cipd_pkgs_to_create.add(version)
             new_variants_lines.extend(
                 generate_skew_test_config_lines(library, version))
@@ -594,7 +597,7 @@ def GenTests(api):
       api.post_process(post_process.DropExpectation))
 
   yield api.test(
-      'build-no-cipd-pkgs',
+      'higher-version-in-variants-pyl',
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
-      url_lib_json_step_datas(['83.0.4103.56']))
+      url_lib_json_step_datas(['83.0.4103.32']))

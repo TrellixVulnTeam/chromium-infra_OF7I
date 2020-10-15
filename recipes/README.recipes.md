@@ -802,7 +802,7 @@ To build a new package for all platforms:
 
 [DEPS](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#11): [build/chromium][build/recipe_modules/chromium], [build/goma][build/recipe_modules/goma], [build/zip][build/recipe_modules/zip], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
-&mdash; **def [RunSteps](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#387)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#390)(api):**
 
 &mdash; **def [check\_correct\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#167)(api, version):**
 
@@ -810,7 +810,7 @@ To build a new package for all platforms:
 
 &mdash; **def [commit\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#128)(hash_value, api):**
 
-&mdash; **def [env\_with\_depot\_tools](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#282)(api):**
+&mdash; **def [env\_with\_depot\_tools](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#285)(api):**
 
 &mdash; **def [generate\_skew\_test\_config\_lines](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#106)(library, version):**
 
@@ -818,19 +818,19 @@ To build a new package for all platforms:
 
 &mdash; **def [get\_chromium\_versions\_to\_add](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#179)(api):**
 
-&mdash; **def [get\_existing\_cipd\_tags](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#207)(variants_pyl_content, variant_name_tmpls):**
+&mdash; **def [get\_existing\_cipd\_tags](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#207)(variants_pyl_ast, variant_name_tmpls):**
 
 &mdash; **def [is\_higher\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#142)(version, query_version):**
 
-&mdash; **def [maybe\_build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#287)(api, cipd_pkgs_to_create, existing_cipd_tags):**
+&mdash; **def [maybe\_build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#290)(api, cipd_pkgs_to_create, existing_cipd_tags):**
 
-&mdash; **def [maybe\_update\_variants\_pyl](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#220)(api, variants_pyl_content, variants_pyl_path):**
+&mdash; **def [maybe\_update\_variants\_pyl](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#219)(api, variants_pyl_content, variants_pyl_path):**
 
 &mdash; **def [releases\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#123)(platform, channel, num, api):**
 
-&mdash; **def [upload\_changes](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#343)(api, new_variants_lines, variants_pyl_path, cipd_pkgs_to_create):**
+&mdash; **def [upload\_changes](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#346)(api, new_variants_lines, variants_pyl_path, cipd_pkgs_to_create):**
 
-&mdash; **def [wait\_for\_cl\_to\_land](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#369)(api):**
+&mdash; **def [wait\_for\_cl\_to\_land](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#372)(api):**
 ### *recipes* / [build\_wheels](/recipes/recipes/build_wheels.py)
 
 [DEPS](/recipes/recipes/build_wheels.py#5): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]
