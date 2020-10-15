@@ -2117,6 +2117,18 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.4.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/lazy-object-proxy/${vpython_platform}"
+  version: "version:1.4.3"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **libusb1**
 
 ### 1.5.3

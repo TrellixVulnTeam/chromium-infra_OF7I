@@ -255,6 +255,18 @@ SPECS.update({
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
+            'lazy-object-proxy',
+            '1.4.3',
+            packaged=[
+                'manylinux-x64-cp38',
+            ],
+            skip_plat=[
+                'linux-arm64-py3',
+                'mac-x64-cp38',
+            ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'netifaces',
             '0.10.9',
             packaged=[
