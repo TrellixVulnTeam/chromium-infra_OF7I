@@ -132,8 +132,8 @@ def _GetPostsubmitDefaultReportConfig(luci_project):
       'default_postsubmit_report_config', {}).get(luci_project, None)
 
 
-def _GetWhitelistedBuilders():
-  """Returns a set of whitelisted builders that the service should process.
+def _GetAllowedBuilders():
+  """Returns a set of allowed builders that the service should process.
 
   builders are specified in canonical string representations, and following is
   an example config:
@@ -348,7 +348,7 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
     file_path (str): Source absolute path to the file.
 
   Returns:
-    A DependencyRepository if a matched one is found and it is whitelisted,
+    A DependencyRepository if a matched one is found and it is allowed,
     otherwise None.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
@@ -875,8 +875,8 @@ class ProcessCodeCoverageData(BaseHandler):
 
     builder_id = '%s/%s/%s' % (build.builder.project, build.builder.bucket,
                                build.builder.builder)
-    if builder_id not in _GetWhitelistedBuilders():
-      logging.info('%s is not whitelisted', builder_id)
+    if builder_id not in _GetAllowedBuilders():
+      logging.info('%s is not allowed', builder_id)
       return
 
     # Convert the Struct to standard dict, to use .get, .iteritems etc.

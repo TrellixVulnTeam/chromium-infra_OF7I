@@ -35,12 +35,12 @@ class AclTest(unittest.TestCase):
 
   @mock.patch.object(acl.appengine_util, 'IsStaging', return_value=False)
   def testAllowedAppAccountCanTriggerNewAnalysis(self, _):
-    for email in constants.WHITELISTED_APP_ACCOUNTS:
+    for email in constants.ALLOWED_APP_ACCOUNTS:
       self.assertTrue(acl.CanTriggerNewAnalysis(email, False))
 
   @mock.patch.object(acl.appengine_util, 'IsStaging', return_value=True)
   def testAllowedStagingAppAccountCanTriggerNewAnalysis(self, _):
-    for email in constants.WHITELISTED_STAGING_APP_ACCOUNTS:
+    for email in constants.ALLOWED_STAGING_APP_ACCOUNTS:
       self.assertTrue(acl.CanTriggerNewAnalysis(email, False))
 
   def testUnkownUserCanNotTriggerNewAnalysis(self):

@@ -15,15 +15,15 @@ def IsPrivilegedUser(user_email, is_admin):
 
 def IsAllowedClientId(client_id):
   """Returns True if the given client id is allowed."""
-  return client_id in constants.WHITELISTED_CLIENT_IDS
+  return client_id in constants.ALLOWED_CLIENT_IDS
 
 
 def CanTriggerNewAnalysis(user_email, is_admin):
   """Returns True if the given email account could trigger a new analysis."""
   if not appengine_util.IsStaging():
-    allowed_app_accounts = constants.WHITELISTED_APP_ACCOUNTS
+    allowed_app_accounts = constants.ALLOWED_APP_ACCOUNTS
   else:
-    allowed_app_accounts = constants.WHITELISTED_STAGING_APP_ACCOUNTS
+    allowed_app_accounts = constants.ALLOWED_STAGING_APP_ACCOUNTS
   return IsPrivilegedUser(user_email,
                           is_admin) or (user_email in allowed_app_accounts)
 

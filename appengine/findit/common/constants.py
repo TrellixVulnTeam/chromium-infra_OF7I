@@ -38,22 +38,23 @@ WATERFALL_ALERTS_URL = 'https://sheriff-o-matic.appspot.com/alerts'
 COMPILE_STEP_NAME = 'compile'
 
 # TODO: move this to config.
-# Whitelisted prod app ids for authorized access to Findit prod.
-WHITELISTED_APP_ACCOUNTS = [
+# Allowed prod app ids for authorized access to Findit prod.
+ALLOWED_APP_ACCOUNTS = [
     'findit-for-me@appspot.gserviceaccount.com',
     'sheriff-o-matic@appspot.gserviceaccount.com',
 ]
-
-# Whitelisted staging app ids for authorized access to Findit staging.
-WHITELISTED_STAGING_APP_ACCOUNTS = [
+WHITELISTED_APP_ACCOUNTS = ALLOWED_APP_ACCOUNTS
+# Allowed staging app ids for authorized access to Findit staging.
+ALLOWED_STAGING_APP_ACCOUNTS = [
     'findit-for-me-staging@appspot.gserviceaccount.com',
     'sheriff-o-matic-staging@appspot.gserviceaccount.com',
 ]
-
-# Whitelisted client ids for authorized access to Findit prod and staging.
-WHITELISTED_CLIENT_IDS = [
+WHITELISTED_STAGING_APP_ACCOUNTS = ALLOWED_STAGING_APP_ACCOUNTS
+# Allowed client ids for authorized access to Findit prod and staging.
+ALLOWED_CLIENT_IDS = [
     API_EXPLORER_CLIENT_ID,
 ]
+WHITELISTED_CLIENT_IDS = ALLOWED_CLIENT_IDS
 
 # Directory of html templates.
 HTML_TEMPLATE_DIR = os.path.realpath(
