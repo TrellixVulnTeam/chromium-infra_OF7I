@@ -218,6 +218,10 @@ func (client *inventoryClientV2) updateAssets(ctx context.Context, deletedDevice
 // FilterDUTHostnames produces a list of only the DUT hostnames that exist.
 func (client *inventoryClientV2) FilterDUTHostnames(ctx context.Context, hostnames []string) ([]string, error) {
 	var out []string
+	// The RPC will fail if no hostnames are provided, so return early instead.
+	if len(hostnames) == 0 {
+		return out, nil
+	}
 	req := &invV2Api.GetCrosDevicesRequest{}
 	for _, hostname := range hostnames {
 		req.Ids = append(req.Ids, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: hostname}})
