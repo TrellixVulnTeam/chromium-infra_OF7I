@@ -27,6 +27,7 @@ regenerate: $(INFRA)/cipd/protoc $(TOOLS)/protoc-gen-prpc-python
 		$(LUCI_GO)/buildbucket/proto/*.proto \
 		$(LUCI_GO)/common/proto/options.proto \
 		$(LUCI_GO)/cv/api/bigquery/v1/*.proto \
+		$(LUCI_GO)/cv/api/migration/*.proto \
 		$(LUCI_GO)/cv/api/recipe/v1/*.proto \
 		$(LUCI_GO)/cv/api/config/v2/*.proto \
 		$(LUCI_GO)/resultdb/proto/v1/*.proto \
