@@ -741,11 +741,15 @@ class Converter(object):
 
       # Extract labels and field values.
       ingestedDict['labels'] = [lv.label for lv in issue.labels]
-      ingestedDict['field_values'], enums = self._IngestFieldValues(
-          issue.field_values, config)
-      field_helpers.ShiftEnumFieldsIntoLabels(
-          ingestedDict['labels'], [], enums, [], config)
-      assert len(enums) == 0  # ShiftEnumFieldsIntoLabels must clear all enums.
+      try:
+        ingestedDict['field_values'], enums = self._IngestFieldValues(
+            issue.field_values, config)
+        field_helpers.ShiftEnumFieldsIntoLabels(
+            ingestedDict['labels'], [], enums, [], config)
+        assert len(
+            enums) == 0  # ShiftEnumFieldsIntoLabels must clear all enums.
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage(e.message)
 
       # Ingest merged, blocking/blocked_on.
       self._ExtractIssueRefs(issue, ingestedDict, err_agg)
@@ -758,7 +762,9 @@ class Converter(object):
     #         Mapping[int, Sequence[str]]]
     """Returns protorpc FieldValues for the given protoc FieldValues.
 
-    Omits any unsupported type fields or fields from different projects.
+    Raises exceptions if any field could not be parsed for any reasons such as
+        unsupported field type, non-existent field, or field from different
+        projects.
 
     Args:
       field_values: protoc FieldValues to ingest.
@@ -769,32 +775,40 @@ class Converter(object):
     Returns:
       A pair 1) Ingested FieldValues. 2) A mapping of field ids to values
       for ENUM_TYPE fields in 'field_values.'
+
+    Raises:
+      InputException: if any fields_values could not be parsed for any reasons
+          such as unsupported field type, non-existent field, or field from
+          different projects.
     """
-    # config = self.services.config.GetProjectConfig(self.cnxn, project_id)
     fds_by_id = {fd.field_id: fd for fd in config.field_defs}
     enums = {}
     ingestedFieldValues = []
-    for fv in field_values:
-      try:
-        _project_id, fd_id = rnc.IngestFieldDefName(
-            self.cnxn, fv.field, self.services)
-        fd = fds_by_id[fd_id]
-        # Ignore fields not belonging to the approval_id_filter (if provided).
-        if (approval_id_filter is not None and
-            fd.approval_id != approval_id_filter):
-          continue
-        if fd.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
-          enums.setdefault(fd_id, []).append(fv.value)
-        else:
-          ingestedFieldValues.append(self._IngestFieldValue(fv, fd))
-      # TODO(crbug/monorail/8050): Aggregate and raise errors.
-      except (exceptions.InputException, exceptions.NoSuchProjectException,
-              exceptions.NoSuchFieldDefException, ValueError) as e:
-        logging.warning(
-            'Could not ingest value (%s) for FieldDef (%s): %s', fv.value,
-            fv.field, e)
-      except KeyError as e:
-        logging.info('Field %s is not in this project', fv.field)
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      for fv in field_values:
+        try:
+          _project_id, fd_id = rnc.IngestFieldDefName(
+              self.cnxn, fv.field, self.services)
+          fd = fds_by_id[fd_id]
+          # Ignore fields not belonging to the approval_id_filter (if provided).
+          if (approval_id_filter is not None and
+              fd.approval_id != approval_id_filter):
+            continue
+          if fd.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
+            enums.setdefault(fd_id, []).append(fv.value)
+          else:
+            ingestedFieldValues.append(self._IngestFieldValue(fv, fd))
+        except (exceptions.InputException, exceptions.NoSuchProjectException,
+                exceptions.NoSuchFieldDefException, ValueError) as e:
+          err_agg.AddErrorMessage(
+              'Could not ingest value ({}) for FieldDef ({}): {}', fv.value,
+              fv.field, e)
+        except exceptions.NoSuchUserException as e:
+          err_agg.AddErrorMessage(
+              'User ({}) not found when ingesting user field: {}', fv.value,
+              fv.field)
+        except KeyError as e:
+          err_agg.AddErrorMessage('Field {} is not in this project', fv.field)
     return ingestedFieldValues, enums
 
   def _IngestFieldValue(self, field_value, field_def):
@@ -814,6 +828,7 @@ class Converter(object):
     Raises:
       InputException if 'field_def' is USER_TYPE and 'field_value' does not
           have a valid formatted resource name.
+      NoSuchUserException if specified user in field does not exist.
       ValueError if 'field_value' could not be parsed for 'field_def'.
     """
     assert field_def.field_type != tracker_pb2.FieldTypes.ENUM_TYPE
@@ -830,12 +845,7 @@ class Converter(object):
   def _ParseOneUserFieldValue(self, value, field_id):
     # type: (str, int) -> proto.tracker_pb2.FieldValue
     """Replacement for the obsolete user parsing in ParseOneFieldValue."""
-    try:
-      user_id = rnc.IngestUserName(self.cnxn, value, self.services)
-    except exceptions.NoSuchUserException:
-      # TODO(crbug/monorail/8050): This error handling taken from V0 API, do we
-      #    still want this validation to happen in this way?
-      user_id = field_helpers.INVALID_USER_ID
+    user_id = rnc.IngestUserName(self.cnxn, value, self.services)
     return tbo.MakeFieldValue(field_id, None, None, user_id, None, None, False)
 
   def _ExtractOwner(self, issue, ingestedDict, err_agg):

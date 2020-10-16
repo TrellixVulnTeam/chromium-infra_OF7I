@@ -1339,16 +1339,6 @@ class ConverterFunctionsTest(unittest.TestCase):
     approval_enum_fv = issue_objects_pb2.FieldValue(
         field='projects/proj/fieldDefs/%d' % approval_enum_field_id,
         value=u'enumval')
-    # field_def_1 does not belong to any approval, and should be ignored.
-    other_fv = issue_objects_pb2.FieldValue(
-        field='projects/proj/fieldDefs/%d' % self.field_def_1,
-        value=u'something',
-    )
-    # This does not exist, and should be ignored.
-    dne_fv = issue_objects_pb2.FieldValue(
-        field='projects/proj/fieldDefs/404',
-        value=u'DoesNotExist',
-    )
     # Define a field belonging to approval_2, which should be ignored.
     approval_2_field_id = self._CreateFieldDef(
         self.project_1.project_id,
@@ -1359,7 +1349,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         field='projects/proj/fieldDefs/%d' % approval_2_field_id,
         value=u'ignored')
     av = issue_objects_pb2.ApprovalValue(
-        name=av_name, field_values=[other_fv, approval_fv, dne_fv])
+        name=av_name, field_values=[approval_fv])
     approval_delta = issues_pb2.ApprovalDelta(
         update_mask=field_mask_pb2.FieldMask(paths=['field_values']),
         approval_value=av,
@@ -1378,6 +1368,35 @@ class ConverterFunctionsTest(unittest.TestCase):
         (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
     ]
     self.assertEqual(actual, expected_delta_specifications)
+
+  def testIngestApprovalDeltas_InvalidFieldValues(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    approval_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_6,
+        value=u'touch-nose',
+        derivation=RULE_DERIVATION,  # Ignored.
+    )
+    other_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_1,
+        value=u'something',
+    )
+    # This does not exist, and should throw error.
+    dne_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/404',
+        value=u'DoesNotExist',
+    )
+    av = issue_objects_pb2.ApprovalValue(
+        name=av_name, field_values=[other_fv, approval_fv, dne_fv])
+    approval_delta = issues_pb2.ApprovalDelta(
+        update_mask=field_mask_pb2.FieldMask(paths=['field_values']),
+        approval_value=av,
+        approvers_remove=['users/222'],
+    )
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Field projects/proj/fieldDefs/404 is not in this project'):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
 
   def testIngestApprovalDeltas_WrongProject(self):
     approval_def_project2_name = 'project2_approval'
@@ -1602,18 +1621,12 @@ class ConverterFunctionsTest(unittest.TestCase):
             name=project1_av_name, field_values=[project1_fv, project2_fv]),
         update_mask=field_mask_pb2.FieldMask(paths=['field_values']))
 
-    actual = self.converter.IngestApprovalDeltas(
-        [project2_delta, project1_delta], self.user_1.user_id)
-
-    expected_p2_fv = fake.MakeFieldValue(
-        field_id=project2_field_id, str_value=u'p2', derived=False)
-    expected_p2 = tracker_pb2.ApprovalDelta(subfield_vals_add=[expected_p2_fv])
-    expected_p1 = tracker_pb2.ApprovalDelta(subfield_vals_add=[self.fv_6])
-    expected_delta_specifications = [
-        (self.issue_2.issue_id, approval_def_project2_id, expected_p2),
-        (self.issue_1.issue_id, self.approval_def_1_id, expected_p1),
-    ]
-    self.assertEqual(actual, expected_delta_specifications)
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Field projects/proj/fieldDefs/%d is not in this project' %
+        self.field_def_6):
+      self.converter.IngestApprovalDeltas(
+          [project2_delta, project1_delta], self.user_1.user_id)
 
   def testIngestIssue(self):
     ingest = issue_objects_pb2.Issue(
@@ -1684,10 +1697,6 @@ class ConverterFunctionsTest(unittest.TestCase):
                 value='users/404',  # User lookup not attempted.
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/%d' % self.field_def_8,
-                value='users/nobody@no.com',  # Parsed to '-1' for INVALID_USER.
-            ),
-            issue_objects_pb2.FieldValue(
                 field='projects/proj/fieldDefs/%d' % self.field_def_9,
                 value='2020-01-01',
             ),
@@ -1702,32 +1711,6 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.FieldValue(
                 field='projects/proj/fieldDefs/%d' % self.field_def_10,
                 value='garbage',
-            ),
-            # TODO(crbug/monorail/8050): FieldValue mistakes are ignored.
-            issue_objects_pb2.FieldValue(),
-            issue_objects_pb2.FieldValue(field='garbage'),
-            issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/test_field_2',
-                value='garbage',
-            ),
-            issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/dogandcat',
-                value='garbage',
-            ),
-            issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/dogandcat',
-            ),
-            issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/catanddog',
-                value='garbagedate',
-            ),
-            issue_objects_pb2.FieldValue(  # Project does not exist.
-                field='projects/noproject/fieldDefs/something',
-                value='something'
-            ),
-            issue_objects_pb2.FieldValue(  # Different project.
-                field='projects/goose/fieldDefs/lorem',
-                value='something'
             ),
         ],
         merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
@@ -1809,8 +1792,6 @@ class ConverterFunctionsTest(unittest.TestCase):
             field_id=self.field_def_8, user_id=111, derived=False),
         tracker_pb2.FieldValue(
             field_id=self.field_def_8, user_id=404, derived=False),
-        tracker_pb2.FieldValue(
-            field_id=self.field_def_8, user_id=-1, derived=False),
         tracker_pb2.FieldValue(
             field_id=self.field_def_9, date_value=1577836800, derived=False),
         tracker_pb2.FieldValue(
@@ -1899,6 +1880,14 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.ComponentValue(
                 component='projects/proj/componentDefs/404')
         ],
+        field_values=[
+            issue_objects_pb2.FieldValue(),
+            issue_objects_pb2.FieldValue(field='garbage'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/%d' % self.field_def_8,
+                value='users/nonexisting@user.com',
+            ),
+        ],
         merged_into_issue_ref=invalid_issue_ref,
         blocked_on_issue_refs=[
             issue_objects_pb2.IssueRef(),
@@ -1913,14 +1902,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         r'.+cc_users: Invalid resource name: invalidFormat1.',
         r'Status is required when creating an issue',
         r'.+components: Component not found: 404.',
+        r'.+: Invalid resource name: .', r'.+: Invalid resource name: garbage.',
+        r'.+not found when ingesting user field:.+',
         r'.+issue:.+[\n\r]+ext_identifier:.+[\n\r]+: IssueRefs MUST NOT have.+',
         r'.+: IssueRefs MUST have one of.+',
         r'.+issue:.+[\n\r]+: Project 404 not found.',
         r'.+issue:.+[\n\r]+: Issue.+404.+not found'
     ]
     error_messages_re = '\n'.join(error_messages)
-    logging.info('chicken')
-    print('chicken')
     with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
       self.converter.IngestIssue(ingest, self.project_1.project_id)
 
