@@ -19,7 +19,7 @@ import:
   - proto
   - protoc-gen-go
 - package: google.golang.org/protobuf
-  version: master
+  version: 711224230b573a3b2df57391319e80e606bccddc
   repo: https://go.googlesource.com/protobuf.git
 - package: github.com/gorhill/cronexpr
   version: master
@@ -259,7 +259,7 @@ import:
   subpackages:
   - gerrit
 - package: github.com/shirou/gopsutil
-  version: v2.19.03
+  version: master
   repo: https://chromium.googlesource.com/external/github.com/shirou/gopsutil.git
 - package: github.com/shirou/w32
   version: master
@@ -428,7 +428,7 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/go-warnings/warnings.git
 - package: go.skia.org/infra
-  version: 94e0dfc90ceab37458dc2b2124c77cb2b3283b8f
+  version: 8ce107df30356f9f921ecd109bdeca2c6278ac0b
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
