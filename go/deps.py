@@ -45,7 +45,7 @@ import time
 import yaml
 
 
-# Whitelist of packages with executables we want to be available in PATH. Will
+# A list of packages with executables we want to be available in PATH. Will
 # be installed via "go install" after Glide fetches all vendored dependencies.
 # See 'install' function below.
 VENDORED_TOOLS = [
@@ -66,6 +66,7 @@ VENDORED_TOOLS = [
   'golang.org/x/tools/cmd/stringer',
   'google.golang.org/api/google-api-go-generator',
   'google.golang.org/appengine/cmd/aedeploy',
+  'google.golang.org/grpc/cmd/protoc-gen-go-grpc',
 ]
 
 
@@ -677,8 +678,8 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
 
   # Install only stuff that was vendored via glide. That way we can support
   # multiple workspaces with third party code, but keep a single VENDORED_TOOLS
-  # whitelist of "important stuff". If a workspace is not interested in having
-  # a tool present, it just doesn't list it in deps.yaml.
+  # list of "important stuff". If a workspace is not interested in having a tool
+  # present, it just doesn't list it in deps.yaml.
   to_install = []
   for pkg in VENDORED_TOOLS:
     pkg_path = os.path.join(
