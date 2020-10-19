@@ -386,7 +386,8 @@ type User struct {
 	// User display_name to show other users using the site.
 	// By default this is the obscured or un-obscured email.
 	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// Obscured or un-obscured user email.
+	// Obscured or un-obscured user email or empty if this represents
+	// a deleted user.
 	Email string `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	// User-written indication of their availability or working hours.
 	AvailabilityMessage string `protobuf:"bytes,3,opt,name=availability_message,json=availabilityMessage,proto3" json:"availability_message,omitempty"`

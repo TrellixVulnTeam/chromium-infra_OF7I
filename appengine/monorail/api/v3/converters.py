@@ -259,8 +259,9 @@ class Converter(object):
     issue = self.services.issue.GetIssue(self.cnxn, issue_id)
     users_by_id = self.services.user.GetUsersByIDs(
         self.cnxn, tbo.UsersInvolvedInCommentList(comments))
-    user_display_names = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users_by_id.values())
+    (user_display_names,
+     _user_display_emails) = framework_bizobj.CreateUserDisplayNamesAndEmails(
+         self.cnxn, self.services, self.user_auth, users_by_id.values())
     comment_names_dict = rnc.CreateCommentNames(
         issue.local_id, issue.project_name,
         [comment.sequence for comment in comments])
@@ -986,19 +987,22 @@ class Converter(object):
 
     # Get display names
     users_by_id = self.services.user.GetUsersByIDs(self.cnxn, user_ids)
-    display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users_by_id.values())
+    (display_names_by_id,
+     display_emails_by_id) = framework_bizobj.CreateUserDisplayNamesAndEmails(
+         self.cnxn, self.services, self.user_auth, users_by_id.values())
 
     for user_id, user in users_by_id.items():
       name = rnc.ConvertUserNames([user_id]).get(user_id)
 
       display_name = display_names_by_id.get(user_id)
+      display_email = display_emails_by_id.get(user_id)
       availability = framework_helpers.GetUserAvailability(user)
       availability_message, _availability_status = availability
 
       user_ids_to_names[user_id] = user_objects_pb2.User(
           name=name,
           display_name=display_name,
+          email=display_email,
           availability_message=availability_message)
 
     return user_ids_to_names

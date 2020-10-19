@@ -191,11 +191,12 @@ def ParseAndObscureAddress(email):
   return username, user_domain, obscured_username, obscured_email
 
 
-def CreateUserDisplayNames(cnxn, services, user_auth, users):
+def CreateUserDisplayNamesAndEmails(cnxn, services, user_auth, users):
   # type: (MonorailConnection, Services, AuthData,
-  #     Collection[user_pb2.User]) -> Mapping[int, str]
-  """Create the display names of the given users based on the current user and
-      project.
+  #     Collection[user_pb2.User]) ->
+  #     Tuple[Mapping[int, str], Mapping[int, str]]
+  """Create the display names and emails of the given users based on the
+     current user.
 
   Args:
     cnxn: MonorailConnection to the database.
@@ -204,28 +205,35 @@ def CreateUserDisplayNames(cnxn, services, user_auth, users):
     users: Collection of User PB objects.
 
   Returns:
-    A Dict of user_ids to display names. If a given User does not have an email,
-      the email will be an empty string.
+    A Tuple containing two Dicts of user_ids to display names and user_ids to
+        emails. If a given User does not have an email, there will be an empty
+        string in both.
   """
+  # NOTE: Currently only service accounts can have display_names set. For all
+  # other users and service accounts with no display_names specified, we use the
+  # obscured or unobscured emails for both `display_names` and `emails`.
+  # See crbug.com/monorail/8510.
   display_names = {}
+  emails = {}
 
   # Do a pass on simple display cases.
   maybe_revealed_users = []
   for user in users:
     if user.user_id == framework_constants.DELETED_USER_ID:
       display_names[user.user_id] = framework_constants.DELETED_USER_NAME
+      emails[user.user_id] = ''
     elif not user.email:
       display_names[user.user_id] = ''
-    elif user.email in client_config_svc.GetServiceAccountMap():
-      display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
-          user.email]
+      emails[user.user_id] = ''
     elif not user.obscure_email:
       display_names[user.user_id] = user.email
+      emails[user.user_id] = user.email
     else:
       # Default to hiding user email.
       (_username, _domain, _obs_username,
        obs_email) = ParseAndObscureAddress(user.email)
       display_names[user.user_id] = obs_email
+      emails[user.user_id] = obs_email
       maybe_revealed_users.append(user)
 
   # Reveal viewable emails.
@@ -233,7 +241,15 @@ def CreateUserDisplayNames(cnxn, services, user_auth, users):
       cnxn, services, user_auth, maybe_revealed_users)
   for user in viewable_users:
     display_names[user.user_id] = user.email
-  return display_names
+    emails[user.user_id] = user.email
+
+  # Use Client.display_names for service accounts that have one specified.
+  for user in users:
+    if user.email in client_config_svc.GetServiceAccountMap():
+      display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
+          user.email]
+
+  return display_names, emails
 
 
 def UserOwnsProject(project, effective_ids):

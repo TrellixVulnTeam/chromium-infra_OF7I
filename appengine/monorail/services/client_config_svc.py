@@ -205,6 +205,8 @@ def GetClientConfigSvc():
 
 
 def GetServiceAccountMap():
+  # typ: () -> Mapping[str, str]
+  """Returns only service accounts that have specified display_names."""
   global service_account_map
   if service_account_map is None:
     service_account_map = GetClientConfigSvc().GetDisplayNames()

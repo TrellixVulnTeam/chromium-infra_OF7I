@@ -25,7 +25,7 @@ from testing import testing_helpers
 from tracker import tracker_bizobj
 
 
-class CreateUserDisplayNamesTest(unittest.TestCase):
+class CreateUserDisplayNamesAndEmailsTest(unittest.TestCase):
 
   def setUp(self):
     self.cnxn = fake.MonorailConnection()
@@ -43,60 +43,106 @@ class CreateUserDisplayNamesTest(unittest.TestCase):
     self.user_4 = self.services.user.TestAddUser(
         'user_4@test.com', 444, obscure_email=False)
     self.service_account = self.services.user.TestAddUser(
-        'service@account.com', 999, obscure_email=False)
+        'service@account.com', 999, obscure_email=True)
+    self.user_deleted = self.services.user.TestAddUser(
+        '', framework_constants.DELETED_USER_ID)
     self.requester = self.services.user.TestAddUser('user_5@test.com', 555)
     self.user_auth = authdata.AuthData(
         user_id=self.requester.user_id, email=self.requester.email)
     self.project = self.services.project.TestAddProject(
-        'proj', project_id=789, owner_ids=[111], committer_ids=[222])
+        'proj',
+        project_id=789,
+        owner_ids=[self.user_1.user_id],
+        committer_ids=[self.user_2.user_id, self.service_account.user_id])
 
   @mock.patch('services.client_config_svc.GetServiceAccountMap')
-  def testUserCreateDisplayNames_NonProjectMembers(self, fake_account_map):
+  def testUserCreateDisplayNamesAndEmails_NonProjectMembers(
+      self, fake_account_map):
     fake_account_map.return_value = {'service@account.com': 'Service'}
     users = [self.user_1, self.user_2, self.user_3, self.user_4,
-             self.service_account]
-    display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+             self.service_account, self.user_deleted]
+    (display_names_by_id,
+     display_emails_by_id) = framework_bizobj.CreateUserDisplayNamesAndEmails(
+         self.cnxn, self.services, self.user_auth, users)
     expected_display_names = {
         self.user_1.user_id: testing_helpers.ObscuredEmail(self.user_1.email),
         self.user_2.user_id: self.user_2.email,
         self.user_3.user_id: testing_helpers.ObscuredEmail(self.user_3.email),
         self.user_4.user_id: self.user_4.email,
-        self.service_account.user_id: 'Service'}
+        self.service_account.user_id: 'Service',
+        self.user_deleted.user_id: framework_constants.DELETED_USER_NAME}
+    expected_display_emails = {
+        self.user_1.user_id:
+            testing_helpers.ObscuredEmail(self.user_1.email),
+        self.user_2.user_id:
+            self.user_2.email,
+        self.user_3.user_id:
+            testing_helpers.ObscuredEmail(self.user_3.email),
+        self.user_4.user_id:
+            self.user_4.email,
+        self.service_account.user_id:
+            testing_helpers.ObscuredEmail(self.service_account.email),
+        self.user_deleted.user_id: '',
+    }
     self.assertEqual(display_names_by_id, expected_display_names)
+    self.assertEqual(display_emails_by_id, expected_display_emails)
 
   @mock.patch('services.client_config_svc.GetServiceAccountMap')
-  def testUserCreateDisplayNames_ProjectMember(self, fake_account_map):
+  def testUserCreateDisplayNamesAndEmails_ProjectMember(self, fake_account_map):
     fake_account_map.return_value = {'service@account.com': 'Service'}
     users = [self.user_1, self.user_2, self.user_3, self.user_4,
-             self.service_account]
+             self.service_account, self.user_deleted]
     self.project.committer_ids.append(self.requester.user_id)
-    display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+    (display_names_by_id,
+     display_emails_by_id) = framework_bizobj.CreateUserDisplayNamesAndEmails(
+         self.cnxn, self.services, self.user_auth, users)
     expected_display_names = {
         self.user_1.user_id: self.user_1.email,  # Project member
         self.user_2.user_id: self.user_2.email,  # Project member and unobscured
         self.user_3.user_id: testing_helpers.ObscuredEmail(self.user_3.email),
         self.user_4.user_id: self.user_4.email,  # Unobscured email
-        self.service_account.user_id: 'Service'
+        self.service_account.user_id: 'Service',
+        self.user_deleted.user_id: framework_constants.DELETED_USER_NAME
+    }
+    expected_display_emails = {
+        self.user_1.user_id: self.user_1.email,  # Project member
+        self.user_2.user_id: self.user_2.email,  # Project member and unobscured
+        self.user_3.user_id: testing_helpers.ObscuredEmail(self.user_3.email),
+        self.user_4.user_id: self.user_4.email,  # Unobscured email
+        self.service_account.user_id: self.service_account.email,
+        self.user_deleted.user_id: ''
     }
     self.assertEqual(display_names_by_id, expected_display_names)
+    self.assertEqual(display_emails_by_id, expected_display_emails)
 
   @mock.patch('services.client_config_svc.GetServiceAccountMap')
-  def testUserCreateDisplayNames_Admin(self, fake_account_map):
+  def testUserCreateDisplayNamesAndEmails_Admin(self, fake_account_map):
     fake_account_map.return_value = {'service@account.com': 'Service'}
     users = [self.user_1, self.user_2, self.user_3, self.user_4,
-             self.service_account]
+             self.service_account, self.user_deleted]
     self.user_auth.user_pb.is_site_admin = True
-    display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+    (display_names_by_id,
+     display_emails_by_id) = framework_bizobj.CreateUserDisplayNamesAndEmails(
+         self.cnxn, self.services, self.user_auth, users)
     expected_display_names = {
         self.user_1.user_id: self.user_1.email,
         self.user_2.user_id: self.user_2.email,
         self.user_3.user_id: self.user_3.email,
         self.user_4.user_id: self.user_4.email,
-        self.service_account.user_id: 'Service'}
+        self.service_account.user_id: 'Service',
+        self.user_deleted.user_id: framework_constants.DELETED_USER_NAME}
+    expected_display_emails = {
+        self.user_1.user_id: self.user_1.email,
+        self.user_2.user_id: self.user_2.email,
+        self.user_3.user_id: self.user_3.email,
+        self.user_4.user_id: self.user_4.email,
+        self.service_account.user_id: self.service_account.email,
+        self.user_deleted.user_id: ''
+    }
+
     self.assertEqual(display_names_by_id, expected_display_names)
+    self.assertEqual(display_emails_by_id, expected_display_emails)
+
 
 class ParseAndObscureAddressTest(unittest.TestCase):
 

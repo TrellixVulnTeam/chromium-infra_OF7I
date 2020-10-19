@@ -846,13 +846,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_user = user_objects_pb2.User(
         name='users/111',
         display_name='one@example.com',
+        email='one@example.com',
         availability_message='non-empty-string')
     self.assertEqual(self.converter.ConvertUser(self.user_1), expected_user)
 
 
   def testConvertUsers(self):
+    user_deleted = self.services.user.TestAddUser(
+        '', framework_constants.DELETED_USER_ID)
     self.user_1.vacation_message = 'non-empty-string'
-    user_ids = [self.user_1.user_id]
+    user_ids = [self.user_1.user_id, user_deleted.user_id]
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
 
@@ -861,7 +864,14 @@ class ConverterFunctionsTest(unittest.TestCase):
             user_objects_pb2.User(
                 name='users/111',
                 display_name='one@example.com',
-                availability_message='non-empty-string')
+                email='one@example.com',
+                availability_message='non-empty-string'),
+        user_deleted.user_id:
+            user_objects_pb2.User(
+                name='users/1',
+                display_name=framework_constants.DELETED_USER_NAME,
+                email='',
+                availability_message='User never visited'),
     }
     self.assertEqual(self.converter.ConvertUsers(user_ids), expected_user_dict)
 

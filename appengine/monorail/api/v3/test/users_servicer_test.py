@@ -61,6 +61,7 @@ class UsersServicerTest(unittest.TestCase):
     expected_response = user_objects_pb2.User(
         name='users/222',
         display_name=testing_helpers.ObscuredEmail(self.user_2.email),
+        email=testing_helpers.ObscuredEmail(self.user_2.email),
         availability_message='User never visited')
     self.assertEqual(response, expected_response)
 
@@ -75,10 +76,12 @@ class UsersServicerTest(unittest.TestCase):
         user_objects_pb2.User(
             name='users/222',
             display_name=testing_helpers.ObscuredEmail(self.user_2.email),
+            email=testing_helpers.ObscuredEmail(self.user_2.email),
             availability_message='User never visited'),
         user_objects_pb2.User(
             name='users/333',
             display_name=testing_helpers.ObscuredEmail(self.user_3.email),
+            email=testing_helpers.ObscuredEmail(self.user_3.email),
             availability_message='User never visited')
     ]
     self.assertEqual(
