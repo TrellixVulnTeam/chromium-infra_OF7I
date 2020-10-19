@@ -2395,3 +2395,112 @@ func TestDeleteSwitch(t *testing.T) {
 		})
 	})
 }
+
+func TestCreateAsset(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Create Asset", t, func() {
+		Convey("Create valid asset", func() {
+			asset := &ufspb.Asset{
+				Name: "assets/C001001",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+					Rack: "chromeos6-row2-rack3",
+				},
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			rack := &ufspb.Rack{
+				Name: "chromeos6-row2-rack3",
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				},
+			}
+			rackReq := &ufsAPI.RackRegistrationRequest{
+				Rack: rack,
+			}
+			rackResp, err := tf.Fleet.RackRegistration(tf.C, rackReq)
+			So(err, ShouldBeNil)
+			So(rackResp, ShouldNotBeNil)
+			So(rackResp, ShouldResembleProto, rack)
+			resp, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, asset)
+		})
+		Convey("Create asset - invalid name", func() {
+			asset := &ufspb.Asset{
+				Name: "C001001",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+					Rack: "chromeos6-row2-rack3",
+				},
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			_, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+		Convey("Create asset - empty name", func() {
+			asset := &ufspb.Asset{
+				Name: " ",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+					Rack: "chromeos6-row2-rack3",
+				},
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			_, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+		Convey("Create asset - missing location", func() {
+			asset := &ufspb.Asset{
+				Name: "assets/C001001",
+				Type: ufspb.AssetType_DUT,
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			_, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+		Convey("Create asset - missing rack", func() {
+			asset := &ufspb.Asset{
+				Name: "assets/C001001",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				},
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			_, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+		Convey("Create asset - zone unspecified", func() {
+			asset := &ufspb.Asset{
+				Name: "assets/C001001",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_UNSPECIFIED,
+					Rack: "chromeos6-row2-rack3",
+				},
+			}
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			}
+			_, err := tf.Fleet.CreateAsset(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}

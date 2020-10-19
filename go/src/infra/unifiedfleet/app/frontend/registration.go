@@ -1004,3 +1004,22 @@ func (fs *FleetServerImpl) DeleteSwitch(ctx context.Context, req *ufsAPI.DeleteS
 	err = controller.DeleteSwitch(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateAsset creates an asset entry in database.
+func (fs *FleetServerImpl) CreateAsset(ctx context.Context, req *ufsAPI.CreateAssetRequest) (response *ufspb.Asset, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Asset.Name = util.RemovePrefix(req.Asset.Name)
+	res, err := controller.AssetRegistration(ctx, req.GetAsset())
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	prefix, err := util.GetResourcePrefix(res)
+	res.Name = util.AddPrefix(prefix, res.Name)
+	return res, err
+}

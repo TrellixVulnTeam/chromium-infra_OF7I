@@ -74,6 +74,7 @@ var switchRegex = regexp.MustCompile(`switches\.*`)
 var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
+var assetRegex = regexp.MustCompile(`assets\.*`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)
@@ -930,6 +931,30 @@ func (r *ListVlansRequest) Validate() error {
 // Validate validates input requests of DeleteVlan.
 func (r *DeleteVlanRequest) Validate() error {
 	return validateResourceName(vlanRegex, VlanNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateAsset
+func (r *CreateAssetRequest) Validate() error {
+	if r.GetAsset() == nil {
+		return status.Errorf(codes.InvalidArgument, "Empty asset")
+	}
+	name := strings.TrimSpace(r.GetAsset().GetName())
+	if name == "" {
+		return status.Errorf(codes.InvalidArgument, "Asset name missing")
+	}
+	if !assetRegex.MatchString(name) {
+		return status.Errorf(codes.InvalidArgument, "Invalid asset name %s", name)
+	}
+	if r.GetAsset().GetLocation() == nil {
+		return status.Errorf(codes.InvalidArgument, "Asset location missing")
+	}
+	if r.GetAsset().GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
+		return status.Errorf(codes.InvalidArgument, "Lab unspecified")
+	}
+	if r.GetAsset().GetLocation().GetRack() == "" {
+		return status.Errorf(codes.InvalidArgument, "Rack missing")
+	}
+	return nil
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

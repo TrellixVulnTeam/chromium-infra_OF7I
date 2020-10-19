@@ -1472,6 +1472,23 @@ func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp 
 	return
 }
 
+func (s *DecoratedFleet) CreateAsset(ctx context.Context, req *CreateAssetRequest) (rsp *proto1.Asset, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateAsset", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateAsset(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateAsset", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

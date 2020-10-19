@@ -13,6 +13,7 @@ import "google/protobuf/field_mask.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
+import "infra/unifiedfleet/api/v1/proto/asset.proto";
 import "infra/unifiedfleet/api/v1/proto/machine.proto";
 import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
@@ -283,7 +284,10 @@ service Fleet {
   // List gets all the machineLSEs
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
 
-  // BatchGetKVMs retrieves a batch of kvms 
+  // CreateAsset creates a new asset
+  rpc CreateAsset(CreateAssetRequest) returns (proto.asset);
+
+  // BatchGetKVMs retrieves a batch of kvms
   rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
 
   // BatchGetDHCPConfigs retrieves a batch of dhcp records.
@@ -1516,6 +1520,11 @@ message NetworkOption {
 
   // The user-specified ip, if it's setup, other options will be ignored.
   string ip = 4;
+}
+
+message CreateAssetRequest {
+  // The asset to register
+  proto.asset asset = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message BatchGetKVMsRequest {
