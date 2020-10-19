@@ -12,12 +12,16 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"go.chromium.org/luci/server/auth"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/testing/protocmp"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
@@ -28,8 +32,100 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
+func compareInventoryV2(ctx context.Context, crosInventoryHost string) error {
+	filename := fmt.Sprintf("inv2_ufs_diff.%s.log", time.Now().UTC().Format("2006-01-02T03:04:05"))
+	writer, err := getCloudStorageWriter(ctx, filename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if writer != nil {
+			if err := writer.Close(); err != nil {
+				logging.Warningf(ctx, "failed to close cloud storage writer: %s", err)
+			}
+		}
+	}()
+
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
+	if err != nil {
+		return err
+	}
+	inv2Client := invV2Api.NewInventoryPRPCClient(&prpc.Client{
+		C:    &http.Client{Transport: t},
+		Host: crosInventoryHost,
+	})
+	resp, err := inv2Client.ListCrosDevicesLabConfig(ctx, &invV2Api.ListCrosDevicesLabConfigRequest{})
+	if err != nil {
+		return err
+	}
+	logging.Infof(ctx, "length of configs from Inv2: %d", len(resp.GetLabConfigs()))
+
+	// The ctx here is in OS namespace
+	hostRes, err := inventory.GetAllMachineLSEs(ctx)
+	if hostRes == nil {
+		return errors.New("OS host entity corrupted")
+	}
+	if err := compareDuts(ctx, writer, resp.GetLabConfigs(), hostRes); err != nil {
+		return err
+	}
+	return nil
+}
+
+func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, newHosts *fleetds.OpResults) error {
+	onlyShowNum := 10
+	logs := []string{fmt.Sprintf("\n\n######## OS DUTs diff (Only show the first %d) ############", onlyShowNum)}
+	inv2LSEs := util.ToOSMachineLSEs(oldHosts)
+	inv2Hosts := make(map[string]*ufspb.MachineLSE)
+	for _, lse := range inv2LSEs {
+		inv2Hosts[lse.GetName()] = lse
+	}
+	ufsHosts := make(map[string]*ufspb.MachineLSE)
+	for _, r := range newHosts.Passed() {
+		m := r.Data.(*ufspb.MachineLSE)
+		if m.GetChromeBrowserMachineLse() != nil {
+			logs = append(logs, fmt.Sprintf("\nWrong browser host in OS namespace: %s", m.GetName()))
+		}
+		ufsHosts[m.GetName()] = m
+	}
+
+	logs = append(logs, "Resources in inventory V2 but not in UFS:")
+	var diffs []string
+	for k, v := range inv2Hosts {
+		logging.Infof(ctx, "processing %s", k)
+		if v2, ok := ufsHosts[k]; !ok {
+			logs = append(logs, v.GetName())
+		} else if v != v2 {
+			if len(diffs) < onlyShowNum {
+				diffs = append(diffs, logOSLseDiff(v, v2))
+			}
+		}
+	}
+	logs = append(logs, "Resources in UFS but not in inventory V2:")
+	for k, v := range ufsHosts {
+		if _, ok := inv2Hosts[k]; !ok {
+			logs = append(logs, v.GetName())
+		}
+	}
+	logs = append(logs, "Resources in both UFS and inventory V2 but has difference (UFS ++):")
+	logs = append(logs, diffs...)
+	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Compare does protobuf comparison between both MachineLSE
+func logOSLseDiff(inv2Lse, ufsLSE *ufspb.MachineLSE) string {
+	// Ignoring fields not required for comparison
+	opts1 := protocmp.IgnoreFields(inv2Lse, protoreflect.Name("update_time"))
+	// See: https://developers.google.com/protocol-buffers/docs/reference/go/faq#deepequal
+	opts2 := protocmp.Transform()
+	return cmp.Diff(inv2Lse, ufsLSE, opts1, opts2)
+}
+
 func compareCrimson(ctx context.Context, machineDBHost string) error {
-	writer, err := getCloudStorageWriter(ctx)
+	filename := fmt.Sprintf("crimson_ufs_diff.%s.log", time.Now().UTC().Format("2006-01-02T03:04:05"))
+	writer, err := getCloudStorageWriter(ctx, filename)
 	if err != nil {
 		return err
 	}
@@ -418,7 +514,7 @@ func logDiff(crimsonData, ufsData map[string]string, writer *storage.Writer, log
 	return nil
 }
 
-func getCloudStorageWriter(ctx context.Context) (*storage.Writer, error) {
+func getCloudStorageWriter(ctx context.Context, filename string) (*storage.Writer, error) {
 	bucketName := config.Get(ctx).SelfStorageBucket
 	if bucketName == "" {
 		bucketName = "unified-fleet-system.appspot.com"
@@ -429,7 +525,6 @@ func getCloudStorageWriter(ctx context.Context) (*storage.Writer, error) {
 		return nil, err
 	}
 	bucket := storageClient.Bucket(bucketName)
-	filename := fmt.Sprintf("crimson_ufs_diff.%s.log", time.Now().UTC().Format("2006-01-02T03:04:05"))
 	logging.Infof(ctx, "All diff will be saved to https://storage.cloud.google.com/%s/%s", bucketName, filename)
 	return bucket.Object(filename).NewWriter(ctx), nil
 }

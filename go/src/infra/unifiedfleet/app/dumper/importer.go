@@ -192,11 +192,7 @@ func importCrimson(ctx context.Context) (err error) {
 	return nil
 }
 
-func importCrosInventory(ctx context.Context) error {
-	crosInventoryHost := config.Get(ctx).CrosInventoryHost
-	if crosInventoryHost == "" {
-		crosInventoryHost = "cros-lab-inventory.appspot.com"
-	}
+func importCrosInventory(ctx context.Context, crosInventoryHost string) error {
 	logging.Infof(ctx, "Querying host %s", crosInventoryHost)
 	sv := &frontend.FleetServerImpl{}
 	logging.Infof(ctx, "Importing ChromeOS inventory")

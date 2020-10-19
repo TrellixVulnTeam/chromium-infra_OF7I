@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/server"
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
+	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/cron"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
@@ -125,12 +126,26 @@ func dumpCrosInventory(ctx context.Context) (err error) {
 		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
 	}()
 	// In UFS write to 'os' namespace
+	// The below codes also use the ctx with OS namespace to query Inventory V2 and
+	// is able to get response. As namespaces are datastore concepts, grpc knows nothing
+	// about them and they generally do not apply to all APIs.
 	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	if err != nil {
 		return err
 	}
 	ctx = logging.SetLevel(ctx, logging.Info)
-	return importCrosInventory(ctx)
+	crosInventoryHost := config.Get(ctx).CrosInventoryHost
+	if crosInventoryHost == "" {
+		crosInventoryHost = "cros-lab-inventory.appspot.com"
+	}
+
+	logging.Infof(ctx, "Comparing inventory V2 with UFS before importing")
+	if err := compareInventoryV2(ctx, crosInventoryHost); err != nil {
+		logging.Warningf(ctx, "Fail to generate sync diff: %s", err.Error())
+	}
+	logging.Infof(ctx, "Finish exporting diff from Inventory V2 to UFS to Google Storage")
+
+	return importCrosInventory(ctx, crosInventoryHost)
 }
 
 func dumpCrosNetwork(ctx context.Context) (err error) {
