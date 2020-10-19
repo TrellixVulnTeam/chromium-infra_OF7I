@@ -830,7 +830,12 @@ SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'CryptographyPyPI',
         CryptographyPyPI('cryptography', '2.0.3', openssl='1.1.0f'),
-        CryptographyPyPI('cryptography', '2.6.1', openssl='1.1.0f'),
+        CryptographyPyPI(
+            'cryptography',
+            '2.6.1',
+            openssl='1.1.0f',
+            pyversions=['py2', 'py3'],
+            skip_plat=['mac-x64-cp38', 'linux-arm64-py3']),
     )
 })
 

@@ -1087,6 +1087,7 @@ wheel: <
 * *linux-mipsel*
 * *mac-x64*
 * *manylinux-x64*
+* *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
 * *manylinux-x86*
 * *manylinux-x86-ucs2*

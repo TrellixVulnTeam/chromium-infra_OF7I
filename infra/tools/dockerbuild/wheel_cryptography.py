@@ -17,8 +17,8 @@ class Cryptography(Builder):
                crypt_src,
                openssl_src,
                packaged=None,
-               arch_map=None,
-               pyversions=None):
+               pyversions=None,
+               **kwargs):
     """Specialized wheel builder for the "cryptography" package.
 
     Args:
@@ -30,7 +30,6 @@ class Cryptography(Builder):
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
           Platform's "packaged" property.
-      arch_map: (See Builder's "arch_map" argument.)
       pyversions: (See Buidler's "pyversions" argument.)
     """
     self._packaged = packaged or ()
@@ -42,8 +41,7 @@ class Cryptography(Builder):
             crypt_src.version,
             universal=None,
             pyversions=pyversions,
-            default=True),
-        arch_map=arch_map)
+            default=True), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
@@ -89,6 +87,12 @@ class Cryptography(Builder):
           cwd=openssl_dir,
       )
 
+      # TODO: Use the version from the platform rather than hardcoding this?
+      if wheel.plat.pyversion == 'py2':
+        py_binary = 'python2.7'
+      else:
+        py_binary = 'python3.8'
+
       # Build "cryptography".
       d = {
         'prefix': prefix,
@@ -98,29 +102,35 @@ class Cryptography(Builder):
           dx,
           tdir,
           [
-            '#!/bin/bash',
-            'set -e',
-            'export CFLAGS="' + ' '.join([
-              '-I%(prefix)s/include' % d,
-              '$CFLAGS',
-            ]) + '"',
-            'export LDFLAGS="' + ' '.join([
-              '-L%(prefix)s/lib' % d,
-              '-L%(prefix)s/lib64' % d,
-              '$LDFLAGS',
-            ]) + '"',
-            ' '.join([
-              'python2.7',
-              'setup.py',
-              'build_ext',
-              '--include-dirs', '/usr/cross/include',
-              '--library-dirs', '/usr/cross/lib',
-              '--force', 'build',
-              '--force', 'build_scripts',
-              '--executable=/usr/local/bin/python',
-              '--force', 'bdist_wheel',
-              '--plat-name', wheel.primary_platform,
-            ]),
+              '#!/bin/bash',
+              'set -e',
+              'export CFLAGS="' + ' '.join([
+                  '-I%(prefix)s/include' % d,
+                  '$CFLAGS',
+              ]) + '"',
+              'export LDFLAGS="' + ' '.join([
+                  '-L%(prefix)s/lib' % d,
+                  '-L%(prefix)s/lib64' % d,
+                  '$LDFLAGS',
+              ]) + '"',
+              ' '.join([
+                  py_binary,
+                  'setup.py',
+                  'build_ext',
+                  '--include-dirs',
+                  '/usr/cross/include',
+                  '--library-dirs',
+                  '/usr/cross/lib',
+                  '--force',
+                  'build',
+                  '--force',
+                  'build_scripts',
+                  '--executable=/usr/local/bin/python',
+                  '--force',
+                  'bdist_wheel',
+                  '--plat-name',
+                  wheel.primary_platform,
+              ]),
           ],
           cwd=crypt_dir,
       )
@@ -131,7 +141,8 @@ class Cryptography(Builder):
 
 
 class CryptographyPyPI(Cryptography):
-  def __init__(self, name, ver, openssl):
+
+  def __init__(self, name, ver, openssl, pyversions=('py2',), **kwargs):
     """Adapts Cryptography wheel builder to use available PyPI wheels.
 
     Builds wheels for platforms not present in PyPI (e.g ARM) from source.
@@ -155,5 +166,5 @@ class CryptographyPyPI(Cryptography):
             'windows-x86',
             'windows-x64',
         ],
-        pyversions=['py2'],
-    )
+        pyversions=pyversions,
+        **kwargs)
