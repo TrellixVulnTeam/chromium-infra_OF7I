@@ -106,6 +106,57 @@ func (hc *HistoryClient) logMsgEntity(resourceName string, delete bool, pm proto
 	}
 }
 
+// LogAssetChanges logs the change of the given asset.
+func (hc *HistoryClient) LogAssetChanges(oldData, newData *ufspb.Asset) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	var resName string
+	if oldData != nil {
+		prefix, _ := util.GetResourcePrefix(newData)
+		resName = util.AddPrefix(prefix, oldData.GetName())
+	} else if newData != nil {
+		prefix, _ := util.GetResourcePrefix(newData)
+		resName = util.AddPrefix(prefix, newData.GetName())
+	}
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resName, "asset", LifeCycleRegistration)...)
+		hc.logMsgEntity(resName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resName, "asset", LifeCycleRetire)...)
+		hc.logMsgEntity(resName, true, oldData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(resName, "asset.type", oldData.GetType(), newData.GetType())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.model", oldData.GetModel(), newData.GetModel())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.location", oldData.GetLocation(), newData.GetLocation())...)
+	var oldInfo, newInfo *ufspb.AssetInfo
+	// Assign blank infos to avoid panic in the following code.
+	if oldInfo = oldData.GetInfo(); oldInfo == nil {
+		oldInfo = &ufspb.AssetInfo{}
+	}
+	if newInfo = newData.GetInfo(); newInfo == nil {
+		newInfo = &ufspb.AssetInfo{}
+	}
+	hc.LogAssetInfoChanges(resName, oldInfo, newInfo)
+	hc.logMsgEntity(resName, false, newData)
+}
+
+// LogAssetInfoChanges logs the change of a give asset info
+func (hc *HistoryClient) LogAssetInfoChanges(resName string, oldInfo, newInfo *ufspb.AssetInfo) {
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.serial_number", oldInfo.GetSerialNumber(), newInfo.GetSerialNumber())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.cost_center", oldInfo.GetCostCenter(), newInfo.GetCostCenter())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.google_code_name", oldInfo.GetGoogleCodeName(), newInfo.GetGoogleCodeName())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.model", oldInfo.GetModel(), newInfo.GetModel())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.build_target", oldInfo.GetBuildTarget(), newInfo.GetBuildTarget())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.reference_board", oldInfo.GetReferenceBoard(), newInfo.GetReferenceBoard())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.ethernet_mac_address", oldInfo.GetEthernetMacAddress(), newInfo.GetEthernetMacAddress())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.sku", oldInfo.GetSku(), newInfo.GetSku())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.phase", oldInfo.GetPhase(), newInfo.GetPhase())...)
+}
+
 // LogMachineChanges logs the change of the given machine.
 func (hc *HistoryClient) LogMachineChanges(oldData *ufspb.Machine, newData *ufspb.Machine) {
 	if oldData == nil && newData == nil {

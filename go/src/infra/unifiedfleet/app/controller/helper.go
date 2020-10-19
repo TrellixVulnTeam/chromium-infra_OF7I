@@ -181,6 +181,17 @@ func GetVlanResource(vlanID string) *Resource {
 	}
 }
 
+// GetAssetResource returns a Resource with AssetEntity
+func GetAssetResource(assetID string) *Resource {
+	return &Resource{
+		Kind: registration.AssetKind,
+		ID:   assetID,
+		Entity: &registration.AssetEntity{
+			Name: assetID,
+		},
+	}
+}
+
 // ResourceExist checks if the given resources exists in the datastore
 //
 // Returns error if any one resource does not exist in the system.

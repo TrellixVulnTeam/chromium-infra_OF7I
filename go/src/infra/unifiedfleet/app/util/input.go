@@ -7,9 +7,14 @@ package util
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/info"
+	"google.golang.org/genproto/googleapis/api/annotations"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 )
@@ -59,6 +64,8 @@ const (
 	// MaxPageSize maximum page size for list operations
 	MaxPageSize int32 = 1000
 )
+
+var collectionsRe = regexp.MustCompile(`\/{[a-zA-Z0-9]*}$`)
 
 // Filter names for indexed properties in datastore for different entities
 var (
@@ -141,6 +148,25 @@ func GetPageSize(pageSize int32) int32 {
 	default:
 		return pageSize
 	}
+}
+
+// GetResourcePrefix gets the resource prefix given to the proto message.
+//
+// Returns the resource prefix for a given proto message.
+// See also: https://blog.golang.org/protobuf-apiv2
+func GetResourcePrefix(message proto.Message) (string, error) {
+	m := proto.MessageReflect(message)
+	x, ok := m.Descriptor().Options().(*descriptorpb.MessageOptions)
+	if !ok {
+		return "", errors.Reason("Unable to read Message Options").Err()
+	}
+	y, _ := proto.GetExtension(x, annotations.E_Resource)
+	z, ok := y.(*annotations.ResourceDescriptor)
+	if !ok {
+		return "", errors.Reason("Resource descriptor not found in proto message").Err()
+	}
+	prefix := collectionsRe.ReplaceAllString(z.Pattern[0], "")
+	return prefix, nil
 }
 
 // FormatInputNames formats a given array of resource names
