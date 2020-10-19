@@ -191,6 +191,7 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add(dict(builder=builder_id))
     self.assertIsNotNone(build.key)
     self.assertIsNotNone(build.key.id())
+    self.assertIsNotNone(build.update_token)
 
     build = build.key.get()
     self.assertEqual(build.proto.id, build.key.id())

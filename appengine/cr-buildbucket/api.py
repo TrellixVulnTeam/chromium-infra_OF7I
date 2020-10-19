@@ -331,6 +331,9 @@ def validate_build_token(build, ctx):
   # build.swarming_task_key is None.
 
   try:
+    # TODO(crbug.com/1110990): if build.update_token is set and matched with
+    # the token from the request, skip validation on the MAC tag,
+    # but validate the version, timestamp, and expiration of the token.
     tokens.validate_build_token(token, build.key.id())
   except auth.InvalidTokenError as e:
     raise StatusError(prpc.StatusCode.UNAUTHENTICATED, '%s', e.message)

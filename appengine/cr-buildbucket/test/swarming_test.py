@@ -649,8 +649,10 @@ class SyncBuildTest(BaseTest):
     self.patch('components.auth.delegate_async', return_value=future('blah'))
 
     self.build_token = 'beeff00d'
-    self.patch(
-        'tokens.generate_build_token', autospec=True, return_value='deadbeef'
+    self.gen_build_token_mock = self.patch(
+        'tokens.generate_build_token',
+        autospec=True,
+        return_value=self.build_token,
     )
 
     self.task_def = {'is_task_def': True, 'task_slices': [{
@@ -667,6 +669,8 @@ class SyncBuildTest(BaseTest):
     self.build_bundle = test_util.build_bundle(
         id=1, created_by='user:john@example.com'
     )
+    self.build.resultdb_update_token = self.resultdb_update_token = 'abc01d2e'
+
     self.build_bundle.build.swarming_task_key = None
     with self.build_bundle.infra.mutate() as infra:
       infra.swarming.task_id = ''
@@ -685,15 +689,68 @@ class SyncBuildTest(BaseTest):
     )
     swarming._create_swarming_task(self.build_bundle.build)
 
-  def _expected_task_def(self, **extra):
-    expected_task_def = self.task_def.copy()
-    expected_secrets = launcher_pb2.BuildSecrets(build_token=self.build_token)
+  def _expected_task_def(self, build_token=None, **extra):
+    expected_task_def = copy.deepcopy(self.task_def)
+    expected_secrets = launcher_pb2.BuildSecrets(
+        build_token=(build_token or self.build_token),
+        resultdb_invocation_update_token=self.resultdb_update_token,
+    )
     expected_task_def[u'task_slices'][0][u'properties'][u'secret_bytes'] = (
         base64.b64encode(expected_secrets.SerializeToString())
     )
     expected_task_def['request_uuid'] = str(uuid.UUID(int=self.build.proto.id))
     expected_task_def.update(**extra)
     return expected_task_def
+
+  def test_build_entity_without_update_token(self):
+    net.json_request_async.return_value = future({'task_id': 'x'})
+
+    # if the build entity has no update_token, then tokens.generate_build_token
+    # should be called with the build_id to generate a new token.
+    self.build.update_token = None
+    self.build_bundle.put()
+    swarming._sync_build(self.build.proto.id, 0)
+    self.gen_build_token_mock.assert_called_once_with(1)
+
+    net.json_request_async.assert_called_with(
+        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new',
+        method='POST',
+        scopes=net.EMAIL_SCOPE,
+        payload=self._expected_task_def(),
+        project_id=None,
+        delegation_token='blah',  # see delegate_async mock in setUp
+        deadline=30,
+        max_attempts=1,
+    )
+
+    # Assert that the build entity has the new token.
+    bundle = model.BuildBundle.get(1)
+    self.assertEqual(bundle.build.update_token, self.build_token)
+
+  def test_build_entity_with_update_token(self):
+    net.json_request_async.return_value = future({'task_id': 'x'})
+
+    # if the build entity has a update_token, then tokens.generate_build_token
+    # should not be called.
+    self.build.update_token = 'different_token'
+    self.build_bundle.put()
+    swarming._sync_build(self.build.proto.id, 0)
+    self.assertEqual(self.gen_build_token_mock.call_count, 0)
+
+    net.json_request_async.assert_called_with(
+        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new',
+        method='POST',
+        scopes=net.EMAIL_SCOPE,
+        payload=self._expected_task_def(build_token='different_token'),
+        project_id=None,
+        delegation_token='blah',  # see delegate_async mock in setUp
+        deadline=30,
+        max_attempts=1,
+    )
+
+    # Assert that the token is kept in the build entity.
+    bundle = model.BuildBundle.get(1)
+    self.assertEqual(bundle.build.update_token, 'different_token')
 
   def test_create_task_no_realms(self):
     net.json_request_async.return_value = future({'task_id': 'x'})

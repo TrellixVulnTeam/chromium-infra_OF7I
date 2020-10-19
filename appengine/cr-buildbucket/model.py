@@ -164,6 +164,10 @@ class Build(ndb.Model):
   # Set at invocation creation time.
   resultdb_update_token = ndb.StringProperty(indexed=False)
 
+  # Build token required to update the build.
+  # Set at build creation time.
+  update_token = ndb.StringProperty(indexed=False)
+
   # == proto-derived properties ================================================
   #
   # These properties are derived from "proto" properties.
