@@ -764,14 +764,14 @@ class Converter(object):
     """Returns protorpc FieldValues for the given protoc FieldValues.
 
     Raises exceptions if any field could not be parsed for any reasons such as
-        unsupported field type, non-existent field, or field from different
-        projects.
+        unsupported field type, non-existent field, field from different
+        projects, or fields with mismatched parent approvals.
 
     Args:
       field_values: protoc FieldValues to ingest.
       config: ProjectIssueConfig for the FieldValues we're ingesting.
-      approval_id_filter: an approval_id, any FieldValues that do not have this
-          approval as a parent will be filtered out of the results.
+      approval_id_filter: an approval_id, including any FieldValues that does
+          not have this approval as a parent will trigger InputException.
 
     Returns:
       A pair 1) Ingested FieldValues. 2) A mapping of field ids to values
@@ -788,12 +788,18 @@ class Converter(object):
     with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
       for fv in field_values:
         try:
-          _project_id, fd_id = rnc.IngestFieldDefName(
+          project_id, fd_id = rnc.IngestFieldDefName(
               self.cnxn, fv.field, self.services)
           fd = fds_by_id[fd_id]
-          # Ignore fields not belonging to the approval_id_filter (if provided).
+          # Raise if field does not belong to approval_id_filter (if provided).
           if (approval_id_filter is not None and
               fd.approval_id != approval_id_filter):
+            approval_name = rnc.ConvertApprovalDefNames(
+                self.cnxn, [approval_id_filter], project_id,
+                self.services)[approval_id_filter]
+            err_agg.AddErrorMessage(
+                'Field {} does not belong to approval {}', fv.field,
+                approval_name)
             continue
           if fd.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
             enums.setdefault(fd_id, []).append(fv.value)

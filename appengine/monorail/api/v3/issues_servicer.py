@@ -288,8 +288,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ModifyIssueApprovalValues(self, mc, request):
-    # type: (MonorailContext, ModifyIssueApprovalRequest) ->
-    #     ModifyIssueApprovalResponse
+    # type: (MonorailContext, ModifyIssueApprovalValuesRequest) ->
+    #     ModifyIssueApprovalValuesResponse
     """pRPC API method that implements ModifyIssueApprovalValues.
 
     Raises:

@@ -1334,13 +1334,13 @@ class ConverterFunctionsTest(unittest.TestCase):
     av_name = (
         'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
 
-    # field_def_6 belongs to approval_def_1, and should be included.
+    # field_def_6 belongs to approval_def_1, should be ingested.
     approval_fv = issue_objects_pb2.FieldValue(
         field='projects/proj/fieldDefs/%d' % self.field_def_6,
         value=u'touch-nose',
         derivation=RULE_DERIVATION,  # Ignored.
     )
-    # An enum field belonging to approval_def_1, which should be included.
+    # An enum field belonging to approval_def_1, should be ingested.
     approval_enum_field_id = self._CreateFieldDef(
         self.project_1.project_id,
         'approval2field',
@@ -1349,15 +1349,9 @@ class ConverterFunctionsTest(unittest.TestCase):
     approval_enum_fv = issue_objects_pb2.FieldValue(
         field='projects/proj/fieldDefs/%d' % approval_enum_field_id,
         value=u'enumval')
-    # Define a field belonging to approval_2, which should be ignored.
-    approval_2_field_id = self._CreateFieldDef(
-        self.project_1.project_id,
-        'approval2field',
-        'STR_TYPE',
-        approval_id=self.approval_def_2_id)
+    # Create field value that points to different approval, should raise error.
     approval_2_fv = issue_objects_pb2.FieldValue(
-        field='projects/proj/fieldDefs/%d' % approval_2_field_id,
-        value=u'ignored')
+        field='projects/proj/fieldDefs/%d' % self.field_def_2, value=u'error')
     av = issue_objects_pb2.ApprovalValue(
         name=av_name, field_values=[approval_fv])
     approval_delta = issues_pb2.ApprovalDelta(
@@ -1366,18 +1360,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_vals_remove=[approval_enum_fv, approval_2_fv],
         approvers_remove=['users/222'],
     )
-    actual = self.converter.IngestApprovalDeltas(
-        [approval_delta], self.user_1.user_id)
-    expected_delta = tracker_pb2.ApprovalDelta(
-        subfield_vals_add=[self.fv_6],
-        subfield_vals_remove=[],
-        labels_remove=[u'approval2field-enumval'],
-        approver_ids_remove=[222],
-    )
-    expected_delta_specifications = [
-        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
-    ]
-    self.assertEqual(actual, expected_delta_specifications)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Field .* does not belong to approval .*'):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
 
   def testIngestApprovalDeltas_InvalidFieldValues(self):
     av_name = (

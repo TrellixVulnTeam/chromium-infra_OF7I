@@ -318,7 +318,7 @@ message ApprovalDelta {
   repeated string approvers_remove = 3 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }
   ];
-  // FieldValues that do not belong to `approval_value` will be ignored.
+  // FieldValues that do not belong to `approval_value` will trigger error.
   repeated FieldValue field_vals_remove = 5;
   // TODO(crbug.com/monorail/8019): add Attachment uploading and removing.
 }
