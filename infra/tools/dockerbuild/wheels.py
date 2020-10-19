@@ -342,6 +342,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'psutil',
+            '5.7.2',
+            packaged=[],
+            skip_plat=['mac-x64-cp38'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'pyasn',
             '1.6.0b1',
             packaged=(),

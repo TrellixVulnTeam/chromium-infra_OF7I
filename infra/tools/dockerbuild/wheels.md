@@ -3084,6 +3084,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 5.7.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/psutil/${vpython_platform}"
+  version: "version:5.7.2"
+>
+```
+
+
+* *linux-arm64-py3*
+* *manylinux-x64-py3*
+
 ## **py**
 
 ### 1.5.3
