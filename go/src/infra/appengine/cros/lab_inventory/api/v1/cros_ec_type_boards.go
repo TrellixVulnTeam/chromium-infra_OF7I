@@ -14,6 +14,7 @@ var crosEcTypeBoards = []string{
 	"cheza",
 	"coral",
 	"daisy",
+	"dedede",
 	"dragonegg",
 	"eve",
 	"falco",
