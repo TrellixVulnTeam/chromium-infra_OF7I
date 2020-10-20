@@ -65,6 +65,38 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 	return asset, err
 }
 
+// GetAsset returns asset for the given name from datastore
+func GetAsset(ctx context.Context, name string) (*ufspb.Asset, error) {
+	if name == "" {
+		return nil, status.Error(codes.InvalidArgument, "GetAsset - missing asset name")
+	}
+	asset, err := registration.GetAsset(ctx, name)
+	if err != nil {
+		return nil, errors.Annotate(err, "GetAsset - unable to get asset %s", name).Err()
+	}
+	return asset, nil
+}
+
+// ListAssets lists the assets
+func ListAssets(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Asset, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, getAssetIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "ListAssets - failed to read filter for listing assets").Err()
+		}
+	}
+	filterMap = resetZoneFilter(filterMap)
+	filterMap = resetAssetTypeFilter(filterMap)
+	return registration.ListAssets(ctx, pageSize, pageToken, filterMap, keysOnly)
+}
+
+// getAssetIndexedFieldName returns the same string as the mapping is 1:1
+func getAssetIndexedFieldName(name string) (string, error) {
+	return name, nil
+}
+
 func validateUpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.FieldMask) error {
 	if mask == nil || mask.Paths == nil {
 		// If mask doesn't exist then validate the given asset

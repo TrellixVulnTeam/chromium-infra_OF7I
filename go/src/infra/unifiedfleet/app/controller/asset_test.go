@@ -9,11 +9,13 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockRack(name, row string, zone ufspb.Zone) *ufspb.Rack {
@@ -188,6 +190,123 @@ func TestUpdateAsset(t *testing.T) {
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "assets/C001004")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+	})
+}
+
+func TestGetAsset(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("Testing GetAsset", t, func() {
+		Convey("Get existing assets", func() {
+			r := mockRack("chromeos6-row2-rack3", "2", ufspb.Zone_ZONE_CHROMEOS6)
+			_, err := RackRegistration(ctx, r)
+			So(err, ShouldBeNil)
+			a := mockAsset("C001001", "eve", "2", "chromeos6-row2-rack3", "1", "chromeos6-row2-rack3-host1", ufspb.AssetType_DUT, ufspb.Zone_ZONE_CHROMEOS6)
+			_, err = AssetRegistration(ctx, a)
+			So(err, ShouldBeNil)
+			respA, err := GetAsset(ctx, "C001001")
+			So(err, ShouldBeNil)
+			So(respA, ShouldResembleProto, a)
+		})
+		Convey("Get non existing assets", func() {
+			respA, err := GetAsset(ctx, "C001004")
+			So(err, ShouldNotBeNil)
+			So(respA, ShouldBeNil)
+		})
+		Convey("Get invalid assets", func() {
+			respB, err := GetAsset(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(respB, ShouldBeNil)
+		})
+	})
+}
+
+func createArrayOfMockAssets(n int, prefix, zone, assetType, model string) []*ufspb.Asset {
+	var assets []*ufspb.Asset
+	for i := 0; i < n; i++ {
+		aType := ufspb.AssetType_UNDEFINED
+		if assetType == "dut" {
+			aType = ufspb.AssetType_DUT
+		} else if assetType == "labstation" {
+			aType = ufspb.AssetType_LABSTATION
+		}
+		a := mockAsset(fmt.Sprintf("%s00%d", prefix, i), model, "3", fmt.Sprintf("%s-row3-rack3", zone), fmt.Sprintf("%d", i), fmt.Sprintf("%s-row3-rack3-host%d", zone, i), aType, util.ToUFSZone(zone))
+		assets = append(assets, a)
+	}
+	return assets
+}
+
+func TestListAssets(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	r := mockRack("chromeos6-row3-rack3", "3", ufspb.Zone_ZONE_CHROMEOS6)
+	RackRegistration(ctx, r)
+	r = mockRack("chromeos2-row3-rack3", "3", ufspb.Zone_ZONE_CHROMEOS2)
+	RackRegistration(ctx, r)
+	dutChromeos6 := createArrayOfMockAssets(4, "EVE6", "chromeos6", "dut", "eve")
+	labstationsChromeos6 := createArrayOfMockAssets(4, "FIZ6", "chromeos6", "labstation", "fizz")
+	guadoChromeos2 := createArrayOfMockAssets(4, "GUA2", "chromeos2", "labstation", "guado")
+	fizzChromeos2 := createArrayOfMockAssets(4, "FIZ2", "chromeos2", "labstation", "fizz")
+	assets := append(dutChromeos6, labstationsChromeos6...)
+	assets = append(assets, guadoChromeos2...)
+	assets = append(assets, fizzChromeos2...)
+	chromeos2Assets := append(fizzChromeos2, guadoChromeos2...)
+	chromeos6Assets := append(dutChromeos6, labstationsChromeos6...)
+	labstationAssets := append(fizzChromeos2, labstationsChromeos6...)
+	labstationAssets = append(labstationAssets, guadoChromeos2...)
+	for _, asset := range assets {
+		AssetRegistration(ctx, asset)
+	}
+	Convey("Testing ListAssets", t, func() {
+		Convey("List all existing assets", func() {
+			respAssets, _, err := ListAssets(ctx, 16, "", "", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 16)
+		})
+		Convey("List assets by zone", func() {
+			respAssets, _, err := ListAssets(ctx, 10, "", "zone=chromeos2", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 8)
+			So(respAssets, ShouldResembleProto, chromeos2Assets)
+			respAssets, _, err = ListAssets(ctx, 10, "", "zone=chromeos6", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 8)
+			So(respAssets, ShouldResembleProto, chromeos6Assets)
+		})
+		Convey("List assets by model", func() {
+			respAssets, _, err := ListAssets(ctx, 10, "", "model=guado", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 4)
+			So(respAssets, ShouldResembleProto, guadoChromeos2)
+			respAssets, _, err = ListAssets(ctx, 10, "", "model=eve", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 4)
+			So(respAssets, ShouldResembleProto, dutChromeos6)
+		})
+		Convey("List assets by type", func() {
+			respAssets, _, err := ListAssets(ctx, 10, "", "type=dut", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 4)
+			So(respAssets, ShouldResembleProto, dutChromeos6)
+			respAssets, _, err = ListAssets(ctx, 12, "", "type=labstation", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 12)
+			So(respAssets, ShouldResembleProto, labstationAssets)
+		})
+		Convey("List assets by combination of filters", func() {
+			respAssets, _, err := ListAssets(ctx, 10, "", "type=dut&model=eve", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 4)
+			So(respAssets, ShouldResembleProto, dutChromeos6)
+			respAssets, _, err = ListAssets(ctx, 10, "", "type=labstation&zone=chromeos2", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 8)
+			So(respAssets, ShouldResembleProto, chromeos2Assets)
+			respAssets, _, err = ListAssets(ctx, 10, "", "type=labstation&zone=chromeos2&model=guado", false)
+			So(err, ShouldBeNil)
+			So(respAssets, ShouldHaveLength, 4)
+			So(respAssets, ShouldResembleProto, guadoChromeos2)
 		})
 	})
 }

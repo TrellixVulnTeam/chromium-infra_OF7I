@@ -545,3 +545,14 @@ func resetZoneFilter(filterMap map[string][]interface{}) map[string][]interface{
 	}
 	return filterMap
 }
+
+func resetAssetTypeFilter(filterMap map[string][]interface{}) map[string][]interface{} {
+	if v, ok := filterMap["type"]; ok {
+		for i, vt := range v {
+			v[i] = util.ToAssetType(fmt.Sprintf("%s", vt)).String()
+			fmt.Println(v[i])
+		}
+		filterMap["type"] = v
+	}
+	return filterMap
+}
