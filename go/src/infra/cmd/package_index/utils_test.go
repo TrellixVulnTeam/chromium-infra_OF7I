@@ -137,7 +137,7 @@ func TestInjectDetails(t *testing.T) {
 				So(len(unitProto.GetDetails()), ShouldEqual, 1)
 
 				any := unitProto.GetDetails()[0]
-				So(any.GetTypeUrl(), ShouldEqual, "kythe.io/proto")
+				So(any.GetTypeUrl(), ShouldEqual, "kythe.io/proto/kythe.proto.BuildDetails")
 
 				buildDetails := &kpb.BuildDetails{}
 				proto.Unmarshal(any.GetValue(), buildDetails)
@@ -163,7 +163,7 @@ func TestInjectDetails(t *testing.T) {
 				So(len(unitProto.GetDetails()), ShouldEqual, 1)
 
 				any := unitProto.GetDetails()[0]
-				So(any.GetTypeUrl(), ShouldEqual, "kythe.io/proto")
+				So(any.GetTypeUrl(), ShouldEqual, "kythe.io/proto/kythe.proto.BuildDetails")
 
 				buildDetails := &kpb.BuildDetails{}
 				proto.Unmarshal(any.GetValue(), buildDetails)

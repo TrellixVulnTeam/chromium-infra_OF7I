@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/logging"
-	"google.golang.org/protobuf/proto"
 
 	kpb "infra/cmd/package_index/kythe/proto"
 )
@@ -105,7 +104,7 @@ func injectUnitBuildDetails(ctx context.Context, unitProto *kpb.CompilationUnit,
 	for i, anyDetails := range unitProto.GetDetails() {
 		if anyDetails.GetTypeUrl() == "kythe.io/proto/kythe.proto.BuildDetails" {
 			buildDetails := &kpb.BuildDetails{}
-			if err := proto.Unmarshal(anyDetails.GetValue(), buildDetails); err != nil {
+			if err := ptypes.UnmarshalAny(anyDetails, buildDetails); err != nil {
 				panic(fmt.Sprintf("Failed to parse unit details: %v", err))
 			}
 			buildDetails.BuildConfig = buildConfig
@@ -113,7 +112,7 @@ func injectUnitBuildDetails(ctx context.Context, unitProto *kpb.CompilationUnit,
 			if err != nil {
 				panic(fmt.Sprintf("Failed to pack Any details: %v", err))
 			}
-			any.TypeUrl = "kythe.io/proto"
+			any.TypeUrl = "kythe.io/proto/kythe.proto.BuildDetails"
 			unitProto.Details[i] = any
 			return
 		}
@@ -127,7 +126,7 @@ func injectUnitBuildDetails(ctx context.Context, unitProto *kpb.CompilationUnit,
 	if err != nil {
 		panic(fmt.Sprintf("Failed to pack Any details: %v", err))
 	}
-	any.TypeUrl = "kythe.io/proto"
+	any.TypeUrl = "kythe.io/proto/kythe.proto.BuildDetails"
 
 	unitProto.Details = append(unitProto.Details, any)
 }
