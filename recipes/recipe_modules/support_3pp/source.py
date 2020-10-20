@@ -245,29 +245,73 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
       workdir.script_dir_base)
 
 
+class Manifest(object):  # pragma: no cover
+  """Implements a manifest object used for downloading remote source.
+
+  Attributes:
+    * protocol (required) - Protocol to use for downloading the artifact.
+    * source_uri (required) - Remote artifact resource location URL/URI.
+    * path - Dictates where to download the sources to, e.g. checkout dir.
+    * source_hash (str) - source_hash returned from resolved version. This is
+      external hash of the GitSource.
+  """
+  def __init__(self, protocol, source_uri, path, source_hash=None):
+    self.protocol = protocol
+    self.source_uri = source_uri
+    self.path = path
+    self.source_hash = source_hash
+
+
 #### Private stuff
 
-def _download_source(api, spec, url, checkout_path,
+def _download_source(api, protocol, url, checkout_path,
                      source_hash=None): # pragma: no cover
   """Fetches the raw source from the given remote location.
 
   Args:
     * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
-    * spec (ResolvedSpec) - The package we want to build.
+    * protocol - Protocol to use for downloading the artifact.
     * url - Remote source URL to download package.
     * checkout_path - Path to place the downloaded source.
     * source_hash - Optional source hash, used for git method.
   """
-  # TODO(akashmukherjee): Add download rule for source:url after updating proto.
-  method_name, _ = spec.source_method
   # Checkout a raw git source given remote git hash.
-  if method_name == 'git':
+  if protocol == 'git':
     api.git.checkout(url, source_hash, checkout_path)
-  elif method_name == 'script':
+  elif protocol == 'url':
     api.url.get_file(url, api.path.join(checkout_path, 'raw_source'))
   else:  # pragma: no cover
-    assert False, 'Unknown source type %r' % (method_name,)
+    assert False, 'Unknown download protocol  %r' % (protocol,)
 
+
+def _generate_download_manifest(spec, checkout_dir,
+                                source_hash=None):  # pragma: no cover
+  """Generates download manifest object for current 3pp package.
+
+  Args:
+    * spec (ResolvedSpec) - The package we want to build.
+    * checkout_dir (Workdir) - The destination directory for remote sources.
+    * source_hash - Optional source hash, used for git method.
+
+  Returns a manifest class object with required attributes set for protocols.
+  """
+  method_name, source_method_pb = spec.source_method
+
+  if method_name == 'git':
+    return Manifest('git', source_method_pb.repo, checkout_dir, source_hash)
+
+  elif method_name == 'url':
+    return Manifest('url', source_method_pb.download_url, checkout_dir)
+
+  elif method_name == 'script':
+    # version is already in env as $_3PP_VERSION
+    script = spec.host_dir.join(source_method_pb.name[0])
+    args = map(str, source_method_pb.name[1:])
+    result = run_script(api, script, *args, stdout=api.raw_io.output())
+    return Manifest('url', result.stdout.strip(), checkout_dir)
+
+  else:  # pragma: no cover
+    assert False, 'Unknown source type %r' % (method_name,)
 
 
 def _do_checkout(api, workdir, spec, version, source_hash='',
