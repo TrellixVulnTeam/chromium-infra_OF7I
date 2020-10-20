@@ -21,10 +21,23 @@ import (
 
 // AssetRegistration registers the given asset to the datastore after validation
 func AssetRegistration(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, error) {
-	if err := validateAsset(ctx, asset); err != nil {
-		return nil, err
+	hc := &HistoryClient{}
+	var err error
+	f := func(ctx context.Context) error {
+		if err := validateAssetRegistration(ctx, asset); err != nil {
+			return err
+		}
+		_, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{asset})
+		if err != nil {
+			return err
+		}
+		hc.LogAssetChanges(nil, asset)
+		return hc.SaveChangeEvents(ctx)
 	}
-	return registration.CreateAsset(ctx, asset)
+	if err = datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "AddAsset - unable to update asset %s", asset.GetName()).Err()
+	}
+	return asset, err
 }
 
 // UpdateAsset updates the asset record to the datastore after validation
@@ -92,6 +105,31 @@ func ListAssets(ctx context.Context, pageSize int32, pageToken, filter string, k
 	return registration.ListAssets(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
+// DeleteAsset deletes an asset from UFS
+func DeleteAsset(ctx context.Context, name string) error {
+	hc := &HistoryClient{}
+	f := func(ctx context.Context) error {
+		if err := validateDeleteAsset(ctx, name); err != nil {
+			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
+		}
+		asset, err := registration.GetAsset(ctx, name)
+		if err != nil {
+			return errors.Annotate(err, "DeleteAsset - cannot find asset %s", name).Err()
+		}
+		err = registration.DeleteAsset(ctx, name)
+		if err != nil {
+			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
+		}
+		hc.LogAssetChanges(asset, nil)
+		err = hc.SaveChangeEvents(ctx)
+		if err != nil {
+			return errors.Annotate(err, "DeleteAsset- unable to record delete history").Err()
+		}
+		return nil
+	}
+	return datastore.RunInTransaction(ctx, f, nil)
+}
+
 // getAssetIndexedFieldName returns the same string as the mapping is 1:1
 func getAssetIndexedFieldName(name string) (string, error) {
 	return name, nil
@@ -104,6 +142,18 @@ func validateUpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_ma
 	}
 	// Validate AssetUpdate Mask if it exists
 	return validateAssetUpdateMask(ctx, asset, mask)
+}
+
+func validateAssetRegistration(ctx context.Context, asset *ufspb.Asset) error {
+	if err := validateAsset(ctx, asset); err != nil {
+		return err
+	}
+	var errMsg strings.Builder
+	errMsg.WriteString("validateAsset - ")
+	if err := ResourceExist(ctx, []*Resource{GetAssetResource(asset.GetName())}, &errMsg); err == nil {
+		return status.Errorf(codes.FailedPrecondition, "validateAssetRegistration - Asset %s exists, cannot create another", asset.GetName())
+	}
+	return nil
 }
 
 func validateAsset(ctx context.Context, asset *ufspb.Asset) error {
@@ -182,6 +232,21 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 			}
 		}
 	}
+	return nil
+}
+
+func validateDeleteAsset(ctx context.Context, name string) error {
+	if name == "" {
+		return status.Error(codes.InvalidArgument, "validateDeleteAsset - Missing asset name")
+	}
+
+	var errMsg strings.Builder
+	errMsg.WriteString("validateDeleteAsset - ")
+	if err := ResourceExist(ctx, []*Resource{GetMachineResource(name)}, &errMsg); err == nil {
+		// Cannot delete asset if its registered as a machine
+		return status.Error(codes.FailedPrecondition, "validateDeleteAsset - Asset registered as DUT/Labstation")
+	}
+	// TODO(anushruth): Add validation for servo resources
 	return nil
 }
 
