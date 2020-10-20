@@ -325,6 +325,39 @@ func IsUFSZone(zone string) bool {
 	return ok
 }
 
+// IsAssetType checks if a strings is a valid asset type
+func IsAssetType(assetType string) bool {
+	for _, x := range ValidAssetTypeStr() {
+		if x == assetType {
+			return true
+		}
+	}
+	return false
+}
+
+// ToAssetType returns an AssetType object corresponding to string
+func ToAssetType(assetType string) ufspb.AssetType {
+	aType := strings.ReplaceAll(assetType, "AssetType_", "")
+	for k, v := range ufspb.AssetType_value {
+		if strings.EqualFold(k, aType) {
+			return ufspb.AssetType(v)
+		}
+	}
+	return ufspb.AssetType_UNDEFINED
+}
+
+// ValidAssetTypeStr returns a valid str list for AssetTypes
+func ValidAssetTypeStr() []string {
+	keys := make([]string, 0, len(ufspb.AssetType_name))
+	for k, v := range ufspb.AssetType_name {
+		// 0 is UNDEFINED
+		if k != 0 {
+			keys = append(keys, strings.ToLower(v))
+		}
+	}
+	return keys
+}
+
 // ValidZoneStr returns a valid str list for zone strings.
 func ValidZoneStr() []string {
 	ks := make([]string, 0, len(StrToUFSZone))

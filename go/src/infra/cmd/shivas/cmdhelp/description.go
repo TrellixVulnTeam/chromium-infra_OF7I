@@ -30,6 +30,18 @@ Adds a switch by specifying several attributes directly.
 shivas add switch -i
 Adds a switch by reading input through interactive mode.`
 
+	// AddAssetLongDesc log description for AddAssetCmd
+	AddAssetLongDesc string = `Add an asset to UFS
+Examples:
+shivas add asset -f asset.json
+Adds an asset by reading a JSON file input.
+
+shivas add asset -name {asset name} -location {asset location} -type DUT
+Adds an asset by specifying several attributes directly
+
+shivas add asset -name {asset name} -lab {lab name} -aisle {aisle} -row {row number}-rack {rack name} -type {asset type} -position {asset position}
+Alternate location specification for finer details.`
+
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
 
@@ -1022,6 +1034,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 	// ZoneFilterHelpText help text for zone filters for list command
 	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(ufsUtil.ValidZoneStr(), ", "))
+
+	// AssetTypesHelpText help text for asset type filters
+	AssetTypesHelpText string = fmt.Sprintf("\nValid type filters [%s]", strings.Join(ufsUtil.ValidAssetTypeStr(), ", "))
 
 	// StateFilterHelpText help text for state filters for list command
 	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))
