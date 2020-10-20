@@ -70,7 +70,8 @@ func verifyPaths(localPath string, gsPath string) error {
 	return nil
 }
 
-const maxConcurrentUploads = 10
+// TODO(crbug.com/1133890): Replace with value from builder config.
+const maxConcurrentUploads = 20
 
 // WriteDir writes a local directory to Google Storage.
 //
