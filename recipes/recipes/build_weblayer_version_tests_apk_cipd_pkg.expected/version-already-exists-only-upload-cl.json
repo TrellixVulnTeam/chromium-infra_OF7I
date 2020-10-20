@@ -655,6 +655,7 @@
       "--force",
       "--r-owners",
       "--cq-dry-run",
+      "--send-mail",
       "--message-file",
       "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 84.0.4147.89\n\nBug:1041619\n"
     ],

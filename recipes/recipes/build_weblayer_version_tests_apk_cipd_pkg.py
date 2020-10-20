@@ -362,7 +362,8 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
         '%d, %s' % (idx + 1, ver)
         for idx, ver in enumerate(cipd_pkgs_to_create))
 
-    upload_args = ['--force', '--r-owners', '--cq-dry-run']
+    upload_args = ['--force', '--r-owners', '--cq-dry-run',
+                   '--send-mail']
     api.git_cl.upload(description, upload_args=upload_args)
 
     with api.step.nest('Waiting for CL to land'):
