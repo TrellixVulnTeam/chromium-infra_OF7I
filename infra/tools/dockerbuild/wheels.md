@@ -867,6 +867,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.14.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/cffi/${vpython_platform}"
+  version: "version:1.14.3"
+>
+```
+
+
+* *linux-arm64-py3*
+* *manylinux-x64-py3*
+
 ## **chardet**
 
 ### 3.0.4
