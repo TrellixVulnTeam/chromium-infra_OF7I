@@ -113,7 +113,6 @@ func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) 
 var fileToRota = map[string]string{
 	"sheriff_perf.json":           "Chromium Perf Regression Sheriff Rotation",
 	"sheriff_gpu.json":            "Chrome GPU Pixel Wrangling",
-	"sheriff_angle.json":          "The ANGLE Wrangle",
 	"sheriff_ios.json":            "Chrome iOS Build Sheriff",
 	"sheriff_perfbot.json":        "Chromium Perf Bot Sheriff Rotation",
 	"sheriff_flutter_engine.json": "Flutter Engine Rotation",

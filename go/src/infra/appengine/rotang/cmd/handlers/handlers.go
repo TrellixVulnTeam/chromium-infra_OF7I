@@ -199,7 +199,6 @@ func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) 
 		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,
 		"sheriff_gpu.json":            h.legacySheriff,
-		"sheriff_angle.json":          h.legacySheriff,
 		"sheriff_ios.json":            h.legacySheriff,
 		"sheriff_perfbot.json":        h.legacySheriff,
 		"sheriff_flutter_engine.json": h.legacySheriff,
