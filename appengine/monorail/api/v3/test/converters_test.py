@@ -1263,6 +1263,43 @@ class ConverterFunctionsTest(unittest.TestCase):
     actual = self.converter.IngestIssueDeltas([])
     self.assertEqual(actual, [])
 
+  def testIngestIssueDeltas_InvalidValuesForFields(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue_1 = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue_1)
+    fd_int = fake.MakeTestFieldDef(1, 780, tracker_pb2.FieldTypes.INT_TYPE)
+    fd_date = fake.MakeTestFieldDef(2, 780, tracker_pb2.FieldTypes.DATE_TYPE)
+    config = fake.MakeTestConfig(780, [], [])
+    config.field_defs = [fd_int, fd_date]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        field_values=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1',
+                value='NotAnInt',
+                derivation=issue_objects_pb2.Derivation.Value('RULE')),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/2',
+                value='NoDate',
+                derivation=issue_objects_pb2.Derivation.Value('EXPLICIT')),
+        ],
+    )
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=['field_values']))
+    error_messages = [
+        r'Could not ingest value \(NotAnInt\) for FieldDef \(projects/proj-780/'
+        r'fieldDefs/1\): Could not parse NotAnInt',
+        r'Could not ingest value \(NoDate\) for FieldDef \(projects/proj-780/fi'
+        r'eldDefs/2\): Could not parse NoDate',
+    ]
+    error_messages_re = '\n'.join(error_messages)
+    with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
+      self.converter.IngestIssueDeltas([api_delta])
+
   @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
   def testIngestApprovalDeltas(self):
     mask = field_mask_pb2.FieldMask(
