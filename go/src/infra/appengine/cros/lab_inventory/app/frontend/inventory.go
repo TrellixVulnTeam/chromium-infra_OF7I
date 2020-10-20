@@ -750,6 +750,18 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 	// Query asset info using hostname and create records
 	var assetTag string
 	record := req.DeviceRepairRecord
+	hostname := record.Hostname
+
+	// Check if an open record already exists for this hostname. Return error if
+	// there is an open record.
+	getRes, err := queryInProgressMRHost(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(getRes) >= 1 {
+		return nil, errors.Reason("A record already exists for host %s; Please complete the existing record", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
 
 	// Try to get asset tag from DeviceEntity id. In most cases (current coverage
 	// is ~71%), DeviceEntity will use asset tag as its ID. UUID is used if not
@@ -758,7 +770,7 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 	//
 	// The ID should either be an asset tag or a uuid. Checking if it equals
 	// hostname is to prevent datastore errors.
-	devices := datastore.GetDevicesByHostnames(ctx, []string{record.Hostname})
+	devices := datastore.GetDevicesByHostnames(ctx, []string{hostname})
 	if err := devices[0].Err; err != nil {
 		logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
 		assetTag = "n/a"
@@ -792,11 +804,24 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 func (is *InventoryServerImpl) UpdateDeviceManualRepairRecord(ctx context.Context, req *api.UpdateDeviceManualRepairRecordRequest) (rsp *api.UpdateDeviceManualRepairRecordResponse, err error) {
 	id := req.Id
 	record := req.DeviceRepairRecord
+	hostname := record.Hostname
 
 	if id == "" {
 		return nil, errors.Reason("ID cannot be empty").Tag(grpcutil.InvalidArgumentTag).Err()
 	}
 
+	// Check if an open record exists for this hostname. If not, throw error
+	// stating no active record to be updated.
+	getRes, err := queryInProgressMRHost(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(getRes) == 0 {
+		return nil, errors.Reason("No open record exists for host %s; Please create a new record", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	// Construct updated record
 	record.UpdatedTime = timestamppb.Now()
 	if record.RepairState == invlibs.DeviceManualRepairRecord_STATE_COMPLETED {
 		record.CompletedTime = record.UpdatedTime
@@ -812,4 +837,18 @@ func (is *InventoryServerImpl) UpdateDeviceManualRepairRecord(ctx context.Contex
 	}
 
 	return &api.UpdateDeviceManualRepairRecordResponse{}, nil
+}
+
+// queryInProgressMRHost takes a hostname and queries for any in progress
+// Manual Repair records associated with it.
+func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.DeviceManualRepairRecordsOpRes, error) {
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{
+		"hostname":     hostname,
+		"repair_state": "STATE_IN_PROGRESS",
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "Failed to query STATE_IN_PROGRESS host %s", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	return getRes, err
 }

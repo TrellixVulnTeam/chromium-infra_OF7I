@@ -1428,6 +1428,18 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
 			So(getRes, ShouldHaveLength, 0)
 		})
+		Convey("Add single record to a host with an open record", func() {
+			// Check existing record
+			propFilter := map[string]string{"hostname": record1.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-aa")
+
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record1}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "A record already exists for host chromeos-createRecords-aa")
+		})
 	})
 
 	// Datastore with DeviceEntity
@@ -1521,7 +1533,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 	record2Complete := mockDeviceManualRepairRecord("chromeos-updateRecords-bb", "updateRec-222", 1, true)
 	record3 := mockDeviceManualRepairRecord("chromeos-updateRecords-cc", "updateRec-333", 1, false)
 	record3Update := mockDeviceManualRepairRecord("chromeos-updateRecords-cc", "updateRec-333", 1, false)
-	record4 := mockDeviceManualRepairRecord("", "", 1, false)
+	record4 := mockDeviceManualRepairRecord("chromeos-updateRecords-dd", "updateRec-444", 1, false)
 
 	// Set up records in datastore
 	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3}
@@ -1597,7 +1609,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			rsp, err := tf.Inventory.UpdateDeviceManualRepairRecord(tf.C, req)
 			So(rsp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "datastore: no such entity")
+			So(err.Error(), ShouldContainSubstring, "No open record exists for host chromeos-updateRecords-dd")
 		})
 	})
 }
