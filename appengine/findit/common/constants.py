@@ -43,18 +43,15 @@ ALLOWED_APP_ACCOUNTS = [
     'findit-for-me@appspot.gserviceaccount.com',
     'sheriff-o-matic@appspot.gserviceaccount.com',
 ]
-WHITELISTED_APP_ACCOUNTS = ALLOWED_APP_ACCOUNTS
 # Allowed staging app ids for authorized access to Findit staging.
 ALLOWED_STAGING_APP_ACCOUNTS = [
     'findit-for-me-staging@appspot.gserviceaccount.com',
     'sheriff-o-matic-staging@appspot.gserviceaccount.com',
 ]
-WHITELISTED_STAGING_APP_ACCOUNTS = ALLOWED_STAGING_APP_ACCOUNTS
 # Allowed client ids for authorized access to Findit prod and staging.
 ALLOWED_CLIENT_IDS = [
     API_EXPLORER_CLIENT_ID,
 ]
-WHITELISTED_CLIENT_IDS = ALLOWED_CLIENT_IDS
 
 # Directory of html templates.
 HTML_TEMPLATE_DIR = os.path.realpath(
