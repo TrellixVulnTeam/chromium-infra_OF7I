@@ -1,8 +1,8 @@
-hash: c14bf9a8cb82c04187522e22b1a4b72a2a1621c1a63c0178030d0cfcabccbfb9
-updated: 2020-10-19T13:19:19.558737-07:00
+hash: 96b5160fae12d8d2b975b9f60262423a351163cb69d1eddd23e05cabcd2f3138
+updated: 2020-10-20T15:26:13.297749-07:00
 imports:
 - name: cloud.google.com/go
-  version: 1575c3c31f1455670e5f399bc577832d0bb83cbc
+  version: 38a56325f4eed4a00a1661895369f69acf402d84
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -18,7 +18,7 @@ imports:
   version: ed2419acda397c1a113d8e9766bb41def2543f27
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
 - name: github.com/antlr/antlr4
-  version: 9e64dfc6e99f7dcf7cae492927d37290daf57734
+  version: 0a7eaede42b0e538e71789ec027f758405f3161e
   repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
   subpackages:
   - runtime/Go/antlr
@@ -456,7 +456,7 @@ imports:
   version: ce943fd02449f621243c9ea6e64098e84752b92b
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
-  version: 7b1cca2348c07eb09fef635269c8e01611260f9f
+  version: d65d470038a546ed9bb38f15e9ad24b9a1d07f4f
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context
@@ -468,7 +468,7 @@ imports:
   - google
   - jwt
 - name: golang.org/x/sync
-  version: b3e1573b75205f2905c4b27986413d2e2be9803c
+  version: 67f06af15bc961c363a7260195bcd53487529a21
   repo: https://go.googlesource.com/sync.git
   subpackages:
   - errgroup
@@ -485,7 +485,7 @@ imports:
   version: 3af7569d3a1e776fc2a3c1cec133b43105ea9c2e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: b894a3290fff7ed8373c3156460600f8216a6c2d
+  version: 226fd2f889caf09c3e3348aa96f008c57c08a700
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -537,7 +537,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 4be647f7f6dbe8e956014c93a79b9032e5a8b613
+  version: 9519efffeb5d1897ae8671568871a6d476986524
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
