@@ -374,6 +374,12 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'pynacl',
+            '1.2.1',
+            skip_plat=['mac-x64-cp38', 'linux-arm64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'scan-build',
             '2.0.8',
             packaged=(),
