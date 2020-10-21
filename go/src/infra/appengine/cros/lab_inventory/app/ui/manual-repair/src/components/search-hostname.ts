@@ -146,6 +146,7 @@ export default class SearchHostname extends connect
       e.preventDefault();
       if (this.input && this.user.signedIn) {
         this.queryHostname(this.input);
+        this.setPath();
       } else if (!this.user.signedIn) {
         thunkDispatch(receiveAppMessage('Please sign in to continue!'));
       } else if (!this.input) {

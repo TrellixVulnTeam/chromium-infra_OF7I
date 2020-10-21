@@ -18,6 +18,8 @@ export const RECEIVE_DEVICE_INFO = 'RECEIVE_DEVICE_INFO';
 export const RECEIVE_RECORD_INFO = 'RECEIVE_RECORD_INFO';
 export const RECEIVE_RECORD_INFO_ERROR = 'RECEIVE_RECORD_INFO_ERROR';
 export const RECEIVE_DEVICE_INFO_ERROR = 'RECEIVE_DEVICE_INFO_ERROR';
+export const CLEAR_DEVICE_INFO = 'CLEAR_DEVICE_INFO';
+export const CLEAR_RECORD_INFO = 'CLEAR_RECORD_INFO';
 
 export function receiveRecordInfo(recordInfo: object) {
   return {type: RECEIVE_RECORD_INFO, recordInfo};
@@ -36,6 +38,13 @@ export function receiveDeviceInfoError(error: object) {
  */
 export function receiveDeviceInfo(deviceInfo: Array<Object>) {
   return {type: RECEIVE_DEVICE_INFO, deviceInfo};
+};
+
+export function clearDeviceInfo() {
+  return {type: CLEAR_DEVICE_INFO};
+};
+export function clearRecordInfo() {
+  return {type: CLEAR_RECORD_INFO};
 };
 
 /**
@@ -179,6 +188,19 @@ export function updateRepairRecord(
   };
 };
 
+/**
+ * Clears all device and repair info. Sets both to empty states and returns a
+ * promise when both are resolved.
+ */
+export function clearRepairRecord() {
+  return function(dispatch: AppThunkDispatch) {
+    return Promise.all([
+      dispatch(clearDeviceInfo()),
+      dispatch(clearRecordInfo()),
+    ]);
+  };
+};
+
 export type RepairRecordStateType = {
   info: {
     deviceInfo: object,
@@ -228,8 +250,8 @@ export function repairRecordReducer(state = emptyState, action) {
         ...state,
         info: {
           deviceInfo: state.info.deviceInfo,
-          recordInfo: {},
-          recordId: '',
+          recordInfo: emptyState.info.recordInfo,
+          recordId: emptyState.info.recordId,
         },
         errors: {
           ...state.errors,
@@ -240,13 +262,31 @@ export function repairRecordReducer(state = emptyState, action) {
       return {
         ...state,
         info: {
-          deviceInfo: {},
+          deviceInfo: emptyState.info.deviceInfo,
           recordInfo: state.info.recordInfo,
-          recordId: '',
+          recordId: emptyState.info.recordId,
         },
         errors: {
           ...state.errors,
           deviceInfoError: action.error,
+        },
+      };
+    case CLEAR_DEVICE_INFO:
+      return {
+        ...state,
+        info: {
+          deviceInfo: emptyState.info.deviceInfo,
+          recordInfo: state.info.recordInfo,
+          recordId: state.info.recordId,
+        },
+      };
+    case CLEAR_RECORD_INFO:
+      return {
+        ...state,
+        info: {
+          deviceInfo: state.info.deviceInfo,
+          recordInfo: emptyState.info.recordInfo,
+          recordId: emptyState.info.recordId,
         },
       };
     default:

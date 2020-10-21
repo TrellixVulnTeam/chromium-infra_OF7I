@@ -14,9 +14,10 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {router} from '../../shared/router';
 import {SHARED_STYLES} from '../../shared/shared-styles';
 import {receiveAppMessage} from '../../state/reducers/message';
-import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
+import {clearRepairRecord, createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
 import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
 
@@ -131,6 +132,7 @@ enum FormAction {
   @property({type: Object}) recordObj;
   // Action to be executed on form submission.
   @property({type: String}) formAction;
+  @property({type: String}) formMessage = '';
 
   stateChanged(state) {
     this.deviceInfo = state.record.info.deviceInfo;
@@ -710,6 +712,14 @@ enum FormAction {
     this.handleFormSubmission();
   };
 
+  handleFormAfterCompletion(hostname: string) {
+    thunkDispatch(clearRepairRecord())
+        .then(
+            () => this.formMessage =
+                `Successfully completed record for ${hostname}!`)
+        .then(() => router.navigate('/repairs'));
+  }
+
   handleFormSubmission() {
     this.submitting = true;
     const toSubmit = this.createPayloadObj();
@@ -734,18 +744,34 @@ enum FormAction {
                   err => thunkDispatch(receiveAppMessage(err)));
     }
 
-    submitRes
-        .then(
-            () => thunkDispatch(
-                getRepairRecord(toSubmit.hostname, this.user.authHeaders)))
-        .finally(() => {
-          this.submitting = false;
-        });
+    if (toSubmit.issueFixed) {
+      submitRes.then(() => this.handleFormAfterCompletion(toSubmit.hostname));
+    } else {
+      submitRes.then(
+          () => thunkDispatch(
+              getRepairRecord(toSubmit.hostname, this.user.authHeaders)));
+    }
+
+    submitRes.finally(() => {
+      this.submitting = false;
+    });
+  }
+
+  /**
+   * Display simple messaging in place of form. Used to elevate information that
+   * may otherwise be missed in the snackbar.
+   */
+  displayFormMessage() {
+    return html`
+      <h2>${this.formMessage}</h2>
+    `;
   }
 
   render() {
     try {
-      return html`${isEmpty(this.deviceInfo) ? null : this.displayForm()}`;
+      return html`${
+          isEmpty(this.deviceInfo) ? this.displayFormMessage() :
+                                     this.displayForm()}`;
     } catch (e) {
       thunkDispatch(receiveAppMessage('Form cannot be displayed: ' + e));
       return;

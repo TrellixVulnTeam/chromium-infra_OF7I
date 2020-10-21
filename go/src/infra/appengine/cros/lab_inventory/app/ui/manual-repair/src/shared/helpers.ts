@@ -14,7 +14,10 @@ export function parseQueryStringToDict(queryString: string):
   const pairs = queryString.split('&');
   for (let i = 0; i < pairs.length; i++) {
     let pair = pairs[i].split('=');
-    queryStore[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    if (pair[0] !== '') {
+      queryStore[decodeURIComponent(pair[0])] =
+          decodeURIComponent(pair[1] || '');
+    }
   }
   return queryStore;
 }
