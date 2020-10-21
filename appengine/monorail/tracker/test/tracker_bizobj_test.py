@@ -1495,9 +1495,9 @@ class BizobjTest(unittest.TestCase):
     # Test amendments.
     self.assertEqual(2, len(amendments))
     self.assertEqual(tracker_pb2.FieldID.BLOCKEDON, amendments[0].field)
-    self.assertEqual('-b/345 -b/456 b/123 b/234', amendments[0].newvalue)
+    self.assertEqual('-b/345 b/123 b/234', amendments[0].newvalue)
     self.assertEqual(tracker_pb2.FieldID.BLOCKING, amendments[1].field)
-    self.assertEqual('-b/789 -b/890 b/567 b/678', amendments[1].newvalue)
+    self.assertEqual('-b/789 b/567 b/678', amendments[1].newvalue)
 
     self.assertEqual(0, len(impacted_iids))
 
@@ -1512,6 +1512,72 @@ class BizobjTest(unittest.TestCase):
           tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/567'),
           tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/678'),
         ], issue.dangling_blocking_refs)
+
+  def testApplyIssueDelta_AddAndRemoveExtRef(self):
+    """Only applies valid issue refs from a delta."""
+    issue = tracker_pb2.Issue(
+        status='New',
+        summary='Sum',
+        dangling_blocked_on_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/111')
+        ],
+        dangling_blocking_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/222')
+        ])
+    delta = tracker_pb2.IssueDelta(
+        ext_blocked_on_add=['b/123'],
+        ext_blocked_on_remove=['b/123'],
+        ext_blocking_add=['b/456'],
+        ext_blocking_remove=['b/456'])
+
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+
+    # Nothing changed.
+    self.assertEqual(0, len(amendments))
+    self.assertEqual(0, len(impacted_iids))
+
+    self.assertEqual(
+        [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/111')],
+        issue.dangling_blocked_on_refs)
+    self.assertEqual(
+        [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/222')],
+        issue.dangling_blocking_refs)
+
+  def testApplyIssueDelta_OnlyInvalidExternalRefs(self):
+    """Only applies valid issue refs from a delta."""
+    issue = tracker_pb2.Issue(
+        status='New',
+        summary='Sum',
+        dangling_blocked_on_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/111')
+        ],
+        dangling_blocking_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/222')
+        ])
+    delta = tracker_pb2.IssueDelta(
+        # Add one invalid and one that already exists.
+        ext_blocked_on_add=['b123', 'b/111'],
+        # Remove one invalid, and one that does not exist.
+        ext_blocked_on_remove=['b', 'b/456'],
+        # Add one invalid and one that already exists.
+        ext_blocking_add=['b//123', 'b/222'],
+        # Remove one invalid, and one that does not exist.
+        ext_blocking_remove=['b/123/123', 'b/890'])
+
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+
+    # Nothing changed.
+    self.assertEqual(0, len(amendments))
+    self.assertEqual(0, len(impacted_iids))
+
+    self.assertEqual(
+        [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/111')],
+        issue.dangling_blocked_on_refs)
+    self.assertEqual(
+        [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/222')],
+        issue.dangling_blocking_refs)
 
   def testApplyIssueDelta_MergedIntoExternal(self):
     """ApplyIssueDelta applies valid mergedinto refs."""

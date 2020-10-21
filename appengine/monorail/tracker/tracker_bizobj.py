@@ -1088,30 +1088,42 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
 
   # Update external issue references.
   if delta.ext_blocked_on_add or delta.ext_blocked_on_remove:
-    add_refs = [
-        tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
-        for ext_id in delta.ext_blocked_on_add
-        if federated.IsShortlinkValid(ext_id)]
-    remove_refs = [
-        tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
-        for ext_id in delta.ext_blocked_on_remove
-        if federated.IsShortlinkValid(ext_id)]
-    amendments.append(MakeBlockedOnAmendment(add_refs, remove_refs))
+    add_refs = []
+    for ext_id in delta.ext_blocked_on_add:
+      ref = tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
+      if (federated.IsShortlinkValid(ext_id) and
+          ref not in issue.dangling_blocked_on_refs and
+          ext_id not in delta.ext_blocked_on_remove):
+        add_refs.append(ref)
+    remove_refs = []
+    for ext_id in delta.ext_blocked_on_remove:
+      ref = tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
+      if (federated.IsShortlinkValid(ext_id) and
+          ref in issue.dangling_blocked_on_refs):
+        remove_refs.append(ref)
+    if add_refs or remove_refs:
+      amendments.append(MakeBlockedOnAmendment(add_refs, remove_refs))
     issue.dangling_blocked_on_refs = [
         ref for ref in issue.dangling_blocked_on_refs + add_refs
         if ref.ext_issue_identifier not in delta.ext_blocked_on_remove]
 
   # Update external issue references.
   if delta.ext_blocking_add or delta.ext_blocking_remove:
-    add_refs = [
-        tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
-        for ext_id in delta.ext_blocking_add
-        if federated.IsShortlinkValid(ext_id)]
-    remove_refs = [
-        tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
-        for ext_id in delta.ext_blocking_remove
-        if federated.IsShortlinkValid(ext_id)]
-    amendments.append(MakeBlockingAmendment(add_refs, remove_refs))
+    add_refs = []
+    for ext_id in delta.ext_blocking_add:
+      ref = tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
+      if (federated.IsShortlinkValid(ext_id) and
+          ref not in issue.dangling_blocking_refs and
+          ext_id not in delta.ext_blocking_remove):
+        add_refs.append(ref)
+    remove_refs = []
+    for ext_id in delta.ext_blocking_remove:
+      ref = tracker_pb2.DanglingIssueRef(ext_issue_identifier=ext_id)
+      if (federated.IsShortlinkValid(ext_id) and
+          ref in issue.dangling_blocking_refs):
+        remove_refs.append(ref)
+    if add_refs or remove_refs:
+      amendments.append(MakeBlockingAmendment(add_refs, remove_refs))
     issue.dangling_blocking_refs = [
         ref for ref in issue.dangling_blocking_refs + add_refs
         if ref.ext_issue_identifier not in delta.ext_blocking_remove]
