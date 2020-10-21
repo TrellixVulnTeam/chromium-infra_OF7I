@@ -138,14 +138,20 @@ def _GetAllowedBuilders():
   builders are specified in canonical string representations, and following is
   an example config:
   {
+    'allowed_builders': [
+      'chromium/try/linux-rel',
+      'chromium/try/linux-chromeos-rel',
+    ],
     'whitelisted_builders': [
       'chromium/try/linux-rel',
       'chromium/try/linux-chromeos-rel',
     ],
   }
   """
-  return set(waterfall_config.GetCodeCoverageSettings().get(
-      'whitelisted_builders', []))
+  config = waterfall_config.GetCodeCoverageSettings()
+  builders = set(config.get('allowed_builders', []))
+  builders.update(config.get('whitelisted_builders', []))
+  return builders
 
 
 def _GetSameOrMostRecentReportForEachPlatform(luci_project, host, project, ref,

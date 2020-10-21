@@ -268,6 +268,10 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     super(ProcessCodeCoverageDataTest, self).setUp()
     self.UpdateUnitTestConfigSettings(
         'code_coverage_settings', {
+            'allowed_builders': [
+                'chromium/try/linux-rel',
+                'chrome/coverage/linux-code-coverage',
+            ],
             'whitelisted_builders': [
                 'chromium/try/linux-rel',
                 'chrome/coverage/linux-code-coverage',
