@@ -246,7 +246,8 @@ class ChromiumProjectAPI(ProjectAPI):
     # TODO(https://crbug.com/1109276) Once builds with the mastername property
     # are beyond horizon that we care about, don't check mastername
     builder_group = (
-        build.input.properties.get('builder_group') or
+        build.input.properties['builder_group']
+        if 'builder_group' in build.input.properties else
         build.input.properties['mastername'])
     return CompileFailureInfo.FromSerializable({
         'failed_steps': {

@@ -11,6 +11,7 @@ from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from common.waterfall import buildbucket_client
 from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.services.chromium_api import ChromiumProjectAPI
+from findit_v2.services.context import Context
 from findit_v2.services.failure_type import StepTypeEnum
 from infra_api_clients import logdog_util
 from infra_api_clients.codereview import gerrit
@@ -621,6 +622,48 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     )
     dimensions = ChromiumProjectAPI().GetRerunDimensions(800000009999)
     self.assertEqual(dimensions, [{'key': 'os', 'value': 'Mac'}])
+
+  @mock.patch.object(git, 'GetCommitsBetweenRevisionsInOrder')
+  def testGetCompileFailureInfo(self, mock_git):
+    mock_git.return_value = ['foo']
+    context = Context(
+        luci_project_name='chromium',
+        gitiles_host='gitiles.host.com',
+        gitiles_project='project/name',
+        gitiles_ref='ref/heads/master',
+        gitiles_id='git_sha')
+    build = self._CreateBuildbucketBuild(800000001234, 1234, 'chromium.linux',
+                                         'Linux Builder')
+    first_failures_in_current_build = {
+        'last_passed_build': {
+            'number': 9998,
+            'commit_id': 'git_sha1',
+        },
+    }
+    compile_failure_info = ChromiumProjectAPI().GetCompileFailureInfo(
+        context, build, first_failures_in_current_build)
+    self.assertEqual(compile_failure_info.master_name, 'chromium.linux')
+
+  @mock.patch.object(git, 'GetCommitsBetweenRevisionsInOrder')
+  def testGetCompileFailureInfoWithMasternameProperty(self, mock_git):
+    mock_git.return_value = ['foo']
+    context = Context(
+        luci_project_name='chromium',
+        gitiles_host='gitiles.host.com',
+        gitiles_project='project/name',
+        gitiles_ref='ref/heads/master',
+        gitiles_id='git_sha')
+    build = self._CreateBuildbucketBuildWithMasternameProperty(
+        800000001234, 1234, 'chromium.linux', 'Linux Builder')
+    first_failures_in_current_build = {
+        'last_passed_build': {
+            'number': 9998,
+            'commit_id': 'git_sha1',
+        },
+    }
+    compile_failure_info = ChromiumProjectAPI().GetCompileFailureInfo(
+        context, build, first_failures_in_current_build)
+    self.assertEqual(compile_failure_info.master_name, 'chromium.linux')
 
   @mock.patch.object(gerrit, 'Gerrit')
   @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
