@@ -113,7 +113,8 @@ export function getDeviceInfo(
 
 /**
  * Call inventory.Inventory/CreateDeviceManualRepairRecord rpc for manual repair
- * record information.
+ * record information. Error is propagated to the next level for the component
+ * to handle.
  *
  * @param record  Record object of the record to be created in datastore.
  * @param headers The additional HTML headers to be passed. These will include
@@ -131,17 +132,21 @@ export function createRepairRecord(
             headers)
         .then(
             res => res,
-            err => Promise.all([
-              dispatch(receiveRecordInfoError(err)),
-              dispatch(receiveAppMessage(err.description)),
-            ]),
+            err => {
+              Promise.all([
+                dispatch(receiveRecordInfoError(err)),
+                dispatch(receiveAppMessage(err.description)),
+              ]);
+              throw Error(err.description);
+            },
         );
   };
 };
 
 /**
  * Call inventory.Inventory/UpdateDeviceManualRepairRecord rpc for manual repair
- * record information.
+ * record information. Error is propagated to the next level for the component
+ * to handle.
  *
  * @param recordId  Record ID of the record to be updated in datastore.
  * @param record    Record object of the record to be updated in datastore.
@@ -163,10 +168,13 @@ export function updateRepairRecord(
             headers)
         .then(
             res => res,
-            err => Promise.all([
-              dispatch(receiveRecordInfoError(err)),
-              dispatch(receiveAppMessage(err.description)),
-            ]),
+            err => {
+              Promise.all([
+                dispatch(receiveRecordInfoError(err)),
+                dispatch(receiveAppMessage(err.description)),
+              ]);
+              throw Error(err.description);
+            },
         );
   };
 };

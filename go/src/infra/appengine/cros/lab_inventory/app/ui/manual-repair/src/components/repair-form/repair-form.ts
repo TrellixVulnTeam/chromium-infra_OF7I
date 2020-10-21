@@ -719,23 +719,19 @@ enum FormAction {
       submitRes =
           thunkDispatch(createRepairRecord(toSubmit, this.user.authHeaders))
               .then(
-                  () => thunkDispatch(
+                  _ => thunkDispatch(
                       receiveAppMessage(`Successfully created record for '${
-                          toSubmit.hostname}'.`)))
-              .catch(
-                  () => thunkDispatch(
-                      receiveAppMessage('Failed to create record.')));
+                          toSubmit.hostname}'.`)),
+                  err => thunkDispatch(receiveAppMessage(err)));
     } else {
       submitRes =
           thunkDispatch(updateRepairRecord(
                             this.recordId, toSubmit, this.user.authHeaders))
               .then(
-                  () => thunkDispatch(
+                  _ => thunkDispatch(
                       receiveAppMessage(`Successfully updated record for '${
-                          toSubmit.hostname}'.`)))
-              .catch(
-                  () => thunkDispatch(
-                      receiveAppMessage('Failed to update record.')));
+                          toSubmit.hostname}'.`)),
+                  err => thunkDispatch(receiveAppMessage(err)));
     }
 
     submitRes
