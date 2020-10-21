@@ -596,6 +596,7 @@ SPECS.update({
         UniversalSource('pyrsistent', '0.16.0', pyversions=['py3']),
         UniversalSource('requests-unixsocket', '0.1.5'),
         UniversalSource('retrying', '1.3.3'),
+        UniversalSource('selenium', '2.29.0'),
         UniversalSource('tlslite', '0.4.9'),
         UniversalSource('websocket_client', '0.40.0'),
     )
