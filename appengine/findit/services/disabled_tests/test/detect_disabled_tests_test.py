@@ -16,8 +16,8 @@ from libs import test_name_util
 from libs import time_util
 from model.flake.flake import Flake
 from model.flake.flake import FlakeIssue
-from model.flake.flake import TestLocation as TestLocation
 from model.test_inventory import LuciTest
+from model.test_location import TestLocation
 from services import bigquery_helper
 from services import step_util
 from services import test_tag_util

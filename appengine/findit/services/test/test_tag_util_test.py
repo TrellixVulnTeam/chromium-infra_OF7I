@@ -10,8 +10,8 @@ from parameterized import parameterized
 
 from dto.test_location import TestLocation as DTOTestLocation
 from libs import test_name_util
-from model.flake.flake import TestLocation as NDBTestLocation
-from model.flake.flake import TestLocation
+from model.test_location import TestLocation as NDBTestLocation
+from model.test_location import TestLocation
 from services import step_util
 from services import test_tag_util
 from waterfall.test.wf_testcase import WaterfallTestCase

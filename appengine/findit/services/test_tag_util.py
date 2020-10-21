@@ -12,7 +12,7 @@ from gae_libs.caches import CompressedMemCache
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
 from libs import test_name_util
 from libs.cache_decorator import Cached
-from model.flake.flake import TestLocation
+from model.test_location import TestLocation
 from services import step_util
 from services import swarmed_test_util
 

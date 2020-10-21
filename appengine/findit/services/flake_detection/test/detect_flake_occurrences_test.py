@@ -18,9 +18,9 @@ from model.flake.detection.flake_occurrence import BuildConfiguration
 from model.flake.detection.flake_occurrence import FlakeOccurrence
 from model.flake.flake import Flake
 from model.flake.flake import TAG_DELIMITER
-from model.flake.flake import TestLocation as NDBTestLocation
 from model.flake.flake_type import FlakeType
 from model.flake.flake_type import FLAKE_TYPE_DESCRIPTIONS
+from model.test_location import TestLocation as NDBTestLocation
 from model.wf_build import WfBuild
 from services import bigquery_helper
 from services import step_util

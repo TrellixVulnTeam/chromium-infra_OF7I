@@ -12,9 +12,9 @@ from model.flake.analysis.flake_culprit import FlakeCulprit
 from model.flake.analysis.master_flake_analysis import MasterFlakeAnalysis
 from model.flake.detection.flake_occurrence import FlakeOccurrence
 from model.flake.flake import Flake
-from model.flake.flake import TestLocation
 from model.flake.flake_issue import FlakeIssue
 from model.flake.flake_type import FlakeType
+from model.test_location import TestLocation
 from model.test_inventory import LuciTest
 from waterfall.test.wf_testcase import WaterfallTestCase
 

@@ -10,7 +10,9 @@ from google.appengine.ext.ndb import msgprop
 from libs import test_name_util
 from model.flake.flake_issue import FlakeIssue
 from model.flake.flake_type import FlakeType
+from model.test_location import TestLocation
 from services import step_util
+
 
 TAG_DELIMITER = '::'
 
@@ -23,13 +25,6 @@ class FlakeCountsByType(ndb.Model):
   flake_type = msgprop.EnumProperty(FlakeType, required=True)
   occurrence_count = ndb.IntegerProperty(default=0)
   impacted_cl_count = ndb.IntegerProperty(default=0)
-
-
-class TestLocation(ndb.Model):
-  """The location of a test in the source tree"""
-  file_path = ndb.StringProperty(required=True)
-  line_number = ndb.IntegerProperty(required=True)
-
 
 class Flake(ndb.Model):
   """Parent flake model which different flake occurrences are grouped under."""
