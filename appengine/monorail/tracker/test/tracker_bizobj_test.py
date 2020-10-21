@@ -1577,6 +1577,22 @@ class BizobjTest(unittest.TestCase):
     self.assertEqual(6789, issue.merged_into)
     self.assertEqual(None, issue.merged_into_external)
 
+  def testApplyIssueDelta_MergedIntoFromExternalToExternal(self):
+    """ApplyIssueDelta updates from an external to another external ref."""
+    issue = tracker_pb2.Issue(
+        status='New', owner_id=111, merged_into_external='b/1')
+    delta = tracker_pb2.IssueDelta(merged_into_external='b/5678')
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+
+    # Test amendments.
+    self.assertEqual(1, len(amendments))
+    self.assertEqual(tracker_pb2.FieldID.MERGEDINTO, amendments[0].field)
+    self.assertEqual('-b/1 b/5678', amendments[0].newvalue)
+    self.assertEqual(set(), impacted_iids)
+    self.assertEqual(0, issue.merged_into)
+    self.assertEqual('b/5678', issue.merged_into_external)
+
   def testApplyIssueDelta_NoMergedIntoInternalAndExternal(self):
     """ApplyIssueDelta does not allow updating the internal and external
     merged_into fields at the same time.

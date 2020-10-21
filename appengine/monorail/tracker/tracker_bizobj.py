@@ -1166,12 +1166,8 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
       except exceptions.NoSuchIssueException:
         pass
 
-    if federated.IsShortlinkValid(delta.merged_into_external):
-      add_ref = tracker_pb2.DanglingIssueRef(
-          ext_issue_identifier=delta.merged_into_external)
-    else:
-      add_ref = None
-
+    add_ref = tracker_pb2.DanglingIssueRef(
+        ext_issue_identifier=delta.merged_into_external)
     issue.merged_into = 0
     issue.merged_into_external = delta.merged_into_external
     amendments.append(MakeMergedIntoAmendment([add_ref], [remove_ref],
