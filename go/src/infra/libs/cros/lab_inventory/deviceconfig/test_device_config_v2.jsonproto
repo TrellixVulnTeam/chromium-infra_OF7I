@@ -153,13 +153,7 @@
                 }
               }
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "board": "fake-fingerprint-board",
               "location": 2
@@ -298,13 +292,7 @@
                 "EN": "Default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240,
                   "value": 32
@@ -536,13 +524,7 @@
               "headphoneCodec": 2,
               "speakerAmp": 5
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "location": 5
             },
@@ -650,13 +632,7 @@
                 "EN": "Non-default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240
                 }
@@ -908,13 +884,7 @@
                 }
               }
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "board": "fake-fingerprint-board",
               "location": 2
@@ -1041,13 +1011,7 @@
                 "EN": "Default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240,
                   "value": 32
@@ -1302,13 +1266,7 @@
                 }
               }
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "location": 5
             },
@@ -1434,13 +1392,7 @@
                 "EN": "Default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240,
                   "value": 32
@@ -1682,13 +1634,7 @@
                 }
               }
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "location": 5
             },
@@ -1814,13 +1760,7 @@
                 "EN": "Default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240,
                   "value": 32
@@ -2053,13 +1993,7 @@
               "headphoneCodec": 2,
               "speakerAmp": 5
             },
-            "camera": {
-              "count": {
-                "value": 1
-              },
-              "userFacingCamera": 1,
-              "worldFacingCamera": 2
-            },
+            "camera": {},
             "fingerprint": {
               "location": 5
             },
@@ -2164,13 +2098,7 @@
                 "EN": "Default camera"
               },
               "hardwareFeature": {
-                "camera": {
-                  "count": {
-                    "value": 1
-                  },
-                  "userFacingCamera": 1,
-                  "worldFacingCamera": 2
-                },
+                "camera": {},
                 "fwConfig": {
                   "mask": 240,
                   "value": 32
