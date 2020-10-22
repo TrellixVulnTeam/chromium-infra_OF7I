@@ -228,8 +228,17 @@ func TestGTestConversions(t *testing.T) {
 				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
 				So(tr.TestLocation, ShouldResembleProto, &pb.TestLocation{
+					Repo:     chromiumSrcRepo,
 					FileName: "//TestFile",
 					Line:     54,
+				})
+				So(tr.TestMetadata, ShouldResembleProto, &pb.TestMetadata{
+					Name: "TestName",
+					Location: &pb.TestLocation{
+						Repo:     chromiumSrcRepo,
+						FileName: "//TestFile",
+						Line:     54,
+					},
 				})
 			})
 			Convey(`Clean path`, func() {
@@ -245,6 +254,7 @@ func TestGTestConversions(t *testing.T) {
 				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
 				So(tr.TestLocation, ShouldResembleProto, &pb.TestLocation{
+					Repo:     chromiumSrcRepo,
 					FileName: "//TestFile",
 					Line:     54,
 				})
@@ -398,6 +408,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "FooTest.TestDoBarDisabled",
+					},
 				},
 				// Iteration 1.
 				{
@@ -411,6 +424,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "BazTest.DoesQux",
+					},
 				},
 				{
 					TestId: "BazTest.DoesQux",
@@ -422,6 +438,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "BazTest.DoesQux",
+					},
 				},
 				{
 					TestId: "FooTest.DoesBar",
@@ -433,6 +452,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "FooTest.DoesBar",
+					},
 				},
 				{
 					TestId: "FooTest.DoesBar",
@@ -444,6 +466,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "FooTest.DoesBar",
+					},
 				},
 
 				// Iteration 2.
@@ -458,6 +483,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "BazTest.DoesQux",
+					},
 				},
 				{
 					TestId:   "BazTest.DoesQux",
@@ -470,6 +498,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "BazTest.DoesQux",
+					},
 				},
 				{
 					TestId: "FooTest.DoesBar",
@@ -481,6 +512,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "FooTest.DoesBar",
+					},
 				},
 				{
 					TestId: "FooTest.DoesBar",
@@ -492,6 +526,9 @@ func TestGTestConversions(t *testing.T) {
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
+					TestMetadata: &pb.TestMetadata{
+						Name: "FooTest.DoesBar",
+					},
 				},
 			}
 			So(testResults, ShouldHaveLength, len(expected))

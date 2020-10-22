@@ -350,16 +350,18 @@ func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, t
 		tags = append(tags, globalTags...)
 
 		tr := &sinkpb.TestResult{
-			TestId:   testName,
-			Expected: expectedSet.Has(runStatus),
-			Status:   status,
-			Tags:     tags,
+			TestId:       testName,
+			Expected:     expectedSet.Has(runStatus),
+			Status:       status,
+			Tags:         tags,
+			TestMetadata: &pb.TestMetadata{Name: testName},
 		}
 		if testLocations {
 			tr.TestLocation = &pb.TestLocation{
-				// TODO(crbug.com/1108016): update sink to prepend locationPrefix.
+				Repo:     chromiumSrcRepo,
 				FileName: testName,
 			}
+			tr.TestMetadata.Location = tr.TestLocation
 		}
 
 		if container, ok := arts[i]; ok {

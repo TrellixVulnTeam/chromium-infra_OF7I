@@ -27,6 +27,9 @@ const (
 
 	// maxSummaryLength is the maximum length of summaryHtml.
 	maxSummaryLength = 4000
+
+	// Gitiles URL for chromium/src repo.
+	chromiumSrcRepo = "https://chromium.googlesource.com/chromium/src"
 )
 
 // summaryTmpl is used to generate SummaryHTML in GTest and JTR-based test

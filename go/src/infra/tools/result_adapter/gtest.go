@@ -153,6 +153,7 @@ func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, erro
 				"test_name", name,
 				"disabled_test", "true",
 			),
+			TestMetadata: &pb.TestMetadata{Name: name},
 		}
 		tr.Tags = append(tr.Tags, globalTags...)
 
@@ -291,6 +292,7 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 			// Store the correct output snippet.
 			"lossless_snippet", strconv.FormatBool(result.LosslessSnippet),
 		),
+		TestMetadata: &pb.TestMetadata{Name: name},
 	}
 
 	// Do not set duration if it is unknown.
@@ -357,9 +359,11 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 		file = stripRepeatedPrefixes(file, "../")
 		file = ensureLeadingDoubleSlash(file)
 		tr.TestLocation = &pb.TestLocation{
+			Repo:     chromiumSrcRepo,
 			FileName: file,
 			Line:     int32(loc.Line),
 		}
+		tr.TestMetadata.Location = tr.TestLocation
 	}
 
 	return tr, nil
