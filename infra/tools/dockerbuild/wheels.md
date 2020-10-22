@@ -2514,6 +2514,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.19.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/numpy/${vpython_platform}"
+  version: "version:1.19.2"
+>
+```
+
+
+* *linux-arm64-py3*
+* *manylinux-x64-py3*
+
 ## **oauth2client**
 
 ### 3.0.0
