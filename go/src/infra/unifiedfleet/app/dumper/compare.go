@@ -22,7 +22,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
 	fleetds "infra/unifiedfleet/app/model/datastore"

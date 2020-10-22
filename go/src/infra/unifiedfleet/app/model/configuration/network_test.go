@@ -12,7 +12,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
 func TestImportDHCPConfigs(t *testing.T) {

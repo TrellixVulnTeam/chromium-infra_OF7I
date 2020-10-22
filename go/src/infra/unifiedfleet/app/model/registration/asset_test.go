@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
 func mockAsset(name, model, host string, assettype ufspb.AssetType) *ufspb.Asset {

@@ -16,7 +16,7 @@ import (
 	grpcStatus "google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/util"

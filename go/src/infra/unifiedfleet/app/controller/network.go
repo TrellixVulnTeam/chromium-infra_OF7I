@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
 )

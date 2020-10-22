@@ -13,7 +13,7 @@ import (
 	code "google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/status"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"

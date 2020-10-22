@@ -11,7 +11,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"

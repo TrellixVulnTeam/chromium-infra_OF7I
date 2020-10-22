@@ -12,7 +12,7 @@ import (
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"go.chromium.org/luci/machine-db/api/crimson/v1"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
 // ToChromeMachines converts crimson machines to UFS format.

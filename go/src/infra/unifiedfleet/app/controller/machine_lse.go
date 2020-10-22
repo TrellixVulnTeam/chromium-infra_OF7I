@@ -20,8 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"

@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/gae/service/info"
 	"google.golang.org/genproto/googleapis/api/annotations"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
 const (

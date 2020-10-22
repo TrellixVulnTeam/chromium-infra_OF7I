@@ -14,8 +14,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	apibq "infra/unifiedfleet/api/v1/proto/bigquery"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	apibq "infra/unifiedfleet/api/v1/models/bigquery"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"

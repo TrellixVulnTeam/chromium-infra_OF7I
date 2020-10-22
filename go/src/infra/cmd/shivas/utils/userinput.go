@@ -18,8 +18,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	fleet "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 	UfleetUtil "infra/unifiedfleet/app/util"
 )

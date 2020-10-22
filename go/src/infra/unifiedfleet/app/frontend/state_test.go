@@ -11,7 +11,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/googleapis/rpc/code"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/state"

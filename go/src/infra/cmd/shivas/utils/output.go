@@ -20,7 +20,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )

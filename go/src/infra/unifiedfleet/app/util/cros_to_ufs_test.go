@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/frontend/fake"
 )
 

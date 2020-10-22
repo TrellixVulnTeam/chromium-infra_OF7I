@@ -13,26 +13,26 @@ import "google/protobuf/field_mask.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
-import "infra/unifiedfleet/api/v1/proto/asset.proto";
-import "infra/unifiedfleet/api/v1/proto/machine.proto";
-import "infra/unifiedfleet/api/v1/proto/rack.proto";
-import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
-import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
-import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
-import "infra/unifiedfleet/api/v1/proto/network.proto";
-import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
-import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
-import "infra/unifiedfleet/api/v1/proto/state.proto";
+import "infra/unifiedfleet/api/v1/models/asset.proto";
+import "infra/unifiedfleet/api/v1/models/machine.proto";
+import "infra/unifiedfleet/api/v1/models/rack.proto";
+import "infra/unifiedfleet/api/v1/models/chrome_platform.proto";
+import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
+import "infra/unifiedfleet/api/v1/models/rack_lse.proto";
+import "infra/unifiedfleet/api/v1/models/network.proto";
+import "infra/unifiedfleet/api/v1/models/peripherals.proto";
+import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
+import "infra/unifiedfleet/api/v1/models/state.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
-  rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
+  rpc CreateChromePlatform(CreateChromePlatformRequest) returns (models.ChromePlatform);
 
   // Update updates the chromePlatform
-  rpc UpdateChromePlatform(UpdateChromePlatformRequest) returns (proto.ChromePlatform);
+  rpc UpdateChromePlatform(UpdateChromePlatformRequest) returns (models.ChromePlatform);
 
   // Get retrieves the details of the chromePlatform
-  rpc GetChromePlatform(GetChromePlatformRequest) returns (proto.ChromePlatform);
+  rpc GetChromePlatform(GetChromePlatformRequest) returns (models.ChromePlatform);
 
   // List gets all the chromePlatforms
   rpc ListChromePlatforms(ListChromePlatformsRequest) returns (ListChromePlatformsResponse);
@@ -50,13 +50,13 @@ service Fleet {
   rpc ImportOSVersions(ImportOSVersionsRequest) returns (google.rpc.Status);
 
   // CreateMachineLSEPrototype creates a new MachineLSEPrototype.
-  rpc CreateMachineLSEPrototype(CreateMachineLSEPrototypeRequest) returns (proto.MachineLSEPrototype);
+  rpc CreateMachineLSEPrototype(CreateMachineLSEPrototypeRequest) returns (models.MachineLSEPrototype);
 
   // Update updates the MachineLSEPrototype
-  rpc UpdateMachineLSEPrototype(UpdateMachineLSEPrototypeRequest) returns (proto.MachineLSEPrototype);
+  rpc UpdateMachineLSEPrototype(UpdateMachineLSEPrototypeRequest) returns (models.MachineLSEPrototype);
 
   // Get retrieves the details of the MachineLSEPrototype
-  rpc GetMachineLSEPrototype(GetMachineLSEPrototypeRequest) returns (proto.MachineLSEPrototype);
+  rpc GetMachineLSEPrototype(GetMachineLSEPrototypeRequest) returns (models.MachineLSEPrototype);
 
   // List gets all the MachineLSEPrototypes
   rpc ListMachineLSEPrototypes(ListMachineLSEPrototypesRequest) returns (ListMachineLSEPrototypesResponse);
@@ -65,13 +65,13 @@ service Fleet {
   rpc DeleteMachineLSEPrototype(DeleteMachineLSEPrototypeRequest) returns (google.protobuf.Empty);
 
   // CreateRackLSEPrototype creates a new RackLSEPrototype.
-  rpc CreateRackLSEPrototype(CreateRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+  rpc CreateRackLSEPrototype(CreateRackLSEPrototypeRequest) returns (models.RackLSEPrototype);
 
   // Update updates the RackLSEPrototype
-  rpc UpdateRackLSEPrototype(UpdateRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+  rpc UpdateRackLSEPrototype(UpdateRackLSEPrototypeRequest) returns (models.RackLSEPrototype);
 
   // Get retrieves the details of the RackLSEPrototype
-  rpc GetRackLSEPrototype(GetRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+  rpc GetRackLSEPrototype(GetRackLSEPrototypeRequest) returns (models.RackLSEPrototype);
 
   // List gets all the RackLSEPrototypes
   rpc ListRackLSEPrototypes(ListRackLSEPrototypesRequest) returns (ListRackLSEPrototypesResponse);
@@ -80,13 +80,13 @@ service Fleet {
   rpc DeleteRackLSEPrototype(DeleteRackLSEPrototypeRequest) returns (google.protobuf.Empty);
 
   // MachineRegistration creates a new machine/nics/drac.
-  rpc MachineRegistration(MachineRegistrationRequest) returns (proto.Machine);
+  rpc MachineRegistration(MachineRegistrationRequest) returns (models.Machine);
 
   // Update updates the machine
-  rpc UpdateMachine(UpdateMachineRequest) returns (proto.Machine);
+  rpc UpdateMachine(UpdateMachineRequest) returns (models.Machine);
 
   // Get retrieves the details of the machine
-  rpc GetMachine(GetMachineRequest) returns (proto.Machine);
+  rpc GetMachine(GetMachineRequest) returns (models.Machine);
 
   // List gets all the machines
   rpc ListMachines(ListMachinesRequest) returns (ListMachinesResponse);
@@ -101,16 +101,16 @@ service Fleet {
   rpc ImportMachines(ImportMachinesRequest) returns (google.rpc.Status);
 
   // Rename rename the machine
-  rpc RenameMachine(RenameMachineRequest) returns (proto.Machine);
+  rpc RenameMachine(RenameMachineRequest) returns (models.Machine);
 
   // RackRegistration creates a new rack/kvms/rpms/switches
-  rpc RackRegistration(RackRegistrationRequest) returns (proto.Rack);
+  rpc RackRegistration(RackRegistrationRequest) returns (models.Rack);
 
   // Update updates the rack
-  rpc UpdateRack(UpdateRackRequest) returns (proto.Rack);
+  rpc UpdateRack(UpdateRackRequest) returns (models.Rack);
 
   // Get retrieves the details of the rack
-  rpc GetRack(GetRackRequest) returns (proto.Rack);
+  rpc GetRack(GetRackRequest) returns (models.Rack);
 
   // List gets all the racks
   rpc ListRacks(ListRacksRequest) returns (ListRacksResponse);
@@ -119,13 +119,13 @@ service Fleet {
   rpc DeleteRack(DeleteRackRequest) returns (google.protobuf.Empty);
 
   // CreateMachineLSE creates a new machineLSE
-  rpc CreateMachineLSE(CreateMachineLSERequest) returns (proto.MachineLSE);
+  rpc CreateMachineLSE(CreateMachineLSERequest) returns (models.MachineLSE);
 
   // Update updates the machineLSE
-  rpc UpdateMachineLSE(UpdateMachineLSERequest) returns (proto.MachineLSE);
+  rpc UpdateMachineLSE(UpdateMachineLSERequest) returns (models.MachineLSE);
 
   // Get retrieves the details of the machineLSE
-  rpc GetMachineLSE(GetMachineLSERequest) returns (proto.MachineLSE);
+  rpc GetMachineLSE(GetMachineLSERequest) returns (models.MachineLSE);
 
   // List gets all the machineLSEs
   rpc ListMachineLSEs(ListMachineLSEsRequest) returns (ListMachineLSEsResponse);
@@ -140,13 +140,13 @@ service Fleet {
   rpc ImportOSMachineLSEs(ImportOSMachineLSEsRequest) returns (google.rpc.Status);
 
   // CreateRackLSE creates a new rackLSE
-  rpc CreateRackLSE(CreateRackLSERequest) returns (proto.RackLSE);
+  rpc CreateRackLSE(CreateRackLSERequest) returns (models.RackLSE);
 
   // Update updates the rackLSE
-  rpc UpdateRackLSE(UpdateRackLSERequest) returns (proto.RackLSE);
+  rpc UpdateRackLSE(UpdateRackLSERequest) returns (models.RackLSE);
 
   // Get retrieves the details of the rackLSE
-  rpc GetRackLSE(GetRackLSERequest) returns (proto.RackLSE);
+  rpc GetRackLSE(GetRackLSERequest) returns (models.RackLSE);
 
   // List gets all the rackLSEs
   rpc ListRackLSEs(ListRackLSEsRequest) returns (ListRackLSEsResponse);
@@ -155,13 +155,13 @@ service Fleet {
   rpc DeleteRackLSE(DeleteRackLSERequest) returns (google.protobuf.Empty);
 
   // CreateNic creates a new nic
-  rpc CreateNic(CreateNicRequest) returns (proto.Nic);
+  rpc CreateNic(CreateNicRequest) returns (models.Nic);
 
   // Update updates the nic
-  rpc UpdateNic(UpdateNicRequest) returns (proto.Nic);
+  rpc UpdateNic(UpdateNicRequest) returns (models.Nic);
 
   // Get retrieves the details of the nic
-  rpc GetNic(GetNicRequest) returns (proto.Nic);
+  rpc GetNic(GetNicRequest) returns (models.Nic);
 
   // List gets all the nics
   rpc ListNics(ListNicsRequest) returns (ListNicsResponse);
@@ -176,13 +176,13 @@ service Fleet {
   rpc ImportDatacenters(ImportDatacentersRequest) returns (google.rpc.Status);
 
   // CreateKVM creates a new KVM
-  rpc CreateKVM(CreateKVMRequest) returns (proto.KVM);
+  rpc CreateKVM(CreateKVMRequest) returns (models.KVM);
 
   // Update updates the KVM
-  rpc UpdateKVM(UpdateKVMRequest) returns (proto.KVM);
+  rpc UpdateKVM(UpdateKVMRequest) returns (models.KVM);
 
   // Get retrieves the details of the KVM
-  rpc GetKVM(GetKVMRequest) returns (proto.KVM);
+  rpc GetKVM(GetKVMRequest) returns (models.KVM);
 
   // List gets all the KVMs
   rpc ListKVMs(ListKVMsRequest) returns (ListKVMsResponse);
@@ -191,13 +191,13 @@ service Fleet {
   rpc DeleteKVM(DeleteKVMRequest) returns (google.protobuf.Empty);
 
   // CreateRPM creates a new RPM
-  rpc CreateRPM(CreateRPMRequest) returns (proto.RPM);
+  rpc CreateRPM(CreateRPMRequest) returns (models.RPM);
 
   // Update updates the RPM
-  rpc UpdateRPM(UpdateRPMRequest) returns (proto.RPM);
+  rpc UpdateRPM(UpdateRPMRequest) returns (models.RPM);
 
   // Get retrieves the details of the RPM
-  rpc GetRPM(GetRPMRequest) returns (proto.RPM);
+  rpc GetRPM(GetRPMRequest) returns (models.RPM);
 
   // List gets all the RPMs
   rpc ListRPMs(ListRPMsRequest) returns (ListRPMsResponse);
@@ -206,13 +206,13 @@ service Fleet {
   rpc DeleteRPM(DeleteRPMRequest) returns (google.protobuf.Empty);
 
   // CreateDrac creates a new drac
-  rpc CreateDrac(CreateDracRequest) returns (proto.Drac);
+  rpc CreateDrac(CreateDracRequest) returns (models.Drac);
 
   // Update updates the drac
-  rpc UpdateDrac(UpdateDracRequest) returns (proto.Drac);
+  rpc UpdateDrac(UpdateDracRequest) returns (models.Drac);
 
   // Get retrieves the details of the drac
-  rpc GetDrac(GetDracRequest) returns (proto.Drac);
+  rpc GetDrac(GetDracRequest) returns (models.Drac);
 
   // List gets all the dracs
   rpc ListDracs(ListDracsRequest) returns (ListDracsResponse);
@@ -221,13 +221,13 @@ service Fleet {
   rpc DeleteDrac(DeleteDracRequest) returns (google.protobuf.Empty);
 
   // CreateSwitch creates a new switch
-  rpc CreateSwitch(CreateSwitchRequest) returns (proto.Switch);
+  rpc CreateSwitch(CreateSwitchRequest) returns (models.Switch);
 
   // Update updates the switch
-  rpc UpdateSwitch(UpdateSwitchRequest) returns (proto.Switch);
+  rpc UpdateSwitch(UpdateSwitchRequest) returns (models.Switch);
 
   // Get retrieves the details of the switch
-  rpc GetSwitch(GetSwitchRequest) returns (proto.Switch);
+  rpc GetSwitch(GetSwitchRequest) returns (models.Switch);
 
   // List gets all the switches
   rpc ListSwitches(ListSwitchesRequest) returns (ListSwitchesResponse);
@@ -236,13 +236,13 @@ service Fleet {
   rpc DeleteSwitch(DeleteSwitchRequest) returns (google.protobuf.Empty);
 
   // CreateVlan creates a new vlan
-  rpc CreateVlan(CreateVlanRequest) returns (proto.Vlan);
+  rpc CreateVlan(CreateVlanRequest) returns (models.Vlan);
 
   // Update updates the vlan
-  rpc UpdateVlan(UpdateVlanRequest) returns (proto.Vlan);
+  rpc UpdateVlan(UpdateVlanRequest) returns (models.Vlan);
 
   // Get retrieves the details of the vlan
-  rpc GetVlan(GetVlanRequest) returns (proto.Vlan);
+  rpc GetVlan(GetVlanRequest) returns (models.Vlan);
 
   // List gets all the vlans
   rpc ListVlans(ListVlansRequest) returns (ListVlansResponse);
@@ -261,31 +261,31 @@ service Fleet {
 
   // UpdateState updates the state for a resource.
   // If the state doesn't exist before, it will create the state record for the resource.
-  rpc UpdateState(UpdateStateRequest) returns (proto.StateRecord);
+  rpc UpdateState(UpdateStateRequest) returns (models.StateRecord);
 
   // GetState retrieves the state of a resource.
-  rpc GetState(GetStateRequest) returns (proto.StateRecord);
+  rpc GetState(GetStateRequest) returns (models.StateRecord);
 
   // GetDHCPConfig retrieves a dhcp record.
-  rpc GetDHCPConfig(GetDHCPConfigRequest) returns (proto.DHCPConfig);
+  rpc GetDHCPConfig(GetDHCPConfigRequest) returns (models.DHCPConfig);
 
   // CreateVM creates a new VM
-  rpc CreateVM(CreateVMRequest) returns (proto.VM);
+  rpc CreateVM(CreateVMRequest) returns (models.VM);
 
   // UpdateVM updates a VM
-  rpc UpdateVM(UpdateVMRequest) returns (proto.VM);
+  rpc UpdateVM(UpdateVMRequest) returns (models.VM);
 
   // DeleteVM delete a VM
   rpc DeleteVM(DeleteVMRequest) returns (google.protobuf.Empty);
 
   // GetVM retrieves the details of the VM
-  rpc GetVM(GetVMRequest) returns (proto.VM);
+  rpc GetVM(GetVMRequest) returns (models.VM);
 
   // List gets all the machineLSEs
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
 
   // CreateAsset creates a new asset
-  rpc CreateAsset(CreateAssetRequest) returns (proto.asset);
+  rpc CreateAsset(CreateAssetRequest) returns (models.asset);
 
   // BatchGetKVMs retrieves a batch of kvms
   rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
@@ -332,7 +332,7 @@ service Fleet {
 
 message CreateVMRequest {
   // The vm to create.
-  proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
+  models.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
 
   reserved 2;
   reserved "machineLSE_id";
@@ -342,7 +342,7 @@ message CreateVMRequest {
 
 message UpdateVMRequest {
   // The VM to update.
-  proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
+  models.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
 
   reserved 2;
   reserved "machineLSE_id";
@@ -397,7 +397,7 @@ message ListVMsRequest {
 
 message ListVMsResponse {
   // The vms from datastore.
-  repeated proto.VM vms = 1;
+  repeated models.VM vms = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -415,7 +415,7 @@ message GetDHCPConfigRequest {
 // the database.
 message CreateChromePlatformRequest {
   // The chromePlatform to create.
-  proto.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
+  models.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the ChromePlatform, which will become the final component of
   // the ChromePlatform's resource name.
@@ -427,7 +427,7 @@ message CreateChromePlatformRequest {
 
 message UpdateChromePlatformRequest {
   // The chromePlatform to update.
-  proto.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
+  models.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -465,7 +465,7 @@ message ListChromePlatformsRequest {
 
 message ListChromePlatformsResponse {
   // The chromePlatforms from datastore.
-  repeated proto.ChromePlatform chromePlatforms = 1;
+  repeated models.ChromePlatform chromePlatforms = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -493,7 +493,7 @@ message ImportChromePlatformsResponse {
 }
 
 message ChromePlatformResult {
-  proto.ChromePlatform platform = 1;
+  models.ChromePlatform platform = 1;
   string error_msg = 2;
 }
 
@@ -528,7 +528,7 @@ message ListOSVersionsRequest {
 
 message ListOSVersionsResponse {
   // The os versions for browser lab from datastore.
-  repeated proto.OSVersion os_version = 1;
+  repeated models.OSVersion os_version = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -539,7 +539,7 @@ message ListOSVersionsResponse {
 // the database.
 message CreateMachineLSEPrototypeRequest {
   // The MachineLSEPrototype to create.
-  proto.MachineLSEPrototype machineLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+  models.MachineLSEPrototype machineLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the MachineLSEPrototype, which will become the final component of
   // the MachineLSEPrototype's resource name.
@@ -551,7 +551,7 @@ message CreateMachineLSEPrototypeRequest {
 
 message UpdateMachineLSEPrototypeRequest {
   // The MachineLSEPrototype to update.
-  proto.MachineLSEPrototype machineLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+  models.MachineLSEPrototype machineLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -589,7 +589,7 @@ message ListMachineLSEPrototypesRequest {
 
 message ListMachineLSEPrototypesResponse {
   // The MachineLSEPrototypes from datastore.
-  repeated proto.MachineLSEPrototype machineLSEPrototypes = 1;
+  repeated models.MachineLSEPrototype machineLSEPrototypes = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -608,7 +608,7 @@ message DeleteMachineLSEPrototypeRequest {
 // the database.
 message CreateRackLSEPrototypeRequest {
   // The RackLSEPrototype to create.
-  proto.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the RackLSEPrototype, which will become the final component of
   // the RackLSEPrototype's resource name.
@@ -620,7 +620,7 @@ message CreateRackLSEPrototypeRequest {
 
 message UpdateRackLSEPrototypeRequest {
   // The RackLSEPrototype to update.
-  proto.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -658,7 +658,7 @@ message ListRackLSEPrototypesRequest {
 
 message ListRackLSEPrototypesResponse {
   // The RackLSEPrototypes from datastore.
-  repeated proto.RackLSEPrototype rackLSEPrototypes = 1;
+  repeated models.RackLSEPrototype rackLSEPrototypes = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -677,12 +677,12 @@ message DeleteRackLSEPrototypeRequest {
 // the database.
 message MachineRegistrationRequest {
   // The machine to create.
-  proto.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message UpdateMachineRequest {
   // The machine to update.
-  proto.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -720,7 +720,7 @@ message ListMachinesRequest {
 
 message ListMachinesResponse {
   // The machines from datastore.
-  repeated proto.Machine machines = 1;
+  repeated models.Machine machines = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -770,7 +770,7 @@ message ConfigSource {
 // the database.
 message CreateRackRequest {
   // The rack to create.
-  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the Rack, which will become the final component of
   // the Rack's resource name.
@@ -782,7 +782,7 @@ message CreateRackRequest {
 
 message UpdateRackRequest {
   // The rack to update.
-  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -820,7 +820,7 @@ message ListRacksRequest {
 
 message ListRacksResponse {
   // The racks from datastore.
-  repeated proto.Rack racks = 1;
+  repeated models.Rack racks = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -839,7 +839,7 @@ message DeleteRackRequest {
 // the database.
 message CreateMachineLSERequest {
   // The machineLSE to create.
-  proto.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
+  models.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the MachineLSE, which will become the final component of
   // the MachineLSE's resource name.
@@ -856,7 +856,7 @@ message CreateMachineLSERequest {
 
 message UpdateMachineLSERequest {
   // The machineLSE to update.
-  proto.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
+  models.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -903,7 +903,7 @@ message ListMachineLSEsRequest {
 
 message ListMachineLSEsResponse {
   // The machineLSEs from datastore.
-  repeated proto.MachineLSE machineLSEs = 1;
+  repeated models.MachineLSE machineLSEs = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -937,7 +937,7 @@ message ImportOSMachineLSEsRequest {
 // the database.
 message CreateRackLSERequest {
   // The rackLSE to create.
-  proto.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the RackLSE, which will become the final component of
   // the RackLSE's resource name.
@@ -949,7 +949,7 @@ message CreateRackLSERequest {
 
 message UpdateRackLSERequest {
   // The rackLSE to update.
-  proto.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -987,7 +987,7 @@ message ListRackLSEsRequest {
 
 message ListRackLSEsResponse {
   // The rackLSEs from datastore.
-  repeated proto.RackLSE rackLSEs = 1;
+  repeated models.RackLSE rackLSEs = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1006,7 +1006,7 @@ message DeleteRackLSERequest {
 // the database.
 message CreateNicRequest {
   // The nic to create.
-  proto.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the Nic, which will become the final component of
   // the Nic's resource name.
@@ -1021,7 +1021,7 @@ message CreateNicRequest {
 
 message UpdateNicRequest {
   // The nic to update.
-  proto.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1062,7 +1062,7 @@ message ListNicsRequest {
 
 message ListNicsResponse {
   // The nics from datastore.
-  repeated proto.Nic nics = 1;
+  repeated models.Nic nics = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1095,7 +1095,7 @@ message ImportDatacentersRequest {
 // the database.
 message CreateKVMRequest {
   // The KVM to create.
-  proto.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
+  models.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the KVM, which will become the final component of
   // the KVM's resource name.
@@ -1110,7 +1110,7 @@ message CreateKVMRequest {
 
 message UpdateKVMRequest {
   // The KVM to update.
-  proto.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
+  models.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1153,7 +1153,7 @@ message ListKVMsRequest {
 
 message ListKVMsResponse {
   // The KVMs from datastore.
-  repeated proto.KVM KVMs = 1;
+  repeated models.KVM KVMs = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1172,7 +1172,7 @@ message DeleteKVMRequest {
 // the database.
 message CreateRPMRequest {
   // The RPM to create.
-  proto.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the RPM, which will become the final component of
   // the RPM's resource name.
@@ -1184,7 +1184,7 @@ message CreateRPMRequest {
 
 message UpdateRPMRequest {
   // The RPM to update.
-  proto.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
+  models.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1222,7 +1222,7 @@ message ListRPMsRequest {
 
 message ListRPMsResponse {
   // The RPMs from datastore.
-  repeated proto.RPM RPMs = 1;
+  repeated models.RPM RPMs = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1241,7 +1241,7 @@ message DeleteRPMRequest {
 // the database.
 message CreateDracRequest {
   // The drac to create.
-  proto.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the Drac, which will become the final component of
   // the Drac's resource name.
@@ -1256,7 +1256,7 @@ message CreateDracRequest {
 
 message UpdateDracRequest {
   // The drac to update.
-  proto.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1299,7 +1299,7 @@ message ListDracsRequest {
 
 message ListDracsResponse {
   // The dracs from datastore.
-  repeated proto.Drac dracs = 1;
+  repeated models.Drac dracs = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1318,7 +1318,7 @@ message DeleteDracRequest {
 // the database.
 message CreateSwitchRequest {
   // The switch to create.
-  proto.Switch switch = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Switch switch = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the Switch, which will become the final component of
   // the Switch's resource name.
@@ -1333,7 +1333,7 @@ message CreateSwitchRequest {
 
 message UpdateSwitchRequest {
   // The switch to update.
-  proto.Switch switch = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Switch switch = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1374,7 +1374,7 @@ message ListSwitchesRequest {
 
 message ListSwitchesResponse {
   // The switches from datastore.
-  repeated proto.Switch switches = 1;
+  repeated models.Switch switches = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1393,7 +1393,7 @@ message DeleteSwitchRequest {
 // the database.
 message CreateVlanRequest {
   // The vlan to create.
-  proto.Vlan vlan = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Vlan vlan = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The ID to use for the Vlan, which will become the final component of
   // the Vlan's resource name.
@@ -1405,7 +1405,7 @@ message CreateVlanRequest {
 
 message UpdateVlanRequest {
   // The vlan to update.
-  proto.Vlan vlan = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Vlan vlan = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1446,7 +1446,7 @@ message ListVlansRequest {
 
 message ListVlansResponse {
   // The vlans from datastore.
-  repeated proto.Vlan vlans = 1;
+  repeated models.Vlan vlans = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1491,7 +1491,7 @@ message GetStateRequest {
 
 message UpdateStateRequest {
   // The state record to update.
-  proto.StateRecord state = 1 [(google.api.field_behavior) = REQUIRED];
+  models.StateRecord state = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -1499,7 +1499,7 @@ message UpdateStateRequest {
 
 message RackRegistrationRequest {
   // The rack to create.
-  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+  models.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message NetworkOption {
@@ -1524,7 +1524,7 @@ message NetworkOption {
 
 message CreateAssetRequest {
   // The asset to register
-  proto.asset asset = 1 [(google.api.field_behavior) = REQUIRED];
+  models.asset asset = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message BatchGetKVMsRequest {
@@ -1537,7 +1537,7 @@ message BatchGetKVMsRequest {
 
 message BatchGetKVMsResponse {
   // The KVMs from datastore.
-  repeated proto.KVM KVMs = 1;
+  repeated models.KVM KVMs = 1;
 }
 
 message BatchGetDHCPConfigsRequest {
@@ -1549,7 +1549,7 @@ message BatchGetDHCPConfigsRequest {
 
 message BatchGetDHCPConfigsResponse {
   // The KVMs from datastore.
-  repeated proto.DHCPConfig dhcp_configs = 1;
+  repeated models.DHCPConfig dhcp_configs = 1;
 }
 
 message BatchGetMachineLSEsRequest {
@@ -1562,7 +1562,7 @@ message BatchGetMachineLSEsRequest {
 
 message BatchGetMachineLSEsResponse {
   // The Machine lses from datastore.
-  repeated proto.MachineLSE machine_lses = 1;
+  repeated models.MachineLSE machine_lses = 1;
 }
 
 message BatchGetMachinesRequest {
@@ -1575,7 +1575,7 @@ message BatchGetMachinesRequest {
 
 message BatchGetMachinesResponse {
   // The machines from datastore.
-  repeated proto.Machine machines = 1;
+  repeated models.Machine machines = 1;
 }
 
 message BatchGetSwitchesRequest {
@@ -1588,7 +1588,7 @@ message BatchGetSwitchesRequest {
 
 message BatchGetSwitchesResponse {
   // The switches from datastore.
-  repeated proto.Switch switches = 1;
+  repeated models.Switch switches = 1;
 }
 
 message BatchGetRPMsRequest {
@@ -1601,7 +1601,7 @@ message BatchGetRPMsRequest {
 
 message BatchGetRPMsResponse {
   // The rpms from datastore.
-  repeated proto.RPM rpms = 1;
+  repeated models.RPM rpms = 1;
 }
 
 
@@ -1615,7 +1615,7 @@ message BatchGetDracsRequest {
 
 message BatchGetDracsResponse {
   // The dracs from datastore.
-  repeated proto.Drac dracs = 1;
+  repeated models.Drac dracs = 1;
 }
 
 message BatchGetNicsRequest {
@@ -1628,7 +1628,7 @@ message BatchGetNicsRequest {
 
 message BatchGetNicsResponse {
   // The nics from datastore.
-  repeated proto.Nic nics = 1;
+  repeated models.Nic nics = 1;
 }
 
 message BatchGetVMsRequest {
@@ -1641,7 +1641,7 @@ message BatchGetVMsRequest {
 
 message BatchGetVMsResponse {
   // The vms from datastore.
-  repeated proto.VM vms = 1;
+  repeated models.VM vms = 1;
 }
 
 message BatchGetVlansRequest {
@@ -1654,7 +1654,7 @@ message BatchGetVlansRequest {
 
 message BatchGetVlansResponse {
   // The vlans from datastore.
-  repeated proto.Vlan vlans = 1;
+  repeated models.Vlan vlans = 1;
 }
 
 message BatchGetRacksRequest {
@@ -1667,7 +1667,7 @@ message BatchGetRacksRequest {
 
 message BatchGetRacksResponse {
   // The racks from datastore.
-  repeated proto.Rack racks = 1;
+  repeated models.Rack racks = 1;
 }
 
 message BatchGetChromePlatformsRequest {
@@ -1680,7 +1680,7 @@ message BatchGetChromePlatformsRequest {
 
 message BatchGetChromePlatformsResponse {
   // The chrome platforms from datastore.
-  repeated proto.ChromePlatform chrome_platforms = 1;
+  repeated models.ChromePlatform chrome_platforms = 1;
 }
 
 message BatchGetMachineLSEPrototypesRequest {
@@ -1693,7 +1693,7 @@ message BatchGetMachineLSEPrototypesRequest {
 
 message BatchGetMachineLSEPrototypesResponse {
   // The machine lse prototypes from datastore.
-  repeated proto.MachineLSEPrototype machine_lse_prototypes = 1;
+  repeated models.MachineLSEPrototype machine_lse_prototypes = 1;
 }
 
 message BatchGetRackLSEPrototypesRequest {
@@ -1706,5 +1706,5 @@ message BatchGetRackLSEPrototypesRequest {
 
 message BatchGetRackLSEPrototypesResponse {
   // The rack lse prototypes from datastore.
-  repeated proto.RackLSEPrototype rack_lse_prototypes = 1;
+  repeated models.RackLSEPrototype rack_lse_prototypes = 1;
 }

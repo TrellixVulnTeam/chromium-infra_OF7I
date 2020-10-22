@@ -18,7 +18,7 @@ import (
 	iv2ds "infra/libs/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
 	iv2pr2 "infra/libs/fleet/protos/go"
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/registration"

@@ -15,8 +15,8 @@ import (
 	"google.golang.org/api/sheets/v4"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	ufsCros "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsCros "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
 const (

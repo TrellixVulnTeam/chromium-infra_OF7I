@@ -16,7 +16,7 @@ import (
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/util"

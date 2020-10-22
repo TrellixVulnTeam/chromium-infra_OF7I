@@ -87,7 +87,7 @@ Example switch:
 }
 
 The protobuf definition of switch is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// VMFileText description for VM file input
 	VMFileText string = `Path to a file containing VM specification in JSON format.
@@ -107,7 +107,7 @@ Example VM:
 }
 
 The protobuf definition of VM is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
 
 	// ListVMLongDesc long description for ListVMCmd
 	ListVMLongDesc string = `List all vms for a host
@@ -294,13 +294,13 @@ Example OS machine creation request:
 
 The protobuf definition can be found here:
 Machine:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto
 
 Drac:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto
 
 Nic:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/network.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
 
 	// MachineFileText description for machine file input
 	MachineFileText string = `Path to a file containing machine specification in JSON format.
@@ -348,7 +348,7 @@ Example OS machine:
 }
 
 The protobuf definition of machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
 	// AddHostLongDesc long description for AddHostCmd
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
@@ -544,7 +544,7 @@ Example host(Caching server/Dev server/VM server) for an OS machine:
 }
 
 The protobuf definition of a deployed machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
 
 	// ListHostLongDesc long description for ListHostCmd
 	ListHostLongDesc string = `List all hosts
@@ -615,7 +615,7 @@ Example prototype for machine deployment:
 }
 
 The protobuf definition of prototype for machine deployment is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto#29`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto#29`
 
 	// AddRackLSEPrototypeLongDesc long description for AddRackLSEPrototypeCmd
 	AddRackLSEPrototypeLongDesc string = `Add prototype for rack deployment.
@@ -667,7 +667,7 @@ Example prototype for rack deployment:
 }
 
 The protobuf definition of prototype for rack deployment is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto`
 
 	// AddChromePlatformLongDesc long description for AddChromePlatformCmd
 	AddChromePlatformLongDesc string = `Add platform configuration for browser machine.
@@ -758,7 +758,7 @@ Example platform configuration:
 }
 
 The protobuf definition of platform configuration for browser machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/chrome_platform.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chrome_platform.proto`
 
 	// AddNicLongDesc long description for AddNicCmd
 	AddNicLongDesc string = `Add a nic to UFS.
@@ -805,7 +805,7 @@ Example nic:
 }
 
 The protobuf definition of nic is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/network.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
 
 	// AddDracLongDesc long description for AddDracCmd
 	AddDracLongDesc string = `Add a drac to UFS.
@@ -861,7 +861,7 @@ Example drac:
 }
 
 The protobuf definition of drac is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// AddKVMLongDesc long description for AddKVMCmd
 	AddKVMLongDesc string = `Add a kvm to UFS.
@@ -907,7 +907,7 @@ Example kvm:
 }
 
 The protobuf definition of kvm is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// AddRackLongDesc long description for AddRackCmd
 	AddRackLongDesc string = `Create a rack to UFS.
@@ -996,10 +996,10 @@ Example OS rack:
 
 The protobuf definition can be found here:
 Rack:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/rack.proto
 
 Switch, KVM and RPM:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// RackFileText description for rack file input
 	RackFileText string = `Path to a file containing rack specification in JSON format.
@@ -1030,7 +1030,7 @@ Example OS rack:
 }
 
 The protobuf definition of rack is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/rack.proto`
 
 	// ZoneFilterHelpText help text for zone filters for list command
 	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(ufsUtil.ValidZoneStr(), ", "))

@@ -9,7 +9,7 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	status "google.golang.org/genproto/googleapis/rpc/status"
-	proto1 "infra/unifiedfleet/api/v1/proto"
+	models "infra/unifiedfleet/api/v1/models"
 )
 
 type DecoratedFleet struct {
@@ -27,7 +27,7 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *models.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateChromePlatform", req)
@@ -44,7 +44,7 @@ func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateCh
 	return
 }
 
-func (s *DecoratedFleet) UpdateChromePlatform(ctx context.Context, req *UpdateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+func (s *DecoratedFleet) UpdateChromePlatform(ctx context.Context, req *UpdateChromePlatformRequest) (rsp *models.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateChromePlatform", req)
@@ -61,7 +61,7 @@ func (s *DecoratedFleet) UpdateChromePlatform(ctx context.Context, req *UpdateCh
 	return
 }
 
-func (s *DecoratedFleet) GetChromePlatform(ctx context.Context, req *GetChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+func (s *DecoratedFleet) GetChromePlatform(ctx context.Context, req *GetChromePlatformRequest) (rsp *models.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetChromePlatform", req)
@@ -163,7 +163,7 @@ func (s *DecoratedFleet) ImportOSVersions(ctx context.Context, req *ImportOSVers
 	return
 }
 
-func (s *DecoratedFleet) CreateMachineLSEPrototype(ctx context.Context, req *CreateMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+func (s *DecoratedFleet) CreateMachineLSEPrototype(ctx context.Context, req *CreateMachineLSEPrototypeRequest) (rsp *models.MachineLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateMachineLSEPrototype", req)
@@ -180,7 +180,7 @@ func (s *DecoratedFleet) CreateMachineLSEPrototype(ctx context.Context, req *Cre
 	return
 }
 
-func (s *DecoratedFleet) UpdateMachineLSEPrototype(ctx context.Context, req *UpdateMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+func (s *DecoratedFleet) UpdateMachineLSEPrototype(ctx context.Context, req *UpdateMachineLSEPrototypeRequest) (rsp *models.MachineLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateMachineLSEPrototype", req)
@@ -197,7 +197,7 @@ func (s *DecoratedFleet) UpdateMachineLSEPrototype(ctx context.Context, req *Upd
 	return
 }
 
-func (s *DecoratedFleet) GetMachineLSEPrototype(ctx context.Context, req *GetMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+func (s *DecoratedFleet) GetMachineLSEPrototype(ctx context.Context, req *GetMachineLSEPrototypeRequest) (rsp *models.MachineLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetMachineLSEPrototype", req)
@@ -248,7 +248,7 @@ func (s *DecoratedFleet) DeleteMachineLSEPrototype(ctx context.Context, req *Del
 	return
 }
 
-func (s *DecoratedFleet) CreateRackLSEPrototype(ctx context.Context, req *CreateRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+func (s *DecoratedFleet) CreateRackLSEPrototype(ctx context.Context, req *CreateRackLSEPrototypeRequest) (rsp *models.RackLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateRackLSEPrototype", req)
@@ -265,7 +265,7 @@ func (s *DecoratedFleet) CreateRackLSEPrototype(ctx context.Context, req *Create
 	return
 }
 
-func (s *DecoratedFleet) UpdateRackLSEPrototype(ctx context.Context, req *UpdateRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+func (s *DecoratedFleet) UpdateRackLSEPrototype(ctx context.Context, req *UpdateRackLSEPrototypeRequest) (rsp *models.RackLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateRackLSEPrototype", req)
@@ -282,7 +282,7 @@ func (s *DecoratedFleet) UpdateRackLSEPrototype(ctx context.Context, req *Update
 	return
 }
 
-func (s *DecoratedFleet) GetRackLSEPrototype(ctx context.Context, req *GetRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+func (s *DecoratedFleet) GetRackLSEPrototype(ctx context.Context, req *GetRackLSEPrototypeRequest) (rsp *models.RackLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetRackLSEPrototype", req)
@@ -333,7 +333,7 @@ func (s *DecoratedFleet) DeleteRackLSEPrototype(ctx context.Context, req *Delete
 	return
 }
 
-func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRegistrationRequest) (rsp *proto1.Machine, err error) {
+func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRegistrationRequest) (rsp *models.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "MachineRegistration", req)
@@ -350,7 +350,7 @@ func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRe
 	return
 }
 
-func (s *DecoratedFleet) UpdateMachine(ctx context.Context, req *UpdateMachineRequest) (rsp *proto1.Machine, err error) {
+func (s *DecoratedFleet) UpdateMachine(ctx context.Context, req *UpdateMachineRequest) (rsp *models.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateMachine", req)
@@ -367,7 +367,7 @@ func (s *DecoratedFleet) UpdateMachine(ctx context.Context, req *UpdateMachineRe
 	return
 }
 
-func (s *DecoratedFleet) GetMachine(ctx context.Context, req *GetMachineRequest) (rsp *proto1.Machine, err error) {
+func (s *DecoratedFleet) GetMachine(ctx context.Context, req *GetMachineRequest) (rsp *models.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetMachine", req)
@@ -435,7 +435,7 @@ func (s *DecoratedFleet) ImportMachines(ctx context.Context, req *ImportMachines
 	return
 }
 
-func (s *DecoratedFleet) RenameMachine(ctx context.Context, req *RenameMachineRequest) (rsp *proto1.Machine, err error) {
+func (s *DecoratedFleet) RenameMachine(ctx context.Context, req *RenameMachineRequest) (rsp *models.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "RenameMachine", req)
@@ -452,7 +452,7 @@ func (s *DecoratedFleet) RenameMachine(ctx context.Context, req *RenameMachineRe
 	return
 }
 
-func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *proto1.Rack, err error) {
+func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *models.Rack, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "RackRegistration", req)
@@ -469,7 +469,7 @@ func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistra
 	return
 }
 
-func (s *DecoratedFleet) UpdateRack(ctx context.Context, req *UpdateRackRequest) (rsp *proto1.Rack, err error) {
+func (s *DecoratedFleet) UpdateRack(ctx context.Context, req *UpdateRackRequest) (rsp *models.Rack, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateRack", req)
@@ -486,7 +486,7 @@ func (s *DecoratedFleet) UpdateRack(ctx context.Context, req *UpdateRackRequest)
 	return
 }
 
-func (s *DecoratedFleet) GetRack(ctx context.Context, req *GetRackRequest) (rsp *proto1.Rack, err error) {
+func (s *DecoratedFleet) GetRack(ctx context.Context, req *GetRackRequest) (rsp *models.Rack, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetRack", req)
@@ -537,7 +537,7 @@ func (s *DecoratedFleet) DeleteRack(ctx context.Context, req *DeleteRackRequest)
 	return
 }
 
-func (s *DecoratedFleet) CreateMachineLSE(ctx context.Context, req *CreateMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+func (s *DecoratedFleet) CreateMachineLSE(ctx context.Context, req *CreateMachineLSERequest) (rsp *models.MachineLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateMachineLSE", req)
@@ -554,7 +554,7 @@ func (s *DecoratedFleet) CreateMachineLSE(ctx context.Context, req *CreateMachin
 	return
 }
 
-func (s *DecoratedFleet) UpdateMachineLSE(ctx context.Context, req *UpdateMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+func (s *DecoratedFleet) UpdateMachineLSE(ctx context.Context, req *UpdateMachineLSERequest) (rsp *models.MachineLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateMachineLSE", req)
@@ -571,7 +571,7 @@ func (s *DecoratedFleet) UpdateMachineLSE(ctx context.Context, req *UpdateMachin
 	return
 }
 
-func (s *DecoratedFleet) GetMachineLSE(ctx context.Context, req *GetMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+func (s *DecoratedFleet) GetMachineLSE(ctx context.Context, req *GetMachineLSERequest) (rsp *models.MachineLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetMachineLSE", req)
@@ -656,7 +656,7 @@ func (s *DecoratedFleet) ImportOSMachineLSEs(ctx context.Context, req *ImportOSM
 	return
 }
 
-func (s *DecoratedFleet) CreateRackLSE(ctx context.Context, req *CreateRackLSERequest) (rsp *proto1.RackLSE, err error) {
+func (s *DecoratedFleet) CreateRackLSE(ctx context.Context, req *CreateRackLSERequest) (rsp *models.RackLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateRackLSE", req)
@@ -673,7 +673,7 @@ func (s *DecoratedFleet) CreateRackLSE(ctx context.Context, req *CreateRackLSERe
 	return
 }
 
-func (s *DecoratedFleet) UpdateRackLSE(ctx context.Context, req *UpdateRackLSERequest) (rsp *proto1.RackLSE, err error) {
+func (s *DecoratedFleet) UpdateRackLSE(ctx context.Context, req *UpdateRackLSERequest) (rsp *models.RackLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateRackLSE", req)
@@ -690,7 +690,7 @@ func (s *DecoratedFleet) UpdateRackLSE(ctx context.Context, req *UpdateRackLSERe
 	return
 }
 
-func (s *DecoratedFleet) GetRackLSE(ctx context.Context, req *GetRackLSERequest) (rsp *proto1.RackLSE, err error) {
+func (s *DecoratedFleet) GetRackLSE(ctx context.Context, req *GetRackLSERequest) (rsp *models.RackLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetRackLSE", req)
@@ -741,7 +741,7 @@ func (s *DecoratedFleet) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERe
 	return
 }
 
-func (s *DecoratedFleet) CreateNic(ctx context.Context, req *CreateNicRequest) (rsp *proto1.Nic, err error) {
+func (s *DecoratedFleet) CreateNic(ctx context.Context, req *CreateNicRequest) (rsp *models.Nic, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateNic", req)
@@ -758,7 +758,7 @@ func (s *DecoratedFleet) CreateNic(ctx context.Context, req *CreateNicRequest) (
 	return
 }
 
-func (s *DecoratedFleet) UpdateNic(ctx context.Context, req *UpdateNicRequest) (rsp *proto1.Nic, err error) {
+func (s *DecoratedFleet) UpdateNic(ctx context.Context, req *UpdateNicRequest) (rsp *models.Nic, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateNic", req)
@@ -775,7 +775,7 @@ func (s *DecoratedFleet) UpdateNic(ctx context.Context, req *UpdateNicRequest) (
 	return
 }
 
-func (s *DecoratedFleet) GetNic(ctx context.Context, req *GetNicRequest) (rsp *proto1.Nic, err error) {
+func (s *DecoratedFleet) GetNic(ctx context.Context, req *GetNicRequest) (rsp *models.Nic, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetNic", req)
@@ -860,7 +860,7 @@ func (s *DecoratedFleet) ImportDatacenters(ctx context.Context, req *ImportDatac
 	return
 }
 
-func (s *DecoratedFleet) CreateKVM(ctx context.Context, req *CreateKVMRequest) (rsp *proto1.KVM, err error) {
+func (s *DecoratedFleet) CreateKVM(ctx context.Context, req *CreateKVMRequest) (rsp *models.KVM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateKVM", req)
@@ -877,7 +877,7 @@ func (s *DecoratedFleet) CreateKVM(ctx context.Context, req *CreateKVMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) UpdateKVM(ctx context.Context, req *UpdateKVMRequest) (rsp *proto1.KVM, err error) {
+func (s *DecoratedFleet) UpdateKVM(ctx context.Context, req *UpdateKVMRequest) (rsp *models.KVM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateKVM", req)
@@ -894,7 +894,7 @@ func (s *DecoratedFleet) UpdateKVM(ctx context.Context, req *UpdateKVMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) GetKVM(ctx context.Context, req *GetKVMRequest) (rsp *proto1.KVM, err error) {
+func (s *DecoratedFleet) GetKVM(ctx context.Context, req *GetKVMRequest) (rsp *models.KVM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetKVM", req)
@@ -945,7 +945,7 @@ func (s *DecoratedFleet) DeleteKVM(ctx context.Context, req *DeleteKVMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) CreateRPM(ctx context.Context, req *CreateRPMRequest) (rsp *proto1.RPM, err error) {
+func (s *DecoratedFleet) CreateRPM(ctx context.Context, req *CreateRPMRequest) (rsp *models.RPM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateRPM", req)
@@ -962,7 +962,7 @@ func (s *DecoratedFleet) CreateRPM(ctx context.Context, req *CreateRPMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) UpdateRPM(ctx context.Context, req *UpdateRPMRequest) (rsp *proto1.RPM, err error) {
+func (s *DecoratedFleet) UpdateRPM(ctx context.Context, req *UpdateRPMRequest) (rsp *models.RPM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateRPM", req)
@@ -979,7 +979,7 @@ func (s *DecoratedFleet) UpdateRPM(ctx context.Context, req *UpdateRPMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) GetRPM(ctx context.Context, req *GetRPMRequest) (rsp *proto1.RPM, err error) {
+func (s *DecoratedFleet) GetRPM(ctx context.Context, req *GetRPMRequest) (rsp *models.RPM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetRPM", req)
@@ -1030,7 +1030,7 @@ func (s *DecoratedFleet) DeleteRPM(ctx context.Context, req *DeleteRPMRequest) (
 	return
 }
 
-func (s *DecoratedFleet) CreateDrac(ctx context.Context, req *CreateDracRequest) (rsp *proto1.Drac, err error) {
+func (s *DecoratedFleet) CreateDrac(ctx context.Context, req *CreateDracRequest) (rsp *models.Drac, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateDrac", req)
@@ -1047,7 +1047,7 @@ func (s *DecoratedFleet) CreateDrac(ctx context.Context, req *CreateDracRequest)
 	return
 }
 
-func (s *DecoratedFleet) UpdateDrac(ctx context.Context, req *UpdateDracRequest) (rsp *proto1.Drac, err error) {
+func (s *DecoratedFleet) UpdateDrac(ctx context.Context, req *UpdateDracRequest) (rsp *models.Drac, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateDrac", req)
@@ -1064,7 +1064,7 @@ func (s *DecoratedFleet) UpdateDrac(ctx context.Context, req *UpdateDracRequest)
 	return
 }
 
-func (s *DecoratedFleet) GetDrac(ctx context.Context, req *GetDracRequest) (rsp *proto1.Drac, err error) {
+func (s *DecoratedFleet) GetDrac(ctx context.Context, req *GetDracRequest) (rsp *models.Drac, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetDrac", req)
@@ -1115,7 +1115,7 @@ func (s *DecoratedFleet) DeleteDrac(ctx context.Context, req *DeleteDracRequest)
 	return
 }
 
-func (s *DecoratedFleet) CreateSwitch(ctx context.Context, req *CreateSwitchRequest) (rsp *proto1.Switch, err error) {
+func (s *DecoratedFleet) CreateSwitch(ctx context.Context, req *CreateSwitchRequest) (rsp *models.Switch, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateSwitch", req)
@@ -1132,7 +1132,7 @@ func (s *DecoratedFleet) CreateSwitch(ctx context.Context, req *CreateSwitchRequ
 	return
 }
 
-func (s *DecoratedFleet) UpdateSwitch(ctx context.Context, req *UpdateSwitchRequest) (rsp *proto1.Switch, err error) {
+func (s *DecoratedFleet) UpdateSwitch(ctx context.Context, req *UpdateSwitchRequest) (rsp *models.Switch, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateSwitch", req)
@@ -1149,7 +1149,7 @@ func (s *DecoratedFleet) UpdateSwitch(ctx context.Context, req *UpdateSwitchRequ
 	return
 }
 
-func (s *DecoratedFleet) GetSwitch(ctx context.Context, req *GetSwitchRequest) (rsp *proto1.Switch, err error) {
+func (s *DecoratedFleet) GetSwitch(ctx context.Context, req *GetSwitchRequest) (rsp *models.Switch, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetSwitch", req)
@@ -1200,7 +1200,7 @@ func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequ
 	return
 }
 
-func (s *DecoratedFleet) CreateVlan(ctx context.Context, req *CreateVlanRequest) (rsp *proto1.Vlan, err error) {
+func (s *DecoratedFleet) CreateVlan(ctx context.Context, req *CreateVlanRequest) (rsp *models.Vlan, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateVlan", req)
@@ -1217,7 +1217,7 @@ func (s *DecoratedFleet) CreateVlan(ctx context.Context, req *CreateVlanRequest)
 	return
 }
 
-func (s *DecoratedFleet) UpdateVlan(ctx context.Context, req *UpdateVlanRequest) (rsp *proto1.Vlan, err error) {
+func (s *DecoratedFleet) UpdateVlan(ctx context.Context, req *UpdateVlanRequest) (rsp *models.Vlan, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateVlan", req)
@@ -1234,7 +1234,7 @@ func (s *DecoratedFleet) UpdateVlan(ctx context.Context, req *UpdateVlanRequest)
 	return
 }
 
-func (s *DecoratedFleet) GetVlan(ctx context.Context, req *GetVlanRequest) (rsp *proto1.Vlan, err error) {
+func (s *DecoratedFleet) GetVlan(ctx context.Context, req *GetVlanRequest) (rsp *models.Vlan, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetVlan", req)
@@ -1336,7 +1336,7 @@ func (s *DecoratedFleet) ImportStates(ctx context.Context, req *ImportStatesRequ
 	return
 }
 
-func (s *DecoratedFleet) UpdateState(ctx context.Context, req *UpdateStateRequest) (rsp *proto1.StateRecord, err error) {
+func (s *DecoratedFleet) UpdateState(ctx context.Context, req *UpdateStateRequest) (rsp *models.StateRecord, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateState", req)
@@ -1353,7 +1353,7 @@ func (s *DecoratedFleet) UpdateState(ctx context.Context, req *UpdateStateReques
 	return
 }
 
-func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rsp *proto1.StateRecord, err error) {
+func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rsp *models.StateRecord, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetState", req)
@@ -1370,7 +1370,7 @@ func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRequest) (rsp *proto1.DHCPConfig, err error) {
+func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRequest) (rsp *models.DHCPConfig, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetDHCPConfig", req)
@@ -1387,7 +1387,7 @@ func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRe
 	return
 }
 
-func (s *DecoratedFleet) CreateVM(ctx context.Context, req *CreateVMRequest) (rsp *proto1.VM, err error) {
+func (s *DecoratedFleet) CreateVM(ctx context.Context, req *CreateVMRequest) (rsp *models.VM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateVM", req)
@@ -1404,7 +1404,7 @@ func (s *DecoratedFleet) CreateVM(ctx context.Context, req *CreateVMRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) UpdateVM(ctx context.Context, req *UpdateVMRequest) (rsp *proto1.VM, err error) {
+func (s *DecoratedFleet) UpdateVM(ctx context.Context, req *UpdateVMRequest) (rsp *models.VM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "UpdateVM", req)
@@ -1438,7 +1438,7 @@ func (s *DecoratedFleet) DeleteVM(ctx context.Context, req *DeleteVMRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) GetVM(ctx context.Context, req *GetVMRequest) (rsp *proto1.VM, err error) {
+func (s *DecoratedFleet) GetVM(ctx context.Context, req *GetVMRequest) (rsp *models.VM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "GetVM", req)
@@ -1472,7 +1472,7 @@ func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp 
 	return
 }
 
-func (s *DecoratedFleet) CreateAsset(ctx context.Context, req *CreateAssetRequest) (rsp *proto1.Asset, err error) {
+func (s *DecoratedFleet) CreateAsset(ctx context.Context, req *CreateAssetRequest) (rsp *models.Asset, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "CreateAsset", req)

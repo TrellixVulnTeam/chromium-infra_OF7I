@@ -19,7 +19,7 @@ import (
 
 	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"

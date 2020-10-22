@@ -10,7 +10,7 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
