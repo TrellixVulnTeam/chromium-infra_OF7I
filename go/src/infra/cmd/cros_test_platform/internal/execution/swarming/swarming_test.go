@@ -7,31 +7,18 @@ package swarming
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
-	"infra/libs/skylab/worker"
 	"testing"
 
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"infra/libs/skylab/worker"
 
-	"github.com/golang/protobuf/jsonpb"
 	. "github.com/smartystreets/goconvey/convey"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/isolated"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
 
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
-
-type fakeResultStore map[string]map[string]*skylab_test_runner.Result
-
-func (s fakeResultStore) AddResult(isolatedHash string, filePath string, result *skylab_test_runner.Result) {
-	s[isolatedHash] = map[string]*skylab_test_runner.Result{
-		filePath: result,
-	}
-}
 
 // fakeSwarming implements skylab_api.Swarming
 type fakeSwarming struct {
@@ -90,35 +77,6 @@ func (f *fakeSwarming) setCannedBotExistsResponse(b bool) {
 
 func (f *fakeSwarming) setTaskState(ID string, state string) {
 	f.taskIDToTaskState[ID] = state
-}
-
-func (f *fakeSwarming) setTaskIsolatedHash(taskID string, isolatedHash string) {
-	f.taskIDToIsolateHash[taskID] = isolatedHash
-}
-
-type fakeGetter struct {
-	resultStore fakeResultStore
-}
-
-func (g *fakeGetter) GetFile(_ context.Context, hex isolated.HexDigest, filePath string) ([]byte, error) {
-	r, ok := g.resultStore[string(hex)][filePath]
-	if !ok {
-		panic(fmt.Sprintf("fake getter could not get file with hash %s and path %s.", hex, filePath))
-	}
-	m := &jsonpb.Marshaler{}
-	s, err := m.MarshalToString(r)
-	if err != nil {
-		panic(fmt.Sprintf("error when marshalling %#v: %s", r, err))
-	}
-	return []byte(s), nil
-}
-
-func fakeGetterFactory(s fakeResultStore) isolate.GetterFactory {
-	return func(_ context.Context, _ string) (isolate.Getter, error) {
-		return &fakeGetter{
-			resultStore: s,
-		}, nil
-	}
 }
 
 func TestNonExistentBot(t *testing.T) {
@@ -198,74 +156,6 @@ func TestLaunch(t *testing.T) {
 			So(task, ShouldNotBeNil)
 			So(swarming.createCalls, ShouldHaveLength, 1)
 			So(swarming.createCalls[0].Name, ShouldEqual, "foo-name")
-		})
-	})
-}
-
-func TestCompletedTask(t *testing.T) {
-	Convey("When a task is launched and completes", t, func() {
-		ctx := context.Background()
-		swarming := newFakeSwarming()
-		i := fakeResultStore{}
-		i.AddResult("foo-isolated", "results.json", &skylab_test_runner.Result{})
-		skylab := &rawSwarmingSkylabClient{
-			swarmingClient: swarming,
-			isolateGetter:  fakeGetterFactory(i),
-		}
-		task, err := skylab.LaunchTask(ctx, &request.Args{})
-		So(err, ShouldBeNil)
-		swarming.setTaskState(skylab.SwarmingTaskID(task), "COMPLETED")
-		swarming.setTaskIsolatedHash(skylab.SwarmingTaskID(task), "foo-isolated")
-
-		Convey("the task results are reported correctly.", func() {
-			res, err := skylab.FetchResults(ctx, task)
-			So(err, ShouldBeNil)
-			So(res, ShouldNotBeNil)
-			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
-			So(res.Result, ShouldNotBeNil)
-		})
-	})
-}
-
-func TestUnfinishedTask(t *testing.T) {
-	Convey("When a task is launched and is killed", t, func() {
-		ctx := context.Background()
-		swarming := newFakeSwarming()
-		skylab := &rawSwarmingSkylabClient{
-			swarmingClient: swarming,
-		}
-		task, err := skylab.LaunchTask(ctx, &request.Args{})
-		So(err, ShouldBeNil)
-		swarming.setTaskState(skylab.SwarmingTaskID(task), "KILLED")
-		swarming.setTaskIsolatedHash(skylab.SwarmingTaskID(task), "ignored-isolated")
-
-		Convey("no results are reported.", func() {
-			res, err := skylab.FetchResults(ctx, task)
-			So(err, ShouldBeNil)
-			So(res, ShouldNotBeNil)
-			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
-			So(res.Result, ShouldBeNil)
-		})
-	})
-}
-
-func TestMissingIsolate(t *testing.T) {
-	Convey("When a task is launched, completes and is missing an isolated output", t, func() {
-		ctx := context.Background()
-		swarming := newFakeSwarming()
-		skylab := &rawSwarmingSkylabClient{
-			swarmingClient: swarming,
-		}
-		task, err := skylab.LaunchTask(ctx, &request.Args{})
-		So(err, ShouldBeNil)
-		swarming.setTaskState(skylab.SwarmingTaskID(task), "COMPLETED")
-
-		Convey("no results are reported.", func() {
-			res, err := skylab.FetchResults(ctx, task)
-			So(err, ShouldBeNil)
-			So(res, ShouldNotBeNil)
-			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
-			So(res.Result, ShouldBeNil)
 		})
 	})
 }

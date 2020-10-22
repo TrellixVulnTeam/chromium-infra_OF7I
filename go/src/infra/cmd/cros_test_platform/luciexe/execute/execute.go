@@ -200,9 +200,6 @@ func validateRequestConfig(cfg *config.Config) error {
 	if cfg.SkylabSwarming == nil {
 		return fmt.Errorf("nil request.config.skylab_swarming")
 	}
-	if cfg.SkylabIsolate == nil {
-		return fmt.Errorf("nil request.config.skylab_isolate")
-	}
 	if cfg.SkylabWorker == nil {
 		return fmt.Errorf("nil request.config.skylab_worker")
 	}
