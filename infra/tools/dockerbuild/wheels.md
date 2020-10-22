@@ -2732,6 +2732,18 @@ wheel: <
 
 * *universal*
 
+### 2.7.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/paramiko-py2_py3"
+  version: "version:2.7.2"
+>
+```
+
+
+* *universal*
+
 ## **pathlib2**
 
 ### 2.3.3
