@@ -309,6 +309,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'pandas',
+            '1.1.3',
+            packaged=[],
+            skip_plat=['mac-x64-cp38'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'psutil',
             '1.2.1',
             packaged=[],

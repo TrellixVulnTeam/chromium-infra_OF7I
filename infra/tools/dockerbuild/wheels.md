@@ -2654,6 +2654,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.1.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pandas/${vpython_platform}"
+  version: "version:1.1.3"
+>
+```
+
+
+* *linux-arm64-py3*
+* *manylinux-x64-py3*
+
 ## **parameterized**
 
 ### 0.7.0
