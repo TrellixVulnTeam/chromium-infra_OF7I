@@ -10,6 +10,7 @@ import (
 
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
+	"infra/cmd/shivas/ufs/subcmds/dut"
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
@@ -34,6 +35,7 @@ var GetCmd = &subcommands.Command{
 	ShortDesc: "Get details of a resource/entity",
 	LongDesc: `Get details for
 	machine/rack/kvm/rpm/switch/drac/nic
+	dut
 	host/vm/vm-slots
 	machine-prototype/rack-prototype/platform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
@@ -58,6 +60,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		machine.GetMachineCmd,
 		host.GetHostCmd,
+		dut.GetDutCmd,
 		kvm.GetKVMCmd,
 		rpm.GetRPMCmd,
 		switches.GetSwitchCmd,

@@ -110,6 +110,8 @@ message ChromeOSMachine {
     string phase = 8;
     // Cost center associated with the asset.
     string cost_center = 9;
+    // The manufacturing ID for a given DUT
+    string hwid = 10;
 }
 
 // ChromeOSDeviceType refers to the different types of

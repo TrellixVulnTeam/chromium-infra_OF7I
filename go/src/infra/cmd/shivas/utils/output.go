@@ -1079,6 +1079,69 @@ func PrintChromePlatformsJSON(res []proto.Message, emit bool) {
 	fmt.Println("]")
 }
 
+// PrintDutsJSON prints the ChromeOS machine lses (DUTs) details in json format.
+func PrintDutsJSON(res []proto.Message, emit bool) {
+	machinelses := make([]*ufspb.MachineLSE, len(res))
+	for i, r := range res {
+		machinelses[i] = r.(*ufspb.MachineLSE)
+	}
+	fmt.Print("[")
+	for i, m := range machinelses {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m, emit)
+		if i < len(machinelses)-1 {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
+
+// PrintDutsShort prints the most commonly used dut information in a
+// human-readable format.
+//
+// TODO(xixuan): remove the similar function for skylab tooling package
+func PrintDutsShort(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machine) {
+	defer tw.Flush()
+	for _, dut := range duts {
+		if dut.GetChromeosMachineLse() == nil {
+			continue
+		}
+		m, ok := machineMap[dut.GetName()]
+		if !ok {
+			continue
+		}
+		fmt.Fprintf(tw, "Hostname:\t%s\n", dut.GetName())
+		fmt.Fprintf(tw, "Inventory Id:\t%s\n", dut.GetMachines()[0])
+		fmt.Fprintf(tw, "Model:\t%s\n", m.GetChromeosMachine().GetModel())
+		fmt.Fprintf(tw, "Board:\t%s\n", m.GetChromeosMachine().GetBuildTarget())
+		fmt.Fprintf(tw, "ReferenceDesign:\t%s\n", m.GetChromeosMachine().GetReferenceBoard())
+		fmt.Fprintf(tw, "Variant:\t%s\n", m.GetChromeosMachine().GetSku())
+		fmt.Fprintf(tw, "HWID:\t%s\n", m.GetChromeosMachine().GetHwid())
+
+		servo := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+		if servo != nil {
+			fmt.Fprintf(tw, "Servo:\n")
+			fmt.Fprintf(tw, "\thostname\t%s\n", servo.GetServoHostname())
+			fmt.Fprintf(tw, "\tport\t%d\n", servo.GetServoPort())
+			fmt.Fprintf(tw, "\tserial number\t%s\n", servo.GetServoSerial())
+			fmt.Fprintf(tw, "\ttype\t%s\n", servo.GetServoType())
+			fmt.Fprintf(tw, "\tsetup\t%s\n", servo.GetServoSetup())
+		} else {
+			fmt.Fprintf(tw, "Servo: None\n")
+		}
+
+		rpm := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm()
+		if rpm != nil {
+			fmt.Fprintf(tw, "RPM:\n")
+			fmt.Fprintf(tw, "\thostname\t%s\n", rpm.GetPowerunitName())
+			fmt.Fprintf(tw, "\toutlet\t%s\n", rpm.GetPowerunitOutlet())
+		} else {
+			fmt.Fprintf(tw, "RPM: None\n")
+		}
+	}
+}
+
 // PrintMachineLSEsJSON prints the machinelse details in json format.
 func PrintMachineLSEsJSON(res []proto.Message, emit bool) {
 	machinelses := make([]*ufspb.MachineLSE, len(res))
