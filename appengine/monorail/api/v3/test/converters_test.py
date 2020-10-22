@@ -1105,6 +1105,65 @@ class ConverterFunctionsTest(unittest.TestCase):
     ]
     self.assertEqual(actual, expected)
 
+  def testIngestIssueDeltas_OwnerAndOwnerDotUser(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue)
+
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        owner=issue_objects_pb2.Issue.UserValue(user='users/111')
+    )
+
+    # Expect ingest to work when update_mask has just 'owner'.
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=['owner'])
+    )
+    expected_delta = tracker_pb2.IssueDelta(owner_id=111)
+    expected = [(78001, expected_delta)]
+    actual = self.converter.IngestIssueDeltas([api_delta])
+    self.assertEqual(actual, expected)
+
+    # Expect ingest to also work when update_mask uses 'owner.user' instead.
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=['owner.user'])
+    )
+    actual = self.converter.IngestIssueDeltas([api_delta])
+    self.assertEqual(actual, expected)
+
+  def testIngestIssueDeltas_StatusAndStatusDotStatus(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue)
+
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        owner=issue_objects_pb2.Issue.UserValue(user='users/111'),
+        status=issue_objects_pb2.Issue.StatusValue(status='New')
+    )
+
+    # Expect ingest to work when update_mask has just 'status'.
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=['status'])
+    )
+    expected_delta = tracker_pb2.IssueDelta(status='New')
+    expected = [(78001, expected_delta)]
+    actual = self.converter.IngestIssueDeltas([api_delta])
+    self.assertEqual(actual, expected)
+
+    # Expect ingest to also work when update_mask uses 'status.status' instead.
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=['status.status'])
+    )
+    actual = self.converter.IngestIssueDeltas([api_delta])
+    self.assertEqual(actual, expected)
+
   def testIngestIssueDeltas_RemoveNonRepeated(self):
     # Set up.
     self.services.project.TestAddProject('proj-780', project_id=780)
@@ -1120,7 +1179,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_delta = issues_pb2.IssueDelta(
         issue=api_issue,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner', 'status', 'summary', 'merged_into_issue_ref']))
+            paths=['owner.user', 'status.status', 'summary',
+                'merged_into_issue_ref']))
 
     # Check thet setting fields to '' result in same behavior as not
     # explicitly setting the values at all.
@@ -1133,7 +1193,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_delta_set = issues_pb2.IssueDelta(
         issue=api_issue_set,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner', 'status', 'summary', 'merged_into_issue_ref']))
+            paths=['owner.user', 'status.status', 'summary',
+                'merged_into_issue_ref']))
 
     expected_delta = tracker_pb2.IssueDelta(
         owner_id=framework_constants.NO_USER_SPECIFIED,

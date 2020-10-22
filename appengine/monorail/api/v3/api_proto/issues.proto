@@ -78,6 +78,7 @@ service Issues {
   // in creating Comments on the parent Issue, and may have the side effect of
   // sending notifications. We also want to allow for any combination of
   // approval changes to be made at once in a monolithic method.
+  // To modify owner add 'owner' to update_mask, though 'owner.user' works too.
   //
   // Raises:
   //   INVALID_ARGUMENT required fields are missing or fields are formatted

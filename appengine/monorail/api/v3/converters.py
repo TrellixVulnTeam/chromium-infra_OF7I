@@ -490,18 +490,19 @@ class Converter(object):
       # where fields are not set and with a FieldMask applied, there is no
       # way to tell if empty fields were explicitly listed or not listed
       # in the FieldMask.
-      if 'status' in api_delta.update_mask.paths:
-        if api_delta.issue.status.status:
-          delta.status = api_delta.issue.status.status
-        else:
+      paths_set = set(api_delta.update_mask.paths)
+      if (not paths_set.isdisjoint({'status', 'status.status'}) and
+          api_delta.issue.status.status):
+        delta.status = api_delta.issue.status.status
+      elif 'status.status' in paths_set and not api_delta.issue.status.status:
           delta.status = ''
 
-      if 'owner' in api_delta.update_mask.paths:
-        if api_delta.issue.owner.user:
-          delta.owner_id = rnc.IngestUserName(
+      if (not paths_set.isdisjoint({'owner', 'owner.user'}) and
+          api_delta.issue.owner.user):
+        delta.owner_id = rnc.IngestUserName(
               self.cnxn, api_delta.issue.owner.user, self.services)
-        else:
-          delta.owner_id = framework_constants.NO_USER_SPECIFIED
+      elif 'owner.user' in paths_set and not api_delta.issue.owner.user:
+        delta.owner_id = framework_constants.NO_USER_SPECIFIED
 
       if 'summary' in api_delta.update_mask.paths:
         if api_delta.issue.summary:
@@ -509,6 +510,8 @@ class Converter(object):
         else:
           delta.summary = ''
 
+      # TODO(crbug/monorail/8548): fix fieldmask usage for un-setting
+      # delta.merged_into and delta.merged_into_external
       if 'merged_into_issue_ref' in api_delta.update_mask.paths:
         merge_ref = api_delta.issue.merged_into_issue_ref
         try:
