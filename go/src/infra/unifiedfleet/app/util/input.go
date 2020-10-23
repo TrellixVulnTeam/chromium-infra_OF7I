@@ -386,19 +386,6 @@ func ToUFSZone(zone string) ufspb.Zone {
 	return ufspb.Zone(ufspb.Zone_value[v])
 }
 
-// ToUFSRealm returns the realm name based on zone string.
-func ToUFSRealm(zone string) string {
-	ufsZone := ToUFSZone(zone)
-	if IsInBrowserZone(ufsZone.String()) {
-		return BrowserLabAdminRealm
-	}
-	if ufsZone == ufspb.Zone_ZONE_CHROMEOS3 || ufsZone == ufspb.Zone_ZONE_CHROMEOS5 ||
-		ufsZone == ufspb.Zone_ZONE_CHROMEOS7 || ufsZone == ufspb.Zone_ZONE_CHROMEOS15 {
-		return AcsLabAdminRealm
-	}
-	return AtlLabAdminRealm
-}
-
 // ToUFSDept returns the dept name based on zone string.
 func ToUFSDept(zone string) string {
 	ufsZone := ToUFSZone(zone)

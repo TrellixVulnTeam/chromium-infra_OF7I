@@ -44,7 +44,6 @@ func InstallHandlers(r *router.Router, mc router.MiddlewareChain) {
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
 	logging.Debugf(ctx, "Check access for %s", rpcName)
-	// TODO: Re-org the permissions with luci-realm
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs", "mdb/hwops-nsi"}
 	if strings.HasPrefix(rpcName, "Import") {
 		group = []string{"mdb/chrome-fleet-software-team"}
