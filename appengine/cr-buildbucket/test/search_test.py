@@ -450,7 +450,7 @@ class SearchTest(testing.AppengineTestCase):
 
     first_page, next_cursor = self.search(max_builds=3)
     self.assertEqual(len(first_page), 3)
-    self.assertTrue(next_cursor)
+    self.assertEqual(next_cursor, 'id>%d' % first_page[-1].key.id())
 
     second_page, _ = self.search(max_builds=3, start_cursor=next_cursor)
     self.assertEqual(len(second_page), 3)
@@ -561,8 +561,8 @@ class SearchTest(testing.AppengineTestCase):
     builds, _ = self.search(tags=[self.INDEXED_TAG])
     self.assertEqual(builds, [build])
 
-    with self.assertRaises(errors.TagIndexIncomplete):
-      self.search(tags=[self.INDEXED_TAG], start_cursor='id>0')
+    builds2, _ = self.search(tags=[self.INDEXED_TAG], start_cursor='id>0')
+    self.assertEqual(builds2, [build])
 
   def test_filter_by_with_legacy_index(self):
     build = test_util.build(id=1)
@@ -633,9 +633,10 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(res, builds[8:])
     self.assertIsNone(cursor)
 
-  def test_filter_by_with_tag_index_cursor_but_no_inded_tag(self):
-    with self.assertRaises(errors.InvalidInputError):
-      self.search(start_cursor='id>1')
+  def test_filter_by_with_id_prefix_cursor_but_no_inded_tag(self):
+    build = self.put_build()
+    builds, _ = self.search(start_cursor='id>1')
+    self.assertEqual(builds, [build])
 
   def test_filter_by_with_experimental(self):
     exp_build = self.put_build(input=dict(experimental=True))

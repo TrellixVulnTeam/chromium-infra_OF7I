@@ -25,7 +25,7 @@ import model
 import user
 
 MAX_RETURN_BUILDS = 1000
-RE_TAG_INDEX_SEARCH_CURSOR = re.compile(r'^id>\d+$')
+RE_ID_PREFIX_SEARCH_CURSOR = re.compile(r'^id>\d+$')
 
 
 def fix_max_builds(max_builds):
@@ -301,16 +301,10 @@ def search_async(q):
     yield check_acls_async(q.bucket_ids)
     q.bucket_ids = set(q.bucket_ids)
 
-  is_tag_index_cursor = (
-      q.start_cursor and RE_TAG_INDEX_SEARCH_CURSOR.match(q.start_cursor)
-  )
   can_use_tag_index = (
-      indexed_tags(q.tags) and (not q.start_cursor or is_tag_index_cursor)
+      indexed_tags(q.tags) and
+      (not q.start_cursor or RE_ID_PREFIX_SEARCH_CURSOR.match(q.start_cursor))
   )
-  if is_tag_index_cursor and not can_use_tag_index:
-    raise errors.InvalidInputError('invalid cursor')
-  can_use_query_search = not q.start_cursor or not is_tag_index_cursor
-  assert can_use_tag_index or can_use_query_search
 
   # Try searching using tag index.
   if can_use_tag_index:
@@ -323,12 +317,9 @@ def search_async(q):
       )
       raise ndb.Return(results)
     except errors.TagIndexIncomplete:
-      if not can_use_query_search:
-        raise
       logging.info('falling back to querying')
 
   # Searching using datastore query.
-  assert can_use_query_search
   search_start_time = utils.utcnow()
   results = yield _query_search_async(q)
   logging.info(
@@ -354,6 +345,9 @@ def _query_search_async(q):
   Assumes:
   - q is valid
   - if bool(bucket_ids), permissions are checked.
+
+  q.start_cursor will be mutated to None if it's an id prefix string, and that
+  id will be used in determining the low boundary of id range in search.
   """
   if not q.bucket_ids:
     q.bucket_ids = yield user.buckets_by_perm_async(user.PERM_BUILDS_LIST)
@@ -407,6 +401,10 @@ def _query_search_async(q):
       dq = dq.filter(model.Build.bucket_id.IN(q.bucket_ids))
 
   id_low, id_high = q.get_create_time_order_build_id_range()
+  if q.start_cursor and RE_ID_PREFIX_SEARCH_CURSOR.match(q.start_cursor):
+    min_id_exclusive = int(q.start_cursor[len('id>'):])
+    id_low = max(id_low or 0, min_id_exclusive + 1)
+    q.start_cursor = None
   if id_low is not None:
     dq = dq.filter(model.Build.key >= ndb.Key(model.Build, id_low))
   if id_high is not None:
@@ -433,11 +431,12 @@ def _query_search_async(q):
       return False
     return True
 
-  raise ndb.Return((
-      yield fetch_page_async(
-          dq, q.max_builds, q.start_cursor, predicate=local_predicate
-      )
-  ))
+  entities, next_cursor = yield fetch_page_async(
+      dq, q.max_builds, q.start_cursor, predicate=local_predicate
+  )
+  if next_cursor is not None:
+    next_cursor = 'id>%d' % entities[-1].key.id()
+  raise ndb.Return(entities, next_cursor)
 
 
 @ndb.non_transactional
@@ -520,7 +519,7 @@ def _tag_index_search_async(q):
   if q.start_cursor:
     # The cursor is a minimum build id, exclusive. Such cursor is resilient
     # to duplicates and additions of index entries to beginning or end.
-    assert RE_TAG_INDEX_SEARCH_CURSOR.match(q.start_cursor)
+    assert RE_ID_PREFIX_SEARCH_CURSOR.match(q.start_cursor)
     min_id_exclusive = int(q.start_cursor[len('id>'):])
     id_low = max(id_low, min_id_exclusive + 1)
   if id_low >= id_high:
