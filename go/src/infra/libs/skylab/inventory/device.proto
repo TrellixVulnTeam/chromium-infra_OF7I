@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 24
+// NEXT TAG: 25
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -381,6 +381,7 @@ message Peripherals {
   optional bool servo = 2;
   optional PeripheralState servo_state = 15;
   optional string servo_type = 17;
+  optional ServoTopology servo_topology = 24;
   optional bool smart_usbhub = 21;
   optional bool stylus = 3;
   optional bool camerabox = 13;
@@ -472,6 +473,32 @@ enum HardwareState {
   // Hardware is not detected to run verifiers.
   // (used for USB-drive when it expected but not detected on the device)
   HARDWARE_NOT_DETECTED = 4;
+}
+
+// Copy from servo.proto
+// Servo Topology describe connected servo devices on DUT set-up to provide Servo functionality.
+// Next Tag : 3
+message ServoTopology  {
+  optional ServoTopologyItem main = 1;
+  repeated ServoTopologyItem children = 2;
+}
+
+// Servo Topology Item describe details of one servo device on DUT set-up.
+// Next Tag : 5
+message ServoTopologyItem  {
+  // type provides the type of servo device. Keeping as String to avoid issue with introduce new type.
+  optional string type = 1;
+  // sysfs_product providess the product name of the device recorded in File System.
+  optional string sysfs_product = 2;
+  // serial providess the serilal number of the device.
+  optional string serial = 3;
+  // usb_hub_port providess the port connection to the device.
+  // e.g. '1-6.2.2' where
+  //   '1-6'  - port on the labstation
+  //   '2'    - port on smart-hub connected to the labstation
+  //   '2'    - port on servo hub (part of servo_v4 or servo_v4.1) connected to the smart-hub
+  // The same path will look '1-6.2' if connected servo_v4 directly to the labstation.
+  optional string usb_hub_port = 4;
 }
 
 // These labels are used by the CI system to provide test coverage hints to
