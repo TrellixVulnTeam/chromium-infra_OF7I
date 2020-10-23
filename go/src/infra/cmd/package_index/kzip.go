@@ -195,7 +195,7 @@ func (ip *indexPack) processExistingKzip(ctx context.Context, kzip string, kzipE
 			continue
 		}
 
-		kzipEntryChannel <- kzipEntry{file.Name, content}
+		kzipEntryChannel <- kzipEntry{filepath.Join(filesDir, filepath.Base(file.Name)), content}
 		logging.Debugf(ctx, "Added %s from kzip", file.Name)
 
 		rc.Close()

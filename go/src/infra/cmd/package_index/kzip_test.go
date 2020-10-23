@@ -57,13 +57,12 @@ func TestWriteToKzip(t *testing.T) {
 		}
 
 		w := zip.NewWriter(javaKzip)
-		w.Create("kzip/")
-		w.Create("kzip/files/")
-		w.Create("kzip/units/")
+		w.Create("foo/")
+		w.Create("foo/files/")
+		w.Create("foo/units/")
 
 		dataFileContent := []byte("test file")
-		dataFileName := "kzip/files/testfile"
-		f, err := w.Create(dataFileName)
+		f, err := w.Create("foo/files/testfile")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,7 +82,7 @@ func TestWriteToKzip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		f, err = w.Create("kzip/units/testunit")
+		f, err = w.Create("foo/units/testunit")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -167,7 +166,7 @@ func TestWriteToKzip(t *testing.T) {
 				So(fnames, ShouldContain, "kzip/pbunits/")
 
 				// Check data file.
-				So(fnames, ShouldContain, dataFileName)
+				So(fnames, ShouldContain, filepath.Join("kzip", "files", "testfile"))
 
 				rcData, err := dataInfo.Open()
 				if err != nil {
