@@ -26,6 +26,9 @@ import (
 
 // RackRegistration creates a new rack, switches, kvms and rpms in datastore.
 func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+	// Older clients of Shivas send OldBrowserLabAdminRealm, which needs to be repalced with BrowserLabAdminRealm
+	rack.Realm = ufsUtil.GetValidRealmName(rack.GetRealm())
+
 	switches := rack.GetChromeBrowserRack().GetSwitchObjects()
 	kvms := rack.GetChromeBrowserRack().GetKvmObjects()
 	rpms := rack.GetChromeBrowserRack().GetRpmObjects()
@@ -115,6 +118,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 
 // UpdateRack updates rack in datastore.
 func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
+	// Older clients of Shivas send OldBrowserLabAdminRealm, which needs to be replaced by BrowserLabAdminRealm
+	rack.Realm = ufsUtil.GetValidRealmName(rack.GetRealm())
+
 	var oldRack *ufspb.Rack
 	var err error
 	f := func(ctx context.Context) error {

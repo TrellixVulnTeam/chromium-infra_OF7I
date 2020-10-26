@@ -16,6 +16,11 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
+// OldBrowserLabAdminRealm is the Old realm for browser lab
+//
+// If a client sends this realm, replace it with BrowserLabAdminRealm
+const OldBrowserLabAdminRealm = "chromium:ufs/browser-admin"
+
 // BrowserLabAdminRealm is the admin realm for browser lab.
 const BrowserLabAdminRealm = "@internal:ufs/browser"
 
@@ -123,4 +128,12 @@ func ToUFSRealm(zone string) string {
 		return AcsLabAdminRealm
 	}
 	return AtlLabAdminRealm
+}
+
+// GetValidRealmName replaces the older Browser realm with newer realm
+func GetValidRealmName(realm string) string {
+	if realm != "" && realm == OldBrowserLabAdminRealm {
+		return BrowserLabAdminRealm
+	}
+	return realm
 }

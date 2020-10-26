@@ -26,6 +26,9 @@ import (
 
 // MachineRegistration creates a new machine, new nic and a new drac in datastore.
 func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
+	// Older clients of Shivas send OldBrowserLabAdminRealm, which needs to be replaced with BrowserLabAdminRealm
+	machine.Realm = util.GetValidRealmName(machine.GetRealm())
+
 	nics := machine.GetChromeBrowserMachine().GetNicObjects()
 	drac := machine.GetChromeBrowserMachine().GetDracObject()
 	f := func(ctx context.Context) error {
@@ -91,6 +94,9 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
 func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask.FieldMask) (*ufspb.Machine, error) {
+	// Older clients of Shivas send OldBrowserLabAdminRealm, which needs to be replaced with BrowserLabAdminRealm
+	machine.Realm = util.GetValidRealmName(machine.GetRealm())
+
 	var oldMachine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
