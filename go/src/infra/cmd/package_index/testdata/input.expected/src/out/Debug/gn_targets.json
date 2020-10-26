@@ -1,0 +1,120 @@
+{
+  "//:test_mojom__generator": {
+    "args": [
+      "--use_bundled_pylibs",
+      "generate",
+      "-d",
+      "../",
+      "-I",
+      "../../",
+      "-o",
+      "gen",
+      "--bytecode_path",
+      "gen/bindings",
+      "--filelist={{response_file_name}}",
+      "-g",
+      "c++",
+      "--typemap",
+      "gen/mojo_bindings__type_mappings"
+    ],
+    "script": "//mojo/mojom_bindings_generator.py",
+    "sources": ["//test.mojom"],
+    "outputs": ["//out/Debug/gen/test.mojom.h"]
+  },
+  "//:test_mojom__parser(//foo/bar:baz)": {
+    "args": [
+      "parse",
+      "--filelist={{response_file_name}}",
+      "-o",
+      "gen",
+      "-d",
+      "../",
+      "--enable_feature",
+      "ipc_logging"
+    ],
+    "script": "//mojo/mojom_bindings_generator.py",
+    "sources": ["//test.mojom"],
+    "outputs": ["//out/Debug/gen/test.p"]
+  },
+  "//:test_mojom__parser": {
+    "args": [
+      "parse",
+      "--filelist={{response_file_name}}",
+      "-o",
+      "gen",
+      "-d",
+      "../",
+      "--enable_feature",
+      "ipc_logging"
+    ],
+    "script": "//mojo/mojom_bindings_generator.py",
+    "sources": ["//test.mojom"],
+    "outputs": ["//out/Debug/gen/test.p"]
+  },
+  "//:test_mojom2__generator": {
+    "args": [
+      "--use_bundled_pylibs",
+      "generate",
+      "-d",
+      "../",
+      "-I",
+      "../../",
+      "-o",
+      "gen",
+      "--bytecode_path",
+      "gen/bindings",
+      "--filelist={{response_file_name}}",
+      "-g",
+      "c++",
+      "--typemap",
+      "gen/mojo_bindings__type_mappings"
+    ],
+    "script": "//mojo/mojom_bindings_generator.py",
+    "sources": ["//test2.mojom"],
+    "outputs": ["//out/Debug/gen/test2.mojom.h"]
+  },
+  "//:test_mojom2__parser": {
+    "args": [
+      "parse",
+      "--filelist={{response_file_name}}",
+      "-o",
+      "gen",
+      "-d",
+      "../",
+      "--enable_feature",
+      "ipc_logging"
+    ],
+    "script": "//mojo/mojom_bindings_generator.py",
+    "sources": ["//test2.mojom"],
+    "outputs": ["//out/Debug/gen/test2.p"]
+  },
+  "//mojo/public/cpp/bindings/tests:generated_test_mojom__generator": {
+    "args": [ "--use_bundled_pylibs", "-o", "gen", "generate", "-d", "../../", "-I", "../../", "--bytecode_path", "gen/mojo/public/tools/bindings", "--filelist={{response_file_name}}", "-g", "c++", "--typemap", "gen/mojo/public/cpp/bindings/tests/generated_test_mojom__type_mappings", "--enable_kythe_annotations" ],
+    "deps": [ "//mojo/public/cpp/bindings/tests:generate_test_mojom", "//mojo/public/cpp/bindings/tests:generated_test_mojom__parsed", "//mojo/public/cpp/bindings/tests:generated_test_mojom__type_mappings", "//mojo/public/cpp/bindings/tests:generated_test_mojom__verify_deps", "//mojo/public/tools/bindings:precompile_templates" ],
+    "inputs": [ "//mojo/public/tools/bindings/generators/mojom_cpp_generator.py", "//mojo/public/tools/bindings/generators/mojom_java_generator.py", "//mojo/public/tools/bindings/generators/mojom_js_generator.py", "//mojo/public/tools/bindings/generators/mojom_ts_generator.py", "//mojo/public/tools/bindings/pylib/mojom/__init__.py", "//mojo/public/tools/bindings/pylib/mojom/error.py", "//mojo/public/tools/bindings/pylib/mojom/generate/__init__.py", "//mojo/public/tools/bindings/pylib/mojom/generate/constant_resolver.py", "//mojo/public/tools/bindings/pylib/mojom/generate/generator.py", "//mojo/public/tools/bindings/pylib/mojom/generate/module.py", "//mojo/public/tools/bindings/pylib/mojom/generate/pack.py", "//mojo/public/tools/bindings/pylib/mojom/generate/template_expander.py", "//mojo/public/tools/bindings/pylib/mojom/generate/translate.py", "//mojo/public/tools/bindings/pylib/mojom/parse/__init__.py", "//mojo/public/tools/bindings/pylib/mojom/parse/ast.py", "//mojo/public/tools/bindings/pylib/mojom/parse/lexer.py", "//mojo/public/tools/bindings/pylib/mojom/parse/parser.py", "//mojo/public/tools/bindings/mojom_bindings_generator.py", "//third_party/jinja2/__init__.py", "//third_party/jinja2/_compat.py", "//third_party/jinja2/_identifier.py", "//third_party/jinja2/asyncfilters.py", "//third_party/jinja2/asyncsupport.py", "//third_party/jinja2/bccache.py", "//third_party/jinja2/compiler.py", "//third_party/jinja2/constants.py", "//third_party/jinja2/debug.py", "//third_party/jinja2/defaults.py", "//third_party/jinja2/environment.py", "//third_party/jinja2/exceptions.py", "//third_party/jinja2/ext.py", "//third_party/jinja2/filters.py", "//third_party/jinja2/idtracking.py", "//third_party/jinja2/lexer.py", "//third_party/jinja2/loaders.py", "//third_party/jinja2/meta.py", "//third_party/jinja2/nativetypes.py", "//third_party/jinja2/nodes.py", "//third_party/jinja2/optimizer.py", "//third_party/jinja2/parser.py", "//third_party/jinja2/runtime.py", "//third_party/jinja2/sandbox.py", "//third_party/jinja2/tests.py", "//third_party/jinja2/utils.py", "//third_party/jinja2/visitor.py" ],
+    "metadata": {},
+    "outputs": [ "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom-forward.h", "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom-import-headers.h", "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom-test-utils.cc", "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom-test-utils.h", "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom.cc", "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom.h" ],
+    "public": "*",
+    "response_file_contents": [ "gen/mojo/public/cpp/bindings/tests/generated.test-mojom" ],
+    "script": "//mojo/public/tools/bindings/mojom_bindings_generator.py",
+    "sources": [ "//out/android-Debug/gen/mojo/public/cpp/bindings/tests/generated.test-mojom" ],
+    "testonly": false,
+    "toolchain": "//build/toolchain/android:android_clang_arm",
+    "type": "action",
+    "visibility": [ "//mojo/public/cpp/bindings/tests:*" ]
+   },
+  "//components/send_tab_to_self/proto:send_tab_to_self_proto_gen" : {
+    "outputs" : ["not inspected"],
+    "args" : ["main.proto", "--protoc", "./clang_x64/protoc", "--proto-in-dir", "../../", "--cc-out-dir", "gen/", "--py-out-dir", "pyproto/"],
+    "toolchain" : "//build/toolchain/android:android_clang_arm",
+    "visibility" : ["//proto:main"],
+    "testonly" : false,
+    "type" : "action",
+    "public" : "*",
+    "metadata" : {},
+    "sources" : ["//main.proto"],
+    "script" : "//tools/protoc_wrapper/protoc_wrapper.py",
+    "deps" : ["//third_party/protobuf:protoc(//build/toolchain/linux:clang_x64)"],
+    "inputs" : ["//out/android-Debug/clang_x64/protoc"]
+  }
+}

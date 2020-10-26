@@ -1,0 +1,14 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto2";
+
+package foo;
+
+import "subsub.proto";
+
+message Bar {
+  optional string bar_title = 1;
+  optional Baz baz = 2;
+}
