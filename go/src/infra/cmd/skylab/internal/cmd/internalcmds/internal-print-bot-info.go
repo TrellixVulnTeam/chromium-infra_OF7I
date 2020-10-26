@@ -129,7 +129,6 @@ func botDimensionsForDUT(d *inventory.DeviceUnderTest, ds dutstate.Info, r swarm
 		dims["location"] = []string{formatLocation(v)}
 	}
 	dims["dut_state"] = []string{string(ds.State)}
-	dims["dut_state_ufs"] = []string{string(ds.State)}
 	swarming.Sanitize(dims, r)
 	return dims
 }
