@@ -576,3 +576,6 @@ import:
 - package: github.com/kr/fs
   version: master
   repo: https://fuchsia.googlesource.com/third_party/github.com/kr/fs.git
+- package: github.com/google/shlex
+  repo: https://chromium.googlesource.com/external/github.com/google/shlex.git
+  version: master
