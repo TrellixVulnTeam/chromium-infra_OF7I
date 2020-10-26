@@ -251,27 +251,6 @@ class ChromiumProjectAPITest(WaterfallTestCase):
       new_d.value = d['value']
     return build
 
-  def _CreateBuildbucketBuildWithMasternameProperty(
-      self,
-      build_id,
-      build_number,
-      master='master',
-      builder='builder',
-      dimensions=None,
-  ):
-    build = Build(id=build_id, number=build_number)
-    build.input.gitiles_commit.host = 'gitiles.host.com'
-    build.input.gitiles_commit.project = 'project/name'
-    build.input.gitiles_commit.ref = 'ref/heads/master'
-    build.input.gitiles_commit.id = 'git_sha'
-    build.input.properties['mastername'] = master
-    build.builder.builder = builder
-    for d in (dimensions or []):
-      new_d = build.infra.swarming.task_dimensions.add()
-      new_d.key = d['key']
-      new_d.value = d['value']
-    return build
-
   @mock.patch.object(logdog_util, 'GetLogFromViewUrl')
   def testGetCompileFailures(self, mock_get_log):
     build_id = 8765432109123
@@ -520,20 +499,6 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
 
   @mock.patch.object(buildbucket_client, 'GetV2Build')
-  def testGetCompileRerunBuildInputPropertiesMasternameProperty(self, mock_bb):
-    mock_bb.return_value = self._CreateBuildbucketBuildWithMasternameProperty(
-        800000001234, 1234, 'chromium.linux', 'Linux Builder')
-    props = ChromiumProjectAPI().GetCompileRerunBuildInputProperties(
-        {'compile': ['bad_target1', 'bad_tests']}, 800000001234)
-    self.assertEqual(props['target_builder'], {
-        'group': 'chromium.linux',
-        'builder': 'Linux Builder'
-    })
-    self.assertEqual(props['builder_group'], 'chromium.linux')
-    self.assertEqual(
-        sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
-
-  @mock.patch.object(buildbucket_client, 'GetV2Build')
   def testGetTestRerunBuildInputProperties(self, mock_bb):
     mock_bb.return_value = self._CreateBuildbucketBuild(
         800000009999, 9999, 'chromium.linux', 'Linux Tests')
@@ -558,41 +523,6 @@ class ChromiumProjectAPITest(WaterfallTestCase):
             },
         },
     }, 800000009999)
-    self.assertEqual(props['target_builder'], {
-        'group': 'chromium.linux',
-        'builder': 'Linux Tests'
-    })
-    self.assertEqual(props['builder_group'], 'chromium.linux')
-    self.assertEqual(props['tests'], {
-        'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
-    })
-
-  @mock.patch.object(buildbucket_client, 'GetV2Build')
-  def testGetTestRerunBuildInputPropertiesMasternameProperty(self, mock_bb):
-    mock_bb.return_value = self._CreateBuildbucketBuildWithMasternameProperty(
-        800000009999, 9999, 'chromium.linux', 'Linux Tests')
-    props = ChromiumProjectAPI().GetTestRerunBuildInputProperties(
-        {
-            'complexitor_tests': {
-                'tests': [
-                    {
-                        'name': 'TestTrueNatureOf42',
-                        'properties': {
-                            'ignored': 'at the moment'
-                        }
-                    },
-                    {
-                        'name': 'ValidateFTLCommunication',
-                        'properties': {
-                            'ignored': 'also'
-                        }
-                    },
-                ],
-                'properties': {
-                    'this is': 'ignored',
-                },
-            },
-        }, 800000009999)
     self.assertEqual(props['target_builder'], {
         'group': 'chromium.linux',
         'builder': 'Linux Tests'
@@ -634,27 +564,6 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         gitiles_id='git_sha')
     build = self._CreateBuildbucketBuild(800000001234, 1234, 'chromium.linux',
                                          'Linux Builder')
-    first_failures_in_current_build = {
-        'last_passed_build': {
-            'number': 9998,
-            'commit_id': 'git_sha1',
-        },
-    }
-    compile_failure_info = ChromiumProjectAPI().GetCompileFailureInfo(
-        context, build, first_failures_in_current_build)
-    self.assertEqual(compile_failure_info.master_name, 'chromium.linux')
-
-  @mock.patch.object(git, 'GetCommitsBetweenRevisionsInOrder')
-  def testGetCompileFailureInfoWithMasternameProperty(self, mock_git):
-    mock_git.return_value = ['foo']
-    context = Context(
-        luci_project_name='chromium',
-        gitiles_host='gitiles.host.com',
-        gitiles_project='project/name',
-        gitiles_ref='ref/heads/master',
-        gitiles_id='git_sha')
-    build = self._CreateBuildbucketBuildWithMasternameProperty(
-        800000001234, 1234, 'chromium.linux', 'Linux Builder')
     first_failures_in_current_build = {
         'last_passed_build': {
             'number': 9998,
