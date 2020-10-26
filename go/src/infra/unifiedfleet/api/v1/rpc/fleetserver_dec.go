@@ -7,8 +7,8 @@ import (
 
 	proto "github.com/golang/protobuf/proto"
 
-	empty "github.com/golang/protobuf/ptypes/empty"
 	status "google.golang.org/genproto/googleapis/rpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	models "infra/unifiedfleet/api/v1/models"
 )
 
@@ -95,7 +95,7 @@ func (s *DecoratedFleet) ListChromePlatforms(ctx context.Context, req *ListChrom
 	return
 }
 
-func (s *DecoratedFleet) DeleteChromePlatform(ctx context.Context, req *DeleteChromePlatformRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteChromePlatform(ctx context.Context, req *DeleteChromePlatformRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteChromePlatform", req)
@@ -231,7 +231,7 @@ func (s *DecoratedFleet) ListMachineLSEPrototypes(ctx context.Context, req *List
 	return
 }
 
-func (s *DecoratedFleet) DeleteMachineLSEPrototype(ctx context.Context, req *DeleteMachineLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteMachineLSEPrototype(ctx context.Context, req *DeleteMachineLSEPrototypeRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteMachineLSEPrototype", req)
@@ -316,7 +316,7 @@ func (s *DecoratedFleet) ListRackLSEPrototypes(ctx context.Context, req *ListRac
 	return
 }
 
-func (s *DecoratedFleet) DeleteRackLSEPrototype(ctx context.Context, req *DeleteRackLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteRackLSEPrototype(ctx context.Context, req *DeleteRackLSEPrototypeRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteRackLSEPrototype", req)
@@ -401,7 +401,7 @@ func (s *DecoratedFleet) ListMachines(ctx context.Context, req *ListMachinesRequ
 	return
 }
 
-func (s *DecoratedFleet) DeleteMachine(ctx context.Context, req *DeleteMachineRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteMachine(ctx context.Context, req *DeleteMachineRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteMachine", req)
@@ -520,7 +520,7 @@ func (s *DecoratedFleet) ListRacks(ctx context.Context, req *ListRacksRequest) (
 	return
 }
 
-func (s *DecoratedFleet) DeleteRack(ctx context.Context, req *DeleteRackRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteRack(ctx context.Context, req *DeleteRackRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteRack", req)
@@ -605,7 +605,7 @@ func (s *DecoratedFleet) ListMachineLSEs(ctx context.Context, req *ListMachineLS
 	return
 }
 
-func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachineLSERequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteMachineLSE", req)
@@ -724,7 +724,7 @@ func (s *DecoratedFleet) ListRackLSEs(ctx context.Context, req *ListRackLSEsRequ
 	return
 }
 
-func (s *DecoratedFleet) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteRackLSE", req)
@@ -809,7 +809,7 @@ func (s *DecoratedFleet) ListNics(ctx context.Context, req *ListNicsRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) DeleteNic(ctx context.Context, req *DeleteNicRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteNic(ctx context.Context, req *DeleteNicRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteNic", req)
@@ -928,7 +928,7 @@ func (s *DecoratedFleet) ListKVMs(ctx context.Context, req *ListKVMsRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) DeleteKVM(ctx context.Context, req *DeleteKVMRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteKVM(ctx context.Context, req *DeleteKVMRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteKVM", req)
@@ -1013,7 +1013,7 @@ func (s *DecoratedFleet) ListRPMs(ctx context.Context, req *ListRPMsRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) DeleteRPM(ctx context.Context, req *DeleteRPMRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteRPM(ctx context.Context, req *DeleteRPMRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteRPM", req)
@@ -1098,7 +1098,7 @@ func (s *DecoratedFleet) ListDracs(ctx context.Context, req *ListDracsRequest) (
 	return
 }
 
-func (s *DecoratedFleet) DeleteDrac(ctx context.Context, req *DeleteDracRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteDrac(ctx context.Context, req *DeleteDracRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteDrac", req)
@@ -1183,7 +1183,7 @@ func (s *DecoratedFleet) ListSwitches(ctx context.Context, req *ListSwitchesRequ
 	return
 }
 
-func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteSwitch", req)
@@ -1268,7 +1268,7 @@ func (s *DecoratedFleet) ListVlans(ctx context.Context, req *ListVlansRequest) (
 	return
 }
 
-func (s *DecoratedFleet) DeleteVlan(ctx context.Context, req *DeleteVlanRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteVlan(ctx context.Context, req *DeleteVlanRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteVlan", req)
@@ -1421,7 +1421,7 @@ func (s *DecoratedFleet) UpdateVM(ctx context.Context, req *UpdateVMRequest) (rs
 	return
 }
 
-func (s *DecoratedFleet) DeleteVM(ctx context.Context, req *DeleteVMRequest) (rsp *empty.Empty, err error) {
+func (s *DecoratedFleet) DeleteVM(ctx context.Context, req *DeleteVMRequest) (rsp *emptypb.Empty, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "DeleteVM", req)

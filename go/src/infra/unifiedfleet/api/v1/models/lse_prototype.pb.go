@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -153,7 +153,7 @@ type RackLSEPrototype struct {
 	Name                   string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	PeripheralRequirements []*PeripheralRequirement `protobuf:"bytes,2,rep,name=peripheral_requirements,json=peripheralRequirements,proto3" json:"peripheral_requirements,omitempty"`
 	// Record the last update timestamp of this RackLSEPrototype (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// tags user can attach for easy querying/search
 	Tags []string `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
 }
@@ -204,7 +204,7 @@ func (x *RackLSEPrototype) GetPeripheralRequirements() []*PeripheralRequirement 
 	return nil
 }
 
-func (x *RackLSEPrototype) GetUpdateTime() *timestamp.Timestamp {
+func (x *RackLSEPrototype) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -232,8 +232,8 @@ type MachineLSEPrototype struct {
 	// to a Rack’s Rack Unit capacity.
 	OccupiedCapacityRu int32 `protobuf:"varint,3,opt,name=occupied_capacity_ru,json=occupiedCapacityRu,proto3" json:"occupied_capacity_ru,omitempty"`
 	// Record the last update timestamp of this MachineLSEPrototype (In UTC timezone)
-	UpdateTime          *timestamp.Timestamp  `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	VirtualRequirements []*VirtualRequirement `protobuf:"bytes,5,rep,name=virtual_requirements,json=virtualRequirements,proto3" json:"virtual_requirements,omitempty"`
+	UpdateTime          *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	VirtualRequirements []*VirtualRequirement  `protobuf:"bytes,5,rep,name=virtual_requirements,json=virtualRequirements,proto3" json:"virtual_requirements,omitempty"`
 	// tags user can attach for easy querying/search
 	Tags []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
 }
@@ -291,7 +291,7 @@ func (x *MachineLSEPrototype) GetOccupiedCapacityRu() int32 {
 	return 0
 }
 
-func (x *MachineLSEPrototype) GetUpdateTime() *timestamp.Timestamp {
+func (x *MachineLSEPrototype) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -583,7 +583,7 @@ var file_infra_unifiedfleet_api_v1_models_lse_prototype_proto_goTypes = []interf
 	(*MachineLSEPrototype)(nil),   // 3: unifiedfleet.api.v1.models.MachineLSEPrototype
 	(*PeripheralRequirement)(nil), // 4: unifiedfleet.api.v1.models.PeripheralRequirement
 	(*VirtualRequirement)(nil),    // 5: unifiedfleet.api.v1.models.VirtualRequirement
-	(*timestamp.Timestamp)(nil),   // 6: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_lse_prototype_proto_depIdxs = []int32{
 	4, // 0: unifiedfleet.api.v1.models.RackLSEPrototype.peripheral_requirements:type_name -> unifiedfleet.api.v1.models.PeripheralRequirement

@@ -15,10 +15,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	reflect "reflect"
 	sync "sync"
@@ -57,7 +57,7 @@ type MachineLSE struct {
 	// A machine cannot be linked to multiple LSEs (no use case for now).
 	Machines []string `protobuf:"bytes,6,rep,name=machines,proto3" json:"machines,omitempty"`
 	// Record the last update timestamp of this MachineLSE (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,7,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// The nic used to associate with the hostname, as one machine/host may contain multiple nics.
 	Nic string `protobuf:"bytes,8,opt,name=nic,proto3" json:"nic,omitempty"`
 	// It refers to which vlan the host is in.
@@ -163,7 +163,7 @@ func (x *MachineLSE) GetMachines() []string {
 	return nil
 }
 
-func (x *MachineLSE) GetUpdateTime() *timestamp.Timestamp {
+func (x *MachineLSE) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -350,7 +350,7 @@ type VM struct {
 	Ip           string `protobuf:"bytes,15,opt,name=ip,proto3" json:"ip,omitempty"`
 	MachineLseId string `protobuf:"bytes,7,opt,name=machine_lse_id,json=machineLseId,proto3" json:"machine_lse_id,omitempty"`
 	// Record the last update timestamp of this VM (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,9,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// tags user can attach for easy querying/searching
 	Tags []string `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
 	// Refers to Zone
@@ -444,7 +444,7 @@ func (x *VM) GetMachineLseId() string {
 	return ""
 }
 
-func (x *VM) GetUpdateTime() *timestamp.Timestamp {
+func (x *VM) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -1073,7 +1073,7 @@ var file_infra_unifiedfleet_api_v1_models_machine_lse_proto_goTypes = []interfac
 	(*ChromeOSMachineLSE)(nil),      // 4: unifiedfleet.api.v1.models.ChromeOSMachineLSE
 	(*ChromeOSDeviceLSE)(nil),       // 5: unifiedfleet.api.v1.models.ChromeOSDeviceLSE
 	(*ChromeOSServerLSE)(nil),       // 6: unifiedfleet.api.v1.models.ChromeOSServerLSE
-	(*timestamp.Timestamp)(nil),     // 7: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),   // 7: google.protobuf.Timestamp
 	(State)(0),                      // 8: unifiedfleet.api.v1.models.State
 	(*lab.DeviceUnderTest)(nil),     // 9: unifiedfleet.api.v1.models.chromeos.lab.DeviceUnderTest
 	(*RPMInterface)(nil),            // 10: unifiedfleet.api.v1.models.RPMInterface

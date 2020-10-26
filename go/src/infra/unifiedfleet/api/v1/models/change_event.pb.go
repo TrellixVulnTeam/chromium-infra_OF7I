@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -47,9 +47,9 @@ type ChangeEvent struct {
 	OldValue string `protobuf:"bytes,3,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
 	NewValue string `protobuf:"bytes,4,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	// Record the last update timestamp of this Event (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	UserEmail  string               `protobuf:"bytes,6,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
-	Comment    string               `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UserEmail  string                 `protobuf:"bytes,6,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
+	Comment    string                 `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
 }
 
 func (x *ChangeEvent) Reset() {
@@ -112,7 +112,7 @@ func (x *ChangeEvent) GetNewValue() string {
 	return ""
 }
 
-func (x *ChangeEvent) GetUpdateTime() *timestamp.Timestamp {
+func (x *ChangeEvent) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -190,8 +190,8 @@ func file_infra_unifiedfleet_api_v1_models_change_event_proto_rawDescGZIP() []by
 
 var file_infra_unifiedfleet_api_v1_models_change_event_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_change_event_proto_goTypes = []interface{}{
-	(*ChangeEvent)(nil),         // 0: unifiedfleet.api.v1.models.ChangeEvent
-	(*timestamp.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*ChangeEvent)(nil),           // 0: unifiedfleet.api.v1.models.ChangeEvent
+	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_change_event_proto_depIdxs = []int32{
 	1, // 0: unifiedfleet.api.v1.models.ChangeEvent.update_time:type_name -> google.protobuf.Timestamp

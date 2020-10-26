@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -40,7 +40,7 @@ type KVM struct {
 	ChromePlatform string `protobuf:"bytes,3,opt,name=chrome_platform,json=chromePlatform,proto3" json:"chrome_platform,omitempty"`
 	CapacityPort   int32  `protobuf:"varint,4,opt,name=capacity_port,json=capacityPort,proto3" json:"capacity_port,omitempty"`
 	// Record the last update timestamp of this KVM (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Refers to Rack name
 	Rack string `protobuf:"bytes,7,opt,name=rack,proto3" json:"rack,omitempty"`
 	// tags user can attach for easy querying/searching
@@ -113,7 +113,7 @@ func (x *KVM) GetCapacityPort() int32 {
 	return 0
 }
 
-func (x *KVM) GetUpdateTime() *timestamp.Timestamp {
+func (x *KVM) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -225,7 +225,7 @@ type RPM struct {
 	// Just for record here, can be added later if needed
 	// To be recorded: model, manufacturer, amperage, voltage
 	// Record the last update timestamp of this RPM (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Refers to Rack name
 	Rack string `protobuf:"bytes,6,opt,name=rack,proto3" json:"rack,omitempty"`
 	// tags user can attach for easy querying/searching
@@ -289,7 +289,7 @@ func (x *RPM) GetCapacityPort() int32 {
 	return 0
 }
 
-func (x *RPM) GetUpdateTime() *timestamp.Timestamp {
+func (x *RPM) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -391,7 +391,7 @@ type Switch struct {
 	Name         string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	CapacityPort int32  `protobuf:"varint,2,opt,name=capacity_port,json=capacityPort,proto3" json:"capacity_port,omitempty"`
 	// Record the last update timestamp of this Switch (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Usually describe the model of the switch
 	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	// Refers to Rack name
@@ -450,7 +450,7 @@ func (x *Switch) GetCapacityPort() int32 {
 	return 0
 }
 
-func (x *Switch) GetUpdateTime() *timestamp.Timestamp {
+func (x *Switch) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -562,7 +562,7 @@ type Drac struct {
 	SwitchInterface *SwitchInterface `protobuf:"bytes,4,opt,name=switch_interface,json=switchInterface,proto3" json:"switch_interface,omitempty"`
 	Password        string           `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
 	// Record the last update timestamp of this Drac (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Refers to Machine name
 	Machine string `protobuf:"bytes,7,opt,name=machine,proto3" json:"machine,omitempty"`
 	// Refers to Rack name
@@ -642,7 +642,7 @@ func (x *Drac) GetPassword() string {
 	return ""
 }
 
-func (x *Drac) GetUpdateTime() *timestamp.Timestamp {
+func (x *Drac) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -876,15 +876,15 @@ func file_infra_unifiedfleet_api_v1_models_peripherals_proto_rawDescGZIP() []byt
 
 var file_infra_unifiedfleet_api_v1_models_peripherals_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_infra_unifiedfleet_api_v1_models_peripherals_proto_goTypes = []interface{}{
-	(*KVM)(nil),                 // 0: unifiedfleet.api.v1.models.KVM
-	(*KVMInterface)(nil),        // 1: unifiedfleet.api.v1.models.KVMInterface
-	(*RPM)(nil),                 // 2: unifiedfleet.api.v1.models.RPM
-	(*RPMInterface)(nil),        // 3: unifiedfleet.api.v1.models.RPMInterface
-	(*Switch)(nil),              // 4: unifiedfleet.api.v1.models.Switch
-	(*SwitchInterface)(nil),     // 5: unifiedfleet.api.v1.models.SwitchInterface
-	(*Drac)(nil),                // 6: unifiedfleet.api.v1.models.Drac
-	(*timestamp.Timestamp)(nil), // 7: google.protobuf.Timestamp
-	(State)(0),                  // 8: unifiedfleet.api.v1.models.State
+	(*KVM)(nil),                   // 0: unifiedfleet.api.v1.models.KVM
+	(*KVMInterface)(nil),          // 1: unifiedfleet.api.v1.models.KVMInterface
+	(*RPM)(nil),                   // 2: unifiedfleet.api.v1.models.RPM
+	(*RPMInterface)(nil),          // 3: unifiedfleet.api.v1.models.RPMInterface
+	(*Switch)(nil),                // 4: unifiedfleet.api.v1.models.Switch
+	(*SwitchInterface)(nil),       // 5: unifiedfleet.api.v1.models.SwitchInterface
+	(*Drac)(nil),                  // 6: unifiedfleet.api.v1.models.Drac
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(State)(0),                    // 8: unifiedfleet.api.v1.models.State
 }
 var file_infra_unifiedfleet_api_v1_models_peripherals_proto_depIdxs = []int32{
 	7, // 0: unifiedfleet.api.v1.models.KVM.update_time:type_name -> google.protobuf.Timestamp

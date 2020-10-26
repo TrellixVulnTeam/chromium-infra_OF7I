@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -38,7 +38,7 @@ type ChromePlatform struct {
 	Manufacturer string `protobuf:"bytes,2,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
 	Description  string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// Record the last update timestamp of this ChromePlatform (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// tags user can attach for easy querying/search
 	Tags []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
 }
@@ -96,7 +96,7 @@ func (x *ChromePlatform) GetDescription() string {
 	return ""
 }
 
-func (x *ChromePlatform) GetUpdateTime() *timestamp.Timestamp {
+func (x *ChromePlatform) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -167,8 +167,8 @@ func file_infra_unifiedfleet_api_v1_models_chrome_platform_proto_rawDescGZIP() [
 
 var file_infra_unifiedfleet_api_v1_models_chrome_platform_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_chrome_platform_proto_goTypes = []interface{}{
-	(*ChromePlatform)(nil),      // 0: unifiedfleet.api.v1.models.ChromePlatform
-	(*timestamp.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*ChromePlatform)(nil),        // 0: unifiedfleet.api.v1.models.ChromePlatform
+	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_chrome_platform_proto_depIdxs = []int32{
 	1, // 0: unifiedfleet.api.v1.models.ChromePlatform.update_time:type_name -> google.protobuf.Timestamp

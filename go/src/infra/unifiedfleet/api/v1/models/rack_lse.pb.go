@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -47,7 +47,7 @@ type RackLSE struct {
 	// The racks that this LSE is linked to. No rack is linked if it's NULL.
 	Racks []string `protobuf:"bytes,5,rep,name=racks,proto3" json:"racks,omitempty"`
 	// Record the last update timestamp of this RackLSE (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 }
 
 func (x *RackLSE) Reset() {
@@ -124,7 +124,7 @@ func (x *RackLSE) GetRacks() []string {
 	return nil
 }
 
-func (x *RackLSE) GetUpdateTime() *timestamp.Timestamp {
+func (x *RackLSE) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -374,10 +374,10 @@ func file_infra_unifiedfleet_api_v1_models_rack_lse_proto_rawDescGZIP() []byte {
 
 var file_infra_unifiedfleet_api_v1_models_rack_lse_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_infra_unifiedfleet_api_v1_models_rack_lse_proto_goTypes = []interface{}{
-	(*RackLSE)(nil),              // 0: unifiedfleet.api.v1.models.RackLSE
-	(*ChromeBrowserRackLSE)(nil), // 1: unifiedfleet.api.v1.models.ChromeBrowserRackLSE
-	(*ChromeOSRackLSE)(nil),      // 2: unifiedfleet.api.v1.models.ChromeOSRackLSE
-	(*timestamp.Timestamp)(nil),  // 3: google.protobuf.Timestamp
+	(*RackLSE)(nil),               // 0: unifiedfleet.api.v1.models.RackLSE
+	(*ChromeBrowserRackLSE)(nil),  // 1: unifiedfleet.api.v1.models.ChromeBrowserRackLSE
+	(*ChromeOSRackLSE)(nil),       // 2: unifiedfleet.api.v1.models.ChromeOSRackLSE
+	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_rack_lse_proto_depIdxs = []int32{
 	1, // 0: unifiedfleet.api.v1.models.RackLSE.chrome_browser_rack_lse:type_name -> unifiedfleet.api.v1.models.ChromeBrowserRackLSE

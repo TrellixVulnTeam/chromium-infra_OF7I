@@ -14,7 +14,6 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
@@ -23,6 +22,7 @@ import (
 	status1 "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	models "infra/unifiedfleet/api/v1/models"
 	reflect "reflect"
 	sync "sync"
@@ -10001,7 +10001,7 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_goTypes = []interface{}{
 	(*models.StateRecord)(nil),         // 152: unifiedfleet.api.v1.models.StateRecord
 	(*models.Asset)(nil),               // 153: unifiedfleet.api.v1.models.asset
 	(*models.DHCPConfig)(nil),          // 154: unifiedfleet.api.v1.models.DHCPConfig
-	(*empty.Empty)(nil),                // 155: google.protobuf.Empty
+	(*emptypb.Empty)(nil),              // 155: google.protobuf.Empty
 	(*status.Status)(nil),              // 156: google.rpc.Status
 }
 var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_depIdxs = []int32{
@@ -12025,7 +12025,7 @@ type FleetClient interface {
 	// List gets all the chromePlatforms
 	ListChromePlatforms(ctx context.Context, in *ListChromePlatformsRequest, opts ...grpc.CallOption) (*ListChromePlatformsResponse, error)
 	// Delete delete the chromePlatform
-	DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// List all the chrome osversions.
@@ -12041,7 +12041,7 @@ type FleetClient interface {
 	// List gets all the MachineLSEPrototypes
 	ListMachineLSEPrototypes(ctx context.Context, in *ListMachineLSEPrototypesRequest, opts ...grpc.CallOption) (*ListMachineLSEPrototypesResponse, error)
 	// Delete delete the MachineLSEPrototype
-	DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateRackLSEPrototype creates a new RackLSEPrototype.
 	CreateRackLSEPrototype(ctx context.Context, in *CreateRackLSEPrototypeRequest, opts ...grpc.CallOption) (*models.RackLSEPrototype, error)
 	// Update updates the RackLSEPrototype
@@ -12051,7 +12051,7 @@ type FleetClient interface {
 	// List gets all the RackLSEPrototypes
 	ListRackLSEPrototypes(ctx context.Context, in *ListRackLSEPrototypesRequest, opts ...grpc.CallOption) (*ListRackLSEPrototypesResponse, error)
 	// Delete delete the RackLSEPrototype
-	DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// MachineRegistration creates a new machine/nics/drac.
 	MachineRegistration(ctx context.Context, in *MachineRegistrationRequest, opts ...grpc.CallOption) (*models.Machine, error)
 	// Update updates the machine
@@ -12061,7 +12061,7 @@ type FleetClient interface {
 	// List gets all the machines
 	ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*ListMachinesResponse, error)
 	// Delete delete the machine
-	DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Import machines from sources
 	//
 	// This doesn't return google.longrunning.Operation as the corresponding
@@ -12078,7 +12078,7 @@ type FleetClient interface {
 	// List gets all the racks
 	ListRacks(ctx context.Context, in *ListRacksRequest, opts ...grpc.CallOption) (*ListRacksResponse, error)
 	// Delete delete the rack
-	DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateMachineLSE creates a new machineLSE
 	CreateMachineLSE(ctx context.Context, in *CreateMachineLSERequest, opts ...grpc.CallOption) (*models.MachineLSE, error)
 	// Update updates the machineLSE
@@ -12088,7 +12088,7 @@ type FleetClient interface {
 	// List gets all the machineLSEs
 	ListMachineLSEs(ctx context.Context, in *ListMachineLSEsRequest, opts ...grpc.CallOption) (*ListMachineLSEsResponse, error)
 	// Delete delete the machineLSE
-	DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ImportMachineLSEs imports machine LSEs & all related infos.
 	ImportMachineLSEs(ctx context.Context, in *ImportMachineLSEsRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// ImportOSMachineLSEs imports ChromeOS machine LSEs & all related infos if needed.
@@ -12102,7 +12102,7 @@ type FleetClient interface {
 	// List gets all the rackLSEs
 	ListRackLSEs(ctx context.Context, in *ListRackLSEsRequest, opts ...grpc.CallOption) (*ListRackLSEsResponse, error)
 	// Delete delete the rackLSE
-	DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateNic creates a new nic
 	CreateNic(ctx context.Context, in *CreateNicRequest, opts ...grpc.CallOption) (*models.Nic, error)
 	// Update updates the nic
@@ -12112,7 +12112,7 @@ type FleetClient interface {
 	// List gets all the nics
 	ListNics(ctx context.Context, in *ListNicsRequest, opts ...grpc.CallOption) (*ListNicsResponse, error)
 	// Delete delete the nic
-	DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ImportNics imports nics info.
 	ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// ImportDatacenters imports datacenter & its related info, including kvm & switch.
@@ -12126,7 +12126,7 @@ type FleetClient interface {
 	// List gets all the KVMs
 	ListKVMs(ctx context.Context, in *ListKVMsRequest, opts ...grpc.CallOption) (*ListKVMsResponse, error)
 	// Delete delete the KVM
-	DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateRPM creates a new RPM
 	CreateRPM(ctx context.Context, in *CreateRPMRequest, opts ...grpc.CallOption) (*models.RPM, error)
 	// Update updates the RPM
@@ -12136,7 +12136,7 @@ type FleetClient interface {
 	// List gets all the RPMs
 	ListRPMs(ctx context.Context, in *ListRPMsRequest, opts ...grpc.CallOption) (*ListRPMsResponse, error)
 	// Delete delete the RPM
-	DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateDrac creates a new drac
 	CreateDrac(ctx context.Context, in *CreateDracRequest, opts ...grpc.CallOption) (*models.Drac, error)
 	// Update updates the drac
@@ -12146,7 +12146,7 @@ type FleetClient interface {
 	// List gets all the dracs
 	ListDracs(ctx context.Context, in *ListDracsRequest, opts ...grpc.CallOption) (*ListDracsResponse, error)
 	// Delete delete the drac
-	DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateSwitch creates a new switch
 	CreateSwitch(ctx context.Context, in *CreateSwitchRequest, opts ...grpc.CallOption) (*models.Switch, error)
 	// Update updates the switch
@@ -12156,7 +12156,7 @@ type FleetClient interface {
 	// List gets all the switches
 	ListSwitches(ctx context.Context, in *ListSwitchesRequest, opts ...grpc.CallOption) (*ListSwitchesResponse, error)
 	// Delete delete the switch
-	DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CreateVlan creates a new vlan
 	CreateVlan(ctx context.Context, in *CreateVlanRequest, opts ...grpc.CallOption) (*models.Vlan, error)
 	// Update updates the vlan
@@ -12166,7 +12166,7 @@ type FleetClient interface {
 	// List gets all the vlans
 	ListVlans(ctx context.Context, in *ListVlansRequest, opts ...grpc.CallOption) (*ListVlansResponse, error)
 	// Delete delete the vlan
-	DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ImportVlans imports vlans & all IP-related infos.
 	ImportVlans(ctx context.Context, in *ImportVlansRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// ImportOSVlans imports the ChromeOS vlans, ips, and dhcp configs.
@@ -12185,7 +12185,7 @@ type FleetClient interface {
 	// UpdateVM updates a VM
 	UpdateVM(ctx context.Context, in *UpdateVMRequest, opts ...grpc.CallOption) (*models.VM, error)
 	// DeleteVM delete a VM
-	DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// GetVM retrieves the details of the VM
 	GetVM(ctx context.Context, in *GetVMRequest, opts ...grpc.CallOption) (*models.VM, error)
 	// List gets all the machineLSEs
@@ -12265,8 +12265,8 @@ func (c *fleetPRPCClient) ListChromePlatforms(ctx context.Context, in *ListChrom
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteChromePlatform", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12337,8 +12337,8 @@ func (c *fleetPRPCClient) ListMachineLSEPrototypes(ctx context.Context, in *List
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteMachineLSEPrototype", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12382,8 +12382,8 @@ func (c *fleetPRPCClient) ListRackLSEPrototypes(ctx context.Context, in *ListRac
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteRackLSEPrototype", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12427,8 +12427,8 @@ func (c *fleetPRPCClient) ListMachines(ctx context.Context, in *ListMachinesRequ
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteMachine", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12490,8 +12490,8 @@ func (c *fleetPRPCClient) ListRacks(ctx context.Context, in *ListRacksRequest, o
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteRack", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12535,8 +12535,8 @@ func (c *fleetPRPCClient) ListMachineLSEs(ctx context.Context, in *ListMachineLS
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteMachineLSE", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12598,8 +12598,8 @@ func (c *fleetPRPCClient) ListRackLSEs(ctx context.Context, in *ListRackLSEsRequ
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteRackLSE", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12643,8 +12643,8 @@ func (c *fleetPRPCClient) ListNics(ctx context.Context, in *ListNicsRequest, opt
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteNic", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12706,8 +12706,8 @@ func (c *fleetPRPCClient) ListKVMs(ctx context.Context, in *ListKVMsRequest, opt
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteKVM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12751,8 +12751,8 @@ func (c *fleetPRPCClient) ListRPMs(ctx context.Context, in *ListRPMsRequest, opt
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteRPM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12796,8 +12796,8 @@ func (c *fleetPRPCClient) ListDracs(ctx context.Context, in *ListDracsRequest, o
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteDrac", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12841,8 +12841,8 @@ func (c *fleetPRPCClient) ListSwitches(ctx context.Context, in *ListSwitchesRequ
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteSwitch", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12886,8 +12886,8 @@ func (c *fleetPRPCClient) ListVlans(ctx context.Context, in *ListVlansRequest, o
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteVlan", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -12967,8 +12967,8 @@ func (c *fleetPRPCClient) UpdateVM(ctx context.Context, in *UpdateVMRequest, opt
 	return out, nil
 }
 
-func (c *fleetPRPCClient) DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetPRPCClient) DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteVM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13173,8 +13173,8 @@ func (c *fleetClient) ListChromePlatforms(ctx context.Context, in *ListChromePla
 	return out, nil
 }
 
-func (c *fleetClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteChromePlatform", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13245,8 +13245,8 @@ func (c *fleetClient) ListMachineLSEPrototypes(ctx context.Context, in *ListMach
 	return out, nil
 }
 
-func (c *fleetClient) DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteMachineLSEPrototype(ctx context.Context, in *DeleteMachineLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteMachineLSEPrototype", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13290,8 +13290,8 @@ func (c *fleetClient) ListRackLSEPrototypes(ctx context.Context, in *ListRackLSE
 	return out, nil
 }
 
-func (c *fleetClient) DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteRackLSEPrototype(ctx context.Context, in *DeleteRackLSEPrototypeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteRackLSEPrototype", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13335,8 +13335,8 @@ func (c *fleetClient) ListMachines(ctx context.Context, in *ListMachinesRequest,
 	return out, nil
 }
 
-func (c *fleetClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteMachine", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13398,8 +13398,8 @@ func (c *fleetClient) ListRacks(ctx context.Context, in *ListRacksRequest, opts 
 	return out, nil
 }
 
-func (c *fleetClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteRack", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13443,8 +13443,8 @@ func (c *fleetClient) ListMachineLSEs(ctx context.Context, in *ListMachineLSEsRe
 	return out, nil
 }
 
-func (c *fleetClient) DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteMachineLSE(ctx context.Context, in *DeleteMachineLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteMachineLSE", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13506,8 +13506,8 @@ func (c *fleetClient) ListRackLSEs(ctx context.Context, in *ListRackLSEsRequest,
 	return out, nil
 }
 
-func (c *fleetClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteRackLSE", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13551,8 +13551,8 @@ func (c *fleetClient) ListNics(ctx context.Context, in *ListNicsRequest, opts ..
 	return out, nil
 }
 
-func (c *fleetClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteNic", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13614,8 +13614,8 @@ func (c *fleetClient) ListKVMs(ctx context.Context, in *ListKVMsRequest, opts ..
 	return out, nil
 }
 
-func (c *fleetClient) DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteKVM(ctx context.Context, in *DeleteKVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteKVM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13659,8 +13659,8 @@ func (c *fleetClient) ListRPMs(ctx context.Context, in *ListRPMsRequest, opts ..
 	return out, nil
 }
 
-func (c *fleetClient) DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteRPM(ctx context.Context, in *DeleteRPMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteRPM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13704,8 +13704,8 @@ func (c *fleetClient) ListDracs(ctx context.Context, in *ListDracsRequest, opts 
 	return out, nil
 }
 
-func (c *fleetClient) DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteDrac(ctx context.Context, in *DeleteDracRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteDrac", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13749,8 +13749,8 @@ func (c *fleetClient) ListSwitches(ctx context.Context, in *ListSwitchesRequest,
 	return out, nil
 }
 
-func (c *fleetClient) DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteSwitch(ctx context.Context, in *DeleteSwitchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteSwitch", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13794,8 +13794,8 @@ func (c *fleetClient) ListVlans(ctx context.Context, in *ListVlansRequest, opts 
 	return out, nil
 }
 
-func (c *fleetClient) DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteVlan(ctx context.Context, in *DeleteVlanRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteVlan", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -13875,8 +13875,8 @@ func (c *fleetClient) UpdateVM(ctx context.Context, in *UpdateVMRequest, opts ..
 	return out, nil
 }
 
-func (c *fleetClient) DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *fleetClient) DeleteVM(ctx context.Context, in *DeleteVMRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteVM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -14048,7 +14048,7 @@ type FleetServer interface {
 	// List gets all the chromePlatforms
 	ListChromePlatforms(context.Context, *ListChromePlatformsRequest) (*ListChromePlatformsResponse, error)
 	// Delete delete the chromePlatform
-	DeleteChromePlatform(context.Context, *DeleteChromePlatformRequest) (*empty.Empty, error)
+	DeleteChromePlatform(context.Context, *DeleteChromePlatformRequest) (*emptypb.Empty, error)
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(context.Context, *ImportChromePlatformsRequest) (*status.Status, error)
 	// List all the chrome osversions.
@@ -14064,7 +14064,7 @@ type FleetServer interface {
 	// List gets all the MachineLSEPrototypes
 	ListMachineLSEPrototypes(context.Context, *ListMachineLSEPrototypesRequest) (*ListMachineLSEPrototypesResponse, error)
 	// Delete delete the MachineLSEPrototype
-	DeleteMachineLSEPrototype(context.Context, *DeleteMachineLSEPrototypeRequest) (*empty.Empty, error)
+	DeleteMachineLSEPrototype(context.Context, *DeleteMachineLSEPrototypeRequest) (*emptypb.Empty, error)
 	// CreateRackLSEPrototype creates a new RackLSEPrototype.
 	CreateRackLSEPrototype(context.Context, *CreateRackLSEPrototypeRequest) (*models.RackLSEPrototype, error)
 	// Update updates the RackLSEPrototype
@@ -14074,7 +14074,7 @@ type FleetServer interface {
 	// List gets all the RackLSEPrototypes
 	ListRackLSEPrototypes(context.Context, *ListRackLSEPrototypesRequest) (*ListRackLSEPrototypesResponse, error)
 	// Delete delete the RackLSEPrototype
-	DeleteRackLSEPrototype(context.Context, *DeleteRackLSEPrototypeRequest) (*empty.Empty, error)
+	DeleteRackLSEPrototype(context.Context, *DeleteRackLSEPrototypeRequest) (*emptypb.Empty, error)
 	// MachineRegistration creates a new machine/nics/drac.
 	MachineRegistration(context.Context, *MachineRegistrationRequest) (*models.Machine, error)
 	// Update updates the machine
@@ -14084,7 +14084,7 @@ type FleetServer interface {
 	// List gets all the machines
 	ListMachines(context.Context, *ListMachinesRequest) (*ListMachinesResponse, error)
 	// Delete delete the machine
-	DeleteMachine(context.Context, *DeleteMachineRequest) (*empty.Empty, error)
+	DeleteMachine(context.Context, *DeleteMachineRequest) (*emptypb.Empty, error)
 	// Import machines from sources
 	//
 	// This doesn't return google.longrunning.Operation as the corresponding
@@ -14101,7 +14101,7 @@ type FleetServer interface {
 	// List gets all the racks
 	ListRacks(context.Context, *ListRacksRequest) (*ListRacksResponse, error)
 	// Delete delete the rack
-	DeleteRack(context.Context, *DeleteRackRequest) (*empty.Empty, error)
+	DeleteRack(context.Context, *DeleteRackRequest) (*emptypb.Empty, error)
 	// CreateMachineLSE creates a new machineLSE
 	CreateMachineLSE(context.Context, *CreateMachineLSERequest) (*models.MachineLSE, error)
 	// Update updates the machineLSE
@@ -14111,7 +14111,7 @@ type FleetServer interface {
 	// List gets all the machineLSEs
 	ListMachineLSEs(context.Context, *ListMachineLSEsRequest) (*ListMachineLSEsResponse, error)
 	// Delete delete the machineLSE
-	DeleteMachineLSE(context.Context, *DeleteMachineLSERequest) (*empty.Empty, error)
+	DeleteMachineLSE(context.Context, *DeleteMachineLSERequest) (*emptypb.Empty, error)
 	// ImportMachineLSEs imports machine LSEs & all related infos.
 	ImportMachineLSEs(context.Context, *ImportMachineLSEsRequest) (*status.Status, error)
 	// ImportOSMachineLSEs imports ChromeOS machine LSEs & all related infos if needed.
@@ -14125,7 +14125,7 @@ type FleetServer interface {
 	// List gets all the rackLSEs
 	ListRackLSEs(context.Context, *ListRackLSEsRequest) (*ListRackLSEsResponse, error)
 	// Delete delete the rackLSE
-	DeleteRackLSE(context.Context, *DeleteRackLSERequest) (*empty.Empty, error)
+	DeleteRackLSE(context.Context, *DeleteRackLSERequest) (*emptypb.Empty, error)
 	// CreateNic creates a new nic
 	CreateNic(context.Context, *CreateNicRequest) (*models.Nic, error)
 	// Update updates the nic
@@ -14135,7 +14135,7 @@ type FleetServer interface {
 	// List gets all the nics
 	ListNics(context.Context, *ListNicsRequest) (*ListNicsResponse, error)
 	// Delete delete the nic
-	DeleteNic(context.Context, *DeleteNicRequest) (*empty.Empty, error)
+	DeleteNic(context.Context, *DeleteNicRequest) (*emptypb.Empty, error)
 	// ImportNics imports nics info.
 	ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error)
 	// ImportDatacenters imports datacenter & its related info, including kvm & switch.
@@ -14149,7 +14149,7 @@ type FleetServer interface {
 	// List gets all the KVMs
 	ListKVMs(context.Context, *ListKVMsRequest) (*ListKVMsResponse, error)
 	// Delete delete the KVM
-	DeleteKVM(context.Context, *DeleteKVMRequest) (*empty.Empty, error)
+	DeleteKVM(context.Context, *DeleteKVMRequest) (*emptypb.Empty, error)
 	// CreateRPM creates a new RPM
 	CreateRPM(context.Context, *CreateRPMRequest) (*models.RPM, error)
 	// Update updates the RPM
@@ -14159,7 +14159,7 @@ type FleetServer interface {
 	// List gets all the RPMs
 	ListRPMs(context.Context, *ListRPMsRequest) (*ListRPMsResponse, error)
 	// Delete delete the RPM
-	DeleteRPM(context.Context, *DeleteRPMRequest) (*empty.Empty, error)
+	DeleteRPM(context.Context, *DeleteRPMRequest) (*emptypb.Empty, error)
 	// CreateDrac creates a new drac
 	CreateDrac(context.Context, *CreateDracRequest) (*models.Drac, error)
 	// Update updates the drac
@@ -14169,7 +14169,7 @@ type FleetServer interface {
 	// List gets all the dracs
 	ListDracs(context.Context, *ListDracsRequest) (*ListDracsResponse, error)
 	// Delete delete the drac
-	DeleteDrac(context.Context, *DeleteDracRequest) (*empty.Empty, error)
+	DeleteDrac(context.Context, *DeleteDracRequest) (*emptypb.Empty, error)
 	// CreateSwitch creates a new switch
 	CreateSwitch(context.Context, *CreateSwitchRequest) (*models.Switch, error)
 	// Update updates the switch
@@ -14179,7 +14179,7 @@ type FleetServer interface {
 	// List gets all the switches
 	ListSwitches(context.Context, *ListSwitchesRequest) (*ListSwitchesResponse, error)
 	// Delete delete the switch
-	DeleteSwitch(context.Context, *DeleteSwitchRequest) (*empty.Empty, error)
+	DeleteSwitch(context.Context, *DeleteSwitchRequest) (*emptypb.Empty, error)
 	// CreateVlan creates a new vlan
 	CreateVlan(context.Context, *CreateVlanRequest) (*models.Vlan, error)
 	// Update updates the vlan
@@ -14189,7 +14189,7 @@ type FleetServer interface {
 	// List gets all the vlans
 	ListVlans(context.Context, *ListVlansRequest) (*ListVlansResponse, error)
 	// Delete delete the vlan
-	DeleteVlan(context.Context, *DeleteVlanRequest) (*empty.Empty, error)
+	DeleteVlan(context.Context, *DeleteVlanRequest) (*emptypb.Empty, error)
 	// ImportVlans imports vlans & all IP-related infos.
 	ImportVlans(context.Context, *ImportVlansRequest) (*status.Status, error)
 	// ImportOSVlans imports the ChromeOS vlans, ips, and dhcp configs.
@@ -14208,7 +14208,7 @@ type FleetServer interface {
 	// UpdateVM updates a VM
 	UpdateVM(context.Context, *UpdateVMRequest) (*models.VM, error)
 	// DeleteVM delete a VM
-	DeleteVM(context.Context, *DeleteVMRequest) (*empty.Empty, error)
+	DeleteVM(context.Context, *DeleteVMRequest) (*emptypb.Empty, error)
 	// GetVM retrieves the details of the VM
 	GetVM(context.Context, *GetVMRequest) (*models.VM, error)
 	// List gets all the machineLSEs
@@ -14261,7 +14261,7 @@ func (*UnimplementedFleetServer) GetChromePlatform(context.Context, *GetChromePl
 func (*UnimplementedFleetServer) ListChromePlatforms(context.Context, *ListChromePlatformsRequest) (*ListChromePlatformsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListChromePlatforms not implemented")
 }
-func (*UnimplementedFleetServer) DeleteChromePlatform(context.Context, *DeleteChromePlatformRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteChromePlatform(context.Context, *DeleteChromePlatformRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteChromePlatform not implemented")
 }
 func (*UnimplementedFleetServer) ImportChromePlatforms(context.Context, *ImportChromePlatformsRequest) (*status.Status, error) {
@@ -14285,7 +14285,7 @@ func (*UnimplementedFleetServer) GetMachineLSEPrototype(context.Context, *GetMac
 func (*UnimplementedFleetServer) ListMachineLSEPrototypes(context.Context, *ListMachineLSEPrototypesRequest) (*ListMachineLSEPrototypesResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListMachineLSEPrototypes not implemented")
 }
-func (*UnimplementedFleetServer) DeleteMachineLSEPrototype(context.Context, *DeleteMachineLSEPrototypeRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteMachineLSEPrototype(context.Context, *DeleteMachineLSEPrototypeRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteMachineLSEPrototype not implemented")
 }
 func (*UnimplementedFleetServer) CreateRackLSEPrototype(context.Context, *CreateRackLSEPrototypeRequest) (*models.RackLSEPrototype, error) {
@@ -14300,7 +14300,7 @@ func (*UnimplementedFleetServer) GetRackLSEPrototype(context.Context, *GetRackLS
 func (*UnimplementedFleetServer) ListRackLSEPrototypes(context.Context, *ListRackLSEPrototypesRequest) (*ListRackLSEPrototypesResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListRackLSEPrototypes not implemented")
 }
-func (*UnimplementedFleetServer) DeleteRackLSEPrototype(context.Context, *DeleteRackLSEPrototypeRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteRackLSEPrototype(context.Context, *DeleteRackLSEPrototypeRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRackLSEPrototype not implemented")
 }
 func (*UnimplementedFleetServer) MachineRegistration(context.Context, *MachineRegistrationRequest) (*models.Machine, error) {
@@ -14315,7 +14315,7 @@ func (*UnimplementedFleetServer) GetMachine(context.Context, *GetMachineRequest)
 func (*UnimplementedFleetServer) ListMachines(context.Context, *ListMachinesRequest) (*ListMachinesResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListMachines not implemented")
 }
-func (*UnimplementedFleetServer) DeleteMachine(context.Context, *DeleteMachineRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteMachine(context.Context, *DeleteMachineRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteMachine not implemented")
 }
 func (*UnimplementedFleetServer) ImportMachines(context.Context, *ImportMachinesRequest) (*status.Status, error) {
@@ -14336,7 +14336,7 @@ func (*UnimplementedFleetServer) GetRack(context.Context, *GetRackRequest) (*mod
 func (*UnimplementedFleetServer) ListRacks(context.Context, *ListRacksRequest) (*ListRacksResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListRacks not implemented")
 }
-func (*UnimplementedFleetServer) DeleteRack(context.Context, *DeleteRackRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteRack(context.Context, *DeleteRackRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRack not implemented")
 }
 func (*UnimplementedFleetServer) CreateMachineLSE(context.Context, *CreateMachineLSERequest) (*models.MachineLSE, error) {
@@ -14351,7 +14351,7 @@ func (*UnimplementedFleetServer) GetMachineLSE(context.Context, *GetMachineLSERe
 func (*UnimplementedFleetServer) ListMachineLSEs(context.Context, *ListMachineLSEsRequest) (*ListMachineLSEsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListMachineLSEs not implemented")
 }
-func (*UnimplementedFleetServer) DeleteMachineLSE(context.Context, *DeleteMachineLSERequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteMachineLSE(context.Context, *DeleteMachineLSERequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteMachineLSE not implemented")
 }
 func (*UnimplementedFleetServer) ImportMachineLSEs(context.Context, *ImportMachineLSEsRequest) (*status.Status, error) {
@@ -14372,7 +14372,7 @@ func (*UnimplementedFleetServer) GetRackLSE(context.Context, *GetRackLSERequest)
 func (*UnimplementedFleetServer) ListRackLSEs(context.Context, *ListRackLSEsRequest) (*ListRackLSEsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListRackLSEs not implemented")
 }
-func (*UnimplementedFleetServer) DeleteRackLSE(context.Context, *DeleteRackLSERequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteRackLSE(context.Context, *DeleteRackLSERequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRackLSE not implemented")
 }
 func (*UnimplementedFleetServer) CreateNic(context.Context, *CreateNicRequest) (*models.Nic, error) {
@@ -14387,7 +14387,7 @@ func (*UnimplementedFleetServer) GetNic(context.Context, *GetNicRequest) (*model
 func (*UnimplementedFleetServer) ListNics(context.Context, *ListNicsRequest) (*ListNicsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListNics not implemented")
 }
-func (*UnimplementedFleetServer) DeleteNic(context.Context, *DeleteNicRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteNic(context.Context, *DeleteNicRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteNic not implemented")
 }
 func (*UnimplementedFleetServer) ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error) {
@@ -14408,7 +14408,7 @@ func (*UnimplementedFleetServer) GetKVM(context.Context, *GetKVMRequest) (*model
 func (*UnimplementedFleetServer) ListKVMs(context.Context, *ListKVMsRequest) (*ListKVMsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListKVMs not implemented")
 }
-func (*UnimplementedFleetServer) DeleteKVM(context.Context, *DeleteKVMRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteKVM(context.Context, *DeleteKVMRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteKVM not implemented")
 }
 func (*UnimplementedFleetServer) CreateRPM(context.Context, *CreateRPMRequest) (*models.RPM, error) {
@@ -14423,7 +14423,7 @@ func (*UnimplementedFleetServer) GetRPM(context.Context, *GetRPMRequest) (*model
 func (*UnimplementedFleetServer) ListRPMs(context.Context, *ListRPMsRequest) (*ListRPMsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListRPMs not implemented")
 }
-func (*UnimplementedFleetServer) DeleteRPM(context.Context, *DeleteRPMRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteRPM(context.Context, *DeleteRPMRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRPM not implemented")
 }
 func (*UnimplementedFleetServer) CreateDrac(context.Context, *CreateDracRequest) (*models.Drac, error) {
@@ -14438,7 +14438,7 @@ func (*UnimplementedFleetServer) GetDrac(context.Context, *GetDracRequest) (*mod
 func (*UnimplementedFleetServer) ListDracs(context.Context, *ListDracsRequest) (*ListDracsResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListDracs not implemented")
 }
-func (*UnimplementedFleetServer) DeleteDrac(context.Context, *DeleteDracRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteDrac(context.Context, *DeleteDracRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteDrac not implemented")
 }
 func (*UnimplementedFleetServer) CreateSwitch(context.Context, *CreateSwitchRequest) (*models.Switch, error) {
@@ -14453,7 +14453,7 @@ func (*UnimplementedFleetServer) GetSwitch(context.Context, *GetSwitchRequest) (
 func (*UnimplementedFleetServer) ListSwitches(context.Context, *ListSwitchesRequest) (*ListSwitchesResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListSwitches not implemented")
 }
-func (*UnimplementedFleetServer) DeleteSwitch(context.Context, *DeleteSwitchRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteSwitch(context.Context, *DeleteSwitchRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteSwitch not implemented")
 }
 func (*UnimplementedFleetServer) CreateVlan(context.Context, *CreateVlanRequest) (*models.Vlan, error) {
@@ -14468,7 +14468,7 @@ func (*UnimplementedFleetServer) GetVlan(context.Context, *GetVlanRequest) (*mod
 func (*UnimplementedFleetServer) ListVlans(context.Context, *ListVlansRequest) (*ListVlansResponse, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ListVlans not implemented")
 }
-func (*UnimplementedFleetServer) DeleteVlan(context.Context, *DeleteVlanRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteVlan(context.Context, *DeleteVlanRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteVlan not implemented")
 }
 func (*UnimplementedFleetServer) ImportVlans(context.Context, *ImportVlansRequest) (*status.Status, error) {
@@ -14495,7 +14495,7 @@ func (*UnimplementedFleetServer) CreateVM(context.Context, *CreateVMRequest) (*m
 func (*UnimplementedFleetServer) UpdateVM(context.Context, *UpdateVMRequest) (*models.VM, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method UpdateVM not implemented")
 }
-func (*UnimplementedFleetServer) DeleteVM(context.Context, *DeleteVMRequest) (*empty.Empty, error) {
+func (*UnimplementedFleetServer) DeleteVM(context.Context, *DeleteVMRequest) (*emptypb.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteVM not implemented")
 }
 func (*UnimplementedFleetServer) GetVM(context.Context, *GetVMRequest) (*models.VM, error) {

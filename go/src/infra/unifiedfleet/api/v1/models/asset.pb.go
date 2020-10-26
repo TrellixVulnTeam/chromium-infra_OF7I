@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -91,8 +91,8 @@ type Asset struct {
 	Location *Location  `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`                                    // Last known location of the asset
 	Info     *AssetInfo `protobuf:"bytes,5,opt,name=info,proto3" json:"info,omitempty"`                                            // Some info about the asset
 	// Record the last update timestamp of this asset (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	Realm      string               `protobuf:"bytes,7,opt,name=realm,proto3" json:"realm,omitempty"` // ACL info of the asset
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	Realm      string                 `protobuf:"bytes,7,opt,name=realm,proto3" json:"realm,omitempty"` // ACL info of the asset
 }
 
 func (x *Asset) Reset() {
@@ -162,7 +162,7 @@ func (x *Asset) GetInfo() *AssetInfo {
 	return nil
 }
 
-func (x *Asset) GetUpdateTime() *timestamp.Timestamp {
+func (x *Asset) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -248,11 +248,11 @@ func file_infra_unifiedfleet_api_v1_models_asset_proto_rawDescGZIP() []byte {
 var file_infra_unifiedfleet_api_v1_models_asset_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_asset_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_asset_proto_goTypes = []interface{}{
-	(AssetType)(0),              // 0: unifiedfleet.api.v1.models.AssetType
-	(*Asset)(nil),               // 1: unifiedfleet.api.v1.models.asset
-	(*Location)(nil),            // 2: unifiedfleet.api.v1.models.Location
-	(*AssetInfo)(nil),           // 3: unifiedfleet.api.v1.models.AssetInfo
-	(*timestamp.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(AssetType)(0),                // 0: unifiedfleet.api.v1.models.AssetType
+	(*Asset)(nil),                 // 1: unifiedfleet.api.v1.models.asset
+	(*Location)(nil),              // 2: unifiedfleet.api.v1.models.Location
+	(*AssetInfo)(nil),             // 3: unifiedfleet.api.v1.models.AssetInfo
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_asset_proto_depIdxs = []int32{
 	0, // 0: unifiedfleet.api.v1.models.asset.type:type_name -> unifiedfleet.api.v1.models.AssetType

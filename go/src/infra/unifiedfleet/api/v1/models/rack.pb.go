@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -45,7 +45,7 @@ type Rack struct {
 	//	*Rack_ChromeosRack
 	Rack isRack_Rack `protobuf_oneof:"rack"`
 	// Record the last update timestamp of this Rack (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Record the ACL info of the rack
 	Realm string `protobuf:"bytes,7,opt,name=realm,proto3" json:"realm,omitempty"`
 	// tags user can attach for easy querying/searching
@@ -130,7 +130,7 @@ func (x *Rack) GetChromeosRack() *ChromeOSRack {
 	return nil
 }
 
-func (x *Rack) GetUpdateTime() *timestamp.Timestamp {
+func (x *Rack) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -386,15 +386,15 @@ func file_infra_unifiedfleet_api_v1_models_rack_proto_rawDescGZIP() []byte {
 
 var file_infra_unifiedfleet_api_v1_models_rack_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_infra_unifiedfleet_api_v1_models_rack_proto_goTypes = []interface{}{
-	(*Rack)(nil),                // 0: unifiedfleet.api.v1.models.Rack
-	(*ChromeBrowserRack)(nil),   // 1: unifiedfleet.api.v1.models.ChromeBrowserRack
-	(*ChromeOSRack)(nil),        // 2: unifiedfleet.api.v1.models.ChromeOSRack
-	(*Location)(nil),            // 3: unifiedfleet.api.v1.models.Location
-	(*timestamp.Timestamp)(nil), // 4: google.protobuf.Timestamp
-	(State)(0),                  // 5: unifiedfleet.api.v1.models.State
-	(*RPM)(nil),                 // 6: unifiedfleet.api.v1.models.RPM
-	(*KVM)(nil),                 // 7: unifiedfleet.api.v1.models.KVM
-	(*Switch)(nil),              // 8: unifiedfleet.api.v1.models.Switch
+	(*Rack)(nil),                  // 0: unifiedfleet.api.v1.models.Rack
+	(*ChromeBrowserRack)(nil),     // 1: unifiedfleet.api.v1.models.ChromeBrowserRack
+	(*ChromeOSRack)(nil),          // 2: unifiedfleet.api.v1.models.ChromeOSRack
+	(*Location)(nil),              // 3: unifiedfleet.api.v1.models.Location
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(State)(0),                    // 5: unifiedfleet.api.v1.models.State
+	(*RPM)(nil),                   // 6: unifiedfleet.api.v1.models.RPM
+	(*KVM)(nil),                   // 7: unifiedfleet.api.v1.models.KVM
+	(*Switch)(nil),                // 8: unifiedfleet.api.v1.models.Switch
 }
 var file_infra_unifiedfleet_api_v1_models_rack_proto_depIdxs = []int32{
 	3, // 0: unifiedfleet.api.v1.models.Rack.location:type_name -> unifiedfleet.api.v1.models.Location

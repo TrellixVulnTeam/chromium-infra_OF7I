@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -101,7 +101,7 @@ type Machine struct {
 	//	*Machine_ChromeosMachine
 	Device isMachine_Device `protobuf_oneof:"device"`
 	// Record the last update timestamp of this machine (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Record the ACL info of the machine
 	Realm string `protobuf:"bytes,7,opt,name=realm,proto3" json:"realm,omitempty"`
 	// tags user can attach for easy querying/searching
@@ -184,7 +184,7 @@ func (x *Machine) GetChromeosMachine() *ChromeOSMachine {
 	return nil
 }
 
-func (x *Machine) GetUpdateTime() *timestamp.Timestamp {
+func (x *Machine) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -626,17 +626,17 @@ func file_infra_unifiedfleet_api_v1_models_machine_proto_rawDescGZIP() []byte {
 var file_infra_unifiedfleet_api_v1_models_machine_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_machine_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_infra_unifiedfleet_api_v1_models_machine_proto_goTypes = []interface{}{
-	(ChromeOSDeviceType)(0),      // 0: unifiedfleet.api.v1.models.ChromeOSDeviceType
-	(*Machine)(nil),              // 1: unifiedfleet.api.v1.models.Machine
-	(*ChromeBrowserMachine)(nil), // 2: unifiedfleet.api.v1.models.ChromeBrowserMachine
-	(*ChromeOSMachine)(nil),      // 3: unifiedfleet.api.v1.models.ChromeOSMachine
-	(*Location)(nil),             // 4: unifiedfleet.api.v1.models.Location
-	(*timestamp.Timestamp)(nil),  // 5: google.protobuf.Timestamp
-	(State)(0),                   // 6: unifiedfleet.api.v1.models.State
-	(*KVMInterface)(nil),         // 7: unifiedfleet.api.v1.models.KVMInterface
-	(*RPMInterface)(nil),         // 8: unifiedfleet.api.v1.models.RPMInterface
-	(*Nic)(nil),                  // 9: unifiedfleet.api.v1.models.Nic
-	(*Drac)(nil),                 // 10: unifiedfleet.api.v1.models.Drac
+	(ChromeOSDeviceType)(0),       // 0: unifiedfleet.api.v1.models.ChromeOSDeviceType
+	(*Machine)(nil),               // 1: unifiedfleet.api.v1.models.Machine
+	(*ChromeBrowserMachine)(nil),  // 2: unifiedfleet.api.v1.models.ChromeBrowserMachine
+	(*ChromeOSMachine)(nil),       // 3: unifiedfleet.api.v1.models.ChromeOSMachine
+	(*Location)(nil),              // 4: unifiedfleet.api.v1.models.Location
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(State)(0),                    // 6: unifiedfleet.api.v1.models.State
+	(*KVMInterface)(nil),          // 7: unifiedfleet.api.v1.models.KVMInterface
+	(*RPMInterface)(nil),          // 8: unifiedfleet.api.v1.models.RPMInterface
+	(*Nic)(nil),                   // 9: unifiedfleet.api.v1.models.Nic
+	(*Drac)(nil),                  // 10: unifiedfleet.api.v1.models.Drac
 }
 var file_infra_unifiedfleet_api_v1_models_machine_proto_depIdxs = []int32{
 	4,  // 0: unifiedfleet.api.v1.models.Machine.location:type_name -> unifiedfleet.api.v1.models.Location

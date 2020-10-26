@@ -11,10 +11,10 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -36,8 +36,8 @@ type Nic struct {
 	Name       string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	MacAddress string `protobuf:"bytes,2,opt,name=mac_address,json=macAddress,proto3" json:"mac_address,omitempty"`
 	// Record the last update timestamp of this machine (In UTC timezone)
-	UpdateTime      *timestamp.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	SwitchInterface *SwitchInterface     `protobuf:"bytes,4,opt,name=switch_interface,json=switchInterface,proto3" json:"switch_interface,omitempty"`
+	UpdateTime      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	SwitchInterface *SwitchInterface       `protobuf:"bytes,4,opt,name=switch_interface,json=switchInterface,proto3" json:"switch_interface,omitempty"`
 	// Refers to Machine name
 	Machine string `protobuf:"bytes,5,opt,name=machine,proto3" json:"machine,omitempty"`
 	// Refers to Rack name
@@ -96,7 +96,7 @@ func (x *Nic) GetMacAddress() string {
 	return ""
 }
 
-func (x *Nic) GetUpdateTime() *timestamp.Timestamp {
+func (x *Nic) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -158,7 +158,7 @@ type Vlan struct {
 	// The number of IPs that in this vlan
 	CapacityIp int32 `protobuf:"varint,3,opt,name=capacity_ip,json=capacityIp,proto3" json:"capacity_ip,omitempty"`
 	// Record the last update timestamp of this Vlan (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// The description of the vlan.
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// The ips that cannot be used by normal host in this vlan.
@@ -234,7 +234,7 @@ func (x *Vlan) GetCapacityIp() int32 {
 	return 0
 }
 
-func (x *Vlan) GetUpdateTime() *timestamp.Timestamp {
+func (x *Vlan) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -295,11 +295,11 @@ type DHCPConfig struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MacAddress string               `protobuf:"bytes,1,opt,name=mac_address,json=macAddress,proto3" json:"mac_address,omitempty"`
-	Hostname   string               `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Ip         string               `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	Vlan       string               `protobuf:"bytes,5,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	MacAddress string                 `protobuf:"bytes,1,opt,name=mac_address,json=macAddress,proto3" json:"mac_address,omitempty"`
+	Hostname   string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Ip         string                 `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	Vlan       string                 `protobuf:"bytes,5,opt,name=vlan,proto3" json:"vlan,omitempty"`
 }
 
 func (x *DHCPConfig) Reset() {
@@ -355,7 +355,7 @@ func (x *DHCPConfig) GetIp() string {
 	return ""
 }
 
-func (x *DHCPConfig) GetUpdateTime() *timestamp.Timestamp {
+func (x *DHCPConfig) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -652,15 +652,15 @@ func file_infra_unifiedfleet_api_v1_models_network_proto_rawDescGZIP() []byte {
 
 var file_infra_unifiedfleet_api_v1_models_network_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_infra_unifiedfleet_api_v1_models_network_proto_goTypes = []interface{}{
-	(*Nic)(nil),                 // 0: unifiedfleet.api.v1.models.Nic
-	(*Vlan)(nil),                // 1: unifiedfleet.api.v1.models.Vlan
-	(*DHCPConfig)(nil),          // 2: unifiedfleet.api.v1.models.DHCPConfig
-	(*AllDHCPConfigs)(nil),      // 3: unifiedfleet.api.v1.models.AllDHCPConfigs
-	(*IP)(nil),                  // 4: unifiedfleet.api.v1.models.IP
-	(*timestamp.Timestamp)(nil), // 5: google.protobuf.Timestamp
-	(*SwitchInterface)(nil),     // 6: unifiedfleet.api.v1.models.SwitchInterface
-	(State)(0),                  // 7: unifiedfleet.api.v1.models.State
-	(Zone)(0),                   // 8: unifiedfleet.api.v1.models.Zone
+	(*Nic)(nil),                   // 0: unifiedfleet.api.v1.models.Nic
+	(*Vlan)(nil),                  // 1: unifiedfleet.api.v1.models.Vlan
+	(*DHCPConfig)(nil),            // 2: unifiedfleet.api.v1.models.DHCPConfig
+	(*AllDHCPConfigs)(nil),        // 3: unifiedfleet.api.v1.models.AllDHCPConfigs
+	(*IP)(nil),                    // 4: unifiedfleet.api.v1.models.IP
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*SwitchInterface)(nil),       // 6: unifiedfleet.api.v1.models.SwitchInterface
+	(State)(0),                    // 7: unifiedfleet.api.v1.models.State
+	(Zone)(0),                     // 8: unifiedfleet.api.v1.models.Zone
 }
 var file_infra_unifiedfleet_api_v1_models_network_proto_depIdxs = []int32{
 	5, // 0: unifiedfleet.api.v1.models.Nic.update_time:type_name -> google.protobuf.Timestamp

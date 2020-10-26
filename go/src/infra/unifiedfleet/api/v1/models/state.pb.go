@@ -11,9 +11,9 @@
 package ufspb
 
 import (
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -143,7 +143,7 @@ type StateRecord struct {
 	Ticket       string `protobuf:"bytes,4,opt,name=ticket,proto3" json:"ticket,omitempty"`
 	Description  string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// Record the last update timestamp of this machine (In UTC timezone)
-	UpdateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 }
 
 func (x *StateRecord) Reset() {
@@ -213,7 +213,7 @@ func (x *StateRecord) GetDescription() string {
 	return ""
 }
 
-func (x *StateRecord) GetUpdateTime() *timestamp.Timestamp {
+func (x *StateRecord) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -285,9 +285,9 @@ func file_infra_unifiedfleet_api_v1_models_state_proto_rawDescGZIP() []byte {
 var file_infra_unifiedfleet_api_v1_models_state_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_state_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_state_proto_goTypes = []interface{}{
-	(State)(0),                  // 0: unifiedfleet.api.v1.models.State
-	(*StateRecord)(nil),         // 1: unifiedfleet.api.v1.models.StateRecord
-	(*timestamp.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(State)(0),                    // 0: unifiedfleet.api.v1.models.State
+	(*StateRecord)(nil),           // 1: unifiedfleet.api.v1.models.StateRecord
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_state_proto_depIdxs = []int32{
 	0, // 0: unifiedfleet.api.v1.models.StateRecord.state:type_name -> unifiedfleet.api.v1.models.State
