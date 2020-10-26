@@ -191,10 +191,6 @@ func (h *State) rota(ctx *router.Context) (*rotang.Configuration, error) {
 
 func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) (string, error) {
 	return map[string]func(ctx *router.Context, file string) (string, error){
-		// Trooper files.
-		"trooper.json":        h.legacyTrooper,
-		"current_trooper.txt": h.legacyTrooper,
-
 		// Sheriff files.
 		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,

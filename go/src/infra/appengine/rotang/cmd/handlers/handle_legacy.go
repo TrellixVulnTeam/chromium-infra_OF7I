@@ -51,65 +51,6 @@ func doCORS(ctx *router.Context) {
 	ctx.Writer.Header().Add("Access-Control-Allow-Origin", "*")
 }
 
-const (
-	trooperCal   = "google.com_3aov6uidfjscpj2hrpsd8i4e7o@group.calendar.google.com"
-	matchSummary = "CCI-Trooper:"
-	trooperShift = "Legacy Trooper"
-	trooperRota  = "troopers"
-	cciRota      = "CCI-Trooper"
-)
-
-type trooperJSON struct {
-	Primary   string   `json:"primary"`
-	Secondary []string `json:"secondaries"`
-	UnixTS    int64    `json:"updated_unix_timestamp"`
-}
-
-func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) {
-	updated := clock.Now(ctx.Context)
-	shift, err := h.shiftStore(ctx.Context).Oncall(ctx.Context, clock.Now(ctx.Context), cciRota)
-	if err != nil {
-		if status.Code(err) != codes.NotFound {
-			return "", err
-		}
-		shift = &rotang.ShiftEntry{}
-	}
-
-	var oncallers []string
-	for _, o := range shift.OnCall {
-		oncallers = append(oncallers, strings.Split(o.Email, "@")[0])
-	}
-
-	switch file {
-	case "trooper.json":
-		primary := "None"
-		secondary := make([]string, 0)
-		if len(oncallers) > 0 {
-			primary = oncallers[0]
-			if len(oncallers) > 1 {
-				secondary = oncallers[1:]
-			}
-		}
-
-		var buf bytes.Buffer
-		if err := json.NewEncoder(&buf).Encode(&trooperJSON{
-			Primary:   primary,
-			Secondary: secondary,
-			UnixTS:    updated.Unix(),
-		}); err != nil {
-			return "", err
-		}
-		return buf.String(), nil
-	case "current_trooper.txt":
-		if len(oncallers) == 0 {
-			return "None", nil
-		}
-		return strings.Join(oncallers, ","), nil
-	default:
-		return "", status.Errorf(codes.InvalidArgument, "legacyTrooper only handles `trooper.json` and `current_trooper.txt`")
-	}
-}
-
 var fileToRota = map[string]string{
 	"sheriff_perf.json":           "Chromium Perf Regression Sheriff Rotation",
 	"sheriff_gpu.json":            "Chrome GPU Pixel Wrangling",
