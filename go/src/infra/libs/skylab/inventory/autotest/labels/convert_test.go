@@ -48,6 +48,20 @@ peripherals: {
   stylus: true
   servo: true
   servo_state: 3
+  servo_topology: {
+	main: {
+		usb_hub_port: "6.4.1"
+		serial: "C1903145591"
+		type: "servo_v4"
+		sysfs_product: "Servo V4"
+	}
+	children: {
+		usb_hub_port: "6.4.2"
+		serial: "0681D03A-92DCCD64"
+		type: "ccd_cr50"
+		sysfs_product: "Cr50"
+	}
+  }
   servo_type: "servo_v3"
   smart_usbhub: true
   storage_state: 1
@@ -172,6 +186,7 @@ var fullLabels = []string{
 	"router_802_11ax",
 	"servo",
 	"servo_state:BROKEN",
+	"servo_topology:eyJtYWluIjp7InR5cGUiOiJzZXJ2b192NCIsInN5c2ZzX3Byb2R1Y3QiOiJTZXJ2byBWNCIsInNlcmlhbCI6IkMxOTAzMTQ1NTkxIiwidXNiX2h1Yl9wb3J0IjoiNi40LjEifSwiY2hpbGRyZW4iOlt7InR5cGUiOiJjY2RfY3I1MCIsInN5c2ZzX3Byb2R1Y3QiOiJDcjUwIiwic2VyaWFsIjoiMDY4MUQwM0EtOTJEQ0NENjQiLCJ1c2JfaHViX3BvcnQiOiI2LjQuMiJ9XX0=",
 	"servo_type:servo_v3",
 	"servo_usb_state:NEED_REPLACEMENT",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
