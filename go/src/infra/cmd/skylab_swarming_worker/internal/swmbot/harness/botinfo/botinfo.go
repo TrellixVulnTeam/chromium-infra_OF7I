@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 
 	"go.chromium.org/luci/common/errors"
@@ -64,8 +65,9 @@ func (s *Store) Close(ctx context.Context) error {
 
 // Open loads the BotInfo for the Bot.  The BotInfo should be closed
 // afterward to write it back.
-func Open(b *swmbot.Info, dutName string) (*Store, error) {
+func Open(ctx context.Context, b *swmbot.Info, dutName string) (*Store, error) {
 	s := Store{bot: b, dutName: dutName}
+	// Read provisioning info from state file.
 	data, err := ioutil.ReadFile(botinfoFilePath(b, b.DUTID))
 	if err != nil {
 		return nil, errors.Annotate(err, "open botinfo").Err()
@@ -73,6 +75,14 @@ func Open(b *swmbot.Info, dutName string) (*Store, error) {
 	if err := swmbot.Unmarshal(data, &s.LocalState); err != nil {
 		return nil, errors.Annotate(err, "open botinfo").Err()
 	}
+	// Read DUT state from UFS.
+	ufsClient, err := swmbot.UFSClient(ctx, b)
+	if err != nil {
+		return nil, errors.Annotate(err, "open botinfo").Err()
+	}
+	dutInfo := dutstate.Read(ctx, ufsClient, s.dutName)
+	log.Printf("Received DUT state from UFS: %v", dutInfo)
+	s.LocalState.HostState = dutInfo.State
 	return &s, nil
 }
 

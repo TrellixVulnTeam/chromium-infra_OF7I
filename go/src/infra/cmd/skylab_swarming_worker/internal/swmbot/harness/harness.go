@@ -86,7 +86,7 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 	}
 	d, sv := i.loadDUTInfo(ctx, b)
 	i.DUTName = d.GetCommon().GetHostname()
-	i.BotInfo = i.loadBotInfo(b)
+	i.BotInfo = i.loadBotInfo(ctx, b)
 
 	hi := i.makeHostInfo(d, sv)
 	i.addBotInfoToHostInfo(hi, i.BotInfo)
@@ -107,14 +107,14 @@ func (i *Info) ParserArgs() parser.Args {
 	}
 }
 
-func (i *Info) loadBotInfo(b *swmbot.Info) *swmbot.LocalState {
+func (i *Info) loadBotInfo(ctx context.Context, b *swmbot.Info) *swmbot.LocalState {
 	if i.err != nil {
 		return nil
 	}
 	if i.DUTName == "" {
 		i.err = fmt.Errorf("DUT Name cannot be blank")
 	}
-	bi, err := botinfo.Open(b, i.DUTName)
+	bi, err := botinfo.Open(ctx, b, i.DUTName)
 	if err != nil {
 		i.err = err
 		return nil
