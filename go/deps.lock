@@ -1,8 +1,8 @@
 hash: 463e46412cde53b0f5e9099efb2c6eac75bd76dfbabf8da2b3280213cd3f4458
-updated: 2020-10-27T17:04:13.09600328+09:00
+updated: 2020-10-27T15:38:11.618455832+01:00
 imports:
 - name: cloud.google.com/go
-  version: a0982f79d6461feabdf31363f29fed7dc5677fe7
+  version: fc6d8e88f5307327101caba74cf5d065569fe5f6
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -407,7 +407,7 @@ imports:
   version: bd5ef7bd5415a7ac448318e64f11a24cd21e594b
   repo: https://chromium.googlesource.com/external/github.com/xeipuuv/gojsonreference.git
 - name: github.com/xeipuuv/gojsonschema
-  version: 065759f9c3d72653843069184bab4f5622926edf
+  version: b076d39a02e5015af0a2a96636e4cc479ecd9f45
   repo: https://chromium.googlesource.com/external/github.com/xeipuuv/gojsonschema.git
 - name: github.com/xtgo/set
   version: 708d80f4a27458f99f8ca12bd0e638c6ee65627f
@@ -459,7 +459,7 @@ imports:
   version: ce943fd02449f621243c9ea6e64098e84752b92b
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
-  version: 146b70c837a4dc8b0c96afeee04a17816c439c9c
+  version: 8eef5233e2a1497eadd978519021e64df3f09d7d
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context
@@ -476,7 +476,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 119d4633e4d1df8fe59217f0e60ce5a83f6b3958
+  version: 0fcbb8f4928c60069788ed687b6fb884621b95b7
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
