@@ -28,14 +28,15 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch) (*ufspb.Switch, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
-		// Validate the input
-		if err := validateCreateSwitch(ctx, s); err != nil {
-			return err
-		}
 
 		// Get rack to associate the switch
 		rack, err := GetRack(ctx, s.GetRack())
 		if err != nil {
+			return err
+		}
+
+		// Validate the input
+		if err := validateCreateSwitch(ctx, s, rack); err != nil {
 			return err
 		}
 
@@ -71,15 +72,19 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, mask *field_mask.FieldMa
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
-		// Validate the input
-		if err := validateUpdateSwitch(ctx, s, mask); err != nil {
-			return errors.Annotate(err, "UpdateSwitch - validation failed").Err()
-		}
 
+		// Get old/existing switch
 		oldS, err := registration.GetSwitch(ctx, s.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateSwitch - get switch %s failed", s.GetName()).Err()
 		}
+
+		// Validate the input
+		if err := validateUpdateSwitch(ctx, oldS, s, mask); err != nil {
+			return errors.Annotate(err, "UpdateSwitch - validation failed").Err()
+		}
+
+		// Copy for logging
 		oldSwitchCopy := proto.Clone(oldS).(*ufspb.Switch)
 		// Fill the zone to switch OUTPUT only fields
 		s.Zone = oldS.GetZone()
@@ -103,6 +108,10 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, mask *field_mask.FieldMa
 					return errors.Annotate(err, "UpdateSwitch - get rack %s failed", s.GetRack()).Err()
 				}
 
+				// check permission for the new rack realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+					return err
+				}
 				// Fill the zone to switch OUTPUT only fields for indexing
 				s.Zone = rack.GetLocation().GetZone().String()
 			}
@@ -142,6 +151,10 @@ func processSwitchUpdateMask(ctx context.Context, oldSwitch *ufspb.Switch, s *uf
 				rack, err := GetRack(ctx, s.GetRack())
 				if err != nil {
 					return oldSwitch, errors.Annotate(err, "UpdateSwitch - get rack %s failed", s.GetRack()).Err()
+				}
+				// check permission for the new rack realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+					return oldSwitch, err
 				}
 				oldSwitch.Rack = s.GetRack()
 				// Fill the zone to switch OUTPUT only fields for indexing
@@ -200,9 +213,14 @@ func DeleteSwitch(ctx context.Context, id string) error {
 func deleteSwitchHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(&ufspb.Switch{Name: id})
-		hc.LogSwitchChanges(&ufspb.Switch{Name: id}, nil)
+
+		s, err := registration.GetSwitch(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "Unable to get switch").Err()
+		}
+
 		// Validate input
-		if err := validateDeleteSwitch(ctx, id); err != nil {
+		if err := validateDeleteSwitch(ctx, s); err != nil {
 			return errors.Annotate(err, "validation failed - Unable to delete switch %s", id).Err()
 		}
 
@@ -213,6 +231,7 @@ func deleteSwitchHelper(ctx context.Context, id string, inTransaction bool) erro
 
 		// Update state
 		hc.stUdt.deleteStateHelper(ctx)
+		hc.LogSwitchChanges(s, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if inTransaction {
@@ -244,22 +263,30 @@ func ReplaceSwitch(ctx context.Context, oldSwitch *ufspb.Switch, newSwitch *ufsp
 //
 // Checks if this Switch(SwitchID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteSwitch(ctx context.Context, id string) error {
-	nics, err := registration.QueryNicByPropertyName(ctx, "switch_id", id, true)
+func validateDeleteSwitch(ctx context.Context, s *ufspb.Switch) error {
+	rack, err := registration.GetRack(ctx, s.GetRack())
+	if err != nil {
+		return errors.Annotate(err, "unable to get rack %s", s.GetRack()).Err()
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, rack.GetRealm()); err != nil {
+		return err
+	}
+	nics, err := registration.QueryNicByPropertyName(ctx, "switch_id", s.GetName(), true)
 	if err != nil {
 		return err
 	}
-	dracs, err := registration.QueryDracByPropertyName(ctx, "switch_id", id, true)
+	dracs, err := registration.QueryDracByPropertyName(ctx, "switch_id", s.GetName(), true)
 	if err != nil {
 		return err
 	}
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "switch_id", id, true)
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "switch_id", s.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(nics) > 0 || len(dracs) > 0 || len(machinelses) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Switch %s cannot be deleted because there are other resources which are referring to this Switch.", id))
+		errorMsg.WriteString(fmt.Sprintf("Switch %s cannot be deleted because there are other resources which are referring to this Switch.", s.GetName()))
 		if len(nics) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nNics referring to the Switch:\n"))
 			for _, nic := range nics {
@@ -288,28 +315,38 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 //
 // check if the switch already exists
 // check if the rack does not exist
-func validateCreateSwitch(ctx context.Context, s *ufspb.Switch) error {
-	// 1. Check if switch already exists
+func validateCreateSwitch(ctx context.Context, s *ufspb.Switch, rack *ufspb.Rack) error {
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
+		return err
+	}
+	// Check if switch already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetSwitchResource(s.Name)}, nil); err != nil {
 		return err
 	}
-	// 2. Check if rack does not exist
-	return ResourceExist(ctx, []*Resource{GetRackResource(s.GetRack())}, nil)
+	return nil
 }
 
 // validateUpdateSwitch validates if a switch can be updated
 //
 // check if switch and rack does not exist
-func validateUpdateSwitch(ctx context.Context, s *ufspb.Switch, mask *field_mask.FieldMask) error {
-	// Aggregate resource to check if switch does not exist
-	resourcesNotFound := []*Resource{GetSwitchResource(s.Name)}
+func validateUpdateSwitch(ctx context.Context, oldS *ufspb.Switch, s *ufspb.Switch, mask *field_mask.FieldMask) error {
+	rack, err := registration.GetRack(ctx, oldS.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", oldS.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+		return err
+	}
+
 	// Aggregate resource to check if rack does not exist
 	if s.GetRack() != "" {
-		resourcesNotFound = append(resourcesNotFound, GetRackResource(s.GetRack()))
-	}
-	// check if resources does not exist
-	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
-		return err
+		resourcesNotFound := []*Resource{GetRackResource(s.GetRack())}
+		// check if resources does not exist
+		if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+			return err
+		}
 	}
 
 	return validateSwitchUpdateMask(s, mask)

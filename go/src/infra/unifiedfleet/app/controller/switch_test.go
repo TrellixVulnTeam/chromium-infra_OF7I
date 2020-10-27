@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -17,6 +19,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockSwitch(id string) *ufspb.Switch {
@@ -37,11 +40,20 @@ func TestCreateSwitch(t *testing.T) {
 	registration.CreateRack(ctx, rack1)
 	Convey("CreateSwitch", t, func() {
 		Convey("Create new switch with already existing switch - error", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-11",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			switch1 := &ufspb.Switch{
 				Name: "switch-1",
-				Rack: "rack-5",
+				Rack: "rack-11",
 			}
-			_, err := registration.CreateSwitch(ctx, switch1)
+			_, err = registration.CreateSwitch(ctx, switch1)
 
 			resp, err := CreateSwitch(ctx, switch1)
 			So(resp, ShouldBeNil)
@@ -61,7 +73,7 @@ func TestCreateSwitch(t *testing.T) {
 			resp, err := CreateSwitch(ctx, switch2)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-5 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-2")
 			So(err, ShouldBeNil)
@@ -74,6 +86,7 @@ func TestCreateSwitch(t *testing.T) {
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
@@ -82,6 +95,7 @@ func TestCreateSwitch(t *testing.T) {
 				Name: "switch-25",
 				Rack: "rack-15",
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
 			resp, err := CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
@@ -96,6 +110,48 @@ func TestCreateSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+		})
+
+		Convey("Create new switch - Permission denied: same realm and no create permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-20",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch1 := &ufspb.Switch{
+				Name: "switch-20",
+				Rack: "rack-20",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = CreateSwitch(ctx, switch1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Create new switch - Permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-21",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch1 := &ufspb.Switch{
+				Name: "switch-21",
+				Rack: "rack-21",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			_, err = CreateSwitch(ctx, switch1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }
@@ -118,19 +174,20 @@ func TestUpdateSwitch(t *testing.T) {
 			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1 in the system")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Update switch with new rack", func() {
+		Convey("Update switch with new rack(same realm) - pass", func() {
 			rack3 := &ufspb.Rack{
 				Name: "rack-3",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateRack(ctx, rack3)
 			So(err, ShouldBeNil)
@@ -140,6 +197,7 @@ func TestUpdateSwitch(t *testing.T) {
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err = registration.CreateRack(ctx, rack4)
 			So(err, ShouldBeNil)
@@ -152,6 +210,7 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			switch3.Rack = "rack-4"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateSwitch(ctx, switch3, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -169,12 +228,13 @@ func TestUpdateSwitch(t *testing.T) {
 			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
-		Convey("Update switch with same rack", func() {
+		Convey("Update switch with same rack(same realm) - pass", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-5",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
@@ -186,6 +246,7 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err = registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -202,17 +263,24 @@ func TestUpdateSwitch(t *testing.T) {
 		})
 
 		Convey("Update switch with non existing rack", func() {
-			switch1 := &ufspb.Switch{
-				Name: "switch-6",
+			rack1 := &ufspb.Rack{
+				Name: "rack-6",
 			}
-			_, err := registration.CreateSwitch(ctx, switch1)
+			_, err := registration.CreateRack(ctx, rack1)
 			So(err, ShouldBeNil)
 
-			switch1.Rack = "rack-6"
+			switch1 := &ufspb.Switch{
+				Name: "switch-6",
+				Rack: "rack-6",
+			}
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+
+			switch1.Rack = "rack-61"
 			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
+			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-61 in the system")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-6")
 			So(err, ShouldBeNil)
@@ -220,23 +288,286 @@ func TestUpdateSwitch(t *testing.T) {
 		})
 
 		Convey("Partial Update switch", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-7",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			s := &ufspb.Switch{
 				Name:         "switch-7",
+				Rack:         "rack-7",
 				CapacityPort: 10,
 				Description:  "Hello Switch",
 			}
-			_, err := registration.CreateSwitch(ctx, s)
+			_, err = registration.CreateSwitch(ctx, s)
 			So(err, ShouldBeNil)
 
 			switch1 := &ufspb.Switch{
 				Name:         "switch-7",
 				CapacityPort: 44,
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateSwitch(ctx, switch1, &field_mask.FieldMask{Paths: []string{"capacity"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetDescription(), ShouldResemble, "Hello Switch")
 			So(resp.GetCapacityPort(), ShouldEqual, 44)
+		})
+
+		Convey("Update switch - Permission denied: same realm and no update permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-51",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch1 := &ufspb.Switch{
+				Name: "switch-51",
+				Rack: "rack-51",
+			}
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = UpdateSwitch(ctx, switch1, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update switch - Permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-52",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch1 := &ufspb.Switch{
+				Name: "switch-52",
+				Rack: "rack-52",
+			}
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateSwitch(ctx, switch1, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update switch with new rack(different realm with no permission)- fail", func() {
+			rack3 := &ufspb.Rack{
+				Name: "rack-53",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack3)
+			So(err, ShouldBeNil)
+
+			rack4 := &ufspb.Rack{
+				Name: "rack-54",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateRack(ctx, rack4)
+			So(err, ShouldBeNil)
+
+			switch3 := &ufspb.Switch{
+				Name: "switch-53",
+				Rack: "rack-53",
+			}
+			_, err = registration.CreateSwitch(ctx, switch3)
+			So(err, ShouldBeNil)
+
+			switch3.Rack = "rack-54"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateSwitch(ctx, switch3, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update switch with new rack(different realm with permission)- pass", func() {
+			rack3 := &ufspb.Rack{
+				Name: "rack-55",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack3)
+			So(err, ShouldBeNil)
+
+			rack4 := &ufspb.Rack{
+				Name: "rack-56",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateRack(ctx, rack4)
+			So(err, ShouldBeNil)
+
+			switch3 := &ufspb.Switch{
+				Name: "switch-55",
+				Rack: "rack-55",
+			}
+			_, err = registration.CreateSwitch(ctx, switch3)
+			So(err, ShouldBeNil)
+
+			switch3.Rack = "rack-56"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateSwitch(ctx, switch3, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, switch3)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-55")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch.rack")
+			So(changes[0].GetOldValue(), ShouldEqual, "rack-55")
+			So(changes[0].GetNewValue(), ShouldEqual, "rack-56")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-55")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+		})
+
+		Convey("Partial Update switch with new rack(same realm) - pass", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-57",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s := &ufspb.Switch{
+				Name: "switch-57",
+				Rack: "rack-57",
+			}
+			_, err = registration.CreateSwitch(ctx, s)
+			So(err, ShouldBeNil)
+
+			rack = &ufspb.Rack{
+				Name: "rack-58",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err = registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s.Rack = "rack-58"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateSwitch(ctx, s, &field_mask.FieldMask{Paths: []string{"rack"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetRack(), ShouldResemble, "rack-58")
+		})
+
+		Convey("Partial Update switch with new rack(different realm with permission) - pass", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-59",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s := &ufspb.Switch{
+				Name: "switch-59",
+				Rack: "rack-59",
+			}
+			_, err = registration.CreateSwitch(ctx, s)
+			So(err, ShouldBeNil)
+
+			rack = &ufspb.Rack{
+				Name: "rack-60",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s.Rack = "rack-60"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateSwitch(ctx, s, &field_mask.FieldMask{Paths: []string{"rack"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetRack(), ShouldResemble, "rack-60")
+		})
+
+		Convey("Partial Update switch with new rack(different realm without permission) - fail", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-61",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s := &ufspb.Switch{
+				Name: "switch-61",
+				Rack: "rack-61",
+			}
+			_, err = registration.CreateSwitch(ctx, s)
+			So(err, ShouldBeNil)
+
+			rack = &ufspb.Rack{
+				Name: "rack-62",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			s.Rack = "rack-62"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateSwitch(ctx, s, &field_mask.FieldMask{Paths: []string{"rack"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }
@@ -248,7 +579,7 @@ func TestDeleteSwitch(t *testing.T) {
 		Convey("Delete switch by non-existing ID - error", func() {
 			err := DeleteSwitch(ctx, "switch-10")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Unable to delete switch switch-10")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-10")
 			So(err, ShouldBeNil)
@@ -266,6 +597,7 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			switch1 := mockSwitch("switch-1")
+			switch1.Rack = "rack-5"
 			_, err = registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
@@ -293,8 +625,19 @@ func TestDeleteSwitch(t *testing.T) {
 		})
 
 		Convey("Delete switch successfully", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-52",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			switch2 := mockSwitch("switch-2")
-			_, err := registration.CreateSwitch(ctx, switch2)
+			switch2.Rack = "rack-52"
+			_, err = registration.CreateSwitch(ctx, switch2)
 			So(err, ShouldBeNil)
 			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
 				{
@@ -304,6 +647,7 @@ func TestDeleteSwitch(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.BrowserLabAdminRealm)
 			err = DeleteSwitch(ctx, "switch-2")
 			So(err, ShouldBeNil)
 
@@ -325,6 +669,50 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeTrue)
+		})
+
+		Convey("Delete switch - Permission denied: same realm and no delete permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-53",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch2 := mockSwitch("switch-53")
+			switch2.Rack = "rack-53"
+			_, err = registration.CreateSwitch(ctx, switch2)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			err = DeleteSwitch(ctx, "switch-53")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Delete switch - Permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-54",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch2 := mockSwitch("switch-54")
+			switch2.Rack = "rack-54"
+			_, err = registration.CreateSwitch(ctx, switch2)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
+			err = DeleteSwitch(ctx, "switch-54")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }

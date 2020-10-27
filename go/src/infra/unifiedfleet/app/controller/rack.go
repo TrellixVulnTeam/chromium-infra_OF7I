@@ -379,13 +379,13 @@ func DeleteRack(ctx context.Context, id string) error {
 
 // can be called inside a transaction
 func getDeleteSwitchIDs(ctx context.Context, rackName string) ([]string, error) {
-	switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rackName, true)
+	switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rackName, false)
 	if err != nil {
 		return nil, errors.Annotate(err, "DeleteRack - failed to query switches for rack %s", rackName).Err()
 	}
 	switchIDs := make([]string, 0, len(switches))
 	for _, s := range switches {
-		if err := validateDeleteSwitch(ctx, s.GetName()); err != nil {
+		if err := validateDeleteSwitch(ctx, s); err != nil {
 			return nil, errors.Annotate(err, "validation failed - Unable to delete switch %s", s.GetName()).Err()
 		}
 		switchIDs = append(switchIDs, s.GetName())

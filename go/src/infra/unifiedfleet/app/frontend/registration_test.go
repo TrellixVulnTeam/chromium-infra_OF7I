@@ -2206,6 +2206,7 @@ func TestUpdateSwitch(t *testing.T) {
 		Convey("Update existing switch", func() {
 			switch1 := &ufspb.Switch{
 				Name: "switch-1",
+				Rack: "rack-1",
 			}
 			resp, err := registration.CreateSwitch(tf.C, switch1)
 			So(err, ShouldBeNil)
@@ -2357,10 +2358,20 @@ func TestDeleteSwitch(t *testing.T) {
 	defer validate()
 	Convey("DeleteSwitch", t, func() {
 		Convey("Delete switch by existing ID without references", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-2",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			switch2 := &ufspb.Switch{
 				Name: "switch-2",
+				Rack: "rack-2",
 			}
-			_, err := registration.CreateSwitch(tf.C, switch2)
+			_, err = registration.CreateSwitch(tf.C, switch2)
 			So(err, ShouldBeNil)
 
 			dreq := &ufsAPI.DeleteSwitchRequest{
