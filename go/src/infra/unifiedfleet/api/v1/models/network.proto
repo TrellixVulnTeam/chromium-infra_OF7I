@@ -109,6 +109,9 @@ message Vlan {
 
     // The zone that this vlan serves. One vlan can serve multiple zones.
     repeated Zone zones = 10;
+
+    // Record the ACL info of the vlan
+    string realm = 13;
 }
 
 message DHCPConfig {

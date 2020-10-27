@@ -18,6 +18,7 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
@@ -1235,7 +1236,7 @@ func TestUpdateVlan(t *testing.T) {
 			resp, err := tf.Fleet.UpdateVlan(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "no Vlan with VlanID vlan-3")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update vlan - Invalid input nil", func() {

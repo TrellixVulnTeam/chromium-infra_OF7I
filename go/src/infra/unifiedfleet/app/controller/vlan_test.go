@@ -13,6 +13,8 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -71,6 +73,7 @@ func TestCreateVlan(t *testing.T) {
 			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
 			vlan1.FreeStartIpv4Str = "192.168.100.6"
 			vlan1.FreeEndIpv4Str = "192.168.100.26"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksCreate, util.BrowserLabAdminRealm)
 			resp, err := CreateVlan(ctx, vlan1)
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
@@ -109,6 +112,23 @@ func TestCreateVlan(t *testing.T) {
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
 		})
+
+		Convey("Create vlan - permission deined", func() {
+			vlan1 := mockVlan("create-vlan-3", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+
+			//same realm and no create permission
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksGet, util.BrowserLabAdminRealm)
+			_, err := CreateVlan(ctx, vlan1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+
+			//different realm and no permission
+			ctx = initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksCreate, util.AtlLabAdminRealm)
+			_, err = CreateVlan(ctx, vlan1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -121,7 +141,7 @@ func TestUpdateVlan(t *testing.T) {
 			resp, err := UpdateVlan(ctx, mockVlan("update-vlan-non-exist", ""), nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "no Vlan with VlanID update-vlan-non-exist")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update vlan - partial update invalid fields", func() {
@@ -259,10 +279,12 @@ func TestUpdateVlan(t *testing.T) {
 			vlan1 := mockVlan("update-vlan-6", "6.6.6.0/27")
 			vlan1.Description = "before update"
 			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_ATL97}
+			vlan1.Realm = util.BrowserLabAdminRealm
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
 
 			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
 			vlan2.Zones = []ufspb.Zone{ufspb.Zone_ZONE_ATL97, ufspb.Zone_ZONE_MTV96}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksUpdate, util.BrowserLabAdminRealm)
 			res, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"zones"}})
 			So(err, ShouldBeNil)
 			So(res.GetZones(), ShouldHaveLength, 2)
@@ -358,6 +380,80 @@ func TestUpdateVlan(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "free ip 1235 is an invalid IP")
 		})
+
+		Convey("Update vlan: permission denied", func() {
+			vlan1 := mockVlan("update-vlan-8", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.Realm = util.BrowserLabAdminRealm
+			_, err := configuration.CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Description = "updating"
+			//same realm and no update permission
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksGet, util.BrowserLabAdminRealm)
+			_, err = UpdateVlan(ctx, vlan2, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+
+			//different realm
+			ctx = initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateVlan(ctx, vlan2, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update vlan(different Zone without permission): permission denied", func() {
+			vlan1 := mockVlan("update-vlan-9", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.Realm = util.BrowserLabAdminRealm
+			_, err := configuration.CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Zones = []ufspb.Zone{ufspb.Zone_ZONE_CHROMEOS2}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateVlan(ctx, vlan2, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update vlan(different Zone with permission): permission denied", func() {
+			vlan1 := mockVlan("update-vlan-10", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.Realm = util.BrowserLabAdminRealm
+			_, err := configuration.CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Zones = []ufspb.Zone{ufspb.Zone_ZONE_CHROMEOS2}
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.NetworksUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.NetworksUpdate),
+				),
+			})
+			resp, err := UpdateVlan(ctx, vlan2, nil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetZones(), ShouldResemble, vlan2.Zones)
+		})
+
+		Convey("Partial Update vlan(No/empty Zone): permission denied", func() {
+			vlan1 := mockVlan("update-vlan-11", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.Realm = util.BrowserLabAdminRealm
+			_, err := configuration.CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Zones = []ufspb.Zone{}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"zones"}})
+			So(resp, ShouldNotBeNil)
+			So(resp.GetZones(), ShouldResemble, []ufspb.Zone(nil))
+		})
 	})
 }
 
@@ -431,9 +527,11 @@ func TestDeleteVlan(t *testing.T) {
 		})
 		Convey("Delete vlan successfully with large numbers of IPs", func() {
 			vlan2.VlanAddress = "192.168.16.0/24"
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
 			resp, err := CreateVlan(ctx, vlan2)
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksGet, util.BrowserLabAdminRealm)
 			err = DeleteVlan(ctx, "vlan-2")
 			So(err, ShouldBeNil)
 
@@ -444,6 +542,25 @@ func TestDeleteVlan(t *testing.T) {
 			respIps, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.16.1"})
 			So(err, ShouldBeNil)
 			So(respIps, ShouldBeNil)
+		})
+		Convey("Delete vlan: permission denied", func() {
+			vlan1 := mockVlan("delete-vlan-3", "192.168.100.0/28")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.Realm = util.BrowserLabAdminRealm
+			_, err := configuration.CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+
+			//same realm and no delete permission
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksGet, util.BrowserLabAdminRealm)
+			err = DeleteVlan(ctx, "delete-vlan-3")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+
+			//different realm
+			ctx = initializeFakeAuthDB(ctx, "user:user@example.com", util.NetworksDelete, util.AtlLabAdminRealm)
+			err = DeleteVlan(ctx, "delete-vlan-3")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }

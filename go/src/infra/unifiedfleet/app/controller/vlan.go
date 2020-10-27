@@ -30,6 +30,7 @@ import (
 
 // CreateVlan creates a new vlan in datastore.
 func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
+	setRealmForVlan(vlan)
 	var ips []*ufspb.IP
 	var length int
 	var err error
@@ -75,16 +76,24 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 
 // UpdateVlan updates vlan in datastore.
 func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask) (*ufspb.Vlan, error) {
+	// Only in case of full update
+	if mask == nil || len(mask.Paths) == 0 {
+		// Set the realm for vlan
+		setRealmForVlan(vlan)
+	}
 	f := func(ctx context.Context) error {
 		hc := getVlanHistoryClient(vlan)
-		if err := validateUpdateVlan(ctx, vlan, mask); err != nil {
-			return errors.Annotate(err, "UpdateVlan - validation failed").Err()
-		}
 
 		oldVlan, err := configuration.GetVlan(ctx, vlan.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateVlan - fail to get old vlan").Err()
 		}
+
+		if err := validateUpdateVlan(ctx, oldVlan, vlan, mask); err != nil {
+			return errors.Annotate(err, "UpdateVlan - validation failed").Err()
+		}
+
+		// Copy for logging
 		oldVlanCopy := proto.Clone(oldVlan).(*ufspb.Vlan)
 
 		// Copy the not-allowed change fields
@@ -160,8 +169,13 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, ke
 func DeleteVlan(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		hc := getVlanHistoryClient(&ufspb.Vlan{Name: id})
-		hc.LogVLANChanges(nil, &ufspb.Vlan{Name: id})
-		err := validateDeleteVlan(ctx, id)
+
+		vlan, err := configuration.GetVlan(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "fail to get old vlan").Err()
+		}
+
+		err = validateDeleteVlan(ctx, vlan)
 		if err != nil {
 			return errors.Annotate(err, "DeleteVlan - validation failed").Err()
 		}
@@ -169,6 +183,8 @@ func DeleteVlan(ctx context.Context, id string) error {
 		if err := configuration.DeleteVlan(ctx, id); err != nil {
 			return err
 		}
+
+		hc.LogVLANChanges(nil, vlan)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -434,6 +450,9 @@ func ReplaceVlan(ctx context.Context, oldVlan *ufspb.Vlan, newVlan *ufspb.Vlan) 
 
 // validateCreateVlan validates if a vlan can be created
 func validateCreateVlan(ctx context.Context, vlan *ufspb.Vlan) error {
+	if err := util.CheckPermission(ctx, util.NetworksCreate, vlan.GetRealm()); err != nil {
+		return err
+	}
 	if err := resourceAlreadyExists(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
 		return err
 	}
@@ -460,28 +479,36 @@ func validateCreateVlan(ctx context.Context, vlan *ufspb.Vlan) error {
 //
 // Checks if this Vlan(VlanID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteVlan(ctx context.Context, id string) error {
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "vlan_id", id, true)
+func validateDeleteVlan(ctx context.Context, vlan *ufspb.Vlan) error {
+	if err := util.CheckPermission(ctx, util.NetworksDelete, vlan.GetRealm()); err != nil {
+		return err
+	}
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "vlan_id", vlan.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(machinelses) > 0 {
-		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d hosts, e.g. %#v", id, len(machinelses), ufsAPI.ParseResources(machinelses, "Name"))
+		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d hosts, e.g. %#v", vlan.GetName(), len(machinelses), ufsAPI.ParseResources(machinelses, "Name"))
 	}
-	vms, err := inventory.QueryVMByPropertyName(ctx, "vlan_id", id, true)
+	vms, err := inventory.QueryVMByPropertyName(ctx, "vlan_id", vlan.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(vms) > 0 {
-		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d vms, e.g. %#v", id, len(vms), ufsAPI.ParseResources(vms, "Name"))
+		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d vms, e.g. %#v", vlan.GetName(), len(vms), ufsAPI.ParseResources(vms, "Name"))
 	}
 	return nil
 }
 
 // validateUpdateVlan validates if a vlan can be updated
-func validateUpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
-	if err := ResourceExist(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
+func validateUpdateVlan(ctx context.Context, oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
+	if err := util.CheckPermission(ctx, util.NetworksUpdate, oldVlan.GetRealm()); err != nil {
 		return err
+	}
+	if vlan.GetRealm() != "" && oldVlan.GetRealm() != vlan.GetRealm() {
+		if err := util.CheckPermission(ctx, util.NetworksUpdate, vlan.GetRealm()); err != nil {
+			return err
+		}
 	}
 	if err := validateVlanUpdateMask(ctx, vlan, mask); err != nil {
 		return err
@@ -555,6 +582,7 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 			oldVlan.ReservedIps = mergeIPs(oldVlan.ReservedIps, vlan.GetReservedIps())
 		case "zones":
 			oldVlan.Zones = mergeZones(oldVlan.GetZones(), vlan.GetZones())
+			setRealmForVlan(oldVlan)
 		case "free_start_ip":
 			oldVlan.FreeStartIpv4Str = vlan.FreeStartIpv4Str
 		case "free_end_ip":
@@ -572,5 +600,13 @@ func getVlanHistoryClient(m *ufspb.Vlan) *HistoryClient {
 		netUdt: &networkUpdater{
 			Hostname: m.Name,
 		},
+	}
+}
+
+func setRealmForVlan(vlan *ufspb.Vlan) {
+	if len(vlan.GetZones()) > 0 {
+		vlan.Realm = util.ToUFSRealm(vlan.GetZones()[0].String())
+	} else {
+		vlan.Realm = ""
 	}
 }
