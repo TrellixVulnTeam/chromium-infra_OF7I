@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -19,6 +21,7 @@ import (
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func TestRackRegistration(t *testing.T) {
@@ -31,7 +34,9 @@ func TestRackRegistration(t *testing.T) {
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
 			resp, err := RackRegistration(ctx, rack)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -93,6 +98,34 @@ func TestRackRegistration(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
+
+		Convey("Create new rack - permission denied: same realm and no create permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-12",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err := RackRegistration(ctx, rack)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Create new rack - permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-13",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			_, err := RackRegistration(ctx, rack)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -106,7 +139,7 @@ func TestUpdateRack(t *testing.T) {
 			}
 			_, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-1 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update existing rack", func() {
@@ -115,6 +148,7 @@ func TestUpdateRack(t *testing.T) {
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
@@ -125,7 +159,9 @@ func TestUpdateRack(t *testing.T) {
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -173,6 +209,85 @@ func TestUpdateRack(t *testing.T) {
 			So(resp.GetCapacityRu(), ShouldEqual, 100)
 			So(resp.GetTags(), ShouldResemble, []string{"atl", "megarack"})
 		})
+
+		Convey("Update rack - permission denied: same realm and no update permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-21",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rack.Tags = []string{"tag-21"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = UpdateRack(ctx, rack, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update rack - permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-22",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rack.Tags = []string{"tag-22"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateRack(ctx, rack, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update rack(realm name) - different realm with permission success", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-23",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rack.Realm = util.AtlLabAdminRealm
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateRack(ctx, rack, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack)
+		})
+
+		Convey("Update rack(realm name) - permission denied: different realm without permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-24",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rack.Realm = util.AtlLabAdminRealm
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateRack(ctx, rack, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -182,7 +297,8 @@ func TestDeleteRack(t *testing.T) {
 	Convey("DeleteRack", t, func() {
 		Convey("Delete rack by existing ID with rackLSE reference", func() {
 			rack1 := &ufspb.Rack{
-				Name: "rack-3",
+				Name:  "rack-3",
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateRack(ctx, rack1)
 			So(err, ShouldBeNil)
@@ -194,6 +310,7 @@ func TestDeleteRack(t *testing.T) {
 			_, err = inventory.CreateRackLSE(ctx, rackLSE1)
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.BrowserLabAdminRealm)
 			err = DeleteRack(ctx, "rack-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
@@ -401,6 +518,34 @@ func TestDeleteRack(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+		})
+
+		Convey("Delete rack - Permission denied: same realm and no delete permission", func() {
+			rack1 := &ufspb.Rack{
+				Name:  "rack-31",
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			err = DeleteRack(ctx, "rack-31")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Delete rack - Permission denied: different realm", func() {
+			rack1 := &ufspb.Rack{
+				Name:  "rack-32",
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
+			err = DeleteRack(ctx, "rack-32")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }

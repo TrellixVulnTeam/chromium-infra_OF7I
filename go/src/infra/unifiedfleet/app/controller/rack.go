@@ -125,10 +125,20 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 	var err error
 	f := func(ctx context.Context) error {
 		hc := getRackClientHistory(rack)
+
+		// Get the existing/old rack
+		oldRack, err = registration.GetRack(ctx, rack.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
+		}
+
 		// Validate input
-		if err := validateUpdateRack(ctx, rack, mask); err != nil {
+		if err := validateUpdateRack(ctx, oldRack, rack, mask); err != nil {
 			return errors.Annotate(err, "UpdateRack - validation failed").Err()
 		}
+
+		// Copy for logging
+		oldRackCopy := proto.Clone(oldRack).(*ufspb.Rack)
 
 		// Make sure OUTPUT_ONLY fields are set to empty
 		// for OS rack we dont do anything as of now.
@@ -140,13 +150,6 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 			rack.GetChromeBrowserRack().RpmObjects = nil
 			rack.GetChromeBrowserRack().KvmObjects = nil
 			rack.GetChromeBrowserRack().SwitchObjects = nil
-		}
-
-		// Get the existing/old rack
-		oldRack, err = registration.GetRack(ctx, rack.GetName())
-		oldRackCopy := proto.Clone(oldRack).(*ufspb.Rack)
-		if err != nil {
-			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
 
 		// Do not let updating from browser to os or vice versa change for rack.
@@ -319,7 +322,7 @@ func DeleteRack(ctx context.Context, id string) error {
 		}
 
 		// Check if any other resource references this rack.
-		if err = validateDeleteRack(ctx, id); err != nil {
+		if err = validateDeleteRack(ctx, rack); err != nil {
 			return err
 		}
 
@@ -494,18 +497,21 @@ func ReplaceRack(ctx context.Context, oldRack *ufspb.Rack, newRack *ufspb.Rack) 
 //
 // Checks if this Rack(RackID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteRack(ctx context.Context, id string) error {
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", id, true)
+func validateDeleteRack(ctx context.Context, rack *ufspb.Rack) error {
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, rack.GetRealm()); err != nil {
+		return err
+	}
+	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", rack.GetName(), true)
 	if err != nil {
 		return err
 	}
-	machines, err := registration.QueryMachineByPropertyName(ctx, "rack", id, true)
+	machines, err := registration.QueryMachineByPropertyName(ctx, "rack", rack.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(racklses) > 0 || len(machines) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Rack %s cannot be deleted because there are other resources which are referring this Rack.", id))
+		errorMsg.WriteString(fmt.Sprintf("Rack %s cannot be deleted because there are other resources which are referring this Rack.", rack.GetName()))
 		if len(racklses) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the Rack:\n"))
 			for _, racklse := range racklses {
@@ -555,7 +561,9 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 	if rack == nil {
 		return errors.New("rack cannot be empty")
 	}
-
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
+		return err
+	}
 	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
 		if rack.GetLocation() == nil || rack.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
 			return errors.New("zone information in the location object cannot be empty/unspecified for a rack")
@@ -624,12 +632,15 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 }
 
 // validateUpdateRack validates if a rack can be updated
-func validateUpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) error {
-	// check if resources does not exist
-	if err := ResourceExist(ctx, []*Resource{GetRackResource(rack.Name)}, nil); err != nil {
+func validateUpdateRack(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb.Rack, mask *field_mask.FieldMask) error {
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, oldRack.GetRealm()); err != nil {
 		return err
 	}
-
+	if rack.GetRealm() != "" && oldRack.GetRealm() != rack.GetRealm() {
+		if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+			return err
+		}
+	}
 	return validateRackUpdateMask(rack, mask)
 }
 
