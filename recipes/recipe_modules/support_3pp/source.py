@@ -396,7 +396,8 @@ def _do_checkout(api, workdir, spec, version, source_hash='',
       api.git('apply', '-v', *patches)
 
 
-def _source_upload(checkout_dir, method_name, source_cipd_spec, external_hash):
+def _source_upload(checkout_dir, method_name, source_cipd_spec,
+                   external_hash=None):
   """Builds and uploads the copy of the source package we have on the
   local machine to the CIPD server.
 
@@ -412,15 +413,16 @@ def _source_upload(checkout_dir, method_name, source_cipd_spec, external_hash):
     * source_cipd_spec (spec) - CIPDSpec obj for source.
     * external_hash - Tag the output package with this hash.
   """
-  # TODO(akashmukherjee): Update enabling source cache for script and url.
-  if method_name != 'git':
+  if method_name == 'cipd':
     return
+
   # Double checking if source is uploaded by a concurrent recipe
   if not source_cipd_spec.check():
     # building the source CIPDSpec into a source type package
     source_cipd_spec.build(root=checkout_dir,
                            install_mode=None,
                            version_file=None,
-                           exclusions=['\.git'])
-    extra_tags = {'external_hash': external_hash}
+                           exclusions=['\.git'] if method_name == 'git' else [])
+    extra_tags = {'external_hash':
+        external_hash} if external_hash else {}
     source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)

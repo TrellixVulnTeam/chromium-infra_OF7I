@@ -1425,8 +1425,6 @@
       "pkg-register",
       "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id",
       "-tag",
-      "external_hash:",
-      "-tag",
       "version:1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"

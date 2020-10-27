@@ -101,7 +101,7 @@ class ResolvedSpec(object):
       if repo_url.startswith('https://chromium.googlesource.com/external/'):
         repo_url = repo_url[len('https://chromium.googlesource.com/external/'):]
       _source_cache = '%s/sources/%s/%s' % (pkg_prefix, method, repo_url)
-    elif method == 'script':
+    elif method == 'script' or method == 'url':
       _source_cache = '%s/sources/%s/%s/%s' % (pkg_prefix, method, self._name,
                                                self._platform)
     else:
