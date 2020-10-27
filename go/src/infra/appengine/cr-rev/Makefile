@@ -13,16 +13,16 @@ gen:
 	protoc backend/pubsub/source_repo_event.proto --go_out=../../../
 
 .PHONY: test
-test: gen
+test:
 	go test ./...
 
 # Deploy to development
 .PHONY: dev
-dev: gen
+dev:
 	gae.py upload --app-id cr-rev-dev  --app-dir .
 
 # Deploy to production
 .PHONY: prod
-prod: prod
+prod:
 	gae.py upload --app-id cr-rev  --app-dir .
 
