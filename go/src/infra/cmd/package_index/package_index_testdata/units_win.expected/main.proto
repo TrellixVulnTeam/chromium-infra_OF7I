@@ -1,0 +1,75 @@
+unit {
+  v_name {
+    corpus: "chromium-test"
+    language: "protobuf"
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/main.proto"
+    }
+    info {
+      path: "../../main.proto"
+      digest: "db0cb1f495da5a2a7559794fafc9440bd17efb4cb074b013285582387d0d4406"
+    }
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/out/Debug/gen/main.pb.h.meta"
+    }
+    info {
+      path: "gen/main.pb.h.meta"
+      digest: "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
+    }
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/out/Debug/gen/sub.pb.h.meta"
+    }
+    info {
+      path: "gen/sub.pb.h.meta"
+      digest: "7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730"
+    }
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/out/Debug/gen/subsub.pb.h.meta"
+    }
+    info {
+      path: "gen/subsub.pb.h.meta"
+      digest: "bf07a7fbb825fc0aae7bf4a1177b2b31fcf8a3feeaf7092761e18c859ee52a9c"
+    }
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/sub.proto"
+    }
+    info {
+      path: "../../sub.proto"
+      digest: "c14640c013e2473bc838cdcfc3d2bd9e71949d0ce475936111a6ade7628f135c"
+    }
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/subsub.proto"
+    }
+    info {
+      path: "../../subsub.proto"
+      digest: "9875ac9edbdaf998e2e5d81f265428e3f2a6f4c5d9b5527cf2450d3705f0415b"
+    }
+  }
+  argument: "--proto_path"
+  argument: "../../"
+  argument: "../../main.proto"
+  source_file: "../../main.proto"
+  details {
+    [kythe.io/proto/kythe.proto.BuildDetails] {
+      build_config: "win"
+    }
+  }
+}

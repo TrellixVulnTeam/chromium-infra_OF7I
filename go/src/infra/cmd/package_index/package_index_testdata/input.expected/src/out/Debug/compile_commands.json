@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "package_index_testdata/input.expected/src/out/Debug",
+    "command": "clang++ -fsyntax-only -DFOO=\\\"foo\\ bar\\\" -std=c++11 -Wno-c++11-narrowing  -Wall -c test.cc -o test.o",
+    "file": "../../test.cc"
+  }
+]

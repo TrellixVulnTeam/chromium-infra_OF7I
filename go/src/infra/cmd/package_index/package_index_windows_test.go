@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// +build windows
+
 package main
 
 import (
@@ -11,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -29,13 +32,13 @@ type unitKey struct {
 	sourceFile string
 }
 
-func TestGnTargets(t *testing.T) {
+func TestPackageIndexWindows(t *testing.T) {
 	t.Parallel()
-	Convey("GN Targets", t, func() {
+
+	Convey("Package index windows", t, func() {
 		// Setup.
 		chanSize := 10
 		numRoutines := 2
-
 		tmpdir, err := ioutil.TempDir("", "")
 		if err != nil {
 			t.Fatal(err)
@@ -50,24 +53,46 @@ func TestGnTargets(t *testing.T) {
 		// Initialize indexPack.
 		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
 		defer cancel()
-		kzipPath := filepath.Join(tmpdir, "out.kzip")
-		testDir := filepath.Join(cwd, "testdata")
+		testDir := filepath.Join(cwd, "package_index_testdata")
 		rootDir := filepath.Join(testDir, "input.expected")
+		kzipPath := filepath.Join(rootDir, "src", "out", "Debug", "kzip")
 		gnPath := filepath.Join(rootDir, "src", "out", "Debug", "gn_targets.json")
+		outputPath := filepath.Join(tmpdir, "out.kzip")
 		if err != nil {
 			t.Fatal(err)
 		}
-		ip := newIndexPack(ctx, kzipPath, rootDir, "src/out/Debug", "compdb", gnPath, "kzip",
-			"chromium-test", "linux", false)
+
+		// Since most development is done in linux, windows tests are runnable
+		// in both linux and windows. However, win32 treats \ on the command line
+		// very differently, so fix the commands file so it can be tested in windows.
+		// * windows treats \'s differently than shlex.  (see
+		//   https://docs.microsoft.com/en-us/windows/win32/api/shellapi/
+		//   nf-shellapi-commandlinetoargvw#remarks) so, we need to halve the
+		//   \'s for windows runs (assuming no in/out of quotes)
+		// * Json needs \ escaping, so replacing 2 \'s with 1 \ requires replacing
+		//   4 \'s with 2 \'s.
+		origCompDb, err := ioutil.ReadFile(filepath.Join(rootDir, "src", "out", "Debug", "compile_commands_win.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		modCompDbContents := regexp.MustCompile(`(?m)\\\\\\\\`).ReplaceAll(origCompDb, []byte("\\\\"))
+		modCompDbPath := filepath.Join(tmpdir, "compile_commands_win_mod.json")
+		err = ioutil.WriteFile(modCompDbPath, modCompDbContents, 0444)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ip := newIndexPack(ctx, outputPath, rootDir, "src/out/Debug", modCompDbPath, gnPath, kzipPath,
+			"chromium-test", "win", false)
 
 		// Read expected units and place into a map.
 		unitMap := make(map[unitKey]string)
-		units, err := ioutil.ReadDir(filepath.Join(testDir, "units.expected"))
+		units, err := ioutil.ReadDir(filepath.Join(testDir, "units_win.expected"))
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, f := range units {
-			content, err := ioutil.ReadFile(filepath.Join(testDir, "units.expected", f.Name()))
+			content, err := ioutil.ReadFile(filepath.Join(testDir, "units_win.expected", f.Name()))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -80,7 +105,60 @@ func TestGnTargets(t *testing.T) {
 			unitMap[unitKey{unit.GetVName().GetCorpus(), unit.GetSourceFile()[0]}] = unit.String()
 		}
 
-		Convey("Parse and process GN targets", func() {
+		// Set new.kzip modified time to after old_duplicate.kzip for testing.
+		oldkzip, err := os.Stat(filepath.Join(kzipPath, "old_duplicate.kzip"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		newModTime := oldkzip.ModTime().Add(time.Second)
+		err = os.Chtimes(filepath.Join(kzipPath, "new.kzip"), newModTime, newModTime)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		Convey("Parse and process GN/clang targets", func() {
+			// Parse existing kzips.
+			existingKzipChannel := make(chan string, chanSize)
+			go func() {
+				err := ip.mergeExistingKzips(existingKzipChannel)
+				if err != nil {
+					panic(err)
+				}
+			}()
+
+			// Process existing kzips.
+			var kzipWg sync.WaitGroup
+			kzipEntryChannel := make(chan kzipEntry, chanSize)
+			kzipSet := NewConcurrentSet(0)
+			kzipWg.Add(1)
+			go func() {
+				err := ip.processExistingKzips(ctx, existingKzipChannel, kzipEntryChannel, kzipSet)
+				if err != nil {
+					panic(err)
+				}
+				kzipWg.Done()
+			}()
+
+			// Parse and process targets.
+			unitProtoChannel := make(chan *kpb.CompilationUnit, chanSize)
+			dataFileChannel := make(chan string, chanSize)
+
+			// Parse compdb.
+			clang := NewClangTargets(modCompDbPath)
+			clang.dataWg.Add(numRoutines)
+			clang.unitWg.Add(numRoutines)
+			clang.kzipDataWg.Add(numRoutines)
+			for i := 0; i < numRoutines; i++ {
+				go func() {
+					// Process clang files.
+					err := clang.ProcessClangTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus,
+						ip.buildConfig, ip.hashMaps, dataFileChannel, unitProtoChannel)
+					if err != nil {
+						t.Fatal(err)
+					}
+				}()
+			}
+
 			// Parse GN targets.
 			gnTargets := NewGnTargets(gnPath)
 			gnTargets.dataWg.Add(numRoutines)
@@ -88,8 +166,6 @@ func TestGnTargets(t *testing.T) {
 			gnTargets.unitWg.Add(numRoutines)
 
 			// Process GN target data files.
-			dataFileChannel := make(chan string, chanSize)
-			unitProtoChannel := make(chan *kpb.CompilationUnit, chanSize)
 			for i := 0; i < numRoutines; i++ {
 				go func() {
 					// Process GN files.
@@ -102,13 +178,13 @@ func TestGnTargets(t *testing.T) {
 			}
 
 			// Convert data files to kzipEntries.
-			kzipEntryChannel := make(chan kzipEntry, chanSize)
 			for i := 0; i < numRoutines; i++ {
 				go func() {
 					ip.dataFileToKzipEntry(ctx, dataFileChannel, kzipEntryChannel)
 
 					// Signal done for GN compilation unit processing.
 					gnTargets.kzipDataWg.Done()
+					clang.kzipDataWg.Done()
 				}()
 			}
 
@@ -125,16 +201,19 @@ func TestGnTargets(t *testing.T) {
 			// Close dataFileChannel and unitProtoChannel after all GN targets have been processed and sent.
 			go func() {
 				gnTargets.dataWg.Wait()
+				clang.dataWg.Wait()
 				close(dataFileChannel)
 			}()
 			go func() {
 				gnTargets.unitWg.Wait()
+				clang.unitWg.Wait()
 				close(unitProtoChannel)
 			}()
 
 			// Close kzipEntryChannel after all entries have been sent.
 			go func() {
 				kzipUnitWg.Wait()
+				kzipWg.Wait()
 				close(kzipEntryChannel)
 			}()
 
@@ -150,12 +229,12 @@ func TestGnTargets(t *testing.T) {
 			}()
 			writeWg.Wait()
 
-			Convey("Kzip contains files and units for mojom and proto targets", func() {
+			Convey("Kzip contains files and units for GN/clang targets and existing kzips", func() {
 				// Check kzip exists.
-				_, err = os.Stat(kzipPath)
+				_, err = os.Stat(outputPath)
 				So(err, ShouldEqual, nil)
 
-				r, err := zip.OpenReader(kzipPath)
+				r, err := zip.OpenReader(outputPath)
 				if err != nil {
 					t.Fatal(err)
 				}

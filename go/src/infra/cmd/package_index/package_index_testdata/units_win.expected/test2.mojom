@@ -1,0 +1,39 @@
+unit {
+  v_name {
+    corpus: "chromium-test"
+    language: "mojom"
+  }
+  required_input {
+    v_name {
+      corpus: "chromium-test"
+      path: "src/test2.mojom"
+    }
+    info {
+      path: "../../test2.mojom"
+      digest: "3dd104b0998f09bcf6716c4a79ed43d16554cbf8d61bdd5fd32dfab442e16759"
+    }
+  }
+  argument: "--use_bundled_pylibs"
+  argument: "generate"
+  argument: "-d"
+  argument: "../"
+  argument: "-I"
+  argument: "../../"
+  argument: "-o"
+  argument: "gen"
+  argument: "--bytecode_path"
+  argument: "gen/bindings"
+  argument: "-g"
+  argument: "c++"
+  argument: "--typemap"
+  argument: "gen/mojo_bindings__type_mappings"
+  argument: "--enable_feature"
+  argument: "ipc_logging"
+  argument: "../../test2.mojom"
+  source_file: "../../test2.mojom"
+  details {
+    [kythe.io/proto/kythe.proto.BuildDetails] {
+      build_config: "win"
+    }
+  }
+}

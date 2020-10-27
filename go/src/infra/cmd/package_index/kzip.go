@@ -158,6 +158,7 @@ func (ip *indexPack) processExistingKzip(ctx context.Context, kzip string, kzipE
 	err = protojson.Unmarshal(content, indexedCompilationProto)
 	if err != nil {
 		logging.Warningf(ctx, "Error parsing JSON")
+		return err
 	}
 	protoUnit := indexedCompilationProto.GetUnit()
 	outputKey := protoUnit.GetOutputKey()
@@ -165,6 +166,7 @@ func (ip *indexPack) processExistingKzip(ctx context.Context, kzip string, kzipE
 	// Check if outputKey has already been processed and add if not.
 	if !outputSet.Add(outputKey) {
 		logging.Infof(ctx, "Duplicated unit \"%s\" (filename: %s)", outputKey, kzip)
+		return nil
 	}
 
 	if protoUnit != nil && ip.buildConfig != "" {
