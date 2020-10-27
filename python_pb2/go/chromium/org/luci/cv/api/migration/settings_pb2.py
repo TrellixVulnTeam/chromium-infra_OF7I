@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"k\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x1a/\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"y\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x42\x33Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -47,6 +47,13 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='prod', full_name='migration.Settings.ApiHost.prod', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -60,7 +67,7 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=127,
-  serialized_end=174,
+  serialized_end=188,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -91,7 +98,7 @@ _SETTINGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=67,
-  serialized_end=174,
+  serialized_end=188,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
