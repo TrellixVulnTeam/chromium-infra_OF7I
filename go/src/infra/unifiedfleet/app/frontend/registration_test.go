@@ -1312,6 +1312,7 @@ func TestUpdateKVM(t *testing.T) {
 		Convey("Update existing KVM", func() {
 			KVM1 := &ufspb.KVM{
 				Name: "kvm-1",
+				Rack: "rack-1",
 			}
 			resp, err := registration.CreateKVM(tf.C, KVM1)
 			So(err, ShouldBeNil)
@@ -1485,10 +1486,20 @@ func TestDeleteKVM(t *testing.T) {
 	defer validate()
 	Convey("DeleteKVM", t, func() {
 		Convey("Delete KVM by existing ID without references", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-2",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			KVM2 := &ufspb.KVM{
 				Name: "kvm-2",
+				Rack: "rack-2",
 			}
-			_, err := registration.CreateKVM(tf.C, KVM2)
+			_, err = registration.CreateKVM(tf.C, KVM2)
 			So(err, ShouldBeNil)
 
 			dreq := &ufsAPI.DeleteKVMRequest{

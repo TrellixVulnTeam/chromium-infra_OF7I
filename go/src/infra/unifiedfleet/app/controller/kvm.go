@@ -29,14 +29,15 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM) (*ufspb.KVM, error) {
 	f := func(ctx context.Context) error {
 		hc := getKVMHistoryClient(kvm)
 		hc.LogKVMChanges(nil, kvm)
-		// Validate the input
-		if err := validateCreateKVM(ctx, kvm); err != nil {
-			return err
-		}
 
 		// Get rack to associate the kvm
 		rack, err := GetRack(ctx, kvm.GetRack())
 		if err != nil {
+			return err
+		}
+
+		// Validate the input
+		if err := validateCreateKVM(ctx, kvm, rack); err != nil {
 			return err
 		}
 
@@ -72,15 +73,18 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) 
 	f := func(ctx context.Context) error {
 		hc := getKVMHistoryClient(kvm)
 
-		// Validate the input
-		if err := validateUpdateKVM(ctx, kvm, mask); err != nil {
-			return errors.Annotate(err, "UpdateKVM - validation failed").Err()
-		}
-
+		// Get old/existing KVM
 		oldKVM, err := registration.GetKVM(ctx, kvm.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateKVM - get kvm %s failed", kvm.GetName()).Err()
 		}
+
+		// Validate the input
+		if err := validateUpdateKVM(ctx, oldKVM, kvm, mask); err != nil {
+			return errors.Annotate(err, "UpdateKVM - validation failed").Err()
+		}
+
+		// Copy for logging
 		oldKVMCopy := proto.Clone(oldKVM).(*ufspb.KVM)
 		// Fill the zone to kvm OUTPUT only fields
 		kvm.Zone = oldKVM.GetZone()
@@ -104,6 +108,10 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) 
 					return errors.Annotate(err, "UpdateKVM - get rack %s failed", kvm.GetRack()).Err()
 				}
 
+				// check permission for the new rack realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+					return err
+				}
 				// Fill the zone to kvm OUTPUT only fields
 				kvm.Zone = rack.GetLocation().GetZone().String()
 			}
@@ -143,6 +151,10 @@ func processKVMUpdateMask(ctx context.Context, oldKVM *ufspb.KVM, kvm *ufspb.KVM
 				rack, err := GetRack(ctx, kvm.GetRack())
 				if err != nil {
 					return oldKVM, errors.Annotate(err, "UpdateKVM - get rack %s failed", kvm.GetRack()).Err()
+				}
+				// check permission for the new rack realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+					return oldKVM, err
 				}
 				oldKVM.Rack = kvm.GetRack()
 				// Fill the zone to kvm OUTPUT only fields
@@ -247,11 +259,16 @@ func DeleteKVM(ctx context.Context, id string) error {
 
 func deleteKVMHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
-		kvm := &ufspb.KVM{Name: id}
-		hc := getKVMHistoryClient(kvm)
-		hc.LogKVMChanges(kvm, nil)
+		hc := getKVMHistoryClient(&ufspb.KVM{Name: id})
+
+		// Get kvm
+		kvm, err := registration.GetKVM(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "Unable to get KVM").Err()
+		}
+
 		// Validate input
-		if err := validateDeleteKVM(ctx, id); err != nil {
+		if err := validateDeleteKVM(ctx, kvm); err != nil {
 			return errors.Annotate(err, "Validation failed - unable to delete kvm %s", id).Err()
 		}
 
@@ -267,6 +284,7 @@ func deleteKVMHelper(ctx context.Context, id string, inTransaction bool) error {
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+		hc.LogKVMChanges(kvm, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if inTransaction {
@@ -309,14 +327,22 @@ func getKVMHistoryClient(kvm *ufspb.KVM) *HistoryClient {
 //
 // Checks if this KVM(KVMID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteKVM(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "kvm_id", id, true)
+func validateDeleteKVM(ctx context.Context, kvm *ufspb.KVM) error {
+	rack, err := registration.GetRack(ctx, kvm.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", kvm.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, rack.GetRealm()); err != nil {
+		return err
+	}
+	machines, err := registration.QueryMachineByPropertyName(ctx, "kvm_id", kvm.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(machines) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("KVM %s cannot be deleted because there are other resources which are referring this KVM.", id))
+		errorMsg.WriteString(fmt.Sprintf("KVM %s cannot be deleted because there are other resources which are referring this KVM.", kvm.GetName()))
 		if len(machines) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the KVM:\n"))
 			for _, machine := range machines {
@@ -333,31 +359,39 @@ func validateDeleteKVM(ctx context.Context, id string) error {
 //
 // check if the kvm already exists
 // check if the rack and resources referenced by kvm does not exist
-func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM) error {
-	// 1. Check if kvm already exists
+func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rack *ufspb.Rack) error {
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
+		return err
+	}
+	// Check if kvm already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetKVMResource(kvm.Name)}, nil); err != nil {
 		return err
 	}
 	if err := validateMacAddress(ctx, kvm.GetName(), kvm.GetMacAddress()); err != nil {
 		return err
 	}
-
-	// Aggregate resource to check if rack does not exist
-	resourcesNotFound := []*Resource{GetRackResource(kvm.GetRack())}
 	// Aggregate resource to check if resources referenced by the kvm does not exist
 	if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
-		resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
+		return ResourceExist(ctx, []*Resource{GetChromePlatformResource(chromePlatformID)}, nil)
 	}
-	// 2. Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	return nil
 }
 
 // validateUpdateKVM validates if a kvm can be updated
 //
 // check if kvm, rack and resources referenced kvm does not exist
-func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) error {
+func validateUpdateKVM(ctx context.Context, oldKvm *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.FieldMask) error {
+	rack, err := registration.GetRack(ctx, oldKvm.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", oldKvm.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+		return err
+	}
 	// Aggregate resource to check if kvm does not exist
-	resourcesNotFound := []*Resource{GetKVMResource(kvm.Name)}
+	var resourcesNotFound []*Resource
 	// Aggregate resource to check if rack does not exist
 	if kvm.GetRack() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetRackResource(kvm.GetRack()))
@@ -410,6 +444,20 @@ func validateKVMUpdateMask(ctx context.Context, kvm *ufspb.KVM, mask *field_mask
 
 // validateUpdateKVMHost validates if a host can be added to a kvm
 func validateUpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName, ipv4Str string) error {
+	// during partial update, kvm object may not have rack info, so we get the old kvm to get the rack
+	// to check the permission
+	oldKvm, err := registration.GetKVM(ctx, kvm.GetName())
+	if err != nil {
+		return err
+	}
+	rack, err := registration.GetRack(ctx, oldKvm.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", oldKvm.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+		return err
+	}
 	if kvm.GetMacAddress() == "" {
 		return errors.New("mac address of kvm hasn't been specified")
 	}

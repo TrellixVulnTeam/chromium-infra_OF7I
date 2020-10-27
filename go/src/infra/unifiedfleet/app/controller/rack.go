@@ -395,13 +395,13 @@ func getDeleteSwitchIDs(ctx context.Context, rackName string) ([]string, error) 
 
 // can be called inside a transaction
 func getDeleteKVMIDs(ctx context.Context, rackName string) ([]string, error) {
-	kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rackName, true)
+	kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rackName, false)
 	if err != nil {
 		return nil, errors.Annotate(err, "DeleteRack - failed to query kvms for rack %s", rackName).Err()
 	}
 	var kvmIDs []string
 	for _, kvm := range kvms {
-		if err := validateDeleteKVM(ctx, kvm.GetName()); err != nil {
+		if err := validateDeleteKVM(ctx, kvm); err != nil {
 			return nil, errors.Annotate(err, "validation failed - Unable to delete kvm %s", kvm.GetName()).Err()
 		}
 		kvmIDs = append(kvmIDs, kvm.GetName())
