@@ -19,6 +19,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -27,14 +28,16 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
-		if err := validateCreateVM(ctx, vm, nwOpt); err != nil {
+		machine, err := getMachineForHost(ctx, vm.GetMachineLseId())
+		if err != nil {
+			return err
+		}
+
+		if err := validateCreateVM(ctx, vm, nwOpt, machine); err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
-		lse, err := inventory.GetMachineLSE(ctx, vm.GetMachineLseId())
-		if err != nil {
-			return errors.Annotate(err, "Fail to get host by %s", vm.GetMachineLseId()).Err()
-		}
-		vm.Zone = lse.Zone
+
+		vm.Zone = machine.GetLocation().GetZone().String()
 		if vm.ResourceState == ufspb.State_STATE_UNSPECIFIED {
 			vm.ResourceState = ufspb.State_STATE_REGISTERED
 		}
@@ -70,16 +73,18 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) (*u
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
-		// Validate input
-		if err := validateUpdateVM(ctx, vm, mask); err != nil {
-			return errors.Annotate(err, "UpdateVM - validation failed").Err()
-		}
-
 		// Get old/existing VM
 		oldVM, err := inventory.GetVM(ctx, vm.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
+
+		// Validate input
+		if err := validateUpdateVM(ctx, oldVM, vm, mask); err != nil {
+			return errors.Annotate(err, "UpdateVM - validation failed").Err()
+		}
+
+		// Copy for logging
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		// Copy the vlan/zone to vm OUTPUT only fields from already existing vm
 		vm.Zone = oldVM.GetZone()
@@ -98,12 +103,15 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) (*u
 			}
 			// Check if user provided new host to associate the vm
 			if vm.MachineLseId != oldVM.MachineLseId {
-				lse, err := inventory.GetMachineLSE(ctx, vm.MachineLseId)
+				machine, err := getMachineForHost(ctx, vm.GetMachineLseId())
 				if err != nil {
-					return errors.Annotate(err, "UpdateVM - fail to get host by %s", vm.MachineLseId).Err()
+					return err
+				}
+				if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+					return err
 				}
 				// update the zone info for vm for vm table indexing
-				vm.Zone = lse.Zone
+				vm.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
@@ -131,15 +139,18 @@ func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOptio
 	var err error
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(&ufspb.VM{Name: vmName})
-		// Validate the input
-		if err := validateUpdateVMHost(ctx, vmName, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
-			return err
-		}
 
+		//Get VM
 		vm, err = GetVM(ctx, vmName)
 		if err != nil {
 			return err
 		}
+
+		// Validate the input
+		if err := validateUpdateVMHost(ctx, vm, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
+			return err
+		}
+
 		// this is for logging changes
 		oldVM := proto.Clone(vm).(*ufspb.VM)
 
@@ -168,7 +179,20 @@ func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOptio
 }
 
 // validateUpdateVMHost validates if an ip can be assigned to the VM
-func validateUpdateVMHost(ctx context.Context, vmName string, vlanName, ipv4Str string) error {
+func validateUpdateVMHost(ctx context.Context, vm *ufspb.VM, vlanName, ipv4Str string) error {
+	// Check permission
+	// during partial update, vm object may not have lse info, so we get the old vm to get the lse
+	// and then machine to check the permission
+	// Get MachineLSE
+	machine, err := getMachineForHost(ctx, vm.GetMachineLseId())
+	if err != nil {
+		return err
+	}
+	// check permission
+	if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
+
 	if ipv4Str != "" {
 		if _, err := util.IPv4StrToInt(ipv4Str); err != nil {
 			return errors.Annotate(err, "Validate create host").Tag(grpcutil.InvalidArgumentTag).Err()
@@ -176,21 +200,29 @@ func validateUpdateVMHost(ctx context.Context, vmName string, vlanName, ipv4Str 
 		return nil
 	}
 	// Check if resources does not exist
-	return ResourceExist(ctx, []*Resource{GetVMResource(vmName), GetVlanResource(vlanName)}, nil)
+	return ResourceExist(ctx, []*Resource{GetVlanResource(vlanName)}, nil)
 }
 
 // DeleteVMHost deletes the dhcp/ip of a vm in datastore.
 func DeleteVMHost(ctx context.Context, vmName string) error {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(&ufspb.VM{Name: vmName})
-		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
-			return err
-		}
 
+		//Get VM
 		oldVM, err := inventory.GetVM(ctx, vmName)
 		if err != nil {
 			return err
 		}
+
+		// Validate the input
+		if err := validateDeleteVM(ctx, oldVM); err != nil {
+			return err
+		}
+
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		oldVM.Vlan = ""
 		oldVM.Ip = ""
@@ -217,12 +249,16 @@ func processVMUpdateMask(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mas
 	for _, path := range mask.Paths {
 		switch path {
 		case "machineLseId":
-			lse, err := inventory.GetMachineLSE(ctx, vm.GetMachineLseId())
+			machine, err := getMachineForHost(ctx, vm.GetMachineLseId())
 			if err != nil {
-				return oldVM, errors.Annotate(err, "fail to get host by %s", vm.GetMachineLseId()).Err()
+				return oldVM, err
+			}
+			// check permission for the new machine realm
+			if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+				return oldVM, err
 			}
 			oldVM.MachineLseId = vm.GetMachineLseId()
-			oldVM.Zone = lse.GetZone()
+			oldVM.Zone = machine.GetLocation().GetZone().String()
 		case "macAddress":
 			oldVM.MacAddress = vm.GetMacAddress()
 		case "resourceState":
@@ -252,10 +288,20 @@ func DeleteVM(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(&ufspb.VM{Name: id})
 
+		//Get VM
+		vm, err := inventory.GetVM(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		// Validate the input
+		if err := validateDeleteVM(ctx, vm); err != nil {
+			return err
+		}
+
 		if err := inventory.DeleteVM(ctx, id); err != nil {
 			return errors.Annotate(err, "Unable to delete vm %s", id).Err()
 		}
-		hc.LogVMChanges(&ufspb.VM{Name: id}, nil)
 
 		if err := hc.stUdt.deleteStateHelper(ctx); err != nil {
 			return err
@@ -265,6 +311,7 @@ func DeleteVM(ctx context.Context, id string) error {
 			return err
 		}
 
+		hc.LogVMChanges(vm, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -312,17 +359,18 @@ func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
 }
 
 // validateCreateVM validates if a vm can be created
-func validateCreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) error {
+func validateCreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption, machine *ufspb.Machine) error {
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesCreate, machine.GetRealm()); err != nil {
+		return err
+	}
+
 	// Aggregate resource to check if vm does not exist
 	if err := resourceAlreadyExists(ctx, []*Resource{GetVMResource(vm.Name)}, nil); err != nil {
 		return err
 	}
 
 	resourcesNotFound := make([]*Resource, 0)
-	// Aggregate resource to check if machinelse does not exist
-	if vm.GetMachineLseId() != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(vm.GetMachineLseId()))
-	}
 	if nwOpt.GetVlan() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetVlanResource(nwOpt.GetVlan()))
 	}
@@ -339,17 +387,21 @@ func validateCreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOp
 }
 
 // validateUpdateVM validates if a vm can be updated
-func validateUpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) error {
-	// Aggregate resource to check if vm does not exist
-	resourcesNotFound := []*Resource{GetVMResource(vm.Name)}
-	// Aggregate resource to check if machinelse does not exist
-	if vm.GetMachineLseId() != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(vm.GetMachineLseId()))
+func validateUpdateVM(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMask) error {
+	// Check permission
+	machine, err := getMachineForHost(ctx, oldVM.GetMachineLseId())
+	if err != nil {
+		return err
+	}
+	if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+		return err
 	}
 
-	// check if resources does not exist
-	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
-		return err
+	if vm.GetMachineLseId() != "" {
+		// check if resources does not exist
+		if err := ResourceExist(ctx, []*Resource{GetMachineLSEResource(vm.GetMachineLseId())}, nil); err != nil {
+			return err
+		}
 	}
 
 	return validateVMUpdateMask(vm, mask)
@@ -385,4 +437,34 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 		}
 	}
 	return nil
+}
+
+func validateDeleteVM(ctx context.Context, vm *ufspb.VM) error {
+	machine, err := getMachineForHost(ctx, vm.GetMachineLseId())
+	if err != nil {
+		return err
+	}
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesDelete, machine.GetRealm()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getMachineForHost(ctx context.Context, lseName string) (*ufspb.Machine, error) {
+	// Get MachineLSE
+	lse, err := inventory.GetMachineLSE(ctx, lseName)
+	if err != nil {
+		return nil, errors.Annotate(err, "Fail to get host by %s", lseName).Err()
+	}
+	if len(lse.GetMachines()) == 0 {
+		return nil, errors.Annotate(err, "No machine for the host %s", lse.GetName()).Err()
+	}
+	//Get Machine
+	machine, err := registration.GetMachine(ctx, lse.GetMachines()[0])
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "machine %s not found", lse.GetMachines()[0])
+	}
+	return machine, nil
 }

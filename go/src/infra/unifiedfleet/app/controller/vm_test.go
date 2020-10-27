@@ -11,6 +11,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -19,6 +21,7 @@ import (
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
@@ -27,9 +30,16 @@ func TestCreateVM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("CreateVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "update-machine",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS3,
+			},
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "create-host",
-			Zone: "fake_zone",
+			Name:     "create-host",
+			Zone:     ufspb.Zone_ZONE_CHROMEOS3.String(),
+			Machines: []string{"update-machine"},
 		})
 		Convey("Create new VM", func() {
 			vm1 := &ufspb.VM{
@@ -40,7 +50,7 @@ func TestCreateVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
-			So(resp.GetZone(), ShouldEqual, "fake_zone")
+			So(resp.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS3.String())
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-create-1")
 			So(err, ShouldBeNil)
@@ -173,9 +183,13 @@ func TestUpdateVM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("UpdateVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "update-machine",
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "update-host",
-			Zone: "fake_zone",
+			Name:     "update-host",
+			Zone:     "fake_zone",
+			Machines: []string{"update-machine"},
 		})
 		Convey("Update non-existing VM", func() {
 			vm1 := &ufspb.VM{
@@ -185,7 +199,7 @@ func TestUpdateVM(t *testing.T) {
 			resp, err := UpdateVM(ctx, vm1, nil)
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no ChromeVM with ChromeVMID vm-update-1 in the system")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-1")
 			So(err, ShouldBeNil)
@@ -425,9 +439,13 @@ func TestDeleteVM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("DeleteVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "delete-machine",
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "delete-host",
-			Zone: "fake_zone",
+			Name:     "delete-host",
+			Zone:     "fake_zone",
+			Machines: []string{"delete-machine"},
 		})
 		Convey("Delete non-existing VM", func() {
 			err := DeleteVM(ctx, "vm-delete-1")
@@ -621,6 +639,256 @@ func TestBatchGetVMs(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldHaveLength, 0)
 		})
+	})
+}
+
+func TestRealmPermissionForVM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	registration.CreateMachine(ctx, &ufspb.Machine{
+		Name:  "machine-browser-1",
+		Realm: util.BrowserLabAdminRealm,
+	})
+	inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+		Name:     "lse-browser-1",
+		Machines: []string{"machine-browser-1"},
+		Hostname: "lse-browser-1",
+	})
+	inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+		Name:     "lse-browser-1.1",
+		Machines: []string{"machine-browser-1"},
+		Hostname: "lse-browser-1.1",
+	})
+	registration.CreateMachine(ctx, &ufspb.Machine{
+		Name:  "machine-osatl-2",
+		Realm: util.AtlLabAdminRealm,
+	})
+	inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+		Name:     "lse-browser-2",
+		Machines: []string{"machine-osatl-2"},
+		Hostname: "lse-browser-2",
+	})
+	Convey("TestRealmPermissionForVM", t, func() {
+
+		Convey("CreateVM with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-1",
+				MachineLseId: "lse-browser-1",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesCreate, util.BrowserLabAdminRealm)
+			resp, _ := CreateVM(ctx, vm1, nil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, vm1)
+		})
+
+		Convey("CreateVM without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-2",
+				MachineLseId: "lse-browser-1",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesCreate, util.AtlLabAdminRealm)
+			_, err := CreateVM(ctx, vm1, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("DeleteVM with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-3",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesDelete, util.BrowserLabAdminRealm)
+			err = DeleteVM(ctx, "vm-3")
+			So(err, ShouldBeNil)
+		})
+
+		Convey("DeleteVM without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-4",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesDelete, util.AtlLabAdminRealm)
+			err = DeleteVM(ctx, "vm-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateVM with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-5",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateVM(ctx, vm1, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Tags, ShouldResemble, []string{"Dell"})
+		})
+
+		Convey("UpdateVM without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-6",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateVM(ctx, vm1, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateVM(new machinelse and same realm) with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-7",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-1.1"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateVM(ctx, vm1, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.MachineLseId, ShouldEqual, "lse-browser-1.1")
+		})
+
+		Convey("UpdateVM(new machinelse and different realm) without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-8",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-2"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateVM(ctx, vm1, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateVM(new machinelse and different realm) with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-9",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-2"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.InventoriesUpdate),
+				),
+			})
+			resp, err := UpdateVM(ctx, vm1, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.MachineLseId, ShouldEqual, "lse-browser-2")
+		})
+
+		Convey("Partial UpdateVM with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-10",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Tags, ShouldResemble, []string{"Dell"})
+		})
+
+		Convey("Partial UpdateVM without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-11",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Partial UpdateVM(new machinelse and same realm) with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-12",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-1.1"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"machineLseId"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.MachineLseId, ShouldResemble, "lse-browser-1.1")
+		})
+
+		Convey("Partial UpdateVM(new machinelse and different realm) without permission - fail", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-13",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-2"
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"machineLseId"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Partial UpdateVM(new machinelse and different realm) with permission - pass", func() {
+			vm1 := &ufspb.VM{
+				Name:         "vm-14",
+				MachineLseId: "lse-browser-1",
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+			So(err, ShouldBeNil)
+
+			vm1.MachineLseId = "lse-browser-2"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.InventoriesUpdate),
+				),
+			})
+			resp, err := UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"machineLseId"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.MachineLseId, ShouldResemble, "lse-browser-2")
+		})
+
 	})
 }
 

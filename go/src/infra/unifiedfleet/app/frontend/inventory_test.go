@@ -324,9 +324,16 @@ func TestCreateVM(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("CreateVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "inventory-create-machine",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS3,
+			},
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "inventory-create-host",
-			Zone: "fake_zone",
+			Name:     "inventory-create-host",
+			Zone:     ufspb.Zone_ZONE_CHROMEOS3.String(),
+			Machines: []string{"inventory-create-machine"},
 		})
 		Convey("Create new VM - happy path", func() {
 			vm1 := &ufspb.VM{
@@ -343,7 +350,7 @@ func TestCreateVM(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "vms/inventory-create-vm1")
-			So(resp.GetZone(), ShouldEqual, "fake_zone")
+			So(resp.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS3.String())
 			So(resp.GetMachineLseId(), ShouldEqual, "inventory-create-host")
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
@@ -411,9 +418,16 @@ func TestUpdateVM(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("UpdateVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "inventory-update-machine",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS3,
+			},
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "inventory-update-host",
-			Zone: "fake_zone",
+			Name:     "inventory-update-host",
+			Zone:     ufspb.Zone_ZONE_CHROMEOS3.String(),
+			Machines: []string{"inventory-update-machine"},
 		})
 		Convey("Update existing VM", func() {
 			vm1 := &ufspb.VM{
@@ -517,9 +531,16 @@ func TestDeleteVM(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("DeleteVM", t, func() {
+		registration.CreateMachine(ctx, &ufspb.Machine{
+			Name: "inventory-delete-machine",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS3,
+			},
+		})
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-			Name: "inventory-delete-host",
-			Zone: "fake_zone",
+			Name:     "inventory-delete-host",
+			Zone:     ufspb.Zone_ZONE_CHROMEOS3.String(),
+			Machines: []string{"inventory-delete-machine"},
 		})
 		Convey("Delete vm by existing ID", func() {
 			vm1 := &ufspb.VM{
@@ -643,7 +664,7 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Zone:          "fake_zone",
+			Zone:          ufspb.Zone_ZONE_CHROMEOS3.String(),
 			Vlan:          "vlan-2",
 			ResourceState: ufspb.State_STATE_DEPLOYED_TESTING,
 		},
