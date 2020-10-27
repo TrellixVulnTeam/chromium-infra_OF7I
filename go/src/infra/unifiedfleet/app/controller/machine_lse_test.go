@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -115,8 +117,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := CreateMachineLSE(ctx, machineLSE1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-1 in the system.\n"+
-				"There is no Machine with MachineID machine-2 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-2")
@@ -560,6 +561,21 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 func TestUpdateMachineLSEDUT(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	machine10 := &ufspb.Machine{
+		Name: "machine-10",
+	}
+	registration.CreateMachine(ctx, machine10)
+
+	machine21 := &ufspb.Machine{
+		Name: "machine-21",
+	}
+	registration.CreateMachine(ctx, machine21)
+
+	machine22 := &ufspb.Machine{
+		Name: "machine-22",
+	}
+	registration.CreateMachine(ctx, machine22)
+
 	servo1 := &chromeosLab.Servo{
 		ServoHostname: "BlueLabstation-10",
 		ServoPort:     21,
@@ -570,6 +586,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	}
 
 	labstationMachinelse := mockLabstationMachineLSE("BlueLabstation-10")
+	labstationMachinelse.Machines = []string{"machine-10"}
 	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo1, servo2}
 	inventory.CreateMachineLSE(ctx, labstationMachinelse)
 
@@ -577,6 +594,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 		Servo: servo1,
 	}
 	dutMachinelse1 := mockDutMachineLSE("DUTMachineLSE-21")
+	dutMachinelse1.Machines = []string{"machine-21"}
 	dutMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals1
 	inventory.CreateMachineLSE(ctx, dutMachinelse1)
 
@@ -584,6 +602,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 		Servo: servo2,
 	}
 	dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-22")
+	dutMachinelse2.Machines = []string{"machine-22"}
 	dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
 	inventory.CreateMachineLSE(ctx, dutMachinelse2)
 
@@ -595,7 +614,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			resp, err := UpdateMachineLSE(ctx, dutMachinelse, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no MachineLSE with MachineLSEID DUTMachineLSE-23 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update machineLSE DUT with same ServerPort and same ServoHostname", func() {
@@ -607,6 +626,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 				Servo: servo3,
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-21")
+			dutMachinelse3.Machines = []string{"machine-21"}
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
 			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
 			So(resp, ShouldNotBeNil)
@@ -673,10 +693,15 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse2)
 			So(err, ShouldBeNil)
 
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-17",
+			})
+			So(err, ShouldBeNil)
 			peripherals1 := &chromeosLab.Peripherals{
 				Servo: servo1,
 			}
 			dutMachinelse1 := mockDutMachineLSE("DUTMachineLSE-17")
+			dutMachinelse1.Machines = []string{"machine-17"}
 			dutMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals1
 			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse1)
 			So(err, ShouldBeNil)
@@ -720,7 +745,14 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 	ctx := testingContext()
 	Convey("UpdateMachineLSE for a Labstation", t, func() {
 		Convey("Update machineLSE Labstation with Servo Info", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
 			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-10")
+			labstationMachinelse1.Machines = []string{"machine-10"}
 			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
 
 			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-10")
@@ -1360,8 +1392,14 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 	ctx := testingContext()
 	Convey("DeleteMachineLSE for a DUT", t, func() {
 		Convey("Delete machineLSE DUT with Servo Info", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
 			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-92")
-			_, err := inventory.CreateMachineLSE(ctx, labstationMachinelse)
+			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse)
 			So(err, ShouldBeNil)
 
 			servo := &chromeosLab.Servo{
@@ -1372,6 +1410,7 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 				Servo: servo,
 			}
 			dutMachinelse := mockDutMachineLSE("DUTMachineLse-92")
+			dutMachinelse.Machines = []string{"machine-1"}
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
 			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
 			So(err, ShouldBeNil)
@@ -1399,13 +1438,20 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 	ctx := testingContext()
 	Convey("DeleteMachineLSE for a Labstation", t, func() {
 		Convey("Delete machineLSE Labstation with Servo Info", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-90",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
 			servo := &chromeosLab.Servo{
 				ServoHostname: "RedLabstation-90",
 				ServoPort:     90,
 			}
 			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-90")
+			labstationMachinelse.Machines = []string{"machine-90"}
 			labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
-			_, err := inventory.CreateMachineLSE(ctx, labstationMachinelse)
+			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse)
 			So(err, ShouldBeNil)
 
 			peripherals := &chromeosLab.Peripherals{
@@ -1434,9 +1480,16 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 		Convey("Delete machineLSE Labstation without Servo Info", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-100",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
 			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-100")
+			labstationMachinelse.Machines = []string{"machine-100"}
 			inventory.CreateMachineLSE(ctx, labstationMachinelse)
-			_, err := state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
 				State:        ufspb.State_STATE_SERVING,
 				ResourceName: "hosts/RedLabstation-100",
 			})
@@ -1565,5 +1618,355 @@ func TestBatchGetMachineLSEs(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldHaveLength, 0)
 		})
+	})
+}
+
+func TestRealmPermissionForMachineLSE(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("TestRealmPermissionForMachineLSE", t, func() {
+		Convey("CreateMachineLSE with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-1",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse := &ufspb.MachineLSE{
+				Name:     "machinelse-1",
+				Machines: []string{"machine-1"},
+				Hostname: "machinelse-1",
+			}
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesCreate, util.BrowserLabAdminRealm)
+			resp, err := CreateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, mlse)
+		})
+
+		Convey("CreateMachineLSE without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-2",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse := &ufspb.MachineLSE{
+				Name:     "machinelse-2",
+				Machines: []string{"machine-2"},
+			}
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.AtlLabAdminRealm)
+			_, err = CreateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("DeleteMachineLSE with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-3",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-3",
+				Machines: []string{"machine-3"},
+				Hostname: "machinelse-3",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesDelete, util.BrowserLabAdminRealm)
+			err = DeleteMachineLSE(ctx, "machinelse-3")
+			So(err, ShouldBeNil)
+		})
+
+		Convey("DeleteMachineLSE without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-4",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-4",
+				Machines: []string{"machine-4"},
+				Hostname: "machinelse-4",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesDelete, util.AtlLabAdminRealm)
+			err = DeleteMachineLSE(ctx, "machinelse-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateMachineLSE with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-5",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-5",
+				Machines: []string{"machine-5"},
+				Hostname: "machinelse-5",
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Tags, ShouldResemble, []string{"Dell"})
+		})
+
+		Convey("UpdateMachineLSE without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-6",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-6",
+				Machines: []string{"machine-6"},
+				Hostname: "machinelse-6",
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateMachineLSE(new machine and same realm) with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-7",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-7",
+				Machines: []string{"machine-7"},
+				Hostname: "machinelse-7",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-7.1",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-7.1"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Machines, ShouldResemble, []string{"machine-7.1"})
+		})
+
+		Convey("UpdateMachineLSE(new machine and different realm) without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-8",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-8",
+				Machines: []string{"machine-8"},
+				Hostname: "machinelse-8",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-8.1",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-8.1"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("UpdateMachineLSE(new machine and different realm) with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-9",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-9",
+				Machines: []string{"machine-9"},
+				Hostname: "machinelse-9",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-9.1",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-9.1"}
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.InventoriesUpdate),
+				),
+			})
+			resp, err := UpdateMachineLSE(ctx, mlse, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Machines, ShouldResemble, []string{"machine-9.1"})
+		})
+
+		Convey("Partial UpdateMachineLSE with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-10",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-10",
+				Machines: []string{"machine-10"},
+				Hostname: "machinelse-10",
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateMachineLSE(ctx, mlse, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Tags, ShouldResemble, []string{"Dell"})
+		})
+
+		Convey("Partial UpdateMachineLSE without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-11",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-11",
+				Machines: []string{"machine-11"},
+				Hostname: "machinelse-11",
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Tags = []string{"Dell"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateMachineLSE(ctx, mlse, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Partial UpdateMachineLSE(new machine and same realm) with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-12",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-12",
+				Machines: []string{"machine-12"},
+				Hostname: "machinelse-12",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-12.1",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-12.1"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			resp, err := UpdateMachineLSE(ctx, mlse, &field_mask.FieldMask{Paths: []string{"machines"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Machines, ShouldResemble, []string{"machine-12.1"})
+		})
+
+		Convey("Partial UpdateMachineLSE(new machine and different realm) without permission - fail", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-13",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-13",
+				Machines: []string{"machine-13"},
+				Hostname: "machinelse-13",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-13.1",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-13.1"}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.InventoriesUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateMachineLSE(ctx, mlse, &field_mask.FieldMask{Paths: []string{"machines"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Partial UpdateMachineLSE(new machine and different realm) with permission - pass", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-14",
+				Realm: util.BrowserLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-14",
+				Machines: []string{"machine-14"},
+				Hostname: "machinelse-14",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-14.1",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			mlse.Machines = []string{"machine-14.1"}
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.InventoriesUpdate),
+				),
+			})
+			resp, err := UpdateMachineLSE(ctx, mlse, &field_mask.FieldMask{Paths: []string{"machines"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Machines, ShouldResemble, []string{"machine-14.1"})
+		})
+
 	})
 }

@@ -57,18 +57,20 @@ func createLabstation(ctx context.Context, lse *ufspb.MachineLSE) (*ufspb.Machin
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(lse)
 
-		// Validate input
-		err := validateCreateMachineLSE(ctx, lse, nil)
-		if err != nil {
-			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
-		}
-
 		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, lse.GetMachines()[0])
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
+
+		// Validate input
+		if err := validateCreateMachineLSE(ctx, lse, nil, machine); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to create labstation").Err()
+		}
+
+		//Copy for logging
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+
 		machine.ResourceState = ufspb.State_STATE_SERVING
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
@@ -101,18 +103,20 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(lse)
 
-		// Validate input
-		err := validateCreateMachineLSE(ctx, lse, nwOpt)
-		if err != nil {
-			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
-		}
-
 		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, lse.GetMachines()[0])
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
+
+		// Validate input
+		if err := validateCreateMachineLSE(ctx, lse, nwOpt, machine); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
+		}
+
+		// Copy for logging
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+
 		machine.ResourceState = ufspb.State_STATE_SERVING
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
@@ -188,13 +192,21 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 	}
 
 	var oldMachinelse *ufspb.MachineLSE
+	var err error
 	// If its a Chrome browser host, ChromeOS server or a ChormeOS labstation
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 
+		// Get the old machinelse
+		// getting oldmachinelse for change history logging
+		oldMachinelse, err = inventory.GetMachineLSE(ctx, machinelse.GetName())
+		if err != nil {
+			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
+		}
+
 		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, mask)
+		err := validateUpdateMachineLSE(ctx, oldMachinelse, machinelse, mask)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update MachineLSE").Err()
 		}
@@ -207,12 +219,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 			machinelse.GetChromeBrowserMachineLse().Vms = nil
 		}
 
-		// Get the old machinelse
-		// getting oldmachinelse for change history logging
-		oldMachinelse, err = inventory.GetMachineLSE(ctx, machinelse.GetName())
-		if err != nil {
-			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
-		}
+		// Copy for logging
 		oldMachinelseCopy := proto.Clone(oldMachinelse).(*ufspb.MachineLSE)
 		// Copy the rack/zone/manufacturer/nic/vlan to machinelse OUTPUT only fields from already existing machinelse
 		machinelse.Rack = oldMachinelse.GetRack()
@@ -246,6 +253,11 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 				machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
 				if err != nil {
 					return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+				}
+
+				// Check permission
+				if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+					return err
 				}
 				setOutputField(ctx, machine, machinelse)
 				if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
@@ -328,6 +340,10 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 				return oldMachinelse, errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
 			}
 			oldMachinelse.Machines = machinelse.GetMachines()
+			// Check permission
+			if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+				return oldMachinelse, err
+			}
 			setOutputField(ctx, machine, oldMachinelse)
 			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
 				return oldMachinelse, errors.Annotate(err, "failed to update zone indexing").Err()
@@ -442,19 +458,20 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 // Delete if this MachineLSE is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachineLSE(ctx context.Context, id string) error {
-	err := validateDeleteMachineLSE(ctx, id)
-	if err != nil {
-		return err
-	}
-	existingMachinelse := &ufspb.MachineLSE{}
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(&ufspb.MachineLSE{
 			Name: id,
 		})
-		existingMachinelse, err = inventory.GetMachineLSE(ctx, id)
+
+		existingMachinelse, err := inventory.GetMachineLSE(ctx, id)
 		if err != nil {
 			return err
 		}
+
+		if err := validateDeleteMachineLSE(ctx, existingMachinelse); err != nil {
+			return err
+		}
+
 		// Check if it is a DUT MachineLSE and has servo info.
 		// Update corresponding Labstation MachineLSE.
 		if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
@@ -796,7 +813,12 @@ func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinel
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.
-func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) error {
+func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption, machine *ufspb.Machine) error {
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesCreate, machine.GetRealm()); err != nil {
+		return err
+	}
+
 	//1. Check for servos for Labstation deployment
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
@@ -876,16 +898,18 @@ func UpdateMachineLSEHost(ctx context.Context, machinelseName string, nwOpt *ufs
 	var err error
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(&ufspb.MachineLSE{Name: machinelseName})
-		// Validate the input
-		if err := validateUpdateMachineLSEHost(ctx, machinelseName, nwOpt); err != nil {
-			return err
-		}
 
 		// Since we update the nic, we have to get machinelse within the transaction
 		machinelse, err = GetMachineLSE(ctx, machinelseName)
 		if err != nil {
 			return err
 		}
+
+		// Validate the input
+		if err := validateUpdateMachineLSEHost(ctx, machinelse, nwOpt); err != nil {
+			return err
+		}
+
 		// this is for logging changes
 		oldMachinelse = proto.Clone(machinelse).(*ufspb.MachineLSE)
 		if err := setNicIfNeeded(ctx, machinelse, nil, nwOpt); err != nil {
@@ -922,9 +946,17 @@ func UpdateMachineLSEHost(ctx context.Context, machinelseName string, nwOpt *ufs
 }
 
 // validateUpdateMachineLSEHost validates if an ip can be assigned to the MachineLSE
-func validateUpdateMachineLSEHost(ctx context.Context, machinelseName string, nwOpt *ufsAPI.NetworkOption) error {
+func validateUpdateMachineLSEHost(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) error {
+	machine, err := registration.GetMachine(ctx, machinelse.GetMachines()[0])
+	if err != nil {
+		return errors.Annotate(err, "unable to get machine %s", machinelse.GetMachines()[0]).Err()
+	}
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
 	// Aggregate resource to check if machinelse does not exist
-	resourcesNotFound := []*Resource{GetMachineLSEResource(machinelseName)}
+	var resourcesNotFound []*Resource
 	if nwOpt.GetVlan() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetVlanResource(nwOpt.GetVlan()))
 	}
@@ -944,13 +976,20 @@ func validateUpdateMachineLSEHost(ctx context.Context, machinelseName string, nw
 func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(&ufspb.MachineLSE{Name: machinelseName})
-		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
-			return err
-		}
+
 		lse, err := inventory.GetMachineLSE(ctx, machinelseName)
 		if err != nil {
 			return err
 		}
+
+		if err := validateDeleteMachineLSEHost(ctx, lse); err != nil {
+			return err
+		}
+
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+
 		lseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
 		lse.Nic = ""
 		lse.Vlan = ""
@@ -972,7 +1011,16 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 }
 
 // validateUpdateMachineLSE validates if a machinelse can be updated in the datastore.
-func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_mask.FieldMask) error {
+func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineLSE, machinelse *ufspb.MachineLSE, mask *field_mask.FieldMask) error {
+	machine, err := registration.GetMachine(ctx, oldMachinelse.GetMachines()[0])
+	if err != nil {
+		return errors.Annotate(err, "unable to get machine %s", oldMachinelse.GetMachines()[0]).Err()
+	}
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
+
 	// 1. This check is only for a Labstation
 	// Check if labstation MachineLSE is updating any servo information
 	// It is also not allowed to update the servo Hostname and servo Port of any servo.
@@ -1093,9 +1141,17 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 }
 
 // validateDeleteMachineLSE validates if a MachineLSE can be deleted
-func validateDeleteMachineLSE(ctx context.Context, id string) error {
-	existingMachinelse, err := inventory.GetMachineLSE(ctx, id)
+func validateDeleteMachineLSE(ctx context.Context, existingMachinelse *ufspb.MachineLSE) error {
+	existingMachinelse, err := inventory.GetMachineLSE(ctx, existingMachinelse.GetName())
 	if err != nil {
+		return err
+	}
+	machine, err := registration.GetMachine(ctx, existingMachinelse.GetMachines()[0])
+	if err != nil {
+		return errors.Annotate(err, "unable to get machine %s", existingMachinelse.GetMachines()[0]).Err()
+	}
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesDelete, machine.GetRealm()); err != nil {
 		return err
 	}
 	if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
@@ -1110,7 +1166,7 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 		if len(nonDeletedHosts) != 0 {
 			errorMsg := fmt.Sprintf("Labstation %s cannot be deleted because "+
 				"there are servos in the labstation referenced by other DUTs: %s.",
-				id, strings.Join(nonDeletedHosts, ", "))
+				existingMachinelse.GetName(), strings.Join(nonDeletedHosts, ", "))
 			logging.Errorf(ctx, errorMsg)
 			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
@@ -1193,4 +1249,17 @@ func getHostHistoryClient(m *ufspb.MachineLSE) *HistoryClient {
 			Hostname: m.Name,
 		},
 	}
+}
+
+// validateDeleteMachineLSEHost validates if a lse host can be deleted
+func validateDeleteMachineLSEHost(ctx context.Context, lse *ufspb.MachineLSE) error {
+	machine, err := registration.GetMachine(ctx, lse.GetMachines()[0])
+	if err != nil {
+		return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
+	}
+	// Check permission
+	if err := util.CheckPermission(ctx, util.InventoriesDelete, machine.GetRealm()); err != nil {
+		return err
+	}
+	return nil
 }

@@ -822,9 +822,16 @@ func TestDeleteMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("DeleteMachineLSE", t, func() {
 		Convey("Delete machineLSE by existing ID", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+			machine := &ufspb.Machine{
+				Name: "machine-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name:     "machinelse-1",
 				Hostname: "machinelse-1",
+				Machines: []string{"machine-1"},
 			})
 			So(err, ShouldBeNil)
 
@@ -840,10 +847,17 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machineLSE by existing ID with assigned ip", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+			machine := &ufspb.Machine{
+				Name: "machine-with-ip",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name:     "machinelse-with-ip",
 				Hostname: "machinelse-with-ip",
 				Nic:      "eth0",
+				Machines: []string{"machine-1"},
 			})
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{

@@ -25,17 +25,18 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 		machinelses := []*ufspb.MachineLSE{machinelse}
-		// Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, nil)
-		if err != nil {
-			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
-		}
 
 		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
 		if err != nil {
 			return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
 		}
+
+		// Validate input
+		if err := validateCreateMachineLSE(ctx, machinelse, nil, machine); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
+		}
+
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
 		machine.ResourceState = ufspb.State_STATE_SERVING
 		setOutputField(ctx, machine, machinelse)
@@ -98,16 +99,16 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 	// TODO(eshwarn) : provide partial update for dut.
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
-		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, nil)
-		if err != nil {
-			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
-		}
 
 		// Get the existing MachineLSE(DUT)
 		oldMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
+		}
+
+		// Validate the input
+		if err := validateUpdateMachineLSE(ctx, oldMachinelse, machinelse, nil); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
 
 		var machine *ufspb.Machine
