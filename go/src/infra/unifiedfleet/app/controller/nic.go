@@ -31,15 +31,16 @@ import (
 func CreateNic(ctx context.Context, nic *ufspb.Nic) (*ufspb.Nic, error) {
 	f := func(ctx context.Context) error {
 		hc := getNicHistoryClient(nic)
-		// 1. Validate the input
-		if err := validateCreateNic(ctx, nic); err != nil {
-			return errors.Annotate(err, "CreateNic - validation failed").Err()
-		}
 
 		// Get browser machine to associate the nic
 		machine, err := getBrowserMachine(ctx, nic.GetMachine())
 		if err != nil {
 			return errors.Annotate(err, "CreateNic - failed to get machine %s", nic.GetMachine()).Err()
+		}
+
+		// Validate the input
+		if err := validateCreateNic(ctx, nic, machine); err != nil {
+			return errors.Annotate(err, "CreateNic - validation failed").Err()
 		}
 
 		// Fill the rack/zone to nic OUTPUT only fields for indexing nic table
@@ -70,16 +71,18 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic) (*ufspb.Nic, error) {
 func UpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
 	f := func(ctx context.Context) error {
 		hc := getNicHistoryClient(nic)
-		// 1. Validate the input
-		if err := validateUpdateNic(ctx, nic, mask); err != nil {
-			return errors.Annotate(err, "UpdateNic - validation failed").Err()
-		}
 
 		// Get old/existing nic
 		oldNic, err := registration.GetNic(ctx, nic.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
 		}
+
+		// Validate the input
+		if err := validateUpdateNic(ctx, oldNic, nic, mask); err != nil {
+			return errors.Annotate(err, "UpdateNic - validation failed").Err()
+		}
+
 		oldNicCopy := proto.Clone(oldNic).(*ufspb.Nic)
 		// Copy the rack/zone to nic OUTPUT only fields from already existing nic
 		nic.Rack = oldNic.GetRack()
@@ -103,7 +106,10 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) 
 				if err != nil {
 					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", nic.GetMachine()).Err()
 				}
-
+				// check permission for the new machine realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+					return err
+				}
 				// Fill the rack/zone to nic OUTPUT only fields
 				nic.Rack = machine.GetLocation().GetRack()
 				nic.Zone = machine.GetLocation().GetZone().String()
@@ -134,6 +140,10 @@ func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic
 			machine, err := getBrowserMachine(ctx, nic.GetMachine())
 			if err != nil {
 				return oldNic, errors.Annotate(err, "failed to get browser machine %s", nic.GetMachine()).Err()
+			}
+			// check permission for the new machine realm
+			if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+				return oldNic, err
 			}
 			oldNic.Machine = nic.GetMachine()
 			// Fill the rack/zone to nic OUTPUT only fields
@@ -201,11 +211,15 @@ func DeleteNic(ctx context.Context, id string) error {
 
 func deleteNicHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
-		nic := &ufspb.Nic{Name: id}
-		hc := getNicHistoryClient(nic)
-		hc.LogNicChanges(nic, nil)
+		hc := getNicHistoryClient(&ufspb.Nic{Name: id})
+
+		nic, err := registration.GetNic(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "DeleteNic - Unable to get nic").Err()
+		}
+
 		// Validate the input
-		if err := validateDeleteNic(ctx, id); err != nil {
+		if err := validateDeleteNic(ctx, nic); err != nil {
 			return errors.Annotate(err, "DeleteNic - validation failed").Err()
 		}
 
@@ -213,6 +227,7 @@ func deleteNicHelper(ctx context.Context, id string, inTransaction bool) error {
 		if err := registration.DeleteNic(ctx, id); err != nil {
 			return errors.Annotate(err, "DeleteNic - unable to delete nic %s", id).Err()
 		}
+		hc.LogNicChanges(nic, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if inTransaction {
@@ -332,15 +347,14 @@ func ReplaceNic(ctx context.Context, oldNic *ufspb.Nic, newNic *ufspb.Nic) (*ufs
 }
 
 // validateDeleteNic validates if a nic can be deleted
-func validateDeleteNic(ctx context.Context, nicName string) error {
-	// check if resources does not exist
-	if err := ResourceExist(ctx, []*Resource{GetNicResource(nicName)}, nil); err != nil {
-		return errors.Annotate(err, "validateDeleteNic - nic %s does not exist", nicName).Err()
-	}
-	// Get the nic
-	nic, err := GetNic(ctx, nicName)
+func validateDeleteNic(ctx context.Context, nic *ufspb.Nic) error {
+	machine, err := registration.GetMachine(ctx, nic.GetMachine())
 	if err != nil {
-		return errors.Annotate(err, "validateDeleteNic - failed to get nic %s", nicName).Err()
+		return errors.Annotate(err, "validateDeleteNic - unable to get machine %s", nic.GetMachine()).Err()
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, machine.GetRealm()); err != nil {
+		return err
 	}
 
 	// Get the machinelse associated with the nic
@@ -349,8 +363,8 @@ func validateDeleteNic(ctx context.Context, nicName string) error {
 		return errors.Annotate(err, "validateDeleteNic - failed to query host by machine %s", nic.GetMachine()).Err()
 	}
 	for _, lse := range lses {
-		if lse.GetNic() == nicName {
-			return status.Errorf(codes.InvalidArgument, "validateDeleteNic - nic %s is used by host %s", nicName, lse.GetName())
+		if lse.GetNic() == nic.GetName() {
+			return status.Errorf(codes.InvalidArgument, "validateDeleteNic - nic %s is used by host %s", nic.GetName(), lse.GetName())
 		}
 	}
 	return nil
@@ -360,8 +374,12 @@ func validateDeleteNic(ctx context.Context, nicName string) error {
 //
 // check if the nic already exists
 // checks if the machine and resources referenced by the nic does not exist
-func validateCreateNic(ctx context.Context, nic *ufspb.Nic) error {
-	// 1. Check if nic already exists
+func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machine *ufspb.Machine) error {
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, machine.GetRealm()); err != nil {
+		return err
+	}
+	// Check if nic already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetNicResource(nic.Name)}, nil); err != nil {
 		return err
 	}
@@ -371,22 +389,29 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic) error {
 	if err := validateNicSwitchPort(ctx, nic.GetName(), nic.GetMachine(), nic.GetSwitchInterface()); err != nil {
 		return err
 	}
-	// Aggregate resource to check if machine does not exist
-	resourcesNotFound := []*Resource{GetMachineResource(nic.GetMachine())}
 	// Aggregate resource to check if resources referenced by the nic does not exist
 	if switchID := nic.GetSwitchInterface().GetSwitch(); switchID != "" {
-		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
+		if err := ResourceExist(ctx, []*Resource{GetSwitchResource(switchID)}, nil); err != nil {
+			return err
+		}
 	}
-	// 2. Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	return nil
 }
 
 // validateUpdateNic validates if a nic can be updated
 //
 // checks if nic, machine and resources referecned by the nic does not exist
-func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) error {
-	// Aggregate resource to check if nic does not exist
-	resourcesNotFound := []*Resource{GetNicResource(nic.Name)}
+func validateUpdateNic(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.FieldMask) error {
+	machine, err := registration.GetMachine(ctx, oldNic.GetMachine())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "machine %s not found", oldNic.GetMachine())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
+	// Aggregate resource to check if does not exist
+	var resourcesNotFound []*Resource
 	// Aggregate resource to check if machine does not exist
 	if nic.GetMachine() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetMachineResource(nic.GetMachine()))

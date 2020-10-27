@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -17,6 +19,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockNic(id string) *ufspb.Nic {
@@ -44,7 +47,7 @@ func TestCreateNic(t *testing.T) {
 			resp, err := CreateNic(ctx, nic1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
 			So(err, ShouldBeNil)
@@ -126,6 +129,7 @@ func TestCreateNic(t *testing.T) {
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
@@ -134,6 +138,7 @@ func TestCreateNic(t *testing.T) {
 				Name:    "nic-25",
 				Machine: "machine-15",
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
 			resp, err := CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
@@ -192,6 +197,48 @@ func TestCreateNic(t *testing.T) {
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
 		})
+
+		Convey("Create new nic - permission denied: same realm and no create permission", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-16",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-26",
+				Machine: "machine-16",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = CreateNic(ctx, nic)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Create new nic - permission denied: different realm", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-17",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-27",
+				Machine: "machine-17",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			_, err = CreateNic(ctx, nic)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -212,7 +259,7 @@ func TestUpdateNic(t *testing.T) {
 			resp, err := UpdateNic(ctx, nic, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-1 in the system")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
 			So(err, ShouldBeNil)
@@ -220,15 +267,21 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update nic with non existing switch", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-2",
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
-				Name: "nic-2",
+				Name:    "nic-2",
+				Machine: "machine-2",
 			}
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
 			nic2 := &ufspb.Nic{
 				Name:    "nic-2",
-				Machine: "machine-1",
+				Machine: "machine-2",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
@@ -236,19 +289,20 @@ func TestUpdateNic(t *testing.T) {
 			resp, err := UpdateNic(ctx, nic2, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+			So(err.Error(), ShouldContainSubstring, "here is no Switch with SwitchID switch-1")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Update nic with new machine", func() {
+		Convey("Update nic with new machine(same realm) - success", func() {
 			machine3 := &ufspb.Machine{
 				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateMachine(ctx, machine3)
 			So(err, ShouldBeNil)
@@ -258,6 +312,7 @@ func TestUpdateNic(t *testing.T) {
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err = registration.CreateMachine(ctx, machine4)
 			So(err, ShouldBeNil)
@@ -273,6 +328,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:    "nic-3",
 				Machine: "machine-4",
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateNic(ctx, nic, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -285,8 +341,14 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update nic with non existing machine", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-5",
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
-				Name: "nic-6",
+				Name:    "nic-6",
+				Machine: "machine-5",
 			}
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
@@ -298,7 +360,7 @@ func TestUpdateNic(t *testing.T) {
 			resp, err := UpdateNic(ctx, nic, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
+			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-6")
 			So(err, ShouldBeNil)
@@ -306,8 +368,14 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Partial Update nic", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-7.1",
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
-				Name: "nic-7",
+				Name:    "nic-7",
+				Machine: "machine-7.1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-7",
 					PortName: "25",
@@ -326,14 +394,25 @@ func TestUpdateNic(t *testing.T) {
 			resp, err := UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
+			So(resp.GetMachine(), ShouldResemble, "machine-7.1")
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
 			So(resp.GetSwitchInterface().GetPortName(), ShouldEqual, "75")
 			So(resp.GetMacAddress(), ShouldResemble, "efgh")
 		})
 
-		Convey("Partial Update nic mac address - succeed", func() {
+		Convey("Partial Update nic mac address and machine(same realm) - succeed", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-8",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
 				Name:       "nic-8",
+				Machine:    "machine-8",
 				MacAddress: "abcd",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-8",
@@ -343,18 +422,35 @@ func TestUpdateNic(t *testing.T) {
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
+			machine1 = &ufspb.Machine{
+				Name: "machine-8-8",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic1 := &ufspb.Nic{
 				Name:       "nic-8",
+				Machine:    "machine-8-8",
 				MacAddress: "nic-8-address",
 			}
-			nic, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			nic, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress", "machine"}})
 			So(err, ShouldBeNil)
 			So(nic.GetMacAddress(), ShouldEqual, "nic-8-address")
 		})
 
 		Convey("Partial Update nic mac address - duplicated mac address", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-8.1",
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
 				Name:       "nic-8.1",
+				Machine:    "machine-8.1",
 				MacAddress: "nic-8.1-address",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-nic-8.1",
@@ -383,8 +479,14 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Partial Update nic mac address - no update at all", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-9",
+			}
+			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
 				Name:       "nic-9",
+				Machine:    "machine-9",
 				MacAddress: "nic-9-address",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "nic-switch-9",
@@ -403,8 +505,13 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update nic mac address - duplicated mac address", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-10",
+			}
+			registration.CreateMachine(ctx, machine1)
 			nic := &ufspb.Nic{
 				Name:       "nic-full-update",
+				Machine:    "machine-10",
 				MacAddress: "nic-full-update-address",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-nic-full",
@@ -412,8 +519,14 @@ func TestUpdateNic(t *testing.T) {
 				},
 			}
 			_, err := registration.CreateNic(ctx, nic)
+
+			machine2 := &ufspb.Machine{
+				Name: "machine-11",
+			}
+			registration.CreateMachine(ctx, machine2)
 			nic2 := &ufspb.Nic{
 				Name:       "nic-full-update2",
+				Machine:    "machine-11",
 				MacAddress: "nic-full-update-address2",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-nic-full",
@@ -458,6 +571,212 @@ func TestUpdateNic(t *testing.T) {
 			So(res, ShouldNotBeNil)
 			So(res, ShouldResembleProto, nic1)
 		})
+
+		Convey("Update nic - permission denied: same realm and no update permission", func() {
+			machine1 := &ufspb.Machine{
+				Name:  "machine-12",
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-12",
+				Machine: "machine-12",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic2 := &ufspb.Nic{
+				Name:       "nic-12",
+				Machine:    "machine-12",
+				MacAddress: "nic-12-address",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.AtlLabAdminRealm)
+			_, err = UpdateNic(ctx, nic2, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update nic - permission denied: different realm", func() {
+			machine1 := &ufspb.Machine{
+				Name:  "machine-13",
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-13",
+				Machine: "machine-13",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic2 := &ufspb.Nic{
+				Name:       "nic-13",
+				Machine:    "machine-13",
+				MacAddress: "nic-13-address",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateNic(ctx, nic2, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update nic with new machine(different realm with no permission) - Permission denied", func() {
+			machine3 := &ufspb.Machine{
+				Name: "machine-14",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine3)
+			So(err, ShouldBeNil)
+
+			machine4 := &ufspb.Machine{
+				Name: "machine-15",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateMachine(ctx, machine4)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-14",
+				Machine: "machine-14",
+			}
+			_, err = registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic = &ufspb.Nic{
+				Name:    "nic-14",
+				Machine: "machine-15",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateNic(ctx, nic, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Partial Update nic with new machine(different realm with no permission) - Permission denied", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-16",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-16",
+				Machine: "machine-16",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			machine2 := &ufspb.Machine{
+				Name: "machine-17",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine2)
+
+			nic1 := &ufspb.Nic{
+				Name:    "nic-16",
+				Machine: "machine-17",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"machine"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update nic with new machine(different realm with permission) - Pass", func() {
+			machine3 := &ufspb.Machine{
+				Name: "machine-18",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine3)
+			So(err, ShouldBeNil)
+
+			machine4 := &ufspb.Machine{
+				Name: "machine-19",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err = registration.CreateMachine(ctx, machine4)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-18",
+				Machine: "machine-18",
+			}
+			_, err = registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic.Machine = "machine-19"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateNic(ctx, nic, nil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, nic)
+		})
+
+		Convey("Partial Update nic with new machine(different realm with permission) - Pass", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-20",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-20",
+				Machine: "machine-20",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			machine2 := &ufspb.Machine{
+				Name: "machine-21",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine2)
+
+			nic.Machine = "machine-21"
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateNic(ctx, nic, &field_mask.FieldMask{Paths: []string{"machine"}})
+			So(resp, ShouldNotBeNil)
+			So(resp.GetMachine(), ShouldEqual, "machine-21")
+		})
 	})
 }
 
@@ -468,7 +787,7 @@ func TestDeleteNic(t *testing.T) {
 		Convey("Delete nic error by non-existing ID", func() {
 			err := DeleteNic(ctx, "nic-10")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-10 in the system")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-10")
 			So(err, ShouldBeNil)
@@ -477,10 +796,17 @@ func TestDeleteNic(t *testing.T) {
 
 		Convey("Delete nic successfully by existing ID", func() {
 			nic := mockNic("nic-1")
+			machine1 := &ufspb.Machine{
+				Name:  "machine-1",
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+			nic.Machine = "machine-1"
 			resp, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
 			err = DeleteNic(ctx, "nic-1")
 			So(err, ShouldBeNil)
 
@@ -526,6 +852,42 @@ func TestDeleteNic(t *testing.T) {
 			resp, err := registration.GetNic(ctx, "nic-ip")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
+		})
+
+		Convey("Delete nic - permission denied: same realm and no delete permission", func() {
+			nic := mockNic("nic-3")
+			machine1 := &ufspb.Machine{
+				Name:  "machine-3",
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+			nic.Machine = "machine-3"
+			resp, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.AtlLabAdminRealm)
+			err = DeleteNic(ctx, "nic-3")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Delete nic - permission denied: different realm", func() {
+			nic := mockNic("nic-4")
+			machine1 := &ufspb.Machine{
+				Name:  "machine-4",
+				Realm: util.AtlLabAdminRealm,
+			}
+			registration.CreateMachine(ctx, machine1)
+			nic.Machine = "machine-4"
+			resp, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.BrowserLabAdminRealm)
+			err = DeleteNic(ctx, "nic-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }
