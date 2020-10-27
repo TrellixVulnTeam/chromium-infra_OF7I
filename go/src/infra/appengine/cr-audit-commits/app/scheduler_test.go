@@ -83,7 +83,8 @@ func TestScheduler(t *testing.T) {
 			So(w.Code, ShouldEqual, http.StatusInternalServerError)
 		})
 
-		Convey("CreateTask succeeds", func() {
+		// TODO(crbug.com/1142678): enable again.
+		SkipConvey("CreateTask succeeds", func() {
 			fakeCloudTasks := &cloudtasksmodule.FakeServer{
 				CreateTaskResponse: &taskspb.Task{},
 			}

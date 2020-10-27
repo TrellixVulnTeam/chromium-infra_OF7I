@@ -259,7 +259,8 @@ import:
   subpackages:
   - gerrit
 - package: github.com/shirou/gopsutil
-  version: master
+  # TODO(crbug.com/1142700): back to master.
+  version: 3202231bcdbd3a6d236dbcc3ec92a96ddfa7168f
   repo: https://chromium.googlesource.com/external/github.com/shirou/gopsutil.git
 - package: github.com/shirou/w32
   version: master
