@@ -32,12 +32,13 @@ export default class ManualRepair extends connect
       SHARED_STYLES,
       css`
       #app-body {
-        width: 70%;
+        width: 75%;
+        height: calc(100vh - 64px);
         margin: auto;
         padding: 1.8em 0 3em 0;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        overflow-y: hidden;
       }
 
       .page-link {

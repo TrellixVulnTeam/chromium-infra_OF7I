@@ -37,26 +37,55 @@ enum FormAction {
       :host {
         width: 100%;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #repair-form {
+        display: flex;
+        flex-direction: row;
+        overflow: hidden;
+      }
+
+      #repair-form-left {
+        width: 40%;
+        flex-shrink: 0;
+        flex-grow: 1;
+        overflow-y: scroll;
+      }
+
+      #repair-form-right {
+        width: 60%;
+        flex-shrink: 0;
+        flex-grow: 1;
+        overflow-y: scroll;
+      }
+
+      .form-column {
+        padding: 0 0.8em 1.8em;
       }
 
       .form-slot {
         display: flex;
-        flex-direction: row;
-      }
-
-      .form-title, .form-subtitle {
-        margin: 0 0 1em 0;
+        flex-direction: column;
       }
 
       .form-title {
+        margin: 0 0 1em 0;
         text-align: center;
       }
 
       .form-subtitle {
-        padding: 0.8em 0.5em 0 0;
-        width: 20%;
-        text-align: right;
+        padding: 0.8em 8px 0.3em;
+        margin-bottom: 0.5em;
+
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0px;
+        z-index: 1;
+
+        text-align: left;
+        background-color: #fff;
       }
 
       #device-info, #repair-info, #additional-info, #repair-actions, .repair-checkboxes {
@@ -67,7 +96,12 @@ enum FormAction {
         flex-wrap: wrap;
       }
 
-      #device-info mwc-textfield, .repair-dropdown {
+      #device-info mwc-textfield {
+        width: 100%;
+        margin: 0 0.8em 0.5em 0;
+      }
+
+      .repair-dropdown {
         width: 45%;
         margin: 0 0.8em 0.5em 0;
       }
@@ -103,6 +137,7 @@ enum FormAction {
         position: fixed;
         right: 2em;
         bottom: 2em;
+        z-index: 5;
 
         display: flex;
         flex-direction: column;
@@ -512,6 +547,107 @@ enum FormAction {
   }
 
   /**
+   * Return Lit HTML containing the repair record information.
+   */
+  displayRepairInfo() {
+    return html`
+      <div class="form-slot">
+        <h3 class="form-subtitle">Repair Record</h3>
+      </div>
+      <div class="form-slot">
+        <h4 class="form-subtitle">Repair Actions</h4>
+        <div id="repair-actions">
+          ${
+        this.buildRepairDropdown(
+            repairConst.DROPDOWN_ACTIONS.labstationRepairActions)}
+          ${
+        this.buildRepairDropdown(
+            repairConst.DROPDOWN_ACTIONS.servoRepairActions)}
+          ${
+        this.buildRepairDropdown(
+            repairConst.DROPDOWN_ACTIONS.yoshiRepairActions)}
+          ${
+        this.buildRepairDropdown(
+            repairConst.DROPDOWN_ACTIONS.chargerRepairActions)}
+          ${
+        this.buildRepairDropdown(
+            repairConst.DROPDOWN_ACTIONS.usbStickRepairActions)}
+          ${
+        this.buildRepairDropdown(repairConst.DROPDOWN_ACTIONS.rpmRepairActions)}
+        </div>
+      </div>
+      <div class="form-slot">
+        <h4 class="form-subtitle">Other Cables Repair Actions</h4>
+        ${
+        this.buildRepairCheckboxes(
+            repairConst.CHECKBOX_ACTIONS.cableRepairActions)}
+      </div>
+      <div class="form-slot">
+        <h4 class="form-subtitle">DUT Repair Actions</h4>
+        ${
+        this.buildRepairCheckboxes(
+            repairConst.CHECKBOX_ACTIONS.dutRepairActions)}
+      </div>
+      <div class="form-slot">
+        <h4 class="form-subtitle">Repair Info</h4>
+        <div id="repair-info">
+          <mwc-textfield
+            label="Buganizer Bug"
+            ?disabled="${this.submitting}"
+            value="${this.recordObj.buganizerBugUrl}"
+            @input="${this.handleBuganizerChange}"
+          ></mwc-textfield>
+          <mwc-textfield
+            label="Diagnosis"
+            ?disabled="${this.submitting}"
+            value="${this.recordObj.diagnosis}"
+            @input="${this.handleDiagnosisChange}"
+          ></mwc-textfield>
+          <mwc-textfield
+            label="Fix Procedure"
+            ?disabled="${this.submitting}"
+            value="${this.recordObj.repairProcedure}"
+            @input="${this.handleProcedureChange}"
+          ></mwc-textfield>
+          <mwc-formfield label="Replacement Requested">
+            <mwc-checkbox
+              ?disabled="${this.submitting}"
+              ?checked="${this.recordObj.replacementRequested}"
+              @change="${this.handleReplacementRequestedChange}">
+            </mwc-checkbox>
+          </mwc-formfield>
+        </div>
+      </div>
+      <div class="form-slot">
+        <h4 class="form-subtitle">Additional Info</h4>
+        <div id="additional-info">
+          <mwc-textfield
+            disabled
+            label="Technician LDAP"
+            value="${this.recordObj.userLdap}"
+          ></mwc-textfield>
+          <mwc-textfield
+            disabled
+            label="Created Time"
+            value="${this.recordObj.createdTime || ''}"
+          ></mwc-textfield>
+          <mwc-textfield
+            disabled
+            label="Updated Time"
+            value="${this.recordObj.updatedTime || ''}"
+          ></mwc-textfield>
+          <mwc-textarea
+            label="Additional Comments"
+            rows=6
+            ?disabled="${this.submitting}"
+            value="${this.recordObj.additionalComments}"
+            @input="${this.handleCommentsChange}"
+          ></mwc-textarea>
+        </div>
+      </div>`;
+  }
+
+  /**
    * Button group indicating available actions.
    *  - For new records, the action will be Create Record.
    *  - For existing records, there will be two actions
@@ -543,108 +679,29 @@ enum FormAction {
   }
 
   /**
+   * Display simple messaging in place of form. Used to elevate information that
+   * may otherwise be missed in the snackbar.
+   */
+  displayFormMessage() {
+    return html`
+      <h2 class='form-title'>${this.formMessage}</h2>
+    `;
+  }
+
+  /**
    * Return Lit HTML of the main repair form.
    */
   displayForm() {
     return html`
-      <div id='repair-form'>
-        <h2 class='form-title'>${this.formAction} Manual Repair Record for ${
+      <h2 class='form-title'>${this.formAction} Manual Repair Record for ${
         this.getHostname()}</h2>
-        ${this.displayDeviceInfo()}
+      <div id='repair-form'>
+        <div id='repair-form-left' class='form-column'>
+          ${this.displayDeviceInfo()}
+        </div>
 
-        <div class="form-slot">
-          <h3 class="form-subtitle">Repair Record</h3>
-        </div>
-        <div class="form-slot">
-          <h4 class="form-subtitle">Repair Actions</h4>
-          <div id="repair-actions">
-            ${
-        this.buildRepairDropdown(
-            repairConst.DROPDOWN_ACTIONS.labstationRepairActions)}
-            ${
-        this.buildRepairDropdown(
-            repairConst.DROPDOWN_ACTIONS.servoRepairActions)}
-            ${
-        this.buildRepairDropdown(
-            repairConst.DROPDOWN_ACTIONS.yoshiRepairActions)}
-            ${
-        this.buildRepairDropdown(
-            repairConst.DROPDOWN_ACTIONS.chargerRepairActions)}
-            ${
-        this.buildRepairDropdown(
-            repairConst.DROPDOWN_ACTIONS.usbStickRepairActions)}
-            ${
-        this.buildRepairDropdown(repairConst.DROPDOWN_ACTIONS.rpmRepairActions)}
-          </div>
-        </div>
-        <div class="form-slot">
-          <h4 class="form-subtitle">Other Cables Repair Actions</h4>
-          ${
-        this.buildRepairCheckboxes(
-            repairConst.CHECKBOX_ACTIONS.cableRepairActions)}
-        </div>
-        <div class="form-slot">
-          <h4 class="form-subtitle">DUT Repair Actions</h4>
-          ${
-        this.buildRepairCheckboxes(
-            repairConst.CHECKBOX_ACTIONS.dutRepairActions)}
-        </div>
-        <div class="form-slot">
-          <h4 class="form-subtitle">Repair Info</h4>
-          <div id="repair-info">
-            <mwc-textfield
-              label="Buganizer Bug"
-              ?disabled="${this.submitting}"
-              value="${this.recordObj.buganizerBugUrl}"
-              @input="${this.handleBuganizerChange}"
-            ></mwc-textfield>
-            <mwc-textfield
-              label="Diagnosis"
-              ?disabled="${this.submitting}"
-              value="${this.recordObj.diagnosis}"
-              @input="${this.handleDiagnosisChange}"
-            ></mwc-textfield>
-            <mwc-textfield
-              label="Fix Procedure"
-              ?disabled="${this.submitting}"
-              value="${this.recordObj.repairProcedure}"
-              @input="${this.handleProcedureChange}"
-            ></mwc-textfield>
-            <mwc-formfield label="Replacement Requested">
-              <mwc-checkbox
-                ?disabled="${this.submitting}"
-                ?checked="${this.recordObj.replacementRequested}"
-                @change="${this.handleReplacementRequestedChange}">
-              </mwc-checkbox>
-            </mwc-formfield>
-          </div>
-        </div>
-        <div class="form-slot">
-          <h4 class="form-subtitle">Additional Info</h4>
-          <div id="additional-info">
-            <mwc-textfield
-              disabled
-              label="Technician LDAP"
-              value="${this.recordObj.userLdap}"
-            ></mwc-textfield>
-            <mwc-textfield
-              disabled
-              label="Created Time"
-              value="${this.recordObj.createdTime || ''}"
-            ></mwc-textfield>
-            <mwc-textfield
-              disabled
-              label="Updated Time"
-              value="${this.recordObj.updatedTime || ''}"
-            ></mwc-textfield>
-            <mwc-textarea
-              label="Additional Comments"
-              rows=6
-              ?disabled="${this.submitting}"
-              value="${this.recordObj.additionalComments}"
-              @input="${this.handleCommentsChange}"
-            ></mwc-textarea>
-          </div>
+        <div id='repair-form-right' class='form-column'>
+          ${this.displayRepairInfo()}
         </div>
         ${this.displayFormBtnGroup()}
       </div>`;
@@ -755,16 +812,6 @@ enum FormAction {
     submitRes.finally(() => {
       this.submitting = false;
     });
-  }
-
-  /**
-   * Display simple messaging in place of form. Used to elevate information that
-   * may otherwise be missed in the snackbar.
-   */
-  displayFormMessage() {
-    return html`
-      <h2>${this.formMessage}</h2>
-    `;
   }
 
   render() {
