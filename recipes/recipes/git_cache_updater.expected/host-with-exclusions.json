@@ -184,7 +184,7 @@
     "cost": {
       "cpu": 2000,
       "disk": 0,
-      "memory": 800,
+      "memory": 1600,
       "net": 10
     },
     "env": {
@@ -353,7 +353,7 @@
     "cost": {
       "cpu": 2000,
       "disk": 0,
-      "memory": 800,
+      "memory": 1600,
       "net": 10
     },
     "env": {
