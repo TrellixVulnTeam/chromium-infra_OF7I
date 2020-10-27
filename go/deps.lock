@@ -1,5 +1,5 @@
-hash: 463e46412cde53b0f5e9099efb2c6eac75bd76dfbabf8da2b3280213cd3f4458
-updated: 2020-10-27T15:38:11.618455832+01:00
+hash: 0d9d0d1587e815655a9c0e8ceda5787f5915fcbef16befb8638981242eb3f343
+updated: 2020-10-27T15:44:22.13520165+01:00
 imports:
 - name: cloud.google.com/go
   version: fc6d8e88f5307327101caba74cf5d065569fe5f6
@@ -262,11 +262,6 @@ imports:
 - name: github.com/luci/gkvlite
   version: 33184d2edd2d39ef71c3ed883e8ff752c4a18213
   repo: https://chromium.googlesource.com/external/github.com/luci/gkvlite.git
-- name: github.com/luci/go-render
-  version: 9a04cc21af0f2e328bfb81741ec9e8967c4f6541
-  repo: https://chromium.googlesource.com/external/github.com/luci/go-render.git
-  subpackages:
-  - render
 - name: github.com/luci/gtreap
   version: 35df89791e8f5560a1fa0c0e8b58709beda51722
   repo: https://chromium.googlesource.com/external/github.com/luci/gtreap.git
