@@ -20,6 +20,7 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // CreateDrac creates a new drac in datastore.
@@ -30,15 +31,16 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
 		hc := &HistoryClient{}
 		hc.LogDracChanges(nil, drac)
-		// 1. Validate input
-		if err := validateCreateDrac(ctx, drac); err != nil {
-			return errors.Annotate(err, "CreateDrac - validation failed").Err()
-		}
 
 		// Get browser machine to associate the drac
 		machine, err := getBrowserMachine(ctx, drac.GetMachine())
 		if err != nil {
 			return errors.Annotate(err, "CreateDrac - failed to get machine %s", drac.GetMachine()).Err()
+		}
+
+		// Validate input
+		if err := validateCreateDrac(ctx, drac, machine); err != nil {
+			return errors.Annotate(err, "CreateDrac - validation failed").Err()
 		}
 
 		// Fill the rack/zone to drac OUTPUT only fields for drac table indexing
@@ -68,16 +70,18 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 func UpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
 		hc := &HistoryClient{}
-		// 1. Validate the input
-		if err := validateUpdateDrac(ctx, drac, mask); err != nil {
-			return errors.Annotate(err, "UpdateDrac - validation failed").Err()
-		}
 
 		// Get old/existing drac
 		oldDrac, err := registration.GetDrac(ctx, drac.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
 		}
+
+		// Validate the input
+		if err := validateUpdateDrac(ctx, oldDrac, drac, mask); err != nil {
+			return errors.Annotate(err, "UpdateDrac - validation failed").Err()
+		}
+
 		oldDracCopy := proto.Clone(oldDrac).(*ufspb.Drac)
 		// Copy the rack/zone to drac OUTPUT only fields from already existing drac
 		drac.Rack = oldDrac.GetRack()
@@ -113,6 +117,10 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMas
 					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", drac.GetMachine()).Err()
 				}
 
+				// check permission for the new machine realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+					return err
+				}
 				// Fill the rack/zone to drac OUTPUT only fields
 				drac.Rack = machine.GetLocation().GetRack()
 				drac.Zone = machine.GetLocation().GetZone().String()
@@ -160,6 +168,10 @@ func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb
 				if err != nil {
 					return oldDrac, errors.Annotate(err, "UpdateDrac - get browser machine %s failed", drac.GetMachine()).Err()
 				}
+				// check permission for the new machine realm
+				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+					return oldDrac, err
+				}
 				oldDrac.Machine = drac.GetMachine()
 				// Fill the rack/zone to drac OUTPUT only fields
 				oldDrac.Rack = machine.GetLocation().GetRack()
@@ -199,6 +211,15 @@ func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb
 // DeleteDracHost deletes the host of a drac in datastore.
 func DeleteDracHost(ctx context.Context, dracName string) error {
 	f := func(ctx context.Context) error {
+		// Get drac
+		drac, err := registration.GetDrac(ctx, dracName)
+		if err != nil {
+			return errors.Annotate(err, "DeleteDracHost - Unable to get drac").Err()
+		}
+		// Validate the input
+		if err := validateDeleteDrac(ctx, drac); err != nil {
+			return errors.Annotate(err, "DeleteDracHost - validation failed").Err()
+		}
 		hc := &HistoryClient{
 			netUdt: &networkUpdater{
 				Hostname: dracName,
@@ -221,6 +242,7 @@ func DeleteDracHost(ctx context.Context, dracName string) error {
 func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, nwOpt *ufsAPI.NetworkOption) error {
 	f := func(ctx context.Context) error {
 		hc := getDracHistoryClient(drac)
+
 		// 1. Validate the input
 		if err := validateUpdateDracHost(ctx, drac, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
@@ -276,19 +298,29 @@ func DeleteDrac(ctx context.Context, id string) error {
 
 func deleteDracHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
-		drac := &ufspb.Drac{Name: id}
-		hc := getDracHistoryClient(drac)
-		hc.LogDracChanges(drac, nil)
-		// 1. Delete the drac
+		hc := getDracHistoryClient(&ufspb.Drac{Name: id})
+
+		// Get drac
+		drac, err := registration.GetDrac(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "DeleteDrac - Unable to get drac").Err()
+		}
+
+		// Validate the input
+		if err := validateDeleteDrac(ctx, drac); err != nil {
+			return errors.Annotate(err, "DeleteDrac - validation failed").Err()
+		}
+
+		// Delete the drac
 		if err := registration.DeleteDrac(ctx, id); err != nil {
 			return errors.Annotate(err, "DeleteDrac - unable to delete drac %s", id).Err()
 		}
 
-		// 2. Delete its ip configs
+		// Delete its ip configs
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return errors.Annotate(err, "DeleteDrac - unable to delete ip configs for drac %s", id).Err()
 		}
-
+		hc.LogDracChanges(drac, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if inTransaction {
@@ -341,7 +373,11 @@ func getBrowserMachineForDrac(ctx context.Context, dracName string) (*ufspb.Mach
 //
 // check if the drac already exists
 // checks if the machine and resources referenced by the drac does not exist
-func validateCreateDrac(ctx context.Context, drac *ufspb.Drac) error {
+func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machine *ufspb.Machine) error {
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, machine.GetRealm()); err != nil {
+		return err
+	}
 	// Check if Drac already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetDracResource(drac.Name)}, nil); err != nil {
 		return err
@@ -364,22 +400,30 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac) error {
 	if err := validateDracSwitchPort(ctx, drac.GetName(), drac.GetMachine(), drac.GetSwitchInterface()); err != nil {
 		return err
 	}
-	// Aggregate resource to check if machine does not exist
-	resourcesNotFound := []*Resource{GetMachineResource(drac.GetMachine())}
+
 	// Aggregate resource to check if resources referenced by the drac does not exist
 	if switchID := drac.GetSwitchInterface().GetSwitch(); switchID != "" {
-		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
+		if err := ResourceExist(ctx, []*Resource{GetSwitchResource(switchID)}, nil); err != nil {
+			return err
+		}
 	}
-	// Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	return nil
 }
 
 // validateUpdateDrac validates if a drac can be updated
 //
 // checks if drac, machine and resources referecned by the drac does not exist
-func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) error {
-	// Aggregate resource to check if drac does not exist
-	resourcesNotFound := []*Resource{GetDracResource(drac.Name)}
+func validateUpdateDrac(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_mask.FieldMask) error {
+	machine, err := registration.GetMachine(ctx, oldDrac.GetMachine())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "machine %s not found", oldDrac.GetMachine())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
+	// Aggregate resource to check if does not exist
+	var resourcesNotFound []*Resource
 	// Aggregate resource to check if machine does not exist
 	if drac.GetMachine() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetMachineResource(drac.GetMachine()))
@@ -409,6 +453,20 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.
 
 // validateUpdateDracHost validates if a host can be added to a drac
 func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName, ipv4Str string) error {
+	// during partial update, drac object may not have machine info, so we get the old drac to get the machine
+	// to check the permission
+	oldDrac, err := registration.GetDrac(ctx, drac.GetName())
+	if err != nil {
+		return err
+	}
+	machine, err := registration.GetMachine(ctx, oldDrac.GetMachine())
+	if err != nil {
+		return errors.Annotate(err, "unable to get machine %s", oldDrac.GetMachine()).Err()
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
 	if drac.GetMacAddress() == "" {
 		return errors.New("mac address of drac hasn't been specified")
 	}
@@ -416,7 +474,7 @@ func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName, ipv
 		return nil
 	}
 	// Check if resources does not exist
-	return ResourceExist(ctx, []*Resource{GetDracResource(drac.Name), GetVlanResource(vlanName)}, nil)
+	return ResourceExist(ctx, []*Resource{GetVlanResource(vlanName)}, nil)
 }
 
 // validateDracUpdateMask validates the update mask for drac update
@@ -460,4 +518,17 @@ func getDracHistoryClient(m *ufspb.Drac) *HistoryClient {
 			Hostname: m.Name,
 		},
 	}
+}
+
+// validateDeleteDrac validates if a drac can be deleted
+func validateDeleteDrac(ctx context.Context, drac *ufspb.Drac) error {
+	machine, err := registration.GetMachine(ctx, drac.GetMachine())
+	if err != nil {
+		return errors.Annotate(err, "validateDeleteDrac - unable to get machine %s", drac.GetMachine()).Err()
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, machine.GetRealm()); err != nil {
+		return err
+	}
+	return nil
 }
