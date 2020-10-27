@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"infra/monitoring/messages"
-	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	"golang.org/x/net/context"
@@ -12,41 +11,6 @@ import (
 
 type findit struct {
 	simpleClient
-}
-
-// Findit fetches items from the findit service, which identifies possible culprit CLs for a failed build.
-func (f *findit) Findit(ctx context.Context, builderGroup *messages.BuilderGroupLocation, builder string, buildNum int64, failedSteps []string) ([]*messages.FinditResult, error) {
-	// TODO(martiniss): Remove once perf is supported by findit
-	if strings.Contains(builderGroup.Name(), "perf") {
-		return []*messages.FinditResult{}, nil
-	}
-
-	data := map[string]interface{}{
-		"builds": []map[string]interface{}{
-			{
-				"master_url":   builderGroup.String(),
-				"builder_name": builder,
-				"build_number": buildNum,
-				"failed_steps": failedSteps,
-			},
-		},
-	}
-
-	b := bytes.NewBuffer(nil)
-	err := json.NewEncoder(b).Encode(data)
-
-	if err != nil {
-		return nil, err
-	}
-
-	URL := f.Host + "/_ah/api/findit/v1/buildfailure"
-	res := &FinditAPIResponse{}
-	if code, err := f.postJSON(ctx, URL, b.Bytes(), res); err != nil {
-		logging.Errorf(ctx, "Error (%d) fetching %s: %v", code, URL, err)
-		return nil, err
-	}
-
-	return res.Results, nil
 }
 
 // FinditBuildbucket fetches items from the findit service using buildbucket concept, which identifies possible culprit CLs for a failed build.

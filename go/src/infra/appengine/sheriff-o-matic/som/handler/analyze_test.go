@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -46,10 +45,6 @@ type mockFindit struct {
 
 func (mf *mockFindit) FinditBuildbucket(ctx context.Context, id int64, stepNames []string) ([]*messages.FinditResultV2, error) {
 	return mf.res, mf.err
-}
-
-func (mf *mockFindit) Findit(ctx context.Context, builderGroup *messages.BuilderGroupLocation, builder string, buildNum int64, failedSteps []string) ([]*messages.FinditResult, error) {
-	return nil, fmt.Errorf("don't call this in tests")
 }
 
 func TestAttachFinditResults(t *testing.T) {
