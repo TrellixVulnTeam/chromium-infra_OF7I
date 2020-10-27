@@ -101,10 +101,20 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 	var err error
 	f := func(ctx context.Context) error {
 		hc := getMachineHistoryClient(machine)
+
+		// Get the existing/old machine
+		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
+		}
+
 		// Validate input
-		if err := validateUpdateMachine(ctx, machine, mask); err != nil {
+		if err := validateUpdateMachine(ctx, oldMachine, machine, mask); err != nil {
 			return errors.Annotate(err, "UpdateMachine - validation failed").Err()
 		}
+
+		// Copy for logging
+		oldMachineCopy := proto.Clone(oldMachine).(*ufspb.Machine)
 
 		if machine.GetChromeBrowserMachine() != nil {
 			// nics and dracs are not allowed to update in UpdateMachine call.
@@ -113,13 +123,6 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			// user has to use nic/drac CRUD apis to update nic/drac
 			machine.GetChromeBrowserMachine().NicObjects = nil
 			machine.GetChromeBrowserMachine().DracObject = nil
-		}
-
-		// Get the existing/old machine
-		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
-		oldMachineCopy := proto.Clone(oldMachine).(*ufspb.Machine)
-		if err != nil {
-			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
 
 		// Do not let updating from browser to os or vice versa change for machine.
@@ -411,7 +414,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 		}
 
 		// 2. Check if any other resource references this machine.
-		if err = validateDeleteMachine(ctx, id); err != nil {
+		if err = validateDeleteMachine(ctx, machine); err != nil {
 			return errors.Annotate(err, "DeleteMachine - validation failed").Err()
 		}
 
@@ -499,16 +502,18 @@ func RenameMachine(ctx context.Context, oldName, newName string) (*ufspb.Machine
 	var machine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
-		// validate
-		if err := validateRenameMachine(ctx, oldName, newName); err != nil {
-			return err
-		}
-
 		// Get the old machine
 		machine, err = registration.GetMachine(ctx, oldName)
 		if err != nil {
 			return err
 		}
+
+		// Validate
+		if err = validateRenameMachine(ctx, machine, newName); err != nil {
+			return err
+		}
+
+		// Copy for logging
 		oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
 		hc := getMachineHistoryClient(oldMachineCopy)
 
@@ -648,14 +653,17 @@ func validateMachineReferences(ctx context.Context, machine *ufspb.Machine) erro
 //
 // Checks if this Machine(MachineID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteMachine(ctx context.Context, id string) error {
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", id, true)
+func validateDeleteMachine(ctx context.Context, machine *ufspb.Machine) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsDelete, machine.GetRealm()); err != nil {
+		return err
+	}
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), true)
 	if err != nil {
 		return err
 	}
 	if len(machinelses) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Machine %s cannot be deleted because there are other resources which are referring this Machine.", id))
+		errorMsg.WriteString(fmt.Sprintf("Machine %s cannot be deleted because there are other resources which are referring this Machine.", machine.GetName()))
 		errorMsg.WriteString(fmt.Sprintf("\nHosts referring the Machine:\n"))
 		for _, machinelse := range machinelses {
 			errorMsg.WriteString(machinelse.Name + ", ")
@@ -682,6 +690,9 @@ func getBrowserMachine(ctx context.Context, machineName string) (*ufspb.Machine,
 
 // validateMachineRegistration validates if a machine/nics/drac can be created
 func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsCreate, machine.GetRealm()); err != nil {
+		return err
+	}
 	var resourcesNotFound []*Resource
 	var resourcesAlreadyExists []*Resource
 	var errorMsg strings.Builder
@@ -763,11 +774,18 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 //
 // checks if the machine and the resources referenced  by the machine
 // does not exist in the system.
-func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask.FieldMask) error {
+func validateUpdateMachine(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsUpdate, oldMachine.GetRealm()); err != nil {
+		return err
+	}
+	if machine.GetRealm() != "" && oldMachine.GetRealm() != machine.GetRealm() {
+		if err := util.CheckPermission(ctx, util.RegistrationsUpdate, machine.GetRealm()); err != nil {
+			return err
+		}
+	}
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot update machine %s:\n", machine.Name))
-	// Aggregate resource to check if machine does not exist
-	resourcesNotFound := []*Resource{GetMachineResource(machine.Name)}
+	var resourcesNotFound []*Resource
 	// Aggregate resources referenced by the machine to check if they do not exist
 	if kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm(); kvmID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetKVMResource(kvmID))
@@ -846,9 +864,9 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 }
 
 // validateRenameMachine validates if a machine can be renames
-func validateRenameMachine(ctx context.Context, oldMachineName, newMachineName string) error {
-	// check if old machine name does not exist
-	if err := ResourceExist(ctx, []*Resource{GetMachineResource(oldMachineName)}, nil); err != nil {
+func validateRenameMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachineName string) error {
+	// Check permission
+	if err := util.CheckPermission(ctx, util.RegistrationsUpdate, oldMachine.GetRealm()); err != nil {
 		return err
 	}
 	// Check if new machine name already exists

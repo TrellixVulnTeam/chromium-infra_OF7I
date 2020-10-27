@@ -10,6 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -19,6 +21,7 @@ import (
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func TestMachineRegistration(t *testing.T) {
@@ -220,7 +223,9 @@ func TestMachineRegistration(t *testing.T) {
 						},
 					},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
 			m, err := MachineRegistration(ctx, machine)
 			So(err, ShouldBeNil)
 			So(m, ShouldResembleProto, machine)
@@ -267,6 +272,34 @@ func TestMachineRegistration(t *testing.T) {
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
+
+		Convey("Register machine - permission denied: same realm and no create permission", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-4",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.AtlLabAdminRealm)
+			_, err := MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Register machine - permission denied: different realm", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-5",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
+			_, err := MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -279,7 +312,7 @@ func TestUpdateMachine(t *testing.T) {
 				Name: "machine-10",
 			}
 			_, err := UpdateMachine(ctx, machine, nil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-10 in the system.")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update new machine with non existing resource", func() {
@@ -310,6 +343,7 @@ func TestUpdateMachine(t *testing.T) {
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err := registration.CreateMachine(ctx, machine)
 			registration.CreateNic(ctx, &ufspb.Nic{
@@ -356,7 +390,9 @@ func TestUpdateMachine(t *testing.T) {
 						ChromePlatform: "chromePlatform-2",
 					},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			resp, err := UpdateMachine(ctx, machine, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine)
@@ -503,6 +539,83 @@ func TestUpdateMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "kvm port A1 of kvm-update-duplicate1 is already occupied")
 		})
+
+		Convey("Update machine - permission denied: same realm and no update permission", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-4",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			_, err = UpdateMachine(ctx, machine, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update machine - permission denied: different realm", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-5",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = UpdateMachine(ctx, machine, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Update machine(realm name) - different realm with permission success", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-6",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			machine.Realm = util.BrowserLabAdminRealm
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.RegistrationsUpdate),
+					authtest.MockPermission("user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate),
+				),
+			})
+			resp, err := UpdateMachine(ctx, machine, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machine)
+		})
+
+		Convey("Update machine(realm name) - permission denied: different realm without permission", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-7",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			machine.Realm = util.BrowserLabAdminRealm
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = UpdateMachine(ctx, machine, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
 	})
 }
 
@@ -512,7 +625,8 @@ func TestDeleteMachine(t *testing.T) {
 	Convey("DeleteMachine", t, func() {
 		Convey("Delete machine by existing ID with machineLSE reference", func() {
 			machine1 := &ufspb.Machine{
-				Name: "machine-3",
+				Name:  "machine-3",
+				Realm: util.AtlLabAdminRealm,
 			}
 			_, err := registration.CreateMachine(ctx, machine1)
 			So(err, ShouldBeNil)
@@ -524,6 +638,7 @@ func TestDeleteMachine(t *testing.T) {
 			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
 			err = DeleteMachine(ctx, "machine-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
@@ -628,6 +743,36 @@ func TestDeleteMachine(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeTrue)
+		})
+
+		Convey("Delete machine - Permission denied: same realm with no delete permission", func() {
+			machine2 := &ufspb.Machine{
+				Name:  "machine-6",
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine2)
+			So(err, ShouldBeNil)
+
+			// same realm different permission
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			err = DeleteMachine(ctx, "machine-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Delete machine - Permission denied: different realm", func() {
+			machine2 := &ufspb.Machine{
+				Name:  "machine-7",
+				Realm: util.AtlLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine2)
+			So(err, ShouldBeNil)
+
+			// different realm
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.BrowserLabAdminRealm)
+			err = DeleteMachine(ctx, "machine-7")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }
@@ -744,10 +889,12 @@ func TestRenameMachine(t *testing.T) {
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
+				Realm: util.BrowserLabAdminRealm,
 			}
 			_, err = registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
 
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
 			res, err := RenameMachine(ctx, "machine-10", "machine-202")
 			So(err, ShouldBeNil)
 			So(res.Name, ShouldEqual, "machine-202")
@@ -825,7 +972,7 @@ func TestRenameMachine(t *testing.T) {
 		Convey("Rename a non-existing Machine", func() {
 			_, err := RenameMachine(ctx, "machine-11", "machine-211")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-11 in the system")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Rename a Machine to an already existing machine name", func() {
 			machine := &ufspb.Machine{
@@ -849,6 +996,40 @@ func TestRenameMachine(t *testing.T) {
 			_, err = RenameMachine(ctx, "machine-12", "machine-212")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Machine machine-212 already exists in the system")
+		})
+
+		Convey("Rename a Machine - permission denied: same realm and no update permission", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-13",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = RenameMachine(ctx, "machine-13", "machine-313")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Rename a Machine - permission denied: different realm", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-14",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = RenameMachine(ctx, "machine-13", "machine-313")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }

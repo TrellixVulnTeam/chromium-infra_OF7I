@@ -8,9 +8,13 @@ import (
 	"context"
 
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
+	"go.chromium.org/luci/server/auth/realms"
 
 	"infra/unifiedfleet/app/config"
 )
@@ -27,4 +31,14 @@ func testingContext() context.Context {
 	c = config.Use(c, &config.Config{})
 	datastore.GetTestable(c).Consistent(true)
 	return c
+}
+
+func initializeFakeAuthDB(ctx context.Context, id identity.Identity, permission realms.Permission, realm string) context.Context {
+	return auth.WithState(ctx, &authtest.FakeState{
+		Identity: id,
+		FakeDB: authtest.NewFakeDB(
+			authtest.MockMembership(id, "user"),
+			authtest.MockPermission(id, realm, permission),
+		),
+	})
 }
