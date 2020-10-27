@@ -108,7 +108,18 @@ grant staging access to contributors!
 
 ## Deploying a new release
 
-First create a new CL for the RELNOTES.md update. Then run:
+- Run `make deploy_prod`
+- Double-check that the version is not named with a `-tainted` suffix, as deploying
+such a version will cause alerts to fire (plus, you shouldn't deploy uncommitted code :).
+- Go to the Versions section of the
+[App Engine Console](https://appengine.google.com/) and update the default
+version of the app services. **Important**: *Remember to update both the "default" and "analyzer"
+services* by clicking the "Migrate traffic" button. Having the default and analyzer services running different versions
+may cause errors and/or monitoring alerts to fire.
+- Wait for a while, making sure that the graphs looks fine and there is no abnormality in https://viceroy.corp.google.com/chrome_infra/Appengine/sheriff_o_matic_prod?duration=1h
+- Send a PSA email to cit-sheriffing@ (cc chops-tfs-team@) about the new release, together with the release notes.
+- You can get the release notes by running
+
 ```sh
 make relnotes
 ```
@@ -127,21 +138,6 @@ go run ../../tools/relnotes/relnotes.go -since-hash <commit_hash> -app sheriff-o
 ```
 
 Tips: You can find the commit hash of a version by looking at the version name in appengine (Go to pantheon page for your app, and click at Versions section). For example, if your version name is 12345-20d8b52, then the commit hash is 20d8b52.
-
-Then:
-
-- Send the RELNOTES.md update CL for review by OWNERS.
-- Land CL.
-- run `make deploy_prod`
-- Double-check that the version is not named with a `-tainted` suffix, as deploying
-such a version will cause alerts to fire (plus, you shouldn't deploy uncommitted code :).
-- Go to the Versions section of the
-[App Engine Console](https://appengine.google.com/) and update the default
-version of the app services. **Important**: *Remember to update both the "default" and "analyzer"
-services* by clicking the "Migrate traffic" button. Having the default and analyzer services running different versions
-may cause errors and/or monitoring alerts to fire.
-- Wait for a while, making sure that the graphs looks fine and there is no abnormality in https://viceroy.corp.google.com/chrome_infra/Appengine/sheriff_o_matic_prod?duration=1h
-- Send a PSA email to cit-sheriffing@ about the new release.
 
 ### Deploying to staging
 
