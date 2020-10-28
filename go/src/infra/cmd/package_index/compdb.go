@@ -328,11 +328,20 @@ func getClangUnit(ctx context.Context, clangInfo *clangUnitInfo, rootPath, outDi
 // that was added. Used as a helper function in getClangUnit.
 func addClangUnitInput(ctx context.Context, fname, dir, outDir, corpus string, hashMaps *FileHashMap,
 	unitProto *kpb.CompilationUnit) (string, error) {
-	fnameFullpath, err := filepath.Abs(filepath.Join(dir, fname))
-	if err != nil {
-		return "", err
-	}
+	// Clean up fname and set to absolute path for use in hashMaps.
+	fname = filepath.Clean(fname)
+	fnameFullpath := fname
 
+	// Paths in *.filepaths files are either absolute or relative to dir.
+	// Format and clean fnameFullpath to make it consistent with entries in hashMaps.
+	if !filepath.IsAbs(fnameFullpath) {
+		fnameFullpathAbs, err := filepath.Abs(filepath.Join(dir, fname))
+		if err != nil {
+			return "", err
+		}
+		fnameFullpath = fnameFullpathAbs
+	}
+	fnameFullpath = filepath.Clean(fnameFullpath)
 	hash, ok := hashMaps.Filehash(fnameFullpath)
 	if !ok {
 		logging.Warningf(ctx, "No information about required input file %s\n", fnameFullpath)
