@@ -150,31 +150,6 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
   return new_request
 
 
-# NOTE: This function will be deprecated soon.
-# TODO(crbug/808695): This is just to support the soon to be deprecated
-# trigger_base_swarming_task_pipeline. Remove this when the pipeline is removed.
-def TriggerSwarmingTask(request, http_client):
-  """Triggers a new Swarming task for the given request.
-
-  The Swarming task priority will be overwritten, and extra tags might be added.
-  Args:
-    request (SwarmingTaskRequest): A Swarming task request.
-    http_client (RetryHttpClient): An http client with automatic retry.
-  """
-  # Use a priority much lower than CQ for now (CQ's priority is 30).
-  # Later we might use a higher priority -- a lower value here.
-  # Note: the smaller value, the higher priority.
-  swarming_settings = waterfall_config.GetSwarmingSettings()
-  request_expiration_hours = swarming_settings.get('request_expiration_hours')
-  request.priority = str(
-      max(100, swarming_settings.get('default_request_priority')))
-  request.expiration_secs = str(request_expiration_hours * 60 * 60)
-
-  request.tags.extend(['findit:1', 'project:Chromium', 'purpose:post-commit'])
-
-  return swarming_util.TriggerSwarmingTask(SwarmingHost(), request, http_client)
-
-
 def ListSwarmingTasksDataByTags(http_client,
                                 master_name,
                                 builder_name,
