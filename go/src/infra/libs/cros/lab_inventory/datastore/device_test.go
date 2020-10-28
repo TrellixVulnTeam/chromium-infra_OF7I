@@ -671,10 +671,12 @@ func TestUpdateLabMeta(t *testing.T) {
 
 		datastore.GetTestable(ctx).Consistent(true)
 		Convey("Update ServoType and SmartUsbhub in meta", func() {
+			topology := &lab.ServoTopology{}
 			meta := map[string]LabMeta{
 				"UUID:01": {
-					ServoType:   "servo_v4_with_ccd_cr50",
-					SmartUsbhub: true,
+					ServoType:     "servo_v4_with_ccd_cr50",
+					SmartUsbhub:   true,
+					ServoTopology: topology,
 				},
 				"UUID:ghost": {},
 			}
@@ -687,14 +689,16 @@ func TestUpdateLabMeta(t *testing.T) {
 			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
 			var p lab.ChromeOSDevice
 			passed[0].Entity.GetCrosDeviceProto(&p)
-			So(p.GetDut().GetPeripherals().GetServo().ServoType, ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldResemble, topology)
 			So(p.GetDut().GetPeripherals().SmartUsbhub, ShouldEqual, true)
 
-			//validates only the single field was change from original
+			//validates only the updated fields were changed
 			newServoPr := proto.MarshalTextString(p.GetDut().GetPeripherals().GetServo())
 			originalServoPr := proto.MarshalTextString(originalServo)
 			So(newServoPr, ShouldNotEqual, originalServoPr)
 			originalServo.ServoType = "servo_v4_with_ccd_cr50"
+			originalServo.ServoTopology = topology
 			originalServoPr = proto.MarshalTextString(originalServo)
 			So(newServoPr, ShouldEqual, originalServoPr)
 

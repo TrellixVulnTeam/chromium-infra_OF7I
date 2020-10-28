@@ -13,6 +13,7 @@ import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
 import "device/config_id.proto";
+import "lab/servo.proto";
 import "infra/libs/fleet/protos/asset.proto";
 import "infra/libs/cros/lab_inventory/protos/repair_record.proto";
 import "google/protobuf/timestamp.proto";
@@ -176,6 +177,7 @@ message LabMeta {
   string chromeos_device_id = 1;
   string servo_type = 2;
   bool smart_usbhub = 3;
+  lab.ServoTopology servo_topology = 4;
 }
 
 message UpdateDutsStatusResponse {
