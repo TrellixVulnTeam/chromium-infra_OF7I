@@ -35,8 +35,8 @@ def GetReferredSwarmingTaskRequestInfo(master_name, builder_name, build_number,
   Returns:
     (ref_task_id, ref_request): Referred swarming task id and request.
   """
-  swarming_task_items = ListSwarmingTasksDataByTags(
-      http_client, master_name, builder_name, build_number, step_name)
+  swarming_task_items = ListSwarmingTasksDataByTags(http_client, builder_name,
+                                                    build_number, step_name)
 
   if not swarming_task_items:
     raise Exception('Cannot find referred swarming task for %s/%s/%d/%s' %
@@ -151,7 +151,6 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
 
 
 def ListSwarmingTasksDataByTags(http_client,
-                                master_name,
                                 builder_name,
                                 build_number,
                                 step_name=None,
@@ -160,7 +159,6 @@ def ListSwarmingTasksDataByTags(http_client,
 
   Args:
     http_client (RetryHttpClient): The http client to send HTTPs requests.
-    master_name (str): Value of the master tag.
     builder_name (str): Value of the buildername tag.
     build_number (int): Value of the buildnumber tag.
     step_name (str): Value of the stepname tag.
@@ -170,7 +168,10 @@ def ListSwarmingTasksDataByTags(http_client,
     (list):  A list of SwarmingTaskData for all tasks with queried tags.
   """
   tag_filters = {
-      'master': master_name,
+      # Findit v1 only operates on builders in the chromium.ci bucket, so
+      # hardcoding this here is fine.
+      'project': 'chromium',
+      'bucket': 'ci',
       'buildername': builder_name,
       'buildnumber': build_number
   }
@@ -203,8 +204,7 @@ def GetNeededIsolatedDataFromTaskResults(task_results, only_failure):
   return needed_isolated_data
 
 
-def GetIsolatedDataForStep(master_name,
-                           builder_name,
+def GetIsolatedDataForStep(builder_name,
                            build_number,
                            step_name,
                            http_client,
@@ -220,8 +220,8 @@ def GetIsolatedDataForStep(master_name,
     only_failure (bool): A flag to determine if only failure info is needed.
   """
   step_isolated_data = []
-  items = ListSwarmingTasksDataByTags(http_client, master_name, builder_name,
-                                      build_number, step_name)
+  items = ListSwarmingTasksDataByTags(http_client, builder_name, build_number,
+                                      step_name)
   if not items:
     return step_isolated_data
 
@@ -229,12 +229,11 @@ def GetIsolatedDataForStep(master_name,
   return step_isolated_data[step_name]
 
 
-def GetIsolatedDataForFailedStepsInABuild(
-    master_name, builder_name, build_number, failed_steps, http_client):
+def GetIsolatedDataForFailedStepsInABuild(builder_name, build_number,
+                                          failed_steps, http_client):
   """Gets the isolated data for failed steps for a build.
 
   Args:
-    master_name (str): The name of the main waterfall master.
     builder_name (str): The name of the main waterfall builder.
     build_number (int): The build number to retrieve the isolated sha of.
     failed_steps (TestFailedSteps): A dict of failed steps.
@@ -243,8 +242,7 @@ def GetIsolatedDataForFailedStepsInABuild(
     build_isolated_data(dict): A dict of isolated data of failed steps in a
       build.
   """
-  items = ListSwarmingTasksDataByTags(http_client, master_name, builder_name,
-                                      build_number)
+  items = ListSwarmingTasksDataByTags(http_client, builder_name, build_number)
   if not items:
     return {}
 
@@ -256,12 +254,10 @@ def GetIsolatedDataForFailedStepsInABuild(
   return build_isolated_data
 
 
-def GetIsolatedShaForStep(master_name, builder_name, build_number, step_name,
-                          http_client):
+def GetIsolatedShaForStep(builder_name, build_number, step_name, http_client):
   """Gets the isolated sha of a master/builder/build/step.
 
   Args:
-    master_name (str): The name of the main waterall master.
     builder_name (str): The name of the main waterfall builder.
     build_number (int): The build number to retrieve the isolated sha of.
     step_name (str): The step name to retrieve the isolated sha of.
@@ -270,24 +266,24 @@ def GetIsolatedShaForStep(master_name, builder_name, build_number, step_name,
     (str): The isolated sha pointing to the compiled binaries at the requested
         configuration.
   """
-  items = ListSwarmingTasksDataByTags(http_client, master_name, builder_name,
-                                      build_number, step_name)
+  items = ListSwarmingTasksDataByTags(http_client, builder_name, build_number,
+                                      step_name)
   if not items:
-    logging.error('Failed to get swarming task data for %s/%s/%s/%s',
-                  master_name, builder_name, build_number, step_name)
+    logging.error('Failed to get swarming task data for %s/%s/%s', builder_name,
+                  build_number, step_name)
     return None
 
   # Each task should have the same sha, so only need to read from the first one.
   if items[0].inputs_ref_sha:
     return items[0].inputs_ref_sha
 
-  logging.error('Isolated sha not found for %s/%s/%s/%s', master_name,
-                builder_name, build_number, step_name)
+  logging.error('Isolated sha not found for %s/%s/%s', builder_name,
+                build_number, step_name)
   return None
 
 
-def CanFindSwarmingTaskFromBuildForAStep(http_client, master_name, builder_name,
+def CanFindSwarmingTaskFromBuildForAStep(http_client, builder_name,
                                          build_number, step_name):
-  tasks = ListSwarmingTasksDataByTags(http_client, master_name, builder_name,
-                                      build_number, step_name)
+  tasks = ListSwarmingTasksDataByTags(http_client, builder_name, build_number,
+                                      step_name)
   return len(tasks) > 0

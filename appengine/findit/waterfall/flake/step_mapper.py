@@ -69,7 +69,6 @@ def _GetMatchingWaterfallBuildStep(cq_build_step, http_client):
   # 4. Check whether there is matching step.
   tasks = swarming.ListSwarmingTasksDataByTags(
       http_client,
-      wf_master_name,
       wf_builder_name,
       builds[0],
       additional_tag_filters={

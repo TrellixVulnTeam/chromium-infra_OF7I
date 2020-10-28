@@ -125,15 +125,13 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(swarming_util, 'ListTasks', return_value={})
   def testListSwarmingTasksDataByTags(self, _):
-    self.assertEqual({},
-                     swarming.ListSwarmingTasksDataByTags(None, 'm', 'b', 123))
+    self.assertEqual({}, swarming.ListSwarmingTasksDataByTags(None, 'b', 123))
     self.assertEqual({},
                      swarming.ListSwarmingTasksDataByTags(
-                         None, 'm', 'b', 123, 'step'))
+                         None, 'b', 123, 'step'))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testGetIsolatedShaForStep(self, mocked_list_swarming_tasks_data):
-    master_name = 'm'
     builder_name = 'b'
     build_number = 123
     step_name = 's'
@@ -147,34 +145,30 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
     self.assertEqual(
         isolated_sha,
-        swarming.GetIsolatedShaForStep(master_name, builder_name, build_number,
-                                       step_name, None))
+        swarming.GetIsolatedShaForStep(builder_name, build_number, step_name,
+                                       None))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags', return_value=None)
   def testGetIsolatedShaForStepNoData(self, _):
-    self.assertIsNone(swarming.GetIsolatedShaForStep('m', 'b', 123, 's', None))
+    self.assertIsNone(swarming.GetIsolatedShaForStep('b', 123, 's', None))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testGetIsolatedShaForStepNoShaFound(self,
                                           mocked_list_swarming_tasks_data):
-    master_name = 'm'
     builder_name = 'b'
     build_number = 123
     step_name = 's'
 
     mocked_list_swarming_tasks_data.return_value = [
-        SwarmingTaskData({
-            'tags': ['master:m']
-        })
+        SwarmingTaskData({'tags': []})
     ]
 
     self.assertIsNone(
-        swarming.GetIsolatedShaForStep(master_name, builder_name, build_number,
-                                       step_name, None))
+        swarming.GetIsolatedShaForStep(builder_name, build_number, step_name,
+                                       None))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testGetIsolatedDataForStep(self, mock_fn):
-    master_name = 'm'
     builder_name = 'b'
     build_number = 223
     step_name = 'unit_tests'
@@ -183,8 +177,8 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         SwarmingTaskData(item) for item in _SAMPLE_BUILD_STEP_DATA
     ]
 
-    data = swarming.GetIsolatedDataForStep(master_name, builder_name,
-                                           build_number, step_name, None)
+    data = swarming.GetIsolatedDataForStep(builder_name, build_number,
+                                           step_name, None)
     expected_data = [{
         'digest':
             'isolatedhashunittests',
@@ -197,7 +191,6 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testGetIsolatedDataForStepNotOnlyFailure(self, mock_fn):
-    master_name = 'm'
     builder_name = 'b'
     build_number = 223
     step_name = 'unit_tests'
@@ -207,7 +200,6 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
     ]
 
     data = swarming.GetIsolatedDataForStep(
-        master_name,
         builder_name,
         build_number,
         step_name,
@@ -235,19 +227,17 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags', return_value=[])
   def testGetIsolatedDataForStepFailed(self, _):
-    master_name = 'm'
     builder_name = 'download_failed'
     build_number = 223
     step_name = 's1'
 
-    data = swarming.GetIsolatedDataForStep(master_name, builder_name,
-                                           build_number, step_name, None)
+    data = swarming.GetIsolatedDataForStep(builder_name, build_number,
+                                           step_name, None)
 
     self.assertEqual([], data)
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testGetIsolatedDataForStepNoOutputsRef(self, mock_data):
-    master_name = 'm'
     builder_name = 'download_failed'
     build_number = 223
     step_name = 's1'
@@ -261,15 +251,14 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         })
     ]
 
-    data = swarming.GetIsolatedDataForStep(master_name, builder_name,
-                                           build_number, step_name, None)
+    data = swarming.GetIsolatedDataForStep(builder_name, build_number,
+                                           step_name, None)
     expected_data = []
 
     self.assertEqual(expected_data, data)
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
   def testUpdateSwarmingSteps(self, mock_data):
-    master_name = 'm'
     builder_name = 'b'
     build_number = 223
     failed_steps = {
@@ -372,7 +361,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
     }
 
     isolated_data = swarming.GetIsolatedDataForFailedStepsInABuild(
-        master_name, builder_name, build_number, failed_steps, None)
+        builder_name, build_number, failed_steps, None)
 
     self.assertEqual(expected_isoloated_data, isolated_data)
 
@@ -380,7 +369,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
   def testGetIsolatedDataForFailedStepsInABuildNoData(self, _):
     self.assertEqual({},
                      swarming.GetIsolatedDataForFailedStepsInABuild(
-                         'm', 'b', 1, [], None))
+                         'b', 1, [], None))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags', return_value=[])
   def testGetReferredSwarmingTaskRequestInfoNoTaskFound(self, _):
@@ -483,7 +472,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags', return_value=[])
   def testCanFindSwarmingTaskFromBuildForAStep(self, _):
     self.assertFalse(
-        swarming.CanFindSwarmingTaskFromBuildForAStep(None, 'm', 'b', 1, 's'))
+        swarming.CanFindSwarmingTaskFromBuildForAStep(None, 'b', 1, 's'))
 
   def testGetSwarmingTaskUrl(self):
     task_id = 'task_id'

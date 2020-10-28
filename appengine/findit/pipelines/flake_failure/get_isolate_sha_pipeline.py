@@ -99,9 +99,10 @@ class GetIsolateShaForBuildPipeline(SynchronousPipeline):
   output_type = GetIsolateShaOutput
 
   def RunImpl(self, parameters):
-    isolate_sha = swarming.GetIsolatedShaForStep(
-        parameters.master_name, parameters.builder_name,
-        parameters.build_number, parameters.step_name, FinditHttpClient())
+    isolate_sha = swarming.GetIsolatedShaForStep(parameters.builder_name,
+                                                 parameters.build_number,
+                                                 parameters.step_name,
+                                                 FinditHttpClient())
     return GetIsolateShaOutput(
         isolate_sha=isolate_sha,
         build_number=parameters.build_number,

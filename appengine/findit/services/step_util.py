@@ -135,15 +135,13 @@ def GetValidBuild(master_name, builder_name, requested_build_number, step_name,
     if (candidate_build and candidate_build.commit_position is not None and
         (candidate_build.result != common_pb2.INFRA_FAILURE or
          swarming.CanFindSwarmingTaskFromBuildForAStep(
-             _HTTP_CLIENT, master_name, builder_name, candidate_build_number,
-             step_name))):
+             _HTTP_CLIENT, builder_name, candidate_build_number, step_name))):
       return candidate_build
 
     increment += 1
 
-  logging.warning('Failed to find valid build for %s/%s/%s within %s builds',
-                  master_name, builder_name, requested_build_number,
-                  maximum_search_distance)
+  logging.warning('Failed to find valid build for %s/%s within %s builds',
+                  builder_name, requested_build_number, maximum_search_distance)
   return None
 
 
@@ -254,8 +252,7 @@ def GetValidBoundingBuildsForStep(
 
   if requested_commit_position <= earliest_build_info.commit_position:
     if not swarming.CanFindSwarmingTaskFromBuildForAStep(
-        _HTTP_CLIENT, master_name, builder_name, lower_bound_build_number,
-        step_name):
+        _HTTP_CLIENT, builder_name, lower_bound_build_number, step_name):
       # TODO(crbug.com/831828): Support newly added test steps for this case.
       # Cannot find valid artifact in earliest_build for the step.
       return None, None
@@ -266,8 +263,7 @@ def GetValidBoundingBuildsForStep(
 
   if requested_commit_position >= latest_build_info.commit_position:
     if not swarming.CanFindSwarmingTaskFromBuildForAStep(
-        _HTTP_CLIENT, master_name, builder_name, upper_bound_build_number,
-        step_name):
+        _HTTP_CLIENT, builder_name, upper_bound_build_number, step_name):
       # Cannot find valid artifact in latest_build for the step.
       return None, None
     if latest_build_info.commit_position == requested_commit_position:

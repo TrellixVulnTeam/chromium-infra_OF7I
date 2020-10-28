@@ -122,8 +122,9 @@ def _GetTestLevelLogForAStep(master_name, builder_name, build_number, step_name,
       return None
 
   # Sends request to swarming server for isolated data.
-  step_isolated_data = swarming.GetIsolatedDataForStep(
-      master_name, builder_name, build_number, step_name, http_client)
+  step_isolated_data = swarming.GetIsolatedDataForStep(builder_name,
+                                                       build_number, step_name,
+                                                       http_client)
 
   if not step_isolated_data:
     logging.warning('Failed to get step_isolated_data for build %s/%s/%d/%s.' %
@@ -249,7 +250,7 @@ def UpdateSwarmingSteps(master_name, builder_name, build_number, failed_steps,
   Also creates and saves swarming steps in datastore.
   """
   build_isolated_data = swarming.GetIsolatedDataForFailedStepsInABuild(
-      master_name, builder_name, build_number, failed_steps, http_client)
+      builder_name, build_number, failed_steps, http_client)
 
   if not build_isolated_data:
     return False
