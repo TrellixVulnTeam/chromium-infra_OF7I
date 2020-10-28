@@ -495,7 +495,7 @@ class Converter(object):
           api_delta.issue.status.status):
         delta.status = api_delta.issue.status.status
       elif 'status.status' in paths_set and not api_delta.issue.status.status:
-          delta.status = ''
+        delta.status = ''
 
       if (not paths_set.isdisjoint({'owner', 'owner.user'}) and
           api_delta.issue.owner.user):
@@ -504,28 +504,32 @@ class Converter(object):
       elif 'owner.user' in paths_set and not api_delta.issue.owner.user:
         delta.owner_id = framework_constants.NO_USER_SPECIFIED
 
-      if 'summary' in api_delta.update_mask.paths:
+      if 'summary' in paths_set:
         if api_delta.issue.summary:
           delta.summary = api_delta.issue.summary
         else:
           delta.summary = ''
 
-      # TODO(crbug/monorail/8548): fix fieldmask usage for un-setting
-      # delta.merged_into and delta.merged_into_external
-      if 'merged_into_issue_ref' in api_delta.update_mask.paths:
-        merge_ref = api_delta.issue.merged_into_issue_ref
-        try:
+      merge_ref = api_delta.issue.merged_into_issue_ref
+      if 'merged_into_issue_ref' in paths_set:
+        if (api_delta.issue.merged_into_issue_ref.issue or
+            api_delta.issue.merged_into_issue_ref.ext_identifier):
           ingested_ref = self._IngestIssueRef(merge_ref)
           if isinstance(ingested_ref, tracker_pb2.DanglingIssueRef):
             delta.merged_into_external = ingested_ref.ext_issue_identifier
           else:
             delta.merged_into = ingested_ref
-        except exceptions.InputException as e:
-          if not (merge_ref.issue or merge_ref.ext_identifier):
-            delta.merged_into = 0
-            delta.merged_into_external = ''
-          else:
-            raise e
+      elif 'merged_into_issue_ref.issue' in paths_set:
+        if api_delta.issue.merged_into_issue_ref.issue:
+          delta.merged_into = self._IngestIssueRef(merge_ref)
+        else:
+          delta.merged_into = 0
+      elif 'merged_into_issue_ref.ext_identifier' in paths_set:
+        if api_delta.issue.merged_into_issue_ref.ext_identifier:
+          ingested_ref = self._IngestIssueRef(merge_ref)
+          delta.merged_into_external = ingested_ref.ext_issue_identifier
+        else:
+          delta.merged_into_external = ''
 
       filtered_api_issue = issue_objects_pb2.Issue()
       api_delta.update_mask.MergeMessage(

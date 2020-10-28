@@ -1179,8 +1179,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_delta = issues_pb2.IssueDelta(
         issue=api_issue,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner.user', 'status.status', 'summary',
-                'merged_into_issue_ref']))
+            paths=[
+                'owner.user', 'status.status', 'summary',
+                'merged_into_issue_ref.issue'
+            ]))
 
     # Check thet setting fields to '' result in same behavior as not
     # explicitly setting the values at all.
@@ -1193,15 +1195,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_delta_set = issues_pb2.IssueDelta(
         issue=api_issue_set,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner.user', 'status.status', 'summary',
-                'merged_into_issue_ref']))
+            paths=[
+                'owner.user', 'status.status', 'summary',
+                'merged_into_issue_ref.issue'
+            ]))
 
     expected_delta = tracker_pb2.IssueDelta(
         owner_id=framework_constants.NO_USER_SPECIFIED,
         status='',
         summary='',
-        merged_into=0,
-        merged_into_external='')
+        merged_into=0)
 
     actual = self.converter.IngestIssueDeltas([api_delta, api_delta_set])
     expected = [(78001, expected_delta), (78002, expected_delta)]
