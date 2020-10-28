@@ -279,9 +279,37 @@ func getLabMetaFromLabel(dutID string, l *inventory.SchedulableLabels) (labconfi
 	if p != nil {
 		labMeta.ServoType = p.GetServoType()
 		labMeta.SmartUsbhub = p.GetSmartUsbhub()
+		labMeta.ServoTopology = convertServoTopology(p.GetServoTopology())
 	}
 
 	return &labMeta
+}
+
+func newServoTopologyItem(i *inventory.ServoTopologyItem) *lab.ServoTopologyItem {
+	if i == nil {
+		return nil
+	}
+	return &lab.ServoTopologyItem{
+		Type:         i.GetType(),
+		SysfsProduct: i.GetSysfsProduct(),
+		Serial:       i.GetSerial(),
+		UsbHubPort:   i.GetUsbHubPort(),
+	}
+}
+
+func convertServoTopology(st *inventory.ServoTopology) *lab.ServoTopology {
+	var t *lab.ServoTopology
+	if st != nil {
+		var children []*lab.ServoTopologyItem
+		for _, child := range st.GetChildren() {
+			children = append(children, newServoTopologyItem(child))
+		}
+		t = &lab.ServoTopology{
+			Main:     newServoTopologyItem(st.Main),
+			Children: children,
+		}
+	}
+	return t
 }
 
 func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
