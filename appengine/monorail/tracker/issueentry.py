@@ -150,12 +150,13 @@ class IssueEntry(servlet.Servlet):
     labels, _derived_labels = tracker_bizobj.ExplicitAndDerivedNonMaskedLabels(
         link_or_template_labels, [], config)
 
-    # Corp-mode users automatically add R-V-G.
+    # Users with restrict_new_issues user pref automatically add R-V-G.
     with work_env.WorkEnv(mr, self.services) as we:
       userprefs = we.GetUserPrefs(mr.auth.user_id)
-      corp_mode = any(up.name == 'restrict_new_issues' and up.value == 'true'
-                      for up in userprefs.prefs)
-      if corp_mode:
+      restrict_new_issues = any(
+          up.name == 'restrict_new_issues' and up.value == 'true'
+          for up in userprefs.prefs)
+      if restrict_new_issues:
         if not any(lab.lower().startswith('restrict-view-') for lab in labels):
           labels.append(CORP_RESTRICTION_LABEL)
 

@@ -5126,9 +5126,10 @@ class WorkEnvTest(unittest.TestCase):
     self.services.usergroup.TestAddMembers(888, user_ids)
 
   # TODO(jrobbins): Update this with user group prefs when implemented.
-  @mock.patch('settings.corp_mode_user_groups', ['corp_group@example.com'])
-  def testGetUserPrefs_Mine_Corp(self):
-    """User who belongs to corp-mode user group gets those prefs."""
+  @mock.patch(
+      'settings.restrict_new_issues_user_groups', ['corp_group@example.com'])
+  def testGetUserPrefs_Mine_RestrictNewIssues(self):
+    """User who belongs to restrict_new_issues user group gets those prefs."""
     self._SetUpCorpUsers([111, 222])
     self.services.user.SetUserPrefs(
         self.cnxn, 111,
@@ -5138,17 +5139,16 @@ class WorkEnvTest(unittest.TestCase):
       userprefs = we.GetUserPrefs(111)
 
     self.assertEqual(111, userprefs.user_id)
-    self.assertEqual(3, len(userprefs.prefs))
+    self.assertEqual(2, len(userprefs.prefs))
     self.assertEqual('code_font', userprefs.prefs[0].name)
     self.assertEqual('true', userprefs.prefs[0].value)
     self.assertEqual('restrict_new_issues', userprefs.prefs[1].name)
     self.assertEqual('true', userprefs.prefs[1].value)
-    self.assertEqual('public_issue_notice', userprefs.prefs[2].name)
-    self.assertEqual('true', userprefs.prefs[2].value)
 
-  @mock.patch('settings.corp_mode_user_groups', ['corp_group@example.com'])
-  def testGetUserPrefs_Mine_OptedOut(self):
-    """If a corp user has opted out, use that pref value."""
+  @mock.patch(
+      'settings.restrict_new_issues_user_groups', ['corp_group@example.com'])
+  def testGetUserPrefs_Mine_RestrictNewIssues_OptedOut(self):
+    """If a restrict_new_issues user has opted out, use that pref value."""
     self._SetUpCorpUsers([111, 222])
     self.services.user.SetUserPrefs(
         self.cnxn, 111,
@@ -5158,11 +5158,46 @@ class WorkEnvTest(unittest.TestCase):
       userprefs = we.GetUserPrefs(111)
 
     self.assertEqual(111, userprefs.user_id)
-    self.assertEqual(2, len(userprefs.prefs))
+    self.assertEqual(1, len(userprefs.prefs))
     self.assertEqual('restrict_new_issues', userprefs.prefs[0].name)
     self.assertEqual('false', userprefs.prefs[0].value)
+
+  # TODO(jrobbins): Update this with user group prefs when implemented.
+  @mock.patch(
+      'settings.public_issue_notice_user_groups', ['corp_group@example.com'])
+  def testGetUserPrefs_Mine_PublicIssueNotice(self):
+    """User who belongs to public_issue_notice user group gets those prefs."""
+    self._SetUpCorpUsers([111, 222])
+    self.services.user.SetUserPrefs(
+        self.cnxn, 111,
+        [user_pb2.UserPrefValue(name='code_font', value='true')])
+    self.SignIn()
+    with self.work_env as we:
+      userprefs = we.GetUserPrefs(111)
+
+    self.assertEqual(111, userprefs.user_id)
+    self.assertEqual(2, len(userprefs.prefs))
+    self.assertEqual('code_font', userprefs.prefs[0].name)
+    self.assertEqual('true', userprefs.prefs[0].value)
     self.assertEqual('public_issue_notice', userprefs.prefs[1].name)
     self.assertEqual('true', userprefs.prefs[1].value)
+
+  @mock.patch(
+      'settings.public_issue_notice_user_groups', ['corp_group@example.com'])
+  def testGetUserPrefs_Mine_PublicIssueNotice_OptedOut(self):
+    """If a public_issue_notice user has opted out, use that pref value."""
+    self._SetUpCorpUsers([111, 222])
+    self.services.user.SetUserPrefs(
+        self.cnxn, 111,
+        [user_pb2.UserPrefValue(name='public_issue_notice', value='false')])
+    self.SignIn()
+    with self.work_env as we:
+      userprefs = we.GetUserPrefs(111)
+
+    self.assertEqual(111, userprefs.user_id)
+    self.assertEqual(1, len(userprefs.prefs))
+    self.assertEqual('public_issue_notice', userprefs.prefs[0].name)
+    self.assertEqual('false', userprefs.prefs[0].value)
 
   def testSetUserPrefs_Anon(self):
     """Anon cannot set prefs."""

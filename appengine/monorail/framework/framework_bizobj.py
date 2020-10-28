@@ -434,14 +434,24 @@ def ValidatePref(name, value):
   return None
 
 
-def IsCorpUser(cnxn, services, user_id):
-  """Return true if user should get a UX similar to corp systems."""
+def IsRestrictNewIssuesUser(cnxn, services, user_id):
+  # type: (MonorailConnection, Services, int) -> bool)
+  """Returns true iff user's new issues should be restricted by default."""
   user_group_ids = services.usergroup.LookupMemberships(cnxn, user_id)
-  corp_mode_groups_dict = services.user.LookupUserIDs(
-      cnxn, settings.corp_mode_user_groups, autocreate=True)
-  corp_mode_group_ids = set(corp_mode_groups_dict.values())
-  corp_mode = any(gid in corp_mode_group_ids for gid in user_group_ids)
-  return corp_mode
+  restrict_new_issues_groups_dict = services.user.LookupUserIDs(
+      cnxn, settings.restrict_new_issues_user_groups, autocreate=True)
+  restrict_new_issues_group_ids = set(restrict_new_issues_groups_dict.values())
+  return any(gid in restrict_new_issues_group_ids for gid in user_group_ids)
+
+
+def IsPublicIssueNoticeUser(cnxn, services, user_id):
+  # type: (MonorailConnection, Services, int) -> bool)
+  """Returns true iff user should see a public issue notice by default."""
+  user_group_ids = services.usergroup.LookupMemberships(cnxn, user_id)
+  public_issue_notice_groups_dict = services.user.LookupUserIDs(
+      cnxn, settings.public_issue_notice_user_groups, autocreate=True)
+  public_issue_notice_group_ids = set(public_issue_notice_groups_dict.values())
+  return any(gid in public_issue_notice_group_ids for gid in user_group_ids)
 
 
 def GetEffectiveIds(cnxn, services, user_ids):

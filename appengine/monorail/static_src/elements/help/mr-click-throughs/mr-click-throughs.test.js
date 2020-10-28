@@ -96,4 +96,25 @@ describe('mr-click-throughs', () => {
     element.prefs = new Map([['public_issue_notice', 'true']]);
     assert.isFalse(element._showCorpModeDialog);
   });
+
+  it('corp user sees corp mode dialog with no RVG warning', async () => {
+    element.userDisplayName = 'user@example.com';
+    element.prefsLoaded = true;
+    element.prefs = new Map([['public_issue_notice', 'true']]);
+
+    await element.updateComplete;
+    assert.notInclude(element.shadowRoot.innerHTML, 'altered');
+  });
+
+  it('corp user sees corp mode dialog with RVG warning', async () => {
+    element.userDisplayName = 'user@example.com';
+    element.prefsLoaded = true;
+    element.prefs = new Map([
+      ['public_issue_notice', 'true'],
+      ['restrict_new_issues', 'true'],
+    ]);
+
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'altered');
+  });
 });

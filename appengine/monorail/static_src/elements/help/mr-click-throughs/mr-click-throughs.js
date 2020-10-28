@@ -101,18 +101,20 @@ export class MrClickThroughs extends connectStore(LitElement) {
         restriction labels, the issue reporter, owner,
         and Cc&apos;d users may always view the issue.</p>
 
-        <p>Your account is a member of a user group that indicates that
-        you may have access to confidential information.  To help prevent
-        leaks when working in public projects, the issue tracker UX has
-        been altered for you:</p>
+        ${this.prefs.get('restrict_new_issues') === 'true' ? html`
+          <p>Your account is a member of a user group that indicates that
+          you may have access to confidential information.  To help prevent
+          leaks when working in public projects, the issue tracker UX has
+          been altered for you:</p>
 
-        <ul>
-         <li>When you open a new issue, the form will initially have a
-         Restrict-View-Google label.  If you know that your issue does
-         not contain confidential information, please remove the label.</li>
-         <li>When you view public issues, a red banner is shown to remind
-         you that any comments or attachments you post will be public.</li>
-        </ul>
+          <ul>
+            <li>When you open a new issue, the form will initially have a
+            Restrict-View-Google label.  If you know that your issue does
+            not contain confidential information, please remove the label.</li>
+            <li>When you view public issues, a red banner is shown to remind
+            you that any comments or attachments you post will be public.</li>
+          </ul>
+        ` : ''}
 
         <div class="edit-actions">
           <chops-button @click=${this.dismissCorpModeDialog}>

@@ -566,7 +566,7 @@ class ValidatePrefTest(unittest.TestCase):
     self.assertIn('Invalid', msg)
 
 
-class IsCorpUserTest(unittest.TestCase):
+class IsRestrictNewIssuesUserTest(unittest.TestCase):
 
   def setUp(self):
     self.cnxn = fake.MonorailConnection()
@@ -577,24 +577,46 @@ class IsCorpUserTest(unittest.TestCase):
     self.services.user.TestAddUser('corp_group@example.com', 888)
     self.services.usergroup.TestAddGroupSettings(888, 'corp_group@example.com')
 
-  @mock.patch('settings.corp_mode_user_groups', [])
-  def testNoCorpGroups(self):
-    """We handle the case where no corp user groups are defined."""
-    self.assertFalse(
-        framework_bizobj.IsCorpUser(self.cnxn, self.services, 111))
-
-  @mock.patch('settings.corp_mode_user_groups', ['corp_group@example.com'])
-  def testNonCorpUser(self):
+  @mock.patch(
+      'settings.restrict_new_issues_user_groups', ['corp_group@example.com'])
+  def testNonRestrictNewIssuesUser(self):
     """We detect when a user is not part of a corp user group."""
     self.assertFalse(
-        framework_bizobj.IsCorpUser(self.cnxn, self.services, 111))
+        framework_bizobj.IsRestrictNewIssuesUser(self.cnxn, self.services, 111))
 
-  @mock.patch('settings.corp_mode_user_groups', ['corp_group@example.com'])
-  def testCorpUser(self):
+  @mock.patch(
+      'settings.restrict_new_issues_user_groups', ['corp_group@example.com'])
+  def testRestrictNewIssuesUser(self):
     """We detect when a user is a member of such a group."""
     self.services.usergroup.TestAddMembers(888, [111, 222])
     self.assertTrue(
-        framework_bizobj.IsCorpUser(self.cnxn, self.services, 111))
+        framework_bizobj.IsRestrictNewIssuesUser(self.cnxn, self.services, 111))
+
+
+class IsPublicIssueNoticeUserTest(unittest.TestCase):
+
+  def setUp(self):
+    self.cnxn = fake.MonorailConnection()
+    self.services = service_manager.Services(
+        user=fake.UserService(), usergroup=fake.UserGroupService())
+    self.services.user.TestAddUser('corp_user@example.com', 111)
+    self.services.user.TestAddUser('corp_group@example.com', 888)
+    self.services.usergroup.TestAddGroupSettings(888, 'corp_group@example.com')
+
+  @mock.patch(
+      'settings.public_issue_notice_user_groups', ['corp_group@example.com'])
+  def testNonPublicIssueNoticeUser(self):
+    """We detect when a user is not part of a corp user group."""
+    self.assertFalse(
+        framework_bizobj.IsPublicIssueNoticeUser(self.cnxn, self.services, 111))
+
+  @mock.patch(
+      'settings.public_issue_notice_user_groups', ['corp_group@example.com'])
+  def testPublicIssueNoticeUser(self):
+    """We detect when a user is a member of such a group."""
+    self.services.usergroup.TestAddMembers(888, [111, 222])
+    self.assertTrue(
+        framework_bizobj.IsPublicIssueNoticeUser(self.cnxn, self.services, 111))
 
 
 class GetEffectiveIdsTest(unittest.TestCase):

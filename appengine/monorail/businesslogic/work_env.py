@@ -2720,15 +2720,22 @@ class WorkEnv(object):
       userprefs = self.services.user.GetUserPrefs(self.mc.cnxn, user_id)
 
     # Hard-coded user prefs for at-risk users that should use "corp mode".
-    # TODO(jrobbins): Remove this when user group preferences are implemented.
-    if framework_bizobj.IsCorpUser(self.mc.cnxn, self.services, user_id):
+    # For some users we mark all of their new issues as Restrict-View-Google.
+    # Others see a "public issue" warning when commenting on public issues.
+    # TODO(crbug.com/monorail/5462):
+    # Remove when user group preferences are implemented.
+    if framework_bizobj.IsRestrictNewIssuesUser(self.mc.cnxn, self.services,
+                                                user_id):
       # Copy so that cached version is not modified.
       userprefs = user_pb2.UserPrefs(user_id=user_id, prefs=userprefs.prefs)
-      pref_names = {pref.name for pref in userprefs.prefs}
-      if 'restrict_new_issues' not in pref_names:
+      if 'restrict_new_issues' not in {pref.name for pref in userprefs.prefs}:
         userprefs.prefs.append(user_pb2.UserPrefValue(
             name='restrict_new_issues', value='true'))
-      if 'public_issue_notice' not in pref_names:
+    if framework_bizobj.IsPublicIssueNoticeUser(self.mc.cnxn, self.services,
+                                                user_id):
+      # Copy so that cached version is not modified.
+      userprefs = user_pb2.UserPrefs(user_id=user_id, prefs=userprefs.prefs)
+      if 'public_issue_notice' not in {pref.name for pref in userprefs.prefs}:
         userprefs.prefs.append(user_pb2.UserPrefValue(
             name='public_issue_notice', value='true'))
 

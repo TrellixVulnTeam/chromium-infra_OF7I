@@ -414,16 +414,28 @@ spam_allowlisted_suffixes = (
     '@webrtc.org',
 )
 
-# These users default to getting a UX that is more similar to
-# corporate systems that they are familiar with.
-corp_mode_user_groups = [
-  'chromeos-all@google.com',
-  'chromeos-acl@google.com',
-  'chromeos-fte-tvc@google.com',
-  'chromeos-fte-tvc@chromium.org',
-  'create-team@google.com',
-  'test-corp-mode@google.com',
-  ]
+# New issues filed by these users in these groups
+# automatically get the Restrict-View-Google label.
+restrict_new_issues_user_groups = [
+    'chromeos-all@google.com',
+    'chromeos-acl@google.com',
+    'chromeos-fte-tvc@google.com',
+    'chromeos-fte-tvc@chromium.org',
+    'create-team@google.com',
+    'test-corp-mode@google.com',
+]
+
+# Users in these groups see a "corp mode" warning dialog when commenting
+# on public issues, informing them that their comments are public by default.
+public_issue_notice_user_groups = [
+    'chromeos-all@google.com',
+    'chromeos-acl@google.com',
+    'chromeos-fte-tvc@google.com',
+    'chromeos-fte-tvc@chromium.org',
+    'create-team@google.com',
+    'test-corp-mode@google.com',
+    'tq-team@google.com',
+]
 
 # These email suffixes are allowed to create new alert bugs via email.
 alert_allowlisted_suffixes = ('@google.com',)
