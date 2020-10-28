@@ -9,8 +9,12 @@ package api
 // to data defined by
 // https://chromium.googlesource.com/chromiumos/infra/proto/src/lab/device.proto
 import (
+	"encoding/base64"
+	"encoding/json"
 	"strconv"
 	"strings"
+
+	"github.com/golang/protobuf/proto"
 
 	dev_proto "go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
@@ -105,6 +109,16 @@ func importServo(servo *lab.Servo, key string, value string) error {
 			servoSetup = lab.ServoSetupType(ss)
 		}
 		servo.ServoSetup = servoSetup
+	case "servo_topology":
+		var topology *lab.ServoTopology
+		if value != "" {
+			jsonBytes, err := base64.StdEncoding.DecodeString(value)
+			if err == nil {
+				topology = &lab.ServoTopology{}
+				json.Unmarshal(jsonBytes, topology)
+			}
+		}
+		servo.ServoTopology = topology
 	}
 	return nil
 }
@@ -282,6 +296,7 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 	peri := getPeripherals(olddata.GetLabels())
 	if servo != nil {
 		servo.ServoType = olddata.GetLabels().GetPeripherals().GetServoType()
+		servo.ServoTopology = getServoTopology(olddata.GetLabels().GetPeripherals().GetServoTopology())
 		peri.Servo = servo
 		servoHostRegister.addServo(servo)
 	}
@@ -332,6 +347,16 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 	}
 	servoHostRegister[hostname] = servoHost
 	return nil
+}
+
+func getServoTopology(st *inventory.ServoTopology) *lab.ServoTopology {
+	var t *lab.ServoTopology
+	if st != nil {
+		stString := proto.MarshalTextString(st)
+		t = &lab.ServoTopology{}
+		proto.UnmarshalText(stString, t)
+	}
+	return t
 }
 
 func boolToDutState(state bool) lab.PeripheralState {

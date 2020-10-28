@@ -22,6 +22,28 @@ var servoInV2 = lab.Servo{
 	ServoSerial:   "test_servo_serial",
 	ServoType:     "v3",
 	ServoSetup:    lab.ServoSetupType_SERVO_SETUP_DUAL_V4,
+	ServoTopology: &lab.ServoTopology{
+		Main: &lab.ServoTopologyItem{
+			Type:         "servo_v4",
+			SysfsProduct: "Servo V4",
+			Serial:       "C1903145591",
+			UsbHubPort:   "6.4.1",
+		},
+		Children: []*lab.ServoTopologyItem{
+			{
+				Type:         "ccd_cr50",
+				SysfsProduct: "Cr50",
+				Serial:       "0681D03A-92DCCD64",
+				UsbHubPort:   "6.4.2",
+			},
+			{
+				Type:         "c2d2",
+				SysfsProduct: "C2D2",
+				Serial:       "0681D03A-YYYYYYYY",
+				UsbHubPort:   "6.4.3",
+			},
+		},
+	},
 }
 
 var devInV2 = lab.ChromeOSDevice{
@@ -306,6 +328,26 @@ common {
 			camerabox_facing: CAMERABOX_FACING_BACK
 			camerabox_light: CAMERABOX_LIGHT_LED
 			servo: true
+			servo_topology: {
+				main: {
+					usb_hub_port: "6.4.1"
+					serial: "C1903145591"
+					type: "servo_v4"
+					sysfs_product: "Servo V4"
+				}
+				children: {
+					usb_hub_port: "6.4.2"
+					serial: "0681D03A-92DCCD64"
+					type: "ccd_cr50"
+					sysfs_product: "Cr50"
+				}
+				children: {
+					usb_hub_port: "6.4.3"
+					serial: "0681D03A-YYYYYYYY"
+					type: "c2d2"
+					sysfs_product: "C2D2"
+				}
+			  }
 			servo_state: BROKEN
 			servo_type: "v3"
 			smart_usbhub: true
