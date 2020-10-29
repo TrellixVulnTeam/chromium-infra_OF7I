@@ -626,6 +626,14 @@ func (r *RenameNicRequest) Validate() error {
 	return validateResourceName(nicRegex, NicNameFormat, r.GetNewName())
 }
 
+// Validate validates input requests of RenameSwitch.
+func (r *RenameSwitchRequest) Validate() error {
+	if err := validateResourceName(switchRegex, SwitchNameFormat, r.GetName()); err != nil {
+		return err
+	}
+	return validateResourceName(switchRegex, SwitchNameFormat, r.GetNewName())
+}
+
 // Validate validates input requests of UpdateState.
 func (r *UpdateStateRequest) Validate() error {
 	if r.State == nil {

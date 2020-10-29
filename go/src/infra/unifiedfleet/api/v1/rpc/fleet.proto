@@ -238,6 +238,9 @@ service Fleet {
   // Delete delete the switch
   rpc DeleteSwitch(DeleteSwitchRequest) returns (google.protobuf.Empty);
 
+  // Rename rename the switch
+  rpc RenameSwitch(RenameSwitchRequest) returns (models.Switch);
+
   // CreateVlan creates a new vlan
   rpc CreateVlan(CreateVlanRequest) returns (models.Vlan);
 
@@ -1098,6 +1101,20 @@ message RenameNicRequest {
   string new_name = 2 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Nic" }
+  ];
+}
+
+message RenameSwitchRequest {
+  // The name of the Switch to rename
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Switch" }
+  ];
+
+  // The new name of the Switch
+  string new_name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Switch" }
   ];
 }
 

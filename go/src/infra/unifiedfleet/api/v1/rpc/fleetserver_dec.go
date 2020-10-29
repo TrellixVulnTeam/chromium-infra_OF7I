@@ -1217,6 +1217,23 @@ func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequ
 	return
 }
 
+func (s *DecoratedFleet) RenameSwitch(ctx context.Context, req *RenameSwitchRequest) (rsp *models.Switch, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RenameSwitch", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RenameSwitch(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RenameSwitch", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateVlan(ctx context.Context, req *CreateVlanRequest) (rsp *models.Vlan, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

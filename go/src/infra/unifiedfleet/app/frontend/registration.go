@@ -1022,6 +1022,17 @@ func (fs *FleetServerImpl) DeleteSwitch(ctx context.Context, req *ufsAPI.DeleteS
 	return &empty.Empty{}, err
 }
 
+// RenameSwitch renames the switch in database.
+func (fs *FleetServerImpl) RenameSwitch(ctx context.Context, req *ufsAPI.RenameSwitchRequest) (rsp *ufspb.Switch, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
 // CreateAsset creates an asset entry in database.
 func (fs *FleetServerImpl) CreateAsset(ctx context.Context, req *ufsAPI.CreateAssetRequest) (response *ufspb.Asset, err error) {
 	defer func() {
