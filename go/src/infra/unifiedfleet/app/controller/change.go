@@ -229,6 +229,8 @@ func (hc *HistoryClient) LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.description", oldData.GetDescription(), newData.GetDescription())...)
 	if newData.GetChromeBrowserMachineLse() != nil {
 		hc.changes = append(hc.changes, logChromeBrowserMachineLse(resourceName, oldData.GetChromeBrowserMachineLse(), newData.GetChromeBrowserMachineLse())...)
+	} else {
+		hc.changes = append(hc.changes, logChromeOSMachineLse(resourceName, oldData.GetChromeosMachineLse(), newData.GetChromeosMachineLse())...)
 	}
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -416,6 +418,16 @@ func (hc *HistoryClient) LogSwitchChanges(oldData, newData *ufspb.Switch) {
 		hc.logMsgEntity(resourceName, true, oldData)
 		return
 	}
+	if oldData.GetName() != newData.GetName() {
+		oldResourceName := util.AddPrefix(util.SwitchCollection, oldData.GetName())
+		hc.changes = append(hc.changes, logLifeCycle(oldResourceName, "switch", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(oldResourceName, "switch.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "switch", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(resourceName, "switch.name", oldData.GetName(), newData.GetName())...)
+		hc.logMsgEntity(oldResourceName, true, oldData)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
@@ -555,6 +567,12 @@ func logChromeBrowserMachineLse(resourceName string, oldData, newData *ufspb.Chr
 	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.vm_capacity", oldData.GetVmCapacity(), newData.GetVmCapacity())...)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.virtual_datacenter", oldData.GetVirtualDatacenter(), newData.GetVirtualDatacenter())...)
+	return changes
+}
+
+func logChromeOSMachineLse(resourceName string, oldData, newData *ufspb.ChromeOSMachineLSE) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logSwitchInterface(resourceName, oldData.GetDeviceLse().GetNetworkDeviceInterface(), newData.GetDeviceLse().GetNetworkDeviceInterface())...)
 	return changes
 }
 

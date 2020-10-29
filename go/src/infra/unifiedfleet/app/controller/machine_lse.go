@@ -1305,6 +1305,17 @@ func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newVal
 			lse.Nic = newValue
 			hc.LogMachineLSEChanges(oldLseCopy, lse)
 		}
+	case "switch":
+		// get MachineLSEs for switch indexing
+		lses, err = inventory.QueryMachineLSEByPropertyName(ctx, "switch_id", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query machinelses/hosts for switch %s", oldValue).Err()
+		}
+		for _, lse := range lses {
+			oldLseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
+			lse.GetChromeosMachineLse().GetDeviceLse().GetNetworkDeviceInterface().Switch = newValue
+			hc.LogMachineLSEChanges(oldLseCopy, lse)
+		}
 	}
 	if _, err = inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
 		return errors.Annotate(err, "unable to batch update machinelses").Err()

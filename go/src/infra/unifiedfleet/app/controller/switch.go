@@ -259,6 +259,85 @@ func ReplaceSwitch(ctx context.Context, oldSwitch *ufspb.Switch, newSwitch *ufsp
 	return nil, nil
 }
 
+// RenameSwitch renames the switch and updates the associated machinelse in datastore
+func RenameSwitch(ctx context.Context, oldSwitchName, newSwitchName string) (*ufspb.Switch, error) {
+	var s *ufspb.Switch
+	var err error
+	f := func(ctx context.Context) error {
+		// Get the old Switch
+		s, err = registration.GetSwitch(ctx, oldSwitchName)
+		if err != nil {
+			return errors.Annotate(err, "Unable to get switch %s", oldSwitchName).Err()
+		}
+
+		// Validate the input
+		if err := validateRenameSwitch(ctx, s, newSwitchName); err != nil {
+			return errors.Annotate(err, "validation failed").Err()
+		}
+
+		// Copy for logging
+		oldSwitchCopy := proto.Clone(s).(*ufspb.Switch)
+		hc := getSwitchHistoryClient(oldSwitchCopy)
+
+		if err := renameSwitchHelper(ctx, oldSwitchName, newSwitchName, hc); err != nil {
+			return err
+		}
+
+		// Delete the old switch
+		if err := registration.DeleteSwitch(ctx, oldSwitchName); err != nil {
+			return errors.Annotate(err, "unable to delete switch %s", oldSwitchName).Err()
+		}
+
+		// Create a new switch
+		s.Name = newSwitchName
+		if _, err = registration.BatchUpdateSwitches(ctx, []*ufspb.Switch{s}); err != nil {
+			return errors.Annotate(err, "unable to batch update switch %s", s.Name).Err()
+		}
+
+		hc.LogSwitchChanges(oldSwitchCopy, s)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "failed to rename switch: %s", oldSwitchName).Err()
+	}
+	return s, nil
+}
+
+// validateRenameSwitch validates if a Switch can be renamed
+func validateRenameSwitch(ctx context.Context, oldSwitch *ufspb.Switch, newSwitchName string) error {
+	rack, err := registration.GetRack(ctx, oldSwitch.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", oldSwitch.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, rack.GetRealm()); err != nil {
+		return err
+	}
+	// Check if new switch name already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetSwitchResource(newSwitchName)}, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func renameSwitchHelper(ctx context.Context, oldSwitchName, newSwitchName string, hc *HistoryClient) error {
+	// Update MachineLSE with new switch name
+	if err := updateIndexingForMachineLSE(ctx, "switch", oldSwitchName, newSwitchName, hc); err != nil {
+		return errors.Annotate(err, "failed to update indexing for hosts").Err()
+	}
+
+	// Update Nic with new switch name
+	if err := updateIndexingForNic(ctx, "switch", oldSwitchName, newSwitchName, hc); err != nil {
+		return errors.Annotate(err, "failed to update indexing for hosts").Err()
+	}
+
+	// Update Drac with new switch name
+	if err := updateIndexingForDrac(ctx, "switch", oldSwitchName, newSwitchName, hc); err != nil {
+		return errors.Annotate(err, "failed to update indexing for dracs").Err()
+	}
+	return nil
+}
+
 // validateDeleteSwitch validates if a Switch can be deleted
 //
 // Checks if this Switch(SwitchID) is not referenced by other resources in the datastore.

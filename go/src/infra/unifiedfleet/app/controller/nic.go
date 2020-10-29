@@ -545,3 +545,26 @@ func validateRenameNic(ctx context.Context, oldNic *ufspb.Nic, newNicName string
 	}
 	return nil
 }
+
+// updateIndexingForNic updates indexing for Nic tables
+// can be used inside a transaction
+func updateIndexingForNic(ctx context.Context, property, oldValue, newValue string, hc *HistoryClient) error {
+	var nics []*ufspb.Nic
+	var err error
+	switch property {
+	case "switch":
+		nics, err = registration.QueryNicByPropertyName(ctx, "switch_id", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query nics for switch %s", newValue).Err()
+		}
+		for _, nic := range nics {
+			oldNicCopy := proto.Clone(nic).(*ufspb.Nic)
+			nic.GetSwitchInterface().Switch = newValue
+			hc.LogNicChanges(oldNicCopy, nic)
+		}
+	}
+	if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
+		return errors.Annotate(err, "unable to batch update nics").Err()
+	}
+	return nil
+}

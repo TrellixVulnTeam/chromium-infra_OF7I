@@ -551,6 +551,16 @@ func updateIndexingForDrac(ctx context.Context, property, oldValue, newValue str
 			drac.Machine = newValue
 			hc.LogDracChanges(oldDracCopy, drac)
 		}
+	case "switch":
+		dracs, err = registration.QueryDracByPropertyName(ctx, "switch_id", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query dracs for switch %s", newValue).Err()
+		}
+		for _, drac := range dracs {
+			oldDracCopy := proto.Clone(drac).(*ufspb.Drac)
+			drac.GetSwitchInterface().Switch = newValue
+			hc.LogDracChanges(oldDracCopy, drac)
+		}
 	}
 	if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
 		return errors.Annotate(err, "updateIndexing - unable to batch update dracs").Err()

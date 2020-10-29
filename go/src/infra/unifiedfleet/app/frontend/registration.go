@@ -1030,6 +1030,12 @@ func (fs *FleetServerImpl) RenameSwitch(ctx context.Context, req *ufsAPI.RenameS
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+	s, err := controller.RenameSwitch(ctx, util.RemovePrefix(req.Name), util.RemovePrefix(req.NewName))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	return nil, err
 }
 

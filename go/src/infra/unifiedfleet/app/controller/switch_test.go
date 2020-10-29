@@ -17,6 +17,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
@@ -774,6 +775,166 @@ func TestBatchGetSwitches(t *testing.T) {
 			resp, err = registration.BatchGetSwitches(ctx, input)
 			So(err, ShouldBeNil)
 			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}
+
+func TestRenameSwitch(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	registration.CreateRack(ctx, &ufspb.Rack{
+		Name:  "rack-1",
+		Realm: util.BrowserLabAdminRealm,
+	})
+	Convey("RenameSwitch", t, func() {
+		Convey("Rename a Switch with new switch name", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name: "nic-1",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-1",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = registration.CreateDrac(ctx, &ufspb.Drac{
+				Name: "drac-1",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-1",
+				},
+			})
+			So(err, ShouldBeNil)
+			host := mockDutMachineLSE("machinelse-1")
+			host.GetChromeosMachineLse().GetDeviceLse().NetworkDeviceInterface = &ufspb.SwitchInterface{
+				Switch: "switch-1",
+			}
+			_, err = inventory.CreateMachineLSE(ctx, host)
+			So(err, ShouldBeNil)
+
+			switch2 := mockSwitch("switch-1")
+			switch2.Rack = "rack-1"
+			_, err = registration.CreateSwitch(ctx, switch2)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			res, err := RenameSwitch(ctx, "switch-1", "switch-2")
+			So(err, ShouldBeNil)
+			So(res.Name, ShouldEqual, "switch-2")
+
+			_, err = registration.GetSwitch(ctx, "switch-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			nic, err := registration.GetNic(ctx, "nic-1")
+			So(nic, ShouldNotBeNil)
+			So(nic.GetSwitchInterface().GetSwitch(), ShouldEqual, "switch-2")
+			drac, err := registration.GetDrac(ctx, "drac-1")
+			So(drac, ShouldNotBeNil)
+			So(drac.GetSwitchInterface().GetSwitch(), ShouldEqual, "switch-2")
+			lse, err := inventory.GetMachineLSE(ctx, "machinelse-1")
+			So(lse, ShouldNotBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetNetworkDeviceInterface().GetSwitch(), ShouldEqual, "switch-2")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+			So(changes[1].GetOldValue(), ShouldEqual, "switch-1")
+			So(changes[1].GetNewValue(), ShouldEqual, "switch-2")
+			So(changes[1].GetEventLabel(), ShouldEqual, "switch.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "switches/switch-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+			So(changes[1].GetOldValue(), ShouldEqual, "switch-1")
+			So(changes[1].GetNewValue(), ShouldEqual, "switch-2")
+			So(changes[1].GetEventLabel(), ShouldEqual, "switch.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "switch-1")
+			So(changes[0].GetNewValue(), ShouldEqual, "switch-2")
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch_interface.switch")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "switch-1")
+			So(changes[0].GetNewValue(), ShouldEqual, "switch-2")
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch_interface.switch")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "switch-1")
+			So(changes[0].GetNewValue(), ShouldEqual, "switch-2")
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch_interface.switch")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+		})
+		Convey("Rename a non-existing Switch", func() {
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err := RenameSwitch(ctx, "switch-3", "switch-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Rename a Switch to an already existing switch name", func() {
+			_, err := registration.CreateSwitch(ctx, &ufspb.Switch{
+				Name: "switch-5",
+				Rack: "rack-1",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateSwitch(ctx, &ufspb.Switch{
+				Name: "switch-6",
+				Rack: "rack-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = RenameSwitch(ctx, "switch-5", "switch-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Switch switch-6 already exists in the system")
+		})
+		Convey("Rename a Machine - permission denied: same realm and no update permission", func() {
+			_, err := registration.CreateSwitch(ctx, &ufspb.Switch{
+				Name: "switch-7",
+				Rack: "rack-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = RenameSwitch(ctx, "switch-7", "switch-8")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+		Convey("Rename a Switch - permission denied: different realm", func() {
+			_, err := registration.CreateSwitch(ctx, &ufspb.Switch{
+				Name: "switch-9",
+				Rack: "rack-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = RenameSwitch(ctx, "switch-9", "switch-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }
