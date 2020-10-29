@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/ufs/subcmds/machine"
+	"infra/cmd/shivas/ufs/subcmds/nic"
 )
 
 type rename struct {
@@ -19,7 +20,7 @@ type rename struct {
 var RenameCmd = &subcommands.Command{
 	UsageLine: "rename <sub-command>",
 	ShortDesc: "Rename a resource/entity",
-	LongDesc:  `Rename a machine`,
+	LongDesc:  `Rename a machine/nic`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &rename{}
 		return c
@@ -41,6 +42,7 @@ func (c renameApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
 		machine.RenameMachineCmd,
+		nic.RenameNicCmd,
 	}
 }
 
