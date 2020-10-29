@@ -10,6 +10,7 @@ import (
 
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/nic"
+	"infra/cmd/shivas/ufs/subcmds/switches"
 )
 
 type rename struct {
@@ -20,7 +21,7 @@ type rename struct {
 var RenameCmd = &subcommands.Command{
 	UsageLine: "rename <sub-command>",
 	ShortDesc: "Rename a resource/entity",
-	LongDesc:  `Rename a machine/nic`,
+	LongDesc:  `Rename a machine/nic/switch`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &rename{}
 		return c
@@ -43,6 +44,7 @@ func (c renameApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		machine.RenameMachineCmd,
 		nic.RenameNicCmd,
+		switches.RenameSwitchCmd,
 	}
 }
 
