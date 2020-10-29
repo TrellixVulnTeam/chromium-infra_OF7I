@@ -25,7 +25,6 @@ type indexPack struct {
 	corpus string
 	// The build config to specify in the unit file, e.g. 'android' or 'windows' (optional)
 	buildConfig string
-	verbose     bool
 
 	// Mapping to and from a filename and its content hash.
 	hashMaps *FileHashMap
@@ -36,7 +35,7 @@ type indexPack struct {
 
 // newIndexPack initializes a new indexPack struct.
 func newIndexPack(ctx context.Context, outputFile, rootPath, outDir, compDbPath,
-	gnTargetsPath, existingJavaKzipsPath, corpus, buildConfig string, verbose bool) *indexPack {
+	gnTargetsPath, existingJavaKzipsPath, corpus, buildConfig string) *indexPack {
 	// Initialize indexPack.
 	ip := &indexPack{
 		outputFile:            outputFile,
@@ -47,7 +46,6 @@ func newIndexPack(ctx context.Context, outputFile, rootPath, outDir, compDbPath,
 		existingJavaKzipsPath: existingJavaKzipsPath,
 		corpus:                corpus,
 		buildConfig:           buildConfig,
-		verbose:               verbose,
 		ctx:                   ctx,
 	}
 	ip.hashMaps = NewFileHashMap()

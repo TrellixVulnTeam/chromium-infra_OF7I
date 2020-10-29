@@ -54,14 +54,14 @@ type GnTargets struct {
 	targetsLen int
 
 	// WaitGroup for closing targetDataOut.
-	dataWg sync.WaitGroup
+	DataWg sync.WaitGroup
 
 	// WaitGroup for closing targetUnitOut.
-	unitWg sync.WaitGroup
+	UnitWg sync.WaitGroup
 
 	// WaitGroup for deferring processing of compilation units until after data files
 	// have been processed into kzip entries.
-	kzipDataWg sync.WaitGroup
+	KzipDataWg sync.WaitGroup
 }
 
 // NewGnTargets returns a GnTargets struct based on JSON file gnTargetsPath.
@@ -131,10 +131,10 @@ func (gnTargets *GnTargets) ProcessGnTargets(ctx context.Context, rootPath, outD
 		}
 	}
 	close(gnInterfaceChan)
-	gnTargets.dataWg.Done()
+	gnTargets.DataWg.Done()
 
 	// Wait for data files to be processed for writing to kzip.
-	gnTargets.kzipDataWg.Wait()
+	gnTargets.KzipDataWg.Wait()
 
 	// Process compilation units.
 	for gnInterface := range gnInterfaceChan {
@@ -148,6 +148,6 @@ func (gnTargets *GnTargets) ProcessGnTargets(ctx context.Context, rootPath, outD
 		}
 		targetUnitOut <- unit
 	}
-	gnTargets.unitWg.Done()
+	gnTargets.UnitWg.Done()
 	return nil
 }

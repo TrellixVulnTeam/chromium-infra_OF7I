@@ -46,14 +46,14 @@ type ClangTargets struct {
 	filepathsSet *ConcurrentSet
 
 	// WaitGroup for closing targetDataOut.
-	dataWg sync.WaitGroup
+	DataWg sync.WaitGroup
 
 	// WaitGroup for closing targetUnitOut.
-	unitWg sync.WaitGroup
+	UnitWg sync.WaitGroup
 
 	// WaitGroup for deferring processing of compilation units until after data files
 	// have been processed into kzip entries.
-	kzipDataWg sync.WaitGroup
+	KzipDataWg sync.WaitGroup
 }
 
 // NewClangTargets initializes a new ClangTargets struct.
@@ -106,10 +106,10 @@ func (clangTargets *ClangTargets) ProcessClangTargets(ctx context.Context, rootP
 		}
 	}
 	close(clangTargetChan)
-	clangTargets.dataWg.Done()
+	clangTargets.DataWg.Done()
 
 	// Wait for data files to be processed for writing to kzip.
-	clangTargets.kzipDataWg.Wait()
+	clangTargets.KzipDataWg.Wait()
 
 	// Process compilation units.
 	for clangInfo := range clangTargetChan {
@@ -119,7 +119,7 @@ func (clangTargets *ClangTargets) ProcessClangTargets(ctx context.Context, rootP
 		}
 		targetUnitOut <- unit
 	}
-	clangTargets.unitWg.Done()
+	clangTargets.UnitWg.Done()
 	return nil
 }
 

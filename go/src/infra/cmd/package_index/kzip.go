@@ -76,8 +76,9 @@ func (ip *indexPack) mergeExistingKzips(existingKzipChannel chan<- string) error
 // processExistingKzips reads existing kzips then extracts and sends compilation
 // units to be written to the final kzip output.
 //
-// Since processExistingKzips is executed by multiple goroutines, outputSet
-// is used to keep track of units already processed based on their output keys.
+// outputSet is used to keep track of units already processed based on their output keys.
+// Since files from existingKzipChannel are sorted by mod time, this must be run
+// by a single goroutine.
 func (ip *indexPack) processExistingKzips(ctx context.Context, existingKzipChannel <-chan string,
 	kzipEntryChannel chan<- kzipEntry, outputSet *ConcurrentSet) error {
 	for kzip := range existingKzipChannel {

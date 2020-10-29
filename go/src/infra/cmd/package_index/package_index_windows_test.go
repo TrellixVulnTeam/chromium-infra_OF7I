@@ -83,7 +83,7 @@ func TestPackageIndexWindows(t *testing.T) {
 		}
 
 		ip := newIndexPack(ctx, outputPath, rootDir, "src/out/Debug", modCompDbPath, gnPath, kzipPath,
-			"chromium-test", "win", false)
+			"chromium-test", "win")
 
 		// Read expected units and place into a map.
 		unitMap := make(map[unitKey]string)
@@ -144,14 +144,14 @@ func TestPackageIndexWindows(t *testing.T) {
 			dataFileChannel := make(chan string, chanSize)
 
 			// Parse compdb.
-			clang := NewClangTargets(modCompDbPath)
-			clang.dataWg.Add(numRoutines)
-			clang.unitWg.Add(numRoutines)
-			clang.kzipDataWg.Add(numRoutines)
+			clangTargets := NewClangTargets(modCompDbPath)
+			clangTargets.DataWg.Add(numRoutines)
+			clangTargets.UnitWg.Add(numRoutines)
+			clangTargets.KzipDataWg.Add(numRoutines)
 			for i := 0; i < numRoutines; i++ {
 				go func() {
 					// Process clang files.
-					err := clang.ProcessClangTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus,
+					err := clangTargets.ProcessClangTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus,
 						ip.buildConfig, ip.hashMaps, dataFileChannel, unitProtoChannel)
 					if err != nil {
 						t.Fatal(err)
@@ -161,9 +161,9 @@ func TestPackageIndexWindows(t *testing.T) {
 
 			// Parse GN targets.
 			gnTargets := NewGnTargets(gnPath)
-			gnTargets.dataWg.Add(numRoutines)
-			gnTargets.kzipDataWg.Add(numRoutines)
-			gnTargets.unitWg.Add(numRoutines)
+			gnTargets.DataWg.Add(numRoutines)
+			gnTargets.KzipDataWg.Add(numRoutines)
+			gnTargets.UnitWg.Add(numRoutines)
 
 			// Process GN target data files.
 			for i := 0; i < numRoutines; i++ {
@@ -183,8 +183,8 @@ func TestPackageIndexWindows(t *testing.T) {
 					ip.dataFileToKzipEntry(ctx, dataFileChannel, kzipEntryChannel)
 
 					// Signal done for GN compilation unit processing.
-					gnTargets.kzipDataWg.Done()
-					clang.kzipDataWg.Done()
+					gnTargets.KzipDataWg.Done()
+					clangTargets.KzipDataWg.Done()
 				}()
 			}
 
@@ -200,13 +200,13 @@ func TestPackageIndexWindows(t *testing.T) {
 
 			// Close dataFileChannel and unitProtoChannel after all GN targets have been processed and sent.
 			go func() {
-				gnTargets.dataWg.Wait()
-				clang.dataWg.Wait()
+				gnTargets.DataWg.Wait()
+				clangTargets.DataWg.Wait()
 				close(dataFileChannel)
 			}()
 			go func() {
-				gnTargets.unitWg.Wait()
-				clang.unitWg.Wait()
+				gnTargets.UnitWg.Wait()
+				clangTargets.UnitWg.Wait()
 				close(unitProtoChannel)
 			}()
 
