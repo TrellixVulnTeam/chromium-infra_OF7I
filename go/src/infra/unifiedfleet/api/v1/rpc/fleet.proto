@@ -172,6 +172,9 @@ service Fleet {
   // ImportNics imports nics info.
   rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
 
+  // Rename rename the nic
+  rpc RenameNic(RenameNicRequest) returns (models.Nic);
+
   // ImportDatacenters imports datacenter & its related info, including kvm & switch.
   rpc ImportDatacenters(ImportDatacentersRequest) returns (google.rpc.Status);
 
@@ -1082,6 +1085,20 @@ message ImportNicsRequest {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
   }
+}
+
+message RenameNicRequest {
+  // The name of the Nic to rename
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Nic" }
+  ];
+
+  // The new name of the Nic
+  string new_name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Nic" }
+  ];
 }
 
 message ImportDatacentersRequest {

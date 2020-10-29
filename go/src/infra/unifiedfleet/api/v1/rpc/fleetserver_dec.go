@@ -843,6 +843,23 @@ func (s *DecoratedFleet) ImportNics(ctx context.Context, req *ImportNicsRequest)
 	return
 }
 
+func (s *DecoratedFleet) RenameNic(ctx context.Context, req *RenameNicRequest) (rsp *models.Nic, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RenameNic", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RenameNic(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RenameNic", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ImportDatacenters(ctx context.Context, req *ImportDatacentersRequest) (rsp *status.Status, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

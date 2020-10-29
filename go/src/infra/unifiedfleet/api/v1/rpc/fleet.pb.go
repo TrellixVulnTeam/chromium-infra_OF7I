@@ -4194,6 +4194,63 @@ func (*ImportNicsRequest_MachineDbSource) isImportNicsRequest_Source() {}
 
 func (*ImportNicsRequest_ConfigSource) isImportNicsRequest_Source() {}
 
+type RenameNicRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The name of the Nic to rename
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The new name of the Nic
+	NewName string `protobuf:"bytes,2,opt,name=new_name,json=newName,proto3" json:"new_name,omitempty"`
+}
+
+func (x *RenameNicRequest) Reset() {
+	*x = RenameNicRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RenameNicRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameNicRequest) ProtoMessage() {}
+
+func (x *RenameNicRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameNicRequest.ProtoReflect.Descriptor instead.
+func (*RenameNicRequest) Descriptor() ([]byte, []int) {
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{68}
+}
+
+func (x *RenameNicRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RenameNicRequest) GetNewName() string {
+	if x != nil {
+		return x.NewName
+	}
+	return ""
+}
+
 type ImportDatacentersRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4208,7 +4265,7 @@ type ImportDatacentersRequest struct {
 func (x *ImportDatacentersRequest) Reset() {
 	*x = ImportDatacentersRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4221,7 +4278,7 @@ func (x *ImportDatacentersRequest) String() string {
 func (*ImportDatacentersRequest) ProtoMessage() {}
 
 func (x *ImportDatacentersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4234,7 +4291,7 @@ func (x *ImportDatacentersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportDatacentersRequest.ProtoReflect.Descriptor instead.
 func (*ImportDatacentersRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{68}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{69}
 }
 
 func (m *ImportDatacentersRequest) GetSource() isImportDatacentersRequest_Source {
@@ -4294,7 +4351,7 @@ type CreateKVMRequest struct {
 func (x *CreateKVMRequest) Reset() {
 	*x = CreateKVMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4307,7 +4364,7 @@ func (x *CreateKVMRequest) String() string {
 func (*CreateKVMRequest) ProtoMessage() {}
 
 func (x *CreateKVMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4320,7 +4377,7 @@ func (x *CreateKVMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateKVMRequest.ProtoReflect.Descriptor instead.
 func (*CreateKVMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{69}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *CreateKVMRequest) GetKVM() *models.KVM {
@@ -4352,7 +4409,7 @@ type UpdateKVMRequest struct {
 func (x *UpdateKVMRequest) Reset() {
 	*x = UpdateKVMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[70]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4365,7 +4422,7 @@ func (x *UpdateKVMRequest) String() string {
 func (*UpdateKVMRequest) ProtoMessage() {}
 
 func (x *UpdateKVMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[70]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4378,7 +4435,7 @@ func (x *UpdateKVMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateKVMRequest.ProtoReflect.Descriptor instead.
 func (*UpdateKVMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{70}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *UpdateKVMRequest) GetKVM() *models.KVM {
@@ -4414,7 +4471,7 @@ type GetKVMRequest struct {
 func (x *GetKVMRequest) Reset() {
 	*x = GetKVMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[71]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[72]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4427,7 +4484,7 @@ func (x *GetKVMRequest) String() string {
 func (*GetKVMRequest) ProtoMessage() {}
 
 func (x *GetKVMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[71]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[72]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4440,7 +4497,7 @@ func (x *GetKVMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetKVMRequest.ProtoReflect.Descriptor instead.
 func (*GetKVMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{71}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *GetKVMRequest) GetName() string {
@@ -4476,7 +4533,7 @@ type ListKVMsRequest struct {
 func (x *ListKVMsRequest) Reset() {
 	*x = ListKVMsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[72]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[73]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4489,7 +4546,7 @@ func (x *ListKVMsRequest) String() string {
 func (*ListKVMsRequest) ProtoMessage() {}
 
 func (x *ListKVMsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[72]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[73]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4502,7 +4559,7 @@ func (x *ListKVMsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKVMsRequest.ProtoReflect.Descriptor instead.
 func (*ListKVMsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{72}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *ListKVMsRequest) GetPageSize() int32 {
@@ -4548,7 +4605,7 @@ type ListKVMsResponse struct {
 func (x *ListKVMsResponse) Reset() {
 	*x = ListKVMsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[73]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[74]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4561,7 +4618,7 @@ func (x *ListKVMsResponse) String() string {
 func (*ListKVMsResponse) ProtoMessage() {}
 
 func (x *ListKVMsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[73]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[74]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4574,7 +4631,7 @@ func (x *ListKVMsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKVMsResponse.ProtoReflect.Descriptor instead.
 func (*ListKVMsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{73}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *ListKVMsResponse) GetKVMs() []*models.KVM {
@@ -4603,7 +4660,7 @@ type DeleteKVMRequest struct {
 func (x *DeleteKVMRequest) Reset() {
 	*x = DeleteKVMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[74]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4616,7 +4673,7 @@ func (x *DeleteKVMRequest) String() string {
 func (*DeleteKVMRequest) ProtoMessage() {}
 
 func (x *DeleteKVMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[74]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4629,7 +4686,7 @@ func (x *DeleteKVMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteKVMRequest.ProtoReflect.Descriptor instead.
 func (*DeleteKVMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{74}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *DeleteKVMRequest) GetName() string {
@@ -4659,7 +4716,7 @@ type CreateRPMRequest struct {
 func (x *CreateRPMRequest) Reset() {
 	*x = CreateRPMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[75]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[76]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4672,7 +4729,7 @@ func (x *CreateRPMRequest) String() string {
 func (*CreateRPMRequest) ProtoMessage() {}
 
 func (x *CreateRPMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[75]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[76]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4685,7 +4742,7 @@ func (x *CreateRPMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRPMRequest.ProtoReflect.Descriptor instead.
 func (*CreateRPMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{75}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *CreateRPMRequest) GetRPM() *models.RPM {
@@ -4716,7 +4773,7 @@ type UpdateRPMRequest struct {
 func (x *UpdateRPMRequest) Reset() {
 	*x = UpdateRPMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[76]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[77]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4729,7 +4786,7 @@ func (x *UpdateRPMRequest) String() string {
 func (*UpdateRPMRequest) ProtoMessage() {}
 
 func (x *UpdateRPMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[76]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[77]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4742,7 +4799,7 @@ func (x *UpdateRPMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRPMRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRPMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{76}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *UpdateRPMRequest) GetRPM() *models.RPM {
@@ -4771,7 +4828,7 @@ type GetRPMRequest struct {
 func (x *GetRPMRequest) Reset() {
 	*x = GetRPMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[77]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[78]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4784,7 +4841,7 @@ func (x *GetRPMRequest) String() string {
 func (*GetRPMRequest) ProtoMessage() {}
 
 func (x *GetRPMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[77]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[78]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4797,7 +4854,7 @@ func (x *GetRPMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRPMRequest.ProtoReflect.Descriptor instead.
 func (*GetRPMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{77}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *GetRPMRequest) GetName() string {
@@ -4833,7 +4890,7 @@ type ListRPMsRequest struct {
 func (x *ListRPMsRequest) Reset() {
 	*x = ListRPMsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[78]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[79]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4846,7 +4903,7 @@ func (x *ListRPMsRequest) String() string {
 func (*ListRPMsRequest) ProtoMessage() {}
 
 func (x *ListRPMsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[78]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[79]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4859,7 +4916,7 @@ func (x *ListRPMsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRPMsRequest.ProtoReflect.Descriptor instead.
 func (*ListRPMsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{78}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *ListRPMsRequest) GetPageSize() int32 {
@@ -4905,7 +4962,7 @@ type ListRPMsResponse struct {
 func (x *ListRPMsResponse) Reset() {
 	*x = ListRPMsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[79]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[80]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4918,7 +4975,7 @@ func (x *ListRPMsResponse) String() string {
 func (*ListRPMsResponse) ProtoMessage() {}
 
 func (x *ListRPMsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[79]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[80]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4931,7 +4988,7 @@ func (x *ListRPMsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRPMsResponse.ProtoReflect.Descriptor instead.
 func (*ListRPMsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{79}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *ListRPMsResponse) GetRPMs() []*models.RPM {
@@ -4960,7 +5017,7 @@ type DeleteRPMRequest struct {
 func (x *DeleteRPMRequest) Reset() {
 	*x = DeleteRPMRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[80]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[81]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4973,7 +5030,7 @@ func (x *DeleteRPMRequest) String() string {
 func (*DeleteRPMRequest) ProtoMessage() {}
 
 func (x *DeleteRPMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[80]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[81]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4986,7 +5043,7 @@ func (x *DeleteRPMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRPMRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRPMRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{80}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *DeleteRPMRequest) GetName() string {
@@ -5016,7 +5073,7 @@ type CreateDracRequest struct {
 func (x *CreateDracRequest) Reset() {
 	*x = CreateDracRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[81]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[82]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5029,7 +5086,7 @@ func (x *CreateDracRequest) String() string {
 func (*CreateDracRequest) ProtoMessage() {}
 
 func (x *CreateDracRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[81]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[82]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5042,7 +5099,7 @@ func (x *CreateDracRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDracRequest.ProtoReflect.Descriptor instead.
 func (*CreateDracRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{81}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *CreateDracRequest) GetDrac() *models.Drac {
@@ -5074,7 +5131,7 @@ type UpdateDracRequest struct {
 func (x *UpdateDracRequest) Reset() {
 	*x = UpdateDracRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[82]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[83]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5087,7 +5144,7 @@ func (x *UpdateDracRequest) String() string {
 func (*UpdateDracRequest) ProtoMessage() {}
 
 func (x *UpdateDracRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[82]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[83]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5100,7 +5157,7 @@ func (x *UpdateDracRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDracRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDracRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{82}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *UpdateDracRequest) GetDrac() *models.Drac {
@@ -5136,7 +5193,7 @@ type GetDracRequest struct {
 func (x *GetDracRequest) Reset() {
 	*x = GetDracRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[83]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[84]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5149,7 +5206,7 @@ func (x *GetDracRequest) String() string {
 func (*GetDracRequest) ProtoMessage() {}
 
 func (x *GetDracRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[83]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[84]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5162,7 +5219,7 @@ func (x *GetDracRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDracRequest.ProtoReflect.Descriptor instead.
 func (*GetDracRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{83}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *GetDracRequest) GetName() string {
@@ -5198,7 +5255,7 @@ type ListDracsRequest struct {
 func (x *ListDracsRequest) Reset() {
 	*x = ListDracsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[84]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[85]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5211,7 +5268,7 @@ func (x *ListDracsRequest) String() string {
 func (*ListDracsRequest) ProtoMessage() {}
 
 func (x *ListDracsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[84]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[85]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5224,7 +5281,7 @@ func (x *ListDracsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDracsRequest.ProtoReflect.Descriptor instead.
 func (*ListDracsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{84}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ListDracsRequest) GetPageSize() int32 {
@@ -5270,7 +5327,7 @@ type ListDracsResponse struct {
 func (x *ListDracsResponse) Reset() {
 	*x = ListDracsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[85]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[86]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5283,7 +5340,7 @@ func (x *ListDracsResponse) String() string {
 func (*ListDracsResponse) ProtoMessage() {}
 
 func (x *ListDracsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[85]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[86]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5296,7 +5353,7 @@ func (x *ListDracsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDracsResponse.ProtoReflect.Descriptor instead.
 func (*ListDracsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{85}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *ListDracsResponse) GetDracs() []*models.Drac {
@@ -5325,7 +5382,7 @@ type DeleteDracRequest struct {
 func (x *DeleteDracRequest) Reset() {
 	*x = DeleteDracRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[86]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[87]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5338,7 +5395,7 @@ func (x *DeleteDracRequest) String() string {
 func (*DeleteDracRequest) ProtoMessage() {}
 
 func (x *DeleteDracRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[86]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[87]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5351,7 +5408,7 @@ func (x *DeleteDracRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDracRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDracRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{86}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *DeleteDracRequest) GetName() string {
@@ -5381,7 +5438,7 @@ type CreateSwitchRequest struct {
 func (x *CreateSwitchRequest) Reset() {
 	*x = CreateSwitchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[87]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[88]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5394,7 +5451,7 @@ func (x *CreateSwitchRequest) String() string {
 func (*CreateSwitchRequest) ProtoMessage() {}
 
 func (x *CreateSwitchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[87]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[88]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5407,7 +5464,7 @@ func (x *CreateSwitchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSwitchRequest.ProtoReflect.Descriptor instead.
 func (*CreateSwitchRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{87}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *CreateSwitchRequest) GetSwitch() *models.Switch {
@@ -5438,7 +5495,7 @@ type UpdateSwitchRequest struct {
 func (x *UpdateSwitchRequest) Reset() {
 	*x = UpdateSwitchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[88]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[89]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5451,7 +5508,7 @@ func (x *UpdateSwitchRequest) String() string {
 func (*UpdateSwitchRequest) ProtoMessage() {}
 
 func (x *UpdateSwitchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[88]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[89]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5464,7 +5521,7 @@ func (x *UpdateSwitchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSwitchRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSwitchRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{88}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *UpdateSwitchRequest) GetSwitch() *models.Switch {
@@ -5493,7 +5550,7 @@ type GetSwitchRequest struct {
 func (x *GetSwitchRequest) Reset() {
 	*x = GetSwitchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[89]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[90]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5506,7 +5563,7 @@ func (x *GetSwitchRequest) String() string {
 func (*GetSwitchRequest) ProtoMessage() {}
 
 func (x *GetSwitchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[89]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[90]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5519,7 +5576,7 @@ func (x *GetSwitchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSwitchRequest.ProtoReflect.Descriptor instead.
 func (*GetSwitchRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{89}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *GetSwitchRequest) GetName() string {
@@ -5555,7 +5612,7 @@ type ListSwitchesRequest struct {
 func (x *ListSwitchesRequest) Reset() {
 	*x = ListSwitchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[90]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[91]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5568,7 +5625,7 @@ func (x *ListSwitchesRequest) String() string {
 func (*ListSwitchesRequest) ProtoMessage() {}
 
 func (x *ListSwitchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[90]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[91]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5581,7 +5638,7 @@ func (x *ListSwitchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSwitchesRequest.ProtoReflect.Descriptor instead.
 func (*ListSwitchesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{90}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *ListSwitchesRequest) GetPageSize() int32 {
@@ -5627,7 +5684,7 @@ type ListSwitchesResponse struct {
 func (x *ListSwitchesResponse) Reset() {
 	*x = ListSwitchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[91]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[92]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5640,7 +5697,7 @@ func (x *ListSwitchesResponse) String() string {
 func (*ListSwitchesResponse) ProtoMessage() {}
 
 func (x *ListSwitchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[91]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[92]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5653,7 +5710,7 @@ func (x *ListSwitchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSwitchesResponse.ProtoReflect.Descriptor instead.
 func (*ListSwitchesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{91}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *ListSwitchesResponse) GetSwitches() []*models.Switch {
@@ -5682,7 +5739,7 @@ type DeleteSwitchRequest struct {
 func (x *DeleteSwitchRequest) Reset() {
 	*x = DeleteSwitchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[92]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[93]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5695,7 +5752,7 @@ func (x *DeleteSwitchRequest) String() string {
 func (*DeleteSwitchRequest) ProtoMessage() {}
 
 func (x *DeleteSwitchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[92]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[93]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5708,7 +5765,7 @@ func (x *DeleteSwitchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSwitchRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSwitchRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{92}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *DeleteSwitchRequest) GetName() string {
@@ -5738,7 +5795,7 @@ type CreateVlanRequest struct {
 func (x *CreateVlanRequest) Reset() {
 	*x = CreateVlanRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[93]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[94]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5751,7 +5808,7 @@ func (x *CreateVlanRequest) String() string {
 func (*CreateVlanRequest) ProtoMessage() {}
 
 func (x *CreateVlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[93]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[94]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5764,7 +5821,7 @@ func (x *CreateVlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateVlanRequest.ProtoReflect.Descriptor instead.
 func (*CreateVlanRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{93}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *CreateVlanRequest) GetVlan() *models.Vlan {
@@ -5795,7 +5852,7 @@ type UpdateVlanRequest struct {
 func (x *UpdateVlanRequest) Reset() {
 	*x = UpdateVlanRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[94]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[95]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5808,7 +5865,7 @@ func (x *UpdateVlanRequest) String() string {
 func (*UpdateVlanRequest) ProtoMessage() {}
 
 func (x *UpdateVlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[94]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[95]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5821,7 +5878,7 @@ func (x *UpdateVlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVlanRequest.ProtoReflect.Descriptor instead.
 func (*UpdateVlanRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{94}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *UpdateVlanRequest) GetVlan() *models.Vlan {
@@ -5850,7 +5907,7 @@ type GetVlanRequest struct {
 func (x *GetVlanRequest) Reset() {
 	*x = GetVlanRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[95]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[96]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5863,7 +5920,7 @@ func (x *GetVlanRequest) String() string {
 func (*GetVlanRequest) ProtoMessage() {}
 
 func (x *GetVlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[95]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[96]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5876,7 +5933,7 @@ func (x *GetVlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVlanRequest.ProtoReflect.Descriptor instead.
 func (*GetVlanRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{95}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *GetVlanRequest) GetName() string {
@@ -5912,7 +5969,7 @@ type ListVlansRequest struct {
 func (x *ListVlansRequest) Reset() {
 	*x = ListVlansRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[96]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[97]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5925,7 +5982,7 @@ func (x *ListVlansRequest) String() string {
 func (*ListVlansRequest) ProtoMessage() {}
 
 func (x *ListVlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[96]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[97]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5938,7 +5995,7 @@ func (x *ListVlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVlansRequest.ProtoReflect.Descriptor instead.
 func (*ListVlansRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{96}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *ListVlansRequest) GetPageSize() int32 {
@@ -5984,7 +6041,7 @@ type ListVlansResponse struct {
 func (x *ListVlansResponse) Reset() {
 	*x = ListVlansResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[97]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[98]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5997,7 +6054,7 @@ func (x *ListVlansResponse) String() string {
 func (*ListVlansResponse) ProtoMessage() {}
 
 func (x *ListVlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[97]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[98]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6010,7 +6067,7 @@ func (x *ListVlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVlansResponse.ProtoReflect.Descriptor instead.
 func (*ListVlansResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{97}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *ListVlansResponse) GetVlans() []*models.Vlan {
@@ -6039,7 +6096,7 @@ type DeleteVlanRequest struct {
 func (x *DeleteVlanRequest) Reset() {
 	*x = DeleteVlanRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[98]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6052,7 +6109,7 @@ func (x *DeleteVlanRequest) String() string {
 func (*DeleteVlanRequest) ProtoMessage() {}
 
 func (x *DeleteVlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[98]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6065,7 +6122,7 @@ func (x *DeleteVlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteVlanRequest.ProtoReflect.Descriptor instead.
 func (*DeleteVlanRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{98}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *DeleteVlanRequest) GetName() string {
@@ -6089,7 +6146,7 @@ type ImportVlansRequest struct {
 func (x *ImportVlansRequest) Reset() {
 	*x = ImportVlansRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6102,7 +6159,7 @@ func (x *ImportVlansRequest) String() string {
 func (*ImportVlansRequest) ProtoMessage() {}
 
 func (x *ImportVlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6115,7 +6172,7 @@ func (x *ImportVlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportVlansRequest.ProtoReflect.Descriptor instead.
 func (*ImportVlansRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{99}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{100}
 }
 
 func (m *ImportVlansRequest) GetSource() isImportVlansRequest_Source {
@@ -6169,7 +6226,7 @@ type ImportOSVlansRequest struct {
 func (x *ImportOSVlansRequest) Reset() {
 	*x = ImportOSVlansRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6182,7 +6239,7 @@ func (x *ImportOSVlansRequest) String() string {
 func (*ImportOSVlansRequest) ProtoMessage() {}
 
 func (x *ImportOSVlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6195,7 +6252,7 @@ func (x *ImportOSVlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportOSVlansRequest.ProtoReflect.Descriptor instead.
 func (*ImportOSVlansRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{100}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{101}
 }
 
 func (m *ImportOSVlansRequest) GetSource() isImportOSVlansRequest_Source {
@@ -6249,7 +6306,7 @@ type ImportStatesRequest struct {
 func (x *ImportStatesRequest) Reset() {
 	*x = ImportStatesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6262,7 +6319,7 @@ func (x *ImportStatesRequest) String() string {
 func (*ImportStatesRequest) ProtoMessage() {}
 
 func (x *ImportStatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6275,7 +6332,7 @@ func (x *ImportStatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportStatesRequest.ProtoReflect.Descriptor instead.
 func (*ImportStatesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{101}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{102}
 }
 
 func (m *ImportStatesRequest) GetSource() isImportStatesRequest_Source {
@@ -6327,7 +6384,7 @@ type GetStateRequest struct {
 func (x *GetStateRequest) Reset() {
 	*x = GetStateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[103]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6340,7 +6397,7 @@ func (x *GetStateRequest) String() string {
 func (*GetStateRequest) ProtoMessage() {}
 
 func (x *GetStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[103]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6353,7 +6410,7 @@ func (x *GetStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStateRequest.ProtoReflect.Descriptor instead.
 func (*GetStateRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{102}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *GetStateRequest) GetResourceName() string {
@@ -6377,7 +6434,7 @@ type UpdateStateRequest struct {
 func (x *UpdateStateRequest) Reset() {
 	*x = UpdateStateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[103]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[104]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6390,7 +6447,7 @@ func (x *UpdateStateRequest) String() string {
 func (*UpdateStateRequest) ProtoMessage() {}
 
 func (x *UpdateStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[103]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[104]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6403,7 +6460,7 @@ func (x *UpdateStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateStateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateStateRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{103}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *UpdateStateRequest) GetState() *models.StateRecord {
@@ -6432,7 +6489,7 @@ type RackRegistrationRequest struct {
 func (x *RackRegistrationRequest) Reset() {
 	*x = RackRegistrationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[104]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[105]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6445,7 +6502,7 @@ func (x *RackRegistrationRequest) String() string {
 func (*RackRegistrationRequest) ProtoMessage() {}
 
 func (x *RackRegistrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[104]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[105]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6458,7 +6515,7 @@ func (x *RackRegistrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RackRegistrationRequest.ProtoReflect.Descriptor instead.
 func (*RackRegistrationRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{104}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *RackRegistrationRequest) GetRack() *models.Rack {
@@ -6486,7 +6543,7 @@ type NetworkOption struct {
 func (x *NetworkOption) Reset() {
 	*x = NetworkOption{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[105]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[106]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6499,7 +6556,7 @@ func (x *NetworkOption) String() string {
 func (*NetworkOption) ProtoMessage() {}
 
 func (x *NetworkOption) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[105]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[106]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6512,7 +6569,7 @@ func (x *NetworkOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkOption.ProtoReflect.Descriptor instead.
 func (*NetworkOption) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{105}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *NetworkOption) GetVlan() string {
@@ -6555,7 +6612,7 @@ type CreateAssetRequest struct {
 func (x *CreateAssetRequest) Reset() {
 	*x = CreateAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[106]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[107]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6568,7 +6625,7 @@ func (x *CreateAssetRequest) String() string {
 func (*CreateAssetRequest) ProtoMessage() {}
 
 func (x *CreateAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[106]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[107]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6581,7 +6638,7 @@ func (x *CreateAssetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAssetRequest.ProtoReflect.Descriptor instead.
 func (*CreateAssetRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{106}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *CreateAssetRequest) GetAsset() *models.Asset {
@@ -6606,7 +6663,7 @@ type BatchGetKVMsRequest struct {
 func (x *BatchGetKVMsRequest) Reset() {
 	*x = BatchGetKVMsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[107]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[108]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6619,7 +6676,7 @@ func (x *BatchGetKVMsRequest) String() string {
 func (*BatchGetKVMsRequest) ProtoMessage() {}
 
 func (x *BatchGetKVMsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[107]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[108]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6632,7 +6689,7 @@ func (x *BatchGetKVMsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetKVMsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetKVMsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{107}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *BatchGetKVMsRequest) GetParent() string {
@@ -6661,7 +6718,7 @@ type BatchGetKVMsResponse struct {
 func (x *BatchGetKVMsResponse) Reset() {
 	*x = BatchGetKVMsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[108]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[109]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6674,7 +6731,7 @@ func (x *BatchGetKVMsResponse) String() string {
 func (*BatchGetKVMsResponse) ProtoMessage() {}
 
 func (x *BatchGetKVMsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[108]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[109]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6687,7 +6744,7 @@ func (x *BatchGetKVMsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetKVMsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetKVMsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{108}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{109}
 }
 
 func (x *BatchGetKVMsResponse) GetKVMs() []*models.KVM {
@@ -6711,7 +6768,7 @@ type BatchGetDHCPConfigsRequest struct {
 func (x *BatchGetDHCPConfigsRequest) Reset() {
 	*x = BatchGetDHCPConfigsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[109]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[110]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6724,7 +6781,7 @@ func (x *BatchGetDHCPConfigsRequest) String() string {
 func (*BatchGetDHCPConfigsRequest) ProtoMessage() {}
 
 func (x *BatchGetDHCPConfigsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[109]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[110]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6737,7 +6794,7 @@ func (x *BatchGetDHCPConfigsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetDHCPConfigsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetDHCPConfigsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{109}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *BatchGetDHCPConfigsRequest) GetParent() string {
@@ -6766,7 +6823,7 @@ type BatchGetDHCPConfigsResponse struct {
 func (x *BatchGetDHCPConfigsResponse) Reset() {
 	*x = BatchGetDHCPConfigsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[110]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[111]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6779,7 +6836,7 @@ func (x *BatchGetDHCPConfigsResponse) String() string {
 func (*BatchGetDHCPConfigsResponse) ProtoMessage() {}
 
 func (x *BatchGetDHCPConfigsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[110]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[111]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6792,7 +6849,7 @@ func (x *BatchGetDHCPConfigsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetDHCPConfigsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetDHCPConfigsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{110}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *BatchGetDHCPConfigsResponse) GetDhcpConfigs() []*models.DHCPConfig {
@@ -6817,7 +6874,7 @@ type BatchGetMachineLSEsRequest struct {
 func (x *BatchGetMachineLSEsRequest) Reset() {
 	*x = BatchGetMachineLSEsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[111]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[112]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6830,7 +6887,7 @@ func (x *BatchGetMachineLSEsRequest) String() string {
 func (*BatchGetMachineLSEsRequest) ProtoMessage() {}
 
 func (x *BatchGetMachineLSEsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[111]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[112]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6843,7 +6900,7 @@ func (x *BatchGetMachineLSEsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetMachineLSEsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetMachineLSEsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{111}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *BatchGetMachineLSEsRequest) GetParent() string {
@@ -6872,7 +6929,7 @@ type BatchGetMachineLSEsResponse struct {
 func (x *BatchGetMachineLSEsResponse) Reset() {
 	*x = BatchGetMachineLSEsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[112]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[113]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6885,7 +6942,7 @@ func (x *BatchGetMachineLSEsResponse) String() string {
 func (*BatchGetMachineLSEsResponse) ProtoMessage() {}
 
 func (x *BatchGetMachineLSEsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[112]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[113]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6898,7 +6955,7 @@ func (x *BatchGetMachineLSEsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetMachineLSEsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetMachineLSEsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{112}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *BatchGetMachineLSEsResponse) GetMachineLses() []*models.MachineLSE {
@@ -6923,7 +6980,7 @@ type BatchGetMachinesRequest struct {
 func (x *BatchGetMachinesRequest) Reset() {
 	*x = BatchGetMachinesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[113]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[114]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6936,7 +6993,7 @@ func (x *BatchGetMachinesRequest) String() string {
 func (*BatchGetMachinesRequest) ProtoMessage() {}
 
 func (x *BatchGetMachinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[113]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[114]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6949,7 +7006,7 @@ func (x *BatchGetMachinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetMachinesRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetMachinesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{113}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{114}
 }
 
 func (x *BatchGetMachinesRequest) GetParent() string {
@@ -6978,7 +7035,7 @@ type BatchGetMachinesResponse struct {
 func (x *BatchGetMachinesResponse) Reset() {
 	*x = BatchGetMachinesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[114]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[115]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6991,7 +7048,7 @@ func (x *BatchGetMachinesResponse) String() string {
 func (*BatchGetMachinesResponse) ProtoMessage() {}
 
 func (x *BatchGetMachinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[114]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[115]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7004,7 +7061,7 @@ func (x *BatchGetMachinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetMachinesResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetMachinesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{114}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *BatchGetMachinesResponse) GetMachines() []*models.Machine {
@@ -7029,7 +7086,7 @@ type BatchGetSwitchesRequest struct {
 func (x *BatchGetSwitchesRequest) Reset() {
 	*x = BatchGetSwitchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[115]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[116]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7042,7 +7099,7 @@ func (x *BatchGetSwitchesRequest) String() string {
 func (*BatchGetSwitchesRequest) ProtoMessage() {}
 
 func (x *BatchGetSwitchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[115]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[116]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7055,7 +7112,7 @@ func (x *BatchGetSwitchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetSwitchesRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetSwitchesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{115}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *BatchGetSwitchesRequest) GetParent() string {
@@ -7084,7 +7141,7 @@ type BatchGetSwitchesResponse struct {
 func (x *BatchGetSwitchesResponse) Reset() {
 	*x = BatchGetSwitchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[116]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[117]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7097,7 +7154,7 @@ func (x *BatchGetSwitchesResponse) String() string {
 func (*BatchGetSwitchesResponse) ProtoMessage() {}
 
 func (x *BatchGetSwitchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[116]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[117]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7110,7 +7167,7 @@ func (x *BatchGetSwitchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetSwitchesResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetSwitchesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{116}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *BatchGetSwitchesResponse) GetSwitches() []*models.Switch {
@@ -7135,7 +7192,7 @@ type BatchGetRPMsRequest struct {
 func (x *BatchGetRPMsRequest) Reset() {
 	*x = BatchGetRPMsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[117]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[118]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7148,7 +7205,7 @@ func (x *BatchGetRPMsRequest) String() string {
 func (*BatchGetRPMsRequest) ProtoMessage() {}
 
 func (x *BatchGetRPMsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[117]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[118]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7161,7 +7218,7 @@ func (x *BatchGetRPMsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetRPMsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetRPMsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{117}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *BatchGetRPMsRequest) GetParent() string {
@@ -7190,7 +7247,7 @@ type BatchGetRPMsResponse struct {
 func (x *BatchGetRPMsResponse) Reset() {
 	*x = BatchGetRPMsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[118]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[119]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7203,7 +7260,7 @@ func (x *BatchGetRPMsResponse) String() string {
 func (*BatchGetRPMsResponse) ProtoMessage() {}
 
 func (x *BatchGetRPMsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[118]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[119]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7216,7 +7273,7 @@ func (x *BatchGetRPMsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetRPMsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetRPMsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{118}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{119}
 }
 
 func (x *BatchGetRPMsResponse) GetRpms() []*models.RPM {
@@ -7241,7 +7298,7 @@ type BatchGetDracsRequest struct {
 func (x *BatchGetDracsRequest) Reset() {
 	*x = BatchGetDracsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[119]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[120]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7254,7 +7311,7 @@ func (x *BatchGetDracsRequest) String() string {
 func (*BatchGetDracsRequest) ProtoMessage() {}
 
 func (x *BatchGetDracsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[119]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[120]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7267,7 +7324,7 @@ func (x *BatchGetDracsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetDracsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetDracsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{119}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *BatchGetDracsRequest) GetParent() string {
@@ -7296,7 +7353,7 @@ type BatchGetDracsResponse struct {
 func (x *BatchGetDracsResponse) Reset() {
 	*x = BatchGetDracsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[120]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[121]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7309,7 +7366,7 @@ func (x *BatchGetDracsResponse) String() string {
 func (*BatchGetDracsResponse) ProtoMessage() {}
 
 func (x *BatchGetDracsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[120]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[121]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7322,7 +7379,7 @@ func (x *BatchGetDracsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetDracsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetDracsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{120}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *BatchGetDracsResponse) GetDracs() []*models.Drac {
@@ -7347,7 +7404,7 @@ type BatchGetNicsRequest struct {
 func (x *BatchGetNicsRequest) Reset() {
 	*x = BatchGetNicsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[121]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[122]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7360,7 +7417,7 @@ func (x *BatchGetNicsRequest) String() string {
 func (*BatchGetNicsRequest) ProtoMessage() {}
 
 func (x *BatchGetNicsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[121]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[122]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7373,7 +7430,7 @@ func (x *BatchGetNicsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetNicsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetNicsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{121}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{122}
 }
 
 func (x *BatchGetNicsRequest) GetParent() string {
@@ -7402,7 +7459,7 @@ type BatchGetNicsResponse struct {
 func (x *BatchGetNicsResponse) Reset() {
 	*x = BatchGetNicsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[122]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[123]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7415,7 +7472,7 @@ func (x *BatchGetNicsResponse) String() string {
 func (*BatchGetNicsResponse) ProtoMessage() {}
 
 func (x *BatchGetNicsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[122]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[123]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7428,7 +7485,7 @@ func (x *BatchGetNicsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetNicsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetNicsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{122}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *BatchGetNicsResponse) GetNics() []*models.Nic {
@@ -7453,7 +7510,7 @@ type BatchGetVMsRequest struct {
 func (x *BatchGetVMsRequest) Reset() {
 	*x = BatchGetVMsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[123]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[124]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7466,7 +7523,7 @@ func (x *BatchGetVMsRequest) String() string {
 func (*BatchGetVMsRequest) ProtoMessage() {}
 
 func (x *BatchGetVMsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[123]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[124]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7479,7 +7536,7 @@ func (x *BatchGetVMsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetVMsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetVMsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{123}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{124}
 }
 
 func (x *BatchGetVMsRequest) GetParent() string {
@@ -7508,7 +7565,7 @@ type BatchGetVMsResponse struct {
 func (x *BatchGetVMsResponse) Reset() {
 	*x = BatchGetVMsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[124]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[125]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7521,7 +7578,7 @@ func (x *BatchGetVMsResponse) String() string {
 func (*BatchGetVMsResponse) ProtoMessage() {}
 
 func (x *BatchGetVMsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[124]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[125]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7534,7 +7591,7 @@ func (x *BatchGetVMsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetVMsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetVMsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{124}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *BatchGetVMsResponse) GetVms() []*models.VM {
@@ -7559,7 +7616,7 @@ type BatchGetVlansRequest struct {
 func (x *BatchGetVlansRequest) Reset() {
 	*x = BatchGetVlansRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[125]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[126]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7572,7 +7629,7 @@ func (x *BatchGetVlansRequest) String() string {
 func (*BatchGetVlansRequest) ProtoMessage() {}
 
 func (x *BatchGetVlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[125]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[126]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7585,7 +7642,7 @@ func (x *BatchGetVlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetVlansRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetVlansRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{125}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *BatchGetVlansRequest) GetParent() string {
@@ -7614,7 +7671,7 @@ type BatchGetVlansResponse struct {
 func (x *BatchGetVlansResponse) Reset() {
 	*x = BatchGetVlansResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[126]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[127]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7627,7 +7684,7 @@ func (x *BatchGetVlansResponse) String() string {
 func (*BatchGetVlansResponse) ProtoMessage() {}
 
 func (x *BatchGetVlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[126]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[127]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7640,7 +7697,7 @@ func (x *BatchGetVlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetVlansResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetVlansResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{126}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *BatchGetVlansResponse) GetVlans() []*models.Vlan {
@@ -7665,7 +7722,7 @@ type BatchGetRacksRequest struct {
 func (x *BatchGetRacksRequest) Reset() {
 	*x = BatchGetRacksRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[127]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[128]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7678,7 +7735,7 @@ func (x *BatchGetRacksRequest) String() string {
 func (*BatchGetRacksRequest) ProtoMessage() {}
 
 func (x *BatchGetRacksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[127]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[128]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7691,7 +7748,7 @@ func (x *BatchGetRacksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetRacksRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetRacksRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{127}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *BatchGetRacksRequest) GetParent() string {
@@ -7720,7 +7777,7 @@ type BatchGetRacksResponse struct {
 func (x *BatchGetRacksResponse) Reset() {
 	*x = BatchGetRacksResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[128]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[129]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7733,7 +7790,7 @@ func (x *BatchGetRacksResponse) String() string {
 func (*BatchGetRacksResponse) ProtoMessage() {}
 
 func (x *BatchGetRacksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[128]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[129]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7746,7 +7803,7 @@ func (x *BatchGetRacksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetRacksResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetRacksResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{128}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{129}
 }
 
 func (x *BatchGetRacksResponse) GetRacks() []*models.Rack {
@@ -7771,7 +7828,7 @@ type BatchGetChromePlatformsRequest struct {
 func (x *BatchGetChromePlatformsRequest) Reset() {
 	*x = BatchGetChromePlatformsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[129]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[130]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7784,7 +7841,7 @@ func (x *BatchGetChromePlatformsRequest) String() string {
 func (*BatchGetChromePlatformsRequest) ProtoMessage() {}
 
 func (x *BatchGetChromePlatformsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[129]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[130]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7797,7 +7854,7 @@ func (x *BatchGetChromePlatformsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetChromePlatformsRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetChromePlatformsRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{129}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{130}
 }
 
 func (x *BatchGetChromePlatformsRequest) GetParent() string {
@@ -7826,7 +7883,7 @@ type BatchGetChromePlatformsResponse struct {
 func (x *BatchGetChromePlatformsResponse) Reset() {
 	*x = BatchGetChromePlatformsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[130]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[131]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7839,7 +7896,7 @@ func (x *BatchGetChromePlatformsResponse) String() string {
 func (*BatchGetChromePlatformsResponse) ProtoMessage() {}
 
 func (x *BatchGetChromePlatformsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[130]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[131]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7852,7 +7909,7 @@ func (x *BatchGetChromePlatformsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetChromePlatformsResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetChromePlatformsResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{130}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *BatchGetChromePlatformsResponse) GetChromePlatforms() []*models.ChromePlatform {
@@ -7877,7 +7934,7 @@ type BatchGetMachineLSEPrototypesRequest struct {
 func (x *BatchGetMachineLSEPrototypesRequest) Reset() {
 	*x = BatchGetMachineLSEPrototypesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[131]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[132]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7890,7 +7947,7 @@ func (x *BatchGetMachineLSEPrototypesRequest) String() string {
 func (*BatchGetMachineLSEPrototypesRequest) ProtoMessage() {}
 
 func (x *BatchGetMachineLSEPrototypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[131]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[132]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7903,7 +7960,7 @@ func (x *BatchGetMachineLSEPrototypesRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use BatchGetMachineLSEPrototypesRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetMachineLSEPrototypesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{131}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *BatchGetMachineLSEPrototypesRequest) GetParent() string {
@@ -7932,7 +7989,7 @@ type BatchGetMachineLSEPrototypesResponse struct {
 func (x *BatchGetMachineLSEPrototypesResponse) Reset() {
 	*x = BatchGetMachineLSEPrototypesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[132]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[133]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7945,7 +8002,7 @@ func (x *BatchGetMachineLSEPrototypesResponse) String() string {
 func (*BatchGetMachineLSEPrototypesResponse) ProtoMessage() {}
 
 func (x *BatchGetMachineLSEPrototypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[132]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[133]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7958,7 +8015,7 @@ func (x *BatchGetMachineLSEPrototypesResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use BatchGetMachineLSEPrototypesResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetMachineLSEPrototypesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{132}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *BatchGetMachineLSEPrototypesResponse) GetMachineLsePrototypes() []*models.MachineLSEPrototype {
@@ -7983,7 +8040,7 @@ type BatchGetRackLSEPrototypesRequest struct {
 func (x *BatchGetRackLSEPrototypesRequest) Reset() {
 	*x = BatchGetRackLSEPrototypesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[133]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[134]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7996,7 +8053,7 @@ func (x *BatchGetRackLSEPrototypesRequest) String() string {
 func (*BatchGetRackLSEPrototypesRequest) ProtoMessage() {}
 
 func (x *BatchGetRackLSEPrototypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[133]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[134]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8009,7 +8066,7 @@ func (x *BatchGetRackLSEPrototypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchGetRackLSEPrototypesRequest.ProtoReflect.Descriptor instead.
 func (*BatchGetRackLSEPrototypesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{133}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *BatchGetRackLSEPrototypesRequest) GetParent() string {
@@ -8038,7 +8095,7 @@ type BatchGetRackLSEPrototypesResponse struct {
 func (x *BatchGetRackLSEPrototypesResponse) Reset() {
 	*x = BatchGetRackLSEPrototypesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[134]
+		mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[135]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8051,7 +8108,7 @@ func (x *BatchGetRackLSEPrototypesResponse) String() string {
 func (*BatchGetRackLSEPrototypesResponse) ProtoMessage() {}
 
 func (x *BatchGetRackLSEPrototypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[134]
+	mi := &file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[135]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8064,7 +8121,7 @@ func (x *BatchGetRackLSEPrototypesResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use BatchGetRackLSEPrototypesResponse.ProtoReflect.Descriptor instead.
 func (*BatchGetRackLSEPrototypesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{134}
+	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP(), []int{135}
 }
 
 func (x *BatchGetRackLSEPrototypesResponse) GetRackLsePrototypes() []*models.RackLSEPrototype {
@@ -8728,7 +8785,17 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDesc = []byte{
 	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
 	0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52,
 	0x0c, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x42, 0x08, 0x0a,
-	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0xca, 0x01, 0x0a, 0x18, 0x49, 0x6d, 0x70, 0x6f,
+	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0x9d, 0x01, 0x0a, 0x10, 0x52, 0x65, 0x6e, 0x61,
+	0x6d, 0x65, 0x4e, 0x69, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x40, 0x0a, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2c, 0xe0, 0x41, 0x02, 0xfa,
+	0x41, 0x26, 0x0a, 0x24, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x2d, 0x66, 0x6c, 0x65, 0x65,
+	0x74, 0x2d, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x2e, 0x61, 0x70, 0x70, 0x73, 0x70, 0x6f, 0x74,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4e, 0x69, 0x63, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x47,
+	0x0a, 0x08, 0x6e, 0x65, 0x77, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x2c, 0xe0, 0x41, 0x02, 0xfa, 0x41, 0x26, 0x0a, 0x24, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x2d, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2d, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x2e, 0x61,
+	0x70, 0x70, 0x73, 0x70, 0x6f, 0x74, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4e, 0x69, 0x63, 0x52, 0x07,
+	0x6e, 0x65, 0x77, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0xca, 0x01, 0x0a, 0x18, 0x49, 0x6d, 0x70, 0x6f,
 	0x72, 0x74, 0x44, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x56, 0x0a, 0x11, 0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x5f,
 	0x64, 0x62, 0x5f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
@@ -9187,7 +9254,7 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDesc = []byte{
 	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d,
 	0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x52, 0x61, 0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f,
 	0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x52, 0x11, 0x72, 0x61, 0x63, 0x6b, 0x4c, 0x73, 0x65, 0x50,
-	0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x32, 0xf2, 0x4f, 0x0a, 0x05, 0x46, 0x6c,
+	0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x32, 0xcb, 0x50, 0x0a, 0x05, 0x46, 0x6c,
 	0x65, 0x65, 0x74, 0x12, 0x78, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x43, 0x68, 0x72,
 	0x6f, 0x6d, 0x65, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x12, 0x34, 0x2e, 0x75, 0x6e,
 	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
@@ -9505,331 +9572,337 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDesc = []byte{
 	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
 	0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x4e, 0x69, 0x63, 0x73, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x5a, 0x0a, 0x11, 0x49, 0x6d, 0x70, 0x6f, 0x72,
-	0x74, 0x44, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x73, 0x12, 0x31, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x44, 0x61, 0x74,
-	0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x12, 0x57, 0x0a, 0x09, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d,
-	0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
-	0x65, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e,
-	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
-	0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x4b, 0x56, 0x4d, 0x12, 0x57, 0x0a, 0x09,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x57, 0x0a, 0x09, 0x52, 0x65, 0x6e, 0x61, 0x6d,
+	0x65, 0x4e, 0x69, 0x63, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x52,
+	0x65, 0x6e, 0x61, 0x6d, 0x65, 0x4e, 0x69, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x4e, 0x69, 0x63,
+	0x12, 0x5a, 0x0a, 0x11, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x44, 0x61, 0x74, 0x61, 0x63, 0x65,
+	0x6e, 0x74, 0x65, 0x72, 0x73, 0x12, 0x31, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x44, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x57, 0x0a, 0x09,
+	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66,
 	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71,
+	0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
 	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
-	0x73, 0x2e, 0x4b, 0x56, 0x4d, 0x12, 0x51, 0x0a, 0x06, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x12,
-	0x26, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
-	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f,
-	0x64, 0x65, 0x6c, 0x73, 0x2e, 0x4b, 0x56, 0x4d, 0x12, 0x5f, 0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74,
-	0x4b, 0x56, 0x4d, 0x73, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
-	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c,
-	0x69, 0x73, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29,
-	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4b, 0x56, 0x4d,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x09, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x57, 0x0a, 0x09, 0x43, 0x72, 0x65,
-	0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x52,
-	0x50, 0x4d, 0x12, 0x57, 0x0a, 0x09, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x12,
+	0x73, 0x2e, 0x4b, 0x56, 0x4d, 0x12, 0x57, 0x0a, 0x09, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4b,
+	0x56, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
+	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x4b, 0x56, 0x4d, 0x12, 0x51,
+	0x0a, 0x06, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x12, 0x26, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
+	0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x4b, 0x56,
+	0x4d, 0x12, 0x5f, 0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x12, 0x28, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4b, 0x56, 0x4d, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
+	0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x4e, 0x0a, 0x09, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4b, 0x56, 0x4d, 0x12,
 	0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x4b, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70,
+	0x74, 0x79, 0x12, 0x57, 0x0a, 0x09, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x12,
+	0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
 	0x52, 0x50, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69,
 	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x52, 0x50, 0x4d, 0x12, 0x51, 0x0a, 0x06, 0x47,
-	0x65, 0x74, 0x52, 0x50, 0x4d, 0x12, 0x26, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x52, 0x50, 0x4d, 0x12, 0x5f,
-	0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69,
-	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
-	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c,
-	0x69, 0x73, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4e, 0x0a, 0x09, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x12, 0x29, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x50, 0x4d,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12,
-	0x5a, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x12, 0x2a, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x44, 0x72,
-	0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66,
-	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63, 0x12, 0x5a, 0x0a, 0x0a, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66,
-	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65,
-	0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63, 0x12, 0x54, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x44, 0x72,
-	0x61, 0x63, 0x12, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
-	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74,
-	0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e,
-	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
-	0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63, 0x12, 0x62, 0x0a,
-	0x09, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69,
-	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x4c, 0x69, 0x73, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x50, 0x0a, 0x0a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x12,
-	0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f,
-	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d,
-	0x70, 0x74, 0x79, 0x12, 0x60, 0x0a, 0x0c, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69,
-	0x74, 0x63, 0x68, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
-	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53,
-	0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x60, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53,
-	0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x52, 0x50, 0x4d, 0x12, 0x57, 0x0a, 0x09, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
+	0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
 	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73,
-	0x2e, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x5a, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x53, 0x77,
-	0x69, 0x74, 0x63, 0x68, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
-	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47,
-	0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x22, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x77, 0x69,
-	0x74, 0x63, 0x68, 0x12, 0x6b, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63,
-	0x68, 0x65, 0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x2e, 0x52, 0x50, 0x4d, 0x12, 0x51, 0x0a, 0x06, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x12, 0x26,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64,
+	0x65, 0x6c, 0x73, 0x2e, 0x52, 0x50, 0x4d, 0x12, 0x5f, 0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74, 0x52,
+	0x50, 0x4d, 0x73, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
 	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69,
-	0x73, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x54, 0x0a, 0x0c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68,
-	0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
-	0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x5a, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
-	0x56, 0x6c, 0x61, 0x6e, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
-	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x6c,
-	0x61, 0x6e, 0x12, 0x5a, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e,
-	0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x54,
-	0x0a, 0x07, 0x47, 0x65, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66,
-	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x4d, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x09, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x52, 0x50, 0x4d, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x50, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
+	0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x5a, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
 	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
-	0x56, 0x6c, 0x61, 0x6e, 0x12, 0x62, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x6c, 0x61, 0x6e,
-	0x73, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0a, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x4e, 0x0a, 0x0b, 0x49, 0x6d,
-	0x70, 0x6f, 0x72, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66,
-	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x72, 0x70, 0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
-	0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x52, 0x0a, 0x0d, 0x49, 0x6d,
-	0x70, 0x6f, 0x72, 0x74, 0x4f, 0x53, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x12, 0x2d, 0x2e, 0x75, 0x6e,
-	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
-	0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x4f, 0x53, 0x56, 0x6c,
-	0x61, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x50,
-	0x0a, 0x0c, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x73, 0x12, 0x2c,
+	0x44, 0x72, 0x61, 0x63, 0x12, 0x5a, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x72,
+	0x61, 0x63, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
+	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20,
 	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x53,
-	0x74, 0x61, 0x74, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x12, 0x63, 0x0a, 0x0b, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12,
-	0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52,
-	0x65, 0x63, 0x6f, 0x72, 0x64, 0x12, 0x5d, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74,
-	0x65, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x53,
-	0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x75, 0x6e,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63,
+	0x12, 0x54, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x12, 0x27, 0x2e, 0x75, 0x6e,
 	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
-	0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65,
-	0x63, 0x6f, 0x72, 0x64, 0x12, 0x66, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
 	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
-	0x73, 0x2e, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x54, 0x0a, 0x08,
-	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x4d, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
-	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
-	0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
-	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e,
-	0x56, 0x4d, 0x12, 0x54, 0x0a, 0x08, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x4d, 0x12, 0x28,
+	0x73, 0x2e, 0x44, 0x72, 0x61, 0x63, 0x12, 0x62, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x72,
+	0x61, 0x63, 0x73, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a,
 	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56,
-	0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
-	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d,
-	0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x4d, 0x12, 0x4c, 0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x56, 0x4d, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
-	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
-	0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x4e, 0x0a, 0x05, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x12,
-	0x25, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64,
-	0x65, 0x6c, 0x73, 0x2e, 0x56, 0x4d, 0x12, 0x5c, 0x0a, 0x07, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x4d,
-	0x73, 0x12, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x75, 0x6e, 0x69,
-	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a, 0x0b, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x73,
-	0x73, 0x65, 0x74, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
-	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x21, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x61, 0x73,
-	0x73, 0x65, 0x74, 0x12, 0x6b, 0x0a, 0x0c, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4b,
-	0x56, 0x4d, 0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
-	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61,
-	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63,
-	0x68, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x80, 0x01, 0x0a, 0x13, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43,
-	0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x12, 0x33, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x72, 0x61,
+	0x63, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0a, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
 	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
-	0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x34, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74,
-	0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x80, 0x01, 0x0a, 0x13, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74,
-	0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x73, 0x12, 0x33, 0x2e, 0x75, 0x6e,
-	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
-	0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61,
-	0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x34, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68,
-	0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x10, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47,
-	0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x73, 0x12, 0x30, 0x2e, 0x75, 0x6e, 0x69,
-	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63,
-	0x68, 0x69, 0x6e, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x75,
+	0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12, 0x60, 0x0a, 0x0c,
+	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x2c, 0x2e, 0x75,
 	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d,
-	0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x77, 0x0a, 0x10, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63,
-	0x68, 0x65, 0x73, 0x12, 0x30, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69,
+	0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x60,
+	0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x2c,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53,
+	0x77, 0x69, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68,
+	0x12, 0x5a, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x29, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63,
+	0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d,
+	0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x6b, 0x0a, 0x0c,
+	0x4c, 0x69, 0x73, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x12, 0x2c, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63,
+	0x68, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x0c, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12,
+	0x5a, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x2a, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x6c,
+	0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x5a, 0x0a, 0x0a, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x73, 0x2e, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x54, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x56, 0x6c,
+	0x61, 0x6e, 0x12, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
+	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74,
+	0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6e,
+	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x6c, 0x61, 0x6e, 0x12, 0x62, 0x0a,
+	0x09, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x12, 0x29, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x4c, 0x69, 0x73, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x50, 0x0a, 0x0a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x6c, 0x61, 0x6e, 0x12,
+	0x2a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x56, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d,
+	0x70, 0x74, 0x79, 0x12, 0x4e, 0x0a, 0x0b, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x56, 0x6c, 0x61,
+	0x6e, 0x73, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
+	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6d, 0x70,
+	0x6f, 0x72, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x12, 0x52, 0x0a, 0x0d, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x4f, 0x53, 0x56,
+	0x6c, 0x61, 0x6e, 0x73, 0x12, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x49,
+	0x6d, 0x70, 0x6f, 0x72, 0x74, 0x4f, 0x53, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x50, 0x0a, 0x0c, 0x49, 0x6d, 0x70, 0x6f, 0x72,
+	0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
+	0x63, 0x2e, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72,
+	0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x63, 0x0a, 0x0b, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
+	0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x12, 0x5d,
+	0x0a, 0x08, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
+	0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x12, 0x66, 0x0a,
+	0x0d, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x2d,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x48, 0x43, 0x50, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x54, 0x0a, 0x08, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56,
+	0x4d, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x75, 0x6e,
+	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x4d, 0x12, 0x54, 0x0a, 0x08, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x4d, 0x12, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
+	0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56,
+	0x4d, 0x12, 0x4c, 0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x4d, 0x12, 0x28, 0x2e,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x4d,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x12,
+	0x4e, 0x0a, 0x05, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x12, 0x25, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
+	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
+	0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x1e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x56, 0x4d, 0x12,
+	0x5c, 0x0a, 0x07, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x4d, 0x73, 0x12, 0x27, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a,
+	0x0b, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x12, 0x2b, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73,
+	0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x61, 0x73, 0x73, 0x65, 0x74, 0x12, 0x6b, 0x0a, 0x0c,
+	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d, 0x73, 0x12, 0x2c, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4b,
+	0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4b, 0x56, 0x4d,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x80, 0x01, 0x0a, 0x13, 0x42, 0x61,
+	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x73, 0x12, 0x33, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63,
+	0x68, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x34, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x48, 0x43, 0x50, 0x43, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x80, 0x01, 0x0a,
+	0x13, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65,
+	0x4c, 0x53, 0x45, 0x73, 0x12, 0x33, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42,
+	0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53,
+	0x45, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x34, 0x2e, 0x75, 0x6e, 0x69, 0x66,
+	0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68,
+	0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x77, 0x0a, 0x10, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69,
+	0x6e, 0x65, 0x73, 0x12, 0x30, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
 	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61,
-	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65,
+	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x73, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
 	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6b, 0x0a, 0x0c, 0x42, 0x61, 0x74, 0x63,
-	0x68, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
-	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
-	0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x0d, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
-	0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x12, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
-	0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6b, 0x0a, 0x0c, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
-	0x74, 0x4e, 0x69, 0x63, 0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4e, 0x69, 0x63, 0x73, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
-	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61,
-	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4e, 0x69, 0x63, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x68, 0x0a, 0x0b, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x4d,
-	0x73, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63,
-	0x68, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c,
+	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x10, 0x42, 0x61, 0x74, 0x63,
+	0x68, 0x47, 0x65, 0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x12, 0x30, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x53,
+	0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31,
 	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
 	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
-	0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x0d,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x12, 0x2d, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74,
-	0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x75,
+	0x74, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x6b, 0x0a, 0x0c, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d,
+	0x73, 0x12, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63,
+	0x68, 0x47, 0x65, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47,
+	0x65, 0x74, 0x52, 0x50, 0x4d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e,
+	0x0a, 0x0d, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x12,
+	0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47,
+	0x65, 0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
+	0x74, 0x44, 0x72, 0x61, 0x63, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6b,
+	0x0a, 0x0c, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4e, 0x69, 0x63, 0x73, 0x12, 0x2c,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
+	0x74, 0x4e, 0x69, 0x63, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x75,
 	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56,
-	0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x0d,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x73, 0x12, 0x2d, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74,
-	0x52, 0x61, 0x63, 0x6b, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52,
-	0x61, 0x63, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x8c, 0x01, 0x0a,
-	0x17, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x43, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x50,
-	0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x12, 0x37, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69,
-	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
-	0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x43, 0x68, 0x72, 0x6f, 0x6d,
-	0x65, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x38, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4e,
+	0x69, 0x63, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x68, 0x0a, 0x0b, 0x42,
+	0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x73, 0x12, 0x2b, 0x2e, 0x75, 0x6e, 0x69,
+	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
+	0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x4d, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x0d, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
+	0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x12, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x56, 0x6c, 0x61, 0x6e, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x0d, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
+	0x74, 0x52, 0x61, 0x63, 0x6b, 0x73, 0x12, 0x2d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x8c, 0x01, 0x0a, 0x17, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47,
+	0x65, 0x74, 0x43, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d,
+	0x73, 0x12, 0x37, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74,
 	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63,
 	0x68, 0x47, 0x65, 0x74, 0x43, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f,
-	0x72, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x9b, 0x01, 0x0a, 0x1c,
-	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c,
-	0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x12, 0x3c, 0x2e, 0x75,
-	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d,
-	0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79,
-	0x70, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x3d, 0x2e, 0x75, 0x6e, 0x69,
+	0x72, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x38, 0x2e, 0x75, 0x6e, 0x69,
 	0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63,
-	0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x92, 0x01, 0x0a, 0x19, 0x42, 0x61,
-	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x12, 0x39, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
-	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70,
-	0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x4c, 0x53,
-	0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x3a, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
-	0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74,
-	0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74,
-	0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x25,
-	0x5a, 0x23, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x70, 0x63, 0x3b,
-	0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x43, 0x68, 0x72,
+	0x6f, 0x6d, 0x65, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x9b, 0x01, 0x0a, 0x1c, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65,
+	0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f,
+	0x74, 0x79, 0x70, 0x65, 0x73, 0x12, 0x3c, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
+	0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e,
+	0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c,
+	0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x3d, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65,
+	0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61,
+	0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45,
+	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x92, 0x01, 0x0a, 0x19, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52,
+	0x61, 0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73,
+	0x12, 0x39, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68,
+	0x47, 0x65, 0x74, 0x52, 0x61, 0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74,
+	0x79, 0x70, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x3a, 0x2e, 0x75, 0x6e,
+	0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x47, 0x65, 0x74, 0x52, 0x61,
+	0x63, 0x6b, 0x4c, 0x53, 0x45, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x25, 0x5a, 0x23, 0x69, 0x6e, 0x66, 0x72, 0x61,
+	0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70,
+	0x69, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x70, 0x63, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9844,7 +9917,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescGZIP() []byte {
 	return file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDescData
 }
 
-var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes = make([]protoimpl.MessageInfo, 136)
+var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes = make([]protoimpl.MessageInfo, 137)
 var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_goTypes = []interface{}{
 	(*CreateVMRequest)(nil),                      // 0: unifiedfleet.api.v1.rpc.CreateVMRequest
 	(*UpdateVMRequest)(nil),                      // 1: unifiedfleet.api.v1.rpc.UpdateVMRequest
@@ -9914,202 +9987,203 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_goTypes = []interface{}{
 	(*ListNicsResponse)(nil),                     // 65: unifiedfleet.api.v1.rpc.ListNicsResponse
 	(*DeleteNicRequest)(nil),                     // 66: unifiedfleet.api.v1.rpc.DeleteNicRequest
 	(*ImportNicsRequest)(nil),                    // 67: unifiedfleet.api.v1.rpc.ImportNicsRequest
-	(*ImportDatacentersRequest)(nil),             // 68: unifiedfleet.api.v1.rpc.ImportDatacentersRequest
-	(*CreateKVMRequest)(nil),                     // 69: unifiedfleet.api.v1.rpc.CreateKVMRequest
-	(*UpdateKVMRequest)(nil),                     // 70: unifiedfleet.api.v1.rpc.UpdateKVMRequest
-	(*GetKVMRequest)(nil),                        // 71: unifiedfleet.api.v1.rpc.GetKVMRequest
-	(*ListKVMsRequest)(nil),                      // 72: unifiedfleet.api.v1.rpc.ListKVMsRequest
-	(*ListKVMsResponse)(nil),                     // 73: unifiedfleet.api.v1.rpc.ListKVMsResponse
-	(*DeleteKVMRequest)(nil),                     // 74: unifiedfleet.api.v1.rpc.DeleteKVMRequest
-	(*CreateRPMRequest)(nil),                     // 75: unifiedfleet.api.v1.rpc.CreateRPMRequest
-	(*UpdateRPMRequest)(nil),                     // 76: unifiedfleet.api.v1.rpc.UpdateRPMRequest
-	(*GetRPMRequest)(nil),                        // 77: unifiedfleet.api.v1.rpc.GetRPMRequest
-	(*ListRPMsRequest)(nil),                      // 78: unifiedfleet.api.v1.rpc.ListRPMsRequest
-	(*ListRPMsResponse)(nil),                     // 79: unifiedfleet.api.v1.rpc.ListRPMsResponse
-	(*DeleteRPMRequest)(nil),                     // 80: unifiedfleet.api.v1.rpc.DeleteRPMRequest
-	(*CreateDracRequest)(nil),                    // 81: unifiedfleet.api.v1.rpc.CreateDracRequest
-	(*UpdateDracRequest)(nil),                    // 82: unifiedfleet.api.v1.rpc.UpdateDracRequest
-	(*GetDracRequest)(nil),                       // 83: unifiedfleet.api.v1.rpc.GetDracRequest
-	(*ListDracsRequest)(nil),                     // 84: unifiedfleet.api.v1.rpc.ListDracsRequest
-	(*ListDracsResponse)(nil),                    // 85: unifiedfleet.api.v1.rpc.ListDracsResponse
-	(*DeleteDracRequest)(nil),                    // 86: unifiedfleet.api.v1.rpc.DeleteDracRequest
-	(*CreateSwitchRequest)(nil),                  // 87: unifiedfleet.api.v1.rpc.CreateSwitchRequest
-	(*UpdateSwitchRequest)(nil),                  // 88: unifiedfleet.api.v1.rpc.UpdateSwitchRequest
-	(*GetSwitchRequest)(nil),                     // 89: unifiedfleet.api.v1.rpc.GetSwitchRequest
-	(*ListSwitchesRequest)(nil),                  // 90: unifiedfleet.api.v1.rpc.ListSwitchesRequest
-	(*ListSwitchesResponse)(nil),                 // 91: unifiedfleet.api.v1.rpc.ListSwitchesResponse
-	(*DeleteSwitchRequest)(nil),                  // 92: unifiedfleet.api.v1.rpc.DeleteSwitchRequest
-	(*CreateVlanRequest)(nil),                    // 93: unifiedfleet.api.v1.rpc.CreateVlanRequest
-	(*UpdateVlanRequest)(nil),                    // 94: unifiedfleet.api.v1.rpc.UpdateVlanRequest
-	(*GetVlanRequest)(nil),                       // 95: unifiedfleet.api.v1.rpc.GetVlanRequest
-	(*ListVlansRequest)(nil),                     // 96: unifiedfleet.api.v1.rpc.ListVlansRequest
-	(*ListVlansResponse)(nil),                    // 97: unifiedfleet.api.v1.rpc.ListVlansResponse
-	(*DeleteVlanRequest)(nil),                    // 98: unifiedfleet.api.v1.rpc.DeleteVlanRequest
-	(*ImportVlansRequest)(nil),                   // 99: unifiedfleet.api.v1.rpc.ImportVlansRequest
-	(*ImportOSVlansRequest)(nil),                 // 100: unifiedfleet.api.v1.rpc.ImportOSVlansRequest
-	(*ImportStatesRequest)(nil),                  // 101: unifiedfleet.api.v1.rpc.ImportStatesRequest
-	(*GetStateRequest)(nil),                      // 102: unifiedfleet.api.v1.rpc.GetStateRequest
-	(*UpdateStateRequest)(nil),                   // 103: unifiedfleet.api.v1.rpc.UpdateStateRequest
-	(*RackRegistrationRequest)(nil),              // 104: unifiedfleet.api.v1.rpc.RackRegistrationRequest
-	(*NetworkOption)(nil),                        // 105: unifiedfleet.api.v1.rpc.NetworkOption
-	(*CreateAssetRequest)(nil),                   // 106: unifiedfleet.api.v1.rpc.CreateAssetRequest
-	(*BatchGetKVMsRequest)(nil),                  // 107: unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
-	(*BatchGetKVMsResponse)(nil),                 // 108: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
-	(*BatchGetDHCPConfigsRequest)(nil),           // 109: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
-	(*BatchGetDHCPConfigsResponse)(nil),          // 110: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
-	(*BatchGetMachineLSEsRequest)(nil),           // 111: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
-	(*BatchGetMachineLSEsResponse)(nil),          // 112: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
-	(*BatchGetMachinesRequest)(nil),              // 113: unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
-	(*BatchGetMachinesResponse)(nil),             // 114: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
-	(*BatchGetSwitchesRequest)(nil),              // 115: unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
-	(*BatchGetSwitchesResponse)(nil),             // 116: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
-	(*BatchGetRPMsRequest)(nil),                  // 117: unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
-	(*BatchGetRPMsResponse)(nil),                 // 118: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
-	(*BatchGetDracsRequest)(nil),                 // 119: unifiedfleet.api.v1.rpc.BatchGetDracsRequest
-	(*BatchGetDracsResponse)(nil),                // 120: unifiedfleet.api.v1.rpc.BatchGetDracsResponse
-	(*BatchGetNicsRequest)(nil),                  // 121: unifiedfleet.api.v1.rpc.BatchGetNicsRequest
-	(*BatchGetNicsResponse)(nil),                 // 122: unifiedfleet.api.v1.rpc.BatchGetNicsResponse
-	(*BatchGetVMsRequest)(nil),                   // 123: unifiedfleet.api.v1.rpc.BatchGetVMsRequest
-	(*BatchGetVMsResponse)(nil),                  // 124: unifiedfleet.api.v1.rpc.BatchGetVMsResponse
-	(*BatchGetVlansRequest)(nil),                 // 125: unifiedfleet.api.v1.rpc.BatchGetVlansRequest
-	(*BatchGetVlansResponse)(nil),                // 126: unifiedfleet.api.v1.rpc.BatchGetVlansResponse
-	(*BatchGetRacksRequest)(nil),                 // 127: unifiedfleet.api.v1.rpc.BatchGetRacksRequest
-	(*BatchGetRacksResponse)(nil),                // 128: unifiedfleet.api.v1.rpc.BatchGetRacksResponse
-	(*BatchGetChromePlatformsRequest)(nil),       // 129: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
-	(*BatchGetChromePlatformsResponse)(nil),      // 130: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
-	(*BatchGetMachineLSEPrototypesRequest)(nil),  // 131: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
-	(*BatchGetMachineLSEPrototypesResponse)(nil), // 132: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
-	(*BatchGetRackLSEPrototypesRequest)(nil),     // 133: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
-	(*BatchGetRackLSEPrototypesResponse)(nil),    // 134: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
-	nil,                                // 135: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry
-	(*models.VM)(nil),                  // 136: unifiedfleet.api.v1.models.VM
-	(*field_mask.FieldMask)(nil),       // 137: google.protobuf.FieldMask
-	(*models.ChromePlatform)(nil),      // 138: unifiedfleet.api.v1.models.ChromePlatform
-	(*models.OSVersion)(nil),           // 139: unifiedfleet.api.v1.models.OSVersion
-	(*models.MachineLSEPrototype)(nil), // 140: unifiedfleet.api.v1.models.MachineLSEPrototype
-	(*models.RackLSEPrototype)(nil),    // 141: unifiedfleet.api.v1.models.RackLSEPrototype
-	(*models.Machine)(nil),             // 142: unifiedfleet.api.v1.models.Machine
-	(*models.Rack)(nil),                // 143: unifiedfleet.api.v1.models.Rack
-	(*models.MachineLSE)(nil),          // 144: unifiedfleet.api.v1.models.MachineLSE
-	(*models.RackLSE)(nil),             // 145: unifiedfleet.api.v1.models.RackLSE
-	(*models.Nic)(nil),                 // 146: unifiedfleet.api.v1.models.Nic
-	(*models.KVM)(nil),                 // 147: unifiedfleet.api.v1.models.KVM
-	(*models.RPM)(nil),                 // 148: unifiedfleet.api.v1.models.RPM
-	(*models.Drac)(nil),                // 149: unifiedfleet.api.v1.models.Drac
-	(*models.Switch)(nil),              // 150: unifiedfleet.api.v1.models.Switch
-	(*models.Vlan)(nil),                // 151: unifiedfleet.api.v1.models.Vlan
-	(*models.StateRecord)(nil),         // 152: unifiedfleet.api.v1.models.StateRecord
-	(*models.Asset)(nil),               // 153: unifiedfleet.api.v1.models.asset
-	(*models.DHCPConfig)(nil),          // 154: unifiedfleet.api.v1.models.DHCPConfig
-	(*emptypb.Empty)(nil),              // 155: google.protobuf.Empty
-	(*status.Status)(nil),              // 156: google.rpc.Status
+	(*RenameNicRequest)(nil),                     // 68: unifiedfleet.api.v1.rpc.RenameNicRequest
+	(*ImportDatacentersRequest)(nil),             // 69: unifiedfleet.api.v1.rpc.ImportDatacentersRequest
+	(*CreateKVMRequest)(nil),                     // 70: unifiedfleet.api.v1.rpc.CreateKVMRequest
+	(*UpdateKVMRequest)(nil),                     // 71: unifiedfleet.api.v1.rpc.UpdateKVMRequest
+	(*GetKVMRequest)(nil),                        // 72: unifiedfleet.api.v1.rpc.GetKVMRequest
+	(*ListKVMsRequest)(nil),                      // 73: unifiedfleet.api.v1.rpc.ListKVMsRequest
+	(*ListKVMsResponse)(nil),                     // 74: unifiedfleet.api.v1.rpc.ListKVMsResponse
+	(*DeleteKVMRequest)(nil),                     // 75: unifiedfleet.api.v1.rpc.DeleteKVMRequest
+	(*CreateRPMRequest)(nil),                     // 76: unifiedfleet.api.v1.rpc.CreateRPMRequest
+	(*UpdateRPMRequest)(nil),                     // 77: unifiedfleet.api.v1.rpc.UpdateRPMRequest
+	(*GetRPMRequest)(nil),                        // 78: unifiedfleet.api.v1.rpc.GetRPMRequest
+	(*ListRPMsRequest)(nil),                      // 79: unifiedfleet.api.v1.rpc.ListRPMsRequest
+	(*ListRPMsResponse)(nil),                     // 80: unifiedfleet.api.v1.rpc.ListRPMsResponse
+	(*DeleteRPMRequest)(nil),                     // 81: unifiedfleet.api.v1.rpc.DeleteRPMRequest
+	(*CreateDracRequest)(nil),                    // 82: unifiedfleet.api.v1.rpc.CreateDracRequest
+	(*UpdateDracRequest)(nil),                    // 83: unifiedfleet.api.v1.rpc.UpdateDracRequest
+	(*GetDracRequest)(nil),                       // 84: unifiedfleet.api.v1.rpc.GetDracRequest
+	(*ListDracsRequest)(nil),                     // 85: unifiedfleet.api.v1.rpc.ListDracsRequest
+	(*ListDracsResponse)(nil),                    // 86: unifiedfleet.api.v1.rpc.ListDracsResponse
+	(*DeleteDracRequest)(nil),                    // 87: unifiedfleet.api.v1.rpc.DeleteDracRequest
+	(*CreateSwitchRequest)(nil),                  // 88: unifiedfleet.api.v1.rpc.CreateSwitchRequest
+	(*UpdateSwitchRequest)(nil),                  // 89: unifiedfleet.api.v1.rpc.UpdateSwitchRequest
+	(*GetSwitchRequest)(nil),                     // 90: unifiedfleet.api.v1.rpc.GetSwitchRequest
+	(*ListSwitchesRequest)(nil),                  // 91: unifiedfleet.api.v1.rpc.ListSwitchesRequest
+	(*ListSwitchesResponse)(nil),                 // 92: unifiedfleet.api.v1.rpc.ListSwitchesResponse
+	(*DeleteSwitchRequest)(nil),                  // 93: unifiedfleet.api.v1.rpc.DeleteSwitchRequest
+	(*CreateVlanRequest)(nil),                    // 94: unifiedfleet.api.v1.rpc.CreateVlanRequest
+	(*UpdateVlanRequest)(nil),                    // 95: unifiedfleet.api.v1.rpc.UpdateVlanRequest
+	(*GetVlanRequest)(nil),                       // 96: unifiedfleet.api.v1.rpc.GetVlanRequest
+	(*ListVlansRequest)(nil),                     // 97: unifiedfleet.api.v1.rpc.ListVlansRequest
+	(*ListVlansResponse)(nil),                    // 98: unifiedfleet.api.v1.rpc.ListVlansResponse
+	(*DeleteVlanRequest)(nil),                    // 99: unifiedfleet.api.v1.rpc.DeleteVlanRequest
+	(*ImportVlansRequest)(nil),                   // 100: unifiedfleet.api.v1.rpc.ImportVlansRequest
+	(*ImportOSVlansRequest)(nil),                 // 101: unifiedfleet.api.v1.rpc.ImportOSVlansRequest
+	(*ImportStatesRequest)(nil),                  // 102: unifiedfleet.api.v1.rpc.ImportStatesRequest
+	(*GetStateRequest)(nil),                      // 103: unifiedfleet.api.v1.rpc.GetStateRequest
+	(*UpdateStateRequest)(nil),                   // 104: unifiedfleet.api.v1.rpc.UpdateStateRequest
+	(*RackRegistrationRequest)(nil),              // 105: unifiedfleet.api.v1.rpc.RackRegistrationRequest
+	(*NetworkOption)(nil),                        // 106: unifiedfleet.api.v1.rpc.NetworkOption
+	(*CreateAssetRequest)(nil),                   // 107: unifiedfleet.api.v1.rpc.CreateAssetRequest
+	(*BatchGetKVMsRequest)(nil),                  // 108: unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
+	(*BatchGetKVMsResponse)(nil),                 // 109: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
+	(*BatchGetDHCPConfigsRequest)(nil),           // 110: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
+	(*BatchGetDHCPConfigsResponse)(nil),          // 111: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
+	(*BatchGetMachineLSEsRequest)(nil),           // 112: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
+	(*BatchGetMachineLSEsResponse)(nil),          // 113: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
+	(*BatchGetMachinesRequest)(nil),              // 114: unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
+	(*BatchGetMachinesResponse)(nil),             // 115: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
+	(*BatchGetSwitchesRequest)(nil),              // 116: unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
+	(*BatchGetSwitchesResponse)(nil),             // 117: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
+	(*BatchGetRPMsRequest)(nil),                  // 118: unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
+	(*BatchGetRPMsResponse)(nil),                 // 119: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
+	(*BatchGetDracsRequest)(nil),                 // 120: unifiedfleet.api.v1.rpc.BatchGetDracsRequest
+	(*BatchGetDracsResponse)(nil),                // 121: unifiedfleet.api.v1.rpc.BatchGetDracsResponse
+	(*BatchGetNicsRequest)(nil),                  // 122: unifiedfleet.api.v1.rpc.BatchGetNicsRequest
+	(*BatchGetNicsResponse)(nil),                 // 123: unifiedfleet.api.v1.rpc.BatchGetNicsResponse
+	(*BatchGetVMsRequest)(nil),                   // 124: unifiedfleet.api.v1.rpc.BatchGetVMsRequest
+	(*BatchGetVMsResponse)(nil),                  // 125: unifiedfleet.api.v1.rpc.BatchGetVMsResponse
+	(*BatchGetVlansRequest)(nil),                 // 126: unifiedfleet.api.v1.rpc.BatchGetVlansRequest
+	(*BatchGetVlansResponse)(nil),                // 127: unifiedfleet.api.v1.rpc.BatchGetVlansResponse
+	(*BatchGetRacksRequest)(nil),                 // 128: unifiedfleet.api.v1.rpc.BatchGetRacksRequest
+	(*BatchGetRacksResponse)(nil),                // 129: unifiedfleet.api.v1.rpc.BatchGetRacksResponse
+	(*BatchGetChromePlatformsRequest)(nil),       // 130: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
+	(*BatchGetChromePlatformsResponse)(nil),      // 131: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
+	(*BatchGetMachineLSEPrototypesRequest)(nil),  // 132: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
+	(*BatchGetMachineLSEPrototypesResponse)(nil), // 133: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
+	(*BatchGetRackLSEPrototypesRequest)(nil),     // 134: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
+	(*BatchGetRackLSEPrototypesResponse)(nil),    // 135: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
+	nil,                                // 136: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry
+	(*models.VM)(nil),                  // 137: unifiedfleet.api.v1.models.VM
+	(*field_mask.FieldMask)(nil),       // 138: google.protobuf.FieldMask
+	(*models.ChromePlatform)(nil),      // 139: unifiedfleet.api.v1.models.ChromePlatform
+	(*models.OSVersion)(nil),           // 140: unifiedfleet.api.v1.models.OSVersion
+	(*models.MachineLSEPrototype)(nil), // 141: unifiedfleet.api.v1.models.MachineLSEPrototype
+	(*models.RackLSEPrototype)(nil),    // 142: unifiedfleet.api.v1.models.RackLSEPrototype
+	(*models.Machine)(nil),             // 143: unifiedfleet.api.v1.models.Machine
+	(*models.Rack)(nil),                // 144: unifiedfleet.api.v1.models.Rack
+	(*models.MachineLSE)(nil),          // 145: unifiedfleet.api.v1.models.MachineLSE
+	(*models.RackLSE)(nil),             // 146: unifiedfleet.api.v1.models.RackLSE
+	(*models.Nic)(nil),                 // 147: unifiedfleet.api.v1.models.Nic
+	(*models.KVM)(nil),                 // 148: unifiedfleet.api.v1.models.KVM
+	(*models.RPM)(nil),                 // 149: unifiedfleet.api.v1.models.RPM
+	(*models.Drac)(nil),                // 150: unifiedfleet.api.v1.models.Drac
+	(*models.Switch)(nil),              // 151: unifiedfleet.api.v1.models.Switch
+	(*models.Vlan)(nil),                // 152: unifiedfleet.api.v1.models.Vlan
+	(*models.StateRecord)(nil),         // 153: unifiedfleet.api.v1.models.StateRecord
+	(*models.Asset)(nil),               // 154: unifiedfleet.api.v1.models.asset
+	(*models.DHCPConfig)(nil),          // 155: unifiedfleet.api.v1.models.DHCPConfig
+	(*emptypb.Empty)(nil),              // 156: google.protobuf.Empty
+	(*status.Status)(nil),              // 157: google.rpc.Status
 }
 var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_depIdxs = []int32{
-	136, // 0: unifiedfleet.api.v1.rpc.CreateVMRequest.vm:type_name -> unifiedfleet.api.v1.models.VM
-	105, // 1: unifiedfleet.api.v1.rpc.CreateVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	136, // 2: unifiedfleet.api.v1.rpc.UpdateVMRequest.vm:type_name -> unifiedfleet.api.v1.models.VM
-	137, // 3: unifiedfleet.api.v1.rpc.UpdateVMRequest.update_mask:type_name -> google.protobuf.FieldMask
-	105, // 4: unifiedfleet.api.v1.rpc.UpdateVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	136, // 5: unifiedfleet.api.v1.rpc.ListVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
-	138, // 6: unifiedfleet.api.v1.rpc.CreateChromePlatformRequest.chromePlatform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
-	138, // 7: unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest.chromePlatform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
-	137, // 8: unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest.update_mask:type_name -> google.protobuf.FieldMask
-	138, // 9: unifiedfleet.api.v1.rpc.ListChromePlatformsResponse.chromePlatforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	137, // 0: unifiedfleet.api.v1.rpc.CreateVMRequest.vm:type_name -> unifiedfleet.api.v1.models.VM
+	106, // 1: unifiedfleet.api.v1.rpc.CreateVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	137, // 2: unifiedfleet.api.v1.rpc.UpdateVMRequest.vm:type_name -> unifiedfleet.api.v1.models.VM
+	138, // 3: unifiedfleet.api.v1.rpc.UpdateVMRequest.update_mask:type_name -> google.protobuf.FieldMask
+	106, // 4: unifiedfleet.api.v1.rpc.UpdateVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	137, // 5: unifiedfleet.api.v1.rpc.ListVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
+	139, // 6: unifiedfleet.api.v1.rpc.CreateChromePlatformRequest.chromePlatform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	139, // 7: unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest.chromePlatform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	138, // 8: unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest.update_mask:type_name -> google.protobuf.FieldMask
+	139, // 9: unifiedfleet.api.v1.rpc.ListChromePlatformsResponse.chromePlatforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
 	39,  // 10: unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 11: unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
 	15,  // 12: unifiedfleet.api.v1.rpc.ImportChromePlatformsResponse.passed:type_name -> unifiedfleet.api.v1.rpc.ChromePlatformResult
 	15,  // 13: unifiedfleet.api.v1.rpc.ImportChromePlatformsResponse.failed:type_name -> unifiedfleet.api.v1.rpc.ChromePlatformResult
-	138, // 14: unifiedfleet.api.v1.rpc.ChromePlatformResult.platform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	139, // 14: unifiedfleet.api.v1.rpc.ChromePlatformResult.platform:type_name -> unifiedfleet.api.v1.models.ChromePlatform
 	39,  // 15: unifiedfleet.api.v1.rpc.ImportOSVersionsRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 16: unifiedfleet.api.v1.rpc.ImportOSVersionsRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	139, // 17: unifiedfleet.api.v1.rpc.ListOSVersionsResponse.os_version:type_name -> unifiedfleet.api.v1.models.OSVersion
-	140, // 18: unifiedfleet.api.v1.rpc.CreateMachineLSEPrototypeRequest.machineLSEPrototype:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	140, // 19: unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest.machineLSEPrototype:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	137, // 20: unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	140, // 21: unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse.machineLSEPrototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	141, // 22: unifiedfleet.api.v1.rpc.CreateRackLSEPrototypeRequest.rackLSEPrototype:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
-	141, // 23: unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest.rackLSEPrototype:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
-	137, // 24: unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	141, // 25: unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse.rackLSEPrototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
-	142, // 26: unifiedfleet.api.v1.rpc.MachineRegistrationRequest.machine:type_name -> unifiedfleet.api.v1.models.Machine
-	142, // 27: unifiedfleet.api.v1.rpc.UpdateMachineRequest.machine:type_name -> unifiedfleet.api.v1.models.Machine
-	137, // 28: unifiedfleet.api.v1.rpc.UpdateMachineRequest.update_mask:type_name -> google.protobuf.FieldMask
-	142, // 29: unifiedfleet.api.v1.rpc.ListMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
+	140, // 17: unifiedfleet.api.v1.rpc.ListOSVersionsResponse.os_version:type_name -> unifiedfleet.api.v1.models.OSVersion
+	141, // 18: unifiedfleet.api.v1.rpc.CreateMachineLSEPrototypeRequest.machineLSEPrototype:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	141, // 19: unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest.machineLSEPrototype:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	138, // 20: unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	141, // 21: unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse.machineLSEPrototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	142, // 22: unifiedfleet.api.v1.rpc.CreateRackLSEPrototypeRequest.rackLSEPrototype:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
+	142, // 23: unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest.rackLSEPrototype:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
+	138, // 24: unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	142, // 25: unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse.rackLSEPrototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
+	143, // 26: unifiedfleet.api.v1.rpc.MachineRegistrationRequest.machine:type_name -> unifiedfleet.api.v1.models.Machine
+	143, // 27: unifiedfleet.api.v1.rpc.UpdateMachineRequest.machine:type_name -> unifiedfleet.api.v1.models.Machine
+	138, // 28: unifiedfleet.api.v1.rpc.UpdateMachineRequest.update_mask:type_name -> google.protobuf.FieldMask
+	143, // 29: unifiedfleet.api.v1.rpc.ListMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
 	39,  // 30: unifiedfleet.api.v1.rpc.ImportMachinesRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 31: unifiedfleet.api.v1.rpc.ImportMachinesRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	143, // 32: unifiedfleet.api.v1.rpc.CreateRackRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
-	143, // 33: unifiedfleet.api.v1.rpc.UpdateRackRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
-	137, // 34: unifiedfleet.api.v1.rpc.UpdateRackRequest.update_mask:type_name -> google.protobuf.FieldMask
-	143, // 35: unifiedfleet.api.v1.rpc.ListRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
-	144, // 36: unifiedfleet.api.v1.rpc.CreateMachineLSERequest.machineLSE:type_name -> unifiedfleet.api.v1.models.MachineLSE
-	105, // 37: unifiedfleet.api.v1.rpc.CreateMachineLSERequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	144, // 38: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.machineLSE:type_name -> unifiedfleet.api.v1.models.MachineLSE
-	137, // 39: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.update_mask:type_name -> google.protobuf.FieldMask
-	135, // 40: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.network_options:type_name -> unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry
-	144, // 41: unifiedfleet.api.v1.rpc.ListMachineLSEsResponse.machineLSEs:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	144, // 32: unifiedfleet.api.v1.rpc.CreateRackRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
+	144, // 33: unifiedfleet.api.v1.rpc.UpdateRackRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
+	138, // 34: unifiedfleet.api.v1.rpc.UpdateRackRequest.update_mask:type_name -> google.protobuf.FieldMask
+	144, // 35: unifiedfleet.api.v1.rpc.ListRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
+	145, // 36: unifiedfleet.api.v1.rpc.CreateMachineLSERequest.machineLSE:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	106, // 37: unifiedfleet.api.v1.rpc.CreateMachineLSERequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	145, // 38: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.machineLSE:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	138, // 39: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.update_mask:type_name -> google.protobuf.FieldMask
+	136, // 40: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.network_options:type_name -> unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry
+	145, // 41: unifiedfleet.api.v1.rpc.ListMachineLSEsResponse.machineLSEs:type_name -> unifiedfleet.api.v1.models.MachineLSE
 	39,  // 42: unifiedfleet.api.v1.rpc.ImportMachineLSEsRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 43: unifiedfleet.api.v1.rpc.ImportMachineLSEsRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
 	39,  // 44: unifiedfleet.api.v1.rpc.ImportOSMachineLSEsRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 45: unifiedfleet.api.v1.rpc.ImportOSMachineLSEsRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	145, // 46: unifiedfleet.api.v1.rpc.CreateRackLSERequest.rackLSE:type_name -> unifiedfleet.api.v1.models.RackLSE
-	145, // 47: unifiedfleet.api.v1.rpc.UpdateRackLSERequest.rackLSE:type_name -> unifiedfleet.api.v1.models.RackLSE
-	137, // 48: unifiedfleet.api.v1.rpc.UpdateRackLSERequest.update_mask:type_name -> google.protobuf.FieldMask
-	145, // 49: unifiedfleet.api.v1.rpc.ListRackLSEsResponse.rackLSEs:type_name -> unifiedfleet.api.v1.models.RackLSE
-	146, // 50: unifiedfleet.api.v1.rpc.CreateNicRequest.nic:type_name -> unifiedfleet.api.v1.models.Nic
-	146, // 51: unifiedfleet.api.v1.rpc.UpdateNicRequest.nic:type_name -> unifiedfleet.api.v1.models.Nic
-	137, // 52: unifiedfleet.api.v1.rpc.UpdateNicRequest.update_mask:type_name -> google.protobuf.FieldMask
-	146, // 53: unifiedfleet.api.v1.rpc.ListNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
+	146, // 46: unifiedfleet.api.v1.rpc.CreateRackLSERequest.rackLSE:type_name -> unifiedfleet.api.v1.models.RackLSE
+	146, // 47: unifiedfleet.api.v1.rpc.UpdateRackLSERequest.rackLSE:type_name -> unifiedfleet.api.v1.models.RackLSE
+	138, // 48: unifiedfleet.api.v1.rpc.UpdateRackLSERequest.update_mask:type_name -> google.protobuf.FieldMask
+	146, // 49: unifiedfleet.api.v1.rpc.ListRackLSEsResponse.rackLSEs:type_name -> unifiedfleet.api.v1.models.RackLSE
+	147, // 50: unifiedfleet.api.v1.rpc.CreateNicRequest.nic:type_name -> unifiedfleet.api.v1.models.Nic
+	147, // 51: unifiedfleet.api.v1.rpc.UpdateNicRequest.nic:type_name -> unifiedfleet.api.v1.models.Nic
+	138, // 52: unifiedfleet.api.v1.rpc.UpdateNicRequest.update_mask:type_name -> google.protobuf.FieldMask
+	147, // 53: unifiedfleet.api.v1.rpc.ListNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
 	39,  // 54: unifiedfleet.api.v1.rpc.ImportNicsRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 55: unifiedfleet.api.v1.rpc.ImportNicsRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
 	39,  // 56: unifiedfleet.api.v1.rpc.ImportDatacentersRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 57: unifiedfleet.api.v1.rpc.ImportDatacentersRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	147, // 58: unifiedfleet.api.v1.rpc.CreateKVMRequest.KVM:type_name -> unifiedfleet.api.v1.models.KVM
-	147, // 59: unifiedfleet.api.v1.rpc.UpdateKVMRequest.KVM:type_name -> unifiedfleet.api.v1.models.KVM
-	137, // 60: unifiedfleet.api.v1.rpc.UpdateKVMRequest.update_mask:type_name -> google.protobuf.FieldMask
-	105, // 61: unifiedfleet.api.v1.rpc.UpdateKVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	147, // 62: unifiedfleet.api.v1.rpc.ListKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
-	148, // 63: unifiedfleet.api.v1.rpc.CreateRPMRequest.RPM:type_name -> unifiedfleet.api.v1.models.RPM
-	148, // 64: unifiedfleet.api.v1.rpc.UpdateRPMRequest.RPM:type_name -> unifiedfleet.api.v1.models.RPM
-	137, // 65: unifiedfleet.api.v1.rpc.UpdateRPMRequest.update_mask:type_name -> google.protobuf.FieldMask
-	148, // 66: unifiedfleet.api.v1.rpc.ListRPMsResponse.RPMs:type_name -> unifiedfleet.api.v1.models.RPM
-	149, // 67: unifiedfleet.api.v1.rpc.CreateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
-	149, // 68: unifiedfleet.api.v1.rpc.UpdateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
-	137, // 69: unifiedfleet.api.v1.rpc.UpdateDracRequest.update_mask:type_name -> google.protobuf.FieldMask
-	105, // 70: unifiedfleet.api.v1.rpc.UpdateDracRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	149, // 71: unifiedfleet.api.v1.rpc.ListDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
-	150, // 72: unifiedfleet.api.v1.rpc.CreateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
-	150, // 73: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
-	137, // 74: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.update_mask:type_name -> google.protobuf.FieldMask
-	150, // 75: unifiedfleet.api.v1.rpc.ListSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
-	151, // 76: unifiedfleet.api.v1.rpc.CreateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
-	151, // 77: unifiedfleet.api.v1.rpc.UpdateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
-	137, // 78: unifiedfleet.api.v1.rpc.UpdateVlanRequest.update_mask:type_name -> google.protobuf.FieldMask
-	151, // 79: unifiedfleet.api.v1.rpc.ListVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
+	148, // 58: unifiedfleet.api.v1.rpc.CreateKVMRequest.KVM:type_name -> unifiedfleet.api.v1.models.KVM
+	148, // 59: unifiedfleet.api.v1.rpc.UpdateKVMRequest.KVM:type_name -> unifiedfleet.api.v1.models.KVM
+	138, // 60: unifiedfleet.api.v1.rpc.UpdateKVMRequest.update_mask:type_name -> google.protobuf.FieldMask
+	106, // 61: unifiedfleet.api.v1.rpc.UpdateKVMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	148, // 62: unifiedfleet.api.v1.rpc.ListKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
+	149, // 63: unifiedfleet.api.v1.rpc.CreateRPMRequest.RPM:type_name -> unifiedfleet.api.v1.models.RPM
+	149, // 64: unifiedfleet.api.v1.rpc.UpdateRPMRequest.RPM:type_name -> unifiedfleet.api.v1.models.RPM
+	138, // 65: unifiedfleet.api.v1.rpc.UpdateRPMRequest.update_mask:type_name -> google.protobuf.FieldMask
+	149, // 66: unifiedfleet.api.v1.rpc.ListRPMsResponse.RPMs:type_name -> unifiedfleet.api.v1.models.RPM
+	150, // 67: unifiedfleet.api.v1.rpc.CreateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
+	150, // 68: unifiedfleet.api.v1.rpc.UpdateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
+	138, // 69: unifiedfleet.api.v1.rpc.UpdateDracRequest.update_mask:type_name -> google.protobuf.FieldMask
+	106, // 70: unifiedfleet.api.v1.rpc.UpdateDracRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	150, // 71: unifiedfleet.api.v1.rpc.ListDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
+	151, // 72: unifiedfleet.api.v1.rpc.CreateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
+	151, // 73: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
+	138, // 74: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.update_mask:type_name -> google.protobuf.FieldMask
+	151, // 75: unifiedfleet.api.v1.rpc.ListSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
+	152, // 76: unifiedfleet.api.v1.rpc.CreateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
+	152, // 77: unifiedfleet.api.v1.rpc.UpdateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
+	138, // 78: unifiedfleet.api.v1.rpc.UpdateVlanRequest.update_mask:type_name -> google.protobuf.FieldMask
+	152, // 79: unifiedfleet.api.v1.rpc.ListVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
 	39,  // 80: unifiedfleet.api.v1.rpc.ImportVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 81: unifiedfleet.api.v1.rpc.ImportVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
 	39,  // 82: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 83: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
 	39,  // 84: unifiedfleet.api.v1.rpc.ImportStatesRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
 	40,  // 85: unifiedfleet.api.v1.rpc.ImportStatesRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	152, // 86: unifiedfleet.api.v1.rpc.UpdateStateRequest.state:type_name -> unifiedfleet.api.v1.models.StateRecord
-	137, // 87: unifiedfleet.api.v1.rpc.UpdateStateRequest.update_mask:type_name -> google.protobuf.FieldMask
-	143, // 88: unifiedfleet.api.v1.rpc.RackRegistrationRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
-	153, // 89: unifiedfleet.api.v1.rpc.CreateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
-	147, // 90: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
-	154, // 91: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse.dhcp_configs:type_name -> unifiedfleet.api.v1.models.DHCPConfig
-	144, // 92: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse.machine_lses:type_name -> unifiedfleet.api.v1.models.MachineLSE
-	142, // 93: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
-	150, // 94: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
-	148, // 95: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse.rpms:type_name -> unifiedfleet.api.v1.models.RPM
-	149, // 96: unifiedfleet.api.v1.rpc.BatchGetDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
-	146, // 97: unifiedfleet.api.v1.rpc.BatchGetNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
-	136, // 98: unifiedfleet.api.v1.rpc.BatchGetVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
-	151, // 99: unifiedfleet.api.v1.rpc.BatchGetVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
-	143, // 100: unifiedfleet.api.v1.rpc.BatchGetRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
-	138, // 101: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse.chrome_platforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
-	140, // 102: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse.machine_lse_prototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	141, // 103: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse.rack_lse_prototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
-	105, // 104: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry.value:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	153, // 86: unifiedfleet.api.v1.rpc.UpdateStateRequest.state:type_name -> unifiedfleet.api.v1.models.StateRecord
+	138, // 87: unifiedfleet.api.v1.rpc.UpdateStateRequest.update_mask:type_name -> google.protobuf.FieldMask
+	144, // 88: unifiedfleet.api.v1.rpc.RackRegistrationRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
+	154, // 89: unifiedfleet.api.v1.rpc.CreateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
+	148, // 90: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
+	155, // 91: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse.dhcp_configs:type_name -> unifiedfleet.api.v1.models.DHCPConfig
+	145, // 92: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse.machine_lses:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	143, // 93: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
+	151, // 94: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
+	149, // 95: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse.rpms:type_name -> unifiedfleet.api.v1.models.RPM
+	150, // 96: unifiedfleet.api.v1.rpc.BatchGetDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
+	147, // 97: unifiedfleet.api.v1.rpc.BatchGetNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
+	137, // 98: unifiedfleet.api.v1.rpc.BatchGetVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
+	152, // 99: unifiedfleet.api.v1.rpc.BatchGetVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
+	144, // 100: unifiedfleet.api.v1.rpc.BatchGetRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
+	139, // 101: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse.chrome_platforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	141, // 102: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse.machine_lse_prototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	142, // 103: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse.rack_lse_prototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
+	106, // 104: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry.value:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
 	7,   // 105: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.CreateChromePlatformRequest
 	8,   // 106: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest
 	9,   // 107: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:input_type -> unifiedfleet.api.v1.rpc.GetChromePlatformRequest
@@ -10135,7 +10209,7 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_depIdxs = []int32{
 	36,  // 127: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineRequest
 	37,  // 128: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:input_type -> unifiedfleet.api.v1.rpc.ImportMachinesRequest
 	38,  // 129: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:input_type -> unifiedfleet.api.v1.rpc.RenameMachineRequest
-	104, // 130: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:input_type -> unifiedfleet.api.v1.rpc.RackRegistrationRequest
+	105, // 130: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:input_type -> unifiedfleet.api.v1.rpc.RackRegistrationRequest
 	42,  // 131: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:input_type -> unifiedfleet.api.v1.rpc.UpdateRackRequest
 	43,  // 132: unifiedfleet.api.v1.rpc.Fleet.GetRack:input_type -> unifiedfleet.api.v1.rpc.GetRackRequest
 	44,  // 133: unifiedfleet.api.v1.rpc.Fleet.ListRacks:input_type -> unifiedfleet.api.v1.rpc.ListRacksRequest
@@ -10158,160 +10232,162 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_depIdxs = []int32{
 	64,  // 150: unifiedfleet.api.v1.rpc.Fleet.ListNics:input_type -> unifiedfleet.api.v1.rpc.ListNicsRequest
 	66,  // 151: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:input_type -> unifiedfleet.api.v1.rpc.DeleteNicRequest
 	67,  // 152: unifiedfleet.api.v1.rpc.Fleet.ImportNics:input_type -> unifiedfleet.api.v1.rpc.ImportNicsRequest
-	68,  // 153: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:input_type -> unifiedfleet.api.v1.rpc.ImportDatacentersRequest
-	69,  // 154: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:input_type -> unifiedfleet.api.v1.rpc.CreateKVMRequest
-	70,  // 155: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:input_type -> unifiedfleet.api.v1.rpc.UpdateKVMRequest
-	71,  // 156: unifiedfleet.api.v1.rpc.Fleet.GetKVM:input_type -> unifiedfleet.api.v1.rpc.GetKVMRequest
-	72,  // 157: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:input_type -> unifiedfleet.api.v1.rpc.ListKVMsRequest
-	74,  // 158: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:input_type -> unifiedfleet.api.v1.rpc.DeleteKVMRequest
-	75,  // 159: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:input_type -> unifiedfleet.api.v1.rpc.CreateRPMRequest
-	76,  // 160: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:input_type -> unifiedfleet.api.v1.rpc.UpdateRPMRequest
-	77,  // 161: unifiedfleet.api.v1.rpc.Fleet.GetRPM:input_type -> unifiedfleet.api.v1.rpc.GetRPMRequest
-	78,  // 162: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:input_type -> unifiedfleet.api.v1.rpc.ListRPMsRequest
-	80,  // 163: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:input_type -> unifiedfleet.api.v1.rpc.DeleteRPMRequest
-	81,  // 164: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:input_type -> unifiedfleet.api.v1.rpc.CreateDracRequest
-	82,  // 165: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:input_type -> unifiedfleet.api.v1.rpc.UpdateDracRequest
-	83,  // 166: unifiedfleet.api.v1.rpc.Fleet.GetDrac:input_type -> unifiedfleet.api.v1.rpc.GetDracRequest
-	84,  // 167: unifiedfleet.api.v1.rpc.Fleet.ListDracs:input_type -> unifiedfleet.api.v1.rpc.ListDracsRequest
-	86,  // 168: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:input_type -> unifiedfleet.api.v1.rpc.DeleteDracRequest
-	87,  // 169: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:input_type -> unifiedfleet.api.v1.rpc.CreateSwitchRequest
-	88,  // 170: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:input_type -> unifiedfleet.api.v1.rpc.UpdateSwitchRequest
-	89,  // 171: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:input_type -> unifiedfleet.api.v1.rpc.GetSwitchRequest
-	90,  // 172: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:input_type -> unifiedfleet.api.v1.rpc.ListSwitchesRequest
-	92,  // 173: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:input_type -> unifiedfleet.api.v1.rpc.DeleteSwitchRequest
-	93,  // 174: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:input_type -> unifiedfleet.api.v1.rpc.CreateVlanRequest
-	94,  // 175: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:input_type -> unifiedfleet.api.v1.rpc.UpdateVlanRequest
-	95,  // 176: unifiedfleet.api.v1.rpc.Fleet.GetVlan:input_type -> unifiedfleet.api.v1.rpc.GetVlanRequest
-	96,  // 177: unifiedfleet.api.v1.rpc.Fleet.ListVlans:input_type -> unifiedfleet.api.v1.rpc.ListVlansRequest
-	98,  // 178: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:input_type -> unifiedfleet.api.v1.rpc.DeleteVlanRequest
-	99,  // 179: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:input_type -> unifiedfleet.api.v1.rpc.ImportVlansRequest
-	100, // 180: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:input_type -> unifiedfleet.api.v1.rpc.ImportOSVlansRequest
-	101, // 181: unifiedfleet.api.v1.rpc.Fleet.ImportStates:input_type -> unifiedfleet.api.v1.rpc.ImportStatesRequest
-	103, // 182: unifiedfleet.api.v1.rpc.Fleet.UpdateState:input_type -> unifiedfleet.api.v1.rpc.UpdateStateRequest
-	102, // 183: unifiedfleet.api.v1.rpc.Fleet.GetState:input_type -> unifiedfleet.api.v1.rpc.GetStateRequest
-	6,   // 184: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:input_type -> unifiedfleet.api.v1.rpc.GetDHCPConfigRequest
-	0,   // 185: unifiedfleet.api.v1.rpc.Fleet.CreateVM:input_type -> unifiedfleet.api.v1.rpc.CreateVMRequest
-	1,   // 186: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:input_type -> unifiedfleet.api.v1.rpc.UpdateVMRequest
-	3,   // 187: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:input_type -> unifiedfleet.api.v1.rpc.DeleteVMRequest
-	2,   // 188: unifiedfleet.api.v1.rpc.Fleet.GetVM:input_type -> unifiedfleet.api.v1.rpc.GetVMRequest
-	4,   // 189: unifiedfleet.api.v1.rpc.Fleet.ListVMs:input_type -> unifiedfleet.api.v1.rpc.ListVMsRequest
-	106, // 190: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:input_type -> unifiedfleet.api.v1.rpc.CreateAssetRequest
-	107, // 191: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
-	109, // 192: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
-	111, // 193: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
-	113, // 194: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
-	115, // 195: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:input_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
-	117, // 196: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
-	119, // 197: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDracsRequest
-	121, // 198: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:input_type -> unifiedfleet.api.v1.rpc.BatchGetNicsRequest
-	123, // 199: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetVMsRequest
-	125, // 200: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:input_type -> unifiedfleet.api.v1.rpc.BatchGetVlansRequest
-	127, // 201: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:input_type -> unifiedfleet.api.v1.rpc.BatchGetRacksRequest
-	129, // 202: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
-	131, // 203: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
-	133, // 204: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
-	138, // 205: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	138, // 206: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	138, // 207: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	11,  // 208: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsResponse
-	155, // 209: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:output_type -> google.protobuf.Empty
-	156, // 210: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:output_type -> google.rpc.Status
-	18,  // 211: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:output_type -> unifiedfleet.api.v1.rpc.ListOSVersionsResponse
-	156, // 212: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:output_type -> google.rpc.Status
-	140, // 213: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	140, // 214: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	140, // 215: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	23,  // 216: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse
-	155, // 217: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:output_type -> google.protobuf.Empty
-	141, // 218: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	141, // 219: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	141, // 220: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	29,  // 221: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse
-	155, // 222: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:output_type -> google.protobuf.Empty
-	142, // 223: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:output_type -> unifiedfleet.api.v1.models.Machine
-	142, // 224: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	142, // 225: unifiedfleet.api.v1.rpc.Fleet.GetMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	35,  // 226: unifiedfleet.api.v1.rpc.Fleet.ListMachines:output_type -> unifiedfleet.api.v1.rpc.ListMachinesResponse
-	155, // 227: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:output_type -> google.protobuf.Empty
-	156, // 228: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:output_type -> google.rpc.Status
-	142, // 229: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	143, // 230: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:output_type -> unifiedfleet.api.v1.models.Rack
-	143, // 231: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:output_type -> unifiedfleet.api.v1.models.Rack
-	143, // 232: unifiedfleet.api.v1.rpc.Fleet.GetRack:output_type -> unifiedfleet.api.v1.models.Rack
-	45,  // 233: unifiedfleet.api.v1.rpc.Fleet.ListRacks:output_type -> unifiedfleet.api.v1.rpc.ListRacksResponse
-	155, // 234: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:output_type -> google.protobuf.Empty
-	144, // 235: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	144, // 236: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	144, // 237: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	51,  // 238: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsResponse
-	155, // 239: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:output_type -> google.protobuf.Empty
-	156, // 240: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:output_type -> google.rpc.Status
-	156, // 241: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:output_type -> google.rpc.Status
-	145, // 242: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	145, // 243: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	145, // 244: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	59,  // 245: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEsResponse
-	155, // 246: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:output_type -> google.protobuf.Empty
-	146, // 247: unifiedfleet.api.v1.rpc.Fleet.CreateNic:output_type -> unifiedfleet.api.v1.models.Nic
-	146, // 248: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:output_type -> unifiedfleet.api.v1.models.Nic
-	146, // 249: unifiedfleet.api.v1.rpc.Fleet.GetNic:output_type -> unifiedfleet.api.v1.models.Nic
-	65,  // 250: unifiedfleet.api.v1.rpc.Fleet.ListNics:output_type -> unifiedfleet.api.v1.rpc.ListNicsResponse
-	155, // 251: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:output_type -> google.protobuf.Empty
-	156, // 252: unifiedfleet.api.v1.rpc.Fleet.ImportNics:output_type -> google.rpc.Status
-	156, // 253: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:output_type -> google.rpc.Status
-	147, // 254: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	147, // 255: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	147, // 256: unifiedfleet.api.v1.rpc.Fleet.GetKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	73,  // 257: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:output_type -> unifiedfleet.api.v1.rpc.ListKVMsResponse
-	155, // 258: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:output_type -> google.protobuf.Empty
-	148, // 259: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	148, // 260: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	148, // 261: unifiedfleet.api.v1.rpc.Fleet.GetRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	79,  // 262: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:output_type -> unifiedfleet.api.v1.rpc.ListRPMsResponse
-	155, // 263: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:output_type -> google.protobuf.Empty
-	149, // 264: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	149, // 265: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	149, // 266: unifiedfleet.api.v1.rpc.Fleet.GetDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	85,  // 267: unifiedfleet.api.v1.rpc.Fleet.ListDracs:output_type -> unifiedfleet.api.v1.rpc.ListDracsResponse
-	155, // 268: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:output_type -> google.protobuf.Empty
-	150, // 269: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	150, // 270: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	150, // 271: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	91,  // 272: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:output_type -> unifiedfleet.api.v1.rpc.ListSwitchesResponse
-	155, // 273: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:output_type -> google.protobuf.Empty
-	151, // 274: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	151, // 275: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	151, // 276: unifiedfleet.api.v1.rpc.Fleet.GetVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	97,  // 277: unifiedfleet.api.v1.rpc.Fleet.ListVlans:output_type -> unifiedfleet.api.v1.rpc.ListVlansResponse
-	155, // 278: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:output_type -> google.protobuf.Empty
-	156, // 279: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:output_type -> google.rpc.Status
-	156, // 280: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:output_type -> google.rpc.Status
-	156, // 281: unifiedfleet.api.v1.rpc.Fleet.ImportStates:output_type -> google.rpc.Status
-	152, // 282: unifiedfleet.api.v1.rpc.Fleet.UpdateState:output_type -> unifiedfleet.api.v1.models.StateRecord
-	152, // 283: unifiedfleet.api.v1.rpc.Fleet.GetState:output_type -> unifiedfleet.api.v1.models.StateRecord
-	154, // 284: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:output_type -> unifiedfleet.api.v1.models.DHCPConfig
-	136, // 285: unifiedfleet.api.v1.rpc.Fleet.CreateVM:output_type -> unifiedfleet.api.v1.models.VM
-	136, // 286: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:output_type -> unifiedfleet.api.v1.models.VM
-	155, // 287: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:output_type -> google.protobuf.Empty
-	136, // 288: unifiedfleet.api.v1.rpc.Fleet.GetVM:output_type -> unifiedfleet.api.v1.models.VM
-	5,   // 289: unifiedfleet.api.v1.rpc.Fleet.ListVMs:output_type -> unifiedfleet.api.v1.rpc.ListVMsResponse
-	153, // 290: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:output_type -> unifiedfleet.api.v1.models.asset
-	108, // 291: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
-	110, // 292: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
-	112, // 293: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
-	114, // 294: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
-	116, // 295: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:output_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
-	118, // 296: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
-	120, // 297: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDracsResponse
-	122, // 298: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:output_type -> unifiedfleet.api.v1.rpc.BatchGetNicsResponse
-	124, // 299: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetVMsResponse
-	126, // 300: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:output_type -> unifiedfleet.api.v1.rpc.BatchGetVlansResponse
-	128, // 301: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:output_type -> unifiedfleet.api.v1.rpc.BatchGetRacksResponse
-	130, // 302: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
-	132, // 303: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
-	134, // 304: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
-	205, // [205:305] is the sub-list for method output_type
-	105, // [105:205] is the sub-list for method input_type
+	68,  // 153: unifiedfleet.api.v1.rpc.Fleet.RenameNic:input_type -> unifiedfleet.api.v1.rpc.RenameNicRequest
+	69,  // 154: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:input_type -> unifiedfleet.api.v1.rpc.ImportDatacentersRequest
+	70,  // 155: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:input_type -> unifiedfleet.api.v1.rpc.CreateKVMRequest
+	71,  // 156: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:input_type -> unifiedfleet.api.v1.rpc.UpdateKVMRequest
+	72,  // 157: unifiedfleet.api.v1.rpc.Fleet.GetKVM:input_type -> unifiedfleet.api.v1.rpc.GetKVMRequest
+	73,  // 158: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:input_type -> unifiedfleet.api.v1.rpc.ListKVMsRequest
+	75,  // 159: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:input_type -> unifiedfleet.api.v1.rpc.DeleteKVMRequest
+	76,  // 160: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:input_type -> unifiedfleet.api.v1.rpc.CreateRPMRequest
+	77,  // 161: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:input_type -> unifiedfleet.api.v1.rpc.UpdateRPMRequest
+	78,  // 162: unifiedfleet.api.v1.rpc.Fleet.GetRPM:input_type -> unifiedfleet.api.v1.rpc.GetRPMRequest
+	79,  // 163: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:input_type -> unifiedfleet.api.v1.rpc.ListRPMsRequest
+	81,  // 164: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:input_type -> unifiedfleet.api.v1.rpc.DeleteRPMRequest
+	82,  // 165: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:input_type -> unifiedfleet.api.v1.rpc.CreateDracRequest
+	83,  // 166: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:input_type -> unifiedfleet.api.v1.rpc.UpdateDracRequest
+	84,  // 167: unifiedfleet.api.v1.rpc.Fleet.GetDrac:input_type -> unifiedfleet.api.v1.rpc.GetDracRequest
+	85,  // 168: unifiedfleet.api.v1.rpc.Fleet.ListDracs:input_type -> unifiedfleet.api.v1.rpc.ListDracsRequest
+	87,  // 169: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:input_type -> unifiedfleet.api.v1.rpc.DeleteDracRequest
+	88,  // 170: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:input_type -> unifiedfleet.api.v1.rpc.CreateSwitchRequest
+	89,  // 171: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:input_type -> unifiedfleet.api.v1.rpc.UpdateSwitchRequest
+	90,  // 172: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:input_type -> unifiedfleet.api.v1.rpc.GetSwitchRequest
+	91,  // 173: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:input_type -> unifiedfleet.api.v1.rpc.ListSwitchesRequest
+	93,  // 174: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:input_type -> unifiedfleet.api.v1.rpc.DeleteSwitchRequest
+	94,  // 175: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:input_type -> unifiedfleet.api.v1.rpc.CreateVlanRequest
+	95,  // 176: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:input_type -> unifiedfleet.api.v1.rpc.UpdateVlanRequest
+	96,  // 177: unifiedfleet.api.v1.rpc.Fleet.GetVlan:input_type -> unifiedfleet.api.v1.rpc.GetVlanRequest
+	97,  // 178: unifiedfleet.api.v1.rpc.Fleet.ListVlans:input_type -> unifiedfleet.api.v1.rpc.ListVlansRequest
+	99,  // 179: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:input_type -> unifiedfleet.api.v1.rpc.DeleteVlanRequest
+	100, // 180: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:input_type -> unifiedfleet.api.v1.rpc.ImportVlansRequest
+	101, // 181: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:input_type -> unifiedfleet.api.v1.rpc.ImportOSVlansRequest
+	102, // 182: unifiedfleet.api.v1.rpc.Fleet.ImportStates:input_type -> unifiedfleet.api.v1.rpc.ImportStatesRequest
+	104, // 183: unifiedfleet.api.v1.rpc.Fleet.UpdateState:input_type -> unifiedfleet.api.v1.rpc.UpdateStateRequest
+	103, // 184: unifiedfleet.api.v1.rpc.Fleet.GetState:input_type -> unifiedfleet.api.v1.rpc.GetStateRequest
+	6,   // 185: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:input_type -> unifiedfleet.api.v1.rpc.GetDHCPConfigRequest
+	0,   // 186: unifiedfleet.api.v1.rpc.Fleet.CreateVM:input_type -> unifiedfleet.api.v1.rpc.CreateVMRequest
+	1,   // 187: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:input_type -> unifiedfleet.api.v1.rpc.UpdateVMRequest
+	3,   // 188: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:input_type -> unifiedfleet.api.v1.rpc.DeleteVMRequest
+	2,   // 189: unifiedfleet.api.v1.rpc.Fleet.GetVM:input_type -> unifiedfleet.api.v1.rpc.GetVMRequest
+	4,   // 190: unifiedfleet.api.v1.rpc.Fleet.ListVMs:input_type -> unifiedfleet.api.v1.rpc.ListVMsRequest
+	107, // 191: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:input_type -> unifiedfleet.api.v1.rpc.CreateAssetRequest
+	108, // 192: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
+	110, // 193: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
+	112, // 194: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
+	114, // 195: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
+	116, // 196: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:input_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
+	118, // 197: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
+	120, // 198: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDracsRequest
+	122, // 199: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:input_type -> unifiedfleet.api.v1.rpc.BatchGetNicsRequest
+	124, // 200: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetVMsRequest
+	126, // 201: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:input_type -> unifiedfleet.api.v1.rpc.BatchGetVlansRequest
+	128, // 202: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:input_type -> unifiedfleet.api.v1.rpc.BatchGetRacksRequest
+	130, // 203: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
+	132, // 204: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
+	134, // 205: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
+	139, // 206: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	139, // 207: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	139, // 208: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	11,  // 209: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsResponse
+	156, // 210: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:output_type -> google.protobuf.Empty
+	157, // 211: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:output_type -> google.rpc.Status
+	18,  // 212: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:output_type -> unifiedfleet.api.v1.rpc.ListOSVersionsResponse
+	157, // 213: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:output_type -> google.rpc.Status
+	141, // 214: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	141, // 215: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	141, // 216: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	23,  // 217: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse
+	156, // 218: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:output_type -> google.protobuf.Empty
+	142, // 219: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	142, // 220: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	142, // 221: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	29,  // 222: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse
+	156, // 223: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:output_type -> google.protobuf.Empty
+	143, // 224: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:output_type -> unifiedfleet.api.v1.models.Machine
+	143, // 225: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	143, // 226: unifiedfleet.api.v1.rpc.Fleet.GetMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	35,  // 227: unifiedfleet.api.v1.rpc.Fleet.ListMachines:output_type -> unifiedfleet.api.v1.rpc.ListMachinesResponse
+	156, // 228: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:output_type -> google.protobuf.Empty
+	157, // 229: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:output_type -> google.rpc.Status
+	143, // 230: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	144, // 231: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:output_type -> unifiedfleet.api.v1.models.Rack
+	144, // 232: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:output_type -> unifiedfleet.api.v1.models.Rack
+	144, // 233: unifiedfleet.api.v1.rpc.Fleet.GetRack:output_type -> unifiedfleet.api.v1.models.Rack
+	45,  // 234: unifiedfleet.api.v1.rpc.Fleet.ListRacks:output_type -> unifiedfleet.api.v1.rpc.ListRacksResponse
+	156, // 235: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:output_type -> google.protobuf.Empty
+	145, // 236: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	145, // 237: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	145, // 238: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	51,  // 239: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsResponse
+	156, // 240: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:output_type -> google.protobuf.Empty
+	157, // 241: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:output_type -> google.rpc.Status
+	157, // 242: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:output_type -> google.rpc.Status
+	146, // 243: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	146, // 244: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	146, // 245: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	59,  // 246: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEsResponse
+	156, // 247: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:output_type -> google.protobuf.Empty
+	147, // 248: unifiedfleet.api.v1.rpc.Fleet.CreateNic:output_type -> unifiedfleet.api.v1.models.Nic
+	147, // 249: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:output_type -> unifiedfleet.api.v1.models.Nic
+	147, // 250: unifiedfleet.api.v1.rpc.Fleet.GetNic:output_type -> unifiedfleet.api.v1.models.Nic
+	65,  // 251: unifiedfleet.api.v1.rpc.Fleet.ListNics:output_type -> unifiedfleet.api.v1.rpc.ListNicsResponse
+	156, // 252: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:output_type -> google.protobuf.Empty
+	157, // 253: unifiedfleet.api.v1.rpc.Fleet.ImportNics:output_type -> google.rpc.Status
+	147, // 254: unifiedfleet.api.v1.rpc.Fleet.RenameNic:output_type -> unifiedfleet.api.v1.models.Nic
+	157, // 255: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:output_type -> google.rpc.Status
+	148, // 256: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	148, // 257: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	148, // 258: unifiedfleet.api.v1.rpc.Fleet.GetKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	74,  // 259: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:output_type -> unifiedfleet.api.v1.rpc.ListKVMsResponse
+	156, // 260: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:output_type -> google.protobuf.Empty
+	149, // 261: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	149, // 262: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	149, // 263: unifiedfleet.api.v1.rpc.Fleet.GetRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	80,  // 264: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:output_type -> unifiedfleet.api.v1.rpc.ListRPMsResponse
+	156, // 265: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:output_type -> google.protobuf.Empty
+	150, // 266: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	150, // 267: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	150, // 268: unifiedfleet.api.v1.rpc.Fleet.GetDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	86,  // 269: unifiedfleet.api.v1.rpc.Fleet.ListDracs:output_type -> unifiedfleet.api.v1.rpc.ListDracsResponse
+	156, // 270: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:output_type -> google.protobuf.Empty
+	151, // 271: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	151, // 272: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	151, // 273: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	92,  // 274: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:output_type -> unifiedfleet.api.v1.rpc.ListSwitchesResponse
+	156, // 275: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:output_type -> google.protobuf.Empty
+	152, // 276: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	152, // 277: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	152, // 278: unifiedfleet.api.v1.rpc.Fleet.GetVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	98,  // 279: unifiedfleet.api.v1.rpc.Fleet.ListVlans:output_type -> unifiedfleet.api.v1.rpc.ListVlansResponse
+	156, // 280: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:output_type -> google.protobuf.Empty
+	157, // 281: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:output_type -> google.rpc.Status
+	157, // 282: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:output_type -> google.rpc.Status
+	157, // 283: unifiedfleet.api.v1.rpc.Fleet.ImportStates:output_type -> google.rpc.Status
+	153, // 284: unifiedfleet.api.v1.rpc.Fleet.UpdateState:output_type -> unifiedfleet.api.v1.models.StateRecord
+	153, // 285: unifiedfleet.api.v1.rpc.Fleet.GetState:output_type -> unifiedfleet.api.v1.models.StateRecord
+	155, // 286: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:output_type -> unifiedfleet.api.v1.models.DHCPConfig
+	137, // 287: unifiedfleet.api.v1.rpc.Fleet.CreateVM:output_type -> unifiedfleet.api.v1.models.VM
+	137, // 288: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:output_type -> unifiedfleet.api.v1.models.VM
+	156, // 289: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:output_type -> google.protobuf.Empty
+	137, // 290: unifiedfleet.api.v1.rpc.Fleet.GetVM:output_type -> unifiedfleet.api.v1.models.VM
+	5,   // 291: unifiedfleet.api.v1.rpc.Fleet.ListVMs:output_type -> unifiedfleet.api.v1.rpc.ListVMsResponse
+	154, // 292: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:output_type -> unifiedfleet.api.v1.models.asset
+	109, // 293: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
+	111, // 294: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
+	113, // 295: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
+	115, // 296: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
+	117, // 297: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:output_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
+	119, // 298: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
+	121, // 299: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDracsResponse
+	123, // 300: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:output_type -> unifiedfleet.api.v1.rpc.BatchGetNicsResponse
+	125, // 301: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetVMsResponse
+	127, // 302: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:output_type -> unifiedfleet.api.v1.rpc.BatchGetVlansResponse
+	129, // 303: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:output_type -> unifiedfleet.api.v1.rpc.BatchGetRacksResponse
+	131, // 304: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
+	133, // 305: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
+	135, // 306: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
+	206, // [206:307] is the sub-list for method output_type
+	105, // [105:206] is the sub-list for method input_type
 	105, // [105:105] is the sub-list for extension type_name
 	105, // [105:105] is the sub-list for extension extendee
 	0,   // [0:105] is the sub-list for field type_name
@@ -11140,7 +11216,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ImportDatacentersRequest); i {
+			switch v := v.(*RenameNicRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11152,7 +11228,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateKVMRequest); i {
+			switch v := v.(*ImportDatacentersRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11164,7 +11240,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateKVMRequest); i {
+			switch v := v.(*CreateKVMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11176,7 +11252,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetKVMRequest); i {
+			switch v := v.(*UpdateKVMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11188,7 +11264,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListKVMsRequest); i {
+			switch v := v.(*GetKVMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11200,7 +11276,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListKVMsResponse); i {
+			switch v := v.(*ListKVMsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11212,7 +11288,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteKVMRequest); i {
+			switch v := v.(*ListKVMsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11224,7 +11300,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateRPMRequest); i {
+			switch v := v.(*DeleteKVMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11236,7 +11312,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateRPMRequest); i {
+			switch v := v.(*CreateRPMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11248,7 +11324,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRPMRequest); i {
+			switch v := v.(*UpdateRPMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11260,7 +11336,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListRPMsRequest); i {
+			switch v := v.(*GetRPMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11272,7 +11348,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListRPMsResponse); i {
+			switch v := v.(*ListRPMsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11284,7 +11360,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRPMRequest); i {
+			switch v := v.(*ListRPMsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11296,7 +11372,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[81].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateDracRequest); i {
+			switch v := v.(*DeleteRPMRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11308,7 +11384,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[82].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDracRequest); i {
+			switch v := v.(*CreateDracRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11320,7 +11396,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[83].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDracRequest); i {
+			switch v := v.(*UpdateDracRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11332,7 +11408,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[84].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDracsRequest); i {
+			switch v := v.(*GetDracRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11344,7 +11420,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[85].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDracsResponse); i {
+			switch v := v.(*ListDracsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11356,7 +11432,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[86].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteDracRequest); i {
+			switch v := v.(*ListDracsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11368,7 +11444,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateSwitchRequest); i {
+			switch v := v.(*DeleteDracRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11380,7 +11456,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[88].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateSwitchRequest); i {
+			switch v := v.(*CreateSwitchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11392,7 +11468,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[89].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSwitchRequest); i {
+			switch v := v.(*UpdateSwitchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11404,7 +11480,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[90].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSwitchesRequest); i {
+			switch v := v.(*GetSwitchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11416,7 +11492,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[91].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListSwitchesResponse); i {
+			switch v := v.(*ListSwitchesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11428,7 +11504,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[92].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteSwitchRequest); i {
+			switch v := v.(*ListSwitchesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11440,7 +11516,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[93].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateVlanRequest); i {
+			switch v := v.(*DeleteSwitchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11452,7 +11528,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[94].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateVlanRequest); i {
+			switch v := v.(*CreateVlanRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11464,7 +11540,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[95].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetVlanRequest); i {
+			switch v := v.(*UpdateVlanRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11476,7 +11552,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[96].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListVlansRequest); i {
+			switch v := v.(*GetVlanRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11488,7 +11564,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[97].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListVlansResponse); i {
+			switch v := v.(*ListVlansRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11500,7 +11576,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[98].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteVlanRequest); i {
+			switch v := v.(*ListVlansResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11512,7 +11588,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ImportVlansRequest); i {
+			switch v := v.(*DeleteVlanRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11524,7 +11600,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ImportOSVlansRequest); i {
+			switch v := v.(*ImportVlansRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11536,7 +11612,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ImportStatesRequest); i {
+			switch v := v.(*ImportOSVlansRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11548,7 +11624,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStateRequest); i {
+			switch v := v.(*ImportStatesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11560,7 +11636,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[103].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateStateRequest); i {
+			switch v := v.(*GetStateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11572,7 +11648,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[104].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RackRegistrationRequest); i {
+			switch v := v.(*UpdateStateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11584,7 +11660,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[105].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NetworkOption); i {
+			switch v := v.(*RackRegistrationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11596,7 +11672,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[106].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateAssetRequest); i {
+			switch v := v.(*NetworkOption); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11608,7 +11684,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[107].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetKVMsRequest); i {
+			switch v := v.(*CreateAssetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11620,7 +11696,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[108].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetKVMsResponse); i {
+			switch v := v.(*BatchGetKVMsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11632,7 +11708,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[109].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetDHCPConfigsRequest); i {
+			switch v := v.(*BatchGetKVMsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11644,7 +11720,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[110].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetDHCPConfigsResponse); i {
+			switch v := v.(*BatchGetDHCPConfigsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11656,7 +11732,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[111].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachineLSEsRequest); i {
+			switch v := v.(*BatchGetDHCPConfigsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11668,7 +11744,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[112].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachineLSEsResponse); i {
+			switch v := v.(*BatchGetMachineLSEsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11680,7 +11756,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[113].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachinesRequest); i {
+			switch v := v.(*BatchGetMachineLSEsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11692,7 +11768,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[114].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachinesResponse); i {
+			switch v := v.(*BatchGetMachinesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11704,7 +11780,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[115].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetSwitchesRequest); i {
+			switch v := v.(*BatchGetMachinesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11716,7 +11792,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[116].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetSwitchesResponse); i {
+			switch v := v.(*BatchGetSwitchesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11728,7 +11804,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[117].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetRPMsRequest); i {
+			switch v := v.(*BatchGetSwitchesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11740,7 +11816,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[118].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetRPMsResponse); i {
+			switch v := v.(*BatchGetRPMsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11752,7 +11828,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[119].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetDracsRequest); i {
+			switch v := v.(*BatchGetRPMsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11764,7 +11840,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[120].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetDracsResponse); i {
+			switch v := v.(*BatchGetDracsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11776,7 +11852,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[121].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetNicsRequest); i {
+			switch v := v.(*BatchGetDracsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11788,7 +11864,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[122].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetNicsResponse); i {
+			switch v := v.(*BatchGetNicsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11800,7 +11876,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[123].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetVMsRequest); i {
+			switch v := v.(*BatchGetNicsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11812,7 +11888,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[124].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetVMsResponse); i {
+			switch v := v.(*BatchGetVMsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11824,7 +11900,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[125].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetVlansRequest); i {
+			switch v := v.(*BatchGetVMsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11836,7 +11912,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[126].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetVlansResponse); i {
+			switch v := v.(*BatchGetVlansRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11848,7 +11924,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[127].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetRacksRequest); i {
+			switch v := v.(*BatchGetVlansResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11860,7 +11936,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[128].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetRacksResponse); i {
+			switch v := v.(*BatchGetRacksRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11872,7 +11948,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[129].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetChromePlatformsRequest); i {
+			switch v := v.(*BatchGetRacksResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11884,7 +11960,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[130].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetChromePlatformsResponse); i {
+			switch v := v.(*BatchGetChromePlatformsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11896,7 +11972,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[131].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachineLSEPrototypesRequest); i {
+			switch v := v.(*BatchGetChromePlatformsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11908,7 +11984,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[132].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetMachineLSEPrototypesResponse); i {
+			switch v := v.(*BatchGetMachineLSEPrototypesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11920,7 +11996,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[133].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchGetRackLSEPrototypesRequest); i {
+			switch v := v.(*BatchGetMachineLSEPrototypesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11932,6 +12008,18 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			}
 		}
 		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[134].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BatchGetRackLSEPrototypesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[135].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BatchGetRackLSEPrototypesResponse); i {
 			case 0:
 				return &v.state
@@ -11968,19 +12056,19 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 		(*ImportNicsRequest_MachineDbSource)(nil),
 		(*ImportNicsRequest_ConfigSource)(nil),
 	}
-	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[68].OneofWrappers = []interface{}{
+	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[69].OneofWrappers = []interface{}{
 		(*ImportDatacentersRequest_MachineDbSource)(nil),
 		(*ImportDatacentersRequest_ConfigSource)(nil),
 	}
-	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[99].OneofWrappers = []interface{}{
+	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100].OneofWrappers = []interface{}{
 		(*ImportVlansRequest_MachineDbSource)(nil),
 		(*ImportVlansRequest_ConfigSource)(nil),
 	}
-	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[100].OneofWrappers = []interface{}{
+	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101].OneofWrappers = []interface{}{
 		(*ImportOSVlansRequest_MachineDbSource)(nil),
 		(*ImportOSVlansRequest_ConfigSource)(nil),
 	}
-	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[101].OneofWrappers = []interface{}{
+	file_infra_unifiedfleet_api_v1_rpc_fleet_proto_msgTypes[102].OneofWrappers = []interface{}{
 		(*ImportStatesRequest_MachineDbSource)(nil),
 		(*ImportStatesRequest_ConfigSource)(nil),
 	}
@@ -11990,7 +12078,7 @@ func file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   136,
+			NumMessages:   137,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -12115,6 +12203,8 @@ type FleetClient interface {
 	DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ImportNics imports nics info.
 	ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error)
+	// Rename rename the nic
+	RenameNic(ctx context.Context, in *RenameNicRequest, opts ...grpc.CallOption) (*models.Nic, error)
 	// ImportDatacenters imports datacenter & its related info, including kvm & switch.
 	ImportDatacenters(ctx context.Context, in *ImportDatacentersRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// CreateKVM creates a new KVM
@@ -12655,6 +12745,15 @@ func (c *fleetPRPCClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, o
 func (c *fleetPRPCClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error) {
 	out := new(status.Status)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ImportNics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) RenameNic(ctx context.Context, in *RenameNicRequest, opts ...grpc.CallOption) (*models.Nic, error) {
+	out := new(models.Nic)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "RenameNic", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -13569,6 +13668,15 @@ func (c *fleetClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opt
 	return out, nil
 }
 
+func (c *fleetClient) RenameNic(ctx context.Context, in *RenameNicRequest, opts ...grpc.CallOption) (*models.Nic, error) {
+	out := new(models.Nic)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/RenameNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fleetClient) ImportDatacenters(ctx context.Context, in *ImportDatacentersRequest, opts ...grpc.CallOption) (*status.Status, error) {
 	out := new(status.Status)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ImportDatacenters", in, out, opts...)
@@ -14138,6 +14246,8 @@ type FleetServer interface {
 	DeleteNic(context.Context, *DeleteNicRequest) (*emptypb.Empty, error)
 	// ImportNics imports nics info.
 	ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error)
+	// Rename rename the nic
+	RenameNic(context.Context, *RenameNicRequest) (*models.Nic, error)
 	// ImportDatacenters imports datacenter & its related info, including kvm & switch.
 	ImportDatacenters(context.Context, *ImportDatacentersRequest) (*status.Status, error)
 	// CreateKVM creates a new KVM
@@ -14392,6 +14502,9 @@ func (*UnimplementedFleetServer) DeleteNic(context.Context, *DeleteNicRequest) (
 }
 func (*UnimplementedFleetServer) ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ImportNics not implemented")
+}
+func (*UnimplementedFleetServer) RenameNic(context.Context, *RenameNicRequest) (*models.Nic, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method RenameNic not implemented")
 }
 func (*UnimplementedFleetServer) ImportDatacenters(context.Context, *ImportDatacentersRequest) (*status.Status, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ImportDatacenters not implemented")
@@ -15414,6 +15527,24 @@ func _Fleet_ImportNics_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FleetServer).ImportNics(ctx, req.(*ImportNicsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_RenameNic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenameNicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).RenameNic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/RenameNic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).RenameNic(ctx, req.(*RenameNicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -16549,6 +16680,10 @@ var _Fleet_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ImportNics",
 			Handler:    _Fleet_ImportNics_Handler,
+		},
+		{
+			MethodName: "RenameNic",
+			Handler:    _Fleet_RenameNic_Handler,
 		},
 		{
 			MethodName: "ImportDatacenters",

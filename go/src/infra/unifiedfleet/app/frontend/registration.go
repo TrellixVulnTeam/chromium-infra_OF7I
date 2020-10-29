@@ -458,6 +458,17 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *ufsAPI.ImportNic
 	return successStatus.Proto(), nil
 }
 
+// RenameNic renames the nic in database.
+func (fs *FleetServerImpl) RenameNic(ctx context.Context, req *ufsAPI.RenameNicRequest) (rsp *ufspb.Nic, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
 // ImportDatacenters imports the datacenter and its related info in batch.
 func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *ufsAPI.ImportDatacentersRequest) (response *status.Status, err error) {
 	defer func() {

@@ -618,6 +618,14 @@ func validateNic(nic *ufspb.Nic) error {
 	return nil
 }
 
+// Validate validates input requests of RenameNic.
+func (r *RenameNicRequest) Validate() error {
+	if err := validateResourceName(nicRegex, NicNameFormat, r.GetName()); err != nil {
+		return err
+	}
+	return validateResourceName(nicRegex, NicNameFormat, r.GetNewName())
+}
+
 // Validate validates input requests of UpdateState.
 func (r *UpdateStateRequest) Validate() error {
 	if r.State == nil {
