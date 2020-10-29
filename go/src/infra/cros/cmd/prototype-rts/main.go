@@ -24,7 +24,8 @@ func getApplication() *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			subcommands.CmdHelp,
-			cmd.StartProgressSink(),
+			cmd.StartServices(),
+			cmd.InvokeRTD(),
 		},
 	}
 }
