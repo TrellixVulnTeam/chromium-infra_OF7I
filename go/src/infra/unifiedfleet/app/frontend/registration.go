@@ -466,7 +466,13 @@ func (fs *FleetServerImpl) RenameNic(ctx context.Context, req *ufsAPI.RenameNicR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	nic, err := controller.RenameNic(ctx, util.RemovePrefix(req.Name), util.RemovePrefix(req.NewName))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
+	return nic, err
 }
 
 // ImportDatacenters imports the datacenter and its related info in batch.

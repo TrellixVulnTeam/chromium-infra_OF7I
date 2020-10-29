@@ -1294,6 +1294,17 @@ func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newVal
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
 			return errors.Annotate(err, "unable to batch update machinelses").Err()
 		}
+	case "nic":
+		// get MachineLSEs for nic indexing
+		lses, err = inventory.QueryMachineLSEByPropertyName(ctx, "nic", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query machinelses/hosts for nic %s", oldValue).Err()
+		}
+		for _, lse := range lses {
+			oldLseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
+			lse.Nic = newValue
+			hc.LogMachineLSEChanges(oldLseCopy, lse)
+		}
 	}
 	if _, err = inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
 		return errors.Annotate(err, "unable to batch update machinelses").Err()

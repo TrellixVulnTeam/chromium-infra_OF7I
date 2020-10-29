@@ -483,3 +483,65 @@ func getNicHistoryClient(m *ufspb.Nic) *HistoryClient {
 		},
 	}
 }
+
+// RenameNic renames the nic and updates the associated machinelse in datastore
+func RenameNic(ctx context.Context, oldNicName, newNicName string) (*ufspb.Nic, error) {
+	var nic *ufspb.Nic
+	var err error
+	f := func(ctx context.Context) error {
+		// Get the old Nic
+		nic, err = registration.GetNic(ctx, oldNicName)
+		if err != nil {
+			return errors.Annotate(err, "Unable to get nic %s", oldNicName).Err()
+		}
+
+		// Validate the input
+		if err := validateRenameNic(ctx, nic, newNicName); err != nil {
+			return errors.Annotate(err, "validation failed").Err()
+		}
+
+		// Copy for logging
+		oldNicCopy := proto.Clone(nic).(*ufspb.Nic)
+		hc := getNicHistoryClient(oldNicCopy)
+
+		// Update MachineLSE with new nic name
+		if err := updateIndexingForMachineLSE(ctx, "nic", oldNicName, newNicName, hc); err != nil {
+			return errors.Annotate(err, "failed to update indexing for hosts").Err()
+		}
+
+		// Delete the old nic
+		if err := registration.DeleteNic(ctx, oldNicName); err != nil {
+			return errors.Annotate(err, "unable to delete nic %s", oldNicName).Err()
+		}
+
+		// Create a new nic
+		nic.Name = newNicName
+		if _, err = registration.BatchUpdateNics(ctx, []*ufspb.Nic{nic}); err != nil {
+			return errors.Annotate(err, "unable to batch update nic %s", nic.Name).Err()
+		}
+
+		hc.LogNicChanges(oldNicCopy, nic)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "failed to rename nic: %s", oldNicName).Err()
+	}
+	return nic, nil
+}
+
+// validateRenameNic validates if a Nic can be renamed
+func validateRenameNic(ctx context.Context, oldNic *ufspb.Nic, newNicName string) error {
+	machine, err := registration.GetMachine(ctx, oldNic.GetMachine())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "machine %s not found", oldNic.GetMachine())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		return err
+	}
+	// Check if new nic name already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetNicResource(newNicName)}, nil); err != nil {
+		return err
+	}
+	return nil
+}

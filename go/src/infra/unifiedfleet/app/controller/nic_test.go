@@ -965,3 +965,134 @@ func TestBatchGetNics(t *testing.T) {
 		})
 	})
 }
+
+func TestRenameNic(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	registration.CreateMachine(ctx, &ufspb.Machine{
+		Name: "machine-ren-1",
+		Device: &ufspb.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+		},
+		Realm: util.BrowserLabAdminRealm,
+	})
+	Convey("RenameNic", t, func() {
+
+		Convey("Rename a Nic with new nic name", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "machine-ren-1:nic-1",
+				Machine: "machine-ren-1",
+			})
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-1",
+				Machines: []string{"machine-ren-1"},
+				Nic:      "machine-ren-1:nic-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			res, err := RenameNic(ctx, "machine-ren-1:nic-1", "machine-ren-1:nic-2")
+			So(err, ShouldBeNil)
+			So(res.Name, ShouldEqual, "machine-ren-1:nic-2")
+			machine, err := GetMachine(ctx, "machine-ren-1")
+			So(machine, ShouldNotBeNil)
+			So(machine.GetChromeBrowserMachine().GetNicObjects()[0].GetName(), ShouldEqual, "machine-ren-1:nic-2")
+			_, err = registration.GetNic(ctx, "machine-ren-1:nic-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			nic, err := registration.GetNic(ctx, "machine-ren-1:nic-2")
+			So(nic, ShouldNotBeNil)
+			So(nic.GetName(), ShouldEqual, "machine-ren-1:nic-2")
+			So(nic.GetMachine(), ShouldEqual, "machine-ren-1")
+			host, err := inventory.GetMachineLSE(ctx, "machinelse-1")
+			So(host, ShouldNotBeNil)
+			So(host.GetNic(), ShouldResemble, "machine-ren-1:nic-2")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/machine-ren-1:nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-ren-1:nic-1")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-ren-1:nic-2")
+			So(changes[1].GetEventLabel(), ShouldEqual, "nic.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/machine-ren-1:nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-ren-1:nic-1")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-ren-1:nic-2")
+			So(changes[1].GetEventLabel(), ShouldEqual, "nic.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "machine-ren-1:nic-1")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-ren-1:nic-2")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/machine-ren-1:nic-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/machine-ren-1:nic-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+		})
+		Convey("Rename a non-existing Nic", func() {
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err := RenameNic(ctx, "machine-ren-1:nic-3", "machine-ren-1:nic-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Rename a Nic to an already existing nic name", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "machine-ren-1:nic-5",
+				Machine: "machine-ren-1",
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "machine-ren-1:nic-6",
+				Machine: "machine-ren-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			_, err = RenameNic(ctx, "machine-ren-1:nic-5", "machine-ren-1:nic-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Nic machine-ren-1:nic-6 already exists in the system")
+		})
+		Convey("Rename a Machine - permission denied: same realm and no update permission", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "machine-ren-1:nic-7",
+				Machine: "machine-ren-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = RenameNic(ctx, "machine-ren-1:nic-7", "machine-ren-1:nic-8")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+		Convey("Rename a Nic - permission denied: different realm", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "machine-ren-1:nic-9",
+				Machine: "machine-ren-1",
+			})
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.AtlLabAdminRealm)
+			_, err = RenameNic(ctx, "machine-ren-1:nic-9", "machine-ren-1:nic-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+	})
+}
