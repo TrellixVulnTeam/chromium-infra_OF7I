@@ -146,7 +146,20 @@ func (c *addDutRun) innerRun(a subcommands.Application, args []string, env subco
 		Host:    e.UFSService,
 		Options: site.UFSPRPCOptions,
 	})
-	err = c.deployToUFS(ctx, ufsClient, specs)
+	inv2Client := invV2Api.NewInventoryPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.InventoryService,
+		Options: site.DefaultPRPCOptions,
+	})
+
+	deploymentID, err := c.triggerDeploy(ctx, ic, specs)
+	if err != nil {
+		return err
+	}
+
+	// Deploy to UFS after they're already successfully deployed to Inventory V2,
+	// So that we could get DUT ID.
+	err = c.deployToUFS(ctx, ufsClient, inv2Client, specs)
 	if c.commonFlags.Verbose() {
 		fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
 		if err != nil {
@@ -162,10 +175,6 @@ func (c *addDutRun) innerRun(a subcommands.Application, args []string, env subco
 		fmt.Fprintf(a.GetOut(), "\n")
 	}
 
-	deploymentID, err := c.triggerDeploy(ctx, ic, specs)
-	if err != nil {
-		return err
-	}
 	ds, err := ic.GetDeploymentStatus(ctx, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 	if err != nil {
 		return err
@@ -243,17 +252,28 @@ func serializeMany(specs []*inventory.DeviceUnderTest) ([][]byte, error) {
 }
 
 // deployToUFS kicks off the inventory updates to UFS
-func (c *addDutRun) deployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, specs []*inventory.DeviceUnderTest) error {
+func (c *addDutRun) deployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, ic invV2Api.InventoryClient, specs []*inventory.DeviceUnderTest) error {
 	// Ignore other loggings from other packages, only expose error logging.
 	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
 	// Set the namespace to os in context metadata for UFS api call
 	newCtx = skycmdlib.SetupContext(newCtx, ufsUtil.OSNamespace)
 	for _, spec := range specs {
+		devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: spec.GetCommon().GetHostname()}}
+		dutResp, err := ic.GetCrosDevices(ctx, &invV2Api.GetCrosDevicesRequest{
+			Ids: []*invV2Api.DeviceID{devID},
+		})
+		if err != nil || len(dutResp.FailedDevices) > 0 || len(dutResp.Data) != 1 {
+			continue
+		}
+		dut, err := invV2Api.AdaptToV1DutSpec(dutResp.Data[0])
+		if err != nil {
+			continue
+		}
 		devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
 		if len(devicesToAdd) != 1 {
 			return errors.Reason("Cannot parse lab config from the host %s's spec", spec.GetCommon().GetHostname()).Err()
 		}
-		mlse := ufsUtil.DUTToLSE(devicesToAdd[0].GetDut(), "", nil)
+		mlse := ufsUtil.DUTToLSE(devicesToAdd[0].GetDut(), dut.GetCommon().GetId(), nil)
 		_, err = ufsClient.CreateMachineLSE(newCtx, &ufsAPI.CreateMachineLSERequest{
 			MachineLSE:   mlse,
 			MachineLSEId: mlse.GetName(),
