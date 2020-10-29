@@ -209,10 +209,10 @@ func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConf
 	if err != nil {
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
-	req := tls.ProvisionRequest{
+	req := tls.ProvisionDutRequest{
 		Name: r.DutHostname,
-		Image: &tls.ProvisionRequest_ChromeOSImage{
-			PathOneof: &tls.ProvisionRequest_ChromeOSImage_GsPathPrefix{
+		Image: &tls.ProvisionDutRequest_ChromeOSImage{
+			PathOneof: &tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
 				GsPathPrefix: p,
 			},
 		},
@@ -226,7 +226,7 @@ func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConf
 
 	c := tls.NewCommonClient(conn)
 
-	op, err := c.Provision(ctx, &req)
+	op, err := c.ProvisionDut(ctx, &req)
 	if err != nil {
 		// Errors here indicate a failure in starting the operation, not failure
 		// in the provision attempt.
