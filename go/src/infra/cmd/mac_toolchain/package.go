@@ -22,15 +22,13 @@ import (
 
 // defaultExcludePrefixes excludes parts of Xcode.app that are not necessary for
 // any of our purposes. Specifically, it excludes unused platforms like
-// AppleTVOS and WatchOS, documentation, and anything related to Swift.
+// AppleTVOS and WatchOS, documentation.
 var defaultExcludePrefixes = []string{
 	"Contents/Applications",
 	"Contents/Developer/Platforms/AppleTVOS.platform",
 	"Contents/Developer/Platforms/AppleTVSimulator.platform",
 	"Contents/Developer/Platforms/WatchOS.platform",
 	"Contents/Developer/Platforms/WatchSimulator.platform",
-	// Excludes both .../swift/ and .../swift_static/.
-	"Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift",
 }
 
 // macExcludePrefixes excludes parts of Xcode.app not required for building
