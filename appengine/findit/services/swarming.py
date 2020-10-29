@@ -64,6 +64,45 @@ def _IsTestFilter(arg):
       arg.startswith(test_filter_arg) for test_filter_arg in test_filter_args)
 
 
+def _SetTestFilters(args, tests, iterations):
+  """Given a test command, sets parameters to run only the specified tests.
+
+  Args:
+    args (ListOfBasestring): A list of arguments to pass to the test command.
+    tests (list): A list of tests to run.
+    iterations (int): Number of iterations each test should run.
+
+  Returns:
+    (list):  A modified list of arguments to pass to the test command.
+  """
+  # Remove existing test filter first.
+  res = ListOfBasestring.FromSerializable(
+      [a for a in args if not _IsTestFilter(a)])
+
+  res.append('--isolated-script-test-filter=%s' % '::'.join(tests))
+
+  res.append('--isolated-script-test-repeat=%s' % iterations)
+
+  res.append('--isolated-script-test-launcher-retry-limit=0')
+
+  # Also rerun disabled tests. Scenario: the test was disabled before Findit
+  # runs any analysis. One possible case:
+  #   1. A gtest became flaky on CQ, but Findit was not automatically
+  #      triggered to run any analysis because:
+  #      * the test is not flaky enough
+  #   2. The test got disabled, but no culprit was identified.
+  #   3. Some developer starts the investigation and requests Findit to
+  #      analyze the flaky test.
+  #   4. Findit picks the latest Waterfall build of the matching configuration
+  #      for the CQ build in which the flaky test is found.
+  #   5. In the picked Waterfall build, the test is already disabled.
+  #
+  # Note: test runner on Android ignores this flag because it is not supported
+  # yet even though it exists.
+  res.append('--isolated-script-test-also-run-disabled-tests')
+  return res
+
+
 def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
                                          master_name, builder_name, step_name,
                                          tests, iterations):
@@ -91,35 +130,14 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
   new_request.properties.idempotent = False
 
   # Set the gtest_filter to run the given tests only.
-  # Remove existing test filter first.
-  new_request.properties.extra_args = ListOfBasestring.FromSerializable(
-      [a for a in new_request.properties.extra_args if not _IsTestFilter(a)])
-
-  new_request.properties.extra_args.append(
-      '--isolated-script-test-filter=%s' % '::'.join(tests))
-
-  new_request.properties.extra_args.append(
-      '--isolated-script-test-repeat=%s' % iterations)
-
-  new_request.properties.extra_args.append(
-      '--isolated-script-test-launcher-retry-limit=0')
-
-  # Also rerun disabled tests. Scenario: the test was disabled before Findit
-  # runs any analysis. One possible case:
-  #   1. A gtest became flaky on CQ, but Findit was not automatically
-  #      triggered to run any analysis because:
-  #      * the test is not flaky enough
-  #   2. The test got disabled, but no culprit was identified.
-  #   3. Some developer starts the investigation and requests Findit to
-  #      analyze the flaky test.
-  #   4. Findit picks the latest Waterfall build of the matching configuration
-  #      for the CQ build in which the flaky test is found.
-  #   5. In the picked Waterfall build, the test is already disabled.
-  #
-  # Note: test runner on Android ignores this flag because it is not supported
-  # yet even though it exists.
-  new_request.properties.extra_args.append(
-      '--isolated-script-test-also-run-disabled-tests')
+  # Only one of command or extra_args will be populated.
+  if len(new_request.properties.command) > 0:
+    assert len(new_request.properties.extra_args) == 0
+    new_request.properties.command = _SetTestFilters(
+        new_request.properties.command, tests, iterations)
+  else:
+    new_request.properties.extra_args = _SetTestFilters(
+        new_request.properties.extra_args, tests, iterations)
 
   # Remove the env setting for sharding.
   sharding_settings = ['GTEST_SHARD_INDEX', 'GTEST_TOTAL_SHARDS']

@@ -23,7 +23,7 @@ class SwarmingTaskRequestTest(TestCase):
         priority='150',
         properties=SwarmingTaskProperties(
             caches=[],
-            command=None,
+            command=ListOfBasestring(),
             dimensions=[],
             env=[],
             env_prefixes=[],
@@ -70,7 +70,7 @@ class SwarmingTaskRequestTest(TestCase):
         'pubsub_auth_token': 'token',
         'pubsub_userdata': 'data',
         'properties': {
-            'command': 'path/to/binary',
+            'command': ['path/to/binary'],
             'unused_property': 'blabla',
             'dimensions': [{
                 'key': 'cpu',
@@ -109,7 +109,7 @@ class SwarmingTaskRequestTest(TestCase):
         priority='150',
         properties=SwarmingTaskProperties(
             caches=None,
-            command='path/to/binary',
+            command=ListOfBasestring.FromSerializable(['path/to/binary']),
             dimensions=[
                 {
                     'key': 'cpu',

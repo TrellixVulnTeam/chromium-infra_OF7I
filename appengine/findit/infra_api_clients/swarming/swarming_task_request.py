@@ -54,7 +54,7 @@ class SwarmingTaskInputsRef(StructuredObject):
 class SwarmingTaskProperties(StructuredObject):
   """Fields populated in swarming task requests."""
   caches = list
-  command = basestring
+  command = ListOfBasestring
   env_prefixes = list
   dimensions = list
   env = list
@@ -119,7 +119,7 @@ class SwarmingTaskRequest(StructuredObject):
         priority='150',
         properties=SwarmingTaskProperties(
             caches=[],
-            command=None,
+            command=ListOfBasestring(),
             dimensions=[],
             env=[],
             env_prefixes=[],
@@ -172,7 +172,8 @@ class SwarmingTaskRequest(StructuredObject):
         priority=str(data.get('priority')),
         properties=SwarmingTaskProperties(
             caches=properties.get('caches'),
-            command=properties.get('command'),
+            command=ListOfBasestring.FromSerializable(
+                properties.get('command') or []),
             dimensions=properties.get('dimensions') or [],
             env=properties.get('env') or [],
             env_prefixes=properties.get('env_prefixes') or [],

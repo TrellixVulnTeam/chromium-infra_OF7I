@@ -69,14 +69,19 @@ _SAMPLE_BUILD_STEP_DATA = [
     }
 ]
 
-_REF_REQUEST = {
+_REF_REQUEST_WITH_COMMAND = {
     'expiration_secs': '3600',
     'name': 'ref_task_request',
     'parent_task_id': 'pti',
     'priority': '25',
     'properties': {
-        'command':
+        'command': [
             'cmd',
+            '--flag=value',
+            '--gtest_filter=d.f',
+            '--test-launcher-filter-file=path/to/filter/file',
+            '--isolated-script-test-filter',
+        ],
         'dimensions': [{
             'key': 'k',
             'value': 'v'
@@ -95,22 +100,13 @@ _REF_REQUEST = {
                 'value': '5'
             },
         ],
-        'execution_timeout_secs':
-            '3600',
-        'extra_args': [
-            '--flag=value',
-            '--gtest_filter=d.f',
-            '--test-launcher-filter-file=path/to/filter/file',
-        ],
-        'grace_period_secs':
-            '30',
-        'idempotent':
-            True,
+        'execution_timeout_secs': '3600',
+        'grace_period_secs': '30',
+        'idempotent': True,
         'inputs_ref': {
             'isolatedserver': 'isolatedserver'
         },
-        'io_timeout_secs':
-            '1200',
+        'io_timeout_secs': '1200',
     },
     'tags': ['master:%s' % 'b',
              'buildername:%s' % 'b', 'name:a_tests'],
@@ -120,6 +116,51 @@ _REF_REQUEST = {
     'pubsub_userdata': None,
 }
 
+_REF_REQUEST_WITH_EXTRA_ARGS = {
+    'expiration_secs': '3600',
+    'name': 'ref_task_request',
+    'parent_task_id': 'pti',
+    'priority': '25',
+    'properties': {
+        'dimensions': [{
+            'key': 'k',
+            'value': 'v'
+        }],
+        'env': [
+            {
+                'key': 'a',
+                'value': '1'
+            },
+            {
+                'key': 'GTEST_SHARD_INDEX',
+                'value': '1'
+            },
+            {
+                'key': 'GTEST_TOTAL_SHARDS',
+                'value': '5'
+            },
+        ],
+        'execution_timeout_secs': '3600',
+        'extra_args': [
+            '--flag=value',
+            '--gtest_filter=d.f',
+            '--test-launcher-filter-file=path/to/filter/file',
+            '--isolated-script-test-filter',
+        ],
+        'grace_period_secs': '30',
+        'idempotent': True,
+        'inputs_ref': {
+            'isolatedserver': 'isolatedserver'
+        },
+        'io_timeout_secs': '1200',
+    },
+    'tags': ['master:%s' % 'b',
+             'buildername:%s' % 'b', 'name:a_tests'],
+    'user': 'user',
+    'pubsub_topic': None,
+    'pubsub_auth_token': None,
+    'pubsub_userdata': None,
+}
 
 class SwarmingTest(wf_testcase.WaterfallTestCase):
 
@@ -384,7 +425,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
       })])
   @mock.patch.object(swarming_util, 'GetSwarmingTaskRequest')
   def testGetReferredSwarmingTaskRequestInfo(self, mock_get, _):
-    request = SwarmingTaskRequest.FromSerializable(_REF_REQUEST)
+    request = SwarmingTaskRequest.FromSerializable(_REF_REQUEST_WITH_COMMAND)
     mock_get.return_value = request
     task_id, ref_request = swarming.GetReferredSwarmingTaskRequestInfo(
         'm', 'b', 123, 's', None)
@@ -395,7 +436,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(token, 'GenerateAuthToken', return_value='auth_token')
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2018, 03, 15, 0, 0, 0))
-  def testCreateNewSwarmingTaskRequestTemplate(self, *_):
+  def testCreateNewSwarmingTaskRequestTemplateWithCommand(self, *_):
     ref_task_id = 'ref_task_id'
     master_name = 'm'
     builder_name = 'b'
@@ -405,8 +446,69 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
     new_request = swarming.CreateNewSwarmingTaskRequestTemplate(
         'runner_id', ref_task_id,
-        SwarmingTaskRequest.FromSerializable(_REF_REQUEST), master_name,
-        builder_name, step_name, tests, iterations)
+        SwarmingTaskRequest.FromSerializable(_REF_REQUEST_WITH_COMMAND),
+        master_name, builder_name, step_name, tests, iterations)
+
+    expected_new_request_json = {
+        'expiration_secs': '72000',
+        'name': 'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
+        'parent_task_id': '',
+        'priority': '150',
+        'properties': {
+            'command': [
+                'cmd', '--flag=value', '--isolated-script-test-filter=a.b::a.c',
+                '--isolated-script-test-repeat=%d' % iterations,
+                '--isolated-script-test-launcher-retry-limit=0',
+                '--isolated-script-test-also-run-disabled-tests'
+            ],
+            'dimensions': [{
+                'key': 'k',
+                'value': 'v'
+            }],
+            'env': [{
+                'key': 'a',
+                'value': '1'
+            },],
+            'execution_timeout_secs': '3600',
+            'grace_period_secs': '30',
+            'idempotent': False,
+            'inputs_ref': {
+                'isolatedserver': 'isolatedserver',
+            },
+            'io_timeout_secs': '1200',
+        },
+        'tags': [
+            'ref_master:%s' % master_name,
+            'ref_buildername:%s' % builder_name,
+            'ref_stepname:%s' % step_name, 'ref_name:a_tests', 'findit:1',
+            'project:Chromium', 'purpose:post-commit'
+        ],
+        'user': '',
+        'pubsub_auth_token': 'auth_token',
+        'pubsub_topic': 'projects/app-id/topics/swarming',
+        'pubsub_userdata': json.dumps({'runner_id': 'runner_id'}),
+    }
+
+    self.assertEqual(
+        SwarmingTaskRequest.FromSerializable(expected_new_request_json),
+        new_request)
+
+  @mock.patch.object(app_identity, 'get_application_id', return_value='app-id')
+  @mock.patch.object(token, 'GenerateAuthToken', return_value='auth_token')
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime(2018, 03, 15, 0, 0, 0))
+  def testCreateNewSwarmingTaskRequestTemplateWithExtraArgs(self, *_):
+    ref_task_id = 'ref_task_id'
+    master_name = 'm'
+    builder_name = 'b'
+    step_name = 'a_tests on platform'
+    tests = ['a.b', 'a.c']
+    iterations = 100
+
+    new_request = swarming.CreateNewSwarmingTaskRequestTemplate(
+        'runner_id', ref_task_id,
+        SwarmingTaskRequest.FromSerializable(_REF_REQUEST_WITH_EXTRA_ARGS),
+        master_name, builder_name, step_name, tests, iterations)
 
     expected_new_request_json = {
         'expiration_secs':
@@ -418,8 +520,6 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'priority':
             '150',
         'properties': {
-            'command':
-                'cmd',
             'dimensions': [{
                 'key': 'k',
                 'value': 'v'

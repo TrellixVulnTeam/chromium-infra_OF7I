@@ -27,17 +27,12 @@ from services.flake_failure import flake_test_results
 from waterfall.test import wf_testcase
 
 _SAMPLE_REQUEST_JSON = {
-    'expiration_secs':
-        '3600',
-    'name':
-        'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
-    'parent_task_id':
-        '',
-    'priority':
-        '25',
+    'expiration_secs': '3600',
+    'name': 'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
+    'parent_task_id': '',
+    'priority': '25',
     'properties': {
-        'command':
-            'cmd',
+        'command': ['cmd'],
         'dimensions': [{
             'key': 'k',
             'value': 'v'
@@ -46,8 +41,7 @@ _SAMPLE_REQUEST_JSON = {
             'key': 'a',
             'value': '1'
         },],
-        'execution_timeout_secs':
-            '10',
+        'execution_timeout_secs': '10',
         'extra_args': [
             '--flag=value',
             '--gtest_filter=a.b:a.c',
@@ -55,16 +49,13 @@ _SAMPLE_REQUEST_JSON = {
             '--test-launcher-retry-limit=0',
             '--gtest_also_run_disabled_tests',
         ],
-        'grace_period_secs':
-            '30',
-        'idempotent':
-            False,
+        'grace_period_secs': '30',
+        'idempotent': False,
         'inputs_ref': {
             'isolatedserver': 'isolatedserver',
             'isolated': 'sha'
         },
-        'io_timeout_secs':
-            '1200',
+        'io_timeout_secs': '1200',
     },
     'tags': [
         'ref_master:m',
@@ -73,16 +64,10 @@ _SAMPLE_REQUEST_JSON = {
         'ref_stepname:s',
         'ref_name:test',
     ],
-    'user':
-        '',
-    'pubsub_auth_token':
-        'auth_token',
-    'pubsub_topic':
-        'projects/app-id/topics/swarming',
-    'pubsub_userdata':
-        json.dumps({
-            'runner_id': 'runner_id'
-        }),
+    'user': '',
+    'pubsub_auth_token': 'auth_token',
+    'pubsub_topic': 'projects/app-id/topics/swarming',
+    'pubsub_userdata': json.dumps({'runner_id': 'runner_id'}),
 }
 
 
@@ -451,7 +436,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
                 '--gtest_also_run_disabled_tests'
             ]),
             io_timeout_secs='1200',
-            command='cmd',
+            command=ListOfBasestring.FromSerializable(['cmd']),
             env=[{
                 'value': '1',
                 'key': 'a'
@@ -527,7 +512,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
                 '--gtest_also_run_disabled_tests'
             ]),
             io_timeout_secs='1200',
-            command='cmd',
+            command=ListOfBasestring.FromSerializable(['cmd']),
             env=[{
                 'value': '1',
                 'key': 'a'

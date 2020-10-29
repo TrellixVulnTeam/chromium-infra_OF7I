@@ -21,7 +21,10 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'parent_task_id': 'pti',
         'priority': '1',
         'properties': {
-            'command': 'cmd',
+            'command': [
+                'cmd',
+                '--param',
+            ],
             'dimensions': [{
                 'key': 'd',
                 'value': 'dv'
@@ -73,7 +76,10 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'parent_task_id': 'pti',
         'priority': '150',
         'properties': {
-            'command': 'cmd',
+            'command': [
+                'cmd',
+                '--param',
+            ],
             'dimensions': [{
                 'key': 'd',
                 'value': 'dv'
