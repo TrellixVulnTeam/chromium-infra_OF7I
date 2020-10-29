@@ -96,3 +96,11 @@ func RemoveStringEntry(slice []string, entry string) []string {
 	}
 	return slice
 }
+
+// GetNewNicNameForRenameMachine returns new nic name for new machine name
+func GetNewNicNameForRenameMachine(oldNicName, oldMachineName, newMachineName string) string {
+	if strings.HasPrefix(oldNicName, oldMachineName+":") {
+		return newMachineName + strings.TrimPrefix(oldNicName, oldMachineName)
+	}
+	return oldNicName
+}

@@ -867,7 +867,7 @@ func TestRenameMachine(t *testing.T) {
 	Convey("RenameMachine", t, func() {
 		Convey("Rename a Machine with new machine name", func() {
 			nic := &ufspb.Nic{
-				Name:    "nic-10",
+				Name:    "machine-10:nic-10",
 				Machine: "machine-10",
 			}
 			_, err := registration.CreateNic(ctx, nic)
@@ -881,6 +881,7 @@ func TestRenameMachine(t *testing.T) {
 			host := &ufspb.MachineLSE{
 				Name:     "machinelse-10",
 				Machines: []string{"machine-10"},
+				Nic:      "machine-10:nic-10",
 			}
 			_, err = inventory.CreateMachineLSE(ctx, host)
 			So(err, ShouldBeNil)
@@ -898,11 +899,15 @@ func TestRenameMachine(t *testing.T) {
 			res, err := RenameMachine(ctx, "machine-10", "machine-202")
 			So(err, ShouldBeNil)
 			So(res.Name, ShouldEqual, "machine-202")
+			So(res.GetChromeBrowserMachine().GetDisplayName(), ShouldEqual, "machine-202")
 
 			_, err = registration.GetMachine(ctx, "machine-10")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-			nic, err = registration.GetNic(ctx, "nic-10")
+			_, err = registration.GetNic(ctx, "machine-10:nic-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			nic, err = registration.GetNic(ctx, "machine-202:nic-10")
 			So(err, ShouldBeNil)
 			So(nic.GetMachine(), ShouldEqual, "machine-202")
 			drac, err = registration.GetDrac(ctx, "drac-10")
@@ -911,6 +916,7 @@ func TestRenameMachine(t *testing.T) {
 			host, err = inventory.GetMachineLSE(ctx, "machinelse-10")
 			So(err, ShouldBeNil)
 			So(host.GetMachines(), ShouldResemble, []string{"machine-202"})
+			So(host.GetNic(), ShouldResemble, "machine-202:nic-10")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
 			So(err, ShouldBeNil)
@@ -930,24 +936,45 @@ func TestRenameMachine(t *testing.T) {
 			So(changes[1].GetOldValue(), ShouldEqual, "machine-10")
 			So(changes[1].GetNewValue(), ShouldEqual, "machine-202")
 			So(changes[1].GetEventLabel(), ShouldEqual, "machine.name")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nic-10")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/machine-10:nic-10")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
-			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
-			So(changes[0].GetEventLabel(), ShouldEqual, "nic.machine")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "drac-10")
+			So(changes, ShouldHaveLength, 3)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-10:nic-10")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-202:nic-10")
+			So(changes[1].GetEventLabel(), ShouldEqual, "nic.name")
+			So(changes[2].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[2].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[2].GetEventLabel(), ShouldEqual, "nic.machine")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/machine-202:nic-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-10:nic-10")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-202:nic-10")
+			So(changes[1].GetEventLabel(), ShouldEqual, "nic.name")
+			So(changes[2].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[2].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[2].GetEventLabel(), ShouldEqual, "nic.machine")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-10")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
 			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
 			So(changes[0].GetEventLabel(), ShouldEqual, "drac.machine")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machinelse-10")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-10")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
-			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.machine")
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, "[machine-10]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[machine-202]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.machines")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-10:nic-10")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-202:nic-10")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
@@ -956,7 +983,11 @@ func TestRenameMachine(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-10")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/machine-10:nic-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/machine-202:nic-10")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
@@ -997,7 +1028,6 @@ func TestRenameMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Machine machine-212 already exists in the system")
 		})
-
 		Convey("Rename a Machine - permission denied: same realm and no update permission", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-13",
@@ -1014,7 +1044,6 @@ func TestRenameMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
-
 		Convey("Rename a Machine - permission denied: different realm", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-14",

@@ -1263,3 +1263,40 @@ func validateDeleteMachineLSEHost(ctx context.Context, lse *ufspb.MachineLSE) er
 	}
 	return nil
 }
+
+// updateIndexingForMachineLSE updates indexing for Machinelse table
+// can be used inside a transaction
+func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newValue string, hc *HistoryClient) error {
+	var lses []*ufspb.MachineLSE
+	var err error
+	switch property {
+	case "machine":
+		// Update the MachineLSE with new machine name and nic name
+		lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query machinelses/hosts for machine %s", oldValue).Err()
+		}
+		for _, lse := range lses {
+			// Copy for logging
+			oldLseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
+			machines := lse.GetMachines()
+			for i := range machines {
+				if machines[i] == oldValue {
+					machines[i] = newValue
+					break
+				}
+			}
+			lse.Machines = machines
+			// Update the nic name as well
+			lse.Nic = util.GetNewNicNameForRenameMachine(lse.GetNic(), oldValue, newValue)
+			hc.LogMachineLSEChanges(oldLseCopy, lse)
+		}
+		if _, err = inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
+			return errors.Annotate(err, "unable to batch update machinelses").Err()
+		}
+	}
+	if _, err = inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
+		return errors.Annotate(err, "unable to batch update machinelses").Err()
+	}
+	return nil
+}

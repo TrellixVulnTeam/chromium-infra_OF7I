@@ -318,6 +318,18 @@ func (hc *HistoryClient) LogNicChanges(oldData, newData *ufspb.Nic) {
 		hc.logMsgEntity(resourceName, true, oldData)
 		return
 	}
+	if oldData.GetName() != newData.GetName() {
+		oldResourceName := util.AddPrefix(util.NicCollection, oldData.GetName())
+		hc.changes = append(hc.changes, logLifeCycle(oldResourceName, "nic", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(oldResourceName, "nic.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logCommon(oldResourceName, "nic.machine", oldData.GetMachine(), newData.GetMachine())...)
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "nic", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(resourceName, "nic.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logCommon(resourceName, "nic.machine", oldData.GetMachine(), newData.GetMachine())...)
+		hc.logMsgEntity(oldResourceName, true, oldData)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.machine", oldData.GetMachine(), newData.GetMachine())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)

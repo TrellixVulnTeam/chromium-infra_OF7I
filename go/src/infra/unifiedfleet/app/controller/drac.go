@@ -532,3 +532,28 @@ func validateDeleteDrac(ctx context.Context, drac *ufspb.Drac) error {
 	}
 	return nil
 }
+
+// updateIndexingForDrac updates indexing for Drac tables
+// can be used inside a transaction
+func updateIndexingForDrac(ctx context.Context, property, oldValue, newValue string, hc *HistoryClient) error {
+	var dracs []*ufspb.Drac
+	var err error
+	switch property {
+	case "machine":
+		// get Dracs for indexing
+		dracs, err = registration.QueryDracByPropertyName(ctx, "machine", oldValue, false)
+		if err != nil {
+			return errors.Annotate(err, "failed to query dracs for machine %s", newValue).Err()
+		}
+		for _, drac := range dracs {
+			// Copy for logging
+			oldDracCopy := proto.Clone(drac).(*ufspb.Drac)
+			drac.Machine = newValue
+			hc.LogDracChanges(oldDracCopy, drac)
+		}
+	}
+	if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
+		return errors.Annotate(err, "updateIndexing - unable to batch update dracs").Err()
+	}
+	return nil
+}

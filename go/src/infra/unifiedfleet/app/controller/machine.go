@@ -320,23 +320,6 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 			for _, vm := range vms {
 				vm.Zone = v
 			}
-		case "machine":
-			for _, machinelse := range machinelses {
-				machines := machinelse.GetMachines()
-				for i := range machines {
-					if machines[i] == oldIndexMap["machine"] {
-						machines[i] = v
-						break
-					}
-				}
-				machinelse.Machines = machines
-			}
-			for _, nic := range nics {
-				nic.Machine = v
-			}
-			for _, drac := range dracs {
-				drac.Machine = v
-			}
 		}
 	}
 
@@ -498,18 +481,18 @@ func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, p
 }
 
 // RenameMachine renames the machine and updates the associated nics, drac and machinelse in datastore
-func RenameMachine(ctx context.Context, oldName, newName string) (*ufspb.Machine, error) {
+func RenameMachine(ctx context.Context, oldMachineName, newMachineName string) (*ufspb.Machine, error) {
 	var machine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
 		// Get the old machine
-		machine, err = registration.GetMachine(ctx, oldName)
+		machine, err = registration.GetMachine(ctx, oldMachineName)
 		if err != nil {
 			return err
 		}
 
 		// Validate
-		if err = validateRenameMachine(ctx, machine, newName); err != nil {
+		if err = validateRenameMachine(ctx, machine, newMachineName); err != nil {
 			return err
 		}
 
@@ -517,21 +500,21 @@ func RenameMachine(ctx context.Context, oldName, newName string) (*ufspb.Machine
 		oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
 		hc := getMachineHistoryClient(oldMachineCopy)
 
-		// Update indexing for MachineLSE/Drac/Nic with new Machine name
-		indexMap := map[string]string{"machine": newName}
-		oldIndexMap := map[string]string{"machine": oldName}
-		if err := updateIndexingForMachineResources(ctx, machine, indexMap, oldIndexMap, hc); err != nil {
-			return errors.Annotate(err, "failed to update indexing").Err()
+		if err := renameMachineHelper(ctx, oldMachineName, newMachineName, hc); err != nil {
+			return err
 		}
 
 		// Delete old machine
-		err = registration.DeleteMachine(ctx, machine.Name)
+		err = registration.DeleteMachine(ctx, oldMachineName)
 		if err != nil {
 			return err
 		}
 
 		// Create new machine
-		machine.Name = newName
+		machine.Name = newMachineName
+		if machine.GetChromeBrowserMachine() != nil {
+			machine.GetChromeBrowserMachine().DisplayName = newMachineName
+		}
 		_, err = registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine})
 		if err != nil {
 			return err
@@ -550,6 +533,46 @@ func RenameMachine(ctx context.Context, oldName, newName string) (*ufspb.Machine
 		setMachine(ctx, machine)
 	}
 	return machine, nil
+}
+
+func renameMachineHelper(ctx context.Context, oldMachineName, newMachineName string, hc *HistoryClient) error {
+	// Rename the Nic(s) for the machine
+	newNics := make([]*ufspb.Nic, 0, 0)
+	// Nic have machine name in their "Name/ID"
+	// Also Update the machine name in all the nics
+	nics, err := registration.QueryNicByPropertyName(ctx, "machine", oldMachineName, false)
+	if err != nil {
+		return errors.Annotate(err, "failed to query nics for machine %s", oldMachineName).Err()
+	}
+	for _, nic := range nics {
+		// Copy for logging
+		oldNicCopy := proto.Clone(nic).(*ufspb.Nic)
+		if strings.HasPrefix(nic.GetName(), oldMachineName+":") {
+			// Delete the nic
+			if err := registration.DeleteNic(ctx, nic.GetName()); err != nil {
+				return errors.Annotate(err, "unable to delete nic %s", nic.GetName()).Err()
+			}
+			nic.Name = util.GetNewNicNameForRenameMachine(nic.GetName(), oldMachineName, newMachineName)
+		}
+		nic.Machine = newMachineName
+		hc.LogNicChanges(oldNicCopy, nic)
+		newNics = append(newNics, nic)
+	}
+	// Create/Update the Nic(s) for the machine with new name
+	if _, err = registration.BatchUpdateNics(ctx, newNics); err != nil {
+		return errors.Annotate(err, "unable to batch update nics").Err()
+	}
+
+	// Update the MachineLSE with new machine name and new nic name
+	if err := updateIndexingForMachineLSE(ctx, "machine", oldMachineName, newMachineName, hc); err != nil {
+		return errors.Annotate(err, "failed to update indexing for hosts").Err()
+	}
+
+	// Update Drac with new Machine name
+	if err := updateIndexingForDrac(ctx, "machine", oldMachineName, newMachineName, hc); err != nil {
+		return errors.Annotate(err, "failed to update indexing for dracs").Err()
+	}
+	return nil
 }
 
 // ReplaceMachine replaces an old Machine with new Machine in datastore
@@ -863,7 +886,7 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 	return nil
 }
 
-// validateRenameMachine validates if a machine can be renames
+// validateRenameMachine validates if a machine can be renamed
 func validateRenameMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachineName string) error {
 	// Check permission
 	if err := util.CheckPermission(ctx, util.RegistrationsUpdate, oldMachine.GetRealm()); err != nil {
@@ -942,7 +965,7 @@ func setDracToMachine(machine *ufspb.Machine, drac *ufspb.Drac) {
 func getDeleteNicIDs(ctx context.Context, machineName string) ([]string, error) {
 	nics, err := registration.QueryNicByPropertyName(ctx, "machine", machineName, true)
 	if err != nil {
-		return nil, errors.Annotate(err, "DeleteMachine - failed to query nics for machine %s", machineName).Err()
+		return nil, errors.Annotate(err, "failed to query nics for machine %s", machineName).Err()
 	}
 	nicIDs := make([]string, 0, len(nics))
 	for _, nic := range nics {
@@ -955,7 +978,7 @@ func getDeleteNicIDs(ctx context.Context, machineName string) ([]string, error) 
 func getDeleteDracID(ctx context.Context, machineName string) (string, error) {
 	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
 	if err != nil {
-		return "", errors.Annotate(err, "DeleteMachine - failed to query dracs for machine %s", machineName).Err()
+		return "", errors.Annotate(err, "failed to query dracs for machine %s", machineName).Err()
 	}
 	if len(dracs) > 0 {
 		return dracs[0].GetName(), nil
