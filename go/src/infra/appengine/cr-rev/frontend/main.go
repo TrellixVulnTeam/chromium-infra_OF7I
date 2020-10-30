@@ -29,8 +29,8 @@ func handleIndex(c *router.Context) {
 
 // handlePublicGerritRedirect redirects user to a CL on chromium-review
 func handlePublicGerritRedirect(c *router.Context) {
-	id := c.Params.ByName("id")
-	url := "https://chromium-review.googlesource.com/c/" + id
+	path := c.Params.ByName("path")
+	url := "https://chromium-review.googlesource.com/c" + path
 	http.Redirect(
 		c.Writer, c.Request, url, http.StatusPermanentRedirect)
 }
@@ -38,8 +38,8 @@ func handlePublicGerritRedirect(c *router.Context) {
 // handleInternalGerritRedirect redirects user to a CL on
 // chrome-internal-review.
 func handleInternalGerritRedirect(c *router.Context) {
-	id := c.Params.ByName("id")
-	url := "https://chrome-internal-review.googlesource.com/c/" + id
+	path := c.Params.ByName("path")
+	url := "https://chrome-internal-review.googlesource.com/c" + path
 	http.Redirect(
 		c.Writer, c.Request, url, http.StatusPermanentRedirect)
 }
@@ -76,8 +76,8 @@ func main() {
 	server.Main(nil, modules, func(srv *server.Server) error {
 		redirect := redirect.NewRules(redirect.NewGitilesRedirect())
 
-		srv.Routes.GET("/i/:id", mw, handleInternalGerritRedirect)
-		srv.Routes.GET("/c/:id", mw, handlePublicGerritRedirect)
+		srv.Routes.Handle("GET", "/i/*path", mw, handleInternalGerritRedirect)
+		srv.Routes.Handle("GET", "/c/*path", mw, handlePublicGerritRedirect)
 		srv.Routes.GET("/", mw, handleIndex)
 
 		apiV1 := srv.Routes.Subrouter("/_ah/api/crrev/v1")
