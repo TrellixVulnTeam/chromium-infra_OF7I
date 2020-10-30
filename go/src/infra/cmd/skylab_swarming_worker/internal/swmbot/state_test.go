@@ -6,6 +6,7 @@ package swmbot
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"infra/libs/cros/dutstate"
@@ -28,11 +29,18 @@ func TestMarshalAndUnmarshal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error dumping dimensions: %s", err)
 	}
+	if strings.Contains(string(data), string(bi.HostState)) {
+		t.Fatal("Host state serialized. Field should be ignored")
+	}
 	var got LocalState
 	err = Unmarshal(data, &got)
 	if err != nil {
 		t.Fatalf("Error loading test file: %s", err)
 	}
+	if len(got.HostState) > 0 {
+		t.Errorf("Got state %v, expected  to be empty", got.HostState)
+	}
+	bi.HostState = ""
 	if !reflect.DeepEqual(got, bi) {
 		t.Errorf("Got %v, expected %v", got, bi)
 	}

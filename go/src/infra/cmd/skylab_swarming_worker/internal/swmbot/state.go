@@ -13,7 +13,7 @@ import (
 // LocalState contains persistent bot information that is cached on the
 // Skylab drone.
 type LocalState struct {
-	HostState               dutstate.State          `json:"state"`
+	HostState               dutstate.State          `json:"-"`
 	ProvisionableLabels     ProvisionableLabels     `json:"provisionable_labels"`
 	ProvisionableAttributes ProvisionableAttributes `json:"provisionable_attributes"`
 }
