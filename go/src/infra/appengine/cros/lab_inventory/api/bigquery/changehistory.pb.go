@@ -11,10 +11,9 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -26,23 +25,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 type ChangeHistory struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Hostname    string               `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Label       string               `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"` // What is changed, e.g. servo_port.
-	OldValue    string               `protobuf:"bytes,4,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
-	NewValue    string               `protobuf:"bytes,5,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
-	ByWhom      *ChangeHistory_User  `protobuf:"bytes,7,opt,name=by_whom,json=byWhom,proto3" json:"by_whom,omitempty"`
-	Comment     string               `protobuf:"bytes,8,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Hostname    string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Label       string                 `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"` // What is changed, e.g. servo_port.
+	OldValue    string                 `protobuf:"bytes,4,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
+	NewValue    string                 `protobuf:"bytes,5,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	ByWhom      *ChangeHistory_User    `protobuf:"bytes,7,opt,name=by_whom,json=byWhom,proto3" json:"by_whom,omitempty"`
+	Comment     string                 `protobuf:"bytes,8,opt,name=comment,proto3" json:"comment,omitempty"`
 }
 
 func (x *ChangeHistory) Reset() {
@@ -112,7 +107,7 @@ func (x *ChangeHistory) GetNewValue() string {
 	return ""
 }
 
-func (x *ChangeHistory) GetUpdatedTime() *timestamp.Timestamp {
+func (x *ChangeHistory) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -239,9 +234,9 @@ func file_infra_appengine_cros_lab_inventory_api_bigquery_changehistory_proto_ra
 
 var file_infra_appengine_cros_lab_inventory_api_bigquery_changehistory_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_infra_appengine_cros_lab_inventory_api_bigquery_changehistory_proto_goTypes = []interface{}{
-	(*ChangeHistory)(nil),       // 0: apibq.ChangeHistory
-	(*ChangeHistory_User)(nil),  // 1: apibq.ChangeHistory.User
-	(*timestamp.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*ChangeHistory)(nil),         // 0: apibq.ChangeHistory
+	(*ChangeHistory_User)(nil),    // 1: apibq.ChangeHistory.User
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_changehistory_proto_depIdxs = []int32{
 	2, // 0: apibq.ChangeHistory.updated_time:type_name -> google.protobuf.Timestamp

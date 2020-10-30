@@ -11,10 +11,9 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -25,10 +24,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 type HaRTAsset struct {
 	state         protoimpl.MessageState
@@ -44,11 +39,11 @@ type HaRTAsset struct {
 	// Google Part Number
 	Gpn string `protobuf:"bytes,6,opt,name=gpn,proto3" json:"gpn,omitempty"`
 	// Description associated to the part number
-	GpnDescription string               `protobuf:"bytes,7,opt,name=gpn_description,json=gpnDescription,proto3" json:"gpn_description,omitempty"`
-	FormFactor     string               `protobuf:"bytes,8,opt,name=form_factor,json=formFactor,proto3" json:"form_factor,omitempty"`
-	CostCenter     string               `protobuf:"bytes,9,opt,name=cost_center,json=costCenter,proto3" json:"cost_center,omitempty"`
-	Project        string               `protobuf:"bytes,10,opt,name=project,proto3" json:"project,omitempty"`
-	UpdatedTime    *timestamp.Timestamp `protobuf:"bytes,11,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	GpnDescription string                 `protobuf:"bytes,7,opt,name=gpn_description,json=gpnDescription,proto3" json:"gpn_description,omitempty"`
+	FormFactor     string                 `protobuf:"bytes,8,opt,name=form_factor,json=formFactor,proto3" json:"form_factor,omitempty"`
+	CostCenter     string                 `protobuf:"bytes,9,opt,name=cost_center,json=costCenter,proto3" json:"cost_center,omitempty"`
+	Project        string                 `protobuf:"bytes,10,opt,name=project,proto3" json:"project,omitempty"`
+	UpdatedTime    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *HaRTAsset) Reset() {
@@ -153,7 +148,7 @@ func (x *HaRTAsset) GetProject() string {
 	return ""
 }
 
-func (x *HaRTAsset) GetUpdatedTime() *timestamp.Timestamp {
+func (x *HaRTAsset) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -215,8 +210,8 @@ func file_infra_appengine_cros_lab_inventory_api_bigquery_hart_assets_proto_rawD
 
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hart_assets_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hart_assets_proto_goTypes = []interface{}{
-	(*HaRTAsset)(nil),           // 0: apibq.HaRTAsset
-	(*timestamp.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*HaRTAsset)(nil),             // 0: apibq.HaRTAsset
+	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hart_assets_proto_depIdxs = []int32{
 	1, // 0: apibq.HaRTAsset.updated_time:type_name -> google.protobuf.Timestamp

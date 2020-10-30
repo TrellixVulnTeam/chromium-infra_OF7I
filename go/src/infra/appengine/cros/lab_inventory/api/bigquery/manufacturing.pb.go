@@ -11,11 +11,10 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	manufacturing "go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -27,18 +26,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 type ManufacturingInventory struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ManufacturingId string                `protobuf:"bytes,1,opt,name=manufacturing_id,json=manufacturingId,proto3" json:"manufacturing_id,omitempty"`
-	Config          *manufacturing.Config `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
-	UpdatedTime     *timestamp.Timestamp  `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	ManufacturingId string                 `protobuf:"bytes,1,opt,name=manufacturing_id,json=manufacturingId,proto3" json:"manufacturing_id,omitempty"`
+	Config          *manufacturing.Config  `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
+	UpdatedTime     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *ManufacturingInventory) Reset() {
@@ -87,7 +82,7 @@ func (x *ManufacturingInventory) GetConfig() *manufacturing.Config {
 	return nil
 }
 
-func (x *ManufacturingInventory) GetUpdatedTime() *timestamp.Timestamp {
+func (x *ManufacturingInventory) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -142,7 +137,7 @@ var file_infra_appengine_cros_lab_inventory_api_bigquery_manufacturing_proto_msg
 var file_infra_appengine_cros_lab_inventory_api_bigquery_manufacturing_proto_goTypes = []interface{}{
 	(*ManufacturingInventory)(nil), // 0: apibq.ManufacturingInventory
 	(*manufacturing.Config)(nil),   // 1: manufacturing.Config
-	(*timestamp.Timestamp)(nil),    // 2: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),  // 2: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_manufacturing_proto_depIdxs = []int32{
 	1, // 0: apibq.ManufacturingInventory.config:type_name -> manufacturing.Config

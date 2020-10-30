@@ -11,10 +11,9 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -26,19 +25,15 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 // Next Tag: 4
 type HWIDInventory struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Hwid        string               `protobuf:"bytes,1,opt,name=hwid,proto3" json:"hwid,omitempty"`
-	Sku         string               `protobuf:"bytes,2,opt,name=sku,proto3" json:"sku,omitempty"`
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	Hwid        string                 `protobuf:"bytes,1,opt,name=hwid,proto3" json:"hwid,omitempty"`
+	Sku         string                 `protobuf:"bytes,2,opt,name=sku,proto3" json:"sku,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *HWIDInventory) Reset() {
@@ -87,7 +82,7 @@ func (x *HWIDInventory) GetSku() string {
 	return ""
 }
 
-func (x *HWIDInventory) GetUpdatedTime() *timestamp.Timestamp {
+func (x *HWIDInventory) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -132,8 +127,8 @@ func file_infra_appengine_cros_lab_inventory_api_bigquery_hwid_server_proto_rawD
 
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hwid_server_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hwid_server_proto_goTypes = []interface{}{
-	(*HWIDInventory)(nil),       // 0: apibq.HWIDInventory
-	(*timestamp.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*HWIDInventory)(nil),         // 0: apibq.HWIDInventory
+	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_hwid_server_proto_depIdxs = []int32{
 	1, // 0: apibq.HWIDInventory.updated_time:type_name -> google.protobuf.Timestamp

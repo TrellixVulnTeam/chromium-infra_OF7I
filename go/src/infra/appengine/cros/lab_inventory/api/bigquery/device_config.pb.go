@@ -11,11 +11,10 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	device "go.chromium.org/chromiumos/infra/proto/go/device"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -27,18 +26,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 type DeviceConfigInventory struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Config      *device.Config       `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Config      *device.Config         `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *DeviceConfigInventory) Reset() {
@@ -87,7 +82,7 @@ func (x *DeviceConfigInventory) GetConfig() *device.Config {
 	return nil
 }
 
-func (x *DeviceConfigInventory) GetUpdatedTime() *timestamp.Timestamp {
+func (x *DeviceConfigInventory) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -139,7 +134,7 @@ var file_infra_appengine_cros_lab_inventory_api_bigquery_device_config_proto_msg
 var file_infra_appengine_cros_lab_inventory_api_bigquery_device_config_proto_goTypes = []interface{}{
 	(*DeviceConfigInventory)(nil), // 0: apibq.DeviceConfigInventory
 	(*device.Config)(nil),         // 1: device.Config
-	(*timestamp.Timestamp)(nil),   // 2: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_device_config_proto_depIdxs = []int32{
 	1, // 0: apibq.DeviceConfigInventory.config:type_name -> device.Config

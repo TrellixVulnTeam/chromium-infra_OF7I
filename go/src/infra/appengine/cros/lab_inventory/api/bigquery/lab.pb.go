@@ -11,11 +11,10 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	lab "go.chromium.org/chromiumos/infra/proto/go/lab"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -27,19 +26,15 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 type LabInventory struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Hostname    string               `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Device      *lab.ChromeOSDevice  `protobuf:"bytes,3,opt,name=device,proto3" json:"device,omitempty"`
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Hostname    string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Device      *lab.ChromeOSDevice    `protobuf:"bytes,3,opt,name=device,proto3" json:"device,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *LabInventory) Reset() {
@@ -95,7 +90,7 @@ func (x *LabInventory) GetDevice() *lab.ChromeOSDevice {
 	return nil
 }
 
-func (x *LabInventory) GetUpdatedTime() *timestamp.Timestamp {
+func (x *LabInventory) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -146,9 +141,9 @@ func file_infra_appengine_cros_lab_inventory_api_bigquery_lab_proto_rawDescGZIP(
 
 var file_infra_appengine_cros_lab_inventory_api_bigquery_lab_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_appengine_cros_lab_inventory_api_bigquery_lab_proto_goTypes = []interface{}{
-	(*LabInventory)(nil),        // 0: apibq.LabInventory
-	(*lab.ChromeOSDevice)(nil),  // 1: lab.ChromeOSDevice
-	(*timestamp.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*LabInventory)(nil),          // 0: apibq.LabInventory
+	(*lab.ChromeOSDevice)(nil),    // 1: lab.ChromeOSDevice
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_lab_proto_depIdxs = []int32{
 	1, // 0: apibq.LabInventory.device:type_name -> lab.ChromeOSDevice

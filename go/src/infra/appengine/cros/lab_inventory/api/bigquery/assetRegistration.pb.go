@@ -11,10 +11,9 @@
 package apibq
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	protos "infra/libs/fleet/protos"
 	reflect "reflect"
 	sync "sync"
@@ -27,18 +26,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
-
 type RegisteredAsset struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Asset       *protos.ChopsAsset   `protobuf:"bytes,2,opt,name=asset,proto3" json:"asset,omitempty"`
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Asset       *protos.ChopsAsset     `protobuf:"bytes,2,opt,name=asset,proto3" json:"asset,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 }
 
 func (x *RegisteredAsset) Reset() {
@@ -87,7 +82,7 @@ func (x *RegisteredAsset) GetAsset() *protos.ChopsAsset {
 	return nil
 }
 
-func (x *RegisteredAsset) GetUpdatedTime() *timestamp.Timestamp {
+func (x *RegisteredAsset) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
@@ -136,9 +131,9 @@ func file_infra_appengine_cros_lab_inventory_api_bigquery_assetRegistration_prot
 
 var file_infra_appengine_cros_lab_inventory_api_bigquery_assetRegistration_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_appengine_cros_lab_inventory_api_bigquery_assetRegistration_proto_goTypes = []interface{}{
-	(*RegisteredAsset)(nil),     // 0: apibq.RegisteredAsset
-	(*protos.ChopsAsset)(nil),   // 1: fleet.ChopsAsset
-	(*timestamp.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*RegisteredAsset)(nil),       // 0: apibq.RegisteredAsset
+	(*protos.ChopsAsset)(nil),     // 1: fleet.ChopsAsset
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_infra_appengine_cros_lab_inventory_api_bigquery_assetRegistration_proto_depIdxs = []int32{
 	1, // 0: apibq.RegisteredAsset.asset:type_name -> fleet.ChopsAsset
