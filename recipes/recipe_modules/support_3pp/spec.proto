@@ -414,6 +414,14 @@ message ScriptSource {
   //     /path/to/repo/subdir/package_name/fetch.py url checkout \
   //     /path/to/checkout
   repeated string name = 1;
+  // TODO(akashmukherjee): Remove this field after complete migration.
+  // (optional) Boolean to use new downloader workflow.
+  //
+  // If present, script source will use new workflow and fetch scripts will only
+  // spit out download URL, recipe will use its downloader workflow to download
+  // the artifact.
+  //
+  bool use_fetch_raw_workflow = 1001;
 }
 
 // This will provide a original download url to fetch sources from third party.
