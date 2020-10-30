@@ -16,6 +16,7 @@ from framework import emailfmt
 from framework import framework_views
 from framework import urls
 from proto import user_pb2
+from proto import usergroup_pb2
 from services import service_manager
 from testing import fake
 from tracker import tracker_bizobj
@@ -155,13 +156,23 @@ class ComputeGroupReasonListTest(unittest.TestCase):
         self.project.project_id, 1, 'summary', 'New', 555)
 
   def CheckGroupReasonList(
-      self, actual, reporter_apl=None, owner_apl=None, old_owner_apl=None,
-      default_owner_apl=None, ccd_apl=None, default_ccd_apl=None,
-      starrer_apl=None, subscriber_apl=None, also_notified_apl=None,
+      self,
+      actual,
+      reporter_apl=None,
+      owner_apl=None,
+      old_owner_apl=None,
+      default_owner_apl=None,
+      ccd_apl=None,
+      default_ccd_apl=None,
+      starrer_apl=None,
+      subscriber_apl=None,
+      also_notified_apl=None,
       all_notifications_apl=None):
-    (you_report, you_own, you_old_owner, you_default_owner,
-     you_ccd, you_default_ccd, you_star, you_subscribe, you_also_notify,
-     all_notifications) = actual
+
+    (
+        you_report, you_own, you_old_owner, you_default_owner, you_ccd,
+        you_default_ccd, you_star, you_subscribe, you_also_notify,
+        all_notifications) = actual
     self.assertEqual(
         (reporter_apl or [], notify_reasons.REASON_REPORTER),
         you_report)
@@ -207,6 +218,111 @@ class ComputeGroupReasonListTest(unittest.TestCase):
         ccd_apl=[notify_reasons.AddrPerm(
             False, self.alice.email, self.alice, REPLY_NOT_ALLOWED,
             user_pb2.UserPrefs(user_id=self.alice.user_id))])
+
+  def testComputeGroupReasonList_DerivedCcs(self):
+    """Check we correctly compute reasons for component and rule ccs."""
+    member_1 = self.services.user.TestAddUser('member_1@example.com', 991)
+    member_2 = self.services.user.TestAddUser('member_2@example.com', 992)
+    member_3 = self.services.user.TestAddUser('member_3@example.com', 993)
+
+    expanded_group = self.services.user.TestAddUser('group@example.com', 999)
+    self.services.usergroup.CreateGroup(
+        'cnxn', self.services, expanded_group.email, 'owners')
+    self.services.usergroup.TestAddGroupSettings(
+        expanded_group.user_id,
+        expanded_group.email,
+        notify_members=True,
+        notify_group=False)
+    self.services.usergroup.TestAddMembers(
+        expanded_group.user_id, [member_1.user_id, member_2.user_id])
+
+    group = self.services.user.TestAddUser('group_1@example.com', 888)
+    self.services.usergroup.CreateGroup(
+        'cnxn', self.services, group.email, 'owners')
+    self.services.usergroup.TestAddGroupSettings(
+        group.user_id, group.email, notify_members=False, notify_group=True)
+    self.services.usergroup.TestAddMembers(
+        group.user_id, [member_2.user_id, member_3.user_id])
+
+    users_by_id = framework_views.MakeAllUserViews(
+        'cnxn', self.services.user, [
+            self.alice.user_id, self.fred.user_id, member_1.user_id,
+            member_2.user_id, member_3.user_id, group.user_id,
+            expanded_group.user_id
+        ])
+
+    comp_id = 123
+    self.config.component_defs = [
+        fake.MakeTestComponentDef(
+            self.project.project_id,
+            comp_id,
+            path='Chicken',
+            cc_ids=[group.user_id, expanded_group.user_id, self.alice.user_id])
+    ]
+    derived_cc_ids = [
+        self.fred.user_id,  # cc'd directly due to a rule
+        self.alice.user_id,  # cc'd due to the component
+        expanded_group
+        .user_id,  # cc'd due to the component, members notified directly
+        group.user_id,  # cc'd due to the component
+        # cc'd directly due to a rule,
+        # not removed from rule cc notifications due to transitive cc of
+        # expanded_group.
+        member_1.user_id,
+        member_3.user_id,
+    ]
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        2,
+        'summary',
+        'New',
+        0,
+        derived_cc_ids=derived_cc_ids,
+        component_ids=[comp_id])
+    actual = notify_reasons.ComputeGroupReasonList(
+        'cnxn', self.services, self.project, issue, self.config, users_by_id,
+        [], True)
+
+    # Asserts list/reason of derived ccs from rules (not components).
+    # The derived ccs list/reason is the 6th tuple returned by
+    # ComputeGroupReasonList()
+    actual_ccd_apl, actual_ccd_reason = actual[5]
+    self.assertEqual(
+        actual_ccd_apl, [
+            notify_reasons.AddrPerm(
+                False, member_3.email, member_3, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=member_3.user_id)),
+            notify_reasons.AddrPerm(
+                False, self.fred.email, self.fred, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=self.fred.user_id)),
+            notify_reasons.AddrPerm(
+                False, member_1.email, member_1, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=member_1.user_id)),
+        ])
+    self.assertEqual(actual_ccd_reason, notify_reasons.REASON_DEFAULT_CCD)
+
+    # Asserts list/reason of derived ccs from components.
+    # The component derived ccs list/reason is hte 7th tuple returned by
+    # ComputeGroupReasonList() when there are component derived ccs.
+    actual_component_apl, actual_comp_reason = actual[6]
+    self.assertEqual(
+        actual_component_apl, [
+            notify_reasons.AddrPerm(
+                False, group.email, group, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=group.user_id)),
+            notify_reasons.AddrPerm(
+                False, self.alice.email, self.alice, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=self.alice.user_id)),
+            notify_reasons.AddrPerm(
+                False, member_2.email, member_2, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=member_2.user_id)),
+            notify_reasons.AddrPerm(
+                False, member_1.email, member_1, REPLY_NOT_ALLOWED,
+                user_pb2.UserPrefs(user_id=member_1.user_id)),
+        ])
+    self.assertEqual(
+        actual_comp_reason,
+        "You are auto-CC'd on all issues in component Chicken")
 
   def testComputeGroupReasonList_Starrers(self):
     """Bob and Alice starred it, but Alice opts out of notifications."""

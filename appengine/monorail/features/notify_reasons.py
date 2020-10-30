@@ -269,7 +269,10 @@ def ComputeCustomFieldAddrPerms(
   """Check the reasons to notify users named in custom fields."""
   group_reason_list = []
   for fd in config.field_defs:
-    named_user_ids = ComputeNamedUserIDsToNotify(issue.field_values, fd)
+    (direct_named_ids,
+     transitive_named_ids) = services.usergroup.ExpandAnyGroupEmailRecipients(
+         cnxn, ComputeNamedUserIDsToNotify(issue.field_values, fd))
+    named_user_ids = direct_named_ids + transitive_named_ids
     if named_user_ids:
       named_addr_perms = ComputeIssueChangeAddressPermList(
           cnxn, named_user_ids, project, issue, services, omit_addrs,
@@ -297,7 +300,10 @@ def ComputeComponentFieldAddrPerms(
   group_reason_list = []
   for cd in config.component_defs:
     if cd.component_id in component_ids:
-      cc_ids = component_helpers.GetCcIDsForComponentAndAncestors(config, cd)
+      (direct_ccs,
+       transitive_ccs) = services.usergroup.ExpandAnyGroupEmailRecipients(
+           cnxn, component_helpers.GetCcIDsForComponentAndAncestors(config, cd))
+      cc_ids = direct_ccs + transitive_ccs
       comp_addr_perms = ComputeIssueChangeAddressPermList(
           cnxn, cc_ids, project, issue, services, omit_addrs,
           users_by_id, pref_check_function=lambda u: True)
@@ -320,24 +326,33 @@ def ComputeGroupReasonList(
   reporter = [issue.reporter_id] if issue.reporter_id in starrer_ids else []
   if old_owner_id:
     old_direct_owners, old_transitive_owners = (
-        services.usergroup.ExpandAnyUserGroups(cnxn, [old_owner_id]))
+        services.usergroup.ExpandAnyGroupEmailRecipients(cnxn, [old_owner_id]))
   else:
     old_direct_owners, old_transitive_owners = [], []
 
   direct_owners, transitive_owners = (
-      services.usergroup.ExpandAnyUserGroups(cnxn, [issue.owner_id]))
+      services.usergroup.ExpandAnyGroupEmailRecipients(cnxn, [issue.owner_id]))
   der_direct_owners, der_transitive_owners = (
-      services.usergroup.ExpandAnyUserGroups(
+      services.usergroup.ExpandAnyGroupEmailRecipients(
           cnxn, [issue.derived_owner_id]))
-  direct_comp, trans_comp = services.usergroup.ExpandAnyUserGroups(
+  direct_comp, trans_comp = services.usergroup.ExpandAnyGroupEmailRecipients(
       cnxn, component_helpers.GetComponentCcIDs(issue, config))
-  direct_ccs, transitive_ccs = services.usergroup.ExpandAnyUserGroups(
+  direct_ccs, transitive_ccs = services.usergroup.ExpandAnyGroupEmailRecipients(
       cnxn, list(issue.cc_ids))
-  # TODO(jrobbins): This will say that the user was cc'd by a rule when it
-  # was really added to the derived_cc_ids by a component.
   der_direct_ccs, der_transitive_ccs = (
-      services.usergroup.ExpandAnyUserGroups(
+      services.usergroup.ExpandAnyGroupEmailRecipients(
           cnxn, list(issue.derived_cc_ids)))
+  # Remove cc's derived from components, which are grouped into their own
+  # notify-reason-group in ComputeComponentFieldAddrPerms().
+  # This means that an exact email cc'd by both a component and a rule will
+  # get an email that says they are only being notified because of the
+  # component.
+  # Note that a user directly cc'd due to a rule who is also part of a
+  # group cc'd due to a component, will get a message saying they're cc'd for
+  # both the rule and the component.
+  der_direct_ccs = list(set(der_direct_ccs).difference(set(direct_comp)))
+  der_transitive_ccs = list(set(der_transitive_ccs).difference(set(trans_comp)))
+
   users_by_id.update(framework_views.MakeAllUserViews(
       cnxn, services.user, transitive_owners, der_transitive_owners,
       direct_comp, trans_comp, transitive_ccs, der_transitive_ccs))

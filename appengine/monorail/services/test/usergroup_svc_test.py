@@ -236,36 +236,6 @@ class UserGroupServiceTest(unittest.TestCase):
     self.assertItemsEqual([111, 222, 888, 999], members_dict[777])
     self.assertItemsEqual([], owners_dict[777])
 
-  def testExpandAnyUserGroups_NoneRequested(self):
-    self.SetUpDetermineWhichUserIDsAreGroups([], [])
-    self.mox.ReplayAll()
-    direct_ids, indirect_ids = self.usergroup_service.ExpandAnyUserGroups(
-        self.cnxn, [])
-    self.mox.VerifyAll()
-    self.assertItemsEqual([], direct_ids)
-    self.assertItemsEqual([], indirect_ids)
-
-  def testExpandAnyUserGroups_NoGroups(self):
-    self.SetUpDetermineWhichUserIDsAreGroups([111, 222], [])
-    self.mox.ReplayAll()
-    direct_ids, indirect_ids = self.usergroup_service.ExpandAnyUserGroups(
-        self.cnxn, [111, 222])
-    self.mox.VerifyAll()
-    self.assertItemsEqual([111, 222], direct_ids)
-    self.assertItemsEqual([], indirect_ids)
-
-  def testExpandAnyUserGroups_WithGroups(self):
-    self.usergroup_service.group_dag.initialized = True
-    self.SetUpDetermineWhichUserIDsAreGroups([111, 222, 888], [888])
-    self.SetUpLookupAllMembers(
-        [888], [(222, 888, 'member'), (333, 888, 'member')], {}, {})
-    self.mox.ReplayAll()
-    direct_ids, indirect_ids = self.usergroup_service.ExpandAnyUserGroups(
-        self.cnxn, [111, 222, 888])
-    self.mox.VerifyAll()
-    self.assertItemsEqual([111, 222], direct_ids)
-    self.assertItemsEqual([333, 222], indirect_ids)
-
   def testExpandAnyGroupEmailRecipients(self):
     self.usergroup_service.group_dag.initialized = True
     self.SetUpDetermineWhichUserIDsAreGroups(

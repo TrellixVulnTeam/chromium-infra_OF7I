@@ -337,36 +337,6 @@ class UserGroupService(object):
                               if row[1] == gid and row[2] == 'owner']
     return member_ids_dict, owner_ids_dict
 
-  # TODO(jojwang): monorail:4642, where appropriate, replace calls to
-  # ExpandAnyUserGroups with calls to ExpandAnyGroupEmailRecipients.
-  def ExpandAnyUserGroups(self, cnxn, user_ids):
-    """Transitively expand any user groups and return member user IDs.
-
-    Args:
-      cnxn: connection to SQL database.
-      user_ids: list of user IDs to check.
-
-    Returns:
-      A pair (individual_user_ids, transitive_ids). individual_user_ids
-          is a list of user IDs that were in the given user_ids list and
-          that identify individual members. transitive_ids is a list of
-          user IDs of the members of any user group in the given list of
-          user_ids and the individual members of any nested groups.
-    """
-    group_ids = self.DetermineWhichUserIDsAreGroups(cnxn, user_ids)
-    direct_ids = [uid for uid in user_ids if uid not in group_ids]
-    member_ids_dict, owner_ids_dict = self.LookupAllMembers(cnxn, group_ids)
-    indirect_ids = set()
-    for gid in group_ids:
-      indirect_ids.update(member_ids_dict[gid])
-      indirect_ids.update(owner_ids_dict[gid])
-
-    # Note: we return direct and indirect member IDs separately so that
-    # the email notification footer can give more a specific reason for
-    # why the user got an email.  E.g., "You were Cc'd" vs. "You are a
-    # member of a user group that was Cc'd".
-    return direct_ids, list(indirect_ids)
-
   def ExpandAnyGroupEmailRecipients(self, cnxn, user_ids):
     """Expand the list with members that are part of a group configured
        to have notifications sent directly to members. Remove any groups

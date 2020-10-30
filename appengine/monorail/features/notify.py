@@ -406,8 +406,9 @@ class NotifyBulkChangeTask(notify_helpers.NotifyTaskBase):
       for fd in config.field_defs:
         named_ids.update(notify_reasons.ComputeNamedUserIDsToNotify(
             issue.field_values, fd))
-      direct, indirect = self.services.usergroup.ExpandAnyUserGroups(
-          mr.cnxn, list(issue.cc_ids) + list(issue.derived_cc_ids) +
+      direct, indirect = self.services.usergroup.ExpandAnyGroupEmailRecipients(
+          mr.cnxn,
+          list(issue.cc_ids) + list(issue.derived_cc_ids) +
           [issue.owner_id, old_owner_id, issue.derived_owner_id] +
           list(named_ids))
       ids_in_issues[issue.local_id] = set(starrers[issue.local_id])

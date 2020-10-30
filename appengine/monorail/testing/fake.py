@@ -205,9 +205,11 @@ def MakeTestIssue(
   return issue
 
 
-def MakeTestComponentDef(project_id, comp_id, path=''):
+def MakeTestComponentDef(project_id, comp_id, path='', cc_ids=None):
+  if cc_ids is None:
+    cc_ids = []
   return tracker_bizobj.MakeComponentDef(
-      comp_id, project_id, path, '', False, [], [], None, None)
+      comp_id, project_id, path, '', False, [], cc_ids, None, None)
 
 
 def MakeTestConfig(project_id, labels, statuses):
@@ -280,9 +282,17 @@ class UserGroupService(object):
     self.role_dict = {}
 
   def TestAddGroupSettings(
-      self, group_id, email, who_can_view=None, anyone_can_join=False,
-      who_can_add=None, external_group_type=None,
-      last_sync_time=0, friend_projects=None):
+      self,
+      group_id,
+      email,
+      who_can_view=None,
+      anyone_can_join=False,
+      who_can_add=None,
+      external_group_type=None,
+      last_sync_time=0,
+      friend_projects=None,
+      notify_members=True,
+      notify_group=False):
     """Set up a fake group for testing.
 
     Args:
@@ -292,11 +302,15 @@ class UserGroupService(object):
       anyone_can_join: optional boolean to allow any users to join the group.
       who_can_add: optional list of int user IDs of users who can add
           more members to the group.
+      notify_members: optional boolean for if emails to this group should be
+          sent directly to members.
+      notify_group: optional boolean for if emails to this group should be
+          sent directly to the group email.
     """
     friend_projects = friend_projects or []
     group_settings = usergroup_pb2.MakeSettings(
-        who_can_view or 'members',
-        external_group_type, last_sync_time, friend_projects)
+        who_can_view or 'members', external_group_type, last_sync_time,
+        friend_projects, notify_members, notify_group)
     self.group_settings[group_id] = group_settings
     self.group_addrs[group_id] = email
     # TODO(jrobbins): store the other settings.
@@ -431,24 +445,6 @@ class UserGroupService(object):
 
   def UpdateSettings(self, _cnxn, group_id, group_settings):
     self.group_settings[group_id] = group_settings
-
-  def ExpandAnyUserGroups(self, cnxn, user_ids):
-    # TODO(jojwang): Update fake.DetermineWhichUserIDsAreGroups
-    # to return unique ids so set does not have to be called outside
-    # the method.
-    group_ids = set(self.DetermineWhichUserIDsAreGroups(cnxn, user_ids))
-    direct_ids = [uid for uid in user_ids if uid not in group_ids]
-    member_ids_dict, owner_ids_dict = self.LookupAllMembers(cnxn, group_ids)
-
-    indirect_ids = set()
-    for gid in group_ids:
-      indirect_ids.update(member_ids_dict[gid])
-      indirect_ids.update(owner_ids_dict[gid])
-    # It's possible that a user has both direct and indirect memberships of
-    # one group. In this case, mark the user as direct member only.
-    indirect_ids = [iid for iid in indirect_ids if iid not in direct_ids]
-
-    return direct_ids, list(indirect_ids)
 
   def ExpandAnyGroupEmailRecipients(self, cnxn, user_ids):
     group_ids = set(self.DetermineWhichUserIDsAreGroups(cnxn, user_ids))
