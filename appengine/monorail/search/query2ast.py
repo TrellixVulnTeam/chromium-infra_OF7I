@@ -385,6 +385,14 @@ def _ParseStructuredTerm(prefix, op_str, value, fields, now=None):
     if first_field.field_type == DATE:
       date_values = [_ParseDateValue(val, now=now) for val in quick_or_vals]
       return ast_pb2.MakeCond(op, fields[prefix], [], date_values)
+    elif first_field.field_type == APPROVAL and prefix.endswith(SET_ON_SUFFIX):
+      date_values = [_ParseDateValue(val, now=now) for val in quick_or_vals]
+      return ast_pb2.MakeCond(
+          op,
+          fields[prefix], [],
+          date_values,
+          key_suffix=SET_ON_SUFFIX,
+          phase_name=phase_name)
     else:
       quick_or_ints = []
       for qov in quick_or_vals:

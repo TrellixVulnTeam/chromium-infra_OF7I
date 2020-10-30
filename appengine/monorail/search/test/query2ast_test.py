@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import datetime
 import time
 import unittest
+import mock
 
 from proto import ast_pb2
 from proto import tracker_pb2
@@ -554,7 +555,8 @@ class QueryParsingUnitTest(unittest.TestCase):
         MakeCond(GT, [fd2], ['3'], [3]),
         cond2)
 
-  def testParseUserQuery_Approvals(self):
+  @mock.patch('time.time', return_value=NOW)
+  def testParseUserQuery_Approvals(self, _mock_time):
     """Test approval queries are parsed correctly."""
     fd1 = tracker_bizobj.MakeFieldDef(
         1, self.project_id, 'UIReview', tracker_pb2.FieldTypes.APPROVAL_TYPE,
@@ -570,14 +572,20 @@ class QueryParsingUnitTest(unittest.TestCase):
         None, None, 'no_action', 'doc', False)
     self.default_config.field_defs.extend([fd1, fd2, fd3])
     ast = query2ast.ParseUserQuery(
-        'UXReview-approver:user1@mail.com,user2@mail.com UIReview:Approved',
-        '', BUILTIN_ISSUE_FIELDS, self.default_config)
+        'UXReview-approver:user1@mail.com,user2@mail.com UIReview:Approved '
+        'UIReview-on>today-7', '', BUILTIN_ISSUE_FIELDS, self.default_config)
     cond1 = ast.conjunctions[0].conds[0]
     cond2 = ast.conjunctions[0].conds[1]
+    cond3 = ast.conjunctions[0].conds[2]
     self.assertEqual(MakeCond(TEXT_HAS, [fd3],
                               ['user1@mail.com', 'user2@mail.com'], [],
                               key_suffix='-approver'), cond1)
     self.assertEqual(MakeCond(TEXT_HAS, [fd1], ['approved'], []), cond2)
+    self.assertEqual(
+        cond3,
+        MakeCond(
+            GT, [fd1], [], [query2ast._CalculatePastDate(7, NOW)],
+            key_suffix='-on'))
 
   def testParseUserQuery_PhaseFields(self):
     fd = tracker_bizobj.MakeFieldDef(
