@@ -284,6 +284,13 @@ func TestRedirects(t *testing.T) {
 			So(commit, ShouldResemble, commits[0])
 			So(url, ShouldEqual, "https://foo.googlesource.com/bar/+/0000000000000000000000000000000000000000/foo/bar")
 		})
+
+		Convey("commit not found", func() {
+			url, _, err := r.FindRedirectURL(
+				ctx, "/FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+		})
 	})
 
 	Convey("short hash redirect", t, func() {

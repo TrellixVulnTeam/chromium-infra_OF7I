@@ -108,7 +108,12 @@ func (r *fullCommitHashRule) getRedirect(ctx context.Context, url string) (strin
 
 	commit := utils.FindBestCommit(ctx, commits)
 	if commit == nil {
-		return "", nil, ErrNoMatch
+		// If there are no matches, always redirect to chromium/src
+		commit = &models.Commit{
+			Host:       "chromium",
+			Repository: "chromium/src",
+			CommitHash: result[1],
+		}
 	}
 
 	path := ""
