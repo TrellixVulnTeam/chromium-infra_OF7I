@@ -59,8 +59,12 @@ func Invoke(ctx context.Context, progressSinkPort, tlsPort int32) error {
 				TlsDutName: "my-little-dutty",
 			},
 		},
-		Name: "request_dummy-pass",
-		Test: "remoteTestDrivers/tnull/tests/dummy-pass",
+		Requests: []*rtd.Request{
+			{
+				Name: "request_dummy-pass",
+				Test: "remoteTestDrivers/tnull/tests/dummy-pass",
+			},
+		},
 	}
 	invocationFile, err := writeInvocationToFile(ctx, i)
 	if err != nil {
