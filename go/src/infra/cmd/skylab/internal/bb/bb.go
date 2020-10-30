@@ -35,8 +35,8 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
-// NewClient returns a new client to interact with buildbucket builds.
-func NewClient(ctx context.Context, env site.Environment, authFlags authcli.Flags) (*Client, error) {
+// NewClient returns a new client to interact with buildbucket builds from the given builder.
+func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, authFlags authcli.Flags) (*Client, error) {
 	hClient, err := newHTTPClient(ctx, &authFlags)
 	if err != nil {
 		return nil, err
@@ -44,20 +44,20 @@ func NewClient(ctx context.Context, env site.Environment, authFlags authcli.Flag
 
 	pClient := &prpc.Client{
 		C:       hClient,
-		Host:    env.BuildbucketHost,
+		Host:    builderInfo.Host,
 		Options: site.DefaultPRPCOptions,
 	}
 
 	return &Client{
-		client: buildbucket_pb.NewBuildsPRPCClient(pClient),
-		env:    env,
+		client:    buildbucket_pb.NewBuildsPRPCClient(pClient),
+		builderID: builderInfo.BuilderID,
 	}, nil
 }
 
 // Client provides helper methods to interact with buildbucket builds.
 type Client struct {
-	client buildbucket_pb.BuildsClient
-	env    site.Environment
+	client    buildbucket_pb.BuildsClient
+	builderID *buildbucket_pb.BuilderID
 }
 
 // newHTTPClient returns an HTTP client with authentication set up.
@@ -121,11 +121,7 @@ func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, t
 	}
 
 	bbReq := &buildbucket_pb.ScheduleBuildRequest{
-		Builder: &buildbucket_pb.BuilderID{
-			Project: c.env.BuildbucketProject,
-			Bucket:  c.env.BuildbucketBucket,
-			Builder: c.env.BuildbucketBuilder,
-		},
+		Builder:    c.builderID,
 		Properties: props,
 		Tags:       tagPairs,
 	}
@@ -208,7 +204,7 @@ func (c *Client) GetBuild(ctx context.Context, ID int64) (*Build, error) {
 // SearchBuildsByTags searches for all buildbucket builds with the given tags.
 //
 // SearchBuildsByTags returns at most limit results.
-func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, builder *buildbucket_pb.BuilderID, tags ...string) ([]*Build, error) {
+func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, tags ...string) ([]*Build, error) {
 	if len(tags) == 0 {
 		return nil, errors.Reason("must provide at least one tag").Err()
 	}
@@ -217,7 +213,7 @@ func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, builder *bui
 		return nil, errors.Annotate(err, "search builds by tags").Err()
 	}
 	rawBuilds, err := c.searchRawBuilds(ctx, limit, &buildbucket_pb.BuildPredicate{
-		Builder: builder,
+		Builder: c.builderID,
 		Tags:    tps,
 	})
 	if err != nil {
@@ -229,7 +225,7 @@ func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, builder *bui
 // BuildURL constructs the URL to a build with the given ID.
 func (c *Client) BuildURL(buildID int64) string {
 	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
-		c.env.BuildbucketProject, c.env.BuildbucketBucket, c.env.BuildbucketBuilder, buildID)
+		c.builderID.Project, c.builderID.Bucket, c.builderID.Builder, buildID)
 }
 
 func (c *Client) searchRawBuilds(ctx context.Context, limit int, predicate *buildbucket_pb.BuildPredicate) ([]*buildbucket_pb.Build, error) {

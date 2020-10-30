@@ -160,7 +160,7 @@ func (c *backfillRequestRun) isBuildTagsSet() bool {
 }
 
 func (c *backfillRequestRun) setNewBBClient(ctx context.Context) error {
-	client, err := bb.NewClient(ctx, c.envFlags.Env(), c.authFlags)
+	client, err := bb.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
 	if err == nil {
 		c.bbClient = client
 	}
@@ -198,13 +198,7 @@ func isBackfillBuild(b *bb.Build) bool {
 const bbBuildSearchLimit = 100
 
 func (c *backfillRequestRun) getOriginalBuildsByTags(ctx context.Context) ([]*bb.Build, error) {
-	env := c.envFlags.Env()
-	builder := buildbucketpb.BuilderID{
-		Project: env.BuildbucketProject,
-		Bucket:  env.BuildbucketBucket,
-		Builder: env.BuildbucketBuilder,
-	}
-	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, &builder, c.buildTags...)
+	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, c.buildTags...)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +225,7 @@ func isOriginalBuild(b *bb.Build) bool {
 // getSortedBackfillBuildsFor returns nil (and no error) if no backfill builds
 // are found.
 func (c *backfillRequestRun) getSortedBackfillBuildsFor(ctx context.Context, b *bb.Build) ([]*bb.Build, error) {
-	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, b.Builder, backfillTags(b.Tags, b.ID)...)
+	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, backfillTags(b.Tags, b.ID)...)
 	if err != nil {
 		return nil, errors.Annotate(err, "get sorted backfill builds for %d", b.ID).Err()
 	}

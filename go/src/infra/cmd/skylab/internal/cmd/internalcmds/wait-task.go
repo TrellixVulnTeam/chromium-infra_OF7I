@@ -81,7 +81,7 @@ func (c *waitTaskRun) innerRunBuildbucket(a subcommands.Application, env subcomm
 	ctx, cancel := cmdlib.MaybeWithTimeout(ctx, c.timeoutMins)
 	defer cancel(context.Canceled)
 
-	bClient, err := bb.NewClient(ctx, c.envFlags.Env(), c.authFlags)
+	bClient, err := bb.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
 	if err != nil {
 		return nil, err
 	}

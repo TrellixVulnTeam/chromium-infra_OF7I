@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.chromium.org/luci/auth"
+	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/grpc/prpc"
 )
@@ -29,13 +30,17 @@ type Environment struct {
 	ServiceAccount     string
 
 	// Buildbucket-specific values.
-	BuildbucketHost    string
-	BuildbucketProject string
-	BuildbucketBucket  string
-	BuildbucketBuilder string
+	CTPBuilderInfo BuildbucketBuilderInfo
 
 	// UFS-specific values
 	UFSService string
+}
+
+// BuildbucketBuilderInfo contains information for initializing a
+// Buildbucket client that talks to a specific builder.
+type BuildbucketBuilderInfo struct {
+	Host      string
+	BuilderID *buildbucket_pb.BuilderID
 }
 
 // Wrapped returns the environment wrapped in a helper type to satisfy
@@ -76,10 +81,14 @@ var Prod = Environment{
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_PROD",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
 
-	BuildbucketHost:    "cr-buildbucket.appspot.com",
-	BuildbucketProject: "chromeos",
-	BuildbucketBucket:  "testplatform",
-	BuildbucketBuilder: "cros_test_platform",
+	CTPBuilderInfo: BuildbucketBuilderInfo{
+		Host: "cr-buildbucket.appspot.com",
+		BuilderID: &buildbucket_pb.BuilderID{
+			Project: "chromeos",
+			Bucket:  "testplatform",
+			Builder: "cros_test_platform",
+		},
+	},
 
 	UFSService: "ufs.api.cr.dev",
 }
@@ -95,10 +104,14 @@ var Dev = Environment{
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 
-	BuildbucketHost:    "cr-buildbucket.appspot.com",
-	BuildbucketProject: "chromeos",
-	BuildbucketBucket:  "testplatform",
-	BuildbucketBuilder: "cros_test_platform-dev",
+	CTPBuilderInfo: BuildbucketBuilderInfo{
+		Host: "cr-buildbucket.appspot.com",
+		BuilderID: &buildbucket_pb.BuilderID{
+			Project: "chromeos",
+			Bucket:  "testplatform",
+			Builder: "cros_test_platform-dev",
+		},
+	},
 
 	UFSService: "staging.ufs.api.cr.dev",
 }

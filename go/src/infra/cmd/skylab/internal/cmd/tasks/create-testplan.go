@@ -76,8 +76,7 @@ func (c *createTestPlanRun) innerRun(a subcommands.Application, args []string, e
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	e := c.envFlags.Env()
-	client, err := bb.NewClient(ctx, e, c.authFlags)
+	client, err := bb.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
 	if err != nil {
 		return err
 	}

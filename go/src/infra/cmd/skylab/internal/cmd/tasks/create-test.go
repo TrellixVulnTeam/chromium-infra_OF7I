@@ -86,8 +86,7 @@ func (c *createTestRun) innerRunBB(a subcommands.Application, args []string, env
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	e := c.envFlags.Env()
-	client, err := bb.NewClient(ctx, e, c.authFlags)
+	client, err := bb.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
 	if err != nil {
 		return err
 	}

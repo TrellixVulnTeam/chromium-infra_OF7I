@@ -84,7 +84,7 @@ func (c *createSuiteRun) validateArgs() error {
 }
 
 func (c *createSuiteRun) innerRunBB(ctx context.Context, a subcommands.Application, suiteName string) error {
-	client, err := bb.NewClient(ctx, c.envFlags.Env(), c.authFlags)
+	client, err := bb.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
 	if err != nil {
 		return err
 	}
