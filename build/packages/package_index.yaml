@@ -1,0 +1,11 @@
+package: infra/tools/package_index/${platform}
+description: package_index creates kythe index packs for codesearch.
+platforms:
+  - linux-amd64
+  - windows-amd64
+go_packages:
+  - infra/cmd/package_index
+root: ../../go/bin
+data:
+  - file: package_index${exe_suffix}
+  - version_file: .versions/package_index${exe_suffix}.cipd_version
