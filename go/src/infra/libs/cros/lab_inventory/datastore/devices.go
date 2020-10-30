@@ -136,6 +136,7 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 			}
 
 			if dut := message.GetDut(); dut != nil {
+				cleanPreDeployFields(dut)
 				// Update associated labstation if the DUT has a new servo. Also
 				// assign new servo port if specified.
 				if err := r.amendServoToLabstation(ctx, dut, nil, assignServoPort); err != nil {
@@ -877,4 +878,13 @@ func ReportInventory(ctx context.Context, environment string) error {
 	}
 	utilization.ReportInventoryMetricsV2(ctx, devices, environment)
 	return nil
+}
+
+// cleanPreDeployFields resets values for the fields re-generated during deployment.
+func cleanPreDeployFields(d *lab.DeviceUnderTest) {
+	servo := d.GetPeripherals().GetServo()
+	if servo != nil {
+		servo.ServoType = ""
+		servo.ServoTopology = nil
+	}
 }

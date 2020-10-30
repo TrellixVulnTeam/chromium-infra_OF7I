@@ -158,6 +158,8 @@ func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory
 		devicesToUpdate = labstations
 	}
 
+	cleanPreDeployFields(devicesToUpdate)
+
 	f := func() error {
 		if rsp, err := c.client.UpdateCrosDevicesSetup(ctx, &api.UpdateCrosDevicesSetupRequest{
 			Devices:       devicesToUpdate,
@@ -359,4 +361,17 @@ func (c *invServiceClient) deviceConfigsExists(ctx context.Context, configIds []
 		return nil, err
 	}
 	return resp.GetExists(), err
+}
+
+// cleanPreDeployFields resets values for the fields re-generated during deployment.
+func cleanPreDeployFields(devices []*lab.ChromeOSDevice) {
+	for _, d := range devices {
+		if dut := d.GetDut(); dut != nil {
+			servo := dut.GetPeripherals().GetServo()
+			if servo != nil {
+				servo.ServoType = ""
+				servo.ServoTopology = nil
+			}
+		}
+	}
 }

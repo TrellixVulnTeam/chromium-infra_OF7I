@@ -21,6 +21,11 @@ func mockServo(servoHost string) *lab.Servo {
 		ServoPort:     8888,
 		ServoSerial:   "SERVO1",
 		ServoType:     "v3",
+		ServoTopology: &lab.ServoTopology{
+			Main: &lab.ServoTopologyItem{
+				Type: "v3",
+			},
+		},
 	}
 }
 
@@ -443,7 +448,9 @@ func TestUpdateDeviceID(t *testing.T) {
 		datastore.GetTestable(ctx).Consistent(true)
 		Convey("Update existing devices", func() {
 			dev1 := mockDut("erty1", "UUID:00000", "lbstat1")
-			dev2 := mockDut("erty1", "Asset:00000", "lbstat1")
+			dev2Updated := mockDut("erty1", "Asset:00000", "lbstat1")
+			dev2Updated.GetDut().GetPeripherals().GetServo().ServoType = ""
+			dev2Updated.GetDut().GetPeripherals().GetServo().ServoTopology = nil
 			dev3 := mockLabstation("asdf1", "UUID:02")
 			dev4 := mockLabstation("asdf1", "Asset:02")
 			var devProto lab.ChromeOSDevice
@@ -451,17 +458,17 @@ func TestUpdateDeviceID(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ret.Passed(), ShouldHaveLength, 2)
 			So(ret.Failed(), ShouldHaveLength, 0)
-			err = UpdateDeviceID(ctx, dev1.Id.Value, dev2.Id.Value)
+			err = UpdateDeviceID(ctx, dev1.Id.Value, dev2Updated.Id.Value)
 			So(err, ShouldBeNil)
-			res := GetDevicesByIds(ctx, []string{dev1.Id.Value, dev2.Id.Value})
+			res := GetDevicesByIds(ctx, []string{dev1.Id.Value, dev2Updated.Id.Value})
 			So(res, ShouldHaveLength, 2)
 			So(res[0].Err, ShouldNotBeNil)
 			So(res[1].Err, ShouldBeNil)
 			err = res[1].Entity.GetCrosDeviceProto(&devProto)
 			So(err, ShouldBeNil)
-			// Compare devProto to dev2 to determine that only ID
-			// was updated. Note that dev2 is dev1 with ID updated
-			So(&devProto, ShouldResemble, dev2)
+			// Compare devProto to dev2Updated to determine that only ID was updated.
+			// Note that dev2Updated is dev1 with ID updated and clean ServoType as it cleaned when add new DUT.
+			So(&devProto, ShouldResemble, dev2Updated)
 			err = UpdateDeviceID(ctx, dev3.Id.Value, dev4.Id.Value)
 			So(err, ShouldBeNil)
 			res = GetDevicesByIds(ctx, []string{dev3.Id.Value, dev4.Id.Value})
