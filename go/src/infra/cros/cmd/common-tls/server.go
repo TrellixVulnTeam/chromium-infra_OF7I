@@ -23,6 +23,7 @@ import (
 
 type server struct {
 	tls.UnimplementedCommonServer
+	grpcServ *grpc.Server
 	// wiringConn is a connection to the wiring service.
 	wiringConn *grpc.ClientConn
 	clientPool *sshpool.Pool
@@ -32,6 +33,7 @@ type server struct {
 
 func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
 	return server{
+		grpcServ:   grpc.NewServer(),
 		wiringConn: c,
 		sshConfig:  sshConfig,
 	}
@@ -43,10 +45,13 @@ func (s *server) Serve(l net.Listener) error {
 	s.lroMgr = newLROManager()
 	defer s.lroMgr.Close()
 
-	server := grpc.NewServer()
-	tls.RegisterCommonServer(server, s)
-	longrunning.RegisterOperationsServer(server, s.lroMgr)
-	return server.Serve(l)
+	tls.RegisterCommonServer(s.grpcServ, s)
+	longrunning.RegisterOperationsServer(s.grpcServ, s.lroMgr)
+	return s.grpcServ.Serve(l)
+}
+
+func (s *server) GracefulStop() {
+	s.grpcServ.GracefulStop()
 }
 
 func (s *server) Provision(ctx context.Context, req *tls.ProvisionRequest) (*longrunning.Operation, error) {
