@@ -145,6 +145,17 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
       e for e in new_request.properties.env if e['key'] not in sharding_settings
   ]
 
+  # Remove environment prefixes used by the chromium.tests pool task template.
+  # Otherwise, swarming complains about a collision.
+  # This should be kept in sync with the task template at
+  # http://shortn/_rOkMZ6ANDo.
+  # See https://crbug.com/1128541#c14 for more details.
+  pool_env_prefixes = ['PATH', 'VPYTHON_VIRTUALENV_ROOT']
+  new_request.properties.env_prefixes = [
+      e for e in new_request.properties.env_prefixes
+      if e['key'] not in pool_env_prefixes
+  ]
+
   # Reset tags for searching and monitoring.
   ref_name = swarming_util.GetTagValue(ref_request.tags, 'name')
   new_request.tags = ListOfBasestring()

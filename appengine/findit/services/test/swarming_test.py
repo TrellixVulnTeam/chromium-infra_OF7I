@@ -140,6 +140,25 @@ _REF_REQUEST_WITH_EXTRA_ARGS = {
                 'value': '5'
             },
         ],
+        'env_prefixes': [
+            {
+                'key': 'a',
+                'value': ['1']
+            },
+            {
+                'key':
+                    'PATH',
+                'value': [
+                    '.task_template_packages',
+                    '.task_template_packages/cpython/bin',
+                    '.task_template_packages/cpython3/bin'
+                ]
+            },
+            {
+                'key': 'VPYTHON_VIRTUALENV_ROOT',
+                'value': ['.task_template_vpython_cache/vpython']
+            },
+        ],
         'execution_timeout_secs': '3600',
         'extra_args': [
             '--flag=value',
@@ -511,14 +530,10 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         master_name, builder_name, step_name, tests, iterations)
 
     expected_new_request_json = {
-        'expiration_secs':
-            '72000',
-        'name':
-            'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
-        'parent_task_id':
-            '',
-        'priority':
-            '150',
+        'expiration_secs': '72000',
+        'name': 'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
+        'parent_task_id': '',
+        'priority': '150',
         'properties': {
             'dimensions': [{
                 'key': 'k',
@@ -528,8 +543,11 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
                 'key': 'a',
                 'value': '1'
             },],
-            'execution_timeout_secs':
-                '3600',
+            'env_prefixes': [{
+                'key': 'a',
+                'value': ['1']
+            },],
+            'execution_timeout_secs': '3600',
             'extra_args': [
                 '--flag=value',
                 '--isolated-script-test-filter=a.b::a.c',
@@ -537,15 +555,12 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
                 '--isolated-script-test-launcher-retry-limit=0',
                 '--isolated-script-test-also-run-disabled-tests',
             ],
-            'grace_period_secs':
-                '30',
-            'idempotent':
-                False,
+            'grace_period_secs': '30',
+            'idempotent': False,
             'inputs_ref': {
                 'isolatedserver': 'isolatedserver',
             },
-            'io_timeout_secs':
-                '1200',
+            'io_timeout_secs': '1200',
         },
         'tags': [
             'ref_master:%s' % master_name,
@@ -553,16 +568,10 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
             'ref_stepname:%s' % step_name, 'ref_name:a_tests', 'findit:1',
             'project:Chromium', 'purpose:post-commit'
         ],
-        'user':
-            '',
-        'pubsub_auth_token':
-            'auth_token',
-        'pubsub_topic':
-            'projects/app-id/topics/swarming',
-        'pubsub_userdata':
-            json.dumps({
-                'runner_id': 'runner_id'
-            }),
+        'user': '',
+        'pubsub_auth_token': 'auth_token',
+        'pubsub_topic': 'projects/app-id/topics/swarming',
+        'pubsub_userdata': json.dumps({'runner_id': 'runner_id'}),
     }
 
     self.assertEqual(
