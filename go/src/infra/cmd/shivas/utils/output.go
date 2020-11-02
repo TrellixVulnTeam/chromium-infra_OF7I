@@ -1113,11 +1113,13 @@ func PrintDutsShort(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machi
 		}
 		fmt.Fprintf(tw, "Hostname:\t%s\n", dut.GetName())
 		fmt.Fprintf(tw, "Inventory Id:\t%s\n", dut.GetMachines()[0])
+		fmt.Fprintf(tw, "Serial number:\t%s\n", m.GetSerialNumber())
 		fmt.Fprintf(tw, "Model:\t%s\n", m.GetChromeosMachine().GetModel())
 		fmt.Fprintf(tw, "Board:\t%s\n", m.GetChromeosMachine().GetBuildTarget())
 		fmt.Fprintf(tw, "ReferenceDesign:\t%s\n", m.GetChromeosMachine().GetReferenceBoard())
 		fmt.Fprintf(tw, "Variant:\t%s\n", m.GetChromeosMachine().GetSku())
 		fmt.Fprintf(tw, "HWID:\t%s\n", m.GetChromeosMachine().GetHwid())
+		fmt.Fprintf(tw, "State:\t%s\n", m.GetResourceState().String())
 
 		servo := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if servo != nil {
