@@ -24,6 +24,7 @@ class SwarmingTaskRequestTest(TestCase):
         properties=SwarmingTaskProperties(
             caches=[],
             command=ListOfBasestring(),
+            relative_cwd=None,
             dimensions=[],
             env=[],
             env_prefixes=[],
@@ -75,6 +76,7 @@ class SwarmingTaskRequestTest(TestCase):
                 'path': '.foo'
             },],
             'command': ['path/to/binary'],
+            'relative_cwd': 'out/Release',
             'unused_property': 'blabla',
             'dimensions': [{
                 'key': 'cpu',
@@ -117,6 +119,7 @@ class SwarmingTaskRequestTest(TestCase):
                 'path': '.foo'
             }],
             command=ListOfBasestring.FromSerializable(['path/to/binary']),
+            relative_cwd='out/Release',
             dimensions=[
                 {
                     'key': 'cpu',

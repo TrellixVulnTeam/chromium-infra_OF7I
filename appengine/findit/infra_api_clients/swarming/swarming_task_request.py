@@ -55,6 +55,7 @@ class SwarmingTaskProperties(StructuredObject):
   """Fields populated in swarming task requests."""
   caches = list
   command = ListOfBasestring
+  relative_cwd = basestring
   env_prefixes = list
   dimensions = list
   env = list
@@ -120,6 +121,7 @@ class SwarmingTaskRequest(StructuredObject):
         properties=SwarmingTaskProperties(
             caches=[],
             command=ListOfBasestring(),
+            relative_cwd=None,
             dimensions=[],
             env=[],
             env_prefixes=[],
@@ -174,6 +176,7 @@ class SwarmingTaskRequest(StructuredObject):
             caches=properties.get('caches') or [],
             command=ListOfBasestring.FromSerializable(
                 properties.get('command') or []),
+            relative_cwd=properties.get('relative_cwd'),
             dimensions=properties.get('dimensions') or [],
             env=properties.get('env') or [],
             env_prefixes=properties.get('env_prefixes') or [],

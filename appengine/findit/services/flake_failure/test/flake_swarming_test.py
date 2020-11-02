@@ -437,6 +437,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
             ]),
             io_timeout_secs='1200',
             command=ListOfBasestring.FromSerializable(['cmd']),
+            relative_cwd=None,
             env=[{
                 'value': '1',
                 'key': 'a'
