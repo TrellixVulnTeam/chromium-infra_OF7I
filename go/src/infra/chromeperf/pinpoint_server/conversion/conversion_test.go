@@ -10,6 +10,7 @@ import (
 
 	"infra/chromeperf/pinpoint"
 
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -71,7 +72,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -109,7 +110,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -142,7 +143,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -182,7 +183,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -221,7 +222,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -254,7 +255,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -311,7 +312,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -352,7 +353,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -387,7 +388,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -430,7 +431,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -472,7 +473,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -509,7 +510,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -565,7 +566,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -602,7 +603,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -633,7 +634,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
@@ -670,7 +671,7 @@ func TestSimpleConversions(t *testing.T) {
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
-				telemetryJob.XXX_Merge(job)
+				proto.Merge(telemetryJob, job)
 				_, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldNotBeNil)
 				So(fmt.Sprintf("%v", err), ShouldContainSubstring, "functional experiments not supported")
@@ -683,7 +684,7 @@ func TestSimpleConversions(t *testing.T) {
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
-				gtestJob.XXX_Merge(job)
+				proto.Merge(gtestJob, job)
 				_, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldNotBeNil)
 				So(fmt.Sprintf("%v", err), ShouldContainSubstring, "functional experiments not supported")
