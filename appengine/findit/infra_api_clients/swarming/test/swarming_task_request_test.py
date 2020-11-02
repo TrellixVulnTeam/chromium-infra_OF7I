@@ -70,6 +70,10 @@ class SwarmingTaskRequestTest(TestCase):
         'pubsub_auth_token': 'token',
         'pubsub_userdata': 'data',
         'properties': {
+            'caches': [{
+                'name': 'a',
+                'path': '.foo'
+            },],
             'command': ['path/to/binary'],
             'unused_property': 'blabla',
             'dimensions': [{
@@ -108,7 +112,10 @@ class SwarmingTaskRequestTest(TestCase):
         parent_task_id='parent task id',
         priority='150',
         properties=SwarmingTaskProperties(
-            caches=None,
+            caches=[{
+                'name': 'a',
+                'path': '.foo'
+            }],
             command=ListOfBasestring.FromSerializable(['path/to/binary']),
             dimensions=[
                 {

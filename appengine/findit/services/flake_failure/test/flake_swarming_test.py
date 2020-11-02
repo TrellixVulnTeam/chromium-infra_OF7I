@@ -444,7 +444,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
             execution_timeout_secs='3600',
             env_prefixes=[],
             grace_period_secs='30',
-            caches=None,
+            caches=[],
             cipd_input=swarming_task_request.CIPDInput(
                 packages=swarming_task_request.CIPDPackages(),
                 client_package=swarming_task_request.CIPDClientPackage(
@@ -520,7 +520,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
             execution_timeout_secs='3600',
             env_prefixes=[],
             grace_period_secs='30',
-            caches=None),
+            caches=[]),
         priority='25',
         parent_task_id='',
         user='',

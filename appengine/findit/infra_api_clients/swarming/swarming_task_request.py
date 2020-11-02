@@ -171,7 +171,7 @@ class SwarmingTaskRequest(StructuredObject):
         parent_task_id=data.get('parent_task_id'),
         priority=str(data.get('priority')),
         properties=SwarmingTaskProperties(
-            caches=properties.get('caches'),
+            caches=properties.get('caches') or [],
             command=ListOfBasestring.FromSerializable(
                 properties.get('command') or []),
             dimensions=properties.get('dimensions') or [],

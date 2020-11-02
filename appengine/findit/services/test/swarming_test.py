@@ -122,6 +122,16 @@ _REF_REQUEST_WITH_EXTRA_ARGS = {
     'parent_task_id': 'pti',
     'priority': '25',
     'properties': {
+        'caches': [
+            {
+                'name': 'a',
+                'path': '.foo'
+            },
+            {
+                'name': 'task_template_vpython_cache',
+                'path': '.task_template_vpython_cache/vpython'
+            },
+        ],
         'dimensions': [{
             'key': 'k',
             'value': 'v'
@@ -535,6 +545,10 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'parent_task_id': '',
         'priority': '150',
         'properties': {
+            'caches': [{
+                'name': 'a',
+                'path': '.foo'
+            }],
             'dimensions': [{
                 'key': 'k',
                 'value': 'v'
