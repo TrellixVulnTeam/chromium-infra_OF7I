@@ -55,4 +55,4 @@ cron:
 
 - description: Sync manual repair records to BQ
   url: /internal/cron/sync-manual-repair-records-to-bq
-  schedule: every 1 hours
+  schedule: every 30 minutes
