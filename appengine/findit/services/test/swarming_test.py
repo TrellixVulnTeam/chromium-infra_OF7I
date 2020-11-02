@@ -182,6 +182,22 @@ _REF_REQUEST_WITH_EXTRA_ARGS = {
             'isolatedserver': 'isolatedserver'
         },
         'io_timeout_secs': '1200',
+        'cipd_input': {
+            'packages': [{
+                'path': '.path',
+                'version': '1',
+                'package_name': 'foo',
+            }, {
+                'path': '.task_template_packages',
+                'version': 'version',
+                'package_name': 'package_name',
+            }],
+            'client_package': {
+                'version': 'version',
+                'package_name': 'package_name',
+            },
+            'server': 'server',
+        },
     },
     'tags': ['master:%s' % 'b',
              'buildername:%s' % 'b', 'name:a_tests'],
@@ -575,6 +591,18 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
                 'isolatedserver': 'isolatedserver',
             },
             'io_timeout_secs': '1200',
+            'cipd_input': {
+                'packages': [{
+                    'path': '.path',
+                    'version': '1',
+                    'package_name': 'foo',
+                }],
+                'client_package': {
+                    'version': 'version',
+                    'package_name': 'package_name',
+                },
+                'server': 'server',
+            },
         },
         'tags': [
             'ref_master:%s' % master_name,

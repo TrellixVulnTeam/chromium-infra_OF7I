@@ -13,6 +13,7 @@ from google.appengine.api import app_identity
 
 from gae_libs import token
 from infra_api_clients.swarming import swarming_util
+from infra_api_clients.swarming.swarming_task_request import CIPDPackages
 from libs import time_util
 from libs.list_of_basestring import ListOfBasestring
 from waterfall import waterfall_config
@@ -145,8 +146,9 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
       e for e in new_request.properties.env if e['key'] not in sharding_settings
   ]
 
-  # Remove environment prefixes and caches used by the chromium.tests pool task
-  # template. Otherwise, swarming complains about a collision.
+  # Remove environment prefixes, caches, and CIPD packages used by the
+  # chromium.tests pool task template. Otherwise, swarming complains about a
+  # collision.
   # This should be kept in sync with the task template at
   # http://shortn/_rOkMZ6ANDo.
   # See https://crbug.com/1128541#c14 for more details.
@@ -156,9 +158,15 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
       if e['key'] not in pool_env_prefixes
   ]
   new_request.properties.caches = [
-      e for e in new_request.properties.caches
-      if e['name'] != 'task_template_vpython_cache'
+      c for c in new_request.properties.caches
+      if not c['name'].startswith('task_template')
   ]
+  filtered_packages = CIPDPackages()
+  filtered_packages.extend([
+      p for p in new_request.properties.cipd_input.packages
+      if not p.path.startswith('.task_template')
+  ])
+  new_request.properties.cipd_input.packages = filtered_packages
 
   # Reset tags for searching and monitoring.
   ref_name = swarming_util.GetTagValue(ref_request.tags, 'name')
