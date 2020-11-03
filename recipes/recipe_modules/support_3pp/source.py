@@ -86,7 +86,8 @@ def resolve_latest(api, spec):
   type of the ResolvedSpec.
 
   Args:
-    * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
     * spec (ResolvedSpec) - The spec to resolve.
 
   Returns (str, str) the symver for the latest version of this package, e.g.
@@ -159,6 +160,9 @@ def resolve_latest(api, spec):
     # We don't actually run a real step here, so we can't put the 'resolved
     # version' anywhere :(. See TODO at top.
 
+  elif method_name == 'url':
+    version = source_method_pb.version
+
   else: # pragma: no cover
     assert False, '"latest" version resolution not defined for %r' % method_name
 
@@ -170,7 +174,8 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
   """Prepares a checkout in `workdir` to build `spec` at `version`.
 
   Args:
-    * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
     * workdir (Workdir) - The working directory object we're going to build the
       spec in. This function will create the checkout in `workdir.checkout`.
     * spec (ResolvedSpec) - The package we want to build.
@@ -231,7 +236,10 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
         step_hash.presentation.step_text = (
           'external source verification successful.')
 
-  _do_checkout(api, workdir, spec, version, source_hash, source_cipd_spec)
+  if api.properties.get('use_new_checkout'):
+    _source_checkout(api, workdir, spec, version, source_cipd_spec, source_hash)
+  else:
+    _do_checkout(api, workdir, spec, version, source_hash, source_cipd_spec)
 
   # Iff we are going to do the 'build' operation, copy all the package
   # definition scripts into the checkout. If no build message is provided,
@@ -264,31 +272,14 @@ class Manifest(object):  # pragma: no cover
 
 #### Private stuff
 
-def _download_source(api, protocol, url, checkout_path,
-                     source_hash=None): # pragma: no cover
-  """Fetches the raw source from the given remote location.
 
-  Args:
-    * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
-    * protocol - Protocol to use for downloading the artifact.
-    * url - Remote source URL to download package.
-    * checkout_path - Path to place the downloaded source.
-    * source_hash - Optional source hash, used for git method.
-  """
-  # Checkout a raw git source given remote git hash.
-  if protocol == 'git':
-    api.git.checkout(url, source_hash, checkout_path)
-  elif protocol == 'url':
-    api.url.get_file(url, api.path.join(checkout_path, 'raw_source'))
-  else:  # pragma: no cover
-    assert False, 'Unknown download protocol  %r' % (protocol,)
-
-
-def _generate_download_manifest(spec, checkout_dir,
-                                source_hash=None):  # pragma: no cover
+def _generate_download_manifest(api, spec, checkout_dir,
+                                source_hash=None):
   """Generates download manifest object for current 3pp package.
 
   Args:
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
     * spec (ResolvedSpec) - The package we want to build.
     * checkout_dir (Workdir) - The destination directory for remote sources.
     * source_hash - Optional source hash, used for git method.
@@ -303,7 +294,9 @@ def _generate_download_manifest(spec, checkout_dir,
   elif method_name == 'url':
     return Manifest('url', source_method_pb.download_url, checkout_dir)
 
-  elif method_name == 'script':
+  # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
+  # scripts will need to be migrated, so that they print download url instead.
+  elif method_name == 'script':  # pragma: no cover
     # version is already in env as $_3PP_VERSION
     script = spec.host_dir.join(source_method_pb.name[0])
     args = map(str, source_method_pb.name[1:])
@@ -312,6 +305,167 @@ def _generate_download_manifest(spec, checkout_dir,
 
   else:  # pragma: no cover
     assert False, 'Unknown source type %r' % (method_name,)
+
+
+def _download_source(api, download_manifest):
+  """Fetches the raw source from the given remote location.
+
+  Args:
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
+    * download_manifest - A manifest object used for downloading remote source.
+  """
+  # Checkout a raw git source given remote git hash.
+  if download_manifest.protocol == 'git':
+    api.git.checkout(download_manifest.source_uri,
+                     download_manifest.source_hash, download_manifest.path)
+  elif download_manifest.protocol == 'url':
+    api.url.get_file(download_manifest.source_uri,
+                     api.path.join(download_manifest.path, 'raw_source'))
+  else:  # pragma: no cover
+    assert False, 'Unknown download protocol  %r' % (protocol,)
+
+
+def _source_upload(api, checkout_dir,
+                   method_name,
+                   source_cipd_spec,
+                   external_hash=None):
+  """Builds and uploads the copy of the source package we have on the
+  local machine to the CIPD server.
+
+  This method will upload source files into CIPD with `infra/3pp/sources`
+  prefix for provided version. Essentially, uploading the source only for the
+  first time. In later builds, 3pp recipe will use these uploaded artifacts
+  when building the same version of a package.
+
+  Args:
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
+    * checkout_dir - The checkout directory we're going to checkout the
+      source in.
+    * method_name - Source method in spec protobuf.
+    * source_cipd_spec (spec) - CIPDSpec obj for source.
+    * external_hash - Tag the output package with this hash.
+  """
+  if method_name == 'cipd':
+    return
+
+  with api.step.nest('upload source to cipd') as upload_step:
+    try:
+      # Double checking if source is uploaded by a concurrent recipe
+      if not source_cipd_spec.check():
+        # building the source CIPDSpec into a source type package
+        source_cipd_spec.build(
+            root=checkout_dir,
+            install_mode=None,
+            version_file=None,
+            exclusions=['\.git'] if method_name == 'git' else [])
+        extra_tags = {'external_hash': external_hash} if external_hash else {}
+        source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)
+    except api.step.StepFailure:  # pragma: no cover
+      upload_step.status = api.step.FAILURE
+      upload_step.step_text = 'Source upload failed.'
+      raise
+
+
+def _source_checkout(api,
+                     workdir,
+                     spec,
+                     version,
+                     source_cipd_spec,
+                     source_hash=''):
+  """Checks out source packages into checkout_dir.
+
+  This method makes sure sources used in the current build are made available
+  inside checkout_dir. Source checkout can done in two ways, if source is
+  already cached (url, script, git), it will download the source cache cipd
+  package, also true for cipd source. If not cached, downloader workflow is
+  triggered which downloads and builds a source package for future use.
+
+  Args:
+    * api - The module injection site for support_3pp recipe module
+      (i.e. `self.m`)
+    * workdir (Workdir) - The working directory object we're going to build the
+      spec in. This function will create the checkout in `workdir.checkout`.
+    * spec (ResolvedSpec) - The package we want to build.
+    * version (str) - The symver of the package we want to build (e.g. '1.2.0').
+    * source_cipd_spec (spec) - CIPDSpec obj for source.
+    * source_hash (str) - source_hash returned from resolved version. This is
+      external hash of the source.
+  """
+  method_name, source_method_pb = spec.source_method
+  source_pb = spec.create_pb.source
+
+  checkout_dir = workdir.checkout
+  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
+  # Run checkout in this subdirectory of the install script's $CWD.
+  if source_pb.subdir:  # pragma: no cover
+    checkout_dir = checkout_dir.join(*(source_pb.subdir.split('/')))
+
+  api.file.ensure_directory(
+      'mkdir -p [workdir]/checkout/%s' % (str(source_pb.subdir),), checkout_dir)
+
+  if source_cipd_spec and not source_cipd_spec.check():
+    # If source is not cached already, downloads, builds and uploads source.
+    download_manifest = _generate_download_manifest(api, spec, checkout_dir,
+                                                    source_hash)
+    _download_source(api, download_manifest)
+
+    _source_upload(api, checkout_dir, method_name,
+                   source_cipd_spec, source_hash)
+
+  # Fetches source from cipd for all types.
+  else:
+    source_package = str(
+        source_method_pb.pkg) if method_name == 'cipd' else str(
+            source_cipd_spec.pkg_name)
+    api.cipd.ensure(
+        checkout_dir,
+        api.cipd.EnsureFile().add_package(source_package,
+                                          'version:' + str(version)))
+
+  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
+  if source_pb.unpack_archive:  # pragma: no cover
+    with api.step.nest('unpack_archive'):
+      paths = api.file.glob_paths('find archive to unpack', checkout_dir, '*.*')
+      assert len(paths) == 1, (
+          'unpack_archive==true - expected single archive file, '
+          'but %s are extracted' % (paths,))
+
+      archive = paths[0]
+      archive_name = archive.pieces[-1]
+      api.step.active_result.presentation.step_text = ('found %r' %
+                                                       (archive_name,))
+
+      tmpdir = api.path.mkdtemp()
+      # Use copy instead of move because archive might be a symlink (e.g. when
+      # using a "cipd" source mode).
+      #
+      # TODO(iannucci): Have a way for `cipd pkg-deploy` to always deploy in
+      # copy mode and change this to a move.
+      api.file.copy('cp %r [tmpdir]' % archive_name, archive,
+                    tmpdir.join(archive_name))
+
+      # blow away any other files (e.g. .git)
+      api.file.rmtree('rm -rf [checkout_dir]', checkout_dir)
+
+      api.archive.extract('extracting [tmpdir]/%s' % archive_name,
+                          tmpdir.join(archive_name), checkout_dir)
+
+      if not source_pb.no_archive_prune:
+        api.file.flatten_single_directories('prune archive subdirs',
+                                            checkout_dir)
+
+  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
+  if source_pb.patch_dir:  # pragma: no cover
+    patches = []
+    for patch_dir in source_pb.patch_dir:
+      patch_dir = str(patch_dir)
+      patches.extend(
+          api.file.glob_paths('find patches in %s' % patch_dir,
+                              spec.host_dir.join(*(patch_dir.split('/'))), '*'))
+    with api.context(cwd=checkout_dir):
+      api.git('apply', '-v', *patches)
 
 
 def _do_checkout(api, workdir, spec, version, source_hash='',
@@ -346,12 +500,7 @@ def _do_checkout(api, workdir, spec, version, source_hash='',
     assert False, 'Unknown source type %r' % (method_name,)
 
   # TODO: Split checkout into fetch_raw and unpack
-  with api.step.nest('upload source to cipd'):
-    try:
-      _source_upload(checkout_dir, method_name, source_cipd_spec, source_hash)
-    except api.step.StepFailure:  # pragma: no cover
-      api.step.active_result.presentation.status = api.step.FAILURE
-      api.step.active_result.presentation.step_text = 'Could not upload source.'
+  _source_upload(api, checkout_dir, method_name, source_cipd_spec, source_hash)
   if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):
       paths = api.file.glob_paths(
@@ -394,35 +543,3 @@ def _do_checkout(api, workdir, spec, version, source_hash='',
         spec.host_dir.join(*(patch_dir.split('/'))), '*'))
     with api.context(cwd=checkout_dir):
       api.git('apply', '-v', *patches)
-
-
-def _source_upload(checkout_dir, method_name, source_cipd_spec,
-                   external_hash=None):
-  """Builds and uploads the copy of the source package we have on the
-  local machine to the CIPD server.
-
-  This method will upload source files into CIPD with `infra/3pp/sources`
-  prefix for provided version. Essentially, uploading the source only for the
-  first time. In later builds, 3pp recipe will use these uploaded artifacts
-  when building the same version of a package.
-
-  Args:
-    * checkout_dir - The checkout directory we're going to checkout the
-      source in.
-    * method_name - Source method in spec protobuf.
-    * source_cipd_spec (spec) - CIPDSpec obj for source.
-    * external_hash - Tag the output package with this hash.
-  """
-  if method_name == 'cipd':
-    return
-
-  # Double checking if source is uploaded by a concurrent recipe
-  if not source_cipd_spec.check():
-    # building the source CIPDSpec into a source type package
-    source_cipd_spec.build(root=checkout_dir,
-                           install_mode=None,
-                           version_file=None,
-                           exclusions=['\.git'] if method_name == 'git' else [])
-    extra_tags = {'external_hash':
-        external_hash} if external_hash else {}
-    source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)

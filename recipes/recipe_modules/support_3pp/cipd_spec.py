@@ -52,6 +52,10 @@ class CIPDSpec(object):
     return 'version:'+self._symver
 
   @property
+  def pkg_name(self):
+    return self._pkg
+
+  @property
   def _cache_key(self):
     return (self._pkg, self._symver)
 

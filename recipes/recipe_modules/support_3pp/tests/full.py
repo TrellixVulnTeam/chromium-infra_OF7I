@@ -494,7 +494,7 @@ def GenTests(api):
   create { verify { test: "verify.py" } }
   '''
   yield (api.test('catch git tag movement')
-      + api.properties(GOOS='linux', GOARCH='amd64')
+      + api.properties(GOOS='linux', GOARCH='amd64', use_new_checkout=True)
       + api.step_data(
           'find package specs',
           api.file.glob_paths(['[CACHE]/builder/package_repo/%s/3pp.pb' % pkg
@@ -516,4 +516,35 @@ def GenTests(api):
         version='version:1.5.0-rc1',
         test_data_tags=['version:1.5.0-rc1','external_hash:deadbeef']),
       )
+  )
+
+  # test for source url package.
+  dep = '''
+  create {
+    platform_re: "linux-amd64|mac-.*"
+    source {
+      url {
+        download_url: "https://some.internet.example.com"
+        version: "1.2.3"
+      }
+    }
+    build {}
+  }
+  upload { pkg_prefix: "pkg" }
+  '''
+  yield (api.test('source url test')
+      + api.properties(GOOS='linux', GOARCH='amd64', use_new_checkout=True)
+      + api.step_data(
+          'find package specs',
+          api.file.glob_paths(['[CACHE]/builder/package_repo/%s/3pp.pb' % pkg
+                               for pkg in ['dep', 'tool', 'unsupported']]))
+      + api.step_data(
+          "load package specs.read 'dep'",
+          api.file.read_text(dep))
+      + api.step_data(
+          "load package specs.read 'tool'",
+          api.file.read_text(tool))
+      + api.step_data(
+          "load package specs.read 'unsupported'",
+          api.file.read_text(unsupported))
   )

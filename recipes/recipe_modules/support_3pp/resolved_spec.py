@@ -154,7 +154,7 @@ class ResolvedSpec(object):
     pb = self.create_pb.source
     method = pb.WhichOneof("method")
     self._assert_resolve_for(method is not None)
-    self._assert_resolve_for(method in ('git', 'cipd', 'script'))
+    self._assert_resolve_for(method in ('git', 'cipd', 'script', 'url'))
     return method, getattr(pb, method)
 
   @property
