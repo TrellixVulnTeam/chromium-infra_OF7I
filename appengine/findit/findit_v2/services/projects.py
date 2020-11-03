@@ -148,7 +148,7 @@ PROJECT_CFG = {
         # this is the default value.
         # 'max_revertible_culprit_age_hours': 24,
         # Do not automatically revert commits by these accounts.
-        'automated_account_whitelist': constants.NO_AUTO_COMMIT_REVERT_ACCOUNTS,
+        'automated_account_allowlist': constants.NO_AUTO_COMMIT_REVERT_ACCOUNTS,
     },
     'chromeos': {
         'project_api': ChromeOSProjectAPI(),

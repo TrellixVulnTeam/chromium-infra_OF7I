@@ -267,7 +267,7 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
         ([True, True, False, False, False, 0, True, False, False, False], {
             'notify': True
         }),
-        # Culprit author whitelisted.
+        # Culprit author allowed.
         ([
             True, True, False, False, False, 0, True, False, False, True,
             ['dummy@account.org']
@@ -310,7 +310,7 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       cqed_changes.return_value = scenario.get(8, False)
       changed_in_time.return_value = scenario.get(9, True)
       projects.PROJECT_CFG['chromium'][
-          'automated_account_whitelist'] = scenario.get(10, [])
+          'automated_account_allowlist'] = scenario.get(10, [])
       projects.PROJECT_CFG['chromium'][
           'auto_commit_enabled_for_project'] = scenario.get(11, True)
 

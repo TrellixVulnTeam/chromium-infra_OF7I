@@ -277,9 +277,9 @@ class CompileAnalysisAPI(AnalysisAPI):
                           'Culprit is too old to auto-revert')
 
     if cl_details.owner_email in project_config.get(
-        'automated_account_whitelist', []):
+        'automated_account_allowlist', []):
       return self._Notify(project_api, culprit,
-                          'Culprit was created by a whitelisted account')
+                          'Culprit was created by an allowed account')
 
     revert_description = self._ComposeRevertDescription(project_api, culprit)
     if project_config.get('auto_commit_enabled_for_project', False):

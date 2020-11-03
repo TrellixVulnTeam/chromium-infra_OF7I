@@ -76,7 +76,7 @@ def OnBuildCompletion(project, bucket, builder_name, build_id, build_result):
   Returns:
     False if it is unsupported or skipped; otherwise True.
   """
-  # Skip builders that are not in the whitelist of a supported project/bucket.
+  # Skip builders that are not in the allowlist of a supported project/bucket.
   builder_type = projects.GetBuilderType(project, bucket, builder_name)
 
   if builder_type == projects.BuilderTypeEnum.SUPPORTED:

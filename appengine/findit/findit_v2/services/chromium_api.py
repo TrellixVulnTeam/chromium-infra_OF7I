@@ -104,7 +104,7 @@ class ChromiumProjectAPI(ProjectAPI):
 
   def GetRerunDimensions(self, analyzed_build_id):
     # Copy these dimensions from the analyzed builder to the rerun job request.
-    dimension_whitelist = set([
+    dimension_allowlist = set([
         'os',
         'gpu',
     ])
@@ -114,7 +114,7 @@ class ChromiumProjectAPI(ProjectAPI):
     assert build, "Could not get analyzed build %d" % analyzed_build_id
     dimension_dicts = []
     for dimension_proto in build.infra.swarming.task_dimensions:
-      if dimension_proto.key in dimension_whitelist:
+      if dimension_proto.key in dimension_allowlist:
         # Explicitly include only the 'key' and 'value' keys to discard
         # 'expiration' which is unrelated.
         dimension_dicts.append({
