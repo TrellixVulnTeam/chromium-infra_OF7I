@@ -11,8 +11,6 @@ import sys
 import subprocess
 import tempfile
 
-from distutils.spawn import find_executable
-
 from . import cipd
 from . import dockcross
 from . import source
@@ -81,7 +79,26 @@ class System(object):
 
   @classmethod
   def _find_tool(cls, name):
-    return find_executable(name)
+    # This function doesn't support relative or absolute paths, only bare
+    # executable names.
+    assert os.sep not in name
+
+    # We can't use distutils.spawn.find_executable, as on Windows it doesn't
+    # check the full list of extensions, only '.exe'. So it fails for cipd,
+    # which is a batch file on Windows.
+    path = os.getenv('PATH').split(os.pathsep)
+    if sys.platform == 'win32':
+      extensions = os.getenv('PATHEXT').split(os.pathsep)
+    else:
+      extensions = ['']
+
+    for directory in path:
+      for extension in extensions:
+        filename = os.path.join(directory, name + extension)
+        if os.path.isfile(filename):
+          return filename
+
+    return None
 
   @property
   def tools(self):
