@@ -700,35 +700,6 @@ class ValidateStepsTests(BaseTestCase):
 
   @parameterized.expand(
       [
-          (common_pb2.FAILURE, common_pb2.SUCCESS),
-          (common_pb2.INFRA_FAILURE, common_pb2.FAILURE),
-          (common_pb2.CANCELED, common_pb2.INFRA_FAILURE),
-      ],
-      testcase_func_name=_testcase_func_name,
-  )
-  def test_parent_status_better_than_child(self, child, parent):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.CANCELED),
-        step_pb2.Step(name='a|b', status=common_pb2.CANCELED),
-        step_pb2.Step(name='a|b|c', status=common_pb2.SUCCESS),
-        step_pb2.Step(name='a|b|c|d', status=common_pb2.SUCCESS),
-        step_pb2.Step(name='a|b|e', status=parent),
-        step_pb2.Step(name='a|b|e|f', status=child),
-        step_pb2.Step(name='a|b|e|f|g', status=common_pb2.SUCCESS),
-        step_pb2.Step(name='a|b|e|f|h', status=common_pb2.SUCCESS),
-    ]
-    for i in range(8):
-      steps[i].start_time.FromDatetime(datetime.datetime(2018, 1, 1))
-      steps[i].end_time.FromDatetime(datetime.datetime(2019, 1, 1))
-
-    self.assert_invalid(
-        steps,
-        r'u\'a\|b\|e\|f\'\'s status %s is worse than parent u\'a\|b\|e\'\'s '
-        'status %s' % (status_name(child), status_name(parent))
-    )
-
-  @parameterized.expand(
-      [
           (common_pb2.SUCCESS, common_pb2.STARTED, False),
           (common_pb2.FAILURE, common_pb2.STARTED, False),
           (common_pb2.INFRA_FAILURE, common_pb2.STARTED, False),

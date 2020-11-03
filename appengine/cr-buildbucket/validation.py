@@ -64,15 +64,6 @@ START_TIME_REQUIRED_STATUSES = (
     common_pb2.FAILURE,
 )
 
-# Step statuses, listed from best to worst and if applicable. See
-# https://chromium.googlesource.com/infra/luci/luci-go/+/dffd1081b775979aa1c5a8046d9a65adead1cee8/buildbucket/proto/step.proto#75
-STATUS_PRECEDENCE = (
-    common_pb2.SUCCESS,  # best
-    common_pb2.FAILURE,
-    common_pb2.INFRA_FAILURE,
-    common_pb2.CANCELED,  # worst
-)
-
 # Character separating parent from children steps.
 STEP_SEP = '|'
 
@@ -421,13 +412,6 @@ def validate_status_consistency(child, parent):
     _enter_err(
         'status', 'non-terminal (%s) %r must have STARTED parent %r (%s)',
         c_name, child.name, parent.name, p_name
-    )
-
-  if (p in STATUS_PRECEDENCE and c in STATUS_PRECEDENCE and
-      STATUS_PRECEDENCE.index(p) < STATUS_PRECEDENCE.index(c)):
-    _enter_err(
-        'status', '%r\'s status %s is worse than parent %r\'s status %s',
-        child.name, c_name, parent.name, p_name
     )
 
 
