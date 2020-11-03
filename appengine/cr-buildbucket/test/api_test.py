@@ -4,6 +4,7 @@
 
 import os
 import datetime
+import logging
 
 from google.appengine.ext import ndb
 from google.protobuf import text_format, field_mask_pb2
@@ -863,7 +864,8 @@ class BatchTests(BaseTestCase):
 
   @mock.patch('service.get_async', autospec=True)
   @mock.patch('search.search_async', autospec=True)
-  def test_get_and_search(self, search_async, get_async):
+  @mock.patch.object(logging, 'info')
+  def test_get_and_search(self, mocked_logging, search_async, get_async):
     search_async.return_value = future(
         ([test_util.build(id=1), test_util.build(id=2)], '')
     )
@@ -902,6 +904,10 @@ class BatchTests(BaseTestCase):
     self.assertEqual(res.responses[0].search_builds.builds[0].id, 1L)
     self.assertEqual(res.responses[0].search_builds.builds[1].id, 2L)
     self.assertEqual(res.responses[1].get_build.id, 3L)
+    mocked_logging.assert_any_call(
+        'Batch: detect multiple types of requests - %s',
+        set(['search_builds', 'get_build'])
+    )
 
   @mock.patch('service.get_async', autospec=True)
   def test_errors(self, get_async):

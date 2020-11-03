@@ -656,6 +656,7 @@ class BuildsApi(object):
     # First, execute ScheduleBuild requests.
     schedule_requests = []
     in_parallel = []
+    seen_types = set()
     for rr in batch:
       request_type = rr.request.WhichOneof('request')
       if not request_type:
@@ -665,6 +666,9 @@ class BuildsApi(object):
         schedule_requests.append(rr)
       else:
         in_parallel.append(rr)
+      seen_types.add(request_type)
+    if len(seen_types) > 1:  # pragma: no cover
+      logging.info('Batch: detect multiple types of requests - %s', seen_types)
     if schedule_requests:
       schedule_build_multi([
           _ReqRes(rr.request.schedule_build, rr.response)
