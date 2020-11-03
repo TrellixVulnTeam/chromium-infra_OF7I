@@ -21,6 +21,7 @@ message AssetInfo {
   string ethernet_mac_address = 8;
   string sku = 9;
   string phase = 10;
+  string hwid = 11;
 }
 
 message AssetInfoRequest {

@@ -386,6 +386,42 @@ func ToUFSZone(zone string) ufspb.Zone {
 	return ufspb.Zone(ufspb.Zone_value[v])
 }
 
+// List of regexps for recognizing assets stored with googlers or out of lab.
+var googlers = []*regexp.Regexp{
+	regexp.MustCompile(`container`),
+	regexp.MustCompile(`desk`),
+	regexp.MustCompile(`testbed`),
+}
+
+// LabToZone converts deprecated Lab type to Zone
+func LabToZone(lab string) ufspb.Zone {
+	switch oslabRegexp.FindString(lab) {
+	case "chromeos1":
+		return ufspb.Zone_ZONE_CHROMEOS1
+	case "chromeos2":
+		return ufspb.Zone_ZONE_CHROMEOS2
+	case "chromeos3":
+		return ufspb.Zone_ZONE_CHROMEOS3
+	case "chromeos4":
+		return ufspb.Zone_ZONE_CHROMEOS4
+	case "chromeos5":
+		return ufspb.Zone_ZONE_CHROMEOS5
+	case "chromeos6":
+		return ufspb.Zone_ZONE_CHROMEOS6
+	case "chromeos7":
+		return ufspb.Zone_ZONE_CHROMEOS7
+	case "chromeos15":
+		return ufspb.Zone_ZONE_CHROMEOS15
+	default:
+		for _, r := range googlers {
+			if r.MatchString(lab) {
+				return ufspb.Zone_ZONE_CROS_GOOGLER_DESK
+			}
+		}
+		return ufspb.Zone_ZONE_UNSPECIFIED
+	}
+}
+
 // ToUFSDept returns the dept name based on zone string.
 func ToUFSDept(zone string) string {
 	ufsZone := ToUFSZone(zone)

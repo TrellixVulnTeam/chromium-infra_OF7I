@@ -5,6 +5,7 @@
 package util
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -26,6 +27,12 @@ const (
 	wifiLSEPrototype       = "acs:wificell"
 )
 
+var oslabRegexp = regexp.MustCompile(`chromeos[0-9]{1,2}`)
+var rackRegexp = regexp.MustCompile(`rack[0-9]{1,2}`)
+var rowRegexp = regexp.MustCompile(`row[0-9]{1,2}`)
+var hostRegexp = regexp.MustCompile(`host[0-9]{1,3}`)
+var labstationRegexp = regexp.MustCompile(`labstation[0-9]{1,3}`)
+
 // ToOSMachineLSEs converts cros inventory data to UFS LSEs for ChromeOS machines.
 func ToOSMachineLSEs(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*ufspb.MachineLSE {
 	lses := make([]*ufspb.MachineLSE, 0, len(labConfigs))
@@ -39,6 +46,86 @@ func ToOSMachineLSEs(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_Lab
 		}
 	}
 	return lses
+}
+
+// ToOSAssets converts cros inventory data to UFS ChromeOS assets.
+func ToOSAssets(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, existingAssetMap map[string]*ufspb.Asset) []*ufspb.Asset {
+	newAssets := make([]*ufspb.Asset, 0, len(labConfigs))
+	for _, lc := range labConfigs {
+		assetTag := lc.GetConfig().GetId().GetValue()
+		assetInfo, hostname, assetType := deviceToAssetMeta(lc.GetConfig())
+		old, ok := existingAssetMap[assetTag]
+		if ok {
+			old.Model = assetInfo.Model
+			old.Info = assetInfo
+			old.Type = assetType
+			old.Realm = ToUFSRealm(old.GetLocation().GetZone().String())
+			newAssets = append(newAssets, old)
+		} else {
+			location := hostnameToLocation(hostname)
+			newAssets = append(newAssets, &ufspb.Asset{
+				Name:     assetTag,
+				Type:     assetType,
+				Model:    assetInfo.Model,
+				Location: location,
+				Info:     assetInfo,
+				Realm:    ToUFSRealm(location.GetZone().String()),
+			})
+		}
+	}
+	return newAssets
+}
+
+func deviceToAssetMeta(d *lab.ChromeOSDevice) (*ufspb.AssetInfo, string, ufspb.AssetType) {
+	assetTag := d.GetId().GetValue()
+	devConfigID := d.GetDeviceConfigId()
+	dut := d.GetDut()
+	hostname := dut.GetHostname()
+	newAssetType := ufspb.AssetType_DUT
+	if dut == nil {
+		hostname = d.GetLabstation().GetHostname()
+		newAssetType = ufspb.AssetType_LABSTATION
+	}
+	return &ufspb.AssetInfo{
+		AssetTag:     assetTag,
+		SerialNumber: d.GetSerialNumber(),
+		Model:        devConfigID.GetModelId().GetValue(),
+		BuildTarget:  devConfigID.GetPlatformId().GetValue(),
+		Sku:          devConfigID.GetVariantId().GetValue(),
+		Hwid:         d.GetManufacturingId().GetValue(),
+	}, hostname, newAssetType
+}
+
+func hostnameToLocation(hostname string) *ufspb.Location {
+	location := &ufspb.Location{
+		BarcodeName: hostname,
+	}
+	lab := oslabRegexp.FindString(hostname)
+	row := rowRegexp.FindString(hostname)
+	rack := rackRegexp.FindString(hostname)
+
+	zone := LabToZone(lab)
+	if zone == ufspb.Zone_ZONE_UNSPECIFIED {
+		return location
+	}
+	location.Zone = zone
+	if row != "" {
+		location.Row = row[len("row"):]
+	}
+	if rack != "" {
+		location.Rack = fmt.Sprintf("%s-%s-%s", lab, row, rack)
+		location.RackNumber = rack[len("rack"):]
+	}
+	position := hostRegexp.FindString(hostname)
+	if position == "" {
+		position = labstationRegexp.FindString(hostname)
+		if position != "" {
+			location.Position = position[len("labstation"):]
+		}
+	} else {
+		location.Position = position[len("host"):]
+	}
+	return location
 }
 
 // DUTToLSE converts a DUT spec to a UFS machine LSE

@@ -2,6 +2,7 @@ package dumper
 
 import (
 	"context"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -11,10 +12,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/grpc/prpc"
+	"go.chromium.org/luci/server/auth"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	iv2ds "infra/libs/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
 	iv2pr2 "infra/libs/fleet/protos/go"
@@ -26,14 +30,6 @@ import (
 )
 
 var macRegex = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:\.-]){5}([0-9A-Fa-f]{2})$`)
-var chromeoslab = regexp.MustCompile(`chromeos[0-9]{1,2}`)
-
-// List of regexps for recognizing assets stored with googlers or out of lab.
-var googlers = []*regexp.Regexp{
-	regexp.MustCompile(`container`),
-	regexp.MustCompile(`desk`),
-	regexp.MustCompile(`testbed`),
-}
 
 // List of fields to be ignored when comparing a machine object to another.
 // Field names here should reflect *.proto not generated *.pb.go
@@ -90,10 +86,6 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 			continue
 		}
 		if err != nil {
-			// Asset doesn't exist in UFS. Create a new one
-			if err := checkRackExists(ctx, iv2Asset.GetLocation().GetRack()); err != nil {
-				registerRacksForAsset(ctx, iv2Asset)
-			}
 			iv2Asset.UpdateTime = ut
 			_, err := controller.AssetRegistration(ctx, iv2Asset)
 			if err != nil {
@@ -110,13 +102,62 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 	}
 	logging.Infof(ctx, "Updating: %v", assetsToUpdate)
 	_, err = registration.BatchUpdateAssets(ctx, assetsToUpdate)
-	return err
+	if err != nil {
+		return err
+	}
 
+	return updateAssetsFromInventoryV2(ctx)
+}
+
+func updateAssetsFromInventoryV2(ctx context.Context) error {
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
+	if err != nil {
+		return err
+	}
+	inv2Client := invV2Api.NewInventoryPRPCClient(&prpc.Client{
+		C:    &http.Client{Transport: t},
+		Host: config.Get(ctx).CrosInventoryHost,
+	})
+	resp, err := inv2Client.ListCrosDevicesLabConfig(ctx, &invV2Api.ListCrosDevicesLabConfigRequest{})
+	if err != nil {
+		return err
+	}
+
+	assets, err := registration.GetAllAssets(ctx)
+	if err != nil {
+		return err
+	}
+	existingAssetMap := make(map[string]*ufspb.Asset, 0)
+	for _, a := range assets {
+		existingAssetMap[a.GetName()] = a
+	}
+	assetsToUpdate := util.ToOSAssets(resp.GetLabConfigs(), existingAssetMap)
+
+	logging.Infof(ctx, "UFS already contains %d assets", len(assets))
+	logging.Infof(ctx, "Inventory V2 contains %d machines", len(resp.GetLabConfigs()))
+	logging.Infof(ctx, "Updating %d assets based on inventory", len(assetsToUpdate))
+
+	pageSize := 500
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(assetsToUpdate))
+		_, err = registration.BatchUpdateAssets(ctx, assetsToUpdate[i:end])
+		if err != nil {
+			return err
+		}
+		if i+pageSize >= len(assetsToUpdate) {
+			break
+		}
+	}
+	logging.Infof(ctx, "Successfully updated %d assets", len(assetsToUpdate))
+	return nil
 }
 
 func checkRackExists(ctx context.Context, rack string) error {
+	// It's possible that an asset's rack is empty because
+	// a. we cannot parse rack from its hostname, e.g. chromeos1-...jetstream-host5
+	// b. the asset is not scanned/doesn't exist in HaRT
 	if rack == "" {
-		return errors.Reason("Invalid Rack").Err()
+		return nil
 	}
 	return controller.ResourceExist(ctx, []*controller.Resource{controller.GetRackResource(rack)}, nil)
 }
@@ -135,6 +176,7 @@ func registerRacksForAsset(ctx context.Context, asset *ufspb.Asset) error {
 		},
 		Description:   "Added from IV2 by SyncAssetsFromIV2",
 		ResourceState: ufspb.State_STATE_SERVING,
+		Realm:         util.ToUFSRealm(l.GetZone().String()),
 	}
 	logging.Infof(ctx, "Add rack: %v", rack)
 	_, err := controller.RackRegistration(ctx, rack)
@@ -159,6 +201,13 @@ func SyncMachinesFromAssets(ctx context.Context) error {
 	for _, asset := range assets {
 		// Store DUTs and Labstations as machines
 		if asset.GetType() == ufspb.AssetType_DUT || asset.GetType() == ufspb.AssetType_LABSTATION {
+			// Create rack when creating machines
+			if err := checkRackExists(ctx, asset.GetLocation().GetRack()); err != nil {
+				if err := registerRacksForAsset(ctx, asset); err != nil {
+					logging.Warningf(ctx, "Unable to create rack %s: %s", asset.GetLocation().GetRack(), err.Error())
+					continue
+				}
+			}
 			aMachine := CreateMachineFromAsset(asset)
 			if aMachine == nil {
 				continue
@@ -274,35 +323,6 @@ func Cmp(iv2Asset, ufsAsset *ufspb.Asset) bool {
 	return cmp.Equal(iv2Asset, ufsAsset, opts1, opts2)
 }
 
-// LabToZone converts deprecated Lab type to Zone
-func LabToZone(lab string) ufspb.Zone {
-	switch chromeoslab.FindString(lab) {
-	case "chromeos1":
-		return ufspb.Zone_ZONE_CHROMEOS1
-	case "chromeos2":
-		return ufspb.Zone_ZONE_CHROMEOS2
-	case "chromeos3":
-		return ufspb.Zone_ZONE_CHROMEOS3
-	case "chromeos4":
-		return ufspb.Zone_ZONE_CHROMEOS4
-	case "chromeos5":
-		return ufspb.Zone_ZONE_CHROMEOS5
-	case "chromeos6":
-		return ufspb.Zone_ZONE_CHROMEOS6
-	case "chromeos7":
-		return ufspb.Zone_ZONE_CHROMEOS7
-	case "chromeos15":
-		return ufspb.Zone_ZONE_CHROMEOS15
-	default:
-		for _, r := range googlers {
-			if r.MatchString(lab) {
-				return ufspb.Zone_ZONE_CROS_GOOGLER_DESK
-			}
-		}
-		return ufspb.Zone_ZONE_UNSPECIFIED
-	}
-}
-
 // CreateAssetsFromChopsAsset returns Asset proto constructed from ChopsAsset and AssetInfo proto
 func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.AssetInfo, hostname string) (*ufspb.Asset, error) {
 	a := &ufspb.Asset{
@@ -330,7 +350,7 @@ func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 		}
 	}
 
-	a.Location.Zone = LabToZone(asset.GetLocation().GetLab())
+	a.Location.Zone = util.LabToZone(asset.GetLocation().GetLab())
 	if a.Location.Zone == ufspb.Zone_ZONE_CROS_GOOGLER_DESK && hostname == "" {
 		a.Location.BarcodeName = asset.GetLocation().GetLab()
 	}
@@ -390,6 +410,7 @@ func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
 		Sku:            asset.GetInfo().GetSku(),
 		Phase:          asset.GetInfo().GetPhase(),
 		CostCenter:     asset.GetInfo().GetCostCenter(),
+		Hwid:           asset.GetInfo().GetHwid(),
 	}
 	switch asset.GetType() {
 	case ufspb.AssetType_DUT:
@@ -407,6 +428,8 @@ func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
 		Device: &ufspb.Machine_ChromeosMachine{
 			ChromeosMachine: device,
 		},
+		Realm:         asset.GetRealm(),
+		ResourceState: ufspb.State_STATE_REGISTERED,
 	}
 	return machine
 }
