@@ -163,16 +163,16 @@ class ComputeGroupReasonListTest(unittest.TestCase):
       old_owner_apl=None,
       default_owner_apl=None,
       ccd_apl=None,
+      group_ccd_apl=None,
       default_ccd_apl=None,
       starrer_apl=None,
       subscriber_apl=None,
       also_notified_apl=None,
       all_notifications_apl=None):
-
     (
         you_report, you_own, you_old_owner, you_default_owner, you_ccd,
-        you_default_ccd, you_star, you_subscribe, you_also_notify,
-        all_notifications) = actual
+        you_group_ccd, you_default_ccd, you_star, you_subscribe,
+        you_also_notify, all_notifications) = actual
     self.assertEqual(
         (reporter_apl or [], notify_reasons.REASON_REPORTER),
         you_report)
@@ -188,6 +188,8 @@ class ComputeGroupReasonListTest(unittest.TestCase):
     self.assertEqual(
         (ccd_apl or [], notify_reasons.REASON_CCD),
         you_ccd)
+    self.assertEqual(
+        (group_ccd_apl or [], notify_reasons.REASON_GROUP_CCD), you_group_ccd)
     self.assertEqual(
         (default_ccd_apl or [], notify_reasons.REASON_DEFAULT_CCD),
         you_default_ccd)
@@ -284,9 +286,9 @@ class ComputeGroupReasonListTest(unittest.TestCase):
         [], True)
 
     # Asserts list/reason of derived ccs from rules (not components).
-    # The derived ccs list/reason is the 6th tuple returned by
+    # The derived ccs list/reason is the 7th tuple returned by
     # ComputeGroupReasonList()
-    actual_ccd_apl, actual_ccd_reason = actual[5]
+    actual_ccd_apl, actual_ccd_reason = actual[6]
     self.assertEqual(
         actual_ccd_apl, [
             notify_reasons.AddrPerm(
@@ -302,9 +304,9 @@ class ComputeGroupReasonListTest(unittest.TestCase):
     self.assertEqual(actual_ccd_reason, notify_reasons.REASON_DEFAULT_CCD)
 
     # Asserts list/reason of derived ccs from components.
-    # The component derived ccs list/reason is hte 7th tuple returned by
+    # The component derived ccs list/reason is hte 8th tuple returned by
     # ComputeGroupReasonList() when there are component derived ccs.
-    actual_component_apl, actual_comp_reason = actual[6]
+    actual_component_apl, actual_comp_reason = actual[7]
     self.assertEqual(
         actual_component_apl, [
             notify_reasons.AddrPerm(

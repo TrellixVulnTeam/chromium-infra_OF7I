@@ -40,6 +40,10 @@ REASON_OLD_OWNER = 'You were the issue owner before this change'
 REASON_DEFAULT_OWNER = 'A rule made you owner of the issue'
 REASON_CCD = 'You were specifically CC\'d on the issue'
 REASON_DEFAULT_CCD = 'A rule CC\'d you on the issue'
+# TODO(crbug.com/monorail/2857): separate reasons for notification to group
+# members resulting from component and rules derived ccs.
+REASON_GROUP_CCD = (
+    'A group you\'re a member of was specifically CC\'d on the issue')
 REASON_STARRER = 'You starred the issue'
 REASON_SUBSCRIBER = 'Your saved query matched the issue'
 REASON_ALSO_NOTIFY = 'A rule was set up to notify you'
@@ -375,8 +379,9 @@ def ComputeGroupReasonList(
       cnxn, der_direct_owners + der_transitive_owners, project, issue,
       services, omit_addrs, users_by_id)
   cc_addr_perm_list = ComputeIssueChangeAddressPermList(
-      cnxn, direct_ccs + transitive_ccs, project, issue,
-      services, omit_addrs, users_by_id)
+      cnxn, direct_ccs, project, issue, services, omit_addrs, users_by_id)
+  transitive_cc_addr_perm_list = ComputeIssueChangeAddressPermList(
+      cnxn, transitive_ccs, project, issue, services, omit_addrs, users_by_id)
   der_cc_addr_perm_list = ComputeIssueChangeAddressPermList(
       cnxn, der_direct_ccs + der_transitive_ccs, project, issue,
       services, omit_addrs, users_by_id)
@@ -410,13 +415,14 @@ def ComputeGroupReasonList(
         cnxn, services, project, contributor_could_view, omit_addrs)
 
   group_reason_list = [
-    (reporter_addr_perm_list, REASON_REPORTER),
-    (owner_addr_perm_list, REASON_OWNER),
-    (old_owner_addr_perm_list, REASON_OLD_OWNER),
-    (der_owner_addr_perm_list, REASON_DEFAULT_OWNER),
-    (cc_addr_perm_list, REASON_CCD),
-    (der_cc_addr_perm_list, REASON_DEFAULT_CCD),
-    ]
+      (reporter_addr_perm_list, REASON_REPORTER),
+      (owner_addr_perm_list, REASON_OWNER),
+      (old_owner_addr_perm_list, REASON_OLD_OWNER),
+      (der_owner_addr_perm_list, REASON_DEFAULT_OWNER),
+      (cc_addr_perm_list, REASON_CCD),
+      (transitive_cc_addr_perm_list, REASON_GROUP_CCD),
+      (der_cc_addr_perm_list, REASON_DEFAULT_CCD),
+  ]
   group_reason_list.extend(ComputeComponentFieldAddrPerms(
       cnxn, config, issue, project, services, omit_addrs,
       users_by_id))
