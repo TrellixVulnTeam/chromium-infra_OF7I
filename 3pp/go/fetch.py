@@ -37,7 +37,8 @@ def do_checkout(version, platform, kind, checkout_path):
       'https://storage.googleapis.com/golang/go%s.src.tar.gz' % (version,))
 
   print >>sys.stderr, 'fetching', download_url
-  urllib.urlretrieve(download_url, os.path.join(checkout_path, 'archive' + ext))
+  urllib.urlretrieve(download_url,
+                     os.path.join(checkout_path, 'archive.' + ext))
 
 
 def main():
