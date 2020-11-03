@@ -247,6 +247,8 @@ def NativePlatforms():
   # Identify our native platforms.
   if sys.platform == 'darwin':
     return [ALL['mac-x64'], ALL['mac-x64-cp38']]
+  elif sys.platform == 'win32':
+    return [ALL['windows-x86'], ALL['windows-x64']]
   else:
     raise ValueError('Cannot identify native image for %r.' % (sys.platform,))
 
