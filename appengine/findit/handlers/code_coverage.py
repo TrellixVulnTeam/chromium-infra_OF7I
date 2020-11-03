@@ -1626,13 +1626,19 @@ class UpdatePostsubmitReport(BaseHandler):
   PERMISSION_LEVEL = Permission.CORP_USER
 
   def HandlePost(self):
+    luci_project = self.request.get('luci_project')
+    platform = self.request.get('platform')
+    platform_info_map = _GetPostsubmitPlatformInfoMap(luci_project)
+    if platform not in platform_info_map:
+      return BaseHandler.CreateError('Platform: %s is not supported' % platform,
+                                     400)
+    bucket = platform_info_map[platform]['bucket']
+    builder = platform_info_map[platform]['builder']
 
     project = self.request.get('project')
     host = self.request.get('host')
     ref = self.request.get('ref')
     revision = self.request.get('revision')
-    bucket = self.request.get('bucket')
-    builder = self.request.get('builder')
     visible = self.request.get('visible').lower() == 'true'
     report = PostsubmitReport.Get(
         server_host=host,

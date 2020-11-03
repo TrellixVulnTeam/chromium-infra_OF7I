@@ -28,6 +28,7 @@
     }
   </style>
   <script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <link rel="import" href="/ui/elements/cats-app.html">
   <link rel="import" href="/ui/elements/coverage/coverage-documentation.html">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -37,6 +38,27 @@
       document.getElementById('app').userInfo = {{ (user_info or {}) | tojson | safe }};
       document.getElementById('app').banner = {{ (banner or {}) | tojson | safe }};
     });
+
+
+    function togglePostSubmitReportVisibility(luci_project, platform, project, host, ref, revision, e) {
+      var parameters = {
+        'format': 'json',
+        'luci_project': luci_project,
+        'platform': platform,
+        'project': project,
+        'host': host,
+        'ref': ref,
+        'revision': revision,
+        'visible': e.checked,
+      };
+      $.post('/coverage/task/postsubmit-report/update', parameters, function(data) {
+
+      }).fail(function(xhr) {
+        // Revert the checkbox event
+        e.checked = !e.checked
+        alert("Some error occured. Please refresh and try again")
+      });
+    }
   </script>
 </head>
 
@@ -114,7 +136,18 @@
                 <a href="https://ci.chromium.org/b/{{datum.build_id}}">Build</a>
               </td>
               {% if show_invisible_report %}
-                <td>{{datum.visible}}</td>
+                <td>
+                  {% if datum.visible %}
+                    <input type="checkbox"
+                      id="inline"
+                      checked={{datum.visible}}
+                      onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", this)'>
+                  {% else %}
+                  <input type="checkbox"
+                    id="inline"
+                    onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", this)'>
+                  {% endif %}
+                </td>
               {% endif %}
             </tr>
           {% endif %}

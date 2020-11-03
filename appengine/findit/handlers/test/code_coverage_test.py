@@ -1170,17 +1170,41 @@ class UpdatePostsubmitReportTest(WaterfallTestCase):
   ],
                                        debug=True)
 
+  def setUp(self):
+    super(UpdatePostsubmitReportTest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings', {
+            'postsubmit_platform_info_map': {
+                'chromium': {
+                    'linux': {
+                        'bucket': 'coverage',
+                        'builder': 'linux-code-coverage',
+                        'coverage_tool': 'clang',
+                        'ui_name': 'Linux (C/C++)',
+                    },
+                },
+            },
+        })
+
+  def tearDown(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
+    super(UpdatePostsubmitReportTest, self).tearDown()
+
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testPostsubmitReportUpdated(self, *_):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     manifest = _CreateSampleManifest()
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
+    luci_project = 'chromium'
+    platform = 'linux'
     ref = 'refs/heads/master'
     revision = '99999'
-    bucket = 'coverage'
-    builder = 'linux-code-coverage'
-
+    coverage_config = self.GetUnitTestConfigSettings(
+    ).code_coverage_settings.get('postsubmit_platform_info_map',
+                                 {}).get(luci_project, {})[platform]
+    bucket = coverage_config['bucket']
+    builder = coverage_config['builder']
     report = PostsubmitReport.Create(
         server_host=server_host,
         project=project,
@@ -1193,13 +1217,12 @@ class UpdatePostsubmitReportTest(WaterfallTestCase):
         summary_metrics=_CreateSampleCoverageSummaryMetric(),
         build_id=123456789,
         visible=False)
-
     report.put()
 
     request_url = (
-        '/coverage/task/postsubmit-report/update?host=%s&project=%s&ref=%s'
-        '&revision=%s&bucket=%s&builder=%s&visible=%s') % (
-            server_host, project, ref, revision, bucket, builder, True)
+        '/coverage/task/postsubmit-report/update?host=%s&luci_project=%s'
+        '&platform=%s&project=%s&ref=%s&revision=%s&visible=%s') % (
+            server_host, luci_project, platform, project, ref, revision, True)
     response = self.test_app.post(request_url)
 
     self.assertEqual(200, response.status_int)

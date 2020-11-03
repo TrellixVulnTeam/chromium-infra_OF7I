@@ -381,6 +381,9 @@ class WaterfallTestCase(TestCase):  # pragma: no cover.
     FinditConfig.Get().Update(
         users.User(email='admin@chromium.org'), True, **config_data)
 
+  def GetUnitTestConfigSettings(self):
+    return FinditConfig.Get()
+
   def setUp(self):
     super(WaterfallTestCase, self).setUp()
     self.UpdateUnitTestConfigSettings()
