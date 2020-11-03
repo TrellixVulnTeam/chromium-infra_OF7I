@@ -14,7 +14,6 @@ from google.protobuf import any_pb2
 from chromeperf.engine import combinators
 from chromeperf.engine import evaluator
 from chromeperf.engine import predicates
-from chromeperf.engine import task_pb2
 from chromeperf.pinpoint import change_pb2
 from chromeperf.pinpoint import find_isolate_task_payload_pb2
 from chromeperf.pinpoint import test_runner_payload_pb2

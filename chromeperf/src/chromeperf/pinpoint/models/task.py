@@ -15,7 +15,6 @@ from google.protobuf import any_pb2
 from google.protobuf import message
 
 from chromeperf.engine import evaluator as evaluator_module
-from chromeperf.engine import task_pb2
 
 __all__ = ('populate_task_graph', 'task_graph_loader', 'PayloadUnpackingMixin')
 
@@ -87,8 +86,8 @@ def populate_task_graph(client, job, graph):
 
 
 def task_graph_loader(
-    datastore_client: datastore.Client,
-    job: typing.Any,
+        datastore_client: datastore.Client,
+        job: typing.Any,
 ) -> typing.Callable[[], evaluator_module.TaskGraph]:
     def load_task_graph() -> evaluator_module.TaskGraph:
         with datastore_client.transaction():

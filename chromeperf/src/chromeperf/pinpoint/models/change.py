@@ -235,13 +235,15 @@ class Change:
     For example, a Change might sync to src@9064a40 and catapult@8f26966,
     then apply patch 2423293002.
     """
-    commits: list = dataclasses.field(default_factory=list)
+    commits: typing.List[commit.Commit] = dataclasses.field(
+        default_factory=list)
     patch: GerritPatch = None
 
     @classmethod
     def FromProto(cls, datastore_client, proto: change_pb2.Change):
-        return cls(commits=[commit.Commit.FromProto(datastore_client, c)
-                            for c in proto.commits],
+        return cls(commits=[
+            commit.Commit.FromProto(datastore_client, c) for c in proto.commits
+        ],
                    patch=GerritPatch.FromProto(proto.patch))
 
     def __str__(self):

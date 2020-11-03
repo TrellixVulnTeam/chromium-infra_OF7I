@@ -19,7 +19,6 @@ from google.protobuf import empty_pb2
 from chromeperf.engine import combinators
 from chromeperf.engine import evaluator
 from chromeperf.engine import predicates
-from chromeperf.engine import task_pb2
 from chromeperf.pinpoint import errors
 from chromeperf.pinpoint import change_pb2
 from chromeperf.pinpoint import result_reader_payload_pb2
