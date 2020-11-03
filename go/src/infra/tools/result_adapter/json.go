@@ -424,7 +424,6 @@ func (f *TestFields) parseArtifacts(ctx context.Context, testID string, normPath
 			// Look for the path in outputs.
 			// TODO(crbug/1032779): Track outputs that were processed.
 			if fullPath := findArtifactFullPath(normPathToFullPath, normPath); fullPath != "" {
-				// TODO(crbug.com/1108016): set ContentType in sink.
 				container.artifacts[name] = &sinkpb.Artifact{
 					Body: &sinkpb.Artifact_FilePath{FilePath: fullPath},
 				}

@@ -32,6 +32,7 @@ func main() {
 		Commands: []*subcommands.Command{
 			cmdGtest(),
 			cmdJSON(),
+			cmdSingle(),
 
 			{}, // a separator
 			subcommands.CmdHelp,

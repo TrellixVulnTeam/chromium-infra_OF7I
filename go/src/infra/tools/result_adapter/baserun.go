@@ -74,7 +74,6 @@ func (r *baseRun) initSinkClient(ctx context.Context) (err error) {
 }
 
 // runTestCmd waits for test cmd to complete.
-// TODO(crbug.com/1108016): Implement.
 func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
 	// Kill the subprocess if is asked to stop.
 	// Subprocess exiting will unblock result_uploader and will stop soon.
