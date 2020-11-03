@@ -9,7 +9,7 @@ package location_test
 import (
 	"testing"
 
-	"infra/cros/cmd/skylab_local_state/internal/location"
+	"infra/cros/cmd/skylab_local_state/location"
 )
 
 func TestResultsDir(t *testing.T) {

@@ -18,7 +18,7 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	serverauth "go.chromium.org/luci/server/auth"
 
-	"infra/cros/cmd/skylab_local_state/internal/cmd"
+	"infra/cros/cmd/skylab_local_state/cmd"
 )
 
 func getApplication(authOpts auth.Options) *cli.Application {

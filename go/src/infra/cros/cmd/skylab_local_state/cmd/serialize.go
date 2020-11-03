@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 
-	"infra/cros/cmd/skylab_local_state/internal/location"
+	"infra/cros/cmd/skylab_local_state/location"
 )
 
 // Serialize subcommand: Gather host info file and wrap it with DUT name.

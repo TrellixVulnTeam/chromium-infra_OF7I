@@ -20,6 +20,7 @@ import (
 	serverauth "go.chromium.org/luci/server/auth"
 
 	"infra/cros/cmd/phosphorus/internal/cmd"
+	localstate "infra/cros/cmd/skylab_local_state/cmd"
 )
 
 func getApplication(authOpts auth.Options) *cli.Application {
@@ -42,6 +43,8 @@ func getApplication(authOpts auth.Options) *cli.Application {
 			cmd.RunTest,
 			cmd.UploadToTKO,
 			cmd.UploadToGS(authOpts),
+			localstate.Load(authOpts),
+			localstate.Save(authOpts),
 		},
 	}
 }
