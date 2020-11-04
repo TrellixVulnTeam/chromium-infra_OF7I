@@ -31,6 +31,9 @@ message Metadata {
   // WPT-specific metadata.
   WPT wpt = 4;
 
+  // Buganizer metadata.
+  Buganizer buganizer = 5;
+
   // Reserved for metadata information for third-party code. See
   // https://opensource.google/docs/thirdparty/metadata/
   reserved 13;
@@ -62,6 +65,12 @@ message Monorail {
   // The Monorail component. For example, “UI>Browser>Zoom”.
   // Only a single component is allowed.
   string component = 2;
+}
+
+// Buganizer specific metadata.
+message Buganizer {
+  // The component id. For example, 690873.
+  int64 component_id = 1;
 }
 
 // Trinary is a tri-state boolean.

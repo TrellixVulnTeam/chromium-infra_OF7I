@@ -20,13 +20,14 @@ func TestParseOwners(t *testing.T) {
 	Convey(`ParseOwners`, t, func() {
 		Convey(`Works`, func() {
 			actual, err := parseOwners(strings.NewReader(`
+# TEAM: team-email@chromium.org
 someone@example.com
 
 # Some comments
 
-# TEAM: team-email@chromium.org
 # OS: iOS
 # COMPONENT: Some>Component
+# Internal Component: b/components/1234
 # WPT-NOTIFY: true
 			`))
 			So(err, ShouldBeNil)
@@ -38,6 +39,9 @@ someone@example.com
 					Component: "Some>Component",
 				},
 				Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+				Buganizer: &dirmdpb.Buganizer{
+					ComponentId: 1234,
+				},
 			})
 		})
 

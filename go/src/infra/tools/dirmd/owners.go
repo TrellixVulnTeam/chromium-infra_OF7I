@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -20,7 +21,7 @@ import (
 // The file implements reading of metadata from legacy OWNERS files.
 // TODO(crbug.com/1104246): delete this file.
 
-var ownerKeyValuePairRe = regexp.MustCompile(`#\s*([\w\-]+)\s*:\s*(\S+)`)
+var ownerKeyValuePairRe = regexp.MustCompile(`#\s*([\w\-]+|Internal Component)\s*:\s*(\S+)`)
 
 // readOwners reads metadata from legacy OWNERS of the given directory.
 // Returns (nil, nil) if OWNERS file does not exist.
@@ -74,6 +75,19 @@ func parseOwners(r io.Reader) (*dirmdpb.Metadata, error) {
 					ret.Wpt = &dirmdpb.WPT{Notify: dirmdpb.Trinary_NO}
 				default:
 					return nil, errors.Reason("WPT-NOTIFY: expected true or false, got %q", value).Err()
+				}
+
+			case "Internal Component":
+				const componentPrefix = "b/components/"
+				if !strings.HasPrefix(value, componentPrefix) {
+					return nil, errors.Reason("Internal Component: expected component to start with 'b/components/', got %q", value).Err()
+				}
+				componentID, err := strconv.Atoi(strings.TrimPrefix(value, componentPrefix))
+				if err != nil {
+					return nil, errors.Reason("Internal Component: expected integer component id, got %q", componentID).Err()
+				}
+				ret.Buganizer = &dirmdpb.Buganizer{
+					ComponentId: int64(componentID),
 				}
 			}
 		}
