@@ -39,7 +39,7 @@ type gsClient interface {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(client gsClient) *DirWriter {
+func NewDirWriter(client gsClient, maxConcurrentUploads int) *DirWriter {
 	return &DirWriter{
 		client:               client,
 		maxConcurrentUploads: maxConcurrentUploads,
@@ -69,9 +69,6 @@ func verifyPaths(localPath string, gsPath string) error {
 	}
 	return nil
 }
-
-// TODO(crbug.com/1133890): Replace with value from builder config.
-const maxConcurrentUploads = 20
 
 // WriteDir writes a local directory to Google Storage.
 //

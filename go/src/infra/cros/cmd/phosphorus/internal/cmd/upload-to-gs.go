@@ -102,6 +102,9 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 	return nil
 }
 
+// TODO(crbug.com/1133890): Replace with value from builder config.
+const maxConcurrentUploads = 20
+
 // runGSUploadStep uploads all files in the specified directory to GS.
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
 	localPath := r.GetLocalDirectory()
@@ -117,7 +120,7 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 	if err != nil {
 		return "", err
 	}
-	w := gs.NewDirWriter(gsC)
+	w := gs.NewDirWriter(gsC, maxConcurrentUploads)
 
 	// TODO(crbug.com/1130071) Set timeout from the recipe.
 	// Hard-coded here to stop the bleeding fast.
