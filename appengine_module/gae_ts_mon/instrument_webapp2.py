@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
-import logging
 import time
 import webapp2
 
@@ -12,8 +10,6 @@ from infra_libs.ts_mon import handlers
 from infra_libs.ts_mon import shared
 from infra_libs.ts_mon.common import http_metrics
 from infra_libs.ts_mon.common import interface
-
-from google.appengine.api import runtime as apiruntime
 
 
 def instrument(app, time_fn=time.time):
@@ -72,33 +68,9 @@ def _instrumented_dispatcher(dispatcher, request, response, time_fn=time.time):
   return ret
 
 
-def report_memory(handler):
-  """Wraps an app so handlers log when memory usage increased by at least 0.5MB
-  after the handler completed.
-  """
-  if os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
-    # Otherwise this fails with:
-    # AssertionError: No api proxy found for service "system"
-    return handler  # pragma: no cover
-
-  min_delta = 0.5
-
-  def dispatch_and_report(*args, **kwargs):
-    before = apiruntime.runtime.memory_usage().current()
-    try:
-      return handler(*args, **kwargs)
-    finally:
-      after = apiruntime.runtime.memory_usage().current()
-      if after >= before + min_delta:  # pragma: no cover
-        logging.debug('Memory usage: %.1f -> %.1f MB; delta: %.1f MB', before,
-                      after, after - before)
-
-  return dispatch_and_report
-
-
 class TaskNumAssignerHandler(webapp2.RequestHandler):
 
-  @report_memory
+  @handlers.report_memory
   def get(self):
     if self.request.headers.get('X-Appengine-Cron') != 'true':
       self.abort(403)
@@ -115,4 +87,4 @@ def create_app():
   ])
 
 
-app = create_app()
+tasknum_assigner = create_app()
