@@ -42,6 +42,7 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 		if events == nil {
 			return nil
 		}
+		var lastErr error
 		for _, event := range events.GetRefUpdates() {
 			ref := event.GetRefName()
 
@@ -55,12 +56,13 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 			}
 			err := importCommits(ctx, repository, event.GetOldId(), event.GetNewId())
 			if err != nil {
-				return fmt.Errorf("Error while importing %v %s..%s: %w",
+				// Proceed with other events, but store last error.
+				lastErr = fmt.Errorf("Error while importing %v %s..%s: %w",
 					repository, event.GetOldId(), event.GetNewId(), err)
 			}
 		}
 
-		return nil
+		return lastErr
 	}
 }
 

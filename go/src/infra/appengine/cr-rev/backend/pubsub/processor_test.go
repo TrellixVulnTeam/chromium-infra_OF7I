@@ -256,7 +256,7 @@ func TestPubsubProcessor(t *testing.T) {
 			},
 		}
 		c := &gitilesProto.Fake{}
-		c.SetRepository("oldid", nil, commits)
+		c.SetRepository("deleted_branch", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
 		err := processor(ctx, m)
 		So(err, ShouldBeNil)
@@ -265,5 +265,46 @@ func TestPubsubProcessor(t *testing.T) {
 		q := datastore.NewQuery("Commit").Eq("Repository", "deleted_branch")
 		datastore.GetAll(ctx, q, &datastoreCommits)
 		So(len(datastoreCommits), ShouldEqual, 0)
+	})
+
+	Convey("move forward with errors", t, func() {
+		m := &SourceRepoEvent{
+			Name: "projects/foo/repos/partial_error",
+			Event: &SourceRepoEvent_RefUpdateEvent_{
+				RefUpdateEvent: &SourceRepoEvent_RefUpdateEvent{
+					RefUpdates: map[string]*SourceRepoEvent_RefUpdateEvent_RefUpdate{
+						"refs/heads/foo": {
+							RefName: "refs/heads/foo",
+							NewId:   "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+							OldId:   "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0",
+						},
+						"refs/heads/master": {
+							RefName: "refs/heads/master",
+							NewId:   "0000000000000000000000000000000000000001",
+							OldId:   "0000000000000000000000000000000000000000",
+						},
+					},
+				},
+			},
+		}
+		commits := []*git.Commit{
+			{
+				Id:      "0000000000000000000000000000000000000001",
+				Parents: []string{"0000000000000000000000000000000000000000"},
+			},
+			{
+				Id: "0000000000000000000000000000000000000000",
+			},
+		}
+		c := &gitilesProto.Fake{}
+		c.SetRepository("partial_error", nil, commits)
+		ctx := gitiles.SetClient(ctx, c)
+		err := processor(ctx, m)
+		So(err, ShouldBeError)
+
+		datastoreCommits := []*models.Commit{}
+		q := datastore.NewQuery("Commit").Eq("Repository", "partial_error")
+		datastore.GetAll(ctx, q, &datastoreCommits)
+		So(len(datastoreCommits), ShouldEqual, 1)
 	})
 }
