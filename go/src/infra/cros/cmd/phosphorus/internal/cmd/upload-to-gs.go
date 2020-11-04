@@ -21,6 +21,7 @@ import (
 	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/lucictx"
+	"google.golang.org/appengine/log"
 
 	"infra/cros/cmd/phosphorus/internal/gs"
 )
@@ -102,8 +103,14 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 	return nil
 }
 
-// TODO(crbug.com/1133890): Replace with value from builder config.
-const maxConcurrentUploads = 20
+func maxConcurrentUploads(r *phosphorus.UploadToGSRequest) int {
+	if n := r.GetConfig().GetLogDataUploadStep().GetMaxConcurrentUploads(); n > 0 {
+		return int(n)
+	}
+	// "Reasonable" default picked by fiat, intended to obviously jump out in
+	// logs.
+	return 23
+}
 
 // runGSUploadStep uploads all files in the specified directory to GS.
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
@@ -120,7 +127,9 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 	if err != nil {
 		return "", err
 	}
-	w := gs.NewDirWriter(gsC, maxConcurrentUploads)
+	mc := maxConcurrentUploads(&r)
+	log.Infof(ctx, "Limiting number of concurrent uploads to %d", mc)
+	w := gs.NewDirWriter(gsC, mc)
 
 	// TODO(crbug.com/1130071) Set timeout from the recipe.
 	// Hard-coded here to stop the bleeding fast.
