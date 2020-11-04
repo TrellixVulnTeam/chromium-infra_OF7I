@@ -268,7 +268,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/dep",
+      "3pp/sources/git/go.repo/dep",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -283,7 +283,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.cipd describe 3pp/sources/git/https://go.repo/dep",
+    "name": "building dep.fetch sources.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -496,7 +496,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/dep",
+      "3pp/sources/git/go.repo/dep",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -511,7 +511,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/dep",
+    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
@@ -527,7 +527,7 @@
       "cipd",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/dep\", \"root\": \"[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/checkout\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/go.repo/dep\", \"root\": \"[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/checkout\"}",
       "-out",
       "[CLEANUP]/tmp_tmp_2",
       "-hash-algo",
@@ -544,13 +544,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.upload source to cipd.build 3pp/sources/git/https://go.repo/dep",
+    "name": "building dep.fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -566,7 +566,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/dep"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -592,7 +592,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_2",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep/40-chars-fake-of-the-package-instance_id"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/dep/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -613,7 +613,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/dep",
+      "3pp/sources/git/go.repo/dep",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -628,7 +628,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/dep (2)",
+    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -642,7 +642,7 @@
     "cmd": [
       "cipd",
       "pkg-register",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep/40-chars-fake-of-the-package-instance_id",
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/dep/40-chars-fake-of-the-package-instance_id",
       "-tag",
       "external_hash:hash",
       "-tag",
@@ -659,17 +659,17 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.upload source to cipd.register 3pp/sources/git/https://go.repo/dep",
+    "name": "building dep.fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@3pp/sources/git/https://go.repo/dep@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/https://go.repo/dep/+/40-chars-fake-of-the-package-instance_id@@@"
+      "@@@STEP_LINK@3pp/sources/git/go.repo/dep@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/go.repo/dep/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1277,7 +1277,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/tool",
+      "3pp/sources/git/go.repo/tool",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -1292,7 +1292,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
@@ -1308,7 +1308,7 @@
       "cipd",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout\"}",
       "-out",
       "[CLEANUP]/tmp_tmp_4",
       "-hash-algo",
@@ -1325,13 +1325,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building tool.fetch sources.upload source to cipd.build 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool.fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -1347,7 +1347,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -1373,7 +1373,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_4",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -1394,7 +1394,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/tool",
+      "3pp/sources/git/go.repo/tool",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -1409,7 +1409,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/tool (2)",
+    "name": "building tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -1423,7 +1423,7 @@
     "cmd": [
       "cipd",
       "pkg-register",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id",
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id",
       "-tag",
       "version:1.5.0-rc1",
       "-json-output",
@@ -1438,17 +1438,17 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building tool.fetch sources.upload source to cipd.register 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool.fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@3pp/sources/git/https://go.repo/tool@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/https://go.repo/tool/+/40-chars-fake-of-the-package-instance_id@@@"
+      "@@@STEP_LINK@3pp/sources/git/go.repo/tool@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/go.repo/tool/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1866,7 +1866,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/tool",
+      "3pp/sources/git/go.repo/tool",
       "-version",
       "version:v1.4.1",
       "-json-output",
@@ -1881,7 +1881,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.cipd describe 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool (2).fetch sources.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -2094,7 +2094,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/tool",
+      "3pp/sources/git/go.repo/tool",
       "-version",
       "version:v1.4.1",
       "-json-output",
@@ -2109,7 +2109,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_TEXT@tag 'version:v1.4.1' not found@@@",
@@ -2125,7 +2125,7 @@
       "cipd",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout\"}",
       "-out",
       "[CLEANUP]/tmp_tmp_6",
       "-hash-algo",
@@ -2142,13 +2142,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.upload source to cipd.build 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool (2).fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -2164,7 +2164,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -2190,7 +2190,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_6",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id"
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -2211,7 +2211,7 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/tool",
+      "3pp/sources/git/go.repo/tool",
       "-version",
       "version:v1.4.1",
       "-json-output",
@@ -2226,7 +2226,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/tool (2)",
+    "name": "building tool (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -2240,7 +2240,7 @@
     "cmd": [
       "cipd",
       "pkg-register",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id",
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id",
       "-tag",
       "external_hash:hash",
       "-tag",
@@ -2257,17 +2257,17 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.upload source to cipd.register 3pp/sources/git/https://go.repo/tool",
+    "name": "building tool (2).fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/go.repo/tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@3pp/sources/git/https://go.repo/tool@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/https://go.repo/tool/+/40-chars-fake-of-the-package-instance_id@@@"
+      "@@@STEP_LINK@3pp/sources/git/go.repo/tool@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/go.repo/tool/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

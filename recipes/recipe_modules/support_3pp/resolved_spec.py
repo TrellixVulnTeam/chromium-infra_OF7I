@@ -100,7 +100,12 @@ class ResolvedSpec(object):
       repo_url = source_method_pb.repo
       if repo_url.startswith('https://chromium.googlesource.com/external/'):
         repo_url = repo_url[len('https://chromium.googlesource.com/external/'):]
-      _source_cache = '%s/sources/%s/%s' % (pkg_prefix, method, repo_url)
+      elif repo_url.startswith('https://'):
+        repo_url = repo_url[len('https://'):]
+      elif repo_url.startswith('http://'):  # pragma: no cover
+        repo_url = repo_url[len('http://'):]
+      _source_cache = '%s/sources/%s/%s' % (pkg_prefix, method,
+                                            repo_url.lower())
     elif method == 'script' or method == 'url':
       _source_cache = '%s/sources/%s/%s/%s' % (pkg_prefix, method, self._name,
                                                self._platform)
