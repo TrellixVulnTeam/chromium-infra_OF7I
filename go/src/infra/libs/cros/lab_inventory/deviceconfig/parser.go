@@ -5,9 +5,11 @@
 package deviceconfig
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -16,6 +18,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	luciproto "go.chromium.org/luci/common/proto"
 
 	"infra/libs/cros/git"
 	"infra/libs/cros/gs"
@@ -60,18 +63,27 @@ func getProgramConfigs(ctx context.Context, gsClient gs.ClientInterface, p strin
 	return &programs, nil
 }
 
+func fixFieldMaskForConfigBundle(b []byte) ([]byte, error) {
+	var payload payload.ConfigBundle
+	t := reflect.TypeOf(payload)
+	buf, err := luciproto.FixFieldMasksBeforeUnmarshal(b, t)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
 func getDeviceConfigs(ctx context.Context, gc git.ClientInterface, gitInfos []*gitilesInfo) ([]*device.Config, error) {
 	var allCfgs []*device.Config
 	for _, gi := range gitInfos {
 		err := gc.SwitchProject(ctx, gi.project)
 		if err != nil {
-			// Raise error as encountering invalid project, stop scanning
-			// other device projects as the program config may be not trustable.
-			return nil, err
+			logging.Debugf(ctx, "skip checking project %s, %s", gi.project, err.Error())
+			continue
 		}
 		content, err := gc.GetFile(ctx, gi.path)
 		if err != nil {
-			logging.Debugf(ctx, "fail to get config file for project %s(%s): %s", gi.project, gi.path, err.Error())
+			logging.Debugf(ctx, "fail to get config file for project %s (%s): %s", gi.project, gi.path, err.Error())
 			continue
 		}
 		if content == "" {
@@ -79,8 +91,12 @@ func getDeviceConfigs(ctx context.Context, gc git.ClientInterface, gitInfos []*g
 			continue
 		}
 		var payload payload.ConfigBundle
-		if err := unmarshaller.Unmarshal(strings.NewReader(content), &payload); err != nil {
-			return nil, errors.Annotate(err, "fail to unmarshal %s", gi.path).Err()
+		buf, err := fixFieldMaskForConfigBundle([]byte(content))
+		if err != nil {
+			return nil, errors.Annotate(err, "fail to fix field mask for %s/%s", gi.project, gi.path).Err()
+		}
+		if err := unmarshaller.Unmarshal(bytes.NewBuffer(buf), &payload); err != nil {
+			return nil, errors.Annotate(err, "fail to unmarshal %s/%s", gi.project, gi.path).Err()
 		}
 		dcs := parseConfigBundle(payload)
 		allCfgs = append(allCfgs, dcs...)
@@ -96,7 +112,7 @@ func parsePrograms(programs *Programs) ([]*gitilesInfo, error) {
 		if validRepo(r) {
 			gitInfos = append(gitInfos, &gitilesInfo{
 				project: r.Name,
-				path:    r.ConfigPath,
+				path:    correctConfigPath(r.ConfigPath),
 			})
 		}
 		// Add project-level config bundle path
@@ -105,12 +121,19 @@ func parsePrograms(programs *Programs) ([]*gitilesInfo, error) {
 			if validRepo(r) {
 				gitInfos = append(gitInfos, &gitilesInfo{
 					project: r.Name,
-					path:    r.ConfigPath,
+					path:    correctConfigPath(r.ConfigPath),
 				})
 			}
 		}
 	}
 	return gitInfos, nil
+}
+
+func correctProjectName(n string) string {
+	return strings.Replace(n, "+", "plus", -1)
+}
+func correctConfigPath(p string) string {
+	return strings.Replace(p, "config.jsonproto", "joined.jsonproto", -1)
 }
 
 func validRepo(r *Repo) bool {

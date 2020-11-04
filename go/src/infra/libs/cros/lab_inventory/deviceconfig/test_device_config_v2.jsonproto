@@ -1,4 +1,19 @@
 {
+  "buildTargets": [
+    {
+      "arc": {
+        "device": "zork_cheets",
+        "firstApiLevel": "28"
+      },
+      "id": {
+        "value": "zork"
+      },
+      "overlayName": "overlay-zork-private",
+      "publicReplication": {
+        "publicFields": "id,overlayName"
+      }
+    }
+  ],
   "brandConfigs": [
     {
       "brandId": {

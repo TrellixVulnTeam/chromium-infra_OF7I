@@ -103,6 +103,7 @@ func syncDevConfigHandler(c *router.Context) error {
 			return err
 		}
 		bsCfg := cfg.GetProjectConfigSource()
+		logging.Infof(c.Context, "boxster configs: %q, %q, %q", bsCfg.GetGitilesHost(), bsCfg.GetProject(), bsCfg.GetBranch())
 		gitClient, err := git.NewClient(c.Context, &http.Client{Transport: t}, "", bsCfg.GetGitilesHost(), bsCfg.GetProject(), bsCfg.GetBranch())
 		if err != nil {
 			return err

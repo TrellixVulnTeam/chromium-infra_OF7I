@@ -79,11 +79,11 @@ func (c *Client) Init(ctx context.Context, hc *http.Client, gerritHost string, g
 
 // SwitchProject switches the project and changes the latest hash to fetch.
 func (c *Client) SwitchProject(ctx context.Context, project string) error {
+	c.project = project
 	latestSHA1, err := c.fetchLatestSHA1(ctx)
 	if err != nil {
 		return errors.Annotate(err, fmt.Sprintf("get latest sha1 for repo %s", c.project)).Err()
 	}
-	c.project = project
 	c.latestSHA1 = latestSHA1
 	return nil
 }

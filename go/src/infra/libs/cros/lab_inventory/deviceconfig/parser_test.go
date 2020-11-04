@@ -25,7 +25,9 @@ func TestParseConfigBundle(t *testing.T) {
 		// Refer to https://chromium.googlesource.com/chromiumos/config/+/refs/heads/master/test/project/fake/fake/config.star for unittest check
 		b, err := ioutil.ReadFile("test_device_config_v2.jsonproto")
 		So(err, ShouldBeNil)
-		err = unmarshaller.Unmarshal(bytes.NewReader(b), &payload)
+		buf, err := fixFieldMaskForConfigBundle([]byte(b))
+		So(err, ShouldBeNil)
+		err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &payload)
 		So(err, ShouldBeNil)
 		Convey("Happy path", func() {
 			dcs := parseConfigBundle(payload)
@@ -141,7 +143,7 @@ func TestParsePrograms(t *testing.T) {
 			}
 			So(gitInfos, ShouldHaveLength, 4)
 			for _, gi := range gitInfos {
-				So(gi.path, ShouldBeIn, []string{"generated/config.jsonproto"})
+				So(gi.path, ShouldBeIn, []string{"generated/joined.jsonproto"})
 				So(gi.project, ShouldBeIn, []string{
 					"chromeos/program/galaxy",
 					"chromeos/project/galaxy/milkyway",

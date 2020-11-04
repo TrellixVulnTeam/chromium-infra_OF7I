@@ -105,7 +105,6 @@ func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsC
 	cfgs := make([]proto.Message, len(allDCs))
 	for i, c := range allDCs {
 		cfgs[i] = c
-		logging.Debugf(ctx, "device config %#v", c)
 	}
 	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newDevCfgEntity)
 }
