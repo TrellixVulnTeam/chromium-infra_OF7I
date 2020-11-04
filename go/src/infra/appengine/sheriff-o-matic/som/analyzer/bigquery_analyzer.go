@@ -75,6 +75,9 @@ var androidFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
+	if r.Bucket == "findit" {
+		return false
+	}
 	builderGroup := r.BuilderGroup.String()
 	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, builderGroup) {
 		return true
@@ -105,9 +108,7 @@ var chromiumFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-
 	builderGroup := r.BuilderGroup.String()
-
 	validBuilderGroups := []string{
 		"chrome",
 		"chromium",
@@ -124,7 +125,9 @@ var chromiumGPUFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-
+	if r.Bucket == "findit" {
+		return false
+	}
 	validBuilderGroups := []string{
 		"chromium.gpu",
 		"chromium.gpu.fyi",
@@ -137,11 +140,10 @@ var chromiumPerfFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-
 	if strings.Contains(r.Builder, "bisect") {
 		return false
 	}
-	excludedBuckets := []string{"try", "cq", "staging", "general"}
+	excludedBuckets := []string{"try", "cq", "staging", "general", "findit"}
 	if sliceContains(excludedBuckets, r.Bucket) {
 		return false
 	}
@@ -152,7 +154,9 @@ var iosFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-
+	if r.Bucket == "findit" {
+		return false
+	}
 	if r.Project == "chrome" && r.BuilderGroup.String() == "internal.bling.main" {
 		return true
 	}
@@ -177,7 +181,7 @@ var chromiumClangFilterFunc = func(r failureRow) bool {
 	if strings.Contains(r.Builder, "bisect") {
 		return false
 	}
-	excludedBuckets := []string{"try", "cq", "staging", "general"}
+	excludedBuckets := []string{"try", "cq", "staging", "general", "findit"}
 	if sliceContains(excludedBuckets, r.Bucket) {
 		return false
 	}
