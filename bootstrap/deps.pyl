@@ -38,6 +38,11 @@
     'gs': 'd8033f34e17c0c51bb834b27f6e8c59fc24ae72c.tar.gz',
     'implicit': True,  # Required by cryptography
   },
+  "click": {
+    "build": "0",
+    "gs": "1e55974c8a8d75b0733dd40841a1a354ad36ae10.tar.gz",
+    "version": "7.1.2"
+  },
   'coverage': {
     'version': '4.1',
     'build': '0',
@@ -75,6 +80,12 @@
     'build': '0',
     'repo': 'infra/testing/expect_tests',
     'rev': 'c3766acb62c87bf616b40922f5e3c4857533c37f',
+  },
+  # Uploaded by running "./ingest_pypi_wheels.py Flask 1.1.2"
+  "Flask": {
+    "build": "0",
+    "gs": "c3c3a1ad658816dc62ed724849eccc72d905cdac.tar.gz",
+    "version": "1.1.2"
   },
   'funcsigs': {
     'build': '0',
@@ -127,6 +138,23 @@
     'repo': 'external/github.com/phihag/ipaddress',
     'rev': '77c528007b90de88068df498726c574e8a86f497',
     'implicit': True,  # Required by cryptography
+  },
+  "itsdangerous": {
+    "build": "0",
+    "gs": "b79fef5caacdd247f7def3fe59e6def34bc86905.tar.gz",
+    "version": "1.1.0"
+  },
+  "Jinja2": {
+    "build": "0",
+    "gs": "1017138fd4cb627204d3109b75c107c3d6f3f7fb.tar.gz",
+    "version": "2.11.2"
+  },
+  'MarkupSafe': {
+    'version': '0.23',
+    'build': '0',
+    'repo': 'external/github.com/mitsuhiko/markupsafe',
+    'rev': 'feb1d70c16df62f60dcb521d127fdad8819fc036',
+    'implicit': True,  # Required by Jinja2
   },
   'mock': {
     'build': '0',
@@ -300,4 +328,9 @@
     'rev': 'ec67aba9d62d0e32dc5154c940a2214441bf0a9e',
     # 'implicit': True,  # Required by webtest
   },
+  "Werkzeug": {
+    "build": "0",
+    "gs": "1b99c679ce5960c70f7bdef36ac935e36d0803d2.tar.gz",
+    "version": "0.15.2"
+  }
 }
