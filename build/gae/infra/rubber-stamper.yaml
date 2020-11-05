@@ -1,8 +1,8 @@
 name: infra/rubber-stamper
 extends: ../base.yaml
 
-inputsdir: ../../../go/src/infra/appengine
+inputsdir: ../../../go/src/infra/appengine/rubber-stamper
 
 build:
-  - go_gae_bundle: ${inputsdir}/rubber-stamper/app.yaml
-    dest: ${contextdir}/rubber-stamper
+  - go_gae_bundle: ${inputsdir}/appengine/app.yaml
+    dest: ${contextdir}/appengine
