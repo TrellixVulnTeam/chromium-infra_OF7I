@@ -15,8 +15,6 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	proto "github.com/golang/protobuf/proto"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
 	grpc "google.golang.org/grpc"
@@ -24,6 +22,7 @@ import (
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -34,10 +33,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Request message for CreateHotlist method.
 // Next available tag: 2
@@ -903,7 +898,7 @@ var file_api_v3_api_proto_hotlists_proto_goTypes = []interface{}{
 	(*Hotlist)(nil),                       // 11: monorail.v3.Hotlist
 	(*field_mask.FieldMask)(nil),          // 12: google.protobuf.FieldMask
 	(*HotlistItem)(nil),                   // 13: monorail.v3.HotlistItem
-	(*empty.Empty)(nil),                   // 14: google.protobuf.Empty
+	(*emptypb.Empty)(nil),                 // 14: google.protobuf.Empty
 }
 var file_api_v3_api_proto_hotlists_proto_depIdxs = []int32{
 	11, // 0: monorail.v3.CreateHotlistRequest.hotlist:type_name -> monorail.v3.Hotlist
@@ -1141,7 +1136,7 @@ type HotlistsClient interface {
 	// Raises:
 	//   NOT_FOUND if the hotlist is not found.
 	//   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
-	DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Returns a list of all HotlistItems in the hotlist.
 	//
@@ -1160,7 +1155,7 @@ type HotlistsClient interface {
 	//   or view issues they're trying to rerank.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Adds new items associated with given issues to a hotlist.
 	//
@@ -1170,7 +1165,7 @@ type HotlistsClient interface {
 	//   view issues they are trying to add.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Removes items associated with given issues from a hotlist.
 	//
@@ -1180,7 +1175,7 @@ type HotlistsClient interface {
 	//   view issues they are trying to remove.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Removes editors assigned to a hotlist.
 	//
@@ -1189,7 +1184,7 @@ type HotlistsClient interface {
 	//   PERMISSION_DENIED if the requester is not allowed to remove all specified
 	//   editors from the hotlist.
 	//   INVALID_ARGUMENT if any specified editors are not in the hotlist.
-	RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Gathers all viewable hotlists that a user is a member of.
 	//
@@ -1233,8 +1228,8 @@ func (c *hotlistsPRPCClient) UpdateHotlist(ctx context.Context, in *UpdateHotlis
 	return out, nil
 }
 
-func (c *hotlistsPRPCClient) DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsPRPCClient) DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Hotlists", "DeleteHotlist", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1251,8 +1246,8 @@ func (c *hotlistsPRPCClient) ListHotlistItems(ctx context.Context, in *ListHotli
 	return out, nil
 }
 
-func (c *hotlistsPRPCClient) RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsPRPCClient) RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Hotlists", "RerankHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1260,8 +1255,8 @@ func (c *hotlistsPRPCClient) RerankHotlistItems(ctx context.Context, in *RerankH
 	return out, nil
 }
 
-func (c *hotlistsPRPCClient) AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsPRPCClient) AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Hotlists", "AddHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1269,8 +1264,8 @@ func (c *hotlistsPRPCClient) AddHotlistItems(ctx context.Context, in *AddHotlist
 	return out, nil
 }
 
-func (c *hotlistsPRPCClient) RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsPRPCClient) RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Hotlists", "RemoveHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1278,8 +1273,8 @@ func (c *hotlistsPRPCClient) RemoveHotlistItems(ctx context.Context, in *RemoveH
 	return out, nil
 }
 
-func (c *hotlistsPRPCClient) RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsPRPCClient) RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Hotlists", "RemoveHotlistEditors", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1331,8 +1326,8 @@ func (c *hotlistsClient) UpdateHotlist(ctx context.Context, in *UpdateHotlistReq
 	return out, nil
 }
 
-func (c *hotlistsClient) DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsClient) DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Hotlists/DeleteHotlist", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1349,8 +1344,8 @@ func (c *hotlistsClient) ListHotlistItems(ctx context.Context, in *ListHotlistIt
 	return out, nil
 }
 
-func (c *hotlistsClient) RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsClient) RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Hotlists/RerankHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1358,8 +1353,8 @@ func (c *hotlistsClient) RerankHotlistItems(ctx context.Context, in *RerankHotli
 	return out, nil
 }
 
-func (c *hotlistsClient) AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsClient) AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Hotlists/AddHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1367,8 +1362,8 @@ func (c *hotlistsClient) AddHotlistItems(ctx context.Context, in *AddHotlistItem
 	return out, nil
 }
 
-func (c *hotlistsClient) RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsClient) RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Hotlists/RemoveHotlistItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1376,8 +1371,8 @@ func (c *hotlistsClient) RemoveHotlistItems(ctx context.Context, in *RemoveHotli
 	return out, nil
 }
 
-func (c *hotlistsClient) RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *hotlistsClient) RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Hotlists/RemoveHotlistEditors", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1427,7 +1422,7 @@ type HotlistsServer interface {
 	// Raises:
 	//   NOT_FOUND if the hotlist is not found.
 	//   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
-	DeleteHotlist(context.Context, *GetHotlistRequest) (*empty.Empty, error)
+	DeleteHotlist(context.Context, *GetHotlistRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Returns a list of all HotlistItems in the hotlist.
 	//
@@ -1446,7 +1441,7 @@ type HotlistsServer interface {
 	//   or view issues they're trying to rerank.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	RerankHotlistItems(context.Context, *RerankHotlistItemsRequest) (*empty.Empty, error)
+	RerankHotlistItems(context.Context, *RerankHotlistItemsRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Adds new items associated with given issues to a hotlist.
 	//
@@ -1456,7 +1451,7 @@ type HotlistsServer interface {
 	//   view issues they are trying to add.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	AddHotlistItems(context.Context, *AddHotlistItemsRequest) (*empty.Empty, error)
+	AddHotlistItems(context.Context, *AddHotlistItemsRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Removes items associated with given issues from a hotlist.
 	//
@@ -1466,7 +1461,7 @@ type HotlistsServer interface {
 	//   view issues they are trying to remove.
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
-	RemoveHotlistItems(context.Context, *RemoveHotlistItemsRequest) (*empty.Empty, error)
+	RemoveHotlistItems(context.Context, *RemoveHotlistItemsRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Removes editors assigned to a hotlist.
 	//
@@ -1475,7 +1470,7 @@ type HotlistsServer interface {
 	//   PERMISSION_DENIED if the requester is not allowed to remove all specified
 	//   editors from the hotlist.
 	//   INVALID_ARGUMENT if any specified editors are not in the hotlist.
-	RemoveHotlistEditors(context.Context, *RemoveHotlistEditorsRequest) (*empty.Empty, error)
+	RemoveHotlistEditors(context.Context, *RemoveHotlistEditorsRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Gathers all viewable hotlists that a user is a member of.
 	//
@@ -1498,22 +1493,22 @@ func (*UnimplementedHotlistsServer) GetHotlist(context.Context, *GetHotlistReque
 func (*UnimplementedHotlistsServer) UpdateHotlist(context.Context, *UpdateHotlistRequest) (*Hotlist, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateHotlist not implemented")
 }
-func (*UnimplementedHotlistsServer) DeleteHotlist(context.Context, *GetHotlistRequest) (*empty.Empty, error) {
+func (*UnimplementedHotlistsServer) DeleteHotlist(context.Context, *GetHotlistRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteHotlist not implemented")
 }
 func (*UnimplementedHotlistsServer) ListHotlistItems(context.Context, *ListHotlistItemsRequest) (*ListHotlistItemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListHotlistItems not implemented")
 }
-func (*UnimplementedHotlistsServer) RerankHotlistItems(context.Context, *RerankHotlistItemsRequest) (*empty.Empty, error) {
+func (*UnimplementedHotlistsServer) RerankHotlistItems(context.Context, *RerankHotlistItemsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RerankHotlistItems not implemented")
 }
-func (*UnimplementedHotlistsServer) AddHotlistItems(context.Context, *AddHotlistItemsRequest) (*empty.Empty, error) {
+func (*UnimplementedHotlistsServer) AddHotlistItems(context.Context, *AddHotlistItemsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddHotlistItems not implemented")
 }
-func (*UnimplementedHotlistsServer) RemoveHotlistItems(context.Context, *RemoveHotlistItemsRequest) (*empty.Empty, error) {
+func (*UnimplementedHotlistsServer) RemoveHotlistItems(context.Context, *RemoveHotlistItemsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveHotlistItems not implemented")
 }
-func (*UnimplementedHotlistsServer) RemoveHotlistEditors(context.Context, *RemoveHotlistEditorsRequest) (*empty.Empty, error) {
+func (*UnimplementedHotlistsServer) RemoveHotlistEditors(context.Context, *RemoveHotlistEditorsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveHotlistEditors not implemented")
 }
 func (*UnimplementedHotlistsServer) GatherHotlistsForUser(context.Context, *GatherHotlistsForUserRequest) (*GatherHotlistsForUserResponse, error) {

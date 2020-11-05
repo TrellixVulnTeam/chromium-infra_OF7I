@@ -15,11 +15,10 @@
 package api_proto
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -30,10 +29,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Many values on an issue can be set either explicitly or by a rule.
 //
@@ -308,7 +303,7 @@ type Comment struct {
 	// Resource name of the author of the comment.
 	Commenter string `protobuf:"bytes,5,opt,name=commenter,proto3" json:"commenter,omitempty"`
 	// The time this comment was added to the Issue.
-	CreateTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// Optional string full text of an email that caused this comment to be added.
 	InboundMessage string `protobuf:"bytes,7,opt,name=inbound_message,json=inboundMessage,proto3" json:"inbound_message,omitempty"`
 	// The approval this comment is associated with, if applicable.
@@ -386,7 +381,7 @@ func (x *Comment) GetCommenter() string {
 	return ""
 }
 
-func (x *Comment) GetCreateTime() *timestamp.Timestamp {
+func (x *Comment) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
 	}
@@ -543,17 +538,17 @@ type Issue struct {
 	// Issues for which this issue is blocking completion.
 	BlockingIssueRefs []*IssueRef `protobuf:"bytes,13,rep,name=blocking_issue_refs,json=blockingIssueRefs,proto3" json:"blocking_issue_refs,omitempty"`
 	// The time the issue was reported.
-	CreateTime *timestamp.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// The most recent time the issue was closed.
-	CloseTime *timestamp.Timestamp `protobuf:"bytes,15,opt,name=close_time,json=closeTime,proto3" json:"close_time,omitempty"`
+	CloseTime *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=close_time,json=closeTime,proto3" json:"close_time,omitempty"`
 	// The most recent time the issue was modified.
-	ModifyTime *timestamp.Timestamp `protobuf:"bytes,16,opt,name=modify_time,json=modifyTime,proto3" json:"modify_time,omitempty"`
+	ModifyTime *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=modify_time,json=modifyTime,proto3" json:"modify_time,omitempty"`
 	// The most recent time a component value was modified.
-	ComponentModifyTime *timestamp.Timestamp `protobuf:"bytes,17,opt,name=component_modify_time,json=componentModifyTime,proto3" json:"component_modify_time,omitempty"`
+	ComponentModifyTime *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=component_modify_time,json=componentModifyTime,proto3" json:"component_modify_time,omitempty"`
 	// The most recent time the status value was modified.
-	StatusModifyTime *timestamp.Timestamp `protobuf:"bytes,18,opt,name=status_modify_time,json=statusModifyTime,proto3" json:"status_modify_time,omitempty"`
+	StatusModifyTime *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=status_modify_time,json=statusModifyTime,proto3" json:"status_modify_time,omitempty"`
 	// The most recent time the owner made a modification to the issue.
-	OwnerModifyTime *timestamp.Timestamp `protobuf:"bytes,19,opt,name=owner_modify_time,json=ownerModifyTime,proto3" json:"owner_modify_time,omitempty"`
+	OwnerModifyTime *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=owner_modify_time,json=ownerModifyTime,proto3" json:"owner_modify_time,omitempty"`
 	// The number of attachments associated with the issue.
 	AttachmentCount uint32 `protobuf:"varint,20,opt,name=attachment_count,json=attachmentCount,proto3" json:"attachment_count,omitempty"`
 	// The number of users who have starred the issue.
@@ -686,42 +681,42 @@ func (x *Issue) GetBlockingIssueRefs() []*IssueRef {
 	return nil
 }
 
-func (x *Issue) GetCreateTime() *timestamp.Timestamp {
+func (x *Issue) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
 	}
 	return nil
 }
 
-func (x *Issue) GetCloseTime() *timestamp.Timestamp {
+func (x *Issue) GetCloseTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CloseTime
 	}
 	return nil
 }
 
-func (x *Issue) GetModifyTime() *timestamp.Timestamp {
+func (x *Issue) GetModifyTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ModifyTime
 	}
 	return nil
 }
 
-func (x *Issue) GetComponentModifyTime() *timestamp.Timestamp {
+func (x *Issue) GetComponentModifyTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ComponentModifyTime
 	}
 	return nil
 }
 
-func (x *Issue) GetStatusModifyTime() *timestamp.Timestamp {
+func (x *Issue) GetStatusModifyTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.StatusModifyTime
 	}
 	return nil
 }
 
-func (x *Issue) GetOwnerModifyTime() *timestamp.Timestamp {
+func (x *Issue) GetOwnerModifyTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.OwnerModifyTime
 	}
@@ -879,7 +874,7 @@ type ApprovalValue struct {
 	// The current status of the approval.
 	Status ApprovalValue_ApprovalStatus `protobuf:"varint,4,opt,name=status,proto3,enum=monorail.v3.ApprovalValue_ApprovalStatus" json:"status,omitempty"`
 	// The time `status` was last set.
-	SetTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=set_time,json=setTime,proto3" json:"set_time,omitempty"`
+	SetTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=set_time,json=setTime,proto3" json:"set_time,omitempty"`
 	// The user who most recently set `status`.
 	Setter string `protobuf:"bytes,6,opt,name=setter,proto3" json:"setter,omitempty"`
 	// The phase the approval is associated with (if applicable).
@@ -948,7 +943,7 @@ func (x *ApprovalValue) GetStatus() ApprovalValue_ApprovalStatus {
 	return ApprovalValue_APPROVAL_STATUS_UNSPECIFIED
 }
 
-func (x *ApprovalValue) GetSetTime() *timestamp.Timestamp {
+func (x *ApprovalValue) GetSetTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.SetTime
 	}
@@ -1692,7 +1687,7 @@ var file_api_v3_api_proto_issue_objects_proto_goTypes = []interface{}{
 	(*Issue_LabelValue)(nil),          // 13: monorail.v3.Issue.LabelValue
 	(*Issue_StatusValue)(nil),         // 14: monorail.v3.Issue.StatusValue
 	(*Issue_UserValue)(nil),           // 15: monorail.v3.Issue.UserValue
-	(*timestamp.Timestamp)(nil),       // 16: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
 }
 var file_api_v3_api_proto_issue_objects_proto_depIdxs = []int32{
 	1,  // 0: monorail.v3.Comment.state:type_name -> monorail.v3.IssueContentState

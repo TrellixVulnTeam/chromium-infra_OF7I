@@ -15,7 +15,6 @@
 package api_proto
 
 import (
-	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -29,10 +28,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Potential roles of a user.
 // Next available tag: 3
@@ -382,6 +377,7 @@ type User struct {
 	// However the API will accept User names with formats: users/<user_id> or users/<email>.
 	// To fetch the display_name for any users/<user_id> returned by the API,
 	// you can call {Batch}GetUser{s}.
+	// We represent deleted users within Monorail with `users/1` or `users/2103649657`.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// User display_name to show other users using the site.
 	// By default this is the obscured or un-obscured email.

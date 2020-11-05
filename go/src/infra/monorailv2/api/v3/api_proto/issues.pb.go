@@ -15,7 +15,6 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
 	grpc "google.golang.org/grpc"
@@ -33,10 +32,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // The type of notification a change should trigger.
 // See monorail/doc/userguide/email.md
@@ -724,7 +719,7 @@ type ApprovalDelta struct {
 	UpdateMask *field_mask.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	// Resource names of the approvers we want to remove.
 	ApproversRemove []string `protobuf:"bytes,3,rep,name=approvers_remove,json=approversRemove,proto3" json:"approvers_remove,omitempty"`
-	// FieldValues that do not belong to `approval_value` will be ignored.
+	// FieldValues that do not belong to `approval_value` will trigger error.
 	FieldValsRemove []*FieldValue `protobuf:"bytes,5,rep,name=field_vals_remove,json=fieldValsRemove,proto3" json:"field_vals_remove,omitempty"` // TODO(crbug.com/monorail/8019): add Attachment uploading and removing.
 }
 
@@ -2087,6 +2082,7 @@ type IssuesClient interface {
 	// in creating Comments on the parent Issue, and may have the side effect of
 	// sending notifications. We also want to allow for any combination of
 	// approval changes to be made at once in a monolithic method.
+	// To modify owner add 'owner' to update_mask, though 'owner.user' works too.
 	//
 	// Raises:
 	//   INVALID_ARGUMENT required fields are missing or fields are formatted
@@ -2385,6 +2381,7 @@ type IssuesServer interface {
 	// in creating Comments on the parent Issue, and may have the side effect of
 	// sending notifications. We also want to allow for any combination of
 	// approval changes to be made at once in a monolithic method.
+	// To modify owner add 'owner' to update_mask, though 'owner.user' works too.
 	//
 	// Raises:
 	//   INVALID_ARGUMENT required fields are missing or fields are formatted

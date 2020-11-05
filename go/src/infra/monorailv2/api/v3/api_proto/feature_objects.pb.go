@@ -15,11 +15,10 @@
 package api_proto
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -30,10 +29,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Privacy level of a Hotlist.
 // Next available tag: 2
@@ -222,7 +217,7 @@ type HotlistItem struct {
 	// Resource name of the adder of HotlistItem.
 	Adder string `protobuf:"bytes,4,opt,name=adder,proto3" json:"adder,omitempty"`
 	// The time this HotlistItem was added to the hotlist.
-	CreateTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// User-provided additional details about this item.
 	Note string `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
 }
@@ -287,7 +282,7 @@ func (x *HotlistItem) GetAdder() string {
 	return ""
 }
 
-func (x *HotlistItem) GetCreateTime() *timestamp.Timestamp {
+func (x *HotlistItem) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
 	}
@@ -387,11 +382,11 @@ func file_api_v3_api_proto_feature_objects_proto_rawDescGZIP() []byte {
 var file_api_v3_api_proto_feature_objects_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_v3_api_proto_feature_objects_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_api_v3_api_proto_feature_objects_proto_goTypes = []interface{}{
-	(Hotlist_HotlistPrivacy)(0), // 0: monorail.v3.Hotlist.HotlistPrivacy
-	(*Hotlist)(nil),             // 1: monorail.v3.Hotlist
-	(*HotlistItem)(nil),         // 2: monorail.v3.HotlistItem
-	(*IssuesListColumn)(nil),    // 3: monorail.v3.IssuesListColumn
-	(*timestamp.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(Hotlist_HotlistPrivacy)(0),   // 0: monorail.v3.Hotlist.HotlistPrivacy
+	(*Hotlist)(nil),               // 1: monorail.v3.Hotlist
+	(*HotlistItem)(nil),           // 2: monorail.v3.HotlistItem
+	(*IssuesListColumn)(nil),      // 3: monorail.v3.IssuesListColumn
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_api_v3_api_proto_feature_objects_proto_depIdxs = []int32{
 	3, // 0: monorail.v3.Hotlist.default_columns:type_name -> monorail.v3.IssuesListColumn

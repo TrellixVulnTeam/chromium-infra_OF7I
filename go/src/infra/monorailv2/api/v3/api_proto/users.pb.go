@@ -14,8 +14,6 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	proto "github.com/golang/protobuf/proto"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
 	grpc "google.golang.org/grpc"
@@ -23,6 +21,7 @@ import (
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -33,10 +32,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // The request message for Users.GetUser.
 // Next available tag: 2
@@ -606,7 +601,7 @@ var file_api_v3_api_proto_users_proto_goTypes = []interface{}{
 	(*User)(nil),                     // 8: monorail.v3.User
 	(*field_mask.FieldMask)(nil),     // 9: google.protobuf.FieldMask
 	(*ProjectStar)(nil),              // 10: monorail.v3.ProjectStar
-	(*empty.Empty)(nil),              // 11: google.protobuf.Empty
+	(*emptypb.Empty)(nil),            // 11: google.protobuf.Empty
 }
 var file_api_v3_api_proto_users_proto_depIdxs = []int32{
 	8,  // 0: monorail.v3.BatchGetUsersResponse.users:type_name -> monorail.v3.User
@@ -803,7 +798,7 @@ type UsersClient interface {
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
-	UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Lists all of a user's starred projects.
 	//
@@ -856,8 +851,8 @@ func (c *usersPRPCClient) StarProject(ctx context.Context, in *StarProjectReques
 	return out, nil
 }
 
-func (c *usersPRPCClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *usersPRPCClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Users", "UnStarProject", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -918,8 +913,8 @@ func (c *usersClient) StarProject(ctx context.Context, in *StarProjectRequest, o
 	return out, nil
 }
 
-func (c *usersClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *usersClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Users/UnStarProject", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -973,7 +968,7 @@ type UsersServer interface {
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
-	UnStarProject(context.Context, *UnStarProjectRequest) (*empty.Empty, error)
+	UnStarProject(context.Context, *UnStarProjectRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Lists all of a user's starred projects.
 	//
@@ -999,7 +994,7 @@ func (*UnimplementedUsersServer) UpdateUser(context.Context, *UpdateUserRequest)
 func (*UnimplementedUsersServer) StarProject(context.Context, *StarProjectRequest) (*ProjectStar, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StarProject not implemented")
 }
-func (*UnimplementedUsersServer) UnStarProject(context.Context, *UnStarProjectRequest) (*empty.Empty, error) {
+func (*UnimplementedUsersServer) UnStarProject(context.Context, *UnStarProjectRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnStarProject not implemented")
 }
 func (*UnimplementedUsersServer) ListProjectStars(context.Context, *ListProjectStarsRequest) (*ListProjectStarsResponse, error) {

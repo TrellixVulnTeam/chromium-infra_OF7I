@@ -27,6 +27,7 @@ message User {
   // However the API will accept User names with formats: users/<user_id> or users/<email>.
   // To fetch the display_name for any users/<user_id> returned by the API,
   // you can call {Batch}GetUser{s}.
+  // We represent deleted users within Monorail with `users/1` or `users/2103649657`.
   string name = 1;
   // User display_name to show other users using the site.
   // By default this is the obscured or un-obscured email.

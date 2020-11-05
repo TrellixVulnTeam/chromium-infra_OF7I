@@ -14,11 +14,10 @@
 package api_proto
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -29,10 +28,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Type of this status.
 // Next available tag: 4
@@ -1231,9 +1226,9 @@ type ComponentDef struct {
 	// The user that last modified this component.
 	Modifier string `protobuf:"bytes,8,opt,name=modifier,proto3" json:"modifier,omitempty"`
 	// The time this component was created.
-	CreateTime *timestamp.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// The time this component was last modified.
-	ModifyTime *timestamp.Timestamp `protobuf:"bytes,10,opt,name=modify_time,json=modifyTime,proto3" json:"modify_time,omitempty"`
+	ModifyTime *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=modify_time,json=modifyTime,proto3" json:"modify_time,omitempty"`
 	// Labels that auto-apply to issues in this component.
 	Labels []string `protobuf:"bytes,11,rep,name=labels,proto3" json:"labels,omitempty"`
 }
@@ -1326,14 +1321,14 @@ func (x *ComponentDef) GetModifier() string {
 	return ""
 }
 
-func (x *ComponentDef) GetCreateTime() *timestamp.Timestamp {
+func (x *ComponentDef) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
 	}
 	return nil
 }
 
-func (x *ComponentDef) GetModifyTime() *timestamp.Timestamp {
+func (x *ComponentDef) GetModifyTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ModifyTime
 	}
@@ -2720,7 +2715,7 @@ var file_api_v3_api_proto_project_objects_proto_goTypes = []interface{}{
 	(*FieldDef_DateTypeSettings)(nil),               // 27: monorail.v3.FieldDef.DateTypeSettings
 	(*FieldDef_EnumTypeSettings_Choice)(nil),        // 28: monorail.v3.FieldDef.EnumTypeSettings.Choice
 	(*ProjectConfig_GridViewConfig)(nil),            // 29: monorail.v3.ProjectConfig.GridViewConfig
-	(*timestamp.Timestamp)(nil),                     // 30: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),                   // 30: google.protobuf.Timestamp
 	(*Issue)(nil),                                   // 31: monorail.v3.Issue
 	(*ApprovalValue)(nil),                           // 32: monorail.v3.ApprovalValue
 	(*IssuesListColumn)(nil),                        // 33: monorail.v3.IssuesListColumn

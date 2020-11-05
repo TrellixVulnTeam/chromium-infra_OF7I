@@ -15,14 +15,13 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	proto "github.com/golang/protobuf/proto"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -33,10 +32,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Request message for CreateFieldDef method.
 // Next available tag: 3
@@ -585,7 +580,7 @@ var file_api_v3_api_proto_projects_proto_goTypes = []interface{}{
 	(*ComponentDef)(nil),               // 8: monorail.v3.ComponentDef
 	(*IssueTemplate)(nil),              // 9: monorail.v3.IssueTemplate
 	(*Project)(nil),                    // 10: monorail.v3.Project
-	(*empty.Empty)(nil),                // 11: google.protobuf.Empty
+	(*emptypb.Empty)(nil),              // 11: google.protobuf.Empty
 }
 var file_api_v3_api_proto_projects_proto_depIdxs = []int32{
 	7,  // 0: monorail.v3.CreateFieldDefRequest.fielddef:type_name -> monorail.v3.FieldDef
@@ -759,7 +754,7 @@ type ProjectsClient interface {
 	//   INVALID_INPUT if the request is invalid.
 	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
 	//   NOT_FOUND if the component or project is not found.
-	DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Returns all templates for specified project.
 	//
@@ -797,8 +792,8 @@ func (c *projectsPRPCClient) CreateComponentDef(ctx context.Context, in *CreateC
 	return out, nil
 }
 
-func (c *projectsPRPCClient) DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *projectsPRPCClient) DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.client.Call(ctx, "monorail.v3.Projects", "DeleteComponentDef", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -850,8 +845,8 @@ func (c *projectsClient) CreateComponentDef(ctx context.Context, in *CreateCompo
 	return out, nil
 }
 
-func (c *projectsClient) DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
+func (c *projectsClient) DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/monorail.v3.Projects/DeleteComponentDef", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -905,7 +900,7 @@ type ProjectsServer interface {
 	//   INVALID_INPUT if the request is invalid.
 	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
 	//   NOT_FOUND if the component or project is not found.
-	DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*empty.Empty, error)
+	DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*emptypb.Empty, error)
 	// status: NOT READY
 	// Returns all templates for specified project.
 	//
@@ -928,7 +923,7 @@ func (*UnimplementedProjectsServer) CreateFieldDef(context.Context, *CreateField
 func (*UnimplementedProjectsServer) CreateComponentDef(context.Context, *CreateComponentDefRequest) (*ComponentDef, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateComponentDef not implemented")
 }
-func (*UnimplementedProjectsServer) DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*empty.Empty, error) {
+func (*UnimplementedProjectsServer) DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteComponentDef not implemented")
 }
 func (*UnimplementedProjectsServer) ListIssueTemplates(context.Context, *ListIssueTemplatesRequest) (*ListIssueTemplatesResponse, error) {
