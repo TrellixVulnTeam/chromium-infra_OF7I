@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
@@ -26,6 +27,14 @@ import (
 	"infra/cros/cmd/skylab_local_state/ufs"
 	"infra/libs/cros/dutstate"
 )
+
+// DUT states that should never be overwritten.
+var protectedDUTStates = map[string]bool{
+	dutstate.NeedsDeploy.String():      true,
+	dutstate.NeedsReplacement.String(): true,
+}
+
+type stateLoader func(autotestDir string, dutID string) (*lab_platform.DutState, error)
 
 // Save subcommand: Update the bot state json file.
 func Save(authOpts auth.Options) *subcommands.Command {
@@ -89,6 +98,12 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
+	ctx := cli.GetContext(a, c, env)
+	request, err := ensureNoProtectedStateOverwrite(ctx, &request, GetDutState)
+	if err != nil {
+		return err
+	}
+
 	i, err := getHostInfo(request.ResultsDir, request.DutName)
 
 	if err != nil {
@@ -112,7 +127,6 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 		}
 	}
 
-	ctx := cli.GetContext(a, c, env)
 	return updateDutStateToUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName, request.DutState)
 }
 
@@ -148,6 +162,25 @@ func validateSaveRequest(request *skylab_local_state.SaveRequest) error {
 	}
 
 	return nil
+}
+
+// ensureNoProtectedStateOverwrite checks if the current DUT state is in the
+// list of states we should not overwrite, and modifies the request to leave
+// the state untouched if so.
+func ensureNoProtectedStateOverwrite(ctx context.Context, saveRequest *skylab_local_state.SaveRequest, getDutState stateLoader) (skylab_local_state.SaveRequest, error) {
+	currentDUTState, err := getDutState(saveRequest.Config.AutotestDir, saveRequest.DutId)
+	if err != nil {
+		return skylab_local_state.SaveRequest{}, err
+	}
+
+	if protectedDUTStates[currentDUTState.State] {
+		logging.Warningf(ctx, "Not saving requested DUT state %s, since current DUT state is %s, which should never be overwritten", saveRequest.DutState, currentDUTState.State)
+		updatedSaveRequest := *saveRequest
+		updatedSaveRequest.DutState = currentDUTState.State
+		return updatedSaveRequest, nil
+	}
+
+	return *saveRequest, nil
 }
 
 // getHostInfo reads the host info from the store file.

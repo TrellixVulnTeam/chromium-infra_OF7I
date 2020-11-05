@@ -114,7 +114,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
-	dutState, err := getDutState(request.Config.AutotestDir, request.DutId)
+	dutState, err := GetDutState(request.Config.AutotestDir, request.DutId)
 	if err != nil {
 		return err
 	}
@@ -250,8 +250,8 @@ func hostInfoFromDutInfo(dut *inventory.DeviceUnderTest) *skylab_local_state.Aut
 	return &i
 }
 
-// getDutState reads the local bot state from the cache file.
-func getDutState(autotestDir string, dutID string) (*lab_platform.DutState, error) {
+// GetDutState reads the local bot state from the cache file.
+func GetDutState(autotestDir string, dutID string) (*lab_platform.DutState, error) {
 	p := location.CacheFilePath(autotestDir, dutID)
 	s := lab_platform.DutState{}
 
