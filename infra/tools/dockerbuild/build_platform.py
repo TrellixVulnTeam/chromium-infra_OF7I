@@ -204,6 +204,7 @@ ALL = {
             cipd_platform='mac-amd64',
         ),
         Platform(
+            # TODO: Rename to -py3 to conform to other Python 3 platform names.
             name='mac-x64-cp38',
             manylinux_name=None,
             cross_triple='',
@@ -236,6 +237,17 @@ ALL = {
             packaged=True,
             cipd_platform='windows-amd64',
         ),
+        Platform(
+            name='windows-x64-py3',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp38',
+            wheel_plat=('win_amd64',),
+            dockcross_base=None,
+            openssl_target='Cygwin-x86_64',
+            packaged=True,
+            cipd_platform='windows-amd64',
+        ),
     )
 }
 NAMES = sorted(ALL.keys())
@@ -248,7 +260,7 @@ def NativePlatforms():
   if sys.platform == 'darwin':
     return [ALL['mac-x64'], ALL['mac-x64-cp38']]
   elif sys.platform == 'win32':
-    return [ALL['windows-x86'], ALL['windows-x64']]
+    return [ALL['windows-x86'], ALL['windows-x64'], ALL['windows-x64-py3']]
   else:
     raise ValueError('Cannot identify native image for %r.' % (sys.platform,))
 
