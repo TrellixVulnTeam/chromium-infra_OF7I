@@ -1,10 +1,10 @@
 Name: devil
 URL: https://github.com/catapult-project/catapult
-Revision: 0256bd4b17f3a7d3d81cfa24ea9e81a321f0748e
+Revision: b8b4d61dd32f367d32547b7aaa3108f9654fa3ba
 License: BSD
 
 Description:
-devil is a library used by the Chromium developers to interact with Android
+devil (😈) is a library used by the Chromium developers to interact with Android
 devices. It currently supports SDK level 16 and above.
 
 Local Modifications:

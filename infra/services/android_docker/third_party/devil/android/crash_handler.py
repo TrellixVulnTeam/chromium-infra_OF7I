@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-
 import logging
 
 from devil import base_error
@@ -33,10 +32,13 @@ def RetryOnSystemCrash(f, device, retries=3):
     except device_errors.DeviceUnreachableError:
       if num_try > retries:
         logger.error('%d consecutive device crashes. No longer retrying.',
-                      num_try)
+                     num_try)
         raise
       try:
         logger.warning('Device is unreachable. Waiting for recovery...')
+        # Treat the device being unreachable as an unexpected reboot and clear
+        # any cached state.
+        device.ClearCache()
         device.WaitUntilFullyBooted()
       except base_error.BaseError:
         logger.exception('Device never recovered. X(')

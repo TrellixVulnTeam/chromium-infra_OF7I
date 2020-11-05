@@ -1,7 +1,6 @@
 # Copyright 2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 """Helper object to read and modify Shared Preferences from Android apps.
 
 See e.g.:
@@ -10,13 +9,12 @@ See e.g.:
 
 import logging
 import posixpath
+from xml.etree import ElementTree
 
 from devil.android import device_errors
 from devil.android.sdk import version_codes
-from xml.etree import ElementTree
 
 logger = logging.getLogger(__name__)
-
 
 _XML_DECLARATION = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n"
 
@@ -161,12 +159,14 @@ class StringSetPref(StringPref):
       ElementTree.SubElement(self._elem, 'string').text = str(item)
 
 
-_PREF_TYPES = {c.tag_name: c for c in [BooleanPref, FloatPref, IntPref,
-                                       LongPref, StringPref, StringSetPref]}
+_PREF_TYPES = {
+    c.tag_name: c
+    for c in
+    [BooleanPref, FloatPref, IntPref, LongPref, StringPref, StringSetPref]
+}
 
 
 class SharedPrefs(object):
-
   def __init__(self, device, package, filename, use_encrypted_path=False):
     """Helper object to read and update "Shared Prefs" of Android apps.
 
@@ -224,8 +224,10 @@ class SharedPrefs(object):
   def __repr__(self):
     """Get a useful printable representation of the object."""
     return '<{cls} file {filename} for {package} on {device}>'.format(
-      cls=type(self).__name__, filename=self.filename, package=self.package,
-      device=str(self._device))
+        cls=type(self).__name__,
+        filename=self.filename,
+        package=self.package,
+        device=str(self._device))
 
   def __str__(self):
     """Get the underlying xml document as a string."""
@@ -278,25 +280,31 @@ class SharedPrefs(object):
       self._xml = None
       self._changed = True
 
-  def Commit(self):
+  def Commit(self, force_commit=False):
     """Save the current set of preferences to the device.
 
-    Only actually saves if some preferences have been modified.
+    Only actually saves if some preferences have been modified or force_commit
+    is set to True.
+
+    Args:
+      force_commit: Commit even if no changes have been made to the SharedPrefs
+        instance.
     """
-    if not self.changed:
+    if not (self.changed or force_commit):
       return
     self._device.RunShellCommand(
         ['mkdir', '-p', posixpath.dirname(self.path)],
-        as_root=True, check_return=True)
+        as_root=True,
+        check_return=True)
     self._device.WriteFile(self.path, str(self), as_root=True)
     # Creating the directory/file can cause issues with SELinux if they did
     # not already exist. As a workaround, apply the package's security context
     # to the shared_prefs directory, which mimics the behavior of a file
     # created by the app itself
     if self._device.build_version_sdk >= version_codes.MARSHMALLOW:
-      security_context = self._device.GetSecurityContextForPackage(self.package,
-          encrypted=self._encrypted)
-      if security_context == None:
+      security_context = self._device.GetSecurityContextForPackage(
+          self.package, encrypted=self._encrypted)
+      if security_context is None:
         raise device_errors.CommandFailedError(
             'Failed to get security context for %s' % self.package)
       paths = [posixpath.dirname(self.path), self.path]
@@ -305,11 +313,11 @@ class SharedPrefs(object):
     # Ensure that there isn't both an encrypted and unencrypted version of the
     # file on the device at the same time.
     if self._device.build_version_sdk >= version_codes.NOUGAT:
-      remove_path = (self._unencrypted_path if self._encrypted
-                     else self._encrypted_path)
+      remove_path = (self._unencrypted_path
+                     if self._encrypted else self._encrypted_path)
       if self._device.PathExists(remove_path, as_root=True):
         logging.warning('Found an equivalent shared prefs file at %s, removing',
-            remove_path)
+                        remove_path)
         self._device.RemovePath(remove_path, as_root=True)
 
     self._device.KillAll(self.package, exact=True, as_root=True, quiet=True)
@@ -426,8 +434,8 @@ class SharedPrefs(object):
       pref = pref_cls(self._GetChild(key))
       old_value = pref.get()
     except KeyError:
-      pref = pref_cls(ElementTree.SubElement(
-          self.xml, pref_cls.tag_name, {'name': key}))
+      pref = pref_cls(
+          ElementTree.SubElement(self.xml, pref_cls.tag_name, {'name': key}))
       old_value = None
     if old_value != value:
       pref.set(value)

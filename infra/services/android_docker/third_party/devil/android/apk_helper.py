@@ -1,39 +1,97 @@
 # Copyright (c) 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 """Module containing utilities for apk packages."""
 
+import contextlib
+import logging
+import os
 import re
+import shutil
+import tempfile
 import zipfile
 
 from devil import base_error
+from devil.android.ndk import abis
 from devil.android.sdk import aapt
+from devil.android.sdk import bundletool
+from devil.android.sdk import split_select
+from devil.utils import cmd_helper
 
+_logger = logging.getLogger(__name__)
 
-_MANIFEST_ATTRIBUTE_RE = re.compile(
-    r'\s*A: ([^\(\)= ]*)(?:\([^\(\)= ]*\))?='
-    r'(?:"(.*)" \(Raw: .*\)|\(type.*?\)(.*))$')
+_MANIFEST_ATTRIBUTE_RE = re.compile(r'\s*A: ([^\(\)= ]*)(?:\([^\(\)= ]*\))?='
+                                    r'(?:"(.*)" \(Raw: .*\)|\(type.*?\)(.*))$')
 _MANIFEST_ELEMENT_RE = re.compile(r'\s*(?:E|N): (\S*) .*$')
+_BASE_APK_APKS_RE = re.compile(r'^splits/base-master.*\.apk$')
+
+
+class ApkHelperError(base_error.BaseError):
+  """Exception for APK helper failures."""
+
+  def __init__(self, message):
+    super(ApkHelperError, self).__init__(message)
+
+
+@contextlib.contextmanager
+def _DeleteHelper(files, to_delete):
+  """Context manager that returns |files| and deletes |to_delete| on exit."""
+  try:
+    yield files
+  finally:
+    paths = to_delete if isinstance(to_delete, list) else [to_delete]
+    for path in paths:
+      if os.path.isfile(path):
+        os.remove(path)
+      elif os.path.isdir(path):
+        shutil.rmtree(path)
+      else:
+        raise ApkHelperError('Cannot delete %s' % path)
+
+
+@contextlib.contextmanager
+def _NoopFileHelper(files):
+  """Context manager that returns |files|."""
+  yield files
 
 
 def GetPackageName(apk_path):
   """Returns the package name of the apk."""
-  return ApkHelper(apk_path).GetPackageName()
+  return ToHelper(apk_path).GetPackageName()
 
 
 # TODO(jbudorick): Deprecate and remove this function once callers have been
 # converted to ApkHelper.GetInstrumentationName
 def GetInstrumentationName(apk_path):
   """Returns the name of the Instrumentation in the apk."""
-  return ApkHelper(apk_path).GetInstrumentationName()
+  return ToHelper(apk_path).GetInstrumentationName()
 
 
 def ToHelper(path_or_helper):
   """Creates an ApkHelper unless one is already given."""
-  if isinstance(path_or_helper, basestring):
+  if not isinstance(path_or_helper, basestring):
+    return path_or_helper
+  elif path_or_helper.endswith('.apk'):
     return ApkHelper(path_or_helper)
-  return path_or_helper
+  elif path_or_helper.endswith('.apks'):
+    return ApksHelper(path_or_helper)
+  elif path_or_helper.endswith('_bundle'):
+    return BundleScriptHelper(path_or_helper)
+
+  raise ApkHelperError('Unrecognized APK format %s' % path_or_helper)
+
+
+def ToSplitHelper(path_or_helper, split_apks):
+  if isinstance(path_or_helper, SplitApkHelper):
+    if sorted(path_or_helper.split_apk_paths) != sorted(split_apks):
+      raise ApkHelperError('Helper has different split APKs')
+    return path_or_helper
+  elif (isinstance(path_or_helper, basestring)
+        and path_or_helper.endswith('.apk')):
+    return SplitApkHelper(path_or_helper, split_apks)
+
+  raise ApkHelperError(
+      'Unrecognized APK format %s, %s' % (path_or_helper, split_apks))
 
 
 # To parse the manifest, the function uses a node stack where at each level of
@@ -47,7 +105,6 @@ def ToHelper(path_or_helper):
 # been popped/pushed due to indentation).
 def _ParseManifestFromApk(apk_path):
   aapt_output = aapt.Dump('xmltree', apk_path, 'AndroidManifest.xml')
-
   parsed_manifest = {}
   node_stack = [parsed_manifest]
   indent = '  '
@@ -67,7 +124,8 @@ def _ParseManifestFromApk(apk_path):
 
     # If namespaces are stripped, aapt still outputs the full url to the
     # namespace and appends it to the attribute names.
-    line = line.replace('http://schemas.android.com/apk/res/android:', 'android:')
+    line = line.replace('http://schemas.android.com/apk/res/android:',
+                        'android:')
 
     indent_depth = 0
     while line[(len(indent) * indent_depth):].startswith(indent):
@@ -95,8 +153,9 @@ def _ParseManifestFromApk(apk_path):
     if m:
       manifest_key = m.group(1)
       if manifest_key in node:
-        raise base_error.BaseError(
-            "A single attribute should have one key and one value")
+        raise ApkHelperError(
+            "A single attribute should have one key and one value: {}".format(
+                line))
       else:
         node[manifest_key] = m.group(2) or m.group(3)
       continue
@@ -109,6 +168,13 @@ def _ParseNumericKey(obj, key, default=0):
   if val is None:
     return default
   return int(val, 0)
+
+
+def _SplitLocaleString(locale):
+  split_locale = locale.split('-')
+  if len(split_locale) != 2:
+    raise ApkHelperError('Locale has incorrect format: {}'.format(locale))
+  return tuple(split_locale)
 
 
 class _ExportedActivity(object):
@@ -142,22 +208,32 @@ def _IterateExportedActivities(manifest_info):
     yield activity
 
 
-class ApkHelper(object):
+class BaseApkHelper(object):
+  """Abstract base class representing an installable Android app."""
 
-  def __init__(self, path):
-    self._apk_path = path
+  def __init__(self):
     self._manifest = None
 
   @property
   def path(self):
-    return self._apk_path
+    raise NotImplementedError()
+
+  def __repr__(self):
+    return '%s(%s)' % (self.__class__.__name__, self.path)
+
+  def _GetBaseApkPath(self):
+    """Returns context manager providing path to this app's base APK.
+
+    Must be implemented by subclasses.
+    """
+    raise NotImplementedError()
 
   def GetActivityName(self):
     """Returns the name of the first launcher Activity in the apk."""
     manifest_info = self._GetManifest()
     for activity in _IterateExportedActivities(manifest_info):
-      if ('android.intent.action.MAIN' in activity.actions and
-          'android.intent.category.LAUNCHER' in activity.categories):
+      if ('android.intent.action.MAIN' in activity.actions
+          and 'android.intent.category.LAUNCHER' in activity.categories):
         return self._ResolveName(activity.name)
     return None
 
@@ -165,23 +241,23 @@ class ApkHelper(object):
     """Returns name of the first action=View Activity that can handle http."""
     manifest_info = self._GetManifest()
     for activity in _IterateExportedActivities(manifest_info):
-      if ('android.intent.action.VIEW' in activity.actions and
-          'http' in activity.schemes):
+      if ('android.intent.action.VIEW' in activity.actions
+          and 'http' in activity.schemes):
         return self._ResolveName(activity.name)
     return None
 
-  def GetInstrumentationName(
-      self, default='android.test.InstrumentationTestRunner'):
+  def GetInstrumentationName(self,
+                             default='android.test.InstrumentationTestRunner'):
     """Returns the name of the Instrumentation in the apk."""
     all_instrumentations = self.GetAllInstrumentations(default=default)
     if len(all_instrumentations) != 1:
-      raise base_error.BaseError(
+      raise ApkHelperError(
           'There is more than one instrumentation. Expected one.')
     else:
       return self._ResolveName(all_instrumentations[0]['android:name'])
 
-  def GetAllInstrumentations(
-      self, default='android.test.InstrumentationTestRunner'):
+  def GetAllInstrumentations(self,
+                             default='android.test.InstrumentationTestRunner'):
     """Returns a list of all Instrumentations in the apk."""
     try:
       return self._GetManifest()['manifest'][0]['instrumentation']
@@ -194,13 +270,15 @@ class ApkHelper(object):
     try:
       return manifest_info['manifest'][0]['package']
     except KeyError:
-      raise Exception('Failed to determine package name of %s' % self._apk_path)
+      raise ApkHelperError('Failed to determine package name of %s' % self.path)
 
   def GetPermissions(self):
     manifest_info = self._GetManifest()
     try:
-      return [p['android:name'] for
-              p in manifest_info['manifest'][0]['uses-permission']]
+      return [
+          p['android:name']
+          for p in manifest_info['manifest'][0]['uses-permission']
+      ]
     except KeyError:
       return []
 
@@ -233,9 +311,72 @@ class ApkHelper(object):
     except KeyError:
       return []
 
+  def GetVersionCode(self):
+    """Returns the versionCode as an integer, or None if not available."""
+    manifest_info = self._GetManifest()
+    try:
+      version_code = manifest_info['manifest'][0]['android:versionCode']
+      return int(version_code, 16)
+    except KeyError:
+      return None
+
+  def GetVersionName(self):
+    """Returns the versionName as a string."""
+    manifest_info = self._GetManifest()
+    try:
+      version_name = manifest_info['manifest'][0]['android:versionName']
+      return version_name
+    except KeyError:
+      return ''
+
+  def GetMinSdkVersion(self):
+    """Returns the minSdkVersion as a string, or None if not available.
+
+    Note: this cannot always be cast to an integer."""
+    manifest_info = self._GetManifest()
+    try:
+      uses_sdk = manifest_info['manifest'][0]['uses-sdk'][0]
+      min_sdk_version = uses_sdk['android:minSdkVersion']
+      try:
+        # The common case is for this to be an integer. Convert to decimal
+        # notation (rather than hexadecimal) for readability, but convert back
+        # to a string for type consistency with the general case.
+        return str(int(min_sdk_version, 16))
+      except ValueError:
+        # In general (ex. apps with minSdkVersion set to pre-release Android
+        # versions), minSdkVersion can be a string (usually, the OS codename
+        # letter). For simplicity, don't do any validation on the value.
+        return min_sdk_version
+    except KeyError:
+      return None
+
+  def GetTargetSdkVersion(self):
+    """Returns the targetSdkVersion as a string, or None if not available.
+
+    Note: this cannot always be cast to an integer. If this application targets
+    a pre-release SDK, this returns the SDK codename instead (ex. "R").
+    """
+    manifest_info = self._GetManifest()
+    try:
+      uses_sdk = manifest_info['manifest'][0]['uses-sdk'][0]
+      target_sdk_version = uses_sdk['android:targetSdkVersion']
+      try:
+        # The common case is for this to be an integer. Convert to decimal
+        # notation (rather than hexadecimal) for readability, but convert back
+        # to a string for type consistency with the general case.
+        return str(int(target_sdk_version, 16))
+      except ValueError:
+        # In general (ex. apps targeting pre-release Android versions),
+        # targetSdkVersion can be a string (usually, the OS codename letter).
+        # For simplicity, don't do any validation on the value.
+        return target_sdk_version
+    except KeyError:
+      return None
+
   def _GetManifest(self):
     if not self._manifest:
-      self._manifest = _ParseManifestFromApk(self._apk_path)
+      with self._GetBaseApkPath() as base_apk_path:
+        self._manifest = _ParseManifestFromApk(base_apk_path)
     return self._manifest
 
   def _ResolveName(self, name):
@@ -245,8 +386,9 @@ class ApkHelper(object):
     return name
 
   def _ListApkPaths(self):
-    with zipfile.ZipFile(self._apk_path) as z:
-      return z.namelist()
+    with self._GetBaseApkPath() as base_apk_path:
+      with zipfile.ZipFile(base_apk_path) as z:
+        return z.namelist()
 
   def GetAbis(self):
     """Returns a list of ABIs in the apk (empty list if no native code)."""
@@ -257,10 +399,10 @@ class ApkHelper(object):
       if len(path_tokens) >= 2 and path_tokens[0] == 'lib':
         libs.add(path_tokens[1])
     lib_to_abi = {
-        'armeabi-v7a': ['armeabi-v7a', 'arm64-v8a'],
-        'arm64-v8a': ['arm64-v8a'],
-        'x86': ['x86', 'x64'],
-        'x64': ['x64']
+        abis.ARM: [abis.ARM, abis.ARM_64],
+        abis.ARM_64: [abis.ARM_64],
+        abis.X86: [abis.X86, abis.X86_64],
+        abis.X86_64: [abis.X86_64]
     }
     try:
       output = set()
@@ -269,4 +411,197 @@ class ApkHelper(object):
           output.add(abi)
       return sorted(output)
     except KeyError:
-      raise base_error.BaseError('Unexpected ABI in lib/* folder.')
+      raise ApkHelperError('Unexpected ABI in lib/* folder.')
+
+  def GetApkPaths(self,
+                  device,
+                  modules=None,
+                  allow_cached_props=False,
+                  additional_locales=None):
+    """Returns context manager providing list of split APK paths for |device|.
+
+    The paths may be deleted when the context manager exits. Must be implemented
+    by subclasses.
+
+    args:
+      device: The device for which to return split APKs.
+      modules: Extra feature modules to install.
+      allow_cached_props: Allow using cache when querying propery values from
+        |device|.
+    """
+    # pylint: disable=unused-argument
+    raise NotImplementedError()
+
+  @staticmethod
+  def SupportsSplits():
+    return False
+
+
+class ApkHelper(BaseApkHelper):
+  """Represents a single APK Android app."""
+
+  def __init__(self, apk_path):
+    super(ApkHelper, self).__init__()
+    self._apk_path = apk_path
+
+  @property
+  def path(self):
+    return self._apk_path
+
+  def _GetBaseApkPath(self):
+    return _NoopFileHelper(self._apk_path)
+
+  def GetApkPaths(self,
+                  device,
+                  modules=None,
+                  allow_cached_props=False,
+                  additional_locales=None):
+    if modules:
+      raise ApkHelperError('Cannot install modules when installing single APK')
+    return _NoopFileHelper([self._apk_path])
+
+
+class SplitApkHelper(BaseApkHelper):
+  """Represents a multi APK Android app."""
+
+  def __init__(self, base_apk_path, split_apk_paths):
+    super(SplitApkHelper, self).__init__()
+    self._base_apk_path = base_apk_path
+    self._split_apk_paths = split_apk_paths
+
+  @property
+  def path(self):
+    return self._base_apk_path
+
+  @property
+  def split_apk_paths(self):
+    return self._split_apk_paths
+
+  def __repr__(self):
+    return '%s(%s, %s)' % (self.__class__.__name__, self.path,
+                           self.split_apk_paths)
+
+  def _GetBaseApkPath(self):
+    return _NoopFileHelper(self._base_apk_path)
+
+  def GetApkPaths(self,
+                  device,
+                  modules=None,
+                  allow_cached_props=False,
+                  additional_locales=None):
+    if modules:
+      raise ApkHelperError('Cannot install modules when installing single APK')
+    splits = split_select.SelectSplits(
+        device,
+        self.path,
+        self.split_apk_paths,
+        allow_cached_props=allow_cached_props)
+    if len(splits) == 1:
+      _logger.warning('split-select did not select any from %s', splits)
+    return _NoopFileHelper([self._base_apk_path] + splits)
+
+  #override
+  @staticmethod
+  def SupportsSplits():
+    return True
+
+
+class BaseBundleHelper(BaseApkHelper):
+  """Abstract base class representing an Android app bundle."""
+
+  def _GetApksPath(self):
+    """Returns context manager providing path to the bundle's APKS archive.
+
+    Must be implemented by subclasses.
+    """
+    raise NotImplementedError()
+
+  def _GetBaseApkPath(self):
+    try:
+      base_apk_path = tempfile.mkdtemp()
+      with self._GetApksPath() as apks_path:
+        with zipfile.ZipFile(apks_path) as z:
+          base_apks = [s for s in z.namelist() if _BASE_APK_APKS_RE.match(s)]
+          if len(base_apks) < 1:
+            raise ApkHelperError('Cannot find base APK in %s' % self.path)
+          z.extract(base_apks[0], base_apk_path)
+          return _DeleteHelper(
+              os.path.join(base_apk_path, base_apks[0]), base_apk_path)
+    except:
+      shutil.rmtree(base_apk_path)
+      raise
+
+  def GetApkPaths(self,
+                  device,
+                  modules=None,
+                  allow_cached_props=False,
+                  additional_locales=None):
+    locales = [device.GetLocale()]
+    if additional_locales:
+      locales.extend(_SplitLocaleString(l) for l in additional_locales)
+    with self._GetApksPath() as apks_path:
+      try:
+        split_dir = tempfile.mkdtemp()
+        # TODO(tiborg): Support all locales.
+        bundletool.ExtractApks(split_dir, apks_path,
+                               device.product_cpu_abis, locales,
+                               device.GetFeatures(), device.pixel_density,
+                               device.build_version_sdk, modules)
+        splits = [os.path.join(split_dir, p) for p in os.listdir(split_dir)]
+        return _DeleteHelper(splits, split_dir)
+      except:
+        shutil.rmtree(split_dir)
+        raise
+
+  #override
+  @staticmethod
+  def SupportsSplits():
+    return True
+
+
+class ApksHelper(BaseBundleHelper):
+  """Represents a bundle's APKS archive."""
+
+  def __init__(self, apks_path):
+    super(ApksHelper, self).__init__()
+    self._apks_path = apks_path
+
+  @property
+  def path(self):
+    return self._apks_path
+
+  def _GetApksPath(self):
+    return _NoopFileHelper(self._apks_path)
+
+
+class BundleScriptHelper(BaseBundleHelper):
+  """Represents a bundle install script."""
+
+  def __init__(self, bundle_script_path):
+    super(BundleScriptHelper, self).__init__()
+    self._bundle_script_path = bundle_script_path
+
+  @property
+  def path(self):
+    return self._bundle_script_path
+
+  def _GetApksPath(self):
+    apks_path = None
+    try:
+      fd, apks_path = tempfile.mkstemp(suffix='.apks')
+      os.close(fd)
+      cmd = [
+          self._bundle_script_path,
+          'build-bundle-apks',
+          '--output-apks',
+          apks_path,
+      ]
+      status, stdout, stderr = cmd_helper.GetCmdStatusOutputAndError(cmd)
+      if status != 0:
+        raise ApkHelperError('Failed running {} with output\n{}\n{}'.format(
+            ' '.join(cmd), stdout, stderr))
+      return _DeleteHelper(apks_path, apks_path)
+    except:
+      if apks_path:
+        os.remove(apks_path)
+      raise

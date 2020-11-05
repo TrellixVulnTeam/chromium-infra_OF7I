@@ -1,7 +1,6 @@
 # Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 """Thread and ThreadGroup that reraise exceptions on the main thread."""
 # pylint: disable=W0212
 
@@ -11,12 +10,15 @@ import threading
 import time
 import traceback
 
+from devil import base_error
 from devil.utils import watchdog_timer
 
 
-class TimeoutError(Exception):
+class TimeoutError(base_error.BaseError):
   """Module-specific timeout exception."""
-  pass
+
+  def __init__(self, message):
+    super(TimeoutError, self).__init__(message)
 
 
 def LogThreadStack(thread, error_log_func=logging.critical):
@@ -67,10 +69,18 @@ class ReraiserThread(threading.Thread):
     self._exc_info = None
     self._thread_group = None
 
-  def ReraiseIfException(self):
-    """Reraise exception if an exception was raised in the thread."""
-    if self._exc_info:
-      raise self._exc_info[0], self._exc_info[1], self._exc_info[2]
+  if sys.version_info < (3, ):
+    # pylint: disable=exec-used
+    exec ('''def ReraiseIfException(self):
+  """Reraise exception if an exception was raised in the thread."""
+  if self._exc_info:
+    raise self._exc_info[0], self._exc_info[1], self._exc_info[2]''')
+  else:
+
+    def ReraiseIfException(self):
+      """Reraise exception if an exception was raised in the thread."""
+      if self._exc_info:
+        raise self._exc_info[1]
 
   def GetReturnValue(self):
     """Reraise exception if present, otherwise get the return value."""

@@ -23,15 +23,20 @@ logger = logging.getLogger(__name__)
 
 class LogcatMonitor(object):
 
-  _RECORD_ITER_TIMEOUT = 0.2
+  _RECORD_ITER_TIMEOUT = 0.01
   _RECORD_THREAD_JOIN_WAIT = 5.0
   _WAIT_TIME = 0.2
   THREADTIME_RE_FORMAT = (
       r'(?P<date>\S*) +(?P<time>\S*) +(?P<proc_id>%s) +(?P<thread_id>%s) +'
       r'(?P<log_level>%s) +(?P<component>%s) *: +(?P<message>%s)$')
 
-  def __init__(self, adb, clear=True, filter_specs=None, output_file=None,
-               transform_func=None):
+  def __init__(self,
+               adb,
+               clear=True,
+               filter_specs=None,
+               output_file=None,
+               transform_func=None,
+               check_error=True):
     """Create a LogcatMonitor instance.
 
     Args:
@@ -41,11 +46,14 @@ class LogcatMonitor(object):
       output_file: File path to save recorded logcat.
       transform_func: An optional unary callable that takes and returns
         a list of lines, possibly transforming them in the process.
+      check_error: Check for and raise an exception on nonzero exit codes
+        from the underlying logcat command.
     """
     if isinstance(adb, adb_wrapper.AdbWrapper):
       self._adb = adb
     else:
       raise ValueError('Unsupported type passed for argument "device"')
+    self._check_error = check_error
     self._clear = clear
     self._filter_specs = filter_specs
     self._output_file = output_file
@@ -60,7 +68,10 @@ class LogcatMonitor(object):
     return self._output_file
 
   @decorators.WithTimeoutAndRetriesDefaults(10, 0)
-  def WaitFor(self, success_regex, failure_regex=None, timeout=None,
+  def WaitFor(self,
+              success_regex,
+              failure_regex=None,
+              timeout=None,
               retries=None):
     """Wait for a matching logcat line or until a timeout occurs.
 
@@ -115,7 +126,11 @@ class LogcatMonitor(object):
         else:
           time.sleep(self._WAIT_TIME)
 
-  def FindAll(self, message_regex, proc_id=None, thread_id=None, log_level=None,
+  def FindAll(self,
+              message_regex,
+              proc_id=None,
+              thread_id=None,
+              log_level=None,
               component=None):
     """Finds all lines in the logcat that match the provided constraints.
 
@@ -150,8 +165,8 @@ class LogcatMonitor(object):
       component = r'[^\s:]+'
     # pylint: disable=protected-access
     threadtime_re = re.compile(
-        type(self).THREADTIME_RE_FORMAT % (
-            proc_id, thread_id, log_level, component, message_regex))
+        type(self).THREADTIME_RE_FORMAT % (proc_id, thread_id, log_level,
+                                           component, message_regex))
 
     with open(self._record_file.name, 'r') as f:
       for line in f:
@@ -165,12 +180,15 @@ class LogcatMonitor(object):
     Function spawns a thread that records logcat to file and will not die
     until |StopRecording| is called.
     """
+
     def record_to_file():
       # Write the log with line buffering so the consumer sees each individual
       # line.
-      for data in self._adb.Logcat(filter_specs=self._filter_specs,
-                                   logcat_format='threadtime',
-                                   iter_timeout=self._RECORD_ITER_TIMEOUT):
+      for data in self._adb.Logcat(
+          filter_specs=self._filter_specs,
+          logcat_format='threadtime',
+          iter_timeout=self._RECORD_ITER_TIMEOUT,
+          check_error=self._check_error):
         if self._stop_recording_event.isSet():
           return
 
@@ -254,8 +272,7 @@ class LogcatMonitor(object):
     """Closes logcat recording file in case |Close| was never called."""
     with self._record_file_lock:
       if self._record_file:
-        logger.warning(
-            'Need to call |Close| on the logcat monitor when done!')
+        logger.warning('Need to call |Close| on the logcat monitor when done!')
         self._record_file.close()
 
   @property
