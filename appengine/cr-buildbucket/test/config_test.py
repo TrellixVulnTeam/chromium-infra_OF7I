@@ -731,6 +731,52 @@ class ConfigTest(testing.AppengineTestCase):
     )
     self.assertEqual(actual, expected)
 
+  def test_builder_flattening_resultdb(self):
+    # pylint: disable=no-value-for-parameter
+    actual = self.flatten_builder_config(
+        '''
+        buckets {
+          name: "bucket"
+          swarming {
+            builders {
+              name: "builder"
+              resultdb {
+                enable: true
+                bq_exports {
+                  project: "proj"
+                  dataset: "dataset"
+                  table: "table"
+                }
+              }
+            }
+          }
+        }
+        '''
+    )
+    expected = text_format.Parse(
+        '''
+        name: "builder"
+        dimensions: "pool:luci.proj.bucket"
+        resultdb {
+          enable: true
+          bq_exports {
+            project: "proj"
+            dataset: "dataset"
+            table: "table"
+          }
+        }
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
+        ''', project_config_pb2.Builder()
+    )
+    self.assertEqual(actual, expected)
+
   @mock.patch('components.config.get_project_configs', autospec=True)
   def test_cron_update_buckets_backfill_experiments(self, get_project_configs):
     infra_experiments_cfg = parse_cfg(

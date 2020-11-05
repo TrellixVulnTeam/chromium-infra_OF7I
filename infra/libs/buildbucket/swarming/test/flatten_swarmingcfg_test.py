@@ -73,6 +73,20 @@ class ProjectCfgTest(unittest.TestCase):
                 name: "build_chromium"
                 path: "out"
               }
+              resultdb {
+                bq_exports {
+                  project: "project"
+                  dataset: "dataset"
+                  table: "table"
+                  test_results {}
+                }
+                bq_exports {
+                  project: "project"
+                  dataset: "dataset"
+                  table: "table2"
+                  test_results {}
+                }
+              }
             }
             builders {
               name: "builder"
@@ -89,6 +103,24 @@ class ProjectCfgTest(unittest.TestCase):
               caches {
                 name: "a"
                 path: "a"
+              }
+              resultdb {
+                bq_exports {
+                  project: "project"
+                  dataset: "dataset"
+                  table: "table"
+                  test_results {
+                    predicate { test_id_regexp: "ninja://.+" }
+                  }
+                }
+              }
+              resultdb {
+                bq_exports {
+                  project: "project"
+                  dataset: "dataset"
+                  table: "table3"
+                  test_results {}
+                }
               }
             }
           }
@@ -122,6 +154,28 @@ class ProjectCfgTest(unittest.TestCase):
         caches {
           name: "git_chromium"
           path: "git_cache"
+        }
+        resultdb {
+          bq_exports {
+            project: "project"
+            dataset: "dataset"
+            table: "table"
+            test_results {
+              predicate { test_id_regexp: "ninja://.+" }
+            }
+          }
+          bq_exports {
+            project: "project"
+            dataset: "dataset"
+            table: "table2"
+            test_results {}
+          }
+          bq_exports {
+            project: "project"
+            dataset: "dataset"
+            table: "table3"
+            test_results {}
+          }
         }
       ''',
     )

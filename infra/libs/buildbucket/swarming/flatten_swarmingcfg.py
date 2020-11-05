@@ -93,6 +93,11 @@ def merge_builder(b1, b2):
     exe = copy.deepcopy(b1.exe)
     _merge_exe(exe, b2.exe)
 
+  resultdb = None
+  if b1.HasField('resultdb') or b2.HasField('resultdb'):
+    resultdb = copy.deepcopy(b1.resultdb)
+    _merge_resultdb(resultdb, b2.resultdb)
+
   b1.MergeFrom(b2)
   b1.dimensions[:] = format_dimensions(dims)
   b1.swarming_tags[:] = sorted(set(b1.swarming_tags))
@@ -109,6 +114,9 @@ def merge_builder(b1, b2):
 
   if exe:
     b1.exe.CopyFrom(exe)
+
+  if resultdb:
+    b1.resultdb.CopyFrom(resultdb)
 
 
 def flatten_builder(builder, defaults, mixins):
@@ -183,3 +191,17 @@ def _merge_properties(p1, p2):
   props = json.loads(p1) if p1 else {}
   props.update(json.loads(p2) if p2 else {})
   return json.dumps(props, sort_keys=True, separators=(',', ":"))
+
+
+def _merge_resultdb(r1, r2):
+  """Merges Builder.ResultDB message r2 into r1."""
+  table_id = lambda exp: (exp.project, exp.dataset, exp.table)
+  existing = {table_id(exp) for exp in r2.bq_exports}
+  indices = [
+    i for i, exp in enumerate(r1.bq_exports)
+    if table_id(exp) in existing
+  ]
+  for i in reversed(indices):
+    del r1.bq_exports[i]
+  r1.MergeFrom(r2)
+  r1.bq_exports.sort(key=table_id)
