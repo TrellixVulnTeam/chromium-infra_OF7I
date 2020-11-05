@@ -261,6 +261,10 @@ def NativePlatforms():
     return [ALL['mac-x64'], ALL['mac-x64-cp38']]
   elif sys.platform == 'win32':
     return [ALL['windows-x86'], ALL['windows-x64'], ALL['windows-x64-py3']]
+  elif sys.platform == 'linux2':
+    # Linux platforms are built with docker, so Linux doesn't support any
+    # platforms natively.
+    return []
   else:
     raise ValueError('Cannot identify native image for %r.' % (sys.platform,))
 

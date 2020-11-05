@@ -17,6 +17,8 @@ from . import source
 from . import util
 from . import build_platform
 
+from .builder import PlatformNotSupported
+
 
 class MissingToolsError(RuntimeError):
   """Raised if required system tools could not be identified."""
@@ -148,6 +150,11 @@ class System(object):
       if plat in native_platforms:
         util.LOGGER.info('Using native platform for [%s].', plat.name)
         dx = dockcross.NativeImage(self, plat)
+      else:
+        raise PlatformNotSupported(
+            ('Platform %r unsupported on host platform %r '
+             '(supported platforms are %r)') %
+            (plat.name, sys.platform, native_platforms))
 
     self._dockcross_images[plat.name] = dx
     return dx
