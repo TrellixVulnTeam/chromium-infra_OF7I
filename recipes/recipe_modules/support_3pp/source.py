@@ -262,12 +262,14 @@ class Manifest(object):  # pragma: no cover
     * path - Dictates where to download the sources to, e.g. checkout dir.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the GitSource.
+    * ext - Extension used for downloading sources.
   """
-  def __init__(self, protocol, source_uri, path, source_hash=None):
+  def __init__(self, protocol, source_uri, path, source_hash=None, ext=None):
     self.protocol = protocol
     self.source_uri = source_uri
     self.path = path
     self.source_hash = source_hash
+    self.ext = ext
 
 
 #### Private stuff
@@ -291,17 +293,20 @@ def _generate_download_manifest(api, spec, checkout_dir,
   if method_name == 'git':
     return Manifest('git', source_method_pb.repo, checkout_dir, source_hash)
 
+  # TODO(akashmukherjee): Add ext to url source proto.
   elif method_name == 'url':
-    return Manifest('url', source_method_pb.download_url, checkout_dir)
+    return Manifest('url', source_method_pb.download_url,
+                    checkout_dir, ext='.tar.gz')
 
   # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
   # scripts will need to be migrated, so that they print download url instead.
   elif method_name == 'script':  # pragma: no cover
     # version is already in env as $_3PP_VERSION
     script = spec.host_dir.join(source_method_pb.name[0])
-    args = map(str, source_method_pb.name[1:])
-    result = run_script(api, script, *args, stdout=api.raw_io.output())
-    return Manifest('url', result.stdout.strip(), checkout_dir)
+    args = map(str, source_method_pb.name[1:]) + ['get_url']
+    result = run_script(api, script, *args, stdout=api.json.output())
+    source_uri, ext = result.stdout['url'], result.stdout['ext']
+    return Manifest('url', source_uri, checkout_dir, ext=ext)
 
   else:  # pragma: no cover
     assert False, 'Unknown source type %r' % (method_name,)
@@ -320,8 +325,9 @@ def _download_source(api, download_manifest):
     api.git.checkout(download_manifest.source_uri,
                      download_manifest.source_hash, download_manifest.path)
   elif download_manifest.protocol == 'url':
+    artifact = 'raw_source' + download_manifest.ext
     api.url.get_file(download_manifest.source_uri,
-                     api.path.join(download_manifest.path, 'raw_source'))
+                     api.path.join(download_manifest.path, artifact))
   else:  # pragma: no cover
     assert False, 'Unknown download protocol  %r' % (protocol,)
 
