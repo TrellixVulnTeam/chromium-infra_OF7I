@@ -29,7 +29,7 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 9
+CURRENT_BUCKET_SCHEMA_VERSION = 10
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 # Names of well-known experiments
