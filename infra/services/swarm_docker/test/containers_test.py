@@ -56,10 +56,10 @@ class FakeContainer(object):
     self.uptime = uptime
     self.swarming_bot_killed = False
 
-  def get_container_uptime(self, now):  # pylint: disable=unused-argument
+  def get_container_uptime(self, _):
     return self.uptime
 
-  def kill_swarming_bot(self):
+  def kill_swarming_bot(self, *_, **__):
     self.swarming_bot_killed = True
 
 
@@ -424,7 +424,9 @@ class TestDockerClient(unittest.TestCase):
         client._get_env('').get('DOCKER_HOST_HOSTNAME'),
         'hostofa_hostofa_hostofa_host')
 
+
 class TestContainer(unittest.TestCase):
+
   def setUp(self):
     self.container_backend = FakeContainerBackend('container1')
     self.container = containers.Container(self.container_backend)
@@ -478,10 +480,36 @@ class TestContainer(unittest.TestCase):
     self.container.kill_swarming_bot()
     self.assertEquals(self.container_backend.exec_inputs[-1], 'kill -15 123')
 
-  def test_kill_swarming_bot_error(self):
+  def test_kill_swarming_bot_error_no_shutdown(self):
+    self.container_backend.attrs = {
+        'State': {
+            'StartedAt': '2000-01-01T00:00:00.0000000000'
+        }
+    }
+    # 1 hour uptime.
+    now = datetime.strptime('2000-01-01T01:00:00.000000',
+                            '%Y-%m-%dT%H:%M:%S.%f')
     self.container_backend.exec_outputs = ['omg failure']
-    self.container.kill_swarming_bot()
-    # Ensure nothing was killed when the bot's pid couldn't be found.
+    self.container.kill_swarming_bot(now=now, max_uptime=60)
+    # Ensure nothing was killed when the bot's pid couldn't be found and its
+    # uptime is much less than max_uptime.
+    self.assertFalse(
+        any('kill -15' in cmd for cmd in self.container_backend.exec_inputs))
+    self.assertFalse(self.container_backend.was_stopped)
+
+  def test_kill_swarming_bot_error_shutdown(self):
+    self.container_backend.attrs = {
+        'State': {
+            'StartedAt': '2000-01-01T00:00:00.0000000000'
+        }
+    }
+    # 12 hour uptime.
+    now = datetime.strptime('2000-01-01T12:00:00.000000',
+                            '%Y-%m-%dT%H:%M:%S.%f')
+    self.container_backend.exec_outputs = ['omg failure']
+    self.container.kill_swarming_bot(now=now, max_uptime=60)
+    # Ensure the container was shutdown when the bot's pid couldn't be found
+    # and its uptime was much larger than max_uptime.
     self.assertFalse(
         any('kill -15' in cmd for cmd in self.container_backend.exec_inputs))
     self.assertTrue(self.container_backend.was_stopped)
@@ -489,9 +517,18 @@ class TestContainer(unittest.TestCase):
   def test_kill_swarming_bot_cant_kill(self):
     def _raise_requests_timeout(**_kwargs):
       raise requests.exceptions.ReadTimeout()
+
+    self.container_backend.attrs = {
+        'State': {
+            'StartedAt': '2000-01-01T00:00:00.0000000000'
+        }
+    }
+    # 1 hour uptime.
+    now = datetime.strptime('2000-01-01T01:00:00.000000',
+                            '%Y-%m-%dT%H:%M:%S.%f')
     self.container_backend.exec_outputs = ['omg failure']
     self.container_backend.stop = _raise_requests_timeout
-    self.container.kill_swarming_bot()
+    self.container.kill_swarming_bot(now=now)
     # Ensure nothing was killed when the bot's pid couldn't be found.
     self.assertFalse(
         any('kill -15' in cmd for cmd in self.container_backend.exec_inputs))
@@ -503,11 +540,20 @@ class TestContainer(unittest.TestCase):
       raise requests.exceptions.ReadTimeout()
     def _raise_docker_api_error(**_kwargs):
       raise docker.errors.APIError('omg error')
+
+    self.container_backend.attrs = {
+        'State': {
+            'StartedAt': '2000-01-01T00:00:00.0000000000'
+        }
+    }
+    # 1 hour uptime.
+    now = datetime.strptime('2000-01-01T01:00:00.000000',
+                            '%Y-%m-%dT%H:%M:%S.%f')
     self.container_backend.exec_outputs = ['omg failure']
     self.container_backend.stop = _raise_requests_timeout
     self.container_backend.remove = _raise_docker_api_error
     with self.assertRaises(containers.FrozenContainerError):
-      self.container.kill_swarming_bot()
+      self.container.kill_swarming_bot(now=now)
     # Ensure nothing was killed when the bot's pid couldn't be found.
     self.assertFalse(
         any('kill -15' in cmd for cmd in self.container_backend.exec_inputs))

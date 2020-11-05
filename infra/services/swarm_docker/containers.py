@@ -203,7 +203,7 @@ class DockerClient(object):
           'Container %s has uptime of %s minutes.', container.name, str(uptime))
       if uptime is not None and uptime > max_uptime:
         try:
-          container.kill_swarming_bot()
+          container.kill_swarming_bot(max_uptime=max_uptime)
         except FrozenContainerError:
           frozen_containers += 1
     if running_containers and frozen_containers == len(running_containers):
@@ -327,7 +327,16 @@ class Container(object):
           self._container.name, output)
       return None
 
-  def kill_swarming_bot(self):
+  def kill_swarming_bot(self, now=None, max_uptime=None):
+    """Shuts down the swarming bot process in the container.
+
+    If the bot can't safely be killed, the container will be stopped instead
+    if its uptime exceeds max_uptime.
+
+    Args:
+      now: datetime.datetime representing 'now'. Passed in mostly for tests.
+      max_uptime: Max uptime to allow for a container.
+    """
     pid = self.get_swarming_bot_pid()
     if pid is not None:
       # The swarming bot process will capture this signal and shut itself
@@ -340,7 +349,14 @@ class Container(object):
       else:
         logging.info('Sent SIGTERM to swarming bot of %s.', self.name)
     else:
-      logging.warning('Unknown bot pid. Stopping container.')
+      now = now or datetime.utcnow()
+      uptime = self.get_container_uptime(now)
+      if max_uptime and uptime <= 2 * max_uptime:
+        logging.warning(
+            'Unknown bot pid. Quitting early since container uptime (%d) is '
+            'within grace period of %d.', uptime, 2 * max_uptime)
+        return
+      logging.error('Unknown bot pid. Stopping container.')
       try:
         self.stop()
       except requests.exceptions.ReadTimeout:
