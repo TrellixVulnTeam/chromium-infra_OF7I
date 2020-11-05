@@ -16,12 +16,6 @@ import (
 
 	context "context"
 
-	proto "github.com/golang/protobuf/proto"
-
-	duration "github.com/golang/protobuf/ptypes/duration"
-
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
-
 	grpc "google.golang.org/grpc"
 
 	codes "google.golang.org/grpc/codes"
@@ -31,6 +25,10 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	reflect "reflect"
 
@@ -43,10 +41,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // OncallRequest contains the name of the rotation of interest.
 type OncallRequest struct {
@@ -274,10 +268,10 @@ type ShiftsRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// start contains the beginning of the time range of interest.
 	// Leaving this field empty will fetch shifts from the beginning of time.
-	Start *timestamp.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	Start *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// end contains the end of the time range of interest.
 	// Leaving this field empty will fetch shift to the end of time.
-	End *timestamp.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	End *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
 }
 
 func (x *ShiftsRequest) Reset() {
@@ -319,14 +313,14 @@ func (x *ShiftsRequest) GetName() string {
 	return ""
 }
 
-func (x *ShiftsRequest) GetStart() *timestamp.Timestamp {
+func (x *ShiftsRequest) GetStart() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Start
 	}
 	return nil
 }
 
-func (x *ShiftsRequest) GetEnd() *timestamp.Timestamp {
+func (x *ShiftsRequest) GetEnd() *timestamppb.Timestamp {
 	if x != nil {
 		return x.End
 	}
@@ -394,10 +388,10 @@ type MigrationInfoRequest struct {
 	// start contains the beginning of the time range of interest.
 	// Leaving this field empty will fetch shifts from the beginning
 	// of time.
-	Start *timestamp.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	Start *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// end contains the end of the time range of interest.
 	// Leaving this field empty will fetch shifts to the end of time.
-	End *timestamp.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	End *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
 }
 
 func (x *MigrationInfoRequest) Reset() {
@@ -439,14 +433,14 @@ func (x *MigrationInfoRequest) GetName() string {
 	return ""
 }
 
-func (x *MigrationInfoRequest) GetStart() *timestamp.Timestamp {
+func (x *MigrationInfoRequest) GetStart() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Start
 	}
 	return nil
 }
 
-func (x *MigrationInfoRequest) GetEnd() *timestamp.Timestamp {
+func (x *MigrationInfoRequest) GetEnd() *timestamppb.Timestamp {
 	if x != nil {
 		return x.End
 	}
@@ -619,9 +613,9 @@ type ShiftConfiguration struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name     string             `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Duration *duration.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
-	Entries  []*ShiftEntry      `protobuf:"bytes,3,rep,name=entries,proto3" json:"entries,omitempty"`
+	Name     string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Duration *durationpb.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	Entries  []*ShiftEntry        `protobuf:"bytes,3,rep,name=entries,proto3" json:"entries,omitempty"`
 }
 
 func (x *ShiftConfiguration) Reset() {
@@ -663,7 +657,7 @@ func (x *ShiftConfiguration) GetName() string {
 	return ""
 }
 
-func (x *ShiftConfiguration) GetDuration() *duration.Duration {
+func (x *ShiftConfiguration) GetDuration() *durationpb.Duration {
 	if x != nil {
 		return x.Duration
 	}
@@ -689,9 +683,9 @@ type ShiftEntry struct {
 	// for this shift.
 	Oncallers []*OnCaller `protobuf:"bytes,2,rep,name=oncallers,proto3" json:"oncallers,omitempty"`
 	// start is the start of this shift.
-	Start *timestamp.Timestamp `protobuf:"bytes,3,opt,name=start,proto3" json:"start,omitempty"`
+	Start *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=start,proto3" json:"start,omitempty"`
 	// end is the end of the shift.
-	End *timestamp.Timestamp `protobuf:"bytes,4,opt,name=end,proto3" json:"end,omitempty"`
+	End *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end,proto3" json:"end,omitempty"`
 	// comment contains an optional comment about this shift.
 	// Eg. Information about a shift swap.
 	Comment string `protobuf:"bytes,5,opt,name=comment,proto3" json:"comment,omitempty"`
@@ -746,14 +740,14 @@ func (x *ShiftEntry) GetOncallers() []*OnCaller {
 	return nil
 }
 
-func (x *ShiftEntry) GetStart() *timestamp.Timestamp {
+func (x *ShiftEntry) GetStart() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Start
 	}
 	return nil
 }
 
-func (x *ShiftEntry) GetEnd() *timestamp.Timestamp {
+func (x *ShiftEntry) GetEnd() *timestamppb.Timestamp {
 	if x != nil {
 		return x.End
 	}
@@ -1300,9 +1294,9 @@ type OOO struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Start   *timestamp.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
-	End     *timestamp.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
-	Comment string               `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	Start   *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	End     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	Comment string                 `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
 }
 
 func (x *OOO) Reset() {
@@ -1337,14 +1331,14 @@ func (*OOO) Descriptor() ([]byte, []int) {
 	return file_infra_appengine_rotang_proto_rotangapi_rotangapi_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *OOO) GetStart() *timestamp.Timestamp {
+func (x *OOO) GetStart() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Start
 	}
 	return nil
 }
 
-func (x *OOO) GetEnd() *timestamp.Timestamp {
+func (x *OOO) GetEnd() *timestamppb.Timestamp {
 	if x != nil {
 		return x.End
 	}
@@ -1678,8 +1672,8 @@ var file_infra_appengine_rotang_proto_rotangapi_rotangapi_proto_goTypes = []inte
 	(*OOO)(nil),                          // 20: rotangapi.OOO
 	(*MakeAllMembersOwnersRequest)(nil),  // 21: rotangapi.MakeAllMembersOwnersRequest
 	(*MakeAllMembersOwnersResponse)(nil), // 22: rotangapi.MakeAllMembersOwnersResponse
-	(*timestamp.Timestamp)(nil),          // 23: google.protobuf.Timestamp
-	(*duration.Duration)(nil),            // 24: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),        // 23: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),          // 24: google.protobuf.Duration
 }
 var file_infra_appengine_rotang_proto_rotangapi_rotangapi_proto_depIdxs = []int32{
 	10, // 0: rotangapi.OncallResponse.shift:type_name -> rotangapi.ShiftEntry

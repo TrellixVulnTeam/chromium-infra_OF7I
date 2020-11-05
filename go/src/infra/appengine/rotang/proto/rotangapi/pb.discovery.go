@@ -3,8 +3,8 @@
 package rotangapi
 
 import (
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	discovery "go.chromium.org/luci/grpc/discovery"
+	"go.chromium.org/luci/grpc/discovery"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 func init() {
@@ -670,7 +670,7 @@ func init() {
 // Will not return nil.
 //
 // Do NOT modify the returned descriptor.
-func FileDescriptorSet() *descriptor.FileDescriptorSet {
+func FileDescriptorSet() *descriptorpb.FileDescriptorSet {
 	// We just need ONE of the service names to look up the FileDescriptorSet.
 	ret, err := discovery.GetDescriptorSet("rotangapi.OncallInfo")
 	if err != nil {
