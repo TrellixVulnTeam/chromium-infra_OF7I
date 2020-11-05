@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package chromeperf.pinpoint;
+
+message Comparison {
+  enum CompareResult {
+    COMPARE_RESULT_UNSPECIFIED = 0;
+
+    // The samples are unlikely to come from the same distribution, and are
+    // therefore likely different. Reject the null hypothesis.
+    DIFFERENT = 1;
+
+    // The samples are unlikely to come from distributions that differ by the
+    // given magnitude. Cannot reject the null hypothesis.
+    SAME = 2;
+
+    // Not enough evidence to reject either hypothesis. We should collect more
+    // data before making a final decision.
+    UNKNOWN = 3;
+  }
+  CompareResult result = 1;
+
+  // The consolidated p-value for the statistical tests used in the
+  // implementation.
+  double p_value = 2;
+
+  // The `alpha` where if the p-value is lower means we can reject the null
+  // hypothesis.
+  double low_threshold = 3;
+
+  // The `alpha` where if the p-value is lower means we need more information to
+  // make a definitive judgement.
+  double high_threshold = 4;
+}
+
