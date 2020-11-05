@@ -8,11 +8,12 @@ import json
 import typing
 
 from google.cloud import datastore
+from google.protobuf import empty_pb2
 from google.protobuf import json_format as proto_json_format
 from google.protobuf import message as proto_message
 
-import chromeperf.pinpoint.models.job as job_module
-import chromeperf.pinpoint.models.task as task_module
+from chromeperf.engine import combinators
+from chromeperf.engine import predicates
 from chromeperf.pinpoint import find_isolate_task_payload_pb2
 from chromeperf.pinpoint import result_reader_payload_pb2
 from chromeperf.pinpoint import test_runner_payload_pb2
@@ -20,17 +21,26 @@ from chromeperf.pinpoint.evaluators import isolate_finder
 from chromeperf.pinpoint.evaluators import result_reader
 from chromeperf.pinpoint.evaluators import test_runner
 from chromeperf.pinpoint.models import repository
-
-_PAYLOAD_TYPE_MAP = {
-    'find_isolate': find_isolate_task_payload_pb2.FindIsolateTaskPayload,
-    'read_value': result_reader_payload_pb2.ResultReaderPayload,
-    'run_test': test_runner_payload_pb2.TestRunnerPayload,
-}
+import chromeperf.engine.evaluator as evaluator_module
+import chromeperf.engine.event as event_module
+import chromeperf.pinpoint.models.job as job_module
+import chromeperf.pinpoint.models.task as task_module
 
 _TASK_MODULE_MAP = {
     'find_isolate': isolate_finder,
     'read_value': result_reader,
     'run_test': test_runner,
+}
+
+_TASK_PAYLOAD_TYPE_MAP = {
+    'find_isolate': find_isolate_task_payload_pb2.FindIsolateTaskPayload,
+    'read_value': result_reader_payload_pb2.ResultReaderPayload,
+    'run_test': test_runner_payload_pb2.TestRunnerPayload,
+}
+
+_EVENT_PAYLOAD_TYPE_MAP = {
+    'build': find_isolate_task_payload_pb2.BuildUpdate,
+    'none': empty_pb2.Empty,
 }
 
 
@@ -61,7 +71,7 @@ def _from_dict(client, kind, d):
             raise NotImplementedError('Only support typing.List')
 
         if issubclass(kind, proto_message.Message):
-            return proto_json_format.Parse(json.dumps(d))
+            return proto_json_format.ParseDict(d, kind())
         return d
     except FromDictError:
         raise
@@ -77,9 +87,9 @@ def _task_entity_to_dict(task_entity: datastore.entity.Entity):
         d.id_or_name for d in task_dict['dependencies']
     ]
     try:
-        if task_dict['task_type'] in _PAYLOAD_TYPE_MAP:
+        if task_dict['task_type'] in _TASK_PAYLOAD_TYPE_MAP:
             payload = task_dict['payload']
-            proto_type = _PAYLOAD_TYPE_MAP[task_dict['task_type']]
+            proto_type = _TASK_PAYLOAD_TYPE_MAP[task_dict['task_type']]
             result = proto_type()
             if not payload.Unpack(result):
                 raise TypeError(
@@ -90,15 +100,22 @@ def _task_entity_to_dict(task_entity: datastore.entity.Entity):
                 result, including_default_value_fields=True)
     except Exception as e:
         task_dict['payload'] = proto_json_format.MessageToDict(
-            task_dict['payload'])
+            task_dict['payload'], including_default_value_fields=True)
         task_dict['payload_decode_error'] = str(e)
     return task_dict
+
+
+def _task_context_to_dict(context):
+    d = dataclasses.asdict(context)
+    d['payload'] = proto_json_format.MessageToDict(
+        d['payload'], including_default_value_fields=True)
+    return d
 
 
 def create_app(client: datastore.Client = datastore.Client()):
     app = flask.Flask(__name__)
 
-    @app.route("/debug/jobs/<job_id>", methods=['GET', 'POST'])
+    @app.route("/debug/jobs/<job_id>", methods=['GET', 'POST', 'PATCH'])
     def job(job_id):  # pylint: disable=unused-variable
         job_key = client.key('Job', job_id)
 
@@ -108,10 +125,19 @@ def create_app(client: datastore.Client = datastore.Client()):
                 tasks = [_task_entity_to_dict(t) for t in entities]
             return flask.jsonify(tasks)
 
+        @dataclasses.dataclass
+        class JobPostRequest:
+            type: str
+            options: dict
+
         if flask.request.method == 'POST':
-            req = flask.request.get_json()
-            mod = _TASK_MODULE_MAP[req['type']]
-            options = _from_dict(client, mod.TaskOptions, req['options'])
+            req = _from_dict(
+                client,
+                JobPostRequest,
+                flask.request.get_json(),
+            )
+            mod = _TASK_MODULE_MAP[req.type]
+            options = _from_dict(client, mod.TaskOptions, req.options)
             graph = mod.create_graph(options)
             job = job_module.Job(
                 key=job_key,
@@ -122,7 +148,48 @@ def create_app(client: datastore.Client = datastore.Client()):
             task_module.populate_task_graph(client, job, graph)
             return flask.jsonify({})
 
-    @app.route("/debug/jobs/<job_id>/tasks/<task_id>")
+        @dataclasses.dataclass
+        class JobUpdateEvent:
+            type: str
+            payload_type: str
+            payload: dict
+            target_task: typing.Optional[str] = None
+
+        @dataclasses.dataclass
+        class JobUpdateRequest:
+            evaluator: str
+            event: JobUpdateEvent
+
+        if flask.request.method == 'PATCH':
+            job = job_module.Job(
+                key=job_key,
+                user='test-user@example.com',
+                url='https://pinpoint.service/job',
+            )
+            req = _from_dict(
+                client,
+                JobUpdateRequest,
+                flask.request.get_json(),
+            )
+            evaluator = _TASK_MODULE_MAP[req.evaluator].Evaluator
+            proto_type = _EVENT_PAYLOAD_TYPE_MAP[req.event.payload_type]
+            context = evaluator_module.evaluate_graph(
+                event_module.build_event(
+                    type=req.event.type,
+                    target_task=req.event.target_task,
+                    payload=proto_json_format.ParseDict(
+                        req.event.payload,
+                        proto_type(),
+                    ),
+                ),
+                evaluator(job, client),
+                task_module.task_graph_loader(client, job),
+            )
+            return flask.jsonify(
+                {k: _task_context_to_dict(v)
+                 for k, v in context.items()})
+
+    @app.route("/debug/jobs/<job_id>/tasks/<task_id>", methods=['GET'])
     def task(job_id, task_id):  # pylint: disable=unused-variable
         job_key = client.key('Job', job_id)
         entity = client.get(client.key('Task', task_id, parent=job_key))

@@ -96,3 +96,104 @@ def test_Post_Test_Runner_Job(test_client, mocker):
         'status': 'pending',
         'task_type': 'run_test'
     } for i in range(10)]
+
+
+def test_Update_Test_Runner_Job(test_client, mocker):
+    ret = test_client.post(
+        '/debug/jobs/test_job_123',
+        json={
+            'type': 'run_test',
+            'options': {
+                'build_options': {
+                    'builder': 'Some Builder',
+                    'target': 'telemetry_perf_tests',
+                    'bucket': 'luci.bucket',
+                    'change': {
+                        'commits': [{
+                            'repository': {
+                                'name': 'chromium',
+                            },
+                            'git_hash': 'aaaaaaa',
+                        }],
+                    },
+                },
+                'swarming_server': 'some_server',
+                'dimensions': [{
+                    'key': 'pool',
+                    'value': 'Chrome-perf-pinpoint'
+                }],
+                'extra_args': [],
+                'attempts': 10,
+            },
+        },
+    )
+    assert ret.status_code == 200
+
+    ret = test_client.patch(
+        '/debug/jobs/test_job_123',
+        json={
+            'evaluator': 'run_test',
+            'event': {
+                'type': 'initiate',
+                'payload_type': 'none',
+                'payload': {},
+            }
+        },
+    )
+    assert ret.status_code == 200
+    res = {
+        'find_isolate_chromium@aaaaaaa': {
+            'payload': {
+                '@type':
+                'type.googleapis.com/chromeperf.pinpoint.FindIsolateTaskPayload',
+                'bucket': 'luci.bucket',
+                'builder': 'Some Builder',
+                'change': {
+                    'commits': [{
+                        'gitHash': 'aaaaaaa',
+                        'repository': 'chromium'
+                    }]
+                },
+                'errors': [],
+                'isolateHash': '',
+                'isolateServer': '',
+                'target': 'telemetry_perf_tests',
+                'tries': 0
+            },
+            'state': 'pending'
+        }
+    }
+    res.update({
+        f'run_test_chromium@aaaaaaa_{i}': {
+            'payload': {
+                '@type':
+                'type.googleapis.com/chromeperf.pinpoint.TestRunnerPayload',
+                'errors': [],
+                'index': i,
+                'input': {
+                    'change': {
+                        'commits': [{
+                            'gitHash': 'aaaaaaa',
+                            'repository': 'chromium'
+                        }]
+                    },
+                    'dimensions': [{
+                        'key': 'pool',
+                        'value': 'Chrome-perf-pinpoint'
+                    }],
+                    'executionTimeoutSecs':
+                    '',
+                    'expirationSecs':
+                    '',
+                    'extraArgs': [],
+                    'ioTimeoutSecs':
+                    '',
+                    'swarmingServer':
+                    'some_server'
+                }
+            },
+            'state': 'pending'
+        }
+        for i in range(10)
+    })
+    assert ret.get_json() == res
