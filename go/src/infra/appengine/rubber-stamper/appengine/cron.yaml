@@ -1,0 +1,4 @@
+cron:
+- description: "Schedule tasks for CL to be reviewed"
+  url: /_cron/scheduler
+  schedule: every 1 minutes
