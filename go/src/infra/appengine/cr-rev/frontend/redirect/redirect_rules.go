@@ -16,7 +16,6 @@ import (
 	"regexp"
 	"strconv"
 
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
@@ -27,12 +26,12 @@ var diffFullHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(\.{2,3})([[:xdi
 var diffShortHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{6,39})(\.{2,3})([[:xdigit:]]{6,40})`)
 
 // List of valid positions refs for numberRedirectRule
-var chromiumPositionRefs = stringset.Set{
-	"refs/heads/main":                         struct{}{},
-	"refs/heads/master":                       struct{}{},
-	"svn://svn.chromium.org/chrome":           struct{}{},
-	"svn://svn.chromium.org/chrome/trunk":     struct{}{},
-	"svn://svn.chromium.org/chrome/trunk/src": struct{}{},
+var chromiumPositionRefs = []string{
+	"refs/heads/main",
+	"refs/heads/master",
+	"svn://svn.chromium.org/chrome",
+	"svn://svn.chromium.org/chrome/trunk",
+	"svn://svn.chromium.org/chrome/trunk/src",
 }
 
 type redirectRule interface {
@@ -60,31 +59,38 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 		return "", nil, err
 	}
 
-	commits := []*models.Commit{}
-	q := datastore.NewQuery("Commit").
-		Eq("PositionNumber", id).
-		Eq("Host", "chromium").
-		Eq("Repository", "chromium/src")
+	queries := make([]*datastore.Query, len(chromiumPositionRefs))
+	for i, ref := range chromiumPositionRefs {
+		queries[i] = datastore.NewQuery("Commit").
+			Eq("PositionNumber", id).
+			Eq("Host", "chromium").
+			Eq("Repository", "chromium/src").
+			Eq("PositionRef", ref)
+	}
 
-	err = datastore.GetAll(ctx, q, &commits)
+	var commit *models.Commit
+	err = datastore.RunMulti(ctx, queries, func(c *models.Commit) {
+		if commit != nil {
+			return
+		}
+		commit = c
+	})
 	if err != nil {
 		return "", nil, err
 	}
-
-	for _, commit := range commits {
-		if chromiumPositionRefs.Has(commit.PositionRef) {
-			path := ""
-			if len(result) == 3 {
-				path = result[2]
-			}
-			url, err = r.gitRedirect.Commit(*commit, path)
-			if err != nil {
-				return "", nil, err
-			}
-			return url, commit, nil
-		}
+	if commit == nil {
+		return "", nil, ErrNoMatch
 	}
-	return "", nil, ErrNoMatch
+
+	path := ""
+	if len(result) == 3 {
+		path = result[2]
+	}
+	url, err = r.gitRedirect.Commit(*commit, path)
+	if err != nil {
+		return "", nil, err
+	}
+	return url, commit, nil
 }
 
 // fullCommitHashRule finds a commit across all indexed repositories and, if
