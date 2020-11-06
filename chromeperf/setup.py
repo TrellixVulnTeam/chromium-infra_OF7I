@@ -9,6 +9,7 @@ setup(
     package_dir={'': 'src'},
     install_requires=[
         'attrs>=20.1.0',
+        'apache-beam[gcp]>=2.25.0'
         'cachetools>=4.1.1',
         'certifi>=2020.6.20',
         'chardet>=3.0.4',
@@ -21,7 +22,7 @@ setup(
         'google-cloud-datastore>=1.5.0',
         'googleapis-common-protos>=1.52.0',
         'grpcio>=1.31.0',
-        'httplib2>=0.18.1',
+        'httplib2<0.18.0',
         'idna>=2.10',
         'iniconfig>=1.0.1',
         'more-itertools>=8.5.0',
