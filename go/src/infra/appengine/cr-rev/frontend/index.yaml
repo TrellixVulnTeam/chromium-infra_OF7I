@@ -1,4 +1,10 @@
 indexes:
+- kind: Commit
+  properties:
+  - name: PositionNumber
+  - name: Repository
+  - name: PositionRef
+  - name: Host
 
 # LEGACY
 # This is necessary for viewing and debugging the
