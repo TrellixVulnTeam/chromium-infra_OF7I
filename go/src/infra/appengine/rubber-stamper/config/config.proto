@@ -1,0 +1,22 @@
+// Copyright 2020 The Chromium Authors. All Rights Reserved.
+// Use of this source code is governed by the Apache v2.0 license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package rubber_stamper.config;
+
+option go_package = "infra/appengine/rubber-stamper/config";
+
+// Config is the service-wide configuration data for rubber-stamper.
+message Config {
+  // A map stores configs for all the Gerrit hosts, where keys are names of
+  // hosts (e.g. "chromium" or "chrome-internal"), values are corresponding
+  // configs.
+  map<string, HostConfig> host_configs = 1;
+}
+
+// HostConfig describes the config to be used for a Gerrit host.
+message HostConfig {
+  // TODO: Patterns
+}
