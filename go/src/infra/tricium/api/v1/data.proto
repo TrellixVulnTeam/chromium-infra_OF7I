@@ -15,9 +15,9 @@ message Data {
   // see GitFileDetails for field details.
   enum Type {
     NONE = 0;
-    GIT_FILE_DETAILS = 1;
+    GIT_FILE_DETAILS = 1;  // deprecated
     FILES = 2;
-    CLANG_DETAILS = 3;
+    CLANG_DETAILS = 3;  // deprecated
     RESULTS = 4;
   }
 
@@ -46,6 +46,9 @@ message Data {
 
 
   // Details for retrieval of file content from a Git repository.
+  //
+  // In practice this was only used as an input to GitFileDetails,
+  // and is now DEPRECATED.
   //
   // ISOLATED PATH: tricium/data/git_file_details.json
   message GitFileDetails {
@@ -98,7 +101,7 @@ message Data {
 
   // Details needed to replay a clang compilation.
   //
-  // Any included path should correspond to a file in the isolated input.
+  // Note: This was never used in practice, and is DEPRECATED.
   //
   // ISOLATED PATH: tricium/data/clang_details.json
   message ClangDetails {

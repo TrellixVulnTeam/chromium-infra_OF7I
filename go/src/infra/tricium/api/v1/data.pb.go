@@ -186,6 +186,9 @@ func (m *Data_TypeDetails) GetIsPlatformSpecific() bool {
 
 // Details for retrieval of file content from a Git repository.
 //
+// In practice this was only used as an input to GitFileDetails,
+// and is now DEPRECATED.
+//
 // ISOLATED PATH: tricium/data/git_file_details.json
 type Data_GitFileDetails struct {
 	// The platforms this data is tied to encoded as a bitmap.
@@ -391,7 +394,7 @@ func (m *Data_File) GetStatus() Data_Status {
 
 // Details needed to replay a clang compilation.
 //
-// Any included path should correspond to a file in the isolated input.
+// Note: This was never used in practice, and is DEPRECATED.
 //
 // ISOLATED PATH: tricium/data/clang_details.json
 type Data_ClangDetails struct {

@@ -51,21 +51,9 @@ Available functions are in [functions](../functions) directory.
 If you are just enabling a new project with existing Analyzers, then you don't
 need to edit the service config, which mostly contains the Analyzer definitions.
 
-If you are adding a new Analyzer to be used across multiple projects, the
-definition should go in the service config (which is in an internal location,
-please contact tricium-dev@google.com).
-
-### Enabling the Tricium Gerrit Plugin for a Gerrit Instance
-
-If your project uses a Gerrit instance that already has Tricium enabled (e.g.
-chromium) then you don't need to do anything here.
-
-To enable the Tricium plugin for a new Gerrit instance, make a change in
-[refs/meta/config](https://gerrit-review.googlesource.com/Documentation/config-project-config.html#_the_refs_meta_config_namespace).
-
-Depending on the configuration of the repository, you may be able to do this in
-a similar way as above, except using origin/refs/meta/config as the upstream
-instead of origin/infra/config.
+If you are adding a new Analyzer to be used across multiple projects, you
+should add it to the [tricium recipe
+module](https://source.chromium.org/chromium/infra/infra/+/master:recipes-py/recipe_modules/tricium/api.py).
 
 ## Analyzer Development
 
