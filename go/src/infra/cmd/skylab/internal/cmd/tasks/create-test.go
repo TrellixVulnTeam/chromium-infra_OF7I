@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
@@ -101,7 +102,8 @@ func (c *createTestRun) innerRunBB(a subcommands.Application, args []string, env
 	if err != nil {
 		return err
 	}
-	buildID, err := client.ScheduleLegacyBuild(ctx, req, c.buildTags())
+	m := map[string]*test_platform.Request{"default": req}
+	buildID, err := client.ScheduleBuild(ctx, m, c.buildTags())
 	if err != nil {
 		return err
 	}

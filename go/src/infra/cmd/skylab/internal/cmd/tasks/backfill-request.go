@@ -92,7 +92,7 @@ func (c *backfillRequestRun) innerRun(a subcommands.Application, args []string, 
 	case len(originalBuilds) == 0:
 		return errors.Reason("no matching build found").Err()
 	case len(originalBuilds) > 1:
-		if !c.confirmMultileBuildsOK(a, originalBuilds) {
+		if !c.confirmMultipleBuildsOK(a, originalBuilds) {
 			return nil
 		}
 	default:
@@ -253,7 +253,7 @@ func (c *backfillRequestRun) getFirstWithValidBackfillRequest(bs []*bb.Build) *b
 	return nil
 }
 
-func (c *backfillRequestRun) confirmMultileBuildsOK(a subcommands.Application, builds []*bb.Build) bool {
+func (c *backfillRequestRun) confirmMultipleBuildsOK(a subcommands.Application, builds []*bb.Build) bool {
 	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
 	return prompt(fmt.Sprintf("Found %d builds to backfill. Create requests for them all [y/N]? ", len(builds)))
 }

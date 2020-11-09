@@ -76,25 +76,6 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
-// ScheduleLegacyBuild schedules a new cros_test_platform build.
-//
-// ScheduleLegacyBuild returns the buildbucket build ID for the scheduled build
-// on success.
-// ScheduleLegacyBuild does not wait for the scheduled build to start.
-// ScheduleLegacyBuild uses the old "request" input property.
-func (c *Client) ScheduleLegacyBuild(ctx context.Context, request *test_platform.Request, tags []string) (int64, error) {
-	rs, err := requestToStructPB(request)
-	if err != nil {
-		return -1, err
-	}
-	props := &structpb.Struct{
-		Fields: map[string]*structpb.Value{
-			"request": rs,
-		},
-	}
-	return c.scheduleBuildRaw(ctx, props, tags)
-}
-
 // ScheduleBuild schedules a new cros_test_platform build.
 //
 // ScheduleBuild returns the buildbucket build ID for the scheduled build on
