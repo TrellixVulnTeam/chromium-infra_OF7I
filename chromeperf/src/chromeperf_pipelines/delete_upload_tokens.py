@@ -175,9 +175,6 @@ def main():
     # Run the pipeline!
     result = p.run()
     result.wait_until_finish()
-    for counter in result.metrics().query()['counters']:
-        print(f'Counter: {counter}')
-        print(f'  = {counter.result}')
 
 
 if __name__ == '__main__':
