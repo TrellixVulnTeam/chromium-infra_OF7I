@@ -294,3 +294,20 @@ func (s *DecoratedInventory) ListCrosDevicesLabConfig(ctx context.Context, req *
 	}
 	return
 }
+
+func (s *DecoratedInventory) ListManualRepairRecords(ctx context.Context, req *ListManualRepairRecordsRequest) (rsp *ListManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListManualRepairRecords", rsp, err)
+	}
+	return
+}

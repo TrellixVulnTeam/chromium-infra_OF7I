@@ -853,3 +853,14 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 
 	return getRes, err
 }
+
+// ListManualRepairRecords takes filtering parameters and returns a list of
+// repair records that match the filters.
+//
+// Currently supports filtering on:
+// - hostname
+// - asset tag
+// - limit (number of records)
+func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req *api.ListManualRepairRecordsRequest) (rsp *api.ListManualRepairRecordsResponse, err error) {
+	return nil, nil
+}

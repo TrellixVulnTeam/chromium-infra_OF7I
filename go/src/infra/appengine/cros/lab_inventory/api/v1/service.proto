@@ -71,6 +71,10 @@ service Inventory {
 
   // ListCrosDevicesLabConfig lists the lab configs of all devices saved in Inventor v2.
   rpc ListCrosDevicesLabConfig(ListCrosDevicesLabConfigRequest) returns (ListCrosDevicesLabConfigResponse);
+
+  // ListManualRepairRecords lists repair records based on filters passed in the
+  // request.
+  rpc ListManualRepairRecords(ListManualRepairRecordsRequest) returns (ListManualRepairRecordsResponse);
 }
 
 message ListCrosDevicesLabConfigRequest {
@@ -279,3 +283,13 @@ message UpdateDeviceManualRepairRecordRequest {
 }
 
 message UpdateDeviceManualRepairRecordResponse {}
+
+message ListManualRepairRecordsRequest {
+  string hostname = 1;
+  string asset_tag = 2;
+  int32 limit = 3;
+}
+
+message ListManualRepairRecordsResponse {
+  repeated inventory.libs.protos.DeviceManualRepairRecord repair_records = 1;
+}
