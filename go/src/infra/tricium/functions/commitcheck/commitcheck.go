@@ -22,10 +22,10 @@ func main() {
 		log.Panicf("Unexpected argument")
 	}
 
-	// Read Tricium input GIT_FILE_DETAILS data.
-	input := &tricium.Data_GitFileDetails{}
+	// Read Tricium input FILES data.
+	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Panicf("Failed to read GIT_FILE_DETAILS data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 
 	results := &tricium.Data_Results{}
