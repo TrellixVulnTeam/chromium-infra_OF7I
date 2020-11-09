@@ -7,14 +7,20 @@ package main
 import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/rubber-stamper/cron"
 )
 
 func main() {
-	server.Main(nil, nil, func(srv *server.Server) error {
+	modules := []module.Module{
+		cfgmodule.NewModuleFromFlags(),
+	}
+
+	server.Main(nil, modules, func(srv *server.Server) error {
 		basemw := router.NewMiddlewareChain()
 
 		srv.Routes.GET("/hello-world", router.MiddlewareChain{}, func(c *router.Context) {
@@ -24,6 +30,10 @@ func main() {
 
 		srv.Routes.GET("/_cron/scheduler", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
 			cron.ScheduleReviews(c)
+		})
+
+		srv.Routes.GET("/_cron/update-config", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
+			cron.UpdateConfig(c)
 		})
 
 		return nil
