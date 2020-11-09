@@ -105,7 +105,7 @@
    },
   "//components/send_tab_to_self/proto:send_tab_to_self_proto_gen" : {
     "outputs" : ["not inspected"],
-    "args" : ["main.proto", "--protoc", "./clang_x64/protoc", "--proto-in-dir", "../../", "--cc-out-dir", "gen/", "--py-out-dir", "pyproto/"],
+    "args" : ["../../tools/protoc_wrapper/protoc_wrapper.py", "main.proto", "--protoc", "./clang_x64/protoc", "--proto-in-dir", "../../", "--cc-out-dir", "gen/", "--py-out-dir", "pyproto/"],
     "toolchain" : "//build/toolchain/android:android_clang_arm",
     "visibility" : ["//proto:main"],
     "testonly" : false,
@@ -113,7 +113,7 @@
     "public" : "*",
     "metadata" : {},
     "sources" : ["//main.proto"],
-    "script" : "//tools/protoc_wrapper/protoc_wrapper.py",
+    "script" : "//build/util/python2_action.py",
     "deps" : ["//third_party/protobuf:protoc(//build/toolchain/linux:clang_x64)"],
     "inputs" : ["//out/android-Debug/clang_x64/protoc"]
   }
