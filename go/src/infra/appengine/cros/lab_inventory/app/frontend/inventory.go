@@ -862,5 +862,25 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 // - asset tag
 // - limit (number of records)
 func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req *api.ListManualRepairRecordsRequest) (rsp *api.ListManualRepairRecordsResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	propFilter := map[string]string{
+		"hostname":  req.Hostname,
+		"asset_tag": req.AssetTag,
+	}
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+	if err != nil {
+		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	var repairRecords []*invlibs.DeviceManualRepairRecord
+	for _, r := range getRes {
+		repairRecords = append(repairRecords, r.Record)
+	}
+
+	return &api.ListManualRepairRecordsResponse{
+		RepairRecords: repairRecords,
+	}, err
 }

@@ -1624,3 +1624,51 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 		})
 	})
 }
+
+func TestListManualRepairRecords(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1, true)
+	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 2, false)
+	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-222", 3, false)
+	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3}
+
+	// Set up records in datastore
+	datastore.AddDeviceManualRepairRecords(ctx, records)
+
+	Convey("Test list device manual repair records", t, func() {
+		Convey("List records using hostname and asset tag", func() {
+			req := &api.ListManualRepairRecordsRequest{
+				Hostname: "chromeos-getRecords-aa",
+				AssetTag: "getRecords-111",
+			}
+			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp.RepairRecords, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 2)
+			So(resp.RepairRecords[0].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
+			So(resp.RepairRecords[0].GetAssetTag(), ShouldEqual, "getRecords-111")
+			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
+			So(resp.RepairRecords[1].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
+			So(resp.RepairRecords[1].GetAssetTag(), ShouldEqual, "getRecords-111")
+			So(resp.RepairRecords[1].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+		})
+		Convey("List records that do not exist", func() {
+			req := &api.ListManualRepairRecordsRequest{
+				Hostname: "chromeos-getRecords-bb",
+				AssetTag: "getRecords-111",
+			}
+			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 0)
+		})
+	})
+}
