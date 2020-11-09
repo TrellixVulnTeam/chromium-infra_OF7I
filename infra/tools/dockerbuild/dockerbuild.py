@@ -7,7 +7,6 @@ import distutils.version
 import os
 import re
 import sys
-import time
 
 from . import dockcross
 from . import markdown
@@ -386,12 +385,6 @@ def run(args):
       native_python=args.native_python,
       upload_sources=args.upload_sources,
       force_source_download=args.force_source_download)
-
-  # TODO: Remove this debug stuff.
-  if sys.platform == 'win32':
-    util.LOGGER.info('Sleeping for 5s in run()...')
-    time.sleep(5)
-    util.LOGGER.info('Done sleeping.')
 
   rc = args.func(args, system)
   if system.repo.missing_sources:
