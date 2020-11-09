@@ -49,6 +49,12 @@ func TestDefaultGitRetryRegexps(t *testing.T) {
 			`fatal: expected wanted-ref, got '0176ERR RESOURCE_EXHAUSTED: Resource has been exhausted (e.g. check quota).'`,
 			`fatal: fetch-pack: protocol error: bad band #48`,
 			`error: RPC failed; HTTP 400 curl 22 The requested URL returned error: 400`,
+			`fatal: fetch-pack: fetch failed`,
+			`fatal: fetch-pack: unable to spawn http-fetch`,
+			`fatal: fetch-pack: expected keep then TAB at start of http-fetch output`,
+			`fatal: fetch-pack: expected hash then LF at end of http-fetch output`,
+			`fatal: fetch-pack: unable to finish http-fetch`,
+			`fatal: fetch-pack: pack downloaded from $URI does not match expected hash $HASH`,
 		} {
 			Convey(fmt.Sprintf(`Matches line: %q`, line), func() {
 				So(DefaultGitRetryRegexp.MatchString(line), ShouldBeTrue)

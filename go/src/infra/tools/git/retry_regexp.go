@@ -92,6 +92,14 @@ var defaultGitRetryRegexpSource = []string{
 
 	// b/170222146
 	`The requested URL returned error: 400`,
+
+	// fxbug.dev/63100
+	`fetch-pack: fetch failed`,
+	`fetch-pack: unable to spawn http-fetch`,
+	`fetch-pack: expected keep then TAB at start of http-fetch output`,
+	`fetch-pack: expected hash then LF at end of http-fetch output`,
+	`fetch-pack: unable to finish http-fetch`,
+	`fetch-pack: pack downloaded from .* does not match expected hash .*`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
