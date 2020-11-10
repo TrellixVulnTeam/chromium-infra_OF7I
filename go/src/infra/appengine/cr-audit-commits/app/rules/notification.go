@@ -107,7 +107,7 @@ func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefCo
 		}
 		bug, success := GetToken(ctx, "BugNumber", result.MetaData)
 		if state == "" {
-			// Comment on the bug if any. If not, file a new bug.
+			// Comment on the bug if any.
 			if success {
 				bugID, _ := strconv.Atoi(bug)
 				err := postComment(ctx, cfg, int32(bugID), resultText(cfg, rc, true), cs, labels)
@@ -116,14 +116,7 @@ func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefCo
 				}
 				return fmt.Sprintf("Comment posted on BUG=%d", int32(bugID)), nil
 			}
-			labelsWithOs := append(labels, "OS-Windows", "OS-Mac", "OS-Linux", "OS-Android", "OS-iOS", "OS-Chrome")
-			c := CommentOrFileMonorailIssue{
-				&cpb.CommentOrFileMonorailIssue{
-					Components: f.Components,
-					Labels:     labelsWithOs,
-				},
-			}
-			return c.Notify(ctx, cfg, rc, cs, state)
+			return "Unable to update bug", nil
 		}
 	}
 	return "No violation found", nil
