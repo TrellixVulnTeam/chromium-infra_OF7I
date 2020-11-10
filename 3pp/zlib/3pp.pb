@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/zlib"
-      default_version: "1.2.11"
-      original_download_url: "https://zlib.net/"
+    url {
+      download_url: "https://zlib.net/zlib-1.2.11.tar.gz"
+      version: "1.2.11"
     }
     unpack_archive: true
   }
