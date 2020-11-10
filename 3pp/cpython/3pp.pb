@@ -7,10 +7,10 @@ create {
   platform_re: "linux-.*|mac-.*"
   source {
     # Python 2 is officially done, and 2.7.18 is the last official release.
-    cipd {
-      pkg: "infra/third_party/source/python"
-      default_version: "2.7.18",
-      original_download_url: "https://www.python.org/downloads/release/python-2718/"
+    url {
+      download_url: "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz"
+      version: "2.7.18",
+      extension: ".tgz"
     }
     unpack_archive: true
     patch_dir: "patches"
