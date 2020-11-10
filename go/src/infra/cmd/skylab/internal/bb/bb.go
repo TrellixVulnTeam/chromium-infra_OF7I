@@ -76,12 +76,12 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
-// ScheduleBuild schedules a new cros_test_platform build.
+// ScheduleCTPBuild schedules a new cros_test_platform build.
 //
-// ScheduleBuild returns the buildbucket build ID for the scheduled build on
+// ScheduleCTPBuild returns the buildbucket build ID for the scheduled build on
 // success.
-// ScheduleBuild does not wait for the scheduled build to start.
-func (c *Client) ScheduleBuild(ctx context.Context, requests map[string]*test_platform.Request, tags []string) (int64, error) {
+// ScheduleCTPBuild does not wait for the scheduled build to start.
+func (c *Client) ScheduleCTPBuild(ctx context.Context, requests map[string]*test_platform.Request, tags []string) (int64, error) {
 	rs, err := requestsToStructPB(requests)
 	if err != nil {
 		return -1, err

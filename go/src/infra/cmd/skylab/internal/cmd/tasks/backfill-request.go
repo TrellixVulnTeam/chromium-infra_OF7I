@@ -277,7 +277,7 @@ func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original
 		bumpPriority(reqs)
 	}
 
-	ID, err := c.bbClient.ScheduleBuild(ctx, reqs, backfillTags(original.Tags, original.ID))
+	ID, err := c.bbClient.ScheduleCTPBuild(ctx, reqs, backfillTags(original.Tags, original.ID))
 	if err != nil {
 		return -1, errors.Annotate(err, "schedule backfill").Err()
 	}

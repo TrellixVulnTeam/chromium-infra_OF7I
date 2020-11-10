@@ -103,7 +103,7 @@ func (c *createTestRun) innerRunBB(a subcommands.Application, args []string, env
 		return err
 	}
 	m := map[string]*test_platform.Request{"default": req}
-	buildID, err := client.ScheduleBuild(ctx, m, c.buildTags())
+	buildID, err := client.ScheduleCTPBuild(ctx, m, c.buildTags())
 	if err != nil {
 		return err
 	}

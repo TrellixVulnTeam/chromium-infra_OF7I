@@ -94,7 +94,7 @@ func (c *createSuiteRun) innerRunBB(ctx context.Context, a subcommands.Applicati
 		return err
 	}
 	m := map[string]*test_platform.Request{"default": req}
-	buildID, err := client.ScheduleBuild(ctx, m, c.buildTags(suiteName))
+	buildID, err := client.ScheduleCTPBuild(ctx, m, c.buildTags(suiteName))
 	if err != nil {
 		return err
 	}
