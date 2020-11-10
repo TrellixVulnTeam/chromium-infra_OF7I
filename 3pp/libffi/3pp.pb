@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/libffi"
-      default_version: "3.2.1"
-      original_download_url: "https://github.com/libffi/libffi/releases"
+    url {
+      download_url: "https://github.com/libffi/libffi/archive/v3.2.1.tar.gz"
+      version: "3.2.1"
     }
     patch_version: "chromium.1"
     unpack_archive: true
