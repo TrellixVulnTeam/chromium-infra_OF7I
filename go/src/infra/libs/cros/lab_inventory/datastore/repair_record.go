@@ -49,13 +49,19 @@ func GetDeviceManualRepairRecords(ctx context.Context, ids []string) []*DeviceMa
 // GetRepairRecordByPropertyName queries DeviceManualRepairRecord entity in the
 // datastore using a map of property names and values. Should return both a
 // Record and an Entity for each Entity in the datastore.
-func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]string) ([]*DeviceManualRepairRecordsOpRes, error) {
+func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]string, limit int32, order []string) ([]*DeviceManualRepairRecordsOpRes, error) {
 	var entities []*DeviceManualRepairRecordEntity
 
 	// Set up query with each property name and value.
 	q := datastore.NewQuery(DeviceManualRepairRecordEntityKind)
 	for pname, pval := range propMap {
 		q = q.Eq(pname, pval)
+	}
+	q = q.Limit(limit)
+
+	// TODO: justinsuen@ Implement ordering with indexes.
+	if len(order) > 0 {
+		logging.Infof(ctx, "Order is not currently used")
 	}
 
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {

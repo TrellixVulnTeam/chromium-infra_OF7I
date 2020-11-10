@@ -1421,7 +1421,7 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Check added record
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-aa")
 			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "n/a")
@@ -1436,13 +1436,13 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 
 			// No record should be added
 			propFilter := map[string]string{"hostname": record2.Hostname}
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 0)
 		})
 		Convey("Add single record to a host with an open record", func() {
 			// Check existing record
 			propFilter := map[string]string{"hostname": record1.Hostname}
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-aa")
 
@@ -1483,7 +1483,7 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Check added record
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-bb")
 			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "mockDutAssetTag-111")
@@ -1497,7 +1497,7 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Asset tag should be uuid generated for dut
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-cc")
 			So(getRes[0].Record.GetAssetTag(), ShouldNotEqual, "")
@@ -1519,7 +1519,7 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Completed time should be same as created
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-ee")
 			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "mockDutAssetTag-222")
@@ -1553,7 +1553,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 	Convey("Test update devices using an non-empty datastore", t, func() {
 		Convey("Update single record with completed repair state", func() {
 			propFilter := map[string]string{"hostname": record1.Hostname}
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			req := &api.UpdateDeviceManualRepairRecordRequest{
 				Id:                 getRes[0].Entity.ID,
 				DeviceRepairRecord: record1Complete,
@@ -1563,7 +1563,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Check updated record
-			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-aa")
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
@@ -1581,7 +1581,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "ID cannot be empty")
 
 			// Check updated record and make sure it is unchanged
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": record2.Hostname})
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": record2.Hostname}, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-bb")
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
@@ -1589,7 +1589,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 		})
 		Convey("Update single record", func() {
 			propFilter := map[string]string{"hostname": record3.Hostname}
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			record3Update.TimeTaken = 20
 			req := &api.UpdateDeviceManualRepairRecordRequest{
 				Id:                 getRes[0].Entity.ID,
@@ -1600,7 +1600,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// Check updated record and make sure fields are changed properly
-			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-cc")
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
@@ -1610,7 +1610,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 		})
 		Convey("Update single non-existent record", func() {
 			propFilter := map[string]string{"hostname": record4.Hostname}
-			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 			So(getRes, ShouldHaveLength, 0)
 
 			req := &api.UpdateDeviceManualRepairRecordRequest{
@@ -1646,6 +1646,7 @@ func TestListManualRepairRecords(t *testing.T) {
 			req := &api.ListManualRepairRecordsRequest{
 				Hostname: "chromeos-getRecords-aa",
 				AssetTag: "getRecords-111",
+				Limit:    5,
 			}
 			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
 
@@ -1659,10 +1660,26 @@ func TestListManualRepairRecords(t *testing.T) {
 			So(resp.RepairRecords[1].GetAssetTag(), ShouldEqual, "getRecords-111")
 			So(resp.RepairRecords[1].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 		})
+		Convey("List records using hostname and asset tag with limit 1", func() {
+			req := &api.ListManualRepairRecordsRequest{
+				Hostname: "chromeos-getRecords-aa",
+				AssetTag: "getRecords-111",
+				Limit:    1,
+			}
+			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp.RepairRecords, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 1)
+			So(resp.RepairRecords[0].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
+			So(resp.RepairRecords[0].GetAssetTag(), ShouldEqual, "getRecords-111")
+			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
+		})
 		Convey("List records that do not exist", func() {
 			req := &api.ListManualRepairRecordsRequest{
 				Hostname: "chromeos-getRecords-bb",
 				AssetTag: "getRecords-111",
+				Limit:    5,
 			}
 			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
 

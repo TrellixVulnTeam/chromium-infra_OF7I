@@ -210,7 +210,7 @@ func TestGetRecordByPropertyName(t *testing.T) {
 	Convey("Get device manual repair record from datastore by property name", t, func() {
 		Convey("Get repair record by Hostname", func() {
 			// Query should return record1, record2, record3
-			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": "chromeos-getByProp-aa"})
+			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": "chromeos-getByProp-aa"}, -1, []string{})
 			So(res, ShouldHaveLength, 3)
 			So(err, ShouldBeNil)
 			for _, r := range res {
@@ -223,9 +223,23 @@ func TestGetRecordByPropertyName(t *testing.T) {
 				So([]string{"getByProp-111", "getByProp-222"}, ShouldContain, r.Record.GetAssetTag())
 			}
 		})
+		Convey("Get repair record by Hostname limit to 1", func() {
+			// Query should return record1
+			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": "chromeos-getByProp-aa"}, 1, []string{})
+			So(res, ShouldHaveLength, 1)
+			So(err, ShouldBeNil)
+			r := res[0]
+			So(r.Err, ShouldBeNil)
+			So(r.Entity.Hostname, ShouldEqual, "chromeos-getByProp-aa")
+			So(r.Record.GetHostname(), ShouldEqual, "chromeos-getByProp-aa")
+			So([]string{"STATE_NOT_STARTED", "STATE_COMPLETED"}, ShouldContain, r.Entity.RepairState)
+			So([]string{"STATE_NOT_STARTED", "STATE_COMPLETED"}, ShouldContain, r.Record.GetRepairState().String())
+			So([]string{"getByProp-111", "getByProp-222"}, ShouldContain, r.Entity.AssetTag)
+			So([]string{"getByProp-111", "getByProp-222"}, ShouldContain, r.Record.GetAssetTag())
+		})
 		Convey("Get repair record by AssetTag", func() {
 			// Query should return record1, record2
-			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"asset_tag": "getByProp-111"})
+			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"asset_tag": "getByProp-111"}, -1, []string{})
 			So(res, ShouldHaveLength, 2)
 			So(err, ShouldBeNil)
 			for _, r := range res {
@@ -240,7 +254,7 @@ func TestGetRecordByPropertyName(t *testing.T) {
 		})
 		Convey("Get repair record by RepairState", func() {
 			// Query should return record2
-			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"repair_state": "STATE_COMPLETED"})
+			res, err := GetRepairRecordByPropertyName(ctx, map[string]string{"repair_state": "STATE_COMPLETED"}, -1, []string{})
 			So(res, ShouldHaveLength, 1)
 			So(err, ShouldBeNil)
 			So(res[0].Err, ShouldBeNil)
@@ -257,8 +271,7 @@ func TestGetRecordByPropertyName(t *testing.T) {
 				map[string]string{
 					"hostname":  "chromeos-getByProp-aa",
 					"asset_tag": "getByProp-111",
-				},
-			)
+				}, -1, []string{})
 			So(res, ShouldHaveLength, 2)
 			So(err, ShouldBeNil)
 			for _, r := range res {

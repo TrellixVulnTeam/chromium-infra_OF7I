@@ -715,7 +715,7 @@ func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, 
 		"hostname":     req.Hostname,
 		"repair_state": "STATE_IN_PROGRESS",
 	}
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
 	if err != nil {
 		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
@@ -846,7 +846,7 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{
 		"hostname":     hostname,
 		"repair_state": "STATE_IN_PROGRESS",
-	})
+	}, -1, []string{})
 	if err != nil {
 		return nil, errors.Annotate(err, "Failed to query STATE_IN_PROGRESS host %s", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
@@ -870,7 +870,7 @@ func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req 
 		"hostname":  req.Hostname,
 		"asset_tag": req.AssetTag,
 	}
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, req.Limit, []string{"-update_time"})
 	if err != nil {
 		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
