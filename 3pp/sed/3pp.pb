@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/gnu_sed"
-      default_version: "4.2.2"
-      original_download_url: "https://ftp.gnu.org/gnu/sed/"
+    url {
+      download_url: "https://ftp.gnu.org/gnu/sed/sed-4.2.2.tar.gz"
+      version: "4.2.2"
     }
     unpack_archive: true
   }
