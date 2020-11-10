@@ -1,11 +1,10 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
+    url {
       # libuuid is part of util-linux
-      pkg: "infra/third_party/source/util-linux"
-      default_version: "2.33-rc1"
-      original_download_url: "https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.33/"
+      download_url: "https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-2.33-rc1.tar.gz"
+      version: "2.33-rc1"
     }
     unpack_archive: true
   }
