@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/openssl"
-      default_version: "1.1.1d"
-      original_download_url: "https://www.openssl.org/source/"
+    url {
+      download_url: "https://www.openssl.org/source/openssl-1.1.1d.tar.gz"
+      version: "1.1.1d"
     }
     patch_version: "chromium.1"
     patch_dir: "patches"
