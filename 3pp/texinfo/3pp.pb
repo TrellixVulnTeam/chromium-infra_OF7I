@@ -6,10 +6,9 @@ create {
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/texinfo"
-      default_version: "6.5"
-      original_download_url: "https://ftp.gnu.org/gnu/texinfo/"
+    url {
+      download_url: "https://ftp.gnu.org/gnu/texinfo/texinfo-6.5.tar.gz"
+      version: "6.5"
     }
     unpack_archive: true
   }
