@@ -57,11 +57,13 @@ def do_latest():
       urllib.urlopen(LATEST))['tag_name'][1:]  # e.g. v3.8.0 -> 3.8.0
 
 
+# TODO(akashmukherjee): Remove.
 def fetch(url, outfile):
   print >>sys.stderr, 'fetching %r' % url
   urllib.urlretrieve(url, outfile)
 
 
+# TODO(akashmukherjee): Remove.
 def do_checkout(version, platform, checkout_path):
   if platform not in PROTOC_PLATFORMS:
     raise ValueError('unsupported platform %s' % platform)
@@ -79,6 +81,27 @@ def do_checkout(version, platform, checkout_path):
   raise ValueError('missing release for supported platform %s' % platform)
 
 
+def get_download_url(version, platform):
+  if platform not in PROTOC_PLATFORMS:
+    raise ValueError('unsupported platform %s' % platform)
+  name = 'protoc-%s-%s.zip' % (version, PROTOC_PLATFORMS[platform])
+
+  rsp = json.load(urllib.urlopen(TAGGED_RELEASE % version))
+  actual_tag = rsp['tag_name'][1:]
+  if version != actual_tag:
+    raise ValueError('expected %s, actual is %s' % (version, actual_tag))
+
+  for a in rsp['assets']:
+    if a['name'] == name:
+      partial_manifest = {
+        'url': a['browser_download_url'],
+        'ext': '.zip',
+      }
+      print(json.dumps(partial_manifest))
+      return
+  raise ValueError('missing release for supported platform %s' % platform)
+
+
 def main():
   ap = argparse.ArgumentParser()
   sub = ap.add_subparsers()
@@ -86,12 +109,18 @@ def main():
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
 
+  # TODO(akashmukherjee): Remove.
   checkout = sub.add_parser("checkout")
   checkout.add_argument("checkout_path")
   checkout.set_defaults(
     func=lambda opts: do_checkout(
       os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM'],
       opts.checkout_path))
+
+  download = sub.add_parser("get_url")
+  download.set_defaults(
+    func=lambda opts: get_download_url(
+      os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM']))
 
   opts = ap.parse_args()
   return opts.func(opts)
