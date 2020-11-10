@@ -2,10 +2,9 @@ create {
   platform_re: "linux-.*|mac-.*"
 
   source {
-    cipd {
-      pkg: "infra/third_party/source/automake"
-      default_version: "1.15"
-      original_download_url: "https://ftp.gnu.org/gnu/automake/"
+    url {
+      download_url: "https://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz"
+      version: "1.15"
     }
     unpack_archive: true
     patch_dir: "patches"
