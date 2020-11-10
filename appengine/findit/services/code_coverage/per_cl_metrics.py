@@ -8,54 +8,91 @@ from datetime import timedelta
 
 from google.appengine.ext import ndb
 
+from libs import time_util
 from model.code_coverage import PresubmitCoverageData
+from model.test_location import TestLocation
 from services import bigquery_helper
+from services import test_tag_util
 
 _PAGE_SIZE = 100
 
+# Time period for which coverage report is to fetched and processed
+_NUM_REPORT_DAYS = 7
 
 def ExportPerClCoverageMetrics():
-  """Reads presubmit coverage data from Datastore and exports
-  it to a Bigquery table."""
+  """Exports per CL coverage metrics to Bigquery.
+  
+  Reads presubmit coverage data from Datastore, add few other dimensions to it
+  and exports it to a Bigquery table.
+
+  """
   query = PresubmitCoverageData.query(
       PresubmitCoverageData.update_timestamp >= datetime.now() -
-      timedelta(days=7))
+      timedelta(days=_NUM_REPORT_DAYS))
+  dir_to_component = test_tag_util.GetChromiumDirectoryToComponentMapping()
+  dir_to_team = test_tag_util.GetChromiumDirectoryToTeamMapping()
   total_rows = 0
-  bigquery_rows = []
   more = True
   cursor = None
   while more:
     results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
     for result in results:
-      bigquery_rows.append(_CreateBigqueryRow(result))
-      total_rows += 1
+      bqrow = _CreateBigqueryRow(result, dir_to_component, dir_to_team)
+      if bqrow:
+        bigquery_helper.ReportRowsToBigquery([bqrow], 'findit-for-me',
+                                             'code_coverage_summaries',
+                                             'per_cl_coverage')
+        total_rows += 1
   logging.info('Total patchsets processed = %d', total_rows)
-  bigquery_helper.ReportRowsToBigquery(bigquery_rows, 'findit-for-me',
-                                       'code_coverage_summaries',
-                                       'per_cl_coverage')
 
 
-def _CreateBigqueryRow(coverage_data):
+def _CreateBigqueryRow(coverage_data, dir_to_component, dir_to_team):
   """Create a bigquery row for per cl coverage.
 
-    Returns a dict whose keys are column names and values are column values
-    corresponding to the schema of the bigquery table.
+  Returns a dict whose keys are column names and values are column values
+  corresponding to the schema of the bigquery table.
 
-    Args:
+  Args:
     coverage_data (PresubmitCoverageData): The PresubmitCoverageData fetched
-  from Datastore
-    """
-  incremental_coverage = []
-  for coverage_percentage in coverage_data.incremental_percentages:
-    incremental_coverage.append({
-        'total_lines': coverage_percentage.total_lines,
-        'covered_lines': coverage_percentage.covered_lines,
-        'path': coverage_percentage.path
-    })
+        from Datastore
+    dir_to_component (dict): Mapping from directory to  component
+    dir_to_team (dict): Mapping from directory to team
+  """
+  if not coverage_data.incremental_percentages:
+    return None
+  coverage = []
 
+  for inc_coverage in coverage_data.incremental_percentages:
+    # ignore the leading double slash(//)
+    path = inc_coverage.path[2:]
+    test_location = TestLocation(file_path=path)
+    absolute_coverage = [
+        x for x in coverage_data.absolute_percentages
+        if x.path == inc_coverage.path
+    ][0]
+    coverage.append({
+        'total_lines_incremental':
+            inc_coverage.total_lines,
+        'covered_lines_incremental':
+            inc_coverage.covered_lines,
+        'total_lines_absolute':
+            absolute_coverage.total_lines,
+        'covered_lines_absolute':
+            absolute_coverage.covered_lines,
+        'path':
+            path,
+        'directory':
+            test_tag_util.GetTestDirectoryFromLocation(test_location),
+        'component':
+            test_tag_util.GetTestComponentFromLocation(test_location,
+                                                       dir_to_component),
+        'team':
+            test_tag_util.GetTestTeamFromLocation(test_location, dir_to_team),
+    })
   return {
       'cl_number': coverage_data.cl_patchset.change,
       'cl_patchset': coverage_data.cl_patchset.patchset,
       'server_host': coverage_data.cl_patchset.server_host,
-      'incremental_coverage': incremental_coverage
+      'coverage': coverage,
+      'insert_timestamp': time_util.GetUTCNow().isoformat()
   }
