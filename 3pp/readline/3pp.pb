@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/readline"
-      default_version: "7.0"
-      original_download_url: "https://ftp.gnu.org/gnu/readline/"
+    url {
+      download_url: "https://ftp.gnu.org/gnu/readline/readline-7.0.tar.gz"
+      version: "7.0"
     }
     unpack_archive: true
   }
