@@ -448,4 +448,10 @@ message UrlSource {
   // specified (e.g. as a dep of other packages). This matches the current
   // CIPDSource behavior.
   string version = 2;
+  // Most of the side loaded sources use `.tar.gz` file extension, however
+  // some source artifacts use other. In order to prevent alteration of the
+  // source artifact when we cache sources, we need extension field passed
+  // via the spec.
+  // If not passed, 3pp will use default .tar.gz extension.
+  string extension = 3;
 }

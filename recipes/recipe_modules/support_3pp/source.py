@@ -296,7 +296,7 @@ def _generate_download_manifest(api, spec, checkout_dir,
   # TODO(akashmukherjee): Add ext to url source proto.
   elif method_name == 'url':
     return Manifest('url', source_method_pb.download_url,
-                    checkout_dir, ext='.tar.gz')
+                    checkout_dir, ext=source_method_pb.extension or '.tar.gz')
 
   # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
   # scripts will need to be migrated, so that they print download url instead.
