@@ -1042,6 +1042,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     if (!this.isConnected) return;
 
     store.dispatch(ui.reportDirtyForm(this.formName, this.isDirty));
+
     this.dispatchEvent(new CustomEvent('change', {
       detail: {
         delta: this.delta,

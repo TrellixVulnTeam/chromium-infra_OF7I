@@ -272,19 +272,23 @@ export class MrEditIssue extends connectStore(LitElement) {
    * Dispatches an action against the server to run "issue presubmit", a feature
    * that warns the user about issue changes that violate configured rules.
    * @param {Object} issueDelta Changes currently present in the edit form.
+   * @param {string} commentContent Text the user is inputting for a comment.
    */
-  _presubmitIssue(issueDelta) {
-    if (Object.keys(issueDelta).length) {
+  _presubmitIssue(issueDelta, commentContent) {
+    if (Object.keys(issueDelta).length || commentContent) {
+      // TODO(crbug.com/monorail/8638): Make filter rules actually process
+      // the text for comments on the backend.
       store.dispatch(issueV0.presubmit(this.issueRef, issueDelta));
     }
   }
 
   /**
    * Form change handler that runs presubmit on the form.
-   * @param {Event} evt
+   * @param {CustomEvent} evt
    */
   _onChange(evt) {
-    this._presubmitIssue(evt.detail.delta);
+    const {delta, commentContent} = evt.detail;
+    this._presubmitIssue(delta, commentContent);
   }
 
   /**

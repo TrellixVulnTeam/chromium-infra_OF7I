@@ -185,8 +185,8 @@ describe('mr-edit-issue', () => {
         'issue-update', 'computer-time', 120 * 1000);
   });
 
-  it('presubmits issue on change', async () => {
-    element.issueRef = 'issueRef';
+  it('presubmits issue on metadata change', async () => {
+    element.issueRef = {};
 
     await element.updateComplete;
     const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
@@ -200,8 +200,26 @@ describe('mr-edit-issue', () => {
 
     sinon.assert.calledWith(prpcClient.call, 'monorail.Issues',
         'PresubmitIssue',
-        {issueDelta: {summary: 'Summary'}, issueRef: 'issueRef'});
+        {issueDelta: {summary: 'Summary'}, issueRef: {}});
   });
+
+  it('presubmits issue on comment change', async () => {
+    element.issueRef = {};
+
+    await element.updateComplete;
+    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    editMetadata.dispatchEvent(new CustomEvent('change', {
+      detail: {
+        delta: {},
+        commentContent: 'test',
+      },
+    }));
+
+    sinon.assert.calledWith(prpcClient.call, 'monorail.Issues',
+        'PresubmitIssue',
+        {issueDelta: {}, issueRef: {}});
+  });
+
 
   it('does not presubmit issue when no changes', () => {
     element._presubmitIssue({});
