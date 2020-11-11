@@ -76,6 +76,7 @@ Full documentation http://go/skylab-cli`,
 			internalcmds.ListDroneDuts,
 			internalcmds.PrintBotInfo,
 			internalcmds.WaitTask,
+			internalcmds.DutStableVersion,
 		},
 	}
 }
