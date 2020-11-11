@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"9\n\x11ReportRunsRequest\x12$\n\x04runs\x18\x01 \x03(\x0b\x32\x16.migration.ReportedRun\"1\n\x0bReportedRun\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\"?\n\x18ReportFinishedRunRequest\x12#\n\x03run\x18\x01 \x01(\x0b\x32\x16.migration.ReportedRun2\xa1\x01\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.EmptyB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"9\n\x11ReportRunsRequest\x12$\n\x04runs\x18\x01 \x03(\x0b\x32\x16.migration.ReportedRun\"1\n\x0bReportedRun\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\"?\n\x18ReportFinishedRunRequest\x12#\n\x03run\x18\x01 \x01(\x0b\x32\x16.migration.ReportedRun\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t2\xef\x01\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.Empty\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.EmptyB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2.DESCRIPTOR,])
 
@@ -123,12 +123,52 @@ _REPORTFINISHEDRUNREQUEST = _descriptor.Descriptor(
   serialized_end=325,
 )
 
+
+_REPORTUSEDNETRCREQUEST = _descriptor.Descriptor(
+  name='ReportUsedNetrcRequest',
+  full_name='migration.ReportUsedNetrcRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='gerrit_host', full_name='migration.ReportUsedNetrcRequest.gerrit_host', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='access_token', full_name='migration.ReportUsedNetrcRequest.access_token', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=327,
+  serialized_end=394,
+)
+
 _REPORTRUNSREQUEST.fields_by_name['runs'].message_type = _REPORTEDRUN
 _REPORTEDRUN.fields_by_name['attempt'].message_type = go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2._ATTEMPT
 _REPORTFINISHEDRUNREQUEST.fields_by_name['run'].message_type = _REPORTEDRUN
 DESCRIPTOR.message_types_by_name['ReportRunsRequest'] = _REPORTRUNSREQUEST
 DESCRIPTOR.message_types_by_name['ReportedRun'] = _REPORTEDRUN
 DESCRIPTOR.message_types_by_name['ReportFinishedRunRequest'] = _REPORTFINISHEDRUNREQUEST
+DESCRIPTOR.message_types_by_name['ReportUsedNetrcRequest'] = _REPORTUSEDNETRCREQUEST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 ReportRunsRequest = _reflection.GeneratedProtocolMessageType('ReportRunsRequest', (_message.Message,), {
@@ -152,6 +192,13 @@ ReportFinishedRunRequest = _reflection.GeneratedProtocolMessageType('ReportFinis
   })
 _sym_db.RegisterMessage(ReportFinishedRunRequest)
 
+ReportUsedNetrcRequest = _reflection.GeneratedProtocolMessageType('ReportUsedNetrcRequest', (_message.Message,), {
+  'DESCRIPTOR' : _REPORTUSEDNETRCREQUEST,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
+  # @@protoc_insertion_point(class_scope:migration.ReportUsedNetrcRequest)
+  })
+_sym_db.RegisterMessage(ReportUsedNetrcRequest)
+
 
 DESCRIPTOR._options = None
 
@@ -162,8 +209,8 @@ _MIGRATION = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=328,
-  serialized_end=489,
+  serialized_start=397,
+  serialized_end=636,
   methods=[
   _descriptor.MethodDescriptor(
     name='ReportRuns',
@@ -181,6 +228,16 @@ _MIGRATION = _descriptor.ServiceDescriptor(
     index=1,
     containing_service=None,
     input_type=_REPORTFINISHEDRUNREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='ReportUsedNetrc',
+    full_name='migration.Migration.ReportUsedNetrc',
+    index=2,
+    containing_service=None,
+    input_type=_REPORTUSEDNETRCREQUEST,
     output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
