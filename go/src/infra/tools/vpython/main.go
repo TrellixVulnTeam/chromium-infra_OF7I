@@ -93,6 +93,9 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 		}
 	}
 
+	// Redirect logs from CIPD plugins to our main logger.
+	cipdPackageLoader.Options.PluginsContext = c
+
 	// Determine if we're bypassing "vpython".
 	defaultConfig.Bypass = env.GetEmpty(BypassENV) == BypassSentinel
 	// Determine if we're operating in "vpython3" mode (invoked as ./vpython3, ./vpython3.exe,
