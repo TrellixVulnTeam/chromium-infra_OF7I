@@ -223,6 +223,7 @@ func TestPackageIndexUnix(t *testing.T) {
 				var unitInfo []*zip.File
 				var dataInfo []*zip.File
 				for _, zipInfo := range r.File {
+					So(strings.Contains(zipInfo.Name, "\\"), ShouldBeFalse)
 					if strings.Contains(zipInfo.Name, "pbunits") && zipInfo.Name != "kzip/pbunits/" {
 						unitInfo = append(unitInfo, zipInfo)
 					} else if strings.Contains(zipInfo.Name, "files") && zipInfo.Name != "kzip/files/" {

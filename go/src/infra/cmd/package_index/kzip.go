@@ -198,7 +198,7 @@ func (ip *indexPack) processExistingKzip(ctx context.Context, kzip string, kzipE
 			continue
 		}
 
-		kzipEntryChannel <- kzipEntry{filepath.Join(filesDir, filepath.Base(file.Name)), content}
+		kzipEntryChannel <- kzipEntry{filesDir + filepath.Base(file.Name), content}
 		logging.Debugf(ctx, "Added %s from kzip", file.Name)
 
 		rc.Close()
@@ -223,7 +223,7 @@ func (ip *indexPack) unitFileToKzipEntry(ctx context.Context,
 			return err
 		}
 		kzipEntryChannel <- entry
-		logging.Infof(ctx, "Writing compilation unit file %s", entry.path)
+		logging.Debugf(ctx, "Writing compilation unit file %s", entry.path)
 	}
 
 	return nil
@@ -253,7 +253,7 @@ func (ip *indexPack) dataFileToKzipEntry(ctx context.Context,
 			hash := hex.EncodeToString(hashByte[:])
 
 			if !ip.hashMaps.Add(fname, hash) {
-				warning := fmt.Sprintf("Not including source file: %s", fname)
+				warning := fmt.Sprintf("Not including source file: %s ", fname)
 				otherFname, ok := ip.hashMaps.Filename(hash)
 				if ok {
 					warning += fmt.Sprintf("because it has the same hash as: %s", otherFname)
@@ -262,7 +262,7 @@ func (ip *indexPack) dataFileToKzipEntry(ctx context.Context,
 				continue
 			}
 
-			hashFname := filepath.Join(filesDir, hash)
+			hashFname := filesDir + hash
 			logging.Debugf(ctx, "Including source file %s as %s for compilation", fname, hashFname)
 
 			kzipEntryChannel <- kzipEntry{hashFname, content}
@@ -281,7 +281,7 @@ func indexedCompilationToKzipEntry(indexedCompilationProto *kpb.IndexedCompilati
 		return kzipEntry{}, err
 	}
 	hash := sha256.Sum256(content)
-	path := filepath.Join(unitsDir, hex.EncodeToString(hash[:]))
+	path := unitsDir + hex.EncodeToString(hash[:])
 	return kzipEntry{path, content}, nil
 }
 

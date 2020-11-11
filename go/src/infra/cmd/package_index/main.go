@@ -107,7 +107,7 @@ func main() {
 	}()
 
 	var kzipEntryWg sync.WaitGroup
-	kzipEntryChannel := make(chan kzipEntry, chanSize)
+	kzipEntryChannel := make(chan kzipEntry, 500) // Channel size is reduced for chromiumos builder.
 	kzipSet := NewConcurrentSet(0)
 	kzipEntryWg.Add(1)
 	go func() {
