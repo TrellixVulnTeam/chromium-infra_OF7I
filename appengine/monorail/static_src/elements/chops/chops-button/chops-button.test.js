@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import sinon from 'sinon';
 import {ChopsButton} from './chops-button.js';
 import {auditA11y} from 'shared/test-helpers';
 
@@ -30,35 +29,17 @@ describe('chops-button', () => {
   });
 
   it('chops-button can be disabled', async () => {
+    await element.updateComplete;
+
+    const innerButton = element.shadowRoot.querySelector('button');
+
     assert.isFalse(element.hasAttribute('disabled'));
+    assert.isFalse(innerButton.hasAttribute('disabled'));
 
     element.disabled = true;
     await element.updateComplete;
 
     assert.isTrue(element.hasAttribute('disabled'));
-  });
-
-  it('keypress on element activates click handler', async () => {
-    const clickStub = sinon.stub();
-
-    element.addEventListener('click', clickStub);
-
-    await element.updateComplete;
-
-    element.dispatchEvent(new KeyboardEvent('keypress', {key: 'Enter'}));
-
-    sinon.assert.calledOnce(clickStub);
-  });
-
-  it('keypress on other element does not activate click handler', async () => {
-    const clickStub = sinon.stub();
-
-    element.addEventListener('click', clickStub);
-
-    await element.updateComplete;
-
-    document.dispatchEvent(new KeyboardEvent('keypress', {key: 'Enter'}));
-
-    sinon.assert.notCalled(clickStub);
+    assert.isTrue(innerButton.hasAttribute('disabled'));
   });
 });

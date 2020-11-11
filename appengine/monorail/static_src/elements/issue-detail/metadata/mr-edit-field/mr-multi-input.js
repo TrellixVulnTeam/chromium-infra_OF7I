@@ -44,7 +44,7 @@ export class MrMultiInput extends LitElement {
           * chops-button styles. */
           margin-left: unset;
           font-size: var(--chops-main-font-size);
-          padding: 0 8px;
+          --chops-button-padding: 0 8px;
           text-align: left;
           justify-content: flex-start;
         }

@@ -5,12 +5,6 @@
 import {LitElement, html, css} from 'lit-element';
 
 /**
- * @type {Array<string>} Array of Event.key names that trigger a button.
- */
-const DEFAULT_INPUT_KEYS = ['Enter', 'Space'];
-
-
-/**
  * `<chops-button>` displays a styled button component with a few niceties.
  *
  * @customElement chops-button
@@ -21,9 +15,9 @@ export class ChopsButton extends LitElement {
   static get styles() {
     return css`
       :host {
+        --chops-button-padding: 0.5em 16px;
         background: hsla(0, 0%, 95%, 1);
         margin: 0.25em 4px;
-        padding: 0.5em 16px;
         cursor: pointer;
         border-radius: 3px;
         text-align: center;
@@ -58,12 +52,35 @@ export class ChopsButton extends LitElement {
         pointer-events: none;
         box-shadow: none;
       }
+      button {
+        background: none;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        padding: var(--chops-button-padding);
+        margin: 0;
+        color: inherit;
+        cursor: inherit;
+        text-align: center;
+        font-family: inherit;
+        text-align: inherit;
+        font-weight: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        border-radius: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     `;
   }
+
   /** @override */
   render() {
     return html`
-      <slot></slot>
+      <button ?disabled=${this.disabled}>
+        <slot></slot>
+      </button>
     `;
   }
 
@@ -75,39 +92,11 @@ export class ChopsButton extends LitElement {
         type: Boolean,
         reflect: true,
       },
-      /**
-       * For accessibility. These are the keys that you can use to fire the
-       * onclick event for chops-button. The value is an Array of
-       * JavaScript key input codes, defaulting to space and enter keys.
-       */
-      inputKeys: {
-        type: Array,
-      },
       /** Whether the button should have a shadow or not. */
       raised: {
         type: Boolean,
         value: false,
         reflect: true,
-      },
-      /**
-       * Used for accessibility to state that this component is a button.
-       * Do not override.
-       */
-      role: {
-        type: String,
-        value: 'button',
-        reflect: true,
-      },
-      /**
-       * Causes the button to be focusable for accessbility.
-       * Do not override.
-       */
-      tabindex: {
-        type: Number,
-        reflect: true,
-      },
-      _boundActivateOnKeypress: {
-        type: Object,
       },
     };
   }
@@ -116,30 +105,8 @@ export class ChopsButton extends LitElement {
   constructor() {
     super();
 
+    this.disabled = false;
     this.raised = false;
-    this.tabindex = 0;
-
-    this._boundActivateOnKeypress = this._activateOnKeypress.bind(this);
-  }
-
-  /** @override */
-  connectedCallback() {
-    super.connectedCallback();
-
-    this.addEventListener('keypress', this._boundActivateOnKeypress, true);
-  }
-
-  /**
-   * Implement the native browser behavior where a button can be activated
-   * by a KeyboardEvent. ie: usually Enter and Space.
-   * @param {KeyboardEvent} event
-   */
-  _activateOnKeypress(event) {
-    const keys = this.inputKeys || DEFAULT_INPUT_KEYS;
-    if (keys.includes(event.key)) {
-      this.click();
-      event.preventDefault();
-    }
   }
 }
 customElements.define('chops-button', ChopsButton);

@@ -50,9 +50,12 @@ export const SHARED_STYLES = css`
     font-size: var(--chops-main-font-size);
     background: var(--chops-white);
     border-radius: 6px;
-    padding: 0.25em 8px;
+    --chops-button-padding: 0.25em 8px;
     margin: 0;
     margin-left: auto;
+  }
+  a.button, .button {
+    padding: var(--chops-button-padding);
   }
   chops-button i.material-icons, a.button i.material-icons, .button i.material-icons {
     display: block;
