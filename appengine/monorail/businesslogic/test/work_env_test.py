@@ -3174,21 +3174,31 @@ class WorkEnvTest(unittest.TestCase):
 
     # We expect all issues to have a description comment and the comment(s)
     # added from the ModifyIssues() changes.
-    def CheckComment(issue_id, exp_amendments, exp_amendments_imp):
+    def CheckComment(
+        issue_id, exp_amendments, exp_amendments_imp, imp_comment_content=''):
       (_desc, comment, comment_imp
       ) = self.services.issue.comments_by_iid[issue_id]
       self.assertEqual(comment.amendments, exp_amendments)
       self.assertEqual(comment.content, content)
       self.assertEqual(comment_imp.amendments, exp_amendments_imp)
-      self.assertEqual(comment_imp.content, '')
+      self.assertEqual(comment_imp.content, imp_comment_content)
       return comment, comment_imp
 
     # Merge changes result in the same Amendment shape for merging into and
-    # from.
+    # from. Merged from Comments
+    # (e.g. 'Another issue was merged into the target issue')
+    # get additional comment content to clarify the merge direction.
     comment_merge_a, comment_merge_a_imp = CheckComment(
-        issue_merge_a.issue_id, exp_amendments_merge_a, exp_amendments_merge_a)
+        issue_merge_a.issue_id,
+        exp_amendments_merge_a,
+        exp_amendments_merge_a,
+        imp_comment_content=work_env._MERGED_INTO_COMMENT)
     comment_merge_b, comment_merge_b_imp = CheckComment(
-        issue_merge_b.issue_id, exp_amendments_merge_b, exp_amendments_merge_b)
+        issue_merge_b.issue_id,
+        exp_amendments_merge_b,
+        exp_amendments_merge_b,
+        imp_comment_content=work_env._MERGED_INTO_COMMENT)
+
     comment_block_a, comment_block_a_imp = CheckComment(
         issue_block_a.issue_id, exp_amendments_block_a,
         exp_amendments_block_a_imp)
@@ -3349,38 +3359,53 @@ class WorkEnvTest(unittest.TestCase):
     exp_amendments_empty_imp.append(tracker_bizobj.MakeBlockingAmendment(
         added_refs, [], default_project_name=issue_empty.project_name))
 
-    # An issue impacted by issue_unique.
-    imp_issue = _Issue(789, 11)
-    imp_issue.owner_id = self.user_1.user_id
+    # Issues impacted by issue_unique.
+    imp_issue_a = _Issue(789, 11)
+    imp_issue_a.owner_id = self.user_1.user_id
+    imp_issue_b = _Issue(789, 12)
 
-    exp_imp_issue = copy.deepcopy(imp_issue)
+    exp_imp_issue_a = copy.deepcopy(imp_issue_a)
+    exp_imp_issue_b = copy.deepcopy(imp_issue_b)
 
-    # A main issue with a unique delta and impact on imp_issue.
+    # A main issue with a unique delta and impact on imp_issue_{a|b}.
     issue_unique = _Issue(789, 5)
-    delta_unique = tracker_pb2.IssueDelta(merged_into=imp_issue.issue_id)
+    issue_unique.merged_into = imp_issue_b.issue_id
+    delta_unique = tracker_pb2.IssueDelta(merged_into=imp_issue_a.issue_id)
 
     exp_issue_unique = copy.deepcopy(issue_unique)
-    exp_issue_unique.merged_into = imp_issue.issue_id
-    exp_amendments_unique = [tracker_bizobj.MakeMergedIntoAmendment(
-        [(imp_issue.project_name, imp_issue.local_id)], [],
-        default_project_name=issue_unique.project_name)]
+    exp_issue_unique.merged_into = imp_issue_a.issue_id
+    exp_amendments_unique = [
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [(imp_issue_a.project_name, imp_issue_a.local_id)],
+            [(imp_issue_b.project_name, imp_issue_b.local_id)],
+            default_project_name=issue_unique.project_name)
+    ]
     # We star issue_5 and expect this star to be merged into imp_issue.
     exp_imp_starrer = 444
     self.services.issue_star.SetStar(
         self.cnxn, self.services, None, issue_unique.issue_id,
         exp_imp_starrer, True)
-    exp_amendments_imp = [tracker_bizobj.MakeMergedIntoAmendment(
-        [(issue_unique.project_name, issue_unique.local_id)], [],
-        default_project_name=imp_issue.project_name)]
-    exp_imp_issue.star_count = 1
+    exp_amendments_imp_a = [
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [(issue_unique.project_name, issue_unique.local_id)], [],
+            default_project_name=imp_issue_a.project_name)
+    ]
+    exp_imp_issue_a.star_count = 1
+    exp_amendments_imp_b = [
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [], [(issue_unique.project_name, issue_unique.local_id)],
+            default_project_name=imp_issue_a.project_name)
+    ]
+
 
     # Add a FilterRule for star_count to check filter rules are applied.
     starred_label = 'starry-night'
     self.services.features.TestAddFilterRule(
         789, 'stars=1', add_labels=[starred_label])
-    exp_imp_issue.derived_labels.append(starred_label)
+    exp_imp_issue_a.derived_labels.append(starred_label)
 
-    self.services.issue.TestAddIssue(imp_issue)
+    self.services.issue.TestAddIssue(imp_issue_a)
+    self.services.issue.TestAddIssue(imp_issue_b)
     self.services.issue.TestAddIssue(issue_noop)
     self.services.issue.TestAddIssue(issue_empty)
     self.services.issue.TestAddIssue(issue_shared_a)
@@ -3441,23 +3466,28 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(unique_comment.amendments, exp_amendments_unique)
     self.assertEqual(unique_comment.content, content)
 
-    # imp_issue was only an impacted issue and never a main issue with
+    # imp_issue_{a|b} were only an impacted issue and never main issues with
     # IssueDelta changes. Only one comment with impacted changes should
     # have been added.
-    (_desc, imp_comment
-    ) = self.services.issue.comments_by_iid[imp_issue.issue_id]
-    self.assertEqual(imp_comment.amendments, exp_amendments_imp)
-    self.assertEqual(imp_comment.content, '')
+    (_desc,
+     imp_a_comment) = self.services.issue.comments_by_iid[imp_issue_a.issue_id]
+    self.assertEqual(imp_a_comment.amendments, exp_amendments_imp_a)
+    self.assertEqual(imp_a_comment.content, work_env._MERGED_INTO_COMMENT)
+    (_desc,
+     imp_b_comment) = self.services.issue.comments_by_iid[imp_issue_b.issue_id]
+    self.assertEqual(imp_b_comment.amendments, exp_amendments_imp_b)
+    self.assertEqual(imp_b_comment.content, work_env._MERGED_INTO_COMMENT)
 
     # Check stars correct.
     self.assertEqual(
         [exp_imp_starrer],
-        self.services.issue_star.stars_by_item_id[imp_issue.issue_id])
+        self.services.issue_star.stars_by_item_id[imp_issue_a.issue_id])
 
     # Check issues correct.
     expected_issues = [
-        exp_issue_noop, exp_issue_empty, exp_issue_shared_a,
-        exp_issue_shared_b, exp_issue_unique, exp_imp_issue]
+        exp_issue_noop, exp_issue_empty, exp_issue_shared_a, exp_issue_shared_b,
+        exp_issue_unique, exp_imp_issue_a, exp_imp_issue_b
+    ]
     # Check we successfully updated these in our services layer.
     for exp_issue in expected_issues:
       # All updated issues should have been fetched from DB, skipping cache.
@@ -3513,6 +3543,13 @@ class WorkEnvTest(unittest.TestCase):
             send_email=send_email),
         # Notified as an impacted issue update.
         mock.call(
+            imp_issue_b.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=imp_b_comment.id,
+            send_email=send_email),
+        # Notified as an impacted issue update.
+        mock.call(
             issue_empty.issue_id,
             hostport,
             self.user_1.user_id,
@@ -3520,10 +3557,10 @@ class WorkEnvTest(unittest.TestCase):
             send_email=send_email),
         # Notified as an impacted issue update.
         mock.call(
-            imp_issue.issue_id,
+            imp_issue_a.issue_id,
             hostport,
             self.user_1.user_id,
-            comment_id=imp_comment.id,
+            comment_id=imp_a_comment.id,
             send_email=send_email),
     ]
     fake_notify.assert_has_calls(expected_notify_calls)

@@ -1663,7 +1663,7 @@ class _IssueChangeImpactedIssues():
     if (delta.merged_into == framework_constants.NO_ISSUE_SPECIFIED and
         issue.merged_into):
       self.merged_from_remove[issue.merged_into].append(issue.issue_id)
-    elif delta.merged_into:
+    elif delta.merged_into and issue.merged_into != delta.merged_into:
       self.merged_from_add[delta.merged_into].append(issue.issue_id)
       if issue.merged_into:
         self.merged_from_remove[issue.merged_into].append(issue.issue_id)

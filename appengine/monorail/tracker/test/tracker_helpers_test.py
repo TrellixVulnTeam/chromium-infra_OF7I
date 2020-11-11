@@ -2302,14 +2302,18 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     issue_delta_pairs = []
 
     issue_1 = _Issue('project', 1)
+    issue_1.merged_into = 78906
     delta_1 = tracker_pb2.IssueDelta(
+        merged_into=78905,
         blocked_on_add=[78901, 78902],
         blocked_on_remove=[78903, 78904],
     )
     issue_delta_pairs.append((issue_1, delta_1))
 
     issue_2 = _Issue('project', 2)
+    issue_2.merged_into = 78905
     delta_2 = tracker_pb2.IssueDelta(
+        merged_into=78905,  # This should be ignored.
         blocking_add=[78901, 78902],
         blocking_remove=[78903, 78904],
     )
@@ -2351,11 +2355,15 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
             78904: [issue_2.issue_id]
         })
     self.assertEqual(
-        impacted_issues.merged_from_add, {78901: [issue_3.issue_id]})
+        impacted_issues.merged_from_add, {
+            78901: [issue_3.issue_id],
+            78905: [issue_1.issue_id],
+        })
     self.assertEqual(
         impacted_issues.merged_from_remove, {
             78901: [issue_4.issue_id],
-            78902: [issue_3.issue_id]
+            78902: [issue_3.issue_id],
+            78906: [issue_1.issue_id],
         })
 
   def testApplyImpactedIssueChanges(self):

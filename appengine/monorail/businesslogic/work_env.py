@@ -94,6 +94,13 @@ from proto import user_pb2
 ListResult = collections.namedtuple('ListResult', ['items', 'next_start'])
 # type: (Sequence[Object], Optional[int]) -> None
 
+# Since Amendments for merged into and merged from changes look the same
+# (i.e. "Mergedinto: 4") We add this comment with any amendments that
+# represent changes of issues merged into the target issue.
+_MERGED_INTO_COMMENT = (
+    'Some issues have been merged into'
+    ' or un-merged from this one.')
+
 
 class WorkEnv(object):
 
@@ -2051,9 +2058,17 @@ class WorkEnv(object):
       # ie: when an issue is marked as blockedOn another or similar.
       imp_amendments = changes.imp_amendments_by_iid.get(iid)
       if imp_amendments:
+        content = ''
+        for am in imp_amendments:
+          if am.field is tracker_pb2.FieldID.MERGEDINTO:
+            content = _MERGED_INTO_COMMENT
         impacted_comments_by_iid[iid] = self.services.issue.CreateIssueComment(
-            self.mc.cnxn, issue, self.mc.auth.user_id, '',
-            amendments=imp_amendments, commit=False)
+            self.mc.cnxn,
+            issue,
+            self.mc.auth.user_id,
+            content,
+            amendments=imp_amendments,
+            commit=False)
     issues_to_reindex = set(
         comments_by_iid.keys() + impacted_comments_by_iid.keys())
     if issues_to_reindex:
