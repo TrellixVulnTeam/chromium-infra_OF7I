@@ -1128,17 +1128,18 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
         ref for ref in issue.dangling_blocking_refs + add_refs
         if ref.ext_issue_identifier not in delta.ext_blocking_remove]
 
-  if delta.merged_into and delta.merged_into_external:
+  if delta.merged_into is not None and delta.merged_into_external is not None:
     raise ValueError(('Cannot update merged_into and merged_into_external'
       ' fields at the same time.'))
 
   if (delta.merged_into is not None and
-      delta.merged_into != 0 and
-      delta.merged_into != issue.merged_into):
-    merged_remove = issue.merged_into
-    merged_add = delta.merged_into
-    issue.merged_into = delta.merged_into
+      delta.merged_into != issue.merged_into and
+      ((delta.merged_into == 0 and issue.merged_into is not None) or
+       delta.merged_into != 0)):
+
+    # Handle removing the existing internal merged_into.
     try:
+      merged_remove = issue.merged_into
       remove_issue = issue_service.GetIssue(cnxn, merged_remove)
       remove_ref = remove_issue.project_name, remove_issue.local_id
       impacted_iids.add(merged_remove)
@@ -1151,7 +1152,10 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
           ext_issue_identifier=issue.merged_into_external)
       issue.merged_into_external = None
 
+    # Handle adding the new merged_into.
     try:
+      merged_add = delta.merged_into
+      issue.merged_into = delta.merged_into
       add_issue = issue_service.GetIssue(cnxn, merged_add)
       add_ref = add_issue.project_name, add_issue.local_id
       impacted_iids.add(merged_add)
@@ -1163,7 +1167,8 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
 
   if (delta.merged_into_external is not None and
       delta.merged_into_external != issue.merged_into_external and
-      federated.IsShortlinkValid(delta.merged_into_external)):
+      (federated.IsShortlinkValid(delta.merged_into_external) or
+       (delta.merged_into_external == '' and issue.merged_into_external))):
 
     remove_ref = None
     if issue.merged_into_external:

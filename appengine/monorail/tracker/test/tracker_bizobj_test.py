@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for issue tracker bizobj functions."""
+"""Tests for issue  bizobj functions."""
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
@@ -1669,6 +1669,63 @@ class BizobjTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       tracker_bizobj.ApplyIssueDelta(self.cnxn, self.services.issue, issue,
           delta, self.config)
+
+  def testApplyIssueDelta_RemoveExistingMergedInto(self):
+    self.services.issue.TestAddIssue(
+        fake.MakeTestIssue(1, 2, 'Summary', 'New', 111, issue_id=6789))
+    issue = tracker_pb2.Issue(status='New', owner_id=111, merged_into=6789)
+    delta = tracker_pb2.IssueDelta(merged_into=0)
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+    self.assertEqual(impacted_iids, {6789})
+    self.assertEqual(1, len(amendments))
+    self.assertEqual(
+        amendments[0],
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [], [(issue.project_name, 2)],
+            default_project_name=issue.project_name))
+    self.assertEqual(issue.merged_into, 0)
+
+  def testApplyIssueDelta_RemoveExternalMergedInto(self):
+    issue = tracker_pb2.Issue(
+        status='New', owner_id=111, merged_into_external='b/123')
+    delta = tracker_pb2.IssueDelta(merged_into_external='')
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+    self.assertEqual(impacted_iids, set())
+    self.assertEqual(1, len(amendments))
+    self.assertEqual(
+        amendments[0],
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [], [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/123')]))
+    self.assertEqual(issue.merged_into_external, '')
+
+  def testApplyIssueDelta_RemoveMergedIntoNoop(self):
+    issue = tracker_pb2.Issue(
+        status='New', owner_id=111, merged_into_external='b/123')
+    delta = tracker_pb2.IssueDelta(merged_into=0)
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+    self.assertEqual(impacted_iids, set())
+    self.assertEqual(0, len(amendments))
+    # A noop request to remove merged_into, should not affect the existing
+    # external value.
+    self.assertIsNone(issue.merged_into)
+    self.assertEqual(issue.merged_into_external, 'b/123')
+
+  def testApplyIssueDelta_RemoveExternalMergedIntoNoop(self):
+    self.services.issue.TestAddIssue(
+        fake.MakeTestIssue(1, 2, 'Summary', 'New', 111, issue_id=6789))
+    issue = tracker_pb2.Issue(status='New', owner_id=111, merged_into=6789)
+    delta = tracker_pb2.IssueDelta(merged_into_external='')
+    amendments, impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        self.cnxn, self.services.issue, issue, delta, self.config)
+    self.assertEqual(impacted_iids, set())
+    self.assertEqual(len(amendments), 0)
+    # A noop request to remove merged_into_external, should not affect the
+    # existing internal merged_into value.
+    self.assertIsNone(issue.merged_into_external)
+    self.assertEqual(issue.merged_into, 6789)
 
   def testApplyIssueBlockRelationChanges(self):
     """We can apply blocking and blocked_on relation changes to an issue."""
