@@ -17,11 +17,12 @@ from services import test_tag_util
 _PAGE_SIZE = 100
 
 # Time period for which coverage report is to fetched and processed
-_NUM_REPORT_DAYS = 7
+_NUM_REPORT_DAYS = 2
+
 
 def ExportPerClCoverageMetrics():
   """Exports per CL coverage metrics to Bigquery.
-  
+
   Reads presubmit coverage data from Datastore, add few other dimensions to it
   and exports it to a Bigquery table.
 

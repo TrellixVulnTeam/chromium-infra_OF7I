@@ -67,6 +67,6 @@ cron:
 
 - description: Query and export per cl coverage metrics to bigquery.
   url: /coverage/cron/per-cl-coverage
-  schedule: every 4 hours
+  schedule: every 24 hours
   retry_parameters:
     job_retry_limit: 0
