@@ -1,10 +1,9 @@
 create {
   platform_re: "linux-.*|mac-.*"
   source {
-    cipd {
-      pkg: "infra/third_party/source/sqlite-autoconf"
-      default_version: "3.19.3"
-      original_download_url: "https://www.sqlite.org/download.html"
+    url {
+      download_url: "http://sqlite.org/2017/sqlite-autoconf-3190300.tar.gz"
+      version: "3.19.3"
     }
     unpack_archive: true
   }
