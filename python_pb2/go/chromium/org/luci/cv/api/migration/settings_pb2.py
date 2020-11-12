@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"y\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x42\x33Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xab\x01\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -66,8 +66,8 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=127,
-  serialized_end=188,
+  serialized_start=178,
+  serialized_end=239,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -85,6 +85,13 @@ _SETTINGS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pssa_migration', full_name='migration.Settings.pssa_migration', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -97,13 +104,47 @@ _SETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=67,
-  serialized_end=188,
+  serialized_start=68,
+  serialized_end=239,
+)
+
+
+_PSSAMIGRATION = _descriptor.Descriptor(
+  name='PSSAMigration',
+  full_name='migration.PSSAMigration',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='projects_blocklist', full_name='migration.PSSAMigration.projects_blocklist', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=241,
+  serialized_end=284,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
 _SETTINGS.fields_by_name['api_hosts'].message_type = _SETTINGS_APIHOST
+_SETTINGS.fields_by_name['pssa_migration'].message_type = _PSSAMIGRATION
 DESCRIPTOR.message_types_by_name['Settings'] = _SETTINGS
+DESCRIPTOR.message_types_by_name['PSSAMigration'] = _PSSAMIGRATION
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Settings = _reflection.GeneratedProtocolMessageType('Settings', (_message.Message,), {
@@ -120,6 +161,13 @@ Settings = _reflection.GeneratedProtocolMessageType('Settings', (_message.Messag
   })
 _sym_db.RegisterMessage(Settings)
 _sym_db.RegisterMessage(Settings.ApiHost)
+
+PSSAMigration = _reflection.GeneratedProtocolMessageType('PSSAMigration', (_message.Message,), {
+  'DESCRIPTOR' : _PSSAMIGRATION,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.settings_pb2'
+  # @@protoc_insertion_point(class_scope:migration.PSSAMigration)
+  })
+_sym_db.RegisterMessage(PSSAMigration)
 
 
 DESCRIPTOR._options = None
