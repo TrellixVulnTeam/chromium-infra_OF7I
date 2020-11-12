@@ -11,10 +11,9 @@
 package config
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	duration "github.com/golang/protobuf/ptypes/duration"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -25,10 +24,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Config is the configuration data served by luci-config for this app.
 type Config struct {
@@ -328,10 +323,10 @@ type Cron struct {
 	EnsureTasksCount int32 `protobuf:"varint,2,opt,name=ensure_tasks_count,json=ensureTasksCount,proto3" json:"ensure_tasks_count,omitempty"`
 	// RepairIdleDuration is the duration for which a bot in the fleet must have
 	// been idle for a repair task to be created against it.
-	RepairIdleDuration *duration.Duration `protobuf:"bytes,3,opt,name=repair_idle_duration,json=repairIdleDuration,proto3" json:"repair_idle_duration,omitempty"`
+	RepairIdleDuration *durationpb.Duration `protobuf:"bytes,3,opt,name=repair_idle_duration,json=repairIdleDuration,proto3" json:"repair_idle_duration,omitempty"`
 	// RepairAttemptDelayDuration is the time between successive attempts at
 	// repairing repair failed bots in the fleet.
-	RepairAttemptDelayDuration *duration.Duration `protobuf:"bytes,4,opt,name=repair_attempt_delay_duration,json=repairAttemptDelayDuration,proto3" json:"repair_attempt_delay_duration,omitempty"`
+	RepairAttemptDelayDuration *durationpb.Duration `protobuf:"bytes,4,opt,name=repair_attempt_delay_duration,json=repairAttemptDelayDuration,proto3" json:"repair_attempt_delay_duration,omitempty"`
 	// Configuration of automatic pool balancing to keep critical pools healthy.
 	PoolBalancer *PoolBalancer `protobuf:"bytes,5,opt,name=pool_balancer,json=poolBalancer,proto3" json:"pool_balancer,omitempty"`
 }
@@ -382,14 +377,14 @@ func (x *Cron) GetEnsureTasksCount() int32 {
 	return 0
 }
 
-func (x *Cron) GetRepairIdleDuration() *duration.Duration {
+func (x *Cron) GetRepairIdleDuration() *durationpb.Duration {
 	if x != nil {
 		return x.RepairIdleDuration
 	}
 	return nil
 }
 
-func (x *Cron) GetRepairAttemptDelayDuration() *duration.Duration {
+func (x *Cron) GetRepairAttemptDelayDuration() *durationpb.Duration {
 	if x != nil {
 		return x.RepairAttemptDelayDuration
 	}
@@ -566,7 +561,7 @@ type Inventory struct {
 	// A DUT will continue to live in the cache (and hence be served via various
 	// RPCs) for dut_info_cache_validity after it has been deleted from the
 	// inventory.
-	DutInfoCacheValidity *duration.Duration `protobuf:"bytes,9,opt,name=dut_info_cache_validity,json=dutInfoCacheValidity,proto3" json:"dut_info_cache_validity,omitempty"`
+	DutInfoCacheValidity *durationpb.Duration `protobuf:"bytes,9,opt,name=dut_info_cache_validity,json=dutInfoCacheValidity,proto3" json:"dut_info_cache_validity,omitempty"`
 	// update_limit_per_minute is used to rate limit some inventory updates.
 	UpdateLimitPerMinute int32 `protobuf:"varint,10,opt,name=update_limit_per_minute,json=updateLimitPerMinute,proto3" json:"update_limit_per_minute,omitempty"`
 	// Queen service to push inventory to.
@@ -678,7 +673,7 @@ func (x *Inventory) GetLabDataPath() string {
 	return ""
 }
 
-func (x *Inventory) GetDutInfoCacheValidity() *duration.Duration {
+func (x *Inventory) GetDutInfoCacheValidity() *durationpb.Duration {
 	if x != nil {
 		return x.DutInfoCacheValidity
 	}
@@ -871,12 +866,12 @@ type DeployDut struct {
 	//
 	// This should be long enough for the newly updated inventory information to
 	// propagate to the Swarming bots.
-	TaskExpirationTimeout *duration.Duration `protobuf:"bytes,1,opt,name=task_expiration_timeout,json=taskExpirationTimeout,proto3" json:"task_expiration_timeout,omitempty"`
+	TaskExpirationTimeout *durationpb.Duration `protobuf:"bytes,1,opt,name=task_expiration_timeout,json=taskExpirationTimeout,proto3" json:"task_expiration_timeout,omitempty"`
 	// Amount of time the deploy Skylab task is allowed to run.
 	//
 	// This should be enough for possibly installing firmware and test image on
 	// the DUT.
-	TaskExecutionTimeout *duration.Duration `protobuf:"bytes,2,opt,name=task_execution_timeout,json=taskExecutionTimeout,proto3" json:"task_execution_timeout,omitempty"`
+	TaskExecutionTimeout *durationpb.Duration `protobuf:"bytes,2,opt,name=task_execution_timeout,json=taskExecutionTimeout,proto3" json:"task_execution_timeout,omitempty"`
 	// Priority of the deploy Skylab task.
 	//
 	// This should be the same as, or higher priority (i.e., numerically lower)
@@ -916,14 +911,14 @@ func (*DeployDut) Descriptor() ([]byte, []int) {
 	return file_infra_appengine_crosskylabadmin_app_config_config_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *DeployDut) GetTaskExpirationTimeout() *duration.Duration {
+func (x *DeployDut) GetTaskExpirationTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.TaskExpirationTimeout
 	}
 	return nil
 }
 
-func (x *DeployDut) GetTaskExecutionTimeout() *duration.Duration {
+func (x *DeployDut) GetTaskExecutionTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.TaskExecutionTimeout
 	}
@@ -1416,7 +1411,7 @@ var file_infra_appengine_crosskylabadmin_app_config_config_proto_goTypes = []int
 	(*DeployDut)(nil),           // 8: crosskylabadmin.config.DeployDut
 	(*StableVersionConfig)(nil), // 9: crosskylabadmin.config.StableVersionConfig
 	(*InventoryProvider)(nil),   // 10: crosskylabadmin.config.InventoryProvider
-	(*duration.Duration)(nil),   // 11: google.protobuf.Duration
+	(*durationpb.Duration)(nil), // 11: google.protobuf.Duration
 }
 var file_infra_appengine_crosskylabadmin_app_config_config_proto_depIdxs = []int32{
 	1,  // 0: crosskylabadmin.config.Config.swarming:type_name -> crosskylabadmin.config.Swarming

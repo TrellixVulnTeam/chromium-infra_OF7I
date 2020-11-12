@@ -14,13 +14,12 @@ import prpc "go.chromium.org/luci/grpc/prpc"
 
 import (
 	context "context"
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -31,10 +30,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 type GetDeploymentStatusResponse_Status int32
 
@@ -2301,7 +2296,7 @@ type GetDutInfoResponse struct {
 	//
 	// Returned specs are guaranteed to be up-to-date with the source of truth as
 	// of this timestamp.
-	Updated *timestamp.Timestamp `protobuf:"bytes,2,opt,name=updated,proto3" json:"updated,omitempty"`
+	Updated *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated,proto3" json:"updated,omitempty"`
 }
 
 func (x *GetDutInfoResponse) Reset() {
@@ -2343,7 +2338,7 @@ func (x *GetDutInfoResponse) GetSpec() []byte {
 	return nil
 }
 
-func (x *GetDutInfoResponse) GetUpdated() *timestamp.Timestamp {
+func (x *GetDutInfoResponse) GetUpdated() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Updated
 	}
@@ -3625,7 +3620,7 @@ type ListRemovedDutsResponse_Dut struct {
 	Comment string `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
 	// expire_time indicates when the removal bug should be revisited
 	// so the DUT is not forgotten.
-	ExpireTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
+	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
 	// model of the DUT.
 	Model string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
 }
@@ -3690,7 +3685,7 @@ func (x *ListRemovedDutsResponse_Dut) GetComment() string {
 	return ""
 }
 
-func (x *ListRemovedDutsResponse_Dut) GetExpireTime() *timestamp.Timestamp {
+func (x *ListRemovedDutsResponse_Dut) GetExpireTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpireTime
 	}
@@ -4453,7 +4448,7 @@ var file_infra_appengine_crosskylabadmin_api_fleet_v1_inventory_proto_goTypes = 
 	(*ListRemovedDutsResponse_Dut)(nil),           // 64: crosskylabadmin.fleet.ListRemovedDutsResponse.Dut
 	(*DutProperty_Rpm)(nil),                       // 65: crosskylabadmin.fleet.DutProperty.Rpm
 	(*Server)(nil),                                // 66: crosskylabadmin.fleet.Server
-	(*timestamp.Timestamp)(nil),                   // 67: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),                 // 67: google.protobuf.Timestamp
 	(ServerRole)(0),                               // 68: crosskylabadmin.fleet.ServerRole
 }
 var file_infra_appengine_crosskylabadmin_api_fleet_v1_inventory_proto_depIdxs = []int32{
