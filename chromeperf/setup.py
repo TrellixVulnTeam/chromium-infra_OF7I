@@ -20,6 +20,7 @@ setup(
         'google-auth>=1.21.0',
         'google-cloud-core>=1.4.1',
         'google-cloud-datastore>=1.5.0',
+        'google-python-cloud-debugger>=2.15',
         'googleapis-common-protos>=1.52.0',
         'grpcio>=1.31.0',
         'httplib2<0.18.0',

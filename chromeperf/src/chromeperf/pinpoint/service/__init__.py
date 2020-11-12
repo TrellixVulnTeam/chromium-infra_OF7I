@@ -113,6 +113,12 @@ def _task_context_to_dict(context):
 
 
 def create_app(client: datastore.Client = datastore.Client()):
+    try:
+        import googleclouddebugger
+        googleclouddebugger.enable(breakpoint_enable_canary=True)
+    except ImportError:
+        pass
+
     app = flask.Flask(__name__)
 
     @app.route("/debug/jobs/<job_id>", methods=['GET', 'POST', 'PATCH'])
