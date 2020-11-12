@@ -19,10 +19,10 @@ import (
 )
 
 // Size of buffered channels.
-var chanSize = 50000
+var chanSize = 1000
 
 // Number of goroutines to use in parallel processing.
-var numRoutines = 1000
+var numRoutines = 32
 
 var (
 	outputFlag        = flag.String("path_to_archive_output", "", "Path to index pack archive to be generated.")
@@ -107,7 +107,7 @@ func main() {
 	}()
 
 	var kzipEntryWg sync.WaitGroup
-	kzipEntryChannel := make(chan kzipEntry, 500) // Channel size is reduced for chromiumos builder.
+	kzipEntryChannel := make(chan kzipEntry, 100) // Channel size is reduced for chromiumos builder.
 	kzipSet := NewConcurrentSet(0)
 	kzipEntryWg.Add(1)
 	go func() {
