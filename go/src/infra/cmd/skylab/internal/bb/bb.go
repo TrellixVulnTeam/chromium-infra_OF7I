@@ -30,10 +30,13 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
+	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/cmd/skylab/internal/logutils"
 	"infra/cmd/skylab/internal/site"
 )
+
+const dutLeaseTaskPriority = 15
 
 // NewClient returns a new client to interact with buildbucket builds from the given builder.
 func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, authFlags authcli.Flags) (*Client, error) {
@@ -91,20 +94,39 @@ func (c *Client) ScheduleCTPBuild(ctx context.Context, requests map[string]*test
 			"requests": rs,
 		},
 	}
-	return c.scheduleBuildRaw(ctx, props, tags)
+	return c.scheduleBuildRaw(ctx, props, tags, nil, 0)
+}
+
+// ScheduleDUTLeaserBuild schedules a new cros_test_platform build and returns the
+// buildbucket build ID for the scheduled build on success, without waiting for the
+// scheduled build to start.
+func (c *Client) ScheduleDUTLeaserBuild(ctx context.Context, dims map[string]string, tags []string, length int32) (int64, error) {
+	propsMap := map[string]interface{}{
+		"lease_length_minutes": length,
+	}
+	props, err := structbuilder.NewStruct(propsMap)
+	if err != nil {
+		return -1, err
+	}
+
+	return c.scheduleBuildRaw(ctx, props, tags, dims, dutLeaseTaskPriority)
 }
 
 // scheduleBuildRaw schedules a new cros_test_platform build for the given properties struct.
-func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, tags []string) (int64, error) {
+func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, tags []string, dims map[string]string, priority int32) (int64, error) {
 	tagPairs, err := splitTagPairs(tags)
 	if err != nil {
 		return -1, err
 	}
 
+	bbDims := bbDimensions(dims)
+
 	bbReq := &buildbucket_pb.ScheduleBuildRequest{
 		Builder:    c.builderID,
 		Properties: props,
 		Tags:       tagPairs,
+		Dimensions: bbDims,
+		Priority:   priority,
 	}
 
 	build, err := c.client.ScheduleBuild(ctx, bbReq)
@@ -142,6 +164,7 @@ func (c *Client) WaitForBuild(ctx context.Context, ID int64) (*Build, error) {
 // Build contains selected state information from a fetched buildbucket Build.
 type Build struct {
 	ID      int64
+	DUTName string
 	Builder *buildbucket_pb.BuilderID
 	Status  buildbucket_pb.Status
 
@@ -262,6 +285,21 @@ func splitTagPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
 	return ret, nil
 }
 
+// bbDimensions converts a map of dimensions to a slice of
+// *buildbucket_pb.RequestedDimension.
+func bbDimensions(dims map[string]string) []*buildbucket_pb.RequestedDimension {
+	ret := make([]*buildbucket_pb.RequestedDimension, len(dims))
+	i := 0
+	for key, value := range dims {
+		ret[i] = &buildbucket_pb.RequestedDimension{
+			Key:   strings.Trim(key, " "),
+			Value: strings.Trim(value, " "),
+		}
+		i++
+	}
+	return ret
+}
+
 // getBuildFields is the list of buildbucket fields that are needed.
 // See go/buildbucket-proto for the list of all fields.
 var getBuildFields = []string{
@@ -273,6 +311,7 @@ var getBuildFields = []string{
 	// Build status is used to determine whether the build is complete.
 	"status",
 	"tags",
+	"infra.swarming",
 }
 
 func getSearchBuildsFields() []string {
@@ -288,6 +327,13 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 		ID:      from.Id,
 		Builder: from.GetBuilder(),
 		Status:  from.GetStatus(),
+	}
+
+	for _, d := range from.GetInfra().GetSwarming().GetBotDimensions() {
+		if d.GetKey() == "dut_name" {
+			build.DUTName = d.GetValue()
+			break
+		}
 	}
 
 	build.Tags = make([]string, 0, len(from.GetTags()))

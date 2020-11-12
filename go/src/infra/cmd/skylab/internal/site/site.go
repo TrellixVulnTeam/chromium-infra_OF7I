@@ -30,7 +30,8 @@ type Environment struct {
 	ServiceAccount     string
 
 	// Buildbucket-specific values.
-	CTPBuilderInfo BuildbucketBuilderInfo
+	CTPBuilderInfo       BuildbucketBuilderInfo
+	DUTLeaserBuilderInfo BuildbucketBuilderInfo
 
 	// UFS-specific values
 	UFSService string
@@ -89,6 +90,14 @@ var Prod = Environment{
 			Builder: "cros_test_platform",
 		},
 	},
+	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
+		Host: "cr-buildbucket.appspot.com",
+		BuilderID: &buildbucket_pb.BuilderID{
+			Project: "chromeos",
+			Bucket:  "test_runner",
+			Builder: "dut_leaser",
+		},
+	},
 
 	UFSService: "ufs.api.cr.dev",
 }
@@ -110,6 +119,14 @@ var Dev = Environment{
 			Project: "chromeos",
 			Bucket:  "testplatform",
 			Builder: "cros_test_platform-dev",
+		},
+	},
+	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
+		Host: "cr-buildbucket.appspot.com",
+		BuilderID: &buildbucket_pb.BuilderID{
+			Project: "chromeos",
+			Bucket:  "test_runner",
+			Builder: "dut_leaser",
 		},
 	},
 

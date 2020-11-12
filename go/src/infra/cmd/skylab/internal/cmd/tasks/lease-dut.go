@@ -7,14 +7,14 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"infra/cmd/skylab/internal/cmd/utils"
+	"infra/cmd/skylab/internal/bb"
 	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/flagx"
@@ -22,21 +22,25 @@ import (
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
-	"infra/libs/cros/dutstate"
 	"infra/libs/skylab/swarming"
-	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
-const dayInMinutes = 24 * 60
+const (
+	dayInMinutes = 24 * 60
 
-// maxTasksPerModel is the maximum number of tasks that are allowed to be executing
-// at the same time for a given model.
-const maxTasksPerModel = 1
+	// maxTasksPerModel is the maximum number of tasks that are allowed to be executing
+	// at the same time for a given model.
+	maxTasksPerModel = 1
 
-// maxTasksPerBoard is the maximum number of tasks that are allowed to be executing
-// at the same time for a given board. It is a completely independent cap from
-// maxTasksPerModel. A board lease does not count towards the model cap and vice versa.
-const maxTasksPerBoard = 0
+	// maxTasksPerBoard is the maximum number of tasks that are allowed to be executing
+	// at the same time for a given board. It is a completely independent cap from
+	// maxTasksPerModel. A board lease does not count towards the model cap and vice versa.
+	maxTasksPerBoard = 0
+
+	boardLease    primaryLeaseDimensionType = "board"
+	modelLease                              = "model"
+	hostnameLease                           = "hostname"
+)
 
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
@@ -65,6 +69,8 @@ Do not build automation around this subcommand.`,
 		return c
 	},
 }
+
+type primaryLeaseDimensionType string
 
 type leaseDutRun struct {
 	subcommands.CommandRunBase
@@ -115,8 +121,12 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return err
 	}
+	bc, err := bb.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilderInfo, c.authFlags)
+	if err != nil {
+		return err
+	}
 
-	taskID := ""
+	var taskID int64
 	switch {
 	case hasOneHostname:
 		oldhost := args[0]
@@ -124,17 +134,17 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		if host != oldhost {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", oldhost, host)
 		}
-		taskID, err = c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
+		taskID, err = c.leaseDutByHostname(ctx, a, sc, bc, leaseDuration, host)
 	case hasBoard:
-		taskID, err = c.leaseDUTByBoard(ctx, a, sc, leaseDuration)
+		taskID, err = c.leaseDUTByBoard(ctx, a, sc, bc, leaseDuration)
 	default:
-		taskID, err = c.leaseDUTByModel(ctx, a, sc, leaseDuration)
+		taskID, err = c.leaseDUTByModel(ctx, a, sc, bc, leaseDuration)
 	}
 	if err != nil {
 		return err
 	}
 
-	dutName, err := c.waitForTaskStart(ctx, sc, taskID)
+	dutName, err := c.waitForBuildStart(ctx, bc, taskID)
 	if err != nil {
 		return err
 	}
@@ -146,91 +156,119 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 }
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
-func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration, host string) (taskID string, err error) {
+func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, bc *bb.Client, leaseDuration time.Duration, host string) (taskID int64, err error) {
 	ic, err := c.getInventoryClient(ctx)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	// TODO(gregorynisbet): Check if model is empty and make sure not to pass
 	// pass it to swarming if it is empty.
 	model, err := getModelForHost(ctx, ic, host)
 	if err != nil {
-		return "", err
-	}
-	updateDutState, err := c.needUpdateDUTState(ctx, host)
-	if err != nil {
-		return "", err
+		return 0, err
 	}
 	// TODO(gregorynisbet): instead of just logging the model, actually pass it
 	// to LeaseByHostnameTask and use it to annotate the lease task.
 	fmt.Fprintf(a.GetErr(), "inferred model (%s)\n", model)
 
-	e := c.envFlags.Env()
-	creator := utils.TaskCreator{
-		Client:      sc,
-		Environment: e,
-	}
-	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason, updateDutState)
+	dims, tags, err := c.fullBBDimensionsAndTags(ctx, sc, hostnameLease, host)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
+	id, err := bc.ScheduleDUTLeaserBuild(ctx, dims, tags, int32(leaseDuration.Minutes()))
+	if err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(a.GetOut(), "Created lease for host %s: %s\n", host, bc.BuildURL(id))
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
 	return id, nil
 }
 
 // leaseDutByModel leases a DUT by model. Any healthy DUT in the given model may be chosen by the task.
-func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) (taskID string, err error) {
+func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, bc *bb.Client, leaseDuration time.Duration) (taskID int64, err error) {
 	tasks, err := sc.GetActiveLeaseTasksForModel(ctx, c.model)
 	if err != nil {
-		return "", errors.Annotate(err, "computing existing leases").Err()
+		return 0, errors.Annotate(err, "computing existing leases").Err()
 	}
 	if maxTasksPerModel <= 0 {
-		return "", errors.Reason("Leases by model are disabled").Err()
+		return 0, errors.Reason("Leases by model are disabled").Err()
 	}
 	if !c.evilLease && len(tasks) > maxTasksPerModel {
-		return "", fmt.Errorf("number of active tasks %d for model %q exceeds global limit for all users %d", len(tasks), c.model, maxTasksPerModel)
+		return 0, fmt.Errorf("number of active tasks %d for model %q exceeds global limit for all users %d", len(tasks), c.model, maxTasksPerModel)
 	}
 
-	e := c.envFlags.Env()
-	creator := utils.TaskCreator{
-		Client:      sc,
-		Environment: e,
-	}
-	id, err := creator.LeaseByModelTask(ctx, c.model, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
+	dims, tags, err := c.fullBBDimensionsAndTags(ctx, sc, modelLease, c.model)
 	if err != nil {
-		return "", err
+		return 0, errors.Annotate(err, "generating dimensions and tags for board").Err()
 	}
-	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", c.model, swarming.TaskURL(e.SwarmingService, id))
+
+	id, err := bc.ScheduleDUTLeaserBuild(ctx, dims, tags, int32(leaseDuration.Minutes()))
+	if err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(a.GetOut(), "Created lease for model %s: %s\n", c.model, bc.BuildURL(id))
 	return id, nil
 }
 
 // leaseDUTbyBoard leases a DUT by board.
-func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) (taskID string, err error) {
+func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application, sc *swarming.Client, bc *bb.Client, leaseDuration time.Duration) (taskID int64, err error) {
 	tasks, err := sc.GetActiveLeaseTasksForBoard(ctx, c.board)
 	if err != nil {
-		return "", errors.Annotate(err, "computing existing lease for board").Err()
+		return 0, errors.Annotate(err, "computing existing lease for board").Err()
 	}
 
 	if maxTasksPerBoard <= 0 {
-		return "", errors.Reason("Leases by board are disabled").Err()
+		return 0, errors.Reason("Leases by board are disabled").Err()
 	}
 	if len(tasks) > maxTasksPerBoard {
-		return "", errors.Reason("number of active tasks %d for board %q exceeds global limit for all users %d", len(tasks), c.board, maxTasksPerBoard).Err()
+		return 0, errors.Reason("number of active tasks %d for board %q exceeds global limit for all users %d", len(tasks), c.board, maxTasksPerBoard).Err()
 	}
 
-	e := c.envFlags.Env()
-	creator := utils.TaskCreator{
-		Client:      sc,
-		Environment: e,
-	}
-	id, err := creator.LeaseByBoardTask(ctx, c.board, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
+	dims, tags, err := c.fullBBDimensionsAndTags(ctx, sc, boardLease, c.board)
 	if err != nil {
-		return "", err
+		return 0, errors.Annotate(err, "generating dimensions and tags for board").Err()
 	}
-	fmt.Fprintf(a.GetOut(), "Created lease task for board %s: %s\n", c.board, swarming.TaskURL(e.SwarmingService, id))
+
+	id, err := bc.ScheduleDUTLeaserBuild(ctx, dims, tags, int32(leaseDuration.Minutes()))
+	if err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(a.GetOut(), "Created lease for board %s: %s\n", c.board, bc.BuildURL(id))
 	return id, nil
+}
+
+// bbDimensionsAndTags creates the full Buildbucket dimensions and tags used to lease a DUT of
+// the specified board/model/hostname dimension.
+func (c *leaseDutRun) fullBBDimensionsAndTags(ctx context.Context, sc *swarming.Client, primaryDimType primaryLeaseDimensionType, primaryDim string) (map[string]string, []string, error) {
+	fullDims := make(map[string]string)
+	tags := []string{
+		"qs_account:leases",
+		fmt.Sprintf("lease-by:%s", primaryDimType),
+		fmt.Sprintf("lease-reason:%s", c.leaseReason),
+		"skylab-tool:lease",
+	}
+
+	if primaryDimType == hostnameLease {
+		botID, err := sc.DutNameToBotID(ctx, primaryDim)
+		if err != nil {
+			return nil, nil, err
+		}
+		fullDims["id"] = botID
+		tags = append(tags, fmt.Sprintf("dut-name:%s", primaryDim))
+	} else {
+		fullDims[fmt.Sprintf("label-%s", primaryDimType)] = primaryDim
+		fullDims["label-pool"] = "DUT_POOL_QUOTA"
+		fullDims["dut_state"] = "ready"
+		tags = append(tags, fmt.Sprintf("%s:%s", primaryDimType, primaryDim))
+	}
+
+	// Any arbitrary dimensions passed from the command line should be included in both
+	// BB dimensions and tags.
+	fullDims = mergeDims(&fullDims, &c.dims)
+	tags = append(tags, dimsToTags(&c.dims)...)
+
+	return fullDims, tags, nil
 }
 
 // newSwarmingClient creates a new swarming client.
@@ -247,31 +285,25 @@ func (c *leaseDutRun) newSwarmingClient(ctx context.Context) (*swarming.Client, 
 	return client, nil
 }
 
-// waitForTaskStart waits for the task with the given id to start and return the unqualified hostname of the DUT running the task.
-func (c *leaseDutRun) waitForTaskStart(ctx context.Context, client *swarming.Client, id string) (string, error) {
+// waitForBuildStart waits for the dut_leaser build with the given id to start and
+// returns the unqualified hostname of the DUT running the task.
+func (c *leaseDutRun) waitForBuildStart(ctx context.Context, client *bb.Client, id int64) (string, error) {
 	for {
-		result, err := client.GetTaskState(ctx, id)
+		build, err := client.GetBuild(ctx, id)
 		if err != nil {
 			return "", err
 		}
-		if len(result.States) != 1 {
-			return "", errors.Reason("Got unexpected task states: %#v; expected one state", result.States).Err()
-		}
-		switch s := result.States[0]; s {
-		case "PENDING":
+		switch s := build.Status; s {
+		case buildbucket_pb.Status_SCHEDULED:
 			time.Sleep(10 * time.Second)
-		case "RUNNING":
-			m, err := client.GetFlatBotDimensionsForTask(ctx, id)
-			if err != nil {
-				return "", err
-			}
-			dutName, ok := m["dut_name"]
-			if !ok {
-				return "", errors.Reason("No dut_name for bot %q", m["id"]).Err()
+		case buildbucket_pb.Status_STARTED:
+			dutName := build.DUTName
+			if dutName == "" {
+				return "", errors.Reason("No dut_name for build %d", id).Err()
 			}
 			return dutName, nil
 		default:
-			return "", errors.Reason("Got unexpected task state %#v", s).Err()
+			return "", errors.Reason("Got unexpected build status %s", buildbucket_pb.Status_name[int32(s)]).Err()
 		}
 	}
 }
@@ -284,29 +316,6 @@ func (c *leaseDutRun) getInventoryClient(ctx context.Context) (inv.Client, error
 	}
 	e := c.envFlags.Env()
 	return inv.NewInventoryClient(hc, e), nil
-}
-
-// needUpdateDUTState read DUT state from UFS service and tells is the state required to be changed to needs_reset by lease task.
-//
-// Do not need change the state when DUT state is needs_deploy or needs_replacement.
-func (c *leaseDutRun) needUpdateDUTState(ctx context.Context, host string) (bool, error) {
-	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return false, err
-	}
-	e := c.envFlags.Env()
-	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.UFSService,
-		Options: site.UFSPRPCOptions,
-	})
-	dutStateInfo := dutstate.Read(ctx, ufsClient, host)
-	switch dutStateInfo.State {
-	case dutstate.NeedsDeploy, dutstate.NeedsReplacement:
-		return false, nil
-	default:
-		return true, nil
-	}
 }
 
 // getModelForHost contacts the inventory v2 service and gets the model associated with
@@ -337,4 +346,30 @@ func exactlyOne(bools ...bool) bool {
 // dutNameToFQDN assumes that a dutName is a valid DUT name, if it is not, then the output is arbitrary.
 func dutNameToFQDN(dutName string) string {
 	return fmt.Sprintf("%s.cros.corp.google.com", dutName)
+}
+
+// convertTags takes a map of dimensions and converts it to a slice of strings in
+// swarming dimension format.
+func dimsToTags(dims *map[string]string) []string {
+	tags := make([]string, len(*dims))
+	i := 0
+	for k, v := range *dims {
+		tags[i] = fmt.Sprintf("%s:%s", k, v)
+		i++
+	}
+	return tags
+}
+
+// mergeDims merges two sets of dimensions, taking values from the first set if there is key overlap.
+func mergeDims(first, second *map[string]string) map[string]string {
+	merged := make(map[string]string)
+	for k, v := range *first {
+		merged[k] = v
+	}
+	for k, v := range *second {
+		if _, keyExists := merged[k]; !keyExists {
+			merged[k] = v
+		}
+	}
+	return merged
 }
