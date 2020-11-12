@@ -94,12 +94,9 @@ from proto import user_pb2
 ListResult = collections.namedtuple('ListResult', ['items', 'next_start'])
 # type: (Sequence[Object], Optional[int]) -> None
 
-# Since Amendments for merged into and merged from changes look the same
-# (i.e. "Mergedinto: 4") We add this comment with any amendments that
-# represent changes of issues merged into the target issue.
-_MERGED_INTO_COMMENT = (
-    'Some issues have been merged into'
-    ' or un-merged from this one.')
+# Comments added to issues impacted by another issue's mergedInto change.
+UNMERGE_COMMENT = 'Issue %s has been un-merged from this issue.\n'
+MERGE_COMMENT = 'Issue %s has been merged into this issue.\n'
 
 
 class WorkEnv(object):
@@ -2058,16 +2055,29 @@ class WorkEnv(object):
       # ie: when an issue is marked as blockedOn another or similar.
       imp_amendments = changes.imp_amendments_by_iid.get(iid)
       if imp_amendments:
+        filtered_imp_amendments = []
         content = ''
+        # Represent MERGEDINTO Amendments for impacted issues with
+        # comment content instead to be consistent with previous behavior
+        # and so users can tell whether a merged change comment on an issue
+        # is a change in the issue's merged_into or a change in another
+        # issue's merged_into.
         for am in imp_amendments:
-          if am.field is tracker_pb2.FieldID.MERGEDINTO:
-            content = _MERGED_INTO_COMMENT
+          if am.field is tracker_pb2.FieldID.MERGEDINTO and am.newvalue:
+            for value in am.newvalue.split():
+              if value.startswith('-'):
+                content += UNMERGE_COMMENT % value.strip('-')
+              else:
+                content += MERGE_COMMENT % value
+          else:
+            filtered_imp_amendments.append(am)
+
         impacted_comments_by_iid[iid] = self.services.issue.CreateIssueComment(
             self.mc.cnxn,
             issue,
             self.mc.auth.user_id,
             content,
-            amendments=imp_amendments,
+            amendments=filtered_imp_amendments,
             commit=False)
     issues_to_reindex = set(
         comments_by_iid.keys() + impacted_comments_by_iid.keys())

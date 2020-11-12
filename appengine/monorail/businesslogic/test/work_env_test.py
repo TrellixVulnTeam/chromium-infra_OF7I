@@ -3108,11 +3108,13 @@ class WorkEnvTest(unittest.TestCase):
     exp_amendments_merge_a = [tracker_bizobj.MakeMergedIntoAmendment(
         [(issue_merge_b.project_name, issue_merge_b.local_id)], [],
         default_project_name=issue_merge_a.project_name)]
+    exp_merge_a_imp_content = work_env.MERGE_COMMENT % issue_merge_b.local_id
     exp_merge_b = copy.deepcopy(issue_merge_b)
     exp_merge_b.merged_into = exp_merge_a.issue_id
     exp_amendments_merge_b = [tracker_bizobj.MakeMergedIntoAmendment(
         [(issue_merge_a.project_name, issue_merge_a.local_id)], [],
         default_project_name=issue_merge_b.project_name)]
+    exp_merge_b_imp_content = work_env.MERGE_COMMENT % issue_merge_a.local_id
 
     # Issues that block each other.
     issue_block_a = _Issue(789, 5)
@@ -3184,20 +3186,18 @@ class WorkEnvTest(unittest.TestCase):
       self.assertEqual(comment_imp.content, imp_comment_content)
       return comment, comment_imp
 
-    # Merge changes result in the same Amendment shape for merging into and
-    # from. Merged from Comments
-    # (e.g. 'Another issue was merged into the target issue')
-    # get additional comment content to clarify the merge direction.
+    # Merge changes result in a MERGEDINTO Amendment for an
+    # Issue's mergedInto change (e.g. MergedInto: 1)
+    # and comment content for the impacted issue's change (with no amendment).
+    # (e.g. 'Issue 2 has been merged into the this issue.')
     comment_merge_a, comment_merge_a_imp = CheckComment(
         issue_merge_a.issue_id,
-        exp_amendments_merge_a,
-        exp_amendments_merge_a,
-        imp_comment_content=work_env._MERGED_INTO_COMMENT)
+        exp_amendments_merge_a, [],
+        imp_comment_content=exp_merge_a_imp_content)
     comment_merge_b, comment_merge_b_imp = CheckComment(
         issue_merge_b.issue_id,
-        exp_amendments_merge_b,
-        exp_amendments_merge_b,
-        imp_comment_content=work_env._MERGED_INTO_COMMENT)
+        exp_amendments_merge_b, [],
+        imp_comment_content=exp_merge_b_imp_content)
 
     comment_block_a, comment_block_a_imp = CheckComment(
         issue_block_a.issue_id, exp_amendments_block_a,
@@ -3385,18 +3385,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue_star.SetStar(
         self.cnxn, self.services, None, issue_unique.issue_id,
         exp_imp_starrer, True)
-    exp_amendments_imp_a = [
-        tracker_bizobj.MakeMergedIntoAmendment(
-            [(issue_unique.project_name, issue_unique.local_id)], [],
-            default_project_name=imp_issue_a.project_name)
-    ]
     exp_imp_issue_a.star_count = 1
-    exp_amendments_imp_b = [
-        tracker_bizobj.MakeMergedIntoAmendment(
-            [], [(issue_unique.project_name, issue_unique.local_id)],
-            default_project_name=imp_issue_a.project_name)
-    ]
-
 
     # Add a FilterRule for star_count to check filter rules are applied.
     starred_label = 'starry-night'
@@ -3471,12 +3460,17 @@ class WorkEnvTest(unittest.TestCase):
     # have been added.
     (_desc,
      imp_a_comment) = self.services.issue.comments_by_iid[imp_issue_a.issue_id]
-    self.assertEqual(imp_a_comment.amendments, exp_amendments_imp_a)
-    self.assertEqual(imp_a_comment.content, work_env._MERGED_INTO_COMMENT)
+    self.assertEqual(imp_a_comment.amendments, [])
+    self.assertEqual(
+        imp_a_comment.content,
+        'Issue %s has been merged into this issue.\n' % issue_unique.local_id)
     (_desc,
      imp_b_comment) = self.services.issue.comments_by_iid[imp_issue_b.issue_id]
-    self.assertEqual(imp_b_comment.amendments, exp_amendments_imp_b)
-    self.assertEqual(imp_b_comment.content, work_env._MERGED_INTO_COMMENT)
+    self.assertEqual(imp_b_comment.amendments, [])
+    self.assertEqual(
+        imp_b_comment.content,
+        'Issue %s has been un-merged from this issue.\n' %
+        issue_unique.local_id)
 
     # Check stars correct.
     self.assertEqual(
