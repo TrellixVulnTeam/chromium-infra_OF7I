@@ -54,7 +54,7 @@ export const STATUS_CLASS_MAP = {
 // Hardcoded frontent documentation for each approval status.
 export const STATUS_DOCSTRING_MAP = {
   'NotSet': '',
-  'NeedsReview': 'Approval gate needs work',
+  'NeedsReview': 'Review/survey not started',
   'NA': 'Approval gate not required',
   'ReviewRequested': 'Approval requested',
   'ReviewStarted': 'Approval in progress',
