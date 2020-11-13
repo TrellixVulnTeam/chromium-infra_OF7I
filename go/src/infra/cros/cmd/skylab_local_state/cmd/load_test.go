@@ -73,7 +73,6 @@ func TestAddBotStateToHostInfo(t *testing.T) {
 		}
 
 		s := &lab_platform.DutState{
-			State: "ready",
 			ProvisionableAttributes: map[string]string{
 				"attribute3": "value3",
 			},
