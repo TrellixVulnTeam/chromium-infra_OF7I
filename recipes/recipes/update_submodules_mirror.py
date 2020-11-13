@@ -76,11 +76,18 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs):
   # This is implicitly used as the cwd by all the git steps below.
   api.m.path['checkout'] = source_checkout_dir
 
-  api.git('fetch', '-t')
-  for ref in refs:
-    if not ref.startswith('refs/heads'):
-      api.git('fetch', 'origin', ref + ':' + RefToRemoteRef(ref))
-
+  try:
+    api.git('fetch', '-t')
+    for ref in refs:
+      if not ref.startswith('refs/heads'):
+        api.git('fetch', 'origin', ref + ':' + RefToRemoteRef(ref))
+  except api.step.StepFailure:
+    # Remove broken source checkout so that subsequent runs don't fail because
+    # of it.
+    with api.context(cwd=checkout_dir):
+      api.m.file.rmtree('Remove broken source checkout clone',
+                        api.path.abspath(source_checkout_dir))
+    raise
 
   for ref in refs:
     with api.step.nest('Process ' + ref):
@@ -315,6 +322,18 @@ def GenTests(api):
       api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+  )
+
+  yield (
+      api.test('existing_checkout_git_dir') +
+      api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
+      ) +
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data('git fetch', retcode=128)
   )
 
   yield (
