@@ -59,6 +59,9 @@ class TestGit(unittest.TestCase):
 
   def setUp(self):
     self.workdir = tempfile.mkdtemp(dir=self.tdir)
+    # Set HOME to temp test directory to avoid picking up ~/.gitconfig settings
+    # that force authentication.
+    os.environ['HOME'] = self.workdir
 
   def test_version_from_relpath(self):
     # in python 2.7, `cwd` doesn't change the lookup of executables, so we have
