@@ -22,8 +22,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -34,63 +35,69 @@ import (
 const bufSize = 1024 * 1024
 
 func TestMisconfiguredServer(t *testing.T) {
-	ctx := context.Background()
-	l := bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	pinpoint.RegisterPinpointServer(s, &pinpointServer{})
-	go func() {
-		if err := s.Serve(l); err != nil {
-			log.Fatalf("Server startup failed.")
-		}
-	}()
-	dialer := func(context.Context, string) (net.Conn, error) {
-		return l.Dial()
-	}
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
-	defer conn.Close()
-	client := pinpoint.NewPinpointClient(conn)
-	resp, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
-	if err == nil {
-		t.Fatalf("Expected err is not nil, got: nil")
-	}
-	if !strings.Contains(err.Error(), "misconfigured service") {
-		t.Fatalf("Missing substring 'misconfigured service' in error; got: %v", err)
-	}
-	log.Printf("Response: %v", resp)
-}
 
-func TestServerNotBehindESP(t *testing.T) {
-	ctx := context.Background()
-	l := bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "{}")
-	}))
-	defer ts.Close()
-
-	client, err := google.DefaultClient(oauth2.NoContext, scopesForLegacy...)
-	flag.Set("legacy_pinpoint_service", ts.URL)
-	if err != nil {
-		t.Fatalf("Failed getting credentials: %v", err)
-	}
-	pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: client})
-	go func() {
-		if err := s.Serve(l); err != nil {
-			log.Fatalf("Server startup failed.")
+	Convey("Given a grpc server without a client", t, func() {
+		ctx := context.Background()
+		l := bufconn.Listen(bufSize)
+		s := grpc.NewServer()
+		dialer := func(context.Context, string) (net.Conn, error) {
+			return l.Dial()
 		}
-	}()
-	dialer := func(context.Context, string) (net.Conn, error) {
-		return l.Dial()
-	}
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
-	defer conn.Close()
-	gclient := pinpoint.NewPinpointClient(conn)
-	resp, err := gclient.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
-	if err == nil {
-		t.Fatalf("Expected err is not nil, got: nil")
-	}
-	if !strings.Contains(err.Error(), "missing required auth header") {
-		t.Fatalf("Missing substring 'missing required auth header' in error; got: %v", err)
-	}
-	log.Printf("Response: %v", resp)
+		pinpoint.RegisterPinpointServer(s, &pinpointServer{})
+		go func() {
+			if err := s.Serve(l); err != nil {
+				log.Fatalf("Server startup failed.")
+			}
+		}()
+
+		Convey("When we connect to the Pinpoint service", func() {
+			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+			So(err, ShouldBeNil)
+			defer conn.Close()
+			client := pinpoint.NewPinpointClient(conn)
+
+			Convey("Then requests to ScheduleJob will fail with 'misconfigured service'", func() {
+				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "misconfigured service")
+			})
+
+		})
+	})
+
+	Convey("Given a grpc server with a legacy client not behind the ESP", t, func() {
+		ctx := context.Background()
+		l := bufconn.Listen(bufSize)
+		s := grpc.NewServer()
+		dialer := func(context.Context, string) (net.Conn, error) {
+			return l.Dial()
+		}
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, "{}")
+		}))
+		defer ts.Close()
+		httpClient, err := google.DefaultClient(oauth2.NoContext, scopesForLegacy...)
+		flag.Set("legacy_pinpoint_service", ts.URL)
+		So(err, ShouldBeNil)
+
+		pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: httpClient})
+		go func() {
+			if err := s.Serve(l); err != nil {
+				log.Fatalf("Server startup failed.")
+			}
+		}()
+
+		Convey("When we connect to the Pinpoint service", func() {
+			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+			So(err, ShouldBeNil)
+			defer conn.Close()
+			client := pinpoint.NewPinpointClient(conn)
+			Convey("Then requests to ScheduleJob will fail with 'missing required auth header'", func() {
+				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "missing required auth header")
+			})
+		})
+	})
+
 }
