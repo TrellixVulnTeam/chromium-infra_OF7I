@@ -89,6 +89,16 @@ func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// Launch the command w/o the result_sink section in lucictx, in case the test
+	// framework has SinkAPI integrated. If a test binary was launched by result_adapter,
+	// the test binary shouldn't be able to talk to the local SinkServer directly.
+	exported, err := lucictx.Export(lucictx.SetResultDB(cmdCtx, nil))
+	if err != nil {
+		return errors.Annotate(err, "failed to export a luci-context w/o result-sink").Err()
+	}
+	defer exported.Close()
+	exported.SetInCmd(cmd)
+
 	if err := cmd.Start(); err != nil {
 		return errors.Annotate(err, "cmd.start").Err()
 	}
