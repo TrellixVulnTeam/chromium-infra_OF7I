@@ -17,11 +17,13 @@ func TestInfo_LuciferConfig(t *testing.T) {
 	t.Parallel()
 	b := &Info{
 		AutotestPath:  "/usr/local/autotest",
+		LabpackDir:    "/usr/labpack",
 		LuciferBinDir: "/opt/lucifer",
 	}
 	got := b.LuciferConfig()
 	want := &lucifer.Config{
 		AutotestPath: "/usr/local/autotest",
+		LabpackDir:   "/usr/labpack",
 		BinDir:       "/opt/lucifer",
 	}
 	if diff := pretty.PrettyConfig.Compare(want, &got); diff != "" {

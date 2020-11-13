@@ -25,6 +25,7 @@ type Info struct {
 	LuciferBinDir    string
 	ParserPath       string
 	SwarmingService  string
+	LabpackDir       string
 	Task             Task
 }
 
@@ -54,6 +55,7 @@ func GetInfo() *Info {
 		LuciferBinDir:    os.Getenv("LUCIFER_TOOLS_DIR"),
 		ParserPath:       os.Getenv("PARSER_PATH"),
 		SwarmingService:  os.Getenv("SWARMING_SERVICE"),
+		LabpackDir:       os.Getenv("LABPACK_DIR"),
 		Task: Task{
 			RunID: os.Getenv("SWARMING_TASK_ID"),
 		},
@@ -69,6 +71,7 @@ type Task struct {
 func (b *Info) LuciferConfig() lucifer.Config {
 	return lucifer.Config{
 		AutotestPath: b.AutotestPath,
+		LabpackDir:   b.LabpackDir,
 		BinDir:       b.LuciferBinDir,
 	}
 }

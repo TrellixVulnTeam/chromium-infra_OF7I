@@ -20,6 +20,7 @@ type Config struct {
 	// BinDir is the directory containing Lucifer binaries.
 	BinDir       string
 	AutotestPath string
+	LabpackDir   string
 }
 
 // XLevel is an enum for the available Lucifer handoff levels.  This
@@ -67,6 +68,7 @@ func TestCommand(c Config, r TestArgs) *exec.Cmd {
 	args := make([]string, 0, 20)
 	args = append(args, "test")
 	args = append(args, "-autotestdir", c.AutotestPath)
+	args = append(args, "-labpackdir", c.LabpackDir)
 	args = appendCommonArgs(args, r.TaskArgs)
 
 	args = append(args, "-hosts", strings.Join(r.Hosts, ","))
@@ -114,6 +116,7 @@ func AdminTaskCommand(c Config, a AdminTaskArgs) *exec.Cmd {
 	args := make([]string, 0, 6)
 	args = append(args, "admintask")
 	args = append(args, "-autotestdir", c.AutotestPath)
+	args = append(args, "-labpackdir", c.LabpackDir)
 	args = appendCommonArgs(args, a.TaskArgs)
 
 	args = append(args, "-host", a.Host)
@@ -140,6 +143,7 @@ func DeployTaskCommand(c Config, a DeployTaskArgs) *exec.Cmd {
 	args := make([]string, 0, 6)
 	args = append(args, "deploytask")
 	args = append(args, "-autotestdir", c.AutotestPath)
+	args = append(args, "-labpackdir", c.LabpackDir)
 	args = appendCommonArgs(args, a.TaskArgs)
 
 	args = append(args, "-host", a.Host)
@@ -167,6 +171,7 @@ func AuditTaskCommand(c Config, a AuditTaskArgs) *exec.Cmd {
 	args := make([]string, 0, 6)
 	args = append(args, "audittask")
 	args = append(args, "-autotestdir", c.AutotestPath)
+	args = append(args, "-labpackdir", c.LabpackDir)
 	args = appendCommonArgs(args, a.TaskArgs)
 
 	args = append(args, "-host", a.Host)
