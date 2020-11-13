@@ -135,7 +135,8 @@ def update_submodules_mirror(
         target_repo,
         extra_submodules = None,
         triggered_by = None,
-        refs = None):
+        refs = None,
+        execution_timeout = time.hour):
     properties = {
         "source_repo": source_repo,
         "target_repo": target_repo,
@@ -146,7 +147,7 @@ def update_submodules_mirror(
         properties["refs"] = refs
     builder(
         name = name,
-        execution_timeout = time.hour,
+        execution_timeout = execution_timeout,
         executable = infra.recipe("update_submodules_mirror"),
         properties = properties,
         caches = [swarming.cache("codesearch_update_submodules_mirror")],
@@ -193,6 +194,7 @@ update_submodules_mirror(
         bucket = "codesearch",
         repo = "https://chromium.googlesource.com/chromium/src",
     ),
+    execution_timeout = 2 * time.hour,
 )
 update_submodules_mirror(
     name = "codesearch-update-submodules-mirror-infra",
