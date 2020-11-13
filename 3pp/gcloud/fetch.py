@@ -52,7 +52,7 @@ def get_download_url(version, platform):
       'ext': ext
     })
   partial_manifest = {
-    'url': download_url,
+    'url': [download_url],
     'ext': ext,
   }
   print(json.dumps(partial_manifest))

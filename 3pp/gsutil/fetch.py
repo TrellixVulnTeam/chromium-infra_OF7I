@@ -28,7 +28,7 @@ def get_download_url(version):
   download_url = (
     'https://storage.googleapis.com/pub/gsutil_%s.tar.gz' % version)
   partial_manifest = {
-    'url': download_url,
+    'url': [download_url],
     'ext': '.tar.gz',
   }
   print(json.dumps(partial_manifest))

@@ -60,7 +60,7 @@ def get_download_url(version):
     'o/featured%%2F%s%s.zip?alt=media' % (ZIP_PREFIX, version)
   )
   partial_manifest = {
-    'url': URL,
+    'url': [URL],
     'ext': '.zip',
   }
   print(json.dumps(partial_manifest))

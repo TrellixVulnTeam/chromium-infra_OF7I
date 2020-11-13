@@ -45,7 +45,7 @@ def get_download_url(version, platform):
     'v': version, 'suf': get_installer_suffix(platform),
   }
   partial_manifest = {
-    'url': url,
+    'url': [url],
     'ext': get_installer_suffix(platform),
   }
   print(json.dumps(partial_manifest))

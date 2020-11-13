@@ -59,7 +59,7 @@ def get_download_url(version, platform, kind):
       'https://storage.googleapis.com/golang/go%s.src.tar.gz' % (version,))
 
   partial_manifest = {
-    'url': download_url,
+    'url': [download_url],
     'ext': ext,
   }
   print(json.dumps(partial_manifest))

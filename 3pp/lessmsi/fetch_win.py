@@ -64,7 +64,7 @@ def get_download_url(version):
     raise Exception('could not find download_url')
 
   partial_manifest = {
-    'url': download_url,
+    'url': [download_url],
     'ext': '.zip',
   }
   print(json.dumps(partial_manifest))

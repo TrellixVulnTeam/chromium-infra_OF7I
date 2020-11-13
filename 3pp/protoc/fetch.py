@@ -94,7 +94,7 @@ def get_download_url(version, platform):
   for a in rsp['assets']:
     if a['name'] == name:
       partial_manifest = {
-        'url': a['browser_download_url'],
+        'url': [a['browser_download_url']],
         'ext': '.zip',
       }
       print(json.dumps(partial_manifest))
