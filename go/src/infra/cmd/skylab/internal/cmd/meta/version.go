@@ -43,14 +43,25 @@ func (c *versionRun) Run(a subcommands.Application, args []string, env subcomman
 	return 0
 }
 
+// fallbackErrorMessage shows a fallback version message if the skylab tool is unable to
+// locate its own CIPD package.
+func fallbackErrorMessage(a subcommands.Application) {
+	fmt.Fprintf(a.GetErr(), "Failed to find CIPD package!\n")
+	fmt.Printf("skylab CLI Tool: v%s\n", site.VersionNumber)
+}
+
 func (c *versionRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	var err error
+
 	p, err := findSkylabPackage()
 	if err != nil {
+		fallbackErrorMessage(a)
 		return err
 	}
 	ctx := context.Background()
 	d, err := describe(ctx, p.Package, p.Pin.InstanceID)
 	if err != nil {
+		fallbackErrorMessage(a)
 		return err
 	}
 
