@@ -429,7 +429,7 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				SummaryHtml: `<ul><li><a href="https://chrome-gpu-gold.skia.org/detail?test=foo&digest=beef">gold_triage_link</a></li></ul>`,
+				SummaryHtml: `<ul><li><a href="https://chrome-gpu-gold.skia.org/detail?test=foo&amp;digest=beef">gold_triage_link</a></li></ul>`,
 				Artifacts: map[string]*sinkpb.Artifact{
 					"isolate_object_list": {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/relative/path/to/diff.png"},

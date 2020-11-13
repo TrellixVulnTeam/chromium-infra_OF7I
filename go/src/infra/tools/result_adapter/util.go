@@ -5,9 +5,9 @@
 package main
 
 import (
+	"html/template"
 	"path"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -37,7 +37,7 @@ const (
 var summaryTmpl = template.Must(template.New("summary").Parse(`
 {{ define "gtest" -}}
 {{- template "links" .links -}}
-{{- if .snippet }}<div><pre>{{.snippet}}</pre></div>{{ end -}}
+{{- if .artifact }}<div><pre><text-artifact artifact-id="{{.artifact}}"></pre></div>{{ end -}}
 {{- end}}
 
 {{ define "jtr" -}}
