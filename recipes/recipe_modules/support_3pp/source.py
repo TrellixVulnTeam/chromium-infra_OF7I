@@ -258,7 +258,8 @@ class Manifest(object):  # pragma: no cover
 
   Attributes:
     * protocol (required) - Protocol to use for downloading the artifact.
-    * source_uri (required) - Remote artifact resource location URL/URI.
+    * source_uri (required) - Remote artifact resource location(s) URL/URI.
+        source_uri is an iterable of str.
     * path - Dictates where to download the sources to, e.g. checkout dir.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the GitSource.
@@ -295,7 +296,7 @@ def _generate_download_manifest(api, spec, checkout_dir,
 
   # TODO(akashmukherjee): Add ext to url source proto.
   elif method_name == 'url':
-    return Manifest('url', source_method_pb.download_url,
+    return Manifest('url', [source_method_pb.download_url],
                     checkout_dir, ext=source_method_pb.extension or '.tar.gz')
 
   # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
@@ -325,9 +326,9 @@ def _download_source(api, download_manifest):
     api.git.checkout(download_manifest.source_uri,
                      download_manifest.source_hash, download_manifest.path)
   elif download_manifest.protocol == 'url':
-    artifact = 'raw_source' + download_manifest.ext
-    api.url.get_file(download_manifest.source_uri,
-                     api.path.join(download_manifest.path, artifact))
+    for i, uri in enumerate(download_manifest.source_uri):
+      artifact = 'raw_source_' + str(i) + download_manifest.ext
+      api.url.get_file(uri, api.path.join(download_manifest.path, artifact))
   else:  # pragma: no cover
     assert False, 'Unknown download protocol  %r' % (protocol,)
 

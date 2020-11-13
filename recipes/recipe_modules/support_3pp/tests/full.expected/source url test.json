@@ -305,7 +305,7 @@
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]/3pp/wd/dep/linux-amd64/1.2.3/checkout/raw_source.tar.gz"
+      "[START_DIR]/3pp/wd/dep/linux-amd64/1.2.3/checkout/raw_source_0.tar.gz"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
