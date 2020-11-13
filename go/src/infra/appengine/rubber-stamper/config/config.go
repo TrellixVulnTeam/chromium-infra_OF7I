@@ -6,24 +6,12 @@ package config
 
 import (
 	"context"
-	"net/http"
 
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/config/validation"
-	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/proto"
 )
-
-// A string with unique address used to store and retrieve config from context.
-var ctxKeyConfig = "rubber-stamper.config"
-
-// contextState is stored in the context under &ctxKeyConfig.
-type contextState struct {
-	config   *Config
-	revision string
-}
 
 // Cached service config.
 var cachedCfg = cfgcache.Register(&cfgcache.Entry{
@@ -41,33 +29,13 @@ func Update(c context.Context) error {
 	return err
 }
 
-// Middleware loads the service config and installs it into the context.
-func Middleware(c *router.Context, next router.Handler) {
-	var meta config.Meta
-	cfg, err := cachedCfg.Get(c.Context, &meta)
-	if err != nil {
-		logging.WithError(err).Errorf(c.Context, "could not load application config")
-		http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	c.Context = setConfig(c.Context, cfg.(*Config), meta.Revision)
-	next(c)
+// Get returns the config stored in the cachedCfg.
+func Get(c context.Context) (*Config, error) {
+	cfg, err := cachedCfg.Get(c, nil)
+	return cfg.(*Config), err
 }
 
-// Get returns the config stored in the context.
-func Get(c context.Context) *Config {
-	return c.Value(&ctxKeyConfig).(*contextState).config
-}
-
-// GetConfigRevision returns the revision of the current config.
-func GetConfigRevision(c context.Context) string {
-	return c.Value(&ctxKeyConfig).(*contextState).revision
-}
-
-// setConfig installs cfg into c.
-func setConfig(c context.Context, cfg *Config, rev string) context.Context {
-	return context.WithValue(c, &ctxKeyConfig, &contextState{
-		config:   cfg,
-		revision: rev,
-	})
+// SetTestConfig set test configs in the cachedCfg.
+func SetTestConfig(ctx context.Context, cfg *Config) error {
+	return cachedCfg.Set(ctx, cfg, &config.Meta{})
 }

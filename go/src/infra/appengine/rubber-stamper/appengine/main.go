@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/rubber-stamper/cron"
+	"infra/appengine/rubber-stamper/internal/gerrit"
 )
 
 func main() {
@@ -21,8 +22,9 @@ func main() {
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		basemw := router.NewMiddlewareChain()
+		srv.Context = gerrit.Setup(srv.Context)
 
+		basemw := router.NewMiddlewareChain()
 		srv.Routes.GET("/hello-world", router.MiddlewareChain{}, func(c *router.Context) {
 			logging.Debugf(c.Context, "Hello world")
 			c.Writer.Write([]byte("Hello, world. This is Rubber-Stamper."))
