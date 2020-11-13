@@ -630,6 +630,18 @@ wheel: <
 
 * *universal*
 
+### 20.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/attrs-py2_py3"
+  version: "version:20.3.0"
+>
+```
+
+
+* *universal*
+
 ## **backport_ipaddress-py2**
 
 ### 0.1
@@ -711,6 +723,7 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 * *windows-x64*
+* *windows-x64-py3*
 * *windows-x86*
 
 ## **beautifulsoup4**
@@ -881,6 +894,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **chardet**
 
@@ -1107,6 +1121,7 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 * *windows-x64*
+* *windows-x64-py3*
 * *windows-x86*
 
 ## **debugpy**
@@ -2131,6 +2146,7 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 * *windows-x64*
+* *windows-x64-py3*
 * *windows-x86*
 
 ### 1.4.3
@@ -2144,6 +2160,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **libusb1**
 
@@ -2526,6 +2543,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **oauth2client**
 
@@ -2679,6 +2697,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **parameterized**
 
@@ -3162,6 +3181,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **py**
 
@@ -3532,6 +3552,7 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *windows-x64-py3*
 
 ## **pyobjc**
 

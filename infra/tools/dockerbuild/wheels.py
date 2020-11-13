@@ -654,6 +654,7 @@ SPECS.update({
         Universal('attrs', '17.4.0'),
         Universal('attrs', '18.2.0'),
         Universal('attrs', '19.3.0'),
+        Universal('attrs', '20.3.0'),
         Universal('backports.functools_lru_cache', '1.5'),
         Universal('backports.shutil_get_terminal_size', '1.0.0'),
         Universal('beautifulsoup4', '4.9.0'),
