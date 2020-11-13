@@ -219,6 +219,22 @@ func (c *updateDutRun) getNewSpecs(a subcommands.Application, oldSpecs *inventor
 	return userinput.GetDeviceSpecs(oldSpecs, updateDUTHelpText, userinput.CLIPrompt(a.GetOut(), os.Stdin, true), nil)
 }
 
+// cleanPreDeploymentFields clean ups fields to regenerate them during deployment.
+//
+// Keep the old values of can effect deployment or cause misleading errors.
+func cleanPreDeploymentFields(common *inventory.CommonDeviceSpecs) {
+	var attributes []*inventory.KeyValue
+	for _, k := range common.GetAttributes() {
+		if k.GetKey() != "servo_type" {
+			attributes = append(attributes, k)
+		}
+	}
+	common.Attributes = attributes
+	emptyServoType := ""
+	common.GetLabels().GetPeripherals().ServoType = &emptyServoType
+	common.GetLabels().GetPeripherals().ServoTopology = nil
+}
+
 // parseSpecsFile parses device specs from the user provided file.
 func parseSpecsFile(specsFile string) (*inventory.DeviceUnderTest, error) {
 	rawText, err := ioutil.ReadFile(specsFile)
@@ -236,6 +252,7 @@ func parseSpecsFile(specsFile string) (*inventory.DeviceUnderTest, error) {
 // This function returns the deployment task ID for the attempt.
 func (c *updateDutRun) triggerRedeploy(ctx context.Context, ic inv.Client, old, updated *inventory.DeviceUnderTest, creator *utils.TaskCreator) (string, error) {
 	newSpecs := updated.GetCommon()
+	cleanPreDeploymentFields(newSpecs)
 	if !proto.Equal(old.GetCommon(), newSpecs) {
 		if err := ic.UpdateDUT(ctx, newSpecs); err != nil {
 			return "", errors.Annotate(err, "update DUT to inventory").Err()
