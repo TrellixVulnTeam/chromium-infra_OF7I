@@ -256,13 +256,19 @@ func AuditTaskCommand(c Config, cmd *AuditTaskArgs) *exec.Cmd {
 // Config describes where the Autotest directory is.
 type Config struct {
 	AutotestDir string
+	LabpackDir  string
 }
 
-// command creates an exec.Cmd for running an executable file in the
-// Autotest directory.
+// command creates an exec.Cmd for running an executable file from special directory.
 func command(c Config, relpath string, args ...string) *exec.Cmd {
+	// TODO(otabek) refactor when migrated to new repository and LabpackDir will be provided always.
 	path := filepath.Join(c.AutotestDir, relpath)
-	log.Printf("Running Autotest command %s %s", path, args)
+	dir := "Autotest"
+	if c.LabpackDir != "" {
+		path = filepath.Join(c.LabpackDir, relpath)
+		dir = "Labpack"
+	}
+	log.Printf("Running %s command %s %s", dir, path, args)
 	return exec.Command(path, args...)
 }
 

@@ -43,6 +43,7 @@ func (e usageError) ExitStatus() subcommands.ExitStatus {
 type commonOpts struct {
 	abortSock   string
 	autotestDir string
+	labpackdir  string
 	gcpProject  string
 	logdogFile  string
 	resultsDir  string
@@ -54,6 +55,8 @@ func (c *commonOpts) Register(f *flag.FlagSet) {
 		"Abort socket")
 	f.StringVar(&c.autotestDir, "autotestdir", "/usr/local/autotest",
 		"Autotest directory")
+	// Apply hardcode value when fully migrate to new repository.
+	f.StringVar(&c.labpackdir, "labpackdir", "", "Labpack directory")
 	f.StringVar(&c.gcpProject, "gcp-project", "chromeos-lucifer",
 		"GCP project")
 	f.StringVar(&c.logdogFile, "logdog-file", "",
@@ -71,6 +74,7 @@ func (c *commonOpts) hostInfoStorePath(host string) string {
 func (c *commonOpts) autotestConfig() autotest.Config {
 	return autotest.Config{
 		AutotestDir: c.autotestDir,
+		LabpackDir:  c.labpackdir,
 	}
 }
 
