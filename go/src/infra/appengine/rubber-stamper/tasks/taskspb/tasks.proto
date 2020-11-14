@@ -1,0 +1,19 @@
+// Copyright 2020 The Chromium Authors. All Rights Reserved.
+// Use of this source code is governed by the Apache v2.0 license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package rubber_stamper.taskspb;
+
+option go_package = "infra/appengine/rubber-stamper/tasks/taskspb";
+
+// ChangeReviewTask describes a task to start reviewing a CL's metadata.
+message ChangeReviewTask {
+  // The Gerrit Host.
+  string host = 1;
+  // The change number.
+  int64 number = 2;
+  // Revision of the change.
+  string revision = 3;
+}
