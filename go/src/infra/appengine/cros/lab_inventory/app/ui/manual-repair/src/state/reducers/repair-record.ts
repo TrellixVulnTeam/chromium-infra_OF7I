@@ -16,13 +16,17 @@ import {receiveAppMessage} from './message';
  */
 export const RECEIVE_DEVICE_INFO = 'RECEIVE_DEVICE_INFO';
 export const RECEIVE_RECORD_INFO = 'RECEIVE_RECORD_INFO';
-export const RECEIVE_RECORD_INFO_ERROR = 'RECEIVE_RECORD_INFO_ERROR';
+export const RECEIVE_REPAIR_HISTORY = 'RECEIVE_REPAIR_HISTORY';
 export const RECEIVE_DEVICE_INFO_ERROR = 'RECEIVE_DEVICE_INFO_ERROR';
+export const RECEIVE_RECORD_INFO_ERROR = 'RECEIVE_RECORD_INFO_ERROR';
 export const CLEAR_DEVICE_INFO = 'CLEAR_DEVICE_INFO';
 export const CLEAR_RECORD_INFO = 'CLEAR_RECORD_INFO';
 
 export function receiveRecordInfo(recordInfo: object) {
   return {type: RECEIVE_RECORD_INFO, recordInfo};
+};
+export function receiveRepairHistory(repairHistory: object) {
+  return {type: RECEIVE_REPAIR_HISTORY, repairHistory};
 };
 export function receiveRecordInfoError(error: object) {
   return {type: RECEIVE_RECORD_INFO_ERROR, error};
@@ -201,11 +205,45 @@ export function clearRepairRecord() {
   };
 };
 
+/**
+ * Call inventory.Inventory/ListManualRepairRecords rpc for manual repair
+ * record history or a DUT. Response is saved to Redux state.
+ *
+ * @param hostname  The hostname of the device.
+ * @param assetTag  The asset tag of the device.
+ * @param headers   The additional HTML headers to be passed. These will include
+ *     auth headers for user auth.
+ * @returns         The response from the RPC.
+ */
+export function getRepairHistory(
+    hostname: string, assetTag: string,
+    headers: {[key: string]: string}): AppThunk<Promise<object>> {
+  return function(dispatch: AppThunkDispatch) {
+    const recordMsg: {[key: string]: any} = {
+      'hostname': hostname,
+      'asset_tag': assetTag,
+      'limit': -1,
+    };
+    return prpcClient
+        .call(
+            'inventory.Inventory', 'ListManualRepairRecords', recordMsg,
+            headers)
+        .then(
+            res => dispatch(receiveRepairHistory(res)),
+            err => {
+              dispatch(receiveAppMessage(err.description));
+              throw Error(err.description);
+            },
+        );
+  };
+};
+
 export type RepairRecordStateType = {
   info: {
     deviceInfo: object,
     recordInfo: object,
     recordId: string,
+    repairHistory: object,
   },
   errors: {
     deviceInfoError: object,
@@ -218,6 +256,7 @@ const emptyState: RepairRecordStateType = {
     deviceInfo: {},
     recordInfo: {},
     recordId: '',
+    repairHistory: {},
   },
   errors: {
     deviceInfoError: {},
@@ -234,6 +273,7 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: action.deviceInfo,
           recordInfo: state.info.recordInfo,
           recordId: state.info.recordId,
+          repairHistory: state.info.repairHistory,
         }
       };
     case RECEIVE_RECORD_INFO:
@@ -243,6 +283,17 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: state.info.deviceInfo,
           recordInfo: action.recordInfo.deviceRepairRecord,
           recordId: action.recordInfo.id,
+          repairHistory: state.info.repairHistory,
+        }
+      };
+    case RECEIVE_REPAIR_HISTORY:
+      return {
+        ...state,
+        info: {
+          deviceInfo: state.info.deviceInfo,
+          recordInfo: state.info.recordInfo,
+          recordId: state.info.recordId,
+          repairHistory: action.repairHistory,
         }
       };
     case RECEIVE_RECORD_INFO_ERROR:
@@ -252,6 +303,7 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: state.info.deviceInfo,
           recordInfo: emptyState.info.recordInfo,
           recordId: emptyState.info.recordId,
+          repairHistory: emptyState.info.repairHistory,
         },
         errors: {
           ...state.errors,
@@ -264,7 +316,8 @@ export function repairRecordReducer(state = emptyState, action) {
         info: {
           deviceInfo: emptyState.info.deviceInfo,
           recordInfo: state.info.recordInfo,
-          recordId: emptyState.info.recordId,
+          recordId: state.info.recordId,
+          repairHistory: state.info.repairHistory,
         },
         errors: {
           ...state.errors,
@@ -278,6 +331,7 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: emptyState.info.deviceInfo,
           recordInfo: state.info.recordInfo,
           recordId: state.info.recordId,
+          repairHistory: state.info.repairHistory,
         },
       };
     case CLEAR_RECORD_INFO:
@@ -287,6 +341,7 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: state.info.deviceInfo,
           recordInfo: emptyState.info.recordInfo,
           recordId: emptyState.info.recordId,
+          repairHistory: emptyState.info.repairHistory,
         },
       };
     default:
