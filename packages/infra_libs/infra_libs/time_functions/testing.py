@@ -11,13 +11,15 @@ import mock
 import pytz
 import tzlocal
 
+from six import with_metaclass
+
 
 def mock_datetime_utc(*dec_args, **dec_kwargs):
   """Overrides built-in datetime and date classes to always return a given time.
 
   Args:
     Same arguments as datetime.datetime accepts to mock UTC time.
-  
+
   Example usage:
     @mock_datetime_utc(2015, 10, 11, 20, 0, 0)
     def my_test(self):
@@ -39,28 +41,27 @@ def mock_datetime_utc(*dec_args, **dec_kwargs):
   original_datetime = datetime.datetime
   original_date = datetime.date
 
-  # Our metaclass must be derived from the parent class metaclass, but if the
-  # parent class doesn't have one, we use 'type' type.
-  class MockDateTimeMeta(original_datetime.__dict__.get('__metaclass__', type)):
+  # Our metaclass must be derived from the parent class metaclass.
+  class MockDateTimeMeta(type(original_datetime)):
+
     @classmethod
     def __instancecheck__(cls, instance):
       return isinstance(instance, original_datetime)
 
-  class _MockDateTime(original_datetime):
-    __metaclass__ = MockDateTimeMeta
+  class _MockDateTime(with_metaclass(MockDateTimeMeta, original_datetime)):
     mock_utcnow = original_datetime(*dec_args, **dec_kwargs)
-  
+
     @classmethod
     def utcnow(cls):
       return cls.mock_utcnow
-  
+
     @classmethod
     def now(cls, tz=None):
       if not tz:
         tz = tzlocal.get_localzone()
       tzaware_utcnow = pytz.utc.localize(cls.mock_utcnow)
       return tz.normalize(tzaware_utcnow.astimezone(tz)).replace(tzinfo=None)
-  
+
     @classmethod
     def today(cls):
       return cls.now().date()
@@ -75,16 +76,15 @@ def mock_datetime_utc(*dec_args, **dec_kwargs):
         tz = tzlocal.get_localzone()
       tzaware_dt = pytz.utc.localize(cls.utcfromtimestamp(timestamp))
       return tz.normalize(tzaware_dt.astimezone(tz)).replace(tzinfo=None)
-  
-  # Our metaclass must be derived from the parent class metaclass, but if the
-  # parent class doesn't have one, we use 'type' type.
-  class MockDateMeta(original_date.__dict__.get('__metaclass__', type)):
+
+  # Our metaclass must be derived from the parent class metaclass.
+  class MockDateMeta(type(original_date)):
+
     @classmethod
     def __instancecheck__(cls, instance):
       return isinstance(instance, original_date)
 
-  class _MockDate(original_date):
-    __metaclass__ = MockDateMeta
+  class _MockDate(with_metaclass(MockDateMeta, original_date)):
 
     @classmethod
     def today(cls):
@@ -108,9 +108,9 @@ def mock_timezone(tzname):
   """Mocks tzlocal.get_localzone method to always return a given timezone.
 
   This should be used in combination with mock_datetime_utc in order to achieve
-  consistent test results accross timezones if datetime.now, datetime.today or
+  consistent test results across timezones if datetime.now, datetime.today or
   date.today functions are used.
-  
+
   Args:
     tzname: Name of the timezone to be used (as passed to pytz.timezone).
   """

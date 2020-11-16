@@ -118,31 +118,36 @@ class TestBigQueryHelper(unittest.TestCase):
     row = bqh.message_to_dict(msg)
 
     expected = {
-      'str': u'a',
-      'strs': [u'a', u'b'],
+        'str': u'a',
+        'strs': [u'a', u'b'],
+        'num': 1,
+        'nums': [0, 1, 2],
+        'nested': {
+            'num': 1,
+            'str': u'a'
+        },
+        'nesteds': [
+            {
+                'num': 1,
+                'str': u'a'
+            },
+            {
+                'num': 2,
+                'str': u'b'
+            },
+        ],
 
-      'num': 1L,
-      'nums': [0L, 1L, 2L],
+        # empty messages are omitted
+        'e': 'E1',
+        'es': ['E0', 'E2'],
 
-      'nested': {'num': 1L, 'str': u'a'},
-      'nesteds': [
-        {'num': 1L, 'str': u'a'},
-        {'num': 2L, 'str': u'b'},
-      ],
-
-      # empty messages are omitted
-
-      'e': 'E1',
-      'es': ['E0', 'E2'],
-
-      # structs are compared separately.
-
-      'timestamp': dt0.isoformat(),
-      'timestamps': [dt0.isoformat(), dt1.isoformat()],
-
-      'repeated_container': {'nums': [1L, 2L]},
-
-      'duration': 2.000003,
+        # structs are compared separately.
+        'timestamp': dt0.isoformat(),
+        'timestamps': [dt0.isoformat(), dt1.isoformat()],
+        'repeated_container': {
+            'nums': [1, 2]
+        },
+        'duration': 2.000003,
     }
 
     # compare structs as JSON values, not strings.

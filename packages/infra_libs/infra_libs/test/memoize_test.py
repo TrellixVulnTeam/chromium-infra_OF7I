@@ -37,7 +37,7 @@ class FunctionTestCase(MemoTestCase):
       self.tag()
       return 'foo'
 
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(func(), 'foo')
     self.assertTagged()
 
@@ -48,7 +48,7 @@ class FunctionTestCase(MemoTestCase):
       return a + b
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(func(1, 2), 3)
       self.assertEqual(func(3, 4), 7)
     self.assertTagged(
@@ -63,7 +63,7 @@ class FunctionTestCase(MemoTestCase):
       return a + b
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(func(1, 1), 2)
       self.assertEqual(func(1, 2), 2)
       self.assertEqual(func(2, 1), 3)
@@ -74,6 +74,7 @@ class FunctionTestCase(MemoTestCase):
     )
 
   def testOldClassMethod(self):
+
     class Test:
       # Disable 'no __init__ method' warning | pylint: disable=W0232
       # pylint: disable=old-style-class
@@ -85,7 +86,7 @@ class FunctionTestCase(MemoTestCase):
         return a
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(Test.func(1), 1)
       self.assertEqual(Test.func(2), 2)
     self.assertTagged(
@@ -104,7 +105,7 @@ class FunctionTestCase(MemoTestCase):
         return a
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(Test.func(1), 1)
       self.assertEqual(Test.func(2), 2)
     self.assertTagged(
@@ -113,6 +114,7 @@ class FunctionTestCase(MemoTestCase):
     )
 
   def testOldClassStaticMethod(self):
+
     class Test:
       # Disable 'no __init__ method' warning | pylint: disable=W0232
       # pylint: disable=old-style-class
@@ -124,7 +126,7 @@ class FunctionTestCase(MemoTestCase):
         return a
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(Test.func(1), 1)
       self.assertEqual(Test.func(2), 2)
     self.assertTagged(
@@ -143,7 +145,7 @@ class FunctionTestCase(MemoTestCase):
         return a
 
     # Execute multiple rounds of two unique function executions.
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(Test.func(1), 1)
       self.assertEqual(Test.func(2), 2)
     self.assertTagged(
@@ -232,7 +234,7 @@ class MemoInstanceMethodTestCase(MemoTestCase):
 
     t0 = Test(self, 't0')
     t1 = Test(self, 't1')
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.func(), 'foo')
       self.assertEqual(t1.func(), 'foo')
     self.assertTagged(
@@ -251,7 +253,7 @@ class MemoInstanceMethodTestCase(MemoTestCase):
 
     t0 = Test(self, 't0')
     t1 = Test(self, 't1')
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.func(), 'foo')
       self.assertEqual(t1.func(), 'foo')
     self.assertTagged(
@@ -270,7 +272,7 @@ class MemoInstanceMethodTestCase(MemoTestCase):
 
     t0 = Test(self, 't0')
     t1 = Test(self, 't1')
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.func(1, 2), 3)
       self.assertEqual(t0.func(1, 3), 4)
       self.assertEqual(t1.func(1, 2), 3)
@@ -293,7 +295,7 @@ class MemoInstanceMethodTestCase(MemoTestCase):
 
     t0 = Test(self, 't0')
     t1 = Test(self, 't1')
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.func(1, 2), 3)
       self.assertEqual(t0.func(1, 3), 4)
       self.assertEqual(t1.func(1, 2), 3)
@@ -315,7 +317,7 @@ class MemoInstanceMethodTestCase(MemoTestCase):
         return a + b
 
     t0 = Test(self, 't0')
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.func.__get__(t0)(1,2), 3)
     self.assertTagged(
         ('t0', 1, 2),
@@ -461,7 +463,7 @@ class MemoClassMethodTestCase(MemoTestCase):
     t0.prop = 1024
     t1.prop = 1337
     del(t1.prop)
-    for _ in xrange(10):
+    for _ in range(10):
       self.assertEqual(t0.prop, 1024)
       self.assertEqual(t1.prop, 0)
 

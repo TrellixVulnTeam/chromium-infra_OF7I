@@ -54,7 +54,7 @@ class InitializeTest(test_case.TestCase):
   def test_sets_monitor(self):
     os.environ['SERVER_SOFTWARE'] = 'Production'  # != 'Development'
     config.initialize(self.app, is_local_unittest=False)
-    self.assertEquals(1, monitors.HttpsMonitor.call_count)
+    self.assertEqual(1, monitors.HttpsMonitor.call_count)
 
   def test_initialize_disallow_None_app(self):
     with self.assertRaises(Exception):

@@ -122,7 +122,7 @@ def send_rows(bq_client, dataset_id, table_id, rows, batch_size=_BATCH_DEFAULT):
 
 
 def _batch(rows, batch_size):
-  for i in xrange(0, len(rows), batch_size):
+  for i in range(0, len(rows), batch_size):
     yield rows[i:i + batch_size]
 
 

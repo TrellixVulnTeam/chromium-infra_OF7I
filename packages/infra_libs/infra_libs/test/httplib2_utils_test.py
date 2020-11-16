@@ -2,13 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import httplib
 import json
 import os
 import socket
 import time
-import urllib
 import unittest
+
+from six.moves import http_client
+from six.moves import urllib
 
 import infra_libs
 from infra_libs.ts_mon.common import http_metrics
@@ -266,9 +267,9 @@ class InstrumentedHttplib2Test(unittest.TestCase):
          'status': http_metrics.STATUS_EXCEPTION}))
 
   def test_httplib_exception(self):
-    self.http._request.side_effect = httplib.HTTPException
+    self.http._request.side_effect = http_client.HTTPException
 
-    with self.assertRaises(httplib.HTTPException):
+    with self.assertRaises(http_client.HTTPException):
       self.http.request('http://foo/')
     self.assertIsNone(http_metrics.response_status.get(
         {'name': 'test', 'client': 'httplib2', 'status': 200}))
@@ -277,11 +278,11 @@ class InstrumentedHttplib2Test(unittest.TestCase):
          'status': http_metrics.STATUS_EXCEPTION}))
 
   def test_gae_httplib_timeout_exception(self):
-    self.http._request.side_effect = httplib.HTTPException(
+    self.http._request.side_effect = http_client.HTTPException(
         'Deadline exceeded while waiting for HTTP response from URL: '
         'http://foo/')
 
-    with self.assertRaises(httplib.HTTPException):
+    with self.assertRaises(http_client.HTTPException):
       self.http.request('http://foo/')
     self.assertIsNone(http_metrics.response_status.get(
         {'name': 'test', 'client': 'httplib2', 'status': 200}))
@@ -415,13 +416,11 @@ class DelegateServiceAccountCredentialsTest(unittest.TestCase):
 
     self.mock_http.request.assert_called_once_with(
         uri='https://iamcredentials.googleapis.com/v1/projects/%s/'
-            'serviceAccounts/%s:generateAccessToken' %
-            (urllib.quote_plus(self.project),
-             urllib.quote_plus(self.email)),
+        'serviceAccounts/%s:generateAccessToken' % (urllib.parse.quote_plus(
+            self.project), urllib.parse.quote_plus(self.email)),
         method='POST',
         body=json.dumps({'scope': self.scopes}),
-        headers={'Content-Type': 'application/json'}
-    )
+        headers={'Content-Type': 'application/json'})
 
     self.assertEqual(['scope'], self.creds._canonicalize_scopes('scope'))
 

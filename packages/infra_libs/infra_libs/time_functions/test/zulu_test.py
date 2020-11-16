@@ -32,12 +32,12 @@ class TestZuluTime(unittest.TestCase):
     self.assertIsNone(zuluparse)
 
   def testNaiveDTZuluStringNonFractional(self):
-    dt = datetime.datetime(2015, 06, 11, 23, 17, 26)
+    dt = datetime.datetime(2015, 6, 11, 23, 17, 26)
     timestring = '2015-06-11T23:17:26.0Z'
     self.assertEqual(zulu.to_zulu_string(dt), timestring)
 
   def testNaiveDTZuluStringFractional(self):
-    dt = datetime.datetime(2015, 06, 11, 23, 17, 26, 123)
+    dt = datetime.datetime(2015, 6, 11, 23, 17, 26, 123)
     timestring = '2015-06-11T23:17:26.000123Z'
     self.assertEqual(zulu.to_zulu_string(dt), timestring)
 
@@ -45,7 +45,7 @@ class TestZuluTime(unittest.TestCase):
     # If you're confused why GMT+8 is -08:00, see
     # http://askubuntu.com/questions/519550/
     # why-is-the-8-timezone-called-gmt-8-in-the-filesystem
-    dt = datetime.datetime(2015, 06, 11, 10, 17, 26, 123,
-                           tzinfo=timezone('Etc/GMT+8'))
+    dt = datetime.datetime(
+        2015, 6, 11, 10, 17, 26, 123, tzinfo=timezone('Etc/GMT+8'))
     timestring = '2015-06-11T18:17:26.000123Z'
     self.assertEqual(zulu.to_zulu_string(dt), timestring)

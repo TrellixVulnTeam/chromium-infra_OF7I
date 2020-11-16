@@ -9,6 +9,8 @@ import os
 import time
 import unittest
 
+from six import string_types
+
 import httplib2
 
 from infra_libs import httplib2_utils
@@ -39,7 +41,7 @@ class AuthTest(unittest.TestCase):
       yield {'LUCI_CONTEXT': ctx_file}
 
   def mocked_http(self, reply, status=200):
-    if not isinstance(reply, basestring):
+    if not isinstance(reply, string_types):
       reply = json.dumps(reply)
     return httplib2_utils.HttpMock([
       (

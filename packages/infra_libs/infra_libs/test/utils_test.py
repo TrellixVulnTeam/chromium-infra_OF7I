@@ -54,7 +54,7 @@ class ReadJsonTest(unittest.TestCase):
       filename=os.path.join(DATA_DIR, 'utils_test_dict.json'))
 
     # Make sure all keys can be decoded as utf8
-    for key in new_dict.iterkeys():
+    for key in new_dict.keys():
       self.assertIsInstance(key, str)
       key.decode('utf-8')  # should raise no exceptions
 
@@ -67,7 +67,7 @@ class ReadJsonTest(unittest.TestCase):
       value.decode('utf-8')
 
     sub_dict = new_dict['clé accentuée']
-    for key, value in sub_dict.iteritems():
+    for key, value in sub_dict.items():
       self.assertIsInstance(key, str)
       self.assertIsInstance(value, str)
 
@@ -86,7 +86,7 @@ class ReadJsonTest(unittest.TestCase):
     self.assertEqual(orig_dict, new_dict)
 
     # Make sure all keys can be decoded as utf8
-    for key in new_dict.iterkeys():
+    for key in new_dict.keys():
       self.assertIsInstance(key, str)
       key.decode('utf-8')  # should raise no exceptions
 
@@ -99,7 +99,7 @@ class ReadJsonTest(unittest.TestCase):
       value.decode('utf-8')
 
     sub_dict = new_dict['clé accentuée']
-    for key, value in sub_dict.iteritems():
+    for key, value in sub_dict.items():
       self.assertIsInstance(key, str)
       self.assertIsInstance(value, str)
 
@@ -108,9 +108,7 @@ class ReadJsonTest(unittest.TestCase):
 
   def test_read_from_string_no_unicode(self):
     # only numerical value. Keys have to be string in json.
-    orig_dict = {'1': 2,
-                 '3': [4, 5., 7, None],
-                 '7':{'8': 9, '10': 11}}
+    orig_dict = {'1': 2, '3': [4, 5., 7, None], '7': {'8': 9, '10': 11}}
     json_data = json.dumps(orig_dict)
     new_dict = infra_libs.read_json_as_utf8(text=json_data)
     self.assertEqual(orig_dict, new_dict)
