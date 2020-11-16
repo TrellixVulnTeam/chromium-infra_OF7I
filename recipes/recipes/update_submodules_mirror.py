@@ -168,7 +168,7 @@ def GetSubmodules(api, deps, source_checkout_name):
     url = entry['url']
     rev = entry['rev']
     if rev is None:
-      rev = 'master'
+      rev = 'HEAD'
 
     # Filter out any DEPS that point outside of the repo, as there's no way to
     # represent this with submodules.
