@@ -74,13 +74,15 @@ def get_download_url(version):
     'setuptools': m.group(2),
     'wheel': m.group(3),
   }
-  download_urls = []
+  download_urls, name = [], []
   for pkgname, vers in versions.iteritems():
-    url, _ = _get_wheel_url(pkgname, vers)
+    url, filename = _get_wheel_url(pkgname, vers)
     download_urls.append(url)
+    name.append(filename)
   partial_manifest = {
-    'url': download_urls,
-    'ext': '.whl',
+      'url': download_urls,
+      'name': name,
+      'ext': '.whl',
   }
   print(json.dumps(partial_manifest))
 

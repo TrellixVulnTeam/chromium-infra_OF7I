@@ -259,18 +259,30 @@ class Manifest(object):  # pragma: no cover
   Attributes:
     * protocol (required) - Protocol to use for downloading the artifact.
     * source_uri (required) - Remote artifact resource location(s) URL/URI.
-        source_uri is an iterable of str.
+        source_uri is a list of str.
     * path - Dictates where to download the sources to, e.g. checkout dir.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the GitSource.
     * ext - Extension used for downloading sources.
+    * artifact_names - Corresponding to source_uri, optional name for downloaded
+      source. It's a list of str of equal length to source_uri. This is
+      optional, if passed will be used. For `pip_bootstrap`, name of the python
+      wheel is important.
   """
-  def __init__(self, protocol, source_uri, path, source_hash=None, ext=None):
+
+  def __init__(self,
+               protocol,
+               source_uri,
+               path,
+               source_hash=None,
+               ext=None,
+               artifact_names=None):
     self.protocol = protocol
     self.source_uri = source_uri
     self.path = path
     self.source_hash = source_hash
     self.ext = ext
+    self.artifact_names = artifact_names
 
 
 #### Private stuff
@@ -307,7 +319,13 @@ def _generate_download_manifest(api, spec, checkout_dir,
     args = map(str, source_method_pb.name[1:]) + ['get_url']
     result = run_script(api, script, *args, stdout=api.json.output())
     source_uri, ext = result.stdout['url'], result.stdout['ext']
-    return Manifest('url', source_uri, checkout_dir, ext=ext)
+    artifact_names = result.stdout['name']
+    # Verify source_uri and artifact_names are equal length.
+    assert len(source_uri) == len(
+        artifact_names
+    ), 'Number of download URLs should be equal to number of artifacts.'
+    return Manifest(
+        'url', source_uri, checkout_dir, ext=ext, artifact_names=artifact_names)
 
   else:  # pragma: no cover
     assert False, 'Unknown source type %r' % (method_name,)
@@ -327,7 +345,10 @@ def _download_source(api, download_manifest):
                      download_manifest.source_hash, download_manifest.path)
   elif download_manifest.protocol == 'url':
     for i, uri in enumerate(download_manifest.source_uri):
-      artifact = 'raw_source_' + str(i) + download_manifest.ext
+      if not download_manifest.artifact_names:
+        artifact = 'raw_source_' + str(i) + download_manifest.ext
+      else:  # pragma: no cover
+        artifact = download_manifest.artifact_names[i]
       api.url.get_file(uri, api.path.join(download_manifest.path, artifact))
   else:  # pragma: no cover
     assert False, 'Unknown download protocol  %r' % (protocol,)
