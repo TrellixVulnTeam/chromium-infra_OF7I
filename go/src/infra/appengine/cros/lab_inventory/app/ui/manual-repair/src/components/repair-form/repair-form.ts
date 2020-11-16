@@ -14,12 +14,13 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {checkDeviceType, getAssetTag, getHostname, getRepairTargetType} from '../../shared/helpers/repair-record-helpers';
 import {router} from '../../shared/router';
 import {SHARED_STYLES} from '../../shared/shared-styles';
 import {receiveAppMessage} from '../../state/reducers/message';
 import {clearRepairRecord, createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
-import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
+import {TYPE_DUT} from '../constants';
 
 import * as repairConst from './repair-form-constants';
 
@@ -180,47 +181,6 @@ enum FormAction {
   }
 
   /**
-   * Checks the type of the device that is managed in state by this form. It
-   * returns a type constant defined in ../constants.
-   */
-  checkDeviceType(): string {
-    if (isEmpty(this.deviceInfo)) return TYPE_UNKNOWN;
-
-    if (TYPE_DUT in this.deviceInfo.labConfig) {
-      return TYPE_DUT;
-    } else if (TYPE_LABSTATION in this.deviceInfo.labConfig) {
-      return TYPE_LABSTATION;
-    }
-    return TYPE_UNKNOWN;
-  }
-
-  /**
-   * Based on device type, return hostname from deviceInfo. Returns empty string
-   * if hostname is not found.
-   */
-  getHostname(): string {
-    if (isEmpty(this.deviceInfo)) return '';
-
-    if (this.checkDeviceType() === TYPE_DUT) {
-      return this.deviceInfo.labConfig?.dut?.hostname;
-    } else if (this.checkDeviceType() === TYPE_LABSTATION) {
-      return this.deviceInfo.labConfig?.labstation?.hostname;
-    }
-    return '';
-  }
-
-  /**
-   * Based on device type, return target type. Returns
-   * repairConst.RepairTargetType.TYPE_DUT as default.
-   */
-  getRepairTargetType(): number {
-    if (this.checkDeviceType() === TYPE_LABSTATION) {
-      return repairConst.RepairTargetType.TYPE_LABSTATION;
-    }
-    return repairConst.RepairTargetType.TYPE_DUT;
-  }
-
-  /**
    * Based on the enumType, match a list of action strings to enum field.
    */
   convertActionToEnum = (actionsList: Array<string>, enumType: object) =>
@@ -255,9 +215,9 @@ enum FormAction {
    */
   getBaseRecordObj() {
     return {
-      hostname: this.getHostname(),
-      assetTag: this.deviceInfo.labConfig?.id?.value,
-      repairTargetType: this.getRepairTargetType(),
+      hostname: getHostname(this.deviceInfo),
+      assetTag: getAssetTag(this.deviceInfo),
+      repairTargetType: getRepairTargetType(this.deviceInfo),
       repairState: repairConst.RepairState.STATE_IN_PROGRESS,
       buganizerBugUrl: '',
       chromiumBugUrl: '',
@@ -514,7 +474,7 @@ enum FormAction {
             value="${this.deviceInfo.manufacturingConfig?.devicePhase}"
           ></mwc-textfield>
           ${
-        this.checkDeviceType() === TYPE_DUT ?
+        checkDeviceType(this.deviceInfo) === TYPE_DUT ?
             html`
             <mwc-textfield
             disabled
@@ -694,7 +654,7 @@ enum FormAction {
   displayForm() {
     return html`
       <h2 class='form-title'>${this.formAction} Manual Repair Record for ${
-        this.getHostname()}</h2>
+        getHostname(this.deviceInfo)}</h2>
       <div id='repair-form'>
         <div id='repair-form-left' class='form-column'>
           ${this.displayDeviceInfo()}

@@ -17,7 +17,7 @@ import {TemplateResult} from 'lit-html';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
-import {parseQueryStringToDict} from '../shared/helpers';
+import {parseQueryStringToDict} from '../shared/helpers/query-store-helpers';
 import {router} from '../shared/router';
 import {SHARED_STYLES} from '../shared/shared-styles';
 import {receiveQueryStore} from '../state/reducers/query';
