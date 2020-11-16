@@ -183,6 +183,15 @@ func TestGTestConversions(t *testing.T) {
 		})
 
 		Convey("snippet", func() {
+			Convey("valid", func() {
+				tr := convert(&GTestRunResult{
+					Status:              "SUCCESS",
+					LosslessSnippet:     true,
+					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
+				})
+				So(tr.SummaryHtml, ShouldEqual, "<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>")
+			})
+
 			Convey("invalid does not cause a fatal error", func() {
 				tr := convert(&GTestRunResult{
 					Status:              "SUCCESS",
@@ -198,10 +207,10 @@ func TestGTestConversions(t *testing.T) {
 					LosslessSnippet:     true,
 					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
 				})
-				So(tr.SummaryHtml, ShouldEqual, `<div><pre><text-artifact artifact-id="snippet"></pre></div>`)
+				So(tr.SummaryHtml, ShouldEqual, "Please check stack_trace artifact for details.")
 				So(tr.Artifacts, ShouldHaveLength, 1)
-				So(tr.Artifacts["snippet"].ContentType, ShouldEqual, "text/plain")
-				So(tr.Artifacts["snippet"].GetContents(), ShouldResemble, []byte("[ RUN      ] FooTest.TestDoBar\n(10 ms)"))
+				So(tr.Artifacts["stack_trace"].ContentType, ShouldEqual, "text/plain")
+				So(tr.Artifacts["stack_trace"].GetContents(), ShouldResemble, []byte("<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>"))
 			})
 		})
 

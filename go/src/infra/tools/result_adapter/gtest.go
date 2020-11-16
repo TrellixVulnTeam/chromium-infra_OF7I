@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -300,14 +301,18 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 	}
 
 	// Write the summary.
-	var snippet []byte
-	if snippet, err = base64.StdEncoding.DecodeString(result.OutputSnippetBase64); err != nil {
-		// Log the error, but we shouldn't fail to convert a file just because we can't
-		// convert a summary.
-		logging.Warningf(ctx, "Failed to convert OutputSnippetBase64 %q", result.OutputSnippetBase64)
-		snippet = nil
+	var snippet string
+	if result.OutputSnippetBase64 != "" {
+		outputBytes, err := base64.StdEncoding.DecodeString(result.OutputSnippetBase64)
+		if err != nil {
+			// Log the error, but we shouldn't fail to convert a file just because we can't
+			// convert a summary.
+			logging.Warningf(ctx, "Failed to convert OutputSnippetBase64 %q", result.OutputSnippetBase64)
+		} else {
+			snippet = string(outputBytes)
+		}
 	}
-
+	r.buf.Reset()
 	links := make(map[string]string, len(result.Links))
 	l := new(Link)
 	s := new(string)
@@ -323,23 +328,28 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 		}
 	}
 
-	r.buf.Reset()
-	summaryInput := map[string]interface{}{
-		"links": links,
-	}
-	if len(snippet) > 0 {
-		tr.Artifacts = map[string]*sinkpb.Artifact{
-			"snippet": {
-				Body:        &sinkpb.Artifact_Contents{Contents: snippet},
-				ContentType: "text/plain",
-			}}
-
-		summaryInput["artifact"] = "snippet"
-	}
-	if err = summaryTmpl.ExecuteTemplate(r.buf, "gtest", summaryInput); err != nil {
+	err = summaryTmpl.ExecuteTemplate(r.buf, "gtest", map[string]interface{}{
+		"snippet": strings.ToValidUTF8(snippet, string(unicode.ReplacementChar)),
+		"links":   links,
+	})
+	if err != nil {
 		return nil, err
 	}
-	tr.SummaryHtml = r.buf.String()
+	stackTrace := r.buf.String()
+
+	if tr.Expected && len(stackTrace) <= maxSummaryLength {
+		// Expected results usually have a short snippet, so just keep it in summaryHtml.
+		tr.SummaryHtml = stackTrace
+	} else if len(stackTrace) > 0 {
+		a := &sinkpb.Artifact{
+			Body:        &sinkpb.Artifact_Contents{Contents: []byte(stackTrace)},
+			ContentType: "text/plain",
+		}
+
+		// TODO(crbug.com/1099606): Remove this summaryHtml when artifact embedding is done.
+		tr.SummaryHtml = "Please check stack_trace artifact for details."
+		tr.Artifacts = map[string]*sinkpb.Artifact{"stack_trace": a}
+	}
 
 	// Store the test code location.
 	if loc, ok := r.TestLocations[name]; ok {
