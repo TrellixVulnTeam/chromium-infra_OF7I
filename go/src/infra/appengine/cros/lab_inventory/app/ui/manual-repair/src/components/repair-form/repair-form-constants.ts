@@ -37,6 +37,9 @@ export interface CheckboxActionsConfig {
 /**
  * Checkbox related Enums implemented based on
  * go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ *
+ * **RepairActionString enums are the string values that will be displayed for
+ * each repair action.
  */
 export enum CableRepairAction {
   CABLE_NA = 0,
@@ -44,6 +47,14 @@ export enum CableRepairAction {
   CABLE_SERVO_DUT = 2,
   CABLE_SERVO_SERVO_MICRO = 3,
   CABLE_OTHER = 4,
+}
+
+export enum CableRepairActionString {
+  CABLE_NA = 'N/A',
+  CABLE_SERVO_HOST_SERVO = 'Servo Host to Servo',
+  CABLE_SERVO_DUT = 'Servo to DUT',
+  CABLE_SERVO_SERVO_MICRO = 'Servo to servo_micro',
+  CABLE_OTHER = 'Other',
 }
 
 export enum DutRepairAction {
@@ -58,24 +69,36 @@ export enum DutRepairAction {
   DUT_OTHER = 9,
 }
 
+export enum DutRepairActionString {
+  DUT_NA = 'N/A',
+  DUT_REIMAGE_DEV = 'Reimaged to DEV mode',
+  DUT_REIMAGE_PROD = 'Reimaged to PROD mode',
+  DUT_POWER_CYCLE_DUT = 'Power Cycled on DUT side',
+  DUT_REBOOT_EC = 'Rebooted by reset EC (F3+PWR button)',
+  DUT_NOT_PRESENT = 'Not present',
+  DUT_REFLASH = 'Reflashed Firmware',
+  DUT_REPLACE = 'Replaced Hardware',
+  DUT_OTHER = 'Other',
+}
+
 export const CHECKBOX_ACTIONS = Object.freeze({
   cableRepairActions: {
     stateName: 'cableRepairActions',
     actionList: new Map([
       [
-        'Servo Host to Servo',
+        CableRepairActionString.CABLE_SERVO_HOST_SERVO,
         {enumVal: CableRepairAction.CABLE_SERVO_HOST_SERVO, timeVal: 5},
       ],
       [
-        'Servo to DUT',
+        CableRepairActionString.CABLE_SERVO_DUT,
         {enumVal: CableRepairAction.CABLE_SERVO_DUT, timeVal: 5},
       ],
       [
-        'Servo to servo_micro',
+        CableRepairActionString.CABLE_SERVO_SERVO_MICRO,
         {enumVal: CableRepairAction.CABLE_SERVO_SERVO_MICRO, timeVal: 5},
       ],
       [
-        'Other',
+        CableRepairActionString.CABLE_OTHER,
         {enumVal: CableRepairAction.CABLE_OTHER, timeVal: 0},
       ],
     ]),
@@ -84,35 +107,35 @@ export const CHECKBOX_ACTIONS = Object.freeze({
     stateName: 'dutRepairActions',
     actionList: new Map([
       [
-        'Reimaged to DEV mode',
+        DutRepairActionString.DUT_REIMAGE_DEV,
         {enumVal: DutRepairAction.DUT_REIMAGE_DEV, timeVal: 8},
       ],
       [
-        'Reimaged to PROD mode',
+        DutRepairActionString.DUT_REIMAGE_PROD,
         {enumVal: DutRepairAction.DUT_REIMAGE_PROD, timeVal: 8},
       ],
       [
-        'Power Cycled on DUT side',
+        DutRepairActionString.DUT_POWER_CYCLE_DUT,
         {enumVal: DutRepairAction.DUT_POWER_CYCLE_DUT, timeVal: 1},
       ],
       [
-        'Rebooted by reset EC (F3+PWR button)',
+        DutRepairActionString.DUT_REBOOT_EC,
         {enumVal: DutRepairAction.DUT_REBOOT_EC, timeVal: 1},
       ],
       [
-        'Reflashed Firmware',
+        DutRepairActionString.DUT_REFLASH,
         {enumVal: DutRepairAction.DUT_REFLASH, timeVal: 5},
       ],
       [
-        'Replaced Hardware',
+        DutRepairActionString.DUT_REPLACE,
         {enumVal: DutRepairAction.DUT_REPLACE, timeVal: 15},
       ],
       [
-        'Not present',
+        DutRepairActionString.DUT_NOT_PRESENT,
         {enumVal: DutRepairAction.DUT_NOT_PRESENT, timeVal: 0},
       ],
       [
-        'Other',
+        DutRepairActionString.DUT_OTHER,
         {enumVal: DutRepairAction.DUT_OTHER, timeVal: 0},
       ],
     ]),
@@ -136,6 +159,9 @@ export interface DropdownActionsConfig {
 /**
  * Dropdown related Enums implemented based on
  * go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ *
+ * **RepairActionString enums are the string values that will be displayed for
+ * each repair action.
  */
 export enum LabstationRepairAction {
   LABSTATION_NA = 0,
@@ -145,6 +171,16 @@ export enum LabstationRepairAction {
   LABSTATION_REPLACE = 4,
   LABSTATION_OTHER = 5,
   LABSTATION_FLASH = 6,
+}
+
+export enum LabstationRepairActionString {
+  LABSTATION_NA = 'N/A',
+  LABSTATION_POWER_CYCLE = 'Power Cycled',
+  LABSTATION_REIMAGE = 'Reimaged',
+  LABSTATION_UPDATE_CONFIG = 'Updated Config',
+  LABSTATION_REPLACE = 'Replaced Hardware',
+  LABSTATION_OTHER = 'Other',
+  LABSTATION_FLASH = 'Flash Firmware',
 }
 
 export enum ServoRepairAction {
@@ -157,6 +193,16 @@ export enum ServoRepairAction {
   SERVO_OTHER = 6,
 }
 
+export enum ServoRepairActionString {
+  SERVO_NA = 'N/A',
+  SERVO_POWER_CYCLE = 'Power Cycled',
+  SERVO_REPLUG_USB_TO_DUT = 'Replugged USB to DUT',
+  SERVO_REPLUG_TO_SERVO_HOST = 'Replugged to Servo',
+  SERVO_UPDATE_CONFIG = 'Updated Config',
+  SERVO_REPLACE = 'Replaced Hardware',
+  SERVO_OTHER = 'Other',
+}
+
 export enum YoshiRepairAction {
   YOSHI_NA = 0,
   YOSHI_REPLUG_ON_DUT = 1,
@@ -165,11 +211,26 @@ export enum YoshiRepairAction {
   YOSHI_OTHER = 4,
 }
 
+export enum YoshiRepairActionString {
+  YOSHI_NA = 'N/A',
+  YOSHI_REPLUG_ON_DUT = 'Replugged on DUT Side',
+  YOSHI_REPLUG_TO_SERVO = 'Replugged to Servo',
+  YOSHI_REPLACE = 'Replaced Yoshi Cable',
+  YOSHI_OTHER = 'Other',
+}
+
 export enum ChargerRepairAction {
   CHARGER_NA = 0,
   CHARGER_REPLUG = 1,
   CHARGER_REPLACE = 2,
   CHARGER_OTHER = 3,
+}
+
+export enum ChargerRepairActionString {
+  CHARGER_NA = 'N/A',
+  CHARGER_REPLUG = 'Replugged',
+  CHARGER_REPLACE = 'Replaced',
+  CHARGER_OTHER = 'Other',
 }
 
 export enum UsbStickRepairAction {
@@ -180,6 +241,14 @@ export enum UsbStickRepairAction {
   USB_STICK_OTHER = 4,
 }
 
+export enum UsbStickRepairActionString {
+  USB_STICK_NA = 'N/A',
+  USB_STICK_REPLUG = 'Replugged',
+  USB_STICK_REPLACE = 'Replaced',
+  USB_STICK_MISSED = 'Missing',
+  USB_STICK_OTHER = 'Other',
+}
+
 export enum RpmRepairAction {
   RPM_NA = 0,
   RPM_UPDATE_DHCP = 1,
@@ -188,37 +257,45 @@ export enum RpmRepairAction {
   RPM_OTHER = 4,
 }
 
+export enum RpmRepairActionString {
+  RPM_NA = 'N/A',
+  RPM_UPDATE_DHCP = 'Updated DHCP',
+  RPM_UPDATE_DUT_CONFIG = 'Updated in DUT Config',
+  RPM_REPLACE = 'Replaced Hardware',
+  RPM_OTHER = 'Other',
+}
+
 export const DROPDOWN_ACTIONS = Object.freeze({
   labstationRepairActions: {
     componentName: 'Labstation',
     stateName: 'labstationRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        LabstationRepairActionString.LABSTATION_NA,
         {enumVal: LabstationRepairAction.LABSTATION_NA, timeVal: 0},
       ],
       [
-        'Flash Firmware',
+        LabstationRepairActionString.LABSTATION_FLASH,
         {enumVal: LabstationRepairAction.LABSTATION_FLASH, timeVal: 3},
       ],
       [
-        'Power Cycled',
+        LabstationRepairActionString.LABSTATION_POWER_CYCLE,
         {enumVal: LabstationRepairAction.LABSTATION_POWER_CYCLE, timeVal: 1},
       ],
       [
-        'Reimaged',
+        LabstationRepairActionString.LABSTATION_REIMAGE,
         {enumVal: LabstationRepairAction.LABSTATION_REIMAGE, timeVal: 7},
       ],
       [
-        'Replaced Hardware',
+        LabstationRepairActionString.LABSTATION_REPLACE,
         {enumVal: LabstationRepairAction.LABSTATION_REPLACE, timeVal: 15},
       ],
       [
-        'Updated Config',
+        LabstationRepairActionString.LABSTATION_UPDATE_CONFIG,
         {enumVal: LabstationRepairAction.LABSTATION_UPDATE_CONFIG, timeVal: 5},
       ],
       [
-        'Other',
+        LabstationRepairActionString.LABSTATION_OTHER,
         {enumVal: LabstationRepairAction.LABSTATION_OTHER, timeVal: 0},
       ],
     ]),
@@ -228,31 +305,31 @@ export const DROPDOWN_ACTIONS = Object.freeze({
     stateName: 'servoRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        ServoRepairActionString.SERVO_NA,
         {enumVal: ServoRepairAction.SERVO_NA, timeVal: 0},
       ],
       [
-        'Power Cycled',
+        ServoRepairActionString.SERVO_POWER_CYCLE,
         {enumVal: ServoRepairAction.SERVO_POWER_CYCLE, timeVal: 1},
       ],
       [
-        'Replaced Hardware',
+        ServoRepairActionString.SERVO_REPLACE,
         {enumVal: ServoRepairAction.SERVO_REPLACE, timeVal: 10},
       ],
       [
-        'Replugged to Servo',
+        ServoRepairActionString.SERVO_REPLUG_TO_SERVO_HOST,
         {enumVal: ServoRepairAction.SERVO_REPLUG_TO_SERVO_HOST, timeVal: 1},
       ],
       [
-        'Replugged USB to DUT',
+        ServoRepairActionString.SERVO_REPLUG_USB_TO_DUT,
         {enumVal: ServoRepairAction.SERVO_REPLUG_USB_TO_DUT, timeVal: 1},
       ],
       [
-        'Updated Config',
+        ServoRepairActionString.SERVO_UPDATE_CONFIG,
         {enumVal: ServoRepairAction.SERVO_UPDATE_CONFIG, timeVal: 5},
       ],
       [
-        'Other',
+        ServoRepairActionString.SERVO_OTHER,
         {enumVal: ServoRepairAction.SERVO_OTHER, timeVal: 0},
       ],
     ]),
@@ -263,23 +340,23 @@ export const DROPDOWN_ACTIONS = Object.freeze({
     stateName: 'yoshiRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        YoshiRepairActionString.YOSHI_NA,
         {enumVal: YoshiRepairAction.YOSHI_NA, timeVal: 0},
       ],
       [
-        'Replaced Yoshi Cable',
+        YoshiRepairActionString.YOSHI_REPLACE,
         {enumVal: YoshiRepairAction.YOSHI_REPLACE, timeVal: 5},
       ],
       [
-        'Replugged on DUT Side',
+        YoshiRepairActionString.YOSHI_REPLUG_ON_DUT,
         {enumVal: YoshiRepairAction.YOSHI_REPLUG_ON_DUT, timeVal: 5},
       ],
       [
-        'Replugged to Servo',
+        YoshiRepairActionString.YOSHI_REPLUG_TO_SERVO,
         {enumVal: YoshiRepairAction.YOSHI_REPLUG_TO_SERVO, timeVal: 1},
       ],
       [
-        'Other',
+        YoshiRepairActionString.YOSHI_OTHER,
         {enumVal: YoshiRepairAction.YOSHI_OTHER, timeVal: 0},
       ],
     ]),
@@ -290,19 +367,19 @@ export const DROPDOWN_ACTIONS = Object.freeze({
     stateName: 'chargerRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        ChargerRepairActionString.CHARGER_NA,
         {enumVal: ChargerRepairAction.CHARGER_NA, timeVal: 0},
       ],
       [
-        'Replaced',
+        ChargerRepairActionString.CHARGER_REPLACE,
         {enumVal: ChargerRepairAction.CHARGER_REPLACE, timeVal: 1},
       ],
       [
-        'Replugged',
+        ChargerRepairActionString.CHARGER_REPLUG,
         {enumVal: ChargerRepairAction.CHARGER_REPLUG, timeVal: 1},
       ],
       [
-        'Other',
+        ChargerRepairActionString.CHARGER_OTHER,
         {enumVal: ChargerRepairAction.CHARGER_OTHER, timeVal: 0},
       ],
     ]),
@@ -312,23 +389,23 @@ export const DROPDOWN_ACTIONS = Object.freeze({
     stateName: 'usbStickRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        UsbStickRepairActionString.USB_STICK_NA,
         {enumVal: UsbStickRepairAction.USB_STICK_NA, timeVal: 0},
       ],
       [
-        'Missing',
+        UsbStickRepairActionString.USB_STICK_MISSED,
         {enumVal: UsbStickRepairAction.USB_STICK_MISSED, timeVal: 0},
       ],
       [
-        'Replaced',
+        UsbStickRepairActionString.USB_STICK_REPLACE,
         {enumVal: UsbStickRepairAction.USB_STICK_REPLACE, timeVal: 1},
       ],
       [
-        'Replugged',
+        UsbStickRepairActionString.USB_STICK_REPLUG,
         {enumVal: UsbStickRepairAction.USB_STICK_REPLUG, timeVal: 1},
       ],
       [
-        'Other',
+        UsbStickRepairActionString.USB_STICK_OTHER,
         {enumVal: UsbStickRepairAction.USB_STICK_OTHER, timeVal: 0},
       ],
     ]),
@@ -338,23 +415,23 @@ export const DROPDOWN_ACTIONS = Object.freeze({
     stateName: 'rpmRepairActions',
     actionList: new Map([
       [
-        'N/A',
+        RpmRepairActionString.RPM_NA,
         {enumVal: RpmRepairAction.RPM_NA, timeVal: 0},
       ],
       [
-        'Updated DHCP',
+        RpmRepairActionString.RPM_UPDATE_DHCP,
         {enumVal: RpmRepairAction.RPM_UPDATE_DHCP, timeVal: 5},
       ],
       [
-        'Updated in DUT Config',
+        RpmRepairActionString.RPM_UPDATE_DUT_CONFIG,
         {enumVal: RpmRepairAction.RPM_UPDATE_DUT_CONFIG, timeVal: 5},
       ],
       [
-        'Replaced Hardware',
+        RpmRepairActionString.RPM_REPLACE,
         {enumVal: RpmRepairAction.RPM_REPLACE, timeVal: 60},
       ],
       [
-        'Other',
+        RpmRepairActionString.RPM_OTHER,
         {enumVal: RpmRepairAction.RPM_OTHER, timeVal: 0},
       ],
     ]),
