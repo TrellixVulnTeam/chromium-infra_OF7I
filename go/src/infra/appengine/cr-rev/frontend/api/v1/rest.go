@@ -79,6 +79,16 @@ func NewRESTServer(r *router.Router, grpcServer CrrevServer) {
 		grpcServer: grpcServer,
 	}
 	mw := router.MiddlewareChain{}
+	mw = mw.Extend(func(c *router.Context, next router.Handler) {
+		c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Add(
+			"Access-Control-Allow-Headers",
+			"Origin, Authorization, Content-Type, Accept, User-Agent")
+		c.Writer.Header().Add(
+			"Access-Control-Allow-Methods",
+			"DELETE, GET, OPTIONS, POST, PUT")
+
+	})
 
 	r.GET("/redirect/:query", mw, s.handleRedirect)
 	r.GET("/get_numbering", mw, s.handleNumbering)
