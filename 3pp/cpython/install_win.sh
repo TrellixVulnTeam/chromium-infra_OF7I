@@ -13,7 +13,7 @@ PREFIX="$1"
 # windows path which ends with slash in order for it to extract to our present
 # location. Otherwise it will assume we're passing it a path of a file in the
 # msi archive that we want to extract.
-lessmsi x install.msi $(cygpath -w $(pwd))"\\"
+lessmsi x raw_source_0.msi "$(cygpath -w "$(pwd)")""\\"
 
 rm -vrf SourceDir/Windows
 rm -vrf SourceDir/tcl

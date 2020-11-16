@@ -46,7 +46,7 @@ def get_download_url(version, platform):
   }
   partial_manifest = {
     'url': [url],
-    'ext': get_installer_suffix(platform),
+    'ext': '.msi',
   }
   print(json.dumps(partial_manifest))
 
