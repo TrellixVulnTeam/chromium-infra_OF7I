@@ -121,6 +121,11 @@ def create_app(client: datastore.Client = datastore.Client()):
 
     app = flask.Flask(__name__)
 
+    # TODO(fancl): Send a real request to check status?
+    @app.route("/healthcheck", methods=['GET'])
+    def healthcheck():  # pylint: disable=unused-variable
+        return "ok"
+
     @app.route("/debug/jobs/<job_id>", methods=['GET', 'POST', 'PATCH'])
     def job(job_id):  # pylint: disable=unused-variable
         job_key = client.key('Job', job_id)
