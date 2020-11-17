@@ -1,0 +1,6 @@
+{
+	"files": [
+    { "path": "src/bad_get.mm" },
+    { "path": "src/good_get.mm" }
+	]
+}

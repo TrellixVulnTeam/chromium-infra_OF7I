@@ -1,0 +1,4 @@
+package: infra/tricium/function/objective-c-style
+install_mode: symlink
+data:
+- file: objective-c-style
