@@ -65,3 +65,71 @@ export function getHostname(deviceInfo): string {
 export function getAssetTag(deviceInfo): string {
   return deviceInfo.labConfig?.id?.value;
 }
+
+/**
+ * Takes a component name and returns the list of repair action strings
+ * associated with it.
+ *
+ * @param component Name of component.
+ * @returns         Component name and enum of all repair action display strings
+ *     for the component.
+ */
+export function getActionStrEnum(component: string) {
+  switch (component) {
+    case 'labstationRepairActions':
+      return {
+        component: 'Labstation',
+        actionList: repairConst.LabstationRepairActionString,
+      };
+    case 'servoRepairActions':
+      return {
+        component: 'Servo',
+        actionList: repairConst.ServoRepairActionString,
+      };
+    case 'yoshiRepairActions':
+      return {
+        component: 'Yoshi Cable',
+        actionList: repairConst.YoshiRepairActionString,
+      };
+    case 'chargerRepairActions':
+      return {
+        component: 'Charger',
+        actionList: repairConst.ChargerRepairActionString,
+      };
+    case 'usbStickRepairActions':
+      return {
+        component: 'USB Stick',
+        actionList: repairConst.UsbStickRepairActionString,
+      };
+    case 'cableRepairActions':
+      return {
+        component: 'Other Cables',
+        actionList: repairConst.CableRepairActionString,
+      };
+    case 'rpmRepairActions':
+      return {
+        component: 'RPM',
+        actionList: repairConst.RpmRepairActionString,
+      };
+    case 'dutRepairActions':
+      return {
+        component: 'DUT',
+        actionList: repairConst.DutRepairActionString,
+      };
+    default: {
+      return null;
+    }
+  }
+}
+
+/**
+ * Takes a standard timestamp and formats it into YYYY-MM-DD HH:MM:SS.
+ *
+ * @param ts  Timestamp in the format YYYY-MM-DDTHH:MM:SS.
+ * @returns   Formatted date.
+ */
+export function formatRecordTimestamp(ts: string): string {
+  const noNano = ts.split('.')[0];
+  const res = noNano.split('T').join(' ');
+  return res;
+}

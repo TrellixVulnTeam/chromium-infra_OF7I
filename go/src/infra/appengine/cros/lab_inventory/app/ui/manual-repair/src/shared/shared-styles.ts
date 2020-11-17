@@ -44,4 +44,8 @@ export const SHARED_STYLES = css`
   mwc-fab {
     --mdc-theme-secondary: #1A73E8;
   }
+
+  vaadin-grid {
+    font-family: Roboto;
+  }
 `;

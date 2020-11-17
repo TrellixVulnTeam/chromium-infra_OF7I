@@ -8,6 +8,7 @@ import '@material/mwc-formfield';
 import '@material/mwc-select';
 import '@material/mwc-textarea';
 import '@material/mwc-textfield';
+import '../repair-history/repair-history-sidebar';
 
 import {Checkbox} from '@material/mwc-checkbox';
 import {css, customElement, html, LitElement, property, TemplateResult} from 'lit-element';
@@ -445,6 +446,7 @@ enum FormAction {
         this.recordObj.hostname}`;
 
     return html`
+      <repair-history-sidebar></repair-history-sidebar>
       <div class="form-slot">
         <h3 class="form-subtitle">Device Info</h3>
         <div id="device-info">

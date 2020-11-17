@@ -21,6 +21,7 @@ export const RECEIVE_DEVICE_INFO_ERROR = 'RECEIVE_DEVICE_INFO_ERROR';
 export const RECEIVE_RECORD_INFO_ERROR = 'RECEIVE_RECORD_INFO_ERROR';
 export const CLEAR_DEVICE_INFO = 'CLEAR_DEVICE_INFO';
 export const CLEAR_RECORD_INFO = 'CLEAR_RECORD_INFO';
+export const CLEAR_REPAIR_HISTORY = 'CLEAR_REPAIR_HISTORY';
 
 export function receiveRecordInfo(recordInfo: object) {
   return {type: RECEIVE_RECORD_INFO, recordInfo};
@@ -49,6 +50,9 @@ export function clearDeviceInfo() {
 };
 export function clearRecordInfo() {
   return {type: CLEAR_RECORD_INFO};
+};
+export function clearRepairHistory() {
+  return {type: CLEAR_REPAIR_HISTORY};
 };
 
 /**
@@ -193,14 +197,15 @@ export function updateRepairRecord(
 };
 
 /**
- * Clears all device and repair info. Sets both to empty states and returns a
- * promise when both are resolved.
+ * Clears all device, repair info, and repair history. Sets all to empty states
+ * and returns a promise when both are resolved.
  */
 export function clearRepairRecord() {
   return function(dispatch: AppThunkDispatch) {
     return Promise.all([
       dispatch(clearDeviceInfo()),
       dispatch(clearRecordInfo()),
+      dispatch(clearRepairHistory()),
     ]);
   };
 };
@@ -341,6 +346,16 @@ export function repairRecordReducer(state = emptyState, action) {
           deviceInfo: state.info.deviceInfo,
           recordInfo: emptyState.info.recordInfo,
           recordId: emptyState.info.recordId,
+          repairHistory: state.info.repairHistory,
+        },
+      };
+    case CLEAR_REPAIR_HISTORY:
+      return {
+        ...state,
+        info: {
+          deviceInfo: state.info.deviceInfo,
+          recordInfo: state.info.recordInfo,
+          recordId: state.info.recordId,
           repairHistory: emptyState.info.repairHistory,
         },
       };

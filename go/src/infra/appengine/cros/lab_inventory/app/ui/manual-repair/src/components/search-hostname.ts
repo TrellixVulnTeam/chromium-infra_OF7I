@@ -11,7 +11,7 @@ import {connect} from 'pwa-helpers';
 import {router} from '../shared/router';
 import {SHARED_STYLES} from '../shared/shared-styles';
 import {clearAppMessage, receiveAppMessage} from '../state/reducers/message';
-import {getRepairRecord} from '../state/reducers/repair-record';
+import {clearRepairRecord, getRepairRecord} from '../state/reducers/repair-record';
 import {store, thunkDispatch} from '../state/store';
 
 
@@ -132,7 +132,10 @@ export default class SearchHostname extends connect
    */
   queryHostname(hostname: string) {
     this.submitting = true;
-    thunkDispatch(getRepairRecord(hostname, this.user.authHeaders))
+    thunkDispatch(clearRepairRecord())
+        .then(
+            () =>
+                thunkDispatch(getRepairRecord(hostname, this.user.authHeaders)))
         .then(() => this.getResultMessaging())
         .finally(() => {
           this.submitting = false;
