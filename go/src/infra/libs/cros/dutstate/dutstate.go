@@ -27,9 +27,12 @@ type State string
 // All DUT states.
 const (
 	// Device ready to run tests.
-	Ready        State = "ready"
-	NeedsRepair  State = "needs_repair"
-	NeedsReset   State = "needs_reset"
+	Ready State = "ready"
+	// Provisioning failed on the device and required verified and repair.
+	NeedsRepair State = "needs_repair"
+	// Test failed on the device and required reset the state.
+	NeedsReset State = "needs_reset"
+	// Device did not recovered after running repair task on it.
 	RepairFailed State = "repair_failed"
 	// Device prepared to be deployed to the lab.
 	NeedsDeploy State = "needs_deploy"
@@ -41,9 +44,9 @@ const (
 	NeedsManualRepair State = "needs_manual_repair"
 	// Device is not fixable due issues with hardware and has to be replaced
 	NeedsReplacement State = "needs_replacement"
+	// Device state when state is not present or cannot be read from UFS.
+	Unknown State = "unknown"
 )
-
-const defaultState = NeedsDeploy
 
 // Info represent information of the state and last updated time.
 type Info struct {
@@ -83,7 +86,7 @@ func Read(ctx context.Context, c UFSClient, host string) Info {
 		}
 		// For default state time will not set and equal 0.
 		return Info{
-			State: defaultState,
+			State: Unknown,
 		}
 	}
 	return Info{
@@ -122,7 +125,7 @@ func convertFromUFSState(state ufsProto.State) State {
 	if s, ok := stateFromUFS[state]; ok {
 		return s
 	}
-	return defaultState
+	return Unknown
 }
 
 func makeUFSResourceName(host string) string {

@@ -11,6 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ufsProto "infra/unifiedfleet/api/v1/models"
@@ -26,6 +28,12 @@ type FakeUFSClient struct {
 
 func (c *FakeUFSClient) GetState(ctx context.Context, req *ufsAPI.GetStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error) {
 	if c.getStateErr == nil {
+		if req.GetResourceName() == "hosts/fail" {
+			return nil, status.Error(codes.Unknown, "Somthing else")
+		}
+		if req.GetResourceName() == "hosts/not_found" {
+			return nil, status.Error(codes.NotFound, "not_found")
+		}
 		return &ufsProto.StateRecord{
 			ResourceName: req.GetResourceName(),
 			State:        c.getStateMap[req.GetResourceName()],
@@ -65,9 +73,13 @@ func TestReadState(t *testing.T) {
 		So(r.State, ShouldEqual, "manual_repair")
 		So(r.Time, ShouldNotEqual, 0)
 
-		r = Read(ctx, c, "host3")
-		So(r.State, ShouldEqual, "needs_deploy")
-		So(r.Time, ShouldNotEqual, 0)
+		r = Read(ctx, c, "not_found")
+		So(r.State, ShouldEqual, "unknown")
+		So(r.Time, ShouldEqual, 0)
+
+		r = Read(ctx, c, "fail")
+		So(r.State, ShouldEqual, "unknown")
+		So(r.Time, ShouldEqual, 0)
 	})
 }
 
@@ -149,7 +161,7 @@ func TestConvertFromUFSState(t *testing.T) {
 		},
 		{
 			ufsProto.State_STATE_UNSPECIFIED,
-			State("needs_deploy"),
+			State("unknown"),
 		},
 	}
 	for _, tc := range testcases {
