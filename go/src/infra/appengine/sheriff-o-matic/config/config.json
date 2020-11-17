@@ -6,6 +6,9 @@
   "builder_groups": {
     "chrome": {
       "excluded_builders": [
+        "chromeos-arm-generic-beta",
+        "chromeos-arm-generic-ltc",
+        "chromeos-arm-generic-stable",
         "chromeos-betty-pi-arc-chrome-beta",
         "chromeos-betty-pi-arc-chrome-ltc",
         "chromeos-betty-pi-arc-chrome-lts",
@@ -17,9 +20,12 @@
         "chromeos-kevin-chrome-beta",
         "chromeos-kevin-chrome-ltc",
         "chromeos-kevin-chrome-lts",
-        "chromeos-kevin-chrome-stable"
-	    ]
-	  },
+        "chromeos-kevin-chrome-stable",
+        "linux-chromeos-beta",
+        "linux-chromeos-ltc",
+        "linux-chromeos-stable"
+      ]
+    },
     "chromium": {
       "excluded_builders": [
         "android-official",
@@ -69,6 +75,7 @@
     "internal.chromeos.fyi": {
       "excluded_builders": [
         "chromeos-betty-arc-r-chrome",
+        "chromeos-betty-pi-arc-chrome-dchecks",
         "chromeos-eve-arc-r-chrome"
       ]
     }
