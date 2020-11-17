@@ -87,7 +87,7 @@ func NewRESTServer(r *router.Router, grpcServer CrrevServer) {
 		c.Writer.Header().Add(
 			"Access-Control-Allow-Methods",
 			"DELETE, GET, OPTIONS, POST, PUT")
-
+		next(c)
 	})
 
 	r.GET("/redirect/:query", mw, s.handleRedirect)
