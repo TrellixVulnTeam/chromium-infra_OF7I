@@ -27,6 +27,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/gae/service/datastore"
 
@@ -458,7 +459,9 @@ func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int
 		nodes[i] = node
 		IDs[i] = ID
 	}
-	err := parallel.WorkPool(10, func(c chan<- func() error) {
+	workers := 10
+	start := time.Now()
+	err := parallel.WorkPool(workers, func(c chan<- func() error) {
 		for _, node := range nodes {
 			node := node
 			c <- func() error {
@@ -466,6 +469,7 @@ func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int
 			}
 		}
 	})
+	logging.Debugf(ctx, "writeNodes: took %v to write %d bytes (%d nodes) to datastore using %d workers with err %v", time.Since(start), len(bytes), len(nodes), workers, err)
 	if err != nil {
 		return nil, errors.Annotate(err, "write nodes").Err()
 	}
