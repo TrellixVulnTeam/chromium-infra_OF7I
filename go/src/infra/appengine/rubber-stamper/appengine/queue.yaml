@@ -1,0 +1,5 @@
+queue:
+
+# A queue for change review tasks.
+- name: change-review-queue
+  rate: 10/s

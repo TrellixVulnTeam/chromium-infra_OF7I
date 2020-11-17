@@ -37,5 +37,5 @@ func (f *factory) makeClient(ctx context.Context, gerritHost string) (Client, er
 		ttl = 0
 		return
 	})
-	return client, err
+	return client.(Client), err
 }

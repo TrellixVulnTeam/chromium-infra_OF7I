@@ -7,12 +7,15 @@ package gerrit
 import (
 	"context"
 
+	"google.golang.org/grpc"
+
 	"go.chromium.org/luci/common/errors"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 )
 
 // Client defines a subset of Gerrit API used by rubber-stamper.
 type Client interface {
+	CLReaderClient
 }
 
 // ClientFactory creates Client tied to Gerrit host and LUCI project.
@@ -33,6 +36,19 @@ func Setup(ctx context.Context) context.Context {
 	return setClientFactory(ctx, newFactory().makeClient)
 }
 
+// SetTestClientFactory sets up a ClientFactory for testing, where clientMap is
+// a map whose keys are gerrit hosts, values are corresponding testing Gerrit
+// clients.
+func SetTestClientFactory(ctx context.Context, clientMap map[string]Client) context.Context {
+	return setClientFactory(ctx, func(ctx context.Context, gerritHost string) (Client, error) {
+		client, ok := clientMap[gerritHost]
+		if !ok {
+			return nil, errors.New("not a valid Gerrit host name")
+		}
+		return client, nil
+	})
+}
+
 // GetCurrentClient returns the Client in the context or an error.
 func GetCurrentClient(ctx context.Context, gerritHost string) (Client, error) {
 	f, _ := ctx.Value(&clientCtxKey).(ClientFactory)
@@ -40,4 +56,13 @@ func GetCurrentClient(ctx context.Context, gerritHost string) (Client, error) {
 		return nil, errors.New("not a valid Gerrit context, no ClientFactory available")
 	}
 	return f(ctx, gerritHost)
+}
+
+// CLReaderClient defines a subset of Gerrit API used by rubber-stamper to
+// fetch CL details.
+type CLReaderClient interface {
+	// Lists changes that match a query.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
+	ListChanges(ctx context.Context, in *gerritpb.ListChangesRequest, opts ...grpc.CallOption) (*gerritpb.ListChangesResponse, error)
 }
