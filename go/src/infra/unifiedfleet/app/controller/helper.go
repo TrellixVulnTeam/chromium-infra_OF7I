@@ -404,7 +404,17 @@ func validateMacAddress(ctx context.Context, assetName, macAddr string) error {
 		if kvm.GetName() == assetName {
 			continue
 		}
-		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by drac %s", macAddr, kvm.GetName())
+		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by KVM %s", macAddr, kvm.GetName())
+	}
+	rpms, err := registration.QueryRPMByPropertyName(ctx, "mac_address", macAddr, true)
+	if err != nil {
+		return err
+	}
+	for _, rpm := range rpms {
+		if rpm.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by RPM %s", macAddr, rpm.GetName())
 	}
 	return nil
 }

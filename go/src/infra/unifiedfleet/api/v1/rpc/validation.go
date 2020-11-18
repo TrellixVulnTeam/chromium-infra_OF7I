@@ -760,6 +760,16 @@ func (r *CreateRPMRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if r.GetRPM().GetRack() == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyRackName)
+	}
+	if r.RPM.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.RPM.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.RPM.MacAddress = newMac
+	}
 	return nil
 }
 

@@ -111,6 +111,9 @@ message RPM {
 
     // State of the rpm
     State resource_state = 11;
+
+    // A description of this rpm.
+    string description = 12;
 }
 
 // Refer to one port of a given RPM

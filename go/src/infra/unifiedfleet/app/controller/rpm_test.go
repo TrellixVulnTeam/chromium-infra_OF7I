@@ -13,14 +13,147 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockRPM(id string) *ufspb.RPM {
 	return &ufspb.RPM{
 		Name: id,
 	}
+}
+
+func TestCreateRPM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	rack1 := &ufspb.Rack{
+		Name: "rack-1",
+		Rack: &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+		},
+	}
+	registration.CreateRack(ctx, rack1)
+	Convey("CreateRPM", t, func() {
+		Convey("Create new rpm with already existing rpm - error", func() {
+			rack1 := &ufspb.Rack{
+				Name: "rack-5",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			registration.CreateRack(ctx, rack1)
+
+			rpm1 := &ufspb.RPM{
+				Name: "rpm-1",
+				Rack: "rack-5",
+			}
+			_, err := registration.CreateRPM(ctx, rpm1)
+
+			resp, err := CreateRPM(ctx, rpm1)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "RPM rpm-1 already exists in the system")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/rpm-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Create RPM - duplicated mac address", func() {
+			rpm := &ufspb.RPM{
+				Name:       "rpm-2-mac",
+				MacAddress: "rpm-2-address",
+			}
+			_, err := registration.CreateRPM(ctx, rpm)
+			rpm2 := &ufspb.RPM{
+				Name:       "rpm-2-mac2",
+				MacAddress: "rpm-2-address",
+				Rack:       "rack-1",
+			}
+			_, err = CreateRPM(ctx, rpm2)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "mac_address rpm-2-address is already occupied")
+		})
+
+		Convey("Create new rpm with existing rack", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-10",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rpm1 := &ufspb.RPM{
+				Name: "rpm-20",
+				Rack: "rack-10",
+			}
+			resp, err := CreateRPM(ctx, rpm1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rpm1)
+
+			s, err := state.GetStateRecord(ctx, "rpms/rpm-20")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/rpm-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rpm")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "rpms/rpm-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+		})
+
+		Convey("Create new rpm - Permission denied: same realm and no create permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-20",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rpm1 := &ufspb.RPM{
+				Name: "rpm-20",
+				Rack: "rack-20",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			_, err = CreateRPM(ctx, rpm1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Create new rpm - Permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-21",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rpm1 := &ufspb.RPM{
+				Name: "rpm-21",
+				Rack: "rack-21",
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.AtlLabAdminRealm)
+			_, err = CreateRPM(ctx, rpm1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+	})
 }
 
 func TestDeleteRPM(t *testing.T) {
@@ -31,7 +164,7 @@ func TestDeleteRPM(t *testing.T) {
 	RPM4 := mockRPM("RPM-4")
 	Convey("DeleteRPM", t, func() {
 		Convey("Delete RPM by existing ID with machine reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM1)
+			resp, cerr := registration.CreateRPM(ctx, RPM1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM1)
 
@@ -60,7 +193,7 @@ func TestDeleteRPM(t *testing.T) {
 		})
 
 		Convey("Delete RPM by existing ID with racklse reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM3)
+			resp, cerr := registration.CreateRPM(ctx, RPM3)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM3)
 
@@ -86,7 +219,7 @@ func TestDeleteRPM(t *testing.T) {
 			So(resp, ShouldResembleProto, RPM3)
 		})
 		Convey("Delete RPM successfully by existing ID without references", func() {
-			resp, cerr := CreateRPM(ctx, RPM4)
+			resp, cerr := registration.CreateRPM(ctx, RPM4)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM4)
 

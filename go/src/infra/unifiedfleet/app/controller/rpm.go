@@ -23,7 +23,45 @@ import (
 
 // CreateRPM creates a new rpm in datastore.
 func CreateRPM(ctx context.Context, rpm *ufspb.RPM) (*ufspb.RPM, error) {
-	return registration.CreateRPM(ctx, rpm)
+	f := func(ctx context.Context) error {
+		hc := getRPMHistoryClient(rpm)
+		hc.LogRPMChanges(nil, rpm)
+
+		// Get rack to associate the rpm
+		rack, err := GetRack(ctx, rpm.GetRack())
+		if err != nil {
+			return err
+		}
+
+		// Validate the input
+		if err := validateCreateRPM(ctx, rpm, rack); err != nil {
+			return err
+		}
+
+		// Fill the zone to rpm OUTPUT only fields for indexing
+		rpm.Zone = rack.GetLocation().GetZone().String()
+		rpm.ResourceState = ufspb.State_STATE_REGISTERED
+
+		// Create a rpm entry
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		if _, err = registration.BatchUpdateRPMs(ctx, []*ufspb.RPM{rpm}); err != nil {
+			return errors.Annotate(err, "Unable to create rpm %s", rpm.Name).Err()
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
+			return err
+		}
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to create rpm in datastore: %s", err)
+		return nil, err
+	}
+	return rpm, nil
 }
 
 // UpdateRPM updates rpm in datastore.
@@ -162,4 +200,23 @@ func getRPMHistoryClient(rpm *ufspb.RPM) *HistoryClient {
 			Hostname: rpm.Name,
 		},
 	}
+}
+
+// validateCreateRPM validates if a rpm can be created
+//
+// check if the rpm already exists
+// check if the rack and resources referenced by rpm does not exist
+func validateCreateRPM(ctx context.Context, rpm *ufspb.RPM, rack *ufspb.Rack) error {
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
+		return err
+	}
+	// Check if rpm already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetRPMResource(rpm.Name)}, nil); err != nil {
+		return err
+	}
+	if err := validateMacAddress(ctx, rpm.GetName(), rpm.GetMacAddress()); err != nil {
+		return err
+	}
+	return nil
 }

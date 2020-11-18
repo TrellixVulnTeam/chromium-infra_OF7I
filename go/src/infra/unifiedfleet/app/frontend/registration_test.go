@@ -1541,8 +1541,15 @@ func TestCreateRPM(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	RPM1 := mockRPM("")
+	RPM1.Rack = "rack-1"
 	RPM2 := mockRPM("")
-	RPM3 := mockRPM("")
+	rack1 := &ufspb.Rack{
+		Name: "rack-1",
+		Rack: &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("CreateRPM", t, func() {
 		Convey("Create new RPM with RPM_id", func() {
 			req := &ufsAPI.CreateRPMRequest{
@@ -1552,17 +1559,6 @@ func TestCreateRPM(t *testing.T) {
 			resp, err := tf.Fleet.CreateRPM(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM1)
-		})
-
-		Convey("Create existing RPM", func() {
-			req := &ufsAPI.CreateRPMRequest{
-				RPM:   RPM3,
-				RPMId: "RPM-1",
-			}
-			resp, err := tf.Fleet.CreateRPM(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
 		})
 
 		Convey("Create new RPM - Invalid input nil", func() {
@@ -1604,35 +1600,20 @@ func TestUpdateRPM(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	RPM1 := mockRPM("")
 	RPM2 := mockRPM("RPM-1")
 	RPM3 := mockRPM("RPM-3")
 	RPM4 := mockRPM("a.b)7&")
 	Convey("UpdateRPM", t, func() {
 		Convey("Update existing RPM", func() {
-			req := &ufsAPI.CreateRPMRequest{
-				RPM:   RPM1,
-				RPMId: "RPM-1",
-			}
-			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			_, err := registration.CreateRPM(tf.C, &ufspb.RPM{Name: "rpm-1"})
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
+
 			ureq := &ufsAPI.UpdateRPMRequest{
 				RPM: RPM2,
 			}
-			resp, err = tf.Fleet.UpdateRPM(tf.C, ureq)
+			resp, err := tf.Fleet.UpdateRPM(tf.C, ureq)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM2)
-		})
-
-		Convey("Update non-existing RPM", func() {
-			ureq := &ufsAPI.UpdateRPMRequest{
-				RPM: RPM3,
-			}
-			resp, err := tf.Fleet.UpdateRPM(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update RPM - Invalid input nil", func() {
@@ -1674,30 +1655,20 @@ func TestGetRPM(t *testing.T) {
 		ctx := testingContext()
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
-		RPM1 := mockRPM("RPM-1")
-		req := &ufsAPI.CreateRPMRequest{
-			RPM:   RPM1,
-			RPMId: "RPM-1",
-		}
-		resp, err := tf.Fleet.CreateRPM(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, RPM1)
 		Convey("Get RPM by existing ID", func() {
+			RPM1 := &ufspb.RPM{
+				Name: "rpm-1",
+			}
+			_, err := registration.CreateRPM(tf.C, RPM1)
+			So(err, ShouldBeNil)
+			RPM1.Name = util.AddPrefix(util.RPMCollection, "rpm-1")
+
 			req := &ufsAPI.GetRPMRequest{
 				Name: util.AddPrefix(util.RPMCollection, "RPM-1"),
 			}
 			resp, err := tf.Fleet.GetRPM(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM1)
-		})
-		Convey("Get RPM by non-existing ID", func() {
-			req := &ufsAPI.GetRPMRequest{
-				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),
-			}
-			resp, err := tf.Fleet.GetRPM(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Get RPM - Invalid input empty name", func() {
 			req := &ufsAPI.GetRPMRequest{
@@ -1768,19 +1739,23 @@ func TestListRPMs(t *testing.T) {
 
 func TestDeleteRPM(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteRPM", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
 		Convey("Delete RPM by existing ID", func() {
-			RPM2 := mockRPM("")
-			req := &ufsAPI.CreateRPMRequest{
-				RPM:   RPM2,
-				RPMId: "RPM-2",
+			rack := &ufspb.Rack{
+				Name: "rack-2",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
 			}
-			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			_, err := registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM2)
+
+			_, err = registration.CreateRPM(tf.C, &ufspb.RPM{
+				Name: "rpm-2", Rack: "rack-2"})
+			So(err, ShouldBeNil)
 
 			dreq := &ufsAPI.DeleteRPMRequest{
 				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),

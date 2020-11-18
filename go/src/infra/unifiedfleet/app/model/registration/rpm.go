@@ -26,12 +26,14 @@ const RPMKind string = "RPM"
 
 // RPMEntity is a datastore entity that tracks RPM.
 type RPMEntity struct {
-	_kind string   `gae:"$kind,RPM"`
-	ID    string   `gae:"$id"`
-	Lab   string   `gae:"lab"` // deprecated
-	Zone  string   `gae:"zone"`
-	Rack  string   `gae:"rack"`
-	Tags  []string `gae:"tags"`
+	_kind      string   `gae:"$kind,RPM"`
+	ID         string   `gae:"$id"`
+	Lab        string   `gae:"lab"` // deprecated
+	Zone       string   `gae:"zone"`
+	Rack       string   `gae:"rack"`
+	Tags       []string `gae:"tags"`
+	MacAddress string   `gae:"mac_address"`
+	State      string   `gae:"state"`
 	// ufspb.RPM cannot be directly used as it contains pointer.
 	RPM []byte `gae:",noindex"`
 }
@@ -55,11 +57,13 @@ func newRPMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		return nil, errors.Annotate(err, "fail to marshal RPM %s", p).Err()
 	}
 	return &RPMEntity{
-		ID:   p.GetName(),
-		RPM:  rpm,
-		Zone: p.GetZone(),
-		Rack: p.GetRack(),
-		Tags: p.GetTags(),
+		ID:         p.GetName(),
+		RPM:        rpm,
+		Zone:       p.GetZone(),
+		Rack:       p.GetRack(),
+		Tags:       p.GetTags(),
+		MacAddress: p.GetMacAddress(),
+		State:      p.GetResourceState().String(),
 	}, nil
 }
 
@@ -239,8 +243,12 @@ func GetRPMIndexedFieldName(input string) (string, error) {
 		field = "rack"
 	case util.TagFilterName:
 		field = "tags"
+	case util.MacAddressFilterName:
+		field = "mac_address"
+	case util.StateFilterName:
+		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are zone/rack/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are zone/rack/tag/mac(macaddress)/state", input)
 	}
 	return field, nil
 }
