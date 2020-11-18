@@ -22,6 +22,11 @@ import "google/api/field_behavior.proto";
 import "google/api/annotations.proto";
 import "google/api/resource.proto";
 import "infra/chromeperf/workflows/workflow_templates.proto";
+import "google/protobuf/empty.proto";
+
+// We're importing the luci-config service proto definition to allow us to refer
+// to the service configuration when responding to luci-config.
+import "go.chromium.org/luci/common/proto/config/service_config.proto";
 
 // Service definition for the WorkflowTemplates API to support serving, and listing of workflow templates.
 service WorkflowTemplates {
@@ -34,6 +39,23 @@ service WorkflowTemplates {
   rpc ListWorkflowTemplates (ListWorkflowTemplatesRequest) returns (ListWorkflowTemplatesResponse) {
     option (google.api.http) = {
       get: "/v1/workflow-templates"
+    };
+  }
+
+  // What follows are luci-config specific RPC endpoints that are HTTP-transcoded to follow the
+  // luci-config protocol. Unfortunately these do not follow the aip.dev guidelines.
+  rpc ServiceMetadata (google.protobuf.Empty) returns (config.ServiceDynamicMetadata) {
+    option (google.api.http) = {
+      get: "/service-metadata"
+    };
+  }
+
+  rpc ValidateConfig (config.ValidationRequestMessage) returns (config.ValidationResponseMessage) {
+    option (google.api.http) = {
+      // There are no URL-based arguments for this API, so we map all the fields in the body
+      // to fields in the config.ValidationRequestMessage.
+      post: "/v1/workflow-templates:validate"
+      body: "*"
     };
   }
 }
