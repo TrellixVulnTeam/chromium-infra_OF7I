@@ -1,0 +1,134 @@
+// Copyright 2020 The Chromium Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package workflows;
+
+option go_package = "infra/chromeperf/workflows";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// Service definition for the Workflows API to start execution engine workflows.
+service Workflows {
+  rpc CreateWorkflow(CreateWorkflowRequest) returns (Workflow) {
+    option (google.api.http) = {
+      post: "/v1/workflows"
+      body: "workflow"
+    };
+  }
+}
+
+message CreateWorkflowRequest {
+  // The Workflow to create.
+  Workflow workflow = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A unique identifier for the request. A random UUID is recommended.
+  // This is used to ensure request idempotency. If empty, idempotency is not
+  // guaranteed.
+  string request_id = 2;
+}
+
+message Workflow {
+  option (google.api.resource) = {
+    type: "api.pinpoint.cr.dev/Workflow"
+    pattern: "workflows/{workflow}"
+  };
+
+  // The resource name of the workflow.
+  //
+  // NOTE: This is system-generated and ignored when provided in a
+  // CreateWorkflowRequest.
+  //
+  // Format: workflows/{name}
+  string name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The template name to use to seed the workflow graph.
+  string template = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // A mapping between a key and values. This is provided to the template when
+  // seeding the workflow graph.
+  map<string, google.protobuf.Value> inputs = 3
+    [(google.api.field_behavior) = REQUIRED];
+
+  // The state of the workflow.
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    PENDING = 1;
+    ONGOING = 2;
+    COMPLETED = 3;
+    CANCELLED = 4;
+  }
+
+  State state = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The creation timestamp for the workflow.
+  google.protobuf.Timestamp create_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The most recent update time for the
+  google.protobuf.Timestamp last_update_time = 6
+    [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Each task in the workflow.
+  repeated Task tasks = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message Task {
+  option (google.api.resource) = {
+    type: "api.pinpoint.cr.dev/Task"
+    pattern: "workflows/{workflow}/tasks/{task}"
+  };
+
+  // The name for the task.
+  //
+  // Format: workflow/{workflow}/task/{task}
+  string name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    PENDING = 1;
+    ONGOING = 2;
+    FAILED = 3;
+    COMPLETED = 4;
+    CANCELLED = 5;
+  }
+
+  // The state of this particular task.
+  State state = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The creation timestamp for this task.
+  google.protobuf.Timestamp create_time = 3
+    [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The timestamp for the most recent update on the task.
+  google.protobuf.Timestamp last_update_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // This is the structured input provided to the Task at creation time.
+  google.protobuf.Struct input = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // This is the structured output at last update time.
+  google.protobuf.Struct output = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // This is the list of Task names which this Task is dependent on.
+  repeated string dependencies = 7 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = { type: "api.pinpoint.cr.dev/Task" }
+  ];
+}
