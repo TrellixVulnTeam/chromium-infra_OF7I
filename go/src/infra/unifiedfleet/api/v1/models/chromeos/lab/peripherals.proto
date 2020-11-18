@@ -34,6 +34,7 @@ message Peripherals {
   repeated Cable cable = 11;
   // Incompatible upgraded type from bool camerabox=9.
   Camerabox camerabox_info = 12;
+  // Indicate if device is connected to a smart usb hub, detected in AdminRepair task.
   bool smart_usbhub = 13;
 }
 
@@ -70,13 +71,15 @@ message Cable {
   CableType type = 1;
 }
 
-// Next Tag: 3
+// Next Tag: 4
 message Audio {
   // Indicate if the DUT is housed in an audio box to record / replay audio
   // for audio testing.
   bool audio_box = 1;
   // Indicate if the DUT is connected to Atrus speakermic
   bool atrus = 2;
+  // Indicate if the DUT is connected to chameleon through static audio cable
+  bool audio_cable = 3;
 }
 
 // Next Tag: 4

@@ -1,0 +1,109 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models.chromeos.lab;
+
+option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
+
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
+
+// This proto defines status labels in lab config of a DUT.
+
+// Next Tag: 10
+message DutState {
+  ChromeOSDeviceID id = 1;
+  PeripheralState servo = 2;
+  PeripheralState chameleon = 3;
+  PeripheralState audio_loopback_dongle = 4;
+  // Indicate how many working bluetooth btpeer for a device.
+  int32 working_bluetooth_btpeer = 5;
+
+  // CR50-related configs by definition shouldn't be a state config, but a build config.
+  // However, we don't have a way to source it from any external configuration system,
+  // and it's changed frequently enough to handle cr50 tests, which makes
+  // it basically impossible for manual updatings: See crbug.com/1057145 for the
+  // troubles it causes.
+  //
+  // So we temporarily set it in state config so that repair job can update it.
+  // For further changes of it, please see tracking bug crbug.com/1057719.
+  //
+  // phases for cr50 module. Next Tag: 3
+  enum CR50Phase {
+    CR50_PHASE_INVALID = 0;
+    CR50_PHASE_PREPVT = 1;
+    CR50_PHASE_PVT = 2;
+  }
+
+  CR50Phase cr50_phase = 6;
+
+  // key env for cr50 RW version. Next Tag: 3
+  enum CR50KeyEnv {
+    CR50_KEYENV_INVALID = 0;
+    CR50_KEYENV_PROD = 1;
+    CR50_KEYENV_DEV = 2;
+  }
+  // Detected based on the cr50 RW version that the DUT is running on.
+  CR50KeyEnv cr50_key_env = 7;
+
+  // Detected during running admin_audit task.
+  HardwareState storage_state = 8;
+  HardwareState servo_usb_state = 9;
+}
+
+// Next Tag: 16
+enum PeripheralState {
+  // Please keep for all unknown states.
+  UNKNOWN = 0;
+  // Device and software on it is working as expected.
+  WORKING = 1;
+  // Configuration for device is not provided.
+  MISSING_CONFIG = 5;
+  // Configuration contains incorrect information.
+  WRONG_CONFIG = 4;
+  // Device is not connected/plugged.
+  NOT_CONNECTED = 2;
+  // Device is not reachable over ssh.
+  NO_SSH = 6;
+  // Device is broken or not working as expected. the state used if no specified state for the issue.
+  BROKEN = 3;
+  // Device cannot be repaired or required manual attention to fix/replace it.
+  NEED_REPLACEMENT = 7;
+
+  // Servo specific states.
+  // cr50 console missing or unresponsive.
+  CR50_CONSOLE_MISSING = 13;
+  // Servod daemon cannot start on servo-host because cr50 testlab not enabled.
+  CCD_TESTLAB_ISSUE = 8;
+  // Servod daemon cannot start on servo-host.
+  SERVOD_ISSUE = 9;
+  // device lid is not open.
+  LID_OPEN_FAILED = 10;
+  // the ribbon cable between servo and DUT is broken or not connected.
+  BAD_RIBBON_CABLE = 11;
+  // the EC on the DUT has issue.
+  EC_BROKEN = 12;
+  // Servo is not connected to the DUT.
+  DUT_NOT_CONNECTED = 14;
+  // Some component in servo-topology missed or not detected.
+  TOPOLOGY_ISSUE = 15;
+}
+
+// The states are using for DUT storage and USB-drive on servo.
+// Next Tag: 5
+enum HardwareState {
+  // keep for all unknown state by default.
+  HARDWARE_UNKNOWN = 0;
+  // Hardware is in good shape and pass all verifiers.
+  HARDWARE_NORMAL = 1;
+  // Hardware is still good but some not critical verifiers did not pass or provided border values.
+  // (used for DUT storage when usage reached 98%)
+  HARDWARE_ACCEPTABLE = 2;
+  // Hardware is broken or bad (did not pass verifiers).
+  HARDWARE_NEED_REPLACEMENT = 3;
+  // Hardware is not detected to run verifiers.
+  // (used for USB-drive when it expected but not detected on the device)
+  HARDWARE_NOT_DETECTED = 4;
+}
