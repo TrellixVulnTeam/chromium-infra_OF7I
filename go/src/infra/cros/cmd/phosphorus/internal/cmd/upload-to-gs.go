@@ -82,23 +82,16 @@ func (c *uploadToGSRun) innerRun(ctx context.Context, args []string, env subcomm
 
 func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 	missingArgs := make([]string, 0)
-	// Two sources for local directory are allowed; direct assignment or constructible from Config
 	if r.GetLocalDirectory() == "" {
-		// Both these fields must be present to assemble from Config
-		if r.GetConfig().GetTask().GetTestResultsDir() == "" ||
-			r.GetConfig().GetTask().GetSynchronousOffloadDir() == "" {
-			missingArgs = append(missingArgs, "dir to offload")
-		}
+		missingArgs = append(missingArgs, "local_directory")
 	}
-
 	if r.GetGsDirectory() == "" {
-		missingArgs = append(missingArgs, "GS directory")
+		missingArgs = append(missingArgs, "gs_directory")
 	}
 
 	if len(missingArgs) > 0 {
-		return errors.Reason("no %s provided", strings.Join(missingArgs, ", ")).Err()
+		return errors.Reason("missing arguments: %s", strings.Join(missingArgs, ", ")).Err()
 	}
-
 	return nil
 }
 
@@ -108,12 +101,6 @@ const maxConcurrentUploads = 20
 // runGSUploadStep uploads all files in the specified directory to GS.
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
 	localPath := r.GetLocalDirectory()
-	if localPath == "" {
-		localPath = filepath.Join(
-			r.GetConfig().GetTask().GetTestResultsDir(),
-			r.GetConfig().GetTask().GetSynchronousOffloadDir(),
-		)
-	}
 	path := gcgs.Path(r.GetGsDirectory())
 
 	gsC, err := newGSClient(ctx, &authFlags)
