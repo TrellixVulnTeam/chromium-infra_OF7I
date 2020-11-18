@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"infra/chromeperf/workflows"
-	"log"
-
-	"google.golang.org/protobuf/encoding/prototext"
+	"strings"
 
 	configProto "go.chromium.org/luci/common/proto/config"
 	"go.chromium.org/luci/config"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // Scopes to use for OAuth2.0 credentials.
@@ -30,8 +31,8 @@ type workflowTemplatesServer struct {
 func (*workflowTemplatesServer) ValidateConfig(ctx context.Context, req *configProto.ValidationRequestMessage) (*configProto.ValidationResponseMessage, error) {
 	c := WorkflowTemplatesConfig{}
 	if err := prototext.Unmarshal(req.Content, &c); err != nil {
-		log.Printf("Failed unmarshaling input; error: %v", err)
-		return nil, err
+		// TODO(dberris): Provide richer error messages for debuggability.
+		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)
 	}
 	return &configProto.ValidationResponseMessage{}, nil
 }
@@ -41,18 +42,41 @@ func (s *workflowTemplatesServer) ListWorkflowTemplates(ctx context.Context, req
 	// Get a list of configurations.
 	configs, err := s.luciConfigClient.GetConfig(ctx, configSetName, workflowTemplatesFile, false)
 	if err != nil {
-		return nil, err
+		// TODO(dberris): Provide richer error messages for debuggability.
+		return nil, status.Errorf(codes.Internal, "Failed fetching configuration; err: %v", err)
 	}
 	c := WorkflowTemplatesConfig{}
 	if err := prototext.Unmarshal([]byte(configs.Content), &c); err != nil {
-		log.Printf("Failed unmarshaling input; error: %v", err)
-		return nil, err
+		// TODO(dberris): Provide richer error messages for debuggability.
+		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)
 	}
 	resp := &workflows.ListWorkflowTemplatesResponse{}
 	for _, t := range c.Templates {
 		resp.WorkflowTemplates = append(resp.WorkflowTemplates, t)
 	}
 	return resp, nil
+}
+
+func (s *workflowTemplatesServer) GetWorkflowTemplate(ctx context.Context, req *workflows.GetWorkflowTemplateRequest) (*workflows.WorkflowTemplate, error) {
+	// TODO(dberris): Use a Redis cache ofr getting configurations?
+	// Get the list of templates.
+	configs, err := s.luciConfigClient.GetConfig(ctx, configSetName, workflowTemplatesFile, false)
+	if err != nil {
+		// TODO(dberris): Provide richer error messages for debuggability.
+		return nil, status.Errorf(codes.Internal, "Failed fetching configuration; err: %v", err)
+	}
+	c := WorkflowTemplatesConfig{}
+	if err := prototext.Unmarshal([]byte(configs.Content), &c); err != nil {
+		// TODO(dberris): Provide richer error messages for debuggability.
+		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)
+	}
+	for _, t := range c.Templates {
+		qualName := "/workflow-template/" + t.Name
+		if strings.Compare(qualName, req.Name) == 0 {
+			return t, nil
+		}
+	}
+	return nil, status.Errorf(codes.NotFound, "Template not found: %s", req.Name)
 }
 
 var luciConfigService = flag.String("luci-config-service", "https://luci-config.appspot.com/_ah/api", "luci-config service base URL")
