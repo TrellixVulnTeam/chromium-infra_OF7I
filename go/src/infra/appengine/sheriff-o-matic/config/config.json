@@ -63,8 +63,7 @@
     },
     "chromium.memory": {
       "excluded_builders": [
-        "Android CFI",
-        "android-asan"
+        "Android CFI"
       ]
     },
     "chromium.win": {

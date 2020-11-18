@@ -75,7 +75,8 @@ var androidFilterFunc = func(r failureRow) bool {
 	if r.Project != "chrome" && r.Project != "chromium" {
 		return false
 	}
-	if r.Bucket == "findit" {
+	excludedBuckets := []string{"try", "findit"}
+	if sliceContains(excludedBuckets, r.Bucket) {
 		return false
 	}
 	builderGroup := r.BuilderGroup.String()
@@ -100,6 +101,7 @@ var androidFilterFunc = func(r failureRow) bool {
 		"android-arm64-stable",
 		"android-arm64-stable",
 		"android-arm-stable",
+		"android-asan",
 	}
 	return sliceContains(validBuilders, r.Builder)
 }
