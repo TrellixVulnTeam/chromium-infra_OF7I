@@ -2013,7 +2013,8 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     issue_1 = _Issue('chicken', 1)
     self.services.issue.TestAddIssue(issue_1)
-    delta_1 = tracker_pb2.IssueDelta(merged_into=impacted_issue.issue_id)
+    delta_1 = tracker_pb2.IssueDelta(
+        merged_into=impacted_issue.issue_id, status='Duplicate')
     exp_d1 = copy.deepcopy(delta_1)
 
     issue_2 = _Issue('chicken', 2)
@@ -2087,11 +2088,11 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         (issue_10, delta_10), (issue_11, delta_11)
     ]
     comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
-    tracker_helpers.AssertIssueChangesValid(
+    tracker_helpers._AssertIssueChangesValid(
         self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
 
     # Check we can handle None `comment_content`.
-    tracker_helpers.AssertIssueChangesValid(
+    tracker_helpers._AssertIssueChangesValid(
         self.cnxn, issue_delta_pairs, self.services)
     self.assertEqual(
         [
@@ -2128,6 +2129,8 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_delta_pairs.append((issue_1, delta_1))
     expected_err_msgs.extend(
         [
+            ('%s: MERGED type statuses must accompany mergedInto values.') %
+            issue_1_ref,
             '%s: Cannot merge an issue into itself.' % issue_1_ref,
             '%s: Cannot block an issue on itself.' % issue_1_ref,
             'users/9876: User does not exist.',
@@ -2142,6 +2145,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 1000, None, None, None, None, False)
     delta_2 = tracker_pb2.IssueDelta(
+        status='Duplicate',
         blocking_add=[issue_2.issue_id],
         summary='s' * (tracker_constants.MAX_SUMMARY_CHARS + 1),
         owner_id=self.no_project_user.user_id,
@@ -2150,15 +2154,29 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     expected_err_msgs.extend(
         [
+            ('%s: MERGED type statuses must accompany mergedInto values.') %
+            issue_2_ref,
             '%s: Cannot block an issue on itself.' % issue_2_ref,
             '%s: Issue owner must be a project member.' % issue_2_ref,
             '%s: Summary is too long.' % issue_2_ref,
             '%s: Error for %r: Value must be <= 999.' % (issue_2_ref, fv)
         ])
 
+    issue_3 = _Issue('chicken', 3)
+    issue_3.status = 'Duplicate'
+    issue_3.merged_into = 78911
+    self.services.issue.TestAddIssue(issue_3)
+    issue_3_ref = getRef(issue_3)
+    delta_3 = tracker_pb2.IssueDelta(
+        status='Available', merged_into_external='b/123')
+    issue_delta_pairs.append((issue_3, delta_3))
+    expected_err_msgs.append(
+        '%s: MERGED type statuses must accompany mergedInto values.' %
+        issue_3_ref)
+
     with self.assertRaisesRegexp(exceptions.InputException,
                                  '\n'.join(expected_err_msgs)):
-      tracker_helpers.AssertIssueChangesValid(
+      tracker_helpers._AssertIssueChangesValid(
           self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
 
   def testAssertIssueChangesValid_ConflictingDeltas(self):
@@ -2225,7 +2243,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     with self.assertRaisesRegexp(exceptions.InputException,
                                  '\n'.join(expected_err_msgs)):
-      tracker_helpers.AssertIssueChangesValid(
+      tracker_helpers._AssertIssueChangesValid(
           self.cnxn, issue_delta_pairs, self.services)
 
   def testComputeNewCcsFromIssueMerge(self):
@@ -2266,6 +2284,91 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     self.services.issue.TestAddIssue(target_issue)
     new_cc_ids = tracker_helpers._ComputeNewCcsFromIssueMerge(target_issue, [])
     self.assertItemsEqual(new_cc_ids, [])
+
+  def testEnforceNonMergeStatusDeltas(self):
+    # No updates: user is setting to a non-MERGED status with no
+    # existing merged_into values.
+    issue_1 = _Issue('chicken', 1)
+    self.services.issue.TestAddIssue(issue_1)
+    delta_1 = tracker_pb2.IssueDelta(status='Available')
+    exp_delta_1 = copy.deepcopy(delta_1)
+
+    # No updates: user is setting to a MERGED status. Whether this request
+    # goes through will be handled by _AssertIssueChangesValid().
+    issue_2 = _Issue('chicken', 2)
+    self.services.issue.TestAddIssue(issue_2)
+    delta_2 = tracker_pb2.IssueDelta(status='Duplicate')
+    exp_delta_2 = copy.deepcopy(delta_2)
+
+    # No updates: user is setting to a MERGED status. (This test issue starts
+    # out with a merged_into value but a non-MERGED status. We don't expect
+    # real data to ever be in this state)
+    issue_3 = _Issue('chicken', 3)
+    issue_3.merged_into = 7011
+    self.services.issue.TestAddIssue(issue_3)
+    delta_3 = tracker_pb2.IssueDelta(status='Duplicate')
+    exp_delta_3 = copy.deepcopy(delta_3)
+
+    # No updates: same situation as above.
+    issue_4 = _Issue('chicken', 4)
+    issue_4.merged_into_external = 'b/123'
+    self.services.issue.TestAddIssue(issue_4)
+    delta_4 = tracker_pb2.IssueDelta(status='Duplicate')
+    exp_delta_4 = copy.deepcopy(delta_4)
+
+    # Update delta: user is setting status AWAY from a MERGED status, so we
+    # auto-remove any existing merged_into values.
+    issue_5 = _Issue('chicken', 5)
+    issue_5.merged_into = 7011
+    self.services.issue.TestAddIssue(issue_5)
+    delta_5 = tracker_pb2.IssueDelta(status='Available')
+    exp_delta_5 = copy.deepcopy(delta_5)
+    exp_delta_5.merged_into = 0
+
+    # Update delta: user is setting status AWAY from a MERGED status, so we
+    # auto-remove any existing merged_into values.
+    issue_6 = _Issue('chicken', 6)
+    issue_6.merged_into_external = 'b/123'
+    self.services.issue.TestAddIssue(issue_6)
+    delta_6 = tracker_pb2.IssueDelta(status='Available')
+    exp_delta_6 = copy.deepcopy(delta_6)
+    exp_delta_6.merged_into_external = ''
+
+    # No updates: user is setting to a non-MERGED status while also setting
+    # a merged_into value. This will be rejected down the line by
+    # _AssertIssueChangesValid()
+    issue_7 = _Issue('chicken', 7)
+    issue_7.merged_into = 7011
+    self.services.issue.TestAddIssue(issue_7)
+    delta_7 = tracker_pb2.IssueDelta(
+        merged_into_external='b/123', status='Available')
+    exp_delta_7 = copy.deepcopy(delta_7)
+
+    # No updates: user is setting to a non-MERGED status while also setting
+    # a merged_into value. This will be rejected down the line by
+    # _AssertIssueChangesValid()
+    issue_8 = _Issue('chicken', 8)
+    issue_8.merged_into_external = 'b/123'
+    self.services.issue.TestAddIssue(issue_8)
+    delta_8 = tracker_pb2.IssueDelta(merged_into=8011, status='Available')
+    exp_delta_8 = copy.deepcopy(delta_8)
+
+    pairs = [
+        (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
+        (issue_4, delta_4), (issue_5, delta_5), (issue_6, delta_6),
+        (issue_7, delta_7), (issue_8, delta_8)
+    ]
+
+    tracker_helpers._EnforceNonMergeStatusDeltas(
+        self.cnxn, pairs, self.services)
+    self.assertEqual(
+        [
+            delta_1, delta_2, delta_3, delta_4, delta_5, delta_6, delta_7,
+            delta_8
+        ], [
+            exp_delta_1, exp_delta_2, exp_delta_3, exp_delta_4, exp_delta_5,
+            exp_delta_6, exp_delta_7, exp_delta_8
+        ])
 
 
 class IssueChangeImpactedIssuesTest(unittest.TestCase):

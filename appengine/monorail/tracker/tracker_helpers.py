@@ -1453,7 +1453,17 @@ def _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg):
       err_agg.AddErrorMessage(err_message, refs_dict[issue.issue_id], refs_str)
 
 
-def AssertIssueChangesValid(
+def PrepareIssueChanges(
+    cnxn, issue_delta_pairs, services, comment_content=None):
+  # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
+  #     Optional[str]) -> None
+  """Clean the deltas and assert they are valid for each paired issue."""
+  _EnforceNonMergeStatusDeltas(cnxn, issue_delta_pairs, services)
+  _AssertIssueChangesValid(
+      cnxn, issue_delta_pairs, services, comment_content=comment_content)
+
+
+def _AssertIssueChangesValid(
     cnxn, issue_delta_pairs, services, comment_content=None):
   # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
   #     Optional[str]) -> None
@@ -1497,6 +1507,26 @@ def AssertIssueChangesValid(
       project = projects_by_id.get(issue.project_id)
       config = configs_by_id.get(issue.project_id)
       issue_ref = refs_dict[issue.issue_id]
+
+      if (delta.merged_into is not None or
+          delta.merged_into_external is not None or delta.status is not None):
+        end_status = delta.status or issue.status
+        merged_options = [
+            delta.merged_into, delta.merged_into_external, issue.merged_into,
+            issue.merged_into_external
+        ]
+        end_merged_into = next(
+            (merge for merge in merged_options if merge is not None), None)
+
+        is_merge_status = end_status.lower() in [
+            status.lower() for status in config.statuses_offer_merge
+        ]
+
+        if ((is_merge_status and not end_merged_into) or
+            (not is_merge_status and end_merged_into)):
+          err_agg.AddErrorMessage(
+              '{}: MERGED type statuses must accompany mergedInto values.',
+              issue_ref)
 
       if delta.merged_into and issue.issue_id == delta.merged_into:
         err_agg.AddErrorMessage(
@@ -1614,6 +1644,32 @@ def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):
       new_cc_ids.add(issue.owner_id)
 
   return [cc_id for cc_id in new_cc_ids if cc_id not in merge_into_issue.cc_ids]
+
+
+def _EnforceNonMergeStatusDeltas(cnxn, issue_delta_pairs, services):
+  # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services)
+  """Update deltas in RAM to remove merged if a MERGED status is removed."""
+  project_ids = list(
+      {issue.project_id for (issue, _delta) in issue_delta_pairs})
+  configs_by_id = services.config.GetProjectConfigs(cnxn, project_ids)
+  statuses_offer_merge_by_pid = {
+      pid:
+      [status.lower() for status in configs_by_id[pid].statuses_offer_merge]
+      for pid in project_ids
+  }
+
+  for issue, delta in issue_delta_pairs:
+    statuses_offer_merge = statuses_offer_merge_by_pid[issue.project_id]
+    # Remove merged_into and merged_into_external when a status is moved
+    # to a non-MERGED status ONLY if the delta does not have merged_into values
+    # If delta does change merged_into values, the request will fail from
+    # AssertIssueChangesValue().
+    if (delta.status and delta.status.lower() not in statuses_offer_merge and
+        delta.merged_into is None and delta.merged_into_external is None):
+      if issue.merged_into:
+        delta.merged_into = 0
+      elif issue.merged_into_external:
+        delta.merged_into_external = ''
 
 
 class _IssueChangeImpactedIssues():

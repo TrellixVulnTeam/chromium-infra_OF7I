@@ -3099,21 +3099,33 @@ class WorkEnvTest(unittest.TestCase):
     issue_merge_b = _Issue(789, 2)
 
     delta_merge_a = tracker_pb2.IssueDelta(
-        merged_into=issue_merge_b.issue_id)
+        merged_into=issue_merge_b.issue_id, status='Duplicate')
     delta_merge_b = tracker_pb2.IssueDelta(
-        merged_into=issue_merge_a.issue_id)
+        merged_into=issue_merge_a.issue_id, status='Duplicate')
 
     exp_merge_a = copy.deepcopy(issue_merge_a)
     exp_merge_a.merged_into = issue_merge_b.issue_id
-    exp_amendments_merge_a = [tracker_bizobj.MakeMergedIntoAmendment(
-        [(issue_merge_b.project_name, issue_merge_b.local_id)], [],
-        default_project_name=issue_merge_a.project_name)]
+    exp_merge_a.status = 'Duplicate'
+    exp_merge_a.status_modified_timestamp = self.PAST_TIME
+    exp_amendments_merge_a = [
+        tracker_bizobj.MakeStatusAmendment('Duplicate', ''),
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [(issue_merge_b.project_name, issue_merge_b.local_id)], [],
+            default_project_name=issue_merge_a.project_name)
+    ]
+
     exp_merge_a_imp_content = work_env.MERGE_COMMENT % issue_merge_b.local_id
     exp_merge_b = copy.deepcopy(issue_merge_b)
     exp_merge_b.merged_into = exp_merge_a.issue_id
-    exp_amendments_merge_b = [tracker_bizobj.MakeMergedIntoAmendment(
-        [(issue_merge_a.project_name, issue_merge_a.local_id)], [],
-        default_project_name=issue_merge_b.project_name)]
+    exp_merge_b.status = 'Duplicate'
+    exp_merge_b.status_modified_timestamp = self.PAST_TIME
+    exp_amendments_merge_b = [
+        tracker_bizobj.MakeStatusAmendment('Duplicate', ''),
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [(issue_merge_a.project_name, issue_merge_a.local_id)], [],
+            default_project_name=issue_merge_b.project_name)
+    ]
+
     exp_merge_b_imp_content = work_env.MERGE_COMMENT % issue_merge_a.local_id
 
     # Issues that block each other.
@@ -3370,16 +3382,21 @@ class WorkEnvTest(unittest.TestCase):
     # A main issue with a unique delta and impact on imp_issue_{a|b}.
     issue_unique = _Issue(789, 5)
     issue_unique.merged_into = imp_issue_b.issue_id
-    delta_unique = tracker_pb2.IssueDelta(merged_into=imp_issue_a.issue_id)
+    delta_unique = tracker_pb2.IssueDelta(
+        merged_into=imp_issue_a.issue_id, status='Duplicate')
 
     exp_issue_unique = copy.deepcopy(issue_unique)
     exp_issue_unique.merged_into = imp_issue_a.issue_id
+    exp_issue_unique.status = 'Duplicate'
+    exp_issue_unique.status_modified_timestamp = self.PAST_TIME
     exp_amendments_unique = [
+        tracker_bizobj.MakeStatusAmendment('Duplicate', ''),
         tracker_bizobj.MakeMergedIntoAmendment(
             [(imp_issue_a.project_name, imp_issue_a.local_id)],
             [(imp_issue_b.project_name, imp_issue_b.local_id)],
             default_project_name=issue_unique.project_name)
     ]
+
     # We star issue_5 and expect this star to be merged into imp_issue.
     exp_imp_starrer = 444
     self.services.issue_star.SetStar(
@@ -3393,6 +3410,23 @@ class WorkEnvTest(unittest.TestCase):
         789, 'stars=1', add_labels=[starred_label])
     exp_imp_issue_a.derived_labels.append(starred_label)
 
+    # Setting status away from a MERGED type auto-removes any merged_into.
+    issue_unmerged = _Issue(789, 6)
+    issue_unmerged.merged_into_external = 'b/123'
+    issue_unmerged.status = 'Duplicate'
+    delta_unmerged = tracker_pb2.IssueDelta(status='Available')
+
+    exp_issue_unmerged = copy.deepcopy(issue_unmerged)
+    exp_issue_unmerged.status = 'Available'
+    exp_issue_unmerged.merged_into_external = ''
+    exp_issue_unmerged.merged_into = 0
+    exp_issue_unmerged.status_modified_timestamp = self.PAST_TIME
+    exp_amendments_unmerged = [
+        tracker_bizobj.MakeStatusAmendment('Available', 'Duplicate'),
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [], [tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/123')])
+    ]
+
     self.services.issue.TestAddIssue(imp_issue_a)
     self.services.issue.TestAddIssue(imp_issue_b)
     self.services.issue.TestAddIssue(issue_noop)
@@ -3400,13 +3434,14 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue_shared_a)
     self.services.issue.TestAddIssue(issue_shared_b)
     self.services.issue.TestAddIssue(issue_unique)
+    self.services.issue.TestAddIssue(issue_unmerged)
 
     issue_delta_pairs = [
-        (issue_noop.issue_id, delta_noop),
-        (issue_empty.issue_id, delta_empty),
+        (issue_noop.issue_id, delta_noop), (issue_empty.issue_id, delta_empty),
         (issue_shared_a.issue_id, delta_shared),
         (issue_shared_b.issue_id, delta_shared),
-        (issue_unique.issue_id, delta_unique)
+        (issue_unique.issue_id, delta_unique),
+        (issue_unmerged.issue_id, delta_unmerged)
     ]
     self.mr.cnxn = mock.Mock()
     self.mr.cnxn.Commit = mock.Mock()
@@ -3455,6 +3490,11 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(unique_comment.amendments, exp_amendments_unique)
     self.assertEqual(unique_comment.content, content)
 
+    (_des, unmerged_comment
+    ) = self.services.issue.comments_by_iid[issue_unmerged.issue_id]
+    self.assertEqual(unmerged_comment.amendments, exp_amendments_unmerged)
+    self.assertEqual(unmerged_comment.content, content)
+
     # imp_issue_{a|b} were only an impacted issue and never main issues with
     # IssueDelta changes. Only one comment with impacted changes should
     # have been added.
@@ -3480,7 +3520,7 @@ class WorkEnvTest(unittest.TestCase):
     # Check issues correct.
     expected_issues = [
         exp_issue_noop, exp_issue_empty, exp_issue_shared_a, exp_issue_shared_b,
-        exp_issue_unique, exp_imp_issue_a, exp_imp_issue_b
+        exp_issue_unique, exp_imp_issue_a, exp_imp_issue_b, exp_issue_unmerged
     ]
     # Check we successfully updated these in our services layer.
     for exp_issue in expected_issues:
@@ -3502,7 +3542,7 @@ class WorkEnvTest(unittest.TestCase):
     # Check the expected issues were successfully returned.
     exp_actual_issues = [
         exp_issue_noop, exp_issue_empty, exp_issue_shared_a, exp_issue_shared_b,
-        exp_issue_unique
+        exp_issue_unique, exp_issue_unmerged
     ]
     self.assertEqual(len(exp_actual_issues), len(actual_issues))
     for issue in actual_issues:
@@ -3535,6 +3575,14 @@ class WorkEnvTest(unittest.TestCase):
             old_owner_id=None,
             comment_id=unique_comment.id,
             send_email=send_email),
+        # Notified as a main issue update.
+        mock.call(
+            issue_unmerged.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=unmerged_comment.id,
+            send_email=send_email),
         # Notified as an impacted issue update.
         mock.call(
             imp_issue_b.issue_id,
@@ -3555,7 +3603,7 @@ class WorkEnvTest(unittest.TestCase):
             hostport,
             self.user_1.user_id,
             comment_id=imp_a_comment.id,
-            send_email=send_email),
+            send_email=send_email)
     ]
     fake_notify.assert_has_calls(expected_notify_calls)
     old_owner_ids = []

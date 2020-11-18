@@ -1945,11 +1945,13 @@ class WorkEnv(object):
         for (issue_id, delta) in issue_id_delta_pairs
     ]
 
-    # PHASE 1: Assert these changes can be made.
+    # PHASE 1: Prepare these changes and assert they can be made.
     self._AssertUserCanModifyIssues(
         issue_delta_pairs, is_description, comment_content=comment_content)
-    tracker_helpers.AssertIssueChangesValid(
-        self.mc.cnxn, issue_delta_pairs, self.services,
+    tracker_helpers.PrepareIssueChanges(
+        self.mc.cnxn,
+        issue_delta_pairs,
+        self.services,
         comment_content=comment_content)
     # TODO(crbug.com/monorail/8074): Assert we do not update more than 100
     # issues at once.
