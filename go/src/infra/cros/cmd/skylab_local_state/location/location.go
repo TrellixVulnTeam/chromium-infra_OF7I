@@ -7,7 +7,6 @@
 package location
 
 import (
-	"fmt"
 	"path/filepath"
 )
 
@@ -19,26 +18,6 @@ import (
 // All runs are nested under the same subdir.
 func ResultsDir(autotestDir string, runID string) string {
 	return filepath.Join(autotestDir, "results", resultsSubDir(runID), runID[len(runID)-1:])
-}
-
-const gsBucket = "chromeos-autotest-results"
-
-// GSURL constructs the Google Storage URL of the task results archive.
-func GSURL(runID string) string {
-	return fmt.Sprintf(
-		"gs://%s/%s/",
-		gsBucket,
-		resultsSubDir(runID),
-	)
-}
-
-// LogsURL constructs a URL to a human-friendly view of the task logs.
-func LogsURL(runID string) string {
-	return fmt.Sprintf(
-		"https://stainless.corp.google.com/browse/%s/%s/",
-		gsBucket,
-		resultsSubDir(runID),
-	)
 }
 
 func resultsSubDir(runID string) string {

@@ -19,19 +19,3 @@ func TestResultsDir(t *testing.T) {
 		t.Fatalf("ResultsDir = %s; want = %s", got, want)
 	}
 }
-
-func TestGSURL(t *testing.T) {
-	got := location.GSURL("fooRunID1")
-	want := "gs://chromeos-autotest-results/swarming-fooRunID0/"
-	if got != want {
-		t.Fatalf("GsURL = %s; want = %s", got, want)
-	}
-}
-
-func TestLogsURL(t *testing.T) {
-	got := location.LogsURL("fooRunID1")
-	want := "https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-fooRunID0/"
-	if got != want {
-		t.Fatalf("LogsURL = %s; want = %s", got, want)
-	}
-}
