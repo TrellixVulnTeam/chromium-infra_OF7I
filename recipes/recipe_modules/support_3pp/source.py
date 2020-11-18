@@ -236,10 +236,8 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
         step_hash.presentation.step_text = (
           'external source verification successful.')
 
-  if api.properties.get('use_new_checkout'):
-    _source_checkout(api, workdir, spec, version, source_cipd_spec, source_hash)
-  else:
-    _do_checkout(api, workdir, spec, version, source_hash, source_cipd_spec)
+  _source_checkout(api, workdir, spec, version,
+                   source_cipd_spec, source_hash=source_hash)
 
   # Iff we are going to do the 'build' operation, copy all the package
   # definition scripts into the checkout. If no build message is provided,
@@ -253,7 +251,8 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
       workdir.script_dir_base)
 
 
-class Manifest(object):  # pragma: no cover
+# TODO(akashmukherjee): Reconstruct the manifest object to beautify.
+class Manifest(object):
   """Implements a manifest object used for downloading remote source.
 
   Attributes:
@@ -313,17 +312,28 @@ def _generate_download_manifest(api, spec, checkout_dir,
 
   # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
   # scripts will need to be migrated, so that they print download url instead.
-  elif method_name == 'script':  # pragma: no cover
+  elif method_name == 'script':
     # version is already in env as $_3PP_VERSION
     script = spec.host_dir.join(source_method_pb.name[0])
     args = map(str, source_method_pb.name[1:]) + ['get_url']
-    result = run_script(api, script, *args, stdout=api.json.output())
+    result = run_script(
+        api,
+        script,
+        *args,
+        stdout=api.json.output(),
+        step_test_data=lambda: api.json.test_api.output_stream({
+            'url': ['https://some.internet.example.com/%s' % (spec.name,)],
+            'ext': '.test',
+            'name': ['test_source']
+        }))
     source_uri, ext = result.stdout['url'], result.stdout['ext']
-    artifact_names = result.stdout['name']
-    # Verify source_uri and artifact_names are equal length.
-    assert len(source_uri) == len(
-        artifact_names
-    ), 'Number of download URLs should be equal to number of artifacts.'
+    # Setting source artifact name is optional, used by `pip_bootstrap`.
+    artifact_names = result.stdout.get('name')
+    # Verify source_uri and artifact_names are equal length, if present.
+    if artifact_names:
+      assert len(source_uri) == len(
+          artifact_names
+      ), 'Number of download URLs should be equal to number of artifacts.'
     return Manifest(
         'url', source_uri, checkout_dir, ext=ext, artifact_names=artifact_names)
 
@@ -375,8 +385,8 @@ def _source_upload(api, checkout_dir,
     * source_cipd_spec (spec) - CIPDSpec obj for source.
     * external_hash - Tag the output package with this hash.
   """
-  if method_name == 'cipd':
-    return
+  if method_name == 'cipd':  # pragma: no cover
+    raise ValueError('CIPD sources are already cached.')
 
   with api.step.nest('upload source to cipd') as upload_step:
     try:
@@ -492,82 +502,5 @@ def _source_checkout(api,
       patches.extend(
           api.file.glob_paths('find patches in %s' % patch_dir,
                               spec.host_dir.join(*(patch_dir.split('/'))), '*'))
-    with api.context(cwd=checkout_dir):
-      api.git('apply', '-v', *patches)
-
-
-def _do_checkout(api, workdir, spec, version, source_hash='',
-                 source_cipd_spec=None):
-  method_name, source_method_pb = spec.source_method
-  source_pb = spec.create_pb.source
-
-  checkout_dir = workdir.checkout
-  if source_pb.subdir:
-    checkout_dir = checkout_dir.join(*(source_pb.subdir.split('/')))
-
-  api.file.ensure_directory(
-    'mkdir -p [workdir]/checkout/%s' % (str(source_pb.subdir),), checkout_dir)
-
-  if method_name == 'git':
-    # We already computed git hash for resolved tag, we will checkout git SHA.
-    api.git.checkout(source_method_pb.repo, source_hash, checkout_dir)
-
-  elif method_name == 'cipd':
-    api.cipd.ensure(
-      checkout_dir,
-      api.cipd.EnsureFile().
-      add_package(str(source_method_pb.pkg), 'version:'+str(version)))
-
-  elif method_name == 'script':
-    # version is already in env as $_3PP_VERSION
-    script = spec.host_dir.join(source_method_pb.name[0])
-    args = map(str, source_method_pb.name[1:]) + ['checkout', checkout_dir]
-    run_script(api, script, *args)
-
-  else: # pragma: no cover
-    assert False, 'Unknown source type %r' % (method_name,)
-
-  # TODO: Split checkout into fetch_raw and unpack
-  _source_upload(api, checkout_dir, method_name, source_cipd_spec, source_hash)
-  if source_pb.unpack_archive:
-    with api.step.nest('unpack_archive'):
-      paths = api.file.glob_paths(
-        'find archive to unpack', checkout_dir, '*.*')
-      assert len(paths) == 1, (
-        'unpack_archive==true - expected single archive file, '
-        'but %s are extracted' % (paths,))
-
-      archive = paths[0]
-      archive_name = archive.pieces[-1]
-      api.step.active_result.presentation.step_text = (
-        'found %r' % (archive_name,))
-
-      tmpdir = api.path.mkdtemp()
-      # Use copy instead of move because archive might be a symlink (e.g. when
-      # using a "cipd" source mode).
-      #
-      # TODO(iannucci): Have a way for `cipd pkg-deploy` to always deploy in
-      # copy mode and change this to a move.
-      api.file.copy('cp %r [tmpdir]' % archive_name,
-                    archive, tmpdir.join(archive_name))
-
-      # blow away any other files (e.g. .git)
-      api.file.rmtree('rm -rf [checkout_dir]', checkout_dir)
-
-      api.archive.extract('extracting [tmpdir]/%s' % archive_name,
-                          tmpdir.join(archive_name),
-                          checkout_dir)
-
-      if not source_pb.no_archive_prune:
-        api.file.flatten_single_directories(
-          'prune archive subdirs', checkout_dir)
-
-  if source_pb.patch_dir:
-    patches = []
-    for patch_dir in source_pb.patch_dir:
-      patch_dir = str(patch_dir)
-      patches.extend(api.file.glob_paths(
-        'find patches in %s' % patch_dir,
-        spec.host_dir.join(*(patch_dir.split('/'))), '*'))
     with api.context(cwd=checkout_dir):
       api.git('apply', '-v', *patches)
