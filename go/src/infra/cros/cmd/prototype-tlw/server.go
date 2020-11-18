@@ -10,6 +10,8 @@ import (
 	"net"
 	"net/url"
 
+	"infra/libs/lro"
+
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"google.golang.org/grpc"
@@ -20,7 +22,7 @@ import (
 
 type server struct {
 	tls.UnimplementedWiringServer
-	lroMgr *lroManager
+	lroMgr *lro.Manager
 }
 
 func (s server) Serve(l net.Listener) error {
@@ -28,7 +30,7 @@ func (s server) Serve(l net.Listener) error {
 	// Register reflection service to support grpc_cli usage.
 	reflection.Register(server)
 	tls.RegisterWiringServer(server, &s)
-	s.lroMgr = newLROManager()
+	s.lroMgr = lro.New()
 	longrunning.RegisterOperationsServer(server, s.lroMgr)
 	return server.Serve(l)
 }
@@ -60,7 +62,7 @@ func (s server) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*
 	if dutName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported DutName %s in request", dutName))
 	}
-	lro := s.lroMgr.new()
-	go s.cache(ctx, parsedURL, dutName, lro.Name)
-	return lro, status.Error(codes.OK, "Started: CacheForDut Operation.")
+	op := s.lroMgr.NewOperation()
+	go s.cache(ctx, parsedURL, dutName, op.Name)
+	return op, status.Error(codes.OK, "Started: CacheForDut Operation.")
 }

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 
+	"infra/libs/lro"
+
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"golang.org/x/crypto/ssh"
@@ -28,7 +30,7 @@ type server struct {
 	wiringConn *grpc.ClientConn
 	clientPool *sshpool.Pool
 	sshConfig  *ssh.ClientConfig
-	lroMgr     *lroManager
+	lroMgr     *lro.Manager
 }
 
 func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
@@ -42,7 +44,7 @@ func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
 func (s *server) Serve(l net.Listener) error {
 	s.clientPool = sshpool.New(s.sshConfig)
 	defer s.clientPool.Close()
-	s.lroMgr = newLROManager()
+	s.lroMgr = lro.New()
 	defer s.lroMgr.Close()
 
 	tls.RegisterCommonServer(s.grpcServ, s)
@@ -55,8 +57,8 @@ func (s *server) GracefulStop() {
 }
 
 func (s *server) Provision(ctx context.Context, req *tls.ProvisionRequest) (*longrunning.Operation, error) {
-	op := s.lroMgr.new()
-	go s.provision(req, op)
+	op := s.lroMgr.NewOperation()
+	go s.provision(req, op.Name)
 
 	return op, status.Error(codes.OK, "Provisioning started")
 }

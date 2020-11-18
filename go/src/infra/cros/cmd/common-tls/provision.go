@@ -15,13 +15,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
-	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var rePartitionNumber = regexp.MustCompile(`.*([0-9]+)`)
@@ -52,27 +50,16 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 	return string(b), nil
 }
 
-// newOperationResponse is a helper in creating Operation_Response and marshals ProvisionResponse.
-func newOperationResponse() *longrunning.Operation_Response {
-	a, _ := ptypes.MarshalAny(&tls.ProvisionResponse{})
-	return &longrunning.Operation_Response{
-		Response: a,
-	}
-}
-
 // newOperationError is a helper in creating Operation_Error and marshals ErrorInfo.
-func newOperationError(c codes.Code, msg string, reason tls.ProvisionResponse_Reason) *longrunning.Operation_Error {
-	errInfo := &errdetails.ErrorInfo{
+func newOperationError(c codes.Code, msg string, reason tls.ProvisionResponse_Reason) *status.Status {
+	s := status.New(c, msg)
+	s, err := s.WithDetails(&errdetails.ErrorInfo{
 		Reason: reason.String(),
+	})
+	if err != nil {
+		panic("Failed to set status details")
 	}
-	a, _ := ptypes.MarshalAny(errInfo)
-	return &longrunning.Operation_Error{
-		Error: &longrunning.Status{
-			Code:    int32(c),
-			Message: msg,
-			Details: []*any.Any{a},
-		},
-	}
+	return s
 }
 
 // stopSystemDaemon stops system daemons than can interfere with provisioning.
@@ -354,64 +341,48 @@ func revertProvisionOS(c *ssh.Client, partitions partitionInfo) {
 
 // provisionOS will provision the OS, but on failure it will set op.Result to longrunning.Operation_Error
 // and return the same error message
-func provisionOS(c *ssh.Client, op *longrunning.Operation, imagePath string, r rootDev) error {
+func provisionOS(c *ssh.Client, imagePath string, r rootDev) error {
 	stopSystemDaemons(c)
 
 	// Only clear the inactive verified DLC marks if the DLCs exist.
 	dlcsExist, err := pathExists(c, dlcLibDir)
 	if err != nil {
-		errMsg := fmt.Sprintf("provisionOS: failed to check if DLC is enabled, %s", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provisionOS: failed to check if DLC is enabled, %s", err)
 	}
 	if dlcsExist {
 		if err := clearInactiveDLCVerifiedMarks(c, r); err != nil {
-			errMsg := fmt.Sprintf("provisionOS: failed to clear inactive verified DLC marks, %s", err)
-			op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-			return errors.New(errMsg)
+			return fmt.Errorf("provisionOS: failed to clear inactive verified DLC marks, %s", err)
 		}
 	}
 
 	partitions := getPartitions(r)
 	if errs := installPartitions(c, imagePath, partitions); len(errs) > 0 {
-		errMsg := fmt.Sprintf("provisionOS: failed to provision the OS, %s", errs)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provisionOS: failed to provision the OS, %s", errs)
 	}
 	if err := postInstall(c, partitions); err != nil {
 		revertProvisionOS(c, partitions)
-		errMsg := fmt.Sprintf("provisionOS: failed to set next kernel, %s", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provisionOS: failed to set next kernel, %s", err)
 	}
 	if err := clearTPM(c); err != nil {
 		revertProvisionOS(c, partitions)
-		errMsg := fmt.Sprintf("provisionOS: failed to clear TPM owner, %s", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
 	runLabMachineAutoReboot(c)
 	if err := rebootDUT(c); err != nil {
 		revertProvisionOS(c, partitions)
-		errMsg := fmt.Sprintf("provisionOS: failed reboot DUT, %s", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provisionOS: failed reboot DUT, %s", err)
 	}
 	return nil
 }
 
-func verifyOSProvision(c *ssh.Client, op *longrunning.Operation, expectedBuilderPath string) error {
+func verifyOSProvision(c *ssh.Client, expectedBuilderPath string) error {
 	actualBuilderPath, err := getBuilderPath(c)
 	if err != nil {
-		errMsg := fmt.Sprintf("verify OS provision: failed to get builder path, %s", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("verify OS provision: failed to get builder path, %s", err)
 	}
 	if actualBuilderPath != expectedBuilderPath {
-		errMsg := fmt.Sprintf("verify OS provision: DUT is on builder path %s when expected builder path is %s, %s",
+		return fmt.Errorf("verify OS provision: DUT is on builder path %s when expected builder path is %s, %s",
 			actualBuilderPath, expectedBuilderPath, err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
 	}
 	return nil
 }
@@ -501,7 +472,7 @@ func installDLC(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dl
 	return nil
 }
 
-func provisionDLCs(c *ssh.Client, op *longrunning.Operation, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
+func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
 	if len(specs) == 0 {
 		return nil
 	}
@@ -539,9 +510,7 @@ func provisionDLCs(c *ssh.Client, op *longrunning.Operation, imagePath string, r
 		err = fmt.Errorf("%s, %s", err, errTmp)
 	}
 	if err != nil {
-		errMsg := fmt.Sprintf("provision DLCs: failed to install the following DLCs (%s)", err)
-		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
-		return errors.New(errMsg)
+		return fmt.Errorf("provision DLCs: failed to install the following DLCs (%s)", err)
 	}
 	return nil
 }
@@ -570,58 +539,58 @@ func parseTargetBuilderPath(imagePath string) (string, error) {
 	return path.Join(path.Base(d), version), nil
 }
 
-func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation) {
-	log.Printf("Provisioning: Started Operation=%v", op)
+func (s *server) provision(req *tls.ProvisionRequest, opName string) {
+	log.Printf("provision: started %v", opName)
+	defer func() {
+		log.Printf("provision: finished %v", opName)
+	}()
+
+	setError := func(opErr *status.Status) {
+		if err := s.lroMgr.SetError(opName, opErr); err != nil {
+			log.Printf("provision: failed to set Operation error, %s", err)
+		}
+	}
 
 	// Set a timeout for provisioning.
 	// TODO(kimjae): Tie the context with timeout to op.
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Hour)
 	defer cancel()
 
-	// Always sets the op to done and update the Operation with lroMgr.
-	defer func() {
-		op.Done = true
-		if err := s.lroMgr.update(op); err != nil {
-			log.Printf("Provision goroutine (not fatal): %s", err)
-		}
-		log.Printf("Provisioning: Finished Operation=%v", op)
-	}()
-
 	imagePath, err := parseImagePath(req)
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: unsupported ProvisionRequest_ChromeOSImage_PathOneof in request, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST)
+			tls.ProvisionResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
 	targetBuilderPath, err := parseTargetBuilderPath(imagePath)
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: bad ProvisionRequest_ChromeOSImage_GsPathPrefix in request, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST)
+			tls.ProvisionResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
 	// Verify that the DUT is reachable.
 	addr, err := s.getSSHAddr(ctx, req.GetName())
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: DUT SSH address unattainable prior to provisioning, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST)
+			tls.ProvisionResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
 	// Connect to the DUT.
 	c, err := s.clientPool.Get(addr)
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.FailedPrecondition,
 			fmt.Sprintf("provision: DUT unreachable prior to provisioning (SSH client), %s", err),
-			tls.ProvisionResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION)
+			tls.ProvisionResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION))
 		return
 	}
 	defer s.clientPool.Put(addr, c)
@@ -629,35 +598,39 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 	// Get the root device.
 	r, err := getRootDev(c)
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to get root device from DUT, %s", err),
-			tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 		return
 	}
 
 	// Provision the OS.
 	select {
 	case <-ctx.Done():
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning OS",
-			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT)
+			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT))
 		return
 	default:
 	}
 	// Get the current builder path.
 	builderPath, err := getBuilderPath(c)
 	if err != nil {
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to get the builder path from DUT, %s", err),
-			tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 		return
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
 	if builderPath != targetBuilderPath {
-		if err := provisionOS(c, op, imagePath, r); err != nil {
+		if err := provisionOS(c, imagePath, r); err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to provision OS, %s", err),
+				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 		// After a reboot, need a new client connection so close the old one.
@@ -674,33 +647,45 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 			defer s.clientPool.Put(addr, c)
 			break
 		}
-		if err := verifyOSProvision(c, op, targetBuilderPath); err != nil {
+		if err := verifyOSProvision(c, targetBuilderPath); err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to verify OS provision, %s", err),
+				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 		// Get the new root device after reboot.
 		r, err = getRootDev(c)
 		if err != nil {
-			op.Result = newOperationError(
+			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to get root device from DUT after reboot, %s", err),
-				tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 	} else {
-		log.Printf("Provision skipped as DUT is already on builder path %s", builderPath)
+		log.Printf("provision: Operation=%s skipped as DUT is already on builder path %s", opName, builderPath)
 	}
 
 	// Provision DLCs.
 	select {
 	case <-ctx.Done():
-		op.Result = newOperationError(
+		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning DLCs",
-			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT)
+			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT))
 		return
 	default:
 	}
-	if err := provisionDLCs(c, op, imagePath, r, req.GetDlcSpecs()); err != nil {
+	if err := provisionDLCs(c, imagePath, r, req.GetDlcSpecs()); err != nil {
+		setError(newOperationError(
+			codes.Aborted,
+			fmt.Sprintf("provision: failed to provision DLCs, %s", err),
+			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
 		return
+	}
+
+	if err := s.lroMgr.SetResult(opName, &tls.ProvisionResponse{}); err != nil {
+		log.Printf("provision: failed to set Opertion result, %s", err)
 	}
 }
