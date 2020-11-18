@@ -10,7 +10,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
-	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/tq"
 	"go.chromium.org/luci/server/tq/tqtesting"
@@ -45,17 +44,16 @@ func TestQueue(t *testing.T) {
 			So(EnqueueChangeReviewTask(ctx, host, cls[1]), ShouldBeNil)
 			So(EnqueueChangeReviewTask(ctx, host, cls[1]), ShouldBeNil)
 			sched.Run(ctx, tqtesting.StopWhenDrained())
-			So(succeeded.Payloads(), ShouldResembleProto, []*taskspb.ChangeReviewTask{
-				{
-					Host:     "host",
-					Number:   12345,
-					Revision: "123abc",
-				},
-				{
-					Host:     "host",
-					Number:   12345,
-					Revision: "456789",
-				},
+			So(len(succeeded.Payloads()), ShouldEqual, 2)
+			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
+				Host:     "host",
+				Number:   12345,
+				Revision: "123abc",
+			})
+			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
+				Host:     "host",
+				Number:   12345,
+				Revision: "456789",
 			})
 		})
 	})

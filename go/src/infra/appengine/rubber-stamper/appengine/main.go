@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
+	"go.chromium.org/luci/server/tq"
 
 	"infra/appengine/rubber-stamper/cron"
 	"infra/appengine/rubber-stamper/internal/gerrit"
@@ -19,6 +20,7 @@ import (
 func main() {
 	modules := []module.Module{
 		cfgmodule.NewModuleFromFlags(),
+		tq.NewModuleFromFlags(),
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
