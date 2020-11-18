@@ -49,7 +49,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		group = []string{"mdb/chrome-fleet-software-team"}
 	}
 	if strings.HasPrefix(rpcName, "List") || strings.HasPrefix(rpcName, "Get") || strings.HasPrefix(rpcName, "BatchGet") {
-		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers"}
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers", "mdb/chromeos-labs", "mdb/chromeos-labs-tvcs", "mdb/acs-labs"}
 	}
 	switch rpcName {
 	case "CreateMachineLSE", "UpdateMachineLSE", "CreateVM", "UpdateVM":
