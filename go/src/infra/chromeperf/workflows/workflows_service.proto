@@ -1,0 +1,44 @@
+// Copyright 2020 The Chromium Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package workflows;
+
+option go_package = "infra/chromeperf/workflows";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "infra/chromeperf/workflows/workflows.proto";
+
+
+// Service definition for the Workflows API to start execution engine workflows.
+service Workflows {
+  rpc CreateWorkflow(CreateWorkflowRequest) returns (workflows.Workflow) {
+    option (google.api.http) = {
+      post: "/v1/workflows"
+      body: "workflow"
+    };
+  }
+}
+
+message CreateWorkflowRequest {
+  // The Workflow to create.
+  workflows.Workflow workflow = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A unique identifier for the request. A random UUID is recommended.
+  // This is used to ensure request idempotency. If empty, idempotency is not
+  // guaranteed.
+  string request_id = 2;
+}
