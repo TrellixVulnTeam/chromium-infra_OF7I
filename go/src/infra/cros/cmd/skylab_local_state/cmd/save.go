@@ -28,13 +28,11 @@ import (
 	"infra/libs/cros/dutstate"
 )
 
-// DUT states that should never be overwritten.
-var protectedDUTStates = map[string]bool{
-	dutstate.NeedsDeploy.String():      true,
-	dutstate.NeedsReplacement.String(): true,
+// Allowlist of DUT states that are safe to overwrite.
+var dutStatesSafeForOverwrite = map[dutstate.State]bool{
+	dutstate.NeedsRepair: true,
+	dutstate.Ready:       true,
 }
-
-type stateLoader func(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName string) (string, error)
 
 // Save subcommand: Update the bot state json file.
 func Save(authOpts auth.Options) *subcommands.Command {
@@ -65,14 +63,14 @@ type saveRun struct {
 	inputPath string
 }
 
-func (c *saveRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *saveRun) Run(a subcommands.Application, _ []string, env subcommands.Env) int {
 	if err := c.validateArgs(); err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
 		c.Flags.Usage()
 		return 1
 	}
 
-	err := c.innerRun(a, args, env)
+	err := c.innerRun(a, env)
 	if err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
 		return 1
@@ -88,7 +86,7 @@ func (c *saveRun) validateArgs() error {
 	return nil
 }
 
-func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error {
 	var request skylab_local_state.SaveRequest
 	if err := readJSONPb(c.inputPath, &request); err != nil {
 		return err
@@ -98,21 +96,12 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
-	ctx := cli.GetContext(a, c, env)
-	request, err := c.ensureNoProtectedStateOverwrite(ctx, &request, dutStateFromUFS)
-	if err != nil {
-		return err
-	}
-
+	// Update host info in two DUT state files: one by DUT name, one by DUT ID.
 	i, err := getHostInfo(request.ResultsDir, request.DutName)
-
 	if err != nil {
 		return err
 	}
-
 	s := newDutStateFromHostInfo(i)
-
-	// Write DUT state into two files: one by DUT name, one by DUT ID.
 	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
 	writeDutState(request.Config.AutotestDir, request.DutName, s)
 	writeDutState(request.Config.AutotestDir, request.DutId, s)
@@ -123,7 +112,17 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 		}
 	}
 
-	return updateDutStateToUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName, request.DutState)
+	// Update the DUT state in UFS (if the current state is safe to update).
+	ctx := cli.GetContext(a, c, env)
+	currentDUTState, err := dutStateFromUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName)
+	if err != nil {
+		return err
+	}
+	if dutStatesSafeForOverwrite[currentDUTState] {
+		return updateDutStateToUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName, request.DutState)
+	}
+	logging.Warningf(ctx, "Not saving requested DUT state %s, since current DUT state is %s, which should never be overwritten", request.DutState, currentDUTState)
+	return nil
 }
 
 func validateSaveRequest(request *skylab_local_state.SaveRequest) error {
@@ -158,25 +157,6 @@ func validateSaveRequest(request *skylab_local_state.SaveRequest) error {
 	}
 
 	return nil
-}
-
-// ensureNoProtectedStateOverwrite checks if the current DUT state is in the
-// list of states we should not overwrite, and modifies the request to leave
-// the state untouched if so.
-func (c *saveRun) ensureNoProtectedStateOverwrite(ctx context.Context, saveRequest *skylab_local_state.SaveRequest, readDutStateFromUFS stateLoader) (skylab_local_state.SaveRequest, error) {
-	dutState, err := readDutStateFromUFS(ctx, &c.authFlags, saveRequest.Config.CrosUfsService, saveRequest.DutName)
-	if err != nil {
-		return skylab_local_state.SaveRequest{}, err
-	}
-
-	if protectedDUTStates[dutState] {
-		logging.Warningf(ctx, "Not saving requested DUT state %s, since current DUT state is %s, which should never be overwritten", saveRequest.DutState, dutState)
-		updatedSaveRequest := *saveRequest
-		updatedSaveRequest.DutState = dutState
-		return updatedSaveRequest, nil
-	}
-
-	return *saveRequest, nil
 }
 
 // getHostInfo reads the host info from the store file.
@@ -279,12 +259,12 @@ func updateDutStateToUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsS
 }
 
 // dutStateFromUFS read DUT state from the UFS service.
-func dutStateFromUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName string) (string, error) {
+func dutStateFromUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName string) (dutstate.State, error) {
 	ufsClient, err := ufs.NewClient(ctx, crosUfsService, authFlags)
 	if err != nil {
 		return "", errors.Annotate(err, "read local state").Err()
 	}
 	info := dutstate.Read(ctx, ufsClient, dutName)
 	logging.Infof(ctx, "Receive DUT state from UFS: %s", info.State)
-	return info.State.String(), nil
+	return info.State, nil
 }
