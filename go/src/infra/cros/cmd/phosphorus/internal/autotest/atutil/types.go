@@ -114,7 +114,6 @@ type Test struct {
 	Hosts            []string
 	Keyvals          map[string]string
 	Name             string
-	OffloadDir       string
 	Owner            string
 	ParentJobID      int
 	RequireSSP       bool
@@ -137,7 +136,6 @@ func (t *Test) AutoservArgs() *autotest.AutoservArgs {
 		JobOwner:         t.Owner,
 		Lab:              true,
 		NoTee:            true,
-		OffloadDir:       t.OffloadDir,
 		ParentJobID:      t.ParentJobID,
 		RequireSSP:       t.RequireSSP,
 		ResultsDir:       t.ResultsDir,

@@ -36,7 +36,6 @@ type AutoservArgs struct {
 	JobOwner           string
 	Lab                bool
 	NoTee              bool
-	OffloadDir         string
 	ParentJobID        int
 	Provision          bool
 	Repair             bool
@@ -99,11 +98,6 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if cmd.NoTee {
 		args = append(args, "-n")
-	}
-	if cmd.OffloadDir != "" {
-		// contra the proto, this is used as a relative path within
-		// autotest, relative to the results directory
-		args = append(args, "--sync-offload-dir", cmd.OffloadDir)
 	}
 	if cmd.ParentJobID != 0 {
 		args = append(args, fmt.Sprintf("--parent_job_id=%d", cmd.ParentJobID))
