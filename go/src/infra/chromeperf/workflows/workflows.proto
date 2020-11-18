@@ -23,6 +23,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
+import "infra/chromeperf/workflows/workflow_templates.proto";
 
 // Service definition for the Workflows API to start execution engine workflows.
 service Workflows {
@@ -30,6 +31,21 @@ service Workflows {
     option (google.api.http) = {
       post: "/v1/workflows"
       body: "workflow"
+    };
+  }
+}
+
+// Service definition for the WorkflowTemplates API to support serving, and listing of workflow templates.
+service WorkflowTemplates {
+  rpc GetWorkflowTemplate (GetWorkflowTemplateRequest) returns (workflows.WorkflowTemplate) {
+    option (google.api.http) = {
+      get: "/v1{name=/workflow-templates/*}"
+    };
+  }
+
+  rpc ListWorkflowTemplates (ListWorkflowTemplatesRequest) returns (ListWorkflowTemplatesResponse) {
+    option (google.api.http) = {
+      get: "/v1/workflow-templates"
     };
   }
 }
@@ -46,7 +62,7 @@ message CreateWorkflowRequest {
 
 message Workflow {
   option (google.api.resource) = {
-    type: "api.pinpoint.cr.dev/Workflow"
+    type: "engine.perf.apis.cr.dev/Workflow"
     pattern: "workflows/{workflow}"
   };
 
@@ -59,10 +75,13 @@ message Workflow {
   string name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The template name to use to seed the workflow graph.
+  //
+  // Must be of the form /workflow-templates/<name>.
   string template = 2 [(google.api.field_behavior) = REQUIRED];
 
   // A mapping between a key and values. This is provided to the template when
-  // seeding the workflow graph.
+  // seeding the workflow graph. Validation for the inputs is determined by
+  // the field descriptors provided by the workflow template definition.
   map<string, google.protobuf.Value> inputs = 3
     [(google.api.field_behavior) = REQUIRED];
 
@@ -91,7 +110,7 @@ message Workflow {
 
 message Task {
   option (google.api.resource) = {
-    type: "api.pinpoint.cr.dev/Task"
+    type: "engine.perf.apis.cr.dev/Task"
     pattern: "workflows/{workflow}/tasks/{task}"
   };
 
@@ -129,6 +148,31 @@ message Task {
   // This is the list of Task names which this Task is dependent on.
   repeated string dependencies = 7 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = { type: "api.pinpoint.cr.dev/Task" }
+    (google.api.resource_reference) = { type: "engine.perf.apis.cr.dev/Task" }
   ];
+}
+
+message GetWorkflowTemplateRequest {
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "engine.perf.apis.cr.dev/WorkflowTemplate"
+    }
+  ];
+}
+
+message ListWorkflowTemplatesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+
+  // This allows filtering workflows by name.
+  string filter = 3;
+}
+
+message ListWorkflowTemplatesResponse {
+  repeated workflows.WorkflowTemplate workflow_templates = 1;
+
+  string next_page_token = 2;
+
+  int32 total_size = 3;
 }
