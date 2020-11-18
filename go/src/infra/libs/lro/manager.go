@@ -25,6 +25,7 @@ import (
 type operation struct {
 	op         *longrunning.Operation
 	finishTime time.Time
+	done       chan struct{}
 }
 
 // Manager keeps track of longrunning operations and serves operations related requests.
@@ -79,6 +80,7 @@ func (m *Manager) NewOperation() *longrunning.Operation {
 		op: &longrunning.Operation{
 			Name: name,
 		},
+		done: make(chan struct{}),
 	}
 	return m.operations[name].op
 }
@@ -88,6 +90,9 @@ func (m *Manager) delete(name string) error {
 	defer m.mu.Unlock()
 	if _, ok := m.operations[name]; !ok {
 		return fmt.Errorf("lro delete: unknown name %s", name)
+	}
+	if !m.operations[name].op.Done {
+		close(m.operations[name].done)
 	}
 	delete(m.operations, name)
 	return nil
@@ -135,6 +140,7 @@ func (m *Manager) SetResult(name string, resp proto.Message) error {
 	}
 	m.operations[name].finishTime = time.Now()
 	m.operations[name].op.Done = true
+	close(m.operations[name].done)
 	return nil
 }
 
@@ -160,26 +166,62 @@ func (m *Manager) SetError(name string, opErr *status.Status) error {
 	}
 	m.operations[name].finishTime = time.Now()
 	m.operations[name].op.Done = true
+	close(m.operations[name].done)
 	return nil
 }
 
-// GetOperation returns the longrunning.Operation if managed.
-func (m *Manager) GetOperation(ctx context.Context, req *longrunning.GetOperationRequest) (*longrunning.Operation, error) {
-	name := req.Name
+func (m *Manager) getOperationClone(name string) (*longrunning.Operation, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	v, ok := m.operations[name]
 	if !ok {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("Operation name %s does not exist", name))
+		return nil, status.Errorf(codes.NotFound, "name %s does not exist", name)
 	}
 	return proto.Clone(v.op).(*longrunning.Operation), nil
+}
+
+// GetOperation returns the longrunning.Operation if managed.
+func (m *Manager) GetOperation(ctx context.Context, req *longrunning.GetOperationRequest) (*longrunning.Operation, error) {
+	return m.getOperationClone(req.Name)
 }
 
 // DeleteOperation deletes the longrunning.Operation if managed.
 func (m *Manager) DeleteOperation(ctx context.Context, req *longrunning.DeleteOperationRequest) (*empty.Empty, error) {
 	name := req.Name
 	if err := m.delete(name); err != nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("failed to delete Operation name %s, %s", name, err))
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("failed to delete name %s, %s", name, err))
 	}
 	return &empty.Empty{}, nil
+}
+
+func (m *Manager) getOperationChannel(name string) (chan struct{}, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	v, ok := m.operations[name]
+	if !ok {
+		return nil, ok
+	}
+	return v.done, ok
+}
+
+// WaitOperation returns once the longrunning.Operation is done or timeout.
+func (m *Manager) WaitOperation(ctx context.Context, req *longrunning.WaitOperationRequest) (*longrunning.Operation, error) {
+	name := req.Name
+	ch, ok := m.getOperationChannel(name)
+	if !ok {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("name %s does not exist", name))
+	}
+
+	if req.Timeout != nil && req.Timeout.Seconds > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, req.Timeout.AsDuration())
+		defer cancel()
+	}
+
+	// Wait until the operation is done or timeout.
+	select {
+	case <-ch:
+	case <-ctx.Done():
+	}
+	return m.getOperationClone(name)
 }
