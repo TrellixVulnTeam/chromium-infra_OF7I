@@ -17,6 +17,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/nic"
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
+	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
@@ -57,6 +58,7 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		machine.DeleteMachineCmd,
 		host.DeleteHostCmd,
 		kvm.DeleteKVMCmd,
+		rpm.DeleteRPMCmd,
 		switches.DeleteSwitchCmd,
 		drac.DeleteDracCmd,
 		nic.DeleteNicCmd,
