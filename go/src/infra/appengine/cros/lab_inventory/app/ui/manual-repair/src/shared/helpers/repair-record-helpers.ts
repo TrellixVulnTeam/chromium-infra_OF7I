@@ -5,6 +5,8 @@
 import {isEmpty} from 'lodash';
 import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../../components/constants';
 import * as repairConst from '../../components/repair-form/repair-form-constants';
+import {RepairHistoryList, RepairHistoryRow, rspActions} from '../../components/repair-history/repair-history-constants';
+
 
 /**
  * Checks the type of the device that is managed in state by this form. It
@@ -132,4 +134,38 @@ export function formatRecordTimestamp(ts: string): string {
   const noNano = ts.split('.')[0];
   const res = noNano.split('T').join(' ');
   return res;
+}
+
+/**
+ * flattenRecordsActions takes the GRPC response of
+ * inventory.Inventory/ListManualRepairRecords and flattens the records into a
+ * RepairHistoryList of date, component, and action objects.
+ */
+export function flattenRecordsActions(repairHistoryRsp): RepairHistoryList {
+  let repairHistoryList: RepairHistoryList = [];
+
+  repairHistoryRsp.repairRecords.forEach(el => {
+    for (const key of rspActions) {
+      const actionStrEnum = getActionStrEnum(key);
+      if (!actionStrEnum) {
+        continue;
+      }
+
+      for (const val of el[key]) {
+        let actStr = actionStrEnum.actionList[val];
+        if (actStr == 'N/A') {
+          continue;
+        }
+
+        let rh: RepairHistoryRow = {
+          date: formatRecordTimestamp(el.updatedTime),
+          component: actionStrEnum.component,
+          action: actStr,
+        };
+        repairHistoryList.push(rh);
+      }
+    }
+  });
+
+  return repairHistoryList;
 }

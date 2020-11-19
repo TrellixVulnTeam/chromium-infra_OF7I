@@ -4,16 +4,17 @@
 
 import '@material/mwc-button';
 import '@vaadin/vaadin-grid/theme/lumo/vaadin-grid.js';
+import './repair-history-modal';
 
 import {css, customElement, html, LitElement, property} from 'lit-element';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
-import {formatRecordTimestamp, getActionStrEnum, getAssetTag, getHostname} from '../../shared/helpers/repair-record-helpers';
+import {flattenRecordsActions, getAssetTag, getHostname} from '../../shared/helpers/repair-record-helpers';
 import {SHARED_STYLES} from '../../shared/shared-styles';
 import {getRepairHistory} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
-import {RepairHistoryList, RepairHistoryRow, rspActions} from './repair-history-constants';
+import {RepairHistoryList} from './repair-history-constants';
 
 
 @customElement('repair-history-sidebar')
@@ -87,47 +88,23 @@ export default class RepairHistorySidebar extends connect
 
   /**
    * Parse GRPC response and display actions as a list of date, component, and
-   * action string.
+   * action string. Return 5 records sorted by date in descending order.
    */
   parseRepairHistory(repairHistoryRsp): RepairHistoryList {
     let repairHistoryList: RepairHistoryList = [];
+
     if (isEmpty(repairHistoryRsp)) {
       return repairHistoryList;
     }
-
-    repairHistoryRsp.repairRecords.forEach(el => {
-      for (const key of rspActions) {
-        const actionStrEnum = getActionStrEnum(key);
-        if (!actionStrEnum) {
-          continue;
-        }
-
-        for (const val of el[key]) {
-          let actStr = actionStrEnum.actionList[val];
-          if (actStr == 'N/A') {
-            continue;
-          }
-
-          let rh: RepairHistoryRow = {
-            date: formatRecordTimestamp(el.updatedTime),
-            component: actionStrEnum.component,
-            action: actStr,
-          };
-          repairHistoryList.push(rh);
-        }
-      }
-    });
+    repairHistoryList = flattenRecordsActions(repairHistoryRsp);
 
     // TODO: Current GRPC returns records sorted in ascending date order. Once
     // backend is implemented properly, will remove reverse().
-    return repairHistoryList.reverse();
+    return repairHistoryList.reverse().slice(0, 5);
   }
 
   /**
    * Return Lit HTML containing the device repair history.
-   *
-   * TODO: Remove heightByRows and limit number of rows to 5. Show all rows in
-   * modal instead.
    */
   displayRepairHistory() {
     return html`
@@ -142,7 +119,7 @@ export default class RepairHistorySidebar extends connect
             <vaadin-grid-column auto-width path="component"></vaadin-grid-column>
             <vaadin-grid-column auto-width path="action"></vaadin-grid-column>
           </vaadin-grid>
-          <mwc-button dense disabled label="Show All (coming soon)" id="show-all-btn"></mwc-button>
+          <repair-history-modal></repair-history-modal>
         </div>
       </div>
     `;
