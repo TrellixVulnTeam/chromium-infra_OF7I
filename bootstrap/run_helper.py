@@ -9,6 +9,7 @@ Reused across infra/run.py and infra_internal/run.py.
 """
 
 import os
+import signal
 import sys
 
 
@@ -52,7 +53,29 @@ def boot_venv(script, env_path):
     if os.path.exists(python):
       os.environ[RUN_PY_RECURSION_BLOCKER] = "1"
       os.environ.pop('PYTHONPATH', None)
-      os.execv(python, [python, script] + sys.argv[1:])
+
+      args = [python, script] + sys.argv[1:]
+      if sys.platform == 'win32':
+        # On Windows, os.execv spawns a child process and exits immediately with
+        # status zero, without waiting for it to finish. This confuses the
+        # recipe engine, which loses the stdout of the process and reports that
+        # the step has finished successfully as soon as the child process
+        # spawns, regardless of whether the child process fails.
+        #
+        # Our alternative implementation below waits on the child process, and
+        # exits with its return status, solving both of the above problems. It
+        # also works better when running from the console, as you don't get an
+        # immediate return back to the command prompt along with interleaved
+        # output from the child.
+        #
+        # This is a well-known Windows Python issue going back to at least 2001.
+        # See https://bugs.python.org/issue19124 for more details.
+        signal.signal(signal.SIGBREAK, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        os._exit(os.spawnv(os.P_WAIT, python, args))
+      else:
+        os.execv(python, args)
       print >> sys.stderr, "Exec is busted :("
       sys.exit(-1)  # should never reach
 
