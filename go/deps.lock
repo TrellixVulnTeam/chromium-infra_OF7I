@@ -1,5 +1,5 @@
 hash: 55f05a966e9a3c43ae52ad2ff815aa91115e210f1e1a3a09a2366f5cd503e99f
-updated: 2020-11-10T14:10:29.654171586+09:00
+updated: 2020-11-19T08:58:13.85936618+09:00
 imports:
 - name: cloud.google.com/go
   version: b4d5e15a4a5b713dcaf028ad777a216a6a02a55e
@@ -32,10 +32,10 @@ imports:
   version: f0f162f0456b11085fcf71b20ec2d838940e4214
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
-  version: aa8e718768c2973274c2a23e9dcc27b42afea794
+  version: 1e9ccef3705c2c41a447aee0ddbe6810ccb7949d
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: e776219c9bb7c6ad5f91d883e5e3081df6ceb99c
+  version: b732553f9d4575132d8f2ae2bf47b0f3592f9047
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
