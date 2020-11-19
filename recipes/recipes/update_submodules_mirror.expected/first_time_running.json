@@ -131,6 +131,8 @@
       "update-index",
       "--add",
       "--cacheinfo",
+      "160000,34b7d6a218430e7ff716b81854743a30cfbd3967,parent/src-internal",
+      "--cacheinfo",
       "160000,4ad2459561d76217c9b7aff412c5c086b491078a,v8",
       "--cacheinfo",
       "160000,13a00f110ef910a25763346d6538b60f12845656,buildtools"
@@ -150,13 +152,16 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
+      "[submodule \"parent/src-internal\"]\n\tpath = parent/src-internal\n\turl = https://chromi-internal.googlesource.com/chrome/src-internal.git\n[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
       "[CACHE]/codesearch_update_submodules_mirror/src/.gitmodules"
     ],
     "infra_step": true,
     "name": "Process refs/heads/master.Write .gitmodules file",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@[submodule \"parent/src-internal\"]@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@\tpath = parent/src-internal@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromi-internal.googlesource.com/chrome/src-internal.git@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"v8\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = v8@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/v8/v8.git@@@",
