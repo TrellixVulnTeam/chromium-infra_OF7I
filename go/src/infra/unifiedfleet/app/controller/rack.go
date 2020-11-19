@@ -411,13 +411,13 @@ func getDeleteKVMIDs(ctx context.Context, rackName string) ([]string, error) {
 
 // can be called inside a transaction
 func getDeleteRPMIDs(ctx context.Context, rackName string) ([]string, error) {
-	rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rackName, true)
+	rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rackName, false)
 	if err != nil {
 		return nil, errors.Annotate(err, "DeleteRack - failed to query rpms for rack %s", rackName).Err()
 	}
 	var rpmIDs []string
 	for _, rpm := range rpms {
-		if err := validateDeleteRPM(ctx, rpm.GetName()); err != nil {
+		if err := validateDeleteRPM(ctx, rpm); err != nil {
 			return nil, errors.Annotate(err, "validation failed - Unable to delete rpm %s", rpm.GetName()).Err()
 		}
 		rpmIDs = append(rpmIDs, rpm.GetName())

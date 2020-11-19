@@ -19,7 +19,6 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
@@ -613,14 +612,32 @@ func TestUpdateRPM(t *testing.T) {
 func TestDeleteRPM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	RPM1 := mockRPM("RPM-1")
-	RPM3 := mockRPM("RPM-3")
-	RPM4 := mockRPM("RPM-4")
 	Convey("DeleteRPM", t, func() {
+		Convey("Delete rpm by non-existing ID - error", func() {
+			err := DeleteRPM(ctx, "rpm-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/rpm-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
 		Convey("Delete RPM by existing ID with machine reference", func() {
-			resp, cerr := registration.CreateRPM(ctx, RPM1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
+			rack1 := &ufspb.Rack{
+				Name: "rack-1",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			registration.CreateRack(ctx, rack1)
+
+			RPM1 := &ufspb.RPM{
+				Name: "RPM-1",
+				Rack: "rack-1",
+			}
+			_, err := registration.CreateRPM(ctx, RPM1)
+			So(err, ShouldBeNil)
 
 			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: "machine-1",
@@ -632,58 +649,181 @@ func TestDeleteRPM(t *testing.T) {
 					},
 				},
 			}
-			mresp, merr := registration.CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteRPM(ctx, "RPM-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
-		})
-
-		Convey("Delete RPM by existing ID with racklse reference", func() {
-			resp, cerr := registration.CreateRPM(ctx, RPM3)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM3)
-
-			chromeOSRackLSE1 := &ufspb.RackLSE{
-				Name: "racklse-1",
-				Lse: &ufspb.RackLSE_ChromeosRackLse{
-					ChromeosRackLse: &ufspb.ChromeOSRackLSE{
-						Rpms: []string{"RPM-3", "RPM-5"},
-					},
-				},
-			}
-			mresp, merr := inventory.CreateRackLSE(ctx, chromeOSRackLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeOSRackLSE1)
-
-			err := DeleteRPM(ctx, "RPM-3")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-3")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM3)
-		})
-		Convey("Delete RPM successfully by existing ID without references", func() {
-			resp, cerr := registration.CreateRPM(ctx, RPM4)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM4)
-
-			err := DeleteRPM(ctx, "RPM-4")
+			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
 			So(err, ShouldBeNil)
 
-			resp, cerr = GetRPM(ctx, "RPM-4")
+			err = DeleteRPM(ctx, "RPM-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Machines referring the RPM:")
+
+			resp, err := registration.GetRPM(ctx, "RPM-1")
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM1)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/RPM-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Delete RPM successfully", func() {
+			rack1 := &ufspb.Rack{
+				Name: "rack-2",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			registration.CreateRack(ctx, rack1)
+
+			rpm2 := mockRPM("rpm-2")
+			rpm2.Rack = "rack-2"
+			_, err := registration.CreateRPM(ctx, rpm2)
+			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "rpms/rpm-2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteRPM(ctx, "rpm-2")
+			So(err, ShouldBeNil)
+
+			resp, err := registration.GetRPM(ctx, "rpm-2")
 			So(resp, ShouldBeNil)
-			So(cerr, ShouldNotBeNil)
-			So(cerr.Error(), ShouldContainSubstring, NotFound)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = state.GetStateRecord(ctx, "rpms/rpm-2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/rpm-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rpm")
+		})
+
+		Convey("Delete RPM successfully together with deleting ip", func() {
+			rack1 := &ufspb.Rack{
+				Name: "rack-ip2",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			registration.CreateRack(ctx, rack1)
+
+			rpm2 := mockRPM("rpm-ip2")
+			rpm2.Rack = "rack-ip2"
+			_, err := registration.CreateRPM(ctx, rpm2)
+			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "rpms/rpm-ip2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "rpm-ip2",
+					Ip:       "1.2.3.4",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.ImportIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "vlan-1:123",
+					Ipv4Str:  "1.2.3.4",
+					Vlan:     "vlan-1",
+					Occupied: true,
+					Ipv4:     123,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteRPM(ctx, "rpm-ip2")
+			So(err, ShouldBeNil)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.4"})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeFalse)
+			_, err = configuration.GetDHCPConfig(ctx, "rpm-ip2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			resp, err := registration.GetRPM(ctx, "rpm-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = state.GetStateRecord(ctx, "rpms/rpm-2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "rpms/rpm-ip2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rpm")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "rpms/rpm-ip2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/rpm-ip2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/rpms/rpm-ip2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+		})
+
+		Convey("Delete rpm - Permission denied: same realm and no delete permission", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-53",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rpm2 := mockRPM("rpm-53")
+			rpm2.Rack = "rack-53"
+			_, err = registration.CreateRPM(ctx, rpm2)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsGet, util.BrowserLabAdminRealm)
+			err = DeleteRPM(ctx, "rpm-53")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
+		})
+
+		Convey("Delete rpm - Permission denied: different realm", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-54",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rpm2 := mockRPM("rpm-54")
+			rpm2.Rack = "rack-54"
+			_, err = registration.CreateRPM(ctx, rpm2)
+			So(err, ShouldBeNil)
+
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
+			err = DeleteRPM(ctx, "rpm-54")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
 	})
 }

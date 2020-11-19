@@ -157,6 +157,7 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing rpms").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	filterMap = resetZoneFilter(filterMap)
 	return registration.ListRPMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
@@ -172,22 +173,32 @@ func DeleteRPM(ctx context.Context, id string) error {
 
 func deleteRPMHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
-		rpm := &ufspb.RPM{Name: id}
-		hc := getRPMHistoryClient(rpm)
-		hc.LogRPMChanges(rpm, nil)
+		hc := getRPMHistoryClient(&ufspb.RPM{Name: id})
+
+		// Get rpm
+		rpm, err := registration.GetRPM(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "Unable to get RPM").Err()
+		}
+
 		// Validate input
-		if err := validateDeleteRPM(ctx, id); err != nil {
+		if err := validateDeleteRPM(ctx, rpm); err != nil {
 			return errors.Annotate(err, "Validation failed - unable to delete rpm %s", id).Err()
 		}
+
+		// Delete the rpm
 		if err := registration.DeleteRPM(ctx, id); err != nil {
 			return errors.Annotate(err, "Delete failed - unable to delete rpm %s", id).Err()
 		}
+
 		// Update state
 		hc.stUdt.deleteStateHelper(ctx)
+
 		// Delete ip configs
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+		hc.LogRPMChanges(rpm, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if inTransaction {
@@ -219,32 +230,30 @@ func ReplaceRPM(ctx context.Context, oldRPM *ufspb.RPM, newRPM *ufspb.RPM) (*ufs
 //
 // Checks if this RPM(RPMID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteRPM(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "rpm_id", id, true)
+func validateDeleteRPM(ctx context.Context, rpm *ufspb.RPM) error {
+	rack, err := registration.GetRack(ctx, rpm.GetRack())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "rack %s not found", rpm.GetRack())
+	}
+	// Check permission
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsDelete, rack.GetRealm()); err != nil {
+		return err
+	}
+	machines, err := registration.QueryMachineByPropertyName(ctx, "rpm_id", rpm.GetName(), true)
 	if err != nil {
 		return err
 	}
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rpm_ids", id, true)
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "rpm_id", rpm.GetName(), true)
 	if err != nil {
 		return err
 	}
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "rpm_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 || len(racklses) > 0 || len(machinelses) > 0 {
+	if len(machines) > 0 || len(machinelses) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("RPM %s cannot be deleted because there are other resources which are referring this RPM.", id))
+		errorMsg.WriteString(fmt.Sprintf("RPM %s cannot be deleted because there are other resources which are referring this RPM.", rpm.GetName()))
 		if len(machines) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the RPM:\n"))
 			for _, machine := range machines {
 				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(racklses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the RPM:\n"))
-			for _, racklse := range racklses {
-				errorMsg.WriteString(racklse.Name + ", ")
 			}
 		}
 		if len(machinelses) > 0 {
