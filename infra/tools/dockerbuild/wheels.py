@@ -664,6 +664,7 @@ SPECS.update({
         Universal('certifi', '2018.11.29'),
         Universal('certifi', '2019.3.9'),
         Universal('certifi', '2020.4.5.1'),
+        Universal('certifi', '2020.11.8'),
         Universal('chardet', '3.0.4'),
         Universal('cheroot', '6.2.4'),
         Universal('colorama', '0.4.1'),

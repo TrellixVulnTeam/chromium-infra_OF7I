@@ -7,7 +7,7 @@ Please see [VPython and You] for a brief tutorial on how to use vpython.
 
 If there's a wheel you need which is missing, please [file a bug][bug].
 
-[bug]: https://bugs.chromium.org/p/chromium/issues/entry?summary=Need%20VPython%20Wheel&description=Link%20to%20PyPI:%20%0AWheel%20Name:%20%0AVersion:%20%0APlatform%28s%29%20Required:&components=Infra%3EThirdPartySoftware
+[bug]: https://bugs.chromium.org/p/chromium/issues/entry?template=+Vpython+Wheel+Request
 [VPython and You]: https://chromium.googlesource.com/infra/infra/+/master/doc/users/vpython_one_page.md
 
 [TOC]
@@ -816,6 +816,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/certifi-py2_py3"
   version: "version:2019.3.9"
+>
+```
+
+
+* *universal*
+
+### 2020.11.8
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/certifi-py2_py3"
+  version: "version:2020.11.8"
 >
 ```
 
@@ -1970,12 +1982,12 @@ wheel: <
 
 ## **infra_libs-py2**
 
-### 2.1.0
+### 2.2.0b1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/infra_libs-py2"
-  version: "version:2.1.0"
+  version: "version:2.2.0b1"
 >
 ```
 
