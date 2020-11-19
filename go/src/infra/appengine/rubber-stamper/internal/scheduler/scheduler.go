@@ -6,6 +6,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -34,6 +35,8 @@ func ScheduleReviews(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	errNum := 0
 	for host := range cfg.HostConfigs {
 		gc, err := gerrit.GetCurrentClient(ctx, getGerritHostURL(host))
 		if err != nil {
@@ -48,12 +51,17 @@ func ScheduleReviews(ctx context.Context) error {
 		for _, cl := range resp.GetChanges() {
 			err := tasks.EnqueueChangeReviewTask(ctx, host, cl)
 			if err != nil {
-				// TODO: not sure how to handle this. continue or return?
+				errNum = errNum + 1
 				logging.WithError(err).Errorf(ctx, "failed to schedule change review task for host %s, cl %d, revision %s", host, cl.Number, cl.CurrentRevision)
+			} else {
+				logging.Infof(ctx, "scheduled change review task for host %s, cl %d, revision %s", host, cl.Number, cl.CurrentRevision)
 			}
 		}
 	}
 
+	if errNum > 0 {
+		return errors.New(fmt.Sprintf("failed to schedule %d tasks", errNum))
+	}
 	return nil
 }
 
