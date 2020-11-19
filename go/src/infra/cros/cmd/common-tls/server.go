@@ -5,14 +5,20 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"strings"
 	"sync"
 
 	"infra/libs/lro"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"golang.org/x/crypto/ssh"
@@ -188,4 +194,106 @@ func (s *server) getSSHAddr(ctx context.Context, name string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%s:%d", resp.GetAddress(), resp.GetPort()), nil
+}
+
+func (s *server) FetchCrashes(req *tls.FetchCrashesRequest, stream tls.Common_FetchCrashesServer) error {
+	const (
+		// Largest size of blob or coredumps to include in an individual response.
+		// Note that, due to serialization overhead or small metadata fields, protos returned
+		// might be slightly larger than this.
+		protoChunkSize = 1024 * 1024
+		// Location of the serializer binary on disk.
+		serializerPath = "/usr/local/sbin/crash_serializer"
+	)
+
+	ctx := stream.Context()
+
+	addr, err := s.getSSHAddr(ctx, req.Dut)
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to get address of %s: %s", req.Dut, err)
+	}
+
+	c, err := s.clientPool.Get(addr)
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to get client pool for %s: %s", req.Dut, err)
+	}
+	defer s.clientPool.Put(addr, c)
+	session, err := c.NewSession()
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to start ssh session for %s: %s", req.Dut, err)
+	}
+
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to get stdout: %s", err)
+	}
+
+	stderrReader, err := session.StderrPipe()
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to get stderr: %s", err)
+	}
+	stderr := bufio.NewScanner(stderrReader)
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	wg.Add(1)
+	// Grab stderr concurrently to reading the protos.
+	go func() {
+		defer wg.Done()
+
+		for stderr.Scan() {
+			log.Printf("crash_serializer: %s\n", stderr.Text())
+		}
+		if err := stderr.Err(); err != nil {
+			log.Printf("Failed to get stderr: %s\n", err)
+		}
+	}()
+
+	args := []string{serializerPath, fmt.Sprintf("--chunk_size=%d", protoChunkSize)}
+	if req.FetchCore {
+		args = append(args, "--fetch_coredumps")
+	}
+
+	err = session.Start(strings.Join(args, " "))
+	if err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to run serializer: %s", err.Error())
+	}
+
+	var sizeBytes [8]byte
+	crashResp := &tls.FetchCrashesResponse{}
+
+	var protoBytes bytes.Buffer
+
+	for {
+		// First, read the size of the proto.
+		n, err := io.ReadFull(stdout, sizeBytes[:])
+		if err != nil {
+			if n == 0 && err == io.EOF {
+				// We've come to the end of the stream -- expected condition.
+				break
+			}
+			// Read only a partial int. Abort.
+			return status.Errorf(codes.Unavailable, "Failed to read a size: %s", err.Error())
+		}
+		size := binary.BigEndian.Uint64(sizeBytes[:])
+
+		// Next, read the actual proto and parse it.
+		if n, err := io.CopyN(&protoBytes, stdout, int64(size)); err != nil {
+			return status.Errorf(codes.Unavailable, "Failed to read complete proto. Read %d bytes but wanted %d. err: %s", n, size, err)
+		}
+		// CopyN guarantees that n == protoByes.Len() == size now.
+
+		if err := proto.Unmarshal(protoBytes.Bytes(), crashResp); err != nil {
+			return status.Errorf(codes.Internal, "Failed to unmarshal proto: %s; %v", err.Error(), protoBytes.Bytes())
+		}
+		protoBytes.Reset()
+		_ = stream.Send(crashResp)
+	}
+
+	if err := session.Wait(); err != nil {
+		return status.Errorf(codes.Internal, "Failed to execute crash_serializer: %s", err.Error())
+	}
+
+	return nil
 }
