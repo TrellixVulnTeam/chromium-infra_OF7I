@@ -5,8 +5,15 @@
 
 import argparse
 import json
+import ssl
 import sys
 import urllib
+
+import certifi
+
+# Make sure up-to-date root certificates are used.
+urllib._urlopener = urllib.FancyURLopener(
+    context=ssl.create_default_context(cafile=certifi.where()))
 
 
 def do_latest():

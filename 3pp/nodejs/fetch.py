@@ -6,12 +6,19 @@
 import argparse
 import json
 import os
+import ssl
 import sys
 import urllib
 
 from pkg_resources import parse_version
+import certifi
 
 BASE_URL = 'https://nodejs.org/dist/'
+
+# Make sure up-to-date root certificates are used.
+urllib._urlopener = urllib.FancyURLopener(
+    context=ssl.create_default_context(cafile=certifi.where()))
+
 
 def do_latest():
   data = json.load(urllib.urlopen(BASE_URL + 'index.json'))
