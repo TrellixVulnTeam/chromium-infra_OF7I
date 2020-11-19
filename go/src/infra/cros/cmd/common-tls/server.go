@@ -62,11 +62,11 @@ func (s *server) GracefulStop() {
 	s.grpcServ.GracefulStop()
 }
 
-func (s *server) Provision(ctx context.Context, req *tls.ProvisionRequest) (*longrunning.Operation, error) {
+func (s *server) ProvisionDut(ctx context.Context, req *tls.ProvisionDutRequest) (*longrunning.Operation, error) {
 	op := s.lroMgr.NewOperation()
 	go s.provision(req, op.Name)
 
-	return op, status.Error(codes.OK, "Provisioning started")
+	return op, status.Error(codes.OK, "ProvisionDut started")
 }
 
 func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {

@@ -51,7 +51,7 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 }
 
 // newOperationError is a helper in creating Operation_Error and marshals ErrorInfo.
-func newOperationError(c codes.Code, msg string, reason tls.ProvisionResponse_Reason) *status.Status {
+func newOperationError(c codes.Code, msg string, reason tls.ProvisionDutResponse_Reason) *status.Status {
 	s := status.New(c, msg)
 	s, err := s.WithDetails(&errdetails.ErrorInfo{
 		Reason: reason.String(),
@@ -433,7 +433,7 @@ func getOtherDLCSlot(slot dlcSlot) dlcSlot {
 	}
 }
 
-func isDLCVerified(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSlot) (bool, error) {
+func isDLCVerified(c *ssh.Client, spec *tls.ProvisionDutRequest_DLCSpec, slot dlcSlot) (bool, error) {
 	dlcID := spec.GetId()
 	verified, err := pathExists(c, path.Join(dlcLibDir, dlcID, string(slot), dlcVerified))
 	if err != nil {
@@ -442,7 +442,7 @@ func isDLCVerified(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSl
 	return verified, nil
 }
 
-func installDLC(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
+func installDLC(c *ssh.Client, spec *tls.ProvisionDutRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
 	verified, err := isDLCVerified(c, spec, slot)
 	if err != nil {
 		return fmt.Errorf("install DLC: failed is DLC verified check, %s", err)
@@ -472,7 +472,7 @@ func installDLC(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dl
 	return nil
 }
 
-func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
+func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.ProvisionDutRequest_DLCSpec) error {
 	if len(specs) == 0 {
 		return nil
 	}
@@ -490,7 +490,7 @@ func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.Prov
 	activeSlot := r.getActiveDLCSlot()
 	errCh := make(chan error)
 	for _, spec := range specs {
-		go func(spec *tls.ProvisionRequest_DLCSpec) {
+		go func(spec *tls.ProvisionDutRequest_DLCSpec) {
 			dlcID := spec.GetId()
 			if err := installDLC(c, spec, imagePath, path.Join(dlcCacheDir, dlcID, dlcPackage), activeSlot); err != nil {
 				errMsg := fmt.Sprintf("failed to install DLC %s, %s", dlcID, err)
@@ -516,15 +516,15 @@ func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.Prov
 }
 
 // parseImagePath on successfully parsing Image path oneof returns the path.
-func parseImagePath(req *tls.ProvisionRequest) (string, error) {
+func parseImagePath(req *tls.ProvisionDutRequest) (string, error) {
 	// Verify the incoming request path oneof is valid.
 	switch t := req.GetImage().GetPathOneof().(type) {
 	// Requests with gs_path_prefix should be in the format:
 	// gs://chromeos-image-archive/eve-release/R86-13388.0.0
-	case *tls.ProvisionRequest_ChromeOSImage_GsPathPrefix:
+	case *tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix:
 		return req.GetImage().GetGsPathPrefix(), nil
 	default:
-		return "", fmt.Errorf("parse image path oneof: unsupported ImagePathOneof in ProvisionRequest, %T", t)
+		return "", fmt.Errorf("parse image path oneof: unsupported ImagePathOneof in ProvisionDutRequest, %T", t)
 	}
 }
 
@@ -539,7 +539,7 @@ func parseTargetBuilderPath(imagePath string) (string, error) {
 	return path.Join(path.Base(d), version), nil
 }
 
-func (s *server) provision(req *tls.ProvisionRequest, opName string) {
+func (s *server) provision(req *tls.ProvisionDutRequest, opName string) {
 	log.Printf("provision: started %v", opName)
 	defer func() {
 		log.Printf("provision: finished %v", opName)
@@ -560,8 +560,8 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 	if err != nil {
 		setError(newOperationError(
 			codes.InvalidArgument,
-			fmt.Sprintf("provision: unsupported ProvisionRequest_ChromeOSImage_PathOneof in request, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST))
+			fmt.Sprintf("provision: unsupported ProvisionDutRequest_ChromeOSImage_PathOneof in request, %s", err),
+			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
@@ -569,8 +569,8 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 	if err != nil {
 		setError(newOperationError(
 			codes.InvalidArgument,
-			fmt.Sprintf("provision: bad ProvisionRequest_ChromeOSImage_GsPathPrefix in request, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST))
+			fmt.Sprintf("provision: bad ProvisionDutRequest_ChromeOSImage_GsPathPrefix in request, %s", err),
+			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
@@ -580,7 +580,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: DUT SSH address unattainable prior to provisioning, %s", err),
-			tls.ProvisionResponse_REASON_INVALID_REQUEST))
+			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
 		return
 	}
 
@@ -590,7 +590,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.FailedPrecondition,
 			fmt.Sprintf("provision: DUT unreachable prior to provisioning (SSH client), %s", err),
-			tls.ProvisionResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION))
+			tls.ProvisionDutResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION))
 		return
 	}
 	defer s.clientPool.Put(addr, c)
@@ -601,7 +601,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to get root device from DUT, %s", err),
-			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 		return
 	}
 
@@ -611,7 +611,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning OS",
-			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT))
 		return
 	default:
 	}
@@ -621,7 +621,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to get the builder path from DUT, %s", err),
-			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 		return
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
@@ -630,7 +630,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to provision OS, %s", err),
-				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 		// After a reboot, need a new client connection so close the old one.
@@ -651,7 +651,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to verify OS provision, %s", err),
-				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 		// Get the new root device after reboot.
@@ -660,7 +660,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to get root device from DUT after reboot, %s", err),
-				tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
 	} else {
@@ -673,7 +673,7 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning DLCs",
-			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT))
 		return
 	default:
 	}
@@ -681,11 +681,11 @@ func (s *server) provision(req *tls.ProvisionRequest, opName string) {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to provision DLCs, %s", err),
-			tls.ProvisionResponse_REASON_PROVISIONING_FAILED))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 		return
 	}
 
-	if err := s.lroMgr.SetResult(opName, &tls.ProvisionResponse{}); err != nil {
+	if err := s.lroMgr.SetResult(opName, &tls.ProvisionDutResponse{}); err != nil {
 		log.Printf("provision: failed to set Opertion result, %s", err)
 	}
 }
