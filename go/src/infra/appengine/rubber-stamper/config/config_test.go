@@ -16,7 +16,15 @@ func TestConfig(t *testing.T) {
 	Convey("loads config and updates context", t, func() {
 		sampleCfg := &Config{
 			HostConfigs: map[string]*HostConfig{
-				"test-host": {},
+				"test-host": {
+					BenignFilePattern: &BenignFilePattern{
+						FileExtensionMap: map[string]*Paths{
+							".txt": {
+								Paths: []string{"whitespace.txt", "a/"},
+							},
+						},
+					},
+				},
 			},
 		}
 

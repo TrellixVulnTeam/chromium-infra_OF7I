@@ -18,5 +18,25 @@ message Config {
 
 // HostConfig describes the config to be used for a Gerrit host.
 message HostConfig {
-  // TODO: Patterns
+  BenignFilePattern benign_file_pattern = 1;
+}
+
+// BenignFilePattern describes pattern of changes to benign files.
+message BenignFilePattern {
+  // A map contains the information that which files are allowed under which
+  // directories, where keys are file extensions, values are paths of files
+  // or directories. For paths to specific files, these files can be considered
+  // benign files; for paths to directories, files under these directories with
+  // corresponding extensions can be considered as benign files. For files with
+  // no extensions, their key should be an empty string "".
+  map<string, Paths> file_extension_map = 1;
+}
+
+// Paths contains a list of allowed paths.
+message Paths {
+  // Could be either a file or a directory. Directory path should end with '/'
+  // or "/*". If end with '/', it only allows direct descendants of the
+  // directory; if end with "/*", it means that all files under this path are
+  // considered benign.
+  repeated string paths = 1;
 }
