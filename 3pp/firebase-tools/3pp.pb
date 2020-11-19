@@ -1,8 +1,6 @@
 create {
   # We only have native (no_docker_env) support on amd64 hosts on our build
-  # system. Since this is actually creating a universal package, it doesn't
-  # matter, but allowing e.g. mac-amd64 and linux-amd64 is convenient for local
-  # testing. It should also work on windows too, but *shrug*.
+  # system.
   platform_re: ".*-amd64"
 
   source {
@@ -19,5 +17,4 @@ create {
 
 upload {
   pkg_prefix: "npm"
-  universal: true
 }

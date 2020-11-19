@@ -6,6 +6,7 @@
 import argparse
 import json
 import ssl
+import os
 import sys
 import urllib
 
@@ -21,6 +22,33 @@ def do_latest():
       'https://registry.npmjs.org/firebase-tools'))['dist-tags']['latest']
 
 
+def get_download_url(version, platform):
+  ext = ''
+  if platform.startswith('windows-'):
+    # pylint: disable=line-too-long
+    url = 'https://github.com/firebase/firebase-tools/releases/download/v%(ver)s/firebase-tools-instant-win.exe' % {
+        'ver': version
+    }
+    ext = '.exe'
+  elif platform.startswith('mac-'):
+    # pylint: disable=line-too-long
+    url = 'https://github.com/firebase/firebase-tools/releases/download/v%(ver)s/firebase-tools-macos' % {
+        'ver': version
+    }
+  elif platform.startswith('linux-'):
+    # pylint: disable=line-too-long
+    url = 'https://github.com/firebase/firebase-tools/releases/download/v%(ver)s/firebase-tools-linux' % {
+        'ver': version
+    }
+  else:
+    raise ValueError('fetch.py is only supported for amd64 hosts.')
+  partial_manifest = {
+    'url': [url],
+    'ext': ext,
+  }
+  print(json.dumps(partial_manifest))
+
+
 def main():
   ap = argparse.ArgumentParser()
   sub = ap.add_subparsers()
@@ -28,10 +56,15 @@ def main():
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
 
+  # TODO(akashmukherjee): Remove.
   checkout = sub.add_parser("checkout")
   checkout.add_argument("checkout_path")
   # we're going to use npm to actually do the fetch in install.sh
   checkout.set_defaults(func=lambda opts: None)
+
+  download = sub.add_parser("get_url")
+  download.set_defaults(func=lambda opts: get_download_url(
+      os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM']))
 
   opts = ap.parse_args()
   return opts.func(opts)

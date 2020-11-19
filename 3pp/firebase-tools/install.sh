@@ -9,6 +9,4 @@ set -o pipefail
 
 PREFIX="$1"
 
-npm install "firebase-tools@${_3PP_VERSION}"
-
-mv node_modules/* $PREFIX/
+mv ./* "$PREFIX"/
