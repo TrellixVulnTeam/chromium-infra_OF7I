@@ -1072,6 +1072,21 @@ Add a rpm by specifying several attributes directly.
 shivas add rpm -i
 Add a rpm by reading input through interactive mode.`
 
+	// UpdateRPMLongDesc long description for UpdateRPMCmd
+	UpdateRPMLongDesc string = `Update a rpm by name.
+
+Examples:
+shivas update rpm -f rpm.json
+Update a rpm by reading a JSON file input.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, ip via command line parameters along with JSON input
+
+shivas update rpm -i
+Update a rpm by reading input through interactive mode.
+
+shivas update rpm -rack {Rack name} -name {rpm name} -mac {mac}
+Partial updates a rpm by parameters. Only specified parameters will be udpated in the rpm.`
+
 	// RPMFileText description for rpm file input
 	RPMFileText string = `[JSON Mode] Path to a file containing rpm specification in JSON format.
 This file must contain one rpm JSON message

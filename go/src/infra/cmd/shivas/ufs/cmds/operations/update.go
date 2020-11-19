@@ -17,6 +17,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/nic"
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
+	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
@@ -57,6 +58,7 @@ func (c updateApp) GetCommands() []*subcommands.Command {
 		machine.UpdateMachineCmd,
 		host.UpdateHostCmd,
 		kvm.UpdateKVMCmd,
+		rpm.UpdateRPMCmd,
 		switches.UpdateSwitchCmd,
 		drac.UpdateDracCmd,
 		nic.UpdateNicCmd,

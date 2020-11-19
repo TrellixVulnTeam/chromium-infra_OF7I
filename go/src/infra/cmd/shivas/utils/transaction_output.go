@@ -99,6 +99,23 @@ func PrintExistingKVM(ctx context.Context, ic ufsAPI.FleetClient, name string) e
 	return nil
 }
 
+// PrintExistingRPM prints the old rpm in update/delete operations
+func PrintExistingRPM(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+	res, err := ic.GetRPM(ctx, &ufsAPI.GetRPMRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.RPMCollection, name),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get rpm").Err()
+	}
+	if res == nil {
+		return errors.Reason("The returned resp is empty").Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The rpm before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return nil
+}
+
 // PrintExistingSwitch prints the old switch in update/delete operations
 func PrintExistingSwitch(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
 	res, err := ic.GetSwitch(ctx, &ufsAPI.GetSwitchRequest{
