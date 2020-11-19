@@ -1057,4 +1057,34 @@ Operation will be faster as only name/id will be retrieved from the service.`
 	ZoneHelpText string = fmt.Sprintf("the name of the zone. "+
 		"You can either use the below strings or prefix \"ZONE_\" to the below strings(for JSON input) to specify the exact enum name. "+
 		"Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", "))
+
+	// AddRPMLongDesc long description for AddRPMCmd
+	AddRPMLongDesc string = `Add a rpm to UFS.
+
+Examples:
+shivas add rpm -f rpm.json
+Add a rpm by reading a JSON file input.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
+
+shivas add rpm -rack {Rack name} -name {rpm name} -mac {mac} -capacity {50} -desc {description}
+Add a rpm by specifying several attributes directly.
+
+shivas add rpm -i
+Add a rpm by reading input through interactive mode.`
+
+	// RPMFileText description for rpm file input
+	RPMFileText string = `[JSON Mode] Path to a file containing rpm specification in JSON format.
+This file must contain one rpm JSON message
+
+Example rpm:
+{
+    "name": "cx101-rpm1XXX",
+    "macAddress": "00:0d:5d:0f:54:ed",
+    "tags": ["dell", "8g"],
+    "capacityPort": 48,
+    "rack": "cr-22"
+}
+
+The protobuf definition of rpm is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 )

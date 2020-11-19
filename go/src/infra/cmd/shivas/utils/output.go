@@ -30,7 +30,7 @@ var (
 	SwitchTitle              = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
 	KvmTitle                 = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
 	KvmFullTitle             = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
-	RpmTitle                 = []string{"RPM Name", "MAC Address", "CapacityPort", "UpdateTime"}
+	RpmTitle                 = []string{"RPM Name", "MAC Address", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
 	DracTitle                = []string{"Drac Name", "Display name", "MAC Address", "Switch", "Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
 	DracFullTitle            = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
 	NicTitle                 = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
