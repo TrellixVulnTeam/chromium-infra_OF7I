@@ -254,7 +254,8 @@ If any step below fails. Stop the deploy and ping
             changes that might have landed in the mean time.
         1.  Test that email works by updating any issue with an owner and/or cc
             list and confirming that the email shows up in
-            g/monorail-staging-emails with all the correct recipients.
+            [g/monorail-staging-emails](http://g/monorail-staging-emails) with
+            all the correct recipients.
     1.  If everything looks good, choose "Continue" for Deploy Staging.
     1.  If there is an issue, choose "Rollback" for this stage.
 1.  Update Prod Schema
