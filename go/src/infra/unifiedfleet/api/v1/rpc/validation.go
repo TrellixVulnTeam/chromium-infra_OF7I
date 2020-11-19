@@ -778,6 +778,13 @@ func (r *UpdateRPMRequest) Validate() error {
 	if r.RPM == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
+	if r.RPM.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.RPM.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.RPM.MacAddress = newMac
+	}
 	return validateResourceName(rpmRegex, RPMNameFormat, r.RPM.GetName())
 }
 

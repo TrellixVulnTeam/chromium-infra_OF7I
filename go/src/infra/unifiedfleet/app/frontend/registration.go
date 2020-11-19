@@ -578,7 +578,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 		}
 
 		// https://aip.dev/122 - as per AIP guideline
-		kvm.Name = util.AddPrefix(util.DracCollection, kvm.Name)
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 		return kvm, nil
 	}
 
@@ -690,7 +690,42 @@ func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *ufsAPI.UpdateRPMR
 		return nil, err
 	}
 	req.RPM.Name = util.FormatDHCPHostname(util.RemovePrefix(req.RPM.Name))
-	rpm, err := controller.UpdateRPM(ctx, req.RPM)
+
+	if req.GetNetworkOption() != nil &&
+		(req.GetNetworkOption().GetDelete() || req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
+		var rpm *ufspb.RPM
+		var err error
+		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
+			rpm, err = controller.UpdateRPM(ctx, req.RPM, req.UpdateMask)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			rpm, err = controller.GetRPM(ctx, req.RPM.Name)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// If network_option.delete is enabled, ignore network_option.vlan and return directly
+		if req.GetNetworkOption().GetDelete() {
+			if err = controller.DeleteRPMHost(ctx, req.RPM.Name); err != nil {
+				return nil, err
+			}
+		}
+
+		if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+			if err = controller.UpdateRPMHost(ctx, rpm, req.GetNetworkOption()); err != nil {
+				return nil, err
+			}
+		}
+
+		// https://aip.dev/122 - as per AIP guideline
+		rpm.Name = util.AddPrefix(util.RPMCollection, rpm.Name)
+		return rpm, nil
+	}
+
+	rpm, err := controller.UpdateRPM(ctx, req.RPM, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

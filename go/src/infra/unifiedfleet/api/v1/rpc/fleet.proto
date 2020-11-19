@@ -1222,6 +1222,8 @@ message UpdateRPMRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+
+  NetworkOption network_option = 3;
 }
 
 message GetRPMRequest {

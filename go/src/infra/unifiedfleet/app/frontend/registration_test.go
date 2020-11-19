@@ -1603,11 +1603,19 @@ func TestUpdateRPM(t *testing.T) {
 	RPM2 := mockRPM("RPM-1")
 	RPM3 := mockRPM("RPM-3")
 	RPM4 := mockRPM("a.b)7&")
+	rack1 := &ufspb.Rack{
+		Name: "rack-1",
+		Rack: &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("UpdateRPM", t, func() {
 		Convey("Update existing RPM", func() {
-			_, err := registration.CreateRPM(tf.C, &ufspb.RPM{Name: "rpm-1"})
+			_, err := registration.CreateRPM(tf.C, &ufspb.RPM{Name: "rpm-1", Rack: "rack-1"})
 			So(err, ShouldBeNil)
 
+			RPM2.Rack = "rack-1"
 			ureq := &ufsAPI.UpdateRPMRequest{
 				RPM: RPM2,
 			}

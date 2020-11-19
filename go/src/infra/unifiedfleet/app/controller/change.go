@@ -455,6 +455,7 @@ func (hc *HistoryClient) LogRPMChanges(oldData, newData *ufspb.RPM) {
 		hc.logMsgEntity(resourceName, true, oldData)
 		return
 	}
+	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
