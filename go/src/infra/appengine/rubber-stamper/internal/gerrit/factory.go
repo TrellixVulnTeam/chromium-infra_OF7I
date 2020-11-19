@@ -37,5 +37,8 @@ func (f *factory) makeClient(ctx context.Context, gerritHost string) (Client, er
 		ttl = 0
 		return
 	})
+	if err != nil {
+		return nil, err
+	}
 	return client.(Client), err
 }
