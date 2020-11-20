@@ -380,6 +380,11 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldBeNil)
 	})
 
+	Convey("Analyze XML file with no errors: owner in <variants>", t, func() {
+		results := analyzeHistogramTestFile(t, "owners/variants_one_owner.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
 	Convey("Analyze XML file with error: only one owner", t, func() {
 		results := analyzeHistogramTestFile(t, "owners/one_owner.xml", patchPath, inputDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{

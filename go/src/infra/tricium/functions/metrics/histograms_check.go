@@ -199,7 +199,18 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			currHistogram = newBytes
 			meta = newMetadata(lineNum)
 			histogramChanged = false
-		} else if strings.HasPrefix(line, histogramEndTag) {
+		}
+		if changedIndex < len(linesChanged) && lineNum == linesChanged[changedIndex] {
+			histogramChanged = true
+			changedIndex++
+		}
+		// Only analyze lines if it's inside the <histogram> block. e.g. we don't need to
+		// check <variants> (for now), top level comments, etc.
+		if currHistogram == nil {
+			lineNum++
+			continue
+		}
+		if strings.HasPrefix(line, histogramEndTag) {
 			// Analyze entire histogram after histogram end tag is encountered.
 			hist := bytesToHistogram(currHistogram, meta)
 			namespace := strings.SplitN(hist.Name, ".", 2)[0]
@@ -219,10 +230,6 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			meta.OwnerStartLineNum = lineNum
 		} else if neverExpiryCommentPattern.MatchString(line) {
 			meta.HasNeverExpiryComment = true
-		}
-		if changedIndex < len(linesChanged) && lineNum == linesChanged[changedIndex] {
-			histogramChanged = true
-			changedIndex++
 		}
 		for _, tag := range tags {
 			if strings.Contains(line, tag) {

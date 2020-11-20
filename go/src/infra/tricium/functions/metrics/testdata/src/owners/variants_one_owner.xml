@@ -1,0 +1,8 @@
+<histogram-configuration>
+    <histograms>
+        <variants name="TestVariants">
+            <owner>ltina@google.com</owner>
+            <variant name="TestVaraint">
+        </histogram>
+    </histograms>
+</histogram-configuration>
