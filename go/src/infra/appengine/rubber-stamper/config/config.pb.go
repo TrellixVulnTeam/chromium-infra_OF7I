@@ -183,10 +183,12 @@ type Paths struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Could be either a file or a directory. Directory path should end with '/'
-	// or "/*". If end with '/', it only allows direct descendants of the
-	// directory; if end with "/*", it means that all files under this path are
-	// considered benign.
+	// We use the Match function in package `path` to judge whether a file
+	// belongs to a path. Therefore, the `paths` here should follow the same
+	// syntax as the `pattern` variable in Match function.
+	// https://golang.org/pkg/path/#Match
+	//
+	// TODO: supports "**" in the syntax.
 	Paths []string `protobuf:"bytes,1,rep,name=paths,proto3" json:"paths,omitempty"`
 }
 

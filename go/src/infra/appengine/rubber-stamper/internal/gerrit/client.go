@@ -65,4 +65,8 @@ type CLReaderClient interface {
 	//
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 	ListChanges(ctx context.Context, in *gerritpb.ListChangesRequest, opts ...grpc.CallOption) (*gerritpb.ListChangesResponse, error)
+	// Lists the files that were modified, added or deleted in a revision.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
+	ListFiles(ctx context.Context, in *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error)
 }
