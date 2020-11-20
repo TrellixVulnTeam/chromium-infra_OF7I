@@ -86,15 +86,24 @@ class GerritPoller(Poller):
     commits_since: datetime() of the oldest commits to look for.
   """
 
-  def __init__(self, host_url, poller_id,
-               commits_since=None, interval_in_minutes=3,
-               setup_refresh_interval_minutes=0, logger=None, run_once=False,
-               with_paths=True, with_diffs=False, datadir=None,
-               git_projects=None):
+  def __init__(self,
+               host_url,
+               poller_id,
+               commits_since=None,
+               interval_in_minutes=3,
+               setup_refresh_interval_minutes=0,
+               logger=None,
+               run_once=False,
+               with_paths=True,
+               with_diffs=False,
+               datadir=None,
+               git_projects=None,
+               test_mode=False):
     Poller.__init__(self, interval_in_minutes, setup_refresh_interval_minutes,
                     run_once)
     self.logger = logger or DEFAULT_LOGGER
-    self.gerrit = gob_helper.GerritHelper(host_url, self.logger, git_projects)
+    self.gerrit = gob_helper.GerritHelper(
+        host_url, self.logger, git_projects, test_mode=test_mode)
     self.poller_id = poller_id
     self.handlers = []
     self.with_paths = with_paths
@@ -227,5 +236,3 @@ class GerritPoller(Poller):
       # as the new query starting point.
       self.seen_bitmap.SetBit(entry.number)
       self.last_seen = entry.update_datetime
-
-

@@ -234,7 +234,8 @@ class Bugdroid(object):
           logger=logger,
           run_once=self.run_once,
           datadir=self.datadir,
-          git_projects=git_projects)
+          git_projects=git_projects,
+          test_mode=config.test_mode)
     else:
       raise ConfigsException('Unknown poller type: %s' % t)
 

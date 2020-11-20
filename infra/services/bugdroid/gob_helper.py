@@ -541,8 +541,13 @@ class GerritHelper(RestApiHelper):
 
   timestamp_format = '%Y-%m-%d %H:%M:%S.%f'
 
-  def __init__(self, api_url, logger=None, ignore_projects=None):
+  def __init__(self,
+               api_url,
+               logger=None,
+               ignore_projects=None,
+               test_mode=False):
     self.ignore_projects = ignore_projects or []
+    self.test_mode = test_mode
     super(GerritHelper, self).__init__(api_url, logger)
 
   @classmethod
@@ -619,7 +624,7 @@ class GerritHelper(RestApiHelper):
 
     entries = []
     for change in changes:
-      if change['project'] in self.ignore_projects:
+      if change['project'] in self.ignore_projects and not self.test_mode:
         self.logger.info(
             'Skip change %s in ignored git projects', change['id'])
       else:
