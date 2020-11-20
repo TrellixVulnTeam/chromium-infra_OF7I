@@ -66,5 +66,5 @@ func ScheduleReviews(ctx context.Context) error {
 }
 
 func getGerritHostURL(host string) string {
-	return "https://" + host + "-review.googlesource.com"
+	return host + "-review.googlesource.com"
 }
