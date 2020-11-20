@@ -17,11 +17,13 @@ package frontend
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
@@ -103,8 +105,13 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 	}
 
 	// Schedule audit tasks to ready|needs_repair|needs_reset|repair_failed DUTs.
-	dims := make(strpair.Map)
-	bots, err := sc.ListAliveBotsInPool(ctx, cfg.Swarming.BotPool, dims)
+	var bots []*swarming.SwarmingRpcsBotInfo
+	f := func() (err error) {
+		dims := make(strpair.Map)
+		bots, err = sc.ListAliveBotsInPool(ctx, cfg.Swarming.BotPool, dims)
+		return err
+	}
+	err = retry.Retry(ctx, simple3TimesRetry(), f, retry.LogCallback(ctx, "Try get list of the BOTs"))
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
 	}
@@ -331,4 +338,19 @@ func identifyLabstationsForRepair(ctx context.Context, bots []*swarming.Swarming
 		botIDs = append(botIDs, id)
 	}
 	return botIDs
+}
+
+// simple3TimesRetryIterator simple retry iterator to try 3 times.
+var simple3TimesRetryIterator = retry.ExponentialBackoff{
+	Limited: retry.Limited{
+		Delay:   200 * time.Millisecond,
+		Retries: 3,
+	},
+}
+
+// simple3TimesRetry returns a retry.Factory based on simple3TimesRetryIterator.
+func simple3TimesRetry() retry.Factory {
+	return func() retry.Iterator {
+		return &simple3TimesRetryIterator
+	}
 }
