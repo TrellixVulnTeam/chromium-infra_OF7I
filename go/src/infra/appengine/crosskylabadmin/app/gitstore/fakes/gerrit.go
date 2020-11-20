@@ -65,7 +65,7 @@ func (gc *GerritClient) CreateChange(ctx context.Context, in *gerrit.CreateChang
 			Number:          gc.nextNumber,
 			Project:         in.Project,
 			Ref:             in.Ref,
-			Status:          gerrit.ChangeInfo_NEW,
+			Status:          gerrit.ChangeStatus_NEW,
 			CurrentRevision: "patch_set_1",
 		},
 	}
@@ -121,7 +121,7 @@ func (gc *GerritClient) SubmitChange(ctx context.Context, in *gerrit.SubmitChang
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.IsSubmitted = true
-			c.ChangeInfo.Status = gerrit.ChangeInfo_MERGED
+			c.ChangeInfo.Status = gerrit.ChangeStatus_MERGED
 			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
 		}
 	}
