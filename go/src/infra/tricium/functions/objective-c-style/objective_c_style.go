@@ -123,7 +123,10 @@ func foundGetPrefix(path string, startLine int, endLine int, functionEndChar int
 }
 
 // CharIndexToLineConverter converts character index obtained from regex to line
-// number required by tricium.
+// number required by tricium. Line numbers for Tricium comments are 1-based
+// because that's how it is in the Gerrit API, where line 0 represents a
+// file-level comment, and line numbers starting with 1 are displayed next to
+// actual lines.
 type CharIndexToLineConverter interface {
 	getStartLine(startIndex int) int
 	getEndLine(endIndex int) int
@@ -135,15 +138,15 @@ func newCharIndexToLineConverter(content string) CharIndexToLineConverter {
 }
 
 func (converter charIndexToLineConverter) getStartLine(startIndex int) int {
-	return sort.SearchInts(getLookupTable(converter), startIndex) + 1
+	return sort.SearchInts(getLookupTable(converter), startIndex) + 2
 }
 
 func (converter charIndexToLineConverter) getEndLine(endIndex int) int {
-	return sort.SearchInts(getLookupTable(converter), endIndex)
+	return sort.SearchInts(getLookupTable(converter), endIndex) + 1
 }
 
 func (converter charIndexToLineConverter) getEndChar(startLine int) int {
-	return len(getLines(converter)[startLine])
+	return len(getLines(converter)[startLine-1])
 }
 
 type charIndexToLineConverter struct {
