@@ -5,6 +5,8 @@
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
+from PB.go.chromium.org.luci.buildbucket.proto.build import Build
+from PB.go.chromium.org.luci.buildbucket.proto.common import GerritChange
 
 DEPS = [
   'recipe_engine/buildbucket',
@@ -200,6 +202,7 @@ class RecipesRepo(object):
     with self._api.context(cwd=self._workdir):
       ret = self._api.bot_update.ensure_checkout(
           gclient_config=gclient_config,
+          assert_one_gerrit_change=False,
           # Only try to checkout the CL if this repo is the one that triggered
           # the current build.
           patch=is_triggering_repo)
@@ -276,6 +279,17 @@ def _find_footer(api, repo_id):
     )
 
   return found_set.pop() if found_set else None, False
+
+
+def _get_upstream_change(api, upstream_url):
+  gs_suffix = '-review.googlesource.com'
+  for cl in api.buildbucket.build.input.gerrit_changes:
+    if not cl.host.endswith(gs_suffix):
+      continue
+    git_host = '%s.googlesource.com' % cl.host[:-len(gs_suffix)]
+    if upstream_url == 'https://%s/%s' % (git_host, cl.project):
+      return cl
+  return None
 
 
 def _get_expected_footer(api, upstream_repo, downstream_repo):
@@ -365,9 +379,13 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
 
 def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
   # NOTE: this recipe is only useful as a tryjob with patch applied against
-  # upstream repo, which means upstream_url must always match that specified in
-  # api.buildbucket.build.input.gerrit_changes[0]. upstream_url remains as a
+  # upstream repo, which means upstream_url must at least match a change from
+  # api.buildbucket.build.input.gerrit_changes. upstream_url remains as a
   # required parameter for symmetric input for upstream/downstream.
+  change = _get_upstream_change(api, upstream_url)
+  assert change is not None, 'no change found from upstream repo'
+  api.tryserver.set_change(change)
+
   # TODO: figure out upstream_id from downstream's repo recipes.cfg file using
   # patch and deprecated both upstream_id and upstream_url parameters.
   workdir_base = api.path['cache'].join('builder')
@@ -423,39 +441,73 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
 
 
 def GenTests(api):
-  def test(name, *footers):
-    upstream_id = 'recipe_engine'
-    downstream_id = 'depot_tools'
-    repo_urls = {
+  REPO_URLS = {
       'build':
-      'https://chromium.googlesource.com/chromium/tools/build',
+          'https://chromium.googlesource.com/chromium/tools/build',
       'depot_tools':
-      'https://chromium.googlesource.com/chromium/tools/depot_tools',
+          'https://chromium.googlesource.com/chromium/tools/depot_tools',
       'recipe_engine':
-      'https://chromium.googlesource.com/infra/luci/recipes-py',
-    }
-    return (
-      api.test(name)
-      + api.properties(
-          upstream_id=upstream_id,
-          upstream_url=repo_urls[upstream_id],
-          downstream_id=downstream_id,
-          downstream_url=repo_urls[downstream_id])
-      + api.buildbucket.try_build(
-          git_repo=repo_urls[upstream_id],
-          change_number=456789,
-          patch_set=12)
-      + api.override_step_data('gerrit changes', api.json.output([{
-        'revisions': {
-          'deadbeef': {'_number': 12, 'commit': {'message': ''}},
-        }
-      }]))
-      + api.step_data(
-          'parse description', api.json.output({
-            k: ['Reasons' if k == BYPASS_FOOTER else downstream_id]
-            for k in footers
-          }))
-    )
+          'https://chromium.googlesource.com/infra/luci/recipes-py',
+  }
+
+  CL_TANGENTIAL = GerritChange(
+      host='chromium-review.googlesource.com',
+      project='chromium/src',
+      change=111111,
+      patchset=1,
+  )
+
+  CL_CHANGE_ACTUAL = GerritChange(
+      host='chromium-review.googlesource.com',
+      project='infra/luci/recipes-py',
+      change=456789,
+      patchset=12,
+  )
+
+  # GerritChange with bad host name.
+  CL_UNSUPPORTED = GerritChange(
+      host='chromium-review.foo-source.com',
+      project='chromium/src',
+      change=0,
+      patchset=0,
+  )
+
+  def test_with_changes(name, upstream_id, downstream_id, changes, *footers):
+    # Depending on the size of api.buildbucket.build.input.gerrit_changes,
+    # the source for initialize step may differ.
+    initialize = api.buildbucket.build(
+        Build(id=1234567, input=Build.Input(gerrit_changes=changes)))
+    if len(changes) == 1:
+      initialize = api.buildbucket.try_build(
+          git_repo=REPO_URLS[upstream_id],
+          change_number=changes[0].change,
+          patch_set=changes[0].patchset)
+    return (api.test(name) + api.properties(
+        upstream_id=upstream_id,
+        upstream_url=REPO_URLS[upstream_id],
+        downstream_id=downstream_id,
+        downstream_url=REPO_URLS[downstream_id]) + initialize +
+            api.override_step_data(
+                'gerrit changes',
+                api.json.output([{
+                    'revisions': {
+                        'deadbeef': {
+                            '_number': 12,
+                            'commit': {
+                                'message': ''
+                            }
+                        },
+                    }
+                }])) + api.step_data(
+                    'parse description',
+                    api.json.output({
+                        k: ['Reasons' if k == BYPASS_FOOTER else downstream_id]
+                        for k in footers
+                    })))
+
+  def test(name, *footers):
+    return test_with_changes(name, 'recipe_engine', 'depot_tools',
+                             [CL_CHANGE_ACTUAL], *footers)
 
   yield (
     test('find_trivial_roll')
@@ -552,3 +604,17 @@ def GenTests(api):
         retcode=1)
     + api.post_process(post_process.StatusException)
   )
+
+  yield (test_with_changes('multiple_patchsets', 'recipe_engine', 'depot_tools',
+                           [CL_TANGENTIAL, CL_CHANGE_ACTUAL], BYPASS_FOOTER) +
+         api.step_data('parse description',
+                       api.json.output({BYPASS_FOOTER: ['Reasons']})))
+
+  yield (api.test('crash_for_no_upstream_patchset') + api.buildbucket.build(
+      Build(id=1234567, input=Build.Input(gerrit_changes=[CL_UNSUPPORTED]))) +
+         api.properties(
+             upstream_id='recipe_engine',
+             upstream_url=REPO_URLS['recipe_engine'],
+             downstream_id='depot_tools',
+             downstream_url=REPO_URLS['depot_tools'],
+         ) + api.expect_exception('AssertionError'))
