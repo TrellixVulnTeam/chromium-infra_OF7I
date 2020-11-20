@@ -116,6 +116,10 @@ var Known = []*Master{
 		Identifier: "client.webrtc.fyi.experimental",
 	},
 	{
+		Name:       "WebRTCInternal",
+		Identifier: "internal.client.webrtc",
+	},
+	{
 		Name:       "WebRTCPerf",
 		Identifier: "client.webrtc.perf",
 	},
