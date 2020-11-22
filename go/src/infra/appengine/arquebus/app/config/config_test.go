@@ -32,16 +32,10 @@ func createConfig(id string) *Config {
 	cfg.Id = id
 
 	return &Config{
-		AccessGroup:      "trooper",
-		MonorailHostname: "example.com",
-		RotangHostname:   "example.net",
-		Assigners:        []*Assigner{&cfg},
-	}
-}
-
-func createOncallSource(rotation string) *UserSource_Oncall {
-	return &UserSource_Oncall{
-		Oncall: &Oncall{Rotation: rotation, Position: Oncall_PRIMARY},
+		AccessGroup:           "trooper",
+		MonorailHostname:      "example.com",
+		RotationProxyHostname: "example.net",
+		Assigners:             []*Assigner{&cfg},
 	}
 }
 
@@ -92,12 +86,6 @@ func TestConfigValidator(t *testing.T) {
 	Convey("empty monorail_hostname is not valid", t, func() {
 		cfg := createConfig("my-assigner")
 		cfg.MonorailHostname = ""
-		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
-	})
-
-	Convey("empty rotang_hostname is not valid", t, func() {
-		cfg := createConfig("my-assigner")
-		cfg.RotangHostname = ""
 		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
 	})
 
@@ -185,14 +173,6 @@ func TestConfigValidator(t *testing.T) {
 			assigner.Assignees[0] = source
 
 			Convey("with valid rotation names", func() {
-				source.From = createOncallSource("rotation")
-				So(validate(cfg), ShouldBeNil)
-				source.From = createOncallSource("r")
-				So(validate(cfg), ShouldBeNil)
-				source.From = createOncallSource("rotation-1")
-				So(validate(cfg), ShouldBeNil)
-				source.From = createOncallSource("My Oncall Rotation-2")
-				So(validate(cfg), ShouldBeNil)
 				source.From = createRotationSource("oncallator:foo-bar")
 				So(validate(cfg), ShouldBeNil)
 				source.From = createRotationSource("grotation:foo-bar")
@@ -213,18 +193,6 @@ func TestConfigValidator(t *testing.T) {
 
 			Convey("with invalid rotation names", func() {
 				invalidID := "invalid id"
-				source.From = createOncallSource(" rotation")
-				So(validate(cfg), ShouldErrLike, invalidID)
-				source.From = createOncallSource("rotation ")
-				So(validate(cfg), ShouldErrLike, invalidID)
-				source.From = createOncallSource("r@otation")
-				So(validate(cfg), ShouldErrLike, invalidID)
-				source.From = createOncallSource("ro#tation")
-				So(validate(cfg), ShouldErrLike, invalidID)
-				source.From = createOncallSource(" ")
-				So(validate(cfg), ShouldErrLike, invalidID)
-				source.From = createOncallSource("")
-				So(validate(cfg), ShouldErrLike, "either name or rotation must be specified")
 				source.From = createRotationSource("")
 				So(validate(cfg), ShouldErrLike, "either name or rotation must be specified")
 				source.From = createRotationSource("foo-bar")

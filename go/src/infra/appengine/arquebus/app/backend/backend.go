@@ -32,7 +32,6 @@ import (
 	"infra/appengine/arquebus/app/backend/model"
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/arquebus/app/util"
-	"infra/appengine/rotang/proto/rotangapi"
 	rotationproxy "infra/appengine/rotation-proxy/proto"
 	monorail "infra/monorailv2/api/api_proto"
 )
@@ -54,15 +53,10 @@ var (
 )
 
 var ctxKeyMonorailClient = "monorail client"
-var ctxKeyRotaNGClient = "rotang client"
 var ctxKeyRotationProxyClient = "rotation-proxy client"
 
 func setMonorailClient(c context.Context, mc monorail.IssuesClient) context.Context {
 	return context.WithValue(c, &ctxKeyMonorailClient, mc)
-}
-
-func setRotaNGClient(c context.Context, rc rotangapi.OncallInfoClient) context.Context {
-	return context.WithValue(c, &ctxKeyRotaNGClient, rc)
 }
 
 func setRotationProxyClient(c context.Context, rc rotationproxy.RotationProxyServiceClient) context.Context {
@@ -71,10 +65,6 @@ func setRotationProxyClient(c context.Context, rc rotationproxy.RotationProxySer
 
 func getMonorailClient(c context.Context) monorail.IssuesClient {
 	return c.Value(&ctxKeyMonorailClient).(monorail.IssuesClient)
-}
-
-func getRotaNGClient(c context.Context) rotangapi.OncallInfoClient {
-	return c.Value(&ctxKeyRotaNGClient).(rotangapi.OncallInfoClient)
 }
 
 func getRotationProxyClient(c context.Context) rotationproxy.RotationProxyServiceClient {
@@ -90,19 +80,6 @@ func createMonorailClient(c context.Context) (monorail.IssuesClient, error) {
 		&prpc.Client{
 			C:    &http.Client{Transport: transport},
 			Host: config.Get(c).MonorailHostname,
-		},
-	), nil
-}
-
-func createRotaNGClient(c context.Context) (rotangapi.OncallInfoClient, error) {
-	transport, err := auth.GetRPCTransport(c, auth.AsSelf)
-	if err != nil {
-		return nil, err
-	}
-	return rotangapi.NewOncallInfoPRPCClient(
-		&prpc.Client{
-			C:    &http.Client{Transport: transport},
-			Host: config.Get(c).RotangHostname,
 		},
 	), nil
 }
@@ -138,16 +115,6 @@ func InstallHandlers(r *router.Router, dispatcher *tq.Dispatcher, m router.Middl
 			return
 		}
 		rc.Context = setMonorailClient(rc.Context, monorailClient)
-
-		rotaNGClient, err := createRotaNGClient(rc.Context)
-		if err != nil {
-			util.ErrStatus(
-				rc, http.StatusInternalServerError,
-				"failed to create an RPC channel for RotaNG: %s", err,
-			)
-			return
-		}
-		rc.Context = setRotaNGClient(rc.Context, rotaNGClient)
 
 		rotationProxyClient, err := createRotationProxyClient(rc.Context)
 		if err != nil {

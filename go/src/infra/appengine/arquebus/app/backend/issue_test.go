@@ -18,7 +18,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"infra/appengine/arquebus/app/config"
-	"infra/appengine/rotang/proto/rotangapi"
+	rotationproxy "infra/appengine/rotation-proxy/proto"
 	monorail "infra/monorailv2/api/api_proto"
 )
 
@@ -32,7 +32,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 		// create a sample assigner with tasks.
 		assigner := createAssigner(c, assignerID)
 		assigner.AssigneesRaw = createRawUserSources(
-			oncallUserSource("Rotation 1", config.Oncall_PRIMARY),
+			rotationUserSource("Rotation 1", config.Oncall_PRIMARY),
 		)
 		assigner.CCsRaw = createRawUserSources()
 		tasks := triggerScheduleTaskHandler(c, assignerID)
@@ -78,7 +78,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 				So(req, ShouldNotBeNil)
 				So(
 					req.Delta.OwnerRef.DisplayName, ShouldEqual,
-					findPrimaryOncall(sampleOncallShifts["Rotation 1"]).DisplayName,
+					findPrimaryOncall(sampleRotationProxyRotations["Rotation 1"].Shifts[0]).DisplayName,
 				)
 			}
 		})
@@ -90,7 +90,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 
 			Convey("if no oncaller is available", func() {
 				// simulate an oncall with empty shifts.
-				mockOncall(c, "Rotation 1", &rotangapi.ShiftEntry{})
+				mockRotation(c, "Rotation 1", &rotationproxy.Rotation{})
 
 				// nUpdated should be 0
 				nUpdated, err := searchAndUpdateIssues(c, assigner, task)
@@ -245,7 +245,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 
 			Convey("because it's outside of the oncall hours", func() {
 				// Mock a rotation with empty shifts.
-				mockOncall(c, "Rotation 1", &rotangapi.ShiftEntry{})
+				mockRotation(c, "Rotation 1", &rotationproxy.Rotation{})
 				// nUpdated should be 0
 				nUpdated, err := searchAndUpdateIssues(c, assigner, task)
 				So(err, ShouldBeNil)
@@ -255,7 +255,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 			Convey("because the config doesn't have assignee", func() {
 				// This rotation only cc-es the oncaller into the issue.
 				assigner.CCsRaw = createRawUserSources(
-					oncallUserSource("Rotation 1", config.Oncall_PRIMARY),
+					rotationUserSource("Rotation 1", config.Oncall_PRIMARY),
 				)
 				assigner.AssigneesRaw = createRawUserSources()
 

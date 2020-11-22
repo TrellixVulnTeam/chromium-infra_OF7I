@@ -29,9 +29,6 @@ import (
 // The regex rule that all assigner IDs must conform to.
 var assignerIDRegex = regexp.MustCompile(`^([a-z0-9]+-?)*[a-z0-9]$`)
 
-// The regex rule for RotaNG rotation names.
-var rotationNameRegex = regexp.MustCompile(`^([[:alnum:]][[:word:]- ]?)*[[:alnum:]]$`)
-
 // The regex rule for rotation-proxy rotation names.
 var rotationProxyNameRegex = regexp.MustCompile(`^(oncallator|grotation):[a-z0-9\-]+$`)
 
@@ -39,7 +36,6 @@ func validateConfig(c *validation.Context, cfg *Config) {
 	validateAccessGroup(c, cfg.AccessGroup)
 	validateMonorailHostname(c, cfg.MonorailHostname)
 	validateAssigners(c, cfg.Assigners)
-	validateRotangHostname(c, cfg.RotangHostname)
 }
 
 func validateAccessGroup(c *validation.Context, group string) {
@@ -52,16 +48,6 @@ func validateAccessGroup(c *validation.Context, group string) {
 
 func validateMonorailHostname(c *validation.Context, hostname string) {
 	c.Enter("monorail_hostname")
-	if hostname == "" {
-		c.Errorf("empty value is not allowed")
-	} else if _, err := url.Parse(hostname); err != nil {
-		c.Errorf("invalid hostname: %s", hostname)
-	}
-	c.Exit()
-}
-
-func validateRotangHostname(c *validation.Context, hostname string) {
-	c.Enter("rotang_hostname")
 	if hostname == "" {
 		c.Errorf("empty value is not allowed")
 	} else if _, err := url.Parse(hostname); err != nil {
@@ -142,40 +128,12 @@ func validateAssigner(c *validation.Context, assigner *Assigner) {
 }
 
 func validateUserSource(c *validation.Context, source *UserSource) {
-	if oncall := source.GetOncall(); oncall != nil {
-		validateOncall(c, oncall)
-	} else if rotation := source.GetRotation(); rotation != nil {
+	if rotation := source.GetRotation(); rotation != nil {
 		validateRotation(c, rotation)
 	} else if email := source.GetEmail(); email != "" {
 		validateEmail(c, email)
 	} else {
 		c.Errorf("missing or unknown user source")
-	}
-}
-
-func validateOncall(c *validation.Context, oncall *Oncall) {
-	var name string
-	if oncall.Name != "" {
-		if oncall.Rotation != "" {
-			c.Errorf("both name and rotation are specified")
-		}
-		name = oncall.Name
-	} else {
-		if oncall.Rotation == "" {
-			c.Errorf("either name or rotation must be specified")
-		}
-		name = oncall.Rotation
-	}
-
-	if name != "" && !rotationNameRegex.MatchString(name) {
-		c.Errorf(
-			"invalid id; only alphabet and numeric characters are allowed, " +
-				"but a space, hyphen, or underscore may be put between " +
-				"the first and last characters.",
-		)
-	}
-	if oncall.Position == Oncall_UNSET {
-		c.Errorf("missing oncall position")
 	}
 }
 

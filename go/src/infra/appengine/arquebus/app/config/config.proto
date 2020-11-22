@@ -33,6 +33,7 @@ message Config {
   repeated Assigner assigners = 3;
 
   // The endpoint for RotaNG APIs.
+  // DEPRECATED AND UNUSED.
   string rotang_hostname = 4;
 
   // The endpoint for Rotation Proxy APIs.
@@ -49,6 +50,7 @@ message IssueQuery {
 }
 
 // Oncall represents a rotation shift modelled in Rotation Proxy.
+// Next ID: 4
 message Oncall {
   // Deprecated: Use Rotation.name instead.
   string rotation = 1;
@@ -68,9 +70,6 @@ message Oncall {
 // Arquebus will assign or cc issues found.
 message UserSource {
   oneof from {
-    // Deprecated: Use UserSource.Rotation instead.
-    Oncall oncall = 1 [deprecated = true];
-
     // The email address of a Monorail user account.
     string email = 2; // e.g., user@chromium.org
 
