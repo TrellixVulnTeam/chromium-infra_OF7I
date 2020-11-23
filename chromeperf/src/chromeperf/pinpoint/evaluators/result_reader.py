@@ -39,11 +39,19 @@ class HistogramOptions:
     statistic: str
     histogram_name: str
 
+    def to_proto(self):
+        PayloadInput = result_reader_payload_pb2.ResultReaderPayload.Input
+        return PayloadInput.HistogramOptions(**dataclasses.asdict(self))
+
 
 @dataclasses.dataclass
 class GraphJsonOptions:
     chart: str
     trace: str
+
+    def to_proto(self):
+        PayloadInput = result_reader_payload_pb2.ResultReaderPayload.Input
+        return PayloadInput.GraphJsonOptions(**dataclasses.asdict(self))
 
 
 @dataclasses.dataclass
@@ -54,6 +62,34 @@ class TaskOptions:
     graph_json_options: GraphJsonOptions
     mode: str
     results_filename: str
+
+    # To/from proto methods don't include nested task options.
+    def to_input_proto(self) -> result_reader_payload_pb2.ResultReaderPayload.Input:
+        # Note this doesn't include test_options.
+        return result_reader_payload_pb2.ResultReaderPayload.Input(
+                benchmark=self.benchmark,
+                mode=self.mode,
+                results_filename=self.results_filename,
+                histogram_options=self.histogram_options.to_proto(),
+                graph_json_options=self.graph_json_options.to_proto())
+
+    @classmethod
+    def from_proto(
+            cls,
+            proto: result_reader_payload_pb2.ResultReaderPayload.Input):
+        return TaskOptions(
+            test_options=None,
+            benchmark=proto.benchmark,
+            histogram_options=HistogramOptions(
+                grouping_label=proto.histogram_options.grouping_label,
+                story=proto.histogram_options.story,
+                statistic=proto.histogram_options.statistic,
+                histogram_name=proto.histogram_options.histogram_name),
+            graph_json_options=GraphJsonOptions(
+                chart=proto.graph_json_options.chart,
+                trace=proto.graph_json_options.trace),
+            mode=proto.mode,
+            results_filename=proto.results_filename)
 
 
 @dataclasses.dataclass
@@ -253,30 +289,9 @@ def create_graph(options: TaskOptions):
                     benchmark=options.benchmark,
                     mode=options.mode,
                     results_filename=path,
-                    histogram_options=result_reader_payload_pb2.
-                    ResultReaderPayload.Input.HistogramOptions(
-                        **dataclasses.asdict(options.histogram_options)),
-                    graph_json_options=result_reader_payload_pb2.
-                    ResultReaderPayload.Input.GraphJsonOptions(
-                        **dataclasses.asdict(options.graph_json_options)),
-                    change=change_pb2.Change(
-                        commits=[
-                            change_pb2.Commit(
-                                repository=c.repository.name,
-                                git_hash=c.git_hash,
-                            ) for c in
-                            options.test_options.build_options.change.commits
-                        ],
-                        patch=(change_pb2.GerritPatch(
-                            server=options.test_options.build_options.change.
-                            patch.server,
-                            change=options.test_options.build_options.change.
-                            patch.change,
-                            revision=options.test_options.build_options.change.
-                            patch.revision) if
-                               options.test_options.build_options.change.patch
-                               else None),
-                    ),
+                    histogram_options=options.histogram_options.to_proto(),
+                    graph_json_options=options.graph_json_options.to_proto(),
+                    change=options.test_options.build_options.change.to_proto(),
                 ),
                 index=attempt,
             )

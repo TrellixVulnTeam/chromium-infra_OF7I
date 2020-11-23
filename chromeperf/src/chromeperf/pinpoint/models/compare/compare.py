@@ -6,16 +6,16 @@
 
 import dataclasses
 
+import scipy.stats
+
 from chromeperf.pinpoint import comparison_pb2
 
-from chromeperf.pinpoint.models.compare import kolmogorov_smirnov
-from chromeperf.pinpoint.models.compare import mann_whitney_u
 from chromeperf.pinpoint.models.compare import thresholds
 
-DIFFERENT = 'different'
-PENDING = 'pending'
-SAME = 'same'
-UNKNOWN = 'unknown'
+DIFFERENT = 'DIFFERENT'
+SAME = 'SAME'
+UNKNOWN = 'UNKNOWN'
+PENDING = 'PENDING'
 
 
 @dataclasses.dataclass
@@ -34,11 +34,26 @@ class ComparisonResult:
 
     @classmethod
     def from_proto(cls, proto: comparison_pb2.Comparison):
+        if proto is None: return None
+        if (proto.result == comparison_pb2.Comparison.CompareResult.COMPARE_RESULT_UNSPECIFIED
+                and proto.p_value == 0.0 and proto.low_threshold == 0.0
+                and proto.high_threshold == 0.0):
+            return None
         return cls(
             result=comparison_pb2.Comparison.CompareResult.Name(proto.result),
             p_value=proto.p_value,
             low_threshold=proto.low_threshold,
             high_threshold=proto.high_threshold)
+
+
+def _mannwhitneyu(values_a, values_b):
+  try:
+      return scipy.stats.mannwhitneyu(values_a, values_b, use_continuity=True,
+                                      alternative='two-sided')[1]
+  except ValueError:
+      # Catch 'All numbers are identical in mannwhitneyu' errors.  For our
+      # purposes that means p-value 1.0.
+      return 1.0
 
 
 # TODO(https://crbug.com/1051710): Make this return all the values useful in
@@ -89,8 +104,8 @@ def compare(values_a, values_b, attempt_count, mode, magnitude
     # [0]*20            [0]*15+[1]*5                0.0097     0.4973
     # range(10, 30)     range(10)+range(30, 40)     0.4946     0.0082
     p_value = min(
-         kolmogorov_smirnov.kolmogorov_smirnov(values_a, values_b),
-         mann_whitney_u.mann_whitney_u(values_a, values_b))
+        scipy.stats.ks_2samp(values_a, values_b)[1],
+        _mannwhitneyu(values_a, values_b))
 
     if p_value <= low_threshold:
         # The p-value is less than the significance level. Reject the null

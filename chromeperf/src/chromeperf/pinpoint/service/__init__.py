@@ -66,6 +66,7 @@ def _from_dict(client, kind, d):
         # Type 'list' doesn't tell us how to construct it's member. Also
         # type hint is not a real class we can use.
         if type(kind) is typing._GenericAlias:
+            # TODO: use typing.get_origin / typing.get_args
             if kind.__origin__ is list:
                 return [_from_dict(client, kind.__args__[0], x) for x in d]
             raise NotImplementedError('Only support typing.List')

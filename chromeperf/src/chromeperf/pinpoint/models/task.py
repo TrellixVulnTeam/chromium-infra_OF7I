@@ -43,7 +43,7 @@ class Task:
         d = dataclasses.asdict(self)
         del d['key']
         d['payload'] = d['payload'].SerializeToString()
-        entity = datastore.Entity(self.key)
+        entity = datastore.Entity(self.key, exclude_from_indexes=('payload',))
         entity.update(d)
         return entity
 

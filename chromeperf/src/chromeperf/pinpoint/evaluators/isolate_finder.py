@@ -200,6 +200,25 @@ class TaskOptions:
     bucket: str
     change: change_module.Change
 
+    def to_proto(self):
+        return find_isolate_task_payload_pb2.FindIsolateTaskOptions(
+            builder=self.builder, target=self.target, bucket=self.bucket,
+            change=self.change.to_proto() if self.change is not None else None)
+
+    @classmethod
+    def from_proto(
+            cls,
+            datastore_client,
+            proto: find_isolate_task_payload_pb2.FindIsolateTaskOptions):
+        return TaskOptions(
+            builder=proto.builder,
+            target=proto.target,
+            bucket=proto.bucket,
+            change=(change_module.Change.FromProto(datastore_client,
+                                                   proto.change)
+                    if proto.change is not None else None))
+
+
 
 def change_id(change: change_module.Change) -> str:
     return change.id_string.replace(' ', '_')
@@ -215,18 +234,7 @@ def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
         builder=options.builder,
         target=options.target,
         bucket=options.bucket,
-        change=change_pb2.Change(
-            commits=[
-                change_pb2.Commit(repository=c.repository.name,
-                                  git_hash=c.git_hash)
-                for c in options.change.commits
-            ],
-            patch=(change_pb2.GerritPatch(
-                server=options.change.patch.server,
-                change=options.change.patch.change,
-                revision=options.change.patch.revision)
-                   if options.change.patch else None),
-        ),
+        change=options.change.to_proto(),
     )
     encoded_payload = any_pb2.Any()
     encoded_payload.Pack(task_payload)

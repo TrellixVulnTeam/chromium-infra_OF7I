@@ -36,6 +36,7 @@ setup(
         'redis>=3.5.3',
         'requests>=2.24.0',
         'rsa>=4.6',
+        'scipy>=1.5.4',
         'six>=1.15.0',
         'toml>=0.10.1',
         'uritemplate>=3.0.1',

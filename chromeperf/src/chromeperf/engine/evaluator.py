@@ -19,6 +19,9 @@ from chromeperf.engine import event as event_module
 _NOT_EVALUATED, _CHILDREN_PENDING, _EVALUATION_DONE = (0, 1, 2)
 
 
+class TooManyIterationsError(Exception): pass
+
+
 @dataclasses.dataclass
 class TaskVertex:
     id: str
@@ -57,6 +60,8 @@ class NormalizedTask:
 class _ReconstitutedTaskGraph(
         collections.namedtuple('_ReconstitutedTaskGraph',
                                ('terminal_tasks', 'tasks'))):
+    # terminal_tasks: str
+    # tasks: typing.Dict[str, _AdjacencyPair]
     __slots__ = ()
 
 
@@ -72,7 +77,7 @@ class MalformedGraphError(Error):
     pass
 
 
-def _preprocess_graph(graph):
+def _preprocess_graph(graph: TaskGraph) -> _ReconstitutedTaskGraph:
     if not graph.vertices:
         raise MalformedGraphError('No vertices in graph.')
     vertices = {
@@ -106,7 +111,8 @@ Evaluator = typing.Callable[[NormalizedTask, event_module.Event, Context],
 
 
 def evaluate_graph(event: event_module.Event, evaluator: Evaluator,
-                   load_graph: typing.Callable[[], TaskGraph]):
+                   load_graph: typing.Callable[[], TaskGraph],
+                   max_iterations=10000):
     """Applies an evaluator given a task in the task graph and an event as input.
 
     This function implements a depth-first search traversal of the task graph
@@ -146,9 +152,13 @@ def evaluate_graph(event: event_module.Event, evaluator: Evaluator,
 
     context = {}
     collected_actions = [actions.Noop()]
+    iter_count = 0
     while collected_actions:
+        logging.debug(f'{len(collected_actions)} collected_actions')
         for action in collected_actions:
-            logging.debug('Running action: %s', action)
+            iter_count += 1
+            if iter_count > max_iterations: raise TooManyIterationsError
+            #logging.debug('Running action: %s...', str(action)[:80])
 
             # Each action should be a callable which takes the context as an input.
             # We want to run each action in their own transaction as well. This must
@@ -172,16 +182,18 @@ def evaluate_graph(event: event_module.Event, evaluator: Evaluator,
 
         vertex_states = {}
         while task_stack:
+            iter_count += 1
+            if iter_count > max_iterations: raise TooManyIterationsError
             task, deps = task_stack[-1]
             state = vertex_states.get(task.id, _NOT_EVALUATED)
             if state == _CHILDREN_PENDING:
                 # We provide a deep copy of the task, to ensure that the evaluator
                 # cannot modify the graph we're working with directly.
                 result_actions = evaluator(
-                    NormalizedTask(copy.copy(task.id),
-                                   copy.copy(task.vertex_type),
+                    NormalizedTask(task.id,
+                                   task.vertex_type,
                                    copy.deepcopy(task.payload),
-                                   copy.copy(task.state), copy.deepcopy(deps)),
+                                   task.state, copy.deepcopy(deps)),
                     event, context)
                 if result_actions:
                     collected_actions.extend(result_actions)

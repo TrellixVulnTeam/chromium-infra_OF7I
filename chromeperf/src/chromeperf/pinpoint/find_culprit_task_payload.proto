@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+import "chromeperf/engine/task.proto";
+import "chromeperf/pinpoint/change.proto";
+import "chromeperf/pinpoint/comparison.proto";
+import "chromeperf/pinpoint/find_isolate_task_payload.proto";
+import "chromeperf/pinpoint/result_reader_payload.proto";
+import "chromeperf/pinpoint/test_runner_payload.proto";
+
+package chromeperf.pinpoint;
+
+
+message AnalysisOptions {
+  float comparison_magnitude = 1;
+  int32 min_attempts = 2;
+  int32 max_attempts = 3;
+}
+
+
+message FindCulpritTaskPayload {
+  repeated chromeperf.engine.ErrorMessage errors = 1;
+
+  message Input {
+    // Initial state (populated by CreateGraph)
+    chromeperf.pinpoint.Change start_change = 2;
+    chromeperf.pinpoint.Change end_change = 3;
+    AnalysisOptions analysis_options = 4;
+
+    // Template options to use when creating new graph vertices.
+    FindIsolateTaskOptions build_option_template = 5;
+    TestRunnerTaskOptions test_option_template = 6;
+    ResultReaderPayload.Input read_option_template = 7;
+  }
+
+  message State {
+    // Populated on first FindCulprits (by PrepareCommits action)
+    repeated chromeperf.pinpoint.Change changes = 1;
+  }
+
+  // Populated by iterations of FindCulprits
+  message Output {
+    message ResultForChange {
+      repeated double result_values = 1;
+
+      message PrevNextComparison {
+        // Comparison with previous commit.
+        Comparison prev = 1;
+
+        // Comparison with next commit.
+        Comparison next = 2;
+      }
+      PrevNextComparison comparisons = 2;
+    }
+
+    // Per-commit results.
+    //
+    // Order (and length) corresponds to State.changes.
+    repeated ResultForChange change_results = 1;
+
+    // A transition from one change to another that has been identified as a
+    // culprit.
+    message Culprit {
+      chromeperf.pinpoint.Change from_ = 1;
+      chromeperf.pinpoint.Change to = 2;
+    }
+    repeated Culprit culprits = 2;
+  }
+
+  Input input = 2;
+  State state = 3;
+  Output output = 4;
+}

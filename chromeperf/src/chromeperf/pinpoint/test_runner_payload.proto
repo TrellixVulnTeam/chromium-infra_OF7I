@@ -77,3 +77,11 @@ message TestRunnerPayload {
   int32 index = 3;
   repeated chromeperf.engine.ErrorMessage errors = 4;
 }
+
+
+message TestRunnerTaskOptions {
+  string swarming_server = 1;
+  repeated TestRunnerPayload.Dimension dimensions = 2;
+  repeated string extra_args = 3;
+  int32 attempts = 4;
+}

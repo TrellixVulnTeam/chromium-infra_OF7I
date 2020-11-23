@@ -269,11 +269,38 @@ def task_id(change, attempt):
 
 @dataclasses.dataclass
 class TaskOptions:
+    @dataclasses.dataclass
+    class Dimension:
+        key: str
+        value: str
     build_options: isolate_finder.TaskOptions
     swarming_server: str
-    dimensions: list
+    dimensions: typing.List[Dimension]  # effectively an ordered dict.
     extra_args: list
     attempts: int
+
+    # To/from proto methods exclude the nested task options.
+    def to_proto(self):
+        return test_runner_payload_pb2.TestRunnerTaskOptions(
+            swarming_server=self.swarming_server,
+            dimensions=[
+                test_runner_payload_pb2.TestRunnerPayload.Dimension(key=k,
+                                                                    value=v)
+                for (k, v) in sorted(self.dimensions.items())],
+            extra_args=self.extra_args,
+            attempts=self.attempts)
+
+    @classmethod
+    def from_proto(
+            cls,
+            proto: test_runner_payload_pb2.TestRunnerTaskOptions):
+        return TaskOptions(
+            build_options=None,
+            swarming_server=proto.swarming_server,
+            dimensions={dim.key: dim.value for dim in proto.dimensions},
+            extra_args=proto.extra_args,
+            attempts=proto.attempts)
+
 
 
 def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
@@ -305,7 +332,10 @@ def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
                         revision=options.build_options.change.patch.revision)
                            if options.build_options.change.patch else None),
                 ),
-                dimensions=options.dimensions,
+                dimensions=[
+                    test_runner_payload_pb2.TestRunnerPayload.Dimension(
+                        key=dim.key, value=dim.value)
+                    for dim in options.dimensions],
             ),
             index=index)
         encoded_payload = any_pb2.Any()

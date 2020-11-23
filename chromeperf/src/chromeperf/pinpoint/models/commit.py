@@ -16,13 +16,13 @@ from chromeperf.pinpoint.models import repository as repository_module
 from chromeperf.pinpoint import change_pb2
 
 
-@dataclasses.dataclass
-class Dep:
-    repository_url: str
-    git_hash: str
+## @dataclasses.dataclass
+## class Dep:
+##     repository_url: str
+##     git_hash: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Commit:
     repository: repository_module.Repository
     git_hash: str
@@ -32,6 +32,10 @@ class Commit:
         repo = repository_module.Repository.FromName(datastore_client,
                                                      proto.repository)
         return cls(repo, proto.git_hash)
+
+    def to_proto(self) -> change_pb2.Commit:
+        return change_pb2.Commit(repository=self.repository.name,
+                                 git_hash=self.git_hash)
 
     def __str__(self):
         """Returns an informal short string representation of this Commit."""
@@ -49,7 +53,7 @@ class Commit:
 
     def AsDict(self, datastore_client):
         d = {
-            'repository': self.repository,
+            'repository': self.repository.name,
             'git_hash': self.git_hash,
         }
 
@@ -76,6 +80,18 @@ class Commit:
         d['url'] = url
         return d
 
+    @classmethod
+    def MakeValidated(cls, datastore_client,
+                      repository: repository_module.Repository, git_hash: str
+                      ) -> 'Commit':
+        # TODO: use a commit cache?
+        try:
+            # Use gitiles to resolve aliases like HEAD to a real hash.
+            result = gitiles_service.commit_info(repository.url, git_hash)
+            return cls(repository=repository, git_hash=result['commit'])
+        except gitiles_service.NotFoundError as e:
+            raise KeyError(str(e))
+
 
 def _parse_commit_position(commit_message):
     """Parses a commit message for the commit position.
@@ -101,3 +117,27 @@ def _parse_commit_field(field, commit_message):
         if len(match) == 2:
             return match[1]
     return None
+
+
+def commit_range(commit_a: Commit, commit_b: Commit):
+    """Get commit info dicts from gitiles for a commit range."""
+    # We need to get the full list of commits in between two git hashes, and
+    # only look into the chain formed by following the first parents of each
+    # commit. This gives us a linear view of the log even in the presence of
+    # merge commits.
+    commits = []
+
+    # The commit_range by default is in reverse-chronological (latest commit
+    # first) order. This means we should keep following the first parent to get
+    # the linear history for a branch that we're exploring.
+    expected_parent = commit_b.git_hash
+    commit_range = gitiles_service.commit_range(
+            commit_a.repository_url, commit_a.git_hash, commit_b.git_hash)
+    for commit in commit_range:
+        # Skip commits until we find the parent we're looking for.
+        if commit['commit'] == expected_parent:
+            commits.append(commit)
+            if 'parents' in commit and len(commit['parents']):
+                expected_parent = commit['parents'][0]
+
+    return commits

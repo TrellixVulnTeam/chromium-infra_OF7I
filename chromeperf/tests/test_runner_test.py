@@ -25,10 +25,9 @@ from . import test_utils  # pylint: disable=relative-beyond-top-level
 from . import bisection_test_util  # pylint: disable=relative-beyond-top-level
 
 DIMENSIONS = [
-    test_runner_payload_pb2.TestRunnerPayload.Dimension(
+    test_runner.TaskOptions.Dimension(
         key='pool', value='Chrome-perf-pinpoint'),
-    test_runner_payload_pb2.TestRunnerPayload.Dimension(key='key',
-                                                        value='value'),
+    test_runner.TaskOptions.Dimension(key='key', value='value'),
 ]
 
 

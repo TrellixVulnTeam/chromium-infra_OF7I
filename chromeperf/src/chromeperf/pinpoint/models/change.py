@@ -18,7 +18,7 @@ from chromeperf.pinpoint import change_pb2
 from chromeperf.services import gerrit_service
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class GerritPatch:
     """A patch in Gerrit.
 
@@ -40,7 +40,7 @@ class GerritPatch:
             return None
         return cls(proto.server, proto.change, proto.revision)
 
-    def to_proto(self) -> typing.Union[change_pb2.GerritPatch, None]:
+    def to_proto(self) -> typing.Optional[change_pb2.GerritPatch]:
         if not self.server and not self.change and not self.revision:
             return None
         return change_pb2.GerritPatch(server=self.server,
@@ -228,23 +228,38 @@ class GerritPatch:
         return cls(server, change, revision)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Change:
     """A particular set of Commits with or without an additional patch applied.
 
     For example, a Change might sync to src@9064a40 and catapult@8f26966,
     then apply patch 2423293002.
     """
+    # TODO: would tuple work better (i.e. be 'frozen' enough for dataclasses)?
     commits: typing.List[commit.Commit] = dataclasses.field(
         default_factory=list)
     patch: GerritPatch = None
 
+    def __hash__(self):
+        # Define __hash__ manually because dataclass' unsafe_hash isn't
+        # sufficient to make a list attribute hashable.
+        return hash((tuple(self.commits), self.patch))
+
     @classmethod
-    def FromProto(cls, datastore_client, proto: change_pb2.Change):
+    def FromProto(cls,
+                  datastore_client,
+                  proto: typing.Optional[change_pb2.Change]):
+        if proto is None:
+            return None
         return cls(commits=[
             commit.Commit.FromProto(datastore_client, c) for c in proto.commits
         ],
                    patch=GerritPatch.FromProto(proto.patch))
+
+    def to_proto(self) -> change_pb2.Change:
+        return change_pb2.Change(
+                commits=[commit.to_proto() for commit in self.commits],
+                patch=self.patch.to_proto() if self.patch is not None else None)
 
     def __str__(self):
         """Returns an informal short string representation of this Change."""
@@ -257,9 +272,10 @@ class Change:
     def id_string(self):
         """Returns a string that is unique to this set of commits and patch.
 
-    This method treats the commits as unordered. chromium@a v8@b is the same as
-    v8@b chromium@a. This is useful for looking up a build with this Change.
-    """
+        This method treats the commits as unordered. chromium@a v8@b is the same
+        as v8@b chromium@a. This is useful for looking up a build with this
+        Change.
+        """
         string = ' '.join(commit.id_string for commit in sorted(self.commits))
         if self.patch:
             string += ' + ' + self.patch.id_string

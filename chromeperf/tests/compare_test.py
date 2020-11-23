@@ -5,8 +5,6 @@
 import pytest
 
 from chromeperf.pinpoint.models.compare import compare
-from chromeperf.pinpoint.models.compare import kolmogorov_smirnov
-from chromeperf.pinpoint.models.compare import mann_whitney_u
 from chromeperf.pinpoint.models.compare import thresholds
 
 
@@ -68,44 +66,6 @@ def test_compare_performance_same():
     comparison = compare.compare(lrange(10), lrange(10), 10, 'performance', 1.0)
     assert comparison.result == compare.SAME
     assert comparison.p_value > comparison.high_threshold
-
-
-def test_kolmogorov_smirnov_basic():
-    assert kolmogorov_smirnov.kolmogorov_smirnov(
-        lrange(10), lrange(20, 30)) == pytest.approx(1.8879793657162556e-05)
-
-    assert kolmogorov_smirnov.kolmogorov_smirnov(
-        lrange(5), lrange(10)) == pytest.approx(0.26680230985258474)
-
-
-def test_kolmogorov_smirnov_duplicate_values():
-    assert kolmogorov_smirnov.kolmogorov_smirnov(
-        [0] * 5, [1] * 5) == pytest.approx(0.0037813540593701006)
-
-
-def test_kolmogorov_smirnov_small_samples():
-    assert kolmogorov_smirnov.kolmogorov_smirnov([0], [1]) == 0.2890414283708268
-
-
-def test_kolmogorov_smirnov_all_values_identical():
-    assert kolmogorov_smirnov.kolmogorov_smirnov([0] * 5, [0] * 5) ==  1.0
-
-
-def test_mann_whitney_u_basic():
-    assert mann_whitney_u.mann_whitney_u(
-        lrange(10), lrange(20, 30)) == pytest.approx(0.00018267179110955002)
-    assert mann_whitney_u.mann_whitney_u(
-        lrange(5), lrange(10)) == pytest.approx(0.13986357686781267)
-
-def test_mann_whitney_u_duplicate_values():
-    assert mann_whitney_u.mann_whitney_u(
-        [0] * 5, [1] * 5) == pytest.approx(0.0039767517097886512)
-
-def test_mann_whitney_u_small_samples():
-    assert mann_whitney_u.mann_whitney_u([0], [1]) == 1.0
-
-def test_mann_whitney_u_all_values_identical():
-    assert mann_whitney_u.mann_whitney_u([0] * 5, [0] * 5) == 1.0
 
 
 def test_high_threshold_unknown_mode():

@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import dataclasses
 import functools
 import itertools
 import logging
@@ -86,14 +87,34 @@ def update_task(datastore_client,
         datastore_client.put(task)
 
 
+@dataclasses.dataclass(frozen=True)
+class UpdateTaskAction:
+    datastore_client: datastore.Client
+    job: typing.Any
+    task_id: str
+    new_state: typing.Optional[str] = None
+    payload: typing.Optional[message.Message] = None
+
+    def __str__(self):
+        return (
+            f'UpdateTaskAction(task_id={self.task_id}, '
+            f'new_state={self.new_state}, '
+            f'payload={None if self.payload is None else "..."})')
+
+    def __call__(self, context):
+        del context
+        update_task(self.datastore_client, self.job, self.task_id,
+                    new_state=self.new_state, payload=self.payload)
+
+
 def extend_task_graph(client, job, vertices, dependencies):
     """Add new vertices and dependency links to the graph.
 
-  Args:
-    job: a dashboard.pinpoint.model.job.Job instance.
-    vertices: an iterable of TaskVertex instances.
-    dependencies: an iterable of Dependency instances.
-  """
+    Args:
+      job: a dashboard.pinpoint.model.job.Job instance.
+      vertices: an iterable of TaskVertex instances.
+      dependencies: an iterable of Dependency instances.
+    """
     if job is None:
         raise ValueError('job must not be None.')
     if not vertices and not dependencies:
@@ -110,7 +131,8 @@ def extend_task_graph(client, job, vertices, dependencies):
 
     with client.transaction():
         # Ensure that the keys we're adding are not in the graph yet.
-        current_tasks = client.query(kind='Task', ancestor=job_key).fetch()
+        current_tasks = list(
+            client.query(kind='Task', ancestor=job_key).fetch())
         current_task_keys = set(t.key for t in current_tasks)
         new_task_keys = set(t.key for t in amendment_task_graph.values())
         overlap = new_task_keys & current_task_keys
@@ -119,7 +141,7 @@ def extend_task_graph(client, job, vertices, dependencies):
                                    (overlap, ))
 
         # Then we add the dependencies.
-        current_task_graph = {t.key.id(): t for t in current_tasks}
+        current_task_graph = {t.key.id_or_name: t for t in current_tasks}
         handled_dependencies = set()
         update_filter = set(amendment_task_graph)
         for dependency in dependencies:
@@ -132,7 +154,7 @@ def extend_task_graph(client, job, vertices, dependencies):
                         'dependency `from` (%s) not in amended graph.' %
                         (dependency.from_, ))
                 if current_task:
-                    current_task_graph[dependency.from_].dependencies.append(
+                    current_task_graph[dependency.from_]['dependencies'].append(
                         dependency_key)
                 if amendment_task:
                     amendment_task_graph[dependency.from_].dependencies.append(
@@ -140,10 +162,10 @@ def extend_task_graph(client, job, vertices, dependencies):
                 handled_dependencies.add(dependency)
                 update_filter.add(dependency.from_)
 
-        client.put_multi(itertools.chain(amendment_task_graph.values(), [
-            t for id_, t in current_task_graph.items() if id_ in update_filter
-        ]),
-                         use_cache=True)
+        client.put_multi(itertools.chain(
+            (t.ToEntity() for t in amendment_task_graph.values()),
+            (t for id_, t in current_task_graph.items()
+             if id_ in update_filter)))
 
 
 def log_transition_failures(wrapped_action):

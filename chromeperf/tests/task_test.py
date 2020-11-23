@@ -389,7 +389,6 @@ def testEvaluateInvalidAmendment_BrokenDependency(setupGraph,
                                                   datastore_client):
     def AddExistingTaskEvaluator(task, event, _):
         if event.get('target') == task.id:
-
             def GraphExtender(_):
                 updates.extend_task_graph(
                     datastore_client,
@@ -402,10 +401,9 @@ def testEvaluateInvalidAmendment_BrokenDependency(setupGraph,
                         )
                     ],
                 )
-
             return [GraphExtender]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(updates.InvalidAmendment):
         evaluator_module.evaluate_graph(
             {'target': 'task_0'},
             AddExistingTaskEvaluator,

@@ -43,3 +43,14 @@ message BuildUpdate {
   }
   BuildState state = 2;
 }
+
+
+// A subset of FindIsolateTaskPayload.
+// TODO: refactor FindIsolateTaskPayload to have an Input submessage, and delete
+// this?
+message FindIsolateTaskOptions {
+  string builder = 1;
+  string target = 2;
+  string bucket = 3;
+  chromeperf.pinpoint.Change change = 4;
+}

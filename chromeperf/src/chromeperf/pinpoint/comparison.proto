@@ -17,6 +17,10 @@ message Comparison {
     // Not enough evidence to reject either hypothesis. We should collect more
     // data before making a final decision.
     UNKNOWN = 3;
+
+    // The result is still pending, because at least one side of the comparison
+    // is still waiting for samples.
+    PENDING = 4;
   }
   CompareResult result = 1;
 
