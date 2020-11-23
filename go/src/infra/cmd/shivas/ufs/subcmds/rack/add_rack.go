@@ -33,6 +33,7 @@ var AddRackCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackRegistrationFileText)
+		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
 		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
@@ -49,6 +50,7 @@ type addRack struct {
 	commonFlags site.CommonFlags
 
 	newSpecsFile string
+	interactive  bool
 
 	rackName string
 	zoneName string
@@ -68,17 +70,6 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
-	var rackRegistrationReq ufsAPI.RackRegistrationRequest
-	if c.newSpecsFile != "" {
-		if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
-			return err
-		}
-		ufsZone := rackRegistrationReq.GetRack().GetLocation().GetZone()
-		rackRegistrationReq.GetRack().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
-	} else {
-		c.parseArgs(&rackRegistrationReq)
-	}
-
 	ctx := cli.GetContext(a, c, env)
 	ns, err := c.envFlags.Namespace()
 	if err != nil {
@@ -98,7 +89,18 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	var rackRegistrationReq ufsAPI.RackRegistrationRequest
+	if c.interactive {
+		utils.GetRackInteractiveInput(ctx, ic, &rackRegistrationReq)
+	} else if c.newSpecsFile != "" {
+		if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
+			return err
+		}
+		ufsZone := rackRegistrationReq.GetRack().GetLocation().GetZone()
+		rackRegistrationReq.GetRack().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
+	} else {
+		c.parseArgs(&rackRegistrationReq)
+	}
 	res, err := ic.RackRegistration(ctx, &rackRegistrationReq)
 	if err != nil {
 		return err
@@ -131,7 +133,10 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 }
 
 func (c *addRack) validateArgs() error {
-	if c.newSpecsFile != "" {
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile != "" || c.interactive {
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
 		}
@@ -144,7 +149,8 @@ func (c *addRack) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
-	} else {
+	}
+	if c.newSpecsFile == "" && !c.interactive {
 		if c.rackName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is setup.")
 		}

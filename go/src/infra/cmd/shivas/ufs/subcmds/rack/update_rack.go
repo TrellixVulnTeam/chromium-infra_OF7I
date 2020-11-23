@@ -10,7 +10,6 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -34,7 +33,6 @@ var UpdateRackCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackFileText)
-		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to update")
 		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
@@ -52,7 +50,6 @@ type updateRack struct {
 	commonFlags site.CommonFlags
 
 	newSpecsFile string
-	interactive  bool
 
 	rackName string
 	zoneName string
@@ -93,10 +90,6 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	var rack ufspb.Rack
-	if c.interactive {
-		return errors.New("Interactive mode for this " +
-			"command is not yet implemented yet. Use JSON input mode.")
-	}
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &rack); err != nil {
 			return err
@@ -151,29 +144,25 @@ func (c *updateRack) parseArgs(rack *ufspb.Rack) {
 }
 
 func (c *updateRack) validateArgs() error {
-	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-	}
-	if c.newSpecsFile != "" || c.interactive {
+	if c.newSpecsFile != "" {
 		if c.rackName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
 		}
 		if c.zoneName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-zone' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-zone' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-capacity_ru' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-capacity_ru' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.state != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
 		}
-	}
-	if c.newSpecsFile == "" && !c.interactive {
+	} else {
 		if c.rackName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.zoneName == "" && c.capacity == 0 && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")

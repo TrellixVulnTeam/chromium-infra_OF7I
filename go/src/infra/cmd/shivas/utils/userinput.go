@@ -43,6 +43,7 @@ const (
 	OptionToEnter             string = "\nDo you want to enter a "
 	OptionToEnterMore         string = "\nDo you want to enter one more "
 	ChooseLab                 string = "\n Choose a Lab\n"
+	ChooseZone                string = "\n Choose a Zone\n"
 	BroswerOrOSLab            string = "1=\"Browser Lab\"\n2=\"OS Lab\"\n"
 	BrowserOrATLOrACSLab      string = "1=\"Browser Lab\"\n2=\"ATL Lab\"\n3=\"ACS Lab\"\n"
 	DutOrLabstationOrServer   string = "1=\"DUT\"\n2=\"Labstation\"\n3=\"Server\"\n"
@@ -2000,6 +2001,83 @@ func GetRPMInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, rpm *
 						break
 					}
 					rpm.CapacityPort = port
+				}
+				input = nil
+			}
+			break
+		}
+	}
+	return
+}
+
+// GetRackInteractiveInput get rack input in interactive mode
+//
+// Name(string) -> Rack name(string) -> CapacityPort(int)
+func GetRackInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, req *UfleetAPI.RackRegistrationRequest) {
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if RackExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				}
+				req.Rack = &fleet.Rack{
+					Name: value,
+				}
+				input = &Input{
+					Key:  "Zone",
+					Desc: fmt.Sprintf("%s%s", ChooseZone, createKeyValuePairs(fleet.Zone_name)),
+				}
+			case "Zone":
+				option := getSelectionInput(value, fleet.Zone_name, input)
+				if option == -1 {
+					break
+				}
+				req.Rack.Location = &fleet.Location{
+					Zone: fleet.Zone(option),
+				}
+				if UfleetUtil.IsInBrowserZone(fleet.Zone(option).String()) {
+					req.Rack.Rack = &fleet.Rack_ChromeBrowserRack{
+						ChromeBrowserRack: &fleet.ChromeBrowserRack{},
+					}
+				} else {
+					req.Rack.Rack = &fleet.Rack_ChromeosRack{
+						ChromeosRack: &fleet.ChromeOSRack{},
+					}
+				}
+				req.GetRack().Realm = UfleetUtil.ToUFSRealm(fleet.Zone(option).String())
+				input = &Input{
+					Key: "Capacity_RU",
+				}
+			case "Capacity_RU":
+				if value != "" {
+					capacity := getIntInput(value, input)
+					if capacity == -1 {
+						input.Desc = "Invalid number input. Please enter a valid input."
+						break
+					}
+					req.Rack.CapacityRu = capacity
 				}
 				input = nil
 			}
