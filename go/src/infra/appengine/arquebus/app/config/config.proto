@@ -22,6 +22,8 @@ option go_package = "infra/appengine/arquebus/app/config";
 
 // Config is the service-wide configuration data for Arquebus
 message Config {
+  reserved 4;
+
   // AccessGroup is the luci-auth group who has access to admin pages and
   // APIs.
   string access_group = 1;
@@ -31,10 +33,6 @@ message Config {
 
   // A list of Assigner config(s).
   repeated Assigner assigners = 3;
-
-  // The endpoint for RotaNG APIs.
-  // DEPRECATED AND UNUSED.
-  string rotang_hostname = 4;
 
   // The endpoint for Rotation Proxy APIs.
   string rotation_proxy_hostname = 5;
