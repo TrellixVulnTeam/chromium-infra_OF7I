@@ -63,12 +63,12 @@ func innerMain() error {
 		sshConfig.Auth = []ssh.AuthMethod{m}
 	}
 	// TODO(ayatane): Handle if the wiring service connection drops.
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", *wiringPort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("0.0.0.0:%d", *wiringPort), grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *port))
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *port))
 	if err != nil {
 		return err
 	}

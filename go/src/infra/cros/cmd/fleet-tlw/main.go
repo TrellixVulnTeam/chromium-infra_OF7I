@@ -18,7 +18,7 @@ var (
 
 func main() {
 	flag.Parse()
-	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *port))
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *port))
 	if err != nil {
 		log.Fatalf("fleet-tlw: %s", err)
 	}
