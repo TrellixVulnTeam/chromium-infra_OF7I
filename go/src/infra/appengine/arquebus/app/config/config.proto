@@ -70,6 +70,8 @@ message Oncall {
 // Arquebus will assign or cc issues found.
 message UserSource {
   oneof from {
+    reserved 1; // Oncall oncall, https://crrev.com/c/2277501
+
     // The email address of a Monorail user account.
     string email = 2; // e.g., user@chromium.org
 
