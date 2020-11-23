@@ -89,9 +89,8 @@ func GetInteractiveInput() []string {
 
 // GetSwitchInteractiveInput get switch input in interactive mode
 //
-// Name(string) -> CapacityPort(int) -> Rack name(string)
-func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch, update bool) string {
-	var rackName string
+// Name(string) -> Rack name(string) -> CapacityPort(int)
+func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch) {
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -116,14 +115,22 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 				if !UfleetAPI.IDRegex.MatchString(value) {
 					break
 				}
-				if !update && SwitchExists(ctx, ic, value) {
+				if SwitchExists(ctx, ic, value) {
 					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
-					break
-				} else if update && !SwitchExists(ctx, ic, value) {
-					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
 				s.Name = value
+				input = &Input{
+					Key:      "Rack name",
+					Desc:     "Name of the rack to associate this switch.",
+					Required: true,
+				}
+			case "Rack name":
+				if value != "" && !RackExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				s.Rack = value
 				input = &Input{
 					Key: "CapacityPort",
 				}
@@ -131,29 +138,17 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 				if value != "" {
 					port := getIntInput(value, input)
 					if port == -1 {
+						input.Desc = "Invalid number input. Please enter a valid input."
 						break
 					}
 					s.CapacityPort = port
 				}
-				input = &Input{
-					Key:  "Rack name",
-					Desc: "Name of the rack to associate this switch.",
-				}
-				if !update {
-					input.Required = true
-				}
-			case "Rack name":
-				if value != "" && !RackExists(ctx, ic, value) {
-					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
-					break
-				}
-				rackName = value
 				input = nil
 			}
 			break
 		}
 	}
-	return rackName
+	return
 }
 
 // GetMachineInteractiveInput get Machine input in interactive mode

@@ -95,7 +95,7 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 
 	var s ufspb.Switch
 	if c.interactive {
-		utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
+		utils.GetSwitchInteractiveInput(ctx, ic, &s)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {

@@ -34,7 +34,6 @@ var UpdateSwitchCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
-		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the switch")
 		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to update")
@@ -53,7 +52,6 @@ type updateSwitch struct {
 	commonFlags site.CommonFlags
 
 	newSpecsFile string
-	interactive  bool
 
 	rackName    string
 	switchName  string
@@ -95,19 +93,15 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		Options: site.DefaultPRPCOptions,
 	})
 	var s ufspb.Switch
-	if c.interactive {
-		utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
-	} else {
-		if c.newSpecsFile != "" {
-			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
-				return err
-			}
-			if s.GetRack() == "" {
-				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
-			}
-		} else {
-			c.parseArgs(&s)
+	if c.newSpecsFile != "" {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
+			return err
 		}
+		if s.GetRack() == "" {
+			return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+		}
+	} else {
+		c.parseArgs(&s)
 	}
 	if err := utils.PrintExistingSwitch(ctx, ic, s.Name); err != nil {
 		return err
@@ -155,32 +149,29 @@ func (c *updateSwitch) parseArgs(s *ufspb.Switch) {
 }
 
 func (c *updateSwitch) validateArgs() error {
-	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-	}
-	if c.newSpecsFile != "" || c.interactive {
+	if c.newSpecsFile != "" {
 		if c.switchName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-capacity' cannot be specified at the same time.")
 		}
 		if c.description != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-rack' cannot be specified at the same time.")
 		}
 		if c.state != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-state' cannot be specified at the same time.")
 		}
 	}
-	if c.newSpecsFile == "" && !c.interactive {
+	if c.newSpecsFile == "" {
 		if c.switchName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.rackName == "" && c.capacity == 0 && c.description == "" && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
