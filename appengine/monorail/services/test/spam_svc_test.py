@@ -86,8 +86,14 @@ class SpamServiceTest(unittest.TestCase):
 
   def testFlagIssues_overThresh(self):
     issue = fake.MakeTestIssue(
-        project_id=789, local_id=1, reporter_id=111, owner_id=456,
-        summary='sum', status='Live', issue_id=78901)
+        project_id=789,
+        local_id=1,
+        reporter_id=111,
+        owner_id=456,
+        summary='sum',
+        status='Live',
+        issue_id=78901,
+        project_name='proj')
     issue.assume_stale = False  # We will store this issue.
 
     self.mock_report_tbl.InsertRows(self.cnxn,
@@ -110,10 +116,25 @@ class SpamServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertIn(issue, self.issue_service.updated_issues)
 
+    self.assertEqual(
+        1,
+        self.spam_service.issue_actions.get(
+            fields={
+                'type': 'flag',
+                'reporter_id': str(111),
+                'issue': 'proj:1'
+            }))
+
   def testFlagIssues_underThresh(self):
     issue = fake.MakeTestIssue(
-        project_id=789, local_id=1, reporter_id=111, owner_id=456,
-        summary='sum', status='Live', issue_id=78901)
+        project_id=789,
+        local_id=1,
+        reporter_id=111,
+        owner_id=456,
+        summary='sum',
+        status='Live',
+        issue_id=78901,
+        project_name='proj')
 
     self.mock_report_tbl.InsertRows(self.cnxn,
         ['issue_id', 'reported_user_id', 'user_id'],
@@ -133,6 +154,13 @@ class SpamServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
 
     self.assertNotIn(issue, self.issue_service.updated_issues)
+    self.assertIsNone(
+        self.spam_service.issue_actions.get(
+            fields={
+                'type': 'flag',
+                'reporter_id': str(111),
+                'issue': 'proj:1'
+            }))
 
   def testUnflagIssue_overThresh(self):
     issue = fake.MakeTestIssue(

@@ -48,13 +48,18 @@ THRESHVERDICT_COMMENT_COLS = ['comment_id', 'is_spam', 'reason', 'project_id']
 class SpamService(object):
   """The persistence layer for spam reports."""
   issue_actions = ts_mon.CounterMetric(
-      'monorail/spam_svc/issue',
-      'Count of things that happen to issues.',
-      [ts_mon.StringField('type')])
+      'monorail/spam_svc/issue', 'Count of things that happen to issues.', [
+          ts_mon.StringField('type'),
+          ts_mon.StringField('reporter_id'),
+          ts_mon.StringField('issue')
+      ])
   comment_actions = ts_mon.CounterMetric(
-      'monorail/spam_svc/comment',
-      'Count of things that happen to comments.',
-      [ts_mon.StringField('type')])
+      'monorail/spam_svc/comment', 'Count of things that happen to comments.', [
+          ts_mon.StringField('type'),
+          ts_mon.StringField('reporter_id'),
+          ts_mon.StringField('issue'),
+          ts_mon.StringField('comment_id')
+      ])
   ml_engine_failures = ts_mon.CounterMetric(
       'monorail/spam_svc/ml_engine_failure',
       'Failures calling the ML Engine API',
@@ -219,7 +224,14 @@ class SpamService(object):
         update_issues.append(issue)
 
     if flagged_spam:
-      self.issue_actions.increment_by(len(update_issues), {'type': 'flag'})
+      for issue in update_issues:
+        issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+        self.issue_actions.increment(
+            {
+                'type': 'flag',
+                'reporter_id': str(reporting_user_id),
+                'issue': issue_ref
+            })
 
     issue_service.UpdateIssues(cnxn, update_issues, update_cols=['is_spam'])
 
@@ -232,7 +244,15 @@ class SpamService(object):
           cnxn, ignore=True, issue_id=issue_id,
           comment_id=comment_id, reported_user_id=reported_user_id,
           user_id=reporting_user_id)
-      self.comment_actions.increment({'type': 'flag'})
+      issue = issue_service.GetIssue(cnxn, issue_id, use_cache=False)
+      issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+      self.comment_actions.increment(
+          {
+              'type': 'flag',
+              'reporter_id': str(reporter_user_id),
+              'issue': issue_ref,
+              'comment_id': str(comment_id)
+          })
     else:
       self.report_tbl.Delete(
           cnxn, issue_id=issue_id, comment_id=comment_id,
@@ -245,7 +265,13 @@ class SpamService(object):
         reason=reason, classifier_confidence=confidence,
         project_id=issue.project_id)
     if is_spam:
-      self.issue_actions.increment({'type': 'classifier'})
+      issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+      self.issue_actions.increment(
+          {
+              'type': 'classifier',
+              'reporter_id': 'classifier',
+              'issue': issue_ref
+          })
     # This is called at issue creation time, so there's nothing else to do here.
 
   def RecordManualIssueVerdicts(self, cnxn, issue_service, issues, user_id,
@@ -266,7 +292,14 @@ class SpamService(object):
       issue.is_spam = is_spam
 
     if is_spam:
-      self.issue_actions.increment_by(len(issues), {'type': 'manual'})
+      for issue in issues:
+        issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+      self.issue_actions.increment(
+          {
+              'type': 'manual',
+              'reporter_id': str(user_id),
+              'issue': issue_ref
+          })
     else:
       issue_service.AllocateNewLocalIDs(cnxn, issues)
 
@@ -285,7 +318,14 @@ class SpamService(object):
     issue_service.SoftDeleteComment(
         cnxn, issue, comment, user_id, user_service, is_spam, True, is_spam)
     if is_spam:
-      self.comment_actions.increment({'type': 'manual'})
+      issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+      self.comment_actions.increment(
+          {
+              'type': 'manual',
+              'reporter_id': str(user_id),
+              'issue': issue_ref,
+              'comment_id': str(comment_id)
+          })
 
   def RecordClassifierCommentVerdict(self, cnxn, comment, is_spam, confidence,
       fail_open):
@@ -294,7 +334,15 @@ class SpamService(object):
         reason=reason, classifier_confidence=confidence,
         project_id=comment.project_id)
     if is_spam:
-      self.comment_actions.increment({'type': 'classifier'})
+      issue = issue_service.GetIssue(cnxn, comment.issue_id, use_cache=False)
+      issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
+      self.comment_actions.increment(
+          {
+              'type': 'classifier',
+              'reporter_id': 'classifier',
+              'issue': issue_ref,
+              'comment_id': str(comment.id)
+          })
 
   def _predict(self, instance):
     """Requests a prediction from the ML Engine API.
