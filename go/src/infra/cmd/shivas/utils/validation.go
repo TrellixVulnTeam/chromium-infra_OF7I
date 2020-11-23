@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	notFound string = "Entity not found."
+	notFound string = "Entity not found"
 )
 
 // EntityExists checks if the given resource exists in the system

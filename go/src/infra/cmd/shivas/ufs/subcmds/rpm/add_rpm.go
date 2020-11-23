@@ -109,9 +109,7 @@ func (c *addRPM) innerRun(a subcommands.Application, args []string, env subcomma
 	var rpm ufspb.RPM
 	var rpms []*ufspb.RPM
 	if c.interactive {
-		return errors.New("Interactive mode for this " +
-			"command is not yet implemented yet.")
-		//utils.GetRPMInteractiveInput(ctx, ic, &rpm, false)
+		utils.GetRPMInteractiveInput(ctx, ic, &rpm)
 	} else if c.newSpecsFile != "" {
 		if utils.IsCSVFile(c.newSpecsFile) {
 			rpms, err = c.parseMCSV()
@@ -125,10 +123,12 @@ func (c *addRPM) innerRun(a subcommands.Application, args []string, env subcomma
 			if rpm.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-			rpms = append(rpms, &rpm)
 		}
 	} else {
 		c.parseArgs(&rpm)
+	}
+
+	if len(rpms) == 0 {
 		rpms = append(rpms, &rpm)
 	}
 
@@ -159,26 +159,26 @@ func (c *addRPM) parseArgs(rpm *ufspb.RPM) {
 
 func (c *addRPM) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & file mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile != "" || c.interactive {
 		if c.rpmName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-rack' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-capacity' cannot be specified at the same time.")
 		}
 		if c.description != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-desc' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

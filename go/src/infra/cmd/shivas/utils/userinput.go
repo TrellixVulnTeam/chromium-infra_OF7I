@@ -1941,6 +1941,79 @@ func GetKVMInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, kvm *
 	return rackName
 }
 
+// GetRPMInteractiveInput get rpm input in interactive mode
+//
+// Name(string) -> Rack name(string) -> MAC Address(string) -> CapacityPort(int)
+func GetRPMInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, rpm *fleet.RPM) {
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if RPMExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				}
+				rpm.Name = value
+				input = &Input{
+					Key:      "Rack name",
+					Desc:     "Name of the rack to associate this rpm.",
+					Required: true,
+				}
+			case "Rack name":
+				if value != "" && !RackExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				rpm.Rack = value
+				input = &Input{
+					Key: "MAC Address",
+				}
+			case "MAC Address":
+				if err := UfleetUtil.IsMacFormatValid(value); err != nil {
+					input.Desc = err.Error()
+					break
+				}
+				rpm.MacAddress = value
+				input = &Input{
+					Key: "CapacityPort",
+				}
+			case "CapacityPort":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						input.Desc = "Invalid number input. Please enter a valid input."
+						break
+					}
+					rpm.CapacityPort = port
+				}
+				input = nil
+			}
+			break
+		}
+	}
+	return
+}
+
 func createKeyValuePairs(m map[int32]string) string {
 	keys := make([]int32, 0, len(m))
 	for k := range m {
@@ -2053,11 +2126,17 @@ func getIntInput(value string, input *Input) int32 {
 
 func getSelectionInput(value string, m map[int32]string, input *Input) int32 {
 	i, err := strconv.ParseInt(value, 10, 32)
-	if err != nil || i < 0 || int(i) >= len(m) {
+	if err != nil {
 		input.Desc = fmt.Sprintf("%s%s%s", WrongInput, "\nChoose a "+input.Key+"\n", createKeyValuePairs(m))
 		return -1
 	}
-	return int32(i)
+	option := int32(i)
+	_, ok := m[option]
+	if !ok {
+		input.Desc = fmt.Sprintf("%s%s%s", WrongInput, "\nChoose a "+input.Key+"\n", createKeyValuePairs(m))
+		return -1
+	}
+	return option
 }
 
 func getRepeatedStringInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, yn, key string, input *Input, isResource bool) ([]string, bool) {

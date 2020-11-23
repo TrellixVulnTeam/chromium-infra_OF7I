@@ -34,7 +34,6 @@ var UpdateRPMCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RPMFileText)
-		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the rpm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the rpm")
@@ -59,7 +58,6 @@ type updateRPM struct {
 	commonFlags site.CommonFlags
 
 	newSpecsFile string
-	interactive  bool
 
 	rackName    string
 	vlanName    string
@@ -105,11 +103,7 @@ func (c *updateRPM) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 	var rpm ufspb.RPM
-	if c.interactive {
-		return errors.New("Interactive mode for this " +
-			"command is not yet implemented yet.")
-		//utils.GetRPMInteractiveInput(ctx, ic, &rpm, true)
-	} else if c.newSpecsFile != "" {
+	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &rpm); err != nil {
 			return err
 		}
@@ -187,35 +181,32 @@ func (c *updateRPM) parseArgs(rpm *ufspb.RPM) {
 }
 
 func (c *updateRPM) validateArgs() error {
-	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-	}
-	if c.newSpecsFile != "" || c.interactive {
+	if c.newSpecsFile != "" {
 		if c.rpmName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-rack' cannot be specified at the same time.")
 		}
 		if c.state != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-state' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-capacity' cannot be specified at the same time.")
 		}
 		if c.description != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
 	}
-	if c.newSpecsFile == "" && !c.interactive {
+	if c.newSpecsFile == "" {
 		if c.rpmName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
 			c.rackName == "" && c.macAddress == "" && c.tags == "" &&

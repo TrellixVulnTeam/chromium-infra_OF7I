@@ -154,3 +154,13 @@ func formatMac(userMac string) string {
 	}
 	return newMac
 }
+
+// IsMacFormatValid check if the given mac address is in valid format
+func IsMacFormatValid(userMac string) error {
+	newUserMac := formatMac(userMac)
+	m, err := net.ParseMAC(newUserMac)
+	if err != nil || len(m) != 6 {
+		return errors.Reason("Invalid mac address %q (before parsing %q)", newUserMac, userMac).Err()
+	}
+	return nil
+}
