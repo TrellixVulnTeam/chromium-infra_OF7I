@@ -19,12 +19,21 @@ import (
 	"crypto/sha256"
 	"encoding/asn1"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	cloudkms "cloud.google.com/go/kms/apiv1"
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
+
+	provenancepb "infra/tools/provenance/proto"
+)
+
+// If unspecified, set expiry of token to 6 months.
+const (
+	DefaultExp int32 = 3600 * 24 * 30 * 6
 )
 
 // Signs a given input using CloudKMS with key stored at kePath.
@@ -76,4 +85,73 @@ func signAsymmetric(ctx context.Context, client *cloudkms.KeyManagementClient, k
 // Encodes JWT specific base64url encoding with padding stripped
 func encodeSegment(seg []byte) string {
 	return strings.TrimRight(base64.URLEncoding.EncodeToString(seg), "=")
+}
+
+// Prepares header segment of provenance meteadata.
+func provenanceHeader(alg string, keyLocation string) (string, error) {
+	header := &provenancepb.ProvenanceInfo_Header{
+		Typ: "jwt",
+		Alg: alg,
+		Kid: keyLocation,
+	}
+
+	headerSegment, err := json.Marshal(header)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to prepare header segment: %+v", err)
+	}
+
+	return encodeSegment(headerSegment), nil
+}
+
+// Prepares payload segment of provenance meteadata.
+func provenacePayload(subjectHash string, topLevelSource *provenancepb.TopLevelSource, recipe string, exp int32) (string, error) {
+	// int32 will not work after 03:14:07 UTC on 19 January 2038.
+	epochNow := int32(time.Now().Unix())
+
+	if exp == 0 {
+		exp = epochNow + DefaultExp
+	}
+
+	buildEntryPoint := &provenancepb.BuildEntryPoint{
+		Type:  "//bcid.corp.google.com/build_entry_point/luci/v1",
+		Value: recipe,
+	}
+
+	builder := &provenancepb.ClaimPayload_Builder{
+		Id: "//bcid.corp.google.com/builders/luci",
+	}
+
+	claim := &provenancepb.ClaimPayload{
+		Builder:         builder,
+		TopLevelSource:  topLevelSource,
+		BuildEntryPoint: buildEntryPoint,
+		SourceComplete:  false,
+	}
+
+	subject := &provenancepb.AttestedClaim_Subject{
+		Sha256: subjectHash,
+	}
+
+	attestedClaim := &provenancepb.AttestedClaim{
+		Type:         "//bcid.corp.google.com/attestations/core-provenance/v1",
+		Subject:      subject,
+		ClaimPayload: claim,
+	}
+
+	payload := &provenancepb.ProvenanceInfo_Payload{
+		Aud:           "//binaryauthorization.googleapis.com/Attestation/v1",
+		Iat:           epochNow,
+		Exp:           exp,
+		Nbf:           epochNow,
+		AttestedClaim: attestedClaim,
+	}
+
+	payloadSegment, err := json.Marshal(payload)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to prepare payload segment: %+v", err)
+	}
+
+	return encodeSegment(payloadSegment), nil
 }
