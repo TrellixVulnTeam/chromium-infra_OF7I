@@ -81,8 +81,6 @@ nav.bottom-pager ul.pager {
             {{range .Assigner.Assignees}}
               {{if .GetEmail}}
                 <a href="mailto://{{.GetEmail}}">email://{{.GetEmail}}</a>
-              {{else if .GetOncall}}
-                <a href=#>{{.GetOncall}}</a>
               {{else if .GetRotation}}
                 <a href=#>{{.GetRotation}}</a>
               {{end}}
@@ -97,8 +95,6 @@ nav.bottom-pager ul.pager {
             {{range .Assigner.CCs}}
               {{if .GetEmail}}
                 <a href="mailto://{{.GetEmail}}">email://{{.GetEmail}}</a>
-              {{else if .GetOncall}}
-                <a href=#>{{.GetOncall}}</a>
               {{else if .GetRotation}}
                 <a href=#>{{.GetRotation}}</a>
               {{end}}
