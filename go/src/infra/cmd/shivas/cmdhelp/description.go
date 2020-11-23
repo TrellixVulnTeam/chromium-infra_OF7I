@@ -956,10 +956,11 @@ Fetches 5 racks and prints the output in JSON format
 `
 
 	// RackRegistrationFileText description for rack registration file input
-	RackRegistrationFileText string = `[JSON Mode] Path to a file containing rack creation request specification in JSON format.
-This file must contain required rack field and optional switches/kvms/rpms fields.
+	RackRegistrationFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing rack creation request specification.
 
-Example browser rack creation request:
+[JSON Mode]
+This file must contain required rack field and optional switches/kvms/rpms fields.
+Example json browser rack creation request:
 {
     "name": "cr82",
     "location": {
@@ -991,7 +992,7 @@ Example browser rack creation request:
     }
 }
 
-Example OS rack:
+Example json OS rack:
 {
     "name": "cr82XXX",
     "location": {
@@ -1002,6 +1003,14 @@ Example OS rack:
     "tags": ["dell", "8g"],
     "chromeosRack": {}
 }
+
+[MCSV Mode]
+The file may have multiple or one rack csv record.
+The header format and sequence should be: [name,zone,capacity_ru,desc,tags]
+Example mcsv format:
+name,zone,capacity_ru,desc,tags
+rack-2,chromeos2,12,hello-1,Dell Power
+rack-3,chromeos2,13,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition can be found here:
 Rack:
