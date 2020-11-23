@@ -6,9 +6,7 @@ package util
 
 import (
 	"context"
-	"strings"
 
-	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/realms"
@@ -32,8 +30,8 @@ const AtlLabAdminRealm = "@internal:ufs/os-atl"
 // AcsLabAdminRealm is the admin realm for acs lab.
 const AcsLabAdminRealm = "@internal:ufs/os-acs"
 
-// TrustedServiceAccounts service accounts which has write permission in UFS
-var TrustedServiceAccounts = []string{"ufs-dev-pods@", "ufs-pods@"}
+// SkipRealmsCheck flag to skip realms check
+var SkipRealmsCheck = false
 
 // UFS registered permissions in process registry
 var (
@@ -105,12 +103,13 @@ func hasPermission(ctx context.Context, perm realms.Permission, realm string) (b
 // return error if user doesnt have permission or unable to check permission in realm
 // else returns nil
 func CheckPermission(ctx context.Context, perm realms.Permission, realm string) error {
+	if SkipRealmsCheck {
+		logging.Infof(ctx, "Skipping Realms check")
+		return nil
+	}
 	if realm == "" {
 		logging.Infof(ctx, "No permission check for empty realm. Entity permission %s allowed for the user %s", perm, auth.CurrentIdentity(ctx))
 		return nil
-	}
-	if auth.CurrentIdentity(ctx) == identity.AnonymousIdentity {
-		return checkTrustedServiceAccount(ctx)
 	}
 	allow, err := hasPermission(ctx, perm, realm)
 	if err != nil {
@@ -122,27 +121,6 @@ func CheckPermission(ctx context.Context, perm realms.Permission, realm string) 
 	}
 	logging.Infof(ctx, "%s has permission %s in the realm %s", auth.CurrentIdentity(ctx), perm, realm)
 	return nil
-}
-
-func checkTrustedServiceAccount(ctx context.Context) error {
-	logging.Infof(ctx, "Current User: %+v", auth.CurrentUser(ctx))
-	signer := auth.GetSigner(ctx)
-	if signer == nil {
-		return status.Errorf(codes.PermissionDenied, "failed to get the Signer instance")
-	}
-	info, err := signer.ServiceInfo(ctx)
-	if err != nil {
-		return status.Errorf(codes.PermissionDenied, "failed to get the Service info %s", err)
-	}
-	sa := info.ServiceAccountName
-	logging.Infof(ctx, "Service Account Name: %s", sa)
-	for _, tsa := range TrustedServiceAccounts {
-		if strings.Contains(sa, tsa) {
-			logging.Infof(ctx, "This is a trusted GKE Service Account Name: %s", sa)
-			return nil
-		}
-	}
-	return status.Errorf(codes.PermissionDenied, "This is a non-trusted Service Account Name: %s", sa)
 }
 
 // ToUFSRealm returns the realm name based on zone string.

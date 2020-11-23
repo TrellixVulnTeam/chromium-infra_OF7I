@@ -15,9 +15,12 @@ import (
 
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/dumper"
+	"infra/unifiedfleet/app/util"
 )
 
 func main() {
+	// skip the realms check for dumper service
+	util.SkipRealmsCheck = true
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
 		limiter.NewModuleFromFlags(),
