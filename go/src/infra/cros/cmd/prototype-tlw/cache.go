@@ -17,7 +17,7 @@ func (s *server) cache(ctx context.Context, parsedURL *url.URL, dutName, opName 
 	log.Printf("CacheForDut: Started Operation = %v", opName)
 	// Devserver URL to be used. In the "real" CacheForDut implementation,
 	// devservers should be resolved here.
-	const baseURL = "http://chromeos6-devserver2.cros:8888/download/"
+	const baseURL = "http://chromeos6-devserver2:8888/download/"
 	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{
 		Url: baseURL + parsedURL.Host + parsedURL.Path,
 	}); err != nil {
