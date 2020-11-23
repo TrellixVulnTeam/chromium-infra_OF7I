@@ -6,6 +6,8 @@ package switches
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -61,6 +63,14 @@ type addSwitch struct {
 	tags        string
 }
 
+var mcsvFields = []string{
+	"name",
+	"rack",
+	"capacity",
+	"desc",
+	"tags",
+}
+
 func (c *addSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
@@ -94,30 +104,45 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 	})
 
 	var s ufspb.Switch
+	var switches []*ufspb.Switch
 	if c.interactive {
 		utils.GetSwitchInteractiveInput(ctx, ic, &s)
-	} else {
-		if c.newSpecsFile != "" {
+	} else if c.newSpecsFile != "" {
+		if utils.IsCSVFile(c.newSpecsFile) {
+			switches, err = c.parseMCSV()
+			if err != nil {
+				return err
+			}
+		} else {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
 				return err
 			}
 			if s.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-		} else {
-			c.parseArgs(&s)
 		}
+	} else {
+		c.parseArgs(&s)
 	}
-	res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
-		Switch:   &s,
-		SwitchId: s.GetName(),
-	})
-	if err != nil {
-		return err
+	if len(switches) == 0 {
+		switches = append(switches, &s)
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, res.GetRack())
+	for _, r := range switches {
+		res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
+			Switch:   r,
+			SwitchId: r.GetName(),
+		})
+		if err != nil {
+			fmt.Printf("Failed to add switch %s to rack %s. %s\n", r.GetName(), r.GetRack(), err)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		res.Name = ufsUtil.RemovePrefix(res.Name)
+		utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
+		fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, res.GetRack())
+	}
 	return nil
 }
 
@@ -131,23 +156,23 @@ func (c *addSwitch) parseArgs(s *ufspb.Switch) {
 
 func (c *addSwitch) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & file mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile != "" || c.interactive {
 		if c.switchName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-capacity' cannot be specified at the same time.")
 		}
 		if c.description != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-desc' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-rack' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
@@ -162,4 +187,47 @@ func (c *addSwitch) validateArgs() error {
 		}
 	}
 	return nil
+}
+
+// parseMCSV parses the MCSV file and returns switches
+func (c *addSwitch) parseMCSV() ([]*ufspb.Switch, error) {
+	records, err := utils.ParseMCSVFile(c.newSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+	var switches []*ufspb.Switch
+	for i, rec := range records {
+		// if i is 0, determine whether this is a header
+		if i == 0 && utils.LooksLikeHeader(rec) {
+			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		s := &ufspb.Switch{}
+		for i := range mcsvFields {
+			name := mcsvFields[i]
+			value := rec[i]
+			switch name {
+			case "name":
+				s.Name = value
+			case "rack":
+				s.Rack = value
+			case "desc":
+				s.Description = value
+			case "capacity":
+				capacityPort, err := strconv.ParseInt(value, 10, 32)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse capacity %s", value)
+				}
+				s.CapacityPort = int32(capacityPort)
+			case "tags":
+				s.Tags = strings.Fields(value)
+			default:
+				return nil, fmt.Errorf("unknown field: %s", name)
+			}
+		}
+		switches = append(switches, s)
+	}
+	return switches, nil
 }

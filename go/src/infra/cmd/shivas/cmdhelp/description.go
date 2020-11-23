@@ -74,9 +74,10 @@ Fetches 50 switches and prints the output in JSON format
 `
 
 	// SwitchFileText description for switch file input
-	SwitchFileText string = `[JSON Mode] Path to a file containing switch specification in JSON format.
-This file must contain one switch JSON message
+	SwitchFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing switch specification.
 
+[JSON Mode]
+This file must contain one switch JSON message
 Example switch:
 {
     "name": "eq079.atl97",
@@ -85,6 +86,14 @@ Example switch:
     "tags": ["dell", "8g"],
     "rack": "cr-22"
 }
+
+[MCSV Mode]
+The file may have multiple or one switch csv record
+The header format and sequence should be: [name,rack,capacity,desc,tags]
+Example mcsv format:
+name,rack,capacity,desc,tags
+switch-2,rack-2,hello-1,Dell Power
+switch-3,rack-2,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition of switch is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
