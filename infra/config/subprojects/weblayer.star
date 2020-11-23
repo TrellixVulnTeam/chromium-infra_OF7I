@@ -6,10 +6,10 @@
 
 load("//lib/infra.star", "infra")
 
-def cron(name, recipe, execution_timeout = None):
+def builder(name, recipe, schedule, bucket, execution_timeout = None):
     luci.builder(
         name = name,
-        bucket = "cron",
+        bucket = bucket,
         executable = infra.recipe(recipe),
         dimensions = {
             "os": "Ubuntu-16.04",
@@ -18,21 +18,30 @@ def cron(name, recipe, execution_timeout = None):
             "builderless": "1",
         },
         properties = {
-            "mastername": "chromium.infra.cron",
             "total_cq_checks": 30,
             "interval_between_checks_in_secs": 120,
         },
         service_account = "chrome-weblayer-builder@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
-        schedule = "with 600s interval",
+        schedule = schedule,
     )
     luci.list_view_entry(
         builder = name,
-        list_view = "cron",
+        list_view = bucket,
     )
 
-cron(
+builder(
+    name = "refresh-weblayer-skew-tests",
+    recipe = "refresh_weblayer_skew_tests",
+    schedule = "triggered",
+    bucket = "tasks",
+    execution_timeout = 6 * time.hour,
+)
+
+builder(
     name = "create-weblayer-skew-tests",
     recipe = "build_weblayer_version_tests_apk_cipd_pkg",
+    schedule = "with 600s interval",
+    bucket = "cron",
     execution_timeout = 6 * time.hour,
 )

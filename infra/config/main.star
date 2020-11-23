@@ -136,6 +136,20 @@ luci.bucket(
     ],
 )
 
+luci.bucket(
+    name = "tasks",
+    acls = [
+        acl.entry(
+            roles = acl.BUILDBUCKET_TRIGGERER,
+            users = [
+                # The refresh-skew-tests builder will be triggered by the chrome-release
+                # builder which uses the service account below.
+                "chrome-official-brancher@chops-service-accounts.iam.gserviceaccount.com",
+            ],
+        ),
+    ],
+)
+
 luci.realm(name = "pools/cron")
 
 luci.notifier_template(
@@ -144,6 +158,7 @@ luci.notifier_template(
 )
 
 luci.list_view(name = "cron")
+luci.list_view(name = "tasks")
 
 # Setup Swarming permissions (in particular for LED).
 
