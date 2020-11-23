@@ -25,7 +25,11 @@ import (
 var CreateSuite = &subcommands.Command{
 	UsageLine: "create-suite [FLAGS...] SUITE_NAME",
 	ShortDesc: "create a suite task",
-	LongDesc:  "Create a suite task, with the given suite name.",
+	LongDesc: `Create a suite task, with the given suite name.
+
+You must supply -board, -image, and -pool.
+
+This command does not wait for the task to start running.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &createSuiteRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

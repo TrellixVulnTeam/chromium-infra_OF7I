@@ -30,7 +30,7 @@ This command is more general than create-test or create-suite. The supplied
 testplan should conform to the TestPlan proto as defined here:
 https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platform/request.proto
 
-You must supply -pool, -image, and one of -board or -model.
+You must supply -board, -image, -pool, and -plan-file.
 
 This command does not wait for the task to start running.`,
 	CommandRun: func() subcommands.CommandRun {
@@ -57,6 +57,9 @@ type createTestPlanRun struct {
 func (c *createTestPlanRun) validateArgs() error {
 	if err := c.createRunCommon.ValidateArgs(c.Flags); err != nil {
 		return err
+	}
+	if c.testplanPath == "" {
+		return cmdlib.NewUsageError(c.Flags, "missing -plan-file")
 	}
 
 	return nil

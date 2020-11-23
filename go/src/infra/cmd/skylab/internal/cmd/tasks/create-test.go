@@ -26,7 +26,7 @@ var CreateTest = &subcommands.Command{
 	ShortDesc: "create a test task",
 	LongDesc: `Create a test task.
 
-You must supply -pool, -image, and one of -board or -model.
+You must supply -board, -image, and -pool.
 
 This command does not wait for the task to start running.`,
 	CommandRun: func() subcommands.CommandRun {
