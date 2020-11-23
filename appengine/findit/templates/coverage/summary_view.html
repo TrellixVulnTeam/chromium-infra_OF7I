@@ -181,7 +181,39 @@
             {% endfor %}
           </tr>
         </thead>
-
+        {% if data_type == 'dirs' or (data_type == 'components' and path != '>>') %}
+        <tbody>
+          <tr>
+            <td>TOTALS</td>
+            {% for target_metric in metrics %}
+              {% set found = False %}
+              {% for metric in data.metadata.summaries %}
+                {% if not found and metric.name == target_metric.name %}
+                  {% set found = True %}
+                  {% if metric.total == 0 %}
+                    {% set percent = 100 %}
+                  {% else %}
+                    {% set percent = (metric.covered*100.0/metric.total) | int %}
+                  {% endif %}
+                  {% if percent >= 90 %}
+                    {% set css_class = 'high-coverage' %}
+                  {% elif percent >= 70 %}
+                    {% set css_class = 'medium-coverage' %}
+                  {% elif percent >= 50 %}
+                    {% set css_class = 'low-coverage' %}
+                  {% else %}
+                    {% set css_class = 'poor-coverage' %}
+                  {% endif %}
+                  <td class="{{css_class}}">
+                    {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
+                    ({{ metric.covered }}/{{ metric.total }})
+                  </td>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </tr>
+        </tbody>
+        {% endif %}
         <tbody>
           {% if data_type == 'components' %}
             {% set entries = data.metadata.dirs %}
@@ -233,40 +265,6 @@
           </tr>
         {% endfor %}
         </tbody>
-
-        {% if data_type == 'dirs' or (data_type == 'components' and path != '>>') %}
-        <tfoot>
-          <tr>
-            <td>TOTALS</td>
-            {% for target_metric in metrics %}
-              {% set found = False %}
-              {% for metric in data.metadata.summaries %}
-                {% if not found and metric.name == target_metric.name %}
-                  {% set found = True %}
-                  {% if metric.total == 0 %}
-                    {% set percent = 100 %}
-                  {% else %}
-                    {% set percent = (metric.covered*100.0/metric.total) | int %}
-                  {% endif %}
-                  {% if percent >= 90 %}
-                    {% set css_class = 'high-coverage' %}
-                  {% elif percent >= 70 %}
-                    {% set css_class = 'medium-coverage' %}
-                  {% elif percent >= 50 %}
-                    {% set css_class = 'low-coverage' %}
-                  {% else %}
-                    {% set css_class = 'poor-coverage' %}
-                  {% endif %}
-                  <td class="{{css_class}}">
-                    {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
-                    ({{ metric.covered }}/{{ metric.total }})
-                  </td>
-                {% endif %}
-              {% endfor %}
-            {% endfor %}
-          </tr>
-        </tfoot>
-        {% endif %}
       </table>
     </div>
   </cats-app>
