@@ -1088,10 +1088,11 @@ shivas update rpm -rack {Rack name} -name {rpm name} -mac {mac}
 Partial updates a rpm by parameters. Only specified parameters will be udpated in the rpm.`
 
 	// RPMFileText description for rpm file input
-	RPMFileText string = `[JSON Mode] Path to a file containing rpm specification in JSON format.
-This file must contain one rpm JSON message
+	RPMFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing rpm specification.
 
-Example rpm:
+[JSON Mode]
+This file must contain one rpm JSON message
+Example json rpm:
 {
     "name": "cx101-rpm1XXX",
     "macAddress": "00:0d:5d:0f:54:ed",
@@ -1099,6 +1100,14 @@ Example rpm:
     "capacityPort": 48,
     "rack": "cr-22"
 }
+
+[MCSV Mode]
+The file may have multiple or one rpm csv record.
+The header format and sequence should be: [name,rack,mac,capacity,desc,tags]
+Example mcsv format:
+name,rack,mac,capacity,desc,tags
+rpm-2,chromeos2,11:11:11:11:11:11,12,hello-1,Dell Power
+rpm-3,chromeos2,22:22:22:22:22:22,13,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition of rpm is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`

@@ -6,6 +6,8 @@ package rpm
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -63,6 +65,15 @@ type addRPM struct {
 	tags        string
 }
 
+var mcsvFields = []string{
+	"name",
+	"rack",
+	"mac",
+	"capacity",
+	"desc",
+	"tags",
+}
+
 func (c *addRPM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
@@ -96,30 +107,44 @@ func (c *addRPM) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	var rpm ufspb.RPM
+	var rpms []*ufspb.RPM
 	if c.interactive {
 		return errors.New("Interactive mode for this " +
 			"command is not yet implemented yet.")
 		//utils.GetRPMInteractiveInput(ctx, ic, &rpm, false)
 	} else if c.newSpecsFile != "" {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &rpm); err != nil {
-			return err
-		}
-		if rpm.GetRack() == "" {
-			return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+		if utils.IsCSVFile(c.newSpecsFile) {
+			rpms, err = c.parseMCSV()
+			if err != nil {
+				return err
+			}
+		} else {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &rpm); err != nil {
+				return err
+			}
+			if rpm.GetRack() == "" {
+				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+			}
+			rpms = append(rpms, &rpm)
 		}
 	} else {
 		c.parseArgs(&rpm)
+		rpms = append(rpms, &rpm)
 	}
-	res, err := ic.CreateRPM(ctx, &ufsAPI.CreateRPMRequest{
-		RPM:   &rpm,
-		RPMId: rpm.GetName(),
-	})
-	if err != nil {
-		return err
+
+	for _, r := range rpms {
+		res, err := ic.CreateRPM(ctx, &ufsAPI.CreateRPMRequest{
+			RPM:   r,
+			RPMId: r.GetName(),
+		})
+		if err != nil {
+			fmt.Printf("Failed to add rpm %s to rack %s. %s\n", r.GetName(), r.GetRack(), err)
+			continue
+		}
+		res.Name = ufsUtil.RemovePrefix(res.Name)
+		utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
+		fmt.Printf("Successfully added the rpm %s to rack %s\n", res.Name, res.GetRack())
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Printf("Successfully added the rpm %s to rack %s\n", res.Name, res.GetRack())
 	return nil
 }
 
@@ -171,4 +196,49 @@ func (c *addRPM) validateArgs() error {
 		}
 	}
 	return nil
+}
+
+// parseMCSV parses the MCSV file and returns rpms
+func (c *addRPM) parseMCSV() ([]*ufspb.RPM, error) {
+	records, err := utils.ParseMCSVFile(c.newSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+	var rpms []*ufspb.RPM
+	for i, rec := range records {
+		// if i is 1, determine whether this is a header
+		if i == 0 && utils.LooksLikeHeader(rec) {
+			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		rpm := &ufspb.RPM{}
+		for i := range mcsvFields {
+			name := mcsvFields[i]
+			value := rec[i]
+			switch name {
+			case "name":
+				rpm.Name = value
+			case "rack":
+				rpm.Rack = value
+			case "mac":
+				rpm.MacAddress = value
+			case "desc":
+				rpm.Description = value
+			case "capacity":
+				capacityPort, err := strconv.ParseInt(value, 10, 32)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse capacity %s", value)
+				}
+				rpm.CapacityPort = int32(capacityPort)
+			case "tags":
+				rpm.Tags = strings.Fields(value)
+			default:
+				return nil, fmt.Errorf("unknown field: %s", name)
+			}
+		}
+		rpms = append(rpms, rpm)
+	}
+	return rpms, nil
 }
