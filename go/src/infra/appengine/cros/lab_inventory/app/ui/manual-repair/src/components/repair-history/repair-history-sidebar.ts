@@ -61,28 +61,33 @@ export default class RepairHistorySidebar extends connect
   @property({type: Object}) user;
   @property({type: Object}) deviceInfo;
   @property({type: Object}) repairHistory;
+  @property({type: Boolean}) updatingHistory = false;
 
   stateChanged(state) {
     this.deviceInfo = state.record.info.deviceInfo;
+    this.repairHistory =
+        this.parseRepairHistory(state.record.info.repairHistory);
     this.user = state.user;
 
-    this.checkHistoryAndQuery(state);
+    this.checkHistoryAndQuery();
   }
 
   /**
    * Checks if repair history is already in state. It will pull the history if
    * the device exists in state and the history is empty.
    */
-  checkHistoryAndQuery(state) {
+  checkHistoryAndQuery() {
     if (isEmpty(this.repairHistory) && !isEmpty(this.deviceInfo)) {
       const assetTag = getAssetTag(this.deviceInfo);
       const hostname = getHostname(this.deviceInfo);
 
-      thunkDispatch(getRepairHistory(hostname, assetTag, this.user.authHeaders))
-          .then(() => {
-            this.repairHistory =
-                this.parseRepairHistory(state.record.info.repairHistory);
-          });
+      if (!this.updatingHistory) {
+        this.updatingHistory = true;
+
+        thunkDispatch(
+            getRepairHistory(hostname, assetTag, this.user.authHeaders))
+            .then(() => this.updatingHistory = false);
+      }
     }
   }
 
