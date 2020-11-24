@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -17,8 +18,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"go.chromium.org/luci/appengine/gaetesting"
+	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type mockResults struct {
@@ -230,6 +235,186 @@ func TestGenerateSQLQuery(t *testing.T) {
 	Convey("Test generate SQL query for invalid tree", t, func() {
 		_, err := generateSQLQuery(c, "abc", "sheriff-o-matic")
 		So(err, ShouldNotBeNil)
+	})
+}
+
+type mockBuildersClient struct{}
+
+func (mbc mockBuildersClient) ListBuilders(c context.Context, req *buildbucketpb.ListBuildersRequest, opts ...grpc.CallOption) (*buildbucketpb.ListBuildersResponse, error) {
+	if req.Bucket == "ci" {
+		return &buildbucketpb.ListBuildersResponse{
+			Builders: []*buildbucketpb.BuilderItem{
+				{
+					Id: &buildbucketpb.BuilderID{
+						Project: "chromium",
+						Bucket:  "ci",
+						Builder: "ci_1",
+					},
+				},
+				{
+					Id: &buildbucketpb.BuilderID{
+						Project: "chromium",
+						Bucket:  "ci",
+						Builder: "ci_2",
+					},
+				},
+			},
+		}, nil
+	}
+	if req.Bucket == "try" {
+		return &buildbucketpb.ListBuildersResponse{
+			Builders: []*buildbucketpb.BuilderItem{
+				{
+					Id: &buildbucketpb.BuilderID{
+						Project: "chromium",
+						Bucket:  "try",
+						Builder: "try_1",
+					},
+				},
+				{
+					Id: &buildbucketpb.BuilderID{
+						Project: "chromium",
+						Bucket:  "try",
+						Builder: "try_2",
+					},
+				},
+			},
+		}, nil
+	}
+	if req.Bucket == "err" {
+		return nil, fmt.Errorf("some infra error")
+	}
+	if req.Bucket == "notfound" {
+		return nil, status.Error(codes.NotFound, "Not found")
+	}
+
+	return nil, nil
+}
+
+func TestFilterDeletedBuilders(t *testing.T) {
+	ctx := context.Background()
+	ctx = gologger.StdConfig.Use(ctx)
+	cl := mockBuildersClient{}
+
+	Convey("no builder", t, func() {
+		failureRows := []failureRow{}
+		filtered, err := filterDeletedBuildersWithClient(ctx, cl, failureRows)
+		So(err, ShouldBeNil)
+		So(filtered, ShouldBeEmpty)
+	})
+
+	Convey("builders belong to one bucket", t, func() {
+		failureRows := []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_3",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_2",
+			},
+		}
+		filtered, err := filterDeletedBuildersWithClient(ctx, cl, failureRows)
+		So(err, ShouldBeNil)
+		So(filtered, ShouldResemble, []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_2",
+			},
+		})
+	})
+
+	Convey("builders belong to more than one buckets", t, func() {
+		failureRows := []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_3",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "try",
+				Builder: "try_3",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "try",
+				Builder: "try_1",
+			},
+		}
+		filtered, err := filterDeletedBuildersWithClient(ctx, cl, failureRows)
+		So(err, ShouldBeNil)
+		So(filtered, ShouldResemble, []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "try",
+				Builder: "try_1",
+			},
+		})
+	})
+
+	Convey("rpc returns errors", t, func() {
+		failureRows := []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "err",
+				Builder: "err_1",
+			},
+		}
+		_, err := filterDeletedBuildersWithClient(ctx, cl, failureRows)
+		So(err, ShouldNotBeNil)
+	})
+
+	Convey("rpc returns NotFound", t, func() {
+		failureRows := []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+			{
+				Project: "chromium",
+				Bucket:  "notfound",
+				Builder: "notfound_1",
+			},
+		}
+		filtered, err := filterDeletedBuildersWithClient(ctx, cl, failureRows)
+		So(err, ShouldBeNil)
+		So(filtered, ShouldResemble, []failureRow{
+			{
+				Project: "chromium",
+				Bucket:  "ci",
+				Builder: "ci_1",
+			},
+		})
 	})
 }
 

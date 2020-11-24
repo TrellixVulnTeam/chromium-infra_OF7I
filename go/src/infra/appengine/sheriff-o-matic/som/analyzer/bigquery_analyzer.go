@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
+	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 	"io/ioutil"
@@ -15,13 +16,16 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
+	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/gae/service/memcache"
+	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
 )
 
 const bqMemcacheFormat = "bq-%s"
@@ -222,6 +226,17 @@ type GitCommit struct {
 	Position bigquery.NullInt64
 }
 
+type bqBucket struct {
+	Project string
+	Bucket  string
+}
+
+type bqBuilder struct {
+	Project string
+	Bucket  string
+	Builder string
+}
+
 // This type is a catch-all for every kind of failure. In a better,
 // simpler design we wouldn't have to use this but it's here to make
 // the transition from previous analyzer logic easier.
@@ -298,6 +313,18 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 		failureRows, err = getFailureRowsForQuery(ctx, queryStr)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	// TODO (nqmtuan): Remove this condition once crbug.com/1152170 is fixed.
+	if tree != "fuchsia" {
+		filteredRows, err := filterDeletedBuilders(ctx, failureRows)
+		if err != nil {
+			// Probably something is wrong with buildbucket, but this is not critical.
+			// We should log the error and proceed.
+			logging.Errorf(ctx, "error when filtering deleted builders: %v", err)
+		} else {
+			failureRows = filteredRows
 		}
 	}
 	return processBQResults(ctx, failureRows)
@@ -682,4 +709,80 @@ func unzipData(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return unzippedData, nil
+}
+
+func getBucketList(c context.Context, failureRows []failureRow) []*bqBucket {
+	seen := map[bqBucket]bool{}
+	result := []*bqBucket{}
+	for _, r := range failureRows {
+		b := bqBucket{
+			Project: r.Project,
+			Bucket:  r.Bucket,
+		}
+		if _, ok := seen[b]; !ok {
+			seen[b] = true
+			result = append(result, &b)
+		}
+	}
+	return result
+}
+
+func getAvailableBuilders(c context.Context, cl client.BBBuildersClient, buckets []*bqBucket) ([]*buildbucketpb.BuilderItem, error) {
+	result := []*buildbucketpb.BuilderItem{}
+	for _, b := range buckets {
+		builders, err := client.ListBuildersByBucket(c, cl, b.Project, b.Bucket)
+		if err != nil {
+			// Bucket not found, maybe it is deleted?
+			if grpcutil.Code(err) == codes.NotFound {
+				logging.Infof(c, "Bucket %v not found: %v", b, err)
+				continue
+			}
+			return nil, err
+		}
+		result = append(result, builders...)
+	}
+	return result, nil
+}
+
+func filterDeletedBuildersWithClient(c context.Context, cl client.BBBuildersClient, failureRows []failureRow) ([]failureRow, error) {
+	buckets := getBucketList(c, failureRows)
+	builders, err := getAvailableBuilders(c, cl, buckets)
+	if err != nil {
+		return nil, err
+	}
+	logging.Infof(c, "There are %d available builders", len(builders))
+	builderMap := map[bqBuilder]bool{}
+	for _, b := range builders {
+		bqb := bqBuilder{
+			Project: b.Id.Project,
+			Bucket:  b.Id.Bucket,
+			Builder: b.Id.Builder,
+		}
+		builderMap[bqb] = true
+	}
+
+	result := []failureRow{}
+	for i, row := range failureRows {
+		bqb := bqBuilder{
+			Project: row.Project,
+			Bucket:  row.Bucket,
+			Builder: row.Builder,
+		}
+		if _, ok := builderMap[bqb]; ok {
+			result = append(result, failureRows[i])
+		} else {
+			logging.Debugf(c, "Builder %+v has been deleted", bqb)
+		}
+	}
+	logging.Infof(c, "Before filtering deleted builders, there are %d failures", len(failureRows))
+	logging.Infof(c, "After filtering deleted builders, there are %d failures", len(result))
+	return result, nil
+}
+
+func filterDeletedBuilders(c context.Context, failureRows []failureRow) ([]failureRow, error) {
+	cl, err := client.BuildersClient(c)
+	if err != nil {
+		return nil, err
+	}
+	return filterDeletedBuildersWithClient(c, cl, failureRows)
 }
