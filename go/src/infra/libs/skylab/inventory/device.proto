@@ -419,7 +419,7 @@ message Peripherals {
 }
 
 // copy of enum from dut_state.proto
-// Next Tag: 16
+// Next Tag: 17
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -455,6 +455,8 @@ enum PeripheralState {
   DUT_NOT_CONNECTED = 14;
   // Some component in servo-topology missed or not detected.
   TOPOLOGY_ISSUE = 15;
+  // SBU voltage issues effect CR50 detection.
+  SBU_LOW_VOLTAGE = 16;
 }
 
 // copy of enum from dut_state.proto
