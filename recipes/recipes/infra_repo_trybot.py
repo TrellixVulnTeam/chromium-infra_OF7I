@@ -44,7 +44,8 @@ def RunSteps(api):
   with api.step.defer_results():
     if api.platform.arch != 'arm':
       with api.context(cwd=co.path.join(patch_root)):
-        api.python('python tests', 'test.py', ['test'])
+        api.python(
+            'python tests', 'test.py', ['test', '--fail-if-longer-than=120'])
         # To preserve high CQ coverage vs very low coverage in infra_internal,
         # test CQ separately. But only if CQ code is modified.
         # Note that this will run CQ tests once again.
