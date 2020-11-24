@@ -11,25 +11,20 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/server/auth"
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/internal/gerrit"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks"
 )
 
 // ScheduleReviews add tasks into Cloud Tasks queue, where each task handles
 // one CL's review.
 func ScheduleReviews(ctx context.Context) error {
-	signer := auth.GetSigner(ctx)
-	if signer == nil {
-		return errors.New("failed to get the Signer instance representing the service")
-	}
-	info, err := signer.ServiceInfo(ctx)
+	sa, err := util.GetServiceAccountName(ctx)
 	if err != nil {
 		return err
 	}
-	sa := info.ServiceAccountName
 
 	cfg, err := config.Get(ctx)
 	if err != nil {
