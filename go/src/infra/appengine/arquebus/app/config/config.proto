@@ -67,9 +67,9 @@ message Oncall {
 // UserSource represents a single source to find a valid Monorail user to whom
 // Arquebus will assign or cc issues found.
 message UserSource {
-  oneof from {
-    reserved 1; // Oncall oncall, https://crrev.com/c/2277501
+  reserved 1; // Oncall oncall, https://crrev.com/c/2277501
 
+  oneof from {
     // The email address of a Monorail user account.
     string email = 2; // e.g., user@chromium.org
 
