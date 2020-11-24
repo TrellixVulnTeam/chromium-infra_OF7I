@@ -35,16 +35,27 @@ func BuildersClient(c context.Context) (buildbucketpb.BuildersClient, error) {
 // ListBuildersByBucket queries BuildBucket for a list of builders for a bucket.
 func ListBuildersByBucket(c context.Context, client BBBuildersClient, project string, bucket string) ([]*buildbucketpb.BuilderItem, error) {
 	logging.Infof(c, "Querying for bucket (%s/%s)", project, bucket)
-	// TODO (crbug.com/1103410): Handle pagination
-	req := &buildbucketpb.ListBuildersRequest{
-		Project:  project,
-		Bucket:   bucket,
-		PageSize: 1000,
+	result := []*buildbucketpb.BuilderItem{}
+	token := ""
+	for {
+		req := &buildbucketpb.ListBuildersRequest{
+			Project:  project,
+			Bucket:   bucket,
+			PageSize: 1000,
+		}
+		if token != "" {
+			req.PageToken = token
+		}
+		res, err := client.ListBuilders(c, req)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, res.Builders...)
+		token = res.NextPageToken
+		if token == "" {
+			break
+		}
 	}
-	res, err := client.ListBuilders(c, req)
-	if err != nil {
-		return nil, err
-	}
-	logging.Infof(c, "Got %d builders", len(res.Builders))
-	return res.Builders, nil
+	logging.Infof(c, "Got %d builders", len(result))
+	return result, nil
 }
