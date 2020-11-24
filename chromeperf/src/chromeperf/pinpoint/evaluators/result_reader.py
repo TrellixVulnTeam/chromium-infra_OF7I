@@ -70,8 +70,10 @@ class TaskOptions:
                 benchmark=self.benchmark,
                 mode=self.mode,
                 results_filename=self.results_filename,
-                histogram_options=self.histogram_options.to_proto(),
-                graph_json_options=self.graph_json_options.to_proto())
+                histogram_options=self.histogram_options.to_proto()
+                    if self.histogram_options is not None else None,
+                graph_json_options=self.graph_json_options.to_proto()
+                    if self.graph_json_options is not None else None)
 
     @classmethod
     def from_proto(
@@ -272,7 +274,7 @@ class Serializer(combinators.FilteringEvaluator):
 def create_graph(options: TaskOptions):
     subgraph = test_runner.create_graph(options.test_options)
     path = None
-    if _is_windows({'dimensions': options.test_options.dimensions}):
+    if _is_windows(options.test_options.dimensions):
         path = ntpath.join(options.benchmark, options.results_filename)
     else:
         path = posixpath.join(options.benchmark, options.results_filename)
@@ -289,8 +291,10 @@ def create_graph(options: TaskOptions):
                     benchmark=options.benchmark,
                     mode=options.mode,
                     results_filename=path,
-                    histogram_options=options.histogram_options.to_proto(),
-                    graph_json_options=options.graph_json_options.to_proto(),
+                    histogram_options=options.histogram_options.to_proto()
+                        if options.histogram_options is not None else None,
+                    graph_json_options=options.graph_json_options.to_proto()
+                        if options.graph_json_options is not None else None,
                     change=options.test_options.build_options.change.to_proto(),
                 ),
                 index=attempt,
@@ -358,12 +362,9 @@ def create_histogram_by_test_path(histograms, ignore_grouping_label=False):
     return histograms_by_path
 
 
-def _is_windows(arguments):
-    dimensions = arguments.get('dimensions', ())
-    if isinstance(dimensions, str):
-        dimensions = json.loads(dimensions)
+def _is_windows(dimensions):
     for dimension in dimensions:
-        if dimension['key'] == 'os' and dimension['value'].startswith('Win'):
+        if dimension.key == 'os' and dimension.value.startswith('Win'):
             return True
     return False
 

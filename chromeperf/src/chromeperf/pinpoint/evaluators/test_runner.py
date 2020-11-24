@@ -284,9 +284,9 @@ class TaskOptions:
         return test_runner_payload_pb2.TestRunnerTaskOptions(
             swarming_server=self.swarming_server,
             dimensions=[
-                test_runner_payload_pb2.TestRunnerPayload.Dimension(key=k,
-                                                                    value=v)
-                for (k, v) in sorted(self.dimensions.items())],
+                test_runner_payload_pb2.TestRunnerPayload.Dimension(
+                    key=d.key, value=d.value)
+                for d in sorted(self.dimensions, key=lambda d: d.key)],
             extra_args=self.extra_args,
             attempts=self.attempts)
 

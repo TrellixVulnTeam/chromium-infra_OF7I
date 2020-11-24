@@ -14,9 +14,11 @@ from google.protobuf import message as proto_message
 
 from chromeperf.engine import combinators
 from chromeperf.engine import predicates
+from chromeperf.pinpoint import find_culprit_task_payload_pb2
 from chromeperf.pinpoint import find_isolate_task_payload_pb2
 from chromeperf.pinpoint import result_reader_payload_pb2
 from chromeperf.pinpoint import test_runner_payload_pb2
+from chromeperf.pinpoint.evaluators import culprit_finder
 from chromeperf.pinpoint.evaluators import isolate_finder
 from chromeperf.pinpoint.evaluators import result_reader
 from chromeperf.pinpoint.evaluators import test_runner
@@ -27,12 +29,14 @@ import chromeperf.pinpoint.models.job as job_module
 import chromeperf.pinpoint.models.task as task_module
 
 _TASK_MODULE_MAP = {
+    'culprit_finder': culprit_finder,
     'find_isolate': isolate_finder,
     'read_value': result_reader,
     'run_test': test_runner,
 }
 
 _TASK_PAYLOAD_TYPE_MAP = {
+    'find_culprit': find_culprit_task_payload_pb2.FindCulpritTaskPayload,
     'find_isolate': find_isolate_task_payload_pb2.FindIsolateTaskPayload,
     'read_value': result_reader_payload_pb2.ResultReaderPayload,
     'run_test': test_runner_payload_pb2.TestRunnerPayload,
@@ -48,24 +52,51 @@ class FromDictError(TypeError):
     pass
 
 
+def _maybe_unwrap_optional(kind):
+    """If kind is a typing.Optional[SomeT], return SomeT (else return kind)."""
+    # TODO: use typing.get_origin / typing.get_args
+    if (kind.__origin__ is typing.Union
+        and len(kind.__args__) == 2
+        and kind.__args__[1] is type(None)):
+        return kind.__args__[0]
+    return kind
+
+
 def _from_dict(client, kind, d):
+    if d is None: return None
     try:
         if dataclasses.is_dataclass(kind):
             # Repository disabled construction directly
             if kind is repository.Repository:
+                if type(d) is not dict:
+                    raise FromDictError(
+                        f'Expected Repository dictionary, got {d!r}')
                 if d.get('name'):
                     return repository.Repository.FromName(client, d['name'])
                 elif d.get('url'):
                     return repository.Repository.FromUrl(client, d['url'])
 
+            fields = dataclasses.fields(kind)
+            def has_default(f):
+                return f.default is not None or f.default_factory is not None
+            missing_fields = set(
+                f.name for f in fields if not has_default(f)) - set(d.keys())
+            if missing_fields:
+                raise FromDictError(f'Missing fields for {kind.__name__}: '
+                                    f'{", ".join(missing_fields)}')
             fieldtypes = {f.name: f.type for f in dataclasses.fields(kind)}
-            return kind(
-                **{f: _from_dict(client, fieldtypes[f], d[f])
-                   for f in d})
+            try:
+                return kind(
+                    **{f: _from_dict(client, fieldtypes[f], d[f])
+                       for f in d})
+            except KeyError as err:
+                raise FromDictError(
+                    f'Unexpected field {err} for kind {kind.__name__}')
 
         # Type 'list' doesn't tell us how to construct it's member. Also
         # type hint is not a real class we can use.
         if type(kind) is typing._GenericAlias:
+            kind = _maybe_unwrap_optional(kind)
             # TODO: use typing.get_origin / typing.get_args
             if kind.__origin__ is list:
                 return [_from_dict(client, kind.__args__[0], x) for x in d]
@@ -76,8 +107,8 @@ def _from_dict(client, kind, d):
         return d
     except FromDictError:
         raise
-    except Exception:
-        raise FromDictError(f'Parse {kind} from {repr(d)}')
+    except Exception as e:
+        raise FromDictError(f'Parse {kind} from {repr(d)}: {e}')
 
 
 def _task_entity_to_dict(task_entity: datastore.entity.Entity):

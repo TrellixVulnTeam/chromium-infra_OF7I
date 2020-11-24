@@ -74,7 +74,7 @@ class TaskOptions:
     # TODO: remove pinned_patch?
     # This is slightly odd to have in the options, as it is already baked into
     # the start_change/end_change.
-    pinned_patch: change_module.GerritPatch  # optional
+    pinned_patch: Optional[change_module.GerritPatch] = None
 
     @classmethod
     def from_proto(
