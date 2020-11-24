@@ -29,6 +29,13 @@ func NewTestPlanForSuites(suiteNames ...string) *test_platform.Request_TestPlan 
 
 // NewTestPlanForAutotestTests returns a test plan consisting of the given named autotest tests.
 func NewTestPlanForAutotestTests(autotestArgs string, testNames ...string) *test_platform.Request_TestPlan {
+	// Due to crbug/984103, the first autotest arg gets dropped somewhere between here and
+	// when autotest reads the args. Add a dummy arg to prevent this bug for now.
+	// TODO(crbug/984103): Remove the dummy arg once the underlying bug is fixed.
+	if autotestArgs != "" {
+		autotestArgs = "dummy=crbug.com/984103 " + autotestArgs
+	}
+
 	p := test_platform.Request_TestPlan{}
 	for _, t := range testNames {
 		p.Test = append(p.Test, &test_platform.Request_Test{

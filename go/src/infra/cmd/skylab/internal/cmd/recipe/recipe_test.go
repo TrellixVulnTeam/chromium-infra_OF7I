@@ -84,8 +84,8 @@ func TestRequest(t *testing.T) {
 		},
 		TestPlan: &test_platform.Request_TestPlan{
 			Test: []*test_platform.Request_Test{
-				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-1", TestArgs: "foo-arg1=val1 foo-arg2=val2"}}},
-				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-2", TestArgs: "foo-arg1=val1 foo-arg2=val2"}}},
+				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-1", TestArgs: "dummy=crbug.com/984103 foo-arg1=val1 foo-arg2=val2"}}},
+				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-2", TestArgs: "dummy=crbug.com/984103 foo-arg1=val1 foo-arg2=val2"}}},
 			},
 		},
 	}
@@ -94,6 +94,60 @@ func TestRequest(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("Unexpected error %s", err)
+	}
+}
+
+func TestDummyAutotestArg(t *testing.T) {
+	a := Args{
+		Board:                      "foo-board",
+		Image:                      "foo-image",
+		Model:                      "foo-model",
+		Pool:                       "foo-pool",
+		TestPlan:                   NewTestPlanForAutotestTests("foo-arg1=val1 foo-arg2=val2", "test-with-args"),
+		Timeout:                    30 * time.Minute,
+		Keyvals:                    map[string]string{"k1": "v1"},
+		FreeformSwarmingDimensions: []string{"freeform-key:freeform-value"},
+		MaxRetries:                 5,
+		ProvisionLabels:            []string{"fwrw-version:foo-firmware"},
+		LegacySuite:                "legacy-suite",
+	}
+	r, err := a.TestPlatformRequest()
+	if err != nil {
+		t.Errorf("Unexpected error %s", err)
+	}
+	got := r.TestPlan.Test
+	want := []*test_platform.Request_Test{
+		{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "test-with-args", TestArgs: "dummy=crbug.com/984103 foo-arg1=val1 foo-arg2=val2"}}},
+	}
+	if diff := prettyConfig.Compare(got, want); diff != "" {
+		t.Errorf("Unexpected diff (-got +want): %s", diff)
+	}
+}
+
+func TestNoDummyAutotestArg(t *testing.T) {
+	a := Args{
+		Board:                      "foo-board",
+		Image:                      "foo-image",
+		Model:                      "foo-model",
+		Pool:                       "foo-pool",
+		TestPlan:                   NewTestPlanForAutotestTests("", "test-without-args"),
+		Timeout:                    30 * time.Minute,
+		Keyvals:                    map[string]string{"k1": "v1"},
+		FreeformSwarmingDimensions: []string{"freeform-key:freeform-value"},
+		MaxRetries:                 5,
+		ProvisionLabels:            []string{"fwrw-version:foo-firmware"},
+		LegacySuite:                "legacy-suite",
+	}
+	r, err := a.TestPlatformRequest()
+	if err != nil {
+		t.Errorf("Unexpected error %s", err)
+	}
+	got := r.TestPlan.Test
+	want := []*test_platform.Request_Test{
+		{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "test-without-args", TestArgs: ""}}},
+	}
+	if diff := prettyConfig.Compare(got, want); diff != "" {
+		t.Errorf("Unexpected diff (-got +want): %s", diff)
 	}
 }
 
