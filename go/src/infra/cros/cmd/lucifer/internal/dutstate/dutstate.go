@@ -37,6 +37,7 @@ func ReadFile(resultsDir string) event.Event {
 var specialEvents = map[event.Event]bool{
 	event.HostNeedsManualRepair: true,
 	event.HostNeedsReplacement:  true,
+	event.HostNeedsDeploy:       true,
 }
 
 // convertDUTStateToEvent converts DUT state to the Event.
