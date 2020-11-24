@@ -6,6 +6,7 @@
 package sshpool
 
 import (
+	"log"
 	"sync"
 
 	"golang.org/x/crypto/ssh"
@@ -28,9 +29,11 @@ type Pool struct {
 	mu     sync.Mutex
 	pool   map[string][]*ssh.Client
 	config *ssh.ClientConfig
+	wg     sync.WaitGroup
 }
 
-// New returns a new Pool.
+// New returns a new Pool. The provided ssh config is used for new SSH
+// connections if pool has none to reuse.
 func New(c *ssh.ClientConfig) *Pool {
 	return &Pool{
 		pool:   make(map[string][]*ssh.Client),
@@ -38,7 +41,7 @@ func New(c *ssh.ClientConfig) *Pool {
 	}
 }
 
-// Get returns a good SSH client
+// Get returns a good SSH client.
 func (p *Pool) Get(host string) (*ssh.Client, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -48,7 +51,7 @@ func (p *Pool) Get(host string) (*ssh.Client, error) {
 		s, err := c.NewSession()
 		if err != nil {
 			// This SSH client is probably bad, so close and stop using it.
-			go c.Close()
+			p.closeClient(c)
 			continue
 		}
 		s.Close()
@@ -69,7 +72,7 @@ func (p *Pool) Put(host string, c *ssh.Client) {
 	s, err := c.NewSession()
 	if err != nil {
 		// This SSH client is probably bad, so close and don't put into the pool.
-		go c.Close()
+		p.closeClient(c)
 		return
 	}
 	s.Close()
@@ -82,9 +85,21 @@ func (p *Pool) Close() error {
 	defer p.mu.Unlock()
 	for hostname, cs := range p.pool {
 		for _, c := range cs {
-			go c.Close()
+			p.closeClient(c)
 		}
 		delete(p.pool, hostname)
 	}
+	p.wg.Wait()
 	return nil
+}
+
+// closeClient closes the supplied ssh.Client.
+func (p *Pool) closeClient(c *ssh.Client) {
+	p.wg.Add(1)
+	go func() {
+		defer p.wg.Done()
+		if err := c.Close(); err != nil {
+			log.Printf("sshpool: Error occurred while closing ssh.Client: %s", err)
+		}
+	}()
 }

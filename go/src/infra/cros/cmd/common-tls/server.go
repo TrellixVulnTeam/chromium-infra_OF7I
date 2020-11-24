@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"infra/cros/cmd/common-tls/internal/sshpool"
+	"infra/libs/sshpool"
 )
 
 type server struct {
