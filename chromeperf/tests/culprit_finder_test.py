@@ -181,7 +181,7 @@ def test_evaluate_graph_initially_expands_commit_range(
     assert evaluator_module.evaluate_graph(
         event_module.build_event(
             type='initiate', target_task=None, payload=empty_pb2.Empty()),
-        culprit_finder.Evaluator(datastore_client, simple_job),
+        culprit_finder.Evaluator(simple_job, datastore_client),
         loader,
     ) == {}
 
@@ -320,7 +320,7 @@ def test_evaluate_graph_success_no_repro(datastore_client, simple_bisection_job,
     loader = task_module.task_graph_loader(datastore_client, job)
     evaluator = wrap_in_payload_lifter(
         combinators.DispatchByTaskType(
-            {'find_culprit': culprit_finder.Evaluator(datastore_client, job),
+            {'find_culprit': culprit_finder.Evaluator(job, datastore_client),
              'read_value': fake_evalulator_factory.read_value_fake(
                      job, lambda ignore_commit, ignore_attempt: [1.0])}))
     evaluator_module.evaluate_graph(
@@ -353,7 +353,7 @@ def test_evaluate_graph_success_speculate_bisection(datastore_client,
     }
     evaluator = wrap_in_payload_lifter(
         combinators.DispatchByTaskType(
-            {'find_culprit': culprit_finder.Evaluator(datastore_client, job),
+            {'find_culprit': culprit_finder.Evaluator(job, datastore_client),
              'read_value': fake_evalulator_factory.read_value_fake(
                      job, lambda commit_no, _: values_for_commits[commit_no])}))
     evaluator_module.evaluate_graph(
@@ -391,7 +391,7 @@ def test_evaluate_graph_success_need_to_refine(datastore_client,
     }
     evaluator = wrap_in_payload_lifter(
         combinators.DispatchByTaskType(
-            {'find_culprit': culprit_finder.Evaluator(datastore_client, job),
+            {'find_culprit': culprit_finder.Evaluator(job, datastore_client),
              'read_value': fake_evalulator_factory.read_value_fake(
                      job, lambda commit_no, _: values_for_commits[commit_no])}))
     evaluator_module.evaluate_graph(
@@ -445,7 +445,7 @@ def test_evaluate_graph_failure_dependencies_failed(
                                          payload=encoded_payload)]
     evaluator = wrap_in_payload_lifter(
         combinators.DispatchByTaskType(
-            {'find_culprit': culprit_finder.Evaluator(datastore_client, job),
+            {'find_culprit': culprit_finder.Evaluator(job, datastore_client),
              'read_value': read_value_fail}))
     evaluator_module.evaluate_graph(
         event_module.build_event(
@@ -467,7 +467,7 @@ def test_evaluate_graph_failure_dependencies_no_results(
     loader = task_module.task_graph_loader(datastore_client, job)
     evaluator = wrap_in_payload_lifter(
         combinators.DispatchByTaskType(
-            {'find_culprit': culprit_finder.Evaluator(datastore_client, job),
+            {'find_culprit': culprit_finder.Evaluator(job, datastore_client),
              'read_value': fake_evalulator_factory.read_value_fake(
                  job,
                  values_fn=lambda *_: [],

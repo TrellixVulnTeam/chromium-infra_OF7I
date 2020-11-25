@@ -39,7 +39,7 @@ def evaluator(datastore_client, job):
                 evaluators=(bisection_test_util.FakeSuccessfulRunTest(
                     datastore_client, job),
                             combinators.TaskPayloadLiftingEvaluator()))),
-        result_reader.Evaluator(datastore_client, job),
+        result_reader.Evaluator(job, datastore_client),
     ))
 
 
@@ -1193,7 +1193,7 @@ def test_Evaluate_FailedDependency(datastore_client, populate_task_graph):
             delegate=combinators.SequenceEvaluator(evaluators=(
                 bisection_test_util.FakeFailedRunTest(datastore_client, job),
                 combinators.TaskPayloadLiftingEvaluator()))),
-        result_reader.Evaluator(datastore_client, job),
+        result_reader.Evaluator(job, datastore_client),
     ))
 
     assert evaluator_module.evaluate_graph(

@@ -878,7 +878,7 @@ class FindCulprit(task_module.PayloadUnpackingMixin,
 
 
 class Evaluator(combinators.FilteringEvaluator):
-    def __init__(self, datastore_client, job):
+    def __init__(self, job, datastore_client):
         super(Evaluator, self).__init__(
             predicate=predicates.All(
                 predicates.TaskTypeEq('find_culprit'),
