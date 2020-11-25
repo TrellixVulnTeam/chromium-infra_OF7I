@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const endpointsHeader = "x-endpoints-api-userinfo"
+
 func getRequestingUserEmail(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -36,17 +38,17 @@ func getRequestingUserEmail(ctx context.Context) (string, error) {
 	var userInfo struct {
 		Email string
 	}
-	auth, ok := md["X-Endpoint-API-UserInfo"]
+	auth, ok := md[endpointsHeader]
 	if !ok {
-		return "", status.Error(codes.PermissionDenied, "missing required auth header 'X-Endpoint-API-UserInfo'")
+		return "", status.Errorf(codes.PermissionDenied, "missing required auth header '%s'", endpointsHeader)
 	}
 	// Decode the auto header from base64encoded json, into a map we can inspect.
 	decoded, err := base64.URLEncoding.DecodeString(auth[0])
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "malformed X-Endpoint-API-UserInfo: %v", err)
+		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
 	}
 	if json.Unmarshal(decoded, &userInfo) != nil {
-		return "", status.Errorf(codes.InvalidArgument, "malformed X-Endpoint-API-UserInfo: %v", err)
+		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
 	}
 	return userInfo.Email, nil
 }
