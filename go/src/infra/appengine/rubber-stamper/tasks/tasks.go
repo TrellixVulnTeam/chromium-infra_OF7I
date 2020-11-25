@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/proto"
 
+	"infra/appengine/rubber-stamper/internal/reviewer"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
@@ -21,7 +22,10 @@ func init() {
 		Prototype: (*taskspb.ChangeReviewTask)(nil),
 		Queue:     "change-review-queue",
 		Handler: func(ctx context.Context, payload proto.Message) error {
-			// TODO: Handle change review task.
+			t := payload.(*taskspb.ChangeReviewTask)
+			if err := reviewer.ReviewChange(ctx, t); err != nil {
+				return fmt.Errorf("failed to review change for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
+			}
 			return nil
 		},
 	})

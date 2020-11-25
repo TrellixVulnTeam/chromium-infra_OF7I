@@ -8,19 +8,36 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/proto"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/tq"
 	"go.chromium.org/luci/server/tq/tqtesting"
 
+	"infra/appengine/rubber-stamper/config"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
 func TestQueue(t *testing.T) {
 	Convey("Chain works", t, func() {
-		ctx, sched := tq.TestingContext(context.Background(), nil)
-		ctx = memory.Use(ctx)
+		cfg := &config.Config{
+			HostConfigs: map[string]*config.HostConfig{
+				"host": {
+					BenignFilePattern: &config.BenignFilePattern{
+						FileExtensionMap: map[string]*config.Paths{
+							".txt": {
+								Paths: []string{"a/b.txt"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		ctx := memory.Use(context.Background())
+		ctx, gerritMock, sched := util.SetupTestingContext(ctx, cfg, "srv-account@example.com", "host", t)
 
 		var succeeded tqtesting.TaskList
 
@@ -39,6 +56,24 @@ func TestQueue(t *testing.T) {
 					CurrentRevision: "456789",
 				},
 			}
+
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     cls[0].Number,
+				RevisionId: cls[0].CurrentRevision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"a/b.txt": nil,
+				},
+			}, nil)
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     cls[1].Number,
+				RevisionId: cls[1].CurrentRevision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"a/b.txt": nil,
+				},
+			}, nil)
+
 			So(EnqueueChangeReviewTask(ctx, host, cls[0]), ShouldBeNil)
 			So(EnqueueChangeReviewTask(ctx, host, cls[0]), ShouldBeNil)
 			So(EnqueueChangeReviewTask(ctx, host, cls[1]), ShouldBeNil)

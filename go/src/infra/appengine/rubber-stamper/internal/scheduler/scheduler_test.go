@@ -14,14 +14,10 @@ import (
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/auth"
-	"go.chromium.org/luci/server/auth/signing"
-	"go.chromium.org/luci/server/auth/signing/signingtest"
-	"go.chromium.org/luci/server/tq"
 	"go.chromium.org/luci/server/tq/tqtesting"
 
 	"infra/appengine/rubber-stamper/config"
-	rsgerrit "infra/appengine/rubber-stamper/internal/gerrit"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
@@ -29,27 +25,19 @@ func TestScheduleReviews(t *testing.T) {
 	Convey("schedule reviews", t, func() {
 		cfg := &config.Config{
 			HostConfigs: map[string]*config.HostConfig{
-				"test-host": {},
+				"test-host": {
+					BenignFilePattern: &config.BenignFilePattern{
+						FileExtensionMap: map[string]*config.Paths{
+							"": {
+								Paths: []string{"a/x", "a/q/y"},
+							},
+						},
+					},
+				},
 			},
 		}
 		ctx := memory.Use(context.Background())
-		ctx = rsgerrit.Setup(ctx)
-		So(config.SetTestConfig(ctx, cfg), ShouldBeNil)
-		ctx, sched := tq.TestingContext(ctx, nil)
-		ctx = auth.ModifyConfig(ctx, func(cfg auth.Config) auth.Config {
-			cfg.Signer = signingtest.NewSigner(&signing.ServiceInfo{
-				ServiceAccountName: "srv-account@example.com",
-			})
-			return cfg
-		})
-
-		ctl := gomock.NewController(t)
-		defer ctl.Finish()
-		gerritMock := gerritpb.NewMockGerritClient(ctl)
-		clientMap := map[string]rsgerrit.Client{
-			getGerritHostURL("test-host"): gerritMock,
-		}
-		ctx = rsgerrit.SetTestClientFactory(ctx, clientMap)
+		ctx, gerritMock, sched := util.SetupTestingContext(ctx, cfg, "srv-account@example.com", "test-host", t)
 
 		var succeeded tqtesting.TaskList
 		sched.TaskSucceeded = tqtesting.TasksCollector(&succeeded)
@@ -70,6 +58,22 @@ func TestScheduleReviews(t *testing.T) {
 				},
 			},
 			MoreChanges: false,
+		}, nil)
+		gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+			Number:     00000,
+			RevisionId: "123abc",
+		})).Return(&gerritpb.ListFilesResponse{
+			Files: map[string]*gerritpb.FileInfo{
+				"a/x": nil,
+			},
+		}, nil)
+		gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+			Number:     00001,
+			RevisionId: "234abc",
+		})).Return(&gerritpb.ListFilesResponse{
+			Files: map[string]*gerritpb.FileInfo{
+				"a/q/y": nil,
+			},
 		}, nil)
 
 		err := ScheduleReviews(ctx)

@@ -13,18 +13,14 @@ import (
 	"go.chromium.org/luci/common/proto"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/auth"
-	"go.chromium.org/luci/server/auth/signing"
-	"go.chromium.org/luci/server/auth/signing/signingtest"
 
 	"infra/appengine/rubber-stamper/config"
-	"infra/appengine/rubber-stamper/internal/gerrit"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
 func TestReviewChange(t *testing.T) {
 	Convey("review change", t, func() {
-		ctx := memory.Use(context.Background())
 		cfg := &config.Config{
 			HostConfigs: map[string]*config.HostConfig{
 				"test-host": {
@@ -41,22 +37,8 @@ func TestReviewChange(t *testing.T) {
 				},
 			},
 		}
-		ctx = gerrit.Setup(ctx)
-		So(config.SetTestConfig(ctx, cfg), ShouldBeNil)
-		ctx = auth.ModifyConfig(ctx, func(cfg auth.Config) auth.Config {
-			cfg.Signer = signingtest.NewSigner(&signing.ServiceInfo{
-				ServiceAccountName: "srv-account@example.com",
-			})
-			return cfg
-		})
-
-		ctl := gomock.NewController(t)
-		defer ctl.Finish()
-		gerritMock := gerritpb.NewMockGerritClient(ctl)
-		clientMap := map[string]gerrit.Client{
-			"test-host-review.googlesource.com": gerritMock,
-		}
-		ctx = gerrit.SetTestClientFactory(ctx, clientMap)
+		ctx := memory.Use(context.Background())
+		ctx, gerritMock, _ := util.SetupTestingContext(ctx, cfg, "srv-account@example.com", "test-host", t)
 
 		t := &taskspb.ChangeReviewTask{
 			Host:     "test-host",
