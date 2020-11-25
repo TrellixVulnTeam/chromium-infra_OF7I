@@ -1,15 +1,12 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 
 # Copyright 2019 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
 # [VPYTHON:BEGIN]
-# wheel: <
-#   # Required for parallelism in python 2.
-#   name: "infra/python/wheels/futures-py2_py3"
-#   version: "version:3.1.1"
-# >
+# python_version: "3.8"
+#
 # wheel: <
 #   name: "infra/python/wheels/yapf-py2_py3"
 #   version: "version:0.30.0"
