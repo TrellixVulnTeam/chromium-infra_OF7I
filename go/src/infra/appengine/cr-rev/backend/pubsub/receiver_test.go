@@ -77,7 +77,8 @@ func TestPubsubSubscribe(t *testing.T) {
 		So(mProcess.calls, ShouldEqual, 0)
 	})
 
-	Convey("invalid message", t, func() {
+	// TODO(crbug.com/1152683): re-enable this.
+	SkipConvey("invalid message", t, func() {
 		ctx := context.Background()
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
@@ -96,7 +97,8 @@ func TestPubsubSubscribe(t *testing.T) {
 		So(mProcess.calls, ShouldEqual, 0)
 	})
 
-	Convey("valid message", t, func() {
+	// TODO(crbug.com/1152683): re-enable this.
+	SkipConvey("valid message", t, func() {
 		ctx := context.Background()
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
