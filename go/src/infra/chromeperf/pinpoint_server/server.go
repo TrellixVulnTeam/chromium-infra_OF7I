@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint_server/conversion"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -35,22 +36,25 @@ func getRequestingUserEmail(ctx context.Context) (string, error) {
 	if !ok {
 		return "", status.Error(codes.InvalidArgument, "missing metadata from request context")
 	}
-	var userInfo struct {
-		Email string
-	}
 	auth, ok := md[endpointsHeader]
-	if !ok {
+	if !ok || len(auth) == 0 {
 		return "", status.Errorf(codes.PermissionDenied, "missing required auth header '%s'", endpointsHeader)
 	}
 	// Decode the auto header from base64encoded json, into a map we can inspect.
-	decoded, err := base64.URLEncoding.DecodeString(auth[0])
+	decoded, err := base64.RawURLEncoding.DecodeString(auth[0])
 	if err != nil {
+		log.Printf("Failed decoding auth = '%v'; error = %s", auth, err)
 		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
 	}
+	userInfo := make(map[string]interface{})
 	if json.Unmarshal(decoded, &userInfo) != nil {
 		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
 	}
-	return userInfo.Email, nil
+	email, ok := userInfo["email"].(string)
+	if !ok || len(email) == 0 {
+		return "", status.Errorf(codes.PermissionDenied, "missing 'email' field from token")
+	}
+	return email, nil
 }
 
 func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJobRequest) (*pinpoint.Job, error) {
