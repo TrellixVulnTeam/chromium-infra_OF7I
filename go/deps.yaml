@@ -575,6 +575,3 @@ import:
 - package: github.com/google/shlex
   repo: https://chromium.googlesource.com/external/github.com/google/shlex.git
   version: master
-- package: golang.org/x/term
-  version: master
-  repo: https://go.googlesource.com/term.git
