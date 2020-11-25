@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const endpointsHeader = "x-endpoints-api-userinfo"
+const endpointsHeader = "x-endpoint-api-userinfo"
 
 func getRequestingUserEmail(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
