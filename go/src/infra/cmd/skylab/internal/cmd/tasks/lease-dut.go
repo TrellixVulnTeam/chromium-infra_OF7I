@@ -18,7 +18,6 @@ import (
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/flagx"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
@@ -157,22 +156,22 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
 func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, bc *bb.Client, leaseDuration time.Duration, host string) (taskID int64, err error) {
-	ic, err := c.getInventoryClient(ctx)
+	ic, err := getInventoryClient(ctx, &c.authFlags, c.envFlags.Env())
 	if err != nil {
 		return 0, err
 	}
 
-	// TODO(gregorynisbet): Check if model is empty and make sure not to pass
-	// pass it to swarming if it is empty.
 	model, err := getModelForHost(ctx, ic, host)
 	if err != nil {
 		return 0, err
 	}
-	// TODO(gregorynisbet): instead of just logging the model, actually pass it
-	// to LeaseByHostnameTask and use it to annotate the lease task.
 	fmt.Fprintf(a.GetErr(), "inferred model (%s)\n", model)
+	var extraTags []string
+	if model != "" {
+		extraTags = append(extraTags, fmt.Sprintf("label-model:%s", model))
+	}
 
-	dims, tags, err := c.fullBBDimensionsAndTags(ctx, sc, hostnameLease, host)
+	dims, tags, err := c.fullBBDimensionsAndTags(ctx, sc, hostnameLease, host, extraTags...)
 	if err != nil {
 		return 0, err
 	}
@@ -240,14 +239,15 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 
 // bbDimensionsAndTags creates the full Buildbucket dimensions and tags used to lease a DUT of
 // the specified board/model/hostname dimension.
-func (c *leaseDutRun) fullBBDimensionsAndTags(ctx context.Context, sc *swarming.Client, primaryDimType primaryLeaseDimensionType, primaryDim string) (map[string]string, []string, error) {
+func (c *leaseDutRun) fullBBDimensionsAndTags(ctx context.Context, sc *swarming.Client, primaryDimType primaryLeaseDimensionType, primaryDim string, extraTags ...string) (map[string]string, []string, error) {
 	fullDims := make(map[string]string)
-	tags := []string{
+	tags := append(
+		extraTags,
 		"qs_account:leases",
 		fmt.Sprintf("lease-by:%s", primaryDimType),
 		fmt.Sprintf("lease-reason:%s", c.leaseReason),
 		"skylab-tool:lease",
-	}
+	)
 
 	if primaryDimType == hostnameLease {
 		botID, err := sc.DutNameToBotID(ctx, primaryDim)
@@ -306,26 +306,6 @@ func (c *leaseDutRun) waitForBuildStart(ctx context.Context, client *bb.Client, 
 			return "", errors.Reason("Got unexpected build status %s", buildbucket_pb.Status_name[int32(s)]).Err()
 		}
 	}
-}
-
-// getInventoryClient produces an inventory client.
-func (c *leaseDutRun) getInventoryClient(ctx context.Context) (inv.Client, error) {
-	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return nil, err
-	}
-	e := c.envFlags.Env()
-	return inv.NewInventoryClient(hc, e), nil
-}
-
-// getModelForHost contacts the inventory v2 service and gets the model associated with
-// a given hostname.
-func getModelForHost(ctx context.Context, ic inv.Client, host string) (string, error) {
-	dut, err := ic.GetDutInfo(ctx, host, true)
-	if err != nil {
-		return "", err
-	}
-	return dut.GetCommon().GetLabels().GetModel(), nil
 }
 
 // exactlyOne counts the number of true booleans and returns whether it is exactly one

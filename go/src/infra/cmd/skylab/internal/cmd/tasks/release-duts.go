@@ -7,6 +7,7 @@ package tasks
 import (
 	"context"
 	"fmt"
+	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"io"
 
 	"github.com/maruel/subcommands"
@@ -54,7 +55,6 @@ func (c *releaseDutsRun) innerRun(a subcommands.Application, args []string, env 
 	if c.Flags.NArg() == 0 {
 		return cmdlib.NewUsageError(c.Flags, "must specify at least 1 DUT")
 	}
-	hostnames := c.Flags.Args()
 
 	ctx := cli.GetContext(a, c, env)
 	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -67,14 +67,15 @@ func (c *releaseDutsRun) innerRun(a subcommands.Application, args []string, env 
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
-	return cancelLeaseTasks(ctx, a.GetOut(), client, hostnames)
+	return c.cancelLeaseTasks(ctx, a.GetOut(), client)
 }
 
-func cancelLeaseTasks(ctx context.Context, w io.Writer, client *swarming.Client, hostnames []string) error {
+func (c *releaseDutsRun) cancelLeaseTasks(ctx context.Context, w io.Writer, client *swarming.Client) error {
+	hostnames := c.Flags.Args()
 	errs := make(errors.MultiError, 0)
 	for _, h := range hostnames {
 		fmt.Fprintf(w, "Canceling lease task for host: %s\n", h)
-		err := cancelLeaseTaskForHost(ctx, w, client, h)
+		err := c.cancelLeaseTaskForHost(ctx, w, client, h)
 		if err != nil {
 			fmt.Fprintf(w, "Failed to cancel: %s\n", err.Error())
 			errs = append(errs, err)
@@ -87,16 +88,39 @@ func cancelLeaseTasks(ctx context.Context, w io.Writer, client *swarming.Client,
 	return nil
 }
 
-func cancelLeaseTaskForHost(ctx context.Context, w io.Writer, client *swarming.Client, hostname string) error {
-	ts, err := client.GetActiveLeaseTasksForHost(ctx, hostname)
+func (c *releaseDutsRun) cancelLeaseTaskForHost(ctx context.Context, w io.Writer, client *swarming.Client, hostname string) error {
+	ic, err := getInventoryClient(ctx, &c.authFlags, c.envFlags.Env())
 	if err != nil {
 		return err
 	}
-	if len(ts) < 1 {
+	model, err := getModelForHost(ctx, ic, hostname)
+	if err != nil {
+		return err
+	}
+	// Not all lease tasks are directly tagged with the hostname,
+	// so we search for all active leases of the associated model,
+	// then iterate through the results to find lease(s) with the
+	// hostname's bot ID.
+	leaseTasksForModel, err := client.GetActiveLeaseTasksForModel(ctx, model)
+	if err != nil {
+		return err
+	}
+	var leaseTasksForHost []*swarming_api.SwarmingRpcsTaskResult
+	botID, err := client.DutNameToBotID(ctx, hostname)
+	if err != nil {
+		return err
+	}
+	for _, t := range leaseTasksForModel {
+		if t.BotId == botID {
+			leaseTasksForHost = append(leaseTasksForHost, t)
+		}
+	}
+
+	if len(leaseTasksForHost) == 0 {
 		fmt.Fprintf(w, "Found no lease tasks for host %s\n", hostname)
 		return nil
 	}
-	for _, t := range ts {
+	for _, t := range leaseTasksForHost {
 		err = client.CancelTask(ctx, t.TaskId)
 		if err != nil {
 			return err

@@ -149,21 +149,6 @@ func (c *Client) GetActiveLeaseTasksForBoard(ctx context.Context, board string) 
 	return c.getActiveLeaseTasksForDimensions(ctx, dims)
 }
 
-// GetActiveLeaseTasksForHost returns a list of RUNNING or PENDING lease tasks,
-// retrying transient errors.
-// hostname cannot be empty.
-func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
-	id, err := c.DutNameToBotID(ctx, hostname)
-	if err != nil {
-		return nil, err
-	}
-	var dims = map[string]string{
-		"id":          id,
-		"skylab-tool": "lease",
-	}
-	return c.getActiveLeaseTasksForDimensions(ctx, dims)
-}
-
 // CancelTask cancels a swarming task by taskID,
 // retrying transient errors.
 func (c *Client) CancelTask(ctx context.Context, taskID string) error {
