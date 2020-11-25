@@ -6,9 +6,14 @@ package reviewer
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/internal/gerrit"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
@@ -33,8 +38,34 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 	}
 	if len(invalidFiles) > 0 {
 		// Invalid BenignFileChange.
-		// TODO: leave comments in Gerrit
-		// TODO: remove reviewer in Gerrit.
+		// TODO: Add a go link in the msg, which tells users what the config
+		// looks like, what classes of CLs are safe, and how to send a CL to
+		// update the config to add a fileset.
+		msg := "The change cannot be auto-reviewed. The following files do not match the benign file configuration: "
+		msg = msg + strings.Join(invalidFiles[:], ", ")
+		setReviewReq := &gerritpb.SetReviewRequest{
+			Number:     t.Number,
+			RevisionId: t.Revision,
+			Message:    msg,
+		}
+		_, err := gc.SetReview(ctx, setReviewReq)
+		if err != nil {
+			return fmt.Errorf("failed to leave comment for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
+		}
+
+		sa, err := util.GetServiceAccountName(ctx)
+		if err != nil {
+			return err
+		}
+		deleteReviewerReq := &gerritpb.DeleteReviewerRequest{
+			Number:    t.Number,
+			AccountId: sa,
+		}
+		_, err = gc.DeleteReviewer(ctx, deleteReviewerReq)
+		if err != nil {
+			return fmt.Errorf("failed to delete reviewer for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
+		}
+
 		return nil
 	}
 

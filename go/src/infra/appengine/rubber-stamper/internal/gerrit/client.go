@@ -7,15 +7,16 @@ package gerrit
 import (
 	"context"
 
-	"google.golang.org/grpc"
-
+	emptypb "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	"google.golang.org/grpc"
 )
 
 // Client defines a subset of Gerrit API used by rubber-stamper.
 type Client interface {
 	CLReaderClient
+	CLWriterClient
 }
 
 // ClientFactory creates Client tied to Gerrit host and LUCI project.
@@ -69,4 +70,17 @@ type CLReaderClient interface {
 	//
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
 	ListFiles(ctx context.Context, in *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error)
+}
+
+// CLWriterClient defines a subset of Gerrit API used by rubber-stamper to
+// review CLs.
+type CLWriterClient interface {
+	// Set various review bits on a change.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review
+	SetReview(ctx context.Context, in *gerritpb.SetReviewRequest, opts ...grpc.CallOption) (*gerritpb.ReviewResult, error)
+	// Deletes a reviewer from a change.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#delete-reviewer
+	DeleteReviewer(ctx context.Context, in *gerritpb.DeleteReviewerRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
