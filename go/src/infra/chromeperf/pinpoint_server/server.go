@@ -84,7 +84,17 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 	// Then we make the request to the Pinpoint service.
 	res, err := s.LegacyClient.PostForm(*legacyPinpointService+"/api/new", values)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed request to legqacy API: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed request to legacy API: %v", err)
+	}
+	switch res.StatusCode {
+	case 403:
+		return nil, status.Errorf(codes.Internal, "Internal error, service not authorized")
+	case 400:
+		return nil, status.Errorf(codes.Internal, "Internal error, service sent an invalid request")
+	case 200:
+		break
+	default:
+		return nil, status.Errorf(codes.Internal, "Internal error")
 	}
 
 	// The response of the legacy service has the following format:
