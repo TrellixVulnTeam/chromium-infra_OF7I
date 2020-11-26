@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	"go.chromium.org/luci/common/errors"
 	"infra/chromeperf/pinpoint"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 func convertGerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
@@ -106,8 +107,10 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 		switch s := tb.StorySelection.(type) {
 		case *pinpoint.TelemetryBenchmark_Story:
 			v.Set("story", s.Story)
+			break
 		case *pinpoint.TelemetryBenchmark_StoryTags:
 			v.Set("story_tags", strings.Join(s.StoryTags.StoryTags, ","))
+			break
 		default:
 			return nil, errors.Reason("Unsupported story_selection in TelemetryBenchmark").
 				InternalReason("story_selection is %v", s).Err()
