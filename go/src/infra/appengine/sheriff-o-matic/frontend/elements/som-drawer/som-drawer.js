@@ -88,7 +88,7 @@ const ROTATIONS = {
   'chromium.perf': [
     {
       name: 'Chromium Perf Sheriff',
-      url: 'https://rota-ng.appspot.com/legacy/sheriff_perfbot.json',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromium-perf-bot-sheriff',
     },
   ],
   'fuchsia': [
