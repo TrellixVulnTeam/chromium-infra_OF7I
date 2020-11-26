@@ -234,6 +234,19 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'gevent',
+            '20.9.0',
+            packaged=('manylinux-x64', 'windows-x86', 'windows-x64'),
+            env={
+                # manylinux1 is too old to build libuv.
+                # So, maybe when manylinux2010 catches on we can build it.
+                # That said, this is currently only used for the recipe engine,
+                # so event loop performance shouldn't be a large concern.
+                'GEVENT_NO_LIBUV_BUILD': '1',
+            },
+            pyversions=['py2'],
+        ),
+        SourceOrPrebuilt(
             'greenlet',
             '0.4.15',
             packaged=(
