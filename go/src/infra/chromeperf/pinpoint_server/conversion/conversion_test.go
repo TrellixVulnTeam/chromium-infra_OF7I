@@ -76,6 +76,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -114,6 +120,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -146,6 +158,12 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
 
 				// Check the conversion of values to maps.
 				So(v, shouldContainMap, map[string]interface{}{
@@ -187,6 +205,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -226,6 +250,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -258,6 +288,12 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
 
 				// Check the conversion of values to maps.
 				So(v, shouldContainMap, map[string]interface{}{
@@ -316,6 +352,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -357,6 +399,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -391,6 +439,12 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
 
 				// Check the conversion of values to maps.
 				So(v, shouldContainMap, map[string]interface{}{
@@ -435,6 +489,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -477,6 +537,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -513,6 +579,12 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
 
 				// Check the conversion of values to maps.
 				So(v, shouldContainMap, map[string]interface{}{
@@ -570,6 +642,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -607,6 +685,12 @@ func TestSimpleConversions(t *testing.T) {
 				v, err := ConvertToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
 				// Check that we have the required Telemetry fields in the JSON.
 				So(v, shouldContainMap, map[string]interface{}{
 					"benchmark":      "some-benchmark",
@@ -637,6 +721,12 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(gtestJob, job)
 				v, err := ConvertToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
 
 				// Check the conversion of values to maps.
 				So(v, shouldContainMap, map[string]interface{}{

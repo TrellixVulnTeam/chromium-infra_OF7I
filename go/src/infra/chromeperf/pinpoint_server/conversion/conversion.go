@@ -26,6 +26,9 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 	// Lift the configuration into a key.
 	v.Set("configuration", job.Config)
 
+	// Always set the target into a key.
+	v.Set("target", job.Target)
+
 	// We're turning a floating point comparison magnitude to a string.
 	if job.ComparisonMagnitude != 0.0 {
 		v.Set("comparison_magnitude", fmt.Sprintf("%f", job.ComparisonMagnitude))
