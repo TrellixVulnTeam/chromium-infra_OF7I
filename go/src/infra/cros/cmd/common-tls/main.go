@@ -9,7 +9,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -22,7 +21,7 @@ import (
 var (
 	port          = flag.Int("port", 0, "Port to listen to")
 	wiringPort    = flag.Int("wiring-port", 0, "Port for the TLS wiring service")
-	sshKey        = flag.String("ssh-key", "", "Path to SSH key for DUTs (no auth if unset)")
+	sshKey        = flag.String("ssh-key", "", "[Deprecated. Will use the well known RSA key.] Path to SSH key for DUTs (no auth if unset)")
 	serverTimeout = flag.Duration("server-timeout", 0, "Maximum duration for which to allow the server to run (<=0 to run indefinitely)")
 )
 
@@ -54,13 +53,7 @@ func innerMain() error {
 		// of our attack profile.
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         5 * time.Second,
-	}
-	if *sshKey != "" {
-		m, err := authMethodWithKey(*sshKey)
-		if err != nil {
-			return err
-		}
-		sshConfig.Auth = []ssh.AuthMethod{m}
+		Auth:            []ssh.AuthMethod{ssh.PublicKeys(sshSigner)},
 	}
 	// TODO(ayatane): Handle if the wiring service connection drops.
 	conn, err := grpc.Dial(fmt.Sprintf("0.0.0.0:%d", *wiringPort), grpc.WithInsecure())
@@ -86,16 +79,4 @@ func innerMain() error {
 		return err
 	}
 	return nil
-}
-
-func authMethodWithKey(keyfile string) (ssh.AuthMethod, error) {
-	key, err := ioutil.ReadFile(keyfile)
-	if err != nil {
-		return nil, fmt.Errorf("read ssh key: %s", err)
-	}
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		return nil, fmt.Errorf("read ssh key %s: %s", keyfile, err)
-	}
-	return ssh.PublicKeys(signer), nil
 }
