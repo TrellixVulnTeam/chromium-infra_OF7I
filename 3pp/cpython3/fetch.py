@@ -81,26 +81,6 @@ def do_latest(platform):
   print highest
 
 
-# TODO(akashmukherjee): Remove.
-def do_checkout(version, platform, checkout_path):
-  # e.g. 3.8.0a4 -> 3.8.0
-  short = version
-  short_re = re.compile(r'(\d+\.\d+\.\d+)')
-  m = short_re.match(version)
-  if m:
-    short = m.group(0)
-  download_url = (
-    'https://www.python.org/ftp/python/%(short)s/python-%(ver)s%(suf)s'
-    % {'short': short, 'ver': version, 'suf': get_webinstaller_suffix(platform)}
-  )
-  print >>sys.stderr, 'fetching %r' % (download_url,)
-  outfile = os.path.join(checkout_path, 'install.exe')
-  urllib.urlretrieve(download_url, outfile)
-
-  # downloads all the *.msi files locally.
-  subprocess.check_call([outfile, '/layout', checkout_path, '/quiet'])
-
-
 def get_download_url(version, platform):
   # e.g. 3.8.0a4 -> 3.8.0
   short = version
@@ -131,14 +111,6 @@ def main():
 
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest(os.environ['_3PP_PLATFORM']))
-
-  # TODO(akashmukherjee): Remove.
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(
-      os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM'],
-      opts.checkout_path))
 
   download = sub.add_parser("get_url")
   download.set_defaults(

@@ -44,16 +44,6 @@ def do_latest():
   print max_string
 
 
-# TODO(akashmukherjee): Remove
-def do_checkout(version, checkout_path):
-  URL = (
-    'https://www.googleapis.com/download/storage/v1/b/appengine-sdks/'
-    'o/featured%%2F%s%s.zip?alt=media' % (ZIP_PREFIX, version)
-  )
-  print >>sys.stderr, "fetching", URL
-  urllib.urlretrieve(URL, os.path.join(checkout_path, 'archive.zip'))
-
-
 def get_download_url(version):
   URL = (
     'https://www.googleapis.com/download/storage/v1/b/appengine-sdks/'
@@ -72,13 +62,6 @@ def main():
 
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
-
-  # TODO(akashmukherjee): Remove
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(
-      os.environ['_3PP_VERSION'], opts.checkout_path))
 
   download = sub.add_parser("get_url")
   download.set_defaults(

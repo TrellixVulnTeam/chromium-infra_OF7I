@@ -56,12 +56,6 @@ def main():
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
 
-  # TODO(akashmukherjee): Remove.
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  # we're going to use npm to actually do the fetch in install.sh
-  checkout.set_defaults(func=lambda opts: None)
-
   download = sub.add_parser("get_url")
   download.set_defaults(func=lambda opts: get_download_url(
       os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM']))

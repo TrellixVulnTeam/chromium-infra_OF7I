@@ -17,26 +17,6 @@ def do_latest():
   print json.load(urllib.urlopen(BASE_URL + '/components-2.json'))['version']
 
 
-# TODO(akashmukherjee): Remove checkout once new workflow is enabled.
-def do_checkout(version, platform, checkout_path):
-  targ_os, targ_arch = platform.split('-')
-  ext = 'zip' if targ_os == 'windows' else 'tar.gz'
-  download_url = (
-    BASE_URL + '/downloads/google-cloud-sdk-%(version)s-%(os)s-%(arch)s.%(ext)s'
-    % {
-      'version': version,
-      'os': {'mac': 'darwin'}.get(targ_os, targ_os),
-      'arch': {
-        '386':   'x86',
-        'amd64': 'x86_64',
-      }[targ_arch],
-      'ext': ext
-    })
-  print >>sys.stderr, "fetching", download_url
-  urllib.urlretrieve(download_url, os.path.join(checkout_path,
-                                                'archive.' + ext))
-
-
 def get_download_url(version, platform):
   targ_os, targ_arch = platform.split('-')
   ext = '.zip' if targ_os == 'windows' else '.tar.gz'
@@ -64,14 +44,6 @@ def main():
 
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
-
-  # TODO(akashmukherjee): Remove checkout once new workflow is enabled.
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(
-      os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM'],
-      opts.checkout_path))
 
   download = sub.add_parser("get_url")
   download.set_defaults(

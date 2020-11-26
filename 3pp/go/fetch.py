@@ -20,28 +20,6 @@ def do_latest():
   print versions[-1]
 
 
-# TODO(akashmukherjee): Remove
-def do_checkout(version, platform, kind, checkout_path):
-  if kind == 'prebuilt':
-    platform = platform.replace('mac', 'darwin')
-    ext = 'zip' if platform.startswith('windows') else 'tar.gz'
-    download_url = (
-      'https://storage.googleapis.com/golang/go%(version)s.%(platform)s.%(ext)s'
-      % {
-        'version': version,
-        'platform': platform,
-        'ext': ext
-      })
-  else:
-    ext = 'tar.gz'
-    download_url = (
-      'https://storage.googleapis.com/golang/go%s.src.tar.gz' % (version,))
-
-  print >>sys.stderr, 'fetching', download_url
-  urllib.urlretrieve(download_url,
-                     os.path.join(checkout_path, 'archive.' + ext))
-
-
 def get_download_url(version, platform, kind):
   if kind == 'prebuilt':
     platform = platform.replace('mac', 'darwin')
@@ -73,14 +51,6 @@ def main():
 
   latest = sub.add_parser('latest')
   latest.set_defaults(func=lambda _opts: do_latest())
-
-  # TODO(akashmukherjee): Remove
-  checkout = sub.add_parser('checkout')
-  checkout.add_argument('checkout_path')
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(
-      os.environ['_3PP_VERSION'], os.environ['_3PP_PLATFORM'],
-      opts.kind, opts.checkout_path))
 
   download = sub.add_parser('get_url')
   download.set_defaults(

@@ -16,14 +16,6 @@ def do_latest():
       'GoogleCloudPlatform/gsutil/master/VERSION').read().strip()
 
 
-# TODO(akashmukherjee): Remove
-def do_checkout(version, checkout_path):
-  download_url = (
-    'https://storage.googleapis.com/pub/gsutil_%s.tar.gz' % version)
-  urllib.urlretrieve(download_url, os.path.join(checkout_path,
-                                                'archive.tar.gz'))
-
-
 def get_download_url(version):
   download_url = (
     'https://storage.googleapis.com/pub/gsutil_%s.tar.gz' % version)
@@ -40,13 +32,6 @@ def main():
 
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
-
-  # TODO(akashmukherjee): Remove
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(os.environ['_3PP_VERSION'],
-                                  opts.checkout_path))
 
   download = sub.add_parser("get_url")
   download.set_defaults(

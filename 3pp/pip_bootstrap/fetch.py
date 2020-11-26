@@ -47,23 +47,6 @@ def do_latest():
                                         _get_version('wheel'))
 
 
-# TODO(akashmukherjee): Remove.
-def do_checkout(version, checkout_path):
-  # split version pip<vers>.setuptools<vers>.wheel<vers>
-  m = re.match(
-    r'^pip(.*)\.setuptools(.*)\.wheel(.*)$',
-    version)
-  versions = {
-    'pip': m.group(1),
-    'setuptools': m.group(2),
-    'wheel': m.group(3),
-  }
-  for pkgname, vers in versions.iteritems():
-    url, name = _get_wheel_url(pkgname, vers)
-    print >>sys.stderr, "fetching", url
-    urllib.urlretrieve(url, os.path.join(checkout_path, name))
-
-
 def get_download_url(version):
   # split version pip<vers>.setuptools<vers>.wheel<vers>
   m = re.match(
@@ -93,13 +76,6 @@ def main():
 
   latest = sub.add_parser("latest")
   latest.set_defaults(func=lambda _opts: do_latest())
-
-  # TODO(akashmukherjee): Remove.
-  checkout = sub.add_parser("checkout")
-  checkout.add_argument("checkout_path")
-  checkout.set_defaults(
-    func=lambda opts: do_checkout(
-      os.environ['_3PP_VERSION'], opts.checkout_path))
 
   download = sub.add_parser("get_url")
   download.set_defaults(
