@@ -516,6 +516,7 @@ def GenTests(api):
         version='version:1.5.0-rc1',
         test_data_tags=['version:1.5.0-rc1','external_hash:deadbeef']),
       )
+      + api.expect_exception('AssertionError')
   )
 
   # test for source url package.

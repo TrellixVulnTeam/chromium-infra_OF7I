@@ -226,12 +226,15 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
     else:
       external_hash = all_tags.get('external_hash', None)
       step_hash = api.step('Verify External Hash', None)
-      # TODO(akashmukherjee): Raise an error instead after verifying.
       if external_hash != source_hash:
         step_hash.presentation.status = 'FAILURE'
         step_hash.presentation.step_text = (
           'resolved version: %s has moved, current hash: %s, stored hash: %s, '
           'please verify.' % (version, source_hash, external_hash))
+        raise AssertionError(
+            'External hash verification failed, please check the third party'
+            ' git repository for any security incidents.'
+        )
       else:  # pragma: no cover
         step_hash.presentation.step_text = (
           'external source verification successful.')
@@ -305,13 +308,10 @@ def _generate_download_manifest(api, spec, checkout_dir,
   if method_name == 'git':
     return Manifest('git', source_method_pb.repo, checkout_dir, source_hash)
 
-  # TODO(akashmukherjee): Add ext to url source proto.
   elif method_name == 'url':
     return Manifest('url', [source_method_pb.download_url],
                     checkout_dir, ext=source_method_pb.extension or '.tar.gz')
 
-  # TODO(akashmukherjee): To enable coverage for source script, fetch.py custom
-  # scripts will need to be migrated, so that they print download url instead.
   elif method_name == 'script':
     # version is already in env as $_3PP_VERSION
     script = spec.host_dir.join(source_method_pb.name[0])
@@ -435,9 +435,8 @@ def _source_checkout(api,
   source_pb = spec.create_pb.source
 
   checkout_dir = workdir.checkout
-  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
   # Run checkout in this subdirectory of the install script's $CWD.
-  if source_pb.subdir:  # pragma: no cover
+  if source_pb.subdir:
     checkout_dir = checkout_dir.join(*(source_pb.subdir.split('/')))
 
   api.file.ensure_directory(
@@ -462,8 +461,7 @@ def _source_checkout(api,
         api.cipd.EnsureFile().add_package(source_package,
                                           'version:' + str(version)))
 
-  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
-  if source_pb.unpack_archive:  # pragma: no cover
+  if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):
       paths = api.file.glob_paths('find archive to unpack', checkout_dir, '*.*')
       assert len(paths) == 1, (
@@ -494,8 +492,7 @@ def _source_checkout(api,
         api.file.flatten_single_directories('prune archive subdirs',
                                             checkout_dir)
 
-  # TODO(akashmukherjee): Remove pragma once all tests switched to new flow.
-  if source_pb.patch_dir:  # pragma: no cover
+  if source_pb.patch_dir:
     patches = []
     for patch_dir in source_pb.patch_dir:
       patch_dir = str(patch_dir)
