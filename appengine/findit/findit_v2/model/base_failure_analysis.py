@@ -24,17 +24,17 @@ class BaseFailureAnalysis(ndb.Model):
 
   # Regression range for the analysis to analyze.
   last_passed_commit = ndb.StructuredProperty(GitilesCommit, indexed=False)
-  first_failed_commit = ndb.StructuredProperty(GitilesCommit, indexed=False)
+  first_failed_commit = ndb.StructuredProperty(GitilesCommit, indexed=True)
 
   # Time when the analysis is created.
-  create_time = ndb.DateTimeProperty(indexed=False, auto_now_add=True)
+  create_time = ndb.DateTimeProperty(indexed=True, auto_now_add=True)
   # Time when the analysis starts to run.
-  start_time = ndb.DateTimeProperty(indexed=False)
+  start_time = ndb.DateTimeProperty(indexed=True)
   # Time when the analysis runs to the end.
-  end_time = ndb.DateTimeProperty(indexed=False)
+  end_time = ndb.DateTimeProperty(indexed=True)
 
   # Status of the analysis, see libs.analysis_status.
-  status = ndb.IntegerProperty(default=analysis_status.RUNNING, indexed=False)
+  status = ndb.IntegerProperty(default=analysis_status.RUNNING, indexed=True)
   # Error code and message, if any.
   error = ndb.JsonProperty(indexed=False)
 
