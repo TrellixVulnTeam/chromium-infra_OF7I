@@ -5,10 +5,8 @@
 from gae_libs.testcase import TestCase
 from infra_api_clients.swarming import swarming_task_request
 from infra_api_clients.swarming.swarming_task_request import (
-    SwarmingTaskInputsRef)
-from infra_api_clients.swarming.swarming_task_request import (
-    SwarmingTaskProperties)
-from infra_api_clients.swarming.swarming_task_request import SwarmingTaskRequest
+    SwarmingTaskInputsRef, SwarmingTaskProperties, SwarmingTaskRequest,
+    SwarmingResultDBCfg)
 from libs.list_of_basestring import ListOfBasestring
 
 
@@ -48,7 +46,8 @@ class SwarmingTaskRequestTest(TestCase):
         pubsub_userdata=None,
         service_account=None,
         tags=ListOfBasestring(),
-        user='')
+        user='',
+        resultdb=SwarmingResultDBCfg(enable=False))
 
     self.assertEqual(expected_request,
                      SwarmingTaskRequest.GetSwarmingTaskRequestTemplate())
@@ -70,6 +69,9 @@ class SwarmingTaskRequestTest(TestCase):
         'pubsub_topic': 'topic',
         'pubsub_auth_token': 'token',
         'pubsub_userdata': 'data',
+        'resultdb': {
+            'enable': True
+        },
         'properties': {
             'caches': [{
                 'name': 'a',
@@ -153,7 +155,8 @@ class SwarmingTaskRequestTest(TestCase):
         pubsub_userdata='data',
         service_account=None,
         tags=ListOfBasestring.FromSerializable(['a']),
-        user='someone')
+        user='someone',
+        resultdb=SwarmingResultDBCfg(enable=True))
 
     self.assertEqual(expected_request,
                      SwarmingTaskRequest.FromSerializable(data))

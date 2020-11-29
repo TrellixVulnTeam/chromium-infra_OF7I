@@ -80,6 +80,11 @@ class SwarmingTaskProperties(StructuredObject):
   cipd_input = CIPDInput
 
 
+class SwarmingResultDBCfg(StructuredObject):
+  """Swarming/ResultDB integration configuration for a task."""
+  enable = bool
+
+
 class SwarmingTaskRequest(StructuredObject):
   """Represents a task request on Swarming server."""
 
@@ -108,6 +113,9 @@ class SwarmingTaskRequest(StructuredObject):
   pubsub_topic = basestring
   pubsub_auth_token = basestring
   pubsub_userdata = basestring
+
+  # ResultDB
+  resultdb = SwarmingResultDBCfg
 
   @staticmethod
   def GetSwarmingTaskRequestTemplate():
@@ -145,7 +153,8 @@ class SwarmingTaskRequest(StructuredObject):
         pubsub_userdata=None,
         service_account=None,
         tags=ListOfBasestring(),
-        user='')
+        user='',
+        resultdb=SwarmingResultDBCfg(enable=False))
 
   @classmethod
   def FromSerializable(cls, data):
@@ -207,4 +216,6 @@ class SwarmingTaskRequest(StructuredObject):
         pubsub_userdata=data.get('pubsub_userdata'),
         service_account=data.get('service_account'),
         tags=ListOfBasestring.FromSerializable(data.get('tags') or []),
-        user=data.get('user'))
+        user=data.get('user'),
+        resultdb=SwarmingResultDBCfg(
+            enable=data.get('resultdb', {}).get('enable', False)))

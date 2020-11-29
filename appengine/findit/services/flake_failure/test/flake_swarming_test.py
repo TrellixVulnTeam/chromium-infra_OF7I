@@ -12,10 +12,8 @@ from dto.swarming_task_error import SwarmingTaskError
 from infra_api_clients.swarming import swarming_util
 from infra_api_clients.swarming import swarming_task_request
 from infra_api_clients.swarming.swarming_task_request import (
-    SwarmingTaskInputsRef)
-from infra_api_clients.swarming.swarming_task_request import (
-    SwarmingTaskProperties)
-from infra_api_clients.swarming.swarming_task_request import SwarmingTaskRequest
+    SwarmingTaskInputsRef, SwarmingTaskProperties, SwarmingTaskRequest,
+    SwarmingResultDBCfg)
 from libs.list_of_basestring import ListOfBasestring
 from pipelines.flake_failure.run_flake_swarming_task_pipeline import (
     RunFlakeSwarmingTaskInput)
@@ -459,7 +457,8 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
         service_account=None,
         pubsub_userdata='{"runner_id": "runner_id"}',
         expiration_secs='3600',
-        pubsub_auth_token='auth_token')
+        pubsub_auth_token='auth_token',
+        resultdb=SwarmingResultDBCfg(enable=False))
 
     self.assertEqual(
         expected_request,
