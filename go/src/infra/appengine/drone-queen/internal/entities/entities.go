@@ -28,6 +28,10 @@ const (
 	AssignedDroneField = "AssignedDrone"
 	// DrainingField is a field name for queries.
 	DrainingField = "Draining"
+	// HiveField is a field name for queries. It indicates a "zone"
+	// that DUTs belong to, which controls which drones a DUT
+	// will be assigned to.
+	HiveField = "Hive"
 )
 
 // DUTGroupKey returns a key to be used for all DUT entities.  This is
@@ -43,6 +47,7 @@ type DUT struct {
 	Group         *datastore.Key `gae:"$parent"`
 	AssignedDrone DroneID
 	Draining      bool
+	Hive          string
 }
 
 // Equal implements equality.
