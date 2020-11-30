@@ -75,43 +75,6 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
     self.assertEqual({'all_tests': ['test1']}, result)
     self.assertIsNone(error)
 
-  @mock.patch.object(
-      swarmed_test_util,
-      'GetTestResultForSwarmingTask',
-      return_value='test_result_log')
-  @mock.patch.object(_GTEST_RESULTS, 'DoesTestExist', return_value=True)
-  @mock.patch.object(_GTEST_RESULTS, 'IsTestEnabled', return_value=True)
-  @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
-  def testIsTestEnabled(self, *_):
-    tasks = [_MockedTask('123')]
-    self.assertTrue(swarmed_test_util.IsTestEnabled('test', tasks))
-
-  @mock.patch.object(
-      swarmed_test_util,
-      'GetTestResultForSwarmingTask',
-      return_value='test_result_log')
-  @mock.patch.object(_GTEST_RESULTS, 'DoesTestExist', return_value=False)
-  @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
-  def testIsTestEnabledTestNotExist(self, *_):
-    tasks = [_MockedTask('123')]
-    self.assertFalse(swarmed_test_util.IsTestEnabled('test', tasks))
-
-  @mock.patch.object(
-      swarmed_test_util,
-      'GetTestResultForSwarmingTask',
-      return_value='test_result_log')
-  @mock.patch.object(
-      BlinkWebTestResults, 'DoesTestExist', return_value=False)
-  @mock.patch.object(
-      test_results_util,
-      'GetTestResultObject',
-      return_value=BlinkWebTestResults({}, partial_result=True))
-  def testIsTestEnabledTestNotExistForAllShards(self, *_):
-    tasks = [_MockedTask('123'), _MockedTask('456')]
-    self.assertFalse(swarmed_test_util.IsTestEnabled('test', tasks))
-
   def testRetrieveShardedTestResultsFromIsolatedServerNoLog(self):
     self.assertEqual(
         [],
