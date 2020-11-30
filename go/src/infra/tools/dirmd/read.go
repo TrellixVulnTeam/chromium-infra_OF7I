@@ -30,7 +30,8 @@ func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
 	switch {
 	case os.IsNotExist(err):
 		// Try the legacy file.
-		return readOwners(dir)
+		md, _, err := ReadOwners(dir)
+		return md, err
 
 	case err != nil:
 		return nil, err

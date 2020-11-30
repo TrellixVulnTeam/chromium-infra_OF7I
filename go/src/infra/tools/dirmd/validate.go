@@ -40,6 +40,6 @@ func ValidateFile(fileName string) error {
 		return prototext.Unmarshal(contents, &dirmdpb.Metadata{})
 	}
 
-	_, err = parseOwners(f)
+	_, _, err = parseOwners(f)
 	return err
 }

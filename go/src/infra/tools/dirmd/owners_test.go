@@ -19,7 +19,7 @@ func TestParseOwners(t *testing.T) {
 
 	Convey(`ParseOwners`, t, func() {
 		Convey(`Works`, func() {
-			actual, err := parseOwners(strings.NewReader(`
+			actual, filtered, err := parseOwners(strings.NewReader(`
 # TEAM: team-email@chromium.org
 someone@example.com
 
@@ -28,9 +28,15 @@ someone@example.com
 # OS: iOS
 # COMPONENT: Some>Component
 # Internal Component: b/components/1234
-# WPT-NOTIFY: true
-			`))
+# WPT-NOTIFY: true`))
 			So(err, ShouldBeNil)
+			So(filtered, ShouldResemble, []string{
+				"",
+				"someone@example.com",
+				"",
+				"# Some comments",
+				"",
+			})
 			So(actual, ShouldResembleProto, &dirmdpb.Metadata{
 				TeamEmail: "team-email@chromium.org",
 				Os:        dirmdpb.OS_IOS,
@@ -46,8 +52,9 @@ someone@example.com
 		})
 
 		Convey(`ChromeOS`, func() {
-			actual, err := parseOwners(strings.NewReader(`# OS: ChromeOS`))
+			actual, filtered, err := parseOwners(strings.NewReader(`# OS: ChromeOS`))
 			So(err, ShouldBeNil)
+			So(filtered, ShouldEqual, []string(nil))
 			So(actual.Os, ShouldEqual, dirmdpb.OS_CHROME_OS)
 		})
 
