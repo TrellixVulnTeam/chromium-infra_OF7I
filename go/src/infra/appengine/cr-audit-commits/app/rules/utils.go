@@ -338,9 +338,12 @@ func GetToken(ctx context.Context, tokenName, packedTokens string) (string, bool
 	tokenName = escapeToken(tokenName)
 	pairs := strings.Split(packedTokens, "\n")
 	for _, v := range pairs {
+		if v == "" {
+			continue
+		}
 		parts := strings.SplitN(v, ":", 2)
 		if len(parts) != 2 {
-			logging.Debugf(ctx, "Missing ':' separator in key:value token %s in RuleResult.MetaData", v)
+			logging.Errorf(ctx, "while processing token %q, missing ':' separator in key:value token %q in RuleResult.MetaData", tokenName, v)
 			continue
 		}
 		if parts[0] != tokenName {
