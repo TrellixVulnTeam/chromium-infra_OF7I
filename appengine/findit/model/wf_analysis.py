@@ -5,6 +5,7 @@
 from google.appengine.ext import ndb
 
 from common import constants
+from common.waterfall import buildbucket_client
 from common.waterfall import failure_type
 from libs import analysis_status
 from model import result_status
@@ -28,6 +29,15 @@ class WfAnalysis(BaseBuildModel):
     analysis = WfAnalysis(
         key=WfAnalysis._CreateKey(master_name, builder_name, build_number))
     analysis.failure_result_map = analysis.failure_result_map or {}
+    try:
+      # Findit is currently only running for chromium/ci bucket
+      bb_build = buildbucket_client.GetV2BuildByBuilderAndBuildNumber(
+          "chromium", "ci", builder_name, build_number)
+      if bb_build is not None:
+        analysis.build_id = str(bb_build.id)
+    except Exception as e:
+      print("Got error when querying {}/{}: {}".format(builder_name,
+                                                       build_number, e))
     return analysis
 
   @staticmethod
