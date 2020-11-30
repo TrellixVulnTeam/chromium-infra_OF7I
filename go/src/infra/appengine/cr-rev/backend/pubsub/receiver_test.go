@@ -9,43 +9,51 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-	"time"
 	"unsafe"
 
 	"cloud.google.com/go/pubsub"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+// ackHandler interface matches pubsub/message ackHandler
+type ackHandler interface {
+	OnAck()
+	OnNack()
+}
+
+//
+type fakeAckHandler struct {
+	acked  int
+	nacked int
+	mu     sync.Mutex
+}
+
+func (ackh *fakeAckHandler) OnAck() {
+	ackh.mu.Lock()
+	defer ackh.mu.Unlock()
+	ackh.acked++
+}
+
+func (ackh *fakeAckHandler) OnNack() {
+	ackh.mu.Lock()
+	defer ackh.mu.Unlock()
+	ackh.nacked++
+}
+
 type mockPubsubReceiver struct {
-	messages []*pubsub.Message
-	calls    int
-	acked    int
-	nacked   int
-	mu       sync.Mutex
+	messages   []*pubsub.Message
+	ackHandler ackHandler
 }
 
 func (m *mockPubsubReceiver) Receive(ctx context.Context, f func(ctx context.Context, m *pubsub.Message)) error {
 	for _, message := range m.messages {
-		m.mu.Lock()
-		m.calls++
-		m.mu.Unlock()
-
-		// Fix Ack method of message
+		// Replace ackHandler with fake handler.
 		pointer := reflect.ValueOf(message)
 		val := reflect.Indirect(pointer)
-		mem := val.FieldByName("doneFunc")
+		mem := val.FieldByName("ackh")
 		ptrToMem := unsafe.Pointer(mem.UnsafeAddr())
-		realPtrToMem := (*func(string, bool, time.Time))(ptrToMem)
-		*realPtrToMem = func(ackID string, ack bool, t time.Time) {
-			m.mu.Lock()
-			defer m.mu.Unlock()
-			if ack {
-				m.acked++
-			} else {
-				m.nacked++
-
-			}
-		}
+		realPtrToMem := (*ackHandler)(ptrToMem)
+		*realPtrToMem = m.ackHandler
 		f(ctx, message)
 	}
 	return nil
@@ -64,42 +72,41 @@ func (m *mockProcessMessage) processPubsubMessage(ctx context.Context,
 func TestPubsubSubscribe(t *testing.T) {
 	Convey("no messages", t, func() {
 		ctx := context.Background()
+		ackh := &fakeAckHandler{}
 		mReceiver := &mockPubsubReceiver{
-			messages: make([]*pubsub.Message, 0),
+			messages:   make([]*pubsub.Message, 0),
+			ackHandler: ackh,
 		}
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
 		So(err, ShouldBeNil)
-		So(mReceiver.calls, ShouldEqual, 0)
-		So(mReceiver.acked, ShouldEqual, 0)
-		So(mReceiver.nacked, ShouldEqual, 0)
-		So(mProcess.calls, ShouldEqual, 0)
+		So(ackh.acked, ShouldEqual, 0)
+		So(ackh.nacked, ShouldEqual, 0)
 	})
 
-	// TODO(crbug.com/1152683): re-enable this.
-	SkipConvey("invalid message", t, func() {
+	Convey("invalid message", t, func() {
 		ctx := context.Background()
+		ackh := &fakeAckHandler{}
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
 				{
 					Data: []byte("foo"),
 				},
 			},
+			ackHandler: ackh,
 		}
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
 		So(err, ShouldBeNil)
-		So(mReceiver.calls, ShouldEqual, 1)
-		So(mReceiver.acked, ShouldEqual, 0)
-		So(mReceiver.nacked, ShouldEqual, 1)
-		So(mProcess.calls, ShouldEqual, 0)
+		So(ackh.acked, ShouldEqual, 0)
+		So(ackh.nacked, ShouldEqual, 1)
 	})
 
-	// TODO(crbug.com/1152683): re-enable this.
-	SkipConvey("valid message", t, func() {
+	Convey("valid message", t, func() {
 		ctx := context.Background()
+		ackh := &fakeAckHandler{}
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
 				{
@@ -121,14 +128,14 @@ func TestPubsubSubscribe(t *testing.T) {
 }`),
 				},
 			},
+			ackHandler: ackh,
 		}
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
 		So(err, ShouldBeNil)
-		So(mReceiver.calls, ShouldEqual, 1)
-		So(mReceiver.acked, ShouldEqual, 1)
-		So(mReceiver.nacked, ShouldEqual, 0)
+		So(ackh.acked, ShouldEqual, 1)
+		So(ackh.nacked, ShouldEqual, 0)
 		So(mProcess.calls, ShouldEqual, 1)
 	})
 }
