@@ -1412,7 +1412,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     actual = converters.IngestIssueDelta(
         self.cnxn, self.services, delta, self.config, [])
 
-    self.assertEqual(0, actual.merged_into)
+    self.assertIsNone(actual.merged_into)
     self.assertEqual('b/5678', actual.merged_into_external)
 
   def testIngestAttachmentUploads_Empty(self):

@@ -685,12 +685,11 @@ def IngestIssueDelta(
   merged_into = None
   merged_into_external = None
   if delta.HasField('merged_into_ref'):
-    if delta.merged_into_ref.ext_identifier:
+    if delta.merged_into_ref.ext_identifier:  # Adding an external merged.
       merged_into_external = delta.merged_into_ref.ext_identifier
-
-    if not delta.merged_into_ref.local_id:
+    elif not delta.merged_into_ref.local_id:  # Clearing an internal merged.
       merged_into = 0
-    else:
+    else:  # Adding an internal merged.
       merged_into = IngestIssueRefs(cnxn, [delta.merged_into_ref], services)[0]
 
   result = tracker_bizobj.MakeIssueDelta(
