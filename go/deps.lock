@@ -1,5 +1,5 @@
 hash: e46a46369a1ca8d488c2aa6b76b25b5928478102d3aa950255bb8d0ef100506a
-updated: 2020-11-26T09:42:44.268155753+09:00
+updated: 2020-11-30T09:52:55.714164806+09:00
 imports:
 - name: cloud.google.com/go
   version: f37f118c87d4d0a77a554515a430ae06e5852294
@@ -18,7 +18,7 @@ imports:
   version: ed2419acda397c1a113d8e9766bb41def2543f27
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
 - name: github.com/antlr/antlr4
-  version: 86610fd4b43ef173c42fb4346ffde8ff7b9b06eb
+  version: eafcc9369e99badb0548cfb56da91ff20b0ab886
   repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
   subpackages:
   - runtime/Go/antlr
@@ -35,7 +35,7 @@ imports:
   version: 1e9ccef3705c2c41a447aee0ddbe6810ccb7949d
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 442528d4784434364f9627eaf890203a91b69fc3
+  version: 02e109933bbd578b2d4738185b3e7fcd8a33ff06
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -108,7 +108,7 @@ imports:
   version: d467d8080fc335b4c8a7b31dd6a66483985d531b
   repo: https://chromium.googlesource.com/external/github.com/go-ole/go-ole.git
 - name: github.com/go-sql-driver/mysql
-  version: cf72fd249522a0cc5e1ce727dfa15189dcb6411f
+  version: f6dcc3d870a826fb4212f2f124acd2e4658632c5
   repo: https://chromium.googlesource.com/external/github.com/go-sql-driver/mysql.git
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
@@ -236,7 +236,7 @@ imports:
   subpackages:
   - zlib
 - name: github.com/klauspost/cpuid
-  version: c8c1820075900becfd4ebb05ea010608bbbfc393
+  version: 242d0b0aa2074c8ed7e32b965696980048c634de
   repo: https://chromium.googlesource.com/external/github.com/klauspost/cpuid.git
 - name: github.com/knq/sysutil
   version: 77e6e1a45b470981b497228e6c71b2d0bc68fc18
@@ -280,7 +280,7 @@ imports:
   version: c8fe2194d5253b1470c4531845086fa3bc154761
   repo: https://chromium.googlesource.com/external/github.com/maruel/ut.git
 - name: github.com/Masterminds/squirrel
-  version: 34e532cc146d306f5190166f78e60a8c92d915be
+  version: d1a9a0e53225d7810c4f5e1136db32f4e360c5bb
   repo: https://chromium.googlesource.com/external/github.com/Masterminds/squirrel.git
 - name: github.com/mattes/migrate
   version: 4768a648fbd9e04389a73a21139d14a4ccb1a61a
@@ -427,7 +427,7 @@ imports:
   version: e55f603d8c797b182566012861c5784481d00df4
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 2e05377d7423cc9bcadf8e143963630f1c9664f7
+  version: 9bcb083a2669cde9154d5bd021d25abebdc32516
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -471,13 +471,13 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: f84b799fce68db3cb46a8f6f819c1e56377181df
+  version: 77190671981848ff71219ecfff38636c9add3b79
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
   - windows
 - name: golang.org/x/term
-  version: f5c789dd3221ff39d752ac54467d762de7cfbec6
+  version: 7de9c90e9dd184706b838f536a1cbf40a296ddb7
   repo: https://go.googlesource.com/term.git
 - name: golang.org/x/text
   version: c27b9fd57aec08b1104313fb190f0ecc6d23095f
