@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/data/strpair"
-	flagx "go.chromium.org/luci/common/flag"
+	luciflag "go.chromium.org/luci/common/flag"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
+	skyflag "infra/cmd/skylab/internal/flagx"
 	"infra/cmdsupport/cmdlib"
 )
 
@@ -26,7 +27,7 @@ type createRunCommon struct {
 	model                    string
 	pool                     string
 	image                    string
-	dimensions               []string
+	dimensions               map[string]string
 	provisionLabels          []string
 	priority                 int
 	timeoutMins              int
@@ -45,9 +46,14 @@ func (c *createRunCommon) Register(fl *flag.FlagSet) {
 e.g., reef-canary/R73-11580.0.0.`)
 	fl.StringVar(&c.board, "board", "", "Board to run test on.")
 	fl.StringVar(&c.model, "model", "", "Model to run test on.")
-	fl.Var(flagx.StringSlice(&c.dimensions), "dim", "Additional scheduling dimension to apply to tests, as a KEY:VALUE string; may be specified multiple times.")
+	// We allow arbitrary dimensions to be passed in via the -dim and/or -dims flags.
+	// For maximum flexibility, both flags can take one or more key:val or key=val
+	// pairs (separated by ","), and repeated/mixed flags are allowed. To keep the
+	// docs intuitive, docstrings describe the more natural arg format for each flag.
+	fl.Var(skyflag.Dims(&c.dimensions), "dim", "Single additional scheduling dimension in format key=value or key:value; may be specified multiple times.")
+	fl.Var(skyflag.Dims(&c.dimensions), "dims", "List of additional scheduling dimensions in format key1=value1,key2=value2,... or key1:value1,key2:value2,... .")
 	fl.StringVar(&c.pool, "pool", "", "Device pool to run test on.")
-	fl.Var(flagx.StringSlice(&c.provisionLabels), "provision-label",
+	fl.Var(luciflag.StringSlice(&c.provisionLabels), "provision-label",
 		`Additional provisionable labels to use for the test
 (e.g. cheets-version:git_pi-arc/cheets_x86_64).  May be specified
 multiple times.  Optional.`)
@@ -58,11 +64,11 @@ will be executed in a low priority. If the tasks runs in a quotascheduler contro
 	fl.IntVar(&c.maxRetries, "max-retries", 0,
 		`Maximum retries allowed in total for all child tests of this
 suite. No retry if it is 0.`)
-	fl.Var(flagx.StringSlice(&c.keyvals), "keyval",
+	fl.Var(luciflag.StringSlice(&c.keyvals), "keyval",
 		`Autotest keyval for test. Key may not contain : character. May be
 specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
-	fl.Var(flagx.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
+	fl.Var(luciflag.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
 	fl.BoolVar(&c.useTestRunner, "use-test-runner", false,
 		`If true, schedule individual tests via buildbucket and run them via
@@ -95,6 +101,7 @@ func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
 }
 
 func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
+	dimSlice := toKeyvalSlice(c.dimensions)
 	keyvalMap, err := toKeyvalMap(c.keyvals)
 	if err != nil {
 		return recipe.Args{}, err
@@ -104,7 +111,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Board:                      c.board,
 		Image:                      c.image,
 		Model:                      c.model,
-		FreeformSwarmingDimensions: c.dimensions,
+		FreeformSwarmingDimensions: dimSlice,
 		ProvisionLabels:            c.provisionLabels,
 		Pool:                       c.pool,
 		QuotaAccount:               c.qsAccount,
@@ -156,6 +163,14 @@ func toKeyvalMap(keyvals []string) (map[string]string, error) {
 		m[k] = v
 	}
 	return m, nil
+}
+
+func toKeyvalSlice(keyvals map[string]string) []string {
+	var s []string
+	for key, val := range keyvals {
+		s = append(s, fmt.Sprintf("%s:%s", key, val))
+	}
+	return s
 }
 
 func printScheduledTaskJSON(w io.Writer, name string, ID string, URL string) error {

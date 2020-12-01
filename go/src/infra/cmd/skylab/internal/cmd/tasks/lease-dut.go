@@ -53,17 +53,20 @@ Do not build automation around this subcommand.`,
 		c := &leaseDutRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		// use a float so that large values passed on the command line are NOT wrapped.
+		// Use a float so that large values passed on the command line are NOT wrapped.
 		c.Flags.Float64Var(&c.leaseMinutes, "minutes", 60, "Duration of lease.")
 		c.Flags.StringVar(&c.leaseReason, "reason", "", "The reason to perform this lease, it must match crbug.com/NNNN or b/NNNN.")
 		// TODO(gregorynisbet):
-		// if a model is provided, then we necessarily target DUT_POOL_QUOTA and only repair-failed DUTs until
-		// a better policy can be implemented.
+		// If a model is provided, then we necessarily target DUT_POOL_QUOTA and only
+		// repair-failed DUTs until a better policy can be implemented.
 		c.Flags.StringVar(&c.model, "model", "", "Leases may optionally target a model instead of a hostname.")
 		c.Flags.StringVar(&c.board, "board", "", "Leases may optionally target a board instead of a hostname.")
-		// We allow arbitrary dimensions to be passed in via the -dims flag.
-		// e.g. -dims a=4,b=7
-		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
+		// We allow arbitrary dimensions to be passed in via the -dim and/or -dims flags.
+		// For maximum flexibility, both flags can take one or more key:val or key=val
+		// pairs (separated by ","), and repeated/mixed flags are allowed. To keep the
+		// docs intuitive, docstrings describe the more natural arg format for each flag.
+		c.Flags.Var(flagx.Dims(&c.dims), "dim", "Single additional dimension in format key=value or key:value; may be specified multiple times.")
+		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... or key1:value1,key2:value2,... .")
 		c.Flags.BoolVar(&c.evilLease, "evil-lease", false, "Evil lease allows the user to bypass the lease per model limit if there's an emergency.")
 		return c
 	},

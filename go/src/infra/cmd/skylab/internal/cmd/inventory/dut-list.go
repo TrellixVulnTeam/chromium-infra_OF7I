@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	flagx "infra/cmd/skylab/internal/flagx"
+	"infra/cmd/skylab/internal/flagx"
 	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
@@ -41,7 +41,12 @@ var DutList = &subcommands.Command{
 		c.Flags.StringVar(&c.pool, "pool", "", "pool name")
 		c.Flags.StringVar(&c.servoType, "servo-type", "", "the type of servo")
 		c.Flags.BoolVar(&c.useInventory, "use-inventory", false, "use the inventory service if set, use swarming if unset")
-		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
+		// We allow arbitrary dimensions to be passed in via the -dim and/or -dims flags.
+		// For maximum flexibility, both flags can take one or more key:val or key=val
+		// pairs (separated by ","), and repeated/mixed flags are allowed. To keep the
+		// docs intuitive, docstrings describe the more natural arg format for each flag.
+		c.Flags.Var(flagx.Dims(&c.dims), "dim", "Single additional dimension in format key=value or key:value; may be specified multiple times.")
+		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... or key1:value1,key2:value2,... .")
 		return c
 	},
 }
