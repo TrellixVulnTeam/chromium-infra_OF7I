@@ -226,6 +226,7 @@ type DeviceManualRepairRecordEntity struct {
 	Hostname    string    `gae:"hostname"`
 	AssetTag    string    `gae:"asset_tag"`
 	RepairState string    `gae:"repair_state"`
+	UserLdap    string    `gae:"user_ldap"`
 	UpdatedTime time.Time `gae:"updated_time"`
 	Content     []byte    `gae:",noindex"`
 }
@@ -269,6 +270,7 @@ func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*Device
 		Hostname:    hostname,
 		AssetTag:    assetTag,
 		RepairState: r.GetRepairState().String(),
+		UserLdap:    r.GetUserLdap(),
 		UpdatedTime: updatedTime,
 		Content:     content,
 	}, nil

@@ -1660,6 +1660,23 @@ func TestListManualRepairRecords(t *testing.T) {
 			So(resp.RepairRecords[1].GetAssetTag(), ShouldEqual, "getRecords-111")
 			So(resp.RepairRecords[1].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 		})
+		Convey("List records using all filters", func() {
+			req := &api.ListManualRepairRecordsRequest{
+				Hostname:    "chromeos-getRecords-aa",
+				AssetTag:    "getRecords-111",
+				Limit:       5,
+				UserLdap:    "testing-account",
+				RepairState: "STATE_COMPLETED",
+			}
+			resp, err := tf.Inventory.ListManualRepairRecords(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp.RepairRecords, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 1)
+			So(resp.RepairRecords[0].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
+			So(resp.RepairRecords[0].GetAssetTag(), ShouldEqual, "getRecords-111")
+			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
+		})
 		Convey("List records using hostname and asset tag with limit 1", func() {
 			req := &api.ListManualRepairRecordsRequest{
 				Hostname: "chromeos-getRecords-aa",

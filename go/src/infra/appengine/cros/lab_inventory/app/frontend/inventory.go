@@ -861,18 +861,38 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 // - hostname
 // - asset tag
 // - limit (number of records)
+// - user ldap
+// - repair state
 func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req *api.ListManualRepairRecordsRequest) (rsp *api.ListManualRepairRecordsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	propFilter := map[string]string{
-		"hostname":  req.Hostname,
-		"asset_tag": req.AssetTag,
+	if err = req.Validate(); err != nil {
+		return nil, err
 	}
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, req.Limit, []string{"-update_time"})
+
+	propFilter := map[string]string{
+		"hostname":  req.GetHostname(),
+		"asset_tag": req.GetAssetTag(),
+	}
+
+	if req.GetUserLdap() != "" {
+		propFilter["user_ldap"] = req.GetUserLdap()
+	}
+
+	if req.GetRepairState() != "" {
+		propFilter["repair_state"] = req.GetRepairState()
+	}
+
+	limit := req.GetLimit()
+	if limit <= 0 {
+		limit = -1
+	}
+
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, limit, []string{"-update_time"})
 	if err != nil {
-		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Err()
 	}
 
 	var repairRecords []*invlibs.DeviceManualRepairRecord
