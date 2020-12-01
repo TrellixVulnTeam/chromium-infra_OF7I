@@ -12,6 +12,7 @@ import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
 import {DEFAULT_ISSUE_FIELD_LIST, parseColSpec} from 'shared/issue-fields.js';
 import {
   shouldWaitForDefaultQuery,
@@ -212,7 +213,7 @@ export class MrListPage extends connectStore(LitElement) {
             </a>
           ` : ''}
           <div class="issue-count" ?hidden=${!this.totalIssues}>
-            ${startIndex + 1} - ${end} of ${this.totalIssues}
+            ${startIndex + 1} - ${end} of ${this.totalIssuesDisplay}
           </div>
           ${hasNext ? html`
             <a
@@ -445,6 +446,19 @@ export class MrListPage extends connectStore(LitElement) {
     this._extractFieldValues = projectV0.extractFieldValuesFromIssue(state);
     this._presentationConfigLoaded =
       projectV0.viewedPresentationConfigLoaded(state);
+  }
+
+  /**
+   * @return {string} Display text of total issue number.
+   */
+  get totalIssuesDisplay() {
+    if (this.totalIssues === 1) {
+      return `${this.totalIssues}`;
+    } else if (this.totalIssues === SERVER_LIST_ISSUES_LIMIT) {
+      // Server has hard limit up to 100,000 list results
+      return `100,000+`;
+    }
+    return `${this.totalIssues}`;
   }
 
   /**

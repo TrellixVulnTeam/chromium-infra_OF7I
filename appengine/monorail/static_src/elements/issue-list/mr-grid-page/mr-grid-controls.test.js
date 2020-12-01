@@ -5,6 +5,7 @@
 import sinon from 'sinon';
 import {assert} from 'chai';
 import {MrGridControls} from './mr-grid-controls.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
 
 let element;
 
@@ -89,5 +90,22 @@ describe('mr-grid-controls', () => {
       {text: 'Counts', value: 'counts',
         url: '/p/chromium/issues/list?q=hello-world&cells=counts'},
     ]);
+  });
+
+  describe('displays appropriate messaging for issue count', () => {
+    it('for one issue', () => {
+      element.issueCount = 1;
+      assert.equal(element.totalIssuesDisplay, '1 issue shown');
+    });
+
+    it('for less than 100,000 issues', () => {
+      element.issueCount = 50;
+      assert.equal(element.totalIssuesDisplay, '50 issues shown');
+    });
+
+    it('for 100,000 issues or more', () => {
+      element.issueCount = SERVER_LIST_ISSUES_LIMIT;
+      assert.equal(element.totalIssuesDisplay, '100,000+ issues shown');
+    });
   });
 });

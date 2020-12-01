@@ -9,6 +9,7 @@ import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import './mr-grid-dropdown.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
 import {urlWithNewParams} from 'shared/helpers.js';
 import {fieldsForIssue} from 'shared/issue-fields.js';
 
@@ -97,10 +98,7 @@ export class MrGridControls extends connectStore(LitElement) {
           <div class="issue-count">
             ${this.issueCount}
             of
-            ${this.totalIssues}
-            ${this.totalIssues === 1 ? html`
-              issue `: html`
-              issues `} shown
+            ${this.totalIssuesDisplay}
           </div>
         `}
         <mr-mode-selector
@@ -165,6 +163,19 @@ export class MrGridControls extends connectStore(LitElement) {
     const options = [...availableFields].sort();
     options.unshift('None');
     return options;
+  }
+
+  /**
+   * @return {string} Display text of total issue number.
+   */
+  get totalIssuesDisplay() {
+    if (this.issueCount === 1) {
+      return `${this.issueCount} issue shown`;
+    } else if (this.issueCount === SERVER_LIST_ISSUES_LIMIT) {
+      // Server has hard limit up to 100,000 list results
+      return `100,000+ issues shown`;
+    }
+    return `${this.issueCount} issues shown`;
   }
 
   /**

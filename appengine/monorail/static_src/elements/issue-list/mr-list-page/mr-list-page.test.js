@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import {assert} from 'chai';
 import {prpcClient} from 'prpc-client-instance.js';
 import {MrListPage, DEFAULT_ISSUES_PER_PAGE} from './mr-list-page.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
 import {store, resetState} from 'reducers/base.js';
 
 let element;
@@ -358,6 +359,11 @@ describe('mr-list-page', () => {
       const count = element.shadowRoot.querySelector('.issue-count');
 
       assert.equal(count.textContent.trim(), '1 - 33 of 33');
+    });
+
+    it('total issue count shows backend limit of 100,000', () => {
+      element.totalIssues = SERVER_LIST_ISSUES_LIMIT;
+      assert.equal(element.totalIssuesDisplay, '100,000+');
     });
 
     it('next and prev hidden on single page', async () => {
