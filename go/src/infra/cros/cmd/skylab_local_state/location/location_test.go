@@ -13,7 +13,15 @@ import (
 )
 
 func TestResultsDir(t *testing.T) {
-	got := location.ResultsDir("/autotest", "fooRunID1")
+	got := location.ResultsDir("/autotest", "fooRunID1", "testID1")
+	want := "/autotest/results/swarming-fooRunID0/1/testID1"
+	if got != want {
+		t.Fatalf("ResultsDir = %s; want = %s", got, want)
+	}
+}
+
+func TestResultsDirWithoutTestId(t *testing.T) {
+	got := location.ResultsDir("/autotest", "fooRunID1", "")
 	want := "/autotest/results/swarming-fooRunID0/1"
 	if got != want {
 		t.Fatalf("ResultsDir = %s; want = %s", got, want)

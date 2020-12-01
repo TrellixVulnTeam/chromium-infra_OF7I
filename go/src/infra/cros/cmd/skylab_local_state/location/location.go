@@ -16,8 +16,8 @@ import (
 // The corresponding runs will have IDs ending in "1", "2", etc., e.g.
 // "123456789abcdef1".
 // All runs are nested under the same subdir.
-func ResultsDir(autotestDir string, runID string) string {
-	return filepath.Join(autotestDir, "results", resultsSubDir(runID), runID[len(runID)-1:])
+func ResultsDir(autotestDir string, runID string, testID string) string {
+	return filepath.Join(autotestDir, "results", resultsSubDir(runID), runID[len(runID)-1:], testID)
 }
 
 func resultsSubDir(runID string) string {

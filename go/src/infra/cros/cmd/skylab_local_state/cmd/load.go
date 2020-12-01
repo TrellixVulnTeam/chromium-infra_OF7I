@@ -120,7 +120,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	hostInfo := getFullHostInfo(dut, dutState)
 
-	resultsDir := location.ResultsDir(request.Config.AutotestDir, request.RunId)
+	resultsDir := location.ResultsDir(request.Config.AutotestDir, request.RunId, request.TestId)
 
 	if err := writeHostInfo(resultsDir, request.DutName, hostInfo); err != nil {
 		return err
