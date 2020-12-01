@@ -5,7 +5,7 @@
 .PHONY: test clean
 
 objective-c-style:
-	go build
+	GOOS=linux GOARCH=amd64 go build
 
 test: objective-c-style
 	./objective-c-style -input=test -output=out
