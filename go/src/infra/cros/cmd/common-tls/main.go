@@ -14,7 +14,6 @@ import (
 	"os"
 	"time"
 
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 )
 
@@ -46,15 +45,6 @@ func innerMain() error {
 		os.Exit(1)
 	}()
 
-	sshConfig := &ssh.ClientConfig{
-		User: "root",
-		// We don't care about the host key for DUTs.
-		// Attackers intercepting our connections to DUTs is not part
-		// of our attack profile.
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         5 * time.Second,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(sshSigner)},
-	}
 	// TODO(ayatane): Handle if the wiring service connection drops.
 	conn, err := grpc.Dial(fmt.Sprintf("0.0.0.0:%d", *wiringPort), grpc.WithInsecure())
 	if err != nil {
@@ -66,7 +56,11 @@ func innerMain() error {
 		return err
 	}
 	log.Printf("CommonServer listening at address %v", l.Addr())
-	s := newServer(conn, sshConfig)
+	s, err := newServer(conn)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		if serverTimeout.Nanoseconds() <= 0 {
 			return

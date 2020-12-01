@@ -15,6 +15,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"infra/libs/lro"
 
@@ -39,12 +40,31 @@ type server struct {
 	lroMgr     *lro.Manager
 }
 
-func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
-	return server{
+// Option to use to create a new TLS server.
+type Option func(*server) error
+
+func newServer(c *grpc.ClientConn, options ...Option) (*server, error) {
+	s := server{
 		grpcServ:   grpc.NewServer(),
 		wiringConn: c,
-		sshConfig:  sshConfig,
+		sshConfig: &ssh.ClientConfig{
+			User: "root",
+			// We don't care about the host key for DUTs.
+			// Attackers intercepting our connections to DUTs is not part
+			// of our attack profile.
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         5 * time.Second,
+			// Use the well known testing RSA key as the default SSH auth
+			// method.
+			Auth: []ssh.AuthMethod{ssh.PublicKeys(sshSigner)},
+		},
 	}
+	for _, option := range options {
+		if err := option(&s); err != nil {
+			return nil, err
+		}
+	}
+	return &s, nil
 }
 
 func (s *server) Serve(l net.Listener) error {
