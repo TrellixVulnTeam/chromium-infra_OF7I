@@ -6,8 +6,10 @@
 package sshpool
 
 import (
+	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -59,6 +61,23 @@ func (p *Pool) Get(host string) (*ssh.Client, error) {
 	}
 	c, err := ssh.Dial("tcp", host, p.config)
 	return c, err
+}
+
+// GetWithTimeout returns a good SSH client within the given timeout.
+func (p *Pool) GetWithTimeout(host string, t time.Duration) (*ssh.Client, error) {
+	timeout := time.After(t)
+	for {
+		select {
+		case <-timeout:
+			return nil, fmt.Errorf("sshpool GetWithTimeout: timeout when trying to connect to %s", host)
+		default:
+			if c, err := p.Get(host); err == nil {
+				return c, err
+			}
+			// Add a slight delay to not hammer the host with SSH connections.
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
 }
 
 // Put puts the client back in the pool if it is good.

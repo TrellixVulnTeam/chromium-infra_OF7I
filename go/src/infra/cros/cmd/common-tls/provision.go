@@ -633,20 +633,18 @@ func (s *server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
-		// After a reboot, need a new client connection so close the old one.
 
-		// Try to reconnect for a least 300 seconds.
-		// TODO(kimjae): Make this connection verification into a function.
-		for i := 0; i < 300; i++ {
-			c, err = s.clientPool.Get(addr)
-			if err != nil {
-				// Try to reconnect again after a delay.
-				time.Sleep(time.Second)
-				continue
-			}
-			defer s.clientPool.Put(addr, c)
-			break
+		// After a reboot, need a new client connection.
+		c, err = s.clientPool.GetWithTimeout(addr, 300*time.Second)
+		if err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to connect to DUT after reboot, %s", err),
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+			return
 		}
+		defer s.clientPool.Put(addr, c)
+
 		if err := verifyOSProvision(c, targetBuilderPath); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
