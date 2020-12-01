@@ -38,7 +38,6 @@ func getApplication() *cli.Application {
 			subcommands.Section("Steps"),
 			// The cros_test_platform recipe runs subcommands in this order:
 			cmd.Enumerate,
-			cmd.SchedulerTrafficSplit,
 			cmd.SkylabExecute,
 			cmd.ComputeBackfill,
 		},
