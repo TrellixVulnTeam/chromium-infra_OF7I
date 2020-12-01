@@ -45,6 +45,24 @@ func TestReviewChange(t *testing.T) {
 			Number:   12345,
 			Revision: "123abc",
 		}
+		Convey("valid BeinignFileChange", func() {
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"a/x": nil,
+				},
+			}, nil)
+			gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+				Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+			})).Return(&gerritpb.ReviewResult{}, nil)
+
+			err := ReviewChange(ctx, t)
+			So(err, ShouldBeNil)
+		})
 		Convey("invalid BenignFileChange", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 				Number:     t.Number,

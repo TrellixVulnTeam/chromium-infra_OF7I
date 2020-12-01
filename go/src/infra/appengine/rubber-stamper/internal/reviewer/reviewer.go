@@ -69,6 +69,15 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 		return nil
 	}
 
-	// TODO: Bot-Commit +1 & Owners-Override +1
+	setReviewReq := &gerritpb.SetReviewRequest{
+		Number:     t.Number,
+		Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+		RevisionId: t.Revision,
+	}
+	_, err = gc.SetReview(ctx, setReviewReq)
+	if err != nil {
+		return fmt.Errorf("failed to add label for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
+	}
+
 	return nil
 }
