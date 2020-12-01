@@ -7,8 +7,9 @@ package rules
 import (
 	"context"
 
-	"go.chromium.org/luci/common/logging"
 	cpb "infra/appengine/cr-audit-commits/app/proto"
+
+	"go.chromium.org/luci/common/logging"
 )
 
 // AcknowledgeMerge is a Rule that acknowledges any merge into a release branch.
@@ -27,7 +28,8 @@ func (rule AcknowledgeMerge) Run(ctx context.Context, ap *AuditParams, rc *Relev
 	result.RuleResultStatus = RuleSkipped
 	bugID, err := bugIDFromCommitMessage(rc.CommitMessage)
 	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Found no bug on relevant commit %s", rc.CommitHash)
+		// TODO(xinyuoffline): File a bug?
+		logging.WithError(err).Warningf(ctx, "AcknowledgeMerge: Found no bug on relevant commit %s", rc.CommitHash)
 		return result, nil
 	}
 	result.RuleResultStatus = NotificationRequired

@@ -5,6 +5,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -45,7 +46,7 @@ func getMaxLabelValue(values map[string]string) (int, error) {
 		}
 	}
 	if unset {
-		return 0, fmt.Errorf("Expected at least one numerical value in the keys of %v", values)
+		return 0, fmt.Errorf("expected at least one numerical value in the keys of %v", values)
 	}
 	return maxIntVal, nil
 
@@ -99,7 +100,7 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 	owner := change.Owner.AccountID
 	crLabelInfo, exists := change.Labels["Code-Review"]
 	if !exists {
-		return nil, fmt.Errorf("The gerrit change for Commit %v does not have the 'Code-Review' label", rc.CommitHash)
+		return nil, errors.New("gerrit change for commit doesn't have label 'Code-Review'")
 	}
 	maxValue, err := getMaxLabelValue(crLabelInfo.Values)
 	if err != nil {
@@ -123,8 +124,9 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 				// Notify the CL that it needs to be approved by a valid reviewer
 				// within `gracePeriod`.
 				if err := postReminder(ctx, change, deadline, cs); err != nil {
-					logging.WithError(err).Errorf(
-						ctx, "Unable to post reminder on change %v", change.ChangeID)
+					// TODO(xinyuoffline): Is this an error?
+					logging.WithError(err).Warningf(
+						ctx, "ChangeReviewed: Unable to post reminder on change %v", change.ChangeID)
 				}
 			}
 		}
@@ -149,7 +151,7 @@ func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *Relevan
 		return nil, err
 	}
 	if len(cls) == 0 {
-		return nil, fmt.Errorf("no CL found for commit %q", rc.CommitHash)
+		return nil, errors.New("no CL found for commit")
 	}
 	return cls[0], nil
 }

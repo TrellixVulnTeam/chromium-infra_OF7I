@@ -6,10 +6,13 @@ package rules
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 
 	"github.com/golang/protobuf/ptypes"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -18,7 +21,6 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/genproto/protobuf/field_mask"
-	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 // Role is an enum describing the relationship between an email account and a
@@ -91,10 +93,8 @@ func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.T
 		}
 		err := ds.Get(ctx, current)
 		if err != nil {
-			return 0, fmt.Errorf("Could not retrieve relevant commit with hash %s",
-				current.CommitHash)
+			return 0, errors.New("could not retrieve commit")
 		}
-
 	}
 }
 
@@ -188,13 +188,12 @@ func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCom
 		return nil, err
 	}
 	if culprit == nil {
-		return nil, fmt.Errorf("Commit %q does not appear to be a revert according to gerrit",
-			rc.CommitHash)
+		return nil, errors.New("commit does not appear to be a revert according to gerrit")
 	}
 
 	host, project, err := gitiles.ParseRepoURL(ap.RepoCfg.BaseRepoURL)
 	if err != nil {
-		return nil, fmt.Errorf("The repo url %s somehow became invalid", ap.RepoCfg.BaseRepoURL)
+		return nil, fmt.Errorf("repo url somehow became invalid: %w", err)
 	}
 
 	gc, err := cs.NewGitilesClient(host)
@@ -211,7 +210,7 @@ func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCom
 	}
 	c := resp.Log
 	if len(c) == 0 {
-		return nil, fmt.Errorf("commit %s not found in repo", culprit.CurrentRevision)
+		return nil, fmt.Errorf("commit %q not found in repo", culprit.CurrentRevision)
 	}
 	commitTime, err := ptypes.Timestamp(c[0].Committer.Time)
 	if err != nil {
@@ -254,8 +253,7 @@ func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		return nil, err
 	}
 	if culprit == nil {
-		return nil, fmt.Errorf("Commit %q does not appear to be a revert according to gerrit",
-			rc.CommitHash)
+		return nil, errors.New("commit does not appear to be a revert according to gerrit")
 	}
 
 	buildURL, err := failedBuildFromCommitMessage(rc.CommitMessage)
@@ -299,7 +297,7 @@ func getRevertAndCulpritChanges(ctx context.Context, ap *AuditParams, rc *Releva
 		return nil, nil, err
 	}
 	if len(cls) == 0 {
-		return nil, nil, fmt.Errorf("no CL found for commit %q", rc.CommitHash)
+		return nil, nil, errors.New("no CL found for commit")
 	}
 	revert, err := cs.gerrit.ChangeDetails(ctx, cls[0].ChangeID, gerrit.ChangeDetailsParams{})
 
@@ -316,7 +314,7 @@ func getRevertAndCulpritChanges(ctx context.Context, ap *AuditParams, rc *Releva
 		return nil, nil, err
 	}
 	if culprit.CurrentRevision == "" {
-		return nil, nil, fmt.Errorf("Could not get current_revision property for cl %q",
+		return nil, nil, fmt.Errorf("could not get current_revision property for cl %q",
 			culprit.ChangeNumber)
 	}
 	return revert, culprit, nil

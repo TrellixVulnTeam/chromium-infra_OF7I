@@ -6,15 +6,17 @@ package rules
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/server/auth"
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
+
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/auth"
 )
 
 // Notification is a type that needs to be implemented by functions
@@ -98,7 +100,7 @@ type FileBugForMergeApprovalViolation struct {
 func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
-		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
+		return "", errors.New("MilestoneNumber not specified in repository configuration")
 	}
 	labels := append([]string{fmt.Sprintf("M-%s", milestone)}, f.Labels...)
 	for _, result := range rc.Result {
@@ -132,7 +134,7 @@ type CommentOnBugToAcknowledgeMerge struct {
 func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
-		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
+		return "", errors.New("MilestoneNumber not specified in repository configuration")
 	}
 	branchName := strings.Replace(cfg.BranchName, "refs/branch-heads/", "", -1)
 	mergeAckLabel := fmt.Sprintf("Merge-Merged-%s-%s", milestone, branchName)
@@ -151,18 +153,21 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 				for _, bug := range bugList {
 					bugNumber, err := strconv.Atoi(bug)
 					if err != nil {
-						logging.WithError(err).Errorf(ctx, "Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
+						// TODO(xinyuoffiline): Is this an error?
+						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
 						continue
 					}
 					vIssue, err := issueFromID(ctx, cfg, int32(bugNumber), cs)
 					if err != nil {
-						logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %d on relevant commit %s", bugNumber, rc.CommitHash)
+						// TODO(xinyuoffiline): Is this an error?
+						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: https://bugs.chromium.org/p/%s/issues/detail?id=%d is invalid on commit %s", cfg.MonorailProject, bugNumber, rc.CommitHash)
 						continue
 					}
 					mergeAckComment := "The following revision refers to this bug: \n%s\n\nCommit: %s\nAuthor: %s\nCommiter: %s\nDate: %s\n\n%s"
 					comment := fmt.Sprintf(mergeAckComment, cfg.LinkToCommit(rc.CommitHash), rc.CommitHash, rc.AuthorAccount, rc.CommitterAccount, rc.CommitTime, rc.CommitMessage)
 					if err = postComment(ctx, cfg, int32(vIssue.Id), comment, cs, labels); err != nil {
-						logging.Errorf(ctx, "Could not comment on bug %s", bug)
+						// TODO(xinyuoffiline): Is this an error?
+						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Could not comment on bug\nhttps://bugs.chromium.org/p/%s/issues/detail?id=%d", vIssue.ProjectId, bugNumber)
 						continue
 					}
 					if validBugs == "" {
@@ -175,7 +180,7 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 					return fmt.Sprintf("Comment posted on BUG(S)=%s", validBugs), nil
 				}
 			}
-			return "", fmt.Errorf("No bug found or could not comment on bug(s) found on revision %s", rc.CommitHash)
+			return "", errors.New("No bug found or could not comment on bug(s) found")
 		}
 	}
 	return "No notification required", nil

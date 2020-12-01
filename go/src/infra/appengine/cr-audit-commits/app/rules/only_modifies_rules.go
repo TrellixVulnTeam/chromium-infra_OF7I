@@ -6,13 +6,15 @@ package rules
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
-	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 const (
@@ -78,7 +80,7 @@ func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *Relevan
 		return nil, err
 	}
 	if len(resp.Log) != 1 {
-		return nil, fmt.Errorf("Could not find commit %s through gitiles", rc.CommitHash)
+		return nil, errors.New("could not find commit through gitiles")
 	}
 	td := resp.Log[0].TreeDiff
 

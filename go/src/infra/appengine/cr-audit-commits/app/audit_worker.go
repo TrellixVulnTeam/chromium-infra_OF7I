@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"context"
@@ -72,10 +73,10 @@ func performScheduledAudits(ctx context.Context, cfg *rules.RefConfig, repoState
 	// number of workers for the load.
 	nNewCommits, err := ds.Count(ctx, ncq)
 	nPendingCommits, err := ds.Count(ctx, pcq)
-	nCommits := nNewCommits + nPendingCommits
 	if err != nil {
 		return auditedCommits, err
 	}
+	nCommits := nNewCommits + nPendingCommits
 	if nCommits == 0 {
 		logging.Infof(ctx, "No relevant commits to audit")
 		return auditedCommits, nil
@@ -162,10 +163,12 @@ func runRules(ctx context.Context, rc *rules.RelevantCommit, ap rules.AuditParam
 		if hasExpired {
 			return
 		}
+		// TODO(xinyuoffline): Only retry transient errors.
+		// TODO(xinyuoffline): Alert on permanent errors.
+		// TODO(xinyuoffline): https://cloud.google.com/error-reporting/docs/formatting-error-messages ?
 		if err != nil {
 			rc.Retries++
-			logging.Errorf(ctx,
-				"Some rule had an error while auditing %s with message: %s", rc.CommitHash, err)
+			logging.WithError(err).Errorf(ctx, "audit failed")
 			logging.Warningf(ctx, "Discarding incomplete results: %s", rc.Result)
 			rc.Result = []rules.RuleResult{}
 			if rc.Retries > rules.MaxRetriesPerCommit {
@@ -212,7 +215,9 @@ func runAccountRules(ctx context.Context, rs rules.AccountRules, rc *rules.Relev
 				if previousResult == nil || previousResult.RuleResultStatus == rules.RulePending {
 					pCurrentRuleResult, err := r.Run(ctx, &ap, rc, wp.clients)
 					if err != nil {
-						return false, err
+						return false, fmt.Errorf(
+							"%s: %w\nCommit: %s/+/%s\nBranch: %s\nAuthor: %s\nSubject: %q", r.GetName(), err,
+							ap.RepoCfg.BaseRepoURL, rc.CommitHash, ap.RepoCfg.BranchName, rc.AuthorAccount, rc.CommitMessage)
 					}
 
 					currentRuleResult := *pCurrentRuleResult

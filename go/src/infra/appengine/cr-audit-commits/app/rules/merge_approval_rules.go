@@ -6,12 +6,14 @@ package rules
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"go.chromium.org/luci/common/logging"
 	cpb "infra/appengine/cr-audit-commits/app/proto"
+
+	"go.chromium.org/luci/common/logging"
 )
 
 const (
@@ -50,25 +52,29 @@ func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *R
 			"\nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
 		return result, nil
 	}
+	// TODO(xinyuoffline): Deduplicate with CommentOnBugToAcknowledgeMerge.Notify().
 	bugList := strings.Split(bugID, ",")
 	milestone := ""
 	success := false
 	for _, bug := range bugList {
 		bugNumber, err := strconv.Atoi(bug)
 		if err != nil {
-			logging.WithError(err).Errorf(ctx, "Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
+			// TODO(xinyuoffline): Is this an error?
+			logging.WithError(err).Warningf(ctx, "OnlyMergeApprovedChange: Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
 			continue
 		}
+		// TODO(xinyuoffline): Calculate this up front outside of the loop.
 		milestone, success = GetToken(ctx, "MilestoneNumber", ap.RepoCfg.Metadata)
 		if !success {
-			return nil, fmt.Errorf("MilestoneNumber not specified in repository configuration")
+			return nil, errors.New("MilestoneNumber not specified in repository configuration")
 		}
 		mergeLabel := fmt.Sprintf(mergeApprovedLabel, milestone)
 		vIssue, err := issueFromID(ctx, ap.RepoCfg, int32(bugNumber), cs)
 		if err != nil {
-			logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %d on relevant commit %s", bugNumber, rc.CommitHash)
-			result.Message = fmt.Sprintf("Revision %s was merged to %s branch and there was an error "+
-				"accessing the associated bug (%d):\n\n%s", rc.CommitHash, ap.RepoCfg.BranchName, bugNumber, err.Error())
+			result.Message = fmt.Sprintf(
+				"Revision %s was merged to %s branch and there was an error "+
+					"accessing the associated bug https://bugs.chromium.org/p/%s/issues/detail?id=%d:\n%s",
+				rc.CommitHash, ap.RepoCfg.BranchName, ap.RepoCfg.MonorailProject, bugNumber, err)
 			return result, nil
 		}
 		result.MetaData, _ = SetToken(ctx, "BugNumber", strconv.Itoa(int(vIssue.Id)), result.MetaData)
@@ -86,12 +92,14 @@ func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *R
 							return result, nil
 						}
 					}
-					logging.WithError(err).Errorf(ctx, "Found merge approval label %s from a non TPM %s", label, author)
+					// TODO(xinyuoffline): Is this an error?
+					logging.WithError(err).Warningf(ctx, "OnlyMergeApprovedChange: Found merge approval label %s from a non TPM %s", label, author)
 					break
 				}
 			}
 		}
-		logging.Errorf(ctx, "Bug %s does not have label %s", bugNumber, mergeLabel)
+		// TODO(xinyuoffline): Is this an error?
+		logging.Warningf(ctx, "OnlyMergeApprovedChange: https://bugs.chromium.org/p/%s/issues/detail?id=%d does not have label %s", ap.RepoCfg.MonorailProject, bugNumber, mergeLabel)
 	}
 	result.Message = fmt.Sprintf("Revision %s was merged to %s branch with no merge approval from "+
 		"a TPM! \nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
