@@ -54,7 +54,7 @@ func main() {
 			log.Printf("Skipping file: %q.", file.Path)
 			continue
 		}
-		if comments := checkGetPrefix(filepath.Join(*inputDir, file.Path)); comments != nil {
+		if comments := checkGetPrefix(*inputDir, file.Path); comments != nil {
 			for _, comment := range comments {
 				log.Printf("%s: %s", file.Path, comment.Category)
 				output.Comments = append(output.Comments, comment)
@@ -79,8 +79,14 @@ func isAllowed(path string) bool {
 	return false
 }
 
-func checkGetPrefix(path string) []*tricium.Data_Comment {
-	content, err := ioutil.ReadFile(path)
+// checkGetPrefix looks for instances of methods starting with "get"
+// in the given file and returns comments, for methods where "get" prefix was
+// misused.
+//
+// dirPath is the path to the repo directory base path, and filePath
+// is the relative path from the base to the file.
+func checkGetPrefix(base string, path string) []*tricium.Data_Comment {
+	content, err := ioutil.ReadFile(filepath.Join(base, path))
 	if err != nil {
 		log.Panicf("Failed to read file: %v", err)
 	}

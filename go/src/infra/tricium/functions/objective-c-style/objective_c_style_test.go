@@ -21,11 +21,11 @@ const (
 func TestGetPrefix(t *testing.T) {
 
 	Convey("Produces no comment for file with correct function names", t, func() {
-		So(checkGetPrefix(good), ShouldBeNil)
+		So(checkGetPrefix("", good), ShouldBeNil)
 	})
 
 	Convey("Flags functions have unnecessary get prefixes", t, func() {
-		c := checkGetPrefix(bad)
+		c := checkGetPrefix("", bad)
 		So(c, ShouldNotBeNil)
 		So(c, ShouldResemble, []*tricium.Data_Comment{
 			{
