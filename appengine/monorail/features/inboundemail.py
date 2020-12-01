@@ -316,6 +316,14 @@ class BouncedEmail(BounceNotificationHandler):
     email_addr = bounce_message.original.get('to')
     logging.info('Bounce was sent to: %r', email_addr)
 
+    # TODO(crbug.com/monorail/8727): Remove this work-around after issue is
+    # fully resolved.
+    # Disable bounce detection for @intel.com.  Some of their emails
+    # will still bounce, but we will keep trying and not triggering
+    # issue reassignment.
+    if '@intel' in email_addr:  # both intel.com and intel-partner.
+      return
+
     app_config = webapp2.WSGIApplication.app.config
     services = app_config['services']
     cnxn = sql.MonorailConnection()
