@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+// Package tlslib provides the canonical implementation of a common TLS server.
+package tlslib
 
 import (
 	"context"
@@ -539,7 +540,7 @@ func parseTargetBuilderPath(imagePath string) (string, error) {
 	return path.Join(path.Base(d), version), nil
 }
 
-func (s *server) provision(req *tls.ProvisionDutRequest, opName string) {
+func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	log.Printf("provision: started %v", opName)
 	defer func() {
 		log.Printf("provision: finished %v", opName)

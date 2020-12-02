@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+
+	"infra/cros/tlslib"
 )
 
 var (
@@ -56,7 +58,7 @@ func innerMain() error {
 		return err
 	}
 	log.Printf("CommonServer listening at address %v", l.Addr())
-	s, err := newServer(conn)
+	s, err := tlslib.NewServer(conn)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+// Package tlslib provides the canonical implementation of a common TLS server.
+package tlslib
 
 import (
 	"bufio"
@@ -30,7 +31,8 @@ import (
 	"infra/libs/sshpool"
 )
 
-type server struct {
+// A Server is an implementation of a common TLS server.
+type Server struct {
 	tls.UnimplementedCommonServer
 	grpcServ *grpc.Server
 	// wiringConn is a connection to the wiring service.
@@ -41,10 +43,11 @@ type server struct {
 }
 
 // Option to use to create a new TLS server.
-type Option func(*server) error
+type Option func(*Server) error
 
-func newServer(c *grpc.ClientConn, options ...Option) (*server, error) {
-	s := server{
+// NewServer creates a new instance of common TLS server.
+func NewServer(c *grpc.ClientConn, options ...Option) (*Server, error) {
+	s := Server{
 		grpcServ:   grpc.NewServer(),
 		wiringConn: c,
 		sshConfig: &ssh.ClientConfig{
@@ -67,7 +70,8 @@ func newServer(c *grpc.ClientConn, options ...Option) (*server, error) {
 	return &s, nil
 }
 
-func (s *server) Serve(l net.Listener) error {
+// Serve starts the TLS server and serves client requests.
+func (s *Server) Serve(l net.Listener) error {
 	s.clientPool = sshpool.New(s.sshConfig)
 	defer s.clientPool.Close()
 	s.lroMgr = lro.New()
@@ -78,18 +82,21 @@ func (s *server) Serve(l net.Listener) error {
 	return s.grpcServ.Serve(l)
 }
 
-func (s *server) GracefulStop() {
+// GracefulStop stops TLS server gracefully.
+func (s *Server) GracefulStop() {
 	s.grpcServ.GracefulStop()
 }
 
-func (s *server) ProvisionDut(ctx context.Context, req *tls.ProvisionDutRequest) (*longrunning.Operation, error) {
+// ProvisionDut implements TLS provision API.
+func (s *Server) ProvisionDut(ctx context.Context, req *tls.ProvisionDutRequest) (*longrunning.Operation, error) {
 	op := s.lroMgr.NewOperation()
 	go s.provision(req, op.Name)
 
 	return op, status.Error(codes.OK, "ProvisionDut started")
 }
 
-func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {
+// ExecDutCommand implements TLS ExecDutCommand API.
+func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {
 	// Batch size of stdout, stderr.
 	const messageSize = 5000
 
@@ -204,7 +211,7 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 }
 
 // getSSHAddr returns the SSH address to use for the DUT, through the wiring service.
-func (s *server) getSSHAddr(ctx context.Context, name string) (string, error) {
+func (s *Server) getSSHAddr(ctx context.Context, name string) (string, error) {
 	c := tls.NewWiringClient(s.wiringConn)
 	resp, err := c.OpenDutPort(ctx, &tls.OpenDutPortRequest{
 		Name: name,
@@ -216,7 +223,8 @@ func (s *server) getSSHAddr(ctx context.Context, name string) (string, error) {
 	return fmt.Sprintf("%s:%d", resp.GetAddress(), resp.GetPort()), nil
 }
 
-func (s *server) FetchCrashes(req *tls.FetchCrashesRequest, stream tls.Common_FetchCrashesServer) error {
+// FetchCrashes implements TLS FetchCrashes API.
+func (s *Server) FetchCrashes(req *tls.FetchCrashesRequest, stream tls.Common_FetchCrashesServer) error {
 	const (
 		// Largest size of blob or coredumps to include in an individual response.
 		// Note that, due to serialization overhead or small metadata fields, protos returned
