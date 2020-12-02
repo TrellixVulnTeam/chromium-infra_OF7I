@@ -573,8 +573,11 @@ import:
   version: master
   repo: https://fuchsia.googlesource.com/third_party/github.com/kr/fs.git
 - package: github.com/google/shlex
-  repo: https://chromium.googlesource.com/external/github.com/google/shlex.git
   version: master
+  repo: https://chromium.googlesource.com/external/github.com/google/shlex.git
 - package: golang.org/x/term
   version: master
   repo: https://go.googlesource.com/term.git
+- package: github.com/etcd-io/bbolt
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/etcd-io/bbolt.git
