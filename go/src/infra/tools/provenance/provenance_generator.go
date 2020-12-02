@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"strings"
 	"time"
@@ -154,4 +155,33 @@ func provenacePayload(subjectHash string, topLevelSource *provenancepb.TopLevelS
 	}
 
 	return encodeSegment(payloadSegment), nil
+}
+
+// Attestation struct for building/writing a single jwt.
+type Attestation struct {
+	jwt string
+}
+
+// Generates the final attestation and writes to a file.
+func generateProvenance(ctx context.Context, client *cloudkms.KeyManagementClient, header string, body string, keyPath string, outfile string) (string, error) {
+	signingInput := []byte(strings.Join([]string{header, body}, "."))
+	provenanceSignature, err := signAsymmetric(ctx, client, keyPath, signingInput)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign the provenance: %+v", err)
+	}
+
+	token := strings.Join([]string{header, body, provenanceSignature}, ".")
+	rawAttestation := Attestation{token}
+
+	provenance, err := json.Marshal(rawAttestation)
+	if err != nil {
+		return "", fmt.Errorf("failed to prepare provenance: %+v", err)
+	}
+
+	err = ioutil.WriteFile(outfile, provenance, 0744)
+	if err != nil {
+		return "", fmt.Errorf("failed to write provenance to file: %+v", err)
+	}
+
+	return token, nil
 }
