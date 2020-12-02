@@ -93,7 +93,7 @@ imports:
 - name: github.com/emirpasic/gods
   version: 79df803e554cab06f835fb729064282b2fd4cc99
   repo: https://chromium.googlesource.com/external/github.com/emirpasic/gods.git
-- name: github.com/etcd-io/bbolt
+- name: go.etcd.io/bbolt
   version: f6be82302843a215152f5a1daf652c1ee5503f85
   repo: https://chromium.googlesource.com/external/github.com/etcd-io/bbolt.git
 - name: github.com/fedesog/webdriver
