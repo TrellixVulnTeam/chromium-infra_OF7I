@@ -2,7 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# pylint: skip-file
+
 import traceback
+
+from lib import pages
 
 
 def process_page(request):
@@ -19,11 +23,10 @@ def process_page(request):
       private: Whether this page is from a private Rietveld issue.
   """
   params = request.get_json(force=True, silent=True)
-  path = params['path']
-  page_type = params['type']
-  private = params['private']
+  path = params['Path']
+  page_type = params['EntityKind']
+  private = params['Private']
 
   pages.process_page(path, page_type, private)
 
   return ''
-
