@@ -21,7 +21,6 @@ def ci_builder(
         extra_dimensions = None,
         schedule = None,
         infra_triggered = True,
-        experimental = False,
         tree_closing = False):
     infra.builder(
         name = name,
@@ -32,7 +31,6 @@ def ci_builder(
         triggered_by = [infra.poller()] if infra_triggered else None,
         schedule = schedule,
         properties = properties,
-        gatekeeper_group = "" if experimental else "chromium.infra",
         extra_dimensions = extra_dimensions,
         notifies = infra.tree_closing_notifiers() if tree_closing else None,
     )
@@ -66,7 +64,7 @@ def try_builder(
 # CI Linux.
 ci_builder(name = "infra-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
 ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
-ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", experimental = True, console_category = "linux|16.04|ARM")
+ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM")
 ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04")
 
 # CI OSX.
@@ -147,7 +145,6 @@ recipes.simulation_tester(
     triggered_by = infra.poller(),
     console_view = "infra",
     console_category = "misc",
-    gatekeeper_group = "chromium.infra",
 )
 
 luci.cq_tryjob_verifier(

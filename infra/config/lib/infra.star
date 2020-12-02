@@ -74,7 +74,6 @@ def builder(
 
         # Misc tweaks.
         properties = None,
-        gatekeeper_group = None,
         schedule = None,
         extra_dimensions = None,
         use_realms = False,
@@ -100,7 +99,6 @@ def builder(
       pool: target Swarming pool.
       service_account: a service account to run the build as.
       properties: a dict with properties to pass to the builder.
-      gatekeeper_group: a gatekeeper group to put it under.
       schedule: a string with builder schedule for cron-like builders.
       extra_dimensions: a dict with additional Swarming dimensions.
       use_realms: True to launch realms-aware builds.
@@ -121,10 +119,6 @@ def builder(
     caches = [infra.cache_gclient_with_go]
     if os.startswith("Mac"):
         caches.append(infra.cache_osx_sdk)
-
-    if gatekeeper_group:
-        properties = properties or {}
-        properties["$gatekeeper"] = {"group": gatekeeper_group}
 
     dimensions = {"os": os, "cpu": cpu or "x86-64", "pool": pool}
     if extra_dimensions:

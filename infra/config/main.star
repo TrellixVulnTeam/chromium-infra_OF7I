@@ -10,7 +10,6 @@ This is also enforced by PRESUBMIT.py script.
 
 Includes CI configs for the following subprojects:
   * Codesearch.
-  * Gatekeeper cron.
   * Gsubtreed crons.
   * WPT autoroller crons.
   * Chromium tarball publisher.
@@ -187,7 +186,6 @@ exec("//subprojects/build.star")
 exec("//subprojects/codesearch.star")
 exec("//subprojects/depot_tools.star")
 exec("//subprojects/expect_tests.star")
-exec("//subprojects/gatekeeper.star")
 exec("//subprojects/infra.star")
 exec("//subprojects/lkgr.star")
 exec("//subprojects/luci-go.star")

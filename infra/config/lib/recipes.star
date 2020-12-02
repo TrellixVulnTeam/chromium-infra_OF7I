@@ -30,8 +30,7 @@ def simulation_tester(
         project_under_test,
         triggered_by,
         console_view = None,
-        console_category = None,
-        gatekeeper_group = None):
+        console_category = None):
     """Defines a CI builder that runs recipe simulation tests.
 
     Args:
@@ -40,7 +39,6 @@ def simulation_tester(
       triggered_by: what builders trigger this one.
       console_view: a console to add it to.
       console_category: a category to use in the console.
-      gatekeeper_group: a gatekeeper group to add it to.
     """
 
     # Normally, this builder will be triggered on specific commit in this
@@ -48,8 +46,6 @@ def simulation_tester(
     # one uses LUCI scheduler "Trigger Now" feature, there will be no associated
     # commit and hence we need git_repo property.
     properties = {"git_repo": _repo_url(project_under_test)}
-    if gatekeeper_group:
-        properties["$gatekeeper"] = {"group": gatekeeper_group}
     luci.builder(
         name = name,
         bucket = "ci",

@@ -50,7 +50,6 @@ recipes.simulation_tester(
     project_under_test = "depot_tools",
     triggered_by = "depot_tools-gitiles-trigger",
     console_view = "depot_tools",
-    gatekeeper_group = "chromium.infra",
 )
 
 # Recipe rolls from Depot Tools.
@@ -92,11 +91,6 @@ luci.builder(
     service_account = "infra-ci-depot-tools-uploader@chops-service-accounts.iam.gserviceaccount.com",
     build_numbers = True,
     triggered_by = ["depot_tools-gitiles-trigger"],
-    properties = {
-        "$gatekeeper": {
-            "group": "chromium.infra",
-        },
-    },
 )
 luci.console_view_entry(
     builder = "depot_tools zip uploader",
