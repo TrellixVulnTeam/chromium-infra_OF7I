@@ -344,7 +344,9 @@
     "name": "find last non-crashing upstream revision.parse recipes.cfg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@recipes.cfg@{\"recipes_path\": \"some/path\"}@@@",
+      "@@@STEP_LOG_LINE@recipes.cfg@{@@@",
+      "@@@STEP_LOG_LINE@recipes.cfg@  \"recipes_path\": \"some/path\"@@@",
+      "@@@STEP_LOG_LINE@recipes.cfg@}@@@",
       "@@@STEP_LOG_END@recipes.cfg@@@"
     ]
   },
