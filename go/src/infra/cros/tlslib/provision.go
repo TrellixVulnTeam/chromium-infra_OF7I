@@ -636,7 +636,9 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		}
 
 		// After a reboot, need a new client connection.
-		c, err = s.clientPool.GetWithTimeout(addr, 300*time.Second)
+		sshCtx, cancel := context.WithTimeout(context.TODO(), 300*time.Second)
+		defer cancel()
+		c, err = s.clientPool.GetContext(sshCtx, addr)
 		if err != nil {
 			setError(newOperationError(
 				codes.Aborted,

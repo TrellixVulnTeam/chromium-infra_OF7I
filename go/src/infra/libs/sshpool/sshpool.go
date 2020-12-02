@@ -6,6 +6,7 @@
 package sshpool
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -63,12 +64,11 @@ func (p *Pool) Get(host string) (*ssh.Client, error) {
 	return c, err
 }
 
-// GetWithTimeout returns a good SSH client within the given timeout.
-func (p *Pool) GetWithTimeout(host string, t time.Duration) (*ssh.Client, error) {
-	timeout := time.After(t)
+// GetContext returns a good SSH client within the context timeout.
+func (p *Pool) GetContext(ctx context.Context, host string) (*ssh.Client, error) {
 	for {
 		select {
-		case <-timeout:
+		case <-ctx.Done():
 			return nil, fmt.Errorf("sshpool GetWithTimeout: timeout when trying to connect to %s", host)
 		default:
 			if c, err := p.Get(host); err == nil {
