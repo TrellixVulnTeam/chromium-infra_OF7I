@@ -28,6 +28,8 @@ automatic_scaling:
 
 ifdef(`DEV', `
 instance_class: F4
+automatic_scaling:
+  min_idle_instances: 1
 ')
 
 handlers:

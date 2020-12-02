@@ -21,12 +21,14 @@ automatic_scaling:
 ifdef(`STAGING', `
 instance_class: F4
 automatic_scaling:
-  min_idle_instances: 25
+  min_idle_instances: 1
   max_pending_latency: 0.2s
 ')
 
 ifdef(`DEV', `
 instance_class: F4
+automatic_scaling:
+  min_idle_instances: 1
 ')
 
 handlers:
