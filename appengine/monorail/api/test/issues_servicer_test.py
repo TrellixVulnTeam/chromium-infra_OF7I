@@ -2368,7 +2368,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.services.issue.TestAddComment(comment, 1)
 
     self.services.spam.FlagComment(
-        self.cnxn, self.issue_1.issue_id, comment.id, 999, 111, True)
+        self.cnxn, self.issue_1, comment.id, 999, 111, True)
     self.services.spam.RecordManualCommentVerdict(
         self.cnxn, self.services.issue, self.services.user, comment.id, 111,
         True)

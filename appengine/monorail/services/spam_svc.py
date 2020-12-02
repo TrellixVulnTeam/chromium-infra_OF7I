@@ -235,27 +235,32 @@ class SpamService(object):
 
     issue_service.UpdateIssues(cnxn, update_issues, update_cols=['is_spam'])
 
-  def FlagComment(self, cnxn, issue_id, comment_id, reported_user_id,
-                  reporting_user_id, flagged_spam):
+  def FlagComment(
+      self, cnxn, issue, comment_id, reported_user_id, reporting_user_id,
+      flagged_spam):
     """Creates or deletes a spam report on a comment."""
     # TODO(seanmccullough): Bulk comment flagging? There's no UI for that.
     if flagged_spam:
       self.report_tbl.InsertRow(
-          cnxn, ignore=True, issue_id=issue_id,
-          comment_id=comment_id, reported_user_id=reported_user_id,
+          cnxn,
+          ignore=True,
+          issue_id=issue.issue_id,
+          comment_id=comment_id,
+          reported_user_id=reported_user_id,
           user_id=reporting_user_id)
-      issue = issue_service.GetIssue(cnxn, issue_id, use_cache=False)
       issue_ref = '%s:%s' % (issue.project_name, issue.local_id)
       self.comment_actions.increment(
           {
               'type': 'flag',
-              'reporter_id': str(reporter_user_id),
+              'reporter_id': str(reporting_user_id),
               'issue': issue_ref,
               'comment_id': str(comment_id)
           })
     else:
       self.report_tbl.Delete(
-          cnxn, issue_id=issue_id, comment_id=comment_id,
+          cnxn,
+          issue_id=issue.issue_id,
+          comment_id=comment_id,
           user_id=reporting_user_id)
 
   def RecordClassifierIssueVerdict(self, cnxn, issue, is_spam, confidence,
@@ -327,8 +332,8 @@ class SpamService(object):
               'comment_id': str(comment_id)
           })
 
-  def RecordClassifierCommentVerdict(self, cnxn, comment, is_spam, confidence,
-      fail_open):
+  def RecordClassifierCommentVerdict(
+      self, cnxn, issue_service, comment, is_spam, confidence, fail_open):
     reason = REASON_FAIL_OPEN if fail_open else REASON_CLASSIFIER
     self.verdict_tbl.InsertRow(cnxn, comment_id=comment.id, is_spam=is_spam,
         reason=reason, classifier_confidence=confidence,

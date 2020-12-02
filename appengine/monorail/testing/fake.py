@@ -2298,14 +2298,16 @@ class SpamService(object):
       else:
         self.reports_by_issue_id[issue.issue_id].remove(user_id)
 
-  def FlagComment(self, cnxn, issue_id, comment_id, reported_user_id, user_id,
-                  flagged_spam):
-    if not comment_id in self.comment_reports_by_issue_id[issue_id]:
-      self.comment_reports_by_issue_id[issue_id][comment_id] = []
+  def FlagComment(
+      self, cnxn, issue, comment_id, reported_user_id, user_id, flagged_spam):
+    if not comment_id in self.comment_reports_by_issue_id[issue.issue_id]:
+      self.comment_reports_by_issue_id[issue.issue_id][comment_id] = []
     if flagged_spam:
-      self.comment_reports_by_issue_id[issue_id][comment_id].append(user_id)
+      self.comment_reports_by_issue_id[issue.issue_id][comment_id].append(
+          user_id)
     else:
-      self.comment_reports_by_issue_id[issue_id][comment_id].remove(user_id)
+      self.comment_reports_by_issue_id[issue.issue_id][comment_id].remove(
+          user_id)
 
   def RecordManualIssueVerdicts(
       self, cnxn, issue_service, issues, user_id, is_spam):

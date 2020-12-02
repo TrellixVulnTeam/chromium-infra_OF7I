@@ -4360,7 +4360,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddComment(flagged_comment, 1)
 
     self.services.spam.FlagComment(
-        self.cnxn, issue.issue_id, flagged_comment.id, flagged_comment.user_id,
+        self.cnxn, issue, flagged_comment.id, flagged_comment.user_id,
         self.user_2.user_id, True)
 
     # One user flagging a comment doesn't cause other users to see it as spam.
