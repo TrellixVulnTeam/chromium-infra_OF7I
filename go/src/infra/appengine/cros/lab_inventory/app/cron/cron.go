@@ -33,7 +33,6 @@ import (
 	"infra/appengine/cros/lab_inventory/app/converter"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	"infra/libs/cros/git"
-	"infra/libs/cros/gs"
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
@@ -97,6 +96,11 @@ func dumpToBQCronHandler(c *router.Context) (err error) {
 func syncDevConfigHandler(c *router.Context) error {
 	logging.Infof(c.Context, "Start syncing device_config repo")
 	cfg := config.Get(c.Context)
+	dCcfg := cfg.GetDeviceConfigSource()
+	cli, err := cfg2datastore.NewGitilesClient(c.Context, dCcfg.GetHost())
+	if err != nil {
+		return err
+	}
 	if cfg.GetProjectConfigSource().GetEnableProjectConfig() {
 		t, err := auth.GetRPCTransport(c.Context, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitilesapi.OAuthScope))
 		if err != nil {
@@ -108,16 +112,11 @@ func syncDevConfigHandler(c *router.Context) error {
 		if err != nil {
 			return err
 		}
-		gsClient, err := gs.NewClient(c.Context, t)
+
 		if err != nil {
 			return err
 		}
-		return deviceconfig.UpdateDatastoreFromBoxster(c.Context, gitClient, gsClient, bsCfg.GetProgramConfigsGsPath())
-	}
-	dCcfg := cfg.GetDeviceConfigSource()
-	cli, err := cfg2datastore.NewGitilesClient(c.Context, dCcfg.GetHost())
-	if err != nil {
-		return err
+		return deviceconfig.UpdateDatastoreFromBoxster(c.Context, gitClient, bsCfg.GetJoinedConfigPath(), cli, dCcfg.GetProject(), dCcfg.GetCommittish(), dCcfg.GetPath())
 	}
 	return deviceconfig.UpdateDatastore(c.Context, cli, dCcfg.GetProject(), dCcfg.GetCommittish(), dCcfg.GetPath())
 }

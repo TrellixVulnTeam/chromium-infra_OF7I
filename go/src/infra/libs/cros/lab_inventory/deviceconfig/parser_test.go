@@ -6,7 +6,6 @@ package deviceconfig
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -20,17 +19,18 @@ import (
 
 func TestParseConfigBundle(t *testing.T) {
 	Convey("Test config bundle parsing", t, func() {
-		var payload payload.ConfigBundle
+		var payloads payload.ConfigBundleList
 		unmarshaller := &jsonpb.Unmarshaler{AllowUnknownFields: false}
 		// Refer to https://chromium.googlesource.com/chromiumos/config/+/refs/heads/master/test/project/fake/fake/config.star for unittest check
 		b, err := ioutil.ReadFile("test_device_config_v2.jsonproto")
 		So(err, ShouldBeNil)
-		buf, err := fixFieldMaskForConfigBundle([]byte(b))
+		buf, err := fixFieldMaskForConfigBundleList([]byte(b))
 		So(err, ShouldBeNil)
-		err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &payload)
+		err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &payloads)
 		So(err, ShouldBeNil)
 		Convey("Happy path", func() {
-			dcs := parseConfigBundle(payload)
+			So(payloads.GetValues(), ShouldHaveLength, 1)
+			dcs := parseConfigBundle(payloads.GetValues()[0])
 			So(dcs, ShouldHaveLength, 6)
 			for _, dc := range dcs {
 				So(dc.GetId().GetPlatformId().GetValue(), ShouldEqual, "FAKE_PROGRAM")
@@ -123,33 +123,6 @@ func TestParseConfigBundle(t *testing.T) {
 				default:
 					t.Errorf("Invalid model:sku: %s", modelWithSku)
 				}
-			}
-		})
-	})
-}
-
-func TestParsePrograms(t *testing.T) {
-	Convey("Test parsing programs", t, func() {
-		b, err := ioutil.ReadFile("test_program_configs.json")
-		So(err, ShouldBeNil)
-		var programs Programs
-		err = json.Unmarshal(b, &programs)
-		So(err, ShouldBeNil)
-		Convey("Happy path", func() {
-			gitInfos, err := parsePrograms(&programs)
-			So(err, ShouldBeNil)
-			for _, g := range gitInfos {
-				fmt.Println(g.path, g.project)
-			}
-			So(gitInfos, ShouldHaveLength, 4)
-			for _, gi := range gitInfos {
-				So(gi.path, ShouldBeIn, []string{"generated/joined.jsonproto"})
-				So(gi.project, ShouldBeIn, []string{
-					"chromeos/program/galaxy",
-					"chromeos/project/galaxy/milkyway",
-					"chromeos/project/galaxy/andromeda",
-					"chromeos/project/galaxy/sombrero",
-				})
 			}
 		})
 	})

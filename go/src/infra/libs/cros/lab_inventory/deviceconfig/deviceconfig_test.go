@@ -288,7 +288,7 @@ type fakeGitClient struct {
 type fakeGSClient struct{}
 
 func (gc *fakeGitClient) GetFile(ctx context.Context, path string) (string, error) {
-	if gc.project != "chromeos/project/galaxy/milkyway" {
+	if path != "generated/configs.jsonproto" {
 		return "", nil
 	}
 	b, err := ioutil.ReadFile("test_device_config_v2.jsonproto")
@@ -315,9 +315,8 @@ func TestUpdateDatastoreFromBoxter(t *testing.T) {
 	Convey("Test update device config from boxster", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		gitilesMock := &fakeGitClient{}
-		gsClientMock := &fakeGSClient{}
 		Convey("Happy path", func() {
-			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, gsClientMock, "gs://fake-path/config.json")
+			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, "generated/configs.jsonproto", nil, "", "", "")
 			So(err, ShouldBeNil)
 			// There should be 6 entities created in datastore as
 			// test_device_config_v2.jsonproto contains 6 device configs.

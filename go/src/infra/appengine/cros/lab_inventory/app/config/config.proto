@@ -69,6 +69,8 @@ message ProjectConfigLocation {
   string branch = 4;
   // Indicate if new project configs are fully enabled.
   bool enable_project_config = 5;
+  // The joined config jsonproto path, e.g. "generated/configs.jsonproto".
+  string joined_config_path = 6;
 }
 
 message AdminService {

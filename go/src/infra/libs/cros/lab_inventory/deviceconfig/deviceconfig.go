@@ -17,7 +17,6 @@ import (
 	"golang.org/x/net/context"
 
 	"infra/libs/cros/git"
-	"infra/libs/cros/gs"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 )
 
@@ -88,17 +87,8 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 }
 
 // UpdateDatastoreFromBoxster updates datastore from boxster (go/boxster)
-func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsClient gs.ClientInterface, configGSPath string) error {
-	// gc is used in later CLs to download device project configs.
-	programs, err := getProgramConfigs(ctx, gsClient, configGSPath)
-	if err != nil {
-		return err
-	}
-	gitInfos, err := parsePrograms(programs)
-	if err != nil {
-		return errors.Annotate(err, "UpdateDatastoreFromBoxster: fail to parse programs").Err()
-	}
-	allDCs, err := getDeviceConfigs(ctx, gc, gitInfos)
+func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, joinedConfigPath string, client gitiles.GitilesClient, project, committish, path string) error {
+	allDCs, err := getDeviceConfigs(ctx, gc, joinedConfigPath)
 	if err != nil {
 		return errors.Annotate(err, "UpdateDatastoreFromBoxster: fail to read all device configs").Err()
 	}
@@ -106,6 +96,17 @@ func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsC
 	for i, c := range allDCs {
 		cfgs[i] = c
 	}
+	logging.Debugf(ctx, "Get %d device configs from boxster", len(cfgs))
+
+	// Will add in next CL, comment first
+	// if client != nil {
+	// 	var v0Cfgs device.AllConfigs
+	// 	cfg2datastore.DownloadCfgProto(ctx, client, project, committish, path, &v0Cfgs)
+	// 	logging.Debugf(ctx, "Get %d device configs from V0", len(v0Cfgs.GetConfigs()))
+
+	// 	compareBoxsterWithV0(ctx, allDCs, v0Cfgs.GetConfigs())
+	// }
+
 	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newDevCfgEntity)
 }
 
