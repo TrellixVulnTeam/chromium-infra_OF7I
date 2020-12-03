@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/errors"
+	. "go.chromium.org/luci/common/testing/assertions"
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -476,6 +477,21 @@ func TestListCrosDevicesLabConfig(t *testing.T) {
 			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp.PassedDevices, ShouldHaveLength, 1)
+
+		}
+		for _, d := range []*lab.ChromeOSDevice{&dut1, &dut2} {
+			resp2, err := tf.Inventory.UpdateDutsStatus(ctx, &api.UpdateDutsStatusRequest{
+				States: []*lab.DutState{
+					{
+						Id: &lab.ChromeOSDeviceID{
+							Value: d.GetId().GetValue(),
+						},
+						Servo: lab.PeripheralState_BROKEN,
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(resp2.GetUpdatedDevices(), ShouldHaveLength, 1)
 		}
 
 		resp, err := tf.Inventory.ListCrosDevicesLabConfig(tf.C, &api.ListCrosDevicesLabConfigRequest{})
@@ -487,9 +503,12 @@ func TestListCrosDevicesLabConfig(t *testing.T) {
 			c := lc.GetConfig()
 			if c.GetDut() != nil {
 				duts = append(duts, c.GetDut().GetHostname())
+				So(lc.GetState().GetServo(), ShouldEqual, lab.PeripheralState_BROKEN)
+				So(lc.GetState().GetId().GetValue(), ShouldEqual, c.GetId().GetValue())
 			}
 			if c.GetLabstation() != nil {
 				labstations = append(labstations, c.GetLabstation().GetHostname())
+				So(lc.GetState(), ShouldResembleProto, &lab.DutState{})
 			}
 		}
 		So(duts, ShouldContain, "dut1")

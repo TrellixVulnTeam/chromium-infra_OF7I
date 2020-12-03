@@ -86,6 +86,7 @@ message ListCrosDevicesLabConfigResponse {
 
   message LabConfig {
     lab.ChromeOSDevice config = 1;
+    lab.DutState state = 3;
     google.protobuf.Timestamp updated_time = 2;
   }
 }

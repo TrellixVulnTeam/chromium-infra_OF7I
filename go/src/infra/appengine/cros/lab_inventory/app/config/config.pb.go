@@ -266,7 +266,7 @@ type ProjectConfigLocation struct {
 	Branch string `protobuf:"bytes,4,opt,name=branch,proto3" json:"branch,omitempty"`
 	// Indicate if new project configs are fully enabled.
 	EnableProjectConfig bool `protobuf:"varint,5,opt,name=enable_project_config,json=enableProjectConfig,proto3" json:"enable_project_config,omitempty"`
-	// The joined config jsonproto path
+	// The joined config jsonproto path, e.g. "generated/configs.jsonproto".
 	JoinedConfigPath string `protobuf:"bytes,6,opt,name=joined_config_path,json=joinedConfigPath,proto3" json:"joined_config_path,omitempty"`
 }
 

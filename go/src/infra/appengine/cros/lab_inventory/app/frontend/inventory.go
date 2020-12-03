@@ -623,9 +623,14 @@ func (is *InventoryServerImpl) ListCrosDevicesLabConfig(ctx context.Context, req
 		if err := d.Entity.GetCrosDeviceProto(dev); err != nil {
 			logging.Debugf(ctx, "fail to get lab config proto for %s (%s)", d.Entity.ID, d.Entity.Hostname)
 		}
+		dutState := &lab.DutState{}
+		if err := d.Entity.GetDutStateProto(dutState); err != nil {
+			logging.Debugf(ctx, "fail to get dut state proto for %s (%s)", d.Entity.ID, d.Entity.Hostname)
+		}
 		utime, _ := ptypes.TimestampProto(d.Entity.Updated)
 		labConfigs = append(labConfigs, &api.ListCrosDevicesLabConfigResponse_LabConfig{
 			Config:      dev,
+			State:       dutState,
 			UpdatedTime: utime,
 		})
 	}
