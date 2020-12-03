@@ -109,11 +109,14 @@ func (c *listVMSlot) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	return printVMSlotsFull(ctx, ic, entities)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, entities, utils.PrintMachineLSEsJSON, printVMFreeSlotFull, printVMFreeSlotNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), false)
 }
 
-func (c *listVMSlot) listFreeVMSlots(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]*ufspb.MachineLSE, error) {
-	var entities []*ufspb.MachineLSE
+func (c *listVMSlot) listFreeVMSlots(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]proto.Message, error) {
+	var entities []proto.Message
 	var total int32
 	full := utils.FullMode(c.outputFlags.Full())
 	for _, filter := range filters {
@@ -131,23 +134,6 @@ func (c *listVMSlot) listFreeVMSlots(ctx context.Context, ic ufsAPI.FleetClient,
 		}
 	}
 	return entities, nil
-}
-
-func printVMSlotsFull(ctx context.Context, ic ufsAPI.FleetClient, entities []*ufspb.MachineLSE) error {
-	names := make([]string, len(entities))
-	for i := range entities {
-		entities[i].Name = ufsUtil.RemovePrefix(entities[i].Name)
-		names[i] = entities[i].GetName()
-	}
-	res, _ := ic.BatchGetDHCPConfigs(ctx, &ufsAPI.BatchGetDHCPConfigsRequest{
-		Names: names,
-	})
-	dhcpMap := make(map[string]*ufspb.DHCPConfig, 0)
-	for _, d := range res.GetDhcpConfigs() {
-		dhcpMap[d.GetHostname()] = d
-	}
-	utils.PrintFreeVMs(entities, dhcpMap)
-	return nil
 }
 
 func (c *listVMSlot) formatFilters() []string {
@@ -188,5 +174,41 @@ func (c *listVMSlot) validateArgs() error {
 	if len(c.states) == 0 {
 		c.states = []string{ufspb.State_STATE_SERVING.String()}
 	}
+	return nil
+}
+
+func printVMFreeSlotFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	entities := make([]*ufspb.MachineLSE, len(msgs))
+	names := make([]string, len(msgs))
+	for i, r := range msgs {
+		entities[i] = r.(*ufspb.MachineLSE)
+		entities[i].Name = ufsUtil.RemovePrefix(entities[i].Name)
+		names[i] = entities[i].GetName()
+	}
+	res, _ := ic.BatchGetDHCPConfigs(ctx, &ufsAPI.BatchGetDHCPConfigsRequest{
+		Names: names,
+	})
+	dhcpMap := make(map[string]*ufspb.DHCPConfig, 0)
+	for _, d := range res.GetDhcpConfigs() {
+		dhcpMap[d.GetHostname()] = d
+	}
+	if tsv {
+		for _, e := range entities {
+			utils.PrintTSVHostFull(e, dhcpMap[e.GetName()])
+		}
+		return nil
+	}
+	utils.PrintTitle(utils.VMFreeSlotFullTitle)
+	utils.PrintMachineLSEFull(entities, dhcpMap)
+	return nil
+}
+
+func printVMFreeSlotNormal(msgs []proto.Message, tsv, keysOnly bool) error {
+	if tsv {
+		utils.PrintTSVMachineLSEs(msgs, keysOnly)
+		return nil
+	}
+	utils.PrintTableTitle(utils.VMFreeSlotTitle, tsv, keysOnly)
+	utils.PrintMachineLSEs(msgs, keysOnly)
 	return nil
 }

@@ -43,7 +43,9 @@ var (
 	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
-	MachineLSETFullitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	MachineLSEFullTitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	VMFreeSlotTitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "Free slots", "DeploymentTicket", "Description", "UpdateTime"}
+	VMFreeSlotFullTitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
 	ZoneTitle                = []string{"Name", "EnumName", "Department"}
 	StateTitle               = []string{"Name", "EnumName", "Description"}
 )
@@ -1310,27 +1312,6 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	for _, s := range machineLSEOutputStrs(m) {
 		out += fmt.Sprintf("%s\t", s)
 	}
-	fmt.Fprintln(tw, out)
-}
-
-// PrintFreeVMs prints the all free slots in table form.
-func PrintFreeVMs(entities []*ufspb.MachineLSE, dhcps map[string]*ufspb.DHCPConfig) {
-	defer tw.Flush()
-	PrintTitle([]string{"Host", "Os Version", "Manufacturer", "Vlan", "Zone", "Free slots", "State"})
-	for _, h := range entities {
-		h.Name = ufsUtil.RemovePrefix(h.Name)
-		printFreeVM(h, dhcps[h.Name])
-	}
-}
-
-func printFreeVM(host *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) {
-	out := fmt.Sprintf("%s\t", host.GetName())
-	out += fmt.Sprintf("%s\t", host.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", host.GetManufacturer())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", host.GetZone())
-	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())
-	out += fmt.Sprintf("%s\t", host.GetResourceState().String())
 	fmt.Fprintln(tw, out)
 }
 

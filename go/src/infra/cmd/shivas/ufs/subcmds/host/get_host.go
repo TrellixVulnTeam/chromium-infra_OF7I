@@ -185,7 +185,7 @@ func printHostFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Mess
 		}
 		return nil
 	}
-	utils.PrintTitle(utils.MachineLSETFullitle)
+	utils.PrintTitle(utils.MachineLSEFullTitle)
 	utils.PrintMachineLSEFull(entities, dhcpMap)
 	return nil
 }
