@@ -25,12 +25,25 @@ class ProcessPageTest(unittest.TestCase):
       'HOST': 'https://www.example.com',
       'BUCKET_NAME': 'BUCKET_NAME',
     }
+    self.content = '\n'.join([
+      '<html>',
+      ' <body>',
+      '  <p>',
+      '   content',
+      '  </p>',
+      ' </body>',
+      '</html>',
+    ])
     mock.patch('os.getenv', self.env.get).start()
     mock.patch('pages.client').start()
     mock.patch('pages.session').start()
     self.addCleanup(mock.patch.stopall)
 
     self.response = pages.session.get()
+    self.response.status_code = 200
+    self.response.text = self.content
+    self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
+
     self.blob_fn = pages.client.get_bucket.return_value.blob
     self.blob = self.blob_fn.return_value
 
@@ -49,15 +62,37 @@ class ProcessPageTest(unittest.TestCase):
     with self.assertRaises(requests.exceptions.HTTPError):
       pages.process_page('/path', pages.PATCH, False)
 
-  def testUploadsToGoogleStorage(self):
-    self.response.status_code = 200
-    self.response.text = 'content'
-    self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
+  def testUploadsToGoogleStorage_Issue(self):
+    pages.process_page('/123', pages.ISSUE, False)
 
-    pages.process_page('/123/patch/1', pages.PATCH, False)
+    self.blob_fn.assert_called_once_with('/123/index.html')
+    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.assertEqual(
+        {'Rietveld-Private': False, 'Status-Code': 200},
+        self.blob.metadata)
+    self.assertEqual(
+        'text/html; charset=UTF-8',
+        self.blob.content_type)
+    self.blob.patch.assert_called_once_with()
+
+  def testUploadsToGoogleStorage_PatchSet(self):
+    pages.process_page('/123/patch/1', pages.PATCH_SET, False)
 
     self.blob_fn.assert_called_once_with('/123/patch/1')
-    self.blob.upload_from_string.assert_called_once_with('content')
+    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.assertEqual(
+        {'Rietveld-Private': False, 'Status-Code': 200},
+        self.blob.metadata)
+    self.assertEqual(
+        'text/html; charset=UTF-8',
+        self.blob.content_type)
+    self.blob.patch.assert_called_once_with()
+
+  def testUploadsToGoogleStorage_Patch(self):
+    pages.process_page('/123/patch/1/3', pages.PATCH, False)
+
+    self.blob_fn.assert_called_once_with('/123/patch/1/3')
+    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
@@ -67,14 +102,10 @@ class ProcessPageTest(unittest.TestCase):
     self.blob.patch.assert_called_once_with()
 
   def testUploadsToGoogleStorage_Private(self):
-    self.response.status_code = 200
-    self.response.text = 'content'
-    self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
+    pages.process_page('/123/patch/1/3', pages.PATCH, True)
 
-    pages.process_page('/123/patch/1', pages.PATCH, True)
-
-    self.blob_fn.assert_called_once_with('/123/patch/1')
-    self.blob.upload_from_string.assert_called_once_with('content')
+    self.blob_fn.assert_called_once_with('/123/patch/1/3')
+    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
     self.assertEqual(
         {'Rietveld-Private': True, 'Status-Code': 200},
         self.blob.metadata)
@@ -85,32 +116,13 @@ class ProcessPageTest(unittest.TestCase):
 
   def testUploadsToGoogleStorage_StatusCode(self):
     self.response.status_code = 404
-    self.response.text = 'content'
-    self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
 
-    pages.process_page('/123/patch/1', pages.PATCH, False)
+    pages.process_page('/123/patch/1/3', pages.PATCH, False)
 
-    self.blob_fn.assert_called_once_with('/123/patch/1')
-    self.blob.upload_from_string.assert_called_once_with('content')
+    self.blob_fn.assert_called_once_with('/123/patch/1/3')
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 404},
-        self.blob.metadata)
-    self.assertEqual(
-        'text/html; charset=UTF-8',
-        self.blob.content_type)
-    self.blob.patch.assert_called_once_with()
-
-  def testUploadsToGoogleStorage_Issue(self):
-    self.response.status_code = 200
-    self.response.text = 'content'
-    self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
-
-    pages.process_page('/123', pages.ISSUE, False)
-
-    self.blob_fn.assert_called_once_with('/123/index.html')
-    self.blob.upload_from_string.assert_called_once_with('content')
-    self.assertEqual(
-        {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
     self.assertEqual(
         'text/html; charset=UTF-8',

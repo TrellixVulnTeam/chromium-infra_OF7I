@@ -6,10 +6,11 @@
 
 import os
 import posixpath
-
 import requests
 
 from google.cloud import storage
+
+import process_content
 
 
 ISSUE = 'Issue'
@@ -41,6 +42,9 @@ def process_page(path, page_type, private):
     path: The page to fetch, e.g. '/1234/patchset/5'
     page_type: One of 'Issue', 'PatchSet' or 'Patch'.
     private: Whether this page is from a private Rietveld issue.
+
+  Raises FatalError if we failed to process the page due to a non-transient
+  issue.
   """
   if page_type not in KNOWN_PAGE_TYPES:
     message = 'Expected page type to be one of {}, got {}'.format(
@@ -55,9 +59,10 @@ def process_page(path, page_type, private):
   if response.status_code >= 500 or response.status_code == 429:
     response.raise_for_status()
 
-  # TODO(crbug.com/1146637): Process page content to remove dynamic links and
-  # unarchived pages.
+  # Process page content to remove dynamic links and unarchived pages.
   content = response.text
+  if response.status_code == 200:
+    content = _process_content(page_type, content)
 
   # Add a '/index.html' for issue pages. This makes it more convenient to browse
   # issues on Google Storage.
@@ -92,3 +97,15 @@ def _get_auth_headers():
   access_token = response.json()['access_token']
 
   return {'Authorization': 'Bearer {}'.format(access_token)}
+
+
+def _process_content(page_type, content):
+  try:
+    if page_type == ISSUE:
+      return process_content.process_issue(content)
+    if page_type == PATCH_SET:
+      return process_content.process_patch_set(content)
+    if page_type == PATCH:
+      return process_content.process_patch(content)
+  except Exception as e:
+    raise FatalError(e)
