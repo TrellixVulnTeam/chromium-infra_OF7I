@@ -120,7 +120,7 @@ func (c *testRunnerBuild) ToTestRun(ctx context.Context) *analytics.TestRun {
 		Status:       inferTestRunStatus(c.status),
 	}
 	if c.res != nil {
-		r.FullLogUrl = c.res.GetAutotestResult().GetSynchronousLogDataUrl()
+		r.FullLogUrl = c.res.GetLogData().GetGsUrl()
 		r.Verdict = &analytics.Verdict{
 			Value: inferTestRunVerdict(c.status, c.res),
 		}
