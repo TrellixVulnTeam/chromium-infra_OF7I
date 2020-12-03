@@ -17,8 +17,8 @@ import (
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
-	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
+	"infra/libs/git"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"

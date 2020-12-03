@@ -13,10 +13,10 @@ import (
 
 	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
-	"infra/libs/cros/git"
 	svlib "infra/libs/cros/stableversion"
 	filter "infra/libs/cros/stableversion/filter"
 	vc "infra/libs/cros/stableversion/validateconfig"
+	"infra/libs/git"
 
 	"github.com/maruel/subcommands"
 	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"

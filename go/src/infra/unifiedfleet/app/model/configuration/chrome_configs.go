@@ -11,7 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
-	gitlib "infra/libs/cros/git"
+	gitlib "infra/libs/git"
 )
 
 // ParsePlatformsFromFile parse chrome platforms in crimson format from local file.

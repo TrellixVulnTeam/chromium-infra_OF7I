@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 
-	gitlib "infra/libs/cros/git"
+	gitlib "infra/libs/git"
 )
 
 func getGitClient(ctx context.Context, gitilesHost, project, branch string) (*gitlib.Client, error) {

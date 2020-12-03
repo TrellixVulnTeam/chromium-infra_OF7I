@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"infra/libs/cros/git"
 	ca "infra/libs/fleet/protos"
 	fleet "infra/libs/fleet/protos/go"
+	"infra/libs/git"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	authclient "go.chromium.org/luci/auth"

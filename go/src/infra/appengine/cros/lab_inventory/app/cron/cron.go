@@ -32,7 +32,6 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/converter"
 	dronequeenapi "infra/appengine/drone-queen/api"
-	"infra/libs/cros/git"
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
@@ -42,6 +41,7 @@ import (
 	"infra/libs/cros/lab_inventory/hart"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	invprotos "infra/libs/cros/lab_inventory/protos"
+	"infra/libs/git"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.

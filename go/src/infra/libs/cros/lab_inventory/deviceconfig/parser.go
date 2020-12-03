@@ -19,7 +19,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	luciproto "go.chromium.org/luci/common/proto"
 
-	"infra/libs/cros/git"
+	"infra/libs/git"
 )
 
 var (

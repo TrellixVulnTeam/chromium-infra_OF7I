@@ -23,8 +23,8 @@ import (
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"go.chromium.org/luci/server/auth"
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
+	"infra/libs/git"
 	"infra/unifiedfleet/app/config"
 )
 
