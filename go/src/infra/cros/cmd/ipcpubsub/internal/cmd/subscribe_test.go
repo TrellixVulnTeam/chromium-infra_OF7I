@@ -6,8 +6,9 @@ package cmd
 
 import (
 	"context"
-	"infra/cmd/cros/ipcpubsub/pubsublib"
 	"testing"
+
+	"infra/cros/cmd/ipcpubsub/pubsublib"
 )
 
 type dummyMessage struct {

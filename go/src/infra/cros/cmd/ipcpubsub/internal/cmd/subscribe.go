@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"infra/cmd/cros/ipcpubsub/pubsublib"
+	"infra/cros/cmd/ipcpubsub/pubsublib"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/maruel/subcommands"

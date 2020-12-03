@@ -3,7 +3,7 @@ description: Binary impl. for inter-process communication via Cloud Pubsub.
 platforms:
   - linux-amd64
 go_packages:
-  - infra/cmd/cros/ipcpubsub
+  - infra/cros/cmd/ipcpubsub
 root: ../../go/bin
 data:
   - file: ipcpubsub${exe_suffix}

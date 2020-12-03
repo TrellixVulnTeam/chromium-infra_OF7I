@@ -8,7 +8,7 @@ import (
 	"context"
 	"flag"
 
-	"infra/cmd/cros/ipcpubsub/internal/site"
+	"infra/cros/cmd/ipcpubsub/internal/site"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/maruel/subcommands"
