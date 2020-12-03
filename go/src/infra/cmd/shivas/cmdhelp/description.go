@@ -30,7 +30,7 @@ Adds a switch by specifying several attributes directly.
 shivas add switch -i
 Adds a switch by reading input through interactive mode.`
 
-	// AddAssetLongDesc log description for AddAssetCmd
+	// AddAssetLongDesc long description for AddAssetCmd
 	AddAssetLongDesc string = `Add an asset to UFS
 Examples:
 shivas add asset -f asset.json
@@ -41,6 +41,57 @@ Adds an asset by specifying several attributes directly
 
 shivas add asset -name {asset name} -lab {lab name} -aisle {aisle} -row {row number}-rack {rack name} -type {asset type} -position {asset position}
 Alternate location specification for finer details.`
+
+	// AddDUTLongDesc long description for AddDUTCmd
+	AddDUTLongDesc string = `Add and deploy a DUT.
+Examples:
+shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -pool {swarming pool}
+Adds a DUT to UFS and triggers a swarming job to deploy the DUT.
+
+shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -deploy=false
+Adds a DUT to UFS. Doesn't trigger the deploy swarming job..
+
+shivas add dut -name {hostname} -machine {asset tag} -pool {swarming pool} -ufs=false
+Triggers a swarming job to deploy the DUT. Avoids updating to UFS.
+
+shivas add dut -name {hostname} -machine {asset tag} -pool {swarming pool} -ufs=false -deploy-dims "taggedJob:1234" -deploy-actions "stage-usb, update-label"
+Triggers a swarming job to deploy the DUT with optional dimensions and actions. Avoids updating to UFS.
+
+shivas add dut -f dut.json -deploy-dims "label-bluetooth:True
+Adds a DUT to UFS using a json description file and triggers a swarming job to deploy the DUT.`
+
+	// DUTRegistrationFileText description for json file input
+	DUTRegistrationFileText string = `path to a file containing DUT specification in JSON format.
+The file must contain one DUT specification.
+
+Example DUT:
+{
+	"name": "chromeos1-row1-rack11-host4",
+	"machineLsePrototype": "atl:standard",
+	"hostname": "chromeos1-row1-rack11-host4",
+	"chromeosMachineLse": {
+		"deviceLse": {
+			"dut": {
+				"hostname": "chromeos1-row1-rack11-host4",
+				"peripherals": {
+					"servo": {
+						"servoHostname": "chromeos1-row1-rack11-labstation",
+						"servoPort": 9904,
+					},
+				},
+				"criticalPools": [],
+				"pools": [
+						"faft_test_debug"
+				]
+			}
+		}
+	},
+	"machines": [
+		"1156928"
+	],
+	"deploymentTicket": "crbug.com/123456",
+	"description": "Fixed and replaced",
+}`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.

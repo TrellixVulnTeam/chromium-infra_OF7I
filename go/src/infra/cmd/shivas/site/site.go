@@ -27,6 +27,7 @@ type Environment struct {
 	UnifiedFleetService    string
 	SwarmingService        string
 	SwarmingServiceAccount string
+	LogdogService          string
 }
 
 // Prod is the environment for prod.
@@ -37,6 +38,7 @@ var Prod = Environment{
 	SwarmingService:     "https://chromeos-swarming.appspot.com/",
 	// TODO(crbug/1128496): remove when fixed
 	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
+	LogdogService:          "luci-logdog.appspot.com",
 }
 
 // Dev is the environment for dev.
@@ -46,6 +48,7 @@ var Dev = Environment{
 	SwarmingService:     "https://chromium-swarm-dev.appspot.com/",
 	// TODO(crbug/1128496): remove when fixed
 	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
+	LogdogService:          "luci-logdog-dev.appspot.com",
 }
 
 // CommonFlags controls some commonly-used CLI flags.

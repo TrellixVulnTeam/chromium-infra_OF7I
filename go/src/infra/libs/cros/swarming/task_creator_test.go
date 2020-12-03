@@ -53,8 +53,8 @@ func TestReserveDUTRequest(t *testing.T) {
 			switch d.Key {
 			case "pool":
 				So(d.Value, ShouldEqual, "ChromeOSSkylab")
-			case "dut_id":
-				So(d.Value, ShouldEqual, "fake_dut_id")
+			case "id":
+				So(d.Value, ShouldEqual, "crossk-fake_dut_host")
 			}
 		}
 		So("skylab-tool:Reserve", ShouldBeIn, r.Tags)

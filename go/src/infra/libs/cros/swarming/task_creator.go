@@ -15,21 +15,44 @@ import (
 	sw "infra/libs/skylab/swarming"
 
 	"github.com/google/uuid"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
+	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 )
 
-const defaultTaskPriority = 25
+const (
+	// LuciProject is used to tag the chromeos tasks.
+	LuciProject = "chromeos"
+
+	// ReserveDUTTaskPriority is the priority used for ReserveDUT task.
+	ReserveDUTTaskPriority = 25
+
+	// DUTIDDimensionKey is the dimension key for dut ID.
+	DUTIDDimensionKey = "dut_id"
+
+	// IDDimensionKey is the dimension key for ID.
+	IDDimensionKey = "id"
+
+	// PoolDimensionKey is the dimension key for pool.
+	PoolDimensionKey = "pool"
+)
 
 // TaskCreator creates Swarming tasks
 type TaskCreator struct {
 	// Client is Swarming API Client
 	client *sw.Client
-	// SwarmingService is a path to teh Swarming API
+	// SwarmingService is a path to Swarming API
 	swarmingService string
 	// Session is an ID that is used to mark tasks and for tracking all of the tasks created in a logical session.
-	session     string
+	session string
+	// Authenticator is used to get user info
+	authenticator *auth.Authenticator
+	// LogdogService is the logdog service for the task logs
+	LogdogService string
+	// SwarmingServiceAccount is the service account to be used
+	SwarmingServiceAccount string
+
 	LUCIProject string
 }
 
@@ -43,22 +66,48 @@ type TaskInfo struct {
 
 // NewTaskCreator creates and initialize the TaskCreator.
 func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, swarmingService string) (*TaskCreator, error) {
-	h, err := cmdlib.NewHTTPClient(ctx, authFlags)
+	a, err := cmdlib.NewAuthenticator(ctx, authFlags)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
+		return nil, errors.Annotate(err, "failed to create TaskCreator. Authenticator error").Err()
 	}
-	client, err := sw.NewClient(h, swarmingService)
+	h, err := a.Client()
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
+		return nil, errors.Annotate(err, "failed to create TaskCreator. Cannot create http client").Err()
+	}
+
+	service, err := sw.NewClient(h, swarmingService)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create TaskCreator. Cannot create API client").Err()
 	}
 
 	tc := &TaskCreator{
-		client:          client,
+		client:          service,
 		swarmingService: swarmingService,
 		session:         uuid.New().String(),
-		LUCIProject:     "chromeos",
+		LUCIProject:     LuciProject,
+		authenticator:   a,
 	}
 	return tc, nil
+}
+
+// LogdogURL returns the logdog URL for task logs, empty string if logdog service not set.
+func (tc *TaskCreator) LogdogURL() string {
+	if tc.LogdogService != "" {
+		return fmt.Sprintf("logdog://%s/%s/%s/+/annotations", tc.LogdogService, tc.LUCIProject, tc.session)
+	}
+	return ""
+}
+
+// MapToSwarmingDimensions converts from a go map to SwarmingRpcsStringPair
+func MapToSwarmingDimensions(dims map[string]string) []*swarming.SwarmingRpcsStringPair {
+	var dimensions []*swarming.SwarmingRpcsStringPair
+	for dimKey, dimValue := range dims {
+		dimensions = append(dimensions, &swarming.SwarmingRpcsStringPair{
+			Key:   dimKey,
+			Value: dimValue,
+		})
+	}
+	return dimensions
 }
 
 // ReserveDUT schedule task to change DUT state to reserved
@@ -67,32 +116,32 @@ func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host stri
 }
 
 // ReserveDUTRequest creates task request to change DUT state to reserved
-func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host string) *swarming_api.SwarmingRpcsNewTaskRequest {
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host string) *swarming.SwarmingRpcsNewTaskRequest {
+	slices := []*swarming.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 2 * 60 * 60,
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+		Properties: &swarming.SwarmingRpcsTaskProperties{
 			Command: changeDUTStateCommand("set_reserved"),
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: sw.SkylabPool},
-				{Key: "id", Value: dutNameToBotID(host)},
+			Dimensions: []*swarming.SwarmingRpcsStringPair{
+				{Key: PoolDimensionKey, Value: sw.SkylabPool},
+				{Key: IDDimensionKey, Value: dutNameToBotID(host)},
 			},
 			ExecutionTimeoutSecs: int64(5 * 60),
 		},
 	}}
-	return &swarming_api.SwarmingRpcsNewTaskRequest{
+	return &swarming.SwarmingRpcsNewTaskRequest{
 		Name: "Reserve",
 		Tags: tc.combineTags("Reserve", "",
 			[]string{
 				fmt.Sprintf("dut-name:%s", host),
 			}),
 		TaskSlices:     slices,
-		Priority:       defaultTaskPriority,
+		Priority:       ReserveDUTTaskPriority,
 		ServiceAccount: serviceAccount,
 	}
 }
 
 // Schedule registers task in the swarming
-func (tc *TaskCreator) schedule(ctx context.Context, req *swarming_api.SwarmingRpcsNewTaskRequest) (*TaskInfo, error) {
+func (tc *TaskCreator) schedule(ctx context.Context, req *swarming.SwarmingRpcsNewTaskRequest) (*TaskInfo, error) {
 	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
 	defer cf()
 	resp, err := tc.client.CreateTask(ctx, req)

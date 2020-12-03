@@ -11,6 +11,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/asset"
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
+	"infra/cmd/shivas/ufs/subcmds/dut"
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
@@ -70,6 +71,7 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		rackprototype.AddRackLSEPrototypeCmd,
 		chromeplatform.AddChromePlatformCmd,
 		vlan.AddVlanCmd,
+		dut.AddDUTCmd,
 	}
 }
 
