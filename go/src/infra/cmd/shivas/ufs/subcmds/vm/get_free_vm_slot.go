@@ -46,9 +46,13 @@ Fetches 5 vm slots by manufacturer of chrome platform.
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.machines), "machine", "Name(s) of a machine to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.prototypes), "prototype", "Name(s) of a host prototype to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.manufacturers), "man", "Name(s) of a manufacturer to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.oses), "os", "Name(s) of a tag to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.vdcs), "vdc", "Name(s) of a virtual datacenter to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.oses), "os", "Name(s) of an os to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.nics), "nic", "Name(s) of a nic to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.vdcs), "vdc", "Name(s) of a vdc to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.vlans), "vlan", "Name(s) of a vlan to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
@@ -64,10 +68,14 @@ type listVMSlot struct {
 	zones         []string
 	racks         []string
 	machines      []string
-	oses          []string
+	prototypes    []string
 	manufacturers []string
+	oses          []string
+	nics          []string
 	vdcs          []string
+	tags          []string
 	states        []string
+	vlans         []string
 
 	number int
 }
@@ -140,10 +148,14 @@ func (c *listVMSlot) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("man", c.manufacturers)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("machine", c.machines)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("machineprototype", c.prototypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("man", c.manufacturers)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("os", c.oses)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("nic", c.nics)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("vdc", c.vdcs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("vlan", c.vlans)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
 	return filters
 }
