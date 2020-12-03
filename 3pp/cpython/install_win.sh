@@ -20,8 +20,6 @@ rm -vrf SourceDir/tcl
 rm -vrf SourceDir/Doc
 rm -vrf SourceDir/DLLs/tcl*.*
 rm -vrf SourceDir/DLLs/tk*.*
-rm -vrf SourceDir/include
-rm -vrf SourceDir/libs
 rm -vrf SourceDir/Lib/test
 rm -vrf SourceDir/Lib/*/*test*
 rm -vrf SourceDir/Lib/tkinter

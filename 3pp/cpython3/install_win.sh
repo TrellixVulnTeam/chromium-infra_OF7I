@@ -10,8 +10,8 @@ set -o pipefail
 PREFIX="$1"
 
 # Remove all .msi bits we don't want.
-rm -vrf -- *_d.msi *_pdb.msi test.msi tcl*.msi doc.msi dev.msi launcher.msi \
-  path.msi pip.msi tools.msi
+rm -vrf -- *_d.msi *_pdb.msi test.msi tcl*.msi doc.msi launcher.msi path.msi \
+  pip.msi tools.msi
 
 # Extract the rest of the msi's to the current directory.
 for x in *.msi; do
