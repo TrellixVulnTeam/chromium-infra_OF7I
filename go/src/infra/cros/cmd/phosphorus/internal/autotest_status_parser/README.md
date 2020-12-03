@@ -1,22 +1,29 @@
-# Autotest results parser.
+# Autotest results parser
 
 [TOC]
 
-This binary is used by `skylab_swarming_worker` and `skylab_test_runner` to
-extract test results from the test result summary file (`status.log`) and the
-exit code file (`.autoserv_execute`) created by the autotest harness inside the
-results directory. The parsing is a simpler version of the one done by
-tko/parse.
+This package defines the `parse` sub-command of `phosphorus`, used to  extract
+test results from the test result summary file (`status.log`) and the exit code
+file (`.autoserv_execute`) created by the autotest harness inside the results
+directory. The parsing is a simpler version of the one done by tko/parse.
 
 ## `status.log` format
+
 The `status.log` file consists of test event lines and miscellaneous stderr
 output. The test event lines are nested according to the subtest hierarchy.
 Each event line
-* starts with a number of tab characters represeting the nesting depth,
-* consists of strings separated by the tab character,
+
+* starts with a number of tab characters represeting the nesting depth
+
+* consists of strings separated by the tab character
+
 * has the following format:
-```status	testDirectory	testName	key1=value1	key2=value2	...	comments and/or failure reason
-```
+
+  ```
+  status	testDirectory	testName	key1=value1	key2=value2
+      ...	comments and/or failure reason
+  ```
+
 Status can be "START", "INFO", test result outcome ("GOOD", "FAIL", "WARN" etc)
 or "END " + test result outcome ("END GOOD", etc).
 
@@ -26,6 +33,7 @@ Each subtest block starts with a "START" event line and ends with an "END ..."
 event line.
 
 ## A typical `status.log` file
+
 ```
 START	test1	test1	timestamp=1561420800	localtime=Jun 26 00:00:00
 	START	test1_subtest	test1_subtest	timestamp=1561420801	localtime=Jun 26 00:00:01

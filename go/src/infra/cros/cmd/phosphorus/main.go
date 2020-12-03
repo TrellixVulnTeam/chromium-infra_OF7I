@@ -19,7 +19,7 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	serverauth "go.chromium.org/luci/server/auth"
 
-	parser "infra/cros/cmd/autotest_status_parser/cmd"
+	parser "infra/cros/cmd/phosphorus/internal/autotest_status_parser/cmd"
 	"infra/cros/cmd/phosphorus/internal/cmd"
 	localstate "infra/cros/cmd/phosphorus/internal/skylab_local_state/cmd"
 )
