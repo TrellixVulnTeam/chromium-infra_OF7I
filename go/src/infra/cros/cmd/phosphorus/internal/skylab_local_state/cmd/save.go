@@ -23,8 +23,8 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 
-	"infra/cros/cmd/skylab_local_state/location"
-	"infra/cros/cmd/skylab_local_state/ufs"
+	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
+	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
 	"infra/libs/cros/dutstate"
 )
 

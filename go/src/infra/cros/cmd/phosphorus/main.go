@@ -21,7 +21,7 @@ import (
 
 	parser "infra/cros/cmd/autotest_status_parser/cmd"
 	"infra/cros/cmd/phosphorus/internal/cmd"
-	localstate "infra/cros/cmd/skylab_local_state/cmd"
+	localstate "infra/cros/cmd/phosphorus/internal/skylab_local_state/cmd"
 )
 
 func getApplication(authOpts auth.Options) *cli.Application {

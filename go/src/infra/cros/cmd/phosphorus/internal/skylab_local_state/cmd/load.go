@@ -18,7 +18,7 @@ import (
 	"go.chromium.org/luci/lucictx"
 
 	fleet "infra/appengine/cros/lab_inventory/api/v1"
-	"infra/cros/cmd/skylab_local_state/location"
+	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
 
