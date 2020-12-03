@@ -41,7 +41,7 @@ Fetches 5 vm slots by manufacturer of chrome platform.
 		c.envFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
 
-		c.Flags.IntVar(&c.number, "n", 0, "the number of free vm slots to fetch.")
+		c.Flags.IntVar(&c.number, "n", 100000, "the number of free vm slots to fetch.")
 
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
