@@ -574,6 +574,7 @@ func logChromeBrowserMachineLse(resourceName string, oldData, newData *ufspb.Chr
 func logChromeOSMachineLse(resourceName string, oldData, newData *ufspb.ChromeOSMachineLSE) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logSwitchInterface(resourceName, oldData.GetDeviceLse().GetNetworkDeviceInterface(), newData.GetDeviceLse().GetNetworkDeviceInterface())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_os_machine_lse.servos", oldData.GetDeviceLse().GetLabstation().GetServos(), newData.GetDeviceLse().GetLabstation().GetServos())...)
 	return changes
 }
 

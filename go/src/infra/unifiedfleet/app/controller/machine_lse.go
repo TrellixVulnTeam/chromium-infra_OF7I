@@ -494,12 +494,18 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 			existingServo := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 			if existingServo != nil {
-				// 1. remove the existingServo entry of DUT form existingLabstationMachinelse
+				// remove the existingServo entry of DUT form existingLabstationMachinelse
 				existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, existingServo.GetServoHostname())
 				if err != nil {
 					return err
 				}
+
+				// Copy for logging
+				oldLabstation := proto.Clone(existingLabstationMachinelse).(*ufspb.MachineLSE)
+
+				// remove the servo entry from labstation
 				removeServoEntryFromLabstation(existingServo, existingLabstationMachinelse)
+
 				// BatchUpdate Labstation - Using Batch update and not UpdateMachineLSE,
 				// because we cant have nested transaction in datastore
 				_, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{existingLabstationMachinelse})
@@ -507,6 +513,11 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 					logging.Errorf(ctx, "Failed to BatchUpdate Labstation MachineLSE %s", err)
 					return err
 				}
+
+				// log events for labstation
+				hcLabstation := getHostHistoryClient(existingLabstationMachinelse)
+				hcLabstation.LogMachineLSEChanges(oldLabstation, existingLabstationMachinelse)
+				hcLabstation.SaveChangeEvents(ctx)
 			}
 		}
 

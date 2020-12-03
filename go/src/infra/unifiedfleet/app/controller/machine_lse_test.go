@@ -1398,14 +1398,16 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			_, err := registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
 
-			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-92")
-			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse)
-			So(err, ShouldBeNil)
-
 			servo := &chromeosLab.Servo{
 				ServoHostname: "RedLabstation-92",
 				ServoPort:     92,
 			}
+
+			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-92")
+			labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
+			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse)
+			So(err, ShouldBeNil)
+
 			peripherals := &chromeosLab.Peripherals{
 				Servo: servo,
 			}
@@ -1429,6 +1431,17 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 
 			resp, _ := inventory.GetMachineLSE(ctx, "RedLabstation-92")
 			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldBeEmpty)
+
+			// verify changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-92")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.chrome_os_machine_lse.servos")
+			So(changes[0].GetOldValue(), ShouldContainSubstring, servo.ServoHostname)
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/RedLabstation-92")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 	})
 }
