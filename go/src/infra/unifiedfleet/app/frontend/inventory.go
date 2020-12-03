@@ -163,7 +163,7 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.List
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListMachineLSEs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	result, nextPageToken, err := controller.ListMachineLSEs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly, req.Full)
 	if err != nil {
 		return nil, err
 	}

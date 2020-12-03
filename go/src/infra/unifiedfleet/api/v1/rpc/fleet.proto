@@ -722,6 +722,11 @@ message ListMachinesRequest {
   // if this is true, only keys will be returned else the entire object
   // will be returned. By setting this to true, the list call be will faster.
   bool keysOnly = 4;
+
+  // if this is true, machine will contain the full information of Nic/Drac.
+  // By setting this to true, the list call will be slower as the server
+  // needs to query and populate the Nic/Drac for each machine.
+  bool full = 5;
 }
 
 message ListMachinesResponse {
@@ -822,6 +827,11 @@ message ListRacksRequest {
   // if this is true, only keys will be returned else the entire object
   // will be returned. By setting this to true, the list call be will faster.
   bool keysOnly = 4;
+
+  // if this is true, rack will contain the full information of KVM/RPM/Switch.
+  // By setting this to true, the list call will be slower as the server
+  // needs to query and populate the KVM/RPM/Switch for each rack.
+  bool full = 5;
 }
 
 message ListRacksResponse {
@@ -905,6 +915,11 @@ message ListMachineLSEsRequest {
   // if this is true, only keys will be returned else the entire object
   // will be returned. By setting this to true, the list call be will faster.
   bool keysOnly = 4;
+
+  // if this is true, machinelse will contain the full information of VMs.
+  // By setting this to true, the list call will be slower as the server
+  // needs to query and populate the VM for each machinelse.
+  bool full = 5;
 }
 
 message ListMachineLSEsResponse {

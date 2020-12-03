@@ -128,7 +128,7 @@ func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *ufsAPI.ListMac
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListMachines(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	result, nextPageToken, err := controller.ListMachines(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly, req.Full)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *ufsAPI.ListRacksR
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRacks(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	result, nextPageToken, err := controller.ListRacks(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly, req.Full)
 	if err != nil {
 		return nil, err
 	}

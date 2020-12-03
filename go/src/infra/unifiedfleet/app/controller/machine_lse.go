@@ -391,7 +391,9 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 	if err != nil {
 		return nil, err
 	}
-	setMachineLSE(ctx, lse)
+	if lse.GetChromeBrowserMachineLse() != nil {
+		setMachineLSE(ctx, lse)
+	}
 	return lse, nil
 }
 
@@ -406,7 +408,7 @@ func BatchGetMachineLSEs(ctx context.Context, ids []string) ([]*ufspb.MachineLSE
 }
 
 // ListMachineLSEs lists the machinelses
-func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSE, string, error) {
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]*ufspb.MachineLSE, string, error) {
 	var filterMap map[string][]interface{}
 	var err error
 	if filter != "" {
@@ -435,6 +437,11 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 		if err != nil {
 			return nil, "", err
 		}
+		if full && !keysOnly {
+			for _, lse := range lses {
+				setMachineLSE(ctx, lse)
+			}
+		}
 		res := make([]*ufspb.MachineLSE, 0)
 		var total int32
 		for _, lse := range lses {
@@ -450,7 +457,16 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 		}
 		return res, "", nil
 	}
-	return inventory.ListMachineLSEs(ctx, pageSize, pageToken, filterMap, keysOnly)
+	lses, nextPageToken, err := inventory.ListMachineLSEs(ctx, pageSize, pageToken, filterMap, keysOnly)
+	if full && !keysOnly {
+		for _, lse := range lses {
+			// VM info not associated with CrOS machinelses.
+			if lse.GetChromeBrowserMachineLse() != nil {
+				setMachineLSE(ctx, lse)
+			}
+		}
+	}
+	return lses, nextPageToken, err
 }
 
 // DeleteMachineLSE deletes the machinelse in datastore

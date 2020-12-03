@@ -1086,19 +1086,19 @@ func TestListMachines(t *testing.T) {
 	}
 	Convey("ListMachines", t, func() {
 		Convey("List Machines - filter invalid - error", func() {
-			_, _, err := ListMachines(ctx, 5, "", "invalid=mx-1", false)
+			_, _, err := ListMachines(ctx, 5, "", "invalid=mx-1", false, false)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
 		})
 
 		Convey("List Machines - filter chromeplatform - happy path", func() {
-			resp, _, _ := ListMachines(ctx, 5, "", "platform=cp-12", false)
+			resp, _, _ := ListMachines(ctx, 5, "", "platform=cp-12", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machinesWithChromeplatform)
 		})
 
 		Convey("ListMachines - Full listing - happy path", func() {
-			resp, _, _ := ListMachines(ctx, 5, "", "", false)
+			resp, _, _ := ListMachines(ctx, 5, "", "", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machines)
 		})

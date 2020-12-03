@@ -1536,19 +1536,19 @@ func TestListMachineLSEs(t *testing.T) {
 	}
 	Convey("ListMachineLSEs", t, func() {
 		Convey("List MachineLSEs - filter invalid - error", func() {
-			_, _, err := ListMachineLSEs(ctx, 5, "", "invalid=mx-1", false)
+			_, _, err := ListMachineLSEs(ctx, 5, "", "invalid=mx-1", false, false)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
 		})
 
 		Convey("List MachineLSEs - filter switch - happy path with filter", func() {
-			resp, _, _ := ListMachineLSEs(ctx, 5, "", "switch=switch-1", false)
+			resp, _, _ := ListMachineLSEs(ctx, 5, "", "switch=switch-1", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machineLSEsWithSwitch)
 		})
 
 		Convey("ListMachineLSEs - Full listing - happy path", func() {
-			resp, _, _ := ListMachineLSEs(ctx, 5, "", "", false)
+			resp, _, _ := ListMachineLSEs(ctx, 5, "", "", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machineLSEs)
 		})
@@ -1571,7 +1571,7 @@ func TestListMachineLSEs(t *testing.T) {
 			}
 			fields := make([]interface{}, 1)
 			fields[0] = "apple"
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", "man=apple & free=true", false)
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", "man=apple & free=true", false, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldBeNil)

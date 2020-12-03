@@ -485,7 +485,7 @@ func validateKVMPort(ctx context.Context, assetName string, kvmInterface *ufspb.
 	}
 	kvmID := kvmInterface.GetKvm()
 	kvmPort := kvmInterface.GetPortName()
-	machines, _, err := ListMachines(ctx, -1, "", fmt.Sprintf("kvm=%s & kvmport=%s", kvmID, kvmPort), false)
+	machines, _, err := ListMachines(ctx, -1, "", fmt.Sprintf("kvm=%s & kvmport=%s", kvmID, kvmPort), false, false)
 	if err != nil {
 		return err
 	}

@@ -361,7 +361,7 @@ func BatchGetMachines(ctx context.Context, ids []string) ([]*ufspb.Machine, erro
 }
 
 // ListMachines lists the machines
-func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Machine, string, error) {
+func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]*ufspb.Machine, string, error) {
 	var filterMap map[string][]interface{}
 	var err error
 	if filter != "" {
@@ -372,7 +372,16 @@ func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string,
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetZoneFilter(filterMap)
-	return registration.ListMachines(ctx, pageSize, pageToken, filterMap, keysOnly)
+	machines, nextPageToken, err := registration.ListMachines(ctx, pageSize, pageToken, filterMap, keysOnly)
+	if full && !keysOnly {
+		for _, machine := range machines {
+			// Nics or Drac info not associated with CrOS machines, yet.
+			if machine.GetChromeBrowserMachine() != nil {
+				setMachine(ctx, machine)
+			}
+		}
+	}
+	return machines, nextPageToken, err
 }
 
 // GetAllMachines returns all machines in datastore.

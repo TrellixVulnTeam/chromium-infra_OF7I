@@ -290,7 +290,7 @@ func BatchGetRacks(ctx context.Context, ids []string) ([]*ufspb.Rack, error) {
 }
 
 // ListRacks lists the racks
-func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Rack, string, error) {
+func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]*ufspb.Rack, string, error) {
 	var filterMap map[string][]interface{}
 	var err error
 	if filter != "" {
@@ -301,7 +301,13 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetZoneFilter(filterMap)
-	return registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
+	racks, nextPageToken, err := registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
+	if full && !keysOnly {
+		for _, rack := range racks {
+			setRack(ctx, rack)
+		}
+	}
+	return racks, nextPageToken, err
 }
 
 // DeleteRack deletes the rack in datastore

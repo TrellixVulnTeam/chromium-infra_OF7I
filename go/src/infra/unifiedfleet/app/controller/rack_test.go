@@ -649,19 +649,19 @@ func TestListRacks(t *testing.T) {
 	}
 	Convey("ListRacks", t, func() {
 		Convey("List Racks - filter invalid - error", func() {
-			_, _, err := ListRacks(ctx, 5, "", "invalid=mx-1", false)
+			_, _, err := ListRacks(ctx, 5, "", "invalid=mx-1", false, false)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
 		})
 
 		Convey("List Racks - filter switch - happy path", func() {
-			resp, _, _ := ListRacks(ctx, 5, "", "tag=tag-12", false)
+			resp, _, _ := ListRacks(ctx, 5, "", "tag=tag-12", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, racksWithSwitch)
 		})
 
 		Convey("ListRacks - Full listing - happy path", func() {
-			resp, _, _ := ListRacks(ctx, 5, "", "", false)
+			resp, _, _ := ListRacks(ctx, 5, "", "", false, false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, racks)
 		})
