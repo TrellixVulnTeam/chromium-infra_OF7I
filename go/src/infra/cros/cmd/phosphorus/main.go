@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	serverauth "go.chromium.org/luci/server/auth"
 
+	parser "infra/cros/cmd/autotest_status_parser/cmd"
 	"infra/cros/cmd/phosphorus/internal/cmd"
 	localstate "infra/cros/cmd/skylab_local_state/cmd"
 )
@@ -45,6 +46,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 			cmd.UploadToGS(authOpts),
 			localstate.Load(authOpts),
 			localstate.Save(authOpts),
+			parser.Parse,
 		},
 	}
 }
