@@ -92,9 +92,34 @@ func TestTBRRules(t *testing.T) {
 				},
 			},
 		}
+		botCommitCl := &gerrit.Change{
+			ChangeID:        "botcommit123",
+			ChangeNumber:    4322,
+			CurrentRevision: "7b12c0de3",
+			Owner: gerrit.AccountInfo{
+				AccountID: 1337,
+			},
+			Labels: map[string]gerrit.LabelInfo{
+				"Bot-Commit": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 1551,
+							},
+							Value: 1,
+						},
+					},
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
+			},
+		}
 		q := map[string][]*gerrit.Change{
 			"commit:7b12c0de1": {reviewedcl},
 			"commit:7b12c0de2": {notreviewedcl},
+			"commit:7b12c0de3": {botCommitCl},
 		}
 		testClients := &Clients{}
 		testClients.gerrit = &mockGerritClient{q: q}
