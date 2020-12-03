@@ -62,6 +62,35 @@ func TestReviewBenignFileChange(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(len(invalidFiles), ShouldEqual, 0)
 		})
+		Convey("missing config", func() {
+			hostCfg.BenignFilePattern = nil
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"a/b.txt": nil,
+				},
+			}, nil)
+
+			invalidFiles, err := reviewBenignFileChange(ctx, nil, gerritMock, t)
+			So(err, ShouldBeNil)
+			So(invalidFiles, ShouldResemble, []string{"a/b.txt"})
+		})
+		Convey("invalid file extension", func() {
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"a/b.md": nil,
+				},
+			}, nil)
+
+			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
+			So(err, ShouldBeNil)
+			So(invalidFiles, ShouldResemble, []string{"a/b.md"})
+		})
 		Convey("invalid file", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 				Number:     t.Number,
@@ -80,6 +109,5 @@ func TestReviewBenignFileChange(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(invalidFiles, ShouldResemble, []string{"a/d.txt", "a/e/p/p.txt", "a/f/z.txt", "a/p"})
 		})
-
 	})
 }

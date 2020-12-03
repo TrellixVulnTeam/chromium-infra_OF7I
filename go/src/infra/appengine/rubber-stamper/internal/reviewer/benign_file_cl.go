@@ -31,12 +31,24 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 		return nil, err
 	}
 
+	if hostCfg == nil || hostCfg.BenignFilePattern == nil {
+		invalidFiles := make([]string, 0, len(resp.Files))
+		for file := range resp.Files {
+			invalidFiles = append(invalidFiles, file)
+		}
+		return invalidFiles, nil
+	}
+
 	fileExtensionMap := hostCfg.BenignFilePattern.FileExtensionMap
 
 	var invalidFiles []string
 	for file := range resp.Files {
 		isValid := false
 		ext := path.Ext(file)
+		if _, ok := fileExtensionMap[ext]; !ok {
+			invalidFiles = append(invalidFiles, file)
+			continue
+		}
 		for _, p := range fileExtensionMap[ext].Paths {
 			ok, err := path.Match(p, file)
 			if err != nil {
