@@ -21,6 +21,7 @@ import string
 from third_party import six
 
 import settings
+from framework import exceptions
 from framework import framework_constants
 from proto import tracker_pb2
 from services import client_config_svc
@@ -95,7 +96,15 @@ def FilterViewableEmails(cnxn, services, user_auth, other_users):
   if user_auth.user_pb.is_site_admin:
     return other_users
 
-  # Case 3: Users see unobscured emails as long as they share a common Project.
+  # Case 3: full_emails_perm_group members always see unobscured emails.
+  try:
+    if services.user.LookupUserID(
+        cnxn, settings.full_emails_perm_group) in user_auth.effective_ids:
+      return other_users
+  except exceptions.NoSuchUserException:
+    pass
+
+  # Case 4: Users see unobscured emails as long as they share a common Project.
   return WhichUsersShareAProject(
       cnxn, services, user_auth.effective_ids, other_users)
 

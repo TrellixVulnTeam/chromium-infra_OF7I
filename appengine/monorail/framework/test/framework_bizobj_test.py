@@ -171,6 +171,8 @@ class FilterViewableEmailsTest(unittest.TestCase):
         'user_2@test.com', 222, obscure_email=False)
     self.requester = self.services.user.TestAddUser(
         'user_5@test.com', 555, obscure_email=True)
+    self.display_name_group = self.services.user.TestAddUser(
+        settings.full_emails_perm_group, 666)
     self.user_auth = authdata.AuthData(
         user_id=self.requester.user_id, email=self.requester.email)
     self.user_auth.user_pb.email = self.user_auth.email
@@ -191,6 +193,13 @@ class FilterViewableEmailsTest(unittest.TestCase):
 
   def testFilterViewableEmail_SiteAdmin(self):
     self.user_auth.user_pb.is_site_admin = True
+    other_users = [self.user_1, self.user_2]
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, self.user_auth, other_users)
+    self.assertEqual(filtered_users, other_users)
+
+  def testFilterViewableEmail_InDisplayNameGroup(self):
+    self.user_auth.effective_ids.add(self.display_name_group.user_id)
     other_users = [self.user_1, self.user_2]
     filtered_users = framework_bizobj.FilterViewableEmails(
         self.cnxn, self.services, self.user_auth, other_users)
