@@ -11,7 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 
 	"infra/cmd/shivas/site"
-	"infra/libs/cros/cipd"
+	"infra/libs/cipd"
 )
 
 // Update subcommand: Update shivas tool.

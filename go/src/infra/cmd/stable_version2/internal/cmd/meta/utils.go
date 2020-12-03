@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	cipd "infra/libs/cros/cipd"
+	cipd "infra/libs/cipd"
 
 	luciCipd "go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/common/errors"

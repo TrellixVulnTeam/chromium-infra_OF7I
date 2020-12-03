@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/site"
-	"infra/libs/cros/cipd"
+	"infra/libs/cipd"
 )
 
 // Version subcommand: Version skylab tool.
