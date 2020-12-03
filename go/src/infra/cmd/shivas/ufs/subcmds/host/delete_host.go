@@ -23,8 +23,8 @@ import (
 // DeleteHostCmd delete a host on a machine.
 var DeleteHostCmd = &subcommands.Command{
 	UsageLine: "host {Hostname}",
-	ShortDesc: "Delete a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine",
-	LongDesc: `Delete a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine.
+	ShortDesc: "Delete a host(Host OS) on a machine",
+	LongDesc: `Delete a host(Host OS) on a machine.
 
 Example:
 shivas delete host {Hostname}

@@ -10,6 +10,7 @@ import (
 
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
+	"infra/cmd/shivas/ufs/subcmds/dut"
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
@@ -57,6 +58,7 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		machine.DeleteMachineCmd,
 		host.DeleteHostCmd,
+		dut.DeleteDUTCmd,
 		kvm.DeleteKVMCmd,
 		rpm.DeleteRPMCmd,
 		switches.DeleteSwitchCmd,

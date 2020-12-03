@@ -63,6 +63,7 @@ type printFullFunc func(ctx context.Context, ic ufsAPI.FleetClient, res []proto.
 type printNormalFunc func(res []proto.Message, tsv, keysOnly bool) error
 type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
 type getSingleFunc func(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error)
+type deleteSingleFunc func(ctx context.Context, ic ufsAPI.FleetClient, name string) error
 
 // PrintEntities a batch of entities based on user parameters
 func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, printJSON printJSONFunc, printFull printFullFunc, printNormal printNormalFunc, json, emit, full, tsv, keysOnly bool) error {
@@ -255,6 +256,64 @@ func ConcurrentGet(ctx context.Context, ic ufsAPI.FleetClient, names []string, g
 	// wait for all goroutines in the waitgroup to complete
 	wg.Wait()
 	return res
+}
+
+// ConcurrentDelete runs multiple goroutines making Delete calls to UFS
+func ConcurrentDelete(ctx context.Context, ic ufsAPI.FleetClient, names []string, deleteSingle deleteSingleFunc) ([]string, []string) {
+	var success, failure []string
+	// buffered channel to append data to a slice in a thread safe env
+	successQueue := make(chan string, 1)
+	// buffered channel to append data to a slice in a thread safe env
+	failureQueue := make(chan string, 1)
+	// waitgroup for multiple goroutines
+	var wg sync.WaitGroup
+	// number of goroutines/threads in the wait group to run concurrently
+	wg.Add(len(names))
+	for i := 0; i < len(names); i++ {
+		// goroutine for each id/name
+		go func(i int) {
+			// single Delete request call to UFS
+			err := deleteSingle(ctx, ic, names[i])
+			if err != nil {
+				// log error message
+				fmt.Fprintln(os.Stderr, err.Error()+" => "+names[i])
+				// send failure deletion message to the buffered channel
+				failureQueue <- fmt.Sprintf("%s", names[i])
+			} else {
+				// send successful deletion message to the buffered channel
+				successQueue <- fmt.Sprintf("%s", names[i])
+			}
+		}(i)
+	}
+
+	// goroutine to append data to successful queue slice
+	go func() {
+		// receive proto on queue channel
+		for pm := range successQueue {
+			// append proto message to slice
+			success = append(success, pm)
+			// inform waitgroup that one more goroutine/thread is completed.
+			wg.Done()
+		}
+	}()
+
+	// goroutine to append data to failure queue slice
+	go func() {
+		// receive proto on queue channel
+		for pm := range failureQueue {
+			// append proto message to slice
+			failure = append(failure, pm)
+			// inform waitgroup that one more goroutine/thread is completed.
+			wg.Done()
+		}
+	}()
+
+	// defer closing the channel
+	defer close(successQueue)
+	defer close(failureQueue)
+	// wait for all goroutines in the waitgroup to complete
+	wg.Wait()
+	return success, failure
 }
 
 // PrintListJSONFormat prints the list output in JSON format
