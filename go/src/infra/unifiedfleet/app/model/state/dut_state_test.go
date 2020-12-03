@@ -10,6 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -57,6 +58,38 @@ func TestUpdateDutState(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsds.InternalError)
+		})
+	})
+}
+
+func TestDeleteDutState(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	Convey("DeleteDutStates", t, func() {
+		Convey("Delete dut state by existing ID", func() {
+			dutState1 := mockDutState("delete-dut-id1")
+			dutState2 := mockDutState("delete-dut-id2")
+			_, err := UpdateDutStates(ctx, []*chromeosLab.DutState{dutState1, dutState2})
+			So(err, ShouldBeNil)
+
+			resp, err := GetAllDutStates(ctx)
+			So(err, ShouldBeNil)
+			So(resp.Passed(), ShouldHaveLength, 2)
+
+			resp2 := DeleteDutStates(ctx, []string{"delete-dut-id2"})
+			So(resp2.Passed(), ShouldHaveLength, 1)
+
+			resp, err = GetAllDutStates(ctx)
+			So(err, ShouldBeNil)
+			So(resp.Passed(), ShouldHaveLength, 1)
+			So(resp.Passed()[0].Data.(*chromeosLab.DutState).GetId().GetValue(), ShouldEqual, "delete-dut-id1")
+		})
+
+		Convey("Delete dut state by non-existing ID", func() {
+			resp := DeleteDutStates(ctx, []string{"delete-dut-non-existing-id"})
+			So(resp.Failed(), ShouldHaveLength, 1)
 		})
 	})
 }

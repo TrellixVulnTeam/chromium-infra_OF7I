@@ -123,6 +123,16 @@ var mockLabConfig = &invV2Api.ListCrosDevicesLabConfigResponse_LabConfig{
 	},
 }
 
+var mockDutState = &lab.DutState{
+	Id: &lab.ChromeOSDeviceID{
+		Value: "",
+	},
+	Servo:                  lab.PeripheralState_WORKING,
+	StorageState:           lab.HardwareState_HARDWARE_NORMAL,
+	WorkingBluetoothBtpeer: 1,
+	Cr50Phase:              lab.DutState_CR50_PHASE_PVT,
+}
+
 // ListCrosDevicesLabConfig mock the invV2Api.InventoryClient's ListCrosDevicesLabConfig
 func (ic *InventoryClient) ListCrosDevicesLabConfig(ctx context.Context, in *invV2Api.ListCrosDevicesLabConfigRequest, opts ...grpc.CallOption) (*invV2Api.ListCrosDevicesLabConfigResponse, error) {
 	cameraDUT := proto.Clone(mockDUT.Dut).(*lab.DeviceUnderTest)
@@ -132,6 +142,10 @@ func (ic *InventoryClient) ListCrosDevicesLabConfig(ctx context.Context, in *inv
 	lcCamera := proto.Clone(mockLabConfig).(*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig)
 	lcCamera.Config.Device = &lab.ChromeOSDevice_Dut{Dut: cameraDUT}
 	lcCamera.Config.Id.Value = "mock_camera_dut_id"
+	cameraState := proto.Clone(mockDutState).(*lab.DutState)
+	cameraState.Servo = lab.PeripheralState_SERVOD_ISSUE
+	lcCamera.State = cameraState
+	lcCamera.State.Id.Value = "mock_camera_dut_id"
 
 	wifiDUT := proto.Clone(mockDUT.Dut).(*lab.DeviceUnderTest)
 	// Put it into acs lab
@@ -144,6 +158,11 @@ func (ic *InventoryClient) ListCrosDevicesLabConfig(ctx context.Context, in *inv
 	lcWifi := proto.Clone(mockLabConfig).(*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig)
 	lcWifi.Config.Device = &lab.ChromeOSDevice_Dut{Dut: wifiDUT}
 	lcWifi.Config.Id.Value = "mock_wifi_dut_id"
+	wifiState := proto.Clone(mockDutState).(*lab.DutState)
+	wifiState.Servo = lab.PeripheralState_NOT_CONNECTED
+	lcWifi.State = wifiState
+	lcWifi.State.Id.Value = "mock_wifi_dut_id"
+
 	return &invV2Api.ListCrosDevicesLabConfigResponse{
 		LabConfigs: []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig{GetMockDUT(), GetMockLabstation(), lcCamera, lcWifi},
 	}, nil
@@ -154,6 +173,8 @@ func GetMockDUT() *invV2Api.ListCrosDevicesLabConfigResponse_LabConfig {
 	lc := proto.Clone(mockLabConfig).(*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig)
 	lc.Config.Device = mockDUT
 	lc.Config.Id.Value = "mock_dut_id"
+	lc.State = mockDutState
+	lc.State.Id.Value = "mock_dut_id"
 	return lc
 }
 

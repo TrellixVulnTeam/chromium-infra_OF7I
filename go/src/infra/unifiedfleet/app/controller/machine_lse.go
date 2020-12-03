@@ -27,6 +27,7 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -578,6 +579,22 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 			break
 		}
 	}
+
+	dutStates := util.ToOSDutStates(labConfigs)
+	deleteNonExistingDutStates(ctx, dutStates, pageSize)
+	logging.Infof(ctx, "Importing %d dut states", len(dutStates))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(dutStates))
+		res, err := state.ImportDutStates(ctx, dutStates[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(lses) {
+			break
+		}
+	}
+
 	return &allRes, nil
 }
 
@@ -712,6 +729,27 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteMachineLSEs)
 	logging.Infof(ctx, "Deleting %d non-existing host and vm-related dhcps", len(toDelete))
 	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
+	return &allRes, nil
+}
+
+func deleteNonExistingDutStates(ctx context.Context, dutStates []*chromeosLab.DutState, pageSize int) (*ufsds.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range dutStates {
+		resMap[r.GetId().GetValue()] = true
+	}
+	resp, err := state.GetAllDutStates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*chromeosLab.DutState)
+		if _, ok := resMap[s.GetId().GetValue()]; !ok {
+			toDelete = append(toDelete, s.GetId().GetValue())
+		}
+	}
+	logging.Infof(ctx, "Deleting %d non-existing dut states", len(toDelete))
+	allRes := *deleteByPage(ctx, toDelete, pageSize, state.DeleteDutStates)
 	return &allRes, nil
 }
 

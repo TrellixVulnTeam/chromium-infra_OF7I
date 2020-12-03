@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
@@ -1378,6 +1379,36 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(lse, ShouldHaveLength, 1)
 			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl:labstation")
 			So(lse[0].GetHostname(), ShouldEqual, "test_servo")
+
+			// Verify dut states
+			resp, err := state.GetAllDutStates(ctx)
+			So(err, ShouldBeNil)
+			// Labstation doesn't have dut state
+			So(resp.Passed(), ShouldHaveLength, 3)
+			ds, err := state.GetDutState(ctx, "mock_dut_id")
+			So(err, ShouldBeNil)
+			So(ds.GetServo(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
+			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
+			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+
+			ds, err = state.GetDutState(ctx, "mock_camera_dut_id")
+			So(err, ShouldBeNil)
+			So(ds.GetServo(), ShouldEqual, chromeosLab.PeripheralState_SERVOD_ISSUE)
+			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
+			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
+			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+
+			ds, err = state.GetDutState(ctx, "mock_wifi_dut_id")
+			So(err, ShouldBeNil)
+			So(ds.GetServo(), ShouldEqual, chromeosLab.PeripheralState_NOT_CONNECTED)
+			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
+			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
+			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+
+			ds, err = state.GetDutState(ctx, "mock_labstation_id")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }

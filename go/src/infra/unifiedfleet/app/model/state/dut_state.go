@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -75,4 +76,48 @@ func UpdateDutStates(ctx context.Context, dutStates []*chromeosLab.DutState) ([]
 		return dutStates, err
 	}
 	return nil, err
+}
+
+func queryAllDutStates(ctx context.Context) ([]ufsds.FleetEntity, error) {
+	var entities []*DutStateEntity
+	q := datastore.NewQuery(DutStateKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]ufsds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllDutStates returns all dut states in datastore.
+func GetAllDutStates(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllDutStates)
+}
+
+// DeleteDutStates deletes a batch of dut states
+func DeleteDutStates(ctx context.Context, resourceNames []string) *ufsds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &chromeosLab.DutState{
+			Id: &chromeosLab.ChromeOSDeviceID{
+				Value: m,
+			},
+		}
+	}
+	return ufsds.DeleteAll(ctx, protos, newDutStateEntity)
+}
+
+// ImportDutStates creates or updates a batch of dut states in datastore
+func ImportDutStates(ctx context.Context, dutStates []*chromeosLab.DutState) (*ufsds.OpResults, error) {
+	protos := make([]proto.Message, len(dutStates))
+	utime := ptypes.TimestampNow()
+	for i, m := range dutStates {
+		if m.UpdateTime == nil {
+			m.UpdateTime = utime
+		}
+		protos[i] = m
+	}
+	return ufsds.Insert(ctx, protos, newDutStateEntity, true, true)
 }

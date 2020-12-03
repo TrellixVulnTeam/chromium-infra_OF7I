@@ -33,6 +33,18 @@ var rowRegexp = regexp.MustCompile(`row[0-9]{1,2}`)
 var hostRegexp = regexp.MustCompile(`host[0-9]{1,3}`)
 var labstationRegexp = regexp.MustCompile(`labstation[0-9]{1,3}`)
 
+// ToOSDutStates converts cros inventory data to UFS dut states for ChromeOS machines.
+func ToOSDutStates(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*ufsCros.DutState {
+	dutStates := make([]*ufsCros.DutState, 0, len(labConfigs))
+	for _, lc := range labConfigs {
+		if lc.GetState().GetId() == nil {
+			continue
+		}
+		dutStates = append(dutStates, copyDUTState(lc.GetState()))
+	}
+	return dutStates
+}
+
 // ToOSMachineLSEs converts cros inventory data to UFS LSEs for ChromeOS machines.
 func ToOSMachineLSEs(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*ufspb.MachineLSE {
 	lses := make([]*ufspb.MachineLSE, 0, len(labConfigs))
@@ -176,6 +188,16 @@ func LabstationToLSE(l *lab.Labstation, deviceID string, updatedTime *timestamp.
 		Lse:                 lse,
 		Zone:                getZoneByHostname(hostname).String(),
 	}
+}
+
+func copyDUTState(oldS *lab.DutState) *ufsCros.DutState {
+	if oldS == nil {
+		return nil
+	}
+	s := proto.MarshalTextString(oldS)
+	var newS ufsCros.DutState
+	proto.UnmarshalText(s, &newS)
+	return &newS
 }
 
 func copyDUT(dut *lab.DeviceUnderTest) *ufsCros.DeviceUnderTest {
