@@ -135,6 +135,35 @@ func TestPollAllProjectsBehavior(t *testing.T) {
 						},
 					},
 				},
+				"chromium": {
+					Repos: []*tricium.RepoDetails{
+						{
+							Source: &tricium.RepoDetails_GerritProject{
+								GerritProject: &tricium.GerritProject{
+									Host:    host,
+									Project: "chromium/src",
+									GitUrl:  "https://chromium.googlesource.com/chromium/src",
+								},
+							},
+						},
+					},
+				},
+				"chromium-m87": {
+					// This is a special chromium milestone project which has
+					// the same project config as the chromium project, but
+					// which should be skipped.
+					Repos: []*tricium.RepoDetails{
+						{
+							Source: &tricium.RepoDetails_GerritProject{
+								GerritProject: &tricium.GerritProject{
+									Host:    host,
+									Project: "chromium/src",
+									GitUrl:  "https://chromium.googlesource.com/chromium/src",
+								},
+							},
+						},
+					},
+				},
 			},
 		}
 
@@ -148,7 +177,8 @@ func TestPollAllProjectsBehavior(t *testing.T) {
 				projects = append(projects, request.Project)
 			}
 			sort.Strings(projects)
-			So(projects, ShouldResemble, []string{"a-project", "b-project"})
+			// Note that chromium-m87 is not polled.
+			So(projects, ShouldResemble, []string{"a-project", "b-project", "chromium"})
 		})
 	})
 }

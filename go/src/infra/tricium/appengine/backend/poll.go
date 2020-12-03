@@ -95,6 +95,22 @@ func poll(c context.Context, cp config.ProviderAPI) error {
 	// Sort the names so that they are processed in a deterministic order.
 	names := make([]string, 0, len(projects))
 	for name := range projects {
+		// Because there is one GerritProject entity to keep track of polling
+		// state, and the ID is the the host+repo, Tricium effectively assumes
+		// that repos watched by different projects must be disjoint. If
+		// multiple projects watch the same repo, a race condition will occur
+		// where the first poll project request to update the GerritProject
+		// state will run and others will not.
+		//
+		// This assumption holds true in most cases, but not for the case of
+		// the special chromium milestone LUCI projects, which all have
+		// different versions of the chromium project config. As a workaround
+		// to resolve this case, we want to skip all such special projects
+		// entirely, so that the up-to-date "chromium" project config is always
+		// used for chromium.
+		if strings.HasPrefix(name, "chromium-m") {
+			continue
+		}
 		names = append(names, name)
 	}
 	sort.Strings(names)
