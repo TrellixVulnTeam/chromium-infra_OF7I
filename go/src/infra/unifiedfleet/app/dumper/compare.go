@@ -23,6 +23,7 @@ import (
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
 	fleetds "infra/unifiedfleet/app/model/datastore"
@@ -65,27 +66,43 @@ func compareInventoryV2(ctx context.Context, crosInventoryHost string) error {
 	if hostRes == nil {
 		return errors.New("OS host entity corrupted")
 	}
-	if err := compareDuts(ctx, writer, resp.GetLabConfigs(), hostRes); err != nil {
+	dutStateRes, err := state.GetAllDutStates(ctx)
+	if dutStateRes == nil {
+		return errors.New("OS DUT state entity corrupted")
+	}
+	if err := compareDuts(ctx, writer, resp.GetLabConfigs(), hostRes, dutStateRes); err != nil {
 		return err
 	}
 	return nil
 }
 
-func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, newHosts *fleetds.OpResults) error {
+func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, newHosts *fleetds.OpResults, newDutStates *fleetds.OpResults) error {
 	onlyShowNum := 10
 	logs := []string{fmt.Sprintf("\n\n######## OS DUTs diff (Only show the first %d) ############", onlyShowNum)}
 	inv2LSEs := util.ToOSMachineLSEs(oldHosts)
+	inv2States := util.ToOSDutStates(oldHosts)
 	inv2Hosts := make(map[string]*ufspb.MachineLSE)
+	inv2DutStates := make(map[string]*chromeosLab.DutState)
+
 	for _, lse := range inv2LSEs {
 		inv2Hosts[lse.GetName()] = lse
 	}
+	for _, s := range inv2States {
+		inv2DutStates[s.GetId().GetValue()] = s
+	}
+
 	ufsHosts := make(map[string]*ufspb.MachineLSE)
+	ufsDutStates := make(map[string]*chromeosLab.DutState)
 	for _, r := range newHosts.Passed() {
 		m := r.Data.(*ufspb.MachineLSE)
 		if m.GetChromeBrowserMachineLse() != nil {
 			logs = append(logs, fmt.Sprintf("\nWrong browser host in OS namespace: %s", m.GetName()))
 		}
 		ufsHosts[m.GetName()] = m
+	}
+	for _, r := range newDutStates.Passed() {
+		m := r.Data.(*chromeosLab.DutState)
+		ufsDutStates[m.GetId().GetValue()] = m
 	}
 
 	logs = append(logs, "Resources in inventory V2 but not in UFS:")
@@ -111,6 +128,30 @@ func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2A
 	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
 		return err
 	}
+
+	logs = append(logs, "DutStates in inventory V2 but not in UFS:")
+	var stateDiffs []string
+	for k, v := range inv2DutStates {
+		logging.Infof(ctx, "processing %s", k)
+		if v2, ok := ufsDutStates[k]; !ok {
+			logs = append(logs, v.GetHostname())
+		} else if v != v2 {
+			if len(stateDiffs) < onlyShowNum {
+				stateDiffs = append(stateDiffs, logOSDutStateDiff(v, v2))
+			}
+		}
+	}
+	logs = append(logs, "DutStates in UFS but not in inventory V2:")
+	for k, v := range ufsHosts {
+		if _, ok := inv2Hosts[k]; !ok {
+			logs = append(logs, v.GetName())
+		}
+	}
+	logs = append(logs, "DutStates in both UFS and inventory V2 but has difference (UFS ++):")
+	logs = append(logs, stateDiffs...)
+	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -121,6 +162,15 @@ func logOSLseDiff(inv2Lse, ufsLSE *ufspb.MachineLSE) string {
 	// See: https://developers.google.com/protocol-buffers/docs/reference/go/faq#deepequal
 	opts2 := protocmp.Transform()
 	return cmp.Diff(inv2Lse, ufsLSE, opts1, opts2)
+}
+
+//
+func logOSDutStateDiff(inv2DS, ufsDS *chromeosLab.DutState) string {
+	// Ignoring fields not required for comparison
+	opts1 := protocmp.IgnoreFields(inv2DS, protoreflect.Name("update_time"))
+	// See: https://developers.google.com/protocol-buffers/docs/reference/go/faq#deepequal
+	opts2 := protocmp.Transform()
+	return cmp.Diff(inv2DS, ufsDS, opts1, opts2)
 }
 
 func compareCrimson(ctx context.Context, machineDBHost string) error {
