@@ -1391,6 +1391,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
 			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
 			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+			So(ds.GetHostname(), ShouldEqual, "chromeos2-test_host")
 
 			ds, err = state.GetDutState(ctx, "mock_camera_dut_id")
 			So(err, ShouldBeNil)
@@ -1398,6 +1399,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
 			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
 			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+			So(ds.GetHostname(), ShouldEqual, "chromeos3-test_host")
 
 			ds, err = state.GetDutState(ctx, "mock_wifi_dut_id")
 			So(err, ShouldBeNil)
@@ -1405,6 +1407,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(ds.GetWorkingBluetoothBtpeer(), ShouldEqual, 1)
 			So(ds.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NORMAL)
 			So(ds.GetCr50Phase(), ShouldEqual, chromeosLab.DutState_CR50_PHASE_PVT)
+			So(ds.GetHostname(), ShouldEqual, "chromeos5-test_host")
 
 			ds, err = state.GetDutState(ctx, "mock_labstation_id")
 			So(err, ShouldNotBeNil)

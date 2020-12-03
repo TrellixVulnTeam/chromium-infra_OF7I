@@ -40,7 +40,14 @@ func ToOSDutStates(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabCo
 		if lc.GetState().GetId() == nil {
 			continue
 		}
-		dutStates = append(dutStates, copyDUTState(lc.GetState()))
+		dut := lc.GetConfig().GetDut()
+		var hostname string
+		if dut != nil {
+			hostname = dut.GetHostname()
+		} else {
+			hostname = lc.GetConfig().GetLabstation().GetHostname()
+		}
+		dutStates = append(dutStates, copyDUTState(lc.GetState(), hostname))
 	}
 	return dutStates
 }
@@ -190,13 +197,14 @@ func LabstationToLSE(l *lab.Labstation, deviceID string, updatedTime *timestamp.
 	}
 }
 
-func copyDUTState(oldS *lab.DutState) *ufsCros.DutState {
+func copyDUTState(oldS *lab.DutState, hostname string) *ufsCros.DutState {
 	if oldS == nil {
 		return nil
 	}
 	s := proto.MarshalTextString(oldS)
 	var newS ufsCros.DutState
 	proto.UnmarshalText(s, &newS)
+	newS.Hostname = hostname
 	return &newS
 }
 

@@ -5,6 +5,7 @@
 package state
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,8 +19,9 @@ import (
 
 func mockDutState(id string) *chromeosLab.DutState {
 	return &chromeosLab.DutState{
-		Id:    &chromeosLab.ChromeOSDeviceID{Value: id},
-		Servo: chromeosLab.PeripheralState_NOT_CONNECTED,
+		Id:       &chromeosLab.ChromeOSDeviceID{Value: id},
+		Hostname: fmt.Sprintf("hostname-%s", id),
+		Servo:    chromeosLab.PeripheralState_NOT_CONNECTED,
 	}
 }
 
@@ -85,6 +87,7 @@ func TestDeleteDutState(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.Passed(), ShouldHaveLength, 1)
 			So(resp.Passed()[0].Data.(*chromeosLab.DutState).GetId().GetValue(), ShouldEqual, "delete-dut-id1")
+			So(resp.Passed()[0].Data.(*chromeosLab.DutState).GetHostname(), ShouldEqual, "hostname-delete-dut-id1")
 		})
 
 		Convey("Delete dut state by non-existing ID", func() {

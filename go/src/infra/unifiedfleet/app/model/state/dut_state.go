@@ -25,7 +25,8 @@ const DutStateKind string = "DutState"
 type DutStateEntity struct {
 	_kind string `gae:"$kind,DutState"`
 	// refer to the device id
-	ID string `gae:"$id"`
+	ID       string `gae:"$id"`
+	Hostname string `gae:"hostname"`
 	// lab.DutState cannot be directly used as it contains pointer (timestamp).
 	DutState []byte `gae:",noindex"`
 }
@@ -50,6 +51,7 @@ func newDutStateEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity
 	}
 	return &DutStateEntity{
 		ID:       p.GetId().GetValue(),
+		Hostname: p.GetHostname(),
 		DutState: s,
 	}, nil
 }

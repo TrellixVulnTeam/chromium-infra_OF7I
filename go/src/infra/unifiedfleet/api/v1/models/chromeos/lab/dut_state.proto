@@ -14,7 +14,7 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
 
 // This proto defines status labels in lab config of a DUT.
 
-// Next Tag: 10
+// Next Tag: 12
 message DutState {
   ChromeOSDeviceID id = 1;
   PeripheralState servo = 2;
@@ -57,6 +57,9 @@ message DutState {
   // Record the last update timestamp of this MachineLSE (In UTC timezone)
   google.protobuf.Timestamp update_time = 10 [
     (google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Record the hostname at that time for further analysis.
+  string hostname = 11;
 }
 
 // Next Tag: 17
