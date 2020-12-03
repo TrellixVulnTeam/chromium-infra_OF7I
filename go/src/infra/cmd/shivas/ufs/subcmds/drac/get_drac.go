@@ -32,7 +32,7 @@ var GetDracCmd = &subcommands.Command{
 
 Example:
 
-shivas get drac {name1} {name2} 
+shivas get drac {name1} {name2}
 
 shivas get drac -zone atl97 -rack rack1 -rack rack2
 
@@ -106,18 +106,17 @@ func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listDracs, c.formatFilters(), c.pageSize, c.keysOnly)
+		res, err = utils.BatchList(ctx, ic, listDracs, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
 	}
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	full := utils.FullMode(c.outputFlags.Full())
 	return utils.PrintEntities(ctx, ic, res, utils.PrintDracsJSON, printDracFull, printDracNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
@@ -140,7 +139,7 @@ func (c *getDrac) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name str
 	})
 }
 
-func listDracs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listDracs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListDracsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,

@@ -106,17 +106,17 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listMachines, c.formatFilters(), c.pageSize, c.keysOnly)
+		res, err = utils.BatchList(ctx, ic, listMachines, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
 	}
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	full := utils.FullMode(c.outputFlags.Full())
 	return utils.PrintEntities(ctx, ic, res, utils.PrintMachinesJSON, printMachineFull, printMachineNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
@@ -161,12 +161,13 @@ func printMachineNormal(entities []proto.Message, tsv, keysOnly bool) error {
 	return nil
 }
 
-func listMachines(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listMachines(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListMachinesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
 		Filter:    filter,
 		KeysOnly:  keysOnly,
+		Full:      full,
 	}
 	res, err := ic.ListMachines(ctx, req)
 	if err != nil {

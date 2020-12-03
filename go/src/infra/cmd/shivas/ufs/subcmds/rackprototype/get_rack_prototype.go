@@ -95,18 +95,17 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listRPMs, c.formatFilters(), c.pageSize, c.keysOnly)
+		res, err = utils.BatchList(ctx, ic, listRPMs, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
 	}
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	full := utils.FullMode(c.outputFlags.Full())
 	return utils.PrintEntities(ctx, ic, res, utils.PrintRackLSEPrototypesJSON, printRackLSEPrototypeFull, printRackLSEPrototypeNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
@@ -123,7 +122,7 @@ func (c *getRackLSEPrototype) getSingle(ctx context.Context, ic ufsAPI.FleetClie
 	})
 }
 
-func listRPMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listRPMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListRackLSEPrototypesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,

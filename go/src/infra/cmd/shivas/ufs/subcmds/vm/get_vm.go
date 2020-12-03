@@ -97,18 +97,17 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listVMs, c.formatFilters(), c.pageSize, c.keysOnly)
+		res, err = utils.BatchList(ctx, ic, listVMs, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
 	}
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	full := utils.FullMode(c.outputFlags.Full())
 	return utils.PrintEntities(ctx, ic, res, utils.PrintVMsJSON, printVMFull, printVMNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
@@ -130,7 +129,7 @@ func (c *getVM) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name strin
 	})
 }
 
-func listVMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listVMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListVMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,

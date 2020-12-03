@@ -39,6 +39,7 @@ Fetches 5 vm slots by manufacturer of chrome platform.
 		c := &listVMSlot{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 
 		c.Flags.IntVar(&c.number, "n", 0, "the number of free vm slots to fetch.")
 
@@ -55,8 +56,9 @@ Fetches 5 vm slots by manufacturer of chrome platform.
 
 type listVMSlot struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	outputFlags site.OutputFlags
 
 	// Filters
 	zones         []string
@@ -113,8 +115,9 @@ func (c *listVMSlot) innerRun(a subcommands.Application, args []string, env subc
 func (c *listVMSlot) listFreeVMSlots(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]*ufspb.MachineLSE, error) {
 	var entities []*ufspb.MachineLSE
 	var total int32
+	full := utils.FullMode(c.outputFlags.Full())
 	for _, filter := range filters {
-		protos, err := utils.DoList(ctx, ic, listFreeSlots, int32(c.number), filter, false)
+		protos, err := utils.DoList(ctx, ic, listFreeSlots, int32(c.number), filter, false, full)
 		if err != nil {
 			return nil, err
 		}
@@ -159,12 +162,13 @@ func (c *listVMSlot) formatFilters() []string {
 	return filters
 }
 
-func listFreeSlots(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listFreeSlots(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListMachineLSEsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
 		Filter:    filter,
 		KeysOnly:  keysOnly,
+		Full:      full,
 	}
 	res, err := ic.ListMachineLSEs(ctx, req)
 	if err != nil {

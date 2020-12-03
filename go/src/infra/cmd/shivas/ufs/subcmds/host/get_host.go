@@ -108,18 +108,17 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listHosts, c.formatFilters(), c.pageSize, c.keysOnly)
+		res, err = utils.BatchList(ctx, ic, listHosts, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
 	}
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	full := utils.FullMode(c.outputFlags.Full())
 	return utils.PrintEntities(ctx, ic, res, utils.PrintMachineLSEsJSON, printHostFull, printHostNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
@@ -146,12 +145,13 @@ func (c *getHost) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name str
 	})
 }
 
-func listHosts(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+func listHosts(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListMachineLSEsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
 		Filter:    filter,
 		KeysOnly:  keysOnly,
+		Full:      full,
 	}
 	res, err := ic.ListMachineLSEs(ctx, req)
 	if err != nil {

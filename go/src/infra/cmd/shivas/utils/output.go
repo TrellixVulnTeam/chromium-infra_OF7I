@@ -57,7 +57,7 @@ var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 // The io writer for json output
 var bw = bufio.NewWriter(os.Stdout)
 
-type listAll func(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error)
+type listAll func(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error)
 type printJSONFunc func(res []proto.Message, emit bool)
 type printFullFunc func(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, tsv bool) error
 type printNormalFunc func(res []proto.Message, tsv, keysOnly bool) error
@@ -79,12 +79,12 @@ func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Messa
 }
 
 // BatchList returns the all listed entities by filters
-func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly bool) ([]proto.Message, error) {
+func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly, full bool) ([]proto.Message, error) {
 	errs := make(map[string]error)
 	res := make([]proto.Message, 0)
 	if len(filters) == 0 {
 		// No filters, single DoList call
-		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), "", keysOnly)
+		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), "", keysOnly, full)
 		if err != nil {
 			errs["emptyFilter"] = err
 		}
@@ -96,7 +96,7 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 		// Filters with a pagesize limit
 		// If user specifies a limit, calling DoList without concrrency avoids non-required list calls to UFS
 		for _, filter := range filters {
-			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
+			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly, full)
 			if err != nil {
 				errs[filter] = err
 			} else {
@@ -110,7 +110,7 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 	} else {
 		// Filters without pagesize limit
 		// If user doesnt specify any limit, call DoList for each filter concurrently to improve latency
-		res, errs = concurrentList(ctx, ic, listFunc, filters, pageSize, keysOnly)
+		res, errs = concurrentList(ctx, ic, listFunc, filters, pageSize, keysOnly, full)
 	}
 
 	if len(errs) > 0 {
@@ -126,7 +126,7 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 }
 
 // concurrentList calls Dolist concurrently for each filter
-func concurrentList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly bool) ([]proto.Message, map[string]error) {
+func concurrentList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly, full bool) ([]proto.Message, map[string]error) {
 	// buffered channel to append data to a slice in a thread safe env
 	queue := make(chan []proto.Message, 1)
 	// waitgroup for multiple goroutines
@@ -140,7 +140,7 @@ func concurrentList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll
 	for i := 0; i < len(filters); i++ {
 		// goroutine for each filter
 		go func(i int) {
-			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filters[i], keysOnly)
+			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filters[i], keysOnly, full)
 			if err != nil {
 				// store the err in sync map
 				merr.Store(filters[i], err)
@@ -178,12 +178,12 @@ func concurrentList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll
 }
 
 // DoList lists the outputs
-func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSize int32, filter string, keysOnly bool) ([]proto.Message, error) {
+func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSize int32, filter string, keysOnly, full bool) ([]proto.Message, error) {
 	var pageToken string
 	res := make([]proto.Message, 0)
 	if pageSize == 0 {
 		for {
-			protos, token, err := listFunc(ctx, ic, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			protos, token, err := listFunc(ctx, ic, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, full)
 			if err != nil {
 				return nil, err
 			}
@@ -201,7 +201,7 @@ func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSi
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			protos, token, err := listFunc(ctx, ic, size, pageToken, filter, keysOnly)
+			protos, token, err := listFunc(ctx, ic, size, pageToken, filter, keysOnly, full)
 			if err != nil {
 				return nil, err
 			}
