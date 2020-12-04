@@ -6,10 +6,13 @@ package gerrit
 
 import (
 	"context"
+	"net/http"
 
 	emptypb "github.com/golang/protobuf/ptypes/empty"
+	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/errors"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc"
 )
 
@@ -26,6 +29,7 @@ type ClientFactory func(ctx context.Context, gerritHost string) (Client, error)
 var _ Client = (gerritpb.GerritClient)(nil)
 
 var clientCtxKey = "infra/appengine/rubber-stamper/internal/client/gerrit.Client"
+var gerritScope = "https://www.googleapis.com/auth/gerritcodereview"
 
 // setClientFactory puts a given ClientFactory into in the context.
 func setClientFactory(ctx context.Context, f ClientFactory) context.Context {
@@ -34,7 +38,13 @@ func setClientFactory(ctx context.Context, f ClientFactory) context.Context {
 
 // Setup puts a production ClientFactory into the context.
 func Setup(ctx context.Context) context.Context {
-	return setClientFactory(ctx, newFactory().makeClient)
+	return setClientFactory(ctx, func(ctx context.Context, gerritHost string) (Client, error) {
+		t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(gerritScope))
+		if err != nil {
+			return nil, err
+		}
+		return gerrit.NewRESTClient(&http.Client{Transport: t}, gerritHost, true)
+	})
 }
 
 // SetTestClientFactory sets up a ClientFactory for testing, where clientMap is
