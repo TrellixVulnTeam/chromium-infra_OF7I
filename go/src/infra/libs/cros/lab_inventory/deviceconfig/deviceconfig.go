@@ -98,14 +98,12 @@ func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, joi
 	}
 	logging.Debugf(ctx, "Get %d device configs from boxster", len(cfgs))
 
-	// Will add in next CL, comment first
-	// if client != nil {
-	// 	var v0Cfgs device.AllConfigs
-	// 	cfg2datastore.DownloadCfgProto(ctx, client, project, committish, path, &v0Cfgs)
-	// 	logging.Debugf(ctx, "Get %d device configs from V0", len(v0Cfgs.GetConfigs()))
-
-	// 	compareBoxsterWithV0(ctx, allDCs, v0Cfgs.GetConfigs())
-	// }
+	if client != nil {
+		var v0Cfgs device.AllConfigs
+		cfg2datastore.DownloadCfgProto(ctx, client, project, committish, path, &v0Cfgs)
+		logging.Debugf(ctx, "Get %d device configs from V0", len(v0Cfgs.GetConfigs()))
+		compareBoxsterWithV0(ctx, allDCs, v0Cfgs.GetConfigs())
+	}
 
 	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newDevCfgEntity)
 }

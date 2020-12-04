@@ -11,10 +11,9 @@
 package invlibs
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -25,10 +24,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// This is a compile-time assertion that a sufficiently up-to-date version
-// of the legacy proto package is being used.
-const _ = proto.ProtoPackageIsVersion4
 
 // Standard manual repair actions taken to fix the labstation.
 // Next tag: 7
@@ -746,11 +741,11 @@ type DeviceManualRepairRecord struct {
 	// Lab Tech spent actually investigating and repairing the device.
 	TimeTaken int32 `protobuf:"varint,14,opt,name=time_taken,json=timeTaken,proto3" json:"time_taken,omitempty"`
 	// Timestamp when repair record was created.
-	CreatedTime *timestamp.Timestamp `protobuf:"bytes,15,opt,name=created_time,json=createdTime,proto3" json:"created_time,omitempty"`
+	CreatedTime *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_time,json=createdTime,proto3" json:"created_time,omitempty"`
 	// Timestamp when repair record was last updated.
-	UpdatedTime *timestamp.Timestamp `protobuf:"bytes,16,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
+	UpdatedTime *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=updated_time,json=updatedTime,proto3" json:"updated_time,omitempty"`
 	// Timestamp when repair record was marked completed.
-	CompletedTime *timestamp.Timestamp `protobuf:"bytes,17,opt,name=completed_time,json=completedTime,proto3" json:"completed_time,omitempty"`
+	CompletedTime *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=completed_time,json=completedTime,proto3" json:"completed_time,omitempty"`
 	// Additional comments if needed to capture repair status.
 	AdditionalComments string `protobuf:"bytes,28,opt,name=additional_comments,json=additionalComments,proto3" json:"additional_comments,omitempty"`
 }
@@ -967,21 +962,21 @@ func (x *DeviceManualRepairRecord) GetTimeTaken() int32 {
 	return 0
 }
 
-func (x *DeviceManualRepairRecord) GetCreatedTime() *timestamp.Timestamp {
+func (x *DeviceManualRepairRecord) GetCreatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedTime
 	}
 	return nil
 }
 
-func (x *DeviceManualRepairRecord) GetUpdatedTime() *timestamp.Timestamp {
+func (x *DeviceManualRepairRecord) GetUpdatedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedTime
 	}
 	return nil
 }
 
-func (x *DeviceManualRepairRecord) GetCompletedTime() *timestamp.Timestamp {
+func (x *DeviceManualRepairRecord) GetCompletedTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CompletedTime
 	}
@@ -1261,7 +1256,7 @@ var file_infra_libs_cros_lab_inventory_protos_repair_record_proto_goTypes = []in
 	(DeviceManualRepairRecord_RepairState)(0),        // 9: inventory.libs.protos.DeviceManualRepairRecord.RepairState
 	(DeviceManualRepairRecord_ManualRepairAction)(0), // 10: inventory.libs.protos.DeviceManualRepairRecord.ManualRepairAction
 	(*DeviceManualRepairRecord)(nil),                 // 11: inventory.libs.protos.DeviceManualRepairRecord
-	(*timestamp.Timestamp)(nil),                      // 12: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),                    // 12: google.protobuf.Timestamp
 }
 var file_infra_libs_cros_lab_inventory_protos_repair_record_proto_depIdxs = []int32{
 	8,  // 0: inventory.libs.protos.DeviceManualRepairRecord.repair_target_type:type_name -> inventory.libs.protos.DeviceManualRepairRecord.RepairTargetType
