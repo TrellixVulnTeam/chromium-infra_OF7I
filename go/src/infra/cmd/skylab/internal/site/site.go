@@ -154,7 +154,7 @@ var DefaultAuthOptions = auth.Options{
 // work easier.
 // We can also print out the build time (e.g. 20060102150405) as the METADATA
 // when show version to users.
-const VersionNumber = "2.1.1"
+const VersionNumber = "2.1.2"
 
 // DefaultPRPCOptions is used for PRPC clients.  If it is nil, the
 // default value is used.  See prpc.Options for details.

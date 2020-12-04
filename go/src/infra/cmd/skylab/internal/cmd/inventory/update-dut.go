@@ -294,11 +294,13 @@ func (c *updateDutRun) deployActions() string {
 	}
 	if c.installOS {
 		s = append(s, "install-test-image")
-		s = append(s, "update-label")
 	}
 	if c.installFirmware {
 		s = append(s, "install-firmware")
 		s = append(s, "verify-recovery-mode")
+	}
+	if c.installOS || c.installFirmware {
+		s = append(s, "update-label")
 	}
 	s = append(s, "run-pre-deploy-verification")
 	return strings.Join(s, ",")
