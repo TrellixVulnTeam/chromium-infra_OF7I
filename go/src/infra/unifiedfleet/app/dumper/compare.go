@@ -108,7 +108,6 @@ func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2A
 	logs = append(logs, "Resources in inventory V2 but not in UFS:")
 	var diffs []string
 	for k, v := range inv2Hosts {
-		logging.Infof(ctx, "processing %s", k)
 		if v2, ok := ufsHosts[k]; !ok {
 			logs = append(logs, v.GetName())
 		} else if v != v2 {
@@ -132,7 +131,6 @@ func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2A
 	logs = append(logs, "DutStates in inventory V2 but not in UFS:")
 	var stateDiffs []string
 	for k, v := range inv2DutStates {
-		logging.Infof(ctx, "processing %s", k)
 		if v2, ok := ufsDutStates[k]; !ok {
 			logs = append(logs, v.GetHostname())
 		} else if v != v2 {

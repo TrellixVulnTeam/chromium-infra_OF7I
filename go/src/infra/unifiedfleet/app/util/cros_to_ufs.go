@@ -134,6 +134,8 @@ func hostnameToLocation(hostname string) *ufspb.Location {
 	if rack != "" {
 		location.Rack = fmt.Sprintf("%s-%s-%s", lab, row, rack)
 		location.RackNumber = rack[len("rack"):]
+	} else {
+		location.Rack = fmt.Sprintf("%s-norack", lab)
 	}
 	position := hostRegexp.FindString(hostname)
 	if position == "" {

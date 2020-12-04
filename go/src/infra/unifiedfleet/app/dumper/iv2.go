@@ -76,16 +76,25 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Add all assets from inventory V2's asset table
 	assetsToUpdate := make([]*ufspb.Asset, 0, len(assets))
 	for _, asset := range assets {
 		var iv2Asset *ufspb.Asset
 		ufsAsset, err := registration.GetAsset(ctx, asset.GetId())
-		iv2Asset, convErr := CreateAssetsFromChopsAsset(asset, assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
+		iv2Asset, convErr := createAssetsFromChopsAsset(asset, assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
 		if convErr != nil {
 			logging.Warningf(ctx, "Unable to create asset %v: %v", asset, convErr)
 			continue
 		}
 		if err != nil {
+			// Create rack when creating assets if rack is missing
+			if err := checkRackExists(ctx, iv2Asset.GetLocation().GetRack()); err != nil {
+				if err := registerRacksForAsset(ctx, iv2Asset); err != nil {
+					logging.Warningf(ctx, "Unable to create rack %s: %s", iv2Asset.GetLocation().GetRack(), err.Error())
+					continue
+				}
+			}
 			iv2Asset.UpdateTime = ut
 			_, err := controller.AssetRegistration(ctx, iv2Asset)
 			if err != nil {
@@ -106,6 +115,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 		return err
 	}
 
+	// Reference all assets based on inventory V2's device (lab config) table
 	return updateAssetsFromInventoryV2(ctx)
 }
 
@@ -323,8 +333,8 @@ func Cmp(iv2Asset, ufsAsset *ufspb.Asset) bool {
 	return cmp.Equal(iv2Asset, ufsAsset, opts1, opts2)
 }
 
-// CreateAssetsFromChopsAsset returns Asset proto constructed from ChopsAsset and AssetInfo proto
-func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.AssetInfo, hostname string) (*ufspb.Asset, error) {
+// createAssetsFromChopsAsset returns Asset proto constructed from ChopsAsset and AssetInfo proto
+func createAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.AssetInfo, hostname string) (*ufspb.Asset, error) {
 	a := &ufspb.Asset{
 		Name: asset.GetId(),
 		Location: &ufspb.Location{
@@ -369,6 +379,9 @@ func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 		r.WriteString("-rack")
 		r.WriteString(rack)
 		a.Location.RackNumber = rack
+	} else {
+		// Avoid setting Rack to zone name, e.g. chromeos2
+		r.WriteString("-norack")
 	}
 	a.Location.Rack = r.String()
 	if assetinfo != nil && assetinfo.GetGoogleCodeName() != "" {
