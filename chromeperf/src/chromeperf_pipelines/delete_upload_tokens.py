@@ -13,25 +13,10 @@ from apache_beam.io.gcp.datastore.v1new.types import Query
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.options.pipeline_options import PipelineOptions
 
-
-def parse_timedelta(value):
-    # Support hours and minutes and combinations of each.
-    result = re.match(r'((?P<hours>\d+)h)?((?P<minutes>\d+)m)?', value)
-    hours = result.group('hours') or '0'
-    minutes = result.group('minutes') or '0'
-    return datetime.timedelta(minutes=int(minutes), hours=int(hours))
+DATETIME_FORMAT = '%G-%m-%d:%H:%M:%S%z'
 
 
-_DATETIME_FORMAT = '%G-%m-%d:%H:%M:%S%z'
-
-
-def parse_datetime(value):
-    if not value:
-        return datetime.datetime.now(tz=datetime.timezone.utc)
-    return datetime.datetime.strptime(value, _DATETIME_FORMAT)
-
-
-class TokenDeletionOptions(PipelineOptions):
+class TokenSelectionOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
         parser.add_argument(
@@ -44,48 +29,30 @@ class TokenDeletionOptions(PipelineOptions):
         parser.add_argument(
             '--reference_time',
             help=(f'A datetime-parseable reference time, in this '
-                  f'format: {_DATETIME_FORMAT} -- if empty means '
+                  f'format: {DATETIME_FORMAT} -- if empty means '
                   f'"now".'),
             default='',
         )
 
 
-def main():
-    project = 'chromeperf'
-    options = PipelineOptions()
-    options.view_as(GoogleCloudOptions).project = project
-    deletion_options = options.view_as(TokenDeletionOptions)
-    max_lifetime = parse_timedelta(deletion_options.max_lifetime)
-    reference_time = parse_datetime(deletion_options.reference_time)
-
-    p = beam.Pipeline(options=options)
-    token_count = metrics.Metrics.counter('main', 'tokens_read')
-    measurement_count = metrics.Metrics.counter('main', 'measurements_read')
+def select_expired_tokens(
+        raw_tokens: beam.Pipeline,
+        raw_measurements: beam.Pipeline,
+        max_lifetime: datetime.timedelta,
+        reference_time: datetime.datetime,
+        expired_tokens,
+):
     missing_token_measurements_count = metrics.Metrics.counter(
-        'main', 'missing_token_measurements_count')
-    deleted_tokens = metrics.Metrics.counter('main', 'deleted_tokens')
-    deleted_measurements = metrics.Metrics.counter('main',
+        'select', 'missing_token_measurements_count')
+    deleted_tokens = metrics.Metrics.counter('select', 'deleted_tokens')
+    deleted_measurements = metrics.Metrics.counter('select',
                                                    'deleted_measurements')
 
-    # Read 'UploadToken' entities, and only get the required fields.
     def extract_update_timestamp(token):
         return (token.key.to_client_key().id, token)
 
-    tokens = (p
-              | 'ReadUploadTokens' >> datastoreio.ReadFromDatastore(
-                  query=Query(kind='Token', project=project))
+    tokens = (raw_tokens
               | 'ExtractTokenKey' >> beam.Map(extract_update_timestamp))
-
-    class CountInput(beam.DoFn):
-        def __init__(self, counter):
-            self._counter = counter
-
-        def process(self, input):
-            self._counter.inc()
-            yield input
-
-    # Count the tokens.
-    _ = (tokens | 'CountTokens' >> beam.ParDo(CountInput(token_count)))
 
     def extract_associated_token(measurement_entity, missing_counter):
         measurement = measurement_entity.to_client_entity()
@@ -97,17 +64,10 @@ def main():
             token_key = token_key.id
         return (token_key, measurement_entity.key)
 
-    # Read 'Measurement' entities.
-    measurements = (p
-                    | 'ReadMeasurements' >> datastoreio.ReadFromDatastore(
-                        query=Query(kind='Measurement', project=project))
-                    | 'ExtractAssociatedToken' >> beam.Map(
-                        extract_associated_token,
-                        missing_counter=missing_token_measurements_count))
-
-    # Count the measurements.
-    _ = (measurements
-         | 'CountMeasurements' >> beam.ParDo(CountInput(measurement_count)))
+    measurements = (
+        raw_measurements
+        | 'ExtractAssociatedToken' >> beam.Map(
+            extract_associated_token, missing_token_measurements_count))
 
     # We'll collect all `Measurement` keys by the 'Token' key.
     measurements_by_token = (({
@@ -116,60 +76,127 @@ def main():
     })
                              | 'Merge' >> beam.CoGroupByKey())
 
-    def select_expired(keyed_token_and_measurements, max_lifetime,
-                       reference_time):
+    def select_expired(keyed_token_and_measurements,
+                       max_lifetime: datetime.timedelta,
+                       reference_time: datetime.datetime, expired_tokens):
         _, token_and_measurements = keyed_token_and_measurements
         tokens = token_and_measurements['token']
 
         # This means we have already deleted the token for these
         # measurements, so we'll always delete these measurements.
         if not tokens:
+            expired_tokens.inc()
             return True
         token = token_and_measurements['token'][0].to_client_entity()
         lifetime = reference_time - token['update_time']
-        return lifetime >= max_lifetime
+        if lifetime >= max_lifetime:
+            expired_tokens.inc()
+            return True
+        return False
 
-    # Now we delete all the measurements and tokens that are expired.
+    # We return two PCollection instances, one with just the expired tokens and
+    # the other the expired measurements.
     expired_tokens = (measurements_by_token
                       | 'SelectExpiredTokens' >> beam.Filter(
                           select_expired,
                           max_lifetime,
                           reference_time,
+                          expired_tokens,
                       ))
 
-    class TokenKeyExtractor(beam.DoFn):
-        def __init__(self, counter):
-            self._counter = counter
+    def extract_token_key(keyed_token_and_measurements, counter):
+        _, token_and_measurements = keyed_token_and_measurements
+        tokens = token_and_measurements['token']
+        res = [t.key for t in tokens]
+        counter.inc(len(res))
+        return res
 
-        def process(self, keyed_token_and_measurements):
-            # We extract the key from just the token, but only if we have it.
-            _, token_and_measurements = keyed_token_and_measurements
-            token = token_and_measurements['token'][0]
-            self._counter.inc()
-            yield token.key
+    def pick_nonempty_tokens(keyed_token_and_measurements):
+        token_key, _ = keyed_token_and_measurements
+        return token_key != '(unspecified)' or len(token_key) > 0
 
-    # Delete the Token.
-    _ = (expired_tokens
-         | 'PickNonEmptyTokens' >>
-         beam.Filter(lambda ktm: len(ktm[1].get('token', [])) > 0)
-         | 'ExtractTokenKeys' >> beam.ParDo(TokenKeyExtractor(deleted_tokens))
+    tokens_to_delete = (
+        expired_tokens
+        | 'PickNonEmptyTokens' >> beam.Filter(pick_nonempty_tokens)
+        |
+        'ExtractTokenKeys' >> beam.FlatMap(extract_token_key, deleted_tokens))
+
+    def extract_measurement(keyed_token_and_measurements, counter):
+        _, token_and_measurements = keyed_token_and_measurements
+        res = token_and_measurements['measurements']
+        counter.inc(len(res))
+        return res
+
+    measurements_to_delete = (expired_tokens
+                              | 'ExtractMeasurementKeys' >> beam.FlatMap(
+                                  extract_measurement, deleted_measurements))
+
+    return tokens_to_delete, measurements_to_delete
+
+
+class CountInput(beam.DoFn):
+    def __init__(self, counter):
+        self._counter = counter
+
+    def process(self, input):
+        self._counter.inc()
+        yield input
+
+
+def parse_timedelta(value):
+    # Support hours and minutes and combinations of each.
+    result = re.match(r'((?P<hours>\d+)h)?((?P<minutes>\d+)m)?', value)
+    hours = result.group('hours') or '0'
+    minutes = result.group('minutes') or '0'
+    return datetime.timedelta(minutes=int(minutes), hours=int(hours))
+
+
+def parse_datetime(value):
+    if not value:
+        return datetime.datetime.now(tz=datetime.timezone.utc)
+    return datetime.datetime.strptime(value, DATETIME_FORMAT)
+
+
+def main():
+    project = 'chromeperf'
+    options = PipelineOptions()
+    options.view_as(GoogleCloudOptions).project = project
+    deletion_options = options.view_as(TokenSelectionOptions)
+    max_lifetime = parse_timedelta(deletion_options.max_lifetime)
+    reference_time = parse_datetime(deletion_options.reference_time)
+
+    p = beam.Pipeline(options=options)
+    token_count = metrics.Metrics.counter('main', 'tokens_read')
+    measurement_count = metrics.Metrics.counter('main', 'measurements_read')
+    expired_token_count = metrics.Metrics.counter('main', 'expired_tokens')
+
+    raw_tokens = (p | 'ReadUploadTokens' >> datastoreio.ReadFromDatastore(
+        query=Query(kind='Token', project=project)))
+
+    # Count the tokens.
+    _ = (raw_tokens | 'CountTokens' >> beam.ParDo(CountInput(token_count)))
+
+    raw_measurements = (p
+                        | 'ReadMeasurements' >> datastoreio.ReadFromDatastore(
+                            query=Query(kind='Measurement', project=project)))
+
+    # Count the measurements.
+    _ = (raw_measurements
+         | 'CountMeasurements' >> beam.ParDo(CountInput(measurement_count)))
+
+    tokens_to_delete, measurements_to_delete = select_expired_tokens(
+        raw_tokens,
+        raw_measurements,
+        max_lifetime,
+        reference_time,
+        expired_token_count,
+    )
+
+    _ = (tokens_to_delete
          | 'DeleteTokens' >> datastoreio.DeleteFromDatastore(project))
 
-    class MeasurementKeyExtractor(beam.DoFn):
-        def __init__(self, counter):
-            self._counter = counter
-
-        def process(self, keyed_token_and_measurements):
-            # We extract the key from just the token, but only if we have it.
-            _, token_and_measurements = keyed_token_and_measurements
-            for measurement_key in token_and_measurements['measurements']:
-                self._counter.inc()
-                yield measurement_key
-
-    # Delete the Measurement entities.
-    _ = (expired_tokens
-         | 'ExtractMeasurementKeys' >> beam.ParDo(
-             MeasurementKeyExtractor(deleted_measurements))
+    _ = (measurements_to_delete
+         | 'ReshuffleMeasurements' >> beam.Reshuffle()
          | 'DeleteMeasurements' >> datastoreio.DeleteFromDatastore(project))
 
     # Run the pipeline!
