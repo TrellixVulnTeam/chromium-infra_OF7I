@@ -34,6 +34,7 @@ type MachineLSEEntity struct {
 	RPMID                 string   `gae:"rpm_id"`
 	VlanID                string   `gae:"vlan_id"`
 	ServoID               string   `gae:"servo_id"`
+	ServoType             string   `gae:"servo_type"`
 	Rack                  string   `gae:"rack"`
 	Lab                   string   `gae:"lab"` // deprecated
 	Zone                  string   `gae:"zone"`
@@ -75,6 +76,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		RPMID:                 p.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
 		VlanID:                p.GetVlan(),
 		ServoID:               servoID,
+		ServoType:             servo.GetServoType(),
 		Rack:                  p.GetRack(),
 		Zone:                  p.GetZone(),
 		Manufacturer:          strings.ToLower(p.GetManufacturer()),
@@ -326,6 +328,8 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "vlan_id"
 	case util.ServoFilterName:
 		field = "servo_id"
+	case util.ServoTypeFilterName:
+		field = "servo_type"
 	case util.ZoneFilterName:
 		field = "zone"
 	case util.RackFilterName:
@@ -349,7 +353,7 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 	case util.NicFilterName:
 		field = "nic"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/vlan/servo/servotype/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
 	}
 	return field, nil
 }

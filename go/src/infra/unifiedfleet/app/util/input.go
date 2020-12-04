@@ -82,6 +82,7 @@ var (
 	SwitchFilterName            string = "switch"
 	SwitchPortFilterName        string = "switchport"
 	ServoFilterName             string = "servo"
+	ServoTypeFilterName         string = "servotype"
 	TagFilterName               string = "tag"
 	ChromePlatformFilterName    string = "platform"
 	MachinePrototypeFilterName  string = "machineprototype"
