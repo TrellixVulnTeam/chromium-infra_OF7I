@@ -82,7 +82,7 @@ func (c *deleteDUT) innerRun(a subcommands.Application, args []string, env subco
 	}
 	duts := utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	fmt.Fprintln(a.GetOut(), "\nDUT(s) before deletion:")
-	utils.PrintDutsJSON(duts, true)
+	utils.PrintMachineLSEsJSON(duts, true)
 	pass, fail := utils.ConcurrentDelete(ctx, ic, args, c.deleteSingle)
 	fmt.Fprintln(a.GetOut(), "\nSuccessfully deleted DUT(s):")
 	fmt.Fprintln(a.GetOut(), pass)

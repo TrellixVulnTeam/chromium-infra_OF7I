@@ -12,9 +12,12 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -30,7 +33,9 @@ var GetDutCmd = &subcommands.Command{
 
 Example:
 
-shivas get dut {name1}
+shivas get dut {name1} {name2}
+
+shivas get dut -rack rack1 -rack2 -state serving -state needs_repair
 
 Gets the ChromeOS DUT and prints the output in user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
@@ -39,6 +44,20 @@ Gets the ChromeOS DUT and prints the output in user-specified format.`,
 		c.envFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.machines), "machine", "Name(s) of a machine/asset to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.prototypes), "prototype", "Name(s) of a host prototype to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.servos), "servo", "Name(s) of a servo:port to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.servotypes), "servotype", "Name(s) of a servo type to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.switches), "switch", "Name(s) of a switch to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.rpms), "rpm", "Name(s) of a rpm to filter by. Can be specified multiple times.")
 
 		return c
 	},
@@ -50,6 +69,21 @@ type getDut struct {
 	envFlags    site.EnvFlags
 	outputFlags site.OutputFlags
 	commonFlags site.CommonFlags
+
+	// Filters
+	zones      []string
+	racks      []string
+	machines   []string
+	prototypes []string
+	tags       []string
+	states     []string
+	servos     []string
+	servotypes []string
+	switches   []string
+	rpms       []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getDut) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -80,24 +114,43 @@ func (c *getDut) innerRun(a subcommands.Application, args []string, env subcomma
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
-	res, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, args[0]),
-	})
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	var res []proto.Message
+	if len(args) > 0 {
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
+	} else {
+		res, err = utils.BatchList(ctx, ic, host.ListHosts, c.formatFilters(), c.pageSize, c.keysOnly, full)
+	}
 	if err != nil {
 		return err
 	}
-
-	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
-	if c.outputFlags.JSON() {
-		utils.PrintDutsJSON([]proto.Message{res}, emit)
-	} else {
-		printDutShort(ctx, ic, []proto.Message{res}, false)
-	}
-	return nil
+	return utils.PrintEntities(ctx, ic, res, utils.PrintMachineLSEsJSON, printDutFull, printDutNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func printDutShort(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+func (c *getDut) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
+	})
+}
+
+func (c *getDut) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("machine", c.machines)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("machineprototype", c.prototypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("servo", c.servos)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("servotype", c.servotypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("switch", c.switches)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("rpm", c.rpms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	return filters
+}
+
+func printDutFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
 	machineMap := make(map[string]*ufspb.Machine, 0)
 	lses := make([]*ufspb.MachineLSE, len(msgs))
 	for i, r := range msgs {
@@ -112,6 +165,11 @@ func printDutShort(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Mess
 		})
 		machineMap[lses[i].Name] = res
 	}
-	utils.PrintDutsShort(lses, machineMap)
+	utils.PrintDutsFull(lses, machineMap)
+	return nil
+}
+
+func printDutNormal(msgs []proto.Message, tsv, keysOnly bool) error {
+	utils.PrintDutsShort(msgs, keysOnly)
 	return nil
 }

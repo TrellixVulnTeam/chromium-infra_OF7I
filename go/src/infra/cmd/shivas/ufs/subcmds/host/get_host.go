@@ -114,7 +114,7 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 	if len(args) > 0 {
 		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
-		res, err = utils.BatchList(ctx, ic, listHosts, c.formatFilters(), c.pageSize, c.keysOnly, full)
+		res, err = utils.BatchList(ctx, ic, ListHosts, c.formatFilters(), c.pageSize, c.keysOnly, full)
 	}
 	if err != nil {
 		return err
@@ -145,7 +145,8 @@ func (c *getHost) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name str
 	})
 }
 
-func listHosts(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
+// ListHosts calls the list MachineLSE in UFS to get a list of MachineLSEs
+func ListHosts(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly, full bool) ([]proto.Message, string, error) {
 	req := &ufsAPI.ListMachineLSEsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
