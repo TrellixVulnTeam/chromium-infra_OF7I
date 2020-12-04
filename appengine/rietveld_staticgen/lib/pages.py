@@ -10,7 +10,7 @@ import requests
 
 from google.cloud import storage
 
-import process_content
+from . import process_content
 
 
 ISSUE = 'Issue'
@@ -52,7 +52,7 @@ def process_page(path, page_type, private):
     raise FatalError(message)
 
   response = session.get(
-      posixpath.join(os.getenv('HOST'), path),
+      posixpath.join(os.getenv('RIETVELD_HOST'), path),
       headers=_get_auth_headers())
 
   # Forward transient errors to the client so tasks can be retried.
