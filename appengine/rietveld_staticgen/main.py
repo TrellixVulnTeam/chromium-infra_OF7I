@@ -22,11 +22,26 @@ def process_page(request):
       type: One of 'Issue', 'PatchSet' or 'Patch'.
       private: Whether this page is from a private Rietveld issue.
   """
-  params = request.get_json(force=True, silent=True)
-  path = params['Path']
-  page_type = params['EntityKind']
-  private = params['Private']
+  try:
+    params = request.get_json(force=True, silent=True)
+    path = params['Path']
+    page_type = params['EntityKind']
+    private = params['Private']
 
-  pages.process_page(path, page_type, private)
+    pages.process_page(path, page_type, private)
 
-  return ''
+    return ''
+
+  except pages.FatalError as e:
+    # Log exception using structured logs, so problems are easy to find.
+    # https://cloud.google.com/functions/docs/monitoring/logging#writing_structured_logs
+    print(json.dumps({
+      'severity': 'ERROR',
+      'exception': 'FatalError',
+      'message': str(e),
+      'path': path,
+      'page_type': page_type,
+      'private': private,
+    }))
+    # Ignore exception, so that cloud tasks doesn't retry it.
+    return ''
