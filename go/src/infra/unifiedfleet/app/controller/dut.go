@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -13,9 +14,20 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
+
+const (
+	// Servo port ranges from 9980 to 9999
+	// https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/servo/servod.py#50
+	// However, as there are devices with servo ports < 9980. Limit the validation to 9900.
+	servoPortMax = 9999
+	servoPortMin = 9900
+)
+
+var servoV3HostnameRegex = regexp.MustCompile(`.*-servo`)
 
 // createDUT creates ChromeOSMachineLSE entities for a DUT.
 //
@@ -48,6 +60,10 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			// Check if the Labstation MachineLSE exists in the system.
 			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
+				return err
+			}
+			// Check if the servo port is assigned, If missing assign a new one.
+			if err := assignServoPortIfMissing(labstationMachinelse, newServo); err != nil {
 				return err
 			}
 			// Check if the ServoHostName and ServoPort are already in use
@@ -132,6 +148,10 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			if err != nil {
 				return err
 			}
+			// Check if a servo port is assigned. Assign one if its not
+			if err := assignServoPortIfMissing(newLabstationMachinelse, newServo); err != nil {
+				return err
+			}
 			// Check if the ServoHostName and ServoPort are already in use
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
@@ -180,4 +200,36 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		return nil, err
 	}
 	return machinelse, nil
+}
+
+// assignServoPortIfMissing assigns a servo port to the given servo
+// if it's missing. Returns error if the port is out of range.
+func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Servo) error {
+	// If servo port is assigned, nothing is modified.
+	if newServo.GetServoPort() != 0 {
+		return nil
+	}
+	// If the servo is assigned in an invalid range return error
+	if port := newServo.GetServoPort(); port > servoPortMax || port < servoPortMin {
+		return errors.Reason("Servo port %v is invalid. Valid servo port range [%v, %v]", port, servoPortMax, servoPortMin).Err()
+	}
+	// If servo is  a servo v3 host then assign port 9999
+	// TODO(anushruth): Avoid hostname regex by querying machine.
+	if servoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+		newServo.ServoPort = int32(servoPortMax)
+		return nil
+	}
+	ports := make(map[int32]struct{}) // set of ports
+	servos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	for _, servo := range servos {
+		ports[servo.GetServoPort()] = struct{}{} // Assign an empty struct. Note: Empty structs don't take memory
+	}
+	for idx := int32(servoPortMax); idx >= int32(servoPortMin); idx-- {
+		// Assign the highest port available to the servo
+		if _, ok := ports[idx]; !ok {
+			newServo.ServoPort = int32(idx)
+			break
+		}
+	}
+	return nil
 }
