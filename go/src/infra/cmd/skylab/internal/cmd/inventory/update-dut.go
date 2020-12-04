@@ -69,6 +69,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/l
 		c.Flags.BoolVar(&c.skipImageDownload, "skip-image-download", false, `Some DUT preparation steps require downloading OS image onto an external drive
 connected to the DUT. This flag disables the download, instead using whatever
 image is already downloaded onto the external drive.`)
+		c.Flags.BoolVar(&c.updateLabels, "update-labels", false, "Force DUT update deploy labels.")
 		return c
 	},
 }
@@ -84,6 +85,7 @@ type updateDutRun struct {
 	installOS         bool
 	installFirmware   bool
 	skipImageDownload bool
+	updateLabels      bool
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -299,7 +301,7 @@ func (c *updateDutRun) deployActions() string {
 		s = append(s, "install-firmware")
 		s = append(s, "verify-recovery-mode")
 	}
-	if c.installOS || c.installFirmware {
+	if c.installOS || c.installFirmware || c.updateLabels {
 		s = append(s, "update-label")
 	}
 	s = append(s, "run-pre-deploy-verification")
