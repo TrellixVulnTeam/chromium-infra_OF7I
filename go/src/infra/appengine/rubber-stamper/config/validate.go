@@ -27,9 +27,11 @@ func validateHostConfig(c *validation.Context, hostConfig *HostConfig) {
 }
 
 func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
-	c.Enter("benign_file_pattern")
-	validateBenignFilePattern(c, repoConfig.BenignFilePattern)
-	c.Exit()
+	if repoConfig.BenignFilePattern != nil {
+		c.Enter("benign_file_pattern")
+		validateBenignFilePattern(c, repoConfig.BenignFilePattern)
+		c.Exit()
+	}
 }
 
 func validateBenignFilePattern(c *validation.Context, benignFilePattern *BenignFilePattern) {

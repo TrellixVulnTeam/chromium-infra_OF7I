@@ -55,11 +55,12 @@ func TestReviewBenignFileChange(t *testing.T) {
 				RevisionId: t.Revision,
 			})).Return(&gerritpb.ListFilesResponse{
 				Files: map[string]*gerritpb.FileInfo{
-					"a/b.txt":   nil,
-					"a/c.txt":   nil,
-					"a/q/y":     nil,
-					"a/e/a.txt": nil,
-					"a/fz.txt":  nil,
+					"/COMMIT_MSG": nil,
+					"a/b.txt":     nil,
+					"a/c.txt":     nil,
+					"a/q/y":       nil,
+					"a/e/a.txt":   nil,
+					"a/fz.txt":    nil,
 				},
 			}, nil)
 
@@ -74,7 +75,8 @@ func TestReviewBenignFileChange(t *testing.T) {
 				RevisionId: t.Revision,
 			})).Return(&gerritpb.ListFilesResponse{
 				Files: map[string]*gerritpb.FileInfo{
-					"a/b.txt": nil,
+					"/COMMIT_MSG": nil,
+					"a/b.txt":     nil,
 				},
 			}, nil)
 
@@ -88,7 +90,8 @@ func TestReviewBenignFileChange(t *testing.T) {
 				RevisionId: t.Revision,
 			})).Return(&gerritpb.ListFilesResponse{
 				Files: map[string]*gerritpb.FileInfo{
-					"a/b.md": nil,
+					"/COMMIT_MSG": nil,
+					"a/b.md":      nil,
 				},
 			}, nil)
 
@@ -102,6 +105,7 @@ func TestReviewBenignFileChange(t *testing.T) {
 				RevisionId: t.Revision,
 			})).Return(&gerritpb.ListFilesResponse{
 				Files: map[string]*gerritpb.FileInfo{
+					"/COMMIT_MSG": nil,
 					"a/d.txt":     nil,
 					"a/p":         nil,
 					"a/e/p/p.txt": nil,

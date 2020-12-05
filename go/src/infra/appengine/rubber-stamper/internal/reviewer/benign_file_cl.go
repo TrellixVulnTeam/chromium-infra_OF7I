@@ -34,6 +34,10 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 	if hostCfg == nil || hostCfg.RepoConfigs[t.Repo] == nil || hostCfg.RepoConfigs[t.Repo].BenignFilePattern == nil {
 		invalidFiles := make([]string, 0, len(resp.Files))
 		for file := range resp.Files {
+			if file == "/COMMIT_MSG" {
+				continue
+			}
+
 			invalidFiles = append(invalidFiles, file)
 		}
 		return invalidFiles, nil
@@ -43,6 +47,10 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 
 	var invalidFiles []string
 	for file := range resp.Files {
+		if file == "/COMMIT_MSG" {
+			continue
+		}
+
 		isValid := false
 		ext := path.Ext(file)
 		if _, ok := fileExtensionMap[ext]; !ok {
