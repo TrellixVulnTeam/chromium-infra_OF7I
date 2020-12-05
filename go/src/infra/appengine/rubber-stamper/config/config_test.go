@@ -17,10 +17,14 @@ func TestConfig(t *testing.T) {
 		sampleCfg := &Config{
 			HostConfigs: map[string]*HostConfig{
 				"test-host": {
-					BenignFilePattern: &BenignFilePattern{
-						FileExtensionMap: map[string]*Paths{
-							".txt": {
-								Paths: []string{"whitespace.txt", "a/"},
+					RepoConfigs: map[string]*RepoConfig{
+						"dummy": {
+							BenignFilePattern: &BenignFilePattern{
+								FileExtensionMap: map[string]*Paths{
+									".txt": {
+										Paths: []string{"whitespace.txt", "a/"},
+									},
+								},
 							},
 						},
 					},

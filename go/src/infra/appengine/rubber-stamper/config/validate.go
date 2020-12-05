@@ -19,8 +19,16 @@ func validateConfig(c *validation.Context, cfg *Config) {
 }
 
 func validateHostConfig(c *validation.Context, hostConfig *HostConfig) {
+	for key, repoConfig := range hostConfig.RepoConfigs {
+		c.Enter("repo_config %s", key)
+		validateRepoConfig(c, repoConfig)
+		c.Exit()
+	}
+}
+
+func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
 	c.Enter("benign_file_pattern")
-	validateBenignFilePattern(c, hostConfig.BenignFilePattern)
+	validateBenignFilePattern(c, repoConfig.BenignFilePattern)
 	c.Exit()
 }
 

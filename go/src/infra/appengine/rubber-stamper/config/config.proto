@@ -18,6 +18,13 @@ message Config {
 
 // HostConfig describes the config to be used for a Gerrit host.
 message HostConfig {
+  // A map stores config for repositories, where keys are names of repos (e.g.
+  // "chromium/src", "infra/infra") and values are corresponding configs.
+  map<string, RepoConfig> repo_configs = 1;
+}
+
+// RepoConfig describes the config to be used for a Gerrit repository.
+message RepoConfig {
   BenignFilePattern benign_file_pattern = 1;
 }
 

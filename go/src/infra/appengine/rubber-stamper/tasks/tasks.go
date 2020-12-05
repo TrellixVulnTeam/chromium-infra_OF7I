@@ -37,6 +37,7 @@ func EnqueueChangeReviewTask(ctx context.Context, host string, cl *gerritpb.Chan
 		Host:     host,
 		Number:   cl.Number,
 		Revision: cl.CurrentRevision,
+		Repo:     cl.Project,
 	}
 	dedupKey := fmt.Sprintf("change(%s,%d,%s)", t.Host, t.Number, t.Revision)
 

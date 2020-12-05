@@ -31,7 +31,7 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 		return nil, err
 	}
 
-	if hostCfg == nil || hostCfg.BenignFilePattern == nil {
+	if hostCfg == nil || hostCfg.RepoConfigs[t.Repo] == nil || hostCfg.RepoConfigs[t.Repo].BenignFilePattern == nil {
 		invalidFiles := make([]string, 0, len(resp.Files))
 		for file := range resp.Files {
 			invalidFiles = append(invalidFiles, file)
@@ -39,7 +39,7 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 		return invalidFiles, nil
 	}
 
-	fileExtensionMap := hostCfg.BenignFilePattern.FileExtensionMap
+	fileExtensionMap := hostCfg.RepoConfigs[t.Repo].BenignFilePattern.FileExtensionMap
 
 	var invalidFiles []string
 	for file := range resp.Files {

@@ -26,10 +26,14 @@ func TestScheduleReviews(t *testing.T) {
 		cfg := &config.Config{
 			HostConfigs: map[string]*config.HostConfig{
 				"test-host": {
-					BenignFilePattern: &config.BenignFilePattern{
-						FileExtensionMap: map[string]*config.Paths{
-							"": {
-								Paths: []string{"a/x", "a/q/y"},
+					RepoConfigs: map[string]*config.RepoConfig{
+						"dummy": {
+							BenignFilePattern: &config.BenignFilePattern{
+								FileExtensionMap: map[string]*config.Paths{
+									"": {
+										Paths: []string{"a/x", "a/q/y"},
+									},
+								},
 							},
 						},
 					},
@@ -51,10 +55,12 @@ func TestScheduleReviews(t *testing.T) {
 				{
 					Number:          00000,
 					CurrentRevision: "123abc",
+					Project:         "dummy",
 				},
 				{
 					Number:          00001,
 					CurrentRevision: "234abc",
+					Project:         "dummy",
 				},
 			},
 			MoreChanges: false,
@@ -95,11 +101,13 @@ func TestScheduleReviews(t *testing.T) {
 				Host:     "test-host",
 				Number:   00000,
 				Revision: "123abc",
+				Repo:     "dummy",
 			},
 			{
 				Host:     "test-host",
 				Number:   00001,
 				Revision: "234abc",
+				Repo:     "dummy",
 			},
 		})
 	})

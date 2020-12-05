@@ -24,13 +24,17 @@ func TestReviewChange(t *testing.T) {
 		cfg := &config.Config{
 			HostConfigs: map[string]*config.HostConfig{
 				"test-host": {
-					BenignFilePattern: &config.BenignFilePattern{
-						FileExtensionMap: map[string]*config.Paths{
-							"": {
-								Paths: []string{"a/x", "a/q/y"},
-							},
-							".txt": {
-								Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
+					RepoConfigs: map[string]*config.RepoConfig{
+						"dummy": {
+							BenignFilePattern: &config.BenignFilePattern{
+								FileExtensionMap: map[string]*config.Paths{
+									"": {
+										Paths: []string{"a/x", "a/q/y"},
+									},
+									".txt": {
+										Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
+									},
+								},
 							},
 						},
 					},
@@ -44,6 +48,7 @@ func TestReviewChange(t *testing.T) {
 			Host:     "test-host",
 			Number:   12345,
 			Revision: "123abc",
+			Repo:     "dummy",
 		}
 		Convey("valid BeinignFileChange", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{

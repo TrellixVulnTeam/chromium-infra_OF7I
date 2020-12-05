@@ -17,19 +17,24 @@ var sampleConfigStr = `
 	host_configs {
 		key: "test-host"
 		value: {
-			benign_file_pattern {
-				file_extension_map {
-					key: ".txt"
-					value: {
-						paths: "a/b.txt",
-						paths: "a/*/c.txt",
-						paths: "d/"
-					}
-				}
-				file_extension_map {
-					key: ""
-					value: {
-						paths: "a/b"
+			repo_configs {
+				key: "dummy"
+				value: {
+					benign_file_pattern {
+						file_extension_map {
+							key: ".txt"
+							value: {
+								paths: "a/b.txt",
+								paths: "a/*/c.txt",
+								paths: "d/"
+							}
+						}
+						file_extension_map {
+							key: ""
+							value: {
+								paths: "a/b"
+							}
+						}
 					}
 				}
 			}
@@ -58,7 +63,7 @@ func TestConfigValidator(t *testing.T) {
 	Convey("validateConfig catches errors", t, func() {
 		cfg := createConfig()
 		Convey("validateBenignFilePattern catches errors", func() {
-			m := cfg.HostConfigs["test-host"].BenignFilePattern.FileExtensionMap
+			m := cfg.HostConfigs["test-host"].RepoConfigs["dummy"].BenignFilePattern.FileExtensionMap
 			Convey("invalid file extension", func() {
 				m["a.txt"] = &Paths{}
 				So(validate(cfg), ShouldErrLike, "invalid file extension a.txt")

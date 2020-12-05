@@ -27,13 +27,17 @@ func TestReviewBenignFileChange(t *testing.T) {
 		gerritMock := gerritpb.NewMockGerritClient(ctl)
 
 		hostCfg := &config.HostConfig{
-			BenignFilePattern: &config.BenignFilePattern{
-				FileExtensionMap: map[string]*config.Paths{
-					"": {
-						Paths: []string{"a/x", "a/q/y"},
-					},
-					".txt": {
-						Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
+			RepoConfigs: map[string]*config.RepoConfig{
+				"dummy": {
+					BenignFilePattern: &config.BenignFilePattern{
+						FileExtensionMap: map[string]*config.Paths{
+							"": {
+								Paths: []string{"a/x", "a/q/y"},
+							},
+							".txt": {
+								Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
+							},
+						},
 					},
 				},
 			},
@@ -43,6 +47,7 @@ func TestReviewBenignFileChange(t *testing.T) {
 			Host:     "test-host",
 			Number:   12345,
 			Revision: "123abc",
+			Repo:     "dummy",
 		}
 		Convey("valid file", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
@@ -63,7 +68,7 @@ func TestReviewBenignFileChange(t *testing.T) {
 			So(len(invalidFiles), ShouldEqual, 0)
 		})
 		Convey("missing config", func() {
-			hostCfg.BenignFilePattern = nil
+			hostCfg.RepoConfigs["dummy"].BenignFilePattern = nil
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 				Number:     t.Number,
 				RevisionId: t.Revision,

@@ -16,4 +16,6 @@ message ChangeReviewTask {
   int64 number = 2;
   // Revision of the change.
   string revision = 3;
+  // The Gerrit Repo.
+  string repo = 4;
 }

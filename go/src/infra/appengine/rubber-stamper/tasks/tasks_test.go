@@ -25,10 +25,14 @@ func TestQueue(t *testing.T) {
 		cfg := &config.Config{
 			HostConfigs: map[string]*config.HostConfig{
 				"host": {
-					BenignFilePattern: &config.BenignFilePattern{
-						FileExtensionMap: map[string]*config.Paths{
-							".txt": {
-								Paths: []string{"a/b.txt"},
+					RepoConfigs: map[string]*config.RepoConfig{
+						"dummy": {
+							BenignFilePattern: &config.BenignFilePattern{
+								FileExtensionMap: map[string]*config.Paths{
+									".txt": {
+										Paths: []string{"a/b.txt"},
+									},
+								},
 							},
 						},
 					},
