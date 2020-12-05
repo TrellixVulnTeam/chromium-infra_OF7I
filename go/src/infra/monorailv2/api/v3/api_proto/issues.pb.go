@@ -256,8 +256,6 @@ type SearchIssuesRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// The names of Projects in which to search issues.
-	// TODO(crbug/monorail/7143): `projects` must hold exactly one project
-	// for now. We will add cross-project search later.
 	Projects []string `protobuf:"bytes,1,rep,name=projects,proto3" json:"projects,omitempty"`
 	// The query string can contain any number of free text and
 	// field search expressions.
@@ -586,6 +584,12 @@ type IssueDelta struct {
 	// The list of fields in `issue` to be updated.
 	//
 	// Repeated fields set on `issue` will be appended to.
+	//
+	// Non-repeated fields (e.g. `owner`) can be set with `issue.owner` set and
+	// either 'owner' or 'owner.user' added to `update_mask`.
+	// To unset non-repeated fields back to their default value, `issue.owner`
+	// must contain the default value and `update_mask` must include 'owner.user'
+	// NOT 'owner'.
 	//
 	// Its `field_values`, however, are a special case. Fields can be specified as
 	// single-value or multi-value in their FieldDef.

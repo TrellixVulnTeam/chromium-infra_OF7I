@@ -166,8 +166,6 @@ message BatchGetIssuesResponse {
 // Next available tag: 6
 message SearchIssuesRequest {
   // The names of Projects in which to search issues.
-  // TODO(crbug/monorail/7143): `projects` must hold exactly one project
-  // for now. We will add cross-project search later.
   repeated string projects = 1 [
     (google.api.resource_reference) = {type: "api.crbug.com/Project"},
     (google.api.field_behavior) = REQUIRED ];
