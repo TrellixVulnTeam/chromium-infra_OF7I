@@ -20,7 +20,6 @@ import (
 	"infra/libs/skylab/inventory"
 
 	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
-	"infra/cmd/skylab_swarming_worker/internal/parser"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/botinfo"
@@ -96,15 +95,6 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 		return nil, errors.Annotate(i.err, "open harness").Err()
 	}
 	return i, nil
-}
-
-// ParserArgs returns the parser.Args for the Swarming bot.
-func (i *Info) ParserArgs() parser.Args {
-	return parser.Args{
-		ParserPath:   i.ParserPath,
-		ResultsDir:   i.ResultsDir,
-		StainlessURL: i.Info.Task.StainlessURL(),
-	}
 }
 
 func (i *Info) loadBotInfo(ctx context.Context, b *swmbot.Info) *swmbot.LocalState {

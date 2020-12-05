@@ -38,15 +38,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	protoCommon "go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	lflag "go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cmd/skylab_swarming_worker/internal/annotations"
-	"infra/cmd/skylab_swarming_worker/internal/autotest/constants"
 	"infra/cmd/skylab_swarming_worker/internal/fifo"
 	"infra/cmd/skylab_swarming_worker/internal/lucifer"
-	"infra/cmd/skylab_swarming_worker/internal/parser"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
 	"infra/libs/cros/dutstate"
@@ -140,25 +137,26 @@ func mainInner(a *args) error {
 
 	var luciferErr error
 
-	switch a.taskName {
-	case setStateNeedsRepairTaskName:
+	switch {
+	case a.taskName == setStateNeedsRepairTaskName:
 		i.BotInfo.HostState = dutstate.NeedsRepair
-	case setStateReservedTaskName:
+	case a.taskName == setStateReservedTaskName:
 		i.BotInfo.HostState = dutstate.Reserved
-	case setStateManualRepairTaskName:
+	case a.taskName == setStateManualRepairTaskName:
 		i.BotInfo.HostState = dutstate.ManualRepair
-	case setStateNeedsReplacementTaskName:
+	case a.taskName == setStateNeedsReplacementTaskName:
 		i.BotInfo.HostState = dutstate.NeedsReplacement
-	case setStateNeedsManualRepairTaskName:
+	case a.taskName == setStateNeedsManualRepairTaskName:
 		i.BotInfo.HostState = dutstate.NeedsManualRepair
-	default:
+	case isSupportedLuciferTask(a):
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
+	default:
+		luciferErr = errors.New("skylab_swarming_worker failed to recognize task type")
 	}
 
 	if err := i.Close(ctx); err != nil {
 		return err
 	}
-
 	return luciferErr
 }
 
@@ -185,21 +183,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		ta.LogDogFile = fifoPath
 	}
 
-	gsBucket := "chromeos-autotest-results"
-
-	if a.sideEffectsConfig != "" {
-		sec, err := parseSideEffectsConfig(a.sideEffectsConfig, annotWriter)
-		if err != nil {
-			return err
-		}
-		if err = dropSideEffectsConfig(sec, i.ResultsDir, annotWriter); err != nil {
-			return err
-		}
-		gsBucket = sec.GetGoogleStorage().GetBucket()
-	}
-
 	luciferErr := runLuciferTask(ctx, i, a, ta)
-
 	if luciferErr != nil {
 		// Attempt to parse results regardless of lucifer errors.
 		luciferErr = errors.Wrap(luciferErr, "run lucifer task")
@@ -207,32 +191,9 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 			"Error: %s", luciferErr)
 	}
 
-	switch {
-	case isAdminTask(a) || isDeployTask(a) || isAuditTask(a):
-		// Show Stainless links here for admin tasks.
-		// For test tasks they are bundled with results.json.
-		annotations.BuildStep(annotWriter, "Epilog")
-		annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
-		annotations.StepClosed(annotWriter)
-	default:
-		pa := i.ParserArgs()
-		pa.Failed = luciferErr != nil
-
-		r, err := parser.GetResults(pa, annotWriter)
-		if err != nil {
-			return errors.Wrap(err, "results parsing")
-		}
-
-		r.LogData = &protoCommon.TaskLogData{
-			GsUrl: i.Task.GsURL(gsBucket),
-		}
-
-		err = writeResultsFile(a.isolatedOutdir, r, annotWriter)
-
-		if err != nil {
-			return errors.Wrap(err, "writing results to isolated output file")
-		}
-	}
+	annotations.BuildStep(annotWriter, "Epilog")
+	annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
+	annotations.StepClosed(annotWriter)
 	return luciferErr
 }
 
@@ -242,6 +203,10 @@ func harnessOptions(a *args) []harness.Option {
 		ho = append(ho, harness.UpdateInventory(getTaskName(a)))
 	}
 	return ho
+}
+
+func isSupportedLuciferTask(a *args) bool {
+	return isAdminTask(a) || isDeployTask(a) || isAuditTask(a)
 }
 
 // updatesInventory returns true if the task(repair/deploy/audit)
@@ -282,7 +247,7 @@ func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.Ta
 	case isDeployTask(a):
 		return runDeployTask(ctx, i, a.actions, ta)
 	default:
-		return runTest(ctx, i, a, ta)
+		panic("Unsupported task type")
 	}
 }
 
@@ -317,85 +282,6 @@ func isAuditTask(a *args) bool {
 func isRepairTask(a *args) bool {
 	task, _ := getAdminTask(a.taskName)
 	return task == repairTaskName
-}
-
-// runTest runs a test.
-func runTest(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
-	// TODO(ayatane): Always reboot between each test for now.
-	tc := prejobTaskControl{
-		runReset:     true,
-		rebootBefore: RebootAlways,
-	}
-	r := lucifer.TestArgs{
-		TaskArgs:           ta,
-		Hosts:              []string{i.DUTName},
-		TaskName:           a.taskName,
-		XTestArgs:          a.xTestArgs,
-		XClientTest:        a.xClientTest,
-		XKeyvals:           a.xKeyvals,
-		XLevel:             lucifer.LuciferLevelSkylabProvision,
-		XLocalOnlyHostInfo: true,
-		// TODO(ayatane): hostDirty, hostProtected not implemented
-		XPrejobTask:      choosePrejobTask(tc, true, false),
-		XProvisionLabels: a.xProvisionLabels,
-	}
-
-	cmd := lucifer.TestCommand(i.LuciferConfig(), r)
-	lr, err := runLuciferCommand(ctx, cmd, i, r.AbortSock)
-	switch {
-	case err != nil:
-		return errors.Wrap(err, "run lucifer failed")
-	case lr.TestsFailed > 0:
-		return errors.Errorf("%d tests failed", lr.TestsFailed)
-	default:
-		return nil
-	}
-}
-
-type rebootBefore int
-
-// Reboot type values.
-const (
-	RebootNever rebootBefore = iota
-	RebootIfDirty
-	RebootAlways
-)
-
-// prejobTaskControl groups values used to control whether to run
-// prejob tasks for tests.  Note that there are subtle interactions
-// between these values, e.g., runReset may run verify as part of
-// reset even if runVerify is false, but runReset will fail if
-// rebootBefore is RebootNever because that restricts cleanup, which
-// runs as part of reset.
-type prejobTaskControl struct {
-	runVerify    bool
-	runReset     bool
-	rebootBefore rebootBefore
-}
-
-func choosePrejobTask(tc prejobTaskControl, hostDirty, hostProtected bool) constants.AdminTaskType {
-	willVerify := (tc.runReset || tc.runVerify) && !hostProtected
-
-	var willReboot bool
-	switch tc.rebootBefore {
-	case RebootAlways:
-		willReboot = true
-	case RebootIfDirty:
-		willReboot = hostDirty || (tc.runReset && willVerify)
-	case RebootNever:
-		willReboot = false
-	}
-
-	switch {
-	case willReboot && willVerify:
-		return constants.Reset
-	case willReboot:
-		return constants.Cleanup
-	case willVerify:
-		return constants.Verify
-	default:
-		return constants.NoTask
-	}
 }
 
 // runAdminTask runs an admin task.  name is the name of the task.
