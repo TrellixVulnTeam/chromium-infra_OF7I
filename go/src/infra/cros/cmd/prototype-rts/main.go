@@ -9,10 +9,11 @@ import (
 	"context"
 	"os"
 
+	"infra/cros/cmd/prototype-rts/internal/cmd"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging/gologger"
-	"infra/cros/cmd/prototype-rts/internal/cmd"
 )
 
 func getApplication() *cli.Application {

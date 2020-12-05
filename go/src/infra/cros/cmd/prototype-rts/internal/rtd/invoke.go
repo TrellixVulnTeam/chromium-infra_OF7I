@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
-	"time"
+	"strings"
+
+	"infra/cros/cmd/prototype-rts/internal/docker"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -13,37 +16,47 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-var (
-	containerRunning = false
-)
+// Orchestrator manages the lifecycle of an RTD container and its invocations.
+type Orchestrator struct {
+	volumeHostDir string
+	container     docker.Docker
+}
 
 // StartRTDContainer starts an RTD container, possibly a totally fake one, and
 // returns once it's running.
-func StartRTDContainer(ctx context.Context) error {
-	if containerRunning {
-		return fmt.Errorf("container already started; can't start another one")
-	}
+func (o *Orchestrator) StartRTDContainer(ctx context.Context, imageURI string) error {
 	logging.Infof(ctx, "Starting RTD container")
-	logging.Infof(ctx, "TODO: `docker pull` the RTD container")
-	logging.Infof(ctx, "TODO: `docker start` the RTD container")
-	containerRunning = true
+	var err error
+	if o.volumeHostDir, err = ioutil.TempDir(os.TempDir(), "rtd-volume"); err != nil {
+		return err
+	}
+	if err = o.container.Pull(ctx, imageURI); err != nil {
+		return err
+	}
+	if err = o.container.CreateVolume(ctx, o.volumeHostDir); err != nil {
+		return err
+	}
+	if err = o.container.Run(ctx, imageURI); err != nil {
+		return err
+	}
 	return nil
 }
 
 // StopRTDContainer stops a running RTD container.
-func StopRTDContainer(ctx context.Context) error {
-	if !containerRunning {
+func (o *Orchestrator) StopRTDContainer(ctx context.Context) error {
+	if !o.container.IsRunning() {
 		return fmt.Errorf("container isn't running; nothing to stop")
 	}
 	logging.Infof(ctx, "Stopping RTD container")
-	logging.Infof(ctx, "TODO: `docker stop` the RTD container")
-	containerRunning = false
+	if err := o.container.Stop(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Invoke runs an RTD Invocation against the running RTD container.
-func Invoke(ctx context.Context, progressSinkPort, tlsPort int32) error {
-	if !containerRunning {
+func (o *Orchestrator) Invoke(ctx context.Context, progressSinkPort, tlsPort int32, rtdCmd string) error {
+	if !o.container.IsRunning() {
 		return fmt.Errorf("container hasn't been started yet; can't invoke")
 	}
 	// TODO: needs more work
@@ -52,7 +65,8 @@ func Invoke(ctx context.Context, progressSinkPort, tlsPort int32) error {
 			Port: progressSinkPort,
 		},
 		TestLabServicesConfig: &rtd.TLSClientConfig{
-			TlsPort: tlsPort,
+			TlsPort:    tlsPort,
+			TlsAddress: "127.0.0.1",
 		},
 		Duts: []*rtd.DUT{
 			{
@@ -66,27 +80,29 @@ func Invoke(ctx context.Context, progressSinkPort, tlsPort int32) error {
 			},
 		},
 	}
-	invocationFile, err := writeInvocationToFile(ctx, i)
+	invocationFile, err := writeInvocationToFile(ctx, i, o.volumeHostDir, docker.VolumeContainerDir)
 	if err != nil {
 		return err
 	}
-	logging.Infof(ctx, "TODO: `docker exec` against the container, with --input %v", invocationFile)
-	logging.Infof(ctx, "Sleeping for a bit to simulate waiting for the Invocation to complete")
-	time.Sleep(10 * time.Second)
+
+	dockerCmd := strings.Fields(strings.Trim(rtdCmd, "\""))
+	dockerCmd = append(dockerCmd, "--input", invocationFile)
+
+	if err := o.container.Exec(ctx, dockerCmd); err != nil {
+		return err
+	}
 	return nil
 }
 
-func writeInvocationToFile(ctx context.Context, i *rtd.Invocation) (string, error) {
+func writeInvocationToFile(ctx context.Context, i *rtd.Invocation, volumeHostDir, volumeContainerDir string) (string, error) {
 	b, err := proto.Marshal(i)
 	if err != nil {
 		return "", err
 	}
-	tmp, err := ioutil.TempDir("", "start-rtd")
-	if err != nil {
-		return "", err
-	}
-	file := path.Join(tmp, "invocation.binaryproto")
-	if err = ioutil.WriteFile(file, b, 0664); err != nil {
+	filename := "invocation.binaryproto"
+	hostFile := path.Join(volumeHostDir, filename)
+	containerFile := path.Join(volumeContainerDir, filename)
+	if err = ioutil.WriteFile(hostFile, b, 0664); err != nil {
 		return "", err
 	}
 	marsh := jsonpb.Marshaler{EmitDefaults: true, Indent: "  "}
@@ -94,7 +110,7 @@ func writeInvocationToFile(ctx context.Context, i *rtd.Invocation) (string, erro
 	if err != nil {
 		return "", err
 	}
-	logging.Infof(ctx, "Wrote RTD's input Invocation binaryproto to %v", file)
+	logging.Infof(ctx, "Wrote RTD's input Invocation binaryproto to %v", hostFile)
 	logging.Infof(ctx, "Contents of this Invocation message in jsonpb form are:\n%v", strForm)
-	return file, nil
+	return containerFile, nil
 }
