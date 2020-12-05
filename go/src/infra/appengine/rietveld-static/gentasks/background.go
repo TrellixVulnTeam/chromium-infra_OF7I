@@ -32,9 +32,12 @@ type CloudTaskPayload struct {
 }
 
 type taskProcessor struct {
-	ctClient    *cloudtask.Client
-	ctQueuePath string
-	ch          <-chan CloudTaskPayload
+	ctClient *cloudtask.Client
+	ch       <-chan CloudTaskPayload
+
+	ctQueuePath           string
+	processPageURL        string
+	processServiceAccount string
 }
 
 // processCloudTaskQueue drains channel and creates Cloud Task.
@@ -45,15 +48,21 @@ func (tp *taskProcessor) process(ctx context.Context) {
 			log.Panic(err)
 		}
 
+		// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#CreateTaskRequest
 		req := &taskspb.CreateTaskRequest{
 			Parent: tp.ctQueuePath,
 			Task: &taskspb.Task{
-				// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#AppEngineHttpRequest
-				MessageType: &taskspb.Task_AppEngineHttpRequest{
-					AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-						HttpMethod:  taskspb.HttpMethod_POST,
-						RelativeUri: "/static-gen-task-handler",
-						Body:        payload,
+				// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
+				MessageType: &taskspb.Task_HttpRequest{
+					HttpRequest: &taskspb.HttpRequest{
+						HttpMethod: taskspb.HttpMethod_POST,
+						Url:        tp.processPageURL,
+						Body:       payload,
+						AuthorizationHeader: &taskspb.HttpRequest_OidcToken{
+							OidcToken: &taskspb.OidcToken{
+								ServiceAccountEmail: tp.processServiceAccount,
+							},
+						},
 					},
 				},
 			},
@@ -160,6 +169,16 @@ func StartBackgroundProcess(ctx context.Context) {
 		log.Panic(err)
 	}
 
+	processPageURL := os.Getenv("PROCESS_PAGE_URL")
+	if processPageURL == "" {
+		log.Panic("envvar PROCESS_PAGE_URL not defined")
+	}
+
+	processServiceAccount := os.Getenv("PROCESS_SERVICE_ACCOUNT")
+	if processServiceAccount == "" {
+		log.Panic("envvar PROCESS_SERVICE_ACCOUNT not defined")
+	}
+
 	log.Printf("Queriying Issues for private changes")
 	issuePrivateCache = NewIssuePrivateCacheMap(ctx, dsClient)
 	log.Printf("Done querying issues for private changes")
@@ -172,6 +191,8 @@ func StartBackgroundProcess(ctx context.Context) {
 		ctQueuePath: fmt.Sprintf(
 			"projects/%s/locations/us-central1/queues/static-gen",
 			os.Getenv("GOOGLE_CLOUD_PROJECT")),
+		processPageURL:        processPageURL,
+		processServiceAccount: processServiceAccount,
 	}
 	wgCT := &sync.WaitGroup{}
 	wgCT.Add(cloudTaskGoRoutines)

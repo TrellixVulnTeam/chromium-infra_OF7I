@@ -5,5 +5,9 @@ runtime: go113
 
 service: gentasks
 
+env_variables:
+  PROCESS_PAGE_URL: "https://us-central1-chromiumcodereview-hr.cloudfunctions.net/process_page"
+  PROCESS_SERVICE_ACCOUNT: "chromiumcodereview-hr@appspot.gserviceaccount.com"
+
 manual_scaling:
   instances: 1
