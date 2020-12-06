@@ -1,0 +1,23 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.tricium_infra;
+
+// Input properties recognized by 'infra/tricium_infra' recipe.
+message Inputs {
+  // gclient config name for checkout, e.g. "infra" or "luci_py".
+  string gclient_config_name = 1;
+
+  // Patch root for checkout, e.g. "infra" or "luci".
+  string patch_root = 2;
+
+  // List of names of legacy analyzers to run.
+  //
+  // Note that this way of specifying analyzers only allows looking up
+  // predefined analyzers from the tricium recipe module; if custom
+  // specification of analyzers is required, this would have to be expanded.
+  repeated string analyzers = 3;
+}

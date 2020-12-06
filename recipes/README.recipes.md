@@ -58,6 +58,7 @@
   * [snapshots/snapshot](#recipes-snapshots_snapshot)
   * [support_3pp:tests/full](#recipes-support_3pp_tests_full)
   * [sync_submodules](#recipes-sync_submodules)
+  * [tricium_infra](#recipes-tricium_infra)
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
   * [wpt_export](#recipes-wpt_export) &mdash; Exports commits in Chromium to the web-platform-tests repo.
@@ -1119,6 +1120,13 @@ Normalizes a string for use in a resource label.
 [DEPS](/recipes/recipes/sync_submodules.py#7): [sync\_submodules](#recipe_modules-sync_submodules), [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
 &mdash; **def [RunSteps](/recipes/recipes/sync_submodules.py#20)(api, disable_path_prefix):**
+### *recipes* / [tricium\_infra](/recipes/recipes/tricium_infra.py)
+
+[DEPS](/recipes/recipes/tricium_infra.py#9): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [depot\_tools/tryserver][depot_tools/recipe_modules/tryserver], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/tricium][recipe_engine/recipe_modules/tricium]
+
+&mdash; **def [RunSteps](/recipes/recipes/tricium_infra.py#27)(api, inputs):**
+
+This recipe runs legacy analyzers for the infra repo.
 ### *recipes* / [update\_submodules\_mirror](/recipes/recipes/update_submodules_mirror.py)
 
 [DEPS](/recipes/recipes/update_submodules_mirror.py#10): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1214,6 +1222,7 @@ Runs a step which adds a link to the current CL if there is one.
 [recipe_engine/recipe_modules/service_account]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-service_account
 [recipe_engine/recipe_modules/step]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-step
 [recipe_engine/recipe_modules/time]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-time
+[recipe_engine/recipe_modules/tricium]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-tricium
 [recipe_engine/recipe_modules/url]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-url
 [recipe_engine/recipe_modules/uuid]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/README.recipes.md#recipe_modules-uuid
 [recipe_engine/wkt/RecipeApi]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/9182b0102469ca22ffe1b7b5bd32ef355601a421/recipe_engine/recipe_api.py#856
