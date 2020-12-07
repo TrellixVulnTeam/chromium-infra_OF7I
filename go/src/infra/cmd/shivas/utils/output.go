@@ -35,7 +35,7 @@ var (
 	DracFullTitle            = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
 	NicTitle                 = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
 	BrowserMachineTitle      = []string{"Machine Name", "Serial Number", "Zone", "Rack", "KVM", "KVM Port", "ChromePlatform", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
-	OSMachineTitle           = []string{"Machine Name", "Zone", "Rack", "Barcode", "UpdateTime"}
+	OSMachineTitle           = []string{"Machine Name", "Zone", "Rack", "Barcode", "Hardware ID", "Model", "DeviceType", "MacAddress", "SKU", "Phase", "Build Target", "State", "Realm", "UpdateTime"}
 	MachinelseprototypeTitle = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
 	RacklseprototypeTitle    = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
 	ChromePlatformTitle      = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
@@ -841,6 +841,15 @@ func machineOutputStrs(pm proto.Message) []string {
 		m.GetLocation().GetZone().String(),
 		m.GetLocation().GetRack(),
 		m.GetLocation().GetBarcodeName(),
+		m.GetChromeosMachine().GetHwid(),
+		m.GetChromeosMachine().GetModel(),
+		m.GetChromeosMachine().GetDeviceType().String(),
+		m.GetChromeosMachine().GetMacAddress(),
+		m.GetChromeosMachine().GetSku(),
+		m.GetChromeosMachine().GetPhase(),
+		m.GetChromeosMachine().GetBuildTarget(),
+		m.GetResourceState().String(),
+		m.GetRealm(),
 		ts,
 	}
 }

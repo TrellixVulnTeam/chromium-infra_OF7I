@@ -54,6 +54,12 @@ Gets the machine and prints the output in the user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name(s) of a platform to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
+
+		// Chrome os machine specific filters
+		c.Flags.Var(flag.StringSlice(&c.devicetypes), "devicetype", "Name(s) of a devicetype to filter by. Can be specified multiple times."+cmdhelp.DeviceTypeFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.models), "model", "Name(s) of a model to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.buildTargets), "target", "Name(s) of a build target to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.phases), "phase", "Name(s) of a phase to filter by. Can be specified multiple times.")
 		return c
 	},
 }
@@ -66,13 +72,17 @@ type getMachine struct {
 	outputFlags site.OutputFlags
 
 	// Filters
-	zones     []string
-	racks     []string
-	kvms      []string
-	kvmPorts  []string
-	platforms []string
-	tags      []string
-	states    []string
+	zones        []string
+	racks        []string
+	kvms         []string
+	kvmPorts     []string
+	platforms    []string
+	tags         []string
+	states       []string
+	devicetypes  []string
+	models       []string
+	buildTargets []string
+	phases       []string
 
 	pageSize int
 	keysOnly bool
@@ -136,6 +146,10 @@ func (c *getMachine) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("platform", c.platforms)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("devicetype", c.devicetypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("model", c.models)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("target", c.buildTargets)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("phase", c.phases)...)
 	return filters
 }
 

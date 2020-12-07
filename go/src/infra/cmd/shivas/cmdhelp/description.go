@@ -1104,6 +1104,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	// ZoneFilterHelpText help text for zone filters for list command
 	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(ufsUtil.ValidZoneStr(), ", "))
 
+	// DeviceTypeFilterHelpText help text for devicetype filters for list command
+	DeviceTypeFilterHelpText string = fmt.Sprintf("\nValid devicetype filters: [%s]\n", strings.Join(ufsUtil.ValidDeviceTypeStr(), ", "))
+
 	// AssetTypesHelpText help text for asset type filters
 	AssetTypesHelpText string = fmt.Sprintf("\nValid type filters [%s]", strings.Join(ufsUtil.ValidAssetTypeStr(), ", "))
 
