@@ -31,18 +31,12 @@ def process_page(request):
 
     pages.process_page(path, page_type, private)
 
-    return ''
+    return '', 200
 
-  except pages.FatalError as e:
-    # Log exception using structured logs, so problems are easy to find.
-    # https://cloud.google.com/functions/docs/monitoring/logging#writing_structured_logs
+  except:
     print(json.dumps({
       'severity': 'ERROR',
-      'exception': 'FatalError',
-      'message': str(e),
-      'path': path,
-      'page_type': page_type,
-      'private': private,
+      'message': traceback.format_exc(),
+      'params': params,
     }))
-    # Ignore exception, so that cloud tasks doesn't retry it.
-    return ''
+    return '', 500
