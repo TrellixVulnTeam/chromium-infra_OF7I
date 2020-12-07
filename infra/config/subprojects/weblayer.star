@@ -20,6 +20,12 @@ def builder(name, recipe, schedule, bucket, execution_timeout = None):
         properties = {
             "total_cq_checks": 30,
             "interval_between_checks_in_secs": 120,
+            "$build/goma": {
+                "enable_ats": True,
+                "rpc_extra_params": "?prod",
+                "server_host": "goma.chromium.org",
+                "use_luci_auth": True,
+            },
         },
         service_account = "chrome-weblayer-builder@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
