@@ -14,7 +14,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 
 	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
-	"infra/libs/cros/stableversion"
+	"infra/cros/stableversion"
 )
 
 var unmarshaller = jsonpb.Unmarshaler{AllowUnknownFields: false}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"infra/libs/cros/stableversion/validateconfig"
+	"infra/cros/stableversion/validateconfig"
 
 	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 )

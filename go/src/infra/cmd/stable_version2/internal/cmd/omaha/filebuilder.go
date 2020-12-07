@@ -14,7 +14,7 @@ import (
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/luci/common/logging"
-	svlib "infra/libs/cros/stableversion"
+	svlib "infra/cros/stableversion"
 )
 
 // 1. Determine the map from board+model to CrOS version

@@ -18,7 +18,7 @@ import (
 	"infra/cmd/stable_version2/internal/cmd/validateconfig/querygs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
-	vc "infra/libs/cros/stableversion/validateconfig"
+	vc "infra/cros/stableversion/validateconfig"
 	gitlib "infra/libs/git"
 
 	"github.com/maruel/subcommands"

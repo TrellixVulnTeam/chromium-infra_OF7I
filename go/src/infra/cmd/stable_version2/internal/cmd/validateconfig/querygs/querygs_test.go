@@ -16,7 +16,7 @@ import (
 	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/luci/common/gcloud/gs"
 
-	"infra/libs/cros/stableversion/validateconfig"
+	"infra/cros/stableversion/validateconfig"
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"infra/cmd/stable_version2/internal/utils"

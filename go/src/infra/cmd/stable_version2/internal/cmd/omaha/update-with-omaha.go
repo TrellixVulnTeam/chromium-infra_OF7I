@@ -24,7 +24,7 @@ import (
 	gslib "infra/cmd/stable_version2/internal/gs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
-	svlib "infra/libs/cros/stableversion"
+	svlib "infra/cros/stableversion"
 	gitlib "infra/libs/git"
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"

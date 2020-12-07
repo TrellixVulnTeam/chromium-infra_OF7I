@@ -13,9 +13,9 @@ import (
 
 	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
-	svlib "infra/libs/cros/stableversion"
-	filter "infra/libs/cros/stableversion/filter"
-	vc "infra/libs/cros/stableversion/validateconfig"
+	svlib "infra/cros/stableversion"
+	filter "infra/cros/stableversion/filter"
+	vc "infra/cros/stableversion/validateconfig"
 	"infra/libs/git"
 
 	"github.com/maruel/subcommands"

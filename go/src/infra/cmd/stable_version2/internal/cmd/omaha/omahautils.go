@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	gslib "infra/cmd/stable_version2/internal/gs"
 
-	svlib "infra/libs/cros/stableversion"
+	svlib "infra/cros/stableversion"
 )
 
 type gslibClient interface {
