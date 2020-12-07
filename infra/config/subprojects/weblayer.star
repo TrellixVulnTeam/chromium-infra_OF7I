@@ -36,18 +36,12 @@ def builder(name, recipe, schedule, bucket, execution_timeout = None):
         list_view = bucket,
     )
 
+# crbug.com/1099017, This builder will automate updates to skew tests
+# when new nightly releases happen for milestone branches.
 builder(
     name = "refresh-weblayer-skew-tests",
     recipe = "refresh_weblayer_skew_tests",
     schedule = "triggered",
     bucket = "tasks",
-    execution_timeout = 6 * time.hour,
-)
-
-builder(
-    name = "create-weblayer-skew-tests",
-    recipe = "build_weblayer_version_tests_apk_cipd_pkg",
-    schedule = "with 600s interval",
-    bucket = "cron",
     execution_timeout = 6 * time.hour,
 )
