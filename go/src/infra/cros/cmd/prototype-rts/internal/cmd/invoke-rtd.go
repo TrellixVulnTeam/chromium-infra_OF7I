@@ -58,14 +58,14 @@ func (inv *invokeCmd) innerRun(ctx context.Context) error {
 	}
 	logging.Infof(ctx, "Validated that gRPC servers are running for ProgressSinkService and TlsService")
 
-	orch := rtd.Orchestrator{}
-	if err := orch.StartRTDContainer(ctx, inv.imageURI); err != nil {
+	o := rtd.Orchestrator{}
+	if err := o.StartRTDContainer(ctx, inv.imageURI); err != nil {
 		return errors.Annotate(err, "failed StartRTDContainer").Err()
 	}
-	if err := orch.Invoke(ctx, int32(inv.progressSinkPort), int32(inv.tlsCommonPort), inv.rtdCommand); err != nil {
+	if err := o.Invoke(ctx, int32(inv.progressSinkPort), int32(inv.tlsCommonPort), inv.rtdCommand); err != nil {
 		return errors.Annotate(err, "failed Invoke").Err()
 	}
-	if err := orch.StopRTDContainer(ctx); err != nil {
+	if err := o.StopRTDContainer(ctx); err != nil {
 		return errors.Annotate(err, "failed StopRTDContainer").Err()
 	}
 	return nil
