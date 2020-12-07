@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 // Test that Dumping and Loading a BotInfo struct returns an identical struct.

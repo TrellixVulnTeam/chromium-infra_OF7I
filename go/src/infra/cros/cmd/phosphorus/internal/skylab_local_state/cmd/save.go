@@ -25,7 +25,7 @@ import (
 
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 // Allowlist of DUT states that are safe to overwrite.

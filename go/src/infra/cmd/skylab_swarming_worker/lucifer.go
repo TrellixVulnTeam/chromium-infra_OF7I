@@ -13,7 +13,7 @@ import (
 
 	"infra/cmd/skylab_swarming_worker/internal/event"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 type luciferResult struct {

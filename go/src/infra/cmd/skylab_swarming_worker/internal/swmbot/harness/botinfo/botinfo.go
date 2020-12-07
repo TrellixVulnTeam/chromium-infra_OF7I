@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 // Store holds a bot's botinfo and dut name, and adds a Close method.

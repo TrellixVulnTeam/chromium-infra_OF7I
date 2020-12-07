@@ -46,7 +46,7 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/lucifer"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 // Task names.

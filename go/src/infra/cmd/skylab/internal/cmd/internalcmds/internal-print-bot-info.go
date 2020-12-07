@@ -17,7 +17,7 @@ import (
 	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/swarming"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"

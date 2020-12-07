@@ -7,7 +7,7 @@ package swmbot
 import (
 	"encoding/json"
 
-	"infra/libs/cros/dutstate"
+	"infra/cros/dutstate"
 )
 
 // LocalState contains persistent bot information that is cached on the
