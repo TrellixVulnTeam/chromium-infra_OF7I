@@ -34,8 +34,7 @@ import (
 )
 
 func compareInventoryV2(ctx context.Context, crosInventoryHost string) error {
-	filename := fmt.Sprintf("inv2_ufs_diff.%s.log", time.Now().UTC().Format("2006-01-02T03:04:05"))
-	writer, err := getCloudStorageWriter(ctx, filename)
+	writer, err := getCloudStorageWriter(ctx, fmt.Sprintf("inv2_ufs_diff/%s.log", getCurTimeFilename()))
 	if err != nil {
 		return err
 	}
@@ -560,6 +559,15 @@ func logDiff(crimsonData, ufsData map[string]string, writer *storage.Writer, log
 		return err
 	}
 	return nil
+}
+
+func getCurTimeFilename() string {
+	// Use PST timezone to generate time-related filename
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err == nil {
+		return time.Now().UTC().In(loc).Format("2006-01-02T03:04:05")
+	}
+	return time.Now().UTC().Format("2006-01-02T03:04:05")
 }
 
 func getCloudStorageWriter(ctx context.Context, filename string) (*storage.Writer, error) {
