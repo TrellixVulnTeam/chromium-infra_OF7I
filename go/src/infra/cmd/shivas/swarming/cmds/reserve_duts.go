@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/shivas/site"
-	"infra/libs/cros/swarming"
+	"infra/libs/swarming"
 )
 
 type reserveDuts struct {
