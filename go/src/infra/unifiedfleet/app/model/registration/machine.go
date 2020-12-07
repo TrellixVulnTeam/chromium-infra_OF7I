@@ -40,6 +40,10 @@ type MachineEntity struct {
 	Zone             string   `gae:"zone"`
 	Tags             []string `gae:"tags"`
 	State            string   `gae:"state"`
+	Model            string   `gae:"model"`
+	BuildTarget      string   `gae:"build_target"`
+	DeviceType       string   `gae:"device_type"`
+	Phase            string   `gae:"phase"`
 	// ufspb.Machine cannot be directly used as it contains pointer.
 	Machine []byte `gae:",noindex"`
 }
@@ -73,6 +77,10 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		Tags:             p.GetTags(),
 		Machine:          machine,
 		State:            p.GetResourceState().String(),
+		Model:            strings.ToLower(p.GetChromeosMachine().GetModel()),
+		BuildTarget:      p.GetChromeosMachine().GetBuildTarget(),
+		DeviceType:       p.GetChromeosMachine().GetDeviceType().String(),
+		Phase:            p.GetChromeosMachine().GetPhase(),
 	}, nil
 }
 
@@ -288,8 +296,16 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 		field = "state"
 	case util.KVMPortFilterName:
 		field = "kvm_port"
+	case util.ModelFilterName:
+		field = "model"
+	case util.BuildTargetFilterName:
+		field = "build_target"
+	case util.DeviceTypeFilterName:
+		field = "device_type"
+	case util.PhaseFilterName:
+		field = "phase"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/kvmport/rpm/zone/rack/platform/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/kvmport/rpm/zone/rack/platform/tag/state/model/buildtarget(target)/devicetype/phase", input)
 	}
 	return field, nil
 }

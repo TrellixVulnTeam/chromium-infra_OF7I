@@ -566,3 +566,13 @@ func resetAssetTypeFilter(filterMap map[string][]interface{}) map[string][]inter
 	}
 	return filterMap
 }
+
+func resetDeviceTypeFilter(filterMap map[string][]interface{}) map[string][]interface{} {
+	if v, ok := filterMap[util.DeviceTypeFilterName]; ok {
+		for i, vz := range v {
+			v[i] = util.ToUFSDeviceType(fmt.Sprintf("%s", vz)).String()
+		}
+		filterMap[util.DeviceTypeFilterName] = v
+	}
+	return filterMap
+}

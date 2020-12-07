@@ -372,6 +372,7 @@ func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string,
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetZoneFilter(filterMap)
+	filterMap = resetDeviceTypeFilter(filterMap)
 	machines, nextPageToken, err := registration.ListMachines(ctx, pageSize, pageToken, filterMap, keysOnly)
 	if full && !keysOnly {
 		for _, machine := range machines {

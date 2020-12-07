@@ -98,6 +98,10 @@ var (
 	OSVersionFilterName         string = "osversion"
 	OSFilterName                string = "os"
 	VirtualDatacenterFilterName string = "vdc"
+	ModelFilterName             string = "model"
+	BuildTargetFilterName       string = "target"
+	DeviceTypeFilterName        string = "devicetype"
+	PhaseFilterName             string = "phase"
 )
 
 const separator string = "/"
@@ -385,6 +389,42 @@ func ToUFSZone(zone string) ufspb.Zone {
 		return ufspb.Zone_ZONE_UNSPECIFIED
 	}
 	return ufspb.Zone(ufspb.Zone_value[v])
+}
+
+// StrToUFSDeviceType refers a map between a string to a UFS defined map.
+var StrToUFSDeviceType = map[string]string{
+	"chromebook":  "DEVICE_CHROMEBOOK",
+	"labstation":  "DEVICE_LABSTATION",
+	"servo":       "DEVICE_SERVO",
+	"unspecified": "CHROME_OS_DEVICE_TYPE_UNSPECIFIED",
+}
+
+// ValidDeviceTypeStr returns a valid str list for devicetype strings.
+func ValidDeviceTypeStr() []string {
+	ks := make([]string, 0, len(StrToUFSDeviceType))
+	for k := range StrToUFSDeviceType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// RemoveGivenPrefix removes the prefix from the string
+func RemoveGivenPrefix(msg, prefix string) string {
+	msg = strings.ToLower(msg)
+	if idx := strings.Index(msg, prefix); idx != -1 {
+		msg = msg[idx+len(prefix):]
+	}
+	return msg
+}
+
+// ToUFSDeviceType converts devicetype string to a UFS devicetype enum.
+func ToUFSDeviceType(devicetype string) ufspb.ChromeOSDeviceType {
+	devicetype = RemoveGivenPrefix(devicetype, "device_")
+	v, ok := StrToUFSDeviceType[devicetype]
+	if !ok {
+		return ufspb.ChromeOSDeviceType_CHROME_OS_DEVICE_TYPE_UNSPECIFIED
+	}
+	return ufspb.ChromeOSDeviceType(ufspb.ChromeOSDeviceType_value[v])
 }
 
 // List of regexps for recognizing assets stored with googlers or out of lab.
