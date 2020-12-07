@@ -5,11 +5,14 @@
 package dirmd
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/protobuf/encoding/prototext"
 
 	"go.chromium.org/luci/common/errors"
@@ -94,30 +97,46 @@ type mappingReader struct {
 // r.Mapping.
 func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	r.Mapping = *NewMapping(0)
-	err := filepath.Walk(r.Root, func(dir string, info os.FileInfo, err error) error {
-		switch {
-		case err != nil:
-			return err
-		case !info.IsDir():
+
+	ctx := context.Background()
+	eg, ctx := errgroup.WithContext(ctx)
+	sem := semaphore.NewWeighted(100) // read up to 100 files concurrently
+	eg.Go(func() error {
+		return filepath.Walk(r.Root, func(dir string, info os.FileInfo, err error) error {
+			switch {
+			case ctx.Err() != nil:
+				return ctx.Err()
+			case err != nil:
+				return err
+			case !info.IsDir():
+				return nil
+			}
+
+			// Read the metadata concurrently.
+			eg.Go(func() error {
+				if err := sem.Acquire(ctx, 1); err != nil {
+					return err
+				}
+				defer sem.Release(1)
+
+				key := r.mustDirKey(dir)
+				switch meta, err := ReadMetadata(dir); {
+				case err != nil:
+					return errors.Annotate(err, "failed to read metadata of %q", dir).Err()
+
+				case meta != nil:
+					r.Dirs[key] = meta
+
+				case form == dirmdpb.MappingForm_FULL:
+					// Put an empty metadata, so that ComputeAll() populates it below.
+					r.Dirs[key] = &dirmdpb.Metadata{}
+				}
+				return nil
+			})
 			return nil
-		}
-
-		key := r.mustDirKey(dir)
-
-		switch meta, err := ReadMetadata(dir); {
-		case err != nil:
-			return errors.Annotate(err, "failed to read metadata of %q", dir).Err()
-
-		case meta != nil:
-			r.Dirs[key] = meta
-
-		case form == dirmdpb.MappingForm_FULL:
-			// Put an empty metadata, so that ComputeAll() populates it below.
-			r.Dirs[key] = &dirmdpb.Metadata{}
-		}
-		return nil
+		})
 	})
-	if err != nil {
+	if err := eg.Wait(); err != nil {
 		return err
 	}
 
