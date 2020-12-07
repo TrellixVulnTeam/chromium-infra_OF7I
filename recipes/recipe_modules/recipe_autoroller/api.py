@@ -193,7 +193,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       self.m.git('branch', '-D', 'roll', ok_ret='any')
 
       # git cl upload cannot work with detached HEAD, it requires a branch.
-      self.m.git('checkout', '-t', '-b', 'roll', 'origin/master')
+      with self.m.depot_tools.on_path():
+        self.m.git('new-branch', 'roll')
 
     return workdir
 

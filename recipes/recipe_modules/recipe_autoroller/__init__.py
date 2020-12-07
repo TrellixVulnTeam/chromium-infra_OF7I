@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 DEPS = [
+    'depot_tools/depot_tools',
     'depot_tools/git',
     'depot_tools/git_cl',
     'depot_tools/gsutil',
