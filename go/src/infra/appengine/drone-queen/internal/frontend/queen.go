@@ -15,6 +15,7 @@
 package frontend
 
 import (
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -32,6 +33,14 @@ import (
 // DroneQueenImpl implements service interfaces.
 type DroneQueenImpl struct {
 	nowFunc func() time.Time
+}
+
+// TODO (anhdle): Remove during full Satlab implementation.
+func getDUTHive(d string) string {
+	if strings.HasPrefix(d, "satlab") {
+		return "satlab"
+	}
+	return ""
 }
 
 // ReportDrone implements service interfaces.
@@ -82,8 +91,9 @@ func (q *DroneQueenImpl) ReportDrone(ctx context.Context, req *api.ReportDroneRe
 	}
 	// Assign new DUTs.
 	var duts []*entities.DUT
+	// TODO(anhdle): Remove the satlab logic during full implementation.
 	f = func(ctx context.Context) error {
-		duts, err = queries.AssignNewDUTs(ctx, id, req.GetLoadIndicators())
+		duts, err = queries.AssignNewDUTs(ctx, id, req.GetLoadIndicators(), getDUTHive(req.GetDroneDescription()))
 		return err
 	}
 	if err = datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -190,7 +200,8 @@ func (q *DroneQueenImpl) DeclareDuts(ctx context.Context, req *api.DeclareDutsRe
 		// Add newly declared DUTs.
 		k := entities.DUTGroupKey(ctx)
 		for _, dut := range newDUTs {
-			if err := datastore.Put(ctx, &entities.DUT{ID: dut, Group: k}); err != nil {
+			// TODO (anhdle): Remove during full Satlab implementation.
+			if err := datastore.Put(ctx, &entities.DUT{ID: dut, Group: k, Hive: getDUTHive(string(dut))}); err != nil {
 				return errors.Annotate(err, "add DUT %s", dut).Err()
 			}
 		}
