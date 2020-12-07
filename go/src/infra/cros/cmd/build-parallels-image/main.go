@@ -14,6 +14,8 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
+
+	"infra/cros/cmd/build-parallels-image/internal/cmd"
 )
 
 func getApplication() *cli.Application {
@@ -27,6 +29,7 @@ func getApplication() *cli.Application {
 			subcommands.CmdHelp,
 
 			subcommands.Section("Steps"),
+			cmd.Provision,
 		},
 	}
 }
