@@ -1,0 +1,10 @@
+package: chromiumos/infra/build-parallels-image/${platform}
+description: Tool to assist building Parallels VM images for testing.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/build-parallels-image
+root: ../../go/bin
+data:
+  - file: build-parallels-image${exe_suffix}
+  - version_file: .versions/build-parallels-image${exe_suffix}.cipd_version
