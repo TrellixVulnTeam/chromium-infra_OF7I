@@ -11,11 +11,12 @@ export type RepairHistoryRow = {
 export type RepairHistoryList = Array<RepairHistoryRow>;
 
 export const rspActions = [
-  'servoRepairActions',
-  'yoshiRepairActions',
-  'chargerRepairActions',
-  'usbStickRepairActions',
   'cableRepairActions',
-  'rpmRepairActions',
+  'chargerRepairActions',
   'dutRepairActions',
+  'labstationRepairActions',
+  'rpmRepairActions',
+  'servoRepairActions',
+  'usbStickRepairActions',
+  'yoshiRepairActions',
 ];
