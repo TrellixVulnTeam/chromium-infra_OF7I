@@ -57,12 +57,14 @@ func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]strin
 	for pname, pval := range propMap {
 		q = q.Eq(pname, pval)
 	}
-	q = q.Limit(limit)
 
-	// TODO: justinsuen@ Implement ordering with indexes.
 	if len(order) > 0 {
-		logging.Infof(ctx, "Order is not currently used")
+		for _, o := range order {
+			q = q.Order(o)
+		}
 	}
+
+	q = q.Limit(limit)
 
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

@@ -1,0 +1,26 @@
+indexes:
+  - kind: DeviceManualRepairRecord
+    properties:
+    - name: asset_tag
+    - name: hostname
+    - name: updated_time
+      direction: desc
+
+  - kind: DeviceManualRepairRecord
+    properties:
+    - name: user_ldap
+    - name: repair_state
+    - name: updated_time
+      direction: desc
+
+  - kind: DeviceManualRepairRecord
+    properties:
+    - name: user_ldap
+    - name: updated_time
+      direction: desc
+
+  - kind: DeviceManualRepairRecord
+    properties:
+    - name: repair_state
+    - name: updated_time
+      direction: desc

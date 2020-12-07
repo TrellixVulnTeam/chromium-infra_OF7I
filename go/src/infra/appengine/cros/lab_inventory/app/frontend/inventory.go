@@ -895,7 +895,7 @@ func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req 
 		limit = -1
 	}
 
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, limit, []string{"-update_time"})
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, limit, []string{"-updated_time"})
 	if err != nil {
 		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Err()
 	}

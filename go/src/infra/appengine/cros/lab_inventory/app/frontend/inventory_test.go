@@ -1288,10 +1288,16 @@ func TestDeviceConfigsExists(t *testing.T) {
 
 func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64, completed bool) *invlibs.DeviceManualRepairRecord {
 	var state invlibs.DeviceManualRepairRecord_RepairState
+	var updatedTime timestamp.Timestamp
+	var completedTime timestamp.Timestamp
 	if completed {
 		state = invlibs.DeviceManualRepairRecord_STATE_COMPLETED
+		updatedTime = timestamp.Timestamp{Seconds: 444, Nanos: 0}
+		completedTime = timestamp.Timestamp{Seconds: 444, Nanos: 0}
 	} else {
 		state = invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS
+		updatedTime = timestamp.Timestamp{Seconds: 222, Nanos: 0}
+		completedTime = timestamp.Timestamp{Seconds: 444, Nanos: 0}
 	}
 
 	return &invlibs.DeviceManualRepairRecord{
@@ -1317,8 +1323,8 @@ func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime 
 		UserLdap:      "testing-account",
 		TimeTaken:     15,
 		CreatedTime:   &timestamp.Timestamp{Seconds: createdTime, Nanos: 0},
-		UpdatedTime:   &timestamp.Timestamp{Seconds: 222, Nanos: 0},
-		CompletedTime: &timestamp.Timestamp{Seconds: 222, Nanos: 0},
+		UpdatedTime:   &updatedTime,
+		CompletedTime: &completedTime,
 	}
 }
 
@@ -1625,7 +1631,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 			So(getRes[0].Record.GetTimeTaken(), ShouldEqual, 20)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
-			So(getRes[0].Record.GetCompletedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+			So(getRes[0].Record.GetCompletedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 444, Nanos: 0})
 		})
 		Convey("Update single non-existent record", func() {
 			propFilter := map[string]string{"hostname": record4.Hostname}
@@ -1650,8 +1656,10 @@ func TestListManualRepairRecords(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 
+	ds.GetTestable(ctx).AutoIndex(true)
 	ds.GetTestable(ctx).Consistent(true)
 
+	// Updated times should go in descending order of record1 > record2 = record3
 	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1, true)
 	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 2, false)
 	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-222", 3, false)
@@ -1674,10 +1682,10 @@ func TestListManualRepairRecords(t *testing.T) {
 			So(resp.RepairRecords, ShouldHaveLength, 2)
 			So(resp.RepairRecords[0].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
 			So(resp.RepairRecords[0].GetAssetTag(), ShouldEqual, "getRecords-111")
-			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
+			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 			So(resp.RepairRecords[1].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
 			So(resp.RepairRecords[1].GetAssetTag(), ShouldEqual, "getRecords-111")
-			So(resp.RepairRecords[1].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+			So(resp.RepairRecords[1].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
 		})
 		Convey("List records using all filters", func() {
 			req := &api.ListManualRepairRecordsRequest{
@@ -1709,7 +1717,7 @@ func TestListManualRepairRecords(t *testing.T) {
 			So(resp.RepairRecords, ShouldHaveLength, 1)
 			So(resp.RepairRecords[0].GetHostname(), ShouldEqual, "chromeos-getRecords-aa")
 			So(resp.RepairRecords[0].GetAssetTag(), ShouldEqual, "getRecords-111")
-			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
+			So(resp.RepairRecords[0].GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 		})
 		Convey("List records that do not exist", func() {
 			req := &api.ListManualRepairRecordsRequest{
