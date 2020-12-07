@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
+	"infra/libs/lro"
 )
 
 // Prejob subcommand: Run a prejob (e.g. provision) against a DUT.
@@ -233,7 +234,7 @@ func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConf
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
 
-	op, err = waitForOp(ctx, longrunning.NewOperationsClient(conn), op.GetName())
+	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(conn), op.GetName())
 	if err != nil {
 		// TODO(pprabhu) Cancel operation.
 		// - Create 60 second headroom before deadline for cancellation.
@@ -253,28 +254,6 @@ func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConf
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
 	}
 	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
-}
-
-func waitForOp(ctx context.Context, client longrunning.OperationsClient, name string) (*longrunning.Operation, error) {
-	// WaitOperation() can return before the provided timeout even though the
-	// underlying operation is in progress. Thus, we must loop until timeout
-	// ourselves.
-	for {
-		// WaitOperation respects timeout in the RPC Context as well as through
-		// an explicit field in WaitOperationRequest. We depend on Context
-		// cancellation for timeouts (like everywhere else in this codebase).
-		// On timeout, WaitOperation() will return an appropriate error
-		// response.
-		op, err := client.WaitOperation(ctx, &longrunning.WaitOperationRequest{
-			Name: name,
-		})
-		if err != nil {
-			return op, err
-		}
-		if op.Done {
-			return op, nil
-		}
-	}
 }
 
 const (
