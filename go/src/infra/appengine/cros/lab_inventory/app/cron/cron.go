@@ -80,6 +80,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevicesHandler))
 
 	r.GET("/internal/cron/sync-manual-repair-records-to-bq", mwCron, logAndSetHTTPErr(syncManualRepairRecordsToBQCronHandler))
+
+	r.GET("/internal/cron/backfill-mr-indexes", mwCron, logAndSetHTTPErr(backfillMRIndexesCronHandler))
 }
 
 const pageSize = 500
@@ -559,4 +561,50 @@ func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
 			http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		}
 	}
+}
+
+func backfillMRIndexesCronHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(c.Context, "Start to backfill manual repair records indexes")
+
+	var batchSize int32 = 100
+	var counter int32 = 0
+	q := ds.NewQuery(datastore.DeviceManualRepairRecordEntityKind).Limit(batchSize)
+
+	var entities []*datastore.DeviceManualRepairRecordEntity
+	if err := ds.GetAll(ctx, q, &entities); err != nil {
+		return err
+	}
+
+	for len(entities) > 0 {
+		logging.Debugf(c.Context, "Processing manual repair entities %s to %s", counter*batchSize, (counter+1)*batchSize)
+		for _, e := range entities {
+			var content invprotos.DeviceManualRepairRecord
+			if err := proto.Unmarshal(e.Content, &content); err != nil {
+				return err
+			}
+			e.UserLdap = content.GetUserLdap()
+			e.RepairState = content.GetRepairState().String()
+
+			updatedTime, err := ptypes.Timestamp(content.GetUpdatedTime())
+			if err != nil {
+				return err
+			}
+			e.UpdatedTime = updatedTime
+		}
+
+		if err := ds.Put(ctx, entities); err != nil {
+			return err
+		}
+
+		entities = nil
+
+		counter++
+		q = ds.NewQuery(datastore.DeviceManualRepairRecordEntityKind).Limit(batchSize).Offset(counter * batchSize)
+		if err := ds.GetAll(ctx, q, &entities); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

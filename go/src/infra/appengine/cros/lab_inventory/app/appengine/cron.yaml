@@ -56,3 +56,7 @@ cron:
 - description: Sync manual repair records to BQ
   url: /internal/cron/sync-manual-repair-records-to-bq
   schedule: every 30 minutes
+
+- description: Backfill manual repair records indexes
+  url: /internal/cron/backfill-mr-indexes
+  schedule: 1 of jan 00:00
