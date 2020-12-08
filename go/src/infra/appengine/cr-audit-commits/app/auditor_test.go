@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"runtime"
 	"testing"
 	"time"
 
@@ -61,6 +62,9 @@ func (d dummyNotifier) Notify(ctx context.Context, cfg *rules.RefConfig, rc *rul
 type strmap map[string]string
 
 func TestAuditor(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping on Windows: flaky")
+	}
 
 	Convey("CommitScanner handler test", t, func() {
 		ctx := memory.Use(context.Background())
