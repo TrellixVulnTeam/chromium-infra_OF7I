@@ -539,6 +539,79 @@ func (x *CIPD) GetInstanceId() string {
 	return ""
 }
 
+// Used to serialize/deserialize data between Invoker and CLI.
+// this is used as input to generator CLI to produce provenance of artifacts.
+type ProvenanceData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SubjectHash    string          `protobuf:"bytes,1,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
+	Recipe         string          `protobuf:"bytes,2,opt,name=recipe,proto3" json:"recipe,omitempty"`
+	Exp            int32           `protobuf:"varint,3,opt,name=exp,proto3" json:"exp,omitempty"`
+	TopLevelSource *TopLevelSource `protobuf:"bytes,4,opt,name=topLevelSource,proto3" json:"topLevelSource,omitempty"`
+}
+
+func (x *ProvenanceData) Reset() {
+	*x = ProvenanceData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ProvenanceData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProvenanceData) ProtoMessage() {}
+
+func (x *ProvenanceData) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProvenanceData.ProtoReflect.Descriptor instead.
+func (*ProvenanceData) Descriptor() ([]byte, []int) {
+	return file_infra_tools_provenance_proto_provenance_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ProvenanceData) GetSubjectHash() string {
+	if x != nil {
+		return x.SubjectHash
+	}
+	return ""
+}
+
+func (x *ProvenanceData) GetRecipe() string {
+	if x != nil {
+		return x.Recipe
+	}
+	return ""
+}
+
+func (x *ProvenanceData) GetExp() int32 {
+	if x != nil {
+		return x.Exp
+	}
+	return 0
+}
+
+func (x *ProvenanceData) GetTopLevelSource() *TopLevelSource {
+	if x != nil {
+		return x.TopLevelSource
+	}
+	return nil
+}
+
 // Header of the provenance.
 type ProvenanceInfo_Header struct {
 	state         protoimpl.MessageState
@@ -556,7 +629,7 @@ type ProvenanceInfo_Header struct {
 func (x *ProvenanceInfo_Header) Reset() {
 	*x = ProvenanceInfo_Header{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[8]
+		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -569,7 +642,7 @@ func (x *ProvenanceInfo_Header) String() string {
 func (*ProvenanceInfo_Header) ProtoMessage() {}
 
 func (x *ProvenanceInfo_Header) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[8]
+	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -629,7 +702,7 @@ type ProvenanceInfo_Payload struct {
 func (x *ProvenanceInfo_Payload) Reset() {
 	*x = ProvenanceInfo_Payload{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[9]
+		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -642,7 +715,7 @@ func (x *ProvenanceInfo_Payload) String() string {
 func (*ProvenanceInfo_Payload) ProtoMessage() {}
 
 func (x *ProvenanceInfo_Payload) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[9]
+	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -711,7 +784,7 @@ type AttestedClaim_Subject struct {
 func (x *AttestedClaim_Subject) Reset() {
 	*x = AttestedClaim_Subject{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[10]
+		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -724,7 +797,7 @@ func (x *AttestedClaim_Subject) String() string {
 func (*AttestedClaim_Subject) ProtoMessage() {}
 
 func (x *AttestedClaim_Subject) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[10]
+	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -761,7 +834,7 @@ type ClaimPayload_Builder struct {
 func (x *ClaimPayload_Builder) Reset() {
 	*x = ClaimPayload_Builder{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[11]
+		mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -774,7 +847,7 @@ func (x *ClaimPayload_Builder) String() string {
 func (*ClaimPayload_Builder) ProtoMessage() {}
 
 func (x *ClaimPayload_Builder) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[11]
+	mi := &file_infra_tools_provenance_proto_provenance_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -875,10 +948,21 @@ var file_infra_tools_provenance_proto_provenance_proto_rawDesc = []byte{
 	0x22, 0x39, 0x0a, 0x04, 0x43, 0x49, 0x50, 0x44, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x69, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75, 0x72, 0x69, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e,
 	0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0a, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x42, 0x2b, 0x5a, 0x29, 0x69,
-	0x6e, 0x66, 0x72, 0x61, 0x2f, 0x74, 0x6f, 0x6f, 0x6c, 0x73, 0x2f, 0x70, 0x72, 0x6f, 0x76, 0x65,
-	0x6e, 0x61, 0x6e, 0x63, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x3b, 0x70, 0x72, 0x6f, 0x76,
-	0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x0a, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x22, 0xa2, 0x01, 0x0a, 0x0e,
+	0x50, 0x72, 0x6f, 0x76, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x44, 0x61, 0x74, 0x61, 0x12, 0x20,
+	0x0a, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x48, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x48, 0x61, 0x73, 0x68,
+	0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x63, 0x69, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x72, 0x65, 0x63, 0x69, 0x70, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x78, 0x70, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x65, 0x78, 0x70, 0x12, 0x44, 0x0a, 0x0e, 0x74, 0x6f,
+	0x70, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x70,
+	0x62, 0x2e, 0x54, 0x6f, 0x70, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x52, 0x0e, 0x74, 0x6f, 0x70, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x42, 0x2b, 0x5a, 0x29, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x74, 0x6f, 0x6f, 0x6c, 0x73, 0x2f,
+	0x70, 0x72, 0x6f, 0x76, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x3b, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x70, 0x62, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -893,7 +977,7 @@ func file_infra_tools_provenance_proto_provenance_proto_rawDescGZIP() []byte {
 	return file_infra_tools_provenance_proto_provenance_proto_rawDescData
 }
 
-var file_infra_tools_provenance_proto_provenance_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_infra_tools_provenance_proto_provenance_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_infra_tools_provenance_proto_provenance_proto_goTypes = []interface{}{
 	(*ProvenanceInfo)(nil),         // 0: provenancepb.ProvenanceInfo
 	(*AttestedClaim)(nil),          // 1: provenancepb.AttestedClaim
@@ -903,27 +987,29 @@ var file_infra_tools_provenance_proto_provenance_proto_goTypes = []interface{}{
 	(*Source)(nil),                 // 5: provenancepb.Source
 	(*GitRepo)(nil),                // 6: provenancepb.GitRepo
 	(*CIPD)(nil),                   // 7: provenancepb.CIPD
-	(*ProvenanceInfo_Header)(nil),  // 8: provenancepb.ProvenanceInfo.Header
-	(*ProvenanceInfo_Payload)(nil), // 9: provenancepb.ProvenanceInfo.Payload
-	(*AttestedClaim_Subject)(nil),  // 10: provenancepb.AttestedClaim.Subject
-	(*ClaimPayload_Builder)(nil),   // 11: provenancepb.ClaimPayload.Builder
+	(*ProvenanceData)(nil),         // 8: provenancepb.ProvenanceData
+	(*ProvenanceInfo_Header)(nil),  // 9: provenancepb.ProvenanceInfo.Header
+	(*ProvenanceInfo_Payload)(nil), // 10: provenancepb.ProvenanceInfo.Payload
+	(*AttestedClaim_Subject)(nil),  // 11: provenancepb.AttestedClaim.Subject
+	(*ClaimPayload_Builder)(nil),   // 12: provenancepb.ClaimPayload.Builder
 }
 var file_infra_tools_provenance_proto_provenance_proto_depIdxs = []int32{
-	10, // 0: provenancepb.AttestedClaim.subject:type_name -> provenancepb.AttestedClaim.Subject
+	11, // 0: provenancepb.AttestedClaim.subject:type_name -> provenancepb.AttestedClaim.Subject
 	2,  // 1: provenancepb.AttestedClaim.claim_payload:type_name -> provenancepb.ClaimPayload
-	11, // 2: provenancepb.ClaimPayload.builder:type_name -> provenancepb.ClaimPayload.Builder
+	12, // 2: provenancepb.ClaimPayload.builder:type_name -> provenancepb.ClaimPayload.Builder
 	3,  // 3: provenancepb.ClaimPayload.top_level_source:type_name -> provenancepb.TopLevelSource
 	4,  // 4: provenancepb.ClaimPayload.build_entry_point:type_name -> provenancepb.BuildEntryPoint
 	5,  // 5: provenancepb.ClaimPayload.source:type_name -> provenancepb.Source
 	6,  // 6: provenancepb.TopLevelSource.git_source:type_name -> provenancepb.GitRepo
 	6,  // 7: provenancepb.Source.git:type_name -> provenancepb.GitRepo
 	7,  // 8: provenancepb.Source.cipd:type_name -> provenancepb.CIPD
-	1,  // 9: provenancepb.ProvenanceInfo.Payload.attested_claim:type_name -> provenancepb.AttestedClaim
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	3,  // 9: provenancepb.ProvenanceData.topLevelSource:type_name -> provenancepb.TopLevelSource
+	1,  // 10: provenancepb.ProvenanceInfo.Payload.attested_claim:type_name -> provenancepb.AttestedClaim
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_infra_tools_provenance_proto_provenance_proto_init() }
@@ -1029,7 +1115,7 @@ func file_infra_tools_provenance_proto_provenance_proto_init() {
 			}
 		}
 		file_infra_tools_provenance_proto_provenance_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ProvenanceInfo_Header); i {
+			switch v := v.(*ProvenanceData); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1041,7 +1127,7 @@ func file_infra_tools_provenance_proto_provenance_proto_init() {
 			}
 		}
 		file_infra_tools_provenance_proto_provenance_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ProvenanceInfo_Payload); i {
+			switch v := v.(*ProvenanceInfo_Header); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1053,7 +1139,7 @@ func file_infra_tools_provenance_proto_provenance_proto_init() {
 			}
 		}
 		file_infra_tools_provenance_proto_provenance_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AttestedClaim_Subject); i {
+			switch v := v.(*ProvenanceInfo_Payload); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1065,6 +1151,18 @@ func file_infra_tools_provenance_proto_provenance_proto_init() {
 			}
 		}
 		file_infra_tools_provenance_proto_provenance_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AttestedClaim_Subject); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_tools_provenance_proto_provenance_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ClaimPayload_Builder); i {
 			case 0:
 				return &v.state
@@ -1087,7 +1185,7 @@ func file_infra_tools_provenance_proto_provenance_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_tools_provenance_proto_provenance_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

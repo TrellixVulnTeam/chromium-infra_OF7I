@@ -21,15 +21,21 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"strings"
 	"time"
 
+	"github.com/maruel/subcommands"
+
 	cloudkms "cloud.google.com/go/kms/apiv1"
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	provenancepb "infra/tools/provenance/proto"
+
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/common/errors"
 )
 
 // If unspecified, set expiry of token to 6 months.
@@ -163,11 +169,17 @@ type Attestation struct {
 }
 
 // Generates the final attestation and writes to a file.
-func generateProvenance(ctx context.Context, client *cloudkms.KeyManagementClient, header string, body string, keyPath string, outfile string) (string, error) {
+func generateProvenance(ctx context.Context, client *cloudkms.KeyManagementClient, input []byte, keyPath string) ([]byte, error) {
+	payloadData := &provenancepb.ProvenanceData{}
+	if err := protojson.Unmarshal([]byte(input), payloadData); err != nil {
+		return nil, errors.Annotate(err, "failed to unmarshal ProvenanceData").Err()
+	}
+	header, _ := provenanceHeader("ES256", keyPath)
+	body, _ := provenacePayload(payloadData.SubjectHash, payloadData.TopLevelSource, payloadData.Recipe, payloadData.Exp)
 	signingInput := []byte(strings.Join([]string{header, body}, "."))
 	provenanceSignature, err := signAsymmetric(ctx, client, keyPath, signingInput)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign the provenance: %+v", err)
+		return nil, fmt.Errorf("failed to sign the provenance: %+v", err)
 	}
 
 	token := strings.Join([]string{header, body, provenanceSignature}, ".")
@@ -175,13 +187,27 @@ func generateProvenance(ctx context.Context, client *cloudkms.KeyManagementClien
 
 	provenance, err := json.Marshal(rawAttestation)
 	if err != nil {
-		return "", fmt.Errorf("failed to prepare provenance: %+v", err)
+		return nil, fmt.Errorf("failed to prepare provenance: %+v", err)
 	}
 
-	err = ioutil.WriteFile(outfile, provenance, 0744)
-	if err != nil {
-		return "", fmt.Errorf("failed to write provenance to file: %+v", err)
-	}
+	return provenance, nil
+}
 
-	return token, nil
+// CLI command and help description.
+func cmdGenerate(authOpts auth.Options) *subcommands.Command {
+	return &subcommands.Command{
+		UsageLine: "generate <options> <path>",
+		ShortDesc: "generates provenance for given artifact",
+		LongDesc: `Processes a json manifest, serializes into provenance format and uploads the digest for signing by Cloud KMS.
+At this time, this tool assumes that all signatures are on SHA-256 digests and
+all keys are EC_SIGN_P256_SHA256.
+<path> refers to the path to the crypto key. e.g.
+projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<cryptoKey>/cryptoKeyVersions/<version>
+-output will be the provenance attestation`,
+		CommandRun: func() subcommands.CommandRun {
+			c := generateRun{}
+			c.Init(authOpts)
+			return &c
+		},
+	}
 }

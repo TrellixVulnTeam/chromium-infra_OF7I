@@ -129,3 +129,12 @@ message CIPD {
   // Instance id that identifies a cipd package uniquely.
   string instance_id = 2;
 }
+
+// Used to serialize/deserialize data between Invoker and CLI.
+// this is used as input to generator CLI to produce provenance of artifacts.
+message ProvenanceData {
+  string subjectHash = 1;
+  string recipe = 2;
+  int32 exp = 3;
+  TopLevelSource topLevelSource = 4;
+}

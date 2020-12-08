@@ -15,12 +15,50 @@
 // This provides a command `provenance` to generate provenance metadata
 // for luci built artifacts. Provenance format here is based upon BinAuthz
 // Attestation format.
+
 package main
 
 import (
-	"fmt"
+	"context"
+	"os"
+
+	"github.com/maruel/subcommands"
+
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/client/versioncli"
+	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/data/rand/mathrand"
+	"go.chromium.org/luci/common/logging/gologger"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
+// Please update version for each major change {behavior, arguments,
+// supported commands}. eg. major.minor.patch
+const version = "0.1.0"
+
+func getApplication(defaultAuthOpts auth.Options) *cli.Application {
+	defaultAuthOpts.Scopes = []string{auth.OAuthScopeEmail, "https://www.googleapis.com/auth/cloud-platform"}
+	return &cli.Application{
+		Name:  "provenance",
+		Title: "Client for interfacing with BCID for Software Verification Service",
+		Context: func(ctx context.Context) context.Context {
+			return gologger.StdConfig.Use(ctx)
+		},
+		// Subcommands available under provenance binary.
+		Commands: []*subcommands.Command{
+			subcommands.CmdHelp,
+			cmdGenerate(defaultAuthOpts),
+			authcli.SubcommandInfo(defaultAuthOpts, "whoami", false),
+			authcli.SubcommandLogin(defaultAuthOpts, "login", false),
+			authcli.SubcommandLogout(defaultAuthOpts, "logout", false),
+			versioncli.CmdVersion(version),
+		},
+	}
+}
+
 func main() {
-	fmt.Println("Chrome Provenance")
+	mathrand.SeedRandomly()
+	app := getApplication(chromeinfra.DefaultAuthOptions())
+	os.Exit(subcommands.Run(app, nil))
 }
