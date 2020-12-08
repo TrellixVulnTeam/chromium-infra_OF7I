@@ -325,7 +325,7 @@ def should_create_skew_test(version, milestones):
 
 def RunSteps(api):
   # Get Chromium version to build skew tests for
-  version = api.properties.get('chromium_version')
+  version = api.properties.get('chrome_version')
   assert version, (
       'Recipe needs to be initialized with chromium'
       ' version in input properties')
@@ -460,7 +460,7 @@ def GenTests(api):
 
   yield api.test(
       'basic',
-      api.properties(chromium_version='82.0.4000.90') +
+      api.properties(chrome_version='82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -470,7 +470,7 @@ def GenTests(api):
 
   yield api.test(
       'build_fails',
-      api.properties(chromium_version='82.0.4000.90') +
+      api.properties(chrome_version='82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -482,14 +482,14 @@ def GenTests(api):
 
   yield api.test(
       'version_is_less_than_curr_tested',
-      api.properties(chromium_version='82.0.4000.10') +
+      api.properties(chrome_version='82.0.4000.10') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
                     api.file.read_text(TEST_VARIANTS_PYL)))
 
   yield api.test(
       'poorly_written_chromium_version',
-      api.properties(chromium_version='82.0.4000.90') +
+      api.properties(chrome_version='82.0.4000.90') +
       api.expect_exception('ValueError') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
@@ -500,7 +500,7 @@ def GenTests(api):
 
   yield api.test(
       'cipd_package_already_exists',
-      api.properties(chromium_version='82.0.4000.90') +
+      api.properties(chrome_version='82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
                     api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -508,5 +508,5 @@ def GenTests(api):
 
   yield api.test(
       'branch_is_not_in_milestones',
-      api.properties(chromium_version='82.0.4003.90') +
+      api.properties(chrome_version='82.0.4003.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']))
