@@ -13,20 +13,20 @@ from apache_beam.io.gcp.datastore.v1new.types import Query
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.options.pipeline_options import PipelineOptions
 
-DATETIME_FORMAT = '%G-%m-%d:%H:%M:%S%z'
+DATETIME_FORMAT = '%Y-%m-%d:%H:%M:%S%z'
 
 
 class TokenSelectionOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--max_lifetime',
             help=('The duration of time an UploadToken should be kept in '
                   'the Datstore, expressed as a string in hours or '
                   'minutes or combinations (e.g. 1h30m)'),
             default='6h',
         )
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--reference_time',
             help=(f'A datetime-parseable reference time, in this '
                   f'format: {DATETIME_FORMAT} -- if empty means '
@@ -34,13 +34,50 @@ class TokenSelectionOptions(PipelineOptions):
             default='',
         )
 
+    def get_selection_provider(self):
+        return _SelectionProvider(self.max_lifetime, self.reference_time)
+
+
+class _SelectionProvider(object):
+    def __init__(self, max_lifetime, reference_time):
+        self._max_lifetime = max_lifetime
+        self._reference_time = reference_time
+        self._cached_max_lifetime = None
+        self._cached_reference_time = None
+
+    @property
+    def max_lifetime(self):
+        if self._cached_max_lifetime is None:
+            # Support hours and minutes and combinations of each.
+            result = re.match(r'((?P<hours>\d+)[Hh])?((?P<minutes>\d+)[Mm])?',
+                              self._max_lifetime.get())
+            hours = result.group('hours') or '0'
+            minutes = result.group('minutes') or '0'
+            self._cached_max_lifetime = datetime.timedelta(
+                minutes=int(minutes), hours=int(hours))
+        return self._cached_max_lifetime
+
+    @property
+    def reference_time(self):
+        if self._cached_reference_time is None:
+            ref_time = self._reference_time.get()
+            if not ref_time:
+                self._cached_reference_time = datetime.datetime.now(
+                    tz=datetime.timezone.utc)
+            else:
+                self._cached_reference_time = datetime.datetime.strptime(
+                    ref_time, DATETIME_FORMAT)
+        return self._cached_reference_time
+
+    def __str__(self):
+        return (f'_SelectionProvider(max_lifetime={self._max_lifetime},'
+                f'ref={self._reference_time})')
+
 
 def select_expired_tokens(
         raw_tokens: beam.Pipeline,
         raw_measurements: beam.Pipeline,
-        max_lifetime: datetime.timedelta,
-        reference_time: datetime.datetime,
-        expired_tokens,
+        selection_provider: _SelectionProvider,
 ):
     missing_token_measurements_count = metrics.Metrics.counter(
         'select', 'missing_token_measurements_count')
@@ -76,21 +113,23 @@ def select_expired_tokens(
     })
                              | 'Merge' >> beam.CoGroupByKey())
 
-    def select_expired(keyed_token_and_measurements,
-                       max_lifetime: datetime.timedelta,
-                       reference_time: datetime.datetime, expired_tokens):
+    expired_tokens_counter = metrics.Metrics.counter('select',
+                                                     'expired_tokens')
+
+    def expired_token_selector(keyed_token_and_measurements,
+                               selection_provider):
         _, token_and_measurements = keyed_token_and_measurements
         tokens = token_and_measurements['token']
 
         # This means we have already deleted the token for these
         # measurements, so we'll always delete these measurements.
         if not tokens:
-            expired_tokens.inc()
+            expired_tokens_counter.inc()
             return True
         token = token_and_measurements['token'][0].to_client_entity()
-        lifetime = reference_time - token['update_time']
-        if lifetime >= max_lifetime:
-            expired_tokens.inc()
+        lifetime = (selection_provider.reference_time - token['update_time'])
+        if lifetime >= selection_provider.max_lifetime:
+            expired_tokens_counter.inc()
             return True
         return False
 
@@ -98,11 +137,7 @@ def select_expired_tokens(
     # the other the expired measurements.
     expired_tokens = (measurements_by_token
                       | 'SelectExpiredTokens' >> beam.Filter(
-                          select_expired,
-                          max_lifetime,
-                          reference_time,
-                          expired_tokens,
-                      ))
+                          expired_token_selector, selection_provider))
 
     def extract_token_key(keyed_token_and_measurements, counter):
         _, token_and_measurements = keyed_token_and_measurements
@@ -143,32 +178,15 @@ class CountInput(beam.DoFn):
         yield input
 
 
-def parse_timedelta(value):
-    # Support hours and minutes and combinations of each.
-    result = re.match(r'((?P<hours>\d+)h)?((?P<minutes>\d+)m)?', value)
-    hours = result.group('hours') or '0'
-    minutes = result.group('minutes') or '0'
-    return datetime.timedelta(minutes=int(minutes), hours=int(hours))
-
-
-def parse_datetime(value):
-    if not value:
-        return datetime.datetime.now(tz=datetime.timezone.utc)
-    return datetime.datetime.strptime(value, DATETIME_FORMAT)
-
-
 def main():
     project = 'chromeperf'
     options = PipelineOptions()
     options.view_as(GoogleCloudOptions).project = project
-    deletion_options = options.view_as(TokenSelectionOptions)
-    max_lifetime = parse_timedelta(deletion_options.max_lifetime)
-    reference_time = parse_datetime(deletion_options.reference_time)
+    selection_options = options.view_as(TokenSelectionOptions)
 
     p = beam.Pipeline(options=options)
     token_count = metrics.Metrics.counter('main', 'tokens_read')
     measurement_count = metrics.Metrics.counter('main', 'measurements_read')
-    expired_token_count = metrics.Metrics.counter('main', 'expired_tokens')
 
     raw_tokens = (p | 'ReadUploadTokens' >> datastoreio.ReadFromDatastore(
         query=Query(kind='Token', project=project)))
@@ -185,12 +203,8 @@ def main():
          | 'CountMeasurements' >> beam.ParDo(CountInput(measurement_count)))
 
     tokens_to_delete, measurements_to_delete = select_expired_tokens(
-        raw_tokens,
-        raw_measurements,
-        max_lifetime,
-        reference_time,
-        expired_token_count,
-    )
+        raw_tokens, raw_measurements,
+        selection_options.get_selection_provider())
 
     _ = (tokens_to_delete
          | 'DeleteTokens' >> datastoreio.DeleteFromDatastore(project))

@@ -17,7 +17,7 @@ def new_token(key):
     e = Entity(Key(['Token', key], project='test'))
     e.set_properties({
         'update_time':
-        datetime.datetime(2000, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
+        datetime.datetime(2020, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
     })
     return e
 
@@ -36,16 +36,19 @@ MEASUREMENTS = [
 
 
 def test_select_all_expired():
-    with test_pipeline.TestPipeline() as p:
+    with test_pipeline.TestPipeline(additional_pipeline_args=[
+            '--max_lifetime',
+            '1H',
+            '--reference_time',
+            '2020-01-02:00:00:01+0000',
+    ]) as p:
+        selection_options = p.options.view_as(
+            delete_upload_tokens.TokenSelectionOptions)
         tokens = p | "CreateTokens" >> beam.Create(TOKENS)
         measurements = p | "CreateMeasurements" >> beam.Create(MEASUREMENTS)
-        expired_counter = beam.metrics.Metrics.counter('test',
-                                                       'expired_tokens')
 
         tokens_to_delete, measurements_to_delete = delete_upload_tokens.select_expired_tokens(
-            tokens, measurements, datetime.timedelta(days=10),
-            datetime.datetime(2001, 1, 1, 0, 0, 0, 0, datetime.timezone.utc),
-            expired_counter)
+            tokens, measurements, selection_options.get_selection_provider())
 
         assert_that(
             tokens_to_delete,
@@ -61,16 +64,19 @@ def test_select_all_expired():
 
 
 def test_select_none_expired():
-    with test_pipeline.TestPipeline() as p:
+    with test_pipeline.TestPipeline(additional_pipeline_args=[
+            '--max_lifetime',
+            '240H',
+            '--reference_time',
+            '2020-01-01:00:00:01+0000',
+    ]) as p:
+        selection_options = p.options.view_as(
+            delete_upload_tokens.TokenSelectionOptions)
         tokens = p | "CreateTokens" >> beam.Create(TOKENS)
         measurements = p | "CreateMeasurements" >> beam.Create(MEASUREMENTS)
-        expired_counter = beam.metrics.Metrics.counter('test',
-                                                       'expired_tokens')
 
         tokens_to_delete, measurements_to_delete = delete_upload_tokens.select_expired_tokens(
-            tokens, measurements, datetime.timedelta(days=10),
-            datetime.datetime(2000, 1, 1, 1, 0, 0, 0, datetime.timezone.utc),
-            expired_counter)
+            tokens, measurements, selection_options.get_selection_provider())
 
         assert_that(tokens_to_delete,
                     equal_to([]),
@@ -82,19 +88,22 @@ def test_select_none_expired():
 
 
 def test_select_missing_tokens():
-    with test_pipeline.TestPipeline() as p:
+    with test_pipeline.TestPipeline(additional_pipeline_args=[
+            '--max_lifetime',
+            '1H',
+            '--reference_time',
+            '2020-01-01:00:00:01+0000',
+    ]) as p:
+        selection_options = p.options.view_as(
+            delete_upload_tokens.TokenSelectionOptions)
         tokens = p | "CreateTokens" >> beam.Create([])
         measurements = p | "CreateMeasurements" >> beam.Create([
             new_measurement(k + (t * 10), t) for t in range(10)
             for k in range(10)
         ])
-        expired_counter = beam.metrics.Metrics.counter('test',
-                                                       'expired_tokens')
 
         tokens_to_delete, measurements_to_delete = delete_upload_tokens.select_expired_tokens(
-            tokens, measurements, datetime.timedelta(days=10),
-            datetime.datetime(2000, 1, 1, 1, 0, 0, 0, datetime.timezone.utc),
-            expired_counter)
+            tokens, measurements, selection_options.get_selection_provider())
 
         assert_that(tokens_to_delete,
                     equal_to([]),
@@ -109,19 +118,22 @@ def test_select_missing_tokens():
 
 
 def test_select_measurements_no_token():
-    with test_pipeline.TestPipeline() as p:
+    with test_pipeline.TestPipeline(additional_pipeline_args=[
+            '--max_lifetime',
+            '1H',
+            '--reference_time',
+            '2020-01-01:00:00:01+0000',
+    ]) as p:
+        selection_options = p.options.view_as(
+            delete_upload_tokens.TokenSelectionOptions)
         tokens = p | "CreateTokens" >> beam.Create([])
         measurements = p | "CreateMeasurements" >> beam.Create([
             new_measurement(k + (t * 10), None) for t in range(10)
             for k in range(10)
         ])
-        expired_counter = beam.metrics.Metrics.counter('test',
-                                                       'expired_tokens')
 
         tokens_to_delete, measurements_to_delete = delete_upload_tokens.select_expired_tokens(
-            tokens, measurements, datetime.timedelta(days=10),
-            datetime.datetime(2000, 1, 1, 1, 0, 0, 0, datetime.timezone.utc),
-            expired_counter)
+            tokens, measurements, selection_options.get_selection_provider())
 
         assert_that(tokens_to_delete,
                     equal_to([]),
