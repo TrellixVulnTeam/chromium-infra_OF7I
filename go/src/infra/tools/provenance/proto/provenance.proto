@@ -39,7 +39,7 @@ message ProvenanceInfo {
     // "Not-before time". Refer to RFC7519.
     int32 nbf = 4;
     // Attested claim portion of the payload.
-    AttestedClaim attested_claim = 5;
+    AttestedClaim attestedClaim = 5;
   }
 }
 
@@ -57,11 +57,11 @@ message AttestedClaim {
   // attestation set that applies to more than one binary, the
   // binaries should be compressed into a single zip file artifact.
   message Subject {
-    string sha256 = 1;
+    string sha256 = 1 [json_name="sha-256"];
   }
   Subject subject = 2;
   // Info about current build goes into payload of attestation.
-  ClaimPayload claim_payload = 3;
+  ClaimPayload payload = 3;
 }
 
 message ClaimPayload {
@@ -96,7 +96,7 @@ message ClaimPayload {
 // Identifies the source location that was used to initiate the build that
 // produced this artifact.
 message TopLevelSource {
-  GitRepo git_source = 1;
+  GitRepo git_repo = 1;
 }
 
 // Identifies how the builder was started (e.g. Blaze build target, LUCI

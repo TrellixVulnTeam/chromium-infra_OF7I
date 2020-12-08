@@ -102,7 +102,7 @@ func provenanceHeader(alg string, keyLocation string) (string, error) {
 		Kid: keyLocation,
 	}
 
-	headerSegment, err := json.Marshal(header)
+	headerSegment, err := protojson.Marshal(header)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to prepare header segment: %+v", err)
@@ -141,9 +141,9 @@ func provenacePayload(subjectHash string, topLevelSource *provenancepb.TopLevelS
 	}
 
 	attestedClaim := &provenancepb.AttestedClaim{
-		Type:         "//bcid.corp.google.com/attestations/core-provenance/v1",
-		Subject:      subject,
-		ClaimPayload: claim,
+		Type:    "//bcid.corp.google.com/attestations/core-provenance/v1",
+		Subject: subject,
+		Payload: claim,
 	}
 
 	payload := &provenancepb.ProvenanceInfo_Payload{
@@ -154,7 +154,7 @@ func provenacePayload(subjectHash string, topLevelSource *provenancepb.TopLevelS
 		AttestedClaim: attestedClaim,
 	}
 
-	payloadSegment, err := json.Marshal(payload)
+	payloadSegment, err := protojson.Marshal(payload)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to prepare payload segment: %+v", err)
