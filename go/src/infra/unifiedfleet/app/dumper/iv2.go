@@ -91,7 +91,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 			// Create rack when creating assets if rack is missing
 			if err := checkRackExists(ctx, iv2Asset.GetLocation().GetRack()); err != nil {
 				if err := registerRacksForAsset(ctx, iv2Asset); err != nil {
-					logging.Warningf(ctx, "Unable to create rack %s: %s", iv2Asset.GetLocation().GetRack(), err.Error())
+					logging.Warningf(ctx, "Unable to create rack %s (asset %s): %s", iv2Asset.GetLocation().GetRack(), iv2Asset.GetName(), err.Error())
 					continue
 				}
 			}

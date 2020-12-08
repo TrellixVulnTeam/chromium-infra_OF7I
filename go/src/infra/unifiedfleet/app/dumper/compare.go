@@ -123,9 +123,6 @@ func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2A
 	}
 	logs = append(logs, "Resources in both UFS and inventory V2 but has difference (UFS ++):")
 	logs = append(logs, diffs...)
-	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
-		return err
-	}
 
 	logs = append(logs, "DutStates in inventory V2 but not in UFS:")
 	var stateDiffs []string
