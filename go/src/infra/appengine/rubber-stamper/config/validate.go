@@ -51,7 +51,7 @@ func validateBenignFilePattern(c *validation.Context, benignFilePattern *BenignF
 				c.Errorf("invalid path %s: %s", p, err)
 			}
 
-			if pExt := path.Ext(p); ext != pExt && p[len(p)-1] != '/' {
+			if pExt := path.Ext(p); ext != pExt && p[len(p)-1] != '/' && p[len(p)-1] != '*' {
 				c.Errorf("the extension of path %s does not match the extension %s", p, ext)
 			}
 		}
