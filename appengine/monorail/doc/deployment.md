@@ -310,6 +310,36 @@ monorail-dev and monorail-staging, respectively.
 If you are ever unsure on how to rollback or clean up unexpected Spinnaker
 errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
 
+## Manually Deploying and Rolling back if Spinnaker is down.
+
+### Creating a new app version
+1. From infra/monorail, create a new local branch at the desired [*commit SHA*]. Ensure that the branch has no unmerged changes.
+   ```
+   git checkout -b <your_release_branch_name> [*commit SHA*]
+   ```
+   1.  [Optional] cherry pick another commit that is ahead of
+            [*commit SHA*]:
+            ```
+            git cherry-pick -x [*cherry-picked commit SHA*]
+            ```
+1. run
+   ```
+   eval `../../go/env.py`
+   ```
+1. Create a new version with gae.py (replacing `deploy_dev` with `deploy_staging` or `deploy_prod`, if appropriate):
+   ```
+   make deploy_dev
+   ```
+1. The new version should show up in pantheon's App Engine's Versions [page](https://pantheon.corp.google.com/appengine/versions?src=ac&project=monorail-dev&serviceId=default). Traffic allocation should be 0%.
+
+### Migrating traffic to a previous or new version
+1. Confirm the new version you want to release or the old version you want to roll back to exists in [pantheon](https://pantheon.corp.google.com/appengine/versions?src=ac&project=monorail-dev&serviceId=api):
+   1. Confirm this for all services (default, besearch, latency-insensitive, api) via the Service dropdown.
+   ![services-dropdown](md_images/pantheon-services-dropdown.png)
+1. Select the desired version and click "Migrate Traffic". REPEAT THIS FOR EVERY SERVICE.
+   ![migrate-traffic](md_images/pantheon-migrate-traffic.png)
+
+
 ## Creating and deploying a new Monorail instance
 
 See: [Creating a new Monorail instance](instance.md)
