@@ -93,7 +93,7 @@ func scanner(ctx context.Context, dsClient *datastore.Client, kind string,
 		q = q.Project(fields...)
 	}
 	t := dsClient.Run(ctx, q)
-	for i := 0; ; i++ {
+	for i := 1; ; i++ {
 		key, err := t.Next(doc)
 		if err == iterator.Done {
 			break
@@ -102,7 +102,7 @@ func scanner(ctx context.Context, dsClient *datastore.Client, kind string,
 			log.Panic(err)
 		}
 		cb(key)
-		if i == saveCursorAfter {
+		if i%saveCursorAfter == 0 {
 			c, err := t.Cursor()
 			if err == nil {
 				log.Printf("Processed %d of %s", i, kind)
