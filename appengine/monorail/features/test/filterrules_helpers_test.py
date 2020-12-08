@@ -118,7 +118,7 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.assertFalse(self.services.issue.enqueue_issues_called)
 
     get_client_mock().queue_path.assert_any_call(
-        settings.app_id, settings.CLOUD_TASKS_REGION, 'default')
+        settings.app_id, settings.CLOUD_TASKS_REGION, 'recomputederivedfields')
     self.assertEqual(get_client_mock().queue_path.call_count, num_calls)
     self.assertEqual(get_client_mock().create_task.call_count, num_calls)
 
@@ -167,7 +167,7 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.assertFalse(self.services.issue.enqueue_issues_called)
     num_calls = (self.services.issue.next_id // self.BLOCK + 1)
     get_client_mock().queue_path.assert_any_call(
-        settings.app_id, settings.CLOUD_TASKS_REGION, 'default')
+        settings.app_id, settings.CLOUD_TASKS_REGION, 'recomputederivedfields')
     self.assertEqual(get_client_mock().queue_path.call_count, num_calls)
     self.assertEqual(get_client_mock().create_task.call_count, num_calls)
 

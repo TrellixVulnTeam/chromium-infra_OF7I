@@ -15,6 +15,7 @@ import six
 from six import string_types
 
 import settings
+from features import features_constants
 from framework import cloud_tasks_helpers
 from framework import exceptions
 from framework import framework_bizobj
@@ -75,7 +76,8 @@ def RecomputeAllDerivedFields(cnxn, services, project, config):
     }
     task = cloud_tasks_helpers.generate_simple_task(
         urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do', params)
-    cloud_tasks_helpers.create_task(task)
+    cloud_tasks_helpers.create_task(
+        task, queue=features_constants.QUEUE_RECOMPUTE_DERIVED_FIELDS)
 
     shard_id = (shard_id + 1) % settings.num_logical_shards
 

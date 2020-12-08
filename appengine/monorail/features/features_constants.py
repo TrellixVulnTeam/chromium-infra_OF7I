@@ -24,6 +24,7 @@ FIELD_DEF_NAME_PATTERN = '[a-zA-Z]([_-]?[a-zA-Z0-9])*'
 QUEUE_NOTIFICATIONS = 'notifications'
 QUEUE_OUTBOUND_EMAIL = 'outboundemail'
 QUEUE_PUBSUB = 'pubsub-issueupdates'
+QUEUE_RECOMPUTE_DERIVED_FIELDS = 'recomputederivedfields'
 
 KNOWN_CUES = (
     'privacy_click_through',

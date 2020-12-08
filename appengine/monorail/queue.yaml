@@ -33,6 +33,13 @@ queue:
     task_age_limit: 24h
     min_backoff_seconds: 60
 
+- name: recomputederivedfields
+  rate: 1/s
+  max_concurrent_requests: 10
+  retry_parameters:
+    task_age_limit: 24h
+    min_backoff_seconds: 60
+
 - name: spamexport
   rate: 1/d
   max_concurrent_requests: 1
