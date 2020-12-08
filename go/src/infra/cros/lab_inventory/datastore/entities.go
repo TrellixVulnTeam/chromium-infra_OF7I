@@ -15,9 +15,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	"infra/libs/cros/lab_inventory/changehistory"
-	inv "infra/libs/cros/lab_inventory/protos"
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/changehistory"
+	inv "infra/cros/lab_inventory/protos"
+	"infra/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 )

@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	inv "infra/libs/cros/lab_inventory/protos"
+	inv "infra/cros/lab_inventory/protos"
 )
 
 func compareBoxsterWithV0(ctx context.Context, boxsterCfgs, v0Cfgs []*device.Config) error {

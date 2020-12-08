@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 
-	"infra/libs/cros/lab_inventory/cfg2datastore"
+	"infra/cros/lab_inventory/cfg2datastore"
 	"infra/libs/git"
 )
 

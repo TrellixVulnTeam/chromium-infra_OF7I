@@ -20,7 +20,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	"infra/libs/cros/lab_inventory/changehistory"
+	"infra/cros/lab_inventory/changehistory"
 )
 
 const (

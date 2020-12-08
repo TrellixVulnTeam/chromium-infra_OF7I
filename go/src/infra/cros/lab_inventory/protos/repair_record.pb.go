@@ -6,7 +6,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0-devel
 // 	protoc        v3.12.1
-// source: infra/libs/cros/lab_inventory/protos/repair_record.proto
+// source: infra/cros/lab_inventory/protos/repair_record.proto
 
 package invlibs
 

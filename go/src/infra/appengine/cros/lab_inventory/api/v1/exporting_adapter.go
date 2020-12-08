@@ -17,7 +17,7 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/libs/cros/lab_inventory/deviceconfig"
+	"infra/cros/lab_inventory/deviceconfig"
 	"infra/libs/skylab/inventory"
 )
 

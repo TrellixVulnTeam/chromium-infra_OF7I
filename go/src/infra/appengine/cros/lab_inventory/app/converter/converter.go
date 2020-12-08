@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
-	ds "infra/libs/cros/lab_inventory/datastore"
+	ds "infra/cros/lab_inventory/datastore"
 )
 
 // DeviceToBQMsgs converts a device to messages that can be committed to bigquery.

@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/common/gcloud/gs"
 
 	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
-	utilslib "infra/libs/cros/lab_inventory/utils"
+	utilslib "infra/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
 )
 

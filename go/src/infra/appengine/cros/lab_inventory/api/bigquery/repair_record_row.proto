@@ -8,7 +8,7 @@ package apibq;
 
 option go_package = "infra/appengine/cros/lab_inventory/api/bigquery;apibq";
 
-import "infra/libs/cros/lab_inventory/protos/repair_record.proto";
+import "infra/cros/lab_inventory/protos/repair_record.proto";
 
 // Next tag: 3
 message DeviceManualRepairRecordRow {

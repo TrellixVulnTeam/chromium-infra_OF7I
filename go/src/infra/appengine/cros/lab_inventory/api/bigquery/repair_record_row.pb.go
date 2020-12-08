@@ -13,7 +13,7 @@ package apibq
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	protos "infra/libs/cros/lab_inventory/protos"
+	protos "infra/cros/lab_inventory/protos"
 	reflect "reflect"
 	sync "sync"
 )

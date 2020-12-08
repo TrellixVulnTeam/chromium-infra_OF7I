@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/utils"
 )
 
 func checkDuplicatedString() (input chan string, result chan bool) {

@@ -2,7 +2,7 @@ package datastore
 
 import (
 	"context"
-	invlibs "infra/libs/cros/lab_inventory/protos"
+	invlibs "infra/cros/lab_inventory/protos"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"

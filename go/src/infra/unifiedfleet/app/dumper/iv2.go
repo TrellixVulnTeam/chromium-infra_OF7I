@@ -19,7 +19,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	iv2ds "infra/libs/cros/lab_inventory/datastore"
+	iv2ds "infra/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
 	iv2pr2 "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/models"

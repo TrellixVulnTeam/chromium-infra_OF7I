@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	"infra/libs/cros/lab_inventory/cfg2datastore"
+	"infra/cros/lab_inventory/cfg2datastore"
 )
 
 const entityKind = "ManufacturingConfig"

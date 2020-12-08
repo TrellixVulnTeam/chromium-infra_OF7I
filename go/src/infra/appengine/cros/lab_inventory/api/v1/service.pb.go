@@ -23,7 +23,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	protos1 "infra/libs/cros/lab_inventory/protos"
+	protos1 "infra/cros/lab_inventory/protos"
 	protos "infra/libs/fleet/protos"
 	reflect "reflect"
 	sync "sync"

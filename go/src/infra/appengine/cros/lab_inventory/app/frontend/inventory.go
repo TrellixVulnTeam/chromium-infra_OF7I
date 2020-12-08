@@ -21,14 +21,14 @@ import (
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
-	"infra/libs/cros/lab_inventory/changehistory"
-	"infra/libs/cros/lab_inventory/datastore"
-	"infra/libs/cros/lab_inventory/deviceconfig"
-	"infra/libs/cros/lab_inventory/dronecfg"
-	"infra/libs/cros/lab_inventory/hwid"
-	"infra/libs/cros/lab_inventory/manufacturingconfig"
-	invlibs "infra/libs/cros/lab_inventory/protos"
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/changehistory"
+	"infra/cros/lab_inventory/datastore"
+	"infra/cros/lab_inventory/deviceconfig"
+	"infra/cros/lab_inventory/dronecfg"
+	"infra/cros/lab_inventory/hwid"
+	"infra/cros/lab_inventory/manufacturingconfig"
+	invlibs "infra/cros/lab_inventory/protos"
+	"infra/cros/lab_inventory/utils"
 )
 
 // InventoryServerImpl implements service interfaces.

@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/auth"
 
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/utils"
 )
 
 // LifeCycleEvent is the type for all life cycle events, e.g. deployment,

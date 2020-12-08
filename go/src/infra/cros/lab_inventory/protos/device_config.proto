@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package inventory.libs.protos;
 
-option go_package = "infra/libs/cros/lab_inventory/protos;invlibs";
+option go_package = "infra/cros/lab_inventory/protos;invlibs";
 
 // These are the distinct configs combinations that will constitute a ChromeOS
 // device.

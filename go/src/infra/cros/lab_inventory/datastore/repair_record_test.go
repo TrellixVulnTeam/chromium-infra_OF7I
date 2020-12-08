@@ -11,7 +11,7 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	invlibs "infra/libs/cros/lab_inventory/protos"
+	invlibs "infra/cros/lab_inventory/protos"
 )
 
 func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64) *invlibs.DeviceManualRepairRecord {

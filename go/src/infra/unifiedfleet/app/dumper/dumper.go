@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
 
-	bqlib "infra/libs/cros/lab_inventory/bq"
+	bqlib "infra/cros/lab_inventory/bq"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/cron"
 	"infra/unifiedfleet/app/model/configuration"

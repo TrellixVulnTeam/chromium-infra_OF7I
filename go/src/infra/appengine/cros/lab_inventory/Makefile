@@ -7,7 +7,7 @@ PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 APP_PATH := $(PROJECT_PATH)/app/appengine
 MR_APP_PATH := $(PROJECT_PATH)/app/ui/manual-repair
 DEV_CFG_PATH := $(PROJECT_PATH)/devcfg/services/dev/
-LIBS_PATH := $(PROJECT_PATH)/../../../libs/cros/lab_inventory
+LIBS_PATH := $(PROJECT_PATH)/../../../cros/lab_inventory
 GCP_PROJECT = cros-lab-inventory
 GCP_PROJECT_DEV = cros-lab-inventory-dev
 

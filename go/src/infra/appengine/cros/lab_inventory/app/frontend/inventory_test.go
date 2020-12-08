@@ -29,10 +29,10 @@ import (
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
-	"infra/libs/cros/lab_inventory/datastore"
-	"infra/libs/cros/lab_inventory/deviceconfig"
-	"infra/libs/cros/lab_inventory/hwid"
-	invlibs "infra/libs/cros/lab_inventory/protos"
+	"infra/cros/lab_inventory/datastore"
+	"infra/cros/lab_inventory/deviceconfig"
+	"infra/cros/lab_inventory/hwid"
+	invlibs "infra/cros/lab_inventory/protos"
 	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 )

@@ -5,7 +5,7 @@
 /**
  * The triggering device that led you to work on this repair. RepairTarget type
  * enum implemented based on
- * go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ * go/src/infra/cros/lab_inventory/protos/repair_record.proto
  */
 export enum RepairTargetType {
   TYPE_DUT = 0,
@@ -15,7 +15,7 @@ export enum RepairTargetType {
 
 /**
  * State for tracking manual repair progress. Repair state enum implemented
- * based on go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ * based on go/src/infra/cros/lab_inventory/protos/repair_record.proto
  */
 export enum RepairState {
   STATE_INVALID = 0,
@@ -36,7 +36,7 @@ export interface CheckboxActionsConfig {
 
 /**
  * Checkbox related Enums implemented based on
- * go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ * go/src/infra/cros/lab_inventory/protos/repair_record.proto
  *
  * **RepairActionString enums are the string values that will be displayed for
  * each repair action.
@@ -158,7 +158,7 @@ export interface DropdownActionsConfig {
 
 /**
  * Dropdown related Enums implemented based on
- * go/src/infra/libs/cros/lab_inventory/protos/repair_record.proto
+ * go/src/infra/cros/lab_inventory/protos/repair_record.proto
  *
  * **RepairActionString enums are the string values that will be displayed for
  * each repair action.

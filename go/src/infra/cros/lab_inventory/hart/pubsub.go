@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	fleet "infra/libs/fleet/protos/go"
 
-	"infra/libs/cros/lab_inventory/datastore"
+	"infra/cros/lab_inventory/datastore"
 )
 
 // PSRequest helps to unmarshall json data sent from pubsub

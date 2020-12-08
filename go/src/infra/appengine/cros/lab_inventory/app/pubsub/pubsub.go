@@ -8,7 +8,7 @@ import (
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cros/lab_inventory/app/config"
-	"infra/libs/cros/lab_inventory/hart"
+	"infra/cros/lab_inventory/hart"
 )
 
 const (

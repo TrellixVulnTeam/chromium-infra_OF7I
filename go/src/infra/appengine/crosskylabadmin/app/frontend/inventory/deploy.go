@@ -29,7 +29,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/worker"
 	"infra/appengine/crosskylabadmin/app/gitstore"
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/utils"
 	protos "infra/libs/fleet/protos"
 	"infra/libs/skylab/inventory"
 

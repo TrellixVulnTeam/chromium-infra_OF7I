@@ -36,7 +36,7 @@ import (
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/gitstore"
-	"infra/libs/cros/lab_inventory/utilization"
+	"infra/cros/lab_inventory/utilization"
 	"infra/libs/skylab/inventory"
 )
 

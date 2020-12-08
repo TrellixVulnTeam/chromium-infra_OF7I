@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	ds "infra/libs/cros/lab_inventory/datastore"
+	ds "infra/cros/lab_inventory/datastore"
 )
 
 // DUT describes a DUT for the purpose of a drone config.

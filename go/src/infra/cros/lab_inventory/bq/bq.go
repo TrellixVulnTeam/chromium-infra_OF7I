@@ -15,9 +15,9 @@ import (
 	"go.chromium.org/luci/common/bq"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
-	"infra/libs/cros/lab_inventory/datastore"
-	"infra/libs/cros/lab_inventory/deviceconfig"
-	"infra/libs/cros/lab_inventory/manufacturingconfig"
+	"infra/cros/lab_inventory/datastore"
+	"infra/cros/lab_inventory/deviceconfig"
+	"infra/cros/lab_inventory/manufacturingconfig"
 )
 
 // GetPSTTimeStamp returns the PST timestamp for bq table.

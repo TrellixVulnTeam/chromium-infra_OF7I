@@ -32,7 +32,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
 	swarming_utils "infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
-	"infra/libs/cros/lab_inventory/utilization"
+	"infra/cros/lab_inventory/utilization"
 )
 
 // SwarmingFactory is a constructor for a SwarmingClient.

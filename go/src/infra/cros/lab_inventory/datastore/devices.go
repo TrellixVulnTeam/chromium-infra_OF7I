@@ -21,9 +21,9 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 
-	"infra/libs/cros/lab_inventory/changehistory"
-	"infra/libs/cros/lab_inventory/utilization"
-	"infra/libs/cros/lab_inventory/utils"
+	"infra/cros/lab_inventory/changehistory"
+	"infra/cros/lab_inventory/utilization"
+	"infra/cros/lab_inventory/utils"
 )
 
 const (
