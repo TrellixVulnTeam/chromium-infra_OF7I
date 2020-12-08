@@ -165,7 +165,7 @@ func provenacePayload(subjectHash string, topLevelSource *provenancepb.TopLevelS
 
 // Attestation struct for building/writing a single jwt.
 type Attestation struct {
-	jwt string
+	Jwt string `json:"jwt"`
 }
 
 // Generates the final attestation and writes to a file.
@@ -183,7 +183,7 @@ func generateProvenance(ctx context.Context, client *cloudkms.KeyManagementClien
 	}
 
 	token := strings.Join([]string{header, body, provenanceSignature}, ".")
-	rawAttestation := Attestation{token}
+	rawAttestation := Attestation{Jwt: token}
 
 	provenance, err := json.Marshal(rawAttestation)
 	if err != nil {
