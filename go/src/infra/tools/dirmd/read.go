@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
@@ -101,6 +102,7 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	ctx := context.Background()
 	eg, ctx := errgroup.WithContext(ctx)
 	sem := semaphore.NewWeighted(100) // read up to 100 files concurrently
+	var mu sync.Mutex
 	eg.Go(func() error {
 		return filepath.Walk(r.Root, func(dir string, info os.FileInfo, err error) error {
 			switch {
@@ -125,11 +127,15 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 					return errors.Annotate(err, "failed to read metadata of %q", dir).Err()
 
 				case meta != nil:
+					mu.Lock()
 					r.Dirs[key] = meta
+					mu.Unlock()
 
 				case form == dirmdpb.MappingForm_FULL:
 					// Put an empty metadata, so that ComputeAll() populates it below.
+					mu.Lock()
 					r.Dirs[key] = &dirmdpb.Metadata{}
+					mu.Unlock()
 				}
 				return nil
 			})
