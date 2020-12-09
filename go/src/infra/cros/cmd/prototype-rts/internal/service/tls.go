@@ -19,6 +19,9 @@ type fakeTLSCommonService struct {
 	tls.UnimplementedCommonServer
 }
 
+// Type-check against the external interface.
+var _ tls.CommonServer = &fakeTLSCommonService{}
+
 // LaunchTLSCommon starts a fake TLS common service.
 func LaunchTLSCommon(ctx context.Context, tlsPort int32) (*grpc.Server, int32, error) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", tlsPort))
@@ -58,6 +61,6 @@ func extractPortOrDie(addr net.Addr) int32 {
 func (*fakeTLSCommonService) ExecDutCommand(req *tls.ExecDutCommandRequest, srv tls.Common_ExecDutCommandServer) error {
 	return status.Errorf(codes.Unimplemented, "method ExecDutCommand not implemented")
 }
-func (*fakeTLSCommonService) Provision(ctx context.Context, req *tls.ProvisionRequest) (*longrunning.Operation, error) {
+func (*fakeTLSCommonService) ProvisionDut(ctx context.Context, req *tls.ProvisionDutRequest) (*longrunning.Operation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Provision not implemented")
 }
