@@ -1,0 +1,10 @@
+package: chromiumos/infra/prototype-rts/${platform}
+description: Program that demonstrates the workflow of a Chrome OS Remote Test Server.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/prototype-rts
+root: ../../go/bin
+data:
+  - file: prototype-rts${exe_suffix}
+  - version_file: .versions/prototype-rts${exe_suffix}.cipd_version
