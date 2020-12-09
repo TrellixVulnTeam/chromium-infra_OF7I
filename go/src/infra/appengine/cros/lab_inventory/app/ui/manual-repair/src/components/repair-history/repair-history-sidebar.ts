@@ -103,9 +103,7 @@ export default class RepairHistorySidebar extends connect
     }
     repairHistoryList = flattenRecordsActions(repairHistoryRsp);
 
-    // TODO: Current GRPC returns records sorted in ascending date order. Once
-    // backend is implemented properly, will remove reverse().
-    return repairHistoryList.reverse().slice(0, 5);
+    return repairHistoryList.slice(0, 5);
   }
 
   /**

@@ -61,9 +61,7 @@ export default class RepairHistoryModal extends connect
       this.btnDisabled = false;
     }
 
-    // TODO: Current GRPC returns records sorted in ascending date order. Once
-    // backend is implemented properly, will remove reverse().
-    return repairHistoryList.reverse();
+    return repairHistoryList;
   }
 
   /**
