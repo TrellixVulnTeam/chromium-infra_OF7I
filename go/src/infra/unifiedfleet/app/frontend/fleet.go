@@ -6,26 +6,13 @@ package frontend
 
 import (
 	"fmt"
-	"infra/unifiedfleet/app/model/datastore"
-	"net/http"
 
 	"github.com/golang/protobuf/proto"
-	authclient "go.chromium.org/luci/auth"
-	gitilesapi "go.chromium.org/luci/common/api/gitiles"
-	"golang.org/x/net/context"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	luciconfig "go.chromium.org/luci/config"
-	"go.chromium.org/luci/grpc/prpc"
-	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
-	"go.chromium.org/luci/server/auth"
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	"infra/libs/git"
-	"infra/libs/sheet"
-	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/model/datastore"
 )
 
 const (
@@ -39,94 +26,9 @@ const (
 	datacenterConfigFile string = "datacenters.cfg"
 )
 
-var spreadSheetScope = []string{authclient.OAuthScopeEmail, "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"}
-
-// CfgInterfaceFactory is a contsructor for a luciconfig.Interface
-// For potential unittest usage
-type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
-
-// MachineDBInterfaceFactory is a constructor for a crimson.CrimsonClient
-// For potential unittest usage
-type MachineDBInterfaceFactory func(ctx context.Context, host string) (crimson.CrimsonClient, error)
-
-// CrosInventoryInterfaceFactory is a constructor for a invV2Api.InventoryClient
-type CrosInventoryInterfaceFactory func(ctx context.Context, host string) (CrosInventoryClient, error)
-
-// SheetInterfaceFactory is a constructor for a sheet.ClientInterface
-type SheetInterfaceFactory func(ctx context.Context) (sheet.ClientInterface, error)
-
-// GitInterfaceFactory is a constructor for a git.ClientInterface
-type GitInterfaceFactory func(ctx context.Context) (git.ClientInterface, error)
-
 // FleetServerImpl implements the configuration server interfaces.
 type FleetServerImpl struct {
-	cfgInterfaceFactory           CfgInterfaceFactory
-	machineDBInterfaceFactory     MachineDBInterfaceFactory
-	crosInventoryInterfaceFactory CrosInventoryInterfaceFactory
-	sheetInterfaceFactory         SheetInterfaceFactory
-	gitInterfaceFactory           GitInterfaceFactory
-	importPageSize                int
-}
-
-// CrosInventoryClient refers to the fake inventory v2 client
-type CrosInventoryClient interface {
-	ListCrosDevicesLabConfig(ctx context.Context, in *invV2Api.ListCrosDevicesLabConfigRequest, opts ...grpc.CallOption) (*invV2Api.ListCrosDevicesLabConfigResponse, error)
-}
-
-func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, host string) (crimson.CrimsonClient, error) {
-	if cs.machineDBInterfaceFactory != nil {
-		return cs.machineDBInterfaceFactory(ctx, host)
-	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
-	if err != nil {
-		return nil, err
-	}
-	pclient := &prpc.Client{
-		C:    &http.Client{Transport: t},
-		Host: host,
-	}
-	return crimson.NewCrimsonPRPCClient(pclient), nil
-}
-
-func (cs *FleetServerImpl) newCrosInventoryInterfaceFactory(ctx context.Context, host string) (CrosInventoryClient, error) {
-	if cs.crosInventoryInterfaceFactory != nil {
-		return cs.crosInventoryInterfaceFactory(ctx, host)
-	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
-	if err != nil {
-		return nil, err
-	}
-	return invV2Api.NewInventoryPRPCClient(&prpc.Client{
-		C:    &http.Client{Transport: t},
-		Host: host,
-	}), nil
-}
-
-func (cs *FleetServerImpl) newSheetInterface(ctx context.Context) (sheet.ClientInterface, error) {
-	if cs.sheetInterfaceFactory != nil {
-		return cs.sheetInterfaceFactory(ctx)
-	}
-	// Testing sheet-access@unified-fleet-system-dev.iam.gserviceaccount.com, if works, will move it to config file.
-	sheetSA := config.Get(ctx).GetSheetServiceAccount()
-	if sheetSA == "" {
-		return nil, status.Errorf(codes.FailedPrecondition, "sheet service account is not specified in config")
-	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsActor, auth.WithServiceAccount(sheetSA), auth.WithScopes(spreadSheetScope...))
-	if err != nil {
-		return nil, err
-	}
-	return sheet.NewClient(ctx, &http.Client{Transport: t})
-}
-
-func (cs *FleetServerImpl) newGitInterface(ctx context.Context, gitilesHost, project, branch string) (git.ClientInterface, error) {
-	if cs.sheetInterfaceFactory != nil {
-		return cs.gitInterfaceFactory(ctx)
-	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitilesapi.OAuthScope))
-	if err != nil {
-		return nil, err
-	}
-	return git.NewClient(ctx, &http.Client{Transport: t}, "", gitilesHost, project, branch)
+	importPageSize int
 }
 
 func (cs *FleetServerImpl) getImportPageSize() int {

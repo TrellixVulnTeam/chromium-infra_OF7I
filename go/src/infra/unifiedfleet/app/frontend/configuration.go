@@ -5,17 +5,13 @@
 package frontend
 
 import (
-	"net/http"
-
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	luciproto "go.chromium.org/luci/common/proto"
 	luciconfig "go.chromium.org/luci/config"
-	"go.chromium.org/luci/config/impl/remote"
 	"go.chromium.org/luci/grpc/grpcutil"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
-	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
@@ -23,32 +19,14 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
 )
 
-const defaultCfgService = "luci-config.appspot.com"
-
 var (
 	parsePlatformsFunc = configuration.ParsePlatformsFromFile
 )
-
-func (fs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
-	if fs.cfgInterfaceFactory != nil {
-		return fs.cfgInterfaceFactory(ctx)
-	}
-	cfgService := config.Get(ctx).LuciConfigService
-	if cfgService == "" {
-		cfgService = defaultCfgService
-	}
-	return remote.New(cfgService, false, func(ctx context.Context) (*http.Client, error) {
-		t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
-		if err != nil {
-			return nil, err
-		}
-		return &http.Client{Transport: t}, nil
-	})
-}
 
 // CreateChromePlatform creates chromeplatform entry in database.
 func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *ufsAPI.CreateChromePlatformRequest) (rsp *ufspb.ChromePlatform, err error) {
@@ -210,7 +188,11 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *ufsAP
 		}
 	default:
 		logging.Debugf(ctx, "Importing chrome platforms from luci-config")
-		cfgInterface := fs.newCfgInterface(ctx)
+		es, err := external.GetServerInterface(ctx)
+		if err != nil {
+			return nil, err
+		}
+		cfgInterface := es.NewCfgInterface(ctx)
 		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
 		if err != nil {
 			logging.Debugf(ctx, "Fail to fetch configs: %s", err.Error())
@@ -246,7 +228,11 @@ func (fs *FleetServerImpl) ImportOSVersions(ctx context.Context, req *ufsAPI.Imp
 	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mdbClient, err := es.NewMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, machineDBConnectionFailureStatus.Err()
 	}
@@ -602,7 +588,11 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *ufsAPI.ImportVl
 	}
 
 	logging.Debugf(ctx, "Importing vlans from luci-config: %s", configSource.FileName)
-	cfgInterface := fs.newCfgInterface(ctx)
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cfgInterface := es.NewCfgInterface(ctx)
 	fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
 	if err != nil {
 		return nil, configServiceFailureStatus.Err()
@@ -623,12 +613,16 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *ufsAPI.ImportVl
 
 // ImportOSVlans imports the ChromeOS vlans, ips and dhcp configs.
 func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *ufsAPI.ImportOSVlansRequest) (response *status.Status, err error) {
-	sheetClient, err := fs.newSheetInterface(ctx)
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sheetClient, err := es.NewSheetInterface(ctx)
 	if err != nil {
 		return nil, sheetConnectionFailureStatus.Err()
 	}
 	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
-	gitClient, err := fs.newGitInterface(ctx, networkCfg.GetGitilesHost(), networkCfg.GetProject(), networkCfg.GetBranch())
+	gitClient, err := es.NewGitInterface(ctx, networkCfg.GetGitilesHost(), networkCfg.GetProject(), networkCfg.GetBranch())
 	if err != nil {
 		return nil, gitConnectionFailureStatus.Err()
 	}

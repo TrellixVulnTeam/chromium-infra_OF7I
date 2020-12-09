@@ -19,6 +19,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -445,7 +446,11 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *ufsAPI.Im
 	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mdbClient, err := es.NewMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, machineDBConnectionFailureStatus.Err()
 	}
@@ -491,7 +496,11 @@ func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *ufsAPI.
 	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	client, err := fs.newCrosInventoryInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	client, err := es.NewCrosInventoryInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, crosInventoryConnectionFailureStatus.Err()
 	}

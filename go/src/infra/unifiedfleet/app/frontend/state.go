@@ -16,6 +16,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/external"
 )
 
 // ImportStates imports states of crimson objects.
@@ -27,7 +28,11 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mdbClient, err := es.NewMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, machineDBConnectionFailureStatus.Err()
 	}

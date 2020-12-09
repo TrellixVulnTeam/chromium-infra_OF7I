@@ -19,6 +19,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -164,7 +165,11 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *ufsAPI.Impor
 	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mdbClient, err := es.NewMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, machineDBConnectionFailureStatus.Err()
 	}
@@ -427,7 +432,11 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *ufsAPI.ImportNic
 	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mdbClient, err := es.NewMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, machineDBConnectionFailureStatus.Err()
 	}
@@ -488,8 +497,13 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *ufsAPI.Im
 		return nil, invalidConfigServiceName.Err()
 	}
 
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	logging.Debugf(ctx, "Importing the datacenter config file from luci-config: %s", configSource.FileName)
-	cfgInterface := fs.newCfgInterface(ctx)
+	cfgInterface := es.NewCfgInterface(ctx)
 	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), datacenterConfigFile, false)
 	if err != nil {
 		return nil, err

@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/frontend"
 	"infra/unifiedfleet/app/util"
 )
@@ -56,6 +57,7 @@ func main() {
 		srv.RunInBackground("ufs.config", cfgLoader.ReloadLoop)
 
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
+		srv.Context = external.WithServerInterface(srv.Context)
 		srv.RegisterUnaryServerInterceptor(versionInterceptor)
 		srv.RegisterUnaryServerInterceptor(namespaceInterceptor)
 		frontend.InstallServices(srv.PRPC)

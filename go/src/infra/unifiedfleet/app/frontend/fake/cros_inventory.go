@@ -168,6 +168,23 @@ func (ic *InventoryClient) ListCrosDevicesLabConfig(ctx context.Context, in *inv
 	}, nil
 }
 
+// DeviceConfigsExists mock the device config exists request.
+func (ic *InventoryClient) DeviceConfigsExists(ctx context.Context, in *invV2Api.DeviceConfigsExistsRequest, opts ...grpc.CallOption) (*invV2Api.DeviceConfigsExistsResponse, error) {
+	resp := make(map[int32]bool)
+	for idx, config := range in.GetConfigIds() {
+		if pid := config.GetPlatformId(); pid != nil && pid.GetValue() == "test" {
+			if mid := config.GetModelId(); mid != nil && mid.GetValue() == "test" {
+				resp[int32(idx)] = true
+			}
+		} else {
+			resp[int32(idx)] = false
+		}
+	}
+	return &invV2Api.DeviceConfigsExistsResponse{
+		Exists: resp,
+	}, nil
+}
+
 // GetMockDUT returns a mock lab config with ChromeOS DUT
 func GetMockDUT() *invV2Api.ListCrosDevicesLabConfigResponse_LabConfig {
 	lc := proto.Clone(mockLabConfig).(*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig)
