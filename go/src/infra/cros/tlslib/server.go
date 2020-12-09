@@ -21,6 +21,7 @@ import (
 	"infra/libs/lro"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"golang.org/x/crypto/ssh"
@@ -85,6 +86,39 @@ func (s *Server) Serve(l net.Listener) error {
 // GracefulStop stops TLS server gracefully.
 func (s *Server) GracefulStop() {
 	s.grpcServ.GracefulStop()
+}
+
+// getCacheURL returns the URL to use for the DUT, through the wiring service.
+func (s *Server) getCacheURL(ctx context.Context, url, name string) (string, error) {
+	c := tls.NewWiringClient(s.wiringConn)
+	op, err := c.CacheForDut(ctx, &tls.CacheForDutRequest{
+		Url:     url,
+		DutName: name,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(s.wiringConn), op.Name)
+	if err != nil {
+		return "", fmt.Errorf("getCacheURL: failed to wait for CacheForDut, %s", err)
+	}
+
+	if s := op.GetError(); s != nil {
+		return "", fmt.Errorf("getCacheURL: failed to get CacheForDut, %s", s)
+	}
+
+	a := op.GetResponse()
+	if a == nil {
+		return "", fmt.Errorf("getCacheURL: failed to get CacheForDut response for URL=%s and Name=%s", url, name)
+	}
+
+	resp := &tls.CacheForDutResponse{}
+	if err := ptypes.UnmarshalAny(a, resp); err != nil {
+		return "", fmt.Errorf("getCacheURL: unexpected response from CacheForDut, %v", a)
+	}
+
+	return resp.GetUrl(), nil
 }
 
 // ProvisionDut implements TLS provision API.

@@ -23,8 +23,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var rePartitionNumber = regexp.MustCompile(`.*([0-9]+)`)
-var reBuilderPath = regexp.MustCompile(`CHROMEOS_RELEASE_BUILDER_PATH=(.*)`)
+type provisionState struct {
+	s                 *Server
+	c                 *ssh.Client
+	dutName           string
+	imagePath         string
+	targetBuilderPath string
+}
+
+var (
+	rePartitionNumber = regexp.MustCompile(`.*([0-9]+)`)
+	reBuilderPath     = regexp.MustCompile(`CHROMEOS_RELEASE_BUILDER_PATH=(.*)`)
+)
 
 // runCmd interprets the given string command in a shell and returns the error if any.
 func runCmd(c *ssh.Client, cmd string) error {
@@ -88,20 +98,6 @@ func getBuilderPath(c *ssh.Client) (string, error) {
 	return match[1], nil
 }
 
-// getGsCacheURL returns the http URL of GS Cache server appended with imagePath as the path.
-func getGsCacheURL(imagePath string) (string, error) {
-	gsURL, err := url.Parse("http://chromeos6-devserver4:8888/download")
-	if err != nil {
-		return "", fmt.Errorf("get GS Cache URL: %s", err)
-	}
-	u, err := url.Parse(imagePath)
-	if err != nil {
-		return "", fmt.Errorf("get GS Cache URL: %s", err)
-	}
-	gsURL.Path = path.Join(gsURL.Path, u.Host, u.Path)
-	return gsURL.String(), nil
-}
-
 // rootDev holds root device related information.
 type rootDev struct {
 	disk      string
@@ -160,6 +156,7 @@ const (
 	partitionNumRootB   = "5"
 )
 
+// partitionsInfo holds active/inactive root + kernel partition information.
 type partitionInfo struct {
 	// The active + inactive kernel device partitions (e.g. /dev/nvme0n1p2).
 	activeKernel   string
@@ -169,8 +166,7 @@ type partitionInfo struct {
 	inactiveRoot string
 }
 
-// getPartitions returns the next kernel and root partitions to update.
-func getPartitions(r rootDev) partitionInfo {
+func getPartitionInfo(r rootDev) partitionInfo {
 	// Determine the next kernel and root.
 	rootDiskPartDelim := r.disk + r.partDelim
 	switch r.partNum {
@@ -205,8 +201,7 @@ func clearInactiveDLCVerifiedMarks(c *ssh.Client, r rootDev) error {
 		}
 	}()
 
-	activeSlot := r.getActiveDLCSlot()
-	inactiveSlot := getOtherDLCSlot(activeSlot)
+	inactiveSlot := r.getInactiveDLCSlot()
 	err := runCmd(c, fmt.Sprintf("rm -f %s", path.Join(dlcCacheDir, "*", "*", string(inactiveSlot), dlcVerified)))
 	if err != nil {
 		return fmt.Errorf("clear inactive verified DLC marks: failed remove inactive verified DLCs, %s", err)
@@ -220,25 +215,21 @@ const (
 )
 
 // installKernel updates kernelPartition on disk.
-func installKernel(c *ssh.Client, imagePath, kernPartition string) error {
-	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
-	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
-	pathPrefix, err := getGsCacheURL(imagePath)
+func (p *provisionState) installKernel(ctx context.Context, pi partitionInfo) error {
+	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "full_dev_part_KERN.bin.gz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install kernel: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(c, fmt.Sprintf(fetchUngzipConvertCmd, path.Join(pathPrefix, "full_dev_part_KERN.bin.gz"), kernPartition))
+	return runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveKernel))
 }
 
 // installRoot updates rootPartition on disk.
-func installRoot(c *ssh.Client, imagePath, rootPartition string) error {
-	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
-	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
-	pathPrefix, err := getGsCacheURL(imagePath)
+func (p *provisionState) installRoot(ctx context.Context, pi partitionInfo) error {
+	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "full_dev_part_ROOT.bin.gz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install root: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(c, fmt.Sprintf(fetchUngzipConvertCmd, path.Join(pathPrefix, "full_dev_part_ROOT.bin.gz"), rootPartition))
+	return runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
 }
 
 const (
@@ -247,43 +238,43 @@ const (
 )
 
 // installStateful updates the stateful partition on disk (finalized after a reboot).
-func installStateful(c *ssh.Client, imagePath string) error {
-	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
-	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
-	pathPrefix, err := getGsCacheURL(imagePath)
+func (p *provisionState) installStateful(ctx context.Context) error {
+	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "stateful.tgz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install stateful: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(c, strings.Join([]string{
+	return runCmd(p.c, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
-		fmt.Sprintf("curl %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", path.Join(pathPrefix, "stateful.tgz"), statefulPath),
+		fmt.Sprintf("curl %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
 		fmt.Sprintf("echo -n clobber > %s", updateStatefulFilePath),
 	}, " && "))
 }
 
-func revertStatefulInstall(c *ssh.Client) {
+func (p *provisionState) revertStatefulInstall() {
 	const (
 		varNew      = "var_new"
 		devImageNew = "dev_image_new"
 	)
-	err := runCmd(c, fmt.Sprintf("rm -rf %s %s %s", path.Join(statefulPath, varNew), path.Join(statefulPath, devImageNew), updateStatefulFilePath))
+	varNewPath := path.Join(statefulPath, varNew)
+	devImageNewPath := path.Join(statefulPath, devImageNew)
+	err := runCmd(p.c, fmt.Sprintf("rm -rf %s %s %s", varNewPath, devImageNewPath, updateStatefulFilePath))
 	if err != nil {
 		log.Printf("revert stateful install: failed to revert stateful installation, %s", err)
 	}
 }
 
-func installPartitions(c *ssh.Client, imagePath string, partitions partitionInfo) []error {
+func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo) []error {
 	kernelErr := make(chan error)
 	rootErr := make(chan error)
 	statefulErr := make(chan error)
 	go func() {
-		kernelErr <- installKernel(c, imagePath, partitions.inactiveKernel)
+		kernelErr <- p.installKernel(ctx, pi)
 	}()
 	go func() {
-		rootErr <- installRoot(c, imagePath, partitions.inactiveRoot)
+		rootErr <- p.installRoot(ctx, pi)
 	}()
 	go func() {
-		statefulErr <- installStateful(c, imagePath)
+		statefulErr <- p.installStateful(ctx)
 	}()
 
 	var provisionErrs []error
@@ -294,24 +285,24 @@ func installPartitions(c *ssh.Client, imagePath string, partitions partitionInfo
 		provisionErrs = append(provisionErrs, err)
 	}
 	if err := <-statefulErr; err != nil {
-		revertStatefulInstall(c)
+		p.revertStatefulInstall()
 		provisionErrs = append(provisionErrs, err)
 	}
 	return provisionErrs
 }
 
-func postInstall(c *ssh.Client, partitions partitionInfo) error {
-	return runCmd(c, strings.Join([]string{
+func (p *provisionState) postInstall(pi partitionInfo) error {
+	return runCmd(p.c, strings.Join([]string{
 		"tmpmnt=$(mktemp -d)",
-		fmt.Sprintf("mount -o ro %s ${tmpmnt}", partitions.inactiveRoot),
-		fmt.Sprintf("${tmpmnt}/postinst %s", partitions.inactiveRoot),
+		fmt.Sprintf("mount -o ro %s ${tmpmnt}", pi.inactiveRoot),
+		fmt.Sprintf("${tmpmnt}/postinst %s", pi.inactiveRoot),
 		"{ umount ${tmpmnt} || true; }",
 		"{ rmdir ${tmpmnt} || true; }",
 	}, " && "))
 }
 
-func revertPostInstall(c *ssh.Client, partitions partitionInfo) {
-	if err := runCmd(c, fmt.Sprintf("/postinst %s 2>&1", partitions.activeRoot)); err != nil {
+func (p *provisionState) revertPostInstall(pi partitionInfo) {
+	if err := runCmd(p.c, fmt.Sprintf("/postinst %s 2>&1", pi.activeRoot)); err != nil {
 		log.Printf("revert post install: failed to revert postinst, %s", err)
 	}
 }
@@ -335,55 +326,60 @@ func rebootDUT(c *ssh.Client) error {
 	return runCmd(c, "(sleep 2 && reboot) &")
 }
 
-func revertProvisionOS(c *ssh.Client, partitions partitionInfo) {
-	revertStatefulInstall(c)
-	revertPostInstall(c, partitions)
+func (p *provisionState) revertProvisionOS(pi partitionInfo) {
+	p.revertStatefulInstall()
+	p.revertPostInstall(pi)
 }
 
 // provisionOS will provision the OS, but on failure it will set op.Result to longrunning.Operation_Error
 // and return the same error message
-func provisionOS(c *ssh.Client, imagePath string, r rootDev) error {
-	stopSystemDaemons(c)
+func (p *provisionState) provisionOS(ctx context.Context) error {
+	r, err := getRootDev(p.c)
+	if err != nil {
+		return fmt.Errorf("installPartitions: failed to get root device from DUT, %s", err)
+	}
+
+	stopSystemDaemons(p.c)
 
 	// Only clear the inactive verified DLC marks if the DLCs exist.
-	dlcsExist, err := pathExists(c, dlcLibDir)
+	dlcsExist, err := pathExists(p.c, dlcLibDir)
 	if err != nil {
 		return fmt.Errorf("provisionOS: failed to check if DLC is enabled, %s", err)
 	}
 	if dlcsExist {
-		if err := clearInactiveDLCVerifiedMarks(c, r); err != nil {
+		if err := clearInactiveDLCVerifiedMarks(p.c, r); err != nil {
 			return fmt.Errorf("provisionOS: failed to clear inactive verified DLC marks, %s", err)
 		}
 	}
 
-	partitions := getPartitions(r)
-	if errs := installPartitions(c, imagePath, partitions); len(errs) > 0 {
+	pi := getPartitionInfo(r)
+	if errs := p.installPartitions(ctx, pi); len(errs) > 0 {
 		return fmt.Errorf("provisionOS: failed to provision the OS, %s", errs)
 	}
-	if err := postInstall(c, partitions); err != nil {
-		revertProvisionOS(c, partitions)
+	if err := p.postInstall(pi); err != nil {
+		p.revertProvisionOS(pi)
 		return fmt.Errorf("provisionOS: failed to set next kernel, %s", err)
 	}
-	if err := clearTPM(c); err != nil {
-		revertProvisionOS(c, partitions)
+	if err := clearTPM(p.c); err != nil {
+		p.revertProvisionOS(pi)
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
-	runLabMachineAutoReboot(c)
-	if err := rebootDUT(c); err != nil {
-		revertProvisionOS(c, partitions)
+	runLabMachineAutoReboot(p.c)
+	if err := rebootDUT(p.c); err != nil {
+		p.revertProvisionOS(pi)
 		return fmt.Errorf("provisionOS: failed reboot DUT, %s", err)
 	}
 	return nil
 }
 
-func verifyOSProvision(c *ssh.Client, expectedBuilderPath string) error {
-	actualBuilderPath, err := getBuilderPath(c)
+func (p *provisionState) verifyOSProvision() error {
+	actualBuilderPath, err := getBuilderPath(p.c)
 	if err != nil {
 		return fmt.Errorf("verify OS provision: failed to get builder path, %s", err)
 	}
-	if actualBuilderPath != expectedBuilderPath {
+	if actualBuilderPath != p.targetBuilderPath {
 		return fmt.Errorf("verify OS provision: DUT is on builder path %s when expected builder path is %s, %s",
-			actualBuilderPath, expectedBuilderPath, err)
+			actualBuilderPath, p.targetBuilderPath, err)
 	}
 	return nil
 }
@@ -423,8 +419,8 @@ func (r rootDev) getActiveDLCSlot() dlcSlot {
 	}
 }
 
-func getOtherDLCSlot(slot dlcSlot) dlcSlot {
-	switch slot {
+func (r rootDev) getInactiveDLCSlot() dlcSlot {
+	switch slot := r.getActiveDLCSlot(); slot {
 	case dlcSlotA:
 		return dlcSlotB
 	case dlcSlotB:
@@ -443,8 +439,8 @@ func isDLCVerified(c *ssh.Client, spec *tls.ProvisionDutRequest_DLCSpec, slot dl
 	return verified, nil
 }
 
-func installDLC(c *ssh.Client, spec *tls.ProvisionDutRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
-	verified, err := isDLCVerified(c, spec, slot)
+func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutRequest_DLCSpec, dlcOutputDir string, slot dlcSlot) error {
+	verified, err := isDLCVerified(p.c, spec, slot)
 	if err != nil {
 		return fmt.Errorf("install DLC: failed is DLC verified check, %s", err)
 	}
@@ -456,44 +452,48 @@ func installDLC(c *ssh.Client, spec *tls.ProvisionDutRequest_DLCSpec, imagePath,
 		return nil
 	}
 
-	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
-	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
-	pathPrefix, err := getGsCacheURL(imagePath)
+	dlcURL := path.Join(p.imagePath, "dlc", dlcID, dlcPackage, dlcImage)
+	url, err := p.s.getCacheURL(ctx, dlcURL, p.dutName)
 	if err != nil {
 		return fmt.Errorf("install DLC: failed to get GS Cache server, %s", err)
 	}
 
 	dlcOutputSlotDir := path.Join(dlcOutputDir, string(slot))
 	dlcOutputImage := path.Join(dlcOutputSlotDir, dlcImage)
-	dlcArtifactURL := path.Join(pathPrefix, "dlc", dlcID, dlcPackage, dlcImage)
-	err = runCmd(c, fmt.Sprintf("mkdir -p %s && curl --output %s %s", dlcOutputSlotDir, dlcOutputImage, dlcArtifactURL))
-	if err != nil {
+	dlcCmd := fmt.Sprintf("mkdir -p %s && curl --output %s %s", dlcOutputSlotDir, dlcOutputImage, url)
+	if err := runCmd(p.c, dlcCmd); err != nil {
 		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
 	}
 	return nil
 }
 
-func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.ProvisionDutRequest_DLCSpec) error {
+func (p *provisionState) provisionDLCs(ctx context.Context, specs []*tls.ProvisionDutRequest_DLCSpec) error {
 	if len(specs) == 0 {
 		return nil
 	}
 
 	// Stop dlcservice daemon in order to not interfere with provisioning DLCs.
-	if err := runCmd(c, "stop dlcservice"); err != nil {
+	if err := runCmd(p.c, "stop dlcservice"); err != nil {
 		log.Printf("provision DLCs: failed to stop dlcservice daemon, %s", err)
 	}
 	defer func() {
-		if err := runCmd(c, "start dlcservice"); err != nil {
+		if err := runCmd(p.c, "start dlcservice"); err != nil {
 			log.Printf("provision DLCs: failed to start dlcservice daemon, %s", err)
 		}
 	}()
 
-	activeSlot := r.getActiveDLCSlot()
+	var err error
+	r, err := getRootDev(p.c)
+	if err != nil {
+		return fmt.Errorf("provision DLCs: failed to get root device from DUT, %s", err)
+	}
+
 	errCh := make(chan error)
 	for _, spec := range specs {
 		go func(spec *tls.ProvisionDutRequest_DLCSpec) {
 			dlcID := spec.GetId()
-			if err := installDLC(c, spec, imagePath, path.Join(dlcCacheDir, dlcID, dlcPackage), activeSlot); err != nil {
+			dlcOutputDir := path.Join(dlcCacheDir, dlcID, dlcPackage)
+			if err := p.installDLC(ctx, spec, dlcOutputDir, r.getActiveDLCSlot()); err != nil {
 				errMsg := fmt.Sprintf("failed to install DLC %s, %s", dlcID, err)
 				errCh <- errors.New(errMsg)
 				return
@@ -502,7 +502,6 @@ func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.Prov
 		}(spec)
 	}
 
-	var err error
 	for range specs {
 		errTmp := <-errCh
 		if errTmp == nil {
@@ -516,28 +515,46 @@ func provisionDLCs(c *ssh.Client, imagePath string, r rootDev, specs []*tls.Prov
 	return nil
 }
 
-// parseImagePath on successfully parsing Image path oneof returns the path.
-func parseImagePath(req *tls.ProvisionDutRequest) (string, error) {
+func (p *provisionState) connect(ctx context.Context, addr string) (func(), error) {
+	c, err := p.s.clientPool.GetContext(ctx, addr)
+	if err != nil {
+		return nil, fmt.Errorf("connect: DUT unreachable, %s", err)
+	}
+
+	p.c = c
+	disconnect := func(c *ssh.Client) func() {
+		return func() {
+			p.s.clientPool.Put(addr, c)
+		}
+	}(p.c)
+	return disconnect, nil
+}
+
+func newProvisionState(s *Server, req *tls.ProvisionDutRequest) (*provisionState, error) {
+	p := &provisionState{
+		s:       s,
+		dutName: req.Name,
+	}
+
 	// Verify the incoming request path oneof is valid.
 	switch t := req.GetImage().GetPathOneof().(type) {
 	// Requests with gs_path_prefix should be in the format:
 	// gs://chromeos-image-archive/eve-release/R86-13388.0.0
 	case *tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix:
-		return req.GetImage().GetGsPathPrefix(), nil
+		p.imagePath = req.GetImage().GetGsPathPrefix()
 	default:
-		return "", fmt.Errorf("parse image path oneof: unsupported ImagePathOneof in ProvisionDutRequest, %T", t)
+		return nil, fmt.Errorf("newProvisionState: unsupported ImagePathOneof in ProvisionDutRequest, %T", t)
 	}
-}
 
-// parseTargetBuilderPath returns the Chrome OS builder path in the format a/xxx.yy.z
-// Acceptable formats must include builder paths.
-func parseTargetBuilderPath(imagePath string) (string, error) {
-	u, uErr := url.Parse(imagePath)
+	u, uErr := url.Parse(p.imagePath)
 	if uErr != nil {
-		return "", fmt.Errorf("parse target builder path: failed to parse path %s, %s", imagePath, uErr)
+		return nil, fmt.Errorf("setPaths: failed to parse path %s, %s", p.imagePath, uErr)
 	}
+
 	d, version := path.Split(u.Path)
-	return path.Join(path.Base(d), version), nil
+	p.targetBuilderPath = path.Join(path.Base(d), version)
+
+	return p, nil
 }
 
 func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
@@ -557,20 +574,11 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Hour)
 	defer cancel()
 
-	imagePath, err := parseImagePath(req)
+	p, err := newProvisionState(s, req)
 	if err != nil {
 		setError(newOperationError(
 			codes.InvalidArgument,
-			fmt.Sprintf("provision: unsupported ProvisionDutRequest_ChromeOSImage_PathOneof in request, %s", err),
-			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
-		return
-	}
-
-	targetBuilderPath, err := parseTargetBuilderPath(imagePath)
-	if err != nil {
-		setError(newOperationError(
-			codes.InvalidArgument,
-			fmt.Sprintf("provision: bad ProvisionDutRequest_ChromeOSImage_GsPathPrefix in request, %s", err),
+			fmt.Sprintf("provision: failed to create provisionState, %s", err),
 			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
 		return
 	}
@@ -586,7 +594,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	}
 
 	// Connect to the DUT.
-	c, err := s.clientPool.Get(addr)
+	disconnect, err := p.connect(ctx, addr)
 	if err != nil {
 		setError(newOperationError(
 			codes.FailedPrecondition,
@@ -594,17 +602,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			tls.ProvisionDutResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION))
 		return
 	}
-	defer s.clientPool.Put(addr, c)
-
-	// Get the root device.
-	r, err := getRootDev(c)
-	if err != nil {
-		setError(newOperationError(
-			codes.Aborted,
-			fmt.Sprintf("provision: failed to get root device from DUT, %s", err),
-			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
-		return
-	}
+	defer disconnect()
 
 	// Provision the OS.
 	select {
@@ -617,7 +615,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	default:
 	}
 	// Get the current builder path.
-	builderPath, err := getBuilderPath(c)
+	builderPath, err := getBuilderPath(p.c)
 	if err != nil {
 		setError(newOperationError(
 			codes.Aborted,
@@ -626,8 +624,8 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		return
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
-	if builderPath != targetBuilderPath {
-		if err := provisionOS(c, imagePath, r); err != nil {
+	if builderPath != p.targetBuilderPath {
+		if err := p.provisionOS(ctx); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to provision OS, %s", err),
@@ -638,7 +636,8 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		// After a reboot, need a new client connection.
 		sshCtx, cancel := context.WithTimeout(context.TODO(), 300*time.Second)
 		defer cancel()
-		c, err = s.clientPool.GetContext(sshCtx, addr)
+
+		disconnect, err := p.connect(sshCtx, addr)
 		if err != nil {
 			setError(newOperationError(
 				codes.Aborted,
@@ -646,21 +645,12 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
-		defer s.clientPool.Put(addr, c)
+		defer disconnect()
 
-		if err := verifyOSProvision(c, targetBuilderPath); err != nil {
+		if err := p.verifyOSProvision(); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to verify OS provision, %s", err),
-				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
-			return
-		}
-		// Get the new root device after reboot.
-		r, err = getRootDev(c)
-		if err != nil {
-			setError(newOperationError(
-				codes.Aborted,
-				fmt.Sprintf("provision: failed to get root device from DUT after reboot, %s", err),
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
 			return
 		}
@@ -678,7 +668,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		return
 	default:
 	}
-	if err := provisionDLCs(c, imagePath, r, req.GetDlcSpecs()); err != nil {
+	if err := p.provisionDLCs(ctx, req.GetDlcSpecs()); err != nil {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to provision DLCs, %s", err),
