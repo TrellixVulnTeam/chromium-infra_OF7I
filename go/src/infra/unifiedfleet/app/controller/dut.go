@@ -7,14 +7,19 @@ package controller
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 
+	iv2api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
@@ -47,6 +52,11 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		// Validate input
 		if err := validateCreateMachineLSE(ctx, machinelse, nil, machine); err != nil {
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
+		}
+
+		// Validate device config
+		if err := validateDeviceConfig(ctx, machine); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to create DUT").Err()
 		}
 
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
@@ -232,4 +242,56 @@ func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Ser
 		}
 	}
 	return nil
+}
+
+// validateDeviceConfig checks if the corresponding device config exists in IV2
+//
+// Checks if the device configuration is known by querying IV2. Returns error if the device config doesn't exist.
+func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
+	devConfigID, err := extractDeviceConfigID(dut)
+	if err != nil {
+		return err
+	}
+
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return err
+	}
+
+	inv2Client, err := es.NewCrosInventoryInterfaceFactory(ctx, config.Get(ctx).GetCrosInventoryHost())
+	if err != nil {
+		return err
+	}
+
+	resp, err := inv2Client.DeviceConfigsExists(ctx, &iv2api.DeviceConfigsExistsRequest{
+		ConfigIds: []*device.ConfigId{devConfigID},
+	})
+
+	if err != nil {
+		return errors.Annotate(err, "Device config validation failed").Err()
+	}
+	if !resp.GetExists()[0] {
+		return errors.Reason("Device config doesn't exist").Err()
+	}
+	return nil
+}
+
+func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
+	crosMachine := dut.GetChromeosMachine()
+	if crosMachine == nil {
+		return nil, errors.Reason("Invalid machine type. Not a chrome OS machine").Err()
+	}
+
+	// Convert the build target and model to lower case to avoid mismatch due to case.
+	buildTarget := strings.ToLower(crosMachine.GetBuildTarget())
+	model := strings.ToLower(crosMachine.GetModel())
+	return &device.ConfigId{
+		PlatformId: &device.PlatformId{
+			Value: buildTarget,
+		},
+		ModelId: &device.ModelId{
+			Value: model,
+		},
+	}, nil
+
 }

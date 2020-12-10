@@ -58,6 +58,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 	req.MachineLSE.Name = util.FormatDHCPHostname(req.MachineLSEId)
 	req.MachineLSE.Hostname = util.FormatDHCPHostname(req.MachineLSE.Hostname)
 	req.NetworkOption = updateNetworkOpt(req.MachineLSE.GetVlan(), req.MachineLSE.GetIp(), req.GetNetworkOption())
+
 	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.GetNetworkOption())
 	if err != nil {
 		return nil, err
