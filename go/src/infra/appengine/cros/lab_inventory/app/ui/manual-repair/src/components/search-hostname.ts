@@ -27,6 +27,7 @@ export default class SearchHostname extends connect
         display: flex;
         justify-content: center;
         margin-bottom: 1.5em;
+        padding-top: 10px;
       }
 
       #search-field {

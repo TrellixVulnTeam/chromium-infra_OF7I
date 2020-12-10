@@ -6,10 +6,10 @@ import '@material/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-drawer';
 import './repair-form/repair-form';
-import './search-hostname';
 import './top-bar';
 import './message-display';
 import './home-view';
+import './dashboard-view';
 
 import {Drawer} from '@material/mwc-drawer';
 import {css, customElement, html, LitElement, property} from 'lit-element';
@@ -58,6 +58,8 @@ export default class ManualRepair extends connect
 
     // Router routes defined here.
     router
+        .on('dashboard',
+            () => {this.route = html`<dashboard-view></dashboard-view>`})
         .on('repairs',
             (_, query) => {
               this.route = html`<repair-form></repair-form>`;
@@ -80,10 +82,17 @@ export default class ManualRepair extends connect
       }
     ],
     [
-      'Repairs', {
+      'Dashboard', {
+        link: '/#/dashboard',
+        target: '',
+        icon: 'dashboard',
+      }
+    ],
+    [
+      'Repair Form', {
         link: '/#/repairs',
         target: '',
-        icon: 'view_list',
+        icon: 'assignment',
       }
     ],
   ]);
@@ -150,7 +159,6 @@ export default class ManualRepair extends connect
         <div slot="appContent">
           <top-bar></top-bar>
           <div id="app-body">
-            <search-hostname></search-hostname>
             ${this.route}
           </div>
           <message-display></message-display>

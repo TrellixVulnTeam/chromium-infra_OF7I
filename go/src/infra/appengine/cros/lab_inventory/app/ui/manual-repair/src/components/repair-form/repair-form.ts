@@ -8,6 +8,7 @@ import '@material/mwc-formfield';
 import '@material/mwc-select';
 import '@material/mwc-textarea';
 import '@material/mwc-textfield';
+import '../search-hostname';
 import '../repair-history/repair-history-sidebar';
 
 import {Checkbox} from '@material/mwc-checkbox';
@@ -778,9 +779,12 @@ enum FormAction {
 
   render() {
     try {
-      return html`${
+      return html`
+        <search-hostname></search-hostname>
+      ${
           isEmpty(this.deviceInfo) ? this.displayFormMessage() :
-                                     this.displayForm()}`;
+                                     this.displayForm()}
+      `;
     } catch (e) {
       thunkDispatch(receiveAppMessage('Form cannot be displayed: ' + e));
       return;
