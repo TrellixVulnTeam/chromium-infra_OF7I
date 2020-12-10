@@ -199,6 +199,12 @@ import {store} from '../state/store';
     this.getRepairRecords();
   }
 
+  handleEnterFilter(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      this.getRepairRecords();
+    }
+  }
+
   /**
    * recordUrlRenderer renders the link icon for each row of the dashboard grid.
    */
@@ -229,6 +235,7 @@ import {store} from '../state/store';
             icon="person"
             helper="Enter a user LDAP"
             value="${this.dashboardFilters.userLdap}"
+            @keydown="${this.handleEnterFilter}"
             @input="${this.handleLdapChange}">
           </mwc-textfield>
         </div>
