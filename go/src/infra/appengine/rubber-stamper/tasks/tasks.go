@@ -34,10 +34,11 @@ func init() {
 // EnqueueChangeReviewTask enqueues a change review task.
 func EnqueueChangeReviewTask(ctx context.Context, host string, cl *gerritpb.ChangeInfo) error {
 	t := &taskspb.ChangeReviewTask{
-		Host:     host,
-		Number:   cl.Number,
-		Revision: cl.CurrentRevision,
-		Repo:     cl.Project,
+		Host:       host,
+		Number:     cl.Number,
+		Revision:   cl.CurrentRevision,
+		Repo:       cl.Project,
+		AutoSubmit: (cl.Labels["Auto-Submit"] != nil) && (cl.Labels["Auto-Submit"].Approved != nil),
 	}
 	dedupKey := fmt.Sprintf("change(%s,%d,%s)", t.Host, t.Number, t.Revision)
 

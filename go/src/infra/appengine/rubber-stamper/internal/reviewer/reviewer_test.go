@@ -45,10 +45,11 @@ func TestReviewChange(t *testing.T) {
 		ctx, gerritMock, _ := util.SetupTestingContext(ctx, cfg, "srv-account@example.com", "test-host", t)
 
 		t := &taskspb.ChangeReviewTask{
-			Host:     "test-host",
-			Number:   12345,
-			Revision: "123abc",
-			Repo:     "dummy",
+			Host:       "test-host",
+			Number:     12345,
+			Revision:   "123abc",
+			Repo:       "dummy",
+			AutoSubmit: false,
 		}
 		Convey("valid BeinignFileChange", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{

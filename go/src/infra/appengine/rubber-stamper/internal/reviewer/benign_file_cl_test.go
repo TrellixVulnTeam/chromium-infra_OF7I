@@ -44,10 +44,11 @@ func TestReviewBenignFileChange(t *testing.T) {
 		}
 
 		t := &taskspb.ChangeReviewTask{
-			Host:     "test-host",
-			Number:   12345,
-			Revision: "123abc",
-			Repo:     "dummy",
+			Host:       "test-host",
+			Number:     12345,
+			Revision:   "123abc",
+			Repo:       "dummy",
+			AutoSubmit: false,
 		}
 		Convey("valid file", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{

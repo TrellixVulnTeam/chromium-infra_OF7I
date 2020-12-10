@@ -49,13 +49,16 @@ func TestScheduleReviews(t *testing.T) {
 
 		gerritMock.EXPECT().ListChanges(gomock.Any(), proto.MatcherEqual(&gerritpb.ListChangesRequest{
 			Query:   "status:open r:srv-account@example.com",
-			Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+			Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION, gerritpb.QueryOption_LABELS},
 		})).Return(&gerritpb.ListChangesResponse{
 			Changes: []*gerritpb.ChangeInfo{
 				{
 					Number:          00000,
 					CurrentRevision: "123abc",
 					Project:         "dummy",
+					Labels: map[string]*gerritpb.LabelInfo{
+						"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
+					},
 				},
 				{
 					Number:          00001,
@@ -84,7 +87,7 @@ func TestScheduleReviews(t *testing.T) {
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00000,
 			RevisionId: "123abc",
-			Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+			Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1, "Commit-Queue": 2},
 		})).Return(&gerritpb.ReviewResult{}, nil)
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00001,
@@ -98,16 +101,18 @@ func TestScheduleReviews(t *testing.T) {
 		sched.Run(ctx, tqtesting.StopWhenDrained())
 		So(succeeded.Payloads(), ShouldResembleProto, []*taskspb.ChangeReviewTask{
 			{
-				Host:     "test-host",
-				Number:   00000,
-				Revision: "123abc",
-				Repo:     "dummy",
+				Host:       "test-host",
+				Number:     00000,
+				Revision:   "123abc",
+				Repo:       "dummy",
+				AutoSubmit: true,
 			},
 			{
-				Host:     "test-host",
-				Number:   00001,
-				Revision: "234abc",
-				Repo:     "dummy",
+				Host:       "test-host",
+				Number:     00001,
+				Revision:   "234abc",
+				Repo:       "dummy",
+				AutoSubmit: false,
 			},
 		})
 	})

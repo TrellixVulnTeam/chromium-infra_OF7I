@@ -69,9 +69,14 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 		return nil
 	}
 
+	labels := map[string]int32{"Bot-Commit": 1, "Owners-Override": 1}
+	if t.AutoSubmit {
+		labels["Commit-Queue"] = 2
+	}
+
 	setReviewReq := &gerritpb.SetReviewRequest{
 		Number:     t.Number,
-		Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+		Labels:     labels,
 		RevisionId: t.Revision,
 	}
 	_, err = gc.SetReview(ctx, setReviewReq)

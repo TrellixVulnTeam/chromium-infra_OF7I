@@ -18,4 +18,6 @@ message ChangeReviewTask {
   string revision = 3;
   // The Gerrit Repo.
   string repo = 4;
+  // Whether the change has Auto-Submit label.
+  bool auto_submit = 5;
 }
