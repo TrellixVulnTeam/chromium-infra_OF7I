@@ -42,7 +42,8 @@ def try_builder(
         os,
         recipe = None,
         experiment_percentage = None,
-        properties = None):
+        properties = None,
+        in_cq = True):
     infra.builder(
         name = name,
         bucket = "try",
@@ -51,12 +52,13 @@ def try_builder(
         use_realms = True,
         properties = properties,
     )
-    luci.cq_tryjob_verifier(
-        builder = name,
-        cq_group = "luci-go",
-        experiment_percentage = experiment_percentage,
-        disable_reuse = (properties or {}).get("presubmit"),
-    )
+    if in_cq:
+        luci.cq_tryjob_verifier(
+            builder = name,
+            cq_group = "luci-go",
+            experiment_percentage = experiment_percentage,
+            disable_reuse = (properties or {}).get("presubmit"),
+        )
 
 ci_builder(name = "luci-go-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
@@ -92,4 +94,16 @@ try_builder(
         "infra": "try",
         "manifests": ["infra/build/images/deterministic/luci"],
     },
+)
+
+try_builder(
+    name = "luci-go-analysis",
+    os = "Ubuntu-16.04",
+    recipe = "tricium_infra",
+    properties = {
+        "gclient_config_name": "luci_go",
+        "patch_root": "infra/go/src/go.chromium.org/luci",
+        "analyzers": ["Gosec", "Spacey", "Spellchecker"],
+    },
+    in_cq = False,
 )

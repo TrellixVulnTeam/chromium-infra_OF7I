@@ -46,7 +46,8 @@ def try_builder(
         cpu = None,
         recipe = None,
         experiment_percentage = None,
-        properties = None):
+        properties = None,
+        in_cq = True):
     infra.builder(
         name = name,
         bucket = "try",
@@ -55,11 +56,12 @@ def try_builder(
         cpu = cpu,
         properties = properties,
     )
-    luci.cq_tryjob_verifier(
-        builder = name,
-        cq_group = "infra",
-        experiment_percentage = experiment_percentage,
-    )
+    if in_cq:
+        luci.cq_tryjob_verifier(
+            builder = name,
+            cq_group = "infra",
+            experiment_percentage = experiment_percentage,
+        )
 
 # CI Linux.
 ci_builder(name = "infra-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
@@ -120,6 +122,18 @@ try_builder(name = "infra-try-trusty-64", os = "Ubuntu-14.04")
 try_builder(name = "infra-try-mac", os = "Mac-10.15")
 try_builder(name = "infra-try-win", os = "Windows-10")
 try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04", recipe = "infra_frontend_tester")
+
+try_builder(
+    name = "infra-analysis",
+    os = "Ubuntu-16.04",
+    recipe = "tricium_infra",
+    properties = {
+        "gclient_config_name": "infra",
+        "patch_root": "infra",
+        "analyzers": ["Copyright", "ESlint", "Gosec", "Spacey", "Spellchecker"],
+    },
+    in_cq = False,
+)
 
 # Experimental trybot for building docker images out of infra.git CLs.
 try_builder(

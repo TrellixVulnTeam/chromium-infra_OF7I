@@ -17,20 +17,23 @@ infra.cq_group(
 def try_builder(
         name,
         os,
+        recipe = None,
         experiment_percentage = None,
-        properties = None):
+        properties = None,
+        in_cq = True):
     infra.builder(
         name = name,
         bucket = "try",
-        executable = infra.recipe("luci_py"),
+        executable = infra.recipe(recipe or "luci_py"),
         os = os,
         properties = properties,
     )
-    luci.cq_tryjob_verifier(
-        builder = name,
-        cq_group = cq_group,
-        experiment_percentage = experiment_percentage,
-    )
+    if in_cq:
+        luci.cq_tryjob_verifier(
+            builder = name,
+            cq_group = cq_group,
+            experiment_percentage = experiment_percentage,
+        )
 
 build.presubmit(
     name = "luci-py-try-presubmit",
@@ -40,6 +43,18 @@ build.presubmit(
     # The default 8-minute timeout is a problem for luci-py.
     # See https://crbug.com/917479 for context.
     timeout_s = 900,
+)
+
+try_builder(
+    name = "luci-py-analysis",
+    os = "Ubuntu-16.04",
+    recipe = "tricium_infra",
+    properties = {
+        "gclient_config_name": "luci_py",
+        "patch_root": "infra/luci",
+        "analyzers": ["Spacey", "Spellchecker"],
+    },
+    in_cq = False,
 )
 
 try_builder(
