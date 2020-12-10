@@ -61,7 +61,7 @@ func (d dummyNotifier) Notify(ctx context.Context, cfg *rules.RefConfig, rc *rul
 
 type strmap map[string]string
 
-func TestAuditor(t *testing.T) {
+func TestTaskAuditor(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping on Windows: flaky")
 	}
@@ -78,7 +78,7 @@ func TestAuditor(t *testing.T) {
 		}
 
 		r := router.New()
-		r.GET(auditorPath, router.NewMiddlewareChain(withTestingContext), Auditor)
+		r.GET(auditorPath, router.NewMiddlewareChain(withTestingContext), taskAuditor)
 		srv := httptest.NewServer(r)
 		client := &http.Client{}
 		auditorTestClients = &rules.Clients{}

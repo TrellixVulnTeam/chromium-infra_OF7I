@@ -141,6 +141,7 @@ func (wp *workerParams) auditWorker(ctx context.Context) {
 //
 // It swallows any error, only logging it in order to move to the next commit.
 func runRules(ctx context.Context, rc *rules.RelevantCommit, rm map[string]rules.AccountRules, ap rules.AuditParams, clients *rules.Clients) {
+	logging.Debugf(ctx, "Analyzing %s/%s", ap.RepoState.ConfigName, rc.CommitHash)
 	for _, rs := range rm {
 		// TODO(xinyuoffline): Only retry transient errors.
 		// TODO(xinyuoffline): Alert on permanent errors.

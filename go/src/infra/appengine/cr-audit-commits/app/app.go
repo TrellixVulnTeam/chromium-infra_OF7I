@@ -63,7 +63,7 @@ func main() {
 		})
 
 		srv.Routes.GET("/_task/auditor", configmw.Extend(gaemiddleware.RequireTaskQueue("default")), func(c *router.Context) {
-			Auditor(c)
+			taskAuditor(c)
 		})
 
 		srv.Routes.GET("/_cron/scheduler", configmw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {

@@ -34,8 +34,8 @@ var configGet = config.GetUpdatedRuleMap
 // pauseRefErr is used to indicate that a ref needs to be paused.
 var errPauseRef = errors.New("ref needs to be paused")
 
-// Auditor is the main entry point for scanning the commits on a given ref and
-// auditing those that are relevant to the configuration.
+// taskAuditor is the main entry point for scanning the commits on a given ref
+// and auditing those that are relevant to the configuration.
 //
 // It scans the ref in the repo and creates entries for relevant commits,
 // executes the audit functions on such commits, and calls notification
@@ -43,19 +43,20 @@ var errPauseRef = errors.New("ref needs to be paused")
 //
 // This is expected to run every 5 minutes and for that reason, it has designed
 // to stop 4 minutes 30 seconds and save any partial progress.
-func Auditor(rc *router.Context) {
+func taskAuditor(rc *router.Context) {
 	outerCtx, resp := rc.Context, rc.Writer
-
 	// Create a derived context with a 9:30 timeout s.t. we have enough
 	// time to save results for at least some of the audited commits,
 	// considering that a run of this handler will be scheduled every 10
 	// minutes.
-	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, 9*time.Minute+30*time.Second)
-	defer cancelInnerCtx()
+	ctx, cancel := context.WithTimeout(outerCtx, 9*time.Minute+30*time.Second)
+	defer cancel()
 
-	cfg, repoState, err := loadConfig(rc.Context, rc.Request.FormValue("refUrl"))
+	refURL := rc.Request.FormValue("refUrl")
+	cfg, repoState, err := loadConfig(ctx, refURL)
 	if err != nil {
-		http.Error(resp, err.Error(), 400)
+		logging.WithError(err).Errorf(ctx, "Failed to load config for %s", refURL)
+		http.Error(resp, "", http.StatusBadRequest)
 		return
 	}
 
@@ -65,25 +66,27 @@ func Auditor(rc *router.Context) {
 	} else {
 		httpClient, err := rules.GetAuthenticatedHTTPClient(ctx, rules.GerritScope, rules.EmailScope)
 		if err != nil {
-			http.Error(resp, err.Error(), 500)
+			logging.WithError(err).Errorf(ctx, "Failed to get auth client")
+			http.Error(resp, "", http.StatusInternalServerError)
 			return
 		}
 
 		cs, err = rules.InitializeClients(ctx, cfg, httpClient)
 		if err != nil {
-			http.Error(resp, err.Error(), 500)
+			logging.WithError(err).Errorf(ctx, "Failed to get initialize clients")
+			http.Error(resp, "", http.StatusInternalServerError)
 			return
 		}
 	}
 
 	// Pause the ref if it stops auditing for a long time.
 	if !repoState.Paused && time.Now().Sub(repoState.LastUpdatedTime) > config.StuckScannerDuration {
-		err = pauseRefAuditing(ctx, cfg, repoState, cs)
-		if err != nil {
-			http.Error(resp, err.Error(), 502)
+		if err = pauseRefAuditing(ctx, cfg, repoState, cs); err != nil {
+			http.Error(resp, "", http.StatusBadGateway)
 			return
 		}
-		http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
+		logging.Warningf(ctx, "Ref %s is now paused", refURL)
+		http.Error(resp, "", http.StatusConflict)
 		return
 	}
 
@@ -94,40 +97,42 @@ func Auditor(rc *router.Context) {
 			repoState.LastKnownCommit = cfg.OverwriteLastKnownCommit
 			repoState.Paused = false
 		} else {
-			http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
+			logging.Warningf(ctx, "Ref %s is still paused", refURL)
+			http.Error(resp, "", http.StatusConflict)
 			return
 		}
 	}
 
 	fl, err := getCommitLog(ctx, cfg, repoState, cs)
-	switch {
-	case err == errPauseRef:
+	if err == errPauseRef {
 		if err := pauseRefAuditing(ctx, cfg, repoState, cs); err != nil {
-			http.Error(resp, err.Error(), 502)
+			http.Error(resp, "", http.StatusBadGateway)
 		}
-		http.Error(resp, err.Error(), 409)
+		logging.Warningf(ctx, "Ref %s is late paused", refURL)
+		http.Error(resp, "", http.StatusConflict)
 		return
-	case err != nil:
-		http.Error(resp, err.Error(), 502)
+	} else if err != nil {
+		logging.WithError(err).Errorf(ctx, "Failed to get commit logs")
+		http.Error(resp, "", http.StatusBadGateway)
 		return
 	}
 
 	if repoState.Paused {
-		http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
+		logging.Warningf(ctx, "Ref %s is very late paused", refURL)
+		http.Error(resp, "", http.StatusConflict)
 		return
 	}
 
 	// Iterate over the log, creating relevantCommit entries as appropriate
 	// and updating repoState. If the context expires during this process,
 	// save the repoState and bail.
-	err = scanCommits(ctx, fl, cfg, repoState)
-	if err != nil && err != context.DeadlineExceeded {
+	if err = scanCommits(ctx, fl, cfg, repoState); err != nil && err != context.DeadlineExceeded {
 		logging.WithError(err).Errorf(ctx, "Could not save new relevant commit")
-		http.Error(resp, err.Error(), 503)
+		http.Error(resp, "", http.StatusServiceUnavailable)
 		return
 	}
 	if err == context.DeadlineExceeded {
-		// If the context has expired do not proceed with auditing.
+		logging.Warningf(ctx, "context has expired, not proceeding with audit")
 		return
 	}
 
@@ -141,24 +146,24 @@ func Auditor(rc *router.Context) {
 	// that were audited and bail.
 	auditedCommits, err := performScheduledAudits(ctx, cfg, repoState, cs)
 	if err != nil && err != context.DeadlineExceeded {
-		http.Error(resp, err.Error(), 500)
+		logging.WithError(err).Errorf(ctx, "performScheduledAudits failed")
+		http.Error(resp, "", http.StatusInternalServerError)
 		return
 	}
 	if putErr := saveAuditedCommits(outerCtx, auditedCommits, cfg, repoState); putErr != nil {
-		http.Error(resp, err.Error(), 503)
+		logging.WithError(err).Errorf(ctx, "saveAuditedCommits with %d items failed", len(auditedCommits))
+		http.Error(resp, "", http.StatusServiceUnavailable)
 		return
 	}
 	if err == context.DeadlineExceeded {
-		// If the context has expired do not proceed with notifications.
+		logging.Warningf(ctx, "context has expired, not proceeding with notifications")
 		return
 	}
-
-	err = notifyAboutViolations(ctx, cfg, repoState, cs)
-	if err != nil {
-		http.Error(resp, err.Error(), 502)
+	if err = notifyAboutViolations(outerCtx, cfg, repoState, cs); err != nil {
+		logging.WithError(err).Errorf(ctx, "notifyAboutViolations failed")
+		http.Error(resp, "", http.StatusBadGateway)
 		return
 	}
-
 }
 
 // getCommitLog gets from gitiles a list from the tip to the last known commit
