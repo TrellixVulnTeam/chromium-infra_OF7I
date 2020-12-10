@@ -1,6 +1,7 @@
 package dut
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
@@ -49,6 +51,9 @@ var AddDUTCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTRegistrationFileText)
+
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the DUT.")
 		c.Flags.StringVar(&c.machine, "machine", "", "asset tag of the machine.")
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
@@ -56,7 +61,6 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.Var(flag.StringSlice(&c.pools), "pools", "comma seperated pools assigned to the DUT.")
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT.")
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
-		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTRegistrationFileText)
 		c.Flags.BoolVar(&c.deploy, "deploy", true, "run the deploy task.")
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
 		c.Flags.BoolVar(&c.ufs, "ufs", true, "update UFS with the DUT info.")
@@ -89,6 +93,17 @@ type addDUT struct {
 	deployActions     []string
 	deployDimensions  map[string]string
 	deployTags        []string
+}
+
+var mcsvFields = []string{
+	"name",
+	"machine",
+	"servo_host",
+	"servo_port",
+	"servo_serial",
+	"rpm_host",
+	"rpm_outlet",
+	"pools",
 }
 
 func (c *addDUT) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -130,41 +145,34 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	}
 	tc.LogdogService = e.LogdogService
 	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
-
-	// Update the UFS database if enabled.
-	if c.ufs {
-		ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
-			C:       hc,
-			Host:    e.UnifiedFleetService,
-			Options: site.DefaultPRPCOptions,
-		})
-
-		machineLSE, err := c.parseArgs()
-		if err != nil {
-			return err
-		}
-
-		var machineLSERequest ufsAPI.CreateMachineLSERequest
-
-		machineLSERequest.MachineLSEId = machineLSE.GetHostname()
-		machineLSERequest.MachineLSE = machineLSE
-
-		res, err := ic.CreateMachineLSE(ctx, &machineLSERequest)
-		if err != nil {
-			return err
-		}
-		res.Name = ufsUtil.RemovePrefix(res.Name)
-		utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-		fmt.Printf("Successfully added DUT to UFS: %s \n", res.GetName())
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UnifiedFleetService,
+		Options: site.DefaultPRPCOptions,
+	})
+	machineLSEs, err := c.parseArgs()
+	if err != nil {
+		return err
 	}
-
-	// Start a swarming deploy task for the DUT.
-	if c.deploy {
-		task, err := tc.DeployDut(ctx, c.machine, c.pools[0], c.deployTaskTimeout, c.deployActions, c.deployTags, c.deployDimensions)
-		if err != nil {
-			return err
+	for _, lse := range machineLSEs {
+		if len(lse.GetMachines()) == 0 {
+			fmt.Printf("Failed to add DUT %s to UFS. It is not linked to any Asset(Machine).\n", lse.GetName())
+			continue
 		}
-		fmt.Printf("Triggered Deploy task for DUT %s. Follow the deploy job at %s\n", c.hostname, task.TaskURL)
+		// Update the UFS database if enabled.
+		if c.ufs {
+			if err := c.addDutToUFS(ctx, ic, lse); err != nil {
+				// skip deployment
+				continue
+			}
+		}
+		// Start a swarming deploy task for the DUT.
+		if c.deploy {
+			c.deployDutToSwarming(ctx, tc, lse)
+		}
+	}
+	if len(machineLSEs) > 1 {
+		fmt.Fprintf(a.GetOut(), "\nBatch tasks URL: %s\n\n", tc.SessionTasksURL())
 	}
 	return nil
 }
@@ -189,65 +197,159 @@ func (c addDUT) validateArgs() error {
 		if c.rpmOutlet == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need rpm outlet to create a DUT")
 		}
-	}
-	if c.deploy {
-		if len(c.pools) == 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Need at least one pool to deploy the DUT.")
+		if c.deploy {
+			if len(c.pools) == 0 {
+				return cmdlib.NewQuietUsageError(c.Flags, "Need at least one pool to deploy the DUT.")
+			}
 		}
 	}
+
 	return nil
 }
 
-func (c *addDUT) parseArgs() (*ufspb.MachineLSE, error) {
-	machineLSE := &ufspb.MachineLSE{}
+func (c *addDUT) parseArgs() ([]*ufspb.MachineLSE, error) {
 	if c.newSpecsFile != "" {
-		if err := utils.ParseJSONFile(c.newSpecsFile, machineLSE); err != nil {
+		if utils.IsCSVFile(c.newSpecsFile) {
+			return c.parseMCSV()
+		}
+		machinelse := &ufspb.MachineLSE{}
+		if err := utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return nil, err
 		}
-		return machineLSE, nil
+		return []*ufspb.MachineLSE{machinelse}, nil
 	}
+	// command line parameters
+	lse, err := c.initializeLSE(nil)
+	if err != nil {
+		return nil, err
+	}
+	return []*ufspb.MachineLSE{lse}, nil
+}
 
-	machineLSE.Hostname = c.hostname
-	machineLSE.Machines = []string{c.machine}
-
-	var servoHostname string
-	var servoPort int32
-	servoHostnamePort := strings.Split(c.servo, ":")
-	if len(servoHostnamePort) == 2 {
-		servoHostname = servoHostnamePort[0]
-		port, err := strconv.ParseInt(servoHostnamePort[1], 10, 32)
+// parseMCSV parses the MCSV file and returns MachineLSEs
+func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
+	records, err := utils.ParseMCSVFile(c.newSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+	var lses []*ufspb.MachineLSE
+	for i, rec := range records {
+		// if i is 1, determine whether this is a header
+		if i == 0 && utils.LooksLikeHeader(rec) {
+			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		recMap := make(map[string]string)
+		for j, title := range mcsvFields {
+			recMap[title] = rec[j]
+		}
+		lse, err := c.initializeLSE(recMap)
 		if err != nil {
 			return nil, err
 		}
-		servoPort = int32(port)
-	} else {
-		servoHostname = servoHostnamePort[0]
+		lses = append(lses, lse)
 	}
+	return lses, nil
+}
 
-	machineLSE.Lse = &ufspb.MachineLSE_ChromeosMachineLse{
-		ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
-			ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
-				DeviceLse: &ufspb.ChromeOSDeviceLSE{
-					Device: &ufspb.ChromeOSDeviceLSE_Dut{
-						Dut: &lab.DeviceUnderTest{
-							Hostname: c.hostname,
-							Peripherals: &lab.Peripherals{
-								Servo: &lab.Servo{
-									ServoHostname: servoHostname,
-									ServoPort:     servoPort,
-									ServoSerial:   c.servoSerial,
-								},
-								Rpm: &lab.RPM{
-									PowerunitName:   c.rpm,
-									PowerunitOutlet: c.rpmOutlet,
+func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
+	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
+		MachineLSE:   lse,
+		MachineLSEId: lse.GetName(),
+	})
+	if err != nil {
+		fmt.Printf("Failed to add DUT %s to UFS. UFS add failed %s\n", lse.GetName(), err)
+		return err
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
+	fmt.Printf("Successfully added DUT to UFS: %s \n", res.GetName())
+	return nil
+}
+
+func (c *addDUT) deployDutToSwarming(ctx context.Context, tc *swarming.TaskCreator, lse *ufspb.MachineLSE) error {
+	if len(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools) == 0 {
+		fmt.Printf("Failed to trigger Deploy task for DUT %s. Need at least one pool to deploy the DUT.\n", lse.GetName())
+		return errors.New("no pools in the lse")
+	}
+	task, err := tc.DeployDut(ctx, lse.GetMachines()[0], lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools()[0], c.deployTaskTimeout, c.deployActions, c.deployTags, c.deployDimensions)
+	if err != nil {
+		fmt.Printf("Failed to trigger Deploy task for DUT %s. Deploy failed %s\n", lse.GetName(), err)
+		return err
+	}
+	fmt.Printf("Triggered Deploy task for DUT %s. Follow the deploy job at %s\n", lse.GetName(), task.TaskURL)
+	return nil
+}
+
+func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, error) {
+	lse := &ufspb.MachineLSE{
+		Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+			ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+				ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+					DeviceLse: &ufspb.ChromeOSDeviceLSE{
+						Device: &ufspb.ChromeOSDeviceLSE_Dut{
+							Dut: &lab.DeviceUnderTest{
+								Peripherals: &lab.Peripherals{
+									Servo: &lab.Servo{},
+									Rpm:   &lab.RPM{},
 								},
 							},
-							Pools: c.pools,
 						},
 					},
 				},
 			},
 		},
 	}
-	return machineLSE, nil
+	var name, servoHost, servoSerial, rpmHost, rpmOutlet string
+	var pools, machines []string
+	var servoPort int32
+	if recMap != nil {
+		// CSV map
+		name = recMap["name"]
+		servoHost = recMap["servo_host"]
+		if recMap["servo_port"] != "" {
+			port, err := strconv.ParseInt(recMap["servo_port"], 10, 32)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse servo port %s. %s", recMap["servo_port"], err)
+			}
+			servoPort = int32(port)
+		}
+		servoSerial = recMap["servo_serial"]
+		rpmHost = recMap["rpm_host"]
+		rpmOutlet = recMap["rpm_outlet"]
+		machines = []string{recMap["machine"]}
+		pools = strings.Fields(recMap["pools"])
+	} else {
+		// command line parameters
+		name = c.hostname
+		servoHostnamePort := strings.Split(c.servo, ":")
+		if len(servoHostnamePort) == 2 {
+			servoHost = servoHostnamePort[0]
+			port, err := strconv.ParseInt(servoHostnamePort[1], 10, 32)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse servo port %s. %s", servoHostnamePort[1], err)
+			}
+			servoPort = int32(port)
+		} else {
+			servoHost = servoHostnamePort[0]
+		}
+		servoSerial = c.servoSerial
+		rpmHost = c.rpm
+		rpmOutlet = c.rpmOutlet
+		machines = []string{c.machine}
+		pools = c.pools
+	}
+	lse.Name = name
+	lse.Hostname = name
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = name
+	lse.Machines = machines
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoHostname = servoHost
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoPort = servoPort
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSerial = servoSerial
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitName = rpmHost
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitOutlet = rpmOutlet
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = pools
+	return lse, nil
 }

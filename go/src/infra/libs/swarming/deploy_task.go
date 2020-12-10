@@ -42,7 +42,7 @@ func (tc *TaskCreator) deployTaskTags(dutID string, newTags []string) []string {
 	tags = append(tags, newTags...)
 	tags = append(tags, "task:Deploy")
 	tags = append(tags, fmt.Sprintf("luci_project:%s", LuciProject))
-	tags = append(tags, fmt.Sprintf("deployAttemptID:%s", tc.session))
+	tags = append(tags, fmt.Sprintf("admin_session:%s", tc.session))
 	tags = append(tags, fmt.Sprintf("deploy_task:%s", dutID))
 	logLocation := tc.LogdogURL()
 	if logLocation != "" {

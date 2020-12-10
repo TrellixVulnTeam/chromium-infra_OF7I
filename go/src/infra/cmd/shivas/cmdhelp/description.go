@@ -72,9 +72,10 @@ Note:
 `
 
 	// DUTRegistrationFileText description for json file input
-	DUTRegistrationFileText string = `path to a file containing DUT specification in JSON format.
-The file must contain one DUT specification.
+	DUTRegistrationFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing DUT specification.
 
+[JSON Mode]
+The file must contain one DUT specification.
 Example DUT:
 {
 	"name": "chromeos1-row1-rack11-host4",
@@ -171,7 +172,17 @@ Example DUT with peripherals:
 	"deploymentTicket": "crbug.com/123456",
 	"description": "Fixed and replaced",
 }
-`
+
+[MCSV Mode]
+The file may have multiple or one dut csv record.
+The header format and sequence should be: [name,machine,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
+Example mcsv format:
+name,machine,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools
+dut-1,machine-1,servo-1,9998,ServoXdw,rpm-1,23,"CTS QUOTA"
+dut-2,machine-2,servo-2,9998,ServoYdw,rpm-2,43,QUOTA
+
+The protobuf definition of machine is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
