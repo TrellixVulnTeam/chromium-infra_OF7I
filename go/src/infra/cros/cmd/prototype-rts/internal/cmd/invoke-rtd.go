@@ -1,17 +1,14 @@
 package cmd
 
 import (
-	"fmt"
-	"time"
-
 	"infra/cros/cmd/prototype-rts/internal/rtd"
+	"infra/cros/cmd/prototype-rts/internal/service"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 // InvokeRTD starts an RTD container and executes Invocations against it.
@@ -47,22 +44,23 @@ func (inv *invokeCmd) Run(a subcommands.Application, args []string, env subcomma
 }
 
 func (inv *invokeCmd) innerRun(ctx context.Context) error {
-	// Test that the requisite services are running locally.
-	dialContext, cancel := context.WithTimeout(ctx, time.Second*2)
-	defer cancel()
-	if _, err := grpc.DialContext(dialContext, fmt.Sprintf(":%d", inv.progressSinkPort), grpc.WithInsecure(), grpc.WithBlock()); err != nil {
-		return errors.Annotate(err, "failed to connect to ProgressSinkService on port %d", inv.progressSinkPort).Err()
+	// Run the services and retrieve the actual ports they start on.
+	_, progressSinkPort, err := service.LaunchProgressSink(ctx, int32(inv.progressSinkPort))
+	if err != nil {
+		return errors.Annotate(err, "progress sink").Err()
 	}
-	if _, err := grpc.DialContext(dialContext, fmt.Sprintf(":%d", inv.tlsCommonPort), grpc.WithInsecure(), grpc.WithBlock()); err != nil {
-		return errors.Annotate(err, "failed to connect to TlsCommonService on port %d", inv.tlsCommonPort).Err()
+	_, tlsCommonPort, err := service.LaunchTLSCommon(ctx, int32(inv.tlsCommonPort))
+	if err != nil {
+		return errors.Annotate(err, "tls common").Err()
 	}
-	logging.Infof(ctx, "Validated that gRPC servers are running for ProgressSinkService and TlsService")
+	// TODO: Also launch TLW or prototype-tlw
+	logging.Infof(ctx, "Services are running. Invoking RTD.")
 
 	o := rtd.Orchestrator{}
 	if err := o.StartRTDContainer(ctx, inv.imageURI); err != nil {
 		return errors.Annotate(err, "failed StartRTDContainer").Err()
 	}
-	if err := o.Invoke(ctx, int32(inv.progressSinkPort), int32(inv.tlsCommonPort), inv.rtdCommand); err != nil {
+	if err := o.Invoke(ctx, int32(progressSinkPort), int32(tlsCommonPort), inv.rtdCommand); err != nil {
 		return errors.Annotate(err, "failed Invoke").Err()
 	}
 	if err := o.StopRTDContainer(ctx); err != nil {
