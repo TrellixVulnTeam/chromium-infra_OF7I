@@ -720,7 +720,7 @@ func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, 
 		"hostname":     req.Hostname,
 		"repair_state": "STATE_IN_PROGRESS",
 	}
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, []string{})
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, 0, []string{})
 	if err != nil {
 		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
@@ -851,7 +851,7 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{
 		"hostname":     hostname,
 		"repair_state": "STATE_IN_PROGRESS",
-	}, -1, []string{})
+	}, -1, 0, []string{})
 	if err != nil {
 		return nil, errors.Annotate(err, "Failed to query STATE_IN_PROGRESS host %s", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
@@ -865,9 +865,10 @@ func queryInProgressMRHost(ctx context.Context, hostname string) ([]*datastore.D
 // Currently supports filtering on:
 // - hostname
 // - asset tag
-// - limit (number of records)
 // - user ldap
 // - repair state
+// - limit (number of records)
+// - offset - used for pagination
 func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req *api.ListManualRepairRecordsRequest) (rsp *api.ListManualRepairRecordsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
@@ -896,7 +897,12 @@ func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req 
 		limit = -1
 	}
 
-	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, limit, []string{"-updated_time"})
+	offset := req.GetOffset()
+	if offset < 0 {
+		offset = 0
+	}
+
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, limit, offset, []string{"-updated_time"})
 	if err != nil {
 		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Err()
 	}

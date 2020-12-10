@@ -49,7 +49,7 @@ func GetDeviceManualRepairRecords(ctx context.Context, ids []string) []*DeviceMa
 // GetRepairRecordByPropertyName queries DeviceManualRepairRecord entity in the
 // datastore using a map of property names and values. Should return both a
 // Record and an Entity for each Entity in the datastore.
-func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]string, limit int32, order []string) ([]*DeviceManualRepairRecordsOpRes, error) {
+func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]string, limit int32, offset int32, order []string) ([]*DeviceManualRepairRecordsOpRes, error) {
 	var entities []*DeviceManualRepairRecordEntity
 
 	// Set up query with each property name and value.
@@ -64,7 +64,7 @@ func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]strin
 		}
 	}
 
-	q = q.Limit(limit)
+	q = q.Limit(limit).Offset(offset)
 
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

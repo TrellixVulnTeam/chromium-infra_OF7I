@@ -285,12 +285,15 @@ message UpdateDeviceManualRepairRecordRequest {
 
 message UpdateDeviceManualRepairRecordResponse {}
 
+// Next tag: 7
 message ListManualRepairRecordsRequest {
   string hostname = 1;
   string asset_tag = 2;
-  int32 limit = 3;
   string user_ldap = 4;
   string repair_state = 5;
+
+  int32 limit = 3;
+  int32 offset = 6;
 }
 
 message ListManualRepairRecordsResponse {
