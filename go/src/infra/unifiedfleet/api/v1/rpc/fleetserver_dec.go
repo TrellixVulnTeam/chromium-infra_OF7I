@@ -10,6 +10,7 @@ import (
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	models "infra/unifiedfleet/api/v1/models"
+	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
 type DecoratedFleet struct {
@@ -1400,6 +1401,23 @@ func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rs
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "GetState", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateDutState(ctx context.Context, req *UpdateDutStateRequest) (rsp *lab.DutState, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateDutState", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateDutState(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateDutState", rsp, err)
 	}
 	return
 }

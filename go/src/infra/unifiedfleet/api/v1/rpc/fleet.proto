@@ -23,6 +23,7 @@ import "infra/unifiedfleet/api/v1/models/network.proto";
 import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
@@ -271,6 +272,10 @@ service Fleet {
 
   // GetState retrieves the state of a resource.
   rpc GetState(GetStateRequest) returns (models.StateRecord);
+
+  // UpdateDutState updates the state config for a DUT
+  // If the dut state doesn't exist before, it will create the dut state record.
+  rpc UpdateDutState(UpdateDutStateRequest) returns (models.chromeos.lab.DutState);
 
   // GetDHCPConfig retrieves a dhcp record.
   rpc GetDHCPConfig(GetDHCPConfigRequest) returns (models.DHCPConfig);
@@ -1547,6 +1552,20 @@ message UpdateStateRequest {
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 }
+
+message UpdateDutStateRequest {
+  // The state record to update.
+  models.chromeos.lab.DutState dut_state = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+
+  // Used for updating back essential configs from repair/deploy task.
+  models.DutMeta dut_meta = 3;
+  models.LabMeta lab_meta = 4;
+}
+
+
 
 message RackRegistrationRequest {
   // The rack to create.

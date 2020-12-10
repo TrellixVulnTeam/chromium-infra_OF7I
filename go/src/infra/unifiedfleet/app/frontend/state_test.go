@@ -12,6 +12,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/code"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/state"
@@ -155,5 +156,100 @@ func TestGetState(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
+	})
+}
+
+func TestUpdateDutState(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	dutStateGood := &chromeosLab.DutState{
+		Id:       &chromeosLab.ChromeOSDeviceID{Value: "UUID:01"},
+		Hostname: "hostname-01",
+	}
+	Convey("Update dut state", t, func() {
+		Convey("happy path", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: dutStateGood,
+			})
+			So(err, ShouldBeNil)
+		})
+
+		Convey("empty dut ID", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("dut ID with all spaces", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id: &chromeosLab.ChromeOSDeviceID{Value: "   "},
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("empty hostname", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "UUID:01"},
+					Hostname: "   ",
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Hostname cannot be empty")
+		})
+
+		Convey("non-matched dut ID in lab meta", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: dutStateGood,
+				LabMeta: &ufspb.LabMeta{
+					ChromeosDeviceId: "UUID:wrong",
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Mismatched dut ID")
+		})
+
+		Convey("non-matched dut hostname in lab meta", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: dutStateGood,
+				LabMeta: &ufspb.LabMeta{
+					ChromeosDeviceId: "UUID:01",
+					Hostname:         "hostname-wrong",
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Mismatched dut hostname")
+		})
+
+		Convey("non-matched dut ID in dut meta", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: dutStateGood,
+				DutMeta: &ufspb.DutMeta{
+					ChromeosDeviceId: "UUID:wrong",
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Mismatched dut ID")
+		})
+
+		Convey("non-matched dut hostname in dut meta", func() {
+			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+				DutState: dutStateGood,
+				DutMeta: &ufspb.DutMeta{
+					ChromeosDeviceId: "UUID:01",
+					Hostname:         "hostname-wrong",
+				},
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Mismatched dut hostname")
+		})
+
 	})
 }

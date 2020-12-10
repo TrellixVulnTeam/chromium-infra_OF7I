@@ -657,6 +657,47 @@ func (r *GetStateRequest) Validate() error {
 	return status.Errorf(codes.InvalidArgument, ResourceFormat)
 }
 
+// Validate validates input requests of UpdateDutState
+func (r *UpdateDutStateRequest) Validate() error {
+	if r.DutState == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if r.GetDutState().GetId() == nil {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	dutID := strings.TrimSpace(r.GetDutState().GetId().GetValue())
+	if dutID == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !IDRegex.MatchString(dutID) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+
+	dutHostname := strings.TrimSpace(r.GetDutState().GetHostname())
+	if dutHostname == "" {
+		return status.Errorf(codes.InvalidArgument, "Hostname cannot be empty when updating dut states for %q", dutID)
+	}
+
+	if r.GetDutMeta() != nil {
+		if r.GetDutMeta().GetChromeosDeviceId() != dutID {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Mismatched dut ID in DUT meta with dut state: %q", dutID))
+		}
+		if r.GetDutMeta().GetHostname() != dutHostname {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Mismatched dut hostname in DUT meta (%q) with dut state %q", r.GetDutMeta().GetHostname(), dutHostname))
+		}
+	}
+	if r.GetLabMeta() != nil {
+		if r.GetLabMeta().GetChromeosDeviceId() != dutID {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Mismatched dut ID in lab meta with dut state: %q", dutID))
+		}
+		if r.GetLabMeta().GetHostname() != dutHostname {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Mismatched dut hostname in lab meta (%q) with dut state %q", r.GetLabMeta().GetHostname(), dutHostname))
+		}
+	}
+
+	return nil
+}
+
 // Validate validates input requests of UpdateNic.
 func (r *UpdateNicRequest) Validate() error {
 	if r.Nic == nil {

@@ -14,6 +14,7 @@ import (
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/external"
@@ -119,4 +120,12 @@ func (fs *FleetServerImpl) GetState(ctx context.Context, req *api.GetStateReques
 		return nil, err
 	}
 	return controller.GetState(ctx, req.ResourceName)
+}
+
+// UpdateDutState updates DUT state for a DUT.
+func (fs *FleetServerImpl) UpdateDutState(ctx context.Context, req *api.UpdateDutStateRequest) (response *chromeosLab.DutState, err error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
