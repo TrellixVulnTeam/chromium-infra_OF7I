@@ -25,20 +25,27 @@ import (
 	tricium "infra/tricium/api/v1"
 )
 
-// Paths to the required resources relative to the executable directory.
 const (
+	// Paths to the gosec binary relative to the gosec_wrapper.
 	gosecPath  = "./bin/gosec"
 	maxWorkers = 10
+	// A couple of warnings were found to be considered noisy,
+	// and so are disabled by default.
+	// G204: Audit use of command execution
+	// G304: File path provided as taint input
+	disableDefault = "G204,G304"
 )
 
 var (
 	inputDir  = flag.String("input", "./", "Path to root of Tricium input")
 	outputDir = flag.String("output", "./", "Path to root of Tricium output")
-	disable   = flag.String("disable", "", "Comma-separated list of checks "+
-		"or categories of checks to disable.")
-	enable = flag.String("enable", "", "Comma-separated checks "+
-		"or categories of checks to enable. "+
-		"The enable list overrides the disable list.")
+	disable   = flag.String("disable", disableDefault,
+		"Comma-separated list of checks "+
+			"or categories of checks to disable;")
+	enable = flag.String("enable", "",
+		"Comma-separated checks "+
+			"or categories of checks to enable. "+
+			"The enable list overrides the disable list.")
 )
 
 // Issue represents a gosec issue found during a run.
