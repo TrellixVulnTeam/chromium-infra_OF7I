@@ -58,7 +58,18 @@ shivas add dut -name {hostname} -machine {asset tag} -pool {swarming pool} -ufs=
 Triggers a swarming job to deploy the DUT with optional dimensions and actions. Avoids updating to UFS.
 
 shivas add dut -f dut.json -deploy-dims "label-bluetooth:True
-Adds a DUT to UFS using a json description file and triggers a swarming job to deploy the DUT.`
+Adds a DUT to UFS using a json description file and triggers a swarming job to deploy the DUT.
+
+Note:
+1. Skylab tool used skip options instead of deploy actions. The following is the mapping of those options.
+	skipInstallOS [False]		-> install-test-image, update-label
+	skipInstallFirmware [False]	-> install-firmware, verify-recovery-mode
+	skipImageDownload [False]	-> stage-usb
+2. Default actions are stage-usb, install-test-image, update-label, install-firmware, verify-recovery-mode and run-pre-deploy-verification corresponding to
+   default skip options in skylab (false for all three options). Skylab tool adds run-pre-deploy-verification to all the tasks.
+3. UFS assigns a servo port if it's not given.
+4. Peripherals like camera, audio, wifi, etc,. are only supported through json input.
+`
 
 	// DUTRegistrationFileText description for json file input
 	DUTRegistrationFileText string = `path to a file containing DUT specification in JSON format.
@@ -78,6 +89,10 @@ Example DUT:
 						"servoHostname": "chromeos1-row1-rack11-labstation",
 						"servoPort": 9904,
 					},
+					"rpm": {
+						"powerunitName": "chromeos1-row2-rack3-rpm",
+						"powerunitOutlet": ".A1"
+					},
 				},
 				"criticalPools": [],
 				"pools": [
@@ -91,7 +106,72 @@ Example DUT:
 	],
 	"deploymentTicket": "crbug.com/123456",
 	"description": "Fixed and replaced",
-}`
+}
+
+Example DUT with peripherals:
+{
+	"name": "chromeos1-row1-rack11-host4",
+	"machineLsePrototype": "atl:standard",
+	"hostname": "chromeos1-row1-rack11-host4",
+	"chromeosMachineLse": {
+		"deviceLse": {
+			"dut": {
+				"hostname": "chromeos1-row1-rack11-host4",
+				"peripherals": {
+					"servo": {
+						"servoHostname": "chromeos1-row1-rack11-labstation",
+						"servoPort": 9904,
+					},
+					"rpm": {
+						"powerunitName": "chromeos1-row2-rack3-rpm",
+						"powerunitOutlet": ".A1"
+					},
+					"chameleon": {
+						"chameleon_peripherals": [1],
+						"audioBoard": false,
+					},
+					"connectedCamera": [{
+						"cameraType": 1,
+					}],
+					"audio": {
+						"audioBox": false,
+						"atrus": false,
+						"audioCable": true,
+					},
+					"wifi": {
+						"wificell": true,
+						"antennaConn": 1,
+						"router": 1,
+					},
+					"touch": {
+						"mimo": false,
+					},
+					"carrier": "att",
+					"camerabox": false,
+					"chaos": false,
+					"cable": [{
+						"type": 1,
+					}],
+					"cameraboxInfo": {
+						"facing": 1,
+						"light": 1,
+					},
+					"smartUsbhub": false
+				},
+				"criticalPools": [],
+				"pools": [
+						"faft_test_debug"
+				]
+			}
+		}
+	},
+	"machines": [
+		"1156928"
+	],
+	"deploymentTicket": "crbug.com/123456",
+	"description": "Fixed and replaced",
+}
+`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.

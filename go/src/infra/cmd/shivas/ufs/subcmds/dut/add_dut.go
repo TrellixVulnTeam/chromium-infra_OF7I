@@ -146,7 +146,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 
 		var machineLSERequest ufsAPI.CreateMachineLSERequest
 
-		machineLSERequest.MachineLSEId = c.hostname
+		machineLSERequest.MachineLSEId = machineLSE.GetHostname()
 		machineLSERequest.MachineLSE = machineLSE
 
 		res, err := ic.CreateMachineLSE(ctx, &machineLSERequest)
