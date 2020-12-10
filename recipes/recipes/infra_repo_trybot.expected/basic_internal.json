@@ -187,7 +187,7 @@
       "-u",
       "test.py",
       "test",
-      "--fail-if-longer-than=120"
+      "--verbose"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
     "name": "python tests"
