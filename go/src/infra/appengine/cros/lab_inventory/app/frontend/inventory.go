@@ -873,13 +873,14 @@ func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req 
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	if err = req.Validate(); err != nil {
-		return nil, err
+	var propFilter = map[string]string{}
+
+	if req.GetHostname() != "" {
+		propFilter["hostname"] = req.GetHostname()
 	}
 
-	propFilter := map[string]string{
-		"hostname":  req.GetHostname(),
-		"asset_tag": req.GetAssetTag(),
+	if req.GetAssetTag() != "" {
+		propFilter["asset_tag"] = req.GetAssetTag()
 	}
 
 	if req.GetUserLdap() != "" {

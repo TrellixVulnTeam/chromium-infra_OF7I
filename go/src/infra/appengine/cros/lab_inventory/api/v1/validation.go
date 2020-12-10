@@ -208,16 +208,3 @@ func (r *AssetList) Validate() error {
 	}
 	return nil
 }
-
-// Validate validates the input requests of ListManualRepairRecords.
-func (r *ListManualRepairRecordsRequest) Validate() error {
-	if r.GetHostname() == "" {
-		return status.Errorf(codes.InvalidArgument, "Hostname cannot be empty")
-	}
-
-	if r.GetAssetTag() == "" {
-		return status.Errorf(codes.InvalidArgument, "Asset tag cannot be empty")
-	}
-
-	return nil
-}
