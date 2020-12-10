@@ -47,10 +47,7 @@ func TestRunAccountRules(t *testing.T) {
 			},
 			RepoState: &rules.RepoState{},
 		}
-		wp := &workerParams{
-			workerFinished: make(chan bool, 1),
-		}
-		_, err := runAccountRules(ctx, rs, rc, ap, wp)
+		err := runAccountRules(ctx, rs, rc, ap, nil)
 		So(err, ShouldErrLike, "Fail Rule: life can be challenging\nCommit: https://dummy.googlesource.com/dummy.git/+/600dc0de\nBranch: refs/heads/master\nAuthor: author@example.com\nSubject: \"This commit is awesome\"")
 	})
 }
