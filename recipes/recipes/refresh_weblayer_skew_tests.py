@@ -18,6 +18,7 @@ DEPS = [
   'depot_tools/gclient',
   'depot_tools/git',
   'depot_tools/git_cl',
+  'recipe_engine/buildbucket',
   'recipe_engine/cipd',
   'recipe_engine/context',
   'recipe_engine/file',
@@ -325,12 +326,21 @@ def should_create_skew_test(version, milestones):
 
 def RunSteps(api):
   # Get Chromium version to build skew tests for
+  input_ref = api.buildbucket.gitiles_commit.ref
   version = api.properties.get('chrome_version')
+
+  assert input_ref, (
+      'Triggerers for this recipe need to add the git ref to the '
+      'gitilesCommit dictionary.')
   assert version, (
       'Recipe needs to be initialized with chromium'
       ' version in input properties')
   assert re.match(CHROMIUM_VERSION_REGEX, version), ('%r does not match the'
                                                      ' chromium version regex.')
+  assert input_ref == 'refs/tags/%s' % version, (
+      'Triggerers need to pass the git ref for the chrome version '
+      'git tag to the gitilesCommit dictionary.')
+
   # Get milestones
   milestones = api.chromiumdash.milestones(
       NUM_MILESTONES, step_name='Fetching last %d milestones' % NUM_MILESTONES)
@@ -347,7 +357,7 @@ def RunSteps(api):
   api.gclient.set_config('chromium_no_telemetry_dependencies')
   api.gclient.apply_config('android')
   # Checkout chromium/src at ToT
-  api.bot_update.ensure_checkout(with_tags=True)
+  api.bot_update.ensure_checkout()
   # Ensure GOMA is installed
   api.goma.ensure_goma()
   # start the GOMA proxy
@@ -458,19 +468,37 @@ def GenTests(api):
     return api.url.json('Fetching last %d milestones' % NUM_MILESTONES,
                         [{'chromium_branch': branch} for branch in branches])
 
+  def input_properties_step_data(chrome_version):
+    return (
+        api.properties(chrome_version=chrome_version) +
+        api.buildbucket.ci_build(
+            project='infra',
+            bucket='tasks',
+            builder='refresh-weblayer-skew-tests',
+            git_repo='https://chromium.googlesource.com/chromium/src',
+            revision='a' * 40,
+            git_ref='refs/tags/%s' % chrome_version))
+
   yield api.test(
       'basic',
-      api.properties(chrome_version='82.0.4000.90') +
+      input_properties_step_data('82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
       api.path.exists(api.path['cleanup'].join('binaries')) +
       cipd_step_data('82.0.4000.90') +
-      chrome_version_step_data('82.0.4000.90'))
+      chrome_version_step_data('82.0.4000.90') +
+      # "--refs refs/tags/<chrome version>" will be implicitly
+      # passed as an arg to bot_update.py because the ref is
+      # passed to this recipe in the gitilesCommit input dictionary.
+      # We need to make sure that we pass this arg or else we won't
+      # be able to checkout the tag.
+      api.post_process(post_process.StepCommandContains, 'bot_update',
+                       ["--refs", "refs/tags/82.0.4000.90"]))
 
   yield api.test(
       'build_fails',
-      api.properties(chrome_version='82.0.4000.90') +
+      input_properties_step_data('82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
           api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -482,14 +510,14 @@ def GenTests(api):
 
   yield api.test(
       'version_is_less_than_curr_tested',
-      api.properties(chrome_version='82.0.4000.10') +
+      input_properties_step_data('82.0.4000.10') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
                     api.file.read_text(TEST_VARIANTS_PYL)))
 
   yield api.test(
       'poorly_written_chromium_version',
-      api.properties(chrome_version='82.0.4000.90') +
+      input_properties_step_data('82.0.4000.90') +
       api.expect_exception('ValueError') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
@@ -500,7 +528,7 @@ def GenTests(api):
 
   yield api.test(
       'cipd_package_already_exists',
-      api.properties(chrome_version='82.0.4000.90') +
+      input_properties_step_data('82.0.4000.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']) +
       api.step_data('Read %s' % VARIANTS_PYL_PATH,
                     api.file.read_text(TEST_VARIANTS_PYL)) +
@@ -508,5 +536,5 @@ def GenTests(api):
 
   yield api.test(
       'branch_is_not_in_milestones',
-      api.properties(chrome_version='82.0.4003.90') +
+      input_properties_step_data('82.0.4003.90') +
       milestone_json_step_datas(['4000', '4103', '3900', '3300']))
