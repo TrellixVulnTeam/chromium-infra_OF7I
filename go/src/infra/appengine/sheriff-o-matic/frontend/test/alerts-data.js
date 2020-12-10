@@ -12,13 +12,6 @@ const TEST_ALERTS = {
             "url": "https://build.chromium.org/p/chromium.mac/builders/Mac%20GN%20%28dbg%29"
           }
         ],
-        "reasons": [
-          {
-            "step": "browser_tests on Mac-10.9",
-            "test_names": null,
-            "url": "https://build.chromium.org/p/chromium.mac/builders/Mac%20GN%20%28dbg%29/builds/33505/steps/browser_tests%20on%20Mac-10.9"
-          }
-        ],
         "regression_ranges": [],
         "tree_closer": false
       },
@@ -41,13 +34,6 @@ const TEST_ALERTS = {
             "name": "WebKit Win7",
             "start_time": 1463635584.498498,
             "url": "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7"
-          }
-        ],
-        "reasons": [
-          {
-            "step": "webkit_lint",
-            "test_names": null,
-            "url": "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42495/steps/webkit_lint"
           }
         ],
         "regression_ranges": [
@@ -325,13 +311,6 @@ const TEST_ALERTS = {
             "url": "https://build.chromium.org/p/chromium.win/builders/Win10%20Tests%20x64"
           }
         ],
-        "reasons": [
-          {
-            "step": "browser_tests on Windows-10-10586",
-            "test_names": null,
-            "url": "https://build.chromium.org/p/chromium.win/builders/Win10%20Tests%20x64/builds/1214/steps/browser_tests%20on%20Windows-10-10586"
-          }
-        ],
         "regression_ranges": [
           {
             "positions": [
@@ -379,13 +358,6 @@ const TEST_ALERTS = {
             "url": "https://build.chromium.org/p/chromium.win/builders/Win10%20Tests%20x64"
           }
         ],
-        "reasons": [
-          {
-            "step": "views_unittests on Windows-10-10586",
-            "test_names": null,
-            "url": "https://build.chromium.org/p/chromium.win/builders/Win10%20Tests%20x64/builds/1215/steps/views_unittests%20on%20Windows-10-10586"
-          }
-        ],
         "regression_ranges": [
           {
             "positions": [
@@ -431,13 +403,6 @@ const TEST_ALERTS = {
             "name": "Linux ChromiumOS Tests (1)",
             "start_time": 1463701411.622166,
             "url": "https://build.chromium.org/p/chromium.chromiumos/builders/Linux%20ChromiumOS%20Tests%20%281%29"
-          }
-        ],
-        "reasons": [
-          {
-            "step": "browser_tests on Ubuntu-12.04",
-            "test_names": null,
-            "url": "https://build.chromium.org/p/chromium.chromiumos/builders/Linux%20ChromiumOS%20Tests%20%281%29/builds/20191/steps/browser_tests%20on%20Ubuntu-12.04"
           }
         ],
         "regression_ranges": [

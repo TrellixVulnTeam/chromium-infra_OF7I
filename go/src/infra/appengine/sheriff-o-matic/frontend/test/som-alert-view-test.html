@@ -64,11 +64,11 @@
     test('merge multiple alert streams', function() {
       let alertsData = {
         test: [
-          {extension: { builders: [{name: 'a'}], reasons: [ {step: 'a'} ]},
+          {extension: { builders: [{name: 'a'}]},
             key: 'test key' },
         ],
         other: [
-          {extension: { builders: [{name: 'blahblah'}], reasons: [ {step: 'reasons'} ]} },
+          {extension: { builders: [{name: 'blahblah'}]} },
         ],
       };
       let alertsResolvedData = {};
@@ -92,7 +92,7 @@
     test('merge multiple alert streams with one null', function() {
       let alertsData = {
         test: [
-          {extension: { builders: [{name: 'a'}], reasons: [ {step: 'a'} ]},
+          {extension: { builders: [{name: 'a'}]},
             key: 'test key' },
         ],
         other: null
@@ -171,21 +171,21 @@
     test('sort works correctly', function() {
       let alertsData = {
         test: [
-          {extension: { builders: [{name: 'a'}, {name: 'b'}, {name: 'z'}], reasons: [ {step: 'a'} ]},
+          {extension: { builders: [{name: 'a'}, {name: 'b'}, {name: 'z'}]},
             title: 'a'},
-          {extension: { builders: [{name: 'c'}], reasons: [ {step: 'a'} ]},
+          {extension: { builders: [{name: 'c'}]},
             title: 'b'},
-          {extension: { builders: [{name: 'd'}], reasons: [ {step: 'c'} ]}, title: 'd' },
-          {extension: { builders: [{name: 'e'}], reasons: [ {step: 'd'} ]}, title: 'e' },
-          {extension: { builders: [{name: 'f'}], reasons: [ {step: 'b'} ]},
+          {extension: { builders: [{name: 'd'}]}, title: 'd' },
+          {extension: { builders: [{name: 'e'}]}, title: 'e' },
+          {extension: { builders: [{name: 'f'}]},
             key: 'hello', title: 'd'},
-          {extension: { builders: [{name: 'g'}], reasons: [ {step: 'a'} ]},
+          {extension: { builders: [{name: 'g'}]},
             key: 'test', title: 'c'},
-          {extension: { builders: [{name: 'h'}], reasons: [ {step: 'a'} ], suspected_cls: [{revision: '1'}]},
+          {extension: { builders: [{name: 'h'}], suspected_cls: [{revision: '1'}]},
            title: 'h'},
-          {extension: { builders: [{name: 'i'}], reasons: [ {step: 'a'} ], suspected_cls: [{revision: 'rev2', reverting_cl_url: 'revert_url'}]},
+          {extension: { builders: [{name: 'i'}], suspected_cls: [{revision: 'rev2', reverting_cl_url: 'revert_url'}]},
            title: 'i'},
-          {extension: { builders: [{name: 'j'}], reasons: [ {step: 'a'} ], has_findings: true},
+          {extension: { builders: [{name: 'j'}], has_findings: true},
            title: 'j'},
         ]
       };

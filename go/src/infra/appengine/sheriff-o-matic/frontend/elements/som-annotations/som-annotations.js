@@ -311,21 +311,6 @@ class SomAnnotations extends Polymer.mixinBehaviors([
           result += 'List of failed builders:\n\n' +
                     failuresInfo.join('\n--------------------\n') + '\n\n';
         }
-        if (alert.extension.reasons && alert.extension.reasons.length > 0) {
-          result += 'Reasons: ';
-          for (let i = 0; i < alert.extension.reasons.length; i++) {
-            result += '\n' + alert.extension.reasons[i].url;
-            if (alert.extension.reasons[i].test_names) {
-              result += '\n' +
-                        'Tests:';
-              if (alert.extension.reasons[i].test_names) {
-                result +=
-                    '\n* ' + alert.extension.reasons[i].test_names.join('\n* ');
-              }
-            }
-          }
-          result += '\n\n';
-        }
       }
       return comment + result;
     }, '');
