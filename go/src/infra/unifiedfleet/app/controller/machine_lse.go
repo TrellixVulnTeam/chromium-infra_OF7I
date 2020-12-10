@@ -1387,3 +1387,42 @@ func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newVal
 	}
 	return nil
 }
+
+// UpdateLabMeta updates only lab meta data for a given ChromeOS DUT.
+func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
+	lse, err := inventory.GetMachineLSE(ctx, meta.GetHostname())
+	if err != nil {
+		return err
+	}
+	dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+	if dut == nil {
+		logging.Warningf(ctx, "%s is not a valid Chromeos DUT, skip updating lab meta", meta.GetHostname())
+		return nil
+	}
+
+	// Copy for logging
+	oldLSE := proto.Clone(lse).(*ufspb.MachineLSE)
+
+	f := func(ctx context.Context) error {
+		hc := getHostHistoryClient(lse)
+		if servo := dut.GetPeripherals().GetServo(); servo != nil {
+			servo.ServoType = meta.GetServoType()
+			servo.ServoTopology = meta.GetServoTopology()
+		}
+		// Periphrals cannot be nil for valid DUT
+		if dut.GetPeripherals() == nil {
+			dut.Peripherals = &chromeosLab.Peripherals{}
+		}
+		dut.GetPeripherals().SmartUsbhub = meta.GetSmartUsbhub()
+		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
+			return errors.Annotate(err, "Unable to update lab meta for %s", lse.Name).Err()
+		}
+		hc.LogMachineLSEChanges(oldLSE, lse)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update entity in datastore: %s", err)
+		return err
+	}
+	return nil
+}

@@ -1133,6 +1133,67 @@ func TestUpdateMachineLSE(t *testing.T) {
 	})
 }
 
+func TestUpdateLabMeta(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("UpdateLabMeta for an OS machine lse", t, func() {
+		Convey("Update a non-OS machine lse", func() {
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-labmeta-1",
+				Hostname: "machinelse-labmeta-1",
+				Machines: []string{"machine-labmeta1"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-labmeta1",
+			})
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+
+			err = UpdateLabMeta(ctx, &ufspb.LabMeta{
+				ChromeosDeviceId: "machine-labmeta1",
+				Hostname:         "machinelse-labmeta-1",
+				SmartUsbhub:      true,
+			})
+			// Update is skipped without error
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Update a OS machine lse - happy path", func() {
+			machineLSE1 := mockDutMachineLSE("machinelse-labmeta-2")
+			machineLSE1.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = &chromeosLab.Peripherals{
+				Servo: &chromeosLab.Servo{},
+			}
+			req, err := inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+
+			topology := &chromeosLab.ServoTopology{
+				Main: &chromeosLab.ServoTopologyItem{
+					Type: "v3",
+				},
+			}
+			err = UpdateLabMeta(ctx, &ufspb.LabMeta{
+				ChromeosDeviceId: "machine-labmeta1",
+				Hostname:         "machinelse-labmeta-2",
+				SmartUsbhub:      true,
+				ServoType:        "fake-type",
+				ServoTopology:    topology,
+			})
+			So(err, ShouldBeNil)
+			req, err = inventory.GetMachineLSE(ctx, "machinelse-labmeta-2")
+			So(err, ShouldBeNil)
+			peri := req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+			So(peri.GetSmartUsbhub(), ShouldBeTrue)
+			So(peri.Servo.GetServoType(), ShouldEqual, "fake-type")
+			So(peri.Servo.GetServoTopology(), ShouldResembleProto, topology)
+		})
+	})
+}
+
 func TestDeleteMachineLSE(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
