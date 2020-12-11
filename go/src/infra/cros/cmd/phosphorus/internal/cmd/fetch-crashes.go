@@ -10,10 +10,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -76,6 +78,13 @@ const (
 	// debugging via output logs, e.g. in stainless).
 	uploadedFile = "uploaded_crashes.txt"
 )
+
+// baseCrashNamePat is a regex that matches the base portion of a crash file. For example, in
+// the following examples, it matches "chrome.20201202.130102.12345.4567"
+// chrome.20201202.130102.12345.4567.log.gz
+// chrome.20201202.130102.12345.4567.dmp
+// chrome.20201202.130102.12345.4567.i915_error_state.log.xz
+var baseCrashNamePat = regexp.MustCompile(`^[^.]+\.\d+\.\d+\.\d+\.\d+`)
 
 // innerRun reads in the JSON PB input, runs the actual fetch-crashes command, and serializes the output.
 func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
@@ -151,6 +160,13 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, t
 
 	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
 
+	rtdCrashes, err := findRTDCrashes(ctx, r.Config.Task.ResultsDir)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to get preexisting crashes: ", err)
+	}
+
+	outDir := filepath.Join(r.Config.Task.ResultsDir, outputSubDir)
+
 	var lastCrashID int64 = -1
 	var crashInfo *tls.CrashInfo
 	// crashBlobs maps the blob's filename to the full blob struct. It is
@@ -165,7 +181,7 @@ readStream:
 				// We've started to receive a new crash, so we've gotten all of the prior one.
 				// Process it.
 				if lastCrashID != -1 {
-					summary, err := processCrash(ctx, crashInfo, crashBlobs, r)
+					summary, err := processCrash(ctx, crashInfo, crashBlobs, r, outDir)
 					if err != nil {
 						logging.Errorf(ctx, "Failed to process crash: %s. Will continue to process others, if any.", err)
 					} else {
@@ -199,7 +215,7 @@ readStream:
 		case io.EOF:
 			// Process the last crash, if any.
 			if lastCrashID != -1 {
-				summary, err := processCrash(ctx, crashInfo, crashBlobs, r)
+				summary, err := processCrash(ctx, crashInfo, crashBlobs, r, outDir)
 				if err != nil {
 					logging.Errorf(ctx, "Failed to process crash %d: %s.", lastCrashID, err)
 				} else {
@@ -212,8 +228,9 @@ readStream:
 		}
 	}
 
-	dir := filepath.Join(r.Config.Task.ResultsDir, outputSubDir)
-	if err := writeUploadedCrashDetails(ctx, dir, fetchResp.Crashes); err != nil {
+	fetchResp.CrashesRtdOnly, fetchResp.CrashesTlsOnly = findMissingCrashes(rtdCrashes, fetchResp.Crashes)
+
+	if err := writeProcessedCrashDetails(ctx, outDir, fetchResp.Crashes); err != nil {
 		// Don't return an error here, because we still successfully
 		// processed the crashes.
 		logging.Errorf(ctx, "Failed to write output details: %s", err)
@@ -230,6 +247,34 @@ readStream:
 	}
 
 	return fetchResp, nil
+}
+
+// findMissingCrashes compares the crashes found in during this run to those written by the rtd.
+// Returns:
+//   |missing| - list of crashes found in rtdCrashes but not in crashes
+//   |extra| - list of crashes found in crashes but not in rtdCrashes
+func findMissingCrashes(rtdCrashes map[string]bool, crashes []*phosphorus.CrashSummary) (missing []string, extra []string) {
+	for _, c := range crashes {
+		if c.FilenameBase == "" {
+			continue
+		}
+		if _, ok := rtdCrashes[c.FilenameBase]; !ok {
+			extra = append(extra, c.FilenameBase)
+		}
+	}
+	for k := range rtdCrashes {
+		found := false
+		for _, c := range crashes {
+			if k == c.FilenameBase {
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, k)
+		}
+	}
+	return
 }
 
 // removeCrashes empties out all accessible crash directories on the DUT
@@ -263,9 +308,51 @@ readStream:
 	return nil
 }
 
-// writeUploadedCrashDetails writes details of the uploaded crashes to the output directory for debugging purposes
+// writeIndividualCrash writes an individual crash to |dir|/crashes, returning the base part of the crash name written
+func writeIndividualCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[string]*tls.CrashBlob, dir string) (string, error) {
+	crashDir := filepath.Join(dir, "crashes")
+	if err := os.MkdirAll(crashDir, 0755); err != nil {
+		return "", errors.Annotate(err, "create output directory").Err()
+	}
+	// The metadata file name is not present in the CrashInfo file, so compute
+	// it from the name of a crash blob.
+	var metaName string
+	var base string
+
+	for _, b := range crashBlobs {
+		path := filepath.Join(crashDir, b.Filename)
+		if err := ioutil.WriteFile(path, b.Blob, 0644); err != nil {
+			return "", errors.Annotate(err, "write blob %s", b.Filename).Err()
+		}
+		if base == "" {
+			base = baseCrashNamePat.FindString(b.Filename)
+			if base != "" {
+				metaName = base + ".meta"
+			}
+		}
+	}
+	if metaName == "" {
+		return "", errors.New("didn't extract metadata file name")
+	}
+	var metaContents string
+	metaContents += "exec_name=" + info.ExecName + "\n"
+	metaContents += "prod=" + info.Prod + "\n"
+	metaContents += "ver=" + info.Ver + "\n"
+	metaContents += "sig=" + info.Sig + "\n"
+	metaContents += "in_progress_integration_test=" + info.InProgressIntegrationTest + "\n"
+	metaContents += "collector=" + info.Collector + "\n"
+	for _, meta := range info.Fields {
+		metaContents += fmt.Sprintf("%s=%s\n", meta.Key, meta.Text)
+	}
+	if err := ioutil.WriteFile(filepath.Join(crashDir, metaName), []byte(metaContents), 0644); err != nil {
+		return "", errors.Annotate(err, "write metadata %s", metaName).Err()
+	}
+	return base, nil
+}
+
+// writeProcessedCrashDetails writes details of the processed crashes to the output directory for debugging purposes
 // (e.g. for browsing in stainless).
-func writeUploadedCrashDetails(ctx context.Context, dir string, crashes []*phosphorus.CrashSummary) error {
+func writeProcessedCrashDetails(ctx context.Context, dir string, crashes []*phosphorus.CrashSummary) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return errors.Annotate(err, "create output directory").Err()
 	}
@@ -315,8 +402,9 @@ func writeUploadedCrashDetails(ctx context.Context, dir string, crashes []*phosp
 	return firstErr
 }
 
-// processCrash evaluates a fully-received crash, uploading it if requested, and giving back an appropriate CrashSummary.
-func processCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[string]*tls.CrashBlob, r phosphorus.FetchCrashesRequest) (*phosphorus.CrashSummary, error) {
+// processCrash evaluates a fully-received crash, writes it to |dir|/crashes, uploads
+// it if requested, and gives back an appropriate CrashSummary.
+func processCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[string]*tls.CrashBlob, r phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
 	var url string
 	if r.UploadCrashes {
 		var blobs []*tls.CrashBlob
@@ -331,16 +419,68 @@ func processCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[strin
 		}
 	}
 
-	// TODO(mutexlox): Unconditionally write the full crash report to the
-	// output directory.
+	base, err := writeIndividualCrash(ctx, info, crashBlobs, dir)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to write crash: ", err)
+	}
 
 	summary := &phosphorus.CrashSummary{
 		ExecName:                  info.ExecName,
 		UploadUrl:                 url,
 		Sig:                       info.Sig,
 		InProgressIntegrationTest: info.InProgressIntegrationTest,
+		FilenameBase:              base,
 	}
 	return summary, nil
+}
+
+// findRTDCrashes returns a list of crashes found by the RTD.
+// Specifically, each item in the map maps the basename of a crash (e.g.
+// chrome.20201202.130102.12345.4567) to the path to a .meta file for that crash
+// (or, if the crash has no .meta file associated with it, any file associated
+// with the crash).
+func findRTDCrashes(ctx context.Context, rootDir string) (map[string]bool, error) {
+	// Globs to directories where we know crashes to show up.
+	crashGlobs := []string{
+		"autoserv_test/sysinfo/var/spool/crash/",
+		"autoserv_test/*/sysinfo/var/log/chrome/Crash Reports/",
+		"autoserv_test/tast/results/crashes/", // no .meta files typically found here
+		"autoserv_test/debug/",
+		"provision_*/crashinfo.*/",
+	}
+
+	// Create a set of basenames w/out extensions
+	crashes := make(map[string]bool)
+	for _, g := range crashGlobs {
+		dirs, err := filepath.Glob(filepath.Join(rootDir, g))
+		// Per go docs, "The only possible returned error is ErrBadPattern, when pattern is malformed."
+		if err != nil {
+			return nil, errors.Annotate(err, "invalid glob").Err()
+		}
+		for _, d := range dirs {
+			if err := addCrashesInDir(ctx, d, &crashes); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return crashes, nil
+}
+
+// addCrasheInDir finds all crashes in |d| and adds them to |crashes|
+func addCrashesInDir(ctx context.Context, d string, crashes *map[string]bool) error {
+	files, err := ioutil.ReadDir(d)
+	if err != nil {
+		return errors.Annotate(err, "reading directory %s", d).Err()
+	}
+	for _, f := range files {
+		if !f.IsDir() {
+			base := baseCrashNamePat.FindString(f.Name())
+			if base != "" {
+				(*crashes)[base] = true
+			}
+		}
+	}
+	return nil
 }
 
 // uploadCrash uploads the given crash to either staging or prod (as specified by |useStaging|).
