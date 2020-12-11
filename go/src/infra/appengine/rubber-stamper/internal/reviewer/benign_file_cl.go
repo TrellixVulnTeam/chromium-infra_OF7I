@@ -58,6 +58,12 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 			continue
 		}
 		for _, p := range fileExtensionMap[ext].Paths {
+			// Allow `**` to mean all paths under this repo
+			// TODO: implement more robust pattern matching
+			if p == "**" {
+				isValid = true
+				break
+			}
 			ok, err := path.Match(p, file)
 			if err != nil {
 				logging.WithError(err).Errorf(ctx, "invalid path in BenignFilePattern: %s", p)

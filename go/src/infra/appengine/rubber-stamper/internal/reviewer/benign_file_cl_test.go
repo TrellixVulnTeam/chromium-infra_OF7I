@@ -37,6 +37,9 @@ func TestReviewBenignFileChange(t *testing.T) {
 							".txt": {
 								Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
 							},
+							".xtb": {
+								Paths: []string{"**"},
+							},
 						},
 					},
 				},
@@ -50,6 +53,23 @@ func TestReviewBenignFileChange(t *testing.T) {
 			Repo:       "dummy",
 			AutoSubmit: false,
 		}
+
+		Convey("all paths valid for a particular extension ", func() {
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"/COMMIT_MSG": nil,
+					"a/b.xtb":     nil,
+					"d.xtb":       nil,
+					"f/e/g.xtb":   nil,
+				},
+			}, nil)
+			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
+			So(err, ShouldBeNil)
+			So(len(invalidFiles), ShouldEqual, 0)
+		})
 		Convey("valid file", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 				Number:     t.Number,
