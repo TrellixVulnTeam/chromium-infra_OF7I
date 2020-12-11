@@ -1,9 +1,0 @@
-queue:
-- name: default
-  rate: 100/s
-  bucket_size: 20
-  retry_parameters:
-    task_age_limit: 2h
-
-- name: admin
-  rate: 100/s
