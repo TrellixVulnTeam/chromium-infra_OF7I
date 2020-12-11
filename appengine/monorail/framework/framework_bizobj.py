@@ -96,13 +96,12 @@ def FilterViewableEmails(cnxn, services, user_auth, other_users):
   if user_auth.user_pb.is_site_admin:
     return other_users
 
-  # Case 3: full_emails_perm_group members always see unobscured emails.
-  try:
-    if services.user.LookupUserID(
-        cnxn, settings.full_emails_perm_group) in user_auth.effective_ids:
+  # Case 3: Members of any groups in settings.full_emails_perm_groups
+  # can view unobscured email addresses.
+  for group_email in settings.full_emails_perm_groups:
+    if services.usergroup.LookupUserGroupID(
+        cnxn, group_email) in user_auth.effective_ids:
       return other_users
-  except exceptions.NoSuchUserException:
-    pass
 
   # Case 4: Users see unobscured emails as long as they share a common Project.
   return WhichUsersShareAProject(

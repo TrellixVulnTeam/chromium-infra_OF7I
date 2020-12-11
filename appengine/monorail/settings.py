@@ -437,8 +437,14 @@ public_issue_notice_user_groups = [
     'tq-team@google.com',
 ]
 
-# Users in this groups can view the full emails of all users on the site.
-full_emails_perm_group = 'monorail-display-names-perm@google.com'
+full_emails_perm_groups = [
+    # Synced group that gives members permission to view the full
+    # emails of all users.
+    'monorail-display-names-perm@google.com',
+    # Native Monorail group that gives service account members permission
+    # to view full emails of all users.
+    'display-names-perm-sa@bugs.chromium.org'
+]
 
 # These email suffixes are allowed to create new alert bugs via email.
 alert_allowlisted_suffixes = ('@google.com',)
