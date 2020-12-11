@@ -3,11 +3,3 @@ cron:
   url: /internal/cron/import-config
   schedule: every 10 minutes
   target: backend
-- description: legacy scan for new projects
-  url: /admin/scan_projects
-  schedule: every 1 hours
-  target: launch-backend
-- description: legacy scan repos
-  url: /admin/scan_repos
-  schedule: every 5 minutes
-  target: launch-backend
