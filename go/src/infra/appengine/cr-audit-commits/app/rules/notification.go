@@ -15,7 +15,6 @@ import (
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
 
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 )
 
@@ -132,57 +131,57 @@ type CommentOnBugToAcknowledgeMerge struct {
 
 // Notify implements Notification.
 func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
-	if !ok {
-		return "", errors.New("MilestoneNumber not specified in repository configuration")
-	}
-	branchName := strings.Replace(cfg.BranchName, "refs/branch-heads/", "", -1)
-	mergeAckLabel := fmt.Sprintf("Merge-Merged-%s-%s", milestone, branchName)
-	mergeLabel := fmt.Sprintf("-Merge-Approved-%s", milestone)
-	labels := []string{mergeLabel, mergeAckLabel}
-	for _, result := range rc.Result {
-		if result.RuleResultStatus != NotificationRequired {
-			continue
-		}
-		bugID, success := GetToken(ctx, "BugNumbers", result.MetaData)
-		if state == "" {
-			if success {
-				logging.Infof(ctx, "Found bug(s): '%s' on relevant commit %s", bugID, rc.CommitHash)
-				bugList := strings.Split(bugID, ",")
-				validBugs := ""
-				for _, bug := range bugList {
-					bugNumber, err := strconv.Atoi(bug)
-					if err != nil {
-						// TODO(xinyuoffiline): Is this an error?
-						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
-						continue
-					}
-					vIssue, err := issueFromID(ctx, cfg, int32(bugNumber), cs)
-					if err != nil {
-						// TODO(xinyuoffiline): Is this an error?
-						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: https://bugs.chromium.org/p/%s/issues/detail?id=%d is invalid on commit %s", cfg.MonorailProject, bugNumber, rc.CommitHash)
-						continue
-					}
-					mergeAckComment := "The following revision refers to this bug: \n%s\n\nCommit: %s\nAuthor: %s\nCommiter: %s\nDate: %s\n\n%s"
-					comment := fmt.Sprintf(mergeAckComment, cfg.LinkToCommit(rc.CommitHash), rc.CommitHash, rc.AuthorAccount, rc.CommitterAccount, rc.CommitTime, rc.CommitMessage)
-					if err = postComment(ctx, cfg, int32(vIssue.Id), comment, cs, labels); err != nil {
-						// TODO(xinyuoffiline): Is this an error?
-						logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Could not comment on bug\nhttps://bugs.chromium.org/p/%s/issues/detail?id=%d", vIssue.ProjectId, bugNumber)
-						continue
-					}
-					if validBugs == "" {
-						validBugs = bug
-					} else {
-						validBugs += fmt.Sprintf(",%s", bug)
-					}
-				}
-				if validBugs != "" {
-					return fmt.Sprintf("Comment posted on BUG(S)=%s", validBugs), nil
-				}
-			}
-			return "", errors.New("No bug found or could not comment on bug(s) found")
-		}
-	}
+	// milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
+	// if !ok {
+	// 	return "", errors.New("MilestoneNumber not specified in repository configuration")
+	// }
+	// branchName := strings.Replace(cfg.BranchName, "refs/branch-heads/", "", -1)
+	// mergeAckLabel := fmt.Sprintf("Merge-Merged-%s-%s", milestone, branchName)
+	// mergeLabel := fmt.Sprintf("-Merge-Approved-%s", milestone)
+	// labels := []string{mergeLabel, mergeAckLabel}
+	// for _, result := range rc.Result {
+	// 	if result.RuleResultStatus != NotificationRequired {
+	// 		continue
+	// 	}
+	// 	bugID, success := GetToken(ctx, "BugNumbers", result.MetaData)
+	// 	if state == "" {
+	// 		if success {
+	// 			logging.Infof(ctx, "Found bug(s): '%s' on relevant commit %s", bugID, rc.CommitHash)
+	// 			bugList := strings.Split(bugID, ",")
+	// 			validBugs := ""
+	// 			for _, bug := range bugList {
+	// 				bugNumber, err := strconv.Atoi(bug)
+	// 				if err != nil {
+	// 					// TODO(xinyuoffiline): Is this an error?
+	// 					logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Found an invalid bug %s on relevant commit %s", bug, rc.CommitHash)
+	// 					continue
+	// 				}
+	// 				vIssue, err := issueFromID(ctx, cfg, int32(bugNumber), cs)
+	// 				if err != nil {
+	// 					// TODO(xinyuoffiline): Is this an error?
+	// 					logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: https://bugs.chromium.org/p/%s/issues/detail?id=%d is invalid on commit %s", cfg.MonorailProject, bugNumber, rc.CommitHash)
+	// 					continue
+	// 				}
+	// 				mergeAckComment := "The following revision refers to this bug: \n%s\n\nCommit: %s\nAuthor: %s\nCommiter: %s\nDate: %s\n\n%s"
+	// 				comment := fmt.Sprintf(mergeAckComment, cfg.LinkToCommit(rc.CommitHash), rc.CommitHash, rc.AuthorAccount, rc.CommitterAccount, rc.CommitTime, rc.CommitMessage)
+	// 				if err = postComment(ctx, cfg, int32(vIssue.Id), comment, cs, labels); err != nil {
+	// 					// TODO(xinyuoffiline): Is this an error?
+	// 					logging.WithError(err).Warningf(ctx, "CommentOnBugToAcknowledgeMerge: Could not comment on bug\nhttps://bugs.chromium.org/p/%s/issues/detail?id=%d", vIssue.ProjectId, bugNumber)
+	// 					continue
+	// 				}
+	// 				if validBugs == "" {
+	// 					validBugs = bug
+	// 				} else {
+	// 					validBugs += fmt.Sprintf(",%s", bug)
+	// 				}
+	// 			}
+	// 			if validBugs != "" {
+	// 				return fmt.Sprintf("Comment posted on BUG(S)=%s", validBugs), nil
+	// 			}
+	// 		}
+	// 		return "", errors.New("No bug found or could not comment on bug(s) found")
+	// 	}
+	// }
 	return "No notification required", nil
 }
 
