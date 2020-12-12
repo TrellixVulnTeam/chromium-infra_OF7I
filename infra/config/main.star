@@ -113,6 +113,11 @@ luci.bucket(
     acls = [
         acl.entry(
             roles = acl.BUILDBUCKET_TRIGGERER,
+            # Allow Tricium dev and prod to trigger analyzer tryjobs.
+            users = [
+                "tricium-dev@appspot.gserviceaccount.com",
+                "tricium-prod@appspot.gserviceaccount.com",
+            ],
             groups = [
                 "project-infra-tryjob-access",
                 "service-account-cq",
