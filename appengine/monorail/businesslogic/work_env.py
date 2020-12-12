@@ -891,6 +891,21 @@ class WorkEnv(object):
       return templates
     return [template for template in templates if not template.members_only]
 
+  def ListComponentDefs(self, project_id, page_size, start):
+    # type: (int, int, int) -> ListResult
+    """Returns component defs that belong to the project."""
+    if start < 0:
+      raise exceptions.InputException('Invalid `start`: %d' % start)
+    if page_size < 0:
+      raise exceptions.InputException('Invalid `page_size`: %d' % page_size)
+
+    config = self.GetProjectConfig(project_id)
+    end = start + page_size
+    next_start = None
+    if end < len(config.component_defs):
+      next_start = end
+    return ListResult(config.component_defs[start:end], next_start)
+
   def CreateComponentDef(
       self, project_id, path, description, admin_ids, cc_ids, labels):
     # type: (int, str, str, Collection[int], Collection[int], Collection[str])
