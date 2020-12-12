@@ -28,10 +28,10 @@ func lifecycle(tss []*Invocation) test_platform.TaskState_LifeCycle {
 	aborted := false
 	running := false
 	for _, ts := range tss {
-		if ts.lifeCycle() == test_platform.TaskState_LIFE_CYCLE_ABORTED {
+		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_ABORTED {
 			aborted = true
 		}
-		if ts.lifeCycle() == test_platform.TaskState_LIFE_CYCLE_RUNNING {
+		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_RUNNING {
 			running = true
 		}
 	}
@@ -49,7 +49,7 @@ func lifecycle(tss []*Invocation) test_platform.TaskState_LifeCycle {
 func verdict(tss []*Invocation) test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
 	for _, t := range tss {
-		if !successfulVerdict(t.verdict()) {
+		if !successfulVerdict(t.Verdict()) {
 			v = test_platform.TaskState_VERDICT_FAILED
 			break
 		}

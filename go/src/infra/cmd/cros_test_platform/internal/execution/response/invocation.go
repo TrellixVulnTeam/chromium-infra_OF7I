@@ -38,29 +38,8 @@ func (t *Invocation) MarkNotRunnable(rejectedTaskDims map[string]string) {
 	t.rejectedTaskDims = rejectedTaskDims
 }
 
-func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
-	if !t.runnable {
-		return []*steps.ExecuteResponse_TaskResult{
-			{
-				Name: t.Name,
-				State: &test_platform.TaskState{
-					LifeCycle: test_platform.TaskState_LIFE_CYCLE_REJECTED,
-					Verdict:   test_platform.TaskState_VERDICT_UNSPECIFIED,
-				},
-				RejectedTaskDimensions: t.rejectedTaskDims,
-			},
-		}
-	}
-
-	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.tasks))
-	for i, a := range t.tasks {
-		ret[i] = a.Result()
-		ret[i].Attempt = int32(i)
-	}
-	return ret
-}
-
-func (t *Invocation) verdict() test_platform.TaskState_Verdict {
+// Verdict returns the test_platform TaskState Verdict for this invocation.
+func (t *Invocation) Verdict() test_platform.TaskState_Verdict {
 	if !t.runnable {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
@@ -84,7 +63,8 @@ func (t *Invocation) verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *Invocation) lifeCycle() test_platform.TaskState_LifeCycle {
+// LifeCycle returns the test_platform TaskState LifeCycle for this invocation.
+func (t *Invocation) LifeCycle() test_platform.TaskState_LifeCycle {
 	as := t.taskResult()
 	// A test result can have 0 attempts only if the test hasn't run *yet*.
 	// This is not possible in practice because the first attempt for each test
@@ -97,6 +77,28 @@ func (t *Invocation) lifeCycle() test_platform.TaskState_LifeCycle {
 		return test_platform.TaskState_LIFE_CYCLE_RUNNING
 	}
 	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
+}
+
+func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
+	if !t.runnable {
+		return []*steps.ExecuteResponse_TaskResult{
+			{
+				Name: t.Name,
+				State: &test_platform.TaskState{
+					LifeCycle: test_platform.TaskState_LIFE_CYCLE_REJECTED,
+					Verdict:   test_platform.TaskState_VERDICT_UNSPECIFIED,
+				},
+				RejectedTaskDimensions: t.rejectedTaskDims,
+			},
+		}
+	}
+
+	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.tasks))
+	for i, a := range t.tasks {
+		ret[i] = a.Result()
+		ret[i].Attempt = int32(i)
+	}
+	return ret
 }
 
 func (t *Invocation) getLatestTask() *skylab.Task {
