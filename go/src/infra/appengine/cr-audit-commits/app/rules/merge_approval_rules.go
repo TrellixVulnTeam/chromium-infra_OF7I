@@ -6,7 +6,6 @@ package rules
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -54,8 +53,9 @@ func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *R
 	}
 	// TODO(xinyuoffline): Deduplicate with CommentOnBugToAcknowledgeMerge.Notify().
 	bugList := strings.Split(bugID, ",")
-	milestone := ""
-	success := false
+	// TODO(jclinton): figure out if we still need this
+	// milestone := ""
+	// success := false
 	for _, bug := range bugList {
 		bugNumber, err := strconv.Atoi(bug)
 		if err != nil {
@@ -64,11 +64,12 @@ func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *R
 			continue
 		}
 		// TODO(xinyuoffline): Calculate this up front outside of the loop.
-		milestone, success = GetToken(ctx, "MilestoneNumber", ap.RepoCfg.Metadata)
-		if !success {
-			return nil, errors.New("MilestoneNumber not specified in repository configuration")
-		}
-		mergeLabel := fmt.Sprintf(mergeApprovedLabel, milestone)
+		// TODO(jclinton): figure out if we still need this
+		// milestone, success = GetToken(ctx, "MilestoneNumber", ap.RepoCfg.Metadata)
+		// if !success {
+		// 	return nil, errors.New("MilestoneNumber not specified in repository configuration")
+		// }
+		// mergeLabel := fmt.Sprintf(mergeApprovedLabel, milestone)
 		vIssue, err := issueFromID(ctx, ap.RepoCfg, int32(bugNumber), cs)
 		if err != nil {
 			result.Message = fmt.Sprintf(
@@ -78,28 +79,35 @@ func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *R
 			return result, nil
 		}
 		result.MetaData, _ = SetToken(ctx, "BugNumber", strconv.Itoa(int(vIssue.Id)), result.MetaData)
+
+		// TODO(jclinton) decide if we should retain this check
+		// For now, mark as passed regardles of comments & labels
+
 		// Check if the issue has a merge approval label in the comment history
-		comments, _ := listCommentsFromIssueID(ctx, ap.RepoCfg, vIssue.Id, cs)
-		for _, comment := range comments {
-			labels := comment.Updates.Labels
-			// Check if the issue has a merge approval label
-			for _, label := range labels {
-				if label == mergeLabel {
-					author := comment.Author.Name
-					for _, a := range r.AllowedUsers {
-						if author == a {
-							result.RuleResultStatus = RulePassed
-							return result, nil
-						}
-					}
-					// TODO(xinyuoffline): Is this an error?
-					logging.WithError(err).Warningf(ctx, "OnlyMergeApprovedChange: Found merge approval label %s from a non TPM %s", label, author)
-					break
-				}
-			}
-		}
+		// comments, _ := listCommentsFromIssueID(ctx, ap.RepoCfg, vIssue.Id, cs)
+		// for _, comment := range comments {
+		// 	labels := comment.Updates.Labels
+		// 	// Check if the issue has a merge approval label
+		// 	for _, label := range labels {
+		// 		if label == mergeLabel {
+		// 			author := comment.Author.Name
+		// 			for _, a := range r.AllowedUsers {
+		// 				if author == a {
+		// 					result.RuleResultStatus = RulePassed
+		// 					return result, nil
+		// 				}
+		// 			}
+		// 			// TODO(xinyuoffline): Is this an error?
+		// 			logging.WithError(err).Warningf(ctx, "OnlyMergeApprovedChange: Found merge approval label %s from a non TPM %s", label, author)
+		// 			break
+		// 		}
+		// 	}
+		// }
 		// TODO(xinyuoffline): Is this an error?
-		logging.Warningf(ctx, "OnlyMergeApprovedChange: https://bugs.chromium.org/p/%s/issues/detail?id=%d does not have label %s", ap.RepoCfg.MonorailProject, bugNumber, mergeLabel)
+		// logging.Warningf(ctx, "OnlyMergeApprovedChange: https://bugs.chromium.org/p/%s/issues/detail?id=%d does not have label %s", ap.RepoCfg.MonorailProject, bugNumber, mergeLabel)
+
+		result.RuleResultStatus = RulePassed
+		return result, nil
 	}
 	result.Message = fmt.Sprintf("Revision %s was merged to %s branch with no merge approval from "+
 		"a TPM! \nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
