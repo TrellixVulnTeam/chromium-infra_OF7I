@@ -61,11 +61,11 @@ send_noreply_email_as_format = 'monorail+noreply@%(domain)s'
 # Replica names for -prod, -staging, and -dev may diverge if replicas ever fail.
 # In such cases the db_replica_names list can be overwritten in Part 5.
 db_database_name = 'monorail'
-db_primary_name = 'master-g2'
+db_primary_name = 'primary'
 db_replica_names = [
-        'replica-g2-00', 'replica-g2-01', 'replica-g2-02', 'replica-g2-03',
-        'replica-g2-04', 'replica-g2-05', 'replica-g2-06', 'replica-g2-07',
-        'replica-g2-08', 'replica-g2-09']
+    'replica-00', 'replica-01', 'replica-02', 'replica-03', 'replica-04',
+    'replica-05', 'replica-06', 'replica-07', 'replica-08', 'replica-09'
+]
 db_region = 'us-central1'
 
 # The default connection pool size for mysql connections.
@@ -348,8 +348,6 @@ else:
     analytics_id = 'UA-55762617-14'
     branded_domains = branded_domains_prod
     domain_to_default_project = domain_to_default_project_prod
-    # Use replicas created in response to replication failures 2019-11-04
-    db_replica_names = ['%s-next' % name for name in db_replica_names]
     # See comment above on how to find this address.
     redis_host = '10.190.48.180'
 

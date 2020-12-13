@@ -42,7 +42,7 @@ done
 
 echo Checking for available backups:
 
-DUE_TIMES=($(gcloud sql backups list --instance master --project=$CLOUD_PROJECT | grep SUCCESSFUL | awk '{print $1}'))
+DUE_TIMES=($(gcloud sql backups list --instance primary --project=$CLOUD_PROJECT | grep SUCCESSFUL | awk '{print $1}'))
 
 for index in ${!DUE_TIMES[*]}; do
   echo "[$index] ${DUE_TIMES[$index]}"
@@ -56,7 +56,7 @@ read DUE_TIME_INDEX
 
 DUE_TIME=${DUE_TIMES[$DUE_TIME_INDEX]}
 
-cmd="gcloud sql instances restore-backup master --due-time=$DUE_TIME --project=$CLOUD_PROJECT --async"
+cmd="gcloud sql instances restore-backup primary --due-time=$DUE_TIME --project=$CLOUD_PROJECT --async"
 echo $cmd
 if [ $DRY_RUN == false ]; then
   $cmd
@@ -74,19 +74,19 @@ fi
 
 echo "Finding restore operation ID..."
 
-RESTORE_OP_IDS=($(gcloud sql operations list --instance=master --project=$CLOUD_PROJECT | grep RESTORE_VOLUME | awk '{print $1}'))
+RESTORE_OP_IDS=($(gcloud sql operations list --instance=primary --project=$CLOUD_PROJECT | grep RESTORE_VOLUME | awk '{print $1}'))
 
 # Assume the fist RESTORE_VOLUME is the operation we want; they're listed in reverse chronological order.
 echo Waiting on restore operation ID: ${RESTORE_OP_IDS[0]}
 
 # This isn't waiting long enough. Or it says it's done before it really is.  Either way, the replica create steps fail
 # with e.g. "Failed in: CATCHING_UP Operation token: 03dd57a9-37a9-4f6f-9aa6-9c3b8ece01bd Message: Saw error in IO and/or SQL thread"
-gcloud sql operations wait ${RESTORE_OP_IDS[0]} --instance=master --project=$CLOUD_PROJECT
+gcloud sql operations wait ${RESTORE_OP_IDS[0]} --instance=primary --project=$CLOUD_PROJECT
 
 echo Restore is finished on primary. Now create the new set of read replicas with the new name prefix $NEW_REPLICA_PREFIX:
 
 for i in `seq 0 9`; do
-  cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-0$i --master-instance-name master --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"
+  cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-0$i --master-instance-name primary --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"
   echo $cmd
   if [ $DRY_RUN == false ]; then
     $cmd

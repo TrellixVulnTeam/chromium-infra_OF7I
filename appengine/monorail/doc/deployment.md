@@ -219,11 +219,11 @@ If any step below fails. Stop the deploy and ping
         ```
         If you don't see any changes since the last deploy, skip this section.
     1.  Copy and paste updates to the
-        [primary DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
+        [primary DB](http://console.cloud.google.com/sql/instances/primary/overview?project=monorail-dev)
         in the `monorail-dev` project. Please be careful when pasting into SQL
         prompt.
     1.  Copy and paste the new changes into the
-        [primary DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-staging)
+        [primary DB](http://console.cloud.google.com/sql/instances/primary/overview?project=monorail-staging)
         in staging.
 1.  Start deployment
     1.  Navigate to the Monorail Delivery page at
