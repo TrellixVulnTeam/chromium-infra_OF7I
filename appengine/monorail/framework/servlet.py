@@ -329,11 +329,14 @@ class Servlet(webapp2.RequestHandler):
             "child-src 'none'; "
             "frame-src accounts.google.com" # All used by gapi.js auth.
             " content-issuetracker.corp.googleapis.com"
-            " login.corp.google.com up.corp.googleapis.com;"
+            " login.corp.google.com up.corp.googleapis.com"
+            # Used by Google Feedback
+            " feedback.googleusercontent.com"
+            " www.google.com; "
             "img-src %(scheme)s data: blob: ; "
             "style-src %(scheme)s 'unsafe-inline'; "
             "object-src 'none'; "
-            "base-uri 'none'; "
+            "base-uri 'self'; " # Used by Google Feedback
             "report-uri /csp.do" % {
             'nonce': nonce,
             'scheme': csp_scheme,
