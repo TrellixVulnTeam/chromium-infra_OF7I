@@ -162,17 +162,11 @@ func (c *addDrac) validateArgs() error {
 		if c.dracName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.switchName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch' is required, no mode ('-f' or '-i') is specified.")
-		}
 		if c.macAddress == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
-		}
-		if c.switchPort == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch-port' is required, no mode ('-f' or '-i') is specified.")
 		}
 	}
 	return nil

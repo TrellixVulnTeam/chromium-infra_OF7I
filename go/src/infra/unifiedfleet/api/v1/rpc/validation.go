@@ -871,12 +871,6 @@ func validateDrac(drac *ufspb.Drac) error {
 		return status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	drac.MacAddress = newMac
-	if drac.GetSwitchInterface().GetSwitch() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch name for the drac cannot be empty")
-	}
-	if drac.GetSwitchInterface().GetPortName() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the drac cannot be empty")
-	}
 	return nil
 }
 
