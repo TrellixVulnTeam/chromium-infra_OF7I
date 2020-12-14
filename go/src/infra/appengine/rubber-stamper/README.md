@@ -30,19 +30,37 @@ is submitted, the config will be pushed to Rubber-Stamper via luci-config.
 #### Examples of benign file patterns
 
 When you need Rubber-Stamper to treat your files as benign files, you need to
-add the path to the files/directories in the config. Here is an example config
-of benigh file patterns:
+add the path to the files/directories in the config.
 
-	benign_file_pattern {
-		file_extension_map {
-			key: ".txt"
-			value: {
-				paths: "a/b.txt",
-				paths: "a/*/c.txt",
-				paths: "d/"
-			}
-		}
-	}
+The list of "benign file extensions" and corresponding filepaths is configured
+on a per-repo basis. Here is a sample `repo_config` that allows all `.xtb` filepaths
+in `chromium/src`, and a few subpaths for`.txt` files.
+
+    repo_configs {
+      key: "chromium/src"
+      value: {
+        benign_file_pattern {
+          file_extension_map {
+            key: ".xtb"
+            value: {
+              paths: "**"
+            }
+          }
+        }
+        benign_file_pattern {
+            file_extension_map {
+                key: ".txt"
+                value: {
+                    paths: "a/b.txt",
+                    paths: "a/*/c.txt",
+                    paths: "d/"
+                }
+            }
+        }        
+      }
+    }
+
+Using `**` in `paths` allows all paths in that repo.
 
 `file_extension_map` is a map contains the information about which files are
 considered benign under which directories. The `key`s are file extensions,
@@ -52,7 +70,7 @@ files under these directories with corresponding extensions can be considered
 as benign files. For files with no extensions, their key should be an empty
 string "".
 
-We use the Match function in package `path` to judge whether a file belongs to
+We use the Match function from the `path` package to judge whether a file belongs to
 a path. Therefore,`paths` here should follow the same syntax as the `pattern`
 variable in the [Match](https://golang.org/pkg/path/#Match) function.
 
