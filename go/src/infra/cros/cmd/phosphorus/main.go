@@ -21,6 +21,7 @@ import (
 
 	parser "infra/cros/cmd/phosphorus/internal/autotest_status_parser/cmd"
 	"infra/cros/cmd/phosphorus/internal/cmd"
+	"infra/cros/cmd/phosphorus/internal/parallels"
 	localstate "infra/cros/cmd/phosphorus/internal/skylab_local_state/cmd"
 )
 
@@ -48,6 +49,9 @@ func getApplication(authOpts auth.Options) *cli.Application {
 			localstate.Load(authOpts),
 			localstate.Save(authOpts),
 			parser.Parse,
+
+			subcommands.Section("Build Parallels Image commands"),
+			parallels.Provision,
 		},
 	}
 }

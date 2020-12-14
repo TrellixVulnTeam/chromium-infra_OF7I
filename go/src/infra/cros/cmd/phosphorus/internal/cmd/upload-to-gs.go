@@ -33,16 +33,16 @@ func UploadToGS(authOpts auth.Options) *subcommands.Command {
 		LongDesc:  `Upload files to Google Storage. A wrapper around 'gsutil'.`,
 		CommandRun: func() subcommands.CommandRun {
 			c := &uploadToGSRun{}
-			c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.UploadToGSRequest")
-			c.Flags.StringVar(&c.outputPath, "output_json", "", "Path that will contain JSON encoded test_platform.phosphorus.UploadToGSResponse")
-			c.authFlags.Register(&c.Flags, authOpts)
+			c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.UploadToGSRequest")
+			c.Flags.StringVar(&c.OutputPath, "output_json", "", "Path that will contain JSON encoded test_platform.phosphorus.UploadToGSResponse")
+			c.AuthFlags.Register(&c.Flags, authOpts)
 			return c
 		},
 	}
 }
 
 type uploadToGSRun struct {
-	commonRun
+	CommonRun
 }
 
 func (c *uploadToGSRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -56,24 +56,24 @@ func (c *uploadToGSRun) Run(a subcommands.Application, args []string, env subcom
 
 func (c *uploadToGSRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.UploadToGSRequest
-	if err := readJSONPb(c.inputPath, &r); err != nil {
+	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
 	if err := validateUploadToGSRequest(r); err != nil {
 		return err
 	}
-	ctx, err := useSystemAuth(ctx, &c.authFlags)
+	ctx, err := useSystemAuth(ctx, &c.AuthFlags)
 	if err != nil {
 		return err
 	}
-	path, err := runGSUploadStep(ctx, c.authFlags, r)
+	path, err := runGSUploadStep(ctx, c.AuthFlags, r)
 	if err != nil {
 		return err
 	}
 	out := phosphorus.UploadToGSResponse{
 		GsUrl: path,
 	}
-	if err = writeJSONPb(c.outputPath, &out); err != nil {
+	if err = WriteJSONPB(c.OutputPath, &out); err != nil {
 		return err
 	}
 	return nil

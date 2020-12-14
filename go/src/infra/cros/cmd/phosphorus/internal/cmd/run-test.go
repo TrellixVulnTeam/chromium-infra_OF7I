@@ -31,14 +31,14 @@ var RunTest = &subcommands.Command{
 A wrapper around 'autoserv'.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &runTestRun{}
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.RunTestRequest")
-		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.RunTestResponse to")
+		c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.RunTestRequest")
+		c.Flags.StringVar(&c.OutputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.RunTestResponse to")
 		return c
 	},
 }
 
 type runTestRun struct {
-	commonRun
+	CommonRun
 }
 
 type autoservResult struct {
@@ -47,7 +47,7 @@ type autoservResult struct {
 }
 
 func (c *runTestRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.validateArgs(); err != nil {
+	if err := c.ValidateArgs(); err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
 		c.Flags.Usage()
 		return 1
@@ -63,7 +63,7 @@ func (c *runTestRun) Run(a subcommands.Application, args []string, env subcomman
 
 func (c *runTestRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.RunTestRequest
-	if err := readJSONPb(c.inputPath, &r); err != nil {
+	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
 	if err := validateRunTestRequest(r); err != nil {
@@ -80,7 +80,7 @@ func (c *runTestRun) innerRun(ctx context.Context, args []string, env subcommand
 	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, runTestResponse(ar))
+	return WriteJSONPB(c.OutputPath, runTestResponse(ar))
 }
 
 func runTestResponse(r *autoservResult) *phosphorus.RunTestResponse {

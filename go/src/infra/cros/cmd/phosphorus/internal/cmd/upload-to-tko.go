@@ -28,13 +28,13 @@ var UploadToTKO = &subcommands.Command{
 A wrapper around 'tko/parse'.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &uploadToTKORun{}
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.UploadToTkoRequest")
+		c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.UploadToTkoRequest")
 		return c
 	},
 }
 
 type uploadToTKORun struct {
-	commonRun
+	CommonRun
 }
 
 func (c *uploadToTKORun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -48,7 +48,7 @@ func (c *uploadToTKORun) Run(a subcommands.Application, args []string, env subco
 
 func (c *uploadToTKORun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.UploadToTkoRequest
-	if err := readJSONPb(c.inputPath, &r); err != nil {
+	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
 	if err := validateUploadToTkoRequest(r); err != nil {

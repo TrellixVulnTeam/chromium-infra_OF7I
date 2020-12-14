@@ -2,21 +2,25 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package parallels
 
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
+	"infra/cros/cmd/phosphorus/internal/cmd"
 	"infra/libs/lro"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
-	"go.chromium.org/luci/auth/client/authcli"
+	bpipb "go.chromium.org/chromiumos/infra/proto/go/uprev/build_parallels_image"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/grpc"
 )
 
@@ -25,66 +29,78 @@ const (
 	parallelsDLCID = "pita"
 	// overallTimeout is the overall timeout to apply to the provision operation.
 	overallTimeout = 20 * time.Minute
+	// tlsPort is the port to use for connecting to TLS.
+	tlsPort = 7152
 )
 
-// Provision subcommand: Provision a DUT.
+// Provision subcommand: Provision a DUT, including with Parallels DLC.
 var Provision = &subcommands.Command{
-	UsageLine: "provision -dut-name DUT_NAME -image-gs-path \"gs://chromeos-image-archive/eve-release/R86-13380.0.0\"",
+	UsageLine: "build-parallels-image-provision -input_json /path/to/input.json",
 	ShortDesc: "Provisions a DUT.",
-	LongDesc:  `Provisions a DUT with the requested Chrome OS build.`,
+	LongDesc:  `Provisions a DUT with the requested Chrome OS build and Parallels DLC. For use in build_parallels_image.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &provisionRun{}
-		c.Flags.StringVar(&c.dutName, "dut-name", "", "The resource name for the DUT")
-		c.Flags.StringVar(&c.imageGSPath, "image-gs-path", "", "The Google Storage path (prefix) where images are located. For example, 'gs://chromeos-image-archive/eve-release/R86-13380.0.0'.")
-		c.Flags.IntVar(&c.tlsPort, "tls-port", 7152, "The port on which to connect to TLS")
+		c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded engprod.build_parallels_image.ProvisionRequest")
 		return c
 	},
 }
 
 type provisionRun struct {
-	subcommands.CommandRunBase
-
-	authFlags authcli.Flags
-
-	tlsPort     int
-	dutName     string
-	imageGSPath string
-}
-
-func (c *provisionRun) validateArgs() error {
-	if c.dutName == "" {
-		return errors.New("-dut-name is not specified")
-	}
-	if c.imageGSPath == "" {
-		return errors.New("-image-gs-path is not specified")
-	}
-	if c.tlsPort < 1 || c.tlsPort > 65535 {
-		return fmt.Errorf("-tls-port is invalid, got %v, want 1-65535", c.tlsPort)
-	}
-	return nil
+	cmd.CommonRun
 }
 
 func (c *provisionRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
-	if err := c.validateArgs(); err != nil {
+	if err := c.ValidateArgs(); err != nil {
 		errors.Log(ctx, err)
 		c.Flags.Usage()
 		return 1
 	}
 
-	provisionCtx, cancel := context.WithTimeout(ctx, overallTimeout)
-	defer cancel()
-	if err := runTLSProvision(provisionCtx, c.dutName, c.imageGSPath, c.tlsPort); err != nil {
+	if err := c.innerRun(ctx, env); err != nil {
 		errors.Log(ctx, err)
 		return 2
 	}
-
 	return 0
+}
+
+func (c *provisionRun) innerRun(ctx context.Context, env subcommands.Env) error {
+	var r bpipb.ProvisionRequest
+	if err := cmd.ReadJSONPB(c.InputPath, &r); err != nil {
+		return err
+	}
+	if err := validateProvisionRequest(r); err != nil {
+		return err
+	}
+
+	if d := google.TimeFromProto(r.Deadline); !d.IsZero() {
+		var c context.CancelFunc
+		log.Printf("Running with deadline %s (current time: %s)", d, time.Now().UTC())
+		ctx, c = context.WithDeadline(ctx, d)
+		defer c()
+	}
+
+	return runTLSProvision(ctx, r.DutName, r.ImageGsPath)
+}
+
+func validateProvisionRequest(r bpipb.ProvisionRequest) error {
+	missingArgs := validateConfig(r.GetConfig())
+
+	if r.DutName == "" {
+		missingArgs = append(missingArgs, "DUT hostname")
+	}
+	if r.ImageGsPath == "" {
+		missingArgs = append(missingArgs, "GS image path")
+	}
+	if len(missingArgs) > 0 {
+		return fmt.Errorf("no %s provided", strings.Join(missingArgs, ", "))
+	}
+	return nil
 }
 
 // runTLSProvision provisions a DUT via the TLS API.
 // See go/cros-tls go/cros-prover
-func runTLSProvision(ctx context.Context, dutName, imageGSPath string, tlsPort int) error {
+func runTLSProvision(ctx context.Context, dutName, imageGSPath string) error {
 	// Allocate 1 minute of the overall timeout to cancelling the provision
 	// operation if something goes wrong. Keep the original context around
 	// so that we can use it when cancelling.

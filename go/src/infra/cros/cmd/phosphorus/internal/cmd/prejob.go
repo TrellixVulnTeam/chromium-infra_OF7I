@@ -40,18 +40,18 @@ do not match the existing ones. Otherwise, reset the DUT via
 'autosev --reset'`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &prejobRun{}
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.PrejobRequest")
-		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.PrejobResponse to")
+		c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.PrejobRequest")
+		c.Flags.StringVar(&c.OutputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.PrejobResponse to")
 		return c
 	},
 }
 
 type prejobRun struct {
-	commonRun
+	CommonRun
 }
 
 func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.validateArgs(); err != nil {
+	if err := c.ValidateArgs(); err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
 		c.Flags.Usage()
 		return 1
@@ -73,7 +73,7 @@ const (
 
 func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.PrejobRequest
-	if err := readJSONPb(c.inputPath, &r); err != nil {
+	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
 	if err := validatePrejobRequest(r); err != nil {
@@ -94,14 +94,14 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		if err != nil {
 			return err
 		}
-		return writeJSONPb(c.outputPath, resp)
+		return WriteJSONPB(c.OutputPath, resp)
 	}
 
 	resp, err := runPrejobLegacy(ctx, r)
 	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, resp)
+	return WriteJSONPB(c.OutputPath, resp)
 }
 
 // This function will be obsoleted once runTLSProvision is globally enabled.

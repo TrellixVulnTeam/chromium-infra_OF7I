@@ -21,25 +21,29 @@ import (
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
 )
 
-type commonRun struct {
+// CommonRun provides the basis for a command that accepts a
+// protobuf as input and optionally produces a protobuf as output.
+// It should be embedded in another struct that implements Run().
+type CommonRun struct {
 	subcommands.CommandRunBase
 
-	authFlags  authcli.Flags
-	inputPath  string
-	outputPath string
+	AuthFlags  authcli.Flags
+	InputPath  string
+	OutputPath string
 }
 
-func (c *commonRun) validateArgs() error {
-	if c.inputPath == "" {
+// ValidateArgs performs common validation.
+func (c *CommonRun) ValidateArgs() error {
+	if c.InputPath == "" {
 		return fmt.Errorf("-input_json not specified")
 	}
 
 	return nil
 }
 
-// readJSONPb reads a JSON string from inFile and unpacks it as a proto.
+// ReadJSONPB reads a JSON string from inFile and unpacks it as a proto.
 // Unexpected fields are ignored.
-func readJSONPb(inFile string, payload proto.Message) error {
+func ReadJSONPB(inFile string, payload proto.Message) error {
 	r, err := os.Open(inFile)
 	if err != nil {
 		return errors.Annotate(err, "read JSON pb").Err()
@@ -53,8 +57,8 @@ func readJSONPb(inFile string, payload proto.Message) error {
 	return nil
 }
 
-// writeJSONPb writes a JSON encoded proto to outFile.
-func writeJSONPb(outFile string, payload proto.Message) error {
+// WriteJSONPB writes a JSON encoded proto to outFile.
+func WriteJSONPB(outFile string, payload proto.Message) error {
 	dir := filepath.Dir(outFile)
 	// Create the directory if it doesn't exist.
 	if err := os.MkdirAll(dir, 0777); err != nil {

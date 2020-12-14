@@ -41,19 +41,19 @@ depending on settings in the input proto, may upload them to http://crash/ for
 internal debugging.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &fetchCrashesRun{}
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.FetchCrashesRequest")
-		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.FetchCrashesResponse to")
+		c.Flags.StringVar(&c.InputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.FetchCrashesRequest")
+		c.Flags.StringVar(&c.OutputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.FetchCrashesResponse to")
 		return c
 	},
 }
 
 type fetchCrashesRun struct {
-	commonRun
+	CommonRun
 }
 
 // Run is the main entry point to (and wrapper around) the FetchCrashes subcommand.
 func (c *fetchCrashesRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.validateArgs(); err != nil {
+	if err := c.ValidateArgs(); err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
 		c.Flags.Usage()
 		return 1
@@ -89,7 +89,7 @@ var baseCrashNamePat = regexp.MustCompile(`^[^.]+\.\d+\.\d+\.\d+\.\d+`)
 // innerRun reads in the JSON PB input, runs the actual fetch-crashes command, and serializes the output.
 func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.FetchCrashesRequest
-	if err := readJSONPb(c.inputPath, &r); err != nil {
+	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
 	if err := validateFetchCrashesRequest(r); err != nil {
@@ -110,7 +110,7 @@ func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subco
 		return err
 	}
 
-	return writeJSONPb(c.outputPath, resp)
+	return WriteJSONPB(c.OutputPath, resp)
 }
 
 // validateFetchCrashesRequest ensures that all required parameters are present in |r|.
