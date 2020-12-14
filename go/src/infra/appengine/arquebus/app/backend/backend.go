@@ -284,6 +284,10 @@ func endTaskRun(c context.Context, task *model.Task, nIssuesUpdated int32, issue
 	task.Ended = clock.Now(c).UTC()
 
 	return datastore.RunInTransaction(c, func(c context.Context) error {
+		// Remove the task entity if it succeeded w/o updating any tickets.
+		if task.WasNoopSuccess {
+			return datastore.Delete(c, task)
+		}
 		return datastore.Put(c, task)
 	}, &datastore.TransactionOptions{Attempts: nRetriesForSavingTaskEntity})
 }
@@ -329,4 +333,21 @@ func runAssignerTaskHandler(c context.Context, tqTask proto.Message) error {
 		)
 	}
 	return nil
+}
+
+// RemoveNoopTasks removes a given number of noop tasks.
+//
+// TODO(crbug.com/967525): remove this once all the existing noop task entities are
+// cleared out.
+func RemoveNoopTasks(c context.Context, ae *model.Assigner, n int32) error {
+	return datastore.RunInTransaction(c, func(c context.Context) error {
+		switch tasks, err := model.GetNoopTasks(c, ae, n); err {
+		case nil:
+			return datastore.Delete(c, tasks)
+		case datastore.ErrNoSuchEntity:
+			return nil
+		default:
+			return err
+		}
+	}, nil)
 }

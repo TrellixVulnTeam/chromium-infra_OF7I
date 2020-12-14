@@ -101,8 +101,15 @@ func GetTasks(c context.Context, assigner *Assigner, limit int32, includeNoopSuc
 		q = q.Eq("WasNoopSuccess", false)
 	}
 	q = q.Order("-ExpectedStart").Limit(limit)
-	if err := datastore.GetAll(c, q, &tasks); err != nil {
-		return nil, err
-	}
-	return tasks, nil
+	return tasks, datastore.GetAll(c, q, &tasks)
+}
+
+// GetNoopTasks returns up to |limit| of noop Task entities.
+//
+// TODO(crbug//967525): remove this function.
+func GetNoopTasks(c context.Context, assigner *Assigner, limit int32) ([]*Task, error) {
+	var tasks []*Task
+	q := datastore.NewQuery(taskKind).Ancestor(GenAssignerKey(c, assigner))
+	q = q.Eq("WasNoopSuccess", true).Order("-ExpectedStart").Limit(limit)
+	return tasks, datastore.GetAll(c, q, &tasks)
 }

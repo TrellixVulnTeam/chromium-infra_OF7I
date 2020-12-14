@@ -9,11 +9,13 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	ds "go.chromium.org/luci/gae/service/datastore"
+
 	"infra/appengine/arquebus/app/util"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUpdateAssigners(t *testing.T) {
@@ -24,7 +26,6 @@ func TestUpdateAssigners(t *testing.T) {
 		rev1, rev2, rev3 := "abc", "def", "ghi"
 
 		// Ensure empty now.
-		ds.GetTestable(c).CatchupIndexes()
 		assigners, err := GetAllAssigners(c)
 		So(err, ShouldBeNil)
 		So(assigners, ShouldBeNil)

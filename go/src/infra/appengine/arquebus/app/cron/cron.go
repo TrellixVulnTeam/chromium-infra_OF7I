@@ -88,6 +88,24 @@ func scheduleAssigners(c *router.Context) {
 	http200res(c)
 }
 
+func removeNoopLogs(c *router.Context) {
+	ctx := c.Context
+
+	aes, err := backend.GetAllAssigners(ctx)
+	if err != nil {
+		http500res(c, err, "failed to retrieve assigners.")
+		return
+	}
+
+	for _, ae := range aes {
+		if err := backend.RemoveNoopTasks(ctx, ae, 200); err != nil {
+			http500res(c, err, "failed to remove old logs.")
+			return
+		}
+	}
+	http200res(c)
+}
+
 //
 // InstallHandlers installs handlers for cron jobs that are part of this app.
 //
@@ -102,4 +120,5 @@ func InstallHandlers(r *router.Router, dispatcher *tq.Dispatcher, mwBase router.
 	r.GET("/internal/cron/update-config", m, updateConfig)
 	r.GET("/internal/cron/update-assigners", m, updateAssigners)
 	r.GET("/internal/cron/schedule-assigners", m, scheduleAssigners)
+	r.GET("/internal/cron/remove-noop-logs", m, removeNoopLogs)
 }

@@ -32,7 +32,6 @@ import (
 func updateAndGetAllAssigners(c context.Context, rev string, cfgs ...*config.Assigner) []*Assigner {
 	err := UpdateAssigners(c, cfgs, rev)
 	So(err, ShouldBeNil)
-	datastore.GetTestable(c).CatchupIndexes()
 	assigners, err := GetAllAssigners(c)
 	So(err, ShouldBeNil)
 
@@ -57,6 +56,5 @@ func createTasks(c context.Context, assigner *Assigner, status TaskStatus, start
 		})
 	}
 	So(datastore.Put(c, tasks), ShouldBeNil)
-	datastore.GetTestable(c).CatchupIndexes()
 	return tasks
 }

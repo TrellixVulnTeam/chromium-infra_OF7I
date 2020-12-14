@@ -13,3 +13,7 @@ cron:
   # backend.model.assigner.go:scheduleAssignerCronInterval and
   # queue.yaml:schedule-assigners.retry_parameters.task_age_limit
   schedule: every 1 minutes
+
+- description: Delete noop logs
+  url: /internal/cron/remove-noop-logs
+  schedule: every 5 minutes

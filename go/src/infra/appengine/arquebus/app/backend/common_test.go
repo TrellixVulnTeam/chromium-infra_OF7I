@@ -17,7 +17,6 @@ import (
 	"go.chromium.org/luci/appengine/tq"
 	"go.chromium.org/luci/appengine/tq/tqtesting"
 	"go.chromium.org/luci/common/clock/testclock"
-	"go.chromium.org/luci/gae/service/datastore"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -120,7 +119,6 @@ func createAssigner(c context.Context, id string) *model.Assigner {
 	cfg.Id = id
 
 	So(UpdateAssigners(c, []*config.Assigner{&cfg}, "rev-1"), ShouldBeNil)
-	datastore.GetTestable(c).CatchupIndexes()
 	assigner, err := GetAssigner(c, id)
 	So(assigner.ID, ShouldEqual, id)
 	So(err, ShouldBeNil)

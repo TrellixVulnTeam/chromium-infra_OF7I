@@ -92,6 +92,7 @@ func CreateTestContext() context.Context {
 	c := context.Background()
 	c = memory.UseWithAppID(c, "arquebus-dev")
 	SetupTaskIndexes(c)
+	datastore.GetTestable(c).Consistent(true)
 	c = authtest.MockAuthConfig(c)
 	c = auth.WithState(c, &authtest.FakeState{
 		Identity: "user:foo@example.org",

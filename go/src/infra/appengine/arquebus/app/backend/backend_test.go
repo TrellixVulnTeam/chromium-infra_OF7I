@@ -105,4 +105,47 @@ func TestBackend(t *testing.T) {
 			// TODO(crbug/967519): implement me.
 		})
 	})
+
+	Convey("RemoveNoopTasks", t, func() {
+		c := createTestContextWithTQ()
+		assigner := createAssigner(c, assignerID)
+		addTasks := func(n int, noop bool) error {
+			tks := make([]*model.Task, n)
+			for i := 0; i < n; i++ {
+				tks[i] = &model.Task{
+					AssignerKey:    model.GenAssignerKey(c, assigner),
+					Status:         model.TaskStatus_Succeeded,
+					WasNoopSuccess: noop,
+				}
+			}
+			return datastore.Put(c, tks)
+		}
+		getTasks := func(n int32) []*model.Task {
+			tks, err := model.GetTasks(c, assigner, n, true)
+			So(err, ShouldBeNil)
+			return tks
+		}
+
+		Convey("With noop tasks", func() {
+			// nTask == 0
+			So(RemoveNoopTasks(c, assigner, 5), ShouldBeNil)
+			So(len(getTasks(5)), ShouldEqual, 0)
+
+			// nTask < nDel
+			addTasks(3, true)
+			So(RemoveNoopTasks(c, assigner, 5), ShouldBeNil)
+			So(len(getTasks(5)), ShouldEqual, 0)
+
+			// nTask > nDel
+			addTasks(7, true)
+			So(RemoveNoopTasks(c, assigner, 5), ShouldBeNil)
+			So(getTasks(5), ShouldHaveLength, 2)
+		})
+
+		Convey("w/o noop tasks", func() {
+			addTasks(7, false)
+			So(RemoveNoopTasks(c, assigner, 5), ShouldBeNil)
+			So(getTasks(7), ShouldHaveLength, 7)
+		})
+	})
 }
