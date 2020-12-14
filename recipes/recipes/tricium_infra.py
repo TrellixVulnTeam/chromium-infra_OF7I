@@ -100,7 +100,7 @@ def GenTests(api):
       tricium_infra_pb.Inputs(
           gclient_config_name='infra',
           patch_root='infra',
-          analyzers=['Copyright', 'ESlint', 'Gosec', 'Spacey', 'Spellchecker']))
+          analyzers=['Copyright', 'Eslint', 'Gosec', 'Spacey', 'Spellchecker']))
          + api.post_process(post_process.DropExpectation))
 
   yield (test_with_patch('luci_py_repo', ['README.md']) + api.properties(
