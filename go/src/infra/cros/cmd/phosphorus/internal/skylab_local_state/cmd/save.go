@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,21 +17,13 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
-	"infra/cros/dutstate"
 )
-
-// Allowlist of DUT states that are safe to overwrite.
-var dutStatesSafeForOverwrite = map[dutstate.State]bool{
-	dutstate.NeedsRepair: true,
-	dutstate.Ready:       true,
-}
 
 // Save subcommand: Update the bot state json file.
 func Save(authOpts auth.Options) *subcommands.Command {
@@ -114,14 +105,7 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 
 	// Update the DUT state in UFS (if the current state is safe to update).
 	ctx := cli.GetContext(a, c, env)
-	currentDUTState, err := dutStateFromUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName)
-	if err != nil {
-		return err
-	}
-	if dutStatesSafeForOverwrite[currentDUTState] {
-		return updateDutStateToUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName, request.DutState)
-	}
-	logging.Warningf(ctx, "Not saving requested DUT state %s, since current DUT state is %s, which should never be overwritten", request.DutState, currentDUTState)
+	ufs.SafeUpdateUFSDUTState(ctx, &c.authFlags, request.DutName, request.DutState, request.Config.CrosUfsService)
 	return nil
 }
 
@@ -243,28 +227,4 @@ func sealResultsDir(dir string) error {
 		return errors.Annotate(err, "seal results dir %s", dir).Err()
 	}
 	return nil
-}
-
-// updateDutStateToUFS send DUT state to the UFS service.
-func updateDutStateToUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName, dutState string) error {
-	ufsClient, err := ufs.NewClient(ctx, crosUfsService, authFlags)
-	if err != nil {
-		return errors.Annotate(err, "save local state").Err()
-	}
-	err = dutstate.Update(ctx, ufsClient, dutName, dutstate.State(dutState))
-	if err != nil {
-		return errors.Annotate(err, "save local state").Err()
-	}
-	return nil
-}
-
-// dutStateFromUFS read DUT state from the UFS service.
-func dutStateFromUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName string) (dutstate.State, error) {
-	ufsClient, err := ufs.NewClient(ctx, crosUfsService, authFlags)
-	if err != nil {
-		return "", errors.Annotate(err, "read local state").Err()
-	}
-	info := dutstate.Read(ctx, ufsClient, dutName)
-	logging.Infof(ctx, "Receive DUT state from UFS: %s", info.State)
-	return info.State, nil
 }

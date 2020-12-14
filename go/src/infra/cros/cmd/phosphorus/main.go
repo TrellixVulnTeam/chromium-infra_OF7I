@@ -52,6 +52,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 
 			subcommands.Section("Build Parallels Image commands"),
 			parallels.Provision,
+			parallels.Save(authOpts),
 		},
 	}
 }
