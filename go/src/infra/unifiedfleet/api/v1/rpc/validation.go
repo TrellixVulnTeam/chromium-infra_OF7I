@@ -609,12 +609,6 @@ func validateNic(nic *ufspb.Nic) error {
 		return status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	nic.MacAddress = newMac
-	if nic.GetSwitchInterface().GetSwitch() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch name for the nic cannot be empty")
-	}
-	if nic.GetSwitchInterface().GetPortName() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the nic cannot be empty")
-	}
 	return nil
 }
 
