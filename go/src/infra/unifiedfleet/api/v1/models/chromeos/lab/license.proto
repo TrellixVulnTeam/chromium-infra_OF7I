@@ -1,0 +1,32 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models.chromeos.lab;
+
+option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
+
+// Represents a Software License assigned to a device.
+// Next Tag: 3
+message License {
+  LicenseType type = 1;
+
+  // An optional string to uniquely identify the license that was assigned,
+  // for tracking purposes.
+  string identifier = 2;
+}
+
+// Next Tag: 3
+enum LicenseType {
+  LICENSE_TYPE_UNSPECIFIED = 0;
+
+  // Microsoft Windows 10 Professional Desktop Operating System.
+  // Contact the Chrome OS Parallels team for license specifics.
+  LICENSE_TYPE_WINDOWS_10_PRO = 1;
+
+  // Microsoft Office Standard.
+  // Contact the Chrome OS Parallels team for license specifics.
+  LICENSE_TYPE_MS_OFFICE_STANDARD = 2;
+}

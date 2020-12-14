@@ -10,6 +10,7 @@ option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 
 import "infra/unifiedfleet/api/v1/models/chromeos/device/config_id.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/license.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/manufacturing/config_id.proto";
@@ -53,6 +54,8 @@ message DeviceUnderTest{
   repeated DUTPool critical_pools = 3;
 
   repeated string pools = 4;
+
+  repeated License licenses = 5;
 }
 
 // Next Tag: 5
