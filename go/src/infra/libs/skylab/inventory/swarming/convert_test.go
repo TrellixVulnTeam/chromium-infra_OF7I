@@ -106,6 +106,14 @@ capabilities {
 }
 board: "boardval"
 arc: true
+licenses: {
+  type: 2
+  identifier: ""
+}
+licenses: {
+  type: 1
+  identifier: ""
+}
 `
 
 var fullDimensions = Dimensions{
@@ -148,6 +156,7 @@ var fullDimensions = Dimensions{
 	"label-mimo":             {"True"},
 	"label-model":            {"modelval"},
 	"label-modem":            {"modemval"},
+	"label-license":          {"LICENSE_TYPE_MS_OFFICE_STANDARD", "LICENSE_TYPE_WINDOWS_10_PRO"},
 	"label-lucidsleep":       {"True"},
 	"label-os_type":          {"OS_TYPE_CROS"},
 	"label-phase":            {"PHASE_MP"},

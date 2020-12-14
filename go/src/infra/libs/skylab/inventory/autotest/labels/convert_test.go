@@ -123,6 +123,14 @@ capabilities {
 }
 board: "boardval"
 arc: true
+licenses: {
+  type: 2
+  identifier: ""
+}
+licenses: {
+  type: 1
+  identifier: ""
+}
 `
 
 var fullLabels = []string{
@@ -169,6 +177,8 @@ var fullLabels = []string{
 	"hw_video_acc_enc_vp9_2",
 	"hwid_component:cellular/fake_cellular",
 	"internal_display",
+	"license_ms_office_standard",
+	"license_windows_10_pro",
 	"lucidsleep",
 	"meet_app",
 	"mimo",
@@ -545,6 +555,14 @@ capabilities {
 }
 board: "boardval"
 arc: true
+licenses: {
+  type: 2
+  identifier: ""
+}
+licenses: {
+  type : 1
+  identifier: ""
+}
 `
 
 var fullLabelsSpecial = []string{
@@ -590,6 +608,8 @@ var fullLabelsSpecial = []string{
 	"hw_video_acc_enc_vp9",
 	"hw_video_acc_enc_vp9_2",
 	"internal_display",
+	"license_ms_office_standard",
+	"license_windows_10_pro",
 	"lucidsleep",
 	"meet_app",
 	"mimo",

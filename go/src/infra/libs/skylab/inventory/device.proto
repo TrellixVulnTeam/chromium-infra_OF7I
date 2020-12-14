@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 34
+// NEXT TAG: 35
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -226,6 +226,9 @@ message SchedulableLabels {
 
   // crbug.com/994200: this matches to label "sku" in autotest.
   optional string hwid_sku = 27;
+
+  // The set of software licenses assigned to the device.
+  repeated License licenses = 34;
 
   optional string model = 13;
 
@@ -552,4 +555,28 @@ message TestCoverageHints {
 message KeyValue {
   required string key = 1;
   optional string value = 2;
+}
+
+// Represents a Software License assigned to a device.
+// Next Tag: 2
+message License {
+  // The type of licenses (e.g. Windows)
+  optional LicenseType type = 1;
+
+  // An optional string to uniquely identify the license that was assigned,
+  // for tracking purposes.
+  optional string identifier = 2;
+}
+
+// Next Tag: 3
+enum LicenseType {
+  LICENSE_TYPE_UNSPECIFIED = 0;
+
+  // Microsoft Windows 10 Professional Desktop Operating System.
+  // Contact the Chrome OS Parallels team for license specifics.
+  LICENSE_TYPE_WINDOWS_10_PRO = 1;
+
+  // Microsoft Office Standard.
+  // Contact the Chrome OS Parallels team for license specifics.
+  LICENSE_TYPE_MS_OFFICE_STANDARD = 2;
 }
