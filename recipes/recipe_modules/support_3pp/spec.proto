@@ -96,6 +96,11 @@ message Spec {
       // source, then this would upload with the CIPD tag of
       // `version:1.2.3.my_org1`
       string patch_version = 9;
+
+      // (required) Base address for constructing a Common Platform Enumeration
+      // ( https://csrc.nist.gov/projects/security-content-automation-protocol/specifications/cpe )
+      // specification for this package.
+      string cpe_base_address = 10;
     }
 
     message Build {
