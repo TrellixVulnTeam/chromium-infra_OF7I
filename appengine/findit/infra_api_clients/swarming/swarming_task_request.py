@@ -114,6 +114,9 @@ class SwarmingTaskRequest(StructuredObject):
   pubsub_auth_token = basestring
   pubsub_userdata = basestring
 
+  # Realm
+  realm = basestring
+
   # ResultDB
   resultdb = SwarmingResultDBCfg
 
@@ -154,6 +157,7 @@ class SwarmingTaskRequest(StructuredObject):
         service_account=None,
         tags=ListOfBasestring(),
         user='',
+        realm=None,
         resultdb=SwarmingResultDBCfg(enable=False))
 
   @classmethod
@@ -217,5 +221,6 @@ class SwarmingTaskRequest(StructuredObject):
         service_account=data.get('service_account'),
         tags=ListOfBasestring.FromSerializable(data.get('tags') or []),
         user=data.get('user'),
+        realm=data.get('realm'),
         resultdb=SwarmingResultDBCfg(
             enable=data.get('resultdb', {}).get('enable', False)))

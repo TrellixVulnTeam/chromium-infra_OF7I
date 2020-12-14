@@ -47,6 +47,7 @@ class SwarmingTaskRequestTest(TestCase):
         service_account=None,
         tags=ListOfBasestring(),
         user='',
+        realm=None,
         resultdb=SwarmingResultDBCfg(enable=False))
 
     self.assertEqual(expected_request,
@@ -69,6 +70,7 @@ class SwarmingTaskRequestTest(TestCase):
         'pubsub_topic': 'topic',
         'pubsub_auth_token': 'token',
         'pubsub_userdata': 'data',
+        'realm': 'foo:realm',
         'resultdb': {
             'enable': True
         },
@@ -156,6 +158,7 @@ class SwarmingTaskRequestTest(TestCase):
         service_account=None,
         tags=ListOfBasestring.FromSerializable(['a']),
         user='someone',
+        realm='foo:realm',
         resultdb=SwarmingResultDBCfg(enable=True))
 
     self.assertEqual(expected_request,

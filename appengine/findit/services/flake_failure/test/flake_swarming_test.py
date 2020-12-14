@@ -458,6 +458,7 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
         pubsub_userdata='{"runner_id": "runner_id"}',
         expiration_secs='3600',
         pubsub_auth_token='auth_token',
+        realm=None,
         resultdb=SwarmingResultDBCfg(enable=False))
 
     self.assertEqual(
