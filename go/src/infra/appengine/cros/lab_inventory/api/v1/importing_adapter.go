@@ -290,6 +290,26 @@ func getPools(l *inventory.SchedulableLabels) []string {
 	return pools
 }
 
+func getLicenses(l *inventory.SchedulableLabels) []*lab.License {
+	var licenses []*lab.License
+	for _, v := range l.Licenses {
+		var t lab.LicenseType
+		switch v.GetType() {
+		case inventory.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO:
+			t = lab.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO
+		case inventory.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD:
+			t = lab.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD
+		default:
+			t = lab.LicenseType_LICENSE_TYPE_UNSPECIFIED
+		}
+		licenses = append(licenses, &lab.License{
+			Type:       t,
+			Identifier: v.GetIdentifier(),
+		})
+	}
+	return licenses
+}
+
 func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegister, olddata *inventory.CommonDeviceSpecs) error {
 	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
 
@@ -305,6 +325,7 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 	}
 
 	pools := getPools(olddata.GetLabels())
+	licenses := getLicenses(olddata.GetLabels())
 	newDut := lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
@@ -316,6 +337,7 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 				Hostname:    olddata.GetHostname(),
 				Peripherals: peri,
 				Pools:       pools,
+				Licenses:    licenses,
 			},
 		},
 	}

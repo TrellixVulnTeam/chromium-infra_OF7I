@@ -126,6 +126,16 @@ var devInV2 = lab.ChromeOSDevice{
 				},
 				SmartUsbhub: true,
 			},
+			Licenses: []*lab.License{
+				{
+					Type:       lab.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO,
+					Identifier: "my-windows-identifier-A001",
+				},
+				{
+					Type:       lab.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD,
+					Identifier: "my-office-identifier-B002",
+				},
+			},
 		},
 	},
 }
@@ -309,6 +319,14 @@ common {
 		cr50_ro_keyid: "prod"
 		ec_type: EC_TYPE_CHROME_OS
 		hwid_sku: "test_sku"
+		licenses: {
+			type: 1
+			identifier: "my-windows-identifier-A001"
+		}
+		licenses: {
+			type: 2
+			identifier: "my-office-identifier-B002"
+		}
 		model: "test_model"
 		os_type: OS_TYPE_CROS
 		sku: "test_variant"

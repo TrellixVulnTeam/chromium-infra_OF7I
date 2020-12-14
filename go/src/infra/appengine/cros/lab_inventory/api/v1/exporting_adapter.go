@@ -309,6 +309,25 @@ func setHwidData(l *inventory.SchedulableLabels, h *HwidData) {
 	}
 }
 
+func setLicenses(l *inventory.SchedulableLabels, lic []*lab.License) {
+	l.Licenses = make([]*inventory.License, len(lic))
+	for i, v := range lic {
+		var t inventory.LicenseType
+		switch v.Type {
+		case lab.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD:
+			t = inventory.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD
+		case lab.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO:
+			t = inventory.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO
+		default:
+			t = inventory.LicenseType_LICENSE_TYPE_UNSPECIFIED
+		}
+		l.Licenses[i] = &inventory.License{
+			Type:       &t,
+			Identifier: &v.Identifier,
+		}
+	}
+}
+
 func setDutStateHelper(s lab.PeripheralState) *bool {
 	var val bool
 	if s == lab.PeripheralState_UNKNOWN || s == lab.PeripheralState_NOT_CONNECTED {
@@ -452,6 +471,7 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 	labels := createDutLabels(lc, &osType)
 
 	setDutPools(labels, lc.GetDut().GetPools())
+	setLicenses(labels, lc.GetDut().GetLicenses())
 	setDutPeripherals(labels, p)
 	setDutState(labels, data.GetDutState())
 	setDeviceConfig(labels, data.GetDeviceConfig())
