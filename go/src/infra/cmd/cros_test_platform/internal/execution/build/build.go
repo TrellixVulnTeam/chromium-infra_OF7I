@@ -81,12 +81,8 @@ func (i *InvocationStepUpdater) NotifyNewTask(task *skylab.Task) {
 
 const (
 	// Include a leading newline to separate from the step name.
-	latestAttemptTemplate = `
-
-[latest attempt](%s)`
-	previousAttemptsTemplate = `
-
-previous failed attempts: %s`
+	latestAttemptTemplate    = "    * [latest attempt](%s)"
+	previousAttemptsTemplate = "    * previous failed attempts: %s"
 )
 
 func (i *InvocationStepUpdater) summary() string {
@@ -94,16 +90,16 @@ func (i *InvocationStepUpdater) summary() string {
 	if len(ts) == 0 {
 		return "No tasks created"
 	}
-	s := fmt.Sprintf(latestAttemptTemplate, ts[len(ts)-1].TaskURL())
+	s := []string{fmt.Sprintf(latestAttemptTemplate, ts[len(ts)-1].TaskURL())}
 	ts = ts[0 : len(ts)-1]
 	if len(ts) > 0 {
 		ls := make([]string, len(ts))
 		for c, t := range ts {
 			ls[c] = fmt.Sprintf("[%d](%s)", c+1, t.TaskURL())
 		}
-		s += fmt.Sprintf(previousAttemptsTemplate, strings.Join(ls, ", "))
+		s = append(s, fmt.Sprintf(previousAttemptsTemplate, strings.Join(ls, ", ")))
 	}
-	return s
+	return strings.Join(s, "\n")
 }
 
 func (i *InvocationStepUpdater) close() {
