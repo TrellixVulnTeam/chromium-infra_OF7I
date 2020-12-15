@@ -47,7 +47,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		// ChromeOSMachineLSE for a DUT
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
-		return createDUT(ctx, machinelse)
+		return CreateDUT(ctx, machinelse)
 	}
 
 	// Browser lab servers
@@ -816,8 +816,7 @@ func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTH
 	}
 	if dutMachinelses != nil && dutMachinelses[0].GetName() != DUTHostname {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Port: %d in Labstation: %s is already "+
-			"in use by DUT: %s. Please provide a different ServoPort.\n",
+		errorMsg.WriteString(fmt.Sprintf("Port: %d in %s is already in use by %s. Please provide a different ServoPort.\n",
 			servo.GetServoPort(), servo.GetServoHostname(), dutMachinelses[0].GetName()))
 		logging.Errorf(ctx, errorMsg.String())
 		return dutMachinelses[0].GetName(), status.Errorf(codes.FailedPrecondition, errorMsg.String())

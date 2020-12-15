@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufslabpb "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/util"
 )
@@ -573,8 +574,76 @@ func logChromeBrowserMachineLse(resourceName string, oldData, newData *ufspb.Chr
 
 func logChromeOSMachineLse(resourceName string, oldData, newData *ufspb.ChromeOSMachineLSE) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logDut(resourceName, oldData.GetDeviceLse().GetDut(), newData.GetDeviceLse().GetDut())...)
+	changes = append(changes, logLabstation(resourceName, oldData.GetDeviceLse().GetLabstation(), newData.GetDeviceLse().GetLabstation())...)
 	changes = append(changes, logSwitchInterface(resourceName, oldData.GetDeviceLse().GetNetworkDeviceInterface(), newData.GetDeviceLse().GetNetworkDeviceInterface())...)
-	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_os_machine_lse.servos", oldData.GetDeviceLse().GetLabstation().GetServos(), newData.GetDeviceLse().GetLabstation().GetServos())...)
+	return changes
+}
+
+func logDut(resourceName string, oldData, newData *ufslabpb.DeviceUnderTest) []*ufspb.ChangeEvent {
+	if oldData == nil && newData == nil {
+		return nil
+	}
+	if oldData == nil {
+		oldData = &ufslabpb.DeviceUnderTest{}
+	}
+	if newData == nil {
+		newData = &ufslabpb.DeviceUnderTest{}
+	}
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetPools(), newData.GetPools())...)
+	if oldData.GetPeripherals() == nil {
+		oldData.Peripherals = &ufslabpb.Peripherals{}
+	}
+	if newData.GetPeripherals() == nil {
+		oldData.Peripherals = &ufslabpb.Peripherals{}
+	}
+	changes = append(changes, logServo(resourceName, "machine_lse.chromeos_machine_lse.dut.servo", oldData.GetPeripherals().GetServo(), newData.GetPeripherals().GetServo())...)
+	changes = append(changes, logRPM(resourceName, "machine_lse.chromeos_machine_lse.dut.rpm", oldData.GetPeripherals().GetRpm(), newData.GetPeripherals().GetRpm())...)
+	// TODO(anushruth): Add support for rest of the peripherals
+	return changes
+}
+
+func logServo(resourceName, labelPrefix string, oldServo, newServo *ufslabpb.Servo) []*ufspb.ChangeEvent {
+	if oldServo == nil && newServo == nil {
+		return nil
+	}
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldServo == nil {
+		oldServo = &ufslabpb.Servo{}
+	}
+	if newServo == nil {
+		newServo = &ufslabpb.Servo{}
+	}
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.hostname", labelPrefix), oldServo.GetServoHostname(), newServo.GetServoHostname())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.port", labelPrefix), oldServo.GetServoPort(), newServo.GetServoPort())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.serial", labelPrefix), oldServo.GetServoSerial(), newServo.GetServoSerial())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.type", labelPrefix), oldServo.GetServoType(), newServo.GetServoType())...)
+	return changes
+}
+
+func logRPM(resourceName, labelPrefix string, oldRpm, newRpm *ufslabpb.RPM) []*ufspb.ChangeEvent {
+	if oldRpm == nil && newRpm == nil {
+		return nil
+	}
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldRpm == nil {
+		oldRpm = &ufslabpb.RPM{}
+	}
+	if newRpm == nil {
+		newRpm = &ufslabpb.RPM{}
+	}
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.name", labelPrefix), oldRpm.GetPowerunitName(), newRpm.GetPowerunitName())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.outlet", labelPrefix), oldRpm.GetPowerunitOutlet(), newRpm.GetPowerunitOutlet())...)
+	return changes
+}
+
+func logLabstation(resourceName string, oldData, newData *ufslabpb.Labstation) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.labstation.pools", oldData.GetPools(), newData.GetPools())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.labstation.servos", oldData.GetServos(), newData.GetServos())...)
+	// Log labstation rpm changes.
+	changes = append(changes, logRPM(resourceName, "machine_lse.chromeos_machine_lse.labstation.rpm", oldData.GetRpm(), newData.GetRpm())...)
 	return changes
 }
 

@@ -420,10 +420,12 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	servo1 := &chromeosLab.Servo{
 		ServoHostname: "BlueLabstation-10",
 		ServoPort:     21,
+		ServoSerial:   "Serial-1",
 	}
 	servo2 := &chromeosLab.Servo{
 		ServoHostname: "BlueLabstation-10",
 		ServoPort:     22,
+		ServoSerial:   "Serial-2",
 	}
 
 	labstationMachinelse := mockLabstationMachineLSE("BlueLabstation-10")
@@ -462,6 +464,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			servo3 := &chromeosLab.Servo{
 				ServoHostname: "BlueLabstation-10",
 				ServoPort:     21,
+				ServoSerial:   "Serial-1",
 			}
 			peripherals3 := &chromeosLab.Peripherals{
 				Servo: servo3,
@@ -1338,7 +1341,7 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-92")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.chrome_os_machine_lse.servos")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.chromeos_machine_lse.labstation.servos")
 			So(changes[0].GetOldValue(), ShouldContainSubstring, servo.ServoHostname)
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/RedLabstation-92")

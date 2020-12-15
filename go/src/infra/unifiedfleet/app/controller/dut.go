@@ -34,11 +34,11 @@ const (
 
 var servoV3HostnameRegex = regexp.MustCompile(`.*-servo`)
 
-// createDUT creates ChromeOSMachineLSE entities for a DUT.
+// CreateDUT creates ChromeOSMachineLSE entities for a DUT.
 //
-// creates one MachineLSE for DUT and updates another MachineLSE for the
+// Creates one MachineLSE for DUT and updates another MachineLSE for the
 // Labstation(with new Servo info from DUT)
-func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
+func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 		machinelses := []*ufspb.MachineLSE{machinelse}
@@ -70,8 +70,12 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			// Check if the Labstation MachineLSE exists in the system.
 			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
-				return err
+				return errors.Annotate(err, "Validation error - Cannot get labstation").Err()
 			}
+			// Clone a copy for logging.
+			oldLabstationMachineLseCopy := proto.Clone(labstationMachinelse).(*ufspb.MachineLSE)
+			// Client to log labstation changes.
+			hcLabstation := getHostHistoryClient(labstationMachinelse)
 			// Check if the servo port is assigned, If missing assign a new one.
 			if err := assignServoPortIfMissing(labstationMachinelse, newServo); err != nil {
 				return err
@@ -81,10 +85,17 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			if err != nil {
 				return err
 			}
+			// Clean servo type and servo topology as that will be updated from SSW.
+			cleanPreDeployFields(newServo)
 			// Update the Labstation MachineLSE with new Servo information.
 			// Append the new Servo entry to the Labstation
 			appendServoEntryToLabstation(newServo, labstationMachinelse)
 			machinelses = append(machinelses, labstationMachinelse)
+			// Log labstation changes to history client.
+			hcLabstation.LogMachineLSEChanges(oldLabstationMachineLseCopy, labstationMachinelse)
+			if err := hc.SaveChangeEvents(ctx); err != nil {
+				return err
+			}
 		}
 
 		// BatchUpdate both DUT (and its machine), and Labstation
@@ -97,7 +108,6 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		if err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs").Err()
 		}
-		// TODO: skip logging labstation changes for now
 		hc.LogMachineLSEChanges(nil, machinelse)
 
 		// Update states
@@ -162,19 +172,26 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			if err := assignServoPortIfMissing(newLabstationMachinelse, newServo); err != nil {
 				return err
 			}
+			cleanPreDeployFields(newServo)
 			// Check if the ServoHostName and ServoPort are already in use
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
+
+			// For logging new Labstation changes.
+			hcNewLabstation := getHostHistoryClient(newLabstationMachinelse)
+
 			// Update the Labstation MachineLSE with new Servo information.
 			oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 			// check if the DUT is connected to the same Labstation or different Labstation
 			if newServo.GetServoHostname() == oldServo.GetServoHostname() {
+				newLabstationMachineLseClone := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
 				// DUT is connected to the same Labstation,
 				// replace the oldServo entry from the Labstation with the newServo entry
 				replaceServoEntryInLabstation(oldServo, newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
+				hcNewLabstation.LogMachineLSEChanges(newLabstationMachineLseClone, newLabstationMachinelse)
 			} else {
 				// DUT is connected to a different Labstation,
 				// remove the oldServo entry of DUT form oldLabstationMachinelse
@@ -182,11 +199,29 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 				if err != nil {
 					return err
 				}
+				hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
+				// Make a copy to log the changes for the labstation (servo host) being replaced.
+				oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
+
 				removeServoEntryFromLabstation(oldServo, oldLabstationMachinelse)
+
+				// Log changes to history.
+				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachineLseCopy, oldLabstationMachinelse)
+				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+					return err
+				}
+
 				machinelses = append(machinelses, oldLabstationMachinelse)
-				// Append the newServo entry of DUT to the newLabstationMachinelse
+
+				// Make a copy to log changes for the replacing labstation (servo host).
+				newLabstationMachineLseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
+				// Append the newServo entry of DUT to the newLabstationMachinelse.
 				appendServoEntryToLabstation(newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
+				hcNewLabstation.LogMachineLSEChanges(newLabstationMachineLseCopy, newLabstationMachinelse)
+			}
+			if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
+				return err
 			}
 		}
 
@@ -196,7 +231,6 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			logging.Errorf(ctx, "Failed to BatchUpdate ChromeOSMachineLSEDUTs %s", err)
 			return err
 		}
-		// TODO: skip logging labstation changes for now
 		hc.LogMachineLSEChanges(oldMachinelse, machinelse)
 
 		// Update states
@@ -294,4 +328,9 @@ func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
 		},
 	}, nil
 
+}
+
+func cleanPreDeployFields(servo *ufslab.Servo) {
+	servo.ServoType = ""
+	servo.ServoTopology = nil
 }
