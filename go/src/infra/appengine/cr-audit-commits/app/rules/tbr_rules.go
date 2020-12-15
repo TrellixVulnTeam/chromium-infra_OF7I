@@ -95,18 +95,20 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 	owner := change.Owner.AccountID
 	crLabelInfo, crExists := change.Labels["Code-Review"]
 	botCommitLabelInfo, bcExists := change.Labels["Bot-Commit"]
-	botCommitApproved := false
+
+	// Bypass code-review check if Bot-Commit label has max vote of 1
 	if bcExists {
 		bcVal, err := getMaxLabelValue(botCommitLabelInfo.Values)
 		if err != nil {
 			return nil, err
 		}
 		if bcVal == 1 {
-			botCommitApproved = true
+			result.RuleResultStatus = RulePassed
+			return result, nil
 		}
 	}
 
-	if !crExists && !botCommitApproved {
+	if !crExists {
 		return nil, fmt.Errorf("The gerrit change for Commit %v does not have the 'Code-Review' label", rc.CommitHash)
 	}
 	maxValue, err := getMaxLabelValue(crLabelInfo.Values)
