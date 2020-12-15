@@ -1,0 +1,88 @@
+[
+  {
+    "cmd": [
+      "which",
+      "docker"
+    ],
+    "name": "ensure docker installed"
+  },
+  {
+    "cmd": [
+      "docker",
+      "version"
+    ],
+    "name": "docker version",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@1.2.3@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "log version",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@1.2.3@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "luci-auth",
+      "token",
+      "-scopes",
+      "https://www.googleapis.com/auth/cloud-platform",
+      "-lifetime",
+      "3m"
+    ],
+    "infra_step": true,
+    "name": "get access token for default account"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[infra::docker]/resources/docker_login.py",
+      "--server",
+      "gcr.io",
+      "--service-account-token-file",
+      "extra.secret.token.should.not.be.logged",
+      "--config-file",
+      "[CLEANUP]/.docker"
+    ],
+    "name": "docker login"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[infra::docker]/resources/docker_run.py",
+      "--config-file",
+      "[CLEANUP]/.docker",
+      "--image",
+      "gcr.io/chromium-container-registry/testimage",
+      "--dir-map",
+      "/foo",
+      "/bar",
+      "--env",
+      "var1=1",
+      "--env",
+      "var2=2",
+      "--inherit-luci-context",
+      "--",
+      "test",
+      "cmd"
+    ],
+    "name": "docker run"
+  },
+  {
+    "cmd": [
+      "docker",
+      "--config",
+      "[CLEANUP]/.docker",
+      "push",
+      "gcr.io/chromium-container-registry/image:2018-11-16-01-25"
+    ],
+    "name": "docker push"
+  },
+  {
+    "name": "$result"
+  }
+]

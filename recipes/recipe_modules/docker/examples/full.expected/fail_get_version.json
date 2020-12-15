@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [
+      "docker",
+      "version"
+    ],
+    "name": "docker version",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Version unknown?@@@"
+    ]
+  }
+]

@@ -6,6 +6,7 @@
   * [cloudbuildhelper](#recipe_modules-cloudbuildhelper) &mdash; API for calling 'cloudbuildhelper' tool.
   * [cloudkms](#recipe_modules-cloudkms)
   * [conda](#recipe_modules-conda) &mdash; Functions to work with Miniconda python environment.
+  * [docker](#recipe_modules-docker)
   * [infra_checkout](#recipe_modules-infra_checkout)
   * [infra_cipd](#recipe_modules-infra_cipd)
   * [infra_system](#recipe_modules-infra_system)
@@ -27,6 +28,7 @@
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage)
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
+  * [docker:examples/full](#recipes-docker_examples_full)
   * [docker_image_builder](#recipes-docker_image_builder)
   * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
   * [gerrit_hello_world](#recipes-gerrit_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
@@ -241,6 +243,68 @@ Args:
 Returns:
   Instance of CondaEnv, that also optionally acts as context manager that
   deletes the environment on exit.
+### *recipe_modules* / [docker](/recipes/recipe_modules/docker)
+
+[DEPS](/recipes/recipe_modules/docker/__init__.py#5): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+#### **class [DockerApi](/recipes/recipe_modules/docker/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+
+Provides steps to connect and run Docker images.
+
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/docker/api.py#140)(self, \*args, \*\*kwargs):**
+
+Executes specified docker command.
+
+Please make sure to use api.docker.login method before if specified command
+requires authentication.
+
+Args:
+  args: arguments passed to the 'docker' command including subcommand name,
+      e.g. api.docker('push', 'my_image:latest').
+  kwargs: arguments passed down to api.step module.
+
+&mdash; **def [ensure\_installed](/recipes/recipe_modules/docker/api.py#17)(self, \*\*kwargs):**
+
+Checks that the docker binary is in the PATH.
+
+Raises StepFailure if binary is not found.
+
+&mdash; **def [get\_version](/recipes/recipe_modules/docker/api.py#29)(self):**
+
+Returns Docker version installed or None if failed to detect.
+
+&mdash; **def [login](/recipes/recipe_modules/docker/api.py#46)(self, server='gcr.io', project='chromium-container-registry', service_account=None, step_name=None, \*\*kwargs):**
+
+Connect to a Docker registry.
+
+This step must be executed before any other step in this module that
+requires authentication.
+
+Args:
+  server: GCP container registry to pull images from. Defaults to 'gcr.io'.
+  project: Name of the Cloud project where Docker images are hosted.
+  service_account: service_account.api.ServiceAccount used for
+      authenticating with the container registry. Defaults to the task's
+      associated service account.
+  step_name: Override step name. Default is 'docker login'.
+
+&mdash; **def [run](/recipes/recipe_modules/docker/api.py#88)(self, image, step_name=None, cmd_args=None, dir_mapping=None, env=None, inherit_luci_context=False, \*\*kwargs):**
+
+Run a command in a Docker image as the current user:group.
+
+Args:
+  image: Name of the image to run.
+  step_name: Override step name. Default is 'docker run'.
+  cmd_args: Used to specify command to run in an image as a list of
+      arguments. If not specified, then the default command embedded into
+      the image is executed.
+  dir_mapping: List of tuples (host_dir, docker_dir) mapping host
+      directories to directories in a Docker container. Directories are
+      mapped as read-write.
+  env: dict of env variables.
+  inherit_luci_context: Inherit current LUCI Context (including auth).
+      CAUTION: removes network isolation between the container and the
+      docker host. Read more https://docs.docker.com/network/host/.
 ### *recipe_modules* / [infra\_checkout](/recipes/recipe_modules/infra_checkout)
 
 [DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -888,6 +952,11 @@ To build a new package for all platforms:
 Recipe to build windows depot_tools bootstrap zipfile.
 
 &mdash; **def [RunSteps](/recipes/recipes/depot_tools_builder.py#26)(api):**
+### *recipes* / [docker:examples/full](/recipes/recipe_modules/docker/examples/full.py)
+
+[DEPS](/recipes/recipe_modules/docker/examples/full.py#7): [docker](#recipe_modules-docker), [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/docker/examples/full.py#14)(api):**
 ### *recipes* / [docker\_image\_builder](/recipes/recipes/docker_image_builder.py)
 
 [DEPS](/recipes/recipes/docker_image_builder.py#8): [build/docker][build/recipe_modules/docker], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
