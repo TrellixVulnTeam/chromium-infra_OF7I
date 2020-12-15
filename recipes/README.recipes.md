@@ -14,6 +14,7 @@
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [sync_submodules](#recipe_modules-sync_submodules)
   * [windows_sdk](#recipe_modules-windows_sdk)
+  * [zip](#recipe_modules-zip)
 
 **[Recipes](#Recipes)**
   * [3pp](#recipes-3pp) &mdash; This recipe builds and packages third party software, such as Git.
@@ -61,6 +62,7 @@
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
   * [wpt_export](#recipes-wpt_export) &mdash; Exports commits in Chromium to the web-platform-tests repo.
   * [wpt_import](#recipes-wpt_import) &mdash; Imports changes from web-platform-tests into Chromium.
+  * [zip:examples/full](#recipes-zip_examples_full)
 ## Recipe Modules
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
@@ -762,6 +764,58 @@ Args:
 
 Raises:
     StepFailure or InfraFailure.
+### *recipe_modules* / [zip](/recipes/recipe_modules/zip)
+
+[DEPS](/recipes/recipe_modules/zip/__init__.py#5): [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+
+#### **class [ZipApi](/recipes/recipe_modules/zip/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+
+Provides steps to zip and unzip files.
+
+&mdash; **def [directory](/recipes/recipe_modules/zip/api.py#30)(self, step_name, directory, output):**
+
+Step to compress a single directory.
+
+Args:
+  step_name: display name of the step.
+  directory: path to a directory to compress, it would become the root of
+      an archive, i.e. |directory|/file.txt would be named 'file.txt' in
+      the archive.
+  output: path to a zip file to create.
+
+&mdash; **def [make\_package](/recipes/recipe_modules/zip/api.py#11)(self, root, output):**
+
+Returns ZipPackage object that can be used to compress a set of files.
+
+Usage:
+  pkg = api.zip.make_package(root, output)
+  pkg.add_file(root.join('file'))
+  pkg.add_directory(root.join('directory'))
+  yield pkg.zip('zipping step')
+
+Args:
+  root: a directory that would become root of a package, all files added to
+      an archive will have archive paths relative to this directory.
+  output: path to a zip file to create.
+
+Returns:
+  ZipPackage object.
+
+&mdash; **def [unzip](/recipes/recipe_modules/zip/api.py#44)(self, step_name, zip_file, output, quiet=False):**
+
+Step to uncompress |zip_file| into |output| directory.
+
+Zip package will be unpacked to |output| so that root of an archive is in
+|output|, i.e. archive.zip/file.txt will become |output|/file.txt.
+
+Step will FAIL if |output| already exists.
+
+Args:
+  step_name: display name of a step.
+  zip_file: path to a zip file to uncompress, should exist.
+  output: path to a directory to unpack to, it should NOT exist.
+  quiet (bool): If True, print terse output instead of the name
+      of each unzipped file.
 ## Recipes
 
 ### *recipes* / [3pp](/recipes/recipes/3pp.py)
@@ -1122,6 +1176,11 @@ See: //docs/testing/web_platform_tests.md (https://goo.gl/rSRGmZ)
 &mdash; **def [git\_cl\_issue\_link](/recipes/recipes/wpt_import.py#91)(api):**
 
 Runs a step which adds a link to the current CL if there is one.
+### *recipes* / [zip:examples/full](/recipes/recipe_modules/zip/examples/full.py)
+
+[DEPS](/recipes/recipe_modules/zip/examples/full.py#5): [zip](#recipe_modules-zip), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/zip/examples/full.py#15)(api):**
 
 [build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium
 [build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium_checkout
