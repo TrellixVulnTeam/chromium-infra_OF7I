@@ -51,7 +51,7 @@ Gets the nic and prints the output in the user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.switches), "switch", "Name(s) of a switch to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.switchPorts), "switchport", "Name(s) of a switch port to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.switchPorts), "switch-port", "Name(s) of a switch port to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.macs), "mac", "Name(s) of a mac to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.machines), "machine", "Name(s) of a machine to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
