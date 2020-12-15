@@ -21,6 +21,7 @@ go_build_environ:
     windows: 0  # we have no cgo toolchain on Windows
 go_packages:
   - infra/tools/led
+update_latest_ref: false  # paused for 2020Q4 production freeze
 root: ../../go/bin
 data:
   - file: led${exe_suffix}

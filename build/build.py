@@ -97,6 +97,13 @@ class PackageDef(collections.namedtuple(
     return bool(self.pkg_def.get('uses_python_env'))
 
   @property
+  def update_latest_ref(self):
+    """Returns True if 'update_latest_ref' in the YAML file is set.
+
+    Defaults to True."""
+    return bool(self.pkg_def.get('update_latest_ref', True))
+
+  @property
   def go_packages(self):
     """Returns a list of Go packages that must be installed for this package."""
     return self.pkg_def.get('go_packages') or []
@@ -857,7 +864,8 @@ def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
       os.remove(f)
 
 
-def upload_pkg(cipd_exe, pkg_file, service_url, tags, service_account):
+def upload_pkg(cipd_exe, pkg_file, service_url, tags, update_latest_ref,
+               service_account):
   """Uploads existing *.cipd file to the storage and tags it.
 
   Args:
@@ -865,6 +873,7 @@ def upload_pkg(cipd_exe, pkg_file, service_url, tags, service_account):
     pkg_file: path to *.cipd file to upload.
     service_url: URL of a package repository service.
     tags: a list of tags to attach to uploaded package instance.
+    update_latest_ref: a bool of whether or not to update the 'latest' CIPD ref
     service_account: path to *.json file with service account to use.
 
   Returns:
@@ -878,7 +887,8 @@ def upload_pkg(cipd_exe, pkg_file, service_url, tags, service_account):
   args = ['-service-url', service_url]
   for tag in sorted(tags):
     args.extend(['-tag', tag])
-  args.extend(['-ref', 'latest'])
+  if update_latest_ref:
+    args.extend(['-ref', 'latest'])
   if service_account:
     args.extend(['-service-account-json', service_account])
   args.extend(['-hash-algo', HASH_ALGO])
@@ -1123,6 +1133,7 @@ def run(
             out_file,
             service_url,
             tags,
+            pkg_def.update_latest_ref,
             service_account_json)
       assert info is not None
       succeeded.append({'pkg_def_name': pkg_def.name, 'info': info})
