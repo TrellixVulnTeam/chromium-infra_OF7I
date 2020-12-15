@@ -128,7 +128,7 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[build::zip]/resources/zip.py"
+      "RECIPE_MODULE[infra::zip]/resources/zip.py"
     ],
     "name": "zip it up",
     "stdin": "{\"entries\": [{\"path\": \"[START_DIR]/depot_tools\", \"type\": \"dir\"}], \"output\": \"[START_DIR]/depot_tools.zip\", \"root\": \"[START_DIR]/depot_tools\"}"

@@ -48,7 +48,7 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[build::zip]/resources/unzip.py"
+      "RECIPE_MODULE[infra::zip]/resources/unzip.py"
     ],
     "name": "Unzip gsutil_4.1.zip",
     "stdin": "{\"output\": \"[START_DIR]/gsutil_staging_dir\", \"quiet\": true, \"zip_file\": \"[START_DIR]/gsutil_4.1.zip\"}"

@@ -849,7 +849,7 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipes/build_from_tarball.py#20)(api):**
 ### *recipes* / [build\_gsutil\_cipd\_pkg](/recipes/recipes/build_gsutil_cipd_pkg.py)
 
-[DEPS](/recipes/recipes/build_gsutil_cipd_pkg.py#5): [build/zip][build/recipe_modules/zip], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/build_gsutil_cipd_pkg.py#5): [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
 ### *recipes* / [build\_wheels](/recipes/recipes/build_wheels.py)
@@ -883,7 +883,7 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#11)(api):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
-[DEPS](/recipes/recipes/depot_tools_builder.py#7): [build/zip][build/recipe_modules/zip], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/depot_tools_builder.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 Recipe to build windows depot_tools bootstrap zipfile.
 
@@ -1185,7 +1185,6 @@ Runs a step which adds a link to the current CL if there is one.
 [build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium
 [build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium_checkout
 [build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-docker
-[build/recipe_modules/zip]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-zip
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-depot_tools
 [depot_tools/recipe_modules/gclient]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-gclient
