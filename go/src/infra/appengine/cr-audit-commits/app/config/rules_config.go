@@ -118,10 +118,11 @@ func GetUpdatedRuleMap(c context.Context) map[string]*rules.RefConfig {
 			BranchName:     refConfig.Ref,
 			StartingCommit: refConfig.StartingCommit,
 			// TODO: For test environment, the MonorailAPIURL should be different.
-			MonorailAPIURL:     monorailAPIURL,
-			MonorailProject:    refConfig.MonorailProject,
-			Rules:              getAccountRules(refConfig.Rules),
-			DynamicRefFunction: dynamicRefFunc,
+			MonorailAPIURL:           monorailAPIURL,
+			MonorailProject:          refConfig.MonorailProject,
+			Rules:                    getAccountRules(refConfig.Rules),
+			OverwriteLastKnownCommit: refConfig.OverwriteLastKnownCommit,
+			DynamicRefFunction:       dynamicRefFunc,
 		}
 	}
 
