@@ -10,6 +10,9 @@ import (
 	"sort"
 	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
 
@@ -71,7 +74,7 @@ func (c CommentOrFileMonorailIssue) Notify(ctx context.Context, cfg *RefConfig, 
 		}
 
 		if existingIssue == nil || !isValidIssue(existingIssue, sa, cfg) {
-			if issueID, err = PostIssue(ctx, cfg, summary, resultText(cfg, rc, false), cs, c.Components, labels); err != nil {
+			if issueID, err = PostIssue(ctx, cfg, summary, rc.AuthorAccount, resultText(cfg, rc, false), cs, c.Components, labels); err != nil {
 				return "", err
 			}
 		} else {
@@ -110,7 +113,7 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 }
 
 // PostIssue will create an issue based on the given parameters.
-func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
+func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients, components, labels []string) (int32, error) {
 	// TODO: Replace monorail v1 api with v3.
 	labels = append(labels, "Pri-1", "Type-Task")
 
@@ -121,7 +124,7 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, co
 		Description: d,
 		Components:  components,
 		Labels:      labels,
-		Status:      monorail.StatusUntriaged,
+		Status:      monorail.StatusAssigned,
 		Summary:     s,
 		ProjectId:   cfg.MonorailProject,
 	}
@@ -129,6 +132,33 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, co
 	req := &monorail.InsertIssueRequest{
 		Issue:     iss,
 		SendEmail: true,
+	}
+
+	if o != "" {
+		ownAtom := &monorail.AtomPerson{
+			Name: o,
+		}
+		iss.Owner = ownAtom
+
+		resp, err := cs.Monorail.InsertIssue(ctx, req)
+		switch status.Code(err) {
+		case codes.OK:
+			return resp.Issue.Id, nil
+		case codes.InvalidArgument:
+			// The Gerrit user doesn't have a corresponding Monorail
+			// account so we'll CC them instead. We think that the
+			// Monorail V1 API returns HTTP 400 in this case which
+			// is mapped to gRPC Invalid Argument:
+			// https://osscs.corp.google.com/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/grpc/proto/google/rpc/code.proto;l=59;drc=eca556dd94c2c2a42dad90d3f7ee0061885c8242
+			// This conflicts with the upstream mapping Internal:
+			// https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md
+			iss.Status = monorail.StatusAvailable
+			iss.Owner = nil
+			iss.Cc = []*monorail.AtomPerson{ownAtom}
+			break // Try to insert again below
+		default:
+			return 0, err
+		}
 	}
 
 	resp, err := cs.Monorail.InsertIssue(ctx, req)

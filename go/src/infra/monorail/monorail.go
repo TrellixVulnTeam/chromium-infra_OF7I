@@ -29,6 +29,8 @@ const (
 	StatusUntriaged = "Untriaged"
 	// Available means the issue is triaged, but no owner assigned.
 	StatusAvailable = "Available"
+	// Assigned means the issue is assigned.
+	StatusAssigned = "Assigned"
 	// Started means the work in progress..
 	StatusStarted = "Started"
 	// ExternalDependency means the issue requires action from a third party.

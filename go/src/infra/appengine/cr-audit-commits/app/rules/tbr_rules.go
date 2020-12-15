@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/api/gerrit"
-	"go.chromium.org/luci/common/logging"
 
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
@@ -22,10 +21,6 @@ import (
 const (
 	// Do not ask gerrit about a change more than once every hour.
 	pollInterval = time.Hour
-	// Fail the audit if the reviewer does not +1 the commit within 7 days.
-	gracePeriod = time.Hour * 24 * 7
-	// Post the reminder about the TBR deadline only after 1 day.
-	reminderDelay = time.Hour * 24
 )
 
 // getMaxLabelValue determines the highest possible value of a vote for a given
@@ -125,29 +120,8 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 			return result, nil
 		}
 	}
-	deadline := rc.CommitTime.Add(gracePeriod)
-	if deadline.After(time.Now()) {
-		result.RuleResultStatus = RulePending
-		// Only post a reminder if `reminderDelay` has elapsed since the commit time.
-		if prevResult != nil && time.Now().After(rc.CommitTime.Add(reminderDelay)) {
-			// Only post a reminder if it hasn't been done already.
-			if _, ok := prevResult.GetToken(ctx, "TBRReminderSent"); !ok {
-				result.SetToken(ctx, "TBRReminderSent", "Sent")
-				// Notify the CL that it needs to be approved by a valid reviewer
-				// within `gracePeriod`.
-				if err := postReminder(ctx, change, deadline, cs, ap); err != nil {
-					logging.WithError(err).Errorf(
-						ctx, "Unable to post reminder on change %v", change.ChangeID)
-				}
-			}
-		}
-	} else {
-
-		result.RuleResultStatus = RuleFailed
-		result.Message = fmt.Sprintf(
-			"The commit was not approved by a reviewer other than the owner within %d days of landing.",
-			int64(gracePeriod.Hours()/24))
-	}
+	result.RuleResultStatus = RuleFailed
+	result.Message = "The commit was not approved by a reviewer other than the owner. Beginning in Q1 2020, Chrome is disallowing TBRs. Learn more at go/chrome-cr-owners-site."
 	return result, nil
 }
 
@@ -165,17 +139,4 @@ func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *Relevan
 		return nil, errors.New("no CL found for commit")
 	}
 	return cls[0], nil
-}
-
-func postReminder(ctx context.Context, change *gerrit.Change, deadline time.Time, cs *Clients, ap *AuditParams) error {
-	msg := fmt.Sprintf("This change needs to be reviewed by a valid reviewer by %v", deadline)
-	chromeMsg := "This change needs to be reviewed by a valid reviewer. Beginning in Q1 2020, Chrome is disallowing TBRs. Learn more at go/chrome-cr-owners-site."
-	if strings.Contains(ap.RepoCfg.GerritURL, "chrom") {
-		msg = chromeMsg
-	}
-	ri := &gerrit.ReviewInput{
-		Message: msg,
-	}
-	_, err := cs.gerrit.SetReview(ctx, change.ChangeID, "current", ri)
-	return err
 }
