@@ -121,12 +121,12 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 
 func (c *getKVM) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("platform", c.platforms)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("mac", c.macs)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RackFilterName, c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ChromePlatformFilterName, c.platforms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.MacAddressFilterName, c.macs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
 	return filters
 }
 

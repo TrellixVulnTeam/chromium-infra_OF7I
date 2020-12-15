@@ -114,12 +114,12 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 func (c *getVM) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("host", c.hosts)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("vlan", c.vlans)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("os", c.oses)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.HostFilterName, c.hosts)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.VlanFilterName, c.vlans)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.OSFilterName, c.oses)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
 }
 

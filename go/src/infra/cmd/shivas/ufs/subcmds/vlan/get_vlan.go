@@ -114,8 +114,8 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 
 func (c *getVlan) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
 	return filters
 }
 

@@ -124,13 +124,13 @@ func (c *getNic) innerRun(a subcommands.Application, args []string, env subcomma
 
 func (c *getNic) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("switch", c.switches)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("switchport", c.switchPorts)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("mac", c.macs)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("machine", c.machines)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RackFilterName, c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.SwitchFilterName, c.switches)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.SwitchPortFilterName, c.switchPorts)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.MacAddressFilterName, c.macs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.MachineFilterName, c.machines)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
 }
 

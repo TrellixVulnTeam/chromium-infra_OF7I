@@ -115,8 +115,8 @@ func (c *getChromePlatform) innerRun(a subcommands.Application, args []string, e
 
 func (c *getChromePlatform) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("man", c.manufacturers)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ManufacturerFilterName, c.manufacturers)...)
 	return filters
 }
 

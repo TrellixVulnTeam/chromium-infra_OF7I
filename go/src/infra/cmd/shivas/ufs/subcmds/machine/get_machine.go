@@ -139,17 +139,17 @@ func (c *getMachine) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name 
 
 func (c *getMachine) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("kvm", c.kvms)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("kvmport", c.kvmPorts)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("platform", c.platforms)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("devicetype", c.devicetypes)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("model", c.models)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("target", c.buildTargets)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("phase", c.phases)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RackFilterName, c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.KVMFilterName, c.kvms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.KVMPortFilterName, c.kvmPorts)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ChromePlatformFilterName, c.platforms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.DeviceTypeFilterName, c.devicetypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ModelFilterName, c.models)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BuildTargetFilterName, c.buildTargets)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.phases)...)
 	return filters
 }
 

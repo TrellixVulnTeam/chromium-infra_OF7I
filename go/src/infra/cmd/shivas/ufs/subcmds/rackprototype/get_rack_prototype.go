@@ -112,7 +112,7 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 
 func (c *getRackLSEPrototype) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
 }
 

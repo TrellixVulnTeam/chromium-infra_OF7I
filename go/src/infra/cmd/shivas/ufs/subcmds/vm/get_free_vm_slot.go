@@ -146,17 +146,17 @@ func (c *listVMSlot) listFreeVMSlots(ctx context.Context, ic ufsAPI.FleetClient,
 
 func (c *listVMSlot) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("machine", c.machines)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("machineprototype", c.prototypes)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("man", c.manufacturers)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("os", c.oses)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("nic", c.nics)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("vdc", c.vdcs)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("vlan", c.vlans)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RackFilterName, c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.MachineFilterName, c.machines)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.MachinePrototypeFilterName, c.prototypes)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ManufacturerFilterName, c.manufacturers)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.OSFilterName, c.oses)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.NicFilterName, c.nics)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.VirtualDatacenterFilterName, c.vdcs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.VlanFilterName, c.vlans)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
 	return filters
 }
 

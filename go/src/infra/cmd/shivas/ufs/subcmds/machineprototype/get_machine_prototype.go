@@ -111,7 +111,7 @@ func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 
 func (c *getMachineLSEPrototype) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
 }
 

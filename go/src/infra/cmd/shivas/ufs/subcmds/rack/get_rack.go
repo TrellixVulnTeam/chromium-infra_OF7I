@@ -35,7 +35,7 @@ shivas get rack name1 name2
 
 shivas get rack -n 10
 
-shivas get rack -zone atl97 -state serving 
+shivas get rack -zone atl97 -state serving
 
 Gets the rack and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
@@ -116,9 +116,9 @@ func (c *getRack) innerRun(a subcommands.Application, args []string, env subcomm
 
 func (c *getRack) formatFilters() []string {
 	filters := make([]string, 0)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
 	return filters
 }
 
