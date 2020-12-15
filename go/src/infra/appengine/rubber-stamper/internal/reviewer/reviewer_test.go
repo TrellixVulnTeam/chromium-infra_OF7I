@@ -63,7 +63,7 @@ func TestReviewChange(t *testing.T) {
 			gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 				Number:     t.Number,
 				RevisionId: t.Revision,
-				Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+				Labels:     map[string]int32{"Bot-Commit": 1},
 			})).Return(&gerritpb.ReviewResult{}, nil)
 
 			err := ReviewChange(ctx, t)

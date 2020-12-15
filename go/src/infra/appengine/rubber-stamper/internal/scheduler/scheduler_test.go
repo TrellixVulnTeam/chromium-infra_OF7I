@@ -87,12 +87,12 @@ func TestScheduleReviews(t *testing.T) {
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00000,
 			RevisionId: "123abc",
-			Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1, "Commit-Queue": 2},
+			Labels:     map[string]int32{"Bot-Commit": 1, "Commit-Queue": 2},
 		})).Return(&gerritpb.ReviewResult{}, nil)
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00001,
 			RevisionId: "234abc",
-			Labels:     map[string]int32{"Bot-Commit": 1, "Owners-Override": 1},
+			Labels:     map[string]int32{"Bot-Commit": 1},
 		})).Return(&gerritpb.ReviewResult{}, nil)
 
 		err := ScheduleReviews(ctx)
