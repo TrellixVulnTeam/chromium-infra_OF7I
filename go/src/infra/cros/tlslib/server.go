@@ -280,6 +280,13 @@ func (s *Server) FetchCrashes(req *tls.FetchCrashesRequest, stream tls.Common_Fe
 		return status.Errorf(codes.FailedPrecondition, "Failed to get client pool for %s: %s", req.Dut, err)
 	}
 	defer s.clientPool.Put(addr, c)
+
+	if exists, err := pathExists(c, serializerPath); err != nil {
+		return status.Errorf(codes.FailedPrecondition, "Failed to check crash_serializer existence: %s", err.Error())
+	} else if !exists {
+		return status.Errorf(codes.Unimplemented, "crash_serializer not present on device")
+	}
+
 	session, err := c.NewSession()
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "Failed to start ssh session for %s: %s", req.Dut, err)

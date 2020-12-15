@@ -28,6 +28,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // FetchCrashes subcommand: fetches crashes from a DUT, optionally uploading them.
@@ -153,12 +155,15 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, t
 
 	cl := tls.NewCommonClient(conn)
 
+	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
+
 	stream, err := cl.FetchCrashes(ctx, &req)
 	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return fetchResp, nil
+		}
 		return nil, errors.Annotate(err, "run TLS FetchCrashes").Err()
 	}
-
-	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
 
 	rtdCrashes, err := findRTDCrashes(ctx, r.Config.Task.ResultsDir)
 	if err != nil {
@@ -224,6 +229,9 @@ readStream:
 			}
 			break readStream
 		default:
+			if status.Code(err) == codes.Unimplemented {
+				return fetchResp, nil
+			}
 			return nil, errors.Annotate(err, "read TLS FetchCrashes response").Err()
 		}
 	}
