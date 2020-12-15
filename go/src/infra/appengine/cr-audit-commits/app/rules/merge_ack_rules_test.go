@@ -8,8 +8,9 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"infra/monorail"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMergeAckRules(t *testing.T) {
@@ -47,7 +48,7 @@ func TestMergeAckRules(t *testing.T) {
 			rc.CommitMessage = "This change has a valid bug ID \nBug:123456"
 			// Run rule
 			rr, _ := AcknowledgeMerge{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, NotificationRequired)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Change to commit has no bug", func() {
 			testClients.Monorail = MockMonorailClient{
@@ -58,7 +59,7 @@ func TestMergeAckRules(t *testing.T) {
 			rc.CommitMessage = "This change has no bug attached"
 			// Run rule
 			rr, _ := AcknowledgeMerge{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, RuleSkipped)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 	})
 }

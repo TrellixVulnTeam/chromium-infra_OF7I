@@ -8,8 +8,6 @@ import (
 	"context"
 
 	cpb "infra/appengine/cr-audit-commits/app/proto"
-
-	"go.chromium.org/luci/common/logging"
 )
 
 // AcknowledgeMerge is a Rule that acknowledges any merge into a release branch.
@@ -24,15 +22,6 @@ func (rule AcknowledgeMerge) GetName() string {
 
 // Run executes the rule.
 func (rule AcknowledgeMerge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
-	result := &RuleResult{}
-	result.RuleResultStatus = RuleSkipped
-	bugID, err := bugIDFromCommitMessage(rc.CommitMessage)
-	if err != nil {
-		// TODO(xinyuoffline): File a bug?
-		logging.WithError(err).Warningf(ctx, "AcknowledgeMerge: Found no bug on relevant commit %s", rc.CommitHash)
-		return result, nil
-	}
-	result.RuleResultStatus = NotificationRequired
-	result.MetaData, _ = SetToken(ctx, "BugNumbers", bugID, result.MetaData)
+	result := &RuleResult{RuleResultStatus: RulePassed}
 	return result, nil
 }

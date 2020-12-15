@@ -238,8 +238,7 @@ func TestNotifier(t *testing.T) {
 				CommitHash:   "badc0de",
 			}
 			err = ds.Get(ctx, rc)
-			// TODO(jclinton) figure out merge behavior
-			So(rc.GetNotificationState("rulesAck"), ShouldEqual, "No notification required")
+			So(rc.GetNotificationState("rulesAck"), ShouldEqual, "Purged removed CommentOnBugToAcknowledgeMerge notifications")
 			So(rc.NotifiedAll, ShouldBeTrue)
 		})
 	})

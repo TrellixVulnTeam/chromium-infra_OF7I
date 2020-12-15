@@ -203,9 +203,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			// Run rule
 			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
-			//Check result message
-			So(rr.Message, ShouldContainSubstring, rc.CommitHash)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Change to commit has an invalid bug ID", func() {
@@ -214,9 +212,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			// Run rule
 			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
-			//Check result message
-			So(rr.Message, ShouldContainSubstring, rc.CommitHash)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 
 	})
