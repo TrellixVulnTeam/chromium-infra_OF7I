@@ -92,6 +92,7 @@ func taskAuditor(rc *router.Context) {
 
 	// If the ref is paused, check if we can unpause it.
 	if repoState.Paused {
+		logging.Debugf(ctx, "Ref %s is paused: cfg is %v", refURL, cfg)
 		if cfg.OverwriteLastKnownCommit != "" && repoState.AcceptedOverwriteLastKnownCommit != cfg.OverwriteLastKnownCommit {
 			repoState.AcceptedOverwriteLastKnownCommit = cfg.OverwriteLastKnownCommit
 			repoState.LastKnownCommit = cfg.OverwriteLastKnownCommit
