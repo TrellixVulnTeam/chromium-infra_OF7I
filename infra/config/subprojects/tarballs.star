@@ -4,13 +4,13 @@
 
 """Jobs that publish tarballs with Chromium source code."""
 
-load("//lib/infra.star", "infra")
+load("//lib/build.star", "build")
 
 def builder(name, recipe, builder_dimension = None, cores = 8, **kwargs):
     luci.builder(
         name = name,
         bucket = "cron",
-        executable = infra.recipe(recipe),
+        executable = build.recipe(recipe),
         service_account = "chromium-tarball-builder@chops-service-accounts.iam.gserviceaccount.com",
         dimensions = {
             "pool": "luci.infra.cron",

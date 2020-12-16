@@ -4,13 +4,13 @@
 
 """Definitions of WPT import/export crons."""
 
-load("//lib/infra.star", "infra")
+load("//lib/build.star", "build")
 
 def cron(name, recipe, execution_timeout = None):
     luci.builder(
         name = name,
         bucket = "cron",
-        executable = infra.recipe(recipe),
+        executable = build.recipe(recipe),
         dimensions = {
             "os": "Ubuntu-16.04",
             "cpu": "x86-64",

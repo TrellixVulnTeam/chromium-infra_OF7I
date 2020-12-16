@@ -1251,9 +1251,9 @@ Runs a step which adds a link to the current CL if there is one.
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/zip/examples/full.py#15)(api):**
 
-[build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium
-[build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-chromium_checkout
-[build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/8c2be8094c9538d4c1ed8d29b9a05bff135ccdec/recipes/README.recipes.md#recipe_modules-docker
+[build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium
+[build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium_checkout
+[build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-docker
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-depot_tools
 [depot_tools/recipe_modules/gclient]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-gclient
