@@ -4,28 +4,6 @@
 
 package messages
 
-// TODO(crbug.com/973577): remove all logic and messages for the old Findit/SoM
-// API when all Findit analyses are migrated to v2.
-
-// FinditResult is the result of request to the findit server.
-// INTERNAL ONLY: For documentation of data format and fields, please check: https://docs.google.com/a/google.com/document/d/1u2O9iGroKKpL38SSK2E_krK29P5PeFI9fM_hgFkjGRc/edit?usp=sharing
-type FinditResult struct {
-	MasterURL                   string       `json:"master_url"`
-	BuilderName                 string       `json:"builder_name"`
-	BuildNumber                 int64        `json:"build_number"`
-	StepName                    string       `json:"step_name"`
-	IsSubTest                   bool         `json:"is_sub_test"`
-	TestName                    string       `json:"test_name"`
-	FirstKnownFailedBuildNumber int64        `json:"first_known_failed_build_number"`
-	SuspectedCLs                []*SuspectCL `json:"suspected_cls"`
-	AnalysisApproach            string       `json:"analysis_approach"`
-	TryJobStatus                string       `json:"try_job_status"`
-	IsFlakyTest                 bool         `json:"is_flaky_test"`
-	HasFindings                 bool         `json:"has_findings"`
-	IsFinished                  bool         `json:"is_finished"`
-	IsSupported                 bool         `json:"is_supported"`
-}
-
 // SuspectCL is a CL which is suspected to have caused a failure.
 type SuspectCL struct {
 	RepoName         string `json:"repo_name"`

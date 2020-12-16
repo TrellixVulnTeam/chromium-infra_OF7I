@@ -33,7 +33,7 @@ Original change's description:
 > Reviewed-on: https://c
 ...skip...
 Lamouri <mlamouri@chromium.org>
-> Cr-Commit-Position: refs/heads/master@{#500312}
+> Cr-Commit-Position: refs/heads/main@{#500312}
 
 TBR=thakis@chromium.org,mlamouri@chromium.org,pfeldman@chromium.org,beccahughes@chromium.org
 
@@ -45,14 +45,14 @@ Bug: 746872
 Reviewed-on: https://chromium-review.googlesource.com/655739
 Reviewed-by: Roger McFarlane <rogerm@chromium.org>
 Commit-Queue: Roger McFarlane <rogerm@chromium.org>
-Cr-Commit-Position: refs/heads/master@{#500363}`
+Cr-Commit-Position: refs/heads/main@{#500363}`
 			c := Change{
 				Comments: text,
 			}
 
 			branch, pos, err := c.CommitPosition()
 			So(err, ShouldBeNil)
-			So(branch, ShouldResemble, "refs/heads/master")
+			So(branch, ShouldResemble, "refs/heads/main")
 			So(pos, ShouldResemble, 500363)
 		})
 

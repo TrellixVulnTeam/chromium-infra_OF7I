@@ -85,11 +85,6 @@ func (cr *CrBugs) CrbugItems(ctx context.Context, label string) ([]messages.Crbu
 	return res.Items, nil
 }
 
-// FinditAPIResponse represents a response from the findit api.
-type FinditAPIResponse struct {
-	Results []*messages.FinditResult `json:"results"`
-}
-
 // FinditAPIResponseV2 represents a response from the findit api.
 type FinditAPIResponseV2 struct {
 	Responses []*messages.FinditResultV2 `json:"responses"`
