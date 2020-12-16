@@ -959,7 +959,7 @@ Recipe to build windows depot_tools bootstrap zipfile.
 &mdash; **def [RunSteps](/recipes/recipe_modules/docker/examples/full.py#14)(api):**
 ### *recipes* / [docker\_image\_builder](/recipes/recipes/docker_image_builder.py)
 
-[DEPS](/recipes/recipes/docker_image_builder.py#8): [build/docker][build/recipe_modules/docker], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/docker_image_builder.py#8): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [docker](#recipe_modules-docker), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 &mdash; **def [RunSteps](/recipes/recipes/docker_image_builder.py#36)(api, arch_type):**
 ### *recipes* / [gae\_tarball\_uploader](/recipes/recipes/gae_tarball_uploader.py)
@@ -1253,7 +1253,6 @@ Runs a step which adds a link to the current CL if there is one.
 
 [build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium
 [build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium_checkout
-[build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-docker
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-depot_tools
 [depot_tools/recipe_modules/gclient]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-gclient

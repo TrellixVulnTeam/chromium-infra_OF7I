@@ -6,9 +6,9 @@ from recipe_engine.post_process import DoesNotRun, MustRun, DropExpectation
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-    'build/docker',
     'depot_tools/bot_update',
     'depot_tools/gclient',
+    'docker',
     'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/properties',

@@ -157,7 +157,7 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[build::docker]/resources/docker_login.py",
+      "RECIPE_MODULE[infra::docker]/resources/docker_login.py",
       "--server",
       "gcr.io",
       "--service-account-token-file",
