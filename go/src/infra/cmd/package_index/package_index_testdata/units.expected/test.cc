@@ -41,7 +41,7 @@ unit {
     }
     info {
       path: "../../third_party/depot_tools/win_toolchain/sdk_header.h"
-      digest: "dbe9f26a572284aad9594aae214681b647e9d8dac16d78323ce7ce8353e54fbb"
+      digest: "d00a30539b38a598d89f113998c1f2fa7924052a4b11b88ef7ead3692576d81d"
     }
   }
   required_input {

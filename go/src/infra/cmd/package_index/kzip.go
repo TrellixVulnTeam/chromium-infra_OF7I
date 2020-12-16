@@ -267,6 +267,12 @@ func (ip *indexPack) dataFileToKzipEntry(ctx context.Context,
 			if err != nil {
 				return err
 			}
+
+			// Replace carriage returns with newline. New lines in files may be represented differently on
+			// Windows and Unix systems [1] so always replace CR+LF with LF. If files are different, Kythe
+			// may not provide correct position for xrefs.
+			// [1] https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_core_autocrlf
+			content = []byte(strings.ReplaceAll(string(content), "\r\n", "\n"))
 			hashByte := sha256.Sum256(content)
 			hash := hex.EncodeToString(hashByte[:])
 
