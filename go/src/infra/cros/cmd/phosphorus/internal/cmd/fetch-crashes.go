@@ -9,6 +9,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"infra/cros/cmd/phosphorus/internal/tls"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -21,7 +22,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
@@ -105,9 +106,7 @@ func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subco
 		defer c()
 	}
 
-	resp, err := runTLSFetchCrashes(ctx, r, tlsConfig{
-		Port: tlsPort,
-	})
+	resp, err := runTLSFetchCrashes(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -132,28 +131,34 @@ func validateFetchCrashesRequest(r phosphorus.FetchCrashesRequest) error {
 
 type fullCrash struct {
 	// info is the metadata for the crash.
-	info *tls.CrashInfo
+	info *tlsapi.CrashInfo
 	// blob is the *combined* blobs for the crash. That is, if FetchCrashes
 	// sent a file across 3 CrashBlob protos, it will only be represented
 	// in one here.
-	blobs []*tls.CrashBlob
+	blobs []*tlsapi.CrashBlob
 }
 
 // runTLSFetchCrashes is the core of the implementation of fetch_crashes: it runs the FetchCrashes TLS API, assembles
 // its output, and (if requested) uploads the crashes.
-func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, tc tlsConfig) (*phosphorus.FetchCrashesResponse, error) {
-	req := tls.FetchCrashesRequest{
+func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (*phosphorus.FetchCrashesResponse, error) {
+	req := tlsapi.FetchCrashesRequest{
 		Dut:       r.DutHostname,
 		FetchCore: false,
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", tc.Port), grpc.WithInsecure())
+	tlsServer, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
+	if err != nil {
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+	defer tlsServer.Stop()
+
+	conn, err := grpc.Dial(tlsServer.Address(), grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Annotate(err, "connect to TLS").Err()
 	}
 	defer conn.Close()
 
-	cl := tls.NewCommonClient(conn)
+	cl := tlsapi.NewCommonClient(conn)
 
 	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
 
@@ -173,10 +178,10 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, t
 	outDir := filepath.Join(r.Config.Task.ResultsDir, outputSubDir)
 
 	var lastCrashID int64 = -1
-	var crashInfo *tls.CrashInfo
+	var crashInfo *tlsapi.CrashInfo
 	// crashBlobs maps the blob's filename to the full blob struct. It is
 	// used to combine files split across multiple blobs.
-	crashBlobs := map[string]*tls.CrashBlob{}
+	crashBlobs := map[string]*tlsapi.CrashBlob{}
 readStream:
 	for {
 		resp, err := stream.Recv()
@@ -195,24 +200,24 @@ readStream:
 				}
 				lastCrashID = resp.CrashId
 				crashInfo = nil
-				crashBlobs = map[string]*tls.CrashBlob{}
+				crashBlobs = map[string]*tlsapi.CrashBlob{}
 			}
 			switch x := resp.Data.(type) {
-			case *tls.FetchCrashesResponse_Crash:
+			case *tlsapi.FetchCrashesResponse_Crash:
 				if crashInfo != nil {
 					logging.Errorf(ctx, "Found two CrashInfos for crash %d. Second exec: %s", lastCrashID, x.Crash.ExecName)
 				} else {
 					crashInfo = x.Crash
 					logging.Infof(ctx, "Starting to process crash %d (exec %s)", lastCrashID, crashInfo.ExecName)
 				}
-			case *tls.FetchCrashesResponse_Blob:
+			case *tlsapi.FetchCrashesResponse_Blob:
 				// Reassemble the blob into one proto.
 				if crashBlobs[x.Blob.Filename] == nil {
 					crashBlobs[x.Blob.Filename] = x.Blob
 				} else {
 					crashBlobs[x.Blob.Filename].Blob = append(crashBlobs[x.Blob.Filename].Blob, x.Blob.Blob...)
 				}
-			case *tls.FetchCrashesResponse_Core:
+			case *tlsapi.FetchCrashesResponse_Core:
 				logging.Errorf(ctx, "Unexpected coredump for crash %d. Ignoring.", lastCrashID)
 			default:
 				logging.Errorf(ctx, "Unexpected crash response of type %T for crash %d", x, lastCrashID)
@@ -286,11 +291,11 @@ func findMissingCrashes(rtdCrashes map[string]bool, crashes []*phosphorus.CrashS
 }
 
 // removeCrashes empties out all accessible crash directories on the DUT
-func removeCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, cl tls.CommonClient) error {
+func removeCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, cl tlsapi.CommonClient) error {
 	// Some of these directories may not exist (e.g. if the user isn't logged in), and that's okay.
 	crashDirs := []string{"/var/spool/crash/", "/home/chronos/crash/", "/home/root/*/crash/", "/home/chronos/u-*/crash/"}
 
-	req := &tls.ExecDutCommandRequest{
+	req := &tlsapi.ExecDutCommandRequest{
 		Name:    r.DutHostname,
 		Command: fmt.Sprintf(`/usr/bin/find %s -maxdepth 1 -type f -delete`, strings.Join(crashDirs, " ")),
 	}
@@ -317,7 +322,7 @@ readStream:
 }
 
 // writeIndividualCrash writes an individual crash to |dir|/crashes, returning the base part of the crash name written
-func writeIndividualCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[string]*tls.CrashBlob, dir string) (string, error) {
+func writeIndividualCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[string]*tlsapi.CrashBlob, dir string) (string, error) {
 	crashDir := filepath.Join(dir, "crashes")
 	if err := os.MkdirAll(crashDir, 0755); err != nil {
 		return "", errors.Annotate(err, "create output directory").Err()
@@ -412,10 +417,10 @@ func writeProcessedCrashDetails(ctx context.Context, dir string, crashes []*phos
 
 // processCrash evaluates a fully-received crash, writes it to |dir|/crashes, uploads
 // it if requested, and gives back an appropriate CrashSummary.
-func processCrash(ctx context.Context, info *tls.CrashInfo, crashBlobs map[string]*tls.CrashBlob, r phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
+func processCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[string]*tlsapi.CrashBlob, r phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
 	var url string
 	if r.UploadCrashes {
-		var blobs []*tls.CrashBlob
+		var blobs []*tlsapi.CrashBlob
 		for _, b := range crashBlobs {
 			blobs = append(blobs, b)
 		}
@@ -562,7 +567,7 @@ func formatCrashForUpload(ctx context.Context, crash fullCrash) (buf bytes.Buffe
 	// create a new slice of fields to upload, including those that are
 	// separated out in the proto. We use a new slice because we don't want
 	// to edit the existing one in the proto.
-	fieldsToUpload := []*tls.CrashMetadata{
+	fieldsToUpload := []*tlsapi.CrashMetadata{
 		{Key: "exec_name", Text: crash.info.ExecName},
 		{Key: "prod", Text: crash.info.Prod},
 		{Key: "ver", Text: crash.info.Ver},

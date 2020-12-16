@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
+	"infra/cros/cmd/phosphorus/internal/tls"
 	"infra/libs/lro"
 )
 
@@ -67,8 +68,9 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 
 const (
 	// TODO(pprabhu): Find a configurable way for drone to provide us the port
-	// number.
-	tlsPort = 7152
+	// numbers.
+	droneTLSPort = 7152
+	droneTLWPort = 7151
 )
 
 func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
@@ -88,9 +90,7 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 	}
 
 	if r.UseTls {
-		resp, err := runTLSProvision(ctx, r, tlsConfig{
-			Port: tlsPort,
-		})
+		resp, err := runTLSProvision(ctx, r)
 		if err != nil {
 			return err
 		}
@@ -195,37 +195,39 @@ func runResetLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Re
 	return ar, nil
 }
 
-type tlsConfig struct {
-	Port int
-}
-
 // runTLSProvision provisions a DUT via the TLS API.
 // See go/cros-tls go/cros-prover
 //
 // Errors returned from the actual provision operation are interpreted into
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
-func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest, tc tlsConfig) (*phosphorus.PrejobResponse, error) {
+func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	p, err := gsPathToImage(r.DesiredProvisionableLabels)
 	if err != nil {
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
-	req := tls.ProvisionDutRequest{
+	req := tlsapi.ProvisionDutRequest{
 		Name: r.DutHostname,
-		Image: &tls.ProvisionDutRequest_ChromeOSImage{
-			PathOneof: &tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
+		Image: &tlsapi.ProvisionDutRequest_ChromeOSImage{
+			PathOneof: &tlsapi.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
 				GsPathPrefix: p,
 			},
 		},
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", tc.Port), grpc.WithInsecure())
+	tlsServer, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
+	if err != nil {
+		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	}
+	defer tlsServer.Stop()
+
+	conn, err := grpc.Dial(tlsServer.Address(), grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
 	defer conn.Close()
 
-	c := tls.NewCommonClient(conn)
+	c := tlsapi.NewCommonClient(conn)
 
 	op, err := c.ProvisionDut(ctx, &req)
 	if err != nil {
