@@ -70,9 +70,7 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 	}
 
 	labels := map[string]int32{"Bot-Commit": 1}
-	if t.AutoSubmit {
-		labels["Commit-Queue"] = 2
-	}
+	// TODO: conditional CQ+2
 
 	setReviewReq := &gerritpb.SetReviewRequest{
 		Number:     t.Number,
