@@ -13,4 +13,8 @@
   return 0;
 }
 
++ (void)getIntValue {
+
+}
+
 @end

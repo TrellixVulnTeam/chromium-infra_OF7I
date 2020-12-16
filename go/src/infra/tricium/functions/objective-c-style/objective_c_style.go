@@ -25,7 +25,7 @@ var (
 	fileAllowlist = []string{".m", ".mm"}
 
 	// Captures return type and selector.
-	methodImplementationRegexp = regexp.MustCompile(`-\s\((.+)\)(get.*)\s\{`)
+	methodImplementationRegexp = regexp.MustCompile(`[-+]\s\((.+)\)(get.*)\s\{`)
 )
 
 func main() {

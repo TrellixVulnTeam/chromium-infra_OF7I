@@ -55,6 +55,16 @@ func TestGetPrefix(t *testing.T) {
 				StartChar: 0,
 				EndChar:   41,
 			},
+
+			{
+				Category:  "ObjectiveCStyle/Get",
+				Message:   "The use of \"get\" is unnecessary, unless one or more values are returned indirectly. See: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CodingGuidelines/Articles/NamingMethods.html#:~:text=The%20use%20of%20%22get%22%20is%20unnecessary,%20unless%20one%20or%20more%20values%20are%20returned%20indirectly.",
+				Path:      "test/src/bad_get.mm",
+				StartLine: 16,
+				EndLine:   16,
+				StartChar: 0,
+				EndChar:   21,
+			},
 		})
 	})
 }
