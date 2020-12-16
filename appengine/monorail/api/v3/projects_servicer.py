@@ -10,7 +10,9 @@ from __future__ import absolute_import
 from google.protobuf import empty_pb2
 
 from api import resource_name_converters as rnc
+from api.v3 import api_constants
 from api.v3 import monorail_servicer
+from api.v3 import paginator
 from api.v3.api_proto import projects_pb2
 from api.v3.api_proto import projects_prpc_pb2
 from businesslogic import work_env
@@ -45,6 +47,37 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
     return projects_pb2.ListIssueTemplatesResponse(
         templates=self.converter.ConvertIssueTemplates(project_id, templates))
+
+  @monorail_servicer.PRPCMethod
+  def ListComponentDefs(self, mc, request):
+    # type: (MonorailContext, ListComponentDefsRequest) ->
+    #   ListComponentDefsResponse
+    """pRPC API method that implements ListComponentDefs.
+
+      Raises:
+        InputException if the request.parent is invalid.
+        NoSuchProjectException if the parent project is not found.
+    """
+    project_id = rnc.IngestProjectName(mc.cnxn, request.parent, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProject(project_id)
+      mc.LookupLoggedInUserPerms(project)
+
+      page_size = paginator.CoercePageSize(
+        request.page_size, api_constants.MAX_COMPONENTS_PER_PAGE)
+      pager = paginator.Paginator(
+          parent=request.parent, page_size=page_size)
+      list_result = we.ListComponentDefs(
+          project_id, page_size, pager.GetStart(request.page_token))
+
+      api_component_defs = self.converter.ConvertComponentDefs(
+          list_result.items, project_id)
+
+    return projects_pb2.ListComponentDefsResponse(
+        component_defs=api_component_defs,
+        next_page_token=pager.GenerateNextPageToken(list_result.next_start))
 
   @monorail_servicer.PRPCMethod
   def CreateComponentDef(self, mc, request):

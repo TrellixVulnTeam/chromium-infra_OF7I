@@ -23,3 +23,6 @@ MAX_MODIFY_APPROVAL_VALUES = 100
 
 # Max users to fetch in the BatchGetUsers API.
 MAX_BATCH_USERS = 100
+
+# Max component defs to fetch in the ListComponentDefs API
+MAX_COMPONENTS_PER_PAGE = 100

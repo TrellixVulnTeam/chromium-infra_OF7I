@@ -26,10 +26,17 @@ from framework import permissions
 from testing import fake
 from services import service_manager
 
+from google.appengine.ext import testbed
 
 class ProjectsServicerTest(unittest.TestCase):
 
   def setUp(self):
+    # memcache and datastore needed for generating page tokens.
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_memcache_stub()
+    self.testbed.init_datastore_v3_stub()
+
     self.cnxn = fake.MonorailConnection()
     self.services = service_manager.Services(
         features=fake.FeaturesService(),
@@ -85,6 +92,79 @@ class ProjectsServicerTest(unittest.TestCase):
     self.assertEqual(
         response,
         projects_pb2.ListIssueTemplatesResponse(templates=[expected_template]))
+
+  @mock.patch('api.v3.api_constants.MAX_COMPONENTS_PER_PAGE', 3)
+  def testListComponentDefs(self):
+    project = self.services.project.TestAddProject(
+        'greece', project_id=987, owner_ids=[self.user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    cd_1 = fake.MakeTestComponentDef(project.project_id, 1, path='Circe')
+    cd_2 = fake.MakeTestComponentDef(project.project_id, 2, path='Achilles')
+    cd_3 = fake.MakeTestComponentDef(project.project_id, 3, path='Patroclus')
+    cd_4 = fake.MakeTestComponentDef(project.project_id, 3, path='Galatea')
+    config.component_defs = [cd_1, cd_2, cd_3, cd_4]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+
+    request = projects_pb2.ListComponentDefsRequest(parent='projects/greece')
+    response_1 = self.CallWrapped(
+        self.projects_svcr.ListComponentDefs, mc, request)
+    expected_cds_1 = self.converter.ConvertComponentDefs(
+        [cd_1, cd_2, cd_3], project.project_id)
+    self.assertEqual(list(response_1.component_defs), expected_cds_1)
+
+    request = projects_pb2.ListComponentDefsRequest(
+        parent='projects/greece', page_token=response_1.next_page_token)
+    response_2 = self.CallWrapped(
+        self.projects_svcr.ListComponentDefs, mc, request)
+    expected_cds_2 = self.converter.ConvertComponentDefs(
+        [cd_4], project.project_id)
+    self.assertEqual(list(response_2.component_defs), expected_cds_2)
+
+  @mock.patch('api.v3.api_constants.MAX_COMPONENTS_PER_PAGE', 2)
+  def testListComponentDefs_PaginateAndMaxSizeCap(self):
+    project = self.services.project.TestAddProject(
+        'greece', project_id=987, owner_ids=[self.user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    cd_1 = fake.MakeTestComponentDef(project.project_id, 1, path='Circe')
+    cd_2 = fake.MakeTestComponentDef(project.project_id, 2, path='Achilles')
+    cd_3 = fake.MakeTestComponentDef(project.project_id, 3, path='Patroclus')
+    cd_4 = fake.MakeTestComponentDef(project.project_id, 4, path='Galatea')
+    cd_5 = fake.MakeTestComponentDef(project.project_id, 5, path='Briseis')
+    config.component_defs = [cd_1, cd_2, cd_3, cd_4, cd_5]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+
+    request = projects_pb2.ListComponentDefsRequest(
+        parent='projects/greece', page_size=3)
+    response_1 = self.CallWrapped(
+        self.projects_svcr.ListComponentDefs, mc, request)
+    expected_cds_1 = self.converter.ConvertComponentDefs(
+        [cd_1, cd_2], project.project_id)
+    self.assertEqual(list(response_1.component_defs), expected_cds_1)
+
+    request = projects_pb2.ListComponentDefsRequest(
+        parent='projects/greece', page_size=3,
+        page_token=response_1.next_page_token)
+    response_2 = self.CallWrapped(
+        self.projects_svcr.ListComponentDefs, mc, request)
+    expected_cds_2 = self.converter.ConvertComponentDefs(
+        [cd_3, cd_4], project.project_id)
+    self.assertEqual(list(response_2.component_defs), expected_cds_2)
+
+    request = projects_pb2.ListComponentDefsRequest(
+        parent='projects/greece', page_size=3,
+        page_token=response_2.next_page_token)
+    response_3 = self.CallWrapped(
+        self.projects_svcr.ListComponentDefs, mc, request)
+    expected_cds_3 = self.converter.ConvertComponentDefs(
+        [cd_5], project.project_id)
+    self.assertEqual(response_3, projects_pb2.ListComponentDefsResponse(
+        component_defs=expected_cds_3))
 
   @mock.patch('time.time')
   def testCreateComponentDef(self, mockTime):
