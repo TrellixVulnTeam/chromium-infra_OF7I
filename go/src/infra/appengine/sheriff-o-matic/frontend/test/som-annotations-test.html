@@ -222,16 +222,38 @@
               name: "WebKit Win7",
               url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7"
             }
-          ]
+          ],
+          reason: {
+            step: "unit_tests"
+          }
         }
       }];
 
-      assert.equal(element._commentForBug(bugModel),
-        "WebKit Win7 step failure\n\n" +
-        "List of failed builders:\n\n" +
-        "Builder: WebKit Win7\n" +
-        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n\n"
-      );
+      assert.equal(element._commentForBug({name: 'android', bug_queue_label: 'sheriff-android'}, bugModel),
+`<insert test name/suite> is failing in step "unit_tests" on builder "WebKit Win7"
+
+List of failed builders:
+
+Builder: WebKit Win7
+https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7
+
+------- Note to sheriffs -------
+
+For failing tests:
+Please file a separate bug for each failing test suite, filling in the name of the test or suite (<in angle brackets>).
+
+Add a component so that bugs end up in the appropriate triage queue, and assign an owner if possible.
+
+If applicable, also include a sample stack trace, link to the flakiness dashboard, and/or post-test screenshot to help with future debugging.
+
+If a culprit CL can be identified, revert the CL. Otherwise, disable the test.
+When either action is complete and the issue no longer requires sheriff attention, remove the sheriff-android label.
+
+For infra failures:
+See go/bugatrooper for instructions and bug templates
+
+------------------------------
+`);
     });
 
     test('filing a bug generates comment for new bug - first failure is available', function() {
@@ -245,18 +267,40 @@
               first_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b12345",
               latest_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789"
             }
-          ]
+          ],
+          reason: {
+            step: "unit_tests"
+          }
         }
       }];
 
-      assert.equal(element._commentForBug(bugModel),
-        "WebKit Win7 step failure\n\n" +
-        "List of failed builders:\n\n" +
-        "Builder: WebKit Win7\n" +
-        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n" +
-        "First failing build:\n" +
-        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b12345\n\n"
-      );
+      assert.equal(element._commentForBug({name: 'android', bug_queue_label: 'sheriff-android'}, bugModel),
+`<insert test name/suite> is failing in step "unit_tests" on builder "WebKit Win7"
+
+List of failed builders:
+
+Builder: WebKit Win7
+https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7
+First failing build:
+https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b12345
+
+------- Note to sheriffs -------
+
+For failing tests:
+Please file a separate bug for each failing test suite, filling in the name of the test or suite (<in angle brackets>).
+
+Add a component so that bugs end up in the appropriate triage queue, and assign an owner if possible.
+
+If applicable, also include a sample stack trace, link to the flakiness dashboard, and/or post-test screenshot to help with future debugging.
+
+If a culprit CL can be identified, revert the CL. Otherwise, disable the test.
+When either action is complete and the issue no longer requires sheriff attention, remove the sheriff-android label.
+
+For infra failures:
+See go/bugatrooper for instructions and bug templates
+
+------------------------------
+`);
     });
 
     test('filing a bug generates comment for new bug - first failure not available', function() {
@@ -270,18 +314,40 @@
               first_failure_url: "",
               latest_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789"
             }
-          ]
+          ],
+          reason: {
+            step: "unit_tests"
+          }
         }
       }];
 
-      assert.equal(element._commentForBug(bugModel),
-        "WebKit Win7 step failure\n\n" +
-        "List of failed builders:\n\n" +
-        "Builder: WebKit Win7\n" +
-        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n" +
-        "Latest failing build:\n" +
-        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789\n\n"
-      );
+      assert.equal(element._commentForBug({name: 'android', bug_queue_label: 'sheriff-android'}, bugModel),
+`<insert test name/suite> is failing in step "unit_tests" on builder "WebKit Win7"
+
+List of failed builders:
+
+Builder: WebKit Win7
+https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7
+Latest failing build:
+https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789
+
+------- Note to sheriffs -------
+
+For failing tests:
+Please file a separate bug for each failing test suite, filling in the name of the test or suite (<in angle brackets>).
+
+Add a component so that bugs end up in the appropriate triage queue, and assign an owner if possible.
+
+If applicable, also include a sample stack trace, link to the flakiness dashboard, and/or post-test screenshot to help with future debugging.
+
+If a culprit CL can be identified, revert the CL. Otherwise, disable the test.
+When either action is complete and the issue no longer requires sheriff attention, remove the sheriff-android label.
+
+For infra failures:
+See go/bugatrooper for instructions and bug templates
+
+------------------------------
+`);
     });
 
     test('click file bugs with defaults', (done) => {
