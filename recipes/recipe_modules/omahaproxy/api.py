@@ -12,12 +12,13 @@ class OmahaproxyApi(recipe_api.RecipeApi):
   """APIs for interacting with omahaproxy."""
 
   @staticmethod
-  def split_version(text):
+  def split_version(text):  # pragma: no cover
     result = [int(x) for x in text.split('.')]
     assert len(result) == 4
     return result
 
-  def history(self, min_major_version=None, exclude_platforms=None):
+  def history(self, min_major_version=None,
+              exclude_platforms=None):  # pragma: no cover
     exclude_platforms = exclude_platforms or []
     TEST_DATA = """os,channel,version,timestamp
         ios,canary,74.0.3729.169,2018-07-16 07:25:01.309860
