@@ -44,7 +44,6 @@ func application(p Params) *cli.Application {
 			cmdExport(),
 			cmdCompute(),
 			cmdChromiumUpdate(&p),
-			cmdMigrate(),
 
 			{},
 			authcli.SubcommandLogin(p.Auth, "auth-login", false),
