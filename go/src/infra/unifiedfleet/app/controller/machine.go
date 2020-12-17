@@ -175,6 +175,53 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 	return machine, nil
 }
 
+// UpdateDutMeta updates only duta meta data for a given ChromeOS DUT.
+//
+// It's a temporary method to correct serial number & HWID.
+// Will remove once HaRT could provide us the correct info.
+func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
+	f := func(ctx context.Context) error {
+		machine, err := registration.GetMachine(ctx, meta.GetChromeosDeviceId())
+		if err != nil {
+			return errors.Annotate(err, "UpdateDutMeta").Err()
+		}
+		hc := getMachineHistoryClient(machine)
+
+		osMachine := machine.GetChromeosMachine()
+		if osMachine == nil {
+			logging.Warningf(ctx, "%s is not a valid Chromeos machine, skip updating dut meta", meta.GetChromeosDeviceId())
+			return nil
+		}
+		// Copy for logging
+		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+
+		if machine.GetSerialNumber() == meta.GetSerialNumber() &&
+			machine.GetChromeosMachine().GetHwid() == meta.GetHwID() &&
+			machine.GetChromeosMachine().GetSku() == meta.GetDeviceSku() {
+			logging.Warningf(ctx, "nothing to update: old serial number %q, old hwid %q, old device-sku %q", meta.GetSerialNumber(), meta.GetHwID(), meta.GetDeviceSku())
+			return nil
+		}
+
+		machine.SerialNumber = meta.GetSerialNumber()
+		machine.GetChromeosMachine().Hwid = meta.GetHwID()
+		machine.GetChromeosMachine().Sku = meta.GetDeviceSku()
+		// Update the machine
+		// Won't update asset as asset will be updated from Inv2 in pre-launch period, which will definitely be correct.
+		// Later when the asset info is updated from HaRT, UpdateDutMeta will be abandoned.
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return errors.Annotate(err, "Unable to update dut meta for %s", machine.Name).Err()
+		}
+		hc.LogMachineChanges(oldMachine, machine)
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update dut meta: %s", err)
+		return err
+	}
+	return nil
+}
+
 // processMachineUpdateMask process update field mask to get only specific update
 // fields and return a complete machine object with updated and existing fields
 func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask, hc *HistoryClient) (*ufspb.Machine, error) {

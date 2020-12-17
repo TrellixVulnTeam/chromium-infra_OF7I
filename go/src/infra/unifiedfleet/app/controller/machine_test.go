@@ -619,6 +619,58 @@ func TestUpdateMachine(t *testing.T) {
 	})
 }
 
+func TestUpdateDutMeta(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("UpdateDutLab for an OS machine", t, func() {
+		Convey("Update a non-OS machine", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-dutmeta-1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = UpdateDutMeta(ctx, &ufspb.DutMeta{
+				ChromeosDeviceId: "machine-dutmeta-1",
+				Hostname:         "machinelse-labmeta-1",
+				SerialNumber:     "fake-serial",
+			})
+			// Update is skipped without error
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Update a OS machine - happy path", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-dutmeta-2",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+			}
+			req, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			So(req.GetSerialNumber(), ShouldBeEmpty)
+			So(req.GetChromeosMachine().GetHwid(), ShouldBeEmpty)
+			So(req.GetChromeosMachine().GetSku(), ShouldBeEmpty)
+
+			err = UpdateDutMeta(ctx, &ufspb.DutMeta{
+				ChromeosDeviceId: "machine-dutmeta-2",
+				Hostname:         "machinelse-dutmeta-2",
+				SerialNumber:     "fake-serial",
+				HwID:             "fake-hwid",
+				DeviceSku:        "fake-devicesku",
+			})
+			So(err, ShouldBeNil)
+			req, err = registration.GetMachine(ctx, "machine-dutmeta-2")
+			So(err, ShouldBeNil)
+			So(req.GetSerialNumber(), ShouldEqual, "fake-serial")
+			So(req.GetChromeosMachine().GetHwid(), ShouldEqual, "fake-hwid")
+			So(req.GetChromeosMachine().GetSku(), ShouldEqual, "fake-devicesku")
+		})
+	})
+}
+
 func TestDeleteMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
