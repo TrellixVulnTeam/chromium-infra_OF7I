@@ -18,8 +18,13 @@ message Workflow {
   // TODO(qyearsley): remove service_account if it is unused.
   string service_account = 1;
   repeated Worker workers = 2;
+
+  // TODO(crbug/1146109): Remove swarming_server and isolate_server.
+  // DEPRECATED, ignored.
   string swarming_server = 3;
+  // DEPRECATED, ignored.
   string isolate_server = 4;
+
   // Function definitions used for this workflow; these contain the function
   // owner and component, to be used when filling out a bug filing template.
   repeated tricium.Function functions = 5;
@@ -47,8 +52,7 @@ message Worker {
   // Name of the runtime platform configuration.
   tricium.Platform.Name runtime_platform = 7;
 
-  // Swarming dimensions for execution of the worker. These should be on the
-  // form "key:value", using keys and values known to the swarming service.
+  // DEPRECATED, ignored.
   repeated string dimensions = 8;
 
   // List of cipd packages needed for the swarming task used to execute the

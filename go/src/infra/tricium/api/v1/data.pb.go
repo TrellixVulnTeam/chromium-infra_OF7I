@@ -456,8 +456,7 @@ func (m *Data_ClangDetails) GetCompDepPaths() []string {
 
 // Results from running a Tricium analyzer.
 //
-// Results are returned to the Tricium service via isolated output from
-// swarming tasks executing Tricium workers or from Buildbucket presentation
+// Results are returned to the Tricium service from Buildbucket
 // properties on executed Tricium recipes.
 //
 // ISOLATED PATH: tricium/data/results.json

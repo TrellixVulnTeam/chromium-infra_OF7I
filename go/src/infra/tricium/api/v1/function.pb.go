@@ -21,6 +21,7 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // Tricium functions; isolators and analyzers.
+// After transition to recipe-based analyzers, all functions are analyzers.
 type Function_Type int32
 
 const (
@@ -51,9 +52,10 @@ func (Function_Type) EnumDescriptor() ([]byte, []int) {
 
 // Tricium function.
 //
-// There are two types of functions; isolators and analyzers.
-// All functions have one input (needs) and one output (provides).
-// For analyzer functions, the output must be of type Data.Results.
+// Originally, there were two types of functions; isolators and analyzers.
+// For analyzer functions, the output must be of type Data.Results. After
+// transition to recipe-based analyzers only, all functions should be analyzers
+// and input type is ignored.
 type Function struct {
 	// The type of this function.
 	//
@@ -501,6 +503,9 @@ func (m *Recipe) GetBuilder() string {
 }
 
 // Specification of a command.
+//
+// DEPRECATED, should not be used.
+// TODO(crbug/1146109): Remove.
 type Cmd struct {
 	// Executable binary.
 	Exec string `protobuf:"bytes,1,opt,name=exec,proto3" json:"exec,omitempty"`

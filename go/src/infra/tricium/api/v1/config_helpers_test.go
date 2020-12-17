@@ -408,14 +408,6 @@ func TestValidateImpl(t *testing.T) {
 		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
 	})
 
-	Convey("Impl must have deadline specified", t, func() {
-		impl := &Impl{
-			RuntimePlatform: Platform_UBUNTU,
-			Impl:            &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-		}
-		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
-	})
-
 	Convey("Impl must have cmd or recipe specified", t, func() {
 		impl := &Impl{
 			RuntimePlatform: Platform_UBUNTU,

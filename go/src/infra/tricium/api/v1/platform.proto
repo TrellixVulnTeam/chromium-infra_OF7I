@@ -54,9 +54,8 @@ message Platform {
   message Details {
     Name name = 1;
 
-    // Swarming dimensions of the form "key:value", with keys and values mapping
-    // to valid swarming keys/values.
-    repeated string dimensions = 2;
+    // DEPRECATED, ignored.
+    repeated string dimensions = 2 [deprecated=true];
 
     // Whether this platform can be used as a runtime platform.
     //

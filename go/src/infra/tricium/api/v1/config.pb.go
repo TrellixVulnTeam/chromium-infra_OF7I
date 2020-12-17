@@ -69,13 +69,11 @@ type ServiceConfig struct {
 	// These packages will be adjusted for the platform in question, by appending
 	// platform name details to the end of the package name.
 	RecipePackages []*CipdPackage `protobuf:"bytes,6,rep,name=recipe_packages,json=recipePackages,proto3" json:"recipe_packages,omitempty"`
-	// Swarming server to use for this service instance.
-	//
-	// This should be a full URL with no trailing slash.
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	SwarmingServer string `protobuf:"bytes,7,opt,name=swarming_server,json=swarmingServer,proto3" json:"swarming_server,omitempty"`
-	// Isolate server to use for this service instance.
-	//
-	// This should be a full URL with no trailing slash.
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	IsolateServer string `protobuf:"bytes,8,opt,name=isolate_server,json=isolateServer,proto3" json:"isolate_server,omitempty"`
 	// Buildbucket server to use for this service instance.
 	//
@@ -185,9 +183,9 @@ type ProjectConfig struct {
 	// Repositories, including Git and Gerrit details.
 	Repos []*RepoDetails `protobuf:"bytes,5,rep,name=repos,proto3" json:"repos,omitempty"`
 	// General service account for this project.
-	// Used for any service interaction, with the exception of swarming.
 	ServiceAccount string `protobuf:"bytes,6,opt,name=service_account,json=serviceAccount,proto3" json:"service_account,omitempty"`
-	// Project-specific swarming service account.
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	SwarmingServiceAccount string   `protobuf:"bytes,7,opt,name=swarming_service_account,json=swarmingServiceAccount,proto3" json:"swarming_service_account,omitempty"`
 	XXX_NoUnkeyedLiteral   struct{} `json:"-"`
 	XXX_unrecognized       []byte   `json:"-"`

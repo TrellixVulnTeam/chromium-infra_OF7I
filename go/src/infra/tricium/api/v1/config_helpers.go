@@ -220,9 +220,6 @@ func validateImpl(i *Impl, sc *ServiceConfig, needs *Data_TypeDetails, provides 
 	if i.GetCmd() == nil && i.GetRecipe() == nil {
 		return errors.New("must include either command or recipe in impl")
 	}
-	if i.GetDeadline() == 0 {
-		return errors.New("missing deadline")
-	}
 	return nil
 }
 

@@ -11,11 +11,13 @@ import "infra/tricium/api/v1/platform.proto";
 
 // Tricium function.
 //
-// There are two types of functions; isolators and analyzers.
-// All functions have one input (needs) and one output (provides).
-// For analyzer functions, the output must be of type Data.Results.
+// Originally, there were two types of functions; isolators and analyzers.
+// For analyzer functions, the output must be of type Data.Results. After
+// transition to recipe-based analyzers only, all functions should be analyzers
+// and input type is ignored.
 message Function {
   // Tricium functions; isolators and analyzers.
+  // After transition to recipe-based analyzers, all functions are analyzers.
   enum Type {
     NONE     = 0;
     ISOLATOR = 1;
@@ -128,7 +130,9 @@ message Impl {
     Recipe recipe = 5;
 
     // Command for binary-based implementation.
-    Cmd cmd = 6;
+    // DEPRECATED, any analyzers with Cmd will be not be triggered.
+    // TODO(crbug/1146109): Remove.
+    Cmd cmd = 6 [deprecated=true];
   }
 
   // Deadline for execution of corresponding workers.
@@ -168,6 +172,9 @@ message Recipe {
 }
 
 // Specification of a command.
+//
+// DEPRECATED, should not be used.
+// TODO(crbug/1146109): Remove.
 message Cmd {
   // Executable binary.
   string exec = 1;

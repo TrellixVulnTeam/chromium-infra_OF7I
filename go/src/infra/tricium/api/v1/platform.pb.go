@@ -121,8 +121,7 @@ var xxx_messageInfo_Platform proto.InternalMessageInfo
 // Links platform enum name to Swarming dimensions.
 type Platform_Details struct {
 	Name Platform_Name `protobuf:"varint,1,opt,name=name,proto3,enum=tricium.Platform_Name" json:"name,omitempty"`
-	// Swarming dimensions of the form "key:value", with keys and values mapping
-	// to valid swarming keys/values.
+	// DEPRECATED, ignored.
 	Dimensions []string `protobuf:"bytes,2,rep,name=dimensions,proto3" json:"dimensions,omitempty"`
 	// Whether this platform can be used as a runtime platform.
 	//

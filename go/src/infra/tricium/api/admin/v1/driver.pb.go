@@ -26,8 +26,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// TriggerRequest contains the details needed to launch a swarming task for a
-// Tricium worker.
+// TriggerRequest contains the details for launching a build for a worker.
 type TriggerRequest struct {
 	RunId                int64    `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	IsolatedInputHash    string   `protobuf:"bytes,2,opt,name=isolated_input_hash,json=isolatedInputHash,proto3" json:"isolated_input_hash,omitempty"`
@@ -114,21 +113,16 @@ func (m *TriggerResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TriggerResponse proto.InternalMessageInfo
 
-// CollectRequest contains the details needed to collect results from a swarming task
-// running a Tricium worker and to launch succeeding Tricium workers.
+// CollectRequest contains the details needed to collect results from a worker.
 type CollectRequest struct {
 	RunId int64 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// The isolated input of this worker is imported in the input hash of any successor
-	// workers of this worker. Passing it along here to make sure it is available.
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	IsolatedInputHash string `protobuf:"bytes,2,opt,name=isolated_input_hash,json=isolatedInputHash,proto3" json:"isolated_input_hash,omitempty"`
-	// Points out which worker to collect results for. This worker name is used to
-	// mangle the ID of the swarming task running the worker.
+	// Worker name of the worker to collect results for.
 	Worker string `protobuf:"bytes,3,opt,name=worker,proto3" json:"worker,omitempty"`
-	// Only one of task_id and build_id should be populated, depending on which
-	// type of task is being collected (buildbucket or swarming.)
-	// The Swarming task ID.
-	//
-	// Used to collect results from the completed swarming worker task.
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	TaskId string `protobuf:"bytes,4,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
 	// The Buildbucket build ID.
 	//
@@ -274,9 +268,9 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type DriverClient interface {
-	// Trigger triggers a swarming task for a Tricium worker.
+	// Trigger triggers a build for a Tricium worker.
 	Trigger(ctx context.Context, in *TriggerRequest, opts ...grpc.CallOption) (*TriggerResponse, error)
-	// Collect collects results from a swarming task running a Tricium worker.
+	// Collect collects results from a build running a Tricium worker.
 	Collect(ctx context.Context, in *CollectRequest, opts ...grpc.CallOption) (*CollectResponse, error)
 }
 type driverPRPCClient struct {

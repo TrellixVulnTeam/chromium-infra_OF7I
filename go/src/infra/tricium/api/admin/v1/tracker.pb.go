@@ -104,12 +104,16 @@ var xxx_messageInfo_WorkflowLaunchedResponse proto.InternalMessageInfo
 // WorkerLaunchedRequest specifies details needed to mark a worker as launched.
 // This includes details useful for the tracking UI.
 //
-// This message should be sent by the Driver after a swarming task or buildbucket
-// build for the worker has been triggered.
+// This message should be sent by the Driver after a Buildbucket build for the
+// worker has been triggered.
 type WorkerLaunchedRequest struct {
-	RunId                int64    `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Worker               string   `protobuf:"bytes,2,opt,name=worker,proto3" json:"worker,omitempty"`
-	IsolatedInputHash    string   `protobuf:"bytes,3,opt,name=isolated_input_hash,json=isolatedInputHash,proto3" json:"isolated_input_hash,omitempty"`
+	RunId  int64  `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Worker string `protobuf:"bytes,2,opt,name=worker,proto3" json:"worker,omitempty"`
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
+	IsolatedInputHash string `protobuf:"bytes,3,opt,name=isolated_input_hash,json=isolatedInputHash,proto3" json:"isolated_input_hash,omitempty"`
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	SwarmingTaskId       string   `protobuf:"bytes,4,opt,name=swarming_task_id,json=swarmingTaskId,proto3" json:"swarming_task_id,omitempty"`
 	BuildbucketBuildId   int64    `protobuf:"varint,5,opt,name=buildbucket_build_id,json=buildbucketBuildId,proto3" json:"buildbucket_build_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -210,15 +214,14 @@ var xxx_messageInfo_WorkerLaunchedResponse proto.InternalMessageInfo
 
 // WorkerDoneRequest specifies details needed to mark a worker as done.
 // This includes details useful for the tracking UI.
-//
-// This message should be sent by the Driver after results from the swarming
-// task for a worker have been collected. Depending on the type of worker, either
-// the isolated_output_hash and isolated_namespace (for swarming tasks) or the
-// buildbucket_output (for buildbucket builds) should be populated.
 type WorkerDoneRequest struct {
-	RunId                int64        `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Worker               string       `protobuf:"bytes,2,opt,name=worker,proto3" json:"worker,omitempty"`
-	IsolatedNamespace    string       `protobuf:"bytes,7,opt,name=isolated_namespace,json=isolatedNamespace,proto3" json:"isolated_namespace,omitempty"`
+	RunId  int64  `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Worker string `protobuf:"bytes,2,opt,name=worker,proto3" json:"worker,omitempty"`
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
+	IsolatedNamespace string `protobuf:"bytes,7,opt,name=isolated_namespace,json=isolatedNamespace,proto3" json:"isolated_namespace,omitempty"`
+	// DEPRECATED, ignored.
+	// TODO(crbug/1146109): Remove.
 	IsolatedOutputHash   string       `protobuf:"bytes,3,opt,name=isolated_output_hash,json=isolatedOutputHash,proto3" json:"isolated_output_hash,omitempty"`
 	Provides             v1.Data_Type `protobuf:"varint,4,opt,name=provides,proto3,enum=tricium.Data_Type" json:"provides,omitempty"`
 	State                v1.State     `protobuf:"varint,5,opt,name=state,proto3,enum=tricium.State" json:"state,omitempty"`

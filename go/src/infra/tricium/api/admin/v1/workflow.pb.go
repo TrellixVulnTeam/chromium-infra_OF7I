@@ -29,8 +29,11 @@ type Workflow struct {
 	// TODO(qyearsley): remove service_account if it is unused.
 	ServiceAccount string    `protobuf:"bytes,1,opt,name=service_account,json=serviceAccount,proto3" json:"service_account,omitempty"`
 	Workers        []*Worker `protobuf:"bytes,2,rep,name=workers,proto3" json:"workers,omitempty"`
-	SwarmingServer string    `protobuf:"bytes,3,opt,name=swarming_server,json=swarmingServer,proto3" json:"swarming_server,omitempty"`
-	IsolateServer  string    `protobuf:"bytes,4,opt,name=isolate_server,json=isolateServer,proto3" json:"isolate_server,omitempty"`
+	// TODO(crbug/1146109): Remove swarming_server and isolate_server.
+	// DEPRECATED, ignored.
+	SwarmingServer string `protobuf:"bytes,3,opt,name=swarming_server,json=swarmingServer,proto3" json:"swarming_server,omitempty"`
+	// DEPRECATED, ignored.
+	IsolateServer string `protobuf:"bytes,4,opt,name=isolate_server,json=isolateServer,proto3" json:"isolate_server,omitempty"`
 	// Function definitions used for this workflow; these contain the function
 	// owner and component, to be used when filling out a bug filing template.
 	Functions             []*v1.Function `protobuf:"bytes,5,rep,name=functions,proto3" json:"functions,omitempty"`

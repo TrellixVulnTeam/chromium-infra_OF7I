@@ -36,35 +36,36 @@ message WorkflowLaunchedResponse {
 // WorkerLaunchedRequest specifies details needed to mark a worker as launched.
 // This includes details useful for the tracking UI.
 //
-// This message should be sent by the Driver after a swarming task or buildbucket
-// build for the worker has been triggered.
+// This message should be sent by the Driver after a Buildbucket build for the
+// worker has been triggered.
 message WorkerLaunchedRequest {
   int64 run_id = 1;
   string worker = 2;
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string isolated_input_hash = 3;
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string swarming_task_id = 4;
   int64 buildbucket_build_id = 5;
 }
 
-message WorkerLaunchedResponse {
-}
+message WorkerLaunchedResponse {}
 
 // WorkerDoneRequest specifies details needed to mark a worker as done.
 // This includes details useful for the tracking UI.
-//
-// This message should be sent by the Driver after results from the swarming
-// task for a worker have been collected. Depending on the type of worker, either
-// the isolated_output_hash and isolated_namespace (for swarming tasks) or the
-// buildbucket_output (for buildbucket builds) should be populated.
 message WorkerDoneRequest {
   int64 run_id = 1;
   string worker = 2;
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string isolated_namespace = 7;
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string isolated_output_hash = 3;
   tricium.Data.Type provides = 4;
   tricium.State state = 5;
   string buildbucket_output = 6;
 }
 
-message WorkerDoneResponse {
-}
+message WorkerDoneResponse {}

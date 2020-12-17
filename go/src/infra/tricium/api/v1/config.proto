@@ -36,14 +36,12 @@ message ServiceConfig {
   // platform name details to the end of the package name.
   repeated CipdPackage recipe_packages = 6;
 
-  // Swarming server to use for this service instance.
-  //
-  // This should be a full URL with no trailing slash.
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string swarming_server = 7;
 
-  // Isolate server to use for this service instance.
-  //
-  // This should be a full URL with no trailing slash.
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string isolate_server = 8;
 
   // Buildbucket server to use for this service instance.
@@ -74,10 +72,10 @@ message ProjectConfig {
   repeated RepoDetails repos = 5;
 
   // General service account for this project.
-  // Used for any service interaction, with the exception of swarming.
   string service_account = 6;
 
-  // Project-specific swarming service account.
+  // DEPRECATED, ignored.
+  // TODO(crbug/1146109): Remove.
   string swarming_service_account = 7;
 }
 
