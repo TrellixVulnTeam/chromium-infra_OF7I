@@ -161,15 +161,6 @@ recipes.simulation_tester(
     console_category = "misc",
 )
 
-# Recipe rolls from Infra.
-recipes.roll_trybots(
-    upstream = "infra",
-    downstream = [
-        "build",
-    ],
-    cq_group = "infra",
-)
-
 luci.cq_tryjob_verifier(
     builder = "infra-internal:try/build_limited Roll Tester (infra)",
     cq_group = "infra",
