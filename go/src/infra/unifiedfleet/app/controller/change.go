@@ -493,6 +493,37 @@ func (hc *HistoryClient) LogVLANChanges(oldData, newData *ufspb.Vlan) {
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
+// LogDutStateChanges logs the change of a dut state record.
+func (hc *HistoryClient) LogDutStateChanges(oldData, newData *ufslabpb.DutState) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	resourceName := util.AddPrefix(util.MachineCollection, newData.GetId().GetValue())
+	if oldData != nil {
+		resourceName = util.AddPrefix(util.MachineCollection, oldData.GetId().GetValue())
+	}
+
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "dut_state", LifeCycleRegistration)...)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "dut_state", LifeCycleRetire)...)
+		oldData.UpdateTime = ptypes.TimestampNow()
+		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.servo", oldData.GetServo(), newData.GetServo())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.chameleon", oldData.GetChameleon(), newData.GetChameleon())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.audio_loopback_dongle", oldData.GetAudioLoopbackDongle(), newData.GetAudioLoopbackDongle())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.working_bluetooth_btpeer", oldData.GetWorkingBluetoothBtpeer(), newData.GetWorkingBluetoothBtpeer())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.storage_state", oldData.GetStorageState(), newData.GetStorageState())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.servo_usb_state", oldData.GetServoUsbState(), newData.GetServoUsbState())...)
+	hc.logMsgEntity(resourceName, false, newData)
+}
+
 // LogDHCPChanges logs the change of the given dhcp.
 func LogDHCPChanges(oldData, newData *ufspb.DHCPConfig) ([]*ufspb.ChangeEvent, *history.SnapshotMsgEntity) {
 	changes := make([]*ufspb.ChangeEvent, 0)
