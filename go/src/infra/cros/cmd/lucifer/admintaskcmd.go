@@ -135,12 +135,11 @@ func runTask(ctx context.Context, ac *api.Client, m *atutil.MainJob, t *atutil.A
 	defer event.Send(event.Completed)
 	te := taskEvents[t.Type]
 	defer func() {
-		var e event.Event
-		if err == nil {
-			e = te.pass
-		} else {
-			e = dutstate.ReadFile(t.ResultsDir)
-			if e == "" {
+		e := dutstate.ReadFile(t.ResultsDir)
+		if e == "" {
+			if err == nil {
+				e = te.pass
+			} else {
 				e = te.fail
 			}
 		}
