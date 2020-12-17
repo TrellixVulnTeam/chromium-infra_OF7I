@@ -47,14 +47,8 @@ def RunSteps(api, inputs):
       if api.path.exists(input_dir.join(f)) and 'third_party/' not in f
   ]
 
-  # TODO(qyearsley): Add a mapping to api.tricium.analyzers class itself, to
-  # avoid having to access __dict___.
-  analyzers = []
-  analyzers_mapping = {}
-  for member in api.tricium.analyzers.__dict__.values():
-    if hasattr(member, 'name'):
-      analyzers_mapping[member.name] = member
-  analyzers = [analyzers_mapping[name] for name in inputs.analyzers]
+  by_name = api.tricium.analyzers.by_name()
+  analyzers = [by_name[name] for name in inputs.analyzers]
 
   api.tricium.run_legacy(analyzers, input_dir, affected_files, commit_message)
 
