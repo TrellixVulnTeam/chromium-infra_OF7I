@@ -20,8 +20,6 @@ mock.patch('google.cloud.storage.Client').start()
 
 import main
 
-from lib import pages
-
 
 class ProcessPageTest(unittest.TestCase):
   def setUp(self):
@@ -39,9 +37,9 @@ class ProcessPageTest(unittest.TestCase):
       '</html>',
     ])
     self.stdout = io.StringIO()
-    mock.patch('lib.pages.client').start()
-    mock.patch('lib.pages.session').start()
-    mock.patch('lib.pages._get_auth_headers').start()
+    mock.patch('main.client').start()
+    mock.patch('main.session').start()
+    mock.patch('main._get_auth_headers').start()
     mock.patch('os.getenv', self.env.get).start()
     mock.patch('sys.stdout', self.stdout).start()
     self.addCleanup(mock.patch.stopall)
@@ -49,17 +47,17 @@ class ProcessPageTest(unittest.TestCase):
     self.request = mock.Mock()
     self.request.get_json.return_value = {
         'Path': '/123',
-        'EntityKind': pages.ISSUE,
+        'EntityKind': main.ISSUE,
         'Private': False,
     }
 
-    self.get_fn = pages.session.get
+    self.get_fn = main.session.get
     self.response = self.get_fn.return_value
     self.response.status_code = 200
     self.response.text = self.content
     self.response.headers = {'content-type': 'text/html; charset=UTF-8'}
 
-    self.blob_fn = pages.client.get_bucket.return_value.blob
+    self.blob_fn = main.client.get_bucket.return_value.blob
     self.blob = self.blob_fn.return_value
 
   def testUnknownPageType(self):
@@ -76,7 +74,7 @@ class ProcessPageTest(unittest.TestCase):
     log = json.loads(self.stdout.getvalue())
     self.assertEqual('ERROR', log['severity'])
     self.assertEqual(
-        'AssertionError: Expected page type to be one of '
+        'AssertionError: Expected entity kind to be one of '
         '(\'Issue\', \'PatchSet\', \'Patch\'), got UNKNOWN_PAGE_TYPE',
         log['message'].splitlines()[-1])
     self.assertEqual(self.request.get_json.return_value, log['params'])
@@ -98,7 +96,7 @@ class ProcessPageTest(unittest.TestCase):
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
+    self.blob_fn.assert_called_once_with('/123')
     self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 503},
@@ -125,7 +123,7 @@ class ProcessPageTest(unittest.TestCase):
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
+    self.blob_fn.assert_called_once_with('/123')
     self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 429},
@@ -143,7 +141,7 @@ class ProcessPageTest(unittest.TestCase):
     self.assertEqual('', self.stdout.getvalue())
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
+    self.blob_fn.assert_called_once_with('/123')
     self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 404},
@@ -160,8 +158,8 @@ class ProcessPageTest(unittest.TestCase):
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
-    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.blob_fn.assert_called_once_with('/123')
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
@@ -175,8 +173,8 @@ class ProcessPageTest(unittest.TestCase):
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
-    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.blob_fn.assert_called_once_with('/123')
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
@@ -187,14 +185,14 @@ class ProcessPageTest(unittest.TestCase):
 
   def testUploadsToGoogleStorage_PatchSet(self):
     self.request.get_json.return_value['Path'] = '/123/patch/1'
-    self.request.get_json.return_value['EntityKind'] = pages.PATCH_SET
+    self.request.get_json.return_value['EntityKind'] = main.PATCH_SET
 
     _, status_code = main.process_page(self.request)
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123/patch/1', headers=mock.ANY)
     self.blob_fn.assert_called_once_with('/123/patch/1')
-    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
@@ -205,14 +203,14 @@ class ProcessPageTest(unittest.TestCase):
 
   def testUploadsToGoogleStorage_Patch(self):
     self.request.get_json.return_value['Path'] = '/123/patch/1/3'
-    self.request.get_json.return_value['EntityKind'] = pages.PATCH
+    self.request.get_json.return_value['EntityKind'] = main.PATCH
 
     _, status_code = main.process_page(self.request)
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123/patch/1/3', headers=mock.ANY)
     self.blob_fn.assert_called_once_with('/123/patch/1/3')
-    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': False, 'Status-Code': 200},
         self.blob.metadata)
@@ -228,8 +226,8 @@ class ProcessPageTest(unittest.TestCase):
 
     self.get_fn.assert_called_once_with(
         'https://www.example.com/123', headers=mock.ANY)
-    self.blob_fn.assert_called_once_with('/123/index.html')
-    self.blob.upload_from_string.assert_called_once_with(self.content.encode())
+    self.blob_fn.assert_called_once_with('/123')
+    self.blob.upload_from_string.assert_called_once_with(self.content)
     self.assertEqual(
         {'Rietveld-Private': True, 'Status-Code': 200},
         self.blob.metadata)
