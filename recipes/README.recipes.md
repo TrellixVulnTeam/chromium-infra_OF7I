@@ -45,9 +45,11 @@
   * [infra_frontend_tester](#recipes-infra_frontend_tester)
   * [infra_repo_trybot](#recipes-infra_repo_trybot)
   * [infra_system:examples/full](#recipes-infra_system_examples_full)
+  * [lkgr_finder](#recipes-lkgr_finder)
   * [luci_gae](#recipes-luci_gae)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
+  * [publish_tarball](#recipes-publish_tarball)
   * [recipe_autoroller](#recipes-recipe_autoroller) &mdash; Rolls recipes.
   * [recipe_bundler](#recipes-recipe_bundler)
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
@@ -60,6 +62,8 @@
   * [tricium_infra](#recipes-tricium_infra)
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
+  * [wpt_export](#recipes-wpt_export) &mdash; Exports commits in Chromium to the web-platform-tests repo.
+  * [wpt_import](#recipes-wpt_import) &mdash; Imports changes from web-platform-tests into Chromium.
   * [zip:examples/full](#recipes-zip_examples_full)
 ## Recipe Modules
 
@@ -1061,6 +1065,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipe_modules/infra_system/examples/full.py#5): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/infra_system/examples/full.py#13)(api):**
+### *recipes* / [lkgr\_finder](/recipes/recipes/lkgr_finder.py)
+
+[DEPS](/recipes/recipes/lkgr_finder.py#10): [build/chromium\_checkout][build/recipe_modules/chromium_checkout], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipes/lkgr_finder.py#75)(api, project, repo, ref, config, lkgr_status_gs_path, allowed_lag):**
 ### *recipes* / [luci\_gae](/recipes/recipes/luci_gae.py)
 
 [DEPS](/recipes/recipes/luci_gae.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
@@ -1076,6 +1085,39 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipes/luci_py.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/luci_py.py#24)(api):**
+### *recipes* / [publish\_tarball](/recipes/recipes/publish_tarball.py)
+
+[DEPS](/recipes/recipes/publish_tarball.py#12): [build/chromium][build/recipe_modules/chromium], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [omahaproxy](#recipe_modules-omahaproxy), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/scheduler][recipe_engine/recipe_modules/scheduler], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipes/publish_tarball.py#393)(api):**
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [copytree\_checkout](/recipes/recipes/publish_tarball.py#101)(api):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [export\_lite\_tarball](/recipes/recipes/publish_tarball.py#112)(api, version):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [export\_nacl\_tarball](/recipes/recipes/publish_tarball.py#192)(api, version):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [export\_tarball](/recipes/recipes/publish_tarball.py#69)(api, args, source, destination):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [fetch\_afdo\_profile](/recipes/recipes/publish_tarball.py#226)(api):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [fetch\_pgo\_profiles](/recipes/recipes/publish_tarball.py#216)(api):**
+
+&mdash; **def [gsutil\_upload](/recipes/recipes/publish_tarball.py#42)(api, source, bucket, dest, args):**
+
+&mdash; **def [publish\_tarball](/recipes/recipes/publish_tarball.py#265)(api):**
+
+&mdash; **def [published\_all\_tarballs](/recipes/recipes/publish_tarball.py#62)(version, ls_result):**
+
+&mdash; **def [published\_full\_tarball](/recipes/recipes/publish_tarball.py#46)(version, ls_result):**
+
+&mdash; **def [published\_lite\_tarball](/recipes/recipes/publish_tarball.py#50)(version, ls_result):**
+
+&mdash; **def [published\_nacl\_tarball](/recipes/recipes/publish_tarball.py#58)(version, ls_result):**
+
+&mdash; **def [published\_test\_tarball](/recipes/recipes/publish_tarball.py#54)(version, ls_result):**
+
+&mdash; **def [trigger\_publish\_tarball\_jobs](/recipes/recipes/publish_tarball.py#242)(api):**
 ### *recipes* / [recipe\_autoroller](/recipes/recipes/recipe_autoroller.py)
 
 [DEPS](/recipes/recipes/recipe_autoroller.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1171,12 +1213,46 @@ but harmless.
 [DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/windows_sdk/examples/full.py#13)(api):**
+### *recipes* / [wpt\_export](/recipes/recipes/wpt_export.py)
+
+[DEPS](/recipes/recipes/wpt_export.py#15): [build/chromium][build/recipe_modules/chromium], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+
+Exports commits in Chromium to the web-platform-tests repo.
+
+This recipe runs the wpt-export script; it is expected to be run as a
+recurring job at a short interval. It creates pull requests on GitHub
+for Chromium commits that contain exportable changes, merges these
+pull requests.
+
+See: //docs/testing/web_platform_tests.md (https://goo.gl/rSRGmZ)
+
+&mdash; **def [RunSteps](/recipes/recipes/wpt_export.py#36)(api):**
+### *recipes* / [wpt\_import](/recipes/recipes/wpt_import.py)
+
+[DEPS](/recipes/recipes/wpt_import.py#17): [build/chromium][build/recipe_modules/chromium], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+
+Imports changes from web-platform-tests into Chromium.
+
+This recipe runs the wpt-import script. The import process involves
+first fetching the latest changes from web-platform-tests, then running
+the tests via try jobs and and updating any baselines and expectations,
+before committing to Chromium.
+
+See: //docs/testing/web_platform_tests.md (https://goo.gl/rSRGmZ)
+
+&mdash; **def [RunSteps](/recipes/recipes/wpt_import.py#45)(api):**
+
+&mdash; **def [git\_cl\_issue\_link](/recipes/recipes/wpt_import.py#91)(api):**
+
+Runs a step which adds a link to the current CL if there is one.
 ### *recipes* / [zip:examples/full](/recipes/recipe_modules/zip/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/zip/examples/full.py#5): [zip](#recipe_modules-zip), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/zip/examples/full.py#15)(api):**
 
+[build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium
+[build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8be4ad2e3e500de7898cadff19f438d056c2f735/recipes/README.recipes.md#recipe_modules-chromium_checkout
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-depot_tools
 [depot_tools/recipe_modules/gclient]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/1ec57124a67c6fd4ea2f2fe9ce9fdb6c31d3fd5d/recipes/README.recipes.md#recipe_modules-gclient
@@ -1206,6 +1282,7 @@ but harmless.
 [recipe_engine/recipe_modules/random]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-random
 [recipe_engine/recipe_modules/raw_io]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-raw_io
 [recipe_engine/recipe_modules/runtime]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-runtime
+[recipe_engine/recipe_modules/scheduler]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-scheduler
 [recipe_engine/recipe_modules/service_account]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-service_account
 [recipe_engine/recipe_modules/step]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-step
 [recipe_engine/recipe_modules/time]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c0e2975de17a9ba4440178cf7e549c43fe75cb47/README.recipes.md#recipe_modules-time

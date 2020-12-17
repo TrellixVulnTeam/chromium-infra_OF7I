@@ -1,0 +1,308 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
+      "--spec-path",
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "--revision_mapping_file",
+      "{\"got_revision\": \"infra\"}",
+      "--git-cache-dir",
+      "[CACHE]/git",
+      "--cleanup-dir",
+      "[CLEANUP]/bot_update",
+      "--output_json",
+      "/path/to/tmp/json",
+      "--revision",
+      "infra@HEAD"
+    ],
+    "cwd": "[CACHE]/builder",
+    "env": {
+      "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
+      "GIT_HTTP_LOW_SPEED_TIME": "300"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "bot_update",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Some step text@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"HEAD\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_failure\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#197293}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"root\": \"infra\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"directories\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/infra.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"version\": 0@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"step_text\": \"Some step text\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision@\"5e03a58dc0850e5137a8ebbce29610670c756aed\"@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#197293}\"@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "runhooks"
+    ],
+    "cwd": "[CACHE]/builder/infra",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "gclient runhooks"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::gitiles]/resources/gerrit_client.py",
+      "--json-file",
+      "/path/to/tmp/json",
+      "--url",
+      "https://chromium.googlesource.com/v8/v8/+/refs/heads/lkgr",
+      "--format",
+      "json"
+    ],
+    "name": "read lkgr from ref",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"author\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"email\": \"testauthor@fake.chromium.org\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"Test Author\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"time\": \"Mon Jan 01 00:00:00 2015\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"commit\": \"97ab2f7d6e7bab812309e05884bdeeaef11962f7\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"committer\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"email\": \"testauthor@fake.chromium.org\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"Test Author\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"time\": \"Mon Jan 01 00:00:00 2015\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"message\": \"Commit1\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"parents\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"d26d1a035d941e46e74ac6aadb118396675509fd\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  ], @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tree\": \"f8201e09e096480ad7ee6672bf0858aef1be2473\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tree_diff\": []@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/builder/lw"
+    ],
+    "infra_step": true,
+    "name": "mkdirs builder/lw"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/infra/run.py",
+      "infra.services.lkgr_finder",
+      "--project=v8",
+      "--verbose",
+      "--read-from-file",
+      "97ab2f7d6e7bab812309e05884bdeeaef11962f7",
+      "--write-to-file",
+      "/path/to/tmp/",
+      "--workdir",
+      "[CACHE]/builder/lw",
+      "--email-errors",
+      "--allowed-lag=4",
+      "--html",
+      "/path/to/tmp/"
+    ],
+    "cwd": "[CACHE]/builder/infra",
+    "name": "calculate v8 lkgr"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::gsutil]/resources/gsutil_smart_retry.py",
+      "--",
+      "RECIPE_REPO[depot_tools]/gsutil.py",
+      "----",
+      "-h",
+      "Content-Type:text/html",
+      "cp",
+      "-a",
+      "public-read",
+      "<html>lkgr</html>",
+      "gs://chromium-v8/lkgr-status/v8-lkgr-status.html"
+    ],
+    "infra_step": true,
+    "name": "gsutil upload",
+    "~followup_annotations": [
+      "@@@STEP_LINK@v8-lkgr-status.html@https://storage.cloud.google.com/chromium-v8/lkgr-status/v8-lkgr-status.html@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::git]/resources/git_setup.py",
+      "--path",
+      "[CACHE]/builder/workdir",
+      "--url",
+      "https://chromium.googlesource.com/v8/v8"
+    ],
+    "name": "git setup"
+  },
+  {
+    "cmd": [
+      "git",
+      "cache",
+      "populate",
+      "-c",
+      "[CACHE]/git",
+      "https://chromium.googlesource.com/v8/v8"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "env": {
+      "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
+    },
+    "infra_step": true,
+    "name": "populate cache"
+  },
+  {
+    "cmd": [
+      "git",
+      "cache",
+      "exists",
+      "--quiet",
+      "--cache-dir",
+      "[CACHE]/git",
+      "https://chromium.googlesource.com/v8/v8"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "env": {
+      "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
+    },
+    "infra_step": true,
+    "name": "git cache"
+  },
+  {
+    "cmd": [
+      "git",
+      "remote",
+      "set-url",
+      "origin",
+      "mirror_dir"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "env": {
+      "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
+    },
+    "infra_step": true,
+    "name": "git remote"
+  },
+  {
+    "cmd": [
+      "git",
+      "fetch",
+      "origin",
+      "master",
+      "--progress"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "env": {
+      "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
+    },
+    "infra_step": true,
+    "name": "git fetch"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "FETCH_HEAD"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "infra_step": true,
+    "name": "git checkout"
+  },
+  {
+    "cmd": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "infra_step": true,
+    "name": "read revision",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>checked out 'deadbeef'<br/>@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-f",
+      "-d",
+      "-x"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "infra_step": true,
+    "name": "git clean"
+  },
+  {
+    "cmd": [
+      "git",
+      "push",
+      "https://chromium.googlesource.com/v8/v8",
+      "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef:refs/heads/lkgr"
+    ],
+    "cwd": "[CACHE]/builder/workdir",
+    "infra_step": true,
+    "name": "push lkgr to ref"
+  },
+  {
+    "name": "$result"
+  }
+]
