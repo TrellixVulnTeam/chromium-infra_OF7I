@@ -44,15 +44,6 @@ recipes.simulation_tester(
     console_view = "build",
 )
 
-# Recipe rolls from Build.
-recipes.roll_trybots(
-    upstream = "build",
-    downstream = [
-        "infra",
-    ],
-    cq_group = "build",
-)
-
 # External testers (defined in another projects) for recipe rolls.
 luci.cq_tryjob_verifier(
     builder = "infra-internal:try/build_limited Roll Tester (build)",
