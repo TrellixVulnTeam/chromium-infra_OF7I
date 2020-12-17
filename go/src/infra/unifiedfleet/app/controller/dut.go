@@ -6,7 +6,6 @@ package controller
 
 import (
 	"context"
-	"regexp"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -22,6 +21,7 @@ import (
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 const (
@@ -31,8 +31,6 @@ const (
 	servoPortMax = 9999
 	servoPortMin = 9900
 )
-
-var servoV3HostnameRegex = regexp.MustCompile(`.*-servo`)
 
 // CreateDUT creates ChromeOSMachineLSE entities for a DUT.
 //
@@ -259,7 +257,7 @@ func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Ser
 	}
 	// If servo is  a servo v3 host then assign port 9999
 	// TODO(anushruth): Avoid hostname regex by querying machine.
-	if servoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+	if util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
 		newServo.ServoPort = int32(servoPortMax)
 		return nil
 	}

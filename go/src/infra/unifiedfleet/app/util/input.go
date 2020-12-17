@@ -497,3 +497,6 @@ func GetSuffixAfterSeparator(name, seprator string) string {
 	}
 	return name[adjustedPos:]
 }
+
+// ServoV3HostnameRegex is used to identify servo V3 hosts.
+var ServoV3HostnameRegex = regexp.MustCompile(`.*-servo`)

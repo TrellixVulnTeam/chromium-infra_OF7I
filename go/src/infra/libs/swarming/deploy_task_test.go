@@ -53,7 +53,7 @@ func TestDeployDUTTask(t *testing.T) {
 			SwarmingServiceAccount: "testServiceAccount@testmail.com",
 		}
 		Convey("deployDUTTask - Happy path", func() {
-			req := tc.deployDUTTask("testDUT", "testPool", "testUser", 30, []string{"reboot"}, []string{"test:yes"}, map[string]string{"bluetooth": "NO"})
+			req := tc.deployDUTTask("test-1", "testDUT", "testPool", "testUser", 30, []string{"reboot"}, []string{"test:yes"}, map[string]string{"bluetooth": "NO"})
 			So(req.EvaluateOnly, ShouldBeFalse)
 			So(req.Name, ShouldEqual, "Deploy")
 			So(req.Priority, ShouldEqual, DeployTaskPriority)
@@ -71,7 +71,7 @@ func TestDeployDUTTask(t *testing.T) {
 		})
 		Convey("deployDUTTask - Missing logdog service and actions", func() {
 			tc.LogdogService = ""
-			req := tc.deployDUTTask("testDUT", "testPool", "testUser", 30, []string{}, []string{}, nil)
+			req := tc.deployDUTTask("test-1", "testDUT", "testPool", "testUser", 30, []string{}, []string{}, nil)
 			So(req.EvaluateOnly, ShouldBeFalse)
 			So(req.Name, ShouldEqual, "Deploy")
 			So(req.Priority, ShouldEqual, DeployTaskPriority)

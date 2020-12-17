@@ -31,6 +31,9 @@ const (
 	// DUTIDDimensionKey is the dimension key for dut ID.
 	DUTIDDimensionKey = "dut_id"
 
+	// DUTNameDimensionKey is the dimension key for dut hostname.
+	DUTNameDimensionKey = "dut_name"
+
 	// IDDimensionKey is the dimension key for ID.
 	IDDimensionKey = "id"
 

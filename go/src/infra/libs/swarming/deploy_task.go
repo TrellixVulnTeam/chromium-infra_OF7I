@@ -52,12 +52,15 @@ func (tc *TaskCreator) deployTaskTags(dutID string, newTags []string) []string {
 }
 
 // deployDUTTask creates a new task RPC request for deploy DUT
-func (tc *TaskCreator) deployDUTTask(dutID, pool, user string, timeout int64, actions, tags []string, dimensions map[string]string) *swarming.SwarmingRpcsNewTaskRequest {
+func (tc *TaskCreator) deployDUTTask(hostname, dutID, pool, user string, timeout int64, actions, tags []string, dimensions map[string]string) *swarming.SwarmingRpcsNewTaskRequest {
 	if dimensions == nil {
 		dimensions = make(map[string]string)
 	}
-	if _, ok := dimensions[DUTIDDimensionKey]; !ok {
+	if _, ok := dimensions[DUTIDDimensionKey]; !ok && dutID != "" {
 		dimensions[DUTIDDimensionKey] = dutID
+	}
+	if _, ok := dimensions[DUTNameDimensionKey]; !ok && hostname != "" {
+		dimensions[DUTNameDimensionKey] = hostname
 	}
 	if _, ok := dimensions[PoolDimensionKey]; !ok {
 		dimensions[PoolDimensionKey] = pool
@@ -90,7 +93,7 @@ func (tc *TaskCreator) deployDUTTask(dutID, pool, user string, timeout int64, ac
 }
 
 // DeployDut creates a task request for deploy task based on the input.
-func (tc *TaskCreator) DeployDut(ctx context.Context, dutID, pool string, timeout int64, actions, tags []string, dimensions map[string]string) (*TaskInfo, error) {
+func (tc *TaskCreator) DeployDut(ctx context.Context, hostname, dutID, pool string, timeout int64, actions, tags []string, dimensions map[string]string) (*TaskInfo, error) {
 	if tc.authenticator == nil {
 		return nil, errors.Reason("Unable to get user email").Err()
 	}
@@ -98,5 +101,5 @@ func (tc *TaskCreator) DeployDut(ctx context.Context, dutID, pool string, timeou
 	if err != nil {
 		return nil, errors.Annotate(err, "Unable to get user info").Err()
 	}
-	return tc.schedule(ctx, tc.deployDUTTask(dutID, pool, user, timeout, actions, tags, dimensions))
+	return tc.schedule(ctx, tc.deployDUTTask(hostname, dutID, pool, user, timeout, actions, tags, dimensions))
 }

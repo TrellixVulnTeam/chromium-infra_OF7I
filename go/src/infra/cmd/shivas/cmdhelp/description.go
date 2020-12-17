@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"infra/cmd/shivas/utils"
+	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -45,30 +46,20 @@ Alternate location specification for finer details.`
 	// AddDUTLongDesc long description for AddDUTCmd
 	AddDUTLongDesc string = `Add and deploy a DUT.
 Examples:
-shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -pool {swarming pool}
+shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -servo-serial {servo serial} -pool {swarming pool}
 Adds a DUT to UFS and triggers a swarming job to deploy the DUT.
 
-shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -deploy=false
-Adds a DUT to UFS. Doesn't trigger the deploy swarming job..
 
-shivas add dut -name {hostname} -machine {asset tag} -pool {swarming pool} -ufs=false
+shivas add dut -name {hostname} -pool {swarming pool} -ignore-ufs=true
 Triggers a swarming job to deploy the DUT. Avoids updating to UFS.
 
-shivas add dut -name {hostname} -machine {asset tag} -pool {swarming pool} -ufs=false -deploy-dims "taggedJob:1234" -deploy-actions "stage-usb, update-label"
-Triggers a swarming job to deploy the DUT with optional dimensions and actions. Avoids updating to UFS.
-
-shivas add dut -f dut.json -deploy-dims "label-bluetooth:True
+shivas add dut -f dut.json
 Adds a DUT to UFS using a json description file and triggers a swarming job to deploy the DUT.
 
 Note:
-1. Skylab tool used skip options instead of deploy actions. The following is the mapping of those options.
-	skipInstallOS [False]		-> install-test-image, update-label
-	skipInstallFirmware [False]	-> install-firmware, verify-recovery-mode
-	skipImageDownload [False]	-> stage-usb
-2. Default actions are stage-usb, install-test-image, update-label, install-firmware, verify-recovery-mode and run-pre-deploy-verification corresponding to
-   default skip options in skylab (false for all three options). Skylab tool adds run-pre-deploy-verification to all the tasks.
-3. UFS assigns a servo port if it's not given.
-4. Peripherals like camera, audio, wifi, etc,. are only supported through json input.
+1. UFS assigns a servo port if it's not given.
+2. Peripherals like camera, audio, wifi, etc,. are only supported through json input.
+3. By default, every deploy task runs update-label, verify-recovery-mode and run-pre-deploy-verification actions on the DUT.
 `
 
 	// DUTRegistrationFileText description for json file input
@@ -1275,3 +1266,21 @@ rpm-3,chromeos2,22:22:22:22:22:22,13,"hello,world, this is ufs",Apple Pro Power
 The protobuf definition of rpm is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 )
+
+// ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
+func ServoSetupTypeAllowedValuesString() string {
+	servoSetupTypeAllowedValueList := []string{}
+	for name := range lab.ServoSetupType_value {
+		servoSetupTypeAllowedValueList = append(servoSetupTypeAllowedValueList, name)
+	}
+	return fmt.Sprintf("[%s]", strings.Join(servoSetupTypeAllowedValueList, ", "))
+}
+
+// CriticalPoolsAllowedValuesString returns a string description of al the allowed values for critical pools.
+func CriticalPoolsAllowedValuesString() string {
+	criticalPools := []string{}
+	for name := range lab.DeviceUnderTest_DUTPool_value {
+		criticalPools = append(criticalPools, name)
+	}
+	return fmt.Sprintf("[%s]", strings.Join(criticalPools, ", "))
+}
