@@ -1389,21 +1389,21 @@ func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newVal
 
 // UpdateLabMeta updates only lab meta data for a given ChromeOS DUT.
 func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
-	lse, err := inventory.GetMachineLSE(ctx, meta.GetHostname())
-	if err != nil {
-		return err
-	}
-	dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
-	if dut == nil {
-		logging.Warningf(ctx, "%s is not a valid Chromeos DUT, skip updating lab meta", meta.GetHostname())
-		return nil
-	}
-
-	// Copy for logging
-	oldLSE := proto.Clone(lse).(*ufspb.MachineLSE)
-
 	f := func(ctx context.Context) error {
+		lse, err := inventory.GetMachineLSE(ctx, meta.GetHostname())
+		if err != nil {
+			return err
+		}
 		hc := getHostHistoryClient(lse)
+
+		dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+		if dut == nil {
+			logging.Warningf(ctx, "%s is not a valid Chromeos DUT, skip updating lab meta", meta.GetHostname())
+			return nil
+		}
+
+		// Copy for logging
+		oldLSE := proto.Clone(lse).(*ufspb.MachineLSE)
 		if servo := dut.GetPeripherals().GetServo(); servo != nil {
 			servo.ServoType = meta.GetServoType()
 			servo.ServoTopology = meta.GetServoTopology()
