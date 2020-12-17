@@ -2,12 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-.PHONY: test clean
+.PHONY: build-for-deployment test clean
 
-copyright:
+build-for-deployment:
+	GOOS=linux GOARCH=amd64 go build -o isolator
+
+isolator:
 	go build -o isolator
 
-test: copyright
+test: isolator
 	./isolator -input=test -output=out
 
 clean:

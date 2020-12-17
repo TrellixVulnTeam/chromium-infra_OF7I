@@ -4,7 +4,10 @@
 
 SRCS := $(wildcard *.go runner/*.go)
 
-.PHONY: all clean
+.PHONY: build-for-deployment test clean
+
+build-for-deployment: $(SRCS) bin
+	GOOS=linux GOARCH=amd64 go build -o shellcheck_tricium
 
 all: shellcheck_tricium bin
 

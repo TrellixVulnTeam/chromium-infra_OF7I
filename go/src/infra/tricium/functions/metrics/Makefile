@@ -1,17 +1,16 @@
-
 # Copyright 2019 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-.PHONY: build-for-deploy test unit-test clean
 
-# Make sure that the deployed binary is runnable on Linux, even if deploying from a different platform.
-build-for-deploy:
+.PHONY: build-for-deployment test unit-test clean
+
+build-for-deployment:
 	GOOS=linux GOARCH=amd64 go build -o metrics_analyzer
 
-metrics-analyzer:
+metrics_analyzer:
 	go build -o metrics_analyzer
 
-test: metrics-analyzer
+test: metrics_analyzer
 	./metrics_analyzer -input=testdata/src -output=out -previous=prevdata/src -patch=prevdata/tricium_generated_diff.patch -enums=enums/enums.xml -- rm/remove_histogram.xml
 
 unit-test:

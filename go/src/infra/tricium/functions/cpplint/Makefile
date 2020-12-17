@@ -2,7 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-.PHONY: test clean
+.PHONY: build-for-deployment test clean
+
+build-for-deployment: python cpplint.py
+	GOOS=linux GOARCH=amd64 go build -o cpplint_parser
 
 cpplint_parser: python cpplint.py
 	go build -o cpplint_parser

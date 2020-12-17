@@ -4,7 +4,10 @@
 
 OUT_BASE=eslint-deps
 
-.PHONY: test clean
+.PHONY: build-for-deployment test clean
+
+build-for-deployment: eslint
+	GOOS=linux GOARCH=amd64 go build -o eslint_parser
 
 eslint_parser: eslint
 	go build -o eslint_parser
