@@ -350,7 +350,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 25
+// NEXT TAG: 26
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -420,6 +420,7 @@ message Peripherals {
 
   optional HardwareState storage_state = 19;
   optional HardwareState servo_usb_state = 20;
+  optional PeripheralState rpm_state = 25;
 }
 
 // copy of enum from dut_state.proto
