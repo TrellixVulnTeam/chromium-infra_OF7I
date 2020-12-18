@@ -14,20 +14,13 @@ import (
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/state"
-	"infra/unifiedfleet/app/util"
 )
 
 // UpdateDutState updates the dut state for a ChromeOS DUT
 func UpdateDutState(ctx context.Context, ds *chromeosLab.DutState) (*chromeosLab.DutState, error) {
-	newCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-	if err != nil {
-		logging.Debugf(newCtx, "Failed to set os namespace in context: %s", err.Error())
-		return nil, err
-	}
-
 	f := func(ctx context.Context) error {
 		// It's not ok that no such DUT (machine lse) exists in UFS.
-		_, err = inventory.GetMachineLSE(newCtx, ds.GetHostname())
+		_, err := inventory.GetMachineLSE(ctx, ds.GetHostname())
 		if err != nil {
 			return errors.Annotate(err, "UpdateDutState").Err()
 		}
@@ -42,8 +35,8 @@ func UpdateDutState(ctx context.Context, ds *chromeosLab.DutState) (*chromeosLab
 		return hc.SaveChangeEvents(ctx)
 	}
 
-	if err := datastore.RunInTransaction(newCtx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update dut state: %s", err)
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "UpdateDutState - %s", err)
 		return nil, err
 	}
 	return ds, nil

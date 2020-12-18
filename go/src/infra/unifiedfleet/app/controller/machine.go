@@ -180,6 +180,9 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 // It's a temporary method to correct serial number & HWID.
 // Will remove once HaRT could provide us the correct info.
 func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
+	if meta == nil {
+		return nil
+	}
 	f := func(ctx context.Context) error {
 		machine, err := registration.GetMachine(ctx, meta.GetChromeosDeviceId())
 		if err != nil {
@@ -189,7 +192,7 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 
 		osMachine := machine.GetChromeosMachine()
 		if osMachine == nil {
-			logging.Warningf(ctx, "%s is not a valid Chromeos machine, skip updating dut meta", meta.GetChromeosDeviceId())
+			logging.Warningf(ctx, "UpdateDutMeta - %s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
 			return nil
 		}
 		// Copy for logging
@@ -216,7 +219,7 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update dut meta: %s", err)
+		logging.Errorf(ctx, "UpdateDutMeta - %s", err.Error())
 		return err
 	}
 	return nil

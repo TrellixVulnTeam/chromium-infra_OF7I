@@ -1389,16 +1389,19 @@ func updateIndexingForMachineLSE(ctx context.Context, property, oldValue, newVal
 
 // UpdateLabMeta updates only lab meta data for a given ChromeOS DUT.
 func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
+	if meta == nil {
+		return nil
+	}
 	f := func(ctx context.Context) error {
 		lse, err := inventory.GetMachineLSE(ctx, meta.GetHostname())
 		if err != nil {
-			return err
+			return errors.Annotate(err, "UpdateLabMeta").Err()
 		}
 		hc := getHostHistoryClient(lse)
 
 		dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 		if dut == nil {
-			logging.Warningf(ctx, "%s is not a valid Chromeos DUT, skip updating lab meta", meta.GetHostname())
+			logging.Warningf(ctx, "UpdateLabMeta - %s is not a valid Chromeos DUT", meta.GetHostname())
 			return nil
 		}
 
@@ -1420,7 +1423,7 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update entity in datastore: %s", err)
+		logging.Errorf(ctx, "UpdateLabMeta - %s", err)
 		return err
 	}
 	return nil

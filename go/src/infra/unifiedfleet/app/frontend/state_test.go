@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -15,7 +16,10 @@ import (
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func TestImportStates(t *testing.T) {
@@ -162,6 +166,7 @@ func TestGetState(t *testing.T) {
 func TestUpdateDutState(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	dutStateGood := &chromeosLab.DutState{
@@ -169,15 +174,8 @@ func TestUpdateDutState(t *testing.T) {
 		Hostname: "hostname-01",
 	}
 	Convey("Update dut state", t, func() {
-		Convey("happy path", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
-				DutState: dutStateGood,
-			})
-			So(err, ShouldBeNil)
-		})
-
 		Convey("empty dut ID", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: &chromeosLab.DutState{},
 			})
 			So(err, ShouldNotBeNil)
@@ -185,7 +183,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("dut ID with all spaces", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: &chromeosLab.DutState{
 					Id: &chromeosLab.ChromeOSDeviceID{Value: "   "},
 				},
@@ -195,7 +193,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("empty hostname", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: &chromeosLab.DutState{
 					Id:       &chromeosLab.ChromeOSDeviceID{Value: "UUID:01"},
 					Hostname: "   ",
@@ -206,7 +204,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("non-matched dut ID in lab meta", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: dutStateGood,
 				LabMeta: &ufspb.LabMeta{
 					ChromeosDeviceId: "UUID:wrong",
@@ -217,7 +215,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("non-matched dut hostname in lab meta", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: dutStateGood,
 				LabMeta: &ufspb.LabMeta{
 					ChromeosDeviceId: "UUID:01",
@@ -229,7 +227,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("non-matched dut ID in dut meta", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: dutStateGood,
 				DutMeta: &ufspb.DutMeta{
 					ChromeosDeviceId: "UUID:wrong",
@@ -240,7 +238,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("non-matched dut hostname in dut meta", func() {
-			_, err := tf.Fleet.UpdateDutState(ctx, &api.UpdateDutStateRequest{
+			_, err := tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: dutStateGood,
 				DutMeta: &ufspb.DutMeta{
 					ChromeosDeviceId: "UUID:01",
@@ -251,5 +249,248 @@ func TestUpdateDutState(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "Mismatched dut hostname")
 		})
 
+		Convey("happy path with no data", func() {
+			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id1", "rpc-dutstate-host1", "dut")
+			So(err, ShouldBeNil)
+			// Use osCtx as we will restrict ctx to include namespace in prod.
+			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "rpc-dutstate-id1"},
+					Hostname: "rpc-dutstate-host1",
+				},
+			})
+			So(err, ShouldBeNil)
+
+			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id1")
+			So(err, ShouldBeNil)
+			So(m.GetSerialNumber(), ShouldEqual, "")
+			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "")
+			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host1")
+			So(err, ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+		})
+
+		Convey("happy path with dut meta", func() {
+			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id2", "rpc-dutstate-host2", "dut")
+			So(err, ShouldBeNil)
+			// Use osCtx as we will restrict ctx to include namespace in prod.
+			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "rpc-dutstate-id2"},
+					Hostname: "rpc-dutstate-host2",
+				},
+				DutMeta: &ufspb.DutMeta{
+					ChromeosDeviceId: "rpc-dutstate-id2",
+					Hostname:         "rpc-dutstate-host2",
+					SerialNumber:     "real-serial",
+					HwID:             "real-hwid",
+					DeviceSku:        "real-sku",
+				},
+			})
+			So(err, ShouldBeNil)
+
+			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id2")
+			So(err, ShouldBeNil)
+			So(m.GetSerialNumber(), ShouldEqual, "real-serial")
+			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "real-sku")
+			So(m.GetChromeosMachine().GetHwid(), ShouldEqual, "real-hwid")
+			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host2")
+			So(err, ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+		})
+
+		Convey("happy path with lab meta", func() {
+			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id3", "rpc-dutstate-host3", "dut")
+			So(err, ShouldBeNil)
+			topology := &chromeosLab.ServoTopology{
+				Main: &chromeosLab.ServoTopologyItem{
+					Type:         "servo_v4",
+					Serial:       "SomeSerial",
+					SysfsProduct: "1-4.6.5",
+				},
+			}
+			// Use osCtx as we will restrict ctx to include namespace in prod.
+			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "rpc-dutstate-id3"},
+					Hostname: "rpc-dutstate-host3",
+				},
+				LabMeta: &ufspb.LabMeta{
+					ChromeosDeviceId: "rpc-dutstate-id3",
+					Hostname:         "rpc-dutstate-host3",
+					ServoType:        "servo_v4_with_ccd_cr50",
+					ServoTopology:    topology,
+					SmartUsbhub:      true,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id3")
+			So(err, ShouldBeNil)
+			So(m.GetSerialNumber(), ShouldEqual, "")
+			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "")
+			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host3")
+			So(err, ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldResembleProto, topology)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeTrue)
+		})
+
+		Convey("only dut meta update for labstation", func() {
+			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id4", "rpc-dutstate-host4", "labstation")
+			So(err, ShouldBeNil)
+			// Use osCtx as we will restrict ctx to include namespace in prod.
+			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "rpc-dutstate-id4"},
+					Hostname: "rpc-dutstate-host4",
+				},
+				DutMeta: &ufspb.DutMeta{
+					ChromeosDeviceId: "rpc-dutstate-id4",
+					Hostname:         "rpc-dutstate-host4",
+					SerialNumber:     "real-serial",
+				},
+				LabMeta: &ufspb.LabMeta{
+					ChromeosDeviceId: "rpc-dutstate-id4",
+					Hostname:         "rpc-dutstate-host4",
+					ServoType:        "servo_v4_with_ccd_cr50",
+					SmartUsbhub:      true,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id4")
+			So(err, ShouldBeNil)
+			So(m.GetSerialNumber(), ShouldEqual, "real-serial")
+			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host4")
+			So(err, ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+		})
+
+		Convey("no update for chrome device", func() {
+			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id5", "rpc-dutstate-host5", "browser")
+			So(err, ShouldBeNil)
+			// Use osCtx as we will restrict ctx to include namespace in prod.
+			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
+				DutState: &chromeosLab.DutState{
+					Id:       &chromeosLab.ChromeOSDeviceID{Value: "rpc-dutstate-id5"},
+					Hostname: "rpc-dutstate-host5",
+				},
+				DutMeta: &ufspb.DutMeta{
+					ChromeosDeviceId: "rpc-dutstate-id5",
+					Hostname:         "rpc-dutstate-host5",
+					SerialNumber:     "real-serial",
+				},
+				LabMeta: &ufspb.LabMeta{
+					ChromeosDeviceId: "rpc-dutstate-id5",
+					Hostname:         "rpc-dutstate-host5",
+					ServoType:        "servo_v4_with_ccd_cr50",
+					SmartUsbhub:      true,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id5")
+			So(err, ShouldBeNil)
+			So(m.GetSerialNumber(), ShouldEqual, "")
+			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host5")
+			So(err, ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldBeNil)
+			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+		})
 	})
+}
+
+func mockOSMachineAndHost(ctx context.Context, id, hostname, deviceType string) error {
+	osCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	if err != nil {
+		return err
+	}
+	var machineLSE1 *ufspb.MachineLSE
+	var machine *ufspb.Machine
+	switch deviceType {
+	case "dut":
+		machineLSE1 = &ufspb.MachineLSE{
+			Name:     hostname,
+			Hostname: hostname,
+			Machines: []string{id},
+			Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+				ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+					ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+						DeviceLse: &ufspb.ChromeOSDeviceLSE{
+							Device: &ufspb.ChromeOSDeviceLSE_Dut{
+								Dut: &chromeosLab.DeviceUnderTest{
+									Hostname: hostname,
+									Peripherals: &chromeosLab.Peripherals{
+										Servo: &chromeosLab.Servo{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		machine = &ufspb.Machine{
+			Name: id,
+			Device: &ufspb.Machine_ChromeosMachine{
+				ChromeosMachine: &ufspb.ChromeOSMachine{},
+			},
+		}
+	case "labstation":
+		machineLSE1 = &ufspb.MachineLSE{
+			Name:     hostname,
+			Hostname: hostname,
+			Machines: []string{id},
+			Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+				ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+					ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+						DeviceLse: &ufspb.ChromeOSDeviceLSE{
+							Device: &ufspb.ChromeOSDeviceLSE_Labstation{
+								Labstation: &chromeosLab.Labstation{
+									Hostname: hostname,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		machine = &ufspb.Machine{
+			Name: id,
+			Device: &ufspb.Machine_ChromeosMachine{
+				ChromeosMachine: &ufspb.ChromeOSMachine{},
+			},
+		}
+	case "browser":
+		machineLSE1 = &ufspb.MachineLSE{
+			Name:     hostname,
+			Hostname: hostname,
+			Machines: []string{id},
+			Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+				ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+			},
+		}
+		machine = &ufspb.Machine{
+			Name: id,
+			Device: &ufspb.Machine_ChromeBrowserMachine{
+				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+			},
+		}
+	}
+
+	if _, err := registration.CreateMachine(osCtx, machine); err != nil {
+		return err
+	}
+	if _, err := inventory.CreateMachineLSE(osCtx, machineLSE1); err != nil {
+		return err
+	}
+	return nil
 }

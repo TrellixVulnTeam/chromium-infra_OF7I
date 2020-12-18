@@ -52,12 +52,12 @@ func TestUpdateDutState(t *testing.T) {
 			So(oldDS.GetChameleon(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
 			So(oldDS.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_ACCEPTABLE)
 
-			// Use ctx in testing
+			// Use osCtx in testing, as in prod, ctx is forced to include namespace.
 			ds2 := mockDutState("update-dutstate-id2", "update-dutstate-hostname2")
 			ds2.Servo = chromeosLab.PeripheralState_BROKEN
 			ds2.Chameleon = chromeosLab.PeripheralState_BROKEN
 			ds2.StorageState = chromeosLab.HardwareState_HARDWARE_NEED_REPLACEMENT
-			_, err = UpdateDutState(ctx, ds2)
+			_, err = UpdateDutState(osCtx, ds2)
 			So(err, ShouldBeNil)
 
 			// Verify with osCtx
