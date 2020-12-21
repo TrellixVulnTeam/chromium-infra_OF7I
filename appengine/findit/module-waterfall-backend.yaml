@@ -33,7 +33,6 @@ skip_files:
 - ^(.*/)?.*_test\.py$
 - ^(.*/)?\..*$
 - ^(.*/)?.*\.md$
-- ^(.*/)?components/.*$  # Exclude components due to conflict with pipeline.
 - ^(.*/)?Makefile$
 - ^(.*/)?README$
 - ^(.*/)?tests\.py$
