@@ -102,15 +102,23 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 	// Bypass code-review check if Bot-Commit label has max vote of 1
 	if bcExists {
 		logging.Debugf(ctx, "Bot-Commit label exists")
-		bcVal, err := getMaxLabelValue(botCommitLabelInfo.Values)
+		bcMaxVal, err := getMaxLabelValue(botCommitLabelInfo.Values)
 		if err != nil {
 			return nil, err
 		}
-		if bcVal == 1 {
-			logging.Debugf(ctx, "Bot-Commit approved CL")
-			result.RuleResultStatus = RulePassed
-			return result, nil
+		logging.Debugf(ctx, "Bot-Commit max value is %d", bcMaxVal)
+
+		for _, vote := range botCommitLabelInfo.All {
+			logging.Debugf(ctx, "Bot-Commit label voter %d voted %d", vote.AccountID, vote.Value)
+			if int(vote.Value) == bcMaxVal {
+				logging.Debugf(ctx, "Bot-Commit label voter %d voted max value %d, rule passed", vote.AccountID, vote.Value)
+				// Valid Bot-Commit found.
+				result.RuleResultStatus = RulePassed
+				return result, nil
+			}
 		}
+
+		logging.Debugf(ctx, "Bot-Commit label exists with no votes that match max value")
 	}
 
 	if !crExists {

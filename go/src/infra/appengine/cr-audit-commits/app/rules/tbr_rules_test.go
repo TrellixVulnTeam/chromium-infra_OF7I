@@ -35,6 +35,7 @@ func TestTBRRules(t *testing.T) {
 			TriggeringAccount: "jdoe@sample.com",
 			RepoCfg:           cfg,
 		}
+
 		reviewedcl := &gerrit.Change{
 			ChangeID:        "tbrchangeid1",
 			ChangeNumber:    4321,
@@ -65,9 +66,16 @@ func TestTBRRules(t *testing.T) {
 						"+1": "Yes",
 					},
 				},
+				"Bot-Commit": {
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
 			},
 		}
-		notreviewedcl := &gerrit.Change{
+
+		selfReviewedCl := &gerrit.Change{
 			ChangeID:        "tbrchangeid2",
 			ChangeNumber:    4322,
 			CurrentRevision: "7b12c0de2",
@@ -90,16 +98,30 @@ func TestTBRRules(t *testing.T) {
 						"+1": "Yes",
 					},
 				},
+				"Bot-Commit": {
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
 			},
 		}
+
 		botCommitCl := &gerrit.Change{
 			ChangeID:        "botcommit123",
-			ChangeNumber:    4322,
+			ChangeNumber:    4323,
 			CurrentRevision: "7b12c0de3",
 			Owner: gerrit.AccountInfo{
 				AccountID: 1337,
 			},
 			Labels: map[string]gerrit.LabelInfo{
+				"Code-Review": {
+					Values: map[string]string{
+						"-1": "No",
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
 				"Bot-Commit": {
 					All: []gerrit.VoteInfo{
 						{
@@ -116,11 +138,122 @@ func TestTBRRules(t *testing.T) {
 				},
 			},
 		}
+
+		botCommitAndSelfCl := &gerrit.Change{
+			ChangeID:        "botcommit456",
+			ChangeNumber:    4324,
+			CurrentRevision: "7b12c0de4",
+			Owner: gerrit.AccountInfo{
+				AccountID: 1337,
+			},
+			Labels: map[string]gerrit.LabelInfo{
+				"Code-Review": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 1337,
+							},
+							Value: 1,
+						},
+					},
+					Values: map[string]string{
+						"-1": "No",
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
+				"Bot-Commit": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 1551,
+							},
+							Value: 1,
+						},
+					},
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
+			},
+		}
+
+		selfReviewedOsCl := &gerrit.Change{
+			ChangeID:        "tbrchangeid3",
+			ChangeNumber:    4325,
+			CurrentRevision: "7b12c0de5",
+			Owner: gerrit.AccountInfo{
+				AccountID: 1337,
+			},
+			Labels: map[string]gerrit.LabelInfo{
+				"Code-Review": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 1337,
+							},
+							Value: 2,
+						},
+					},
+					Values: map[string]string{
+						"-1": "No",
+						" 0": "Whatever",
+						"+1": "Yes",
+						"+2": "Super Yes",
+					},
+				},
+				"Bot-Commit": {
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
+			},
+		}
+
+		reviewedOsCl := &gerrit.Change{
+			ChangeID:        "tbrchangeid4",
+			ChangeNumber:    4326,
+			CurrentRevision: "7b12c0de6",
+			Owner: gerrit.AccountInfo{
+				AccountID: 1337,
+			},
+			Labels: map[string]gerrit.LabelInfo{
+				"Code-Review": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 4001,
+							},
+							Value: 2,
+						},
+					},
+					Values: map[string]string{
+						"-1": "No",
+						" 0": "Whatever",
+						"+1": "Yes",
+						"+2": "Super Yes",
+					},
+				},
+				"Bot-Commit": {
+					Values: map[string]string{
+						" 0": "Whatever",
+						"+1": "Yes",
+					},
+				},
+			},
+		}
+
 		q := map[string][]*gerrit.Change{
 			"commit:7b12c0de1": {reviewedcl},
-			"commit:7b12c0de2": {notreviewedcl},
+			"commit:7b12c0de2": {selfReviewedCl},
 			"commit:7b12c0de3": {botCommitCl},
+			"commit:7b12c0de4": {botCommitAndSelfCl},
+			"commit:7b12c0de5": {selfReviewedOsCl},
+			"commit:7b12c0de6": {reviewedOsCl},
 		}
+
 		testClients := &Clients{}
 		testClients.gerrit = &mockGerritClient{q: q}
 
@@ -157,6 +290,26 @@ func TestTBRRules(t *testing.T) {
 		Convey("Skip", func() {
 			expectedStatus = RuleSkipped
 			rc.AuthorAccount = "robot2@example.com"
+		})
+
+		Convey("Bot-Commit", func() {
+			rc.CommitHash = "7b12c0de3"
+			expectedStatus = RulePassed
+		})
+
+		Convey("Bot-Commit and self CR", func() {
+			rc.CommitHash = "7b12c0de4"
+			expectedStatus = RulePassed
+		})
+
+		Convey("Self-reviewed OS CL fail", func() {
+			rc.CommitHash = "7b12c0de5"
+			expectedStatus = RuleFailed
+		})
+
+		Convey("Reviewed OS CL pass", func() {
+			rc.CommitHash = "7b12c0de6"
+			expectedStatus = RulePassed
 		})
 
 		c := ChangeReviewed{
