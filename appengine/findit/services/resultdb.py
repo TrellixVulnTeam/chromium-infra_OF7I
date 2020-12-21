@@ -13,22 +13,30 @@ from google.protobuf.field_mask_pb2 import FieldMask
 
 RESULTDB_HOSTNAME = "results.api.cr.dev"
 
-
 def query_resultdb(inv_id):
-  # TODO(crbug.com/981066): Add pagination
   logging.info("Query test results for invocation %s from resultdb", inv_id)
   client = resultdb_client(RESULTDB_HOSTNAME)
   inv_name = "invocations/" + inv_id
-  req = resultdb_pb2.QueryTestResultsRequest(
-      invocations=[inv_name],
-      read_mask=FieldMask(paths=["*"]),
-      page_size=1000,
-  )
-  resp = client.QueryTestResults(
-      req,
-      credentials=prpc_client.service_account_credentials(),
-  )
-  logging.info("Got %d test results", len(resp.test_results))
+  next_page_token = None
+  results = []
+  while True:
+    req = resultdb_pb2.QueryTestResultsRequest(
+        invocations=[inv_name],
+        read_mask=FieldMask(paths=["*"]),
+        page_size=1000,
+    )
+    if next_page_token is not None:
+      req.page_token = next_page_token
+    resp = client.QueryTestResults(
+        req,
+        credentials=prpc_client.service_account_credentials(),
+    )
+    next_page_token = resp.next_page_token
+    results.extend(resp.test_results)
+    if next_page_token is None or next_page_token == "":
+      break
+  logging.info("Got %d test results", len(results))
+  return results
 
 
 def resultdb_client(hostname):
