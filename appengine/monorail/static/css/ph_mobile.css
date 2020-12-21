@@ -86,7 +86,12 @@
   #maincol textarea {
     font-size: 100%;
     width: 100%;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
+  #maincol input[type="button"],
+  #maincol input[type="submit"] {
+    padding: 10px;
   }
 
   #maincol .labelediting input {
