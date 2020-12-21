@@ -273,8 +273,9 @@ class AssignTaskNumTest(test_case.TestCase):
     target = targets.TaskTarget('test_service', 'test_job', 'test_region',
                                 'test_host')
     self.mock_state = interface.State(target=target)
-    self.app = instrument_flask.create_app()
+    self.app = flask.Flask('test_app')
     self.app.config['TESTING'] = True
+    instrument_flask.instrument(self.app)
 
   def tearDown(self):
     mock.patch.stopall()

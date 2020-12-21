@@ -33,6 +33,8 @@ def _is_instrumented(app):
 def instrument(app, time_fn=time.time):
   if not _is_instrumented(app):
     app.wsgi_app = FlaskInstrumentor(app.wsgi_app, time_fn)
+    app.add_url_rule(
+        shared.CRON_REQUEST_PATH_TASKNUM_ASSIGNER, view_func=assign_task_num)
 
   return app
 
@@ -153,14 +155,3 @@ def assign_task_num():
   interface.invoke_global_callbacks()
 
   return "OK"
-
-
-def create_app():
-  app = flask.Flask('gae_ts_mon.TaskNumAssigner')
-  app.add_url_rule(
-      shared.CRON_REQUEST_PATH_TASKNUM_ASSIGNER, view_func=assign_task_num)
-
-  return app
-
-
-tasknum_assigner = create_app()
