@@ -146,12 +146,14 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (
 		FetchCore: false,
 	}
 
+	logging.Infof(ctx, "Starting TLS")
 	tlsServer, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
 	if err != nil {
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
 	defer tlsServer.Stop()
 
+	logging.Infof(ctx, "Connecting to TLS")
 	conn, err := grpc.Dial(tlsServer.Address(), grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Annotate(err, "connect to TLS").Err()
@@ -162,6 +164,7 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (
 
 	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
 
+	logging.Infof(ctx, "Calling FetchCrashes")
 	stream, err := cl.FetchCrashes(ctx, &req)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -170,6 +173,7 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (
 		return nil, errors.Annotate(err, "run TLS FetchCrashes").Err()
 	}
 
+	logging.Infof(ctx, "Finding existing crashes")
 	rtdCrashes, err := findRTDCrashes(ctx, r.Config.Task.ResultsDir)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to get preexisting crashes: ", err)
@@ -177,6 +181,7 @@ func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (
 
 	outDir := filepath.Join(r.Config.Task.ResultsDir, outputSubDir)
 
+	logging.Infof(ctx, "Reading FetchCrashes response")
 	var lastCrashID int64 = -1
 	var crashInfo *tlsapi.CrashInfo
 	// crashBlobs maps the blob's filename to the full blob struct. It is
@@ -241,6 +246,7 @@ readStream:
 		}
 	}
 
+	logging.Infof(ctx, "Finding missing crashes")
 	fetchResp.CrashesRtdOnly, fetchResp.CrashesTlsOnly = findMissingCrashes(rtdCrashes, fetchResp.Crashes)
 
 	if err := writeProcessedCrashDetails(ctx, outDir, fetchResp.Crashes); err != nil {
@@ -252,12 +258,15 @@ readStream:
 	// If we uploaded crashes, remove them now to prevent them from being
 	// uploaded again.
 	if r.UploadCrashes {
+		logging.Infof(ctx, "Removing uploaded crashes")
 		if err := removeCrashes(ctx, r, cl); err != nil {
 			// Don't return an error here, because we still successfully
 			// processed the crashes.
 			logging.Errorf(ctx, "Failed to clean up crashes: %s", err)
 		}
 	}
+
+	logging.Infof(ctx, "Completing successfully")
 
 	return fetchResp, nil
 }
@@ -418,6 +427,7 @@ func writeProcessedCrashDetails(ctx context.Context, dir string, crashes []*phos
 // processCrash evaluates a fully-received crash, writes it to |dir|/crashes, uploads
 // it if requested, and gives back an appropriate CrashSummary.
 func processCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[string]*tlsapi.CrashBlob, r phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
+	logging.Infof(ctx, "Processing full crash for exec %s (upload: %t)", info.ExecName, r.UploadCrashes)
 	var url string
 	if r.UploadCrashes {
 		var blobs []*tlsapi.CrashBlob
