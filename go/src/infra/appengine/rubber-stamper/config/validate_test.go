@@ -26,13 +26,19 @@ var sampleConfigStr = `
 							value: {
 								paths: "a/b.txt",
 								paths: "a/*/c.txt",
-								paths: "d/"
+								paths: "d/*"
 							}
 						}
 						file_extension_map {
 							key: ""
 							value: {
 								paths: "a/b"
+							}
+						}
+						file_extension_map {
+							key: "*"
+							value: {
+								paths: "z/*"
 							}
 						}
 					}
@@ -76,6 +82,11 @@ func TestConfigValidator(t *testing.T) {
 				m[".txt"].Paths[0] = "a/b.md"
 				err := validate(cfg)
 				So(err, ShouldErrLike, "the extension of path a/b.md does not match the extension .txt")
+			})
+			Convey("invalid path with extension *", func() {
+				m["*"].Paths[0] = "a/b.md"
+				err := validate(cfg)
+				So(err, ShouldErrLike, "the extension of path a/b.md does not match the extension *")
 			})
 		})
 	})

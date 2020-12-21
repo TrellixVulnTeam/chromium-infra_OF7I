@@ -45,6 +45,11 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 
 	fileExtensionMap := hostCfg.RepoConfigs[t.Repo].BenignFilePattern.FileExtensionMap
 
+	var allExtPaths []string
+	if val, ok := fileExtensionMap["*"]; ok {
+		allExtPaths = val.Paths
+	}
+
 	var invalidFiles []string
 	for file := range resp.Files {
 		if file == "/COMMIT_MSG" {
@@ -53,11 +58,19 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 
 		isValid := false
 		ext := path.Ext(file)
-		if _, ok := fileExtensionMap[ext]; !ok {
+
+		var allowedPaths []string
+		if val, ok := fileExtensionMap[ext]; ok {
+			allowedPaths = append(val.Paths, allExtPaths...)
+		} else {
+			allowedPaths = allExtPaths
+		}
+
+		if len(allowedPaths) == 0 {
 			invalidFiles = append(invalidFiles, file)
 			continue
 		}
-		for _, p := range fileExtensionMap[ext].Paths {
+		for _, p := range allowedPaths {
 			// Allow `**` to mean all paths under this repo
 			// TODO: implement more robust pattern matching
 			if p == "**" {

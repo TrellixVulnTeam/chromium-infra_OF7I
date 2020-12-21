@@ -34,6 +34,9 @@ func TestReviewBenignFileChange(t *testing.T) {
 							"": {
 								Paths: []string{"a/x", "a/q/y"},
 							},
+							"*": {
+								Paths: []string{"t/*"},
+							},
 							".txt": {
 								Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
 							},
@@ -64,6 +67,8 @@ func TestReviewBenignFileChange(t *testing.T) {
 					"a/b.xtb":     nil,
 					"d.xtb":       nil,
 					"f/e/g.xtb":   nil,
+					"t/o":         nil,
+					"t/readme.md": nil,
 				},
 			}, nil)
 			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
@@ -82,6 +87,8 @@ func TestReviewBenignFileChange(t *testing.T) {
 					"a/q/y":       nil,
 					"a/e/a.txt":   nil,
 					"a/fz.txt":    nil,
+					"t/asd.txt":   nil,
+					"t/q":         nil,
 				},
 			}, nil)
 

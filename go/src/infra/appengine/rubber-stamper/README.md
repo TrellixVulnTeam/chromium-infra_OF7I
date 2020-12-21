@@ -46,21 +46,26 @@ in `chromium/src`, and a few subpaths for`.txt` files.
               paths: "**"
             }
           }
-        }
-        benign_file_pattern {
-            file_extension_map {
-                key: ".txt"
-                value: {
-                    paths: "a/b.txt",
-                    paths: "a/*/c.txt",
-                    paths: "d/"
-                }
+          file_extension_map {
+            key: ".txt"
+            value: {
+              paths: "a/b.txt",
+              paths: "a/*/c.txt",
+              paths: "d/"
             }
-        }        
+          }
+          file_extension_map {
+            key: "*"
+            value: {
+              paths: "z/"
+            }
+          }
+        }
       }
     }
 
-Using `**` in `paths` allows all paths in that repo.
+Using `**` in `paths` allows all paths in that repo. Using `*` in the key of
+`file_extension_map` allows all the file extensions.
 
 `file_extension_map` is a map contains the information about which files are
 considered benign under which directories. The `key`s are file extensions,
@@ -78,37 +83,37 @@ If you need to add a file whose suffix already exists in the pattern, you can
 simply add another `paths` under the existing key. For example, adding another
 "a/c.txt" in the above config would be like:
 
-	benign_file_pattern {
-		file_extension_map {
-			key: ".txt"
-			value: {
-				paths: "a/b.txt",
-				paths: "a/*/c.txt",
-				paths: "d/",
-				paths: "a/c.txt"
-			}
-		}
-	}
+    benign_file_pattern {
+      file_extension_map {
+        key: ".txt"
+        value: {
+          paths: "a/b.txt",
+          paths: "a/*/c.txt",
+          paths: "d/",
+          paths: "a/c.txt"
+        }
+      }
+    }
 
 If you need to add a file whose suffix does not exist yet, you need to add a
 new `file_extension_map`, like:
 
-	benign_file_pattern {
-		file_extension_map {
-			key: ".txt"
-			value: {
-				paths: "a/b.txt",
-				paths: "a/*/c.txt",
-				paths: "d/"
-			}
-		}
-        file_extension_map {
-			key: ""
-			value: {
-				paths: "a/DEPS"
-			}
-		}
-	}
+    benign_file_pattern {
+      file_extension_map {
+        key: ".txt"
+        value: {
+          paths: "a/b.txt",
+          paths: "a/*/c.txt",
+          paths: "d/"
+        }
+      }
+      file_extension_map {
+        key: ""
+        value: {
+          paths: "a/DEPS"
+        }
+      }
+    }
 
 ### Have Rubber-Stamper review your CLs
 For every CL that requires Rubber-Stamper's review, add `Rubber Stamper (rubber-stamper@appspot.gserviceaccount.com)`

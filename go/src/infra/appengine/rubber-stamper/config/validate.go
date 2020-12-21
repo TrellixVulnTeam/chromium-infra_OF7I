@@ -37,7 +37,7 @@ func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
 func validateBenignFilePattern(c *validation.Context, benignFilePattern *BenignFilePattern) {
 	m := benignFilePattern.FileExtensionMap
 	for ext, paths := range m {
-		if ext != path.Ext(ext) {
+		if ext != path.Ext(ext) && ext != "*" {
 			c.Errorf("invalid file extension %s", ext)
 		}
 
