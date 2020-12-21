@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/logging"
 
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
@@ -72,6 +73,7 @@ func (r ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
 
 // Run executes the rule.
 func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+	logging.Debugf(ctx, "Applying the ChangeReviewed rule to RelevantCommit: %+v", rc.RepoStateKey)
 	result := &RuleResult{}
 	result.RuleName = r.GetName()
 	prevResult := PreviousResult(ctx, rc, result.RuleName)
@@ -93,16 +95,19 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 		return nil, err
 	}
 	owner := change.Owner.AccountID
+	logging.Debugf(ctx, "Gerrit change owner is: %d", owner)
 	crLabelInfo, crExists := change.Labels["Code-Review"]
 	botCommitLabelInfo, bcExists := change.Labels["Bot-Commit"]
 
 	// Bypass code-review check if Bot-Commit label has max vote of 1
 	if bcExists {
+		logging.Debugf(ctx, "Bot-Commit label exists")
 		bcVal, err := getMaxLabelValue(botCommitLabelInfo.Values)
 		if err != nil {
 			return nil, err
 		}
 		if bcVal == 1 {
+			logging.Debugf(ctx, "Bot-Commit approved CL")
 			result.RuleResultStatus = RulePassed
 			return result, nil
 		}
@@ -111,12 +116,16 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 	if !crExists {
 		return nil, fmt.Errorf("The gerrit change for Commit %v does not have the 'Code-Review' label", rc.CommitHash)
 	}
+	logging.Debugf(ctx, "Code-Review label exists")
 	maxValue, err := getMaxLabelValue(crLabelInfo.Values)
 	if err != nil {
 		return nil, err
 	}
+	logging.Debugf(ctx, "Code-Review label max value is: %d", maxValue)
 	for _, vote := range crLabelInfo.All {
+		logging.Debugf(ctx, "Code-Review label voter %d voted %d", vote.AccountID, vote.Value)
 		if int(vote.Value) == maxValue && vote.AccountID != owner {
+			logging.Debugf(ctx, "Code-Review label voter %d voted %d who is not owner %d", vote.AccountID, vote.Value, owner)
 			// Valid approver found.
 			result.RuleResultStatus = RulePassed
 			return result, nil
