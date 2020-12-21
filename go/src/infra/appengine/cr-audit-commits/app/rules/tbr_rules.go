@@ -140,7 +140,7 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 		}
 	}
 	result.RuleResultStatus = RuleFailed
-	result.Message = "The commit was not approved by a reviewer other than the owner. Beginning in Q1 2020, Chrome is disallowing TBRs. Learn more at go/chrome-cr-owners-site."
+	result.Message = "The commit was not approved by a reviewer other than the owner. Beginning in Q1 2021, Chrome is disallowing TBRs. Learn more at go/chrome-cr-owners-site."
 	return result, nil
 }
 
