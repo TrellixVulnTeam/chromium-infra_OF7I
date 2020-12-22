@@ -5,6 +5,7 @@
 import {assert, expect} from 'chai';
 import {MrAttachment} from './mr-attachment.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import {FILE_DOWNLOAD_WARNING} from 'shared/settings.js';
 
 let element;
 
@@ -147,23 +148,81 @@ describe('mr-attachment', () => {
     assert.equal(viewLink.href, 'http://example.com/attachment.foo');
   });
 
-  it('download link is not displayed if not given', async () => {
-    element.attachment = {};
-    await element.updateComplete;
-    const downloadLink = element.shadowRoot.querySelector(
-        '.attachment-download');
-    assert.isNull(downloadLink);
-  });
+  describe('download', () => {
+    let downloadLink;
 
-  it('download link is displayed if given', async () => {
-    element.attachment = {
-      downloadUrl: 'http://example.com/attachment.foo',
-    };
-    await element.updateComplete;
-    const downloadLink = element.shadowRoot.querySelector(
-        '.attachment-download');
-    assert.isNotNull(downloadLink);
-    expect(downloadLink).to.be.displayed;
-    assert.equal(downloadLink.href, 'http://example.com/attachment.foo');
+    beforeEach(async () => {
+      sinon.stub(window, 'confirm').returns(false);
+
+
+      element.attachment = {};
+      await element.updateComplete;
+      downloadLink = element.shadowRoot.querySelector('.attachment-download');
+      // Prevent Karma from poening up new tabs because of simulated link
+      // clicks.
+      downloadLink.removeAttribute('target');
+    });
+
+    afterEach(() => {
+      window.confirm.restore();
+    });
+
+    it('download link is not displayed if not given', async () => {
+      element.attachment = {};
+      await element.updateComplete;
+      assert.isTrue(downloadLink.hidden);
+    });
+
+    it('download link is displayed if given', async () => {
+      element.attachment = {
+        downloadUrl: 'http://example.com/attachment.foo',
+      };
+      await element.updateComplete;
+      const downloadLink = element.shadowRoot.querySelector(
+          '.attachment-download');
+      assert.isFalse(downloadLink.hidden);
+      expect(downloadLink).to.be.displayed;
+      assert.equal(downloadLink.href, 'http://example.com/attachment.foo');
+    });
+
+    it('download allows recognized file extension and type', async () => {
+      element.attachment = {
+        contentType: 'image/png',
+        filename: 'not-a-virus.png',
+        downloadUrl: '#',
+      };
+      await element.updateComplete;
+
+      downloadLink.click();
+
+      sinon.assert.notCalled(window.confirm);
+    });
+
+    it('file extension matching is case insensitive', async () => {
+      element.attachment = {
+        contentType: 'image/png',
+        filename: 'not-a-virus.PNG',
+        downloadUrl: '#',
+      };
+      await element.updateComplete;
+
+      downloadLink.click();
+
+      sinon.assert.notCalled(window.confirm);
+    });
+
+    it('download warns on unrecognized file extension and type', async () => {
+      element.attachment = {
+        contentType: 'application/virus',
+        filename: 'fake-virus.exe',
+        downloadUrl: '#',
+      };
+      await element.updateComplete;
+
+      downloadLink.click();
+
+      sinon.assert.calledOnce(window.confirm);
+      sinon.assert.calledWith(window.confirm, FILE_DOWNLOAD_WARNING);
+    });
   });
 });

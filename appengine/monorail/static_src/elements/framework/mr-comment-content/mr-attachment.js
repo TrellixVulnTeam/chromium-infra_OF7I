@@ -5,6 +5,8 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
+import {FILE_DOWNLOAD_WARNING, ALLOWED_ATTACHMENT_EXTENSIONS,
+  ALLOWED_CONTENT_TYPE_PREFIXES} from 'shared/settings.js';
 import 'elements/chops/chops-button/chops-button.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
@@ -80,6 +82,7 @@ export class MrAttachment extends connectStore(LitElement) {
       `];
   }
 
+
   /** @override */
   render() {
     return html`
@@ -107,13 +110,13 @@ export class MrAttachment extends connectStore(LitElement) {
                 target="_blank"
               >View</a>
             `: ''}
-            ${this.attachment.downloadUrl ? html`
-              <a
-                class="attachment-download"
-                href=${this.attachment.downloadUrl}
-                target="_blank"
-              >Download</a>
-            `: ''}
+            <a
+              class="attachment-download"
+              href=${this.attachment.downloadUrl}
+              target="_blank"
+              ?hidden=${!this.attachment.downloadUrl}
+              @click=${this._warnOnDownload}
+            >Download</a>
           </div>
           ${this.attachment.thumbnailUrl ? html`
             <a href=${this.attachment.viewUrl} target="_blank">
@@ -159,6 +162,25 @@ export class MrAttachment extends connectStore(LitElement) {
     }, (error) => {
       console.log('Failed to (un)delete attachment', error);
     });
+  }
+
+  /**
+   * Give the user a warning before they download files that Monorail thinks
+   * might have the potential to be unsafe.
+   * @param {MouseEvent} e
+   */
+  _warnOnDownload(e) {
+    const isAllowedType = ALLOWED_CONTENT_TYPE_PREFIXES.some((prefix) => {
+      return this.attachment.contentType.startsWith(prefix);
+    });
+    const isAllowedExtension = ALLOWED_ATTACHMENT_EXTENSIONS.some((ext) => {
+      return this.attachment.filename.toLowerCase().endsWith(ext);
+    });
+
+    if (isAllowedType || isAllowedExtension) return;
+    if (!window.confirm(FILE_DOWNLOAD_WARNING)) {
+      e.preventDefault();
+    }
   }
 }
 
