@@ -17,8 +17,14 @@ import (
 
 	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 )
+
+func defaultTest(tests map[string]*skylab_test_runner.Request_Test) *skylab_test_runner.Request_Test {
+	So(tests["original_test"], ShouldNotBeNil)
+	return tests["original_test"]
+}
 
 func TestProvisionableLabels(t *testing.T) {
 	Convey("Given a test that specifies software dependencies", t, func() {
@@ -56,11 +62,12 @@ func TestClientTest(t *testing.T) {
 				Params:     &test_platform.Request_Params{},
 			}
 			got, err := g.testRunnerRequest(ctx)
+			test := defaultTest(got.Tests)
 			So(err, ShouldBeNil)
 			Convey("it should be marked as such.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().IsClientTest, ShouldEqual, true)
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().IsClientTest, ShouldEqual, true)
 			})
 		})
 	})
@@ -77,11 +84,12 @@ func TestServerTest(t *testing.T) {
 				Params:     &test_platform.Request_Params{},
 			}
 			got, err := g.testRunnerRequest(ctx)
+			test := defaultTest(got.Tests)
 			So(err, ShouldBeNil)
 			Convey("it should be marked as such.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().IsClientTest, ShouldEqual, false)
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().IsClientTest, ShouldEqual, false)
 			})
 		})
 	})
@@ -115,10 +123,11 @@ func TestTestName(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the test name is populated correctly.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Name, ShouldEqual, "foo-test")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Name, ShouldEqual, "foo-test")
 			})
 		})
 	})
@@ -136,10 +145,11 @@ func TestTestArgs(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the test args are propagated correctly.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().TestArgs, ShouldEqual, "foo=bar baz=qux")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().TestArgs, ShouldEqual, "foo=bar baz=qux")
 			})
 		})
 	})
@@ -157,11 +167,12 @@ func TestTestLevelKeyval(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the keyval is propagated.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["key"], ShouldEqual, "test-value")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["key"], ShouldEqual, "test-value")
 			})
 		})
 	})
@@ -179,11 +190,12 @@ func TestRequestLevelKeyval(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the keyval is propagated.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["key"], ShouldEqual, "test-value")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["key"], ShouldEqual, "test-value")
 			})
 		})
 	})
@@ -203,11 +215,12 @@ func TestKeyvalOverride(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the keyval from the request takes precedence.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["ambiguous-key"], ShouldEqual, "request-value")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["ambiguous-key"], ShouldEqual, "request-value")
 			})
 		})
 	})
@@ -228,12 +241,13 @@ func TestConstructedDisplayName(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the display name is generated correctly.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().DisplayName, ShouldEqual, "foo-build/foo-suite/foo-name")
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["label"], ShouldEqual, "foo-build/foo-suite/foo-name")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().DisplayName, ShouldEqual, "foo-build/foo-suite/foo-name")
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["label"], ShouldEqual, "foo-build/foo-suite/foo-name")
 			})
 		})
 	})
@@ -252,12 +266,13 @@ func TestExplicitDisplayName(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the display name is propagated correctly.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().DisplayName, ShouldEqual, "fancy-name")
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["label"], ShouldEqual, "fancy-name")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().DisplayName, ShouldEqual, "fancy-name")
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["label"], ShouldEqual, "fancy-name")
 			})
 		})
 	})
@@ -274,11 +289,12 @@ func TestParentIDKeyval(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the corresponding keyval is populated.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["parent_job_id"], ShouldEqual, "foo-id")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["parent_job_id"], ShouldEqual, "foo-id")
 			})
 		})
 	})
@@ -296,11 +312,12 @@ func TestBuildKeyval(t *testing.T) {
 			}
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
 			Convey("the corresponding keyval is populated.", func() {
-				So(got.Test, ShouldNotBeNil)
-				So(got.Test.GetAutotest(), ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals, ShouldNotBeNil)
-				So(got.Test.GetAutotest().Keyvals["build"], ShouldEqual, "foo-build")
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals, ShouldNotBeNil)
+				So(test.GetAutotest().Keyvals["build"], ShouldEqual, "foo-build")
 			})
 		})
 	})
@@ -380,9 +397,10 @@ func TestEnableSynchronousOffload(t *testing.T) {
 						Params:     &params,
 					}
 					got, err := g.testRunnerRequest(ctx)
+					test := defaultTest(got.Tests)
 					So(err, ShouldBeNil)
 					So(got, ShouldNotBeNil)
-					So(got.GetTest().GetOffload().GetSynchronousGsEnable(), ShouldEqual, c.expected)
+					So(test.GetOffload().GetSynchronousGsEnable(), ShouldEqual, c.expected)
 				})
 			})
 		}

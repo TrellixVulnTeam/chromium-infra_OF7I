@@ -475,17 +475,21 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		Prejob: &skylab_test_runner.Request_Prejob{
 			ProvisionableLabels: pl,
 		},
-		Test: &skylab_test_runner.Request_Test{
-			Harness: &skylab_test_runner.Request_Test_Autotest_{
-				Autotest: &skylab_test_runner.Request_Test_Autotest{
-					DisplayName:  g.displayName(ctx, kv),
-					IsClientTest: isClient,
-					Name:         g.Invocation.Test.Name,
-					Keyvals:      kv,
-					TestArgs:     g.Invocation.TestArgs,
+		// The hard coded "original_test" key is ignored in test_runner builds.
+		// All behavior will remain the same, until we start running multiple tests per test_runner build.
+		Tests: map[string]*skylab_test_runner.Request_Test{
+			"original_test": {
+				Harness: &skylab_test_runner.Request_Test_Autotest_{
+					Autotest: &skylab_test_runner.Request_Test_Autotest{
+						DisplayName:  g.displayName(ctx, kv),
+						IsClientTest: isClient,
+						Name:         g.Invocation.Test.Name,
+						Keyvals:      kv,
+						TestArgs:     g.Invocation.TestArgs,
+					},
 				},
+				Offload: g.offloadOptions(),
 			},
-			Offload: g.offloadOptions(),
 		},
 		ParentRequestUid: g.ParentRequestUID,
 		ParentBuildId:    g.ParentBuildID,
