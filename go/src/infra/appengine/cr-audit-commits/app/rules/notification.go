@@ -16,6 +16,7 @@ import (
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
 
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 )
 
@@ -115,6 +116,7 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 // PostIssue will create an issue based on the given parameters.
 func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients, components, labels []string) (int32, error) {
 	// TODO: Replace monorail v1 api with v3.
+	logging.Debugf(ctx, "Attempting to post issue to Monorail for \"%s\"", s)
 	labels = append(labels, "Pri-1", "Type-Task")
 
 	// The components for the issue will be the additional components
@@ -135,6 +137,7 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients,
 	}
 
 	if o != "" {
+		logging.Debugf(ctx, "Owner \"%s\" was passed-in; about to insert", o)
 		ownAtom := &monorail.AtomPerson{
 			Name: o,
 		}
@@ -143,6 +146,7 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients,
 		resp, err := cs.Monorail.InsertIssue(ctx, req)
 		switch status.Code(err) {
 		case codes.OK:
+			logging.Debugf(ctx, "Successfully filed issue ID %d", resp.Issue.Id)
 			return resp.Issue.Id, nil
 		case codes.InvalidArgument:
 			// The Gerrit user doesn't have a corresponding Monorail
@@ -152,19 +156,24 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients,
 			// https://osscs.corp.google.com/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/grpc/proto/google/rpc/code.proto;l=59;drc=eca556dd94c2c2a42dad90d3f7ee0061885c8242
 			// This conflicts with the upstream mapping Internal:
 			// https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md
+			logging.Debugf(ctx, "Failed with error code InvalidArgument; attempting to file again with owner set to CC")
 			iss.Status = monorail.StatusAvailable
 			iss.Owner = nil
 			iss.Cc = []*monorail.AtomPerson{ownAtom}
 			break // Try to insert again below
 		default:
+			logging.Debugf(ctx, "Failed with unhandled error \"%v\" with status.Code representation \"%v\"; aborting", err, status.Code(err))
 			return 0, err
 		}
 	}
 
+	logging.Debugf(ctx, "About to insert without owner")
 	resp, err := cs.Monorail.InsertIssue(ctx, req)
 	if err != nil {
+		logging.Debugf(ctx, "Failed with unhandled error \"%v\"; aborting", err)
 		return 0, err
 	}
+	logging.Debugf(ctx, "Successfully filed issue ID %d", resp.Issue.Id)
 	return resp.Issue.Id, nil
 }
 
