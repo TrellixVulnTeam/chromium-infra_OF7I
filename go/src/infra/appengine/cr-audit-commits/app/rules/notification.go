@@ -148,15 +148,15 @@ func PostIssue(ctx context.Context, cfg *RefConfig, s, o, d string, cs *Clients,
 		case codes.OK:
 			logging.Debugf(ctx, "Successfully filed issue ID %d", resp.Issue.Id)
 			return resp.Issue.Id, nil
-		case codes.InvalidArgument:
+		case codes.InvalidArgument, codes.Unknown:
 			// The Gerrit user doesn't have a corresponding Monorail
 			// account so we'll CC them instead. We think that the
 			// Monorail V1 API returns HTTP 400 in this case which
-			// is mapped to gRPC Invalid Argument:
+			// is mapped to gRPC Invalid Argument or Unknown:
 			// https://osscs.corp.google.com/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/grpc/proto/google/rpc/code.proto;l=59;drc=eca556dd94c2c2a42dad90d3f7ee0061885c8242
 			// This conflicts with the upstream mapping Internal:
 			// https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md
-			logging.Debugf(ctx, "Failed with error code InvalidArgument; attempting to file again with owner set to CC")
+			logging.Debugf(ctx, "Failed with error code InvalidArgument or Unknown; attempting to file again with owner set to CC")
 			iss.Status = monorail.StatusAvailable
 			iss.Owner = nil
 			iss.Cc = []*monorail.AtomPerson{ownAtom}
