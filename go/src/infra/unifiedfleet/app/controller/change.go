@@ -622,7 +622,7 @@ func logDut(resourceName string, oldData, newData *ufslabpb.DeviceUnderTest) []*
 		newData = &ufslabpb.DeviceUnderTest{}
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
-	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetPools(), newData.GetPools())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetCriticalPools(), newData.GetCriticalPools())...)
 	if oldData.GetPeripherals() == nil {
 		oldData.Peripherals = &ufslabpb.Peripherals{}
 	}
@@ -649,6 +649,7 @@ func logServo(resourceName, labelPrefix string, oldServo, newServo *ufslabpb.Ser
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.hostname", labelPrefix), oldServo.GetServoHostname(), newServo.GetServoHostname())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.port", labelPrefix), oldServo.GetServoPort(), newServo.GetServoPort())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.serial", labelPrefix), oldServo.GetServoSerial(), newServo.GetServoSerial())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.setup", labelPrefix), oldServo.GetServoSetup(), newServo.GetServoSetup())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.type", labelPrefix), oldServo.GetServoType(), newServo.GetServoType())...)
 	return changes
 }

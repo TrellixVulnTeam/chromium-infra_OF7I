@@ -189,7 +189,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		// ChromeOSMachineLSE for a DUT
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
-		return updateDUT(ctx, machinelse)
+		return UpdateDUT(ctx, machinelse, mask)
 	}
 
 	var oldMachinelse *ufspb.MachineLSE

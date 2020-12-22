@@ -497,6 +497,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 				Servo: servo3,
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
+			dutMachinelse3.Machines = []string{"machine-22"}
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
 			dutMachinelse3.ResourceState = ufspb.State_STATE_SERVING
 			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
@@ -554,6 +555,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 				Servo: servo2,
 			}
 			dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-17")
+			dutMachinelse2.Machines = []string{"machine-17"}
 			dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
 			resp, err := UpdateMachineLSE(ctx, dutMachinelse2, nil)
 			So(resp, ShouldNotBeNil)

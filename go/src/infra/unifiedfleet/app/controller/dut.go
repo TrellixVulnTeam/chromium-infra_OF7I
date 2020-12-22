@@ -13,6 +13,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	iv2api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -121,7 +124,7 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 	return machinelse, nil
 }
 
-// updateChromeOSMachineLSEDUT updates ChromeOSMachineLSE entities.
+// UpdateDUT updates a chrome OS DUT.
 //
 // updates one MachineLSE for DUT and updates Labstation MachineLSE
 // (with new Servo info from DUT). If DUT is connected to the same
@@ -129,30 +132,44 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 // If DUT is connected to a different labstation, then old servo info of DUT
 // is removed from old Labstation and new servo info from the DUT is added
 // to the new labstation.
-func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
-	// TODO(eshwarn) : provide partial update for dut.
+func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 
-		// Get the existing MachineLSE(DUT)
+		// Get the existing MachineLSE(DUT).
 		oldMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
 		}
 
-		// Validate the input
+		// Validate the input. Not passing the update mask as there is a different validation for dut.
 		if err := validateUpdateMachineLSE(ctx, oldMachinelse, machinelse, nil); err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
 
 		var machine *ufspb.Machine
-		if len(machinelse.GetMachines()) > 0 {
-			// Get machine to get lab and rack info for machinelse table indexing
-			machine, err = GetMachine(ctx, machinelse.GetMachines()[0])
-			if err != nil {
-				return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+
+		// Validate the update mask and process it.
+		if mask != nil && len(mask.Paths) > 0 {
+			if err := validateUpdateMachineLSEDUTMask(mask, machinelse); err != nil {
+				return err
 			}
-			setOutputField(ctx, machine, machinelse)
+			machinelse, err = processUpdateMachineLSEUpdateMask(ctx, proto.Clone(oldMachinelse).(*ufspb.MachineLSE), machinelse, mask)
+			if err != nil {
+				return err
+			}
+			// Ignore error as this check is done in validateUpdateMachineLSE and process mask functions
+			machine, _ = GetMachine(ctx, machinelse.GetMachines()[0])
+		} else {
+			// Full update, Machines cannot be empty.
+			if len(machinelse.GetMachines()) > 0 {
+				// Ignore error as validateUpdateMachineLSE verifies that the given machine exists.
+				machine, _ = GetMachine(ctx, machinelse.GetMachines()[0])
+				setOutputField(ctx, machine, machinelse)
+			} else {
+				// Empty machines field, Invalid update.
+				return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
+			}
 		}
 
 		machinelses := []*ufspb.MachineLSE{machinelse}
@@ -166,12 +183,12 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			if err != nil {
 				return err
 			}
-			// Check if a servo port is assigned. Assign one if its not
+			// Check if a servo port is assigned. Assign one if its not.
 			if err := assignServoPortIfMissing(newLabstationMachinelse, newServo); err != nil {
 				return err
 			}
 			cleanPreDeployFields(newServo)
-			// Check if the ServoHostName and ServoPort are already in use
+			// Check if the ServoHostName and ServoPort are already in use.
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
@@ -182,14 +199,14 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 
 			// Update the Labstation MachineLSE with new Servo information.
 			oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-			// check if the DUT is connected to the same Labstation or different Labstation
+			// check if the DUT is connected to the same Labstation or different Labstation.
 			if newServo.GetServoHostname() == oldServo.GetServoHostname() {
-				newLabstationMachineLseClone := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
+				newLabstationMachinelseClone := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
 				// DUT is connected to the same Labstation,
 				// replace the oldServo entry from the Labstation with the newServo entry
 				replaceServoEntryInLabstation(oldServo, newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
-				hcNewLabstation.LogMachineLSEChanges(newLabstationMachineLseClone, newLabstationMachinelse)
+				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseClone, newLabstationMachinelse)
 			} else {
 				// DUT is connected to a different Labstation,
 				// remove the oldServo entry of DUT form oldLabstationMachinelse
@@ -199,12 +216,12 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 				}
 				hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
 				// Make a copy to log the changes for the labstation (servo host) being replaced.
-				oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
+				oldLabstationMachinelseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
 
 				removeServoEntryFromLabstation(oldServo, oldLabstationMachinelse)
 
 				// Log changes to history.
-				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachineLseCopy, oldLabstationMachinelse)
+				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelseCopy, oldLabstationMachinelse)
 				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
 					return err
 				}
@@ -212,18 +229,18 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 				machinelses = append(machinelses, oldLabstationMachinelse)
 
 				// Make a copy to log changes for the replacing labstation (servo host).
-				newLabstationMachineLseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
+				newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
 				// Append the newServo entry of DUT to the newLabstationMachinelse.
 				appendServoEntryToLabstation(newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
-				hcNewLabstation.LogMachineLSEChanges(newLabstationMachineLseCopy, newLabstationMachinelse)
+				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
 			}
 			if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
 				return err
 			}
 		}
 
-		// BatchUpdate both DUT and Labstation/s
+		// BatchUpdate both DUT and Labstation(s)
 		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to BatchUpdate ChromeOSMachineLSEDUTs %s", err)
@@ -308,6 +325,7 @@ func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
 	return nil
 }
 
+// extractDeviceConfigID returns a corresponding ConfigID object from machine.
 func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
 	crosMachine := dut.GetChromeosMachine()
 	if crosMachine == nil {
@@ -328,7 +346,185 @@ func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
 
 }
 
+// cleanPreDeployFields clears servo type and topology.
 func cleanPreDeployFields(servo *ufslab.Servo) {
 	servo.ServoType = ""
 	servo.ServoTopology = nil
+}
+
+// validateUpdateMachineLSEDUTMask validates the input mask for the given machineLSE.
+//
+// Assumes that dut and mask aren't empty. This is because this function is not called otherwise.
+func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufspb.MachineLSE) error {
+	var servo *ufslab.Servo
+	var rpm *ufslab.RPM
+
+	// GetDut should return an object. Otherwise UpdateDUT isn't called
+	dut := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+	if peripherals := dut.GetPeripherals(); peripherals != nil {
+		servo = peripherals.GetServo()
+		rpm = peripherals.GetRpm()
+	}
+
+	maskSet := make(map[string]struct{}) // Set of all the masks
+	for _, path := range mask.Paths {
+		maskSet[path] = struct{}{}
+	}
+	// validate the give field mask
+	for _, path := range mask.Paths {
+		switch path {
+		case "name":
+			return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - name cannot be updated, delete and create a new machinelse instead.")
+		case "update_time":
+			return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - update_time cannot be updated, it is a output only field.")
+		case "machines":
+			if machinelse.GetMachines() == nil || len(machinelse.GetMachines()) == 0 || machinelse.GetMachines()[0] == "" {
+				return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
+			}
+		case "dut.hostname":
+			return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - hostname cannot be updated, delete and create a new dut.")
+		case "dut.servo.hostname":
+			if _, ok := maskSet["dut.servo.port"]; servo.GetServoHostname() == "" && ok && servo.GetServoPort() != int32(0) {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot update servo port. Servo host is being reset.")
+			}
+			if _, ok := maskSet["dut.servo.serial"]; servo.GetServoHostname() == "" && ok && servo.GetServoSerial() != "" {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot update servo serial. Servo host is being reset.")
+			}
+			if _, ok := maskSet["dut.servo.setup"]; servo.GetServoHostname() == "" && ok {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot update servo setup. Servo host is being reset.")
+			}
+		case "dut.rpm.host":
+			// Check for deletion of the host. Outlet cannot be updated if host is deleted.
+			if _, ok := maskSet["dut.rpm.outlet"]; ok && rpm.GetPowerunitName() == "" && rpm.GetPowerunitOutlet() != "" {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Deleting rpm host deletes everything. Cannot update outlet.")
+			}
+		case "dut.rpm.outlet":
+			// Check for deletion of rpm outlet. This should not be possible without deleting the host.
+			if _, ok := maskSet["dut.rpm.host"]; rpm.GetPowerunitOutlet() == "" && (!ok || (ok && rpm.GetPowerunitName() != "")) {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot remove rpm outlet. Please delete rpm.")
+			}
+		case "deploymentTicket":
+		case "tags":
+		case "description":
+		case "resourceState":
+		case "dut.pools":
+		case "dut.servo.port":
+		case "dut.servo.serial":
+		case "dut.servo.setup":
+			// valid fields, nothing to validate.
+		default:
+			return status.Errorf(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - unsupported update mask path %q", path)
+		}
+	}
+	return nil
+}
+
+// processUpdateMachineLSEUpdateMask process the update mask and returns the machine lse with updated parameters.
+func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMachineLse *ufspb.MachineLSE, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
+	// Extract all the peripherals to avoid doing it for every update in loop.
+	var oldServo, newServo *ufslab.Servo
+	var oldRPM, newRPM *ufslab.RPM
+	oldDut := oldMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+	newDut := newMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
+	if oldDut != nil {
+		if oldPeripherals := oldDut.GetPeripherals(); oldPeripherals != nil {
+			oldServo = oldPeripherals.GetServo()
+			oldRPM = oldPeripherals.GetRpm()
+		}
+	}
+	if newDut != nil {
+		if newPeripherals := newDut.GetPeripherals(); newPeripherals != nil {
+			newServo = newPeripherals.GetServo()
+			newRPM = newPeripherals.GetRpm()
+		}
+	}
+	for _, path := range mask.Paths {
+		switch path {
+		case "machines":
+			// Get machine to get zone and rack info for machinelse table indexing
+			machine, err := GetMachine(ctx, newMachineLse.GetMachines()[0])
+			if err != nil {
+				return oldMachineLse, errors.Annotate(err, "Unable to get machine %s", newMachineLse.GetMachines()[0]).Err()
+			}
+			oldMachineLse.Machines = newMachineLse.GetMachines()
+			// Check permission
+			if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+				return oldMachineLse, err
+			}
+			setOutputField(ctx, machine, oldMachineLse)
+		case "mlseprototype":
+			oldMachineLse.MachineLsePrototype = newMachineLse.GetMachineLsePrototype()
+		case "resourceState":
+			oldMachineLse.ResourceState = newMachineLse.GetResourceState()
+		case "tags":
+			if tags := newMachineLse.GetTags(); tags != nil && len(tags) > 0 {
+				// Regular tag updates append to the existing tags.
+				oldMachineLse.Tags = mergeTags(oldMachineLse.GetTags(), newMachineLse.GetTags())
+			} else {
+				// Updating tags without any input clears the tags.
+				oldMachineLse.Tags = nil
+			}
+		case "description":
+			oldMachineLse.Description = newMachineLse.Description
+		case "deploymentTicket":
+			oldMachineLse.DeploymentTicket = newMachineLse.GetDeploymentTicket()
+		default:
+			if strings.HasPrefix(path, "dut") {
+				if strings.HasPrefix(path, "dut.servo") {
+					processUpdateMachineLSEServoMask(oldServo, newServo, path)
+				}
+				if strings.HasPrefix(path, "dut.rpm") {
+					processUpdateMachineLSERPMMask(oldRPM, newRPM, path)
+				}
+				processUpdateMachineLSEDUTMask(oldDut, newDut, path)
+			}
+		}
+	}
+	if oldServo.GetServoHostname() != "" {
+		oldDut.GetPeripherals().Servo = oldServo
+	} else { // Reset servo if the servo host is reset.
+		oldDut.GetPeripherals().Servo = nil
+	}
+	if oldRPM.GetPowerunitName() != "" {
+		oldDut.GetPeripherals().Rpm = oldRPM
+	} else { // Reset RPM if the rpm host is reset.
+		oldDut.GetPeripherals().Rpm = nil
+	}
+	// return existing/old machinelse with new updated values.
+	return oldMachineLse, nil
+}
+
+// processUpdateMachineLSEUDTMask returns updated dut with the new parameters from the mask.
+func processUpdateMachineLSEDUTMask(oldDut, newDut *ufslab.DeviceUnderTest, path string) {
+	switch path {
+	case "dut.pools":
+		if pools := newDut.GetCriticalPools(); pools != nil && len(pools) > 0 {
+			oldDut.CriticalPools = newDut.GetCriticalPools()
+		} else {
+			// Assign DUT_POOL_QUOTA by default if everything is cleared.
+			oldDut.CriticalPools = []ufslab.DeviceUnderTest_DUTPool{ufslab.DeviceUnderTest_DUT_POOL_QUOTA}
+		}
+	}
+}
+
+// processUpdateMachineLSEServoMask returns servo with new updated params from the mask.
+func processUpdateMachineLSEServoMask(oldServo, newServo *ufslab.Servo, path string) {
+	switch path {
+	case "dut.servo.hostname":
+		oldServo.ServoHostname = newServo.GetServoHostname()
+	case "dut.servo.port":
+		oldServo.ServoPort = newServo.GetServoPort()
+	case "dut.servo.serial":
+		oldServo.ServoSerial = newServo.GetServoSerial()
+	}
+}
+
+// processUpdateMacineLSERPMMask returns rpm with new updated params from the mask
+func processUpdateMachineLSERPMMask(oldRPM, newRPM *ufslab.RPM, path string) {
+	switch path {
+	case "dut.rpm.host":
+		oldRPM.PowerunitName = newRPM.GetPowerunitName()
+	case "dut.rpm.outlet":
+		oldRPM.PowerunitOutlet = newRPM.GetPowerunitOutlet()
+	}
 }
