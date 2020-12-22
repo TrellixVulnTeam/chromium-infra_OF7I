@@ -239,17 +239,10 @@ class MonorailConnection(object):
   def _ExecuteWithSQLConnection(
       self, sql_cnxn, stmt_str, stmt_args, commit=True):
     """Execute a statement on the given database and return a cursor."""
-    if stmt_str.startswith('INSERT') or stmt_str.startswith('REPLACE'):
-      logging.info('SQL stmt_str: \n%s', stmt_str)
-      logging.info('SQL stmt_args: %r', stmt_args)
-    else:
-      logging.info('SQL stmt: \n%s', (stmt_str % tuple(stmt_args)))
 
     start_time = time.time()
     cursor = sql_cnxn.cursor()
     cursor.execute('SET NAMES utf8mb4')
-    logging.info('made cursor on %r in %d ms',
-                 sql_cnxn, int((time.time() - start_time) * 1000))
     if stmt_str.startswith('INSERT') or stmt_str.startswith('REPLACE'):
       cursor.executemany(stmt_str, stmt_args)
       duration = (time.time() - start_time) * 1000
@@ -261,8 +254,14 @@ class MonorailConnection(object):
       DB_QUERY_LATENCY.add(duration, {'type': 'read'})
       DB_QUERY_COUNT.increment({'type': 'read'})
     DB_RESULT_ROWS.add(cursor.rowcount)
-    logging.info('%d rows in %d ms', cursor.rowcount,
-                 int(duration))
+
+    if stmt_str.startswith('INSERT') or stmt_str.startswith('REPLACE'):
+      formatted_statement = '%s %s' % (stmt_str, stmt_args)
+    else:
+      formatted_statement = stmt_str % tuple(stmt_args)
+    logging.info(
+        '%d rows in %d ms: %s', cursor.rowcount, int(duration),
+        formatted_statement.replace('\n', ' '))
 
     if commit and not stmt_str.startswith('SELECT'):
       try:

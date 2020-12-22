@@ -894,7 +894,6 @@ def _GetCachedSearchResults(
                      shard_id)
 
     if not stale:
-      logging.info('memcache hit on %r', shard_key)
       unfiltered_dict[shard_key] = cached_iids
       search_limit_reached_dict[shard_key] = search_limit_reached
 

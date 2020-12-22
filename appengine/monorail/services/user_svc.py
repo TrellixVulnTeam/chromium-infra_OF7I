@@ -283,7 +283,6 @@ class UserService(object):
     """
     # Look up these users in the RAM cache
     user_id_dict, missed_emails = self.user_id_cache.GetAll(emails)
-    logging.info('hit %d emails, missed %r', len(user_id_dict), missed_emails)
 
     # Hit the DB to lookup any user IDs that were not cached.
     if missed_emails:
@@ -294,7 +293,6 @@ class UserService(object):
       self.user_id_cache.CacheAll(retrieved_dict)
       user_id_dict.update(retrieved_dict)
 
-    logging.info('looked up User IDs %r', user_id_dict)
     return user_id_dict
 
   def LookupUserIDs(self, cnxn, emails, autocreate=False,
@@ -325,7 +323,6 @@ class UserService(object):
     # Look up these users in the RAM cache
     user_id_dict = self.LookupExistingUserIDs(cnxn, needed_emails)
     if len(needed_emails) == len(user_id_dict):
-      logging.info('found all %d emails', len(user_id_dict))
       return user_id_dict
 
     # If any were not found in the DB, create them or raise an exception.

@@ -118,11 +118,11 @@ def initialize(
   # pylint: enable=line-too-long
   if (is_local_unittest or
       os.environ.get('SERVER_SOFTWARE', '').startswith('Development')):
-    logging.info('Using debug monitor')
+    logging.debug('Using debug monitor')
     interface.state.global_monitor = monitors.DebugMonitor()
   else:
-    logging.info('Using https monitor %s with %s', shared.PRODXMON_ENDPOINT,
-                 shared.PRODXMON_SERVICE_ACCOUNT_EMAIL)
+    logging.debug('Using https monitor %s with %s', shared.PRODXMON_ENDPOINT,
+                  shared.PRODXMON_SERVICE_ACCOUNT_EMAIL)
     interface.state.global_monitor = monitors.HttpsMonitor(
         shared.PRODXMON_ENDPOINT,
         monitors.DelegateServiceAccountCredentials(
@@ -140,8 +140,9 @@ def initialize(
 
   standard_metrics.init()
 
-  logging.info('Initialized ts_mon with service_name=%s, job_name=%s, '
-               'hostname=%s', service_name, job_name, hostname)
+  logging.debug(
+      'Initialized ts_mon with service_name=%s, job_name=%s, '
+      'hostname=%s', service_name, job_name, hostname)
 
 
 def instrument_wsgi_application(app, time_fn=time.time):

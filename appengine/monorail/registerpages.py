@@ -182,7 +182,6 @@ class ServletRegistry(object):
     autolink.RegisterAutolink(services)
     # Error pages should be the last to register.
     self._RegisterErrorPages()
-    logging.info('Finished registering monorail handlers.')
     return self.routes
 
   def _RegisterProjectHandlers(self):

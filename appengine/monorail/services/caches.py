@@ -372,9 +372,6 @@ class AbstractTwoLevelCache(object):
       self.cache.CacheItem(key, value)
 
     still_missing_keys = [key for key in keys if key not in cache_hits]
-    logging.info(
-        'decoded %d values from memcache %s, missing %d', len(cache_hits),
-        self.prefix, len(still_missing_keys))
     return cache_hits, still_missing_keys
 
   def _WriteToMemcache(self, retrieved_dict):
@@ -396,9 +393,6 @@ class AbstractTwoLevelCache(object):
       logging.error('Got memcache error: %r', identifier)
       self._DeleteFromMemcache(list(strs_to_cache.keys()))
       return
-    logging.info(
-        'cached batch of %d values in memcache %s', len(retrieved_dict),
-        self.prefix)
 
   def _DeleteFromMemcache(self, keys):
     # type: (Sequence[str]) -> None
