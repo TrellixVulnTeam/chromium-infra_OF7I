@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"1\n\x11ReportRunsRequest\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"7\n\x18ReportFinishedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"7\n\x17\x46\x65tchActiveRunsResponse\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"o\n\x03Run\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\x12\n\n\x02id\x18\x02 \x01(\t\x12\x1d\n\x03\x63ls\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\x12\x19\n\x11\x63onfig_group_name\x18\x04 \x01(\t\"\xc2\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12\x30\n\x0cupdated_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x07trigger\x18\x04 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x05 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1ag\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\x32\xc9\x02\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.Empty\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.Empty\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponseB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"1\n\x11ReportRunsRequest\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"7\n\x18ReportFinishedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"7\n\x17\x46\x65tchActiveRunsResponse\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"T\n\x03Run\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\x12\n\n\x02id\x18\x02 \x01(\t\x12\x1d\n\x03\x63ls\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\"\xc2\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12\x30\n\x0cupdated_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x07trigger\x18\x04 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x05 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1ag\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\x32\xc9\x02\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.Empty\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.Empty\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponseB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2.DESCRIPTOR,])
 
@@ -225,13 +225,6 @@ _RUN = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='config_group_name', full_name='migration.Run.config_group_name', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -245,7 +238,7 @@ _RUN = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=467,
-  serialized_end=578,
+  serialized_end=551,
 )
 
 
@@ -297,8 +290,8 @@ _RUNCL_TRIGGER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=767,
-  serialized_end=870,
+  serialized_start=740,
+  serialized_end=843,
 )
 
 _RUNCL_DEP = _descriptor.Descriptor(
@@ -335,8 +328,8 @@ _RUNCL_DEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=872,
-  serialized_end=903,
+  serialized_start=845,
+  serialized_end=876,
 )
 
 _RUNCL = _descriptor.Descriptor(
@@ -394,8 +387,8 @@ _RUNCL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=581,
-  serialized_end=903,
+  serialized_start=554,
+  serialized_end=876,
 )
 
 _REPORTRUNSREQUEST.fields_by_name['runs'].message_type = _RUN
@@ -494,8 +487,8 @@ _MIGRATION = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=906,
-  serialized_end=1235,
+  serialized_start=879,
+  serialized_end=1208,
   methods=[
   _descriptor.MethodDescriptor(
     name='ReportRuns',
