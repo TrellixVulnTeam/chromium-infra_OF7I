@@ -120,7 +120,7 @@
         <span>Step 1 of 3</span>
         <input type="button" value="Next" onclick="goStep(2)" aria-label="Next"
 	       id="next1"/>
-	<a href="https://bugs.chromium.org/p/monorail/" class="feedback">Report a problem with this wizard</a>
+	<a href="#" onclick="userfeedback.api.startFeedback({'productId': '5208992'});" class="feedback">Report a problem with this wizard</a>
 
       </div>
 
@@ -391,7 +391,9 @@
 <script type="text/javascript"
 	src="https://omahaproxy.appspot.com/guess?version=[chrome_version]&os=[channel_guess_os_name]&callback=guessChannel">
 </script>
-
+<script type="text/javascript" defer
+  src="https://support.google.com/inapp/api.js">
+</script>
 </body>
 </html>
 
