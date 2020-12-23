@@ -1013,35 +1013,6 @@ func TestClientTestArg(t *testing.T) {
 	})
 }
 
-func TestQuotaSchedulerAccount(t *testing.T) {
-	Convey("Given a client test and a quota account set in legacy way", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
-		params := basicParams()
-		params.Scheduling = &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_QuotaAccount{
-				QuotaAccount: "foo-account",
-			},
-			// TODO(linxinan@) Drop this test once the migration is done. Use the deprecated
-			// field "QuotaAccount" only when QsAccount is empty. This test ensures that
-			// the legacy user will not be interrupted.
-			QsAccount: "",
-		}
-		_, err := runWithParams(ctx, skylab, params, invs)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			launchArgs := skylab.launchCalls[0]
-			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:foo-account")
-			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 0)
-			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
-			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_QUOTA)
-		})
-	})
-}
-
 func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 	Convey("Given a client test and a quota account", t, func() {
 		ctx := context.Background()
@@ -1095,24 +1066,6 @@ func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 0)
 			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
 			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_QUOTA)
-		})
-	})
-}
-
-func TestRequestShouldNotSetBothQSAccountAndQuotaAccount(t *testing.T) {
-	Convey("Given a client test with both quota account and priority set", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
-		params := basicParams()
-		params.Scheduling = &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_QuotaAccount{
-				QuotaAccount: "foo-account",
-			},
-			QsAccount: "foo-account",
-		}
-		Convey("The test should end up with a panic.", func() {
-			So(func() { runWithParams(ctx, skylab, params, invs) }, ShouldPanic)
 		})
 	})
 }

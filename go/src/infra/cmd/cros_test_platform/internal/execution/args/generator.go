@@ -225,13 +225,6 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 			inv.CriticalPools = append(inv.CriticalPools, pool)
 		case *test_platform.Request_Params_Scheduling_UnmanagedPool:
 			inv.SelfServePools = append(inv.SelfServePools, v.UnmanagedPool)
-		// TODO(crbug/1059076) Scheduling_QuotaAccount is deprecated. Use
-		// Scheduling.QsAccount instead.
-		case *test_platform.Request_Params_Scheduling_QuotaAccount:
-			if qs != "" {
-				panic(fmt.Sprintf("QsAccount and QuotaAccount should not both be set. Got Scheduling_QuotaAccount: %s and QsAccount: %s", g.Params.GetScheduling().GetQuotaAccount(), qs))
-			}
-			inv.CriticalPools = append(inv.CriticalPools, inventory.SchedulableLabels_DUT_POOL_QUOTA)
 		default:
 			panic(fmt.Sprintf("unhandled scheduling type %#v", p))
 		}
@@ -401,12 +394,6 @@ func (g *Generator) swarmingTags(ctx context.Context, kv map[string]string, cmd 
 	tags = append(tags, "display_name:"+g.displayName(ctx, kv))
 	if qa := g.Params.GetScheduling().GetQsAccount(); qa != "" {
 		tags = append(tags, "qs_account:"+qa)
-	} else {
-		// TODO(crbug/1059076) Drop this after migration, as
-		// Scheduling.QsAccount should be the only field for quota account.
-		if qa := g.Params.GetScheduling().GetQuotaAccount(); qa != "" {
-			tags = append(tags, "qs_account:"+qa)
-		}
 	}
 	tags = append(tags, removeReservedTags(g.Params.GetDecorations().GetTags())...)
 	return tags
