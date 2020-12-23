@@ -78,11 +78,11 @@
  *     returns the inputValue with the given completion substituted for the
  *     given completable.  caret has the same meaning as in the
  *     completable operation.
- *   - String oncomplete(boolean completed, int keycode,
+ *   - String oncomplete(boolean completed, String key,
  *                       HTMLElement element, String text)
  *     This method is called when the user hits a completion key. The default
  *     value is to do nothing, but you can override it if you want. Note that
- *     keycode will be null if the user clicked on it to select
+ *     key will be null if the user clicked on it to select
  *   - Boolean autoselectFirstRow()
  *     This method returns True by default, but subclasses can override it
  *     to make autocomplete fields that require the user to press the down
@@ -229,93 +229,95 @@ function ac_keyevent_(event) {
   event = event || window.event;
 
   const source = getTargetFromEvent(event);
-  if (('INPUT' == source.tagName && source.type.match(/^text|email$/i)) ||
-       'TEXTAREA' == source.tagName) {
-    const code = GetKeyCode(event);
-    const isDown = event.type == 'keydown';
-    const isShiftKey = event.shiftKey;
-    let storeFound = true;
+  const isInput = 'INPUT' == source.tagName &&
+    source.type.match(/^text|email$/i);
+  const isTextarea = 'TEXTAREA' == source.tagName;
+  if (!isInput && !isTextarea) return true;
 
-    if ((source !== ac_focusedInput) || (ac_store === null)) {
-      ac_focusedInput = source;
-      storeFound = false;
-      if (ENTER_KEYCODE !== code && ESC_KEYCODE !== code) {
-        for (let i = 0; i < ac_storeConstructors.length; ++i) {
-          const store = (ac_storeConstructors[i])(source, event);
-          if (store) {
-            ac_store = store;
-            ac_store.setAvoid(event);
-            ac_oldBlurHandler = ac_addHandler_(
-                ac_focusedInput, 'onblur', _ac_ob);
-            storeFound = true;
-            break;
-          }
-        }
+  const key = event.key;
+  const isDown = event.type == 'keydown';
+  const isShiftKey = event.shiftKey;
+  let storeFound = true;
 
-        // There exists an odd condition where an edit box with autocomplete
-        // attached can be removed from the DOM without blur being called
-        // In which case we are left with a store around that will try to
-        // autocomplete the next edit box to receive focus. We need to clean
-        // this up
-
-        // If we can't find a store, force a blur
-        if (!storeFound) {
-          _ac_ob(null);
+  if ((source !== ac_focusedInput) || (ac_store === null)) {
+    ac_focusedInput = source;
+    storeFound = false;
+    if (ENTER_KEYNAME !== key && ESC_KEYNAME !== key) {
+      for (let i = 0; i < ac_storeConstructors.length; ++i) {
+        const store = (ac_storeConstructors[i])(source, event);
+        if (store) {
+          ac_store = store;
+          ac_store.setAvoid(event);
+          ac_oldBlurHandler = ac_addHandler_(
+              ac_focusedInput, 'onblur', _ac_ob);
+          storeFound = true;
+          break;
         }
       }
-      // ac-table rows need to be removed when switching to another input.
-      ac_updateCompletionList(false);
+
+      // There exists an odd condition where an edit box with autocomplete
+      // attached can be removed from the DOM without blur being called
+      // In which case we are left with a store around that will try to
+      // autocomplete the next edit box to receive focus. We need to clean
+      // this up
+
+      // If we can't find a store, force a blur
+      if (!storeFound) {
+        _ac_ob(null);
+      }
     }
-    // If the user typed Esc when the auto-complete menu was not shown,
-    // then blur the input text field so that the user can use keyboard
-    // shortcuts.
-    const acList = document.getElementById('ac-list');
-    if (ESC_KEYCODE == code &&
-        (!acList || acList.style.display == 'none')) {
-      ac_focusedInput.blur();
-    }
-    if (storeFound) {
-      const isCompletion = ac_store.isCompletionKey(code, isDown, isShiftKey);
-      const hasResults = ac_completions && (ac_completions.length > 0);
-      let cancelEvent = false;
+    // ac-table rows need to be removed when switching to another input.
+    ac_updateCompletionList(false);
+  }
+  // If the user typed Esc when the auto-complete menu was not shown,
+  // then blur the input text field so that the user can use keyboard
+  // shortcuts.
+  const acList = document.getElementById('ac-list');
+  if (ESC_KEYNAME == key &&
+      (!acList || acList.style.display == 'none')) {
+    ac_focusedInput.blur();
+  }
 
-      if (isCompletion && hasResults) {
-        // Cancel any enter keystrokes if something is selected so that the
-        // browser doesn't go submitting the form.
-        cancelEvent = (!ac_suppressCompletions && !!ac_completions &&
-                       (ac_selected != -1));
-        window.setTimeout(function() {
-          if (ac_store) {
-            ac_handleKey_(code, isDown, isShiftKey);
-          }
-        }, 0);
-      } else if (!isCompletion) {
-        // Don't want to also blur the field. Up and down move the cursor (in
-        // Firefox) to the start/end of the field. We also don't want that while
-        // the list is showing.
-        cancelEvent = (code == ESC_KEYCODE ||
-                      code == DOWN_KEYCODE ||
-                      code == UP_KEYCODE);
+  if (!storeFound) return true;
 
-        window.setTimeout(function() {
-          if (ac_store) {
-            ac_handleKey_(code, isDown, isShiftKey);
-          }
-        }, 0);
-      } else { // implicit if (isCompletion && !hasResults)
-        if (ac_store.oncomplete) {
-          ac_store.oncomplete(false, code, ac_focusedInput, undefined);
-        }
+  const isCompletion = ac_store.isCompletionKey(key, isDown, isShiftKey);
+  const hasResults = ac_completions && (ac_completions.length > 0);
+  let cancelEvent = false;
+
+  if (isCompletion && hasResults) {
+    // Cancel any enter keystrokes if something is selected so that the
+    // browser doesn't go submitting the form.
+    cancelEvent = (!ac_suppressCompletions && !!ac_completions &&
+                      (ac_selected != -1));
+    window.setTimeout(function() {
+      if (ac_store) {
+        ac_handleKey_(key, isDown, isShiftKey);
       }
+    }, 0);
+  } else if (!isCompletion) {
+    // Don't want to also blur the field. Up and down move the cursor (in
+    // Firefox) to the start/end of the field. We also don't want that while
+    // the list is showing.
+    cancelEvent = (key == ESC_KEYNAME ||
+                  key == DOWN_KEYNAME ||
+                  key == UP_KEYNAME);
 
-      if (cancelEvent) {
-        ac_cancelEvent_(event);
+    window.setTimeout(function() {
+      if (ac_store) {
+        ac_handleKey_(key, isDown, isShiftKey);
       }
-
-      return !cancelEvent;
+    }, 0);
+  } else { // implicit if (isCompletion && !hasResults)
+    if (ac_store.oncomplete) {
+      ac_store.oncomplete(false, key, ac_focusedInput, undefined);
     }
   }
-  return true;
+
+  if (cancelEvent) {
+    ac_cancelEvent_(event);
+  }
+
+  return !cancelEvent;
 }
 
 /** Autocomplete onblur handler. */
@@ -343,7 +345,7 @@ _AC_Store.prototype.completions = function(prefix, tofilter) {
   console.log('UNIMPLEMENTED completions');
 };
 /** returns the chunk of the input to treat as completable. */
-_AC_Store.prototype.oncomplete = function(completed, keycode, element, text) {
+_AC_Store.prototype.oncomplete = function(completed, key, element, text) {
   // Call the onkeyup handler so that choosing an autocomplete option has
   // the same side-effect as typing.  E.g., exposing the next row of input
   // fields.
@@ -361,12 +363,12 @@ _AC_Store.prototype.commaCompletes = true;
  * true iff the given keystroke should cause a completion (and be consumed in
  * the process.
  */
-_AC_Store.prototype.isCompletionKey = function(code, isDown, isShiftKey) {
-  if (!isDown && (ENTER_KEYCODE === code ||
-                  (AC_COMMA_KEYCODE == code && this.commaCompletes))) {
+_AC_Store.prototype.isCompletionKey = function(key, isDown, isShiftKey) {
+  if (!isDown && (ENTER_KEYNAME === key ||
+                  (COMMA_KEYNAME == key && this.commaCompletes))) {
     return true;
   }
-  if (TAB_KEYCODE === code && !isShiftKey) {
+  if (TAB_KEYNAME === key && !isShiftKey) {
     // IE doesn't fire an event for tab on click in a text field, and firefox
     // requires that the onkeypress event for tab be consumed or it navigates
     // to next field.
@@ -633,13 +635,13 @@ let ac_avoidValues = [];
  * element, performing substitutions, etc.
  * @private
  */
-function ac_handleKey_(code, isDown, isShiftKey) {
+function ac_handleKey_(key, isDown, isShiftKey) {
   // check completions
   ac_checkCompletions();
   let show = true;
   const numCompletions = ac_completions ? ac_completions.length : 0;
   // handle enter and tab on key press and the rest on key down
-  if (ac_store.isCompletionKey(code, isDown, isShiftKey)) {
+  if (ac_store.isCompletionKey(key, isDown, isShiftKey)) {
     if (ac_selected < 0 && numCompletions >= 1 &&
         ac_store.autoselectFirstRow()) {
       ac_selected = 0;
@@ -649,24 +651,24 @@ function ac_handleKey_(code, isDown, isShiftKey) {
       const completeValue = ac_completions[ac_selected].value;
       ac_complete();
       if (ac_store.oncomplete) {
-        ac_store.oncomplete(true, code, backupInput, completeValue);
+        ac_store.oncomplete(true, key, backupInput, completeValue);
       }
     }
   } else {
-    switch (code) {
-      case ESC_KEYCODE: // escape
+    switch (key) {
+      case ESC_KEYNAME: // escape
       // JER?? ac_suppressCompletions = true;
         ac_selected = -1;
         show = false;
         break;
-      case UP_KEYCODE: // up
+      case UP_KEYNAME: // up
         if (isDown) {
         // firefox fires arrow events on both down and press, but IE only fires
         // then on press.
           ac_selected = Math.max(numCompletions >= 0 ? 0 : -1, ac_selected - 1);
         }
         break;
-      case DOWN_KEYCODE: // down
+      case DOWN_KEYNAME: // down
         if (isDown) {
           ac_selected = Math.min(
               ac_max_options - 1, Math.min(numCompletions - 1, ac_selected + 1));
@@ -675,17 +677,17 @@ function ac_handleKey_(code, isDown, isShiftKey) {
     }
 
     if (isDown) {
-      switch (code) {
-        case ESC_KEYCODE:
-        case ENTER_KEYCODE:
-        case UP_KEYCODE:
-        case DOWN_KEYCODE:
-        case RIGHT_KEYCODE:
-        case LEFT_KEYCODE:
-        case TAB_KEYCODE:
-        case SHIFT_KEYCODE:
-        case BACKSPACE_KEYCODE:
-        case DELETE_KEYCODE:
+      switch (key) {
+        case ESC_KEYNAME:
+        case ENTER_KEYNAME:
+        case UP_KEYNAME:
+        case DOWN_KEYNAME:
+        case RIGHT_KEYNAME:
+        case LEFT_KEYNAME:
+        case TAB_KEYNAME:
+        case SHIFT_KEYNAME:
+        case BACKSPACE_KEYNAME:
+        case DELETE_KEYNAME:
           break;
         default: // User typed some new characters.
           ac_everTyped = true;
@@ -996,12 +998,6 @@ function ac_getCaretPosition_(textField) {
     return GetCursorPos(window, textField);
   }
 }
-
-/**
- * on key press, the keycode for comma comes out as 44.
- * on keydown it comes out as 188.
- */
-const AC_COMMA_KEYCODE = ','.charCodeAt(0);
 
 function getTargetFromEvent(event) {
   let targ = event.target || event.srcElement;

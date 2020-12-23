@@ -137,21 +137,20 @@ function BR_IsNav() {
          BR_AgentContains_('mozilla');
 }
 
-var BACKSPACE_KEYCODE = 8;
-var COMMA_KEYCODE = 188; // ',' key
-var DEBUG_KEYCODE = 68; // 'D' key
-var DELETE_KEYCODE = 46;
-var DOWN_KEYCODE = 40; // DOWN arrow key
-var ENTER_KEYCODE = 13; // ENTER key
-var ESC_KEYCODE = 27; // ESC key
-var LEFT_KEYCODE = 37; // LEFT arrow key
-var RIGHT_KEYCODE = 39; // RIGHT arrow key
-var SPACE_KEYCODE = 32; // space bar
-var TAB_KEYCODE = 9; // TAB key
-var UP_KEYCODE = 38; // UP arrow key
-var SHIFT_KEYCODE = 16;
-var PAGE_DOWN_KEYCODE = 34;
-var PAGE_UP_KEYCODE = 33;
+var BACKSPACE_KEYNAME = 'Backspace';
+var COMMA_KEYNAME = ',';
+var DELETE_KEYNAME = 'Delete';
+var UP_KEYNAME = 'ArrowUp';
+var DOWN_KEYNAME = 'ArrowDown';
+var LEFT_KEYNAME = 'ArrowLeft';
+var RIGHT_KEYNAME = 'ArrowRight';
+var ENTER_KEYNAME = 'Enter';
+var ESC_KEYNAME = 'Escape';
+var SPACE_KEYNAME = ' ';
+var TAB_KEYNAME = 'Tab';
+var SHIFT_KEYNAME = 'Shift';
+var PAGE_DOWN_KEYNAME = 'PageDown';
+var PAGE_UP_KEYNAME = 'PageUp';
 
 var MAX_EMAIL_ADDRESS_LENGTH = 320; // 64 + '@' + 255
 var MAX_SIGNATURE_LENGTH = 1000; // 1000 chars of maximum signature
@@ -707,14 +706,4 @@ function SafeTimeoutFunction_(win, fn) {
 // Check if a value is defined
 function IsDefined(value) {
   return (typeof value) != 'undefined';
-}
-
-function GetKeyCode(event) {
-  let code;
-  if (event.keyCode) {
-    code = event.keyCode;
-  } else if (event.which) {
-    code = event.which;
-  }
-  return code;
 }
