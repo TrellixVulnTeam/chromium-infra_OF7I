@@ -38,6 +38,17 @@ import (
 
 const dutLeaseTaskPriority = 15
 
+var maxServiceVersion = test_platform.ServiceVersion{Global: 1}
+
+func addServiceVersion(props *structpb.Struct) *structpb.Struct {
+	var err error
+	props.Fields["service_version"], err = protoToStructPB(&maxServiceVersion)
+	if err != nil {
+		panic(err)
+	}
+	return props
+}
+
 // NewClient returns a new client to interact with buildbucket builds from the given builder.
 func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, authFlags authcli.Flags) (*Client, error) {
 	hClient, err := newHTTPClient(ctx, &authFlags)
@@ -97,7 +108,7 @@ func (c *Client) ScheduleCTPBuild(ctx context.Context, requests map[string]*test
 	return c.scheduleBuildRaw(ctx, props, tags, nil, 0)
 }
 
-// ScheduleDUTLeaserBuild schedules a new cros_test_platform build and returns the
+// ScheduleDUTLeaserBuild schedules a new dut_leaser build and returns the
 // buildbucket build ID for the scheduled build on success, without waiting for the
 // scheduled build to start.
 func (c *Client) ScheduleDUTLeaserBuild(ctx context.Context, dims map[string]string, tags []string, length int32) (int64, error) {
@@ -112,8 +123,10 @@ func (c *Client) ScheduleDUTLeaserBuild(ctx context.Context, dims map[string]str
 	return c.scheduleBuildRaw(ctx, props, tags, dims, dutLeaseTaskPriority)
 }
 
-// scheduleBuildRaw schedules a new cros_test_platform build for the given properties struct.
+// scheduleBuildRaw schedules a new Buildbucket build for the given properties struct.
 func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, tags []string, dims map[string]string, priority int32) (int64, error) {
+	props = addServiceVersion(props)
+
 	tagPairs, err := splitTagPairs(tags)
 	if err != nil {
 		return -1, err
@@ -522,7 +535,7 @@ func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
 	return request, nil
 }
 
-func requestToStructPB(from *test_platform.Request) (*structpb.Value, error) {
+func protoToStructPB(from proto.Message) (*structpb.Value, error) {
 	m := jsonpb.Marshaler{}
 	jsonStr, err := m.MarshalToString(from)
 	if err != nil {
@@ -540,7 +553,7 @@ func requestToStructPB(from *test_platform.Request) (*structpb.Value, error) {
 func requestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value, error) {
 	fs := make(map[string]*structpb.Value)
 	for k, r := range from {
-		v, err := requestToStructPB(r)
+		v, err := protoToStructPB(r)
 		if err != nil {
 			return nil, errors.Annotate(err, "requests to struct pb (%s)", k).Err()
 		}
