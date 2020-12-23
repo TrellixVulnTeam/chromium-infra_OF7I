@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xab\x01\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\x84\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x32\n\x0buse_cv_runs\x18\x03 \x01(\x0b\x32\x1d.migration.Settings.UseCVRuns\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a#\n\tUseCVRuns\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -66,8 +66,39 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=178,
-  serialized_end=239,
+  serialized_start=230,
+  serialized_end=291,
+)
+
+_SETTINGS_USECVRUNS = _descriptor.Descriptor(
+  name='UseCVRuns',
+  full_name='migration.Settings.UseCVRuns',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project_regexp', full_name='migration.Settings.UseCVRuns.project_regexp', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=293,
+  serialized_end=328,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -86,7 +117,14 @@ _SETTINGS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='pssa_migration', full_name='migration.Settings.pssa_migration', index=1,
+      name='use_cv_runs', full_name='migration.Settings.use_cv_runs', index=1,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pssa_migration', full_name='migration.Settings.pssa_migration', index=2,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -95,7 +133,7 @@ _SETTINGS = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_SETTINGS_APIHOST, ],
+  nested_types=[_SETTINGS_APIHOST, _SETTINGS_USECVRUNS, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -105,7 +143,7 @@ _SETTINGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=239,
+  serialized_end=328,
 )
 
 
@@ -136,12 +174,14 @@ _PSSAMIGRATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=241,
-  serialized_end=284,
+  serialized_start=330,
+  serialized_end=373,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
+_SETTINGS_USECVRUNS.containing_type = _SETTINGS
 _SETTINGS.fields_by_name['api_hosts'].message_type = _SETTINGS_APIHOST
+_SETTINGS.fields_by_name['use_cv_runs'].message_type = _SETTINGS_USECVRUNS
 _SETTINGS.fields_by_name['pssa_migration'].message_type = _PSSAMIGRATION
 DESCRIPTOR.message_types_by_name['Settings'] = _SETTINGS
 DESCRIPTOR.message_types_by_name['PSSAMigration'] = _PSSAMIGRATION
@@ -155,12 +195,20 @@ Settings = _reflection.GeneratedProtocolMessageType('Settings', (_message.Messag
     # @@protoc_insertion_point(class_scope:migration.Settings.ApiHost)
     })
   ,
+
+  'UseCVRuns' : _reflection.GeneratedProtocolMessageType('UseCVRuns', (_message.Message,), {
+    'DESCRIPTOR' : _SETTINGS_USECVRUNS,
+    '__module__' : 'go.chromium.org.luci.cv.api.migration.settings_pb2'
+    # @@protoc_insertion_point(class_scope:migration.Settings.UseCVRuns)
+    })
+  ,
   'DESCRIPTOR' : _SETTINGS,
   '__module__' : 'go.chromium.org.luci.cv.api.migration.settings_pb2'
   # @@protoc_insertion_point(class_scope:migration.Settings)
   })
 _sym_db.RegisterMessage(Settings)
 _sym_db.RegisterMessage(Settings.ApiHost)
+_sym_db.RegisterMessage(Settings.UseCVRuns)
 
 PSSAMigration = _reflection.GeneratedProtocolMessageType('PSSAMigration', (_message.Message,), {
   'DESCRIPTOR' : _PSSAMIGRATION,
