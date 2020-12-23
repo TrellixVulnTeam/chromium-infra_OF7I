@@ -5,7 +5,7 @@
 import sinon from 'sinon';
 import {assert} from 'chai';
 import {MrGridControls} from './mr-grid-controls.js';
-import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/consts/index.js';
 
 let element;
 

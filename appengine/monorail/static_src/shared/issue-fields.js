@@ -8,7 +8,7 @@ import {labelRefsToStrings, issueRefsToStrings, componentRefsToStrings,
   userRefsToDisplayNames, statusRefsToStrings, labelNameToLabelPrefixes,
 } from './convertersV0.js';
 import {removePrefix} from './helpers.js';
-import {STATUS_ENUM_TO_TEXT} from 'shared/approval-consts.js';
+import {STATUS_ENUM_TO_TEXT} from 'shared/consts/approval.js';
 import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 
 // TODO(zhangtiff): Merge this file with metadata-helpers.js.

@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import {assert} from 'chai';
 import {prpcClient} from 'prpc-client-instance.js';
 import {MrListPage, DEFAULT_ISSUES_PER_PAGE} from './mr-list-page.js';
-import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/consts/index.js';
 import {store, resetState} from 'reducers/base.js';
 
 let element;

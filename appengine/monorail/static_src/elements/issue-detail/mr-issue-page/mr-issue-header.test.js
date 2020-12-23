@@ -7,7 +7,7 @@ import {MrIssueHeader} from './mr-issue-header.js';
 import {store, resetState} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
-  ISSUE_FLAGSPAM_PERMISSION} from 'shared/permissions.js';
+  ISSUE_FLAGSPAM_PERMISSION} from 'shared/consts/permissions.js';
 
 let element;
 

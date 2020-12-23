@@ -18,7 +18,7 @@ import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-code-font-toggle/mr-code-font-toggle.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
-  ISSUE_FLAGSPAM_PERMISSION} from 'shared/permissions.js';
+  ISSUE_FLAGSPAM_PERMISSION} from 'shared/consts/permissions.js';
 import {issueToIssueRef} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 

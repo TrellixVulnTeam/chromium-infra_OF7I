@@ -7,6 +7,9 @@ import axe from 'axe-core';
 // TODO(seanmccullough): Move this into crdx/chopsui-npm if we decide this
 // is worth using in other projects.
 
+/**
+ * @param {HTMLElement} element The element to audit accessibility for.
+ */
 export async function auditA11y(element) {
   // Performance tip: try restricting the analysis using
   // https://github.com/dequelabs/axe-core/blob/develop/doc/API.md#use-resulttypes

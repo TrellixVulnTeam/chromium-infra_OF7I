@@ -9,7 +9,7 @@ import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import './mr-grid-dropdown.js';
-import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/consts/index.js';
 import {urlWithNewParams} from 'shared/helpers.js';
 import {fieldsForIssue} from 'shared/issue-fields.js';
 

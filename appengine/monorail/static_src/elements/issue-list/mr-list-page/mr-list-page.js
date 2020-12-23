@@ -12,7 +12,7 @@ import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import {prpcClient} from 'prpc-client-instance.js';
-import {SERVER_LIST_ISSUES_LIMIT} from 'shared/constants.js';
+import {SERVER_LIST_ISSUES_LIMIT} from 'shared/consts/index.js';
 import {DEFAULT_ISSUE_FIELD_LIST, parseColSpec} from 'shared/issue-fields.js';
 import {
   shouldWaitForDefaultQuery,

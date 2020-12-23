@@ -18,7 +18,7 @@ import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import {ISSUE_DELETE_PERMISSION} from 'shared/permissions.js';
+import {ISSUE_DELETE_PERMISSION} from 'shared/consts/permissions.js';
 
 // eslint-disable-next-line max-len
 import 'elements/framework/dialogs/mr-issue-hotlists-action/mr-update-issue-hotlists-dialog.js';

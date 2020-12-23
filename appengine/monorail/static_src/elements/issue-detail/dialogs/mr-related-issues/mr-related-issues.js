@@ -9,7 +9,7 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import {ISSUE_EDIT_PERMISSION} from 'shared/permissions';
+import {ISSUE_EDIT_PERMISSION} from 'shared/consts/permissions';
 import {prpcClient} from 'prpc-client-instance.js';
 
 /**

@@ -7,7 +7,7 @@ import 'elements/issue-detail/metadata/mr-edit-field/mr-edit-field.js';
 import 'elements/framework/mr-error/mr-error.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
-import {TEXT_TO_STATUS_ENUM} from 'shared/approval-consts.js';
+import {TEXT_TO_STATUS_ENUM} from 'shared/consts/approval.js';
 
 
 export const NO_UPDATES_MESSAGE =

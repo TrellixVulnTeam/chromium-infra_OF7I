@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import {assert} from 'chai';
 import {prpcClient} from 'prpc-client-instance.js';
 import {MrEditIssue, allowRemovedRestrictions} from './mr-edit-issue.js';
-import {clientLoggerFake} from 'shared/test-fakes.js';
+import {clientLoggerFake} from 'shared/test/fakes.js';
 
 let element;
 
