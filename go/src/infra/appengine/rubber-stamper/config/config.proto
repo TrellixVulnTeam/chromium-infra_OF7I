@@ -26,6 +26,7 @@ message HostConfig {
 // RepoConfig describes the config to be used for a Gerrit repository.
 message RepoConfig {
   BenignFilePattern benign_file_pattern = 1;
+  CleanRevertPattern clean_revert_pattern = 2;
 }
 
 // BenignFilePattern describes pattern of changes to benign files.
@@ -48,4 +49,16 @@ message Paths {
   //
   // TODO: supports "**" in the syntax.
   repeated string paths = 1;
+}
+
+// CleanRevertPattern describes pattern of clean reverts.
+message CleanRevertPattern {
+  // The length of time in <int><unit> form. Reverts need to be within this
+  // time_window to be valid.
+  // Valid units are "s", "m", "h", "d", meaning "seconds", "minutes",
+  // "hours", "days" respectively.
+  string time_window = 1;
+
+  // Paths that must have a human reviewer.
+  repeated string excluded_paths = 2;
 }

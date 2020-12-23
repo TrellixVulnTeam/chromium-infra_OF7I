@@ -24,8 +24,8 @@ var sampleConfigStr = `
 						file_extension_map {
 							key: ".txt"
 							value: {
-								paths: "a/b.txt",
-								paths: "a/*/c.txt",
+								paths: "a/b.txt"
+								paths: "a/*/c.txt"
 								paths: "d/*"
 							}
 						}
@@ -41,6 +41,10 @@ var sampleConfigStr = `
 								paths: "z/*"
 							}
 						}
+					}
+					clean_revert_pattern {
+						time_window: "7d"
+						excluded_paths: "a/b/*"
 					}
 				}
 			}
@@ -87,6 +91,21 @@ func TestConfigValidator(t *testing.T) {
 				m["*"].Paths[0] = "a/b.md"
 				err := validate(cfg)
 				So(err, ShouldErrLike, "the extension of path a/b.md does not match the extension *")
+			})
+		})
+		Convey("validateCleanRevertPattern catches errors", func() {
+			crp := cfg.HostConfigs["test-host"].RepoConfigs["dummy"].CleanRevertPattern
+			Convey("invalid time window value", func() {
+				crp.TimeWindow = "a1s"
+				So(validate(cfg), ShouldErrLike, "invalid time_window a1s")
+			})
+			Convey("invalid time window unit", func() {
+				crp.TimeWindow = "12t"
+				So(validate(cfg), ShouldErrLike, "invalid time_window 12t")
+			})
+			Convey("invalid path", func() {
+				crp.ExcludedPaths[0] = "\\"
+				So(validate(cfg), ShouldErrLike, "invalid path \\")
 			})
 		})
 	})
