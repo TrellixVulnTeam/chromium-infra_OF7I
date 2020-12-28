@@ -15,6 +15,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/execution"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -74,6 +75,7 @@ type Args struct {
 	Priority                   int64
 	Tags                       []string
 	ProvisionLabels            []string
+	UploadCrashes              bool
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -137,6 +139,12 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 	duration := ptypes.DurationProto(a.Timeout)
 	params.Time = &test_platform.Request_Params_Time{
 		MaximumDuration: duration,
+	}
+
+	if a.UploadCrashes {
+		params.ExecutionParam = &execution.Param{
+			UploadCrashes: true,
+		}
 	}
 
 	return req, nil

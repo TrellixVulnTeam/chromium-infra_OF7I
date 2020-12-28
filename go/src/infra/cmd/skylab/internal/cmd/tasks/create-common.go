@@ -36,6 +36,7 @@ type createRunCommon struct {
 	keyvals         []string
 	qsAccount       string
 	buildBucket     bool
+	uploadCrashes   bool
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
@@ -67,6 +68,10 @@ suite. No retry if it is 0.`)
 specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
 	fl.Var(luciflag.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
+	fl.BoolVar(&c.uploadCrashes, "upload-crashes", false,
+		`Report crashes from DUTs to pre-configured crash servers.
+Used by release automation to report crashes similar to end-users' flow.
+Most clients should leave this flag unset.`)
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
 
 	// Deprecated flags that have no effect. To be eventually deleted where
@@ -116,6 +121,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Keyvals:                    keyvalMap,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
+		UploadCrashes:              c.uploadCrashes,
 	}, nil
 }
 
