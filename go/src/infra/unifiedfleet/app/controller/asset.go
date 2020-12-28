@@ -17,6 +17,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 // AssetRegistration registers the given asset to the datastore after validation
@@ -46,16 +47,18 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 	var err error
 	hc := &HistoryClient{}
 	f := func(ctx context.Context) error {
-		err := validateUpdateAsset(ctx, asset, mask)
-		if err != nil {
-			return err
-		}
 		// TODO(anshruth): Support validation of DUT/Labstation/Servo
 		// created using this asset. And update them accordingly or fail.
 		oldAsset, err = registration.GetAsset(ctx, asset.GetName())
 		if err != nil {
 			return err
 		}
+
+		err := validateUpdateAsset(ctx, oldAsset, asset, mask)
+		if err != nil {
+			return err
+		}
+
 		// updatableAsset will be used to update the asset
 		updatableAsset := asset
 		if mask != nil && mask.Paths != nil {
@@ -109,12 +112,12 @@ func ListAssets(ctx context.Context, pageSize int32, pageToken, filter string, k
 func DeleteAsset(ctx context.Context, name string) error {
 	hc := &HistoryClient{}
 	f := func(ctx context.Context) error {
-		if err := validateDeleteAsset(ctx, name); err != nil {
-			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
-		}
 		asset, err := registration.GetAsset(ctx, name)
 		if err != nil {
 			return errors.Annotate(err, "DeleteAsset - cannot find asset %s", name).Err()
+		}
+		if err := validateDeleteAsset(ctx, asset); err != nil {
+			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
 		}
 		err = registration.DeleteAsset(ctx, name)
 		if err != nil {
@@ -135,7 +138,15 @@ func getAssetIndexedFieldName(name string) (string, error) {
 	return name, nil
 }
 
-func validateUpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.FieldMask) error {
+func validateUpdateAsset(ctx context.Context, oldAsset *ufspb.Asset, asset *ufspb.Asset, mask *field_mask.FieldMask) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsUpdate, oldAsset.GetRealm()); err != nil {
+		return err
+	}
+	if asset.GetRealm() != "" && oldAsset.GetRealm() != asset.GetRealm() {
+		if err := util.CheckPermission(ctx, util.RegistrationsUpdate, asset.GetRealm()); err != nil {
+			return err
+		}
+	}
 	if mask == nil || mask.Paths == nil {
 		// If mask doesn't exist then validate the given asset
 		return validateAsset(ctx, asset)
@@ -145,6 +156,9 @@ func validateUpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_ma
 }
 
 func validateAssetRegistration(ctx context.Context, asset *ufspb.Asset) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsCreate, asset.GetRealm()); err != nil {
+		return err
+	}
 	if err := validateAsset(ctx, asset); err != nil {
 		return err
 	}
@@ -235,14 +249,13 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 	return nil
 }
 
-func validateDeleteAsset(ctx context.Context, name string) error {
-	if name == "" {
-		return status.Error(codes.InvalidArgument, "validateDeleteAsset - Missing asset name")
+func validateDeleteAsset(ctx context.Context, asset *ufspb.Asset) error {
+	if err := util.CheckPermission(ctx, util.RegistrationsDelete, asset.GetRealm()); err != nil {
+		return err
 	}
-
 	var errMsg strings.Builder
 	errMsg.WriteString("validateDeleteAsset - ")
-	if err := ResourceExist(ctx, []*Resource{GetMachineResource(name)}, &errMsg); err == nil {
+	if err := ResourceExist(ctx, []*Resource{GetMachineResource(asset.GetName())}, &errMsg); err == nil {
 		// Cannot delete asset if its registered as a machine
 		return status.Error(codes.FailedPrecondition, "validateDeleteAsset - Asset registered as DUT/Labstation")
 	}
@@ -281,6 +294,7 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 				oldAsset.Location.BarcodeName = updatedAsset.Location.BarcodeName
 			case "location.zone":
 				oldAsset.Location.Zone = updatedAsset.Location.Zone
+				oldAsset.Realm = updatedAsset.Realm
 			case "info.serial_number":
 				oldAsset.Info.SerialNumber = updatedAsset.Info.SerialNumber
 			case "info.cost_center":

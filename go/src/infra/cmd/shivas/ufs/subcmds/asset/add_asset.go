@@ -109,6 +109,8 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 		if err := utils.ParseJSONFile(c.newSpecsFile, &createAssetRequest); err != nil {
 			return err
 		}
+		ufsZone := createAssetRequest.GetAsset().GetLocation().GetZone()
+		createAssetRequest.GetAsset().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else if c.interactive {
 		fmt.Printf("Not implemented")
 		return nil
@@ -182,5 +184,6 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		asset.Location.Position = c.position
 		asset.Location.Zone = ufsUtil.ToUFSZone(c.zone)
 	}
+	asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
 	return asset, nil
 }
