@@ -13,7 +13,9 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -375,6 +377,89 @@ func TestDeleteAsset(t *testing.T) {
 		Convey("Delete invalid assets", func() {
 			err := DeleteAsset(ctx, "")
 			So(err, ShouldNotBeNil)
+		})
+		Convey("Delete existing assets with machine associated - pass", func() {
+			asset := &ufspb.Asset{
+				Name: "asset-1",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				},
+			}
+			_, err := registration.CreateAsset(ctx, asset)
+			So(err, ShouldBeNil)
+
+			machine := &ufspb.Machine{
+				Name: "asset-1",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			err = DeleteAsset(ctx, "asset-1")
+			So(err, ShouldBeNil)
+
+			_, err = registration.GetMachine(ctx, "asset-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "assets/asset-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "asset")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/asset-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "assets/asset-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/asset-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+		})
+		Convey("Delete existing assets with host associated - fail", func() {
+			asset := &ufspb.Asset{
+				Name: "asset-2",
+				Type: ufspb.AssetType_DUT,
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				},
+			}
+			_, err := registration.CreateAsset(ctx, asset)
+			So(err, ShouldBeNil)
+
+			machine := &ufspb.Machine{
+				Name: "asset-2",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			dut := &ufspb.MachineLSE{
+				Name:     "dut-2",
+				Hostname: "dut-2",
+				Machines: []string{"asset-2"},
+			}
+			_, err = inventory.CreateMachineLSE(ctx, dut)
+			So(err, ShouldBeNil)
+
+			err = DeleteAsset(ctx, "asset-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "DUT dut-2 is referring this Asset")
 		})
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
+	"infra/cmd/shivas/ufs/subcmds/asset"
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/dut"
@@ -56,9 +57,10 @@ func (c *delete) Run(a subcommands.Application, args []string, env subcommands.E
 func (c deleteApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
+		asset.DeleteAssetCmd,
 		machine.DeleteMachineCmd,
-		host.DeleteHostCmd,
 		dut.DeleteDUTCmd,
+		host.DeleteHostCmd,
 		kvm.DeleteKVMCmd,
 		rpm.DeleteRPMCmd,
 		switches.DeleteSwitchCmd,

@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -119,6 +121,11 @@ func DeleteAsset(ctx context.Context, name string) error {
 		if err := validateDeleteAsset(ctx, asset); err != nil {
 			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
 		}
+		// delete associated machine
+		if err := deleteMachineHelper(ctx, asset.GetName()); err != nil {
+			return errors.Annotate(err, "DeleteAsset - failed to delete associated machine %s", asset.GetName()).Err()
+		}
+		// delete the asset
 		err = registration.DeleteAsset(ctx, name)
 		if err != nil {
 			return errors.Annotate(err, "DeleteAsset - failed to delete %s", name).Err()
@@ -131,6 +138,26 @@ func DeleteAsset(ctx context.Context, name string) error {
 		return nil
 	}
 	return datastore.RunInTransaction(ctx, f, nil)
+}
+
+// deleteMachineHelper deletes a machine. If the machine is not found it return nil.
+// This should be run inside a transaction.
+func deleteMachineHelper(ctx context.Context, id string) error {
+	hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
+	machine, err := registration.GetMachine(ctx, id)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil
+		}
+		return err
+	}
+	// delete the machine
+	if err := registration.DeleteMachine(ctx, id); err != nil {
+		return err
+	}
+	hc.stUdt.deleteStateHelper(ctx)
+	hc.LogMachineChanges(machine, nil)
+	return hc.SaveChangeEvents(ctx)
 }
 
 // getAssetIndexedFieldName returns the same string as the mapping is 1:1
@@ -253,11 +280,12 @@ func validateDeleteAsset(ctx context.Context, asset *ufspb.Asset) error {
 	if err := util.CheckPermission(ctx, util.RegistrationsDelete, asset.GetRealm()); err != nil {
 		return err
 	}
-	var errMsg strings.Builder
-	errMsg.WriteString("validateDeleteAsset - ")
-	if err := ResourceExist(ctx, []*Resource{GetMachineResource(asset.GetName())}, &errMsg); err == nil {
-		// Cannot delete asset if its registered as a machine
-		return status.Error(codes.FailedPrecondition, "validateDeleteAsset - Asset registered as DUT/Labstation")
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", asset.GetName(), true)
+	if err != nil {
+		return err
+	}
+	if len(machinelses) > 0 {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("Asset %s cannot be deleted because DUT %s is referring this Asset.", asset.GetName(), machinelses[0].GetName()))
 	}
 	// TODO(anushruth): Add validation for servo resources
 	return nil
