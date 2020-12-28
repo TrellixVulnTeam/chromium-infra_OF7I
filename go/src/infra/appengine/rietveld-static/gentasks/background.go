@@ -143,7 +143,7 @@ func scanPatches(ctx context.Context, c chan<- CloudTaskPayload, dsClient *datas
 		gpID := gpKey.ID
 		private := issuePrivateCache.IsPrivate(ctx, gpKey)
 		c <- CloudTaskPayload{
-			Path:       fmt.Sprintf("/%d/patchset/%d/%d", gpID, pID, key.ID),
+			Path:       fmt.Sprintf("/%d/patch/%d/%d", gpID, pID, key.ID),
 			Private:    private,
 			EntityKind: "Patch",
 		}
