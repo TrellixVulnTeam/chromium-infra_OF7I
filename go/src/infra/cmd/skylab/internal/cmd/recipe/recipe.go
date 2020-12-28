@@ -74,7 +74,6 @@ type Args struct {
 	Priority                   int64
 	Tags                       []string
 	ProvisionLabels            []string
-	EnableSynchronousOffload   bool
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -138,12 +137,6 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 	duration := ptypes.DurationProto(a.Timeout)
 	params.Time = &test_platform.Request_Params_Time{
 		MaximumDuration: duration,
-	}
-
-	if a.EnableSynchronousOffload {
-		params.Migrations = &test_platform.Request_Params_Migrations{
-			EnableSynchronousOffload: a.EnableSynchronousOffload,
-		}
 	}
 
 	return req, nil

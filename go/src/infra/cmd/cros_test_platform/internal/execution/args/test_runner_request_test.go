@@ -359,54 +359,6 @@ func TestNoDeadline(t *testing.T) {
 	})
 }
 
-func TestEnableSynchronousOffload(t *testing.T) {
-	Convey("Given a request that", t, func() {
-		ctx := context.Background()
-
-		cases := []struct {
-			description string
-			// Use a setter instead of a bool to test that a nil Migration does not
-			// cause a crash.
-			setter   func(p *test_platform.Request_Params)
-			expected bool
-		}{
-			{
-				description: "enables synnchronous offload",
-				setter:      setEnableSynchronousOffload,
-				expected:    true,
-			},
-			{
-				description: "explicitly disables synchronous offload",
-				setter:      unsetEnableSynchronousOffload,
-				expected:    false,
-			},
-			{
-				description: "implicitly disables synchronous offload",
-				setter:      unsetMigrationsConfig,
-				expected:    false,
-			},
-		}
-
-		for _, c := range cases {
-			Convey(c.description, func() {
-				var params test_platform.Request_Params
-				c.setter(&params)
-				Convey("the generated test runner request matches", func() {
-					g := Generator{
-						Invocation: basicInvocation(),
-						Params:     &params,
-					}
-					got, err := g.testRunnerRequest(ctx)
-					test := defaultTest(got.Tests)
-					So(err, ShouldBeNil)
-					So(got, ShouldNotBeNil)
-					So(test.GetOffload().GetSynchronousGsEnable(), ShouldEqual, c.expected)
-				})
-			})
-		}
-	})
-}
-
 func TestParentUID(t *testing.T) {
 	Convey("Given a parent UID", t, func() {
 		ctx := context.Background()

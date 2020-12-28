@@ -93,21 +93,3 @@ func setRequestMaximumDuration(p *test_platform.Request_Params, maximumDuration 
 	}
 	p.Time.MaximumDuration = durationpb.New(maximumDuration)
 }
-
-func setEnableSynchronousOffload(p *test_platform.Request_Params) {
-	if p.Migrations == nil {
-		p.Migrations = &test_platform.Request_Params_Migrations{}
-	}
-	p.Migrations.EnableSynchronousOffload = true
-}
-
-func unsetEnableSynchronousOffload(p *test_platform.Request_Params) {
-	if p.Migrations == nil {
-		p.Migrations = &test_platform.Request_Params_Migrations{}
-	}
-	p.Migrations.EnableSynchronousOffload = false
-}
-
-func unsetMigrationsConfig(p *test_platform.Request_Params) {
-	p.Migrations = nil
-}

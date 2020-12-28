@@ -23,25 +23,22 @@ import (
 // createRunCommon encapsulates parameters that are common to
 // all of the create-* subcommands.
 type createRunCommon struct {
-	board                    string
-	model                    string
-	pool                     string
-	image                    string
-	dimensions               map[string]string
-	provisionLabels          []string
-	priority                 int
-	timeoutMins              int
-	maxRetries               int
-	tags                     []string
-	keyvals                  []string
-	qsAccount                string
-	buildBucket              bool
-	enableSynchronousOffload bool
+	board           string
+	model           string
+	pool            string
+	image           string
+	dimensions      map[string]string
+	provisionLabels []string
+	priority        int
+	timeoutMins     int
+	maxRetries      int
+	tags            []string
+	keyvals         []string
+	qsAccount       string
+	buildBucket     bool
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
-	var unusedUseTestRunner bool
-
 	fl.StringVar(&c.image, "image", "",
 		`Fully specified image name to run test against,
 e.g., reef-canary/R73-11580.0.0.`)
@@ -71,11 +68,13 @@ specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
 	fl.Var(luciflag.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
+
+	// Deprecated flags that have no effect. To be eventually deleted where
+	// possible.
+	var unusedUseTestRunner bool
+	var unusedEnableSynchronousOffload bool
 	fl.BoolVar(&unusedUseTestRunner, "use-test-runner", false, "DEPRECATED. Has no effect.")
-	fl.BoolVar(&c.enableSynchronousOffload, "enable-synchronous-offload", false,
-		`If true, test tasks will perform synchronous offload of the contents
-of $SYNCHRONOUS_OFFLOAD_DIR to a GS bucket. This involves using the test runner
-recipe (equivalent to setting -use-test-runner).`)
+	fl.BoolVar(&unusedEnableSynchronousOffload, "enable-synchronous-offload", false, "DEPRECATED. Has no effect.")
 }
 
 func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
@@ -117,7 +116,6 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Keyvals:                    keyvalMap,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
-		EnableSynchronousOffload:   c.enableSynchronousOffload,
 	}, nil
 }
 
