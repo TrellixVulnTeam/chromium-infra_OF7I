@@ -74,7 +74,6 @@ type Args struct {
 	Priority                   int64
 	Tags                       []string
 	ProvisionLabels            []string
-	UseTestRunner              bool
 	EnableSynchronousOffload   bool
 }
 
@@ -141,11 +140,9 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 		MaximumDuration: duration,
 	}
 
-	if a.EnableSynchronousOffload || a.UseTestRunner {
+	if a.EnableSynchronousOffload {
 		params.Migrations = &test_platform.Request_Params_Migrations{
 			EnableSynchronousOffload: a.EnableSynchronousOffload,
-			// Synchronous offload is only possible via test_runner.
-			UseTestRunner: true,
 		}
 	}
 

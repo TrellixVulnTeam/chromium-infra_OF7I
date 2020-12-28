@@ -175,14 +175,6 @@ func validateRequests(trs map[string]*steps.ExecuteRequest) error {
 			return errors.Reason("validate request: per-request timeout support unimplemented: %s[%s] vs %s[%s]", sTag, sTimeout, t, o).Err()
 		}
 	}
-
-	sUseTestRunner := sReq.RequestParams.GetMigrations().GetUseTestRunner()
-	for t, r := range trs {
-		o := r.RequestParams.GetMigrations().GetUseTestRunner()
-		if sUseTestRunner != o {
-			return errors.Reason("validate request: mismatched use_test_runner: %s[%v] vs %s[%v]", sTag, sUseTestRunner, t, o).Err()
-		}
-	}
 	return nil
 }
 

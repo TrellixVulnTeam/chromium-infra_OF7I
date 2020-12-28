@@ -36,11 +36,12 @@ type createRunCommon struct {
 	keyvals                  []string
 	qsAccount                string
 	buildBucket              bool
-	useTestRunner            bool
 	enableSynchronousOffload bool
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
+	var unusedUseTestRunner bool
+
 	fl.StringVar(&c.image, "image", "",
 		`Fully specified image name to run test against,
 e.g., reef-canary/R73-11580.0.0.`)
@@ -70,11 +71,7 @@ specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
 	fl.Var(luciflag.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
-	fl.BoolVar(&c.useTestRunner, "use-test-runner", false,
-		`If true, schedule individual tests via buildbucket and run them via
-the test_runner recipe. If false, schedule tests via raw Swarmng calls and run
-them via skylab_swarming_worker binary. The flag is ignored completely if
-enableSynchronousOffload is true.`)
+	fl.BoolVar(&unusedUseTestRunner, "use-test-runner", false, "DEPRECATED. Has no effect.")
 	fl.BoolVar(&c.enableSynchronousOffload, "enable-synchronous-offload", false,
 		`If true, test tasks will perform synchronous offload of the contents
 of $SYNCHRONOUS_OFFLOAD_DIR to a GS bucket. This involves using the test runner
@@ -120,7 +117,6 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Keyvals:                    keyvalMap,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
-		UseTestRunner:              c.useTestRunner,
 		EnableSynchronousOffload:   c.enableSynchronousOffload,
 	}, nil
 }
