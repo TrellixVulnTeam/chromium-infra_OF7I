@@ -438,5 +438,6 @@ func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpec
 		Cr50KeyEnv:             getCr50Env(labels),
 		StorageState:           lab.HardwareState(int32(peri.GetStorageState())),
 		ServoUsbState:          lab.HardwareState(int32(peri.GetServoUsbState())),
+		RpmState:               lab.PeripheralState(int32(peri.GetRpmState())),
 	})
 }

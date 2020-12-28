@@ -338,7 +338,7 @@ func setDutStateHelper(s lab.PeripheralState) *bool {
 	return &val
 }
 
-func setServoState(s lab.PeripheralState) *inventory.PeripheralState {
+func setPeripheralState(s lab.PeripheralState) *inventory.PeripheralState {
 	target := inventory.PeripheralState_UNKNOWN
 	if s != lab.PeripheralState_UNKNOWN {
 		target = inventory.PeripheralState(s)
@@ -376,12 +376,13 @@ func setHardwareState(s lab.HardwareState) *inventory.HardwareState {
 
 func setDutState(l *inventory.SchedulableLabels, s *lab.DutState) {
 	p := l.Peripherals
-	p.ServoState = setServoState(s.GetServo())
+	p.ServoState = setPeripheralState(s.GetServo())
 	p.Servo = setDutStateHelper(s.GetServo())
 	p.Chameleon = setDutStateHelper(s.GetChameleon())
 	p.AudioLoopbackDongle = setDutStateHelper(s.GetAudioLoopbackDongle())
 	p.ServoUsbState = setHardwareState(s.GetServoUsbState())
 	p.StorageState = setHardwareState(s.GetStorageState())
+	p.RpmState = setPeripheralState(s.GetRpmState())
 
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
 		p.WorkingBluetoothBtpeer = &n

@@ -174,6 +174,7 @@ var devInV2State = lab.DutState{
 	Cr50KeyEnv:             lab.DutState_CR50_KEYENV_PROD,
 	StorageState:           lab.HardwareState_HARDWARE_NORMAL,
 	ServoUsbState:          lab.HardwareState_HARDWARE_NEED_REPLACEMENT,
+	RpmState:               lab.PeripheralState_WORKING,
 }
 
 var labstationInV2 = lab.ChromeOSDevice{
@@ -368,6 +369,7 @@ common {
 			  }
 			servo_state: BROKEN
 			servo_type: "v3"
+			rpm_state: WORKING
 			smart_usbhub: true
 			storage_state: HARDWARE_NORMAL,
 			servo_usb_state: HARDWARE_NEED_REPLACEMENT,
