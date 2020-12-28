@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // AssetKind is a datastore entity identifier for Asset
@@ -24,12 +26,15 @@ const AssetKind string = "Asset"
 
 // AssetEntity is a datastore entity that tracks Assets
 type AssetEntity struct {
-	_kind string `gae:"$kind,Asset"`
-	Name  string `gae:"$id"`
-	Zone  string `gae:"zone"`
-	Type  string `gae:"type"`
-	Model string `gae:"model"`
-	Asset []byte `gae:",noindex"` // Marshalled Asset proto
+	_kind       string `gae:"$kind,Asset"`
+	Name        string `gae:"$id"`
+	Zone        string `gae:"zone"`
+	Type        string `gae:"type"`
+	Model       string `gae:"model"`
+	Rack        string `gae:"rack"`
+	BuildTarget string `gae:"build_target"`
+	Phase       string `gae:"phase"`
+	Asset       []byte `gae:",noindex"` // Marshalled Asset proto
 }
 
 // GetProto returns unmarshalled Asset.
@@ -55,11 +60,14 @@ func newAssetEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, e
 		return nil, errors.Annotate(err, "Failed to marshal asset %s", a).Err()
 	}
 	return &AssetEntity{
-		Name:  a.GetName(),
-		Zone:  a.GetLocation().GetZone().String(),
-		Type:  a.GetType().String(),
-		Model: a.GetModel(),
-		Asset: asset,
+		Name:        a.GetName(),
+		Zone:        a.GetLocation().GetZone().String(),
+		Type:        a.GetType().String(),
+		Model:       a.GetModel(),
+		Rack:        a.GetLocation().GetRack(),
+		BuildTarget: a.GetInfo().GetBuildTarget(),
+		Phase:       a.GetInfo().GetPhase(),
+		Asset:       asset,
 	}, nil
 }
 
@@ -183,4 +191,27 @@ func BatchUpdateAssets(ctx context.Context, assets []*ufspb.Asset) ([]*ufspb.Ass
 		return assets, nil
 	}
 	return nil, err
+}
+
+// GetAssetIndexedFieldName returns the index name
+func GetAssetIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.ZoneFilterName:
+		field = "zone"
+	case util.RackFilterName:
+		field = "rack"
+	case util.ModelFilterName:
+		field = "model"
+	case util.BuildTargetFilterName:
+		field = "build_target"
+	case util.DeviceTypeFilterName:
+		field = "type"
+	case util.PhaseFilterName:
+		field = "phase"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for asset are zone/rack/model/buildtarget(target)/assettype/phase", input)
+	}
+	return field, nil
 }

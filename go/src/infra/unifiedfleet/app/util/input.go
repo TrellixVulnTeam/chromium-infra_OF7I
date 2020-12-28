@@ -104,6 +104,7 @@ var (
 	BuildTargetFilterName       string = "target"
 	DeviceTypeFilterName        string = "devicetype"
 	PhaseFilterName             string = "phase"
+	AssetTypeFilterName         string = "assettype"
 )
 
 const separator string = "/"

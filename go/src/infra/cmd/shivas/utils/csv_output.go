@@ -67,6 +67,11 @@ func PrintAllTSVs(res [][]string) {
 	csw.WriteAll(res)
 }
 
+// PrintTSVAssets prints the tsv format of assets
+func PrintTSVAssets(msgs []proto.Message, keysOnly bool) {
+	printTSVs(msgs, keysOnly, assetOutputStrs)
+}
+
 // PrintTSVMachines prints the tsv format of machines
 func PrintTSVMachines(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineOutputStrs)

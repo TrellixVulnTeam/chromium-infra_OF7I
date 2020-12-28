@@ -8,6 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
+	"infra/cmd/shivas/ufs/subcmds/asset"
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/dut"
@@ -58,9 +59,10 @@ func (c *get) Run(a subcommands.Application, args []string, env subcommands.Env)
 func (c getApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
+		asset.GetAssetCmd,
 		machine.GetMachineCmd,
-		host.GetHostCmd,
 		dut.GetDutCmd,
+		host.GetHostCmd,
 		kvm.GetKVMCmd,
 		rpm.GetRPMCmd,
 		switches.GetSwitchCmd,

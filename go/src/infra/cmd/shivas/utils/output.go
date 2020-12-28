@@ -48,6 +48,7 @@ var (
 	VMFreeSlotFullTitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
 	ZoneTitle                = []string{"Name", "EnumName", "Department"}
 	StateTitle               = []string{"Name", "EnumName", "Description"}
+	AssetTitle               = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -807,6 +808,72 @@ func PrintNicsJSON(res []proto.Message, emit bool) {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
 		if i < len(nics)-1 {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
+
+func assetOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Asset)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Local().Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetLocation().GetZone().String(),
+		m.GetLocation().GetRack(),
+		m.GetLocation().GetBarcodeName(),
+		m.GetInfo().GetSerialNumber(),
+		m.GetInfo().GetHwid(),
+		m.GetModel(),
+		m.GetType().String(),
+		m.GetInfo().GetEthernetMacAddress(),
+		m.GetInfo().GetSku(),
+		m.GetInfo().GetPhase(),
+		m.GetInfo().GetBuildTarget(),
+		m.GetRealm(),
+		ts,
+	}
+}
+
+// PrintAssets prints the all assets in table form.
+func PrintAssets(res []proto.Message, keysOnly bool) {
+	assets := make([]*ufspb.Asset, len(res))
+	for i, r := range res {
+		assets[i] = r.(*ufspb.Asset)
+	}
+	defer tw.Flush()
+	for _, m := range assets {
+		printAsset(m, keysOnly)
+	}
+}
+
+func printAsset(m *ufspb.Asset, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
+	var out string
+	for _, s := range assetOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
+	}
+	fmt.Fprintln(tw, out)
+}
+
+// PrintAssetsJSON prints the asset details in json format.
+func PrintAssetsJSON(res []proto.Message, emit bool) {
+	assets := make([]*ufspb.Asset, len(res))
+	for i, r := range res {
+		assets[i] = r.(*ufspb.Asset)
+	}
+	fmt.Print("[")
+	for i, m := range assets {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m, emit)
+		if i < len(assets)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
