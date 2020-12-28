@@ -479,5 +479,6 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		},
 		ParentRequestUid: g.ParentRequestUID,
 		ParentBuildId:    g.ParentBuildID,
+		ExecutionParam:   g.Params.ExecutionParam,
 	}, nil
 }
