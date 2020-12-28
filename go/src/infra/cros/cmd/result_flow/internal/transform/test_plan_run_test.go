@@ -46,13 +46,12 @@ var (
 )
 
 type ctp struct {
-	tag                 string
-	suite               string
-	legacyAutotestSuite string
-	pool                string
-	buildTarget         string
-	crosBuild           string
-	status              test_platform.TaskState_LifeCycle
+	tag         string
+	suite       string
+	pool        string
+	buildTarget string
+	crosBuild   string
+	status      test_platform.TaskState_LifeCycle
 }
 
 type testPlanRun struct {
@@ -74,13 +73,12 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 			"Transform an ongoing CTP build to analytics.TestPlanRun",
 			[]*ctp{
 				{
-					tag:                 "foo-1",
-					suite:               "fake-suite",
-					legacyAutotestSuite: "",
-					pool:                "fake-pool",
-					buildTarget:         "foo",
-					crosBuild:           "fake-release",
-					status:              test_platform.TaskState_LIFE_CYCLE_RUNNING,
+					tag:         "foo-1",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "foo",
+					crosBuild:   "fake-release",
+					status:      test_platform.TaskState_LIFE_CYCLE_RUNNING,
 				},
 			},
 			[]*testPlanRun{
@@ -98,13 +96,12 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 			"Transform a completed CTP build to analytics.TestPlanRun",
 			[]*ctp{
 				{
-					tag:                 "hoo-1",
-					suite:               "fake-suite",
-					legacyAutotestSuite: "",
-					pool:                "fake-pool",
-					buildTarget:         "hoo",
-					crosBuild:           "fake-release",
-					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+					tag:         "hoo-1",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "hoo",
+					crosBuild:   "fake-release",
+					status:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 				},
 			},
 			[]*testPlanRun{
@@ -119,49 +116,23 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 			},
 		},
 		{
-			"Transform a completed CTP build with legacy autotest suite",
-			[]*ctp{
-				{
-					tag:                 "hoo-1",
-					suite:               "",
-					legacyAutotestSuite: "legacy-autotest-suite",
-					pool:                "fake-pool",
-					buildTarget:         "hoo",
-					crosBuild:           "fake-release",
-					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-				},
-			},
-			[]*testPlanRun{
-				{
-					tag:         "hoo-1",
-					suite:       "legacy-autotest-suite",
-					pool:        "fake-pool",
-					buildTarget: "hoo",
-					crosBuild:   "fake-release",
-					status:      "COMPLETED",
-				},
-			},
-		},
-		{
 			"Transform a completed CTP build with multiple requests",
 			[]*ctp{
 				{
-					tag:                 "foo",
-					suite:               "fake-suite",
-					legacyAutotestSuite: "",
-					pool:                "fake-pool",
-					buildTarget:         "foo",
-					crosBuild:           "fake-release-1",
-					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+					tag:         "foo",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "foo",
+					crosBuild:   "fake-release-1",
+					status:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 				},
 				{
-					tag:                 "hoo",
-					suite:               "fake-suite",
-					legacyAutotestSuite: "",
-					pool:                "fake-pool",
-					buildTarget:         "hoo",
-					crosBuild:           "fake-release-2",
-					status:              test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+					tag:         "hoo",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "hoo",
+					crosBuild:   "fake-release-2",
+					status:      test_platform.TaskState_LIFE_CYCLE_CANCELLED,
 				},
 			},
 			[]*testPlanRun{
@@ -227,9 +198,6 @@ func genFakeBuild(inputs []*ctp) *bbpb.Build {
 		if in.suite != "" {
 			setSuite(ctpReq, in.suite)
 		}
-		if in.legacyAutotestSuite != "" {
-			setLegacySuite(ctpReq, in.legacyAutotestSuite)
-		}
 		requests[in.tag] = ctpReq
 		if int(in.status)&int(test_platform.TaskState_LIFE_CYCLE_MASK_FINAL) != 0 {
 			responses[in.tag] = &steps.ExecuteResponse{
@@ -261,12 +229,6 @@ func setSuite(req *test_platform.Request, suite string) {
 				Name: suite,
 			},
 		},
-	}
-}
-
-func setLegacySuite(req *test_platform.Request, suite string) {
-	req.Params.Legacy = &test_platform.Request_Params_Legacy{
-		AutotestSuite: suite,
 	}
 }
 

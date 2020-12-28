@@ -113,12 +113,7 @@ func (c *ctpBuild) getSuiteName(ctx context.Context, key string) string {
 	if len(suites) > 0 {
 		return suites[0].GetName()
 	}
-	logging.Infof(
-		ctx,
-		"CTP request %s has no suite name attached, try Autotest suite name",
-		c.createTestPlanRunUID(key),
-	)
-	return c.reqs[key].GetParams().GetLegacy().GetAutotestSuite()
+	return ""
 }
 
 func (c *ctpBuild) getDutPool(key string) string {

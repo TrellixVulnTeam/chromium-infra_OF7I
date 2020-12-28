@@ -39,7 +39,7 @@ This command does not wait for the task to start running.`,
 		c.envFlags.Register(&c.Flags)
 		c.createRunCommon.Register(&c.Flags)
 		c.Flags.StringVar(&c.testplanPath, "plan-file", "", "Path to jsonpb-encoded test plan.")
-		c.Flags.StringVar(&c.legacySuite, "legacy-suite", "", "If non-empty and autotest backend is selected, ignore enumeration and run this suite instead.")
+		c.Flags.StringVar(&c.legacySuite, "legacy-suite", "", "DEPRECATED. Has no effect.")
 		return c
 	},
 }
@@ -50,7 +50,9 @@ type createTestPlanRun struct {
 	authFlags    authcli.Flags
 	envFlags     skycmdlib.EnvFlags
 	testplanPath string
-	legacySuite  string
+	// TODO(crbug.com/1161539) Delete once cbuildbot stops setting this on all
+	// branches.
+	legacySuite string
 }
 
 // validateArgs ensures that the command line arguments are valid.
@@ -95,7 +97,6 @@ func (c *createTestPlanRun) innerRun(a subcommands.Application, args []string, e
 	}
 
 	recipeArgs.TestPlan = testPlan
-	recipeArgs.LegacySuite = c.legacySuite
 
 	req, err := recipeArgs.TestPlatformRequest()
 	if err != nil {
