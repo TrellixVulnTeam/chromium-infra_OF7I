@@ -20,6 +20,8 @@ import (
 )
 
 const (
+	// AssetCollection refers to the prefix of the corresponding resource.
+	AssetCollection string = "assets"
 	// MachineCollection refers to the prefix of the corresponding resource.
 	MachineCollection string = "machines"
 	// RackCollection refers to the prefix of the corresponding resource.

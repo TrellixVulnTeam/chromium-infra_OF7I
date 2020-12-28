@@ -1541,6 +1541,74 @@ func (s *DecoratedFleet) CreateAsset(ctx context.Context, req *CreateAssetReques
 	return
 }
 
+func (s *DecoratedFleet) UpdateAsset(ctx context.Context, req *UpdateAssetRequest) (rsp *models.Asset, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateAsset", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateAsset(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateAsset", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetAsset(ctx context.Context, req *GetAssetRequest) (rsp *models.Asset, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetAsset", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetAsset(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetAsset", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListAssets(ctx context.Context, req *ListAssetsRequest) (rsp *ListAssetsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListAssets", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListAssets(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListAssets", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteAsset(ctx context.Context, req *DeleteAssetRequest) (rsp *emptypb.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteAsset", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteAsset(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteAsset", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

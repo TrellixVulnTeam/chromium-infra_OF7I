@@ -1106,3 +1106,77 @@ func (fs *FleetServerImpl) CreateAsset(ctx context.Context, req *ufsAPI.CreateAs
 	res.Name = util.AddPrefix(prefix, res.Name)
 	return res, err
 }
+
+// UpdateAsset updates the asset information in database.
+func (fs *FleetServerImpl) UpdateAsset(ctx context.Context, req *ufsAPI.UpdateAssetRequest) (rsp *ufspb.Asset, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Asset.Name = util.RemovePrefix(req.Asset.Name)
+	asset, err := controller.UpdateAsset(ctx, req.Asset, req.UpdateMask)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	prefix, err := util.GetResourcePrefix(asset)
+	asset.Name = util.AddPrefix(prefix, asset.Name)
+	return asset, err
+}
+
+// GetAsset gets the asset information from database.
+func (fs *FleetServerImpl) GetAsset(ctx context.Context, req *ufsAPI.GetAssetRequest) (rsp *ufspb.Asset, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	asset, err := controller.GetAsset(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	prefix, err := util.GetResourcePrefix(asset)
+	asset.Name = util.AddPrefix(prefix, asset.Name)
+	return asset, err
+}
+
+// ListAssets list the assets information from database.
+func (fs *FleetServerImpl) ListAssets(ctx context.Context, req *ufsAPI.ListAssetsRequest) (rsp *ufsAPI.ListAssetsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListAssets(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, asset := range result {
+		asset.Name = util.AddPrefix(util.AssetCollection, asset.Name)
+	}
+	return &ufsAPI.ListAssetsResponse{
+		Assets:        result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+// DeleteAsset deletes the asset from database.
+func (fs *FleetServerImpl) DeleteAsset(ctx context.Context, req *ufsAPI.DeleteAssetRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = controller.DeleteAsset(ctx, name)
+	return &empty.Empty{}, err
+}

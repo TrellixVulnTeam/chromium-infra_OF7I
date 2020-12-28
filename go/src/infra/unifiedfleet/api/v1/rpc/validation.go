@@ -29,6 +29,7 @@ var (
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidHostname               string = fmt.Sprintf("%s%s", "Invalid input - ", HostnamePattern)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
+	AssetNameFormat               string = "Invalid input - Entity Name pattern should be assets/{asset}."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat      string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
@@ -1017,6 +1018,32 @@ func (r *CreateAssetRequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, "Rack missing")
 	}
 	return nil
+}
+
+// Validate validates input requests of UpdateAsset.
+func (r *UpdateAssetRequest) Validate() error {
+	if r.Asset == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(assetRegex, AssetNameFormat, r.Asset.GetName())
+}
+
+// Validate validates input requests of GetAsset.
+func (r *GetAssetRequest) Validate() error {
+	return validateResourceName(assetRegex, AssetNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListAssets.
+func (r *ListAssetsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteAsset.
+func (r *DeleteAssetRequest) Validate() error {
+	return validateResourceName(assetRegex, AssetNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {
