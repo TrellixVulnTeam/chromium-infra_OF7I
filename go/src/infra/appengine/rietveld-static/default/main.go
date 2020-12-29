@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"cloud.google.com/go/storage"
 )
@@ -42,7 +43,8 @@ func main() {
 // pathHandler handles /<path> to access gs://chromiumcodereview/<path>.
 func pathHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
-	path := req.URL.Path
+	// Remove trailing slashes, so that '/<issue>/' works as well as '/<issue>'.
+	path := strings.TrimSuffix(req.URL.Path, "/")
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
