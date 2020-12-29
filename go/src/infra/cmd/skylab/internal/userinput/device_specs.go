@@ -347,8 +347,9 @@ func validateSameStringArray(expected []string, actual []string) error {
 
 func serialize(dut *inventory.DeviceUnderTest) (string, error) {
 	m := jsonpb.Marshaler{
-		EnumsAsInts: false,
-		Indent:      "  ",
+		EnumsAsInts:  false,
+		Indent:       "  ",
+		EmitDefaults: true,
 	}
 	var w strings.Builder
 	err := m.Marshal(&w, dut)
