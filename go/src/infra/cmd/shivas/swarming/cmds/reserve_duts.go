@@ -6,6 +6,7 @@ package tasks
 
 import (
 	"fmt"
+	"os/user"
 
 	"github.com/maruel/subcommands"
 
@@ -52,6 +53,10 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 	if len(args) == 0 {
 		return errors.Reason("at least one hostname has to be provided").Err()
 	}
+	user, err := user.Current()
+	if err != nil {
+		return err
+	}
 	ctx := cli.GetContext(a, c, env)
 	e := c.envFlags.Env()
 	creator, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
@@ -63,7 +68,7 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 	errorMap := make(map[string]error)
 	for _, host := range args {
 		// TODO(crbug/1128496): update state directly in the UFS without creating the swarming task
-		task, err := creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host)
+		task, err := creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host, user.Username)
 		if err != nil {
 			errorMap[host] = err
 		} else {

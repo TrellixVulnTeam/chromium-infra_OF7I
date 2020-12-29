@@ -114,12 +114,12 @@ func MapToSwarmingDimensions(dims map[string]string) []*swarming.SwarmingRpcsStr
 }
 
 // ReserveDUT schedule task to change DUT state to reserved
-func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.reserveDUTRequest(serviceAccount, host))
+func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host, user string) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.reserveDUTRequest(serviceAccount, host, user))
 }
 
 // ReserveDUTRequest creates task request to change DUT state to reserved
-func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host string) *swarming.SwarmingRpcsNewTaskRequest {
+func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swarming.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 2 * 60 * 60,
 		Properties: &swarming.SwarmingRpcsTaskProperties{
@@ -132,7 +132,7 @@ func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host string) *swarming.
 		},
 	}}
 	return &swarming.SwarmingRpcsNewTaskRequest{
-		Name: "Reserve",
+		Name: fmt.Sprintf("Reserve by %s", user),
 		Tags: tc.combineTags("Reserve", "",
 			[]string{
 				fmt.Sprintf("dut-name:%s", host),

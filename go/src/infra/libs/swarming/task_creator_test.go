@@ -43,8 +43,8 @@ func TestReserveDUTRequest(t *testing.T) {
 			swarmingService: "https://chromium-swarm-dev.appspot.com/",
 			session:         "session0",
 		}
-		r := tc.reserveDUTRequest("fake_service_account", "fake_dut_host")
-		So(r.Name, ShouldEqual, "Reserve")
+		r := tc.reserveDUTRequest("fake_service_account", "fake_dut_host", "fake_user")
+		So(r.Name, ShouldEqual, "Reserve by fake_user")
 		So(r.TaskSlices, ShouldHaveLength, 1)
 		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
 		So(command, ShouldContainSubstring, "/bin/sh -c /opt/infra-tools/skylab_swarming_worker")
@@ -63,7 +63,6 @@ func TestReserveDUTRequest(t *testing.T) {
 		So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
 		So(r.ServiceAccount, ShouldEqual, "fake_service_account")
 		So(r.Priority, ShouldEqual, 25)
-		So(r.Name, ShouldEqual, "Reserve")
 	})
 }
 func TestDUTNameToBotID(t *testing.T) {
