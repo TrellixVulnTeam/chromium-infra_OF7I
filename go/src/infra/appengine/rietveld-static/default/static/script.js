@@ -12,6 +12,96 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+function _remove(elem) {
+  elem.parentElement.removeChild(elem);
+}
+
+function _replace(elem, node) {
+  elem.parentElement.replaceChild(node, elem);
+}
+
+// Remove links to download patches and links to deltas between patchsets from
+// issue and pathset pages.
+function _filterPatchSetContents(body) {
+  const issueListElems = body.getElementsByClassName('issue-list');
+  if (!issueListElems) {
+    return;
+  }
+  const issueList = issueListElems[0];
+  // Remove links to download patchset.
+  _remove(issueList.firstElementChild.children[1]);
+  // Remove links to download file patches and links to deltas between
+  // patchsets.
+  Array.from(issueList.getElementsByTagName('tr')).forEach((tr, idx) => {
+    if (idx == 0) {
+      // 'Patch' header is on column 5 and 'Delta from patchset' header is on
+      // column 3.
+      _remove(tr.children[5]);
+      _remove(tr.children[3]);
+    } else {
+      // Links to patches are in column 8 and links to deltas from patchsets are
+      // on column 4.
+      _remove(tr.children[8]);
+      _remove(tr.children[4]);
+    }
+  });
+}
+
+window.onload = function() {
+  // Replace header (containing username and links to settings and help pages)
+  // with project logo.
+  const header = document.body.children[2];
+  const projectLogo = header.firstElementChild;
+  _replace(header, projectLogo);
+  projectLogo.style.float = null;
+
+  // Remove links to patch download pages, and replace links to user pages, and
+  // search pages with their contents.
+  Array.from(document.getElementsByTagName('a')).forEach((a) => {
+    if (!a.href || !a.href.startsWith(window.location.origin)) {
+      return;
+    }
+    const href = a.href.substr(window.location.origin.length);
+
+    if (href.startsWith('/user') || href.startsWith('/search?project=')) {
+      _replace(a, document.createTextNode(a.text));
+    } else if (href.startsWith('/download') || href.startsWith('/search?')) {
+      _remove(a);
+    }
+  });
+
+  // Remove divs with links to unarchived content.
+  const REMOVED_CLASSES = [
+    // Counter in gray at the top right corner.
+    'counter',
+    // Links to Rietveld version and RSS feeds.
+    'extra',
+    // Issues (see mainmenu2) and Search headers.
+    'mainmenu',
+    // Links to issue list pages (My Issues, Starred, Open, Closed, All).
+    'mainmenu2',
+  ];
+  Array.from(document.getElementsByTagName('div')).forEach((div) => {
+    const classList = Array.from(div.classList);
+    if (classList.some((c) => REMOVED_CLASSES.includes(c))) {
+      _remove(div);
+    }
+  });
+
+  // Remove links to close and star issues, and draft comment warnings.
+  Array.from(document.getElementsByTagName('span')).forEach((span) => {
+    if (span.id.startsWith('issue-')) {
+      // Remove links to star and close issues.
+      _remove(span);
+    } else if (span.style.color == 'red') {
+      // Remove 'Draft comments are only viewable by you.' warnings.
+      _remove(span);
+    }
+  });
+
+  _filterPatchSetContents(document.body);
+}
+
 // Generic helpers
 
 /**
@@ -432,6 +522,7 @@ function M_PatchSetFetched() {
   var section = document.getElementById(http_request.div_id);
   if (http_request.status == 200) {
     section.innerHTML = http_request.responseText;
+    _filterPatchSetContents(section);
     /* initialize dashboardState again to update cached patch rows */
     if (dashboardState) dashboardState.initialize();
   } else {
