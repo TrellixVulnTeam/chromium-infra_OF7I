@@ -622,7 +622,7 @@ func logDut(resourceName string, oldData, newData *ufslabpb.DeviceUnderTest) []*
 		newData = &ufslabpb.DeviceUnderTest{}
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
-	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetCriticalPools(), newData.GetCriticalPools())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetPools(), newData.GetPools())...)
 	if oldData.GetPeripherals() == nil {
 		oldData.Peripherals = &ufslabpb.Peripherals{}
 	}

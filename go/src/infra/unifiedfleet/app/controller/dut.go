@@ -35,6 +35,8 @@ const (
 	servoPortMin = 9900
 )
 
+var defaultPools = []string{"DUT_POOL_QUOTA"}
+
 // CreateDUT creates ChromeOSMachineLSE entities for a DUT.
 //
 // Creates one MachineLSE for DUT and updates another MachineLSE for the
@@ -498,11 +500,11 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 func processUpdateMachineLSEDUTMask(oldDut, newDut *ufslab.DeviceUnderTest, path string) {
 	switch path {
 	case "dut.pools":
-		if pools := newDut.GetCriticalPools(); pools != nil && len(pools) > 0 {
-			oldDut.CriticalPools = newDut.GetCriticalPools()
+		if pools := newDut.GetPools(); pools != nil && len(pools) > 0 {
+			oldDut.Pools = newDut.GetPools()
 		} else {
-			// Assign DUT_POOL_QUOTA by default if everything is cleared.
-			oldDut.CriticalPools = []ufslab.DeviceUnderTest_DUTPool{ufslab.DeviceUnderTest_DUT_POOL_QUOTA}
+			// Assign default pools if nothing is given.
+			oldDut.Pools = defaultPools
 		}
 	}
 }

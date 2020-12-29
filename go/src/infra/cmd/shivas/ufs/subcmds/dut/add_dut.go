@@ -1,3 +1,7 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package dut
 
 import (
@@ -10,7 +14,6 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -31,8 +34,11 @@ var defaultDeployTaskActions = []string{"update-label", "verify-recovery-mode", 
 // TODO(anushruth): Find a better place to put these tags.
 var shivasTags = []string{"shivas:" + site.VersionNumber, "triggered_using:shivas"}
 
-// defaultPools contains the list of critical pools used by default.
+// defaultPools contains the list of pools used by default.
 var defaultPools = []string{"DUT_POOL_QUOTA"}
+
+// deafultSwarmingPool is the swarming pool used for all DUTs.
+var defaultSwarmingPool = "ChromeOSSkylab"
 
 // AddDUTCmd adds a MachineLSE to the database. And starts a swarming job to deploy.
 var AddDUTCmd = &subcommands.Command{
@@ -41,7 +47,7 @@ var AddDUTCmd = &subcommands.Command{
 	LongDesc:  cmdhelp.AddDUTLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addDUT{
-			pools:         defaultPools,
+			pools:         []string{},
 			deployTags:    shivasTags,
 			deployActions: defaultDeployTaskActions,
 		}
@@ -52,21 +58,21 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTRegistrationFileText)
 
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the DUT.")
-		c.Flags.StringVar(&c.machine, "machine", "", "asset tag of the machine.")
+		c.Flags.StringVar(&c.asset, "asset", "", "asset tag of the machine.")
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo. Can skip for Servo V3.")
-		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns SERVO_SETUP_REGULAR if unassigned.")
-		c.Flags.Var(flag.StringSlice(&c.pools), "pools", "comma seperated pools assigned to the DUT. Enclose in double quotes (\") for list of pools. Allowed values are "+cmdhelp.CriticalPoolsAllowedValuesString()+".")
+		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns REGULAR if unassigned.")
+		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the DUT. 'DUT_POOL_QUOTA' is used if nothing is specified")
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT.")
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
 		c.Flags.BoolVar(&c.ignoreUFS, "ignore-ufs", false, "skip updating UFS create a deploy task.")
-		c.Flags.Var(flag.StringSlice(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task. Enclose in double quotes (\") for list of tags")
+		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task.")
 		c.Flags.BoolVar(&c.deploySkipDownloadImage, "deploy-skip-download-image", false, "skips downloading image and staging usb")
 		c.Flags.BoolVar(&c.deploySkipInstallFirmware, "deploy-skip-install-fw", false, "skips installing firmware")
 		c.Flags.BoolVar(&c.deploySkipInstallOS, "deploy-skip-install-os", false, "skips installing os image")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine.")
-		c.Flags.Var(flag.StringSlice(&c.tags), "tags", "comma separated tags. Enclose in double quotes (\") for list of tags.")
+		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags.")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine.")
 		return c
@@ -81,7 +87,7 @@ type addDUT struct {
 
 	newSpecsFile   string
 	hostname       string
-	machine        string
+	asset          string
 	servo          string
 	servoSerial    string
 	servoSetupType string
@@ -104,7 +110,7 @@ type addDUT struct {
 
 var mcsvFields = []string{
 	"name",
-	"machine",
+	"asset",
 	"servo_host",
 	"servo_port",
 	"servo_serial",
@@ -193,8 +199,8 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 
 func (c addDUT) validateArgs() error {
 	if !c.ignoreUFS && c.newSpecsFile == "" {
-		if c.machine == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Need machine ID to create a DUT")
+		if c.asset == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Need asset ID to create a DUT")
 		}
 		if c.servo == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need servo config to create a DUT")
@@ -210,22 +216,15 @@ func (c addDUT) validateArgs() error {
 			}
 		}
 		if c.servoSetupType != "" {
-			if _, ok := lab.ServoSetupType_value[c.servoSetupType]; !ok {
+			if _, ok := lab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; !ok {
 				return cmdlib.NewQuietUsageError(c.Flags, "Invalid servo setup %s", c.servoSetupType)
 			}
 		}
 		if (c.rpm != "" && c.rpmOutlet == "") || (c.rpm == "" && c.rpmOutlet != "") {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need both rpm and its outlet. %s:%s is invalid", c.rpm, c.rpmOutlet)
 		}
-		if len(c.pools) != 0 {
-			for _, name := range c.pools {
-				if _, ok := lab.DeviceUnderTest_DUTPool_value[name]; !ok {
-					return cmdlib.NewQuietUsageError(c.Flags, "Invalid pool %s, Valid pools are %s.", name, cmdhelp.CriticalPoolsAllowedValuesString())
-				}
-			}
-		}
 	}
-	if c.hostname == "" {
+	if c.newSpecsFile == "" && c.hostname == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Need hostname to create a DUT")
 	}
 	return nil
@@ -271,9 +270,10 @@ func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
 		}
 		lse, err := c.initializeLSE(recMap)
 		if err != nil {
-			return nil, err
+			fmt.Printf("Error [%s:%v]: %v. Skipping add on this line\n", c.newSpecsFile, i+1, err.Error())
+		} else {
+			lses = append(lses, lse)
 		}
-		lses = append(lses, lse)
 	}
 	return lses, nil
 }
@@ -294,7 +294,7 @@ func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *uf
 }
 
 func (c *addDUT) deployDutToSwarming(ctx context.Context, tc *swarming.TaskCreator, lse *ufspb.MachineLSE) error {
-	task, err := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools()[0], c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
+	task, err := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
 	if err != nil {
 		fmt.Printf("Failed to trigger Deploy task for DUT %s. Deploy failed %s\n", lse.GetName(), err)
 		return err
@@ -339,13 +339,18 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 			servoPort = int32(port)
 		}
 		servoSerial = recMap["servo_serial"]
-		if _, ok := lab.ServoSetupType_value[recMap["servo_setup"]]; !ok {
+		// Check if the host is servo V3. Need servo serial otherwise.
+		if !ufsUtil.ServoV3HostnameRegex.MatchString(servoHost) && servoSerial == "" {
+			return nil, fmt.Errorf("Not a servo V3 host[%s]. Need servo serial", servoHost)
+		}
+		sst, ok := lab.ServoSetupType_value[appendServoSetupPrefix(recMap["servo_setup"])]
+		if !ok && recMap["servo_setup"] != "" {
 			return nil, fmt.Errorf("Invalid servo setup %s. Valid types are %s", recMap["servo_setup"], cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
-		servoSetup = lab.ServoSetupType(lab.ServoSetupType_value[recMap["servo_setup"]])
+		servoSetup = lab.ServoSetupType(sst) // Default value is REGULAR(0).
 		rpmHost = recMap["rpm_host"]
 		rpmOutlet = recMap["rpm_outlet"]
-		machines = []string{recMap["machine"]}
+		machines = []string{recMap["asset"]}
 		pools = strings.Fields(recMap["pools"])
 	} else {
 		// command line parameters
@@ -356,10 +361,10 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 			return nil, err
 		}
 		servoSerial = c.servoSerial
-		servoSetup = lab.ServoSetupType(lab.ServoSetupType_value[c.servoSetupType])
+		servoSetup = lab.ServoSetupType(lab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)])
 		rpmHost = c.rpm
 		rpmOutlet = c.rpmOutlet
-		machines = []string{c.machine}
+		machines = []string{c.asset}
 		pools = c.pools
 	}
 	lse.Name = name
@@ -379,8 +384,11 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSetup = servoSetup
 	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitName = rpmHost
 	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitOutlet = rpmOutlet
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = []string{"ChromeOSSkylab"}
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().CriticalPools = parsePools(pools)
+	if len(pools) > 0 && pools[0] != "" {
+		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = pools
+	} else {
+		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = defaultPools
+	}
 	return lse, nil
 }
 
@@ -401,17 +409,6 @@ func parseServoHostnamePort(servo string) (string, int32, error) {
 	return servoHostname, servoPort, nil
 }
 
-func parsePools(criticalPools []string) []lab.DeviceUnderTest_DUTPool {
-	if len(criticalPools) == 0 {
-		return nil
-	}
-	pools := []lab.DeviceUnderTest_DUTPool{}
-	for _, name := range criticalPools {
-		pools = append(pools, lab.DeviceUnderTest_DUTPool(lab.DeviceUnderTest_DUTPool_value[name]))
-	}
-	return pools
-}
-
 // updateDeployActions updates the deploySkipActions based on boolean skip options
 func (c *addDUT) updateDeployActions() {
 	if !c.deploySkipDownloadImage {
@@ -423,4 +420,8 @@ func (c *addDUT) updateDeployActions() {
 	if !c.deploySkipInstallFirmware {
 		c.deployActions = append(c.deployActions, "install-firmware")
 	}
+}
+
+func appendServoSetupPrefix(servoSetup string) string {
+	return fmt.Sprintf("SERVO_SETUP_%s", servoSetup)
 }

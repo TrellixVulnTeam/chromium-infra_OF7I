@@ -46,11 +46,11 @@ Alternate location specification for finer details.`
 	// AddDUTLongDesc long description for AddDUTCmd
 	AddDUTLongDesc string = `Add and deploy a DUT.
 Examples:
-shivas add dut -name {hostname} -machine {asset tag} -servo {servo host}:{servo port} -servo-serial {servo serial} -pool {swarming pool}
+shivas add dut -name {hostname} -asset {asset tag} -servo {servo host}:{servo port} -servo-serial {servo serial} -pool {dut pool}
 Adds a DUT to UFS and triggers a swarming job to deploy the DUT.
 
 
-shivas add dut -name {hostname} -pool {swarming pool} -ignore-ufs=true
+shivas add dut -name {hostname} -pool {dut pool} -ignore-ufs=true
 Triggers a swarming job to deploy the DUT. Avoids updating to UFS.
 
 shivas add dut -f dut.json
@@ -86,9 +86,8 @@ Example DUT:
 						"powerunitOutlet": ".A1"
 					},
 				},
-				"criticalPools": [],
 				"pools": [
-						"faft_test_debug"
+						"DUT_POOL_QUOTA"
 				]
 			}
 		}
@@ -150,7 +149,6 @@ Example DUT with peripherals:
 					},
 					"smartUsbhub": false
 				},
-				"criticalPools": [],
 				"pools": [
 						"faft_test_debug"
 				]
@@ -164,16 +162,17 @@ Example DUT with peripherals:
 	"description": "Fixed and replaced",
 }
 
+The protobuf definition of machineLSE is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+
 [MCSV Mode]
 The file may have multiple or one dut csv record.
-The header format and sequence should be: [name,machine,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
+The header format and sequence should be: [name,asset,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
 Example mcsv format:
-name,machine,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools
-dut-1,machine-1,servo-1,9998,ServoXdw,rpm-1,23,"CTS QUOTA"
-dut-2,machine-2,servo-2,9998,ServoYdw,rpm-2,43,QUOTA
-
-The protobuf definition of machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
+name,asset,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
+dut-1,asset-1,servo-1,9998,ServoXdw,REGULAR,rpm-1,23,"CTS QUOTA"
+dut-2,asset-2,servo-2,9998,ServoYdw,,rpm-2,43,QUOTA
+dut-3,asset-3,chromeos6-row2-rack3-host4-servo,,,,,,,`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
@@ -1271,16 +1270,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 func ServoSetupTypeAllowedValuesString() string {
 	servoSetupTypeAllowedValueList := []string{}
 	for name := range lab.ServoSetupType_value {
-		servoSetupTypeAllowedValueList = append(servoSetupTypeAllowedValueList, name)
+		servoSetupTypeAllowedValueList = append(servoSetupTypeAllowedValueList, strings.TrimPrefix(name, "SERVO_SETUP_"))
 	}
 	return fmt.Sprintf("[%s]", strings.Join(servoSetupTypeAllowedValueList, ", "))
-}
-
-// CriticalPoolsAllowedValuesString returns a string description of al the allowed values for critical pools.
-func CriticalPoolsAllowedValuesString() string {
-	criticalPools := []string{}
-	for name := range lab.DeviceUnderTest_DUTPool_value {
-		criticalPools = append(criticalPools, name)
-	}
-	return fmt.Sprintf("[%s]", strings.Join(criticalPools, ", "))
 }
