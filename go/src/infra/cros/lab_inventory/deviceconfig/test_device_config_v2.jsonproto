@@ -35,42 +35,6 @@
       ],
       "components": [
         {
-          "displayPanel": {
-            "productId": "1A1A",
-            "properties": {
-              "diagonalMilliinch": 15000,
-              "heightPx": 1080,
-              "pixelsPerIn": 280,
-              "widthPx": 1920
-            }
-          },
-          "id": {
-            "value": "AUO_1A1A"
-          },
-          "manufacturerId": {
-            "value": "AUO"
-          },
-          "name": "1A1A"
-        },
-        {
-          "displayPanel": {
-            "productId": "2B2B",
-            "properties": {
-              "diagonalMilliinch": 15000,
-              "heightPx": 1080,
-              "pixelsPerIn": 120,
-              "widthPx": 1920
-            }
-          },
-          "id": {
-            "value": "BOE_2B2B"
-          },
-          "manufacturerId": {
-            "value": "BOE"
-          },
-          "name": "2B2B"
-        },
-        {
           "id": {
             "value": "elants_01FF_1234"
           },
@@ -95,6 +59,19 @@
           }
         },
         {
+          "bluetooth": {
+            "usb": {
+              "bcdDevice": "1",
+              "productId": "1",
+              "vendorId": "1"
+            }
+          },
+          "id": {
+            "value": "bluetooth_fake"
+          },
+          "name": "bluetooth_fake"
+        },
+        {
           "id": {
             "value": "elan_99.0_9.0"
           },
@@ -117,18 +94,6 @@
             "fwVersion": "1.1",
             "productId": "ABC1"
           }
-        },
-        {
-          "id": {
-            "value": "0f22:0a11:11"
-          },
-          "wifi": {
-            "pci": {
-              "deviceId": "0a11",
-              "revisionId": "11",
-              "vendorId": "0f22"
-            }
-          }
         }
       ],
       "designList": [
@@ -136,16 +101,6 @@
           "configs": [
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
-                },
-                "barreljack": {
-                  "present": 1
-                },
                 "bluetooth": {
                   "component": {
                     "usb": {
@@ -163,38 +118,10 @@
                 "formFactor": {
                   "formFactor": 1
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 801
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 1
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -210,67 +137,9 @@
                 },
                 "stylus": {
                   "stylus": 2
-                },
-                "usbA": {
-                  "count": {}
-                },
-                "usbC": {
-                  "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
-                "barreljack": {
-                  "description": {
-                    "EN": "Default barreljack"
-                  },
-                  "hardwareFeature": {
-                    "barreljack": {
-                      "present": 1
-                    }
-                  },
-                  "id": "BARRELJACK",
-                  "type": 19
-                },
                 "bluetooth": {
                   "description": {
                     "EN": "Default bluetooth"
@@ -288,45 +157,6 @@
                   },
                   "id": "BLUETOOTH",
                   "type": 18
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240,
-                      "value": 32
-                    }
-                  },
-                  "id": "DEFAULT CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15,
-                      "value": 1
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Default DB",
-                  "type": 11
                 },
                 "fingerprint": {
                   "description": {
@@ -367,83 +197,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "lteBoard": {
-                  "description": {
-                    "EN": "Default lte_board"
-                  },
-                  "hardwareFeature": {
-                    "lte": {
-                      "present": 1
-                    }
-                  },
-                  "id": "LTE_BOARD",
-                  "type": 15
-                },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Touchscreen"
@@ -462,14 +215,6 @@
                   "id": "TOUCHSCREEN",
                   "type": 1
                 },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
                 "stylus": {
                   "description": {
                     "EN": "Default stylus"
@@ -481,36 +226,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -519,12 +234,9 @@
             },
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
+                "embeddedController": {
+                  "ecType": "EC_CHROME",
+                  "present": "PRESENT"
                 },
                 "camera": {},
                 "fingerprint": {
@@ -533,38 +245,10 @@
                 "formFactor": {
                   "formFactor": 1
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 768
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 1
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -580,92 +264,9 @@
                 },
                 "stylus": {
                   "stylus": 2
-                },
-                "usbA": {
-                  "count": {}
-                },
-                "usbC": {
-                  "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Non-default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240
-                    }
-                  },
-                  "id": "Non-default CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Non-default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Non-default DB",
-                  "type": 11
-                },
                 "fingerprint": {
                   "description": {
                     "EN": "No finger print sensor"
@@ -704,83 +305,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "lteBoard": {
-                  "description": {
-                    "EN": "Default lte_board"
-                  },
-                  "hardwareFeature": {
-                    "lte": {
-                      "present": 1
-                    }
-                  },
-                  "id": "LTE_BOARD",
-                  "type": 15
-                },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Touchscreen"
@@ -799,14 +323,6 @@
                   "id": "TOUCHSCREEN",
                   "type": 1
                 },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
                 "stylus": {
                   "description": {
                     "EN": "Default stylus"
@@ -818,36 +334,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -870,13 +356,6 @@
           "configs": [
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
-                },
                 "bluetooth": {
                   "component": {
                     "usb": {
@@ -894,38 +373,10 @@
                 "formFactor": {
                   "formFactor": 2
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 801
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 1
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -941,55 +392,9 @@
                 },
                 "stylus": {
                   "stylus": 2
-                },
-                "usbA": {
-                  "count": {}
-                },
-                "usbC": {
-                  "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
                 "bluetooth": {
                   "description": {
                     "EN": "Default bluetooth"
@@ -1007,45 +412,6 @@
                   },
                   "id": "BLUETOOTH",
                   "type": 18
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240,
-                      "value": 32
-                    }
-                  },
-                  "id": "DEFAULT CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15,
-                      "value": 1
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Default DB",
-                  "type": 11
                 },
                 "fingerprint": {
                   "description": {
@@ -1086,83 +452,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "lteBoard": {
-                  "description": {
-                    "EN": "Default lte_board"
-                  },
-                  "hardwareFeature": {
-                    "lte": {
-                      "present": 1
-                    }
-                  },
-                  "id": "LTE_BOARD",
-                  "type": 15
-                },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Touchscreen"
@@ -1181,14 +470,6 @@
                   "id": "TOUCHSCREEN",
                   "type": 1
                 },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
                 "stylus": {
                   "description": {
                     "EN": "Default stylus"
@@ -1200,36 +481,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -1252,13 +503,6 @@
           "configs": [
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
-                },
                 "bluetooth": {
                   "component": {
                     "usb": {
@@ -1275,38 +519,10 @@
                 "formFactor": {
                   "formFactor": 2
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 801
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 2
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -1322,55 +538,9 @@
                 },
                 "stylus": {
                   "stylus": 2
-                },
-                "usbA": {
-                  "count": {}
-                },
-                "usbC": {
-                  "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
                 "bluetooth": {
                   "description": {
                     "EN": "Default bluetooth"
@@ -1388,45 +558,6 @@
                   },
                   "id": "BLUETOOTH",
                   "type": 18
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240,
-                      "value": 32
-                    }
-                  },
-                  "id": "DEFAULT CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15,
-                      "value": 1
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Default DB",
-                  "type": 11
                 },
                 "fingerprint": {
                   "description": {
@@ -1466,71 +597,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Touchscreen"
@@ -1549,14 +615,6 @@
                   "id": "TOUCHSCREEN",
                   "type": 1
                 },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
                 "stylus": {
                   "description": {
                     "EN": "Default stylus"
@@ -1568,36 +626,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -1620,13 +648,6 @@
           "configs": [
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
-                },
                 "bluetooth": {
                   "component": {
                     "usb": {
@@ -1643,38 +664,10 @@
                 "formFactor": {
                   "formFactor": 1
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 801
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 2
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -1696,49 +689,9 @@
                 },
                 "usbC": {
                   "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
                 "bluetooth": {
                   "description": {
                     "EN": "Default bluetooth"
@@ -1756,45 +709,6 @@
                   },
                   "id": "BLUETOOTH",
                   "type": 18
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240,
-                      "value": 32
-                    }
-                  },
-                  "id": "DEFAULT CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15,
-                      "value": 1
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Default DB",
-                  "type": 11
                 },
                 "fingerprint": {
                   "description": {
@@ -1834,71 +748,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Touchscreen"
@@ -1917,14 +766,6 @@
                   "id": "TOUCHSCREEN",
                   "type": 1
                 },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
                 "stylus": {
                   "description": {
                     "EN": "Default stylus"
@@ -1936,36 +777,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -1988,13 +799,6 @@
           "configs": [
             {
               "hardwareFeatures": {
-                "accelerometer": {
-                  "baseAccelerometer": 1
-                },
-                "audio": {
-                  "headphoneCodec": 2,
-                  "speakerAmp": 5
-                },
                 "camera": {},
                 "fingerprint": {
                   "location": 5
@@ -2002,38 +806,10 @@
                 "formFactor": {
                   "formFactor": 1
                 },
-                "fwConfig": {
-                  "mask": 4095,
-                  "value": 801
-                },
-                "gyroscope": {
-                  "baseGyroscope": 1
-                },
-                "hdmi": {
-                  "present": 2
-                },
                 "keyboard": {
                   "backlight": 1,
                   "keyboardType": 3,
                   "powerButton": 2
-                },
-                "lte": {
-                  "present": 2
-                },
-                "magnetometer": {
-                  "baseMagnetometer": 1
-                },
-                "memory": {
-                  "profile": {
-                    "sizeMegabytes": 16384,
-                    "speedMhz": 3600,
-                    "type": 3
-                  }
-                },
-                "powerButton": {
-                  "edge": 1,
-                  "position": 0.8999999761581421,
-                  "region": 1
                 },
                 "screen": {
                   "panelProperties": {
@@ -2046,94 +822,9 @@
                 },
                 "storage": {
                   "storageType": 1
-                },
-                "usbA": {
-                  "count": {}
-                },
-                "usbC": {
-                  "count": {}
-                },
-                "volumeButton": {
-                  "edge": 2,
-                  "position": 0.75,
-                  "region": 1
                 }
               },
               "hardwareTopology": {
-                "accelerometerGyroscopeMagnetometer": {
-                  "description": {
-                    "EN": "Default sensor"
-                  },
-                  "hardwareFeature": {
-                    "accelerometer": {
-                      "baseAccelerometer": 1
-                    },
-                    "fwConfig": {
-                      "mask": 3840,
-                      "value": 768
-                    },
-                    "gyroscope": {
-                      "baseGyroscope": 1
-                    },
-                    "magnetometer": {
-                      "baseMagnetometer": 1
-                    }
-                  },
-                  "id": "SENSOR",
-                  "type": 8
-                },
-                "audio": {
-                  "description": {
-                    "EN": "Default audio"
-                  },
-                  "hardwareFeature": {
-                    "audio": {
-                      "headphoneCodec": 2,
-                      "speakerAmp": 5
-                    }
-                  },
-                  "id": "AUDIO",
-                  "type": 3
-                },
-                "camera": {
-                  "description": {
-                    "EN": "Default camera"
-                  },
-                  "hardwareFeature": {
-                    "camera": {},
-                    "fwConfig": {
-                      "mask": 240,
-                      "value": 32
-                    }
-                  },
-                  "id": "DEFAULT CAMERA",
-                  "type": 7
-                },
-                "daughterBoard": {
-                  "description": {
-                    "EN": "Default daughter_board"
-                  },
-                  "hardwareFeature": {
-                    "fwConfig": {
-                      "mask": 15,
-                      "value": 1
-                    },
-                    "hdmi": {
-                      "present": 2
-                    },
-                    "lte": {
-                      "present": 2
-                    },
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "Default DB",
-                  "type": 11
-                },
                 "fingerprint": {
                   "description": {
                     "EN": "No finger print sensor"
@@ -2172,71 +863,6 @@
                   "id": "KB_BL",
                   "type": 5
                 },
-                "motherboardUsb": {
-                  "description": {
-                    "EN": "Default motherboard_usb"
-                  },
-                  "hardwareFeature": {
-                    "usbA": {
-                      "count": {}
-                    },
-                    "usbC": {
-                      "count": {}
-                    }
-                  },
-                  "id": "MOTHERBOARD_USB",
-                  "type": 17
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "Default non_volatile_storage"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": 1
-                    }
-                  },
-                  "id": "NON_VOLATILE_STORAGE",
-                  "type": 12
-                },
-                "powerButton": {
-                  "description": {
-                    "EN": "Power button on the left edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "powerButton": {
-                      "edge": 1,
-                      "position": 0.8999999761581421,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_LEFT_POWER_BUTTON",
-                  "type": 20
-                },
-                "proximitySensor": {
-                  "description": {
-                    "EN": "Default proximity_sensor"
-                  },
-                  "hardwareFeature": {},
-                  "id": "PROXIMITY_SENSOR",
-                  "type": 10
-                },
-                "ram": {
-                  "description": {
-                    "EN": "Default ram"
-                  },
-                  "hardwareFeature": {
-                    "memory": {
-                      "profile": {
-                        "sizeMegabytes": 16384,
-                        "speedMhz": 3600,
-                        "type": 3
-                      }
-                    }
-                  },
-                  "id": "RAM",
-                  "type": 13
-                },
                 "screen": {
                   "description": {
                     "EN": "Default screen"
@@ -2254,44 +880,6 @@
                   },
                   "id": "SCREEN",
                   "type": 1
-                },
-                "sdReader": {
-                  "description": {
-                    "EN": "Default sd_reader"
-                  },
-                  "hardwareFeature": {},
-                  "id": "SD_READER",
-                  "type": 16
-                },
-                "thermal": {
-                  "description": {
-                    "EN": "Default thermal"
-                  },
-                  "hardwareFeature": {},
-                  "id": "THERMAL",
-                  "type": 6
-                },
-                "volumeButton": {
-                  "description": {
-                    "EN": "Volume button on the right edge of the screen"
-                  },
-                  "hardwareFeature": {
-                    "volumeButton": {
-                      "edge": 2,
-                      "position": 0.75,
-                      "region": 1
-                    }
-                  },
-                  "id": "SCREEN_RIGHT_VOLUME_BUTTON",
-                  "type": 20
-                },
-                "wifi": {
-                  "description": {
-                    "EN": "Default wifi"
-                  },
-                  "hardwareFeature": {},
-                  "id": "WIFI",
-                  "type": 14
                 }
               },
               "id": {
@@ -2454,24 +1042,6 @@
           "name": "FAKE-LOEMC"
         },
         {
-          "displayPanelVendor": {
-            "vendorCode": "AUO"
-          },
-          "id": {
-            "value": "AUO"
-          },
-          "name": "AUO"
-        },
-        {
-          "displayPanelVendor": {
-            "vendorCode": "BOE"
-          },
-          "id": {
-            "value": "BOE"
-          },
-          "name": "BOE"
-        },
-        {
           "id": {
             "value": "elants"
           },
@@ -2518,65 +1088,8 @@
       ],
       "softwareConfigs": [
         {
-          "audioConfigs": [
-            {
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-            }
-          ],
-          "bluetoothConfig": {
-            "flags": {
-              "enable-suspend-management": true
-            }
-          },
           "designConfigId": {
             "value": "FAKE-REF-DESIGN:2147483647"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "firmwareSku": 2147483647,
@@ -2590,61 +1103,8 @@
           }
         },
         {
-          "audioConfigs": [
-            {
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-              "ucmSuffix": "2mic"
-            }
-          ],
           "designConfigId": {
             "value": "FAKE-REF-DESIGN:0"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "smbiosNameMatch": "FAKE-REF-DESIGN"
@@ -2657,68 +1117,8 @@
           }
         },
         {
-          "audioConfigs": [
-            {
-              "boardFile": "audio/cras-config/board.ini",
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "moduleFile": "audio/alsa-module-config/alsa-project-a.conf",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-              "ucmSuffix": "2mic"
-            }
-          ],
-          "bluetoothConfig": {
-            "flags": {
-              "enable-suspend-management": true
-            }
-          },
           "designConfigId": {
             "value": "PROJECT-A:32"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "firmwareSku": 32,
@@ -2732,66 +1132,8 @@
           }
         },
         {
-          "audioConfigs": [
-            {
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-              "ucmSuffix": "2mic"
-            }
-          ],
-          "bluetoothConfig": {
-            "flags": {
-              "enable-suspend-management": true
-            }
-          },
           "designConfigId": {
             "value": "PROJECT-B:33"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "firmwareSku": 33,
@@ -2805,65 +1147,8 @@
           }
         },
         {
-          "audioConfigs": [
-            {
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-            }
-          ],
-          "bluetoothConfig": {
-            "flags": {
-              "enable-suspend-management": true
-            }
-          },
           "designConfigId": {
             "value": "PROJECT-C:34"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "firmwareSku": 34,
@@ -2877,65 +1162,8 @@
           }
         },
         {
-          "audioConfigs": [
-            {
-              "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-              "cardName": "fakeaudiocard",
-              "dspFile": "audio/fakeaudiocard/dsp.ini",
-              "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-              "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-            },
-            {
-              "cardName": "HDA ATI HDMI",
-              "ucmFile": "ucm-config/HDA ATI HDMI/HiFi.conf",
-              "ucmMasterFile": "ucm-config/HDA ATI HDMI/HDA ATI HDMI.conf"
-            }
-          ],
           "designConfigId": {
             "value": "PROJECT-WL:64"
-          },
-          "firmware": {
-            "ecRoPayload": {
-              "firmwareImageName": "Fake_EC",
-              "type": 2,
-              "version": {
-                "major": 11111,
-                "minor": 2
-              }
-            },
-            "mainRoPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "mainRwPayload": {
-              "firmwareImageName": "Fake",
-              "type": 1,
-              "version": {
-                "major": 11111
-              }
-            },
-            "pdRoPayload": {
-              "firmwareImageName": "Fake_PD",
-              "type": 3,
-              "version": {
-                "major": 11111
-              }
-            }
-          },
-          "firmwareBuildConfig": {
-            "buildTargets": {
-              "coreboot": "fake",
-              "depthcharge": "fake",
-              "ec": "fake",
-              "ecExtras": [
-                "fake-ec-extra1",
-                "fake-ec-extra2"
-              ],
-              "libpayload": "fake"
-            }
           },
           "idScanConfig": {
             "firmwareSku": 64,

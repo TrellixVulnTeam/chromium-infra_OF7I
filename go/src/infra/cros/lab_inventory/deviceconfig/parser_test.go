@@ -41,12 +41,11 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_STYLUS,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
-						device.Config_HARDWARE_FEATURE_FINGERPRINT,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
+						device.Config_HARDWARE_FEATURE_FINGERPRINT,
 					})
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
@@ -56,8 +55,8 @@ func TestParseConfigBundle(t *testing.T) {
 				case "FAKE-REF-DESIGN:2":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
+						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_STYLUS,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
@@ -66,17 +65,17 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
+					So(dc.GetEc(), ShouldEqual, device.Config_EC_CHROME)
 				case "PROJECT-A:32":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CONVERTIBLE)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_STYLUS,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
-						device.Config_HARDWARE_FEATURE_FINGERPRINT,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
+						device.Config_HARDWARE_FEATURE_FINGERPRINT,
 					})
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
@@ -86,7 +85,6 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_STYLUS,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
@@ -100,7 +98,6 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_STYLUS,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
@@ -112,9 +109,10 @@ func TestParseConfigBundle(t *testing.T) {
 				case "PROJECT-WL:64":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
+						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
-						device.Config_HARDWARE_FEATURE_WEBCAM,
 						device.Config_HARDWARE_FEATURE_TOUCHPAD,
+						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
 					})
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -105,15 +106,21 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 					PlatformId: &device.PlatformId{Value: board},
 					ModelId:    &device.ModelId{Value: model},
 				},
-				FormFactor: parseFormFactor(c.GetHardwareFeatures().GetFormFactor().GetFormFactor()),
-				// TODO: GpuFamily, gpu_family in Component.Soc hasn't been set
-				// Graphics: removed from boxster for now
+				FormFactor:       parseFormFactor(c.GetHardwareFeatures().GetFormFactor().GetFormFactor()),
 				HardwareFeatures: parseHardwareFeatures(configBundle.GetComponents(), c.GetHardwareFeatures()),
-				// TODO: Power, a new power topology hasn't been set
+				// Note: no STORAGE_SSD, STORAGE_HDD, STORAGE_UFS storage
+				// label-storage is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/B8spRMj22aUWkbb
 				Storage: parseStorage(c.GetHardwareFeatures()),
-				// TODO: VideoAccelerationSupports, a new video acceleration topology hasn't been set
-				Soc: parseSoc(configBundle.GetComponents()),
-				Cpu: parseArchitecture(configBundle.GetComponents()),
+				Soc:     parseSoc(configBundle.GetComponents()),
+				Cpu:     parseArchitecture(configBundle.GetComponents()),
+				Ec:      parseEcType(c.GetHardwareFeatures()),
+
+				// TODO(xixuan): GpuFamily, gpu_family in Component.Soc hasn't been set
+				// TODO(xixuan): Power, a new power topology hasn't been set
+				// label-power is used in swarming now: https://screenshot.googleplex.com/8EAUwGeoVeBtez7
+				// Graphics: removed from boxster for now
+				// TODO(xixuan): VideoAccelerationSupports, a new video acceleration topology hasn't been set
+				// label-video_acceleration is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/86h2scqNsStwoiW
 			}
 		}
 	}
@@ -166,55 +173,63 @@ func parseSoc(components []*api.Component) device.Config_SOC {
 }
 
 func parseHardwareFeatures(components []*api.Component, hf *api.HardwareFeatures) []device.Config_HardwareFeature {
-	res := make([]device.Config_HardwareFeature, 0)
-	if hf.GetBluetooth() != nil {
-		res = append(res, device.Config_HARDWARE_FEATURE_BLUETOOTH)
+	resMap := make(map[device.Config_HardwareFeature]bool)
+	// Use bluetooth/camera/touchpad/touchscreen component to check
+	for _, c := range components {
+		if c.GetBluetooth() != nil {
+			resMap[device.Config_HARDWARE_FEATURE_BLUETOOTH] = true
+		}
+		// How to determine it's webcam or not?
+		if c.GetCamera() != nil {
+			resMap[device.Config_HARDWARE_FEATURE_WEBCAM] = true
+		}
+		if c.GetTouchpad() != nil {
+			resMap[device.Config_HARDWARE_FEATURE_TOUCHPAD] = true
+		}
+		if c.GetTouchscreen() != nil {
+			resMap[device.Config_HARDWARE_FEATURE_TOUCHSCREEN] = true
+		}
 	}
-	// TODO: HARDWARE_FEATURE_FLASHROM, not used
-	// TODO: HARDWARE_FEATURE_HOTWORDING, field in topology.Audio hasn't been set
-	// HARDWARE_FEATURE_INTERNAL_DISPLAY: Only chromeboxes have this unset
+
+	// HARDWARE_FEATURE_INTERNAL_DISPLAY: Only chromeboxes have this UNSET
 	ff := hf.GetFormFactor().GetFormFactor()
 	if ff != api.HardwareFeatures_FormFactor_CHROMEBOX && ff != api.HardwareFeatures_FormFactor_FORM_FACTOR_UNKNOWN {
-		res = append(res, device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY)
+		resMap[device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY] = true
 	}
-	// TODO: HARDWARE_FEATURE_LUCID_SLEEP, which key in powerConfig?
-	// HARDWARE_FEATURE_WEBCAM: hw_topo.create_camera
-	if hf.GetCamera() != nil {
-		res = append(res, device.Config_HARDWARE_FEATURE_WEBCAM)
-	}
+
+	// HARDWARE_FEATURE_STYLUS: Ensure stylus is not an empty object, e.g. "stylus": {}
 	if hf.GetStylus() != nil {
-		res = append(res, device.Config_HARDWARE_FEATURE_STYLUS)
-	}
-	// HARDWARE_FEATURE_TOUCHPAD: a component
-	for _, c := range components {
-		if c.GetTouchpad() != nil {
-			res = append(res, device.Config_HARDWARE_FEATURE_TOUCHPAD)
-			// May have multiple touchpads, skip the following checks if touchpad is already set.
-			break
+		switch hf.GetStylus().GetStylus() {
+		case api.HardwareFeatures_Stylus_STYLUS_UNKNOWN, api.HardwareFeatures_Stylus_NONE:
+		default:
+			resMap[device.Config_HARDWARE_FEATURE_STYLUS] = true
 		}
 	}
-	// HARDWARE_FEATURE_TOUCHSCREEN: hw_topo.create_screen(touch=True)
-	if screen := hf.GetScreen(); screen != nil {
-		if screen.GetTouchSupport() == api.HardwareFeatures_PRESENT {
-			res = append(res, device.Config_HARDWARE_FEATURE_TOUCHSCREEN)
-		}
-	}
+	// HARDWARE_FEATURE_FINGERPRINT: needs to be present
 	if fp := hf.GetFingerprint(); fp != nil {
 		if fp.GetLocation() != api.HardwareFeatures_Fingerprint_NOT_PRESENT {
-			res = append(res, device.Config_HARDWARE_FEATURE_FINGERPRINT)
+			resMap[device.Config_HARDWARE_FEATURE_FINGERPRINT] = true
 		}
 	}
+	// HARDWARE_FEATURE_DETACHABLE_KEYBOARD
 	if hf.GetKeyboard() != nil && hf.GetKeyboard().GetKeyboardType() == api.HardwareFeatures_Keyboard_DETACHABLE {
-		res = append(res, device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD)
+		resMap[device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD] = true
 	}
+
+	// TODO: HARDWARE_FEATURE_FLASHROM, not used
+	// TODO: HARDWARE_FEATURE_HOTWORDING, field in topology.Audio hasn't been set
+	// TODO: HARDWARE_FEATURE_LUCID_SLEEP, which key in powerConfig?
+
+	// Deduplicate & sort
+	res := make([]device.Config_HardwareFeature, 0)
+	for k := range resMap {
+		res = append(res, k)
+	}
+	sort.Slice(res, func(i, j int) bool { return int32(res[i]) < int32(res[j]) })
 	return res
 }
 
 func parseStorage(hf *api.HardwareFeatures) device.Config_Storage {
-	// TODO: How about other storage type?
-	// STORAGE_SSD
-	// STORAGE_HDD
-	// STORAGE_UFS
 	switch hf.GetStorage().GetStorageType() {
 	case api.Component_Storage_NVME:
 		return device.Config_STORAGE_NVME
@@ -243,4 +258,14 @@ func parseArchitecture(components []*api.Component) device.Config_Architecture {
 		}
 	}
 	return device.Config_ARCHITECTURE_UNDEFINED
+}
+
+func parseEcType(hf *api.HardwareFeatures) device.Config_EC {
+	switch hf.GetEmbeddedController().GetEcType() {
+	case api.HardwareFeatures_EmbeddedController_EC_CHROME:
+		return device.Config_EC_CHROME
+	case api.HardwareFeatures_EmbeddedController_EC_WILCO:
+		return device.Config_EC_WILCO
+	}
+	return device.Config_EC_UNSPECIFIED
 }

@@ -46,12 +46,10 @@ func compareBoxsterWithV0(ctx context.Context, boxsterCfgs, v0Cfgs []*device.Con
 
 	count := 0
 	var diff []string
-	logs := []string{"\n\n######## device config ID only exists in boxster ############"}
+	var logs []string
 	for _, c := range boxsterCfgs {
 		idStr := GetDeviceConfigIDStr(c.GetId())
-		if found, ok := v0CfgMap[idStr]; !ok {
-			logs = append(logs, idStr)
-		} else {
+		if found, ok := v0CfgMap[idStr]; ok {
 			// device.Config is not in type protoreflect.ProtoMessage as it's not generated via cproto.
 			// Convert device.Config to inv.Config
 			newFound := copyDeviceConfig(found)
@@ -75,6 +73,17 @@ func compareBoxsterWithV0(ctx context.Context, boxsterCfgs, v0Cfgs []*device.Con
 		}
 	}
 
+	logs = append(logs, fmt.Sprintf("######## %d different device configs ############", count))
+	logs = append(logs, diff...)
+
+	logs = append(logs, "\n\n######## device config ID only exists in boxster ############")
+	for _, c := range boxsterCfgs {
+		idStr := GetDeviceConfigIDStr(c.GetId())
+		if _, ok := v0CfgMap[idStr]; !ok {
+			logs = append(logs, idStr)
+		}
+	}
+
 	logs = append(logs, "\n\n######## device config ID only exists in device config V0 ############")
 	for _, c := range v0Cfgs {
 		idStr := GetDeviceConfigIDStr(c.GetId())
@@ -82,9 +91,6 @@ func compareBoxsterWithV0(ctx context.Context, boxsterCfgs, v0Cfgs []*device.Con
 			logs = append(logs, idStr)
 		}
 	}
-
-	logs = append(logs, fmt.Sprintf("\n\n######## %d different device configs ############", count))
-	logs = append(logs, diff...)
 
 	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
 		return err
