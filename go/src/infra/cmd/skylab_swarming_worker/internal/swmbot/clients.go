@@ -10,10 +10,12 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/lucictx"
+	"google.golang.org/grpc/metadata"
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 
 	"infra/cmd/skylab_swarming_worker/internal/admin"
 )
@@ -87,4 +89,10 @@ func UFSClient(ctx context.Context, b *Info) (ufsAPI.FleetClient, error) {
 	}
 	c := ufsAPI.NewFleetPRPCClient(pc)
 	return c, nil
+}
+
+// SetupContext set up the outgoing context for API calls.
+func SetupContext(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, namespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }

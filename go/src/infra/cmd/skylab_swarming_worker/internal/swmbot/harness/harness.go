@@ -18,6 +18,10 @@ import (
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/libs/skylab/inventory"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 
 	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
@@ -275,6 +279,98 @@ func getLabMetaFromLabel(dutID string, l *inventory.SchedulableLabels) (labconfi
 	return &labMeta
 }
 
+// TODO (xixuan): will remove the above duplicated functions when UFS feature for OS lab is launched.
+func getUFSDutMetaFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) *ufspb.DutMeta {
+	attr := specs.GetAttributes()
+	dutMeta := &ufspb.DutMeta{
+		ChromeosDeviceId: dutID,
+		Hostname:         specs.GetHostname(),
+	}
+	for _, kv := range attr {
+		if kv.GetKey() == "serial_number" {
+			dutMeta.SerialNumber = kv.GetValue()
+		}
+		if kv.GetKey() == "HWID" {
+			dutMeta.HwID = kv.GetValue()
+		}
+	}
+	dutMeta.DeviceSku = specs.GetLabels().GetSku()
+	return dutMeta
+}
+
+func getUFSLabMetaFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) (labconfig *ufspb.LabMeta) {
+	labMeta := &ufspb.LabMeta{
+		ChromeosDeviceId: dutID,
+		Hostname:         specs.GetHostname(),
+	}
+	p := specs.GetLabels().GetPeripherals()
+	if p != nil {
+		labMeta.ServoType = p.GetServoType()
+		labMeta.SmartUsbhub = p.GetSmartUsbhub()
+		labMeta.ServoTopology = copyServoTopology(convertServoTopology(p.GetServoTopology()))
+	}
+
+	return labMeta
+}
+
+func getUFSDutComponentStateFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) *chromeosLab.DutState {
+	state := &chromeosLab.DutState{
+		Id:       &chromeosLab.ChromeOSDeviceID{Value: dutID},
+		Hostname: specs.GetHostname(),
+	}
+	l := specs.GetLabels()
+	p := l.GetPeripherals()
+	if p != nil {
+		// TODO(xixuan): line 325-333 is only used for backfilling servo state.
+		if p.GetServoState() == inventory.PeripheralState_UNKNOWN {
+			if p.GetServo() {
+				state.Servo = chromeosLab.PeripheralState_WORKING
+			} else {
+				state.Servo = chromeosLab.PeripheralState_NOT_CONNECTED
+			}
+		} else {
+			state.Servo = chromeosLab.PeripheralState(p.GetServoState())
+		}
+		if p.GetChameleon() {
+			state.Chameleon = chromeosLab.PeripheralState_WORKING
+		}
+		if p.GetAudioLoopbackDongle() {
+			state.AudioLoopbackDongle = chromeosLab.PeripheralState_WORKING
+		}
+		state.WorkingBluetoothBtpeer = p.GetWorkingBluetoothBtpeer()
+		switch l.GetCr50Phase() {
+		case inventory.SchedulableLabels_CR50_PHASE_PVT:
+			state.Cr50Phase = chromeosLab.DutState_CR50_PHASE_PVT
+		case inventory.SchedulableLabels_CR50_PHASE_PREPVT:
+			state.Cr50Phase = chromeosLab.DutState_CR50_PHASE_PREPVT
+		}
+		switch l.GetCr50RoKeyid() {
+		case "prod":
+			state.Cr50KeyEnv = chromeosLab.DutState_CR50_KEYENV_PROD
+		case "dev":
+			state.Cr50KeyEnv = chromeosLab.DutState_CR50_KEYENV_DEV
+		}
+
+		state.StorageState = chromeosLab.HardwareState(int32(p.GetStorageState()))
+		state.ServoUsbState = chromeosLab.HardwareState(int32(p.GetServoUsbState()))
+	}
+	return state
+}
+
+func copyServoTopology(topology *lab.ServoTopology) *chromeosLab.ServoTopology {
+	if topology == nil {
+		return nil
+	}
+	s := proto.MarshalTextString(topology)
+	var newTopology chromeosLab.ServoTopology
+	err := proto.UnmarshalText(s, &newTopology)
+	if err != nil {
+		log.Printf("cannot unmarshal servo topology: %s", err.Error())
+		return nil
+	}
+	return &newTopology
+}
+
 func newServoTopologyItem(i *inventory.ServoTopologyItem) *lab.ServoTopologyItem {
 	if i == nil {
 		return nil
@@ -303,6 +399,30 @@ func convertServoTopology(st *inventory.ServoTopology) *lab.ServoTopology {
 }
 
 func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
+	// Duplicating updating dut state to UFS for testing without reporting failures
+	if u.botInfo.UFSService == "" {
+		log.Printf("Skipping label update since no UFS service was provided")
+	} else {
+		ufsDutMeta := getUFSDutMetaFromSpecs(dutID, new.GetCommon())
+		ufsLabMeta := getUFSLabMetaFromSpecs(dutID, new.GetCommon())
+		ufsDutComponentState := getUFSDutComponentStateFromSpecs(dutID, new.GetCommon())
+		ufsClient, err := swmbot.UFSClient(ctx, u.botInfo)
+		if err != nil {
+			log.Printf("fail to create ufs client: %s", err.Error())
+		}
+		osCtx := swmbot.SetupContext(ctx, ufsUtil.OSNamespace)
+		ufsResp, err := ufsClient.UpdateDutState(osCtx, &ufsAPI.UpdateDutStateRequest{
+			DutState: ufsDutComponentState,
+			DutMeta:  ufsDutMeta,
+			LabMeta:  ufsLabMeta,
+		})
+		log.Printf("resp for UFS update: %#v", ufsResp)
+		if err != nil {
+			log.Printf("fail to update UFS meta & component states: %s", err.Error())
+		}
+	}
+
+	// Updating dut state to inventory V2 (Real update)
 	if u.botInfo.InventoryService == "" {
 		log.Printf("Skipping label update since no inventory service was provided")
 		return nil
