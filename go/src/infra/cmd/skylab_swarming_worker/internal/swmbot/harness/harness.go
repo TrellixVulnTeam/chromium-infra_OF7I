@@ -321,16 +321,8 @@ func getUFSDutComponentStateFromSpecs(dutID string, specs *inventory.CommonDevic
 	l := specs.GetLabels()
 	p := l.GetPeripherals()
 	if p != nil {
-		// TODO(xixuan): line 325-333 is only used for backfilling servo state.
-		if p.GetServoState() == inventory.PeripheralState_UNKNOWN {
-			if p.GetServo() {
-				state.Servo = chromeosLab.PeripheralState_WORKING
-			} else {
-				state.Servo = chromeosLab.PeripheralState_NOT_CONNECTED
-			}
-		} else {
-			state.Servo = chromeosLab.PeripheralState(p.GetServoState())
-		}
+		state.Servo = chromeosLab.PeripheralState(p.GetServoState())
+		state.RpmState = chromeosLab.PeripheralState(p.GetRpmState())
 		if p.GetChameleon() {
 			state.Chameleon = chromeosLab.PeripheralState_WORKING
 		}
