@@ -1,0 +1,44 @@
+#!/bin/bash
+set -eu
+
+if [ $# -ne 1 ];  then
+    cat >&2 << EOT
+    Missing test_runner build ID to \`led\`.
+
+    This script creates \`led\` tasks from existing test_runner build that use
+    phosphorus and its support libraries (e.g. common-tls) with local
+    modifications from this checkout.
+
+    For details on \`led\`, see http://go/luci-how-to-led
+
+    Usage: $0 <test_runner-dev BUILD_ID>"
+EOT
+    exit 2
+fi
+
+readonly build_id=$1
+
+readonly script_dir="$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")"
+readonly src_dir="$(realpath -e ${script_dir}/../../../../)"
+cd "${src_dir}"
+`eval ../env.py`
+
+readonly tmp_dir="$(mktemp -d)"
+trap "rm -rf '${tmp_dir}'" EXIT
+
+readonly ref_name=${USER}-test
+
+go install infra/cros/cmd/phosphorus
+cipd create -pkg-def ../../build/packages/phosphorus.yaml -pkg-var exe_suffix: -json-output "${tmp_dir}/cipd-create.out"
+readonly pkg_version="$(jq -r ".result.instance_id" "${tmp_dir}/cipd-create.out")"
+cipd set-ref chromiumos/infra/phosphorus/linux-amd64 -ref=${ref_name} -version=${pkg_version}
+
+readonly build_json="${tmp_dir}/build.json"
+led get-build ${build_id} > "${build_json}"
+
+readonly future_time=$(date -u --rfc-3339=ns -d '+2 hour' | sed -e 's/ /T/' -e 's/\+00:00/Z/')
+jq --arg ft "${future_time}" '.buildbucket.bbagent_args.build.input.properties.request.deadline = $ft' "${build_json}" | sponge "${build_json}"
+jq ".buildbucket.bbagent_args.build.input.properties.\"\$chromeos/phosphorus\".version.cipd_label = \"${ref_name}\"" "${build_json}" | sponge "${build_json}"
+
+
+cat "${build_json}" | led launch
