@@ -43,6 +43,16 @@ Adds an asset by specifying several attributes directly
 shivas add asset -name {asset name} -lab {lab name} -aisle {aisle} -row {row number}-rack {rack name} -type {asset type} -position {asset position}
 Alternate location specification for finer details.`
 
+	// UpdateAssetLongDesc long description for UpdateAssetCmd
+	UpdateAssetLongDesc string = `Update an asset by name.
+
+Examples:
+shivas update asset -f asset.json
+Update a asset by reading a JSON file input.
+
+shivas update asset -name asset1 -zone mtv97 -rack rack1
+Partial updates a asset by parameters. Only specified parameters will be udpated in the asset.`
+
 	// AddDUTLongDesc long description for AddDUTCmd
 	AddDUTLongDesc string = `Add and deploy a DUT.
 Examples:
@@ -442,6 +452,45 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 Nic:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
+
+	// AssetFileText description for asset file input
+	AssetFileText string = `Path to a file containing asset specification in JSON format.
+This file must contain one asset JSON message
+
+Example OS asset:
+{
+	"name":  "test-1",
+	"type":  "DUT",
+	"model":  "atlas",
+	"location":  {
+		"aisle":  "1",
+		"row":  "2",
+		"rack":  "rack-23",
+		"rackNumber":  "23",
+		"shelf":  "3",
+		"position":  "5",
+		"barcodeName":  "bar",
+		"zone":  "ZONE_CHROMEOS6"
+	},
+	"info":  {
+		"assetTag":  "",
+		"serialNumber":  "fer3-rtgd",
+		"costCenter":  "cros",
+		"googleCodeName":  "kohaku",
+		"model":  "atlas",
+		"buildTarget":  "zuko",
+		"referenceBoard":  "atlas",
+		"ethernetMacAddress":  "11:22:33:44:55:66",
+		"sku":  "are",
+		"phase":  "EVT",
+		"hwid":  ""
+	},
+	"updateTime":  "2020-12-29T23:54:45.437251068Z",
+	"realm":  "@internal:ufs/os-atl"
+}
+
+The protobuf definition of asset is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
 
 	// MachineFileText description for machine file input
 	MachineFileText string = `Path to a file containing machine specification in JSON format.

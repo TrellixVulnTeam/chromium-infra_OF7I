@@ -226,6 +226,8 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - asset_tag cannot be updated, delete and create new asset")
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, cannot update update_time")
+			case "location":
+				fallthrough
 			case "location.zone":
 				if asset.GetLocation() == nil || asset.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
 					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid location")
@@ -240,6 +242,20 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				var errMsg strings.Builder
 				errMsg.WriteString("validateAssetUpdateMask - ")
 				return ResourceExist(ctx, []*Resource{GetRackResource(asset.GetLocation().GetRack())}, &errMsg)
+			case "location.aisle":
+				fallthrough
+			case "location.row":
+				fallthrough
+			case "location.rack_number":
+				fallthrough
+			case "location.shelf":
+				fallthrough
+			case "location.position":
+				fallthrough
+			case "location.barcode_name":
+				if asset.GetLocation() == nil {
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid location")
+				}
 			case "type":
 				if asset.GetType() == ufspb.AssetType_UNDEFINED {
 					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, no type given")
@@ -253,8 +269,6 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 			case "info.cost_center":
 				fallthrough
 			case "info.google_code_name":
-				fallthrough
-			case "info.model":
 				fallthrough
 			case "info.build_target":
 				fallthrough
@@ -306,6 +320,10 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 				oldAsset.Type = updatedAsset.Type
 			case "model":
 				oldAsset.Model = updatedAsset.Model
+				oldAsset.Info.Model = updatedAsset.Model
+			case "location":
+				oldAsset.Location = updatedAsset.Location
+				oldAsset.Realm = updatedAsset.Realm
 			case "location.aisle":
 				oldAsset.Location.Aisle = updatedAsset.Location.Aisle
 			case "location.row":
@@ -329,8 +347,6 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 				oldAsset.Info.CostCenter = updatedAsset.Info.CostCenter
 			case "info.google_code_name":
 				oldAsset.Info.GoogleCodeName = updatedAsset.Info.GoogleCodeName
-			case "info.model":
-				oldAsset.Info.Model = updatedAsset.Info.Model
 			case "info.build_target":
 				oldAsset.Info.BuildTarget = updatedAsset.Info.BuildTarget
 			case "info.reference_board":

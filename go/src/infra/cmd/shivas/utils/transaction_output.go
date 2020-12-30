@@ -14,6 +14,23 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+// PrintExistingAsset prints the old asset in update/delete operations.
+func PrintExistingAsset(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+	res, err := ic.GetAsset(ctx, &ufsAPI.GetAssetRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.AssetCollection, name),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get asset").Err()
+	}
+	if res == nil {
+		return errors.Reason("The returned resp is empty").Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The asset before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return nil
+}
+
 // PrintExistingMachine prints the old machine in update/delete operations.
 func PrintExistingMachine(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
 	res, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
