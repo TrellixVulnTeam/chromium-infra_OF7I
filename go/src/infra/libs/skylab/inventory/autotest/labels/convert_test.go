@@ -63,6 +63,7 @@ peripherals: {
 	}
   }
   servo_type: "servo_v3"
+  rpm_state: 1
   smart_usbhub: true
   storage_state: 1
   servo_usb_state: 3
@@ -194,6 +195,7 @@ var fullLabels = []string{
 	"recovery_test",
 	"reference_design:reef",
 	"router_802_11ax",
+	"rpm_state:WORKING",
 	"servo",
 	"servo_state:BROKEN",
 	"servo_topology:eyJtYWluIjp7InR5cGUiOiJzZXJ2b192NCIsInN5c2ZzX3Byb2R1Y3QiOiJTZXJ2byBWNCIsInNlcmlhbCI6IkMxOTAzMTQ1NTkxIiwidXNiX2h1Yl9wb3J0IjoiNi40LjEifSwiY2hpbGRyZW4iOlt7InR5cGUiOiJjY2RfY3I1MCIsInN5c2ZzX3Byb2R1Y3QiOiJDcjUwIiwic2VyaWFsIjoiMDY4MUQwM0EtOTJEQ0NENjQiLCJ1c2JfaHViX3BvcnQiOiI2LjQuMiJ9XX0=",

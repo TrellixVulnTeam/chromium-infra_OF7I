@@ -101,6 +101,13 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
+	if rpmState := p.GetRpmState(); rpmState != inventory.PeripheralState_UNKNOWN {
+		if labRpmState, ok := lab.PeripheralState_name[int32(rpmState)]; ok {
+			lv := "rpm_state:" + labRpmState
+			labels = append(labels, lv)
+		}
+	}
+
 	if servoUSBState := p.GetServoUsbState(); servoUSBState != inventory.HardwareState_HARDWARE_UNKNOWN {
 		if labState, ok := lab.HardwareState_name[int32(p.GetServoUsbState())]; ok {
 			name := labState[len("HARDWARE_"):]
@@ -202,6 +209,11 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			if labSStateVal, ok := lab.PeripheralState_value[strings.ToUpper(v)]; ok {
 				servoState := inventory.PeripheralState(labSStateVal)
 				p.ServoState = &servoState
+			}
+		case "rpm_state":
+			if labRpmState, ok := lab.PeripheralState_value[strings.ToUpper(v)]; ok {
+				rpmState := inventory.PeripheralState(labRpmState)
+				p.RpmState = &rpmState
 			}
 		case "storage_state":
 			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
