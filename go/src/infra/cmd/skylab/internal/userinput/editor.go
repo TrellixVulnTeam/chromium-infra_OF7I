@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 )
@@ -57,11 +58,14 @@ const defaultEditor = "nano"
 
 func editorCmd(filePath string) *exec.Cmd {
 	p := os.Getenv("EDITOR")
-	if p == "" {
-		p = defaultEditor
+	words := strings.Fields(p)
+	if len(words) == 0 {
+		words = []string{defaultEditor}
 	}
 
-	c := exec.Command(p, filePath)
+	words = append(words, filePath)
+
+	c := exec.Command(words[0], words[1:]...)
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
