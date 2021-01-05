@@ -19,7 +19,7 @@ import re
 import urllib
 
 from third_party import ezt
-from third_party import six
+import six
 
 from google.appengine.api import app_identity
 from google.appengine.api import oauth

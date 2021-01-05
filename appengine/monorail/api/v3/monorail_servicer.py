@@ -14,8 +14,6 @@ import time
 import sys
 
 from third_party.google.oauth2 import id_token
-# requests must be imported here to use google.auth.transport.requests
-from third_party import requests
 from third_party.google.auth.transport import requests as google_requests
 
 from google.appengine.api import oauth

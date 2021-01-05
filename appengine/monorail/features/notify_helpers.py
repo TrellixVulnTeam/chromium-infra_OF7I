@@ -8,13 +8,11 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import cgi
 import json
 import logging
-import re
 
 from third_party import ezt
-from third_party import six
+import six
 
 from features import autolink
 from features import autolink_constants

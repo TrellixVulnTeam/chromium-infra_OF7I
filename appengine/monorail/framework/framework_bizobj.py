@@ -16,9 +16,8 @@ from __future__ import absolute_import
 import functools
 import itertools
 import re
-import string
 
-from third_party import six
+import six
 
 import settings
 from framework import exceptions

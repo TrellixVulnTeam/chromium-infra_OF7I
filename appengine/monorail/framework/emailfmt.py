@@ -18,7 +18,7 @@ import logging
 import re
 import rfc822
 
-from third_party import six
+import six
 
 from google.appengine.api import app_identity
 
@@ -326,20 +326,20 @@ def IdentifyIssue(project_name, subject):
 
 
 def IdentifyProjectVerbAndLabel(project_addr):
-    # Ignore any inbound email sent to a "no_reply@" address.
-    if project_addr.startswith('no_reply@'):
-      return None, None, None
+  # Ignore any inbound email sent to a "no_reply@" address.
+  if project_addr.startswith('no_reply@'):
+    return None, None, None
 
-    project_name = None
-    verb = None
-    label = None
-    m = PROJECT_EMAIL_RE.match(project_addr.lower())
-    if m:
-      project_name = m.group('project')
-      verb = m.group('verb')
-      label = m.group('label')
+  project_name = None
+  verb = None
+  label = None
+  m = PROJECT_EMAIL_RE.match(project_addr.lower())
+  if m:
+    project_name = m.group('project')
+    verb = m.group('verb')
+    label = m.group('label')
 
-    return project_name, verb, label
+  return project_name, verb, label
 
 
 def _MatchSubject(subject):

@@ -17,7 +17,7 @@ import time
 import types
 
 from third_party import ezt
-from third_party import six
+import six
 
 from protorpc import messages
 
