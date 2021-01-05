@@ -37,6 +37,7 @@ def RunSteps(api, inputs):
       inputs.gclient_config_name,
       patch_root=inputs.patch_root,
       gerrit_no_rebase_patch_ref=True)
+  checkout.commit_change()
   checkout.gclient_runhooks()
   commit_message = api.gerrit.get_change_description(
       'https://%s' % api.tryserver.gerrit_change.host,
