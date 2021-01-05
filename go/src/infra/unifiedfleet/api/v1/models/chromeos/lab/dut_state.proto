@@ -63,7 +63,7 @@ message DutState {
   string hostname = 11;
 }
 
-// Next Tag: 17
+// Next Tag: 18
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -101,6 +101,8 @@ enum PeripheralState {
   TOPOLOGY_ISSUE = 15;
   // SBU voltage issues effect CR50 detection.
   SBU_LOW_VOLTAGE = 16;
+  // CR50 SBU voltage detected but device was not enumerated.
+  CR50_NOT_ENUMERATED = 17;
 }
 
 // The states are using for DUT storage and USB-drive on servo.
