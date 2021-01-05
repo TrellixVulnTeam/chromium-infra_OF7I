@@ -100,7 +100,7 @@ import:
   - jwt
 - package: google.golang.org/api
   version: master
-  repo: https://code.googlesource.com/google-api-go-client.git
+  repo: https://chromium.googlesource.com/external/github.com/google/google-api-go-client.git
   subpackages:
   - bigquery/v2
   - cloudkms/v1
@@ -552,7 +552,9 @@ import:
   subpackages:
   - runtime/Go/antlr
 - package: github.com/google/cel-go
-  version: master
+  # Next version breaks compatibility with proto v1, in particular breaking
+  # infra/cros/cmd/tclint/internal/metadata that uses v1 protos.
+  version: 385dcdcbc4865cb64aa953c12d7549615cb5fd03
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
 - package: github.com/protocolbuffers/txtpbfmt
   version: master
@@ -581,3 +583,9 @@ import:
 - package: go.etcd.io/bbolt
   version: master
   repo: https://chromium.googlesource.com/external/github.com/etcd-io/bbolt.git
+- package: github.com/stoewer/go-strcase
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/stoewer/go-strcase.git
+- package: github.com/mostynb/zstdpool-syncpool
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/mostynb/zstdpool-syncpool.git
