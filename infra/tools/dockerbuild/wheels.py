@@ -282,7 +282,6 @@ SPECS.update({
             ],
             skip_plat=[
                 'linux-arm64-py3',
-                'mac-x64-cp38',
             ],
             pyversions=['py3'],
         ),

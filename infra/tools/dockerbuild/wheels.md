@@ -2194,6 +2194,7 @@ wheel: <
 ```
 
 
+* *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
