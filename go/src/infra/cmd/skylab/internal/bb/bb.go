@@ -42,7 +42,7 @@ var maxServiceVersion = test_platform.ServiceVersion{Global: 1}
 
 func addServiceVersion(props *structpb.Struct) *structpb.Struct {
 	var err error
-	props.Fields["service_version"], err = protoToStructPB(&maxServiceVersion)
+	props.Fields["$chromeos/service_version"], err = protoToStructPB(&maxServiceVersion)
 	if err != nil {
 		panic(err)
 	}
