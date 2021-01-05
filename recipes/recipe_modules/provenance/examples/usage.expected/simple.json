@@ -1,0 +1,57 @@
+[
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/provenance",
+      "-ensure-file",
+      "infra/tools/provenance/${platform} latest",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/provenance/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/provenance/provenance",
+      "generate",
+      "-input",
+      "[START_DIR]/input.json",
+      "-output",
+      "[CLEANUP]/output.attestation",
+      "projects/PROJECT/locations/global/keyRings/KEYRING/cryptoKeys/KEY"
+    ],
+    "name": "generate"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/provenance/provenance",
+      "generate",
+      "-input",
+      "[START_DIR]/another-input.json",
+      "-output",
+      "[CLEANUP]/another-output.attestation",
+      "projects/PROJECT/locations/global/keyRings/KEYRING/cryptoKeys/KEY"
+    ],
+    "name": "generate (2)"
+  },
+  {
+    "name": "$result"
+  }
+]

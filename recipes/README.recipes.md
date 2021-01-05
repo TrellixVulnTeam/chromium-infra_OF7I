@@ -11,6 +11,7 @@
   * [infra_cipd](#recipe_modules-infra_cipd)
   * [infra_system](#recipe_modules-infra_system)
   * [omahaproxy](#recipe_modules-omahaproxy)
+  * [provenance](#recipe_modules-provenance)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [sync_submodules](#recipe_modules-sync_submodules)
@@ -48,6 +49,7 @@
   * [luci_gae](#recipes-luci_gae)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
+  * [provenance:examples/usage](#recipes-provenance_examples_usage)
   * [recipe_autoroller](#recipes-recipe_autoroller) &mdash; Rolls recipes.
   * [recipe_bundler](#recipes-recipe_bundler)
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
@@ -406,6 +408,31 @@ APIs for interacting with omahaproxy.
 &mdash; **def [history](/recipes/recipe_modules/omahaproxy/api.py#20)(self, min_major_version=None, exclude_platforms=None):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [split\_version](/recipes/recipe_modules/omahaproxy/api.py#14)(text):**
+### *recipe_modules* / [provenance](/recipes/recipe_modules/provenance)
+
+[DEPS](/recipes/recipe_modules/provenance/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+#### **class [ProvenanceApi](/recipes/recipe_modules/provenance/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+
+API for interacting with Provenance using the provenance tool.
+
+&mdash; **def [generate](/recipes/recipe_modules/provenance/api.py#31)(self, kms_crypto_key, input_file, output_file):**
+
+Generate an attestation file with a built artifact.
+
+Args:
+  * kms_crypto_key (str) - The name of the encryption key, e.g.
+    projects/chops-kms/locations/global/keyRings/[KEYRING]/cryptoKeys/[KEY]
+  * input_file (Path) - The path to the input manifest file.
+  * output_file (Path) - The path to the output attestation file.
+
+&emsp; **@property**<br>&mdash; **def [provenance\_path](/recipes/recipe_modules/provenance/api.py#15)(self):**
+
+Returns the path to provenance binary.
+
+When the property is accessed the first time, the latest, released
+provenance will be installed using cipd and verified using the provenance
+built-in to the OS image (if available).
 ### *recipe_modules* / [recipe\_autoroller](/recipes/recipe_modules/recipe_autoroller)
 
 [DEPS](/recipes/recipe_modules/recipe_autoroller/__init__.py#5): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/random][recipe_engine/recipe_modules/random], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1076,6 +1103,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipes/luci_py.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/luci_py.py#24)(api):**
+### *recipes* / [provenance:examples/usage](/recipes/recipe_modules/provenance/examples/usage.py)
+
+[DEPS](/recipes/recipe_modules/provenance/examples/usage.py#5): [provenance](#recipe_modules-provenance), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/provenance/examples/usage.py#11)(api):**
 ### *recipes* / [recipe\_autoroller](/recipes/recipes/recipe_autoroller.py)
 
 [DEPS](/recipes/recipes/recipe_autoroller.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
