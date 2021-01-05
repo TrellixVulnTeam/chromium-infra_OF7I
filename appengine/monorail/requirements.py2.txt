@@ -12,6 +12,9 @@ googleapis-common-protos==1.52.0 --hash=sha256:c8961760f5aad9a711d37b675be103e0c
 # Uploaded Mar 10, 2020
 enum34==1.1.10 --hash=sha256:a98a201d6de3f2ab3db284e70a33b0f896fbf35f8086594e8c9e74b909058d53
 
+# Uploaded Jan 5, 2021
+ezt==1.1 --hash=sha256:2131c2aa34d395433410b4e3cb71b22ab1471fae9da1c60e4426f74c86cb0104
+
 # Required by google-cloud-tasks
 # Uploaded Jul 10, 2019
 grpc-google-iam-v1==0.12.3 --hash=sha256:0bfb5b56f648f457021a91c0df0db4934b6e0c300bd0f2de2333383fe958aa72
