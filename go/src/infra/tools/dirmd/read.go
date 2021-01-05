@@ -28,14 +28,14 @@ const Filename = "DIR_METADATA"
 // See also MappingReader.
 //
 // Returns (nil, nil) if the metadata is not defined.
-//
-// TODO(nodir): replace dir parameter with filename.
 func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
 	fullPath := filepath.Join(dir, Filename)
 	contents, err := ioutil.ReadFile(fullPath)
 	switch {
 	case os.IsNotExist(err):
-		return nil, nil
+		// Try the legacy file.
+		md, _, err := ReadOwners(dir)
+		return md, err
 
 	case err != nil:
 		return nil, err

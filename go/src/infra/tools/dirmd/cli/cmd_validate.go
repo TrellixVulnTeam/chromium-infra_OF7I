@@ -19,7 +19,9 @@ func cmdValidate() *subcommands.Command {
 		LongDesc: text.Doc(`
 			Validate metadata files.
 
-			The positional arguments must be paths to DIR_METADATA files.
+			The positional arguments must be paths to the files.
+			A valid file has a base filename "DIR_METADATA" or "OWNERS".
+			The format of its contents correspond to the base name.
 
 			The subcommand returns a non-zero exit code if any of the files is
 			invalid.

@@ -1,5 +1,0 @@
-team_email: "team-email@chromium.org"
-monorail {
-  project: "chromium"
-  component: "Some>Component"
-}

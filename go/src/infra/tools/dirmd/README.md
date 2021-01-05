@@ -59,6 +59,8 @@ monorail { component: "Component>Foo" }
 * Convert from text proto to JSON which is easier to interpret by programs
   that don't have an easy access to the protobuf files.
 * Validate a given set of files. Used in PRESUBMIT.
+* Fall back to legacy `OWNERS` files, so that metadata can migrate off of
+  OWNERS files smoothly.
 
 The tool is deployed via depot_tools and is available as a
 [CIPD package](https://chrome-infra-packages.appspot.com/p/infra/tools/dirmd).

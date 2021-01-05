@@ -26,7 +26,7 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						// OS was not inherited
 						Monorail: &dirmdpb.Monorail{
@@ -34,7 +34,7 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
-					// "subdir/empty_subdir" is not present because it has
+					// "subdir_with_owners/empty_subdir" is not present because it has
 					// no metadata.
 				},
 			})
@@ -49,7 +49,7 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -57,7 +57,7 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
-					"subdir/empty_subdir": {
+					"subdir_with_owners/empty_subdir": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -78,7 +78,7 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -99,7 +99,7 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Monorail: &dirmdpb.Monorail{
 							Project:   "chromium",
