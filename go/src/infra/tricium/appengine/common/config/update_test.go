@@ -25,39 +25,11 @@ var exampleConfig = map[config.Set]memory.Files{
 			  dimensions: "os:Ubuntu"
 			  has_runtime: true
 			}
-
 			data_details {
 			  type: GIT_FILE_DETAILS
 			  is_platform_specific: false
 			}
-			data_details {
-			  type: FILES
-			  is_platform_specific: false
-			}
-			functions {
-			  type: ISOLATOR
-			  name: "GitFileIsolator"
-			  needs: GIT_FILE_DETAILS
-			  provides: FILES
-			  impls {
-			    runtime_platform: UBUNTU
-			    provides_for_platform: UBUNTU
-			    cmd {
-			      exec: "isolator"
-			      args: "--output=${ISOLATED_OUTDIR}"
-			    }
-			    deadline: 900
-			    cipd_packages {
-			      package_name: "infra/tricium/function/git-file-isolator"
-			      path: "."
-			      version: "live"
-			    }
-			  }
-			}
-
 			buildbucket_server_host: "cr-buildbucket-dev.appspot.com"
-			swarming_server: "https://chromium-swarm.appspot.com"
-			isolate_server: "https://isolateserver.appspot.com"
 		`,
 	},
 	"projects/infra": {
@@ -66,9 +38,7 @@ var exampleConfig = map[config.Set]memory.Files{
 			  role: REQUESTER
 			  group: "tricium-infra-requesters"
 			}
-
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
-			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
 	},
 	"projects/playground": {
@@ -77,14 +47,7 @@ var exampleConfig = map[config.Set]memory.Files{
 			  role: REQUESTER
 			  group: "tricium-playground-requesters"
 			}
-
-			selections {
-			  function: "GitFileIsolator"
-			  platform: UBUNTU
-			}
-
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
-			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
 	},
 }
@@ -123,7 +86,6 @@ var invalidConfig = map[config.Set]memory.Files{
 			    }
 			  }
 			}
-
 			buildbucket_server_host: "cr-buildbucket-dev.appspot.com"
 			swarming_server: "https://chromium-swarm.appspot.com"
 			isolate_server: "https://isolateserver.appspot.com"
@@ -135,7 +97,6 @@ var invalidConfig = map[config.Set]memory.Files{
 			  role: REQUESTER
 			  group: "tricium-infra-requesters"
 			}
-
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
 			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
@@ -146,12 +107,10 @@ var invalidConfig = map[config.Set]memory.Files{
 			  role: REQUESTER
 			  group: "tricium-playground-requesters"
 			}
-
 			selections {
 			  function: "GitFileIsolator"
 			  platform: UBUNTU
 			}
-
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
 			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
@@ -196,13 +155,13 @@ func TestUpdateConfigs(t *testing.T) {
 			revs, err := getStoredProjectConfigRevisions(ctx)
 			So(err, ShouldBeNil)
 			So(revs, ShouldResemble, map[string]string{
-				"infra":      "fac958dbf074f5d82548bf99c1bd4380ec916d71",
-				"playground": "33c3bc06def39dd8c7f2d341ce37b5080980f1bd",
+				"infra":      "ac092d7b6d2c54346ac4ba0027580dbf31183abe",
+				"playground": "59673f3521611145fd45e35a2d9e8e2051e7de53",
 			})
 
 			rev, err := getStoredServiceConfigRevision(ctx)
 			So(err, ShouldBeNil)
-			So(rev, ShouldEqual, "7561c8cb9120a1a527b693a9489e6ee326aecb1c")
+			So(rev, ShouldEqual, "6100757dc507346393ee9bfa4c61ae1f2b6935b6")
 
 			sc, err := getServiceConfig(ctx)
 			So(err, ShouldBeNil)
@@ -235,12 +194,12 @@ func TestUpdateConfigs(t *testing.T) {
 			revs, err = getStoredProjectConfigRevisions(ctx)
 			So(err, ShouldBeNil)
 			So(revs, ShouldResemble, map[string]string{
-				"infra":      "fac958dbf074f5d82548bf99c1bd4380ec916d71",
-				"playground": "33c3bc06def39dd8c7f2d341ce37b5080980f1bd",
+				"infra":      "ac092d7b6d2c54346ac4ba0027580dbf31183abe",
+				"playground": "59673f3521611145fd45e35a2d9e8e2051e7de53",
 			})
 			rev, err = getStoredServiceConfigRevision(ctx)
 			So(err, ShouldBeNil)
-			So(rev, ShouldEqual, "7561c8cb9120a1a527b693a9489e6ee326aecb1c")
+			So(rev, ShouldEqual, "6100757dc507346393ee9bfa4c61ae1f2b6935b6")
 		})
 
 		Convey("Updating an invalid config", func() {

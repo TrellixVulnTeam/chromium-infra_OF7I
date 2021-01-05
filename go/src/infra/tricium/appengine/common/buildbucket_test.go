@@ -22,9 +22,7 @@ import (
 func TestTrigger(t *testing.T) {
 	Convey("Triggers a build", t, func() {
 		w := &admin.Worker{
-			Name:       "FileIsolator",
-			Dimensions: []string{"pool:Chrome", "os:Ubuntu13.04"},
-			Deadline:   1200,
+			Name: "AnalyzerName",
 			Impl: &admin.Worker_Recipe{
 				Recipe: &tricium.Recipe{
 					Project: "tricium",

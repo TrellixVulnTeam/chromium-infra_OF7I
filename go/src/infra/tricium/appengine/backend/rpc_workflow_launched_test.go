@@ -20,28 +20,15 @@ func TestWorkflowLaunchedRequest(t *testing.T) {
 	Convey("Test Environment", t, func() {
 		ctx := triciumtest.Context()
 
-		clangIsolatorUbuntu := "ClangIsolator_Ubuntu"
-		clangIsolatorWindows := "ClangIsolator_Windows"
-		fileIsolator := "GitFileIsolator_Ubuntu"
+		analyzerUbuntu := "Analyzer_Ubuntu"
 
 		workflowProvider := &mockWorkflowProvider{
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  clangIsolatorUbuntu,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  clangIsolatorWindows,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  fileIsolator,
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Next: []string{
-							clangIsolatorUbuntu,
-							clangIsolatorWindows,
-						},
+						Name:     analyzerUbuntu,
+						Needs:    tricium.Data_GIT_FILE_DETAILS,
+						Provides: tricium.Data_RESULTS,
 					},
 				},
 			},
@@ -104,7 +91,7 @@ func TestWorkflowLaunchedRequest(t *testing.T) {
 			}, workflowProvider)
 			So(err, ShouldBeNil)
 
-			name, _, err := track.ExtractFunctionPlatform(fileIsolator)
+			name, _, err := track.ExtractFunctionPlatform(analyzerUbuntu)
 
 			Convey("Marks workflow run as launched", func() {
 				So(ds.Get(ctx, runResult), ShouldBeNil)
@@ -113,13 +100,13 @@ func TestWorkflowLaunchedRequest(t *testing.T) {
 
 			Convey("Adds list of functions to WorkflowRun", func() {
 				So(ds.Get(ctx, run), ShouldBeNil)
-				So(len(run.Functions), ShouldEqual, 3)
+				So(len(run.Functions), ShouldEqual, 1)
 			})
 
 			Convey("Worker and function is marked pending", func() {
 				So(err, ShouldBeNil)
 				functionRunKey := ds.NewKey(ctx, "FunctionRun", name, 0, runKey)
-				workerKey := ds.NewKey(ctx, "WorkerRun", fileIsolator, 0, functionRunKey)
+				workerKey := ds.NewKey(ctx, "WorkerRun", analyzerUbuntu, 0, functionRunKey)
 				wr := &track.WorkerRunResult{ID: 1, Parent: workerKey}
 				So(ds.Get(ctx, wr), ShouldBeNil)
 				So(wr.State, ShouldEqual, tricium.State_PENDING)

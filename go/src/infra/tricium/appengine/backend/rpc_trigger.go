@@ -35,17 +35,17 @@ func (*driverServer) Trigger(c context.Context, req *admin.TriggerRequest) (*adm
 	if req.Worker == "" {
 		return nil, errors.New("missing worker name", grpcutil.InvalidArgumentTag)
 	}
-	if req.IsolatedInputHash == "" {
-		return nil, errors.New("missing isolated input hash", grpcutil.InvalidArgumentTag)
+	if req.IsolatedInputHash != "" {
+		return nil, errors.New("isolated input hash in trigger request", grpcutil.InvalidArgumentTag)
 	}
-	if err := trigger(c, req, config.WorkflowCache, common.SwarmingServer, common.BuildbucketServer, common.IsolateServer); err != nil {
+	if err := trigger(c, req, config.WorkflowCache, common.BuildbucketServer); err != nil {
 		return nil, errors.Annotate(err, "failed to trigger worker").
 			Tag(grpcutil.InternalTag).Err()
 	}
 	return &admin.TriggerResponse{}, nil
 }
 
-func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCacheAPI, sw, bb common.TaskServerAPI, isolator common.IsolateAPI) error {
+func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCacheAPI, bb common.TaskServerAPI) error {
 	workflow, err := wp.GetWorkflow(c, req.RunId)
 	if err != nil {
 		return errors.Annotate(err, "failed to read workflow config").Err()
@@ -60,7 +60,7 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 	// Create PubSub userdata for trigger request.
 	b, err := proto.Marshal(req)
 	if err != nil {
-		return errors.Annotate(err, "failed to marshal PubSub user data for swarming task").Err()
+		return errors.Annotate(err, "failed to marshal PubSub user data").Err()
 	}
 	userdata := base64.StdEncoding.EncodeToString(b)
 	logging.Fields{
@@ -72,29 +72,17 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 	case *admin.Worker_Recipe:
 		// Trigger worker.
 		result, err = bb.Trigger(c, &common.TriggerParameters{
-			Server:           workflow.BuildbucketServerHost,
-			IsolateServerURL: workflow.IsolateServer,
-			Worker:           worker,
-			PubsubUserdata:   userdata,
-			Tags:             tags,
-			Patch:            patch,
+			Server:         workflow.BuildbucketServerHost,
+			Worker:         worker,
+			PubsubUserdata: userdata,
+			Tags:           tags,
+			Patch:          patch,
 		})
 		if err != nil {
 			return errors.Annotate(err, "failed to call trigger on buildbucket API").Err()
 		}
 	case *admin.Worker_Cmd:
-		// Trigger worker.
-		result, err = sw.Trigger(c, &common.TriggerParameters{
-			Server:           workflow.SwarmingServer,
-			IsolateServerURL: workflow.IsolateServer,
-			Worker:           worker,
-			WorkerIsolate:    req.IsolatedInputHash,
-			PubsubUserdata:   userdata,
-			Tags:             tags,
-		})
-		if err != nil {
-			return errors.Annotate(err, "failed to call trigger on swarming API").Err()
-		}
+		return errors.Reason("deprecated field Cmd").Err()
 	case nil:
 		return errors.Reason("missing Impl when isolating worker %s", worker.Name).Err()
 	default:
@@ -104,8 +92,6 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 	b, err = proto.Marshal(&admin.WorkerLaunchedRequest{
 		RunId:              req.RunId,
 		Worker:             req.Worker,
-		IsolatedInputHash:  req.IsolatedInputHash,
-		SwarmingTaskId:     result.TaskID,
 		BuildbucketBuildId: result.BuildID,
 	})
 	if err != nil {
@@ -116,7 +102,7 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 	return tq.Add(c, common.TrackerQueue, t)
 }
 
-// getTags generates tags to send when triggering tasks via buildbucket or swarming.
+// getTags generates tags to send when triggering tasks via buildbucket.
 //
 // These tags can be used later when querying tasks, so
 // any attribute of a job that we may want to query or filter

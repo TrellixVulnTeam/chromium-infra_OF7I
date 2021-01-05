@@ -22,9 +22,8 @@ import (
 
 // Collect tries to collect results for a worker.
 //
-// This request may be for either buildbucket or swarming. If the worker is not
-// yet finished, another task should be enqueued; if the worker is finished,
-// then a worker-done task will be enqueued.
+// If the worker is not yet finished, another collect task is enqueued; if
+// the worker is finished, then a worker-done task will be enqueued.
 func (*driverServer) Collect(c context.Context, req *admin.CollectRequest) (res *admin.CollectResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(c, err)
@@ -32,15 +31,13 @@ func (*driverServer) Collect(c context.Context, req *admin.CollectRequest) (res 
 	logging.Fields{
 		"runID":  req.RunId,
 		"worker": req.Worker,
-		"taskID": req.TaskId,
 	}.Infof(c, "Collect request received.")
 	if err := validateCollectRequest(req); err != nil {
 		return nil, errors.Annotate(err, "invalid request").
 			Tag(grpcutil.InvalidArgumentTag).Err()
 	}
 
-	if err := collect(c, req, config.WorkflowCache, common.SwarmingServer,
-		common.BuildbucketServer, common.IsolateServer); err != nil {
+	if err := collect(c, req, config.WorkflowCache, common.BuildbucketServer); err != nil {
 		return nil, err
 	}
 	return &admin.CollectResponse{}, nil
@@ -56,8 +53,7 @@ func validateCollectRequest(req *admin.CollectRequest) error {
 	return nil
 }
 
-func collect(c context.Context, req *admin.CollectRequest,
-	wp config.WorkflowCacheAPI, sw, bb common.TaskServerAPI, isolator common.IsolateAPI) error {
+func collect(c context.Context, req *admin.CollectRequest, wp config.WorkflowCacheAPI, bb common.TaskServerAPI) error {
 	wf, err := wp.GetWorkflow(c, req.RunId)
 	if err != nil {
 		return errors.Annotate(err, "failed to read workflow config").Err()
@@ -78,13 +74,7 @@ func collect(c context.Context, req *admin.CollectRequest,
 			return errors.Annotate(err, "failed to collect task").Err()
 		}
 	case *admin.Worker_Cmd:
-		result, err = sw.Collect(c, &common.CollectParameters{
-			Server: wf.SwarmingServer,
-			TaskID: req.TaskId,
-		})
-		if err != nil {
-			return errors.Annotate(err, "failed to collect task").Err()
-		}
+		return errors.Reason("deprecated Impl Cmd in config").Err()
 	case nil:
 		return errors.Reason("missing Impl when isolating worker %s", w.Name).Err()
 	default:
@@ -105,21 +95,18 @@ func collect(c context.Context, req *admin.CollectRequest,
 	workerState := tricium.State_SUCCESS
 	if result.State == common.Failure {
 		logging.Fields{
-			"taskID":  req.TaskId,
 			"buildID": req.BuildId,
-		}.Infof(c, "Swarming task failed.")
+		}.Infof(c, "Worker had failure result.")
 		workerState = tricium.State_FAILURE
 	}
 
 	// Mark worker as done.
 	b, err := proto.Marshal(&admin.WorkerDoneRequest{
-		RunId:              req.RunId,
-		Worker:             req.Worker,
-		IsolatedNamespace:  result.IsolatedNamespace,
-		IsolatedOutputHash: result.IsolatedOutputHash,
-		Provides:           w.Provides,
-		State:              workerState,
-		BuildbucketOutput:  result.BuildbucketOutput,
+		RunId:             req.RunId,
+		Worker:            req.Worker,
+		Provides:          w.Provides,
+		State:             workerState,
+		BuildbucketOutput: result.BuildbucketOutput,
 	})
 	if err != nil {
 		return errors.Annotate(err, "failed to encode worker done request").Err()
@@ -160,24 +147,10 @@ func collect(c context.Context, req *admin.CollectRequest,
 		return nil
 	}
 
-	// Enqueue trigger requests for successors.
-	//
-	// The input of any successors is the output of the worker that just
-	// completed, for example the FILES data from GitFileIsolator.
-	for _, worker := range wf.GetNext(req.Worker) {
-		b, err := proto.Marshal(&admin.TriggerRequest{
-			RunId:             req.RunId,
-			IsolatedInputHash: result.IsolatedOutputHash,
-			Worker:            worker,
-		})
-		if err != nil {
-			return errors.Annotate(err, "failed to marshal successor trigger request").Err()
-		}
-		t := tq.NewPOSTTask("/driver/internal/trigger", nil)
-		t.Payload = b
-		if err := tq.Add(c, common.DriverQueue, t); err != nil {
-			return errors.Annotate(err, "failed to enqueue collect request").Err()
-		}
+	// Previously when there were isolators, some workers would have successors,
+	// but with only recipe-based analyzers, there should never be any successors.
+	if len(wf.GetNext(req.Worker)) != 0 {
+		return errors.New("workers should not have any successors")
 	}
 	return nil
 }

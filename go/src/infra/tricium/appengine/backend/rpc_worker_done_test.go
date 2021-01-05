@@ -5,7 +5,6 @@
 package main
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -24,49 +23,20 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-// MockIsolator mocks the Isolator interface for testing.
-type mockIsolator struct{}
-
-func (*mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error) {
-	return "", nil
-}
-
-func (*mockIsolator) FetchIsolatedResults(c context.Context, serverURL, namespace, isolatedOutput string) (string, error) {
-	result := &tricium.Data_Results{
-		Comments: []*tricium.Data_Comment{
-			{Message: "Hello"},
-		},
-	}
-	return (&jsonpb.Marshaler{}).MarshalToString(result)
-}
-
 func TestWorkerDoneRequest(t *testing.T) {
 	Convey("Worker done request with successful worker", t, func() {
 		ctx := triciumtest.Context()
 
-		clangIsolatorUbuntu := "ClangIsolator_Ubuntu"
-		clangIsolatorWindows := "ClangIsolator_Windows"
-		fileIsolator := "GitFileIsolator"
-		fileIsolatorUbuntu := "GitFileIsolator_Ubuntu"
+		simple := "Simple"
+		simpleUbuntu := "Simple_Ubuntu"
 
 		workflowProvider := &mockWorkflowProvider{
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  clangIsolatorUbuntu,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  clangIsolatorWindows,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  fileIsolatorUbuntu,
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Next: []string{
-							clangIsolatorUbuntu,
-							clangIsolatorWindows,
-						},
+						Name:     simpleUbuntu,
+						Needs:    tricium.Data_FILES,
+						Provides: tricium.Data_RESULTS,
 					},
 				},
 			},
@@ -94,22 +64,22 @@ func TestWorkerDoneRequest(t *testing.T) {
 		// Mark worker as launched.
 		So(workerLaunched(ctx, &admin.WorkerLaunchedRequest{
 			RunId:  request.ID,
-			Worker: fileIsolatorUbuntu,
+			Worker: simpleUbuntu,
 		}), ShouldBeNil)
 
 		// Mark worker as done.
 		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             fileIsolatorUbuntu,
-			Provides:           tricium.Data_FILES,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "bas3ba11",
-		}, &mockIsolator{}), ShouldBeNil)
+			RunId:             request.ID,
+			Worker:            simpleUbuntu,
+			Provides:          tricium.Data_RESULTS,
+			State:             tricium.State_SUCCESS,
+			BuildbucketOutput: `{"comments": [{"message": "foo"}, {"message": "bar"}]}`,
+		}), ShouldBeNil)
 
-		functionKey := ds.NewKey(ctx, "FunctionRun", fileIsolator, 0, runKey)
+		functionKey := ds.NewKey(ctx, "FunctionRun", simple, 0, runKey)
 
 		Convey("Marks worker as done", func() {
-			workerKey := ds.NewKey(ctx, "WorkerRun", fileIsolatorUbuntu, 0, functionKey)
+			workerKey := ds.NewKey(ctx, "WorkerRun", simpleUbuntu, 0, functionKey)
 			wr := &track.WorkerRunResult{ID: 1, Parent: workerKey}
 			So(ds.Get(ctx, wr), ShouldBeNil)
 			So(wr.State, ShouldEqual, tricium.State_SUCCESS)
@@ -120,30 +90,6 @@ func TestWorkerDoneRequest(t *testing.T) {
 			So(ds.Get(ctx, fr), ShouldBeNil)
 			So(fr.State, ShouldEqual, tricium.State_SUCCESS)
 		})
-
-		// Mark multi-platform function as done on one platform.
-		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             clangIsolatorWindows,
-			Provides:           tricium.Data_RESULTS,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "1234",
-		}, &mockIsolator{}), ShouldBeNil)
-
-		Convey("Multi-platform function is half done, request stays launched", func() {
-			ar := &track.AnalyzeRequestResult{ID: 1, Parent: requestKey}
-			So(ds.Get(ctx, ar), ShouldBeNil)
-			So(ar.State, ShouldEqual, tricium.State_RUNNING)
-		})
-
-		// Mark multi-platform function as done on other platform.
-		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             clangIsolatorUbuntu,
-			Provides:           tricium.Data_RESULTS,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "1234",
-		}, &mockIsolator{}), ShouldBeNil)
 
 		Convey("Marks workflow as done and adds comments", func() {
 			wr := &track.WorkflowRunResult{ID: 1, Parent: runKey}
@@ -164,29 +110,15 @@ func TestRecipeWorkerDoneRequest(t *testing.T) {
 	Convey("Worker done request with successful worker", t, func() {
 		ctx := triciumtest.Context()
 
-		clangIsolatorUbuntu := "ClangIsolator_Ubuntu"
-		clangIsolatorWindows := "ClangIsolator_Windows"
-		fileIsolator := "GitFileIsolator"
-		fileIsolatorUbuntu := "GitFileIsolator_Ubuntu"
+		simple := "Simple"
+		simpleUbuntu := "Simple_Ubuntu"
 
 		workflowProvider := &mockWorkflowProvider{
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  clangIsolatorUbuntu,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  clangIsolatorWindows,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  fileIsolatorUbuntu,
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Next: []string{
-							clangIsolatorUbuntu,
-							clangIsolatorWindows,
-						},
+						Name:     simpleUbuntu,
+						Provides: tricium.Data_RESULTS,
 					},
 				},
 			},
@@ -214,22 +146,22 @@ func TestRecipeWorkerDoneRequest(t *testing.T) {
 		// Mark worker as launched.
 		So(workerLaunched(ctx, &admin.WorkerLaunchedRequest{
 			RunId:  request.ID,
-			Worker: fileIsolatorUbuntu,
+			Worker: simpleUbuntu,
 		}), ShouldBeNil)
 
 		// Mark worker as done.
 		So(workerDone(ctx, &admin.WorkerDoneRequest{
 			RunId:             request.ID,
-			Worker:            fileIsolatorUbuntu,
-			Provides:          tricium.Data_FILES,
+			Worker:            simpleUbuntu,
+			Provides:          tricium.Data_GIT_FILE_DETAILS,
 			State:             tricium.State_SUCCESS,
 			BuildbucketOutput: `{"comments": []}`,
-		}, &mockIsolator{}), ShouldBeNil)
+		}), ShouldBeNil)
 
-		functionKey := ds.NewKey(ctx, "FunctionRun", fileIsolator, 0, runKey)
+		functionKey := ds.NewKey(ctx, "FunctionRun", simple, 0, runKey)
 
 		Convey("Marks worker as done", func() {
-			workerKey := ds.NewKey(ctx, "WorkerRun", fileIsolatorUbuntu, 0, functionKey)
+			workerKey := ds.NewKey(ctx, "WorkerRun", simpleUbuntu, 0, functionKey)
 			wr := &track.WorkerRunResult{ID: 1, Parent: workerKey}
 			So(ds.Get(ctx, wr), ShouldBeNil)
 			So(wr.State, ShouldEqual, tricium.State_SUCCESS)
@@ -244,29 +176,16 @@ func TestAbortedWorkerDoneRequest(t *testing.T) {
 		// failed, and thus the workflow run is failed.
 		ctx := triciumtest.Context()
 
-		clangIsolatorUbuntu := "ClangIsolator_Ubuntu"
-		clangIsolatorWindows := "ClangIsolator_Windows"
-		fileIsolator := "GitFileIsolator"
-		fileIsolatorUbuntu := "GitFileIsolator_Ubuntu"
+		simple := "Simple"
+		simpleUbuntu := "Simple_Ubuntu"
 
 		workflowProvider := &mockWorkflowProvider{
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  clangIsolatorUbuntu,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  clangIsolatorWindows,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  fileIsolatorUbuntu,
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Next: []string{
-							clangIsolatorUbuntu,
-							clangIsolatorWindows,
-						},
+						Name:     simpleUbuntu,
+						Needs:    tricium.Data_GIT_FILE_DETAILS,
+						Provides: tricium.Data_RESULTS,
 					},
 				},
 			},
@@ -294,21 +213,21 @@ func TestAbortedWorkerDoneRequest(t *testing.T) {
 		// Mark worker as launched.
 		So(workerLaunched(ctx, &admin.WorkerLaunchedRequest{
 			RunId:  request.ID,
-			Worker: fileIsolatorUbuntu,
+			Worker: simpleUbuntu,
 		}), ShouldBeNil)
 
-		// Mark worker as done.
+		// Mark worker as aborted.
 		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             fileIsolatorUbuntu,
-			State:              tricium.State_ABORTED,
-			IsolatedOutputHash: "bas3ba11",
-		}, &mockIsolator{}), ShouldBeNil)
+			RunId:             request.ID,
+			Worker:            simpleUbuntu,
+			State:             tricium.State_ABORTED,
+			BuildbucketOutput: `{"comments": []}`,
+		}), ShouldBeNil)
 
-		functionKey := ds.NewKey(ctx, "FunctionRun", fileIsolator, 0, runKey)
+		functionKey := ds.NewKey(ctx, "FunctionRun", simple, 0, runKey)
 
 		Convey("WorkerRun is marked as aborted", func() {
-			workerKey := ds.NewKey(ctx, "WorkerRun", fileIsolatorUbuntu, 0, functionKey)
+			workerKey := ds.NewKey(ctx, "WorkerRun", simpleUbuntu, 0, functionKey)
 			wr := &track.WorkerRunResult{ID: 1, Parent: workerKey}
 			So(ds.Get(ctx, wr), ShouldBeNil)
 			So(wr.State, ShouldEqual, tricium.State_ABORTED)
@@ -319,23 +238,6 @@ func TestAbortedWorkerDoneRequest(t *testing.T) {
 			So(ds.Get(ctx, fr), ShouldBeNil)
 			So(fr.State, ShouldEqual, tricium.State_FAILURE)
 		})
-
-		// Mark other workers as done.
-		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             clangIsolatorUbuntu,
-			Provides:           tricium.Data_RESULTS,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "1234",
-		}, &mockIsolator{}), ShouldBeNil)
-
-		So(workerDone(ctx, &admin.WorkerDoneRequest{
-			RunId:              request.ID,
-			Worker:             clangIsolatorWindows,
-			Provides:           tricium.Data_RESULTS,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "1234",
-		}, &mockIsolator{}), ShouldBeNil)
 
 		Convey("WorkflowRun is marked as failed", func() {
 			wr := &track.WorkflowRunResult{ID: 1, Parent: runKey}
@@ -354,33 +256,33 @@ func TestAbortedWorkerDoneRequest(t *testing.T) {
 func TestValidateWorkerDoneRequestRequest(t *testing.T) {
 	Convey("Request with all parts is valid", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
-			RunId:              1234,
-			Worker:             "MyLint_Ubuntu",
-			Provides:           tricium.Data_RESULTS,
-			State:              tricium.State_SUCCESS,
-			IsolatedOutputHash: "12ab34cd",
+			RunId:             1234,
+			Worker:            "MyLint_Ubuntu",
+			Provides:          tricium.Data_RESULTS,
+			State:             tricium.State_SUCCESS,
+			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldBeNil)
 	})
 
 	Convey("Specifying provides and state is optional", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
-			RunId:              1234,
-			Worker:             "MyLint_Ubuntu",
-			IsolatedOutputHash: "12ab34cd",
+			RunId:             1234,
+			Worker:            "MyLint_Ubuntu",
+			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldBeNil)
 	})
 
 	Convey("Request with no run ID is invalid", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
-			Worker:             "MyLint_Ubuntu",
-			IsolatedOutputHash: "12ab34cd",
+			Worker:            "MyLint_Ubuntu",
+			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldNotBeNil)
 	})
 
 	Convey("Request with no worker name invalid", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
-			RunId:              1234,
-			IsolatedOutputHash: "12ab34cd",
+			RunId:             1234,
+			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldNotBeNil)
 	})
 
@@ -391,19 +293,18 @@ func TestValidateWorkerDoneRequestRequest(t *testing.T) {
 		}), ShouldBeNil)
 	})
 
-	Convey("Providing buildbucket output but not isolated output is OK", t, func() {
+	Convey("Providing buildbucket output and not isolated output is OK", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
 			RunId:             1234,
 			Worker:            "MyLint_Ubuntu",
-			BuildbucketOutput: "foobar",
+			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldBeNil)
 	})
 
-	Convey("Providing both output types is not OK", t, func() {
+	Convey("Providing deprecated field isolated output is not OK", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
 			RunId:              1234,
 			Worker:             "MyLint_Ubuntu",
-			BuildbucketOutput:  "foobar",
 			IsolatedOutputHash: "12ab34cd",
 		}), ShouldNotBeNil)
 	})

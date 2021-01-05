@@ -19,10 +19,9 @@ import (
 )
 
 const (
-	hello        = "Hello"
-	fileIsolator = "FileIsolator"
-	pylint       = "PyLint"
-	project      = "playground-gerrit-tricium"
+	hello   = "Hello"
+	pylint  = "Pylint"
+	project = "playground-gerrit-tricium"
 )
 
 func TestLaunchRequest(t *testing.T) {
@@ -34,10 +33,6 @@ func TestLaunchRequest(t *testing.T) {
 				project: {
 					Selections: []*tricium.Selection{
 						{
-							Function: fileIsolator,
-							Platform: tricium.Platform_UBUNTU,
-						},
-						{
 							Function: hello,
 							Platform: tricium.Platform_UBUNTU,
 						},
@@ -46,17 +41,13 @@ func TestLaunchRequest(t *testing.T) {
 							Platform: tricium.Platform_UBUNTU,
 						},
 					},
-					SwarmingServiceAccount: "swarming@email.com",
 				},
 			},
 			ServiceConfig: &tricium.ServiceConfig{
-				SwarmingServer:        "chromium-swarm-dev",
 				BuildbucketServerHost: "cr-buildbucket-dev",
-				IsolateServer:         "isolatedserver-dev",
 				Platforms: []*tricium.Platform_Details{
 					{
 						Name:       tricium.Platform_UBUNTU,
-						Dimensions: []string{"pool:Chrome", "os:Ubuntu14.04"},
 						HasRuntime: true,
 					},
 				},
@@ -64,14 +55,6 @@ func TestLaunchRequest(t *testing.T) {
 					{
 						Type:               tricium.Data_GIT_FILE_DETAILS,
 						IsPlatformSpecific: false,
-					},
-					{
-						Type:               tricium.Data_FILES,
-						IsPlatformSpecific: false,
-					},
-					{
-						Type:               tricium.Data_CLANG_DETAILS,
-						IsPlatformSpecific: true,
 					},
 					{
 						Type:               tricium.Data_RESULTS,
@@ -88,48 +71,32 @@ func TestLaunchRequest(t *testing.T) {
 							{
 								ProvidesForPlatform: tricium.Platform_UBUNTU,
 								RuntimePlatform:     tricium.Platform_UBUNTU,
-								Impl: &tricium.Impl_Cmd{
-									Cmd: &tricium.Cmd{
-										Exec: "hello",
+								Impl: &tricium.Impl_Recipe{
+									Recipe: &tricium.Recipe{
+										Project: "chromium",
+										Bucket:  "try",
+										Builder: "hello-analysis",
 									},
 								},
-								Deadline: 120,
-							},
-						},
-					},
-					{
-						Type:     tricium.Function_ISOLATOR,
-						Name:     fileIsolator,
-						Needs:    tricium.Data_GIT_FILE_DETAILS,
-						Provides: tricium.Data_FILES,
-						Impls: []*tricium.Impl{
-							{
-								ProvidesForPlatform: tricium.Platform_UBUNTU,
-								RuntimePlatform:     tricium.Platform_UBUNTU,
-								Impl: &tricium.Impl_Cmd{
-									Cmd: &tricium.Cmd{
-										Exec: "fileisolator",
-									},
-								},
-								Deadline: 120,
 							},
 						},
 					},
 					{
 						Type:     tricium.Function_ANALYZER,
 						Name:     pylint,
-						Needs:    tricium.Data_FILES,
+						Needs:    tricium.Data_GIT_FILE_DETAILS,
 						Provides: tricium.Data_RESULTS,
 						Impls: []*tricium.Impl{
 							{
 								ProvidesForPlatform: tricium.Platform_UBUNTU,
 								RuntimePlatform:     tricium.Platform_UBUNTU,
-								Impl: &tricium.Impl_Cmd{
-									Cmd: &tricium.Cmd{
-										Exec: "pylint",
+								Impl: &tricium.Impl_Recipe{
+									Recipe: &tricium.Recipe{
+										Project: "chromium",
+										Bucket:  "try",
+										Builder: "pylint-analysis",
 									},
 								},
-								Deadline: 120,
 							},
 						},
 					},
@@ -148,7 +115,7 @@ func TestLaunchRequest(t *testing.T) {
 					{Path: "README2.md"},
 				},
 				CommitMessage: "CL summary\n\nBug: 123\n",
-			}, cp, common.MockIsolator, common.MockTaskServerAPI, common.MockPubSub)
+			}, cp, common.MockPubSub)
 			So(err, ShouldBeNil)
 
 			Convey("Enqueues track request", func() {
@@ -174,7 +141,7 @@ func TestLaunchRequest(t *testing.T) {
 					{Path: "README2.md"},
 				},
 				CommitMessage: "CL summary\n\nBug: 123\n",
-			}, config.MockProvider, common.MockIsolator, common.MockTaskServerAPI, common.MockPubSub)
+			}, config.MockProvider, common.MockPubSub)
 			So(err, ShouldBeNil)
 
 			Convey("Succeeding launch request for the same run enqueues no track request", func() {

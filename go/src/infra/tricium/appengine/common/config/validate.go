@@ -21,17 +21,8 @@ import (
 //
 // Returns an error if invalid, or nil if valid.
 func Validate(sc *tricium.ServiceConfig, pc *tricium.ProjectConfig) error {
-	if sc.SwarmingServer == "" {
-		return errors.Reason("missing swarming server URL in service config").Err()
-	}
-	if sc.IsolateServer == "" {
-		return errors.Reason("missing isolate server URL in service config").Err()
-	}
 	if sc.BuildbucketServerHost == "" {
-		return errors.Reason("missing buildbucket server host in service config").Err()
-	}
-	if pc.SwarmingServiceAccount == "" {
-		return errors.Reason("missing swarming service account for project: %+v", pc).Err()
+		return errors.Reason("missing Buildbucket server host in service config").Err()
 	}
 	functions, err := mergeSelectedFunctions(sc, pc)
 	if err != nil {

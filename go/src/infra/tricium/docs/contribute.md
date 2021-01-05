@@ -252,7 +252,7 @@ release a new version, the following is a general process for release:
 
 First, test locally; try both unit tests and a test-invocation on sample input.
 Note, you can run Go unit tests by running `go test ./...`. Make sure you run
-this on a machine that is binary-compatible with the actual Swarming task
+this on a machine that is binary-compatible with the production execution
 environment.
 
 Optionally, you could **try with a local devserver instance of Tricium**

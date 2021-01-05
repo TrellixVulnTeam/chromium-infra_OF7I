@@ -37,21 +37,10 @@ func TestTriggerRequest(t *testing.T) {
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  "Hello",
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Impl:  &admin.Worker_Cmd{},
-					},
-					{
-						Name:     "World",
+						Name:     "Hello",
 						Needs:    tricium.Data_GIT_FILE_DETAILS,
-						Provides: tricium.Data_CLANG_DETAILS,
-						Impl:     &admin.Worker_Cmd{},
-						Next:     []string{"Goodbye"},
-					},
-					{
-						Name:  "Goodbye",
-						Needs: tricium.Data_CLANG_DETAILS,
-						Impl:  &admin.Worker_Recipe{},
+						Provides: tricium.Data_RESULTS,
+						Impl:     &admin.Worker_Recipe{},
 					},
 				},
 			},
@@ -61,7 +50,7 @@ func TestTriggerRequest(t *testing.T) {
 			err := trigger(ctx, &admin.TriggerRequest{
 				RunId:  runID,
 				Worker: "Hello",
-			}, workflowProvider, common.MockTaskServerAPI, common.MockTaskServerAPI, common.MockIsolator)
+			}, workflowProvider, common.MockTaskServerAPI)
 			So(err, ShouldBeNil)
 			Convey("Enqueues track request", func() {
 				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.TrackerQueue]), ShouldEqual, 1)
@@ -94,7 +83,7 @@ func TestHelperFunctions(t *testing.T) {
 			Files:   []tricium.Data_File{{Path: "README.md"}},
 		}), ShouldBeNil)
 
-		Convey("Swarming tags include Gerrit details for Gerrit requests", func() {
+		Convey("Tags include Gerrit details for Gerrit requests", func() {
 			patch := fetchPatchDetails(ctx, 123)
 			So(patch.GitilesHost, ShouldEqual, "http://my-gerrit.com/my-project")
 			So(patch.GitilesProject, ShouldEqual, "my-luci-config-project-id")
@@ -116,7 +105,7 @@ func TestHelperFunctions(t *testing.T) {
 			})
 		})
 
-		Convey("Swarming tags omit Gerrit details for non-Gerrit requests", func() {
+		Convey("Tags omit Gerrit details for non-Gerrit requests", func() {
 			patch := fetchPatchDetails(ctx, 321)
 			expected := common.PatchDetails{
 				GitilesHost:    "http://my-nongerrit.com/repo-url",
@@ -131,7 +120,7 @@ func TestHelperFunctions(t *testing.T) {
 			})
 		})
 
-		Convey("Swarming tags omit Gerrit details if run not found", func() {
+		Convey("Tags omit Gerrit details if run not found", func() {
 			patch := fetchPatchDetails(ctx, 789)
 			So(patch, ShouldResemble, common.PatchDetails{})
 			So(getTags(ctx, "Spacey_UBUNTU", 789, patch), ShouldResemble, []string{
@@ -142,7 +131,7 @@ func TestHelperFunctions(t *testing.T) {
 			})
 		})
 
-		Convey("Swarming tags are nil for invalid worker names", func() {
+		Convey("Tags are nil for invalid worker names", func() {
 			So(getTags(ctx, "invalidworker", 1, common.PatchDetails{}), ShouldBeNil)
 		})
 	})

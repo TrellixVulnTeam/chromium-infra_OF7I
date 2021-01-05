@@ -68,8 +68,6 @@ func workflowLaunched(c context.Context, req *admin.WorkflowLaunchedRequest, wp 
 		workflowRun := &track.WorkflowRun{
 			ID:                    1,
 			Parent:                requestKey,
-			IsolateServerURL:      wf.IsolateServer,
-			SwarmingServerURL:     wf.SwarmingServer,
 			BuildbucketServerHost: wf.BuildbucketServerHost,
 			Functions:             functions,
 		}

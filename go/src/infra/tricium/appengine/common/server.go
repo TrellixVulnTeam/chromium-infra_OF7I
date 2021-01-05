@@ -36,65 +36,47 @@ type PatchDetails struct {
 
 // TriggerParameters contains the parameters for a Trigger call to a TaskServerAPI.
 type TriggerParameters struct {
-	Server           string
-	IsolateServerURL string
-	Worker           *admin.Worker
-	WorkerIsolate    string
-	PubsubUserdata   string
-	Tags             []string
-	Patch            PatchDetails
+	Server         string
+	Worker         *admin.Worker
+	PubsubUserdata string
+	Tags           []string
+	Patch          PatchDetails
 }
 
 // TriggerResult contains the return value of a Trigger call to a TaskServerAPI.
 //
-// One and only one of TaskID and BuildID should be populated.
-// TaskID is the string representation of the ID of the triggered swarming task
 // BuildID is the int64 representation of the ID of the triggered buildbucket build
 type TriggerResult struct {
-	TaskID  string
 	BuildID int64
 }
 
 // CollectParameters contains the parameters for a Collect call to a TaskServerAPI.
 //
-// One and only one of TaskID and BuildID should be populated.
-// TaskID is the string representation of the ID of the collected swarming task
-// BuildID is the int64 representation of the ID of the collected buildbucket build
+// BuildID is the int64 representation of the ID of the collected buildbucket build.
 type CollectParameters struct {
 	Server  string
-	TaskID  string
 	BuildID int64
 }
 
 // CollectResult contains the return value of a Collect call to a TaskServerAPI.
-//
-// One and only one of IsolatedOutputHash and BuildbucketOutput should be populated.
 type CollectResult struct {
 	// State is the current status of the task (can be PENDING, SUCCESS, or FAILURE)
 	State ResultState
-	// IsolatedOutputHash is the data value of a completed Swarming task; if this
-	// is given, then IsolatedNamespace is also required.
-	IsolatedOutputHash string
-	IsolatedNamespace  string
 	// BuildbucketOutput is the data value of a completed Buildbucket build,
 	// which is the JSON serialization of the Results protobuf message; it
 	// should be deserialized with jsonpb since fields use camelCase names.
 	BuildbucketOutput string
 }
 
-// TaskServerAPI specifies the Swarming service API.
+// TaskServerAPI specifies the service API for triggering analyzers
+// through an external service.
+//
+// Only Buildbucket is supported.
 type TaskServerAPI interface {
-	// Trigger triggers a swarming task.
-	//
-	// The provided worker isolate is used for the task. At completion,
-	// the swarming service will publish a message, including the provided
-	// user data, to the worker completion pubsub topic.
+	// Trigger an analyzer through the external service.
 	Trigger(c context.Context, params *TriggerParameters) (*TriggerResult, error)
 
-	// Collect collects results for a swarming task with the provided ID.
-	//
-	// The task in question should be completed before this function is called and the
-	// task should have output.
+	// Collect collects results for the analyzer.
 	Collect(c context.Context, params *CollectParameters) (*CollectResult, error)
 }
 
@@ -119,7 +101,7 @@ type mockTaskServerAPI struct {
 //
 // For any testing actually using the return value, create a new mock.
 func (mockTaskServerAPI) Trigger(c context.Context, params *TriggerParameters) (*TriggerResult, error) {
-	return &TriggerResult{TaskID: "mocktaskid"}, nil
+	return &TriggerResult{BuildID: int64(123)}, nil
 }
 
 // Collect is a mock function for the MockTaskServerAPI.
@@ -127,8 +109,6 @@ func (mockTaskServerAPI) Trigger(c context.Context, params *TriggerParameters) (
 // For any testing actually using the return value, create a new mock.
 func (mockTaskServerAPI) Collect(c context.Context, params *CollectParameters) (*CollectResult, error) {
 	return &CollectResult{
-		State:              Success,
-		IsolatedOutputHash: "mockisolatedoutput",
-		IsolatedNamespace:  "mockisolatednamespace",
+		State: Success,
 	}, nil
 }

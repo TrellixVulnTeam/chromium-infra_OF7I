@@ -120,9 +120,9 @@ type WorkflowRun struct {
 	//
 	// Included here to allow for direct access without queries.
 	Functions []string `gae:",noindex"`
-	// Isolate server URL.
+	// DEPRECATED, ignored.
 	IsolateServerURL string `gae:",noindex"`
-	// Swarming server URL.
+	// DEPRECATED, ignored.
 	SwarmingServerURL string `gae:",noindex"`
 	// Buildbucket server hostname.
 	BuildbucketServerHost string `gae:",noindex"`
@@ -228,20 +228,19 @@ type WorkerRunResult struct {
 	Platform tricium.Platform_Name
 	// State of the parent worker run; running, success, or failure.
 	State tricium.State
-	// Hash to the isolated input provided to the corresponding swarming task.
+	// DEPRECATED, ignored.
 	IsolatedInput string `gae:",noindex"`
 
-	// Outputs: IsolatedOutput or BuildbucketOutput
-	// One and only one of these two fields should be populated by the appropriate
-	// service.
+	// Outputs: BuildbucketOutput
 
-	// Hash to the isolated output collected from the corresponding swarming task,
-	// if applicable.
+	// DEPRECATED, ignored.
 	IsolatedOutput string `gae:",noindex"`
-	// Output as collected from the corresponding buildbucket run, if applicable.
-	BuildbucketOutput  string `gae:",noindex"`
-	SwarmingTaskID     string `gae:",noindex"`
-	BuildbucketBuildID int64  `gae:",noindex"`
+	// Output as collected from the corresponding buildbucket run.
+	BuildbucketOutput string `gae:",noindex"`
+	// DEPRECATED, ignored.
+	SwarmingTaskID string `gae:",noindex"`
+	// Buildbucket build ID.
+	BuildbucketBuildID int64 `gae:",noindex"`
 	// Number of comments produced by this worker.
 	NumComments int `gae:",noindex"`
 	// Tricium result encoded as JSON.

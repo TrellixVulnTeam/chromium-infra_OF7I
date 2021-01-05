@@ -14,13 +14,11 @@ import (
 
 func TestValidate(t *testing.T) {
 	Convey("Test Environment", t, func() {
-		functionName := "PyLint"
+		functionName := "FunctionName"
 		platform := tricium.Platform_UBUNTU
 		config := "enable"
 		sd := &tricium.ServiceConfig{
 			BuildbucketServerHost: "cr-buildbucket-dev.appspot.com",
-			IsolateServer:         "https://isolatedserver-dev.appspot.com",
-			SwarmingServer:        "https://chromium-swarm-dev.appspot.com",
 			Platforms: []*tricium.Platform_Details{
 				{
 					Name:       platform,
@@ -29,7 +27,7 @@ func TestValidate(t *testing.T) {
 			},
 			DataDetails: []*tricium.Data_TypeDetails{
 				{
-					Type:               tricium.Data_FILES,
+					Type:               tricium.Data_GIT_FILE_DETAILS,
 					IsPlatformSpecific: false,
 				},
 				{
@@ -42,18 +40,19 @@ func TestValidate(t *testing.T) {
 			{
 				Type:     tricium.Function_ANALYZER,
 				Name:     functionName,
-				Needs:    tricium.Data_FILES,
+				Needs:    tricium.Data_GIT_FILE_DETAILS,
 				Provides: tricium.Data_RESULTS,
 				Impls: []*tricium.Impl{
 					{
 						RuntimePlatform:     platform,
 						ProvidesForPlatform: platform,
-						Impl: &tricium.Impl_Cmd{
-							Cmd: &tricium.Cmd{
-								Exec: "pylint",
+						Impl: &tricium.Impl_Recipe{
+							Recipe: &tricium.Recipe{
+								Project: "infra",
+								Bucket:  "try",
+								Builder: "analysis",
 							},
 						},
-						Deadline: 120,
 					},
 				},
 				ConfigDefs: []*tricium.ConfigDef{
@@ -73,7 +72,6 @@ func TestValidate(t *testing.T) {
 						Platform: platform,
 					},
 				},
-				SwarmingServiceAccount: "swarming@email.com",
 			})
 			So(err, ShouldBeNil)
 		})
@@ -87,7 +85,6 @@ func TestValidate(t *testing.T) {
 						Platform: tricium.Platform_WINDOWS,
 					},
 				},
-				SwarmingServiceAccount: "swarming@email.com",
 			})
 			So(err, ShouldNotBeNil)
 		})
@@ -107,7 +104,6 @@ func TestValidate(t *testing.T) {
 						},
 					},
 				},
-				SwarmingServiceAccount: "swarming@email.com",
 			})
 			So(err, ShouldBeNil)
 		})
@@ -127,7 +123,6 @@ func TestValidate(t *testing.T) {
 						},
 					},
 				},
-				SwarmingServiceAccount: "swarming@email.com",
 			})
 			So(err, ShouldNotBeNil)
 		})
@@ -136,7 +131,7 @@ func TestValidate(t *testing.T) {
 
 func TestMergeFunctions(t *testing.T) {
 	Convey("Test Environment", t, func() {
-		functionName := "PyLint"
+		functionName := "Analyzer"
 		platform := tricium.Platform_UBUNTU
 		sc := &tricium.ServiceConfig{
 			Platforms: []*tricium.Platform_Details{
@@ -147,7 +142,7 @@ func TestMergeFunctions(t *testing.T) {
 			},
 			DataDetails: []*tricium.Data_TypeDetails{
 				{
-					Type:               tricium.Data_FILES,
+					Type:               tricium.Data_GIT_FILE_DETAILS,
 					IsPlatformSpecific: false,
 				},
 				{
@@ -177,7 +172,7 @@ func TestMergeFunctions(t *testing.T) {
 			_, err := mergeFunction(functionName, sc, nil, &tricium.Function{
 				Type:     tricium.Function_ANALYZER,
 				Name:     functionName,
-				Needs:    tricium.Data_FILES,
+				Needs:    tricium.Data_GIT_FILE_DETAILS,
 				Provides: tricium.Data_RESULTS,
 			})
 			So(err, ShouldBeNil)
@@ -187,7 +182,7 @@ func TestMergeFunctions(t *testing.T) {
 			_, err := mergeFunction(functionName, sc, &tricium.Function{
 				Type:     tricium.Function_ANALYZER,
 				Name:     functionName,
-				Needs:    tricium.Data_FILES,
+				Needs:    tricium.Data_GIT_FILE_DETAILS,
 				Provides: tricium.Data_RESULTS,
 			}, nil)
 			So(err, ShouldBeNil)
@@ -197,7 +192,7 @@ func TestMergeFunctions(t *testing.T) {
 			_, err := mergeFunction(functionName, sc, &tricium.Function{
 				Type:     tricium.Function_ANALYZER,
 				Name:     functionName,
-				Needs:    tricium.Data_FILES,
+				Needs:    tricium.Data_GIT_FILE_DETAILS,
 				Provides: tricium.Data_RESULTS,
 			}, &tricium.Function{
 				Type:     tricium.Function_ISOLATOR,
@@ -215,12 +210,10 @@ func TestMergeFunctions(t *testing.T) {
 		Convey("Project details override service details", func() {
 			user := "someone"
 			comp := "someonesComp"
-			exec := "cat"
-			deadline := int32(120)
 			a, err := mergeFunction(functionName, sc, &tricium.Function{
 				Type:              tricium.Function_ANALYZER,
 				Name:              functionName,
-				Needs:             tricium.Data_FILES,
+				Needs:             tricium.Data_GIT_FILE_DETAILS,
 				Provides:          tricium.Data_RESULTS,
 				PathFilters:       []string{"*\\.py", "*\\.pypy"},
 				Owner:             "emso",
@@ -229,12 +222,13 @@ func TestMergeFunctions(t *testing.T) {
 					{
 						ProvidesForPlatform: platform,
 						RuntimePlatform:     platform,
-						Impl: &tricium.Impl_Cmd{
-							Cmd: &tricium.Cmd{
-								Exec: "echo",
+						Impl: &tricium.Impl_Recipe{
+							Recipe: &tricium.Recipe{
+								Project: "infra",
+								Bucket:  "try",
+								Builder: "analysis",
 							},
 						},
-						Deadline: 60,
 					},
 				},
 			}, &tricium.Function{
@@ -247,12 +241,13 @@ func TestMergeFunctions(t *testing.T) {
 					{
 						ProvidesForPlatform: platform,
 						RuntimePlatform:     platform,
-						Impl: &tricium.Impl_Cmd{
-							Cmd: &tricium.Cmd{
-								Exec: exec,
+						Impl: &tricium.Impl_Recipe{
+							Recipe: &tricium.Recipe{
+								Project: "infra",
+								Bucket:  "try",
+								Builder: "analysis",
 							},
 						},
-						Deadline: deadline,
 					},
 				},
 			})
@@ -262,14 +257,6 @@ func TestMergeFunctions(t *testing.T) {
 			So(a.MonorailComponent, ShouldEqual, comp)
 			So(len(a.PathFilters), ShouldEqual, 1)
 			So(len(a.Impls), ShouldEqual, 1)
-			So(a.Impls[0].ProvidesForPlatform, ShouldEqual, platform)
-			switch i := a.Impls[0].Impl.(type) {
-			case *tricium.Impl_Cmd:
-				So(i.Cmd.Exec, ShouldEqual, exec)
-			default:
-				t.Error("wrong impl type")
-			}
-			So(a.Impls[0].Deadline, ShouldEqual, deadline)
 		})
 	})
 }

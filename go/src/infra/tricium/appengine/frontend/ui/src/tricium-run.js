@@ -46,12 +46,7 @@ class TriciumRun extends LitElement {
 
   // Renders a link to more details for the run, or an empty TemplateResult.
   _renderLink(f) {
-    if (f.swarmingTaskId) {
-      return html`
-        <a href$="${f.swarmingUrl}/task?id=${f.swarmingTaskId}">
-          task ${f.swarmingTaskId}
-        </a>`;
-    } else if (f.buildbucketBuildId) {
+    if (f.buildbucketBuildId) {
       const host = this._chromiumMiloHost(f.buildbucketHost);
       if (!host) {
         return html`build ${f.buildbucketBuildId}`;
@@ -61,7 +56,7 @@ class TriciumRun extends LitElement {
           build ${f.buildbucketBuildId}
         </a>`;
     }
-    return html`error: no swarming task ID or buildbucket build ID`;
+    return html`error: no buildbucket build ID`;
   }
 
   // Returns a host for viewing build information for buildbucket builds.

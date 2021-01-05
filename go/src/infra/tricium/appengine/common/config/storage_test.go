@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 
-	"infra/tricium/api/v1"
+	tricium "infra/tricium/api/v1"
 	"infra/tricium/appengine/common/triciumtest"
 )
 
@@ -18,18 +19,11 @@ func TestConfigStorage(t *testing.T) {
 		ctx := triciumtest.Context()
 
 		Convey("Set and get single project config", func() {
-			config := &tricium.ProjectConfig{
-				ServiceAccount:         "tricium-dev@appspot.gserviceaccount.com",
-				SwarmingServiceAccount: "swarming@tricium-dev.iam.gserviceaccount.com",
-			}
+			config := &tricium.ProjectConfig{}
 			So(setProjectConfig(ctx, "my-project", "version", config), ShouldBeNil)
 			result, err := getProjectConfig(ctx, "my-project")
 			So(err, ShouldBeNil)
-			// ShouldResemble doesn't quite work here because the
-			// retrieved config message could have some extra
-			// generated fields (e.g. XXX_sizecache) set to
-			// something non-zero.
-			So(result, ShouldNotBeNil)
+			So(result, ShouldResembleProto, config)
 		})
 
 		Convey("Set, get, delete multiple project configs", func() {
@@ -71,8 +65,6 @@ func TestConfigStorage(t *testing.T) {
 
 		Convey("Set and get service config", func() {
 			config := &tricium.ServiceConfig{
-				SwarmingServer: "https://chromium-swarm.appspot.com",
-				IsolateServer:  "https://isolateserver.appspot.com",
 				Platforms: []*tricium.Platform_Details{
 					{
 						Name:       platform,

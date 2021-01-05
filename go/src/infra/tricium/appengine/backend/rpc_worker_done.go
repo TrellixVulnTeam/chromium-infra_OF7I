@@ -39,7 +39,7 @@ func (*trackerServer) WorkerDone(c context.Context, req *admin.WorkerDoneRequest
 	if err = validateWorkerDoneRequest(req); err != nil {
 		return nil, errors.Annotate(err, "invalid request").Tag(grpcutil.InvalidArgumentTag).Err()
 	}
-	if err = workerDone(c, req, common.IsolateServer); err != nil {
+	if err = workerDone(c, req); err != nil {
 		return nil, errors.Annotate(err, "failed to track worker completion").Tag(grpcutil.InternalTag).Err()
 	}
 	return &admin.WorkerDoneResponse{}, nil
@@ -55,18 +55,16 @@ func validateWorkerDoneRequest(req *admin.WorkerDoneRequest) error {
 	if req.Worker == "" {
 		return errors.New("missing worker")
 	}
-	if req.IsolatedOutputHash != "" && req.BuildbucketOutput != "" {
-		return errors.New("too many results (both isolate and buildbucket exist)")
+	if req.IsolatedOutputHash != "" {
+		return errors.New("deprecated field IsolatedOutputHash")
 	}
 	return nil
 }
 
-func workerDone(c context.Context, req *admin.WorkerDoneRequest, isolator common.IsolateAPI) error {
+func workerDone(c context.Context, req *admin.WorkerDoneRequest) error {
 	logging.Fields{
 		"runID":             req.RunId,
 		"worker":            req.Worker,
-		"isolatedNamespace": req.IsolatedNamespace,
-		"isolatedOutput":    req.IsolatedOutputHash,
 		"buildbucketOutput": req.BuildbucketOutput,
 	}.Infof(c, "[tracker] Worker done request received.")
 
@@ -101,11 +99,10 @@ func workerDone(c context.Context, req *admin.WorkerDoneRequest, isolator common
 	// Process output and collect comments.
 	// This should only be done for successful analyzers with results.
 	var comments []*track.Comment
-	hasOutput := req.IsolatedOutputHash != "" || req.BuildbucketOutput != ""
+	hasOutput := req.BuildbucketOutput != ""
 	isAnalyzer := req.Provides == tricium.Data_RESULTS
 	if req.State == tricium.State_SUCCESS && isAnalyzer && hasOutput {
-		comments, err = collectComments(c, isolator, run.IsolateServerURL, req.IsolatedNamespace,
-			req.IsolatedOutputHash, req.BuildbucketOutput, functionName, workerKey)
+		comments, err = collectComments(c, req.BuildbucketOutput, functionName, workerKey)
 		if err != nil {
 			return errors.Annotate(err, "failed to get worker results").Err()
 		}
@@ -244,10 +241,8 @@ func workerDone(c context.Context, req *admin.WorkerDoneRequest, isolator common
 			}
 		}
 
-		// Update WorkerRunResult state, isolated or buildbucket output, and
-		// comment count.
+		// Update WorkerRunResult state: buildbucket output and comment count.
 		workerResult.State = req.State
-		workerResult.IsolatedOutput = req.IsolatedOutputHash
 		workerResult.BuildbucketOutput = req.BuildbucketOutput
 		workerResult.NumComments = len(comments)
 		if err := ds.Put(c, workerResult); err != nil {
@@ -488,26 +483,12 @@ func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *t
 
 // collectComments collects the comments in the results from the analyzer.
 //
-// Either isolatedNamespace and isolatedOutputHash, or buildbucketOutput,
-// should be populated.
-func collectComments(c context.Context, isolator common.IsolateAPI, isolateServerURL, isolatedNamespace, isolatedOutputHash, buildbucketOutput, analyzerName string, workerKey *ds.Key) ([]*track.Comment, error) {
+// buildbucketOutput should be populated.
+func collectComments(c context.Context, buildbucketOutput, analyzerName string, workerKey *ds.Key) ([]*track.Comment, error) {
 	var comments []*track.Comment
 	results := tricium.Data_Results{}
-	// If isolate is present, fetch the data. Otherwise, unmarshal the
-	// buildbucket output.
-	if isolatedOutputHash != "" {
-		resultsStr, err := isolator.FetchIsolatedResults(c, isolateServerURL, isolatedNamespace, isolatedOutputHash)
-		if err != nil {
-			return comments, errors.Annotate(err, "failed to fetch isolated worker result").Err()
-		}
-		logging.Infof(c, "Fetched isolated result (%q, %q): %q", isolatedNamespace, isolatedOutputHash, resultsStr)
-		if err := jsonpb.UnmarshalString(resultsStr, &results); err != nil {
-			return comments, errors.Annotate(err, "failed to unmarshal results data").Err()
-		}
-	} else {
-		if err := jsonpb.UnmarshalString(buildbucketOutput, &results); err != nil {
-			return comments, errors.Annotate(err, "failed to unmarshal results data").Err()
-		}
+	if err := jsonpb.UnmarshalString(buildbucketOutput, &results); err != nil {
+		return comments, errors.Annotate(err, "failed to unmarshal results data").Err()
 	}
 	for _, comment := range results.Comments {
 		uuid, err := uuid.NewRandom()

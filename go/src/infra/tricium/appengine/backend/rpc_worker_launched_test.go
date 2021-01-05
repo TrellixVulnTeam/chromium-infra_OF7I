@@ -19,29 +19,15 @@ import (
 func TestWorkerLaunchedRequest(t *testing.T) {
 	Convey("Test Environment", t, func() {
 		ctx := triciumtest.Context()
-
-		clangIsolatorUbuntu := "ClangIsolator_Ubuntu"
-		clangIsolatorWindows := "ClangIsolator_Windows"
-		fileIsolatorUbuntu := "GitFileIsolator_Ubuntu"
+		helloUbuntu := "Hello_Ubuntu"
 
 		workflowProvider := &mockWorkflowProvider{
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  clangIsolatorUbuntu,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  clangIsolatorWindows,
-						Needs: tricium.Data_FILES,
-					},
-					{
-						Name:  fileIsolatorUbuntu,
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Next: []string{
-							clangIsolatorUbuntu,
-							clangIsolatorWindows,
-						},
+						Name:     helloUbuntu,
+						Needs:    tricium.Data_GIT_FILE_DETAILS,
+						Provides: tricium.Data_RESULTS,
 					},
 				},
 			},
@@ -69,15 +55,15 @@ func TestWorkerLaunchedRequest(t *testing.T) {
 		// Mark worker as launched.
 		err = workerLaunched(ctx, &admin.WorkerLaunchedRequest{
 			RunId:  request.ID,
-			Worker: fileIsolatorUbuntu,
+			Worker: helloUbuntu,
 		})
 		So(err, ShouldBeNil)
 
 		Convey("Marks worker as launched", func() {
-			functionName, _, err := track.ExtractFunctionPlatform(fileIsolatorUbuntu)
+			functionName, _, err := track.ExtractFunctionPlatform(helloUbuntu)
 			So(err, ShouldBeNil)
 			functionRunKey := ds.NewKey(ctx, "FunctionRun", functionName, 0, workflowRunKey)
-			workerKey := ds.NewKey(ctx, "WorkerRun", fileIsolatorUbuntu, 0, functionRunKey)
+			workerKey := ds.NewKey(ctx, "WorkerRun", helloUbuntu, 0, functionRunKey)
 			wr := &track.WorkerRunResult{ID: 1, Parent: workerKey}
 			err = ds.Get(ctx, wr)
 			So(err, ShouldBeNil)
@@ -89,7 +75,7 @@ func TestWorkerLaunchedRequest(t *testing.T) {
 		})
 
 		Convey("Validates request", func() {
-			// Validate run id.
+			// Validate run ID.
 			s := &trackerServer{}
 			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{})
 			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = missing run ID")
@@ -100,45 +86,27 @@ func TestWorkerLaunchedRequest(t *testing.T) {
 			})
 			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = missing worker")
 
-			// Validate input hash.
-			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
-				RunId:  request.ID,
-				Worker: fileIsolatorUbuntu,
-			})
-			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = missing isolated input hash")
-
-			// Validate swarming and buildbucket missing.
+			// IsolatedInputHash is a deprecated field.
 			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
 				RunId:             request.ID,
-				Worker:            fileIsolatorUbuntu,
+				Worker:            helloUbuntu,
 				IsolatedInputHash: "hash",
 			})
-			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = missing swarming task and buildbucket ID, one must be present")
+			So(err, ShouldNotBeNil)
 
-			// Validate both swarming and buildbucket present.
-			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
-				RunId:              request.ID,
-				Worker:             fileIsolatorUbuntu,
-				IsolatedInputHash:  "hash",
-				SwarmingTaskId:     "id",
-				BuildbucketBuildId: 12,
-			})
-			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = have both swarming and buildbucket IDs, only one can be present")
-
-			// Validate swarming.
+			// SwarmingTaskId is a deprecated field.
 			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
 				RunId:             request.ID,
-				Worker:            fileIsolatorUbuntu,
+				Worker:            helloUbuntu,
 				IsolatedInputHash: "hash",
 				SwarmingTaskId:    "id",
 			})
-			So(err, ShouldBeNil)
+			So(err, ShouldNotBeNil)
 
 			// Validate buildbucket.
 			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
 				RunId:              request.ID,
-				Worker:             fileIsolatorUbuntu,
-				IsolatedInputHash:  "hash",
+				Worker:             helloUbuntu,
 				BuildbucketBuildId: 12,
 			})
 			So(err, ShouldBeNil)

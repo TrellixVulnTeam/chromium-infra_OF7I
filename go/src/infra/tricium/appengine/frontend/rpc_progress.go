@@ -148,14 +148,8 @@ func progress(c context.Context, runID int64) (tricium.State, []*tricium.Functio
 			State:       wr.State,
 			NumComments: int32(wr.NumComments),
 		}
-		if len(wr.SwarmingTaskID) > 0 {
-			p.SwarmingUrl = workflowRun.SwarmingServerURL
-			p.SwarmingTaskId = wr.SwarmingTaskID
-		}
-		if wr.BuildbucketBuildID > 0 {
-			p.BuildbucketHost = workflowRun.BuildbucketServerHost
-			p.BuildbucketBuildId = wr.BuildbucketBuildID
-		}
+		p.BuildbucketHost = workflowRun.BuildbucketServerHost
+		p.BuildbucketBuildId = wr.BuildbucketBuildID
 		res = append(res, p)
 	}
 	return requestRes.State, res, nil

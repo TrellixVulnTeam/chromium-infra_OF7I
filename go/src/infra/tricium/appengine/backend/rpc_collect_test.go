@@ -7,10 +7,8 @@ package main
 import (
 	"context"
 	"testing"
-	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/luci/common/clock"
 	tq "go.chromium.org/luci/gae/service/taskqueue"
 
 	admin "infra/tricium/api/admin/v1"
@@ -19,18 +17,17 @@ import (
 	"infra/tricium/appengine/common/triciumtest"
 )
 
-// Mock Swarming API that returns a canned task result.
-type mockSwarming struct {
+// Mock task server API that returns a canned task result.
+type mockTaskServer struct {
 	State common.ResultState
 }
 
-func (mockSwarming) Trigger(c context.Context, params *common.TriggerParameters) (*common.TriggerResult, error) {
-	return &common.TriggerResult{TaskID: "mocktaskid"}, nil
+func (mockTaskServer) Trigger(c context.Context, params *common.TriggerParameters) (*common.TriggerResult, error) {
+	return &common.TriggerResult{}, nil
 }
-func (m mockSwarming) Collect(c context.Context, params *common.CollectParameters) (*common.CollectResult, error) {
+func (m mockTaskServer) Collect(c context.Context, params *common.CollectParameters) (*common.CollectResult, error) {
 	return &common.CollectResult{
-		State:              m.State,
-		IsolatedOutputHash: "mockisolatedoutput",
+		State: m.State,
 	}, nil
 }
 
@@ -43,65 +40,20 @@ func TestCollectRequest(t *testing.T) {
 			Workflow: &admin.Workflow{
 				Workers: []*admin.Worker{
 					{
-						Name:  "Hello",
-						Needs: tricium.Data_GIT_FILE_DETAILS,
-						Impl:  &admin.Worker_Cmd{},
-					},
-					{
-						Name:     "World",
+						Name:     "Hello",
 						Needs:    tricium.Data_GIT_FILE_DETAILS,
-						Provides: tricium.Data_CLANG_DETAILS,
-						Impl:     &admin.Worker_Cmd{},
-						Next:     []string{"Goodbye"},
-					},
-					{
-						Name:  "Goodbye",
-						Needs: tricium.Data_CLANG_DETAILS,
-						Impl:  &admin.Worker_Recipe{},
+						Provides: tricium.Data_RESULTS,
+						Impl:     &admin.Worker_Recipe{},
 					},
 				},
 			},
 		}
 
-		Convey("Driver collect request for worker with successors", func() {
-			err := collect(ctx, &admin.CollectRequest{
-				RunId:  runID,
-				Worker: "World",
-			}, workflowProvider, common.MockTaskServerAPI, common.MockTaskServerAPI, common.MockIsolator)
-			So(err, ShouldBeNil)
-
-			Convey("Enqueues track request", func() {
-				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.TrackerQueue]), ShouldEqual, 1)
-			})
-
-			Convey("Enqueues driver request", func() {
-				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.DriverQueue]), ShouldEqual, 1)
-			})
-		})
-
-		Convey("Failing collect request for worker with successors", func() {
-			err := collect(ctx, &admin.CollectRequest{
-				RunId:  runID,
-				Worker: "World",
-			}, workflowProvider, mockSwarming{
-				State: common.Failure,
-			}, common.MockTaskServerAPI, common.MockIsolator)
-			So(err, ShouldBeNil)
-
-			Convey("Enqueues track requests", func() {
-				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.TrackerQueue]), ShouldEqual, 2)
-			})
-
-			Convey("Enqueues no driver requests", func() {
-				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.DriverQueue]), ShouldEqual, 0)
-			})
-		})
-
 		Convey("Driver collect request for worker without successors", func() {
 			err := collect(ctx, &admin.CollectRequest{
 				RunId:  runID,
 				Worker: "Hello",
-			}, workflowProvider, common.MockTaskServerAPI, common.MockTaskServerAPI, common.MockIsolator)
+			}, workflowProvider, common.MockTaskServerAPI)
 			So(err, ShouldBeNil)
 
 			Convey("Enqueues track request", func() {
@@ -112,36 +64,12 @@ func TestCollectRequest(t *testing.T) {
 				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.DriverQueue]), ShouldEqual, 0)
 			})
 		})
-
-		Convey("Driver collect request for incomplete worker without successors", func() {
-			err := collect(ctx, &admin.CollectRequest{
-				RunId:  runID,
-				Worker: "Hello",
-			}, workflowProvider, mockSwarming{
-				State: common.Pending,
-			}, common.MockTaskServerAPI, common.MockIsolator)
-			So(err, ShouldBeNil)
-
-			Convey("Re-enqueues the a driver (collect) request", func() {
-				So(len(tq.GetTestable(ctx).GetScheduledTasks()[common.DriverQueue]), ShouldEqual, 1)
-				task := tq.GetTestable(ctx).GetScheduledTasks()[common.DriverQueue]["5023444679101355902"]
-				So(task.ETA, ShouldEqual, clock.Now(ctx).Add(30*time.Second))
-			})
-		})
 	})
 }
 
 func TestValidateCollectRequest(t *testing.T) {
 	Convey("Test Environment", t, func() {
 		Convey("A request with run ID and worker name is valid", func() {
-			So(validateCollectRequest(&admin.CollectRequest{
-				RunId:             int64(1234),
-				Worker:            "Hello",
-				IsolatedInputHash: "53df47e7dcfecdafb25030cc9fabc2c18f6d9e82",
-			}), ShouldBeNil)
-
-			// Isolated input hash is optional, and may not be present
-			// if the task was aborted or failed in some other way.
 			So(validateCollectRequest(&admin.CollectRequest{
 				RunId:  int64(1234),
 				Worker: "Hello",

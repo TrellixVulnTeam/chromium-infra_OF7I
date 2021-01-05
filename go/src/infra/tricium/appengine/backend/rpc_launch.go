@@ -15,7 +15,6 @@ import (
 	"go.chromium.org/luci/grpc/grpcutil"
 
 	admin "infra/tricium/api/admin/v1"
-	tricium "infra/tricium/api/v1"
 	"infra/tricium/appengine/common"
 	"infra/tricium/appengine/common/config"
 )
@@ -38,8 +37,7 @@ func (r *launcherServer) Launch(c context.Context, req *admin.LaunchRequest) (re
 		return nil, errors.Annotate(err, "invalid request").
 			Tag(grpcutil.InvalidArgumentTag).Err()
 	}
-	if err := launch(c, req, config.LuciConfigServer, common.IsolateServer,
-		common.SwarmingServer, common.PubsubServer); err != nil {
+	if err := launch(c, req, config.LuciConfigServer, common.PubsubServer); err != nil {
 		return nil, err
 	}
 	return &admin.LaunchResponse{}, nil
@@ -65,8 +63,7 @@ func validateLaunchRequest(req *admin.LaunchRequest) error {
 	return nil
 }
 
-func launch(c context.Context, req *admin.LaunchRequest, cp config.ProviderAPI, isolator common.IsolateAPI,
-	swarming common.TaskServerAPI, pubsub common.PubSubAPI) error {
+func launch(c context.Context, req *admin.LaunchRequest, cp config.ProviderAPI, pubsub common.PubSubAPI) error {
 	// Guard checking if there is already a stored workflow for the run ID
 	// in the request; if so stop here.
 	w := &config.Workflow{ID: req.RunId}
@@ -84,12 +81,27 @@ func launch(c context.Context, req *admin.LaunchRequest, cp config.ProviderAPI, 
 	if err != nil {
 		return errors.Annotate(err, "failed to get project config").Err()
 	}
+
 	logging.Fields{
+		"runID":   req.RunId,
 		"project": req.Project,
-	}.Debugf(c, "Got project config.")
+	}.Infof(c, "About to generate workflow.")
+
 	wf, err := config.Generate(sc, pc, req.Files, req.GitRef, req.GitUrl)
 	if err != nil {
-		return errors.Annotate(err, "failed to generate workflow config for project %q", req.Project).Err()
+		// Generate may fail if there are non-recipe-based analyzers.
+		// To help ease the transition, just log a warning and abort.
+		logging.Fields{
+			"project": req.Project,
+		}.Warningf(c, "Workflow generation failed, %s.", err)
+		return nil
+	}
+	// If there is nothing to run, abort and log a warning.
+	if len(wf.Functions) == 0 {
+		logging.Fields{
+			"project": req.Project,
+		}.Warningf(c, "Workflow had no functions to run.")
+		return nil
 	}
 
 	// Set up pubsub for worker completion notification.
@@ -116,25 +128,12 @@ func launch(c context.Context, req *admin.LaunchRequest, cp config.ProviderAPI, 
 	wfTask := tq.NewPOSTTask("/tracker/internal/workflow-launched", nil)
 	wfTask.Payload = b
 
-	// Isolate initial input.
-	inputHash, err := isolator.IsolateGitFileDetails(c, wf.IsolateServer, &tricium.Data_GitFileDetails{
-		Repository:    req.GitUrl,
-		Ref:           req.GitRef,
-		Files:         req.Files,
-		CommitMessage: req.CommitMessage,
-	})
-	if err != nil {
-		return errors.Annotate(err, "failed to isolate git file details").Err()
-	}
-	logging.Infof(c, "[launcher] Isolated git file details, hash: %q", inputHash)
-
 	// Prepare trigger requests for root workers.
 	wTasks := []*tq.Task{}
 	for _, worker := range wf.RootWorkers() {
 		b, err := proto.Marshal(&admin.TriggerRequest{
-			RunId:             req.RunId,
-			IsolatedInputHash: inputHash,
-			Worker:            worker,
+			RunId:  req.RunId,
+			Worker: worker,
 		})
 		if err != nil {
 			return errors.Annotate(err, "failed to encode driver request").Err()

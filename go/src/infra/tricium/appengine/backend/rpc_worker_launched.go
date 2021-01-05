@@ -29,14 +29,15 @@ func (*trackerServer) WorkerLaunched(c context.Context, req *admin.WorkerLaunche
 	if req.Worker == "" {
 		return nil, errors.New("missing worker", grpcutil.InvalidArgumentTag)
 	}
-	if req.IsolatedInputHash == "" {
-		return nil, errors.New("missing isolated input hash", grpcutil.InvalidArgumentTag)
+	if req.IsolatedInputHash != "" {
+		return nil, errors.New("deprecated field isolated input hash", grpcutil.InvalidArgumentTag)
 	}
-	if req.SwarmingTaskId == "" && req.BuildbucketBuildId == 0 {
-		return nil, errors.New("missing swarming task and buildbucket ID, one must be present", grpcutil.InvalidArgumentTag)
+	if req.SwarmingTaskId != "" {
+		return nil, errors.New("deprecated field swarming task ID", grpcutil.InvalidArgumentTag)
+
 	}
-	if req.SwarmingTaskId != "" && req.BuildbucketBuildId != 0 {
-		return nil, errors.New("have both swarming and buildbucket IDs, only one can be present", grpcutil.InvalidArgumentTag)
+	if req.BuildbucketBuildId == 0 {
+		return nil, errors.New("missing buildbucket ID", grpcutil.InvalidArgumentTag)
 	}
 	if err := workerLaunched(c, req); err != nil {
 		return nil, errors.Annotate(err, "failed to track worker launched").
@@ -47,11 +48,9 @@ func (*trackerServer) WorkerLaunched(c context.Context, req *admin.WorkerLaunche
 
 func workerLaunched(c context.Context, req *admin.WorkerLaunchedRequest) error {
 	logging.Fields{
-		"runID":         req.RunId,
-		"worker":        req.Worker,
-		"taskID":        req.SwarmingTaskId,
-		"buildID":       req.BuildbucketBuildId,
-		"isolatedInput": req.IsolatedInputHash,
+		"runID":   req.RunId,
+		"worker":  req.Worker,
+		"buildID": req.BuildbucketBuildId,
 	}.Infof(c, "Request received.")
 	// Compute needed keys.
 	requestKey := ds.NewKey(c, "AnalyzeRequest", "", req.RunId, nil)
@@ -72,8 +71,6 @@ func workerLaunched(c context.Context, req *admin.WorkerLaunchedRequest) error {
 				}
 				if wr.State == tricium.State_PENDING {
 					wr.State = tricium.State_RUNNING
-					wr.IsolatedInput = req.IsolatedInputHash
-					wr.SwarmingTaskID = req.SwarmingTaskId
 					wr.BuildbucketBuildID = req.BuildbucketBuildId
 					if err := ds.Put(c, wr); err != nil {
 						return errors.Annotate(err, "failed to update WorkerRunResult").Err()
