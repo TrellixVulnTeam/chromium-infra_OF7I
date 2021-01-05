@@ -74,9 +74,9 @@ function computeFieldDefName(project, fieldId) {
 /**
  * Returns the ComponentDef's resource name.
  * @param {string} project The display name of the project, e.g. 'chromium'.
- * @param {number} componentId ID of the ComponentDef.
+ * @param {number|string} componentIdOrPath ID or value of the ComponentDef.
  * @return {string}
 */
-function computeComponentDefName(project, componentId) {
-  return `projects/${project}/componentDefs/${componentId}`;
+function computeComponentDefName(project, componentIdOrPath) {
+  return `projects/${project}/componentDefs/${componentIdOrPath}`;
 }

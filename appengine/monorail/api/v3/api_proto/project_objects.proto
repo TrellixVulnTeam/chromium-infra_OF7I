@@ -309,6 +309,10 @@ message ComponentDef {
   }
 
   // Resource name of the component, aka identifier.
+  // the API will always return ComponentDef names with format:
+  // projects/{project}/componentDefs/<component_def_id>.
+  // However the API will accept ComponentDef names with formats:
+  // projects/{project}/componentDefs/<component_def_id>|<value>.
   string name = 1;
   // String value of the component, ie 'Tools>Stability' or 'Blink'.
   string value = 2;

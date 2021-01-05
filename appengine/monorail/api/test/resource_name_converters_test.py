@@ -627,7 +627,7 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testIngestComponentDefNames(self):
     names = [
         'projects/proj/componentDefs/%d' % self.component_def_1_id,
-        'projects/proj/componentDefs/%d' % self.component_def_2_id
+        'projects/proj/componentDefs/%s' % self.component_def_2_path.lower()
     ]
     actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
     self.assertEqual(actual, [
@@ -651,21 +651,21 @@ class ResourceNameConverterTest(unittest.TestCase):
       rnc.IngestComponentDefNames(self.cnxn, names, self.services)
 
     names = [
-        'projects/proj/componentDefs/999', 'projects/proj/componentDefs/998'
+        'projects/proj/componentDefs/999', 'projects/proj/componentDefs/cow'
     ]
-    expected_error = 'Component not found: 999.\nComponent not found: 998.'
+    expected_error = 'Component not found: 999.\nComponent not found: \'cow\'.'
     with self.assertRaisesRegexp(exceptions.NoSuchComponentException,
                                  expected_error):
       rnc.IngestComponentDefNames(self.cnxn, names, self.services)
 
   def testIngestComponentDefNames_InvalidNames(self):
     with self.assertRaises(exceptions.InputException):
-      rnc.IngestHotlistName('projects/proj/componentDefs/notdigits')
+      rnc.IngestHotlistName('projects/proj/componentDefs/not.path.or.id')
 
   def testIngestComponentDefNames_CrossProject(self):
     names = [
         'projects/proj/componentDefs/%d' % self.component_def_1_id,
-        'projects/goose/componentDefs/%d' % self.component_def_3_id
+        'projects/goose/componentDefs/%s' % self.component_def_3_path
     ]
     actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
     self.assertEqual(actual, [

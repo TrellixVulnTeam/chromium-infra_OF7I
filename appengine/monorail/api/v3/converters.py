@@ -738,8 +738,7 @@ class Converter(object):
 
       # Extract components.
       try:
-        project_comp_ids = ingestedDict[
-            'component_ids'] = rnc.IngestComponentDefNames(
+        project_comp_ids = rnc.IngestComponentDefNames(
             self.cnxn, [cv.component for cv in issue.components], self.services)
         ingestedDict['component_ids'] = [
             comp_id for (_pid, comp_id) in project_comp_ids]

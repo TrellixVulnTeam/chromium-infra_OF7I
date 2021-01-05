@@ -78,7 +78,8 @@ STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 COMPONENT_DEF_RE = re.compile(
-    r'%s\/componentDefs\/(?P<component_id>\d+)' % PROJECT_NAME_PATTERN)
+    r'%s\/componentDefs\/((?P<component_id>\d+)|(?P<path>[a-zA-Z>]+))' %
+    (PROJECT_NAME_PATTERN))
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_id}'
 APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_id}'
 
@@ -836,43 +837,52 @@ def IngestComponentDefNames(cnxn, names, services):
     NoSuchProjectException if no project exists with given id.
     NoSuchComponentException if a component is not found.
   """
-  # Parse as many (component id, project name) pairs as possible.
-  parsed_compid_projectnames = []
+  # Parse as many (component id or path, project name) pairs as possible.
+  parsed_comp_projectnames = []
   with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
     for name in names:
       try:
         match = _GetResourceNameMatch(name, COMPONENT_DEF_RE)
-        component_id = int(match.group('component_id'))
         project_name = match.group('project_name')
-        parsed_compid_projectnames.append((component_id, project_name))
+        component_id = match.group('component_id')
+        if component_id:
+          parsed_comp_projectnames.append((int(component_id), project_name))
+        else:
+          parsed_comp_projectnames.append(
+              (str(match.group('path')), project_name))
       except exceptions.InputException as e:
         err_agg.AddErrorMessage(e.message)
 
   # Validate as many projects as possible.
-  project_names = {
-      project_name for _, project_name in parsed_compid_projectnames
-  }
+  project_names = {project_name for _, project_name in parsed_comp_projectnames}
   project_ids_by_name = services.project.LookupProjectIDs(cnxn, project_names)
   with exceptions.ErrorAggregator(exceptions.NoSuchProjectException) as err_agg:
-    for _, project_name in parsed_compid_projectnames:
+    for _, project_name in parsed_comp_projectnames:
       if project_name not in project_ids_by_name:
         err_agg.AddErrorMessage('Project not found: %s.' % project_name)
 
   configs_by_pid = services.config.GetProjectConfigs(
       cnxn, project_ids_by_name.values())
   compid_by_pid = {}
+  comp_path_by_pid = {}
   for pid, config in configs_by_pid.items():
     compid_by_pid[pid] = {comp.component_id for comp in config.component_defs}
+    comp_path_by_pid[pid] = {
+        comp.path.lower(): comp.component_id for comp in config.component_defs
+    }
 
   # Find as many components as possible
   pid_cid_pairs = []
   with exceptions.ErrorAggregator(
       exceptions.NoSuchComponentException) as err_agg:
-    for compid, pname in parsed_compid_projectnames:
+    for comp, pname in parsed_comp_projectnames:
       pid = project_ids_by_name[pname]
-      if compid not in compid_by_pid[pid]:
-        err_agg.AddErrorMessage('Component not found: %d.' % compid)
-      pid_cid_pairs.append((pid, compid))
+      if isinstance(comp, int) and comp in compid_by_pid[pid]:
+        pid_cid_pairs.append((pid, comp))
+      elif isinstance(comp, str) and comp.lower() in comp_path_by_pid[pid]:
+        pid_cid_pairs.append((pid, comp_path_by_pid[pid][comp.lower()]))
+      else:
+        err_agg.AddErrorMessage('Component not found: %r.' % comp)
 
   return pid_cid_pairs
 
