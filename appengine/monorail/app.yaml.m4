@@ -90,8 +90,6 @@ libraries:
   version: 1.0.0
 - name: MySQLdb
   version: "latest"
-- name: pycrypto
-  version: "2.6"
 - name: ssl # needed for google.auth.transport and GAE_USE_SOCKETS_HTTPLIB
   version: "2.7.11"
 

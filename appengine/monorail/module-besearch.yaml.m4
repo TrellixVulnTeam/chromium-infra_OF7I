@@ -62,8 +62,6 @@ libraries:
   version: 1.0.0
 - name: MySQLdb
   version: "latest"
-- name: django
-  version: 1.11
 - name: ssl
   version: latest
 
