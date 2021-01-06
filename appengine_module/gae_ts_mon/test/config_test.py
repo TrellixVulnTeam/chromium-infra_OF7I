@@ -51,19 +51,6 @@ class InitializeTest(test_case.TestCase):
     self.assertEqual('appengine', self.mock_state.target.region)
     self.assertEqual('v1a', self.mock_state.target.hostname)
 
-  def test_sets_target_py3(self):
-    shared.IN_PY3_ENV = True
-    os.environ['GOOGLE_CLOUD_PROJECT'] = 'sample-app'
-    os.environ['GAE_SERVICE'] = 'default'
-    os.environ['GAE_VERSION'] = 'v1a'
-
-    config.initialize(self.app, is_local_unittest=False)
-
-    self.assertEqual('sample-app', self.mock_state.target.service_name)
-    self.assertEqual('default', self.mock_state.target.job_name)
-    self.assertEqual('appengine', self.mock_state.target.region)
-    self.assertEqual('v1a', self.mock_state.target.hostname)
-
   def test_sets_monitor(self):
     os.environ['SERVER_SOFTWARE'] = 'Production'  # != 'Development'
     config.initialize(self.app, is_local_unittest=False)

@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import
 import unittest
-import os
 
 import gae_ts_mon
 
@@ -24,11 +23,3 @@ class SharedTest(test_case.TestCase):
 
     # Make sure it does not pollute the default namespace.
     self.assertIsNone(shared.Instance.get_by_id(entity.key.id()))
-
-  def test_instance_key_id_py3(self):
-    shared.IN_PY3_ENV = True
-    os.environ['GAE_INSTANCE'] = 'instance'
-    os.environ['GAE_VERSION'] = 'version'
-    os.environ['GAE_SERVICE'] = 'default'
-
-    self.assertEqual(shared.instance_key_id(), 'instance.version.default')

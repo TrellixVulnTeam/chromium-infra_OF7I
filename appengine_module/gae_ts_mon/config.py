@@ -54,9 +54,6 @@ def _shutdown_hook(time_fn=time.time):
 
 
 def _internal_callback():
-  # TODO(crbug.com/monorail/8841) This can only be replaced by the Admin API,
-  # which isn't a drop-in replacement; requires each project enabling
-  # "App Engine Admin API", installing a client library, and making REST call.
   for module_name in modules.get_modules():
     target_fields = {
         'task_num': 0,
@@ -105,16 +102,9 @@ def initialize(
     job_name = 'unittest'
     hostname = 'unittest'
   else:
-    if shared.IN_PY3_ENV:
-      service_name = os.getenv('GOOGLE_CLOUD_PROJECT', '')
-      job_name = os.getenv('GAE_SERVICE', '')
-      hostname = os.getenv('GAE_VERSION', '')
-    else:
-      service_name = app_identity.get_application_id()
-      job_name = modules.get_current_module_name()
-      hostname = modules.get_current_version_name()
-    # TODO(crbug.com/monorail/8841): follow up on whether
-    # runtime.set_shutdown_hook is supported in python 3 env.
+    service_name = app_identity.get_application_id()
+    job_name = modules.get_current_module_name()
+    hostname = modules.get_current_version_name()
     runtime.set_shutdown_hook(_shutdown_hook)
 
   interface.state.target = targets.TaskTarget(

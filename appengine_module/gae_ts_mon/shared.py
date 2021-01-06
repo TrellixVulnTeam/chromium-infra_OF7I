@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import contextlib
-import os
 
 from google.appengine.api import modules
 from google.appengine.api import namespace_manager
@@ -23,8 +22,6 @@ INSTANCE_EXPECTED_TO_HAVE_TASK_NUM_SEC = 5 * 60
 INTERNAL_CALLBACK_NAME = '__gae_ts_mon_callback'
 # The cron request path for the tasknum assignment handler.
 CRON_REQUEST_PATH_TASKNUM_ASSIGNER = '/internal/cron/ts_mon/send'
-# GAEv1's python2 env does not expose this variable.
-IN_PY3_ENV = os.getenv('GAE_RUNTIME', '').startswith('python3')
 
 
 appengine_default_version = metrics.StringMetric(
@@ -61,15 +58,10 @@ class Instance(ndb.Model):
 
 
 def instance_key_id():
-  if IN_PY3_ENV:
-    instance_id = os.getenv('GAE_INSTANCE', '')
-    version_name = os.getenv('GAE_VERSION', '')
-    service_name = os.getenv('GAE_SERVICE', '')
-  else:
-    instance_id = modules.get_current_instance_id()
-    version_name = modules.get_current_version_name()
-    service_name = modules.get_current_module_name()
-  return '{}.{}.{}'.format(instance_id, version_name, service_name)
+  return '%s.%s.%s' % (
+      modules.get_current_instance_id(),
+      modules.get_current_version_name(),
+      modules.get_current_module_name())
 
 
 @contextlib.contextmanager
