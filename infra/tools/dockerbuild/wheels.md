@@ -1407,29 +1407,6 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 20.9.0
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/gevent/${vpython_platform}"
-  version: "version:20.9.0"
->
-```
-
-
-* *linux-arm64*
-* *linux-armv6*
-* *linux-mips*
-* *linux-mips64*
-* *linux-mipsel*
-* *mac-x64*
-* *manylinux-x64*
-* *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
-* *windows-x64*
-* *windows-x86*
-
 ## **gitdb2**
 
 ### 2.0.3
