@@ -38,7 +38,7 @@ import (
 
 const dutLeaseTaskPriority = 15
 
-var maxServiceVersion = test_platform.ServiceVersion{}
+var maxServiceVersion = test_platform.ServiceVersion{SkylabTool: 1}
 
 func addServiceVersion(props *structpb.Struct) *structpb.Struct {
 	var err error
