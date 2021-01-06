@@ -245,6 +245,22 @@ def GetNeededIsolatedDataFromTaskResults(task_results, only_failure):
   return needed_isolated_data
 
 
+def GetFailedSwarmingTasksGroupedByStepName(task_results):
+  """ Return a dictionary of failed swarming task id grouped by step name
+  Args:
+    task_results (list): An array of SwarmingTaskData to check.
+  """
+  step_to_task_ids_map = defaultdict(list)
+  for item in task_results:
+    swarming_step_name = item.tags.get(
+        'stepname')[0] if 'stepname' in item.tags else None
+    if not swarming_step_name:
+      continue
+    if item.non_internal_failure:
+      step_to_task_ids_map[swarming_step_name].append(item.task_id)
+  return step_to_task_ids_map
+
+
 def GetIsolatedDataForStep(builder_name,
                            build_number,
                            step_name,
@@ -293,6 +309,19 @@ def GetIsolatedDataForFailedStepsInABuild(builder_name, build_number,
     if step in failed_steps:
       build_isolated_data[step] = data
   return build_isolated_data
+
+
+def GetSwarmingTaskIdsForFailedSteps(builder_name, build_number, failed_steps,
+                                     http_client):
+  items = ListSwarmingTasksDataByTags(http_client, builder_name, build_number)
+  if not items:
+    return {}
+  step_to_swarming_ids_map = GetFailedSwarmingTasksGroupedByStepName(items)
+  result = {}
+  for step, swarming_ids in step_to_swarming_ids_map.iteritems():
+    if step in failed_steps:
+      result[step] = swarming_ids
+  return result
 
 
 def GetIsolatedShaForStep(builder_name, build_number, step_name, http_client):

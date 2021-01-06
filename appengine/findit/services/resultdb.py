@@ -9,22 +9,32 @@ import sys
 from components.prpc import client as prpc_client
 from go.chromium.org.luci.resultdb.proto.v1 import resultdb_pb2
 from go.chromium.org.luci.resultdb.proto.v1 import resultdb_prpc_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import predicate_pb2
 from google.protobuf.field_mask_pb2 import FieldMask
 
 RESULTDB_HOSTNAME = "results.api.cr.dev"
 
-def query_resultdb(inv_id):
-  logging.info("Query test results for invocation %s from resultdb", inv_id)
+
+def resultdb_req(inv_name, only_variants_with_unexpected_results):
+  expectancy = predicate_pb2.TestResultPredicate.Expectancy.ALL
+  if only_variants_with_unexpected_results:
+    expectancy = predicate_pb2.TestResultPredicate.Expectancy.VARIANTS_WITH_UNEXPECTED_RESULTS  # pylint: disable=line-too-long
+
+  return resultdb_pb2.QueryTestResultsRequest(
+      invocations=[inv_name],
+      read_mask=FieldMask(paths=["*"]),
+      page_size=1000,
+      predicate=predicate_pb2.TestResultPredicate(expectancy=expectancy),
+  )
+
+
+def query_resultdb(inv_name, only_variants_with_unexpected_results=True):
+  logging.info("Query test results for invocation %s from resultdb", inv_name)
   client = resultdb_client(RESULTDB_HOSTNAME)
-  inv_name = "invocations/" + inv_id
   next_page_token = None
   results = []
   while True:
-    req = resultdb_pb2.QueryTestResultsRequest(
-        invocations=[inv_name],
-        read_mask=FieldMask(paths=["*"]),
-        page_size=1000,
-    )
+    req = resultdb_req(inv_name, only_variants_with_unexpected_results)
     if next_page_token is not None:
       req.page_token = next_page_token
     resp = client.QueryTestResults(

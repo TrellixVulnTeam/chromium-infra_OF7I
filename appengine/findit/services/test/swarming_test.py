@@ -18,56 +18,43 @@ from services.parameters import TestFailedSteps
 from waterfall import waterfall_config
 from waterfall.test import wf_testcase
 
-_SAMPLE_BUILD_STEP_DATA = [
-    {
-        'failure':
-            True,
-        'id':
-            '2944afa502297110',
-        'internal_failure':
-            False,
-        'name':
-            'unit_tests/Windows-XP-SP3/123c706dde/XP Tests (1)/39454',
-        'state':
-            112,
-        'tags': [
-            'buildername:XP Tests (1)', 'buildnumber:39442', 'cpu:x86-32',
-            'data:123c706ddeeadcc761d612f732ddde9322400446', 'gpu:none',
-            'master:chromium.win', 'name:unit_tests', 'os:Windows-XP-SP3',
-            'pool:Chrome', 'priority:25', 'project:chromium', 'purpose:CI',
-            'purpose:post-commit', 'stepname:unit_tests', 'user:'
-        ],
-        'try_number':
-            0,
-        'user':
-            '',
-        'outputs_ref': {
-            'isolatedserver': 'https://isolateserver.appspot.com',
-            'namespace': 'default-gzip',
-            'isolated': 'isolatedhashunittests'
-        }
-    },
-    {
-        'failure':
-            False,
-        'id':
-            '2944afa502297111',
-        'internal_failure':
-            False,
-        'tags': [
-            'buildername:XP Tests (1)', 'buildnumber:39442', 'cpu:x86-32',
-            'data:123c706ddeeadcc761d612f732ddde9322400446', 'gpu:none',
-            'master:chromium.win', 'name:unit_tests', 'os:Windows-XP-SP3',
-            'pool:Chrome', 'priority:25', 'project:chromium', 'purpose:CI',
-            'purpose:post-commit', 'stepname:unit_tests', 'user:'
-        ],
-        'outputs_ref': {
-            'isolatedserver': 'https://isolateserver.appspot.com',
-            'namespace': 'default-gzip',
-            'isolated': 'isolatedhashunittests1'
-        }
+_SAMPLE_BUILD_STEP_DATA = [{
+    'failure': True,
+    'task_id': '2944afa502297110',
+    'internal_failure': False,
+    'name': 'unit_tests/Windows-XP-SP3/123c706dde/XP Tests (1)/39454',
+    'state': 112,
+    'tags': [
+        'buildername:XP Tests (1)', 'buildnumber:39442', 'cpu:x86-32',
+        'data:123c706ddeeadcc761d612f732ddde9322400446', 'gpu:none',
+        'master:chromium.win', 'name:unit_tests', 'os:Windows-XP-SP3',
+        'pool:Chrome', 'priority:25', 'project:chromium', 'purpose:CI',
+        'purpose:post-commit', 'stepname:unit_tests', 'user:'
+    ],
+    'try_number': 0,
+    'user': '',
+    'outputs_ref': {
+        'isolatedserver': 'https://isolateserver.appspot.com',
+        'namespace': 'default-gzip',
+        'isolated': 'isolatedhashunittests'
     }
-]
+}, {
+    'failure': False,
+    'task_id': '2944afa502297111',
+    'internal_failure': False,
+    'tags': [
+        'buildername:XP Tests (1)', 'buildnumber:39442', 'cpu:x86-32',
+        'data:123c706ddeeadcc761d612f732ddde9322400446', 'gpu:none',
+        'master:chromium.win', 'name:unit_tests', 'os:Windows-XP-SP3',
+        'pool:Chrome', 'priority:25', 'project:chromium', 'purpose:CI',
+        'purpose:post-commit', 'stepname:unit_tests', 'user:'
+    ],
+    'outputs_ref': {
+        'isolatedserver': 'https://isolateserver.appspot.com',
+        'namespace': 'default-gzip',
+        'isolated': 'isolatedhashunittests1'
+    }
+}]
 
 _REF_REQUEST_WITH_COMMAND = {
     'expiration_secs': '3600',
@@ -207,6 +194,7 @@ _REF_REQUEST_WITH_EXTRA_ARGS = {
     'pubsub_userdata': None,
 }
 
+
 class SwarmingTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(swarming_util, 'ListTasks', return_value={})
@@ -224,9 +212,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
     isolated_sha = 'a1b2c3d4'
 
     mocked_list_swarming_tasks_data.return_value = [
-        SwarmingTaskData({
-            'tags': ['data:a1b2c3d4']
-        })
+        SwarmingTaskData({'tags': ['data:a1b2c3d4']})
     ]
 
     self.assertEqual(
@@ -286,29 +272,22 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
     ]
 
     data = swarming.GetIsolatedDataForStep(
-        builder_name,
-        build_number,
-        step_name,
-        None,
-        only_failure=False)
-    expected_data = [
-        {
-            'digest':
-                'isolatedhashunittests',
-            'namespace':
-                'default-gzip',
-            'isolatedserver':
-                waterfall_config.GetSwarmingSettings().get('isolated_server')
-        },
-        {
-            'digest':
-                'isolatedhashunittests1',
-            'namespace':
-                'default-gzip',
-            'isolatedserver':
-                waterfall_config.GetSwarmingSettings().get('isolated_server')
-        }
-    ]
+        builder_name, build_number, step_name, None, only_failure=False)
+    expected_data = [{
+        'digest':
+            'isolatedhashunittests',
+        'namespace':
+            'default-gzip',
+        'isolatedserver':
+            waterfall_config.GetSwarmingSettings().get('isolated_server')
+    }, {
+        'digest':
+            'isolatedhashunittests1',
+        'namespace':
+            'default-gzip',
+        'isolatedserver':
+            waterfall_config.GetSwarmingSettings().get('isolated_server')
+    }]
     self.assertEqual(sorted(expected_data), sorted(data))
 
   @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags', return_value=[])
@@ -329,12 +308,8 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
     step_name = 's1'
 
     mock_data.return_value = [
-        SwarmingTaskData({
-            'failure': True
-        }),
-        SwarmingTaskData({
-            'failure': False
-        })
+        SwarmingTaskData({'failure': True}),
+        SwarmingTaskData({'failure': False})
     ]
 
     data = swarming.GetIsolatedDataForStep(builder_name, build_number,
@@ -465,9 +440,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       swarming,
       'ListSwarmingTasksDataByTags',
-      return_value=[SwarmingTaskData({
-          'task_id': 'task_id'
-      })])
+      return_value=[SwarmingTaskData({'task_id': 'task_id'})])
   @mock.patch.object(swarming_util, 'GetSwarmingTaskRequest')
   def testGetReferredSwarmingTaskRequestInfo(self, mock_get, _):
     request = SwarmingTaskRequest.FromSerializable(_REF_REQUEST_WITH_COMMAND)
@@ -628,3 +601,18 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
   def testGetSwarmingTaskUrl(self):
     task_id = 'task_id'
     self.assertIn(task_id, swarming.GetSwarmingTaskUrl(task_id))
+
+  @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
+  def testGetSwarmingTaskIdsForFailedSteps(self, mock_fn):
+    builder_name = 'b'
+    build_number = 223
+    failed_steps = {'unit_tests': ''}
+
+    mock_fn.return_value = [
+        SwarmingTaskData(item) for item in _SAMPLE_BUILD_STEP_DATA
+    ]
+
+    data = swarming.GetSwarmingTaskIdsForFailedSteps(builder_name, build_number,
+                                                     failed_steps, None)
+    expected_data = {"unit_tests": ["2944afa502297110"]}
+    self.assertEqual(expected_data, data)

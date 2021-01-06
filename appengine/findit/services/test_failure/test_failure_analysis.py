@@ -48,8 +48,9 @@ def _AnalyzeTestFailureOnOneBuild(build_number,
   step_analysis_result['suspected_cls'].append(new_suspected_cl_dict)
 
   if not has_lower_level_info:
-    build_failure_analysis.SaveFailureToMap(
-        cl_failure_map, new_suspected_cl_dict, step_name, test_name, max_score)
+    build_failure_analysis.SaveFailureToMap(cl_failure_map,
+                                            new_suspected_cl_dict, step_name,
+                                            test_name, max_score)
 
 
 def AnalyzeTestFailure(failure_info, change_logs, deps_info, failure_signals):
@@ -207,12 +208,13 @@ def HeuristicAnalysisForTest(heuristic_params):
   build_number = failure_info.build_number
 
   # 1. Detects first failed builds for failed test step, updates failure_info.
-  failure_info = ci_failure.CheckForFirstKnownFailure(
-      master_name, builder_name, build_number, failure_info)
+  failure_info = ci_failure.CheckForFirstKnownFailure(master_name, builder_name,
+                                                      build_number,
+                                                      failure_info)
 
   # Checks first failed builds for each failed test.
   ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
-      master_name, builder_name, build_number, failure_info)
+      master_name, builder_name, build_number, failure_info, use_resultdb=False)
 
   analysis = WfAnalysis.Get(master_name, builder_name, build_number)
   analysis.failure_info = failure_info.ToSerializable()
@@ -234,17 +236,20 @@ def HeuristicAnalysisForTest(heuristic_params):
   deps_info = deps.ExtractDepsInfo(failure_info, change_logs)
 
   # 5. Analyzes the test failure using information collected above.
-  heuristic_result, suspected_cls = AnalyzeTestFailure(
-      failure_info, change_logs, deps_info, signals)
+  heuristic_result, suspected_cls = AnalyzeTestFailure(failure_info,
+                                                       change_logs, deps_info,
+                                                       signals)
 
   # Save results and other info to analysis.
   build_failure_analysis.SaveAnalysisAfterHeuristicAnalysisCompletes(
       master_name, builder_name, build_number, heuristic_result, suspected_cls)
 
   # Save suspected_cls to data_store.
-  build_failure_analysis.SaveSuspectedCLs(
-      suspected_cls, failure_info.master_name, failure_info.builder_name,
-      failure_info.build_number, failure_info.failure_type)
+  build_failure_analysis.SaveSuspectedCLs(suspected_cls,
+                                          failure_info.master_name,
+                                          failure_info.builder_name,
+                                          failure_info.build_number,
+                                          failure_info.failure_type)
 
   # Monitors analysis status change.
   # Only record one metric for each analysis.
@@ -380,8 +385,8 @@ def GetsFirstFailureAtTestLevel(master_name, builder_name, build_number,
                                  test_failure_details.first_failure)
         failure_result_map[failed_step_name][failed_test_name] = task_key
 
-      if (test_failure_details.first_failure == test_failure_details
-          .current_failure):
+      if (test_failure_details.first_failure ==
+          test_failure_details.current_failure):
         # First time failure, add to result_steps.
         result_steps[failed_step_name].append(
             test_failure_details.base_test_name)
@@ -436,8 +441,9 @@ def GetSuspectedCLsWithFailures(master_name, builder_name, build_number,
       for test in failure.tests:
         for suspected_cl in test.suspected_cls or []:
           suspected_cls_with_failures.append([
-              step_util.LegacyGetCanonicalStepName(
-                  master_name, builder_name, build_number, failure.step_name),
+              step_util.LegacyGetCanonicalStepName(master_name, builder_name,
+                                                   build_number,
+                                                   failure.step_name),
               suspected_cl.revision, test.test_name
           ])
     else:

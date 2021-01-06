@@ -13,10 +13,13 @@ from google.appengine.ext import ndb
 from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
 
 from common.findit_http_client import FinditHttpClient
+from infra_api_clients.swarming import swarming_util
 from libs.test_results import test_results_util
+from libs.test_results.resultdb_test_results import ResultDBTestResults
 from model.wf_step import WfStep
 from services import ci_failure
 from services import constants
+from services import resultdb
 from services import step_util
 from services import swarmed_test_util
 from services import swarming
@@ -71,9 +74,35 @@ def _SaveIsolatedResultToStep(master_name, builder_name, build_number,
     step.put()
 
 
-def _StartTestLevelCheckForFirstFailure(master_name, builder_name, build_number,
-                                        step_name, failed_step, http_client):
+def QueryResultDBForFailedTestInSteps(failed_step):
+  all_results = []
+  # TODO (nqmtuan): Consider running this in parallel
+  for swarming_id in failed_step.swarming_ids:
+    inv_name = swarming_util.GetInvocationNameForSwarmingTask(
+        swarming.SwarmingHost(), swarming_id)
+    if not inv_name:
+      logging.error("Could not get invocation for swarming task %s",
+                    swarming_id)
+      continue
+    res = resultdb.query_resultdb(inv_name)
+    all_results.extend(res)
+  return all_results
+
+
+def _StartTestLevelCheckForFirstFailure(master_name,
+                                        builder_name,
+                                        build_number,
+                                        step_name,
+                                        failed_step,
+                                        http_client,
+                                        use_resultdb=False):
   """Downloads test results and initiates first failure info at test level."""
+  test_results_object = None
+  if use_resultdb:
+    all_results = QueryResultDBForFailedTestInSteps(failed_step)
+    # TODO(crbug.com/981066): Continue the workflow after this is implemented
+    test_results_object = ResultDBTestResults(all_results)
+    return False
   list_isolated_data = failed_step.list_isolated_data
   list_isolated_data = (
       list_isolated_data.ToSerializable() if list_isolated_data else [])
@@ -136,8 +165,9 @@ def _GetTestLevelLogForAStep(master_name, builder_name, build_number, step_name,
   test_results = test_results_util.GetTestResultObject(result_log)
 
   if not test_results:
-    logging.warning('Failed to get swarming test results for build %s/%s/%d/%s.'
-                    % (master_name, builder_name, build_number, step_name))
+    logging.warning(
+        'Failed to get swarming test results for build %s/%s/%d/%s.' %
+        (master_name, builder_name, build_number, step_name))
     return None
 
   failed_test_log, _ = (
@@ -200,8 +230,9 @@ def _UpdateFirstFailureOnTestLevel(master_name, builder_name,
       continue
     # Checks back until farthest_first_failure or build 1, don't use build 0
     # since there might be some abnormalities in build 0.
-    failed_test_log = _GetTestLevelLogForAStep(
-        master_name, builder_name, build_number, step_name, http_client)
+    failed_test_log = _GetTestLevelLogForAStep(master_name, builder_name,
+                                               build_number, step_name,
+                                               http_client)
     _SaveIsolatedResultToStep(master_name, builder_name, build_number,
                               step_name, failed_test_log)
     if failed_test_log is None:
@@ -241,21 +272,41 @@ def _UpdateFailureInfoBuilds(failed_steps, builds):
       del builds[build_number]
 
 
-def UpdateSwarmingSteps(master_name, builder_name, build_number, failed_steps,
-                        http_client):
+def UpdateSwarmingSteps(master_name,
+                        builder_name,
+                        build_number,
+                        failed_steps,
+                        http_client,
+                        use_resultdb=False):
   """Updates swarming steps based on swarming task data.
 
   Searches each failed step_name to identify swarming/non-swarming steps and
   updates failed swarming steps for isolated data.
   Also creates and saves swarming steps in datastore.
   """
+  new_steps = []
+  if use_resultdb:
+    swarming_ids_by_step = swarming.GetSwarmingTaskIdsForFailedSteps(
+        builder_name, build_number, failed_steps, http_client)
+    if not swarming_ids_by_step:
+      return False
+    for step_name in swarming_ids_by_step:
+      failed_steps[step_name].swarming_ids = swarming_ids_by_step[step_name]
+      # Create WfStep object for all the failed steps.
+      step = WfStep.Create(master_name, builder_name, build_number, step_name)
+      step.isolated = True  # TODO (nqmtuan): See if we need this
+      new_steps.append(step)
+    ndb.put_multi(new_steps)
+    return True
+
+  # If not using result db
+  # TODO(crbug/981066): Remove the isolate path when resultdb is ready
   build_isolated_data = swarming.GetIsolatedDataForFailedStepsInABuild(
       builder_name, build_number, failed_steps, http_client)
 
   if not build_isolated_data:
     return False
 
-  new_steps = []
   for step_name in build_isolated_data:
     failed_steps[step_name].list_isolated_data = (
         IsolatedDataList.FromSerializable(build_isolated_data[step_name]))
@@ -269,26 +320,31 @@ def UpdateSwarmingSteps(master_name, builder_name, build_number, failed_steps,
   return True
 
 
-def CheckFirstKnownFailureForSwarmingTests(master_name, builder_name,
-                                           build_number, failure_info):
+def CheckFirstKnownFailureForSwarmingTests(master_name,
+                                           builder_name,
+                                           build_number,
+                                           failure_info,
+                                           use_resultdb=False):
   """Uses swarming test results to update first failure info at test level."""
 
   failed_steps = failure_info.failed_steps
 
   # Identifies swarming tests and saves isolated data to them.
   updated = UpdateSwarmingSteps(master_name, builder_name, build_number,
-                                failed_steps, _HTTP_CLIENT)
+                                failed_steps, _HTTP_CLIENT, use_resultdb)
   if not updated:
     return
 
   for step_name, failed_step in failed_steps.iteritems():
-    if not failed_step.supported or not failed_step.list_isolated_data:
+    if not failed_step.supported or not (failed_step.list_isolated_data or
+                                         failed_step.swarming_ids):
       # Not supported step or Non-swarming step.
       continue  # pragma: no cover.
     # Checks tests in one step and updates failed_step info if swarming.
     result = _StartTestLevelCheckForFirstFailure(master_name, builder_name,
                                                  build_number, step_name,
-                                                 failed_step, _HTTP_CLIENT)
+                                                 failed_step, _HTTP_CLIENT,
+                                                 use_resultdb)
 
     if result:  # pragma: no branch
       failed_builds = sorted(failure_info.builds.keys(), reverse=True)
@@ -307,8 +363,9 @@ def AnyTestHasFirstTimeFailure(tests, build_number):
   return False
 
 
-def GetContinuouslyFailedTestsInLaterBuilds(
-    master_name, builder_name, build_number, failure_to_culprit_map):
+def GetContinuouslyFailedTestsInLaterBuilds(master_name, builder_name,
+                                            build_number,
+                                            failure_to_culprit_map):
   """Gets tests which continuously fail in all later builds.
 
   Compares originally failed tests to failed tests in each following builds

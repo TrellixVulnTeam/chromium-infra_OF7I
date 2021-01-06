@@ -5,6 +5,7 @@
 import mock
 from services import resultdb
 from waterfall.test import wf_testcase
+from go.chromium.org.luci.resultdb.proto.v1 import predicate_pb2
 from components.prpc import client as prpc_client
 
 
@@ -12,7 +13,7 @@ class ResultDBTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(prpc_client, 'service_account_credentials')
   @mock.patch('components.prpc.client.Client')
-  def testQueryResultDBWithPagination(self, mock_client, _):
+  def test_query_resultdb_with_pagination(self, mock_client, _):
     side_effect = [
         mock.MagicMock(
             next_page_token="123",
@@ -28,5 +29,14 @@ class ResultDBTest(wf_testcase.WaterfallTestCase):
         ),
     ]
     mock_client.return_value.QueryTestResults.side_effect = side_effect
-    results = resultdb.query_resultdb("my_inv_id")
+    results = resultdb.query_resultdb("my_inv_name")
     self.assertEqual(len(results), 5)
+
+  def test_resultdb_req(self):
+    req = resultdb.resultdb_req("inv_name", True)
+    self.assertEqual(
+        req.predicate.expectancy, predicate_pb2.TestResultPredicate.Expectancy
+        .VARIANTS_WITH_UNEXPECTED_RESULTS)
+    req = resultdb.resultdb_req("inv_name", False)
+    self.assertEqual(req.predicate.expectancy,
+                     predicate_pb2.TestResultPredicate.Expectancy.ALL)

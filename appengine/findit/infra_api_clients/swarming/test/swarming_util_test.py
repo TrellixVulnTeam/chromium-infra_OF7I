@@ -173,9 +173,9 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'available': 4
     }
 
-    self.assertEqual(expected_counts,
-                     swarming_util.GetBotCounts('host', dimensions,
-                                                None).Serialize())
+    self.assertEqual(
+        expected_counts,
+        swarming_util.GetBotCounts('host', dimensions, None).Serialize())
 
     expected_url = ('https://host/_ah/api/swarming/v1/bots/count'
                     '?dimensions=os%3AOS&dimensions=cpu%3Acpu')
@@ -203,8 +203,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
             'failure': True,
             'internal_failure': False
         }],
-        'cursor':
-            'cursor'
+        'cursor': 'cursor'
     }
     content2 = {
         'items': [{
@@ -215,8 +214,8 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
             'internal_failure': False
         }],
     }
-    mock_fn.side_effect = [(json.dumps(content1), None), (json.dumps(content2),
-                                                          None)]
+    mock_fn.side_effect = [(json.dumps(content1), None),
+                           (json.dumps(content2), None)]
     tasks_data = swarming_util.ListTasks('host', tags, None)
     self.assertTrue(tasks_data[0].non_internal_failure)
 
@@ -237,9 +236,9 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
 
   def testParametersToQueryStringList(self):
     dimensions = ['os:OS', 'cpu:cpu']
-    self.assertEqual('?dimensions=os:OS&dimensions=cpu:cpu',
-                     swarming_util.ParametersToQueryString(
-                         dimensions, 'dimensions'))
+    self.assertEqual(
+        '?dimensions=os:OS&dimensions=cpu:cpu',
+        swarming_util.ParametersToQueryString(dimensions, 'dimensions'))
 
   def testGetTagValue(self):
     tags = ['a:1', 'b:2']
@@ -255,11 +254,29 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
         'namespace': 'namespace',
         'isolatedserver': 'isolatedserver'
     }
-    self.assertEqual({
-        'digest': 'isolated',
-        'namespace': 'namespace',
-        'isolatedserver': 'isolatedserver'
-    }, swarming_util.GenerateIsolatedData(outputs_ref))
+    self.assertEqual(
+        {
+            'digest': 'isolated',
+            'namespace': 'namespace',
+            'isolatedserver': 'isolatedserver'
+        }, swarming_util.GenerateIsolatedData(outputs_ref))
 
   def testGenerateIsolatedDataOutputsrefNone(self):
     self.assertEqual({}, swarming_util.GenerateIsolatedData(None))
+
+  @mock.patch.object(swarming_util, 'GetSwarmingTaskResultById')
+  def testGetInvocationNameForSwarmingTask(self, mock_swarming):
+    mock_swarming.return_value = ({
+        'resultdb_info': {
+            'invocation': 'inv'
+        }
+    }, None)
+    self.assertEqual(
+        'inv',
+        swarming_util.GetInvocationNameForSwarmingTask('host', 'task_id'))
+    mock_swarming.return_value = (None, {'code': '403'})
+    self.assertIsNone(
+        swarming_util.GetInvocationNameForSwarmingTask('host', 'task_id'))
+    mock_swarming.return_value = ({}, None)
+    self.assertIsNone(
+        swarming_util.GetInvocationNameForSwarmingTask('host', 'task_id'))

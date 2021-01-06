@@ -6,6 +6,7 @@
 import json
 import urllib
 
+from common.findit_http_client import FinditHttpClient
 from infra_api_clients import http_client_util
 from infra_api_clients.swarming.swarming_bot_counts import SwarmingBotCounts
 from infra_api_clients.swarming.swarming_task_data import SwarmingTaskData
@@ -17,6 +18,8 @@ _NEW_TASK_URL = 'https://%s/_ah/api/swarming/v1/tasks/new'
 _TASK_ID_URL = 'https://%s/_ah/api/swarming/v1/task/%s/request'
 _LIST_TASK_URL = 'https://%s/_ah/api/swarming/v1/tasks/list%s'
 _TASK_RESULT_URL = 'https://%s/_ah/api/swarming/v1/task/%s/result'
+
+_FINDIT_HTTP_CLIENT = FinditHttpClient()
 
 
 def GetSwarmingTaskRequest(host, task_id, http_client):
@@ -60,6 +63,16 @@ def GetSwarmingTaskResultById(host, task_id, http_client):
   return json_data, error
 
 
+def GetInvocationNameForSwarmingTask(host,
+                                     task_id,
+                                     http_client=_FINDIT_HTTP_CLIENT):
+  """Gets ResultDB invocation name given swarming task_id"""
+  json_data, error = GetSwarmingTaskResultById(host, task_id, http_client)
+  if not error:
+    return json_data.get('resultdb_info', {}).get('invocation')
+  return None
+
+
 # TODO(crbug/820264): Move the logic to retry_http_client.py
 def ParametersToQueryString(parameters, field):
   if isinstance(parameters, dict):
@@ -84,8 +97,8 @@ def GetBotCounts(host, dimensions, http_client):
   Returns:
     bot_counts(SwarmingBotCounts): Numbers of swarming bots in different states.
   """
-  url = _BOT_COUNT_URL % (host,
-                          ParametersToQueryString(dimensions, 'dimensions'))
+  url = _BOT_COUNT_URL % (host, ParametersToQueryString(dimensions,
+                                                        'dimensions'))
 
   content, error = http_client_util.SendRequestToServer(url, http_client)
   if error or not content:

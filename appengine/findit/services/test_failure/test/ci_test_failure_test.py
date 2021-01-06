@@ -7,9 +7,11 @@ import mock
 from google.appengine.api import datastore_errors
 
 from common.findit_http_client import FinditHttpClient
+from infra_api_clients.swarming import swarming_util
 from model.wf_step import WfStep
 from services import ci_failure
 from services import constants
+from services import resultdb
 from services import step_util
 from services import swarmed_test_util
 from services import swarming
@@ -52,6 +54,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'last_pass': None,
         'supported': True,
         'list_isolated_data': None,
+        'swarming_ids': None,
         'tests': {
             'Unittest2.Subtest1': {
                 'current_failure': 223,
@@ -94,6 +97,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'last_pass': 220,
         'supported': True,
         'list_isolated_data': None,
+        'swarming_ids': None,
         'tests': {
             'Unittest2.Subtest1': {
                 'current_failure': 223,
@@ -123,17 +127,15 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     step_name = 'abc_test'
     failed_steps = {
         'abc_test': {
-            'current_failure':
-                221,
-            'first_failure':
-                221,
-            'supported':
-                True,
+            'current_failure': 221,
+            'first_failure': 221,
+            'supported': True,
             'list_isolated_data': [{
                 'isolatedserver': 'https://isolateserver.appspot.com',
                 'namespace': 'default-gzip',
                 'digest': 'isolatedhashabctest-223'
-            }]
+            }],
+            'swarming_ids': None,
         }
     }
     builds = {
@@ -182,38 +184,32 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
                 'status': 'SUCCESS',
                 'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
             }],
-            'Unittest1.Subtest2': [
-                {
-                    'elapsed_time_ms': 66,
-                    'losless_snippet': True,
-                    'output_snippet': 'a/b/u1s2.cc:1234: Failure\\n',
-                    'status': 'FAILURE',
-                    'output_snippet_base64': 'YS9iL3UxczIuY2M6MTIzNDogRmF'
-                },
-                {
-                    'elapsed_time_ms': 50,
-                    'losless_snippet': True,
-                    'output_snippet': '[       OK ]\\n',
-                    'status': 'SUCCESS',
-                    'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
-                }
-            ],
-            'Unittest2.Subtest1': [
-                {
-                    'elapsed_time_ms': 56,
-                    'losless_snippet': True,
-                    'output_snippet': 'ERROR',
-                    'status': 'FAILURE',
-                    'output_snippet_base64': 'RVJST1I6eF90ZXN0LmN'
-                },
-                {
-                    'elapsed_time_ms': 1,
-                    'losless_snippet': True,
-                    'output_snippet': '[       OK ]\\n',
-                    'status': 'SUCCESS',
-                    'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
-                }
-            ],
+            'Unittest1.Subtest2': [{
+                'elapsed_time_ms': 66,
+                'losless_snippet': True,
+                'output_snippet': 'a/b/u1s2.cc:1234: Failure\\n',
+                'status': 'FAILURE',
+                'output_snippet_base64': 'YS9iL3UxczIuY2M6MTIzNDogRmF'
+            }, {
+                'elapsed_time_ms': 50,
+                'losless_snippet': True,
+                'output_snippet': '[       OK ]\\n',
+                'status': 'SUCCESS',
+                'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
+            }],
+            'Unittest2.Subtest1': [{
+                'elapsed_time_ms': 56,
+                'losless_snippet': True,
+                'output_snippet': 'ERROR',
+                'status': 'FAILURE',
+                'output_snippet_base64': 'RVJST1I6eF90ZXN0LmN'
+            }, {
+                'elapsed_time_ms': 1,
+                'losless_snippet': True,
+                'output_snippet': '[       OK ]\\n',
+                'status': 'SUCCESS',
+                'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
+            }],
         }]
     }
 
@@ -346,9 +342,11 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
 
     mock_steps.side_effect = [None, log_data_222, log_data_221]
 
-    ci_test_failure._UpdateFirstFailureOnTestLevel(
-        master_name, builder_name, build_number, step_name, failed_step,
-        [224, 223, 222, 221, 220], FinditHttpClient())
+    ci_test_failure._UpdateFirstFailureOnTestLevel(master_name, builder_name,
+                                                   build_number, step_name,
+                                                   failed_step,
+                                                   [224, 223, 222, 221, 220],
+                                                   FinditHttpClient())
 
     expected_failed_step = {
         'current_failure': 224,
@@ -356,6 +354,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'last_pass': 220,
         'supported': True,
         'list_isolated_data': None,
+        'swarming_ids': None,
         'tests': {
             'Unittest2.Subtest1': {
                 'current_failure': 224,
@@ -408,6 +407,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'last_pass': 222,
         'supported': True,
         'list_isolated_data': None,
+        'swarming_ids': None,
         'tests': {
             'Unittest2.Subtest1': {
                 'current_failure': 223,
@@ -448,6 +448,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'last_pass': 221,
         'supported': True,
         'list_isolated_data': None,
+        'swarming_ids': None,
         'tests': {
             'Unittest2.Subtest1': {
                 'current_failure': 223,
@@ -468,14 +469,10 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'supported': True
         },
         'abc_test': {
-            'current_failure':
-                223,
-            'first_failure':
-                222,
-            'last_pass':
-                221,
-            'supported':
-                True,
+            'current_failure': 223,
+            'first_failure': 222,
+            'last_pass': 221,
+            'supported': True,
             'list_isolated_data': [{
                 'isolatedserver': 'https://isolateserver.appspot.com',
                 'namespace': 'default-gzip',
@@ -557,6 +554,27 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         ci_test_failure._StartTestLevelCheckForFirstFailure(
             master_name, builder_name, build_number, step_name, failed_step,
             None))
+
+  @mock.patch.object(
+      swarming_util, 'GetSwarmingTaskResultById', return_value=({}, None))
+  @mock.patch.object(resultdb, 'query_resultdb', return_value=[])
+  def testStartTestLevelCheckForFirstFailureWithResultDBEnabled(
+      self, _mock_resultdb, _mock_get_swarming):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 121
+    step_name = 'atest'
+    failed_step = {'swarming_ids': ["12345670"]}
+    failed_step = TestFailedStep.FromSerializable(failed_step)
+    self.assertFalse(
+        ci_test_failure._StartTestLevelCheckForFirstFailure(
+            master_name,
+            builder_name,
+            build_number,
+            step_name,
+            failed_step,
+            None,
+            use_resultdb=True))
 
   def testSaveLogToStepLogTooBig(self):
     master_name = 'm'
@@ -687,9 +705,9 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
                                    ':567: Failure\\n'),
                 'status':
                     'FAILURE',
-                'output_snippet_base64': (
-                    'RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNj'
-                    'OjU2NzogRmFpbHVyZVxu')
+                'output_snippet_base64':
+                    ('RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNj'
+                     'OjU2NzogRmFpbHVyZVxu')
             }],
             'Unittest3.Subtest2': [{
                 'elapsed_time_ms': 80,
@@ -702,10 +720,10 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     }
 
     expected_failure_log = {
-        'Unittest2.Subtest1': (
-            'RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNjOjU2NzogRmFpbHVyZVxu'),
-        'Unittest3.Subtest2':
-            'YS9iL3UzczIuY2M6MTEwOiBGYWlsdXJlXG4='
+        'Unittest2.Subtest1':
+            ('RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNjOjU2NzogRmFpbHVyZVxu'
+            ),
+        'Unittest3.Subtest2': 'YS9iL3UzczIuY2M6MTEwOiBGYWlsdXJlXG4='
     }
 
     failure_log = ci_test_failure._GetTestLevelLogForAStep(
@@ -761,21 +779,17 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'digest': 'isolatedhashunittests1'
         }]
     }
-    result = ci_test_failure.UpdateSwarmingSteps(
-        master_name, builder_name, build_number, failed_steps, None)
+    result = ci_test_failure.UpdateSwarmingSteps(master_name, builder_name,
+                                                 build_number, failed_steps,
+                                                 None)
 
     expected_failed_steps = {
         'a_tests': {
-            'current_failure':
-                2,
-            'first_failure':
-                0,
-            'supported':
-                True,
-            'last_pass':
-                None,
-            'tests':
-                None,
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True,
+            'last_pass': None,
+            'tests': None,
             'list_isolated_data': [{
                 'digest':
                     'isolatedhashatests',
@@ -783,19 +797,15 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
                     'default-gzip',
                 'isolatedserver': (waterfall_config.GetSwarmingSettings().get(
                     'isolated_server'))
-            }]
+            }],
+            'swarming_ids': None,
         },
         'unit_tests': {
-            'current_failure':
-                2,
-            'first_failure':
-                0,
-            'supported':
-                True,
-            'last_pass':
-                None,
-            'tests':
-                None,
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True,
+            'last_pass': None,
+            'tests': None,
             'list_isolated_data': [{
                 'digest':
                     'isolatedhashunittests1',
@@ -803,7 +813,8 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
                     'default-gzip',
                 'isolatedserver': (waterfall_config.GetSwarmingSettings().get(
                     'isolated_server'))
-            }]
+            }],
+            'swarming_ids': None,
         },
         'compile': {
             'current_failure': 2,
@@ -811,7 +822,84 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass': None,
             'supported': True,
             'tests': None,
-            'list_isolated_data': None
+            'list_isolated_data': None,
+            'swarming_ids': None,
+        }
+    }
+
+    for step_name in failed_steps:
+      step = WfStep.Get(master_name, builder_name, build_number, step_name)
+      if step_name == 'compile':
+        self.assertIsNone(step)
+      else:
+        self.assertIsNotNone(step)
+
+    self.assertTrue(result)
+    self.assertEqual(expected_failed_steps, failed_steps.ToSerializable())
+
+  @mock.patch.object(swarming, 'GetSwarmingTaskIdsForFailedSteps')
+  def testUpdateSwarmingStepsWithResultDBEnabled(self, mock_data):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 223
+    failed_steps = {
+        'a_tests': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True
+        },
+        'unit_tests': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True
+        },
+        'compile': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True
+        }
+    }
+    failed_steps = TestFailedSteps.FromSerializable(failed_steps)
+
+    mock_data.return_value = {
+        'a_tests': ["50625b66a2ac8210"],
+        'unit_tests': ["5ac3f78938340"]
+    }
+    result = ci_test_failure.UpdateSwarmingSteps(
+        master_name,
+        builder_name,
+        build_number,
+        failed_steps,
+        None,
+        use_resultdb=True)
+
+    expected_failed_steps = {
+        'a_tests': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True,
+            'last_pass': None,
+            'tests': None,
+            'list_isolated_data': None,
+            'swarming_ids': ["50625b66a2ac8210"],
+        },
+        'unit_tests': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'supported': True,
+            'last_pass': None,
+            'tests': None,
+            'list_isolated_data': None,
+            'swarming_ids': ["5ac3f78938340"],
+        },
+        'compile': {
+            'current_failure': 2,
+            'first_failure': 0,
+            'last_pass': None,
+            'supported': True,
+            'tests': None,
+            'list_isolated_data': None,
+            'swarming_ids': None,
         }
     }
 
@@ -844,8 +932,9 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     }
     failed_steps = TestFailedSteps.FromSerializable(failed_steps)
 
-    result = ci_test_failure.UpdateSwarmingSteps(
-        master_name, builder_name, build_number, failed_steps, None)
+    result = ci_test_failure.UpdateSwarmingSteps(master_name, builder_name,
+                                                 build_number, failed_steps,
+                                                 None)
     expected_failed_steps = {
         'a_tests': {
             'current_failure': 2,
@@ -853,7 +942,8 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass': None,
             'supported': True,
             'tests': None,
-            'list_isolated_data': None
+            'list_isolated_data': None,
+            'swarming_ids': None,
         },
         'unit_tests': {
             'current_failure': 2,
@@ -861,7 +951,8 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass': None,
             'supported': True,
             'tests': None,
-            'list_isolated_data': None
+            'list_isolated_data': None,
+            'swarming_ids': None,
         }
     }
     self.assertFalse(result)

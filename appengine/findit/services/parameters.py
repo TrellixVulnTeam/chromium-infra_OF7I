@@ -264,6 +264,7 @@ class IsolatedDataList(TypedList):
 class TestFailedStep(BaseFailedStep):
   tests = FailedTests
   list_isolated_data = IsolatedDataList
+  swarming_ids = list
 
 
 class TestFailedSteps(TypedDict):
