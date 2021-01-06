@@ -37,6 +37,9 @@ func excludeSame(m, exclude protoreflect.Message) {
 			// It cannot be the same.
 			return true
 
+		case f.Cardinality() == protoreflect.Repeated:
+			// TODO(crbug.com/1103287) handle exclude same elements from repeated fields.
+
 		case f.Kind() == protoreflect.MessageKind:
 			// Recurse.
 			excludeSame(v.Message(), exclude.Get(f).Message())
@@ -44,9 +47,6 @@ func excludeSame(m, exclude protoreflect.Message) {
 			if isEmpty(v.Message()) {
 				m.Clear(f)
 			}
-
-		case f.Cardinality() == protoreflect.Repeated:
-			panic("Reduce() is not implemented for repeated fields. We don't have them as of writing")
 
 		case scalarValuesEqual(v, exclude.Get(f), f.Kind()):
 			m.Clear(f)

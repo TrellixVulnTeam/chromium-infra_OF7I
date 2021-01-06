@@ -34,6 +34,9 @@ message Metadata {
   // Buganizer metadata.
   Buganizer buganizer = 5;
 
+  // ResultDB tags.
+  ResultDB resultdb = 6;
+
   // Reserved for metadata information for third-party code. See
   // https://opensource.google/docs/thirdparty/metadata/
   reserved 13;
@@ -92,4 +95,12 @@ enum Trinary {
   TRINARY_UNSPECIFIED = 0;
   YES = 1;
   NO = 2;
+}
+
+// ResultDB contains a list of tags to be attached to results of tests
+// defined in a directory.
+message ResultDB {
+  // A list of tags to be attached to results of tests defined in a directory.
+  // Each tag must be formatted as "key:value", and keys can be repeated.
+  repeated string tags = 1;
 }

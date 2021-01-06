@@ -26,6 +26,20 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
+					"subdir": {
+						TeamEmail: "team-email@chromium.org",
+						// OS was not inherited
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						// OS was not inherited
@@ -48,6 +62,20 @@ func TestRead(t *testing.T) {
 					".": {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
+					},
+					"subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
 					},
 					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
@@ -78,6 +106,20 @@ func TestRead(t *testing.T) {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
+					"subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
@@ -98,6 +140,19 @@ func TestRead(t *testing.T) {
 					".": {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
+					},
+					"subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
 					},
 					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",

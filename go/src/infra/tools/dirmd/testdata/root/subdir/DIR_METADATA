@@ -1,0 +1,9 @@
+team_email: "team-email@chromium.org"
+monorail {
+  project: "chromium"
+  component: "Some>Component"
+}
+resultdb {
+  tags: "feature:read-later"
+  tags: "feature:another-one"
+}
