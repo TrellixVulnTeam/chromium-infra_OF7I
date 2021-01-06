@@ -3,6 +3,7 @@
 	"files": [
 		{ "path": "example.c" },
 		{ "path": "example.txt" },
-		{ "path": "BUILD.gn" }
+		{ "path": "BUILD.gn" },
+		{ "path": "Makefile.rules" }
 	]
 }

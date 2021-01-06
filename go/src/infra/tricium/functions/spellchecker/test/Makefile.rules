@@ -1,0 +1,7 @@
+# -*- makefile -*-
+# vim: set filetype=make :
+
+# This is a coment containing thier typos
+.PHONY: not-a-coment
+not-a-coment:
+	echo thier coment --foo > /dev/null
