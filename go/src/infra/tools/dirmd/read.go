@@ -6,6 +6,7 @@ package dirmd
 
 import (
 	"context"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -101,46 +102,74 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 
 	ctx := context.Background()
 	eg, ctx := errgroup.WithContext(ctx)
-	sem := semaphore.NewWeighted(100) // read up to 100 files concurrently
+	sem := semaphore.NewWeighted(100) // make up to 100 IO syscalls concurrently.
 	var mu sync.Mutex
-	eg.Go(func() error {
-		return filepath.Walk(r.Root, func(dir string, info os.FileInfo, err error) error {
-			switch {
-			case ctx.Err() != nil:
-				return ctx.Err()
-			case err != nil:
-				return err
-			case !info.IsDir():
-				return nil
+
+	var visit func(dir string) error
+	visit = func(dir string) error {
+		if err := sem.Acquire(ctx, 1); err != nil {
+			return err
+		}
+		defer sem.Release(1)
+
+		key := r.mustDirKey(dir)
+
+		f, err := os.Open(dir)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		hasMeta := false
+		for {
+			names, err := f.Readdirnames(128)
+			if err == io.EOF {
+				break // We have exhausted all entries in the directory.
+			}
+			if err != nil {
+				return errors.Annotate(err, "failed to read %q", dir).Err()
 			}
 
-			// Read the metadata concurrently.
-			eg.Go(func() error {
-				if err := sem.Acquire(ctx, 1); err != nil {
-					return err
-				}
-				defer sem.Release(1)
-
-				key := r.mustDirKey(dir)
-				switch meta, err := ReadMetadata(dir); {
+			for _, name := range names {
+				fullName := filepath.Join(dir, name)
+				switch fileInfo, err := os.Lstat(fullName); {
 				case err != nil:
-					return errors.Annotate(err, "failed to read metadata of %q", dir).Err()
-
-				case meta != nil:
-					mu.Lock()
-					r.Dirs[key] = meta
-					mu.Unlock()
-
-				case form == dirmdpb.MappingForm_FULL:
-					// Put an empty metadata, so that ComputeAll() populates it below.
-					mu.Lock()
-					r.Dirs[key] = &dirmdpb.Metadata{}
-					mu.Unlock()
+					return err
+				case fileInfo.IsDir():
+					eg.Go(func() error {
+						return visit(fullName)
+					})
+				case name == Filename || name == OwnersFilename:
+					hasMeta = true
 				}
-				return nil
-			})
-			return nil
-		})
+			}
+		}
+
+		switch {
+		case hasMeta:
+			switch meta, err := ReadMetadata(dir); {
+			case err != nil:
+				return errors.Annotate(err, "failed to read %q", dir).Err()
+
+			case meta != nil:
+				mu.Lock()
+				r.Dirs[key] = meta
+				mu.Unlock()
+			}
+
+		case form == dirmdpb.MappingForm_FULL:
+			// Ensure the key is registered in the mapping, so that ComputeAll()
+			// populates it below.
+			mu.Lock()
+			r.Dirs[key] = nil
+			mu.Unlock()
+		}
+
+		return nil
+	}
+
+	eg.Go(func() error {
+		return visit(r.Root)
 	})
 	if err := eg.Wait(); err != nil {
 		return err
