@@ -13,49 +13,42 @@ import (
 )
 
 // An Action indicates the DUT preparation action to do.
-type Action int
+type Action string
 
 const (
 	// NoAction can be used as a null Action value.
-	NoAction Action = iota
+	NoAction Action = "no-action"
 	// StageUSB action
-	StageUSB
+	StageUSB Action = "stage-usb"
 	// InstallTestImage action
-	InstallTestImage
+	InstallTestImage Action = "install-test-image"
 	// InstallFirmware action
-	InstallFirmware
+	InstallFirmware Action = "install-firmware"
 	// VerifyRecoveryMode action
-	VerifyRecoveryMode
+	VerifyRecoveryMode Action = "verify-recovery-mode"
 	// SetupLabstation action
-	SetupLabstation
+	SetupLabstation Action = "setup-labstation"
 	// UpdateLabel action
-	UpdateLabel
+	UpdateLabel Action = "update-label"
 	// RunPreDeployVerification action
-	RunPreDeployVerification
+	RunPreDeployVerification Action = "run-pre-deploy-verification"
 )
-
-//go:generate stringer -type=Action
 
 // ParseAction parses the string argument accepted by lucifer and autotest
 // tools into an Action.
 func ParseAction(s string) (Action, error) {
-	for i, n := range actionArgumentSequence {
-		if n == s {
-			return actionSequence[i], nil
+	a := Action(s)
+	for _, n := range actionSequence {
+		if n == a {
+			return a, nil
 		}
 	}
 	return NoAction, fmt.Errorf("unknown action %s", s)
 }
 
-// Arg returns the argument string used by lucifer and autotest tools for an
-// action.
-func (a Action) Arg() string {
-	for i, o := range actionSequence {
-		if o == a {
-			return actionArgumentSequence[i]
-		}
-	}
-	return ""
+// String returns the string representation of action.
+func (a Action) String() string {
+	return string(a)
 }
 
 // SortActions sorts the given Action slice in the order they should be
@@ -71,9 +64,6 @@ func SortActions(actions []Action) []Action {
 }
 
 // actionSequence orders the actions as they should be executed on a host.
-// Keep actionSequence and actionArgumentSequence in-sync as they're used to
-// translate the actions to and from arguments accepted by lucifer and autotest
-// tools.
 var actionSequence = [...]Action{
 	StageUSB,
 	InstallTestImage,
@@ -82,15 +72,6 @@ var actionSequence = [...]Action{
 	SetupLabstation,
 	UpdateLabel,
 	RunPreDeployVerification,
-}
-var actionArgumentSequence = [...]string{
-	"stage-usb",
-	"install-test-image",
-	"install-firmware",
-	"verify-recovery-mode",
-	"setup-labstation",
-	"update-label",
-	"run-pre-deploy-verification",
 }
 
 func containsAction(as []Action, q Action) bool {

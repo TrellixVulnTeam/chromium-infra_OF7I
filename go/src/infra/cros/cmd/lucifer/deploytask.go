@@ -102,7 +102,7 @@ func (c *deployTaskCmd) runDeployAction(ctx context.Context, ac *api.Client, a d
 		Hostname:     c.host,
 		ResultsDir:   resultsDir,
 		HostInfoFile: c.hostInfoStorePath(c.host),
-		Actions:      []string{a.Arg()},
+		Actions:      []string{a.String()},
 	}
 	cmd := autotest.DutPreparationCommand(c.autotestConfig(), &args)
 	cmd.Stdout = ac.Logger().RawWriter()

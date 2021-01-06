@@ -151,7 +151,7 @@ func (f deployActionList) String() string {
 	}
 	ns := make([]string, 0, len(*f.a))
 	for _, a := range *f.a {
-		ns = append(ns, a.Arg())
+		ns = append(ns, a.String())
 	}
 	return strings.Join(ns, ",")
 }
