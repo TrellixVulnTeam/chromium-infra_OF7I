@@ -1,0 +1,6 @@
+buganizer {
+  component_id: 5678
+}
+buganizer {
+  component_id: 1234
+}

@@ -1,0 +1,4 @@
+team_email: "chromium-review@chromium.org"
+buganizer_public {
+  component_id: 5678
+}

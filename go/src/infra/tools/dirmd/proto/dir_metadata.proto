@@ -31,11 +31,14 @@ message Metadata {
   // WPT-specific metadata.
   WPT wpt = 4;
 
-  // Buganizer metadata.
+  // Private buganizer metadata.
   Buganizer buganizer = 5;
 
   // ResultDB tags.
   ResultDB resultdb = 6;
+
+  // Public buganizer metadata.
+  Buganizer buganizer_public = 7;
 
   // Reserved for metadata information for third-party code. See
   // https://opensource.google/docs/thirdparty/metadata/
