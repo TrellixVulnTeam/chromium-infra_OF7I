@@ -76,7 +76,7 @@ func TestRepairVerifyDUTRequest(t *testing.T) {
 			swarmingService: "https://chromium-swarm-dev.appspot.com/",
 			session:         "session0",
 		}
-		r := tc.repairVerifyTaskRequest("task-name", "tool-name", "fake_service_account", "fake_dut_host", 12345, fakeArgs, logDogURL)
+		r := tc.repairVerifyTaskRequest("task-name", "tool-name", "fake_service_account", "fake_dut_host", 12345, 23456, fakeArgs, logDogURL)
 		So(r.Name, ShouldEqual, "task-name")
 		So(r.TaskSlices, ShouldHaveLength, 1)
 		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
@@ -97,6 +97,8 @@ func TestRepairVerifyDUTRequest(t *testing.T) {
 		So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
 		So(r.ServiceAccount, ShouldEqual, "fake_service_account")
 		So(r.Priority, ShouldEqual, 25)
+		So(r.TaskSlices[0].ExpirationSecs, ShouldEqual, int64(12345))
+		So(r.TaskSlices[0].Properties.ExecutionTimeoutSecs, ShouldEqual, int64(23456))
 	})
 }
 
