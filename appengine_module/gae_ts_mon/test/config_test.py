@@ -43,13 +43,29 @@ class InitializeTest(test_case.TestCase):
     mock.patch.stopall()
     super(InitializeTest, self).tearDown()
 
-  def test_sets_target(self):
+  @mock.patch('gae_ts_mon.shared.is_python3_env', return_value=False)
+  def test_sets_target(self, _mocked_py3_env):
     config.initialize(self.app, is_local_unittest=False)
 
     self.assertEqual('sample-app', self.mock_state.target.service_name)
     self.assertEqual('default', self.mock_state.target.job_name)
     self.assertEqual('appengine', self.mock_state.target.region)
     self.assertEqual('v1a', self.mock_state.target.hostname)
+
+  @mock.patch('gae_ts_mon.shared.is_python3_env', return_value=True)
+  def test_sets_target_py3(self, _mocked_py3_env):
+    with mock.patch.dict(
+        'os.environ', {
+            'GOOGLE_CLOUD_PROJECT': 'sample-app',
+            'GAE_SERVICE': 'default',
+            'GAE_VERSION': 'v1a',
+        }):
+      config.initialize(self.app, is_local_unittest=False)
+
+      self.assertEqual('sample-app', self.mock_state.target.service_name)
+      self.assertEqual('default', self.mock_state.target.job_name)
+      self.assertEqual('appengine', self.mock_state.target.region)
+      self.assertEqual('v1a', self.mock_state.target.hostname)
 
   def test_sets_monitor(self):
     os.environ['SERVER_SOFTWARE'] = 'Production'  # != 'Development'

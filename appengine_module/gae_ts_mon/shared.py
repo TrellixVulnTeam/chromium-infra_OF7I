@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import contextlib
+import os
 
 from google.appengine.api import modules
 from google.appengine.api import namespace_manager
@@ -58,10 +59,15 @@ class Instance(ndb.Model):
 
 
 def instance_key_id():
-  return '%s.%s.%s' % (
-      modules.get_current_instance_id(),
-      modules.get_current_version_name(),
-      modules.get_current_module_name())
+  if is_python3_env():
+    instance_id = os.getenv('GAE_INSTANCE', '')
+    version_name = os.getenv('GAE_VERSION', '')
+    service_name = os.getenv('GAE_SERVICE', '')
+  else:
+    instance_id = modules.get_current_instance_id()
+    version_name = modules.get_current_version_name()
+    service_name = modules.get_current_module_name()
+  return '{}.{}.{}'.format(instance_id, version_name, service_name)
 
 
 @contextlib.contextmanager
@@ -77,3 +83,8 @@ def instance_namespace_context():
 def get_instance_entity():
   with instance_namespace_context():
     return Instance.get_or_insert(instance_key_id())
+
+
+def is_python3_env():
+  # GAEv1's python2 env does not expose this variable.
+  return os.getenv('GAE_RUNTIME', '').startswith('python3')
