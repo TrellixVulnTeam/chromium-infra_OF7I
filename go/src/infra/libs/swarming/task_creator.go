@@ -28,6 +28,9 @@ const (
 	// ReserveDUTTaskPriority is the priority used for ReserveDUT task.
 	ReserveDUTTaskPriority = 25
 
+	// RepairDUTTaskPriority Priority is the priority used for ReserveDUT task.
+	RepairDUTTaskPriority = 25
+
 	// DUTIDDimensionKey is the dimension key for dut ID.
 	DUTIDDimensionKey = "dut_id"
 
@@ -118,7 +121,7 @@ func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host, use
 	return tc.schedule(ctx, tc.reserveDUTRequest(serviceAccount, host, user))
 }
 
-// ReserveDUTRequest creates task request to change DUT state to reserved
+// reserveDUTRequest creates task request to change DUT state to reserved
 func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swarming.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 2 * 60 * 60,
@@ -139,6 +142,34 @@ func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swa
 			}),
 		TaskSlices:     slices,
 		Priority:       ReserveDUTTaskPriority,
+		ServiceAccount: serviceAccount,
+	}
+}
+
+// RepairTask creates admin_repair task for particular DUT
+func (tc *TaskCreator) RepairTask(ctx context.Context, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.repairTaskRequest(serviceAccount, host, expirationSec, cmd, logDogURL))
+}
+
+// repairTaskRequest creates task request for AdminRepair task
+func (tc *TaskCreator) repairTaskRequest(serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) *swarming.SwarmingRpcsNewTaskRequest {
+	slices := []*swarming.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: int64(expirationSec),
+		Properties: &swarming.SwarmingRpcsTaskProperties{
+			Command: cmd,
+			Dimensions: []*swarming.SwarmingRpcsStringPair{
+				{Key: PoolDimensionKey, Value: sw.SkylabPool},
+				{Key: IDDimensionKey, Value: dutNameToBotID(host)},
+			},
+			ExecutionTimeoutSecs: 5400,
+		},
+		WaitForCapacity: true,
+	}}
+	return &swarming.SwarmingRpcsNewTaskRequest{
+		Name:           "admin_repair",
+		Tags:           tc.combineTags("repair", logDogURL, nil),
+		TaskSlices:     slices,
+		Priority:       RepairDUTTaskPriority,
 		ServiceAccount: serviceAccount,
 	}
 }

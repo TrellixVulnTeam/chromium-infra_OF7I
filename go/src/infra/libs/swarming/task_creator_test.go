@@ -65,6 +65,41 @@ func TestReserveDUTRequest(t *testing.T) {
 		So(r.Priority, ShouldEqual, 25)
 	})
 }
+
+func TestRepairDUTRequest(t *testing.T) {
+	t.Parallel()
+	Convey("Verify deploy task request is correct formated", t, func() {
+		fakeArgs := []string{"args1", "args2"}
+		logDogURL := "logDogURL0"
+		tc := &TaskCreator{
+			client:          nil,
+			swarmingService: "https://chromium-swarm-dev.appspot.com/",
+			session:         "session0",
+		}
+		r := tc.repairTaskRequest("fake_service_account", "fake_dut_host", 12345, fakeArgs, logDogURL)
+		So(r.Name, ShouldEqual, "admin_repair")
+		So(r.TaskSlices, ShouldHaveLength, 1)
+		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
+		So(command, ShouldContainSubstring, "args1")
+		So(command, ShouldContainSubstring, "args2")
+		for _, d := range r.TaskSlices[0].Properties.Dimensions {
+			switch d.Key {
+			case "pool":
+				So(d.Value, ShouldEqual, "ChromeOSSkylab")
+			case "id":
+				So(d.Value, ShouldEqual, "crossk-fake_dut_host")
+			}
+		}
+		So("skylab-tool:repair", ShouldBeIn, r.Tags)
+		So("admin_session:session0", ShouldBeIn, r.Tags)
+		So("luci_project:", ShouldBeIn, r.Tags)
+		So("log_location:logDogURL0", ShouldBeIn, r.Tags)
+		So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
+		So(r.ServiceAccount, ShouldEqual, "fake_service_account")
+		So(r.Priority, ShouldEqual, 25)
+	})
+}
+
 func TestDUTNameToBotID(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
