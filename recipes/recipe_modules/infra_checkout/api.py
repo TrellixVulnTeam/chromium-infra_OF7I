@@ -84,6 +84,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         self.m = m
         self._go_env = None
         self._go_env_prefixes = None
+        self._committed = False
 
       @property
       def path(self):
@@ -98,8 +99,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         assert patch_root
         return path.join(patch_root)
 
-      @staticmethod
-      def commit_change():
+      def commit_change(self):
         assert patch_root
         with self.m.context(cwd=path.join(patch_root)):
           self.m.git(
@@ -107,10 +107,19 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
               '-c', 'user.name=The Commit Bot',
               'commit', '-a', '-m', 'Committed patch',
               name='commit git patch')
+        self._committed = True
 
-      @staticmethod
-      def get_changed_files():
+      def get_changed_files(self):
+        """Lists files changed in the patch.
+
+        This assumes that commit_change() has been called.
+
+        Returns:
+          A set of relative paths (strings) of changed files,
+          including added, modified and deleted file paths.
+        """
         assert patch_root
+        assert self._committed
         # Grab a list of changed files.
         with self.m.context(cwd=path.join(patch_root)):
           result = self.m.git(
