@@ -649,6 +649,7 @@ SPECS.update({
         Universal('aenum', '2.1.2'),
         Universal('altgraph', '0.16.1'),
         Universal('appdirs', '1.4.3'),
+        Universal('argcomplete', '1.12.2'),
         Universal('argparse',
                   '1.4.0'),  # Includes fixes missing from stdlib 2.7.6
         Universal('asn1crypto', '0.22.0'),

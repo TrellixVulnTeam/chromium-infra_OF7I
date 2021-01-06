@@ -424,6 +424,20 @@ wheel: <
 
 * *universal*
 
+## **argcomplete**
+
+### 1.12.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/argcomplete-py2_py3"
+  version: "version:1.12.2"
+>
+```
+
+
+* *universal*
+
 ## **argparse**
 
 ### 1.4.0
