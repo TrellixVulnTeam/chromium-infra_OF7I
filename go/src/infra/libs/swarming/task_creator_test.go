@@ -66,7 +66,7 @@ func TestReserveDUTRequest(t *testing.T) {
 	})
 }
 
-func TestRepairDUTRequest(t *testing.T) {
+func TestRepairVerifyDUTRequest(t *testing.T) {
 	t.Parallel()
 	Convey("Verify deploy task request is correct formated", t, func() {
 		fakeArgs := []string{"args1", "args2"}
@@ -76,8 +76,8 @@ func TestRepairDUTRequest(t *testing.T) {
 			swarmingService: "https://chromium-swarm-dev.appspot.com/",
 			session:         "session0",
 		}
-		r := tc.repairTaskRequest("fake_service_account", "fake_dut_host", 12345, fakeArgs, logDogURL)
-		So(r.Name, ShouldEqual, "admin_repair")
+		r := tc.repairVerifyTaskRequest("task-name", "tool-name", "fake_service_account", "fake_dut_host", 12345, fakeArgs, logDogURL)
+		So(r.Name, ShouldEqual, "task-name")
 		So(r.TaskSlices, ShouldHaveLength, 1)
 		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
 		So(command, ShouldContainSubstring, "args1")
@@ -90,7 +90,7 @@ func TestRepairDUTRequest(t *testing.T) {
 				So(d.Value, ShouldEqual, "crossk-fake_dut_host")
 			}
 		}
-		So("skylab-tool:repair", ShouldBeIn, r.Tags)
+		So("skylab-tool:tool-name", ShouldBeIn, r.Tags)
 		So("admin_session:session0", ShouldBeIn, r.Tags)
 		So("luci_project:", ShouldBeIn, r.Tags)
 		So("log_location:logDogURL0", ShouldBeIn, r.Tags)

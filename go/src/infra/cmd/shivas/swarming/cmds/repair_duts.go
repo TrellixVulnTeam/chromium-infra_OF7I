@@ -23,6 +23,7 @@ type repairDuts struct {
 	authFlags      authcli.Flags
 	envFlags       site.EnvFlags
 	expirationMins int
+	onlyVerify     bool
 }
 
 // RepairDutsCmd contains repair-duts command specification
@@ -36,6 +37,7 @@ var RepairDutsCmd = &subcommands.Command{
 		c := &repairDuts{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.Flags.BoolVar(&c.onlyVerify, "verify", false, "Run only verify actions.")
 		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
 		return c
 	},
@@ -50,7 +52,7 @@ func (c *repairDuts) Run(a subcommands.Application, args []string, env subcomman
 	return 0
 }
 
-func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subcommands.Env) (err error) {
 	if len(args) == 0 {
 		return errors.Reason("at least one hostname has to be provided").Err()
 	}
@@ -64,9 +66,14 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
 	for _, host := range args {
-		cmd := &worker.Command{TaskName: "admin_repair"}
+		cmd := &worker.Command{TaskName: c.taskName()}
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
-		task, err := creator.RepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+		var task *swarming.TaskInfo
+		if c.onlyVerify {
+			task, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+		} else {
+			task, err = creator.RepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+		}
 		if err != nil {
 			errorMap[host] = err
 		} else {
@@ -75,4 +82,11 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	}
 	creator.PrintResults(a.GetOut(), successMap, errorMap)
 	return nil
+}
+
+func (c *repairDuts) taskName() string {
+	if c.onlyVerify {
+		return "admin_verify"
+	}
+	return "admin_repair"
 }

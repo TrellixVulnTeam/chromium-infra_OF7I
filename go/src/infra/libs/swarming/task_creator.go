@@ -148,11 +148,16 @@ func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swa
 
 // RepairTask creates admin_repair task for particular DUT
 func (tc *TaskCreator) RepairTask(ctx context.Context, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.repairTaskRequest(serviceAccount, host, expirationSec, cmd, logDogURL))
+	return tc.schedule(ctx, tc.repairVerifyTaskRequest("admin_repair", "repair", serviceAccount, host, expirationSec, cmd, logDogURL))
 }
 
-// repairTaskRequest creates task request for AdminRepair task
-func (tc *TaskCreator) repairTaskRequest(serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) *swarming.SwarmingRpcsNewTaskRequest {
+// VerifyTask creates admin_repair task for particular DUT
+func (tc *TaskCreator) VerifyTask(ctx context.Context, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.repairVerifyTaskRequest("admin_verify", "verify", serviceAccount, host, expirationSec, cmd, logDogURL))
+}
+
+// repairVerifyTaskRequest creates task request for AdminRepair task
+func (tc *TaskCreator) repairVerifyTaskRequest(taskName, toolName, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) *swarming.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: int64(expirationSec),
 		Properties: &swarming.SwarmingRpcsTaskProperties{
@@ -166,8 +171,8 @@ func (tc *TaskCreator) repairTaskRequest(serviceAccount, host string, expiration
 		WaitForCapacity: true,
 	}}
 	return &swarming.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_repair",
-		Tags:           tc.combineTags("repair", logDogURL, nil),
+		Name:           taskName,
+		Tags:           tc.combineTags(toolName, logDogURL, nil),
 		TaskSlices:     slices,
 		Priority:       RepairDUTTaskPriority,
 		ServiceAccount: serviceAccount,
