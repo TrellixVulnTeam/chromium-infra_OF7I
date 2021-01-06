@@ -7,10 +7,13 @@ package reviewer
 import (
 	"context"
 	"path"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	"gopkg.in/src-d/go-git.v4/plumbing/format/gitignore"
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/internal/gerrit"
@@ -43,6 +46,14 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 		return invalidFiles, nil
 	}
 
+	var patterns []gitignore.Pattern
+	for _, path := range hostCfg.RepoConfigs[t.Repo].BenignFilePattern.Paths {
+		patterns = append(patterns, gitignore.ParsePattern(path, nil))
+	}
+	matcher := gitignore.NewMatcher(patterns)
+
+	// TODO: remove old code using FileExtensionMap after switching to
+	// gitignore style paths.
 	fileExtensionMap := hostCfg.RepoConfigs[t.Repo].BenignFilePattern.FileExtensionMap
 
 	var allExtPaths []string
@@ -87,11 +98,18 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 				break
 			}
 		}
-		if !isValid {
+		// Also check with gitignore style match. It should be fully replaced
+		// after switching to gitignore style paths.
+		if !isValid && !matcher.Match(splitPath(file), false) {
 			invalidFiles = append(invalidFiles, file)
 		}
 	}
 
 	sort.Strings(invalidFiles)
 	return invalidFiles, nil
+}
+
+// splitPath splits a path into components, as weird go-git.v4 API wants it.
+func splitPath(p string) []string {
+	return strings.Split(filepath.Clean(p), string(filepath.Separator))
 }
