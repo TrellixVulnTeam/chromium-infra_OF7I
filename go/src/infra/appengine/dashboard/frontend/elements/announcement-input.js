@@ -96,7 +96,7 @@ export class AnnouncementInput extends LitElement {
         @input="${this._disabledUpdateButton}"
         cols="80"
         rows="3"
-        placeholder="Create an announcement"
+        placeholder="Create a publicly visible announcement"
       ></textarea>
       <span>
         ${this.platformNames.map((name) => html`
