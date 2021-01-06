@@ -147,6 +147,11 @@ func DescribePackage(ctx context.Context, pkg, version string) (*cipd.InstanceDe
 
 // UpdatePackageToProd updates a given package by its cipd path to prod tag.
 func UpdatePackageToProd(cipdInstalledPath string, outWriter io.Writer, errWriter io.Writer) error {
+	return UpdatePackage(cipdInstalledPath, "prod", outWriter, errWriter)
+}
+
+// UpdatePackage updates a given package by its cipd path to given tag.
+func UpdatePackage(cipdInstalledPath, refTag string, outWriter io.Writer, errWriter io.Writer) error {
 	d, err := executableDir()
 	if err != nil {
 		return err
@@ -156,7 +161,7 @@ func UpdatePackageToProd(cipdInstalledPath string, outWriter io.Writer, errWrite
 		return err
 	}
 	cmd := exec.Command("cipd", "ensure", "-root", root, "-ensure-file", "-")
-	cmd.Stdin = strings.NewReader(fmt.Sprintf("%s${platform} prod", cipdInstalledPath))
+	cmd.Stdin = strings.NewReader(fmt.Sprintf("%s${platform} %s", cipdInstalledPath, refTag))
 	cmd.Stdout = outWriter
 	cmd.Stderr = errWriter
 	if err := cmd.Run(); err != nil {
