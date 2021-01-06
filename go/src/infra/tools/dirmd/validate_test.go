@@ -17,14 +17,14 @@ func TestValidateFile(t *testing.T) {
 
 	Convey(`ValidateFile`, t, func() {
 		suite := func(path string, valid bool) {
-			dir, err := os.Open(path)
-			So(err, ShouldBeNil)
-			defer dir.Close()
+			err := filepath.Walk(path, func(fullName string, info os.FileInfo, err error) error {
+				switch {
+				case err != nil:
+					return err
+				case info.IsDir():
+					return nil
+				}
 
-			names, err := dir.Readdirnames(1000)
-			So(err, ShouldBeNil)
-			for _, name := range names {
-				fullName := filepath.Join(path, name)
 				Convey(fullName, func() {
 					err := ValidateFile(fullName)
 					if valid {
@@ -33,7 +33,9 @@ func TestValidateFile(t *testing.T) {
 						So(err, ShouldNotBeNil)
 					}
 				})
-			}
+				return nil
+			})
+			So(err, ShouldBeNil)
 		}
 
 		suite("testdata/validation/valid", true)
