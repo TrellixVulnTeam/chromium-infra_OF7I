@@ -67,7 +67,7 @@ func (t *Tunnel) closeListenerWhenDone() {
 // handleConn copies the data between the remote and local service for as long
 // as the tunnel is not interrupted.
 func (t *Tunnel) handleConn(localAddr string) {
-	for t.ctx.Err() == nil {
+	for t.IsAlive() {
 		remoteConn, err := t.listener.Accept()
 		if err != nil {
 			t.logf("%s", err)
@@ -114,6 +114,12 @@ func (t *Tunnel) registerConnToClose(ctx context.Context, conn net.Conn) {
 		<-ctx.Done()
 		conn.Close()
 	}()
+}
+
+// IsAlive checks if the Tunnel is alive. If the tunnel is in the process of
+// shutting down but not fully shut down, this method will return false.
+func (t *Tunnel) IsAlive() bool {
+	return t.ctx.Err() == nil
 }
 
 // RemoteAddr returns the address and port on which the service is
