@@ -38,7 +38,7 @@ import (
 
 const dutLeaseTaskPriority = 15
 
-var maxServiceVersion = test_platform.ServiceVersion{Global: 1}
+var maxServiceVersion = test_platform.ServiceVersion{}
 
 func addServiceVersion(props *structpb.Struct) *structpb.Struct {
 	var err error
