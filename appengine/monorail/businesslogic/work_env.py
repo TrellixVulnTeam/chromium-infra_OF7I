@@ -94,6 +94,12 @@ from proto import user_pb2
 ListResult = collections.namedtuple('ListResult', ['items', 'next_start'])
 # type: (Sequence[Object], Optional[int]) -> None
 
+# AttachmentUpload holds the information of an incoming uploaded
+# attachment before it gets saved as a gcs file and saved to the DB.
+AttachmentUpload = collections.namedtuple(
+    'AttachmentUpload', ['filename', 'contents', 'mimetype'])
+# type: (str, str, str) -> None
+
 # Comments added to issues impacted by another issue's mergedInto change.
 UNMERGE_COMMENT = 'Issue %s has been un-merged from this issue.\n'
 MERGE_COMMENT = 'Issue %s has been merged into this issue.\n'

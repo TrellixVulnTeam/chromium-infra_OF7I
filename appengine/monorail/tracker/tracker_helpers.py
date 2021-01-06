@@ -1462,6 +1462,33 @@ def PrepareIssueChanges(
   _AssertIssueChangesValid(
       cnxn, issue_delta_pairs, services, comment_content=comment_content)
 
+  # TODO(crbug.com/monorail/8019): call _EnforceAttachmentQuotaLimits()
+
+
+def _EnforceAttachmentQuotaLimits(
+    cnxn, issue_delta_pairs, services, attachment_uploads):
+  # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services
+  #     Optional[Sequence[work_env.AttachmentUpload]] -> Mapping[int, int]
+  """Assert that the attachments don't exceed project quotas."""
+  issue_count_by_pid = collections.defaultdict(int)
+  for issue, _delta in issue_delta_pairs:
+    issue_count_by_pid[issue.project_id] += 1
+
+  projects_by_id = services.project.GetProjects(cnxn, issue_count_by_pid.keys())
+
+  new_bytes_by_pid = {}
+  with exceptions.ErrorAggregator(exceptions.OverAttachmentQuota) as err_agg:
+    for pid, count in issue_count_by_pid.items():
+      project = projects_by_id[pid]
+      try:
+        new_bytes_used = ComputeNewQuotaBytesUsed(
+            project, attachment_uploads * count)
+        new_bytes_by_pid[pid] = new_bytes_used
+      except exceptions.OverAttachmentQuota:
+        err_agg.AddErrorMessage(
+            'Attachment quota exceeded for project {}', project.project_name)
+  return new_bytes_by_pid
+
 
 def _AssertIssueChangesValid(
     cnxn, issue_delta_pairs, services, comment_content=None):

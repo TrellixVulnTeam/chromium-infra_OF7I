@@ -14,6 +14,7 @@ import unittest
 
 import settings
 
+from businesslogic import work_env
 from framework import exceptions
 from framework import framework_constants
 from framework import framework_helpers
@@ -38,10 +39,10 @@ TEST_ID_MAP = {
     }
 
 
-def _Issue(project_name, local_id, summary='', status=''):
+def _Issue(project_name, local_id, summary='', status='', project_id=789):
   issue = tracker_pb2.Issue()
   issue.project_name = project_name
-  issue.project_id = 789
+  issue.project_id = project_id
   issue.local_id = local_id
   issue.issue_id = 100000 + local_id
   issue.summary = summary
@@ -694,8 +695,48 @@ class HelpersTest(unittest.TestCase):
         '/p/chromium/issues/detail?id=123456',
         tracker_helpers.FormatCrBugURL('chromium', 123456))
 
-  def testComputeNewQuotaBytesUsed(self):
-    pass  # TODO(jrobbins): Write this test.
+  @mock.patch('tracker.tracker_constants.ISSUE_ATTACHMENTS_QUOTA_HARD', 1)
+  def testComputeNewQuotaBytesUsed_ProjectQuota(self):
+    upload_1 = work_env.AttachmentUpload(
+        'matter not', 'three men make a tiger', 'matter not')
+    upload_2 = work_env.AttachmentUpload('matter not', 'chicken', 'matter not')
+    attachments = [upload_1, upload_2]
+
+    project = fake.Project()
+    project.attachment_bytes_used = 10
+    project.attachment_quota = project.attachment_bytes_used + len(
+        upload_1.contents + upload_2.contents) + 1
+
+    actual_new = tracker_helpers.ComputeNewQuotaBytesUsed(project, attachments)
+    expected_new = project.attachment_quota - 1
+    self.assertEqual(actual_new, expected_new)
+
+    upload_3 = work_env.AttachmentUpload('matter not', 'donut', 'matter not')
+    attachments.append(upload_3)
+    with self.assertRaises(exceptions.OverAttachmentQuota):
+      tracker_helpers.ComputeNewQuotaBytesUsed(project, attachments)
+
+  @mock.patch(
+      'tracker.tracker_constants.ISSUE_ATTACHMENTS_QUOTA_HARD', len('tiger'))
+  def testComputeNewQuotaBytesUsed_GeneralQuota(self):
+    upload_1 = work_env.AttachmentUpload('matter not', 'tiger', 'matter not')
+    attachments = [upload_1]
+
+    project = fake.Project()
+
+    actual_new = tracker_helpers.ComputeNewQuotaBytesUsed(project, attachments)
+    expected_new = len(upload_1.contents)
+    self.assertEqual(actual_new, expected_new)
+
+    upload_2 = work_env.AttachmentUpload('matter not', 'donut', 'matter not')
+    attachments.append(upload_2)
+    with self.assertRaises(exceptions.OverAttachmentQuota):
+      tracker_helpers.ComputeNewQuotaBytesUsed(project, attachments)
+
+    upload_3 = work_env.AttachmentUpload('matter not', 'donut', 'matter not')
+    attachments.append(upload_3)
+    with self.assertRaises(exceptions.OverAttachmentQuota):
+      tracker_helpers.ComputeNewQuotaBytesUsed(project, attachments)
 
   def testIsUnderSoftAttachmentQuota(self):
     pass  # TODO(jrobbins): Write this test.
@@ -2005,6 +2046,61 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         [issue_1, issue_3], [issue_2], [issue_4, issue_5]
     ]
     self.assertEqual(issues_for_deltas, expected_issues_for_deltas)
+
+  def testEnforceAttachmentQuotaLimits(self):
+    self.services.project.TestAddProject('Circe', project_id=798)
+    issue_a1 = _Issue('Circe', 1, project_id=798)
+    delta_a1 = tracker_pb2.IssueDelta()
+
+    issue_a2 = _Issue('Circe', 2, project_id=798)
+    delta_a2 = tracker_pb2.IssueDelta()
+
+    self.services.project.TestAddProject('Patroclus', project_id=788)
+    issue_b1 = _Issue('Patroclus', 1, project_id=788)
+    delta_b1 = tracker_pb2.IssueDelta()
+
+    issue_delta_pairs = [
+        (issue_a1, delta_a1), (issue_a2, delta_a2), (issue_b1, delta_b1)
+    ]
+
+    upload_1 = work_env.AttachmentUpload('dragon', 'OOOOOO\n', 'text/plain')
+    upload_2 = work_env.AttachmentUpload('snake', 'ooooo\n', 'text/plain')
+    attachment_uploads = [upload_1, upload_2]
+
+    actual = tracker_helpers._EnforceAttachmentQuotaLimits(
+        self.cnxn, issue_delta_pairs, self.services, attachment_uploads)
+
+    expected = {
+        798: len(upload_1.contents + upload_2.contents) * 2,
+        788: len(upload_1.contents + upload_2.contents)
+    }
+    self.assertEqual(actual, expected)
+
+  @mock.patch('tracker.tracker_constants.ISSUE_ATTACHMENTS_QUOTA_HARD', 1)
+  def testEnforceAttachmentQuotaLimits_Exceeded(self):
+    self.services.project.TestAddProject('Circe', project_id=798)
+    issue_a1 = _Issue('Circe', 1, project_id=798)
+    delta_a1 = tracker_pb2.IssueDelta()
+
+    issue_a2 = _Issue('Circe', 2, project_id=798)
+    delta_a2 = tracker_pb2.IssueDelta()
+
+    self.services.project.TestAddProject('Patroclus', project_id=788)
+    issue_b1 = _Issue('Patroclus', 1, project_id=788)
+    delta_b1 = tracker_pb2.IssueDelta()
+
+    issue_delta_pairs = [
+        (issue_a1, delta_a1), (issue_a2, delta_a2), (issue_b1, delta_b1)
+    ]
+
+    upload_1 = work_env.AttachmentUpload('dragon', 'OOOOOO\n', 'text/plain')
+    upload_2 = work_env.AttachmentUpload('snake', 'ooooo\n', 'text/plain')
+    attachment_uploads = [upload_1, upload_2]
+
+    with self.assertRaisesRegexp(exceptions.OverAttachmentQuota,
+                                 r'.+ project Patroclus\n.+ project Circe'):
+      tracker_helpers._EnforceAttachmentQuotaLimits(
+          self.cnxn, issue_delta_pairs, self.services, attachment_uploads)
 
   def testAssertIssueChangesValid_Valid(self):
     """We can assert when deltas are valid for issues."""
