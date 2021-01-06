@@ -52,29 +52,16 @@ def get_docstring(test_script):
   return m.group(1).strip().splitlines()[0]
 
 
-def find_cipd_client(out_dir):
-  """Returns path to cipd client built by build.py.
-
-  See build_cipd_client in build.py. It puts cipd client into
-  '<out_dir>/.cipd_client/cipd_<digest>' and there's only one such file there.
-
-  Prints error message and returns None if the file cannot be found.
-  """
-  out_dir = os.path.join(out_dir, '.cipd_client')
-  files = [f for f in os.listdir(out_dir) if f.startswith('cipd_')]
-  if not files:
-    print >> sys.stderr, 'Cannot find CIPD client in %s' % out_dir
-    return None
-  if len(files) != 1:
-    print >> sys.stderr, (
-        'There should be only one cipd client binary in %s, found %s' %
-        (out_dir, files))
-    return None
-  cipd_client = os.path.join(out_dir, files[0])
-  if not os.access(cipd_client, os.X_OK):
-    print >> sys.stderr, 'CIPD client at %s is not runnable'
-    return None
-  return cipd_client
+def find_cipd():
+  """Finds a CIPD client to use in PATH."""
+  exts = ('.exe', '.bat') if sys.platform == 'win32' else ('',)
+  for p in os.environ.get('PATH', '').split(os.pathsep):
+    base = os.path.join(p, 'cipd')
+    for ext in exts:
+      candidate = base + ext
+      if os.path.isfile(candidate):
+        return candidate
+  return 'cipd' + EXE_SUFFIX
 
 
 def run_test(cipd_client, package, work_dir, test_script):
@@ -139,7 +126,7 @@ def run(
     print 'Nothing to test.'
     return 0
 
-  cipd_client = find_cipd_client(package_out_dir)
+  cipd_client = find_cipd()
   if not cipd_client:
     return 1
 

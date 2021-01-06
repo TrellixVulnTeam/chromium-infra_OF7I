@@ -327,6 +327,18 @@ def run_python(script, args):
       env=environ)
 
 
+def find_cipd():
+  """Finds a CIPD client in PATH."""
+  exts = ('.exe', '.bat') if sys.platform == 'win32' else ('',)
+  for p in os.environ.get('PATH', '').split(os.pathsep):
+    base = os.path.join(p, 'cipd')
+    for ext in exts:
+      candidate = base + ext
+      if os.path.isfile(candidate):
+        return candidate
+  return 'cipd' + EXE_SUFFIX
+
+
 def run_cipd(cipd_exe, cmd, args):
   """Invokes CIPD, parsing -json-output result.
 
@@ -905,63 +917,6 @@ def upload_pkg(cipd_exe, pkg_file, service_url, tags, update_latest_ref,
   return info
 
 
-def build_cipd_client(go_workspace, out_dir):
-  """Builds cipd client binary for the host platform.
-
-  Ignores GOOS and GOARCH env vars. Puts the client binary into
-  '<out_dir>/.cipd_client/cipd_<digest>'.
-
-  This binary is used by build.py itself and later by test_packages.py.
-
-  Args:
-    go_workspace: path to Go workspace root (contains 'env.py', 'src', etc).
-    out_dir: build output directory, will be used to store the binary.
-
-  Returns:
-    Path to the built binary.
-  """
-  # To avoid rebuilding cipd client all the time, we cache it in out/*, using
-  # a combination of DEPS+deps.lock+bootstrap.py as a cache key (they define
-  # exact set of sources used to build the cipd binary).
-  #
-  # We can't just use the client in infra.git/cipd/* because it is built by this
-  # script itself: it introduced bootstrap dependency cycle in case we need to
-  # add a new platform or if we wipe cipd backend storage.
-  seed_paths = [
-    os.path.join(ROOT, 'DEPS'),
-    os.path.join(ROOT, 'go', 'deps.lock'),
-    os.path.join(ROOT, 'go', 'bootstrap.py'),
-  ]
-  digest = hashlib.sha1()
-  for p in seed_paths:
-    with open(p, 'rb') as f:
-      digest.update(f.read())
-  cache_key = digest.hexdigest()[:20]
-
-  # Already have it?
-  cipd_out_dir = os.path.join(out_dir, '.cipd_client')
-  cipd_exe = os.path.join(cipd_out_dir, 'cipd_%s%s' % (cache_key, EXE_SUFFIX))
-  if os.path.exists(cipd_exe):
-    return cipd_exe
-
-  # Nuke all previous copies, make sure out_dir exists.
-  if os.path.exists(cipd_out_dir):
-    for p in glob.glob(os.path.join(cipd_out_dir, 'cipd_*')):
-      os.remove(p)
-  else:
-    os.makedirs(cipd_out_dir)
-
-  # Build cipd client binary for the host platform.
-  run_go_build(
-      go_workspace,
-      GoEnviron.host_native(),
-      package='go.chromium.org/luci/cipd/client/cmd/cipd',
-      output=cipd_exe,
-      rebuild=True)
-
-  return cipd_exe
-
-
 def get_build_out_file(package_out_dir, pkg_def):
   """Returns a path where to put built *.cipd package file.
 
@@ -1068,6 +1023,12 @@ def run(
     print 'Nothing to do.'
     return 0
 
+  # Find a CIPD client in PATH to use for building and uploading packages.
+  print_title('CIPD client')
+  cipd_exe = find_cipd()
+  print 'Binary: %s' % cipd_exe
+  subprocess.check_call(['cipd', 'version'], executable=cipd_exe)
+
   # Remove old build artifacts to avoid stale files in case the script crashes
   # for some reason.
   if build:
@@ -1096,9 +1057,6 @@ def run(
         'Go toolset GOHOSTARCH (%s) doesn\'t match expected architecture (%s)' %
         (go_env['GOHOSTARCH'], expected_arch))
     return 1
-
-  # Build the cipd client needed later to build or upload packages.
-  cipd_exe = build_cipd_client(go_workspace, package_out_dir)
 
   # Build the world.
   if build:
