@@ -4,6 +4,7 @@
 
 import json
 import sys
+import urllib2
 
 # pylint: disable=line-too-long
 
@@ -12,4 +13,6 @@ if not d['issue_url']:
   print >> sys.stderr, "Failed to get Gerrit CL associated with this repo."
   print >> sys.stderr, "Ensure that you've run `git cl upload` before using run_remotely.sh"
   sys.exit(1)
-print d['issue_url']
+
+# Print the final URL
+print urllib2.urlopen(d['issue_url']).geturl()

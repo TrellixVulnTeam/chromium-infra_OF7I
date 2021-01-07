@@ -221,7 +221,7 @@ make install
 #
 # We do this here instead of "usercustomize.py" because the latter
 # isn't propagated when a VirtualEnv is cut.
-cat < "$SCRIPT_DIR/../cpython_common/ssl_suffix.py" >> "$PREFIX/lib/python2.7/ssl.py"
+cat < "$SCRIPT_DIR/ssl_suffix.py" >> "$PREFIX/lib/python2.7/ssl.py"
 
 # TODO: maybe strip python executable?
 

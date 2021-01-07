@@ -9,7 +9,7 @@ create {
     patch_dir: "patches"
   }
   build {
-    tool: "help2man"
+    tool: "tools/help2man"
   }
 }
 

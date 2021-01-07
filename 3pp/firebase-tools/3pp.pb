@@ -7,7 +7,7 @@ create {
     script { name: "fetch.py" }
   }
   build {
-    tool: "nodejs"
+    tool: "tools/nodejs"
 
     # Node.js is too new to run under the linux-amd64 docker environment
     # (because that image is based on CentOS5 to conform to PEP 513)

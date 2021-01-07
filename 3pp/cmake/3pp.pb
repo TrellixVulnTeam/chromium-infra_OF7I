@@ -27,8 +27,8 @@ create {
   }
 
   build {
-    tool: "cmake_bootstrap"
-    tool: "ninja"
+    tool: "build_support/cmake_bootstrap"
+    tool: "tools/ninja"
   }
 }
 

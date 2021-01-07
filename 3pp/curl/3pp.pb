@@ -11,8 +11,8 @@ create {
   }
 
   build {
-    dep: "zlib"
-    dep: "libidn2"
+    dep: "static_libs/libidn2"
+    dep: "static_libs/zlib"
   }
 }
 
@@ -20,9 +20,9 @@ create {
   platform_re: "linux-.*"
 
   build {
-    dep: "zlib"
-    dep: "libidn2"
-    dep: "openssl"
+    dep: "static_libs/libidn2"
+    dep: "static_libs/openssl"
+    dep: "static_libs/zlib"
   }
 }
 

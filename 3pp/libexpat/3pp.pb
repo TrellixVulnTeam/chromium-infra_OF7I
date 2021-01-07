@@ -8,9 +8,9 @@
     }
    }
    build {
-    tool: "autoconf"
-    tool: "automake"
-    tool: "libtool"
+    tool: "tools/autoconf"
+    tool: "tools/automake"
+    tool: "tools/libtool"
    }
  }
 

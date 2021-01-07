@@ -9,10 +9,10 @@ create {
     unpack_archive: true
   }
   build {
-    tool: "autoconf"
-    tool: "automake"
-    tool: "libtool"
-    tool: "texinfo"
+    tool: "tools/autoconf"
+    tool: "tools/automake"
+    tool: "tools/libtool"
+    tool: "tools/texinfo"
   }
 }
 

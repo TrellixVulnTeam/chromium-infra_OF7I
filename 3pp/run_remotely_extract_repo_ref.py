@@ -14,10 +14,15 @@ for i, arg in enumerate(cmdline):
   if arg == '-properties':
     properties = json.loads(cmdline[i+1])
     break
+build_input = properties['$recipe_engine/buildbucket']['build']['input']
+cl_info = build_input['gerritChanges'][0]
 if mode == 'ref':
-  build_input = properties['$recipe_engine/buildbucket']['build']['input']
-  ref = build_input['gerritChanges'][0]
   print('refs/changes/%d/%s/%s' % (
-    int(ref['change'])%100, ref['change'], ref['patchset']))
+    int(cl_info['change'])%100, cl_info['change'], cl_info['patchset']))
 elif mode == 'repo':
-  print(properties['repository'])
+  # Get the git host url from the code review url
+  # chromium-review.googlesource.com -> chromium.googlesource.com
+  # chrome-internal-review.googlesource.com -> chrome-internal.googlesource.com
+  host = cl_info['host'].replace('-review', '')
+  repo = cl_info['project']
+  print('https://%s/%s' % (host, repo))

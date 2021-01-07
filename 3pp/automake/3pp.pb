@@ -11,7 +11,7 @@ create {
     patch_version: "chromium1"
   }
 
-  build { tool: "autoconf" }
+  build { tool: "tools/autoconf" }
 }
 
 upload { pkg_prefix: "tools" }

@@ -8,9 +8,10 @@ create {
     patch_dir: "patches"
   }
   build {
-    dep: "pcre"
-    tool: "autoconf"
-    tool: "automake"
+    dep: "static_libs/pcre"
+
+    tool: "tools/autoconf"
+    tool: "tools/automake"
   }
 }
 

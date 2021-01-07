@@ -9,15 +9,15 @@ create {
     tag_pattern: "v%s"
   }}
   build {
-    tool: "ninja"  # Depend on the bootstrapped version when cross-compiling
-    tool: "re2c"
+    tool: "tools/ninja"  # Depend on the bootstrapped version when cross-compiling
+    tool: "tools/re2c"
   }
 }
 
 create {
   platform_re: "windows-.*|mac-.*|linux-amd64"
   build {
-    tool: "re2c"
+    tool: "tools/re2c"
     install: "install_bootstrap.sh"
   }
 }

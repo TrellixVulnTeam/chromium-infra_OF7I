@@ -16,7 +16,7 @@ create {
     subdir: "src/github.com/golang/dep"
   }
 
-  build { tool: "go" }
+  build { tool: "tools/go" }
 }
 
 upload { pkg_prefix: "go/github.com/golang" }

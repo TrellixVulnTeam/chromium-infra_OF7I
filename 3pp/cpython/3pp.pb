@@ -16,10 +16,10 @@ create {
     patch_dir: "patches"
   }
   build {
-    tool: "autoconf"
-    tool: "sed"            # Used by python's makefiles
-    tool: "ed"
-    tool: "pip_bootstrap"
+    tool: "build_support/pip_bootstrap"
+    tool: "tools/autoconf"
+    tool: "tools/ed"
+    tool: "tools/sed"            # Used by python's makefiles
   }
 }
 
@@ -30,28 +30,28 @@ create {
     patch_dir: "mac_patches"
   }
   build {
-    dep: "bzip2"
-    dep: "readline"
-    dep: "ncurses"
-    dep: "zlib"
-    dep: "sqlite"
-    dep: "openssl"
+    dep: "static_libs/bzip2"
+    dep: "static_libs/ncurses"
+    dep: "static_libs/openssl"
+    dep: "static_libs/readline"
+    dep: "static_libs/sqlite"
+    dep: "static_libs/zlib"
   }
 }
 
 create {
   platform_re: "linux-.*"
   build {
-    dep: "bzip2"
-    dep: "readline"
-    dep: "ncurses"
-    dep: "zlib"
-    dep: "sqlite"
-    dep: "openssl"
+    dep: "static_libs/bzip2"
+    dep: "static_libs/ncurses"
+    dep: "static_libs/openssl"
+    dep: "static_libs/readline"
+    dep: "static_libs/sqlite"
+    dep: "static_libs/zlib"
 
     # On Linux, we need to explicitly build libnsl; on other platforms, it is
     # part of 'libc'.
-    dep: "nsl"
+    dep: "static_libs/nsl"
   }
 }
 
@@ -59,8 +59,8 @@ create {
   platform_re: "windows-.*"
   source { script { name: "fetch.py" } }
   build {
-    tool: "lessmsi"
-    tool: "pip_bootstrap"
+    tool: "build_support/pip_bootstrap"
+    tool: "tools/lessmsi"
 
     install: "install_win.sh"
   }

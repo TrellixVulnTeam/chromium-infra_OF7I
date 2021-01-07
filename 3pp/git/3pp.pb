@@ -12,14 +12,14 @@ create {
   }}
 
   build {
-    tool: "autoconf"
-    tool: "sed"
-    tool: "gettext"
+    tool: "tools/autoconf"
+    tool: "tools/gettext"
+    tool: "tools/sed"
 
-    dep: "zlib"
-    dep: "curl"
-    dep: "pcre2"
-    dep: "libexpat"
+    dep: "static_libs/curl"
+    dep: "static_libs/libexpat"
+    dep: "static_libs/pcre2"
+    dep: "static_libs/zlib"
   }
 }
 

@@ -22,7 +22,7 @@ create {
   }
   build {
     install: "install_source.sh"
-    tool: "go"  # depend on the prebuilt version in $PATH
+    tool: "tools/go"  # depend on the prebuilt version in $PATH
   }
 }
 

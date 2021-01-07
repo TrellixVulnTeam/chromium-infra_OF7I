@@ -13,7 +13,7 @@ create {
     unpack_archive: true
   }
   build {
-    tool: "texinfo"
+    tool: "tools/texinfo"
   }
 }
 
