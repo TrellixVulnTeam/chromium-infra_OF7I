@@ -31,28 +31,12 @@ message RepoConfig {
 
 // BenignFilePattern describes pattern of changes to benign files.
 message BenignFilePattern {
-  // A map contains the information that which files are allowed under which
-  // directories, where keys are file extensions, values are paths of files
-  // or directories. For paths to specific files, these files can be considered
-  // benign files; for paths to directories, files under these directories with
-  // corresponding extensions can be considered as benign files. For files with
-  // no extensions, their key should be an empty string "".
-  map<string, Paths> file_extension_map = 1;
+  // file_extension_map has been deprecated.
+  reserved 1;
   // Paths contains the information that which files are allowed and which are
   // not. The paths is parsed as lines in a .gitignore document, and therefore
   // should follows rules listed in https://git-scm.com/docs/gitignore.
   repeated string paths = 2;
-}
-
-// Paths contains a list of allowed paths.
-message Paths {
-  // We use the Match function in package `path` to judge whether a file
-  // belongs to a path. Therefore, the `paths` here should follow the same
-  // syntax as the `pattern` variable in Match function.
-  // https://golang.org/pkg/path/#Match
-  //
-  // TODO: supports "**" in the syntax.
-  repeated string paths = 1;
 }
 
 // CleanRevertPattern describes pattern of clean reverts.

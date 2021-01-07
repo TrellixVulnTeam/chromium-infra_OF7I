@@ -30,39 +30,10 @@ func validateHostConfig(c *validation.Context, hostConfig *HostConfig) {
 }
 
 func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
-	if repoConfig.BenignFilePattern != nil {
-		c.Enter("benign_file_pattern")
-		validateBenignFilePattern(c, repoConfig.BenignFilePattern)
-		c.Exit()
-	}
 	if repoConfig.CleanRevertPattern != nil {
 		c.Enter("clean_revert_pattern")
 		validateCleanRevertPattern(c, repoConfig.CleanRevertPattern)
 		c.Exit()
-	}
-}
-
-func validateBenignFilePattern(c *validation.Context, benignFilePattern *BenignFilePattern) {
-	m := benignFilePattern.FileExtensionMap
-	for ext, paths := range m {
-		if ext != path.Ext(ext) && ext != "*" {
-			c.Errorf("invalid file extension %s", ext)
-		}
-
-		for _, p := range paths.Paths {
-			// This two match statements validate that it's a valid-enough
-			// path. They should not error when trying to match on it.
-			if _, err := path.Match(p, "test"); err != nil {
-				c.Errorf("invalid path %s: %s", p, err)
-			}
-			if _, err := path.Match(p, "src/"); err != nil {
-				c.Errorf("invalid path %s: %s", p, err)
-			}
-
-			if pExt := path.Ext(p); ext != pExt && p[len(p)-1] != '/' && p[len(p)-1] != '*' {
-				c.Errorf("the extension of path %s does not match the extension %s", p, ext)
-			}
-		}
 	}
 }
 

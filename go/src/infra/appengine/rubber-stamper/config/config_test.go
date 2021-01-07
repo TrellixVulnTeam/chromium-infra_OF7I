@@ -20,11 +20,7 @@ func TestConfig(t *testing.T) {
 					RepoConfigs: map[string]*RepoConfig{
 						"dummy": {
 							BenignFilePattern: &BenignFilePattern{
-								FileExtensionMap: map[string]*Paths{
-									".txt": {
-										Paths: []string{"whitespace.txt", "a/"},
-									},
-								},
+								Paths: []string{"whitespace.txt", "a/*.txt"},
 							},
 						},
 					},

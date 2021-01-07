@@ -32,7 +32,7 @@ is submitted, the config will be pushed to Rubber-Stamper via luci-config.
 When you need Rubber-Stamper to treat your files as benign files, you need to
 add the path to the files/directories in the config.
 
-The list of "benign file extensions" and corresponding filepaths is configured
+The list of filepaths that follow `.gitignore` style ignore patterns, is configured
 on a per-repo basis. Here is a sample `repo_config` that allows all `.xtb` filepaths
 in `chromium/src`, and a few subpaths for`.txt` files.
 
@@ -40,77 +40,28 @@ in `chromium/src`, and a few subpaths for`.txt` files.
       key: "chromium/src"
       value: {
         benign_file_pattern {
-          file_extension_map {
-            key: ".xtb"
-            value: {
-              paths: "**"
-            }
-          }
-          file_extension_map {
-            key: ".txt"
-            value: {
-              paths: "a/b.txt",
-              paths: "a/*/c.txt",
-              paths: "d/"
-            }
-          }
-          file_extension_map {
-            key: "*"
-            value: {
-              paths: "z/"
-            }
-          }
+          paths: "**.xtb"
+          paths: "a/b.txt"
+          paths: "a/*/c.txt"
+          paths: "z/*"
         }
       }
     }
 
-Using `**` in `paths` allows all paths in that repo. Using `*` in the key of
-`file_extension_map` allows all the file extensions.
+We use the same rule as in `.gitignore` files to parse these `paths`. Here, each
+element of `paths` is treated as a line in a `.gitignore` file. Syntax of
+`.gitignore` can be found in [gitignore](https://git-scm.com/docs/gitignore). To
+be noticed, in a `.gitignore` file, the last matching pattern decides the
+outcome. We also follow this rule here. For example, with the following
+`repo_config`, file `test/a/1.txt` would be valid, while file
+`test/a/b/2.txt` would not be allowed.
 
-`file_extension_map` is a map contains the information about which files are
-considered benign under which directories. The `key`s are file extensions,
-while the `value`s are paths of files or directories. For paths to specific
-files, these files can be considered benign files; for paths to directories,
-files under these directories with corresponding extensions can be considered
-as benign files. For files with no extensions, their key should be an empty
-string "".
-
-We use the Match function from the `path` package to judge whether a file belongs to
-a path. Therefore,`paths` here should follow the same syntax as the `pattern`
-variable in the [Match](https://golang.org/pkg/path/#Match) function.
-
-If you need to add a file whose suffix already exists in the pattern, you can
-simply add another `paths` under the existing key. For example, adding another
-"a/c.txt" in the above config would be like:
-
-    benign_file_pattern {
-      file_extension_map {
-        key: ".txt"
-        value: {
-          paths: "a/b.txt",
-          paths: "a/*/c.txt",
-          paths: "d/",
-          paths: "a/c.txt"
-        }
-      }
-    }
-
-If you need to add a file whose suffix does not exist yet, you need to add a
-new `file_extension_map`, like:
-
-    benign_file_pattern {
-      file_extension_map {
-        key: ".txt"
-        value: {
-          paths: "a/b.txt",
-          paths: "a/*/c.txt",
-          paths: "d/"
-        }
-      }
-      file_extension_map {
-        key: ""
-        value: {
-          paths: "a/DEPS"
+    repo_configs {
+      key: "chromium/src"
+      value: {
+        benign_file_pattern {
+          paths: "test/a/**",
+          paths: "!test/a/b/*",
         }
       }
     }
