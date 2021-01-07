@@ -6,7 +6,6 @@ package reviewer
 
 import (
 	"context"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -53,51 +52,13 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 	}
 	matcher := gitignore.NewMatcher(patterns)
 
-	// TODO: remove old code using FileExtensionMap after switching to
-	// gitignore style paths.
-	fileExtensionMap := hostCfg.RepoConfigs[t.Repo].BenignFilePattern.FileExtensionMap
-
-	var allExtPaths []string
-	if val, ok := fileExtensionMap["*"]; ok {
-		allExtPaths = val.Paths
-	}
-
 	var invalidFiles []string
 	for file := range resp.Files {
 		if file == "/COMMIT_MSG" {
 			continue
 		}
 
-		isValid := false
-		ext := path.Ext(file)
-
-		var allowedPaths []string
-		if val, ok := fileExtensionMap[ext]; ok {
-			allowedPaths = append(val.Paths, allExtPaths...)
-		} else {
-			allowedPaths = allExtPaths
-		}
-
-		for _, p := range allowedPaths {
-			// Allow `**` to mean all paths under this repo
-			// TODO: implement more robust pattern matching
-			if p == "**" {
-				isValid = true
-				break
-			}
-			ok, err := path.Match(p, file)
-			if err != nil {
-				logging.WithError(err).Errorf(ctx, "invalid path in BenignFilePattern: %s", p)
-				continue
-			}
-			if ok {
-				isValid = true
-				break
-			}
-		}
-		// Also check with gitignore style match. It should be fully replaced
-		// after switching to gitignore style paths.
-		if !isValid && !matcher.Match(splitPath(file), false) {
+		if !matcher.Match(splitPath(file), false) {
 			invalidFiles = append(invalidFiles, file)
 		}
 	}

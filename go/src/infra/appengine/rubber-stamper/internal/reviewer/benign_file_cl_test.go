@@ -39,20 +39,6 @@ func TestReviewBenignFileChange(t *testing.T) {
 							"test/override/a/**",
 							"!test/override/a/b/*",
 						},
-						FileExtensionMap: map[string]*config.Paths{
-							"": {
-								Paths: []string{"a/x", "a/q/y"},
-							},
-							"*": {
-								Paths: []string{"t/*"},
-							},
-							".txt": {
-								Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
-							},
-							".xtb": {
-								Paths: []string{"**"},
-							},
-						},
 					},
 				},
 			},
@@ -66,95 +52,6 @@ func TestReviewBenignFileChange(t *testing.T) {
 			AutoSubmit: false,
 		}
 
-		Convey("all paths valid for a particular extension ", func() {
-			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-				Number:     t.Number,
-				RevisionId: t.Revision,
-			})).Return(&gerritpb.ListFilesResponse{
-				Files: map[string]*gerritpb.FileInfo{
-					"/COMMIT_MSG": nil,
-					"a/b.xtb":     nil,
-					"d.xtb":       nil,
-					"f/e/g.xtb":   nil,
-					"t/o":         nil,
-					"t/readme.md": nil,
-				},
-			}, nil)
-			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
-			So(err, ShouldBeNil)
-			So(len(invalidFiles), ShouldEqual, 0)
-		})
-		Convey("valid file", func() {
-			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-				Number:     t.Number,
-				RevisionId: t.Revision,
-			})).Return(&gerritpb.ListFilesResponse{
-				Files: map[string]*gerritpb.FileInfo{
-					"/COMMIT_MSG": nil,
-					"a/b.txt":     nil,
-					"a/c.txt":     nil,
-					"a/q/y":       nil,
-					"a/e/a.txt":   nil,
-					"a/fz.txt":    nil,
-					"t/asd.txt":   nil,
-					"t/q":         nil,
-				},
-			}, nil)
-
-			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
-			So(err, ShouldBeNil)
-			So(len(invalidFiles), ShouldEqual, 0)
-		})
-		Convey("missing config", func() {
-			hostCfg.RepoConfigs["dummy"].BenignFilePattern = nil
-			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-				Number:     t.Number,
-				RevisionId: t.Revision,
-			})).Return(&gerritpb.ListFilesResponse{
-				Files: map[string]*gerritpb.FileInfo{
-					"/COMMIT_MSG": nil,
-					"a/b.txt":     nil,
-				},
-			}, nil)
-
-			invalidFiles, err := reviewBenignFileChange(ctx, nil, gerritMock, t)
-			So(err, ShouldBeNil)
-			So(invalidFiles, ShouldResemble, []string{"a/b.txt"})
-		})
-		Convey("invalid file extension", func() {
-			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-				Number:     t.Number,
-				RevisionId: t.Revision,
-			})).Return(&gerritpb.ListFilesResponse{
-				Files: map[string]*gerritpb.FileInfo{
-					"/COMMIT_MSG": nil,
-					"a/b.md":      nil,
-				},
-			}, nil)
-
-			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
-			So(err, ShouldBeNil)
-			So(invalidFiles, ShouldResemble, []string{"a/b.md"})
-		})
-		Convey("invalid file", func() {
-			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-				Number:     t.Number,
-				RevisionId: t.Revision,
-			})).Return(&gerritpb.ListFilesResponse{
-				Files: map[string]*gerritpb.FileInfo{
-					"/COMMIT_MSG": nil,
-					"a/d.txt":     nil,
-					"a/p":         nil,
-					"a/e/p/p.txt": nil,
-					"a/f/z.txt":   nil,
-					"a/fz.txt":    nil,
-				},
-			}, nil)
-
-			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
-			So(err, ShouldBeNil)
-			So(invalidFiles, ShouldResemble, []string{"a/d.txt", "a/e/p/p.txt", "a/f/z.txt", "a/p"})
-		})
 		Convey("valid files with gitignore style patterns", func() {
 			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 				Number:     t.Number,

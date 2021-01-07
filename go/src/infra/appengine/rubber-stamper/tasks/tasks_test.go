@@ -28,11 +28,7 @@ func TestQueue(t *testing.T) {
 					RepoConfigs: map[string]*config.RepoConfig{
 						"dummy": {
 							BenignFilePattern: &config.BenignFilePattern{
-								FileExtensionMap: map[string]*config.Paths{
-									".txt": {
-										Paths: []string{"a/b.txt"},
-									},
-								},
+								Paths: []string{"a/b.txt"},
 							},
 						},
 					},

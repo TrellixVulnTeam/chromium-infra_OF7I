@@ -29,11 +29,7 @@ func TestScheduleReviews(t *testing.T) {
 					RepoConfigs: map[string]*config.RepoConfig{
 						"dummy": {
 							BenignFilePattern: &config.BenignFilePattern{
-								FileExtensionMap: map[string]*config.Paths{
-									"": {
-										Paths: []string{"a/x", "a/q/y"},
-									},
-								},
+								Paths: []string{"a/x", "a/q/y"},
 							},
 						},
 					},

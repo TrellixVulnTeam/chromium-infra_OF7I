@@ -27,14 +27,7 @@ func TestReviewChange(t *testing.T) {
 					RepoConfigs: map[string]*config.RepoConfig{
 						"dummy": {
 							BenignFilePattern: &config.BenignFilePattern{
-								FileExtensionMap: map[string]*config.Paths{
-									"": {
-										Paths: []string{"a/x", "a/q/y"},
-									},
-									".txt": {
-										Paths: []string{"a/b.txt", "a/c.txt", "a/e/*", "a/f*"},
-									},
-								},
+								Paths: []string{"a/x", "a/b.txt", "a/c.txt", "a/e/*.txt", "a/f*.txt"},
 							},
 						},
 					},
