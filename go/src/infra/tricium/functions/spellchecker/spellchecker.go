@@ -194,7 +194,7 @@ func main() {
 
 			p := filepath.Join(*inputDir, file.Path)
 			f := openFileOrDie(p)
-			analyzeFile(bufio.NewScanner(f), p, checkEveryWord, patterns, results)
+			analyzeFile(bufio.NewScanner(f), file.Path, checkEveryWord, patterns, results)
 			closeFileOrDie(f)
 		}
 	}
