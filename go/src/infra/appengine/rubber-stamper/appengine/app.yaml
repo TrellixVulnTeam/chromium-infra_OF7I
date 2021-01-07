@@ -5,6 +5,7 @@ runtime: go113
 luci_gae_vars:
   rubber-stamper-dev:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
+    CONFIG_SERVICE_HOST: luci-config.appspot.com
 
 entrypoint: >
   main

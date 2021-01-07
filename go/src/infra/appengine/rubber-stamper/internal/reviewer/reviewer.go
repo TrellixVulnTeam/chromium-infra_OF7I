@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/logging"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 
 	"infra/appengine/rubber-stamper/config"
@@ -48,6 +49,7 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 			RevisionId: t.Revision,
 			Message:    msg,
 		}
+		logging.Debugf(ctx, "change (host %s, cl %d, revision %s) cannot be auto-reviewed: %s", t.Host, t.Number, t.Revision, msg)
 		_, err := gc.SetReview(ctx, setReviewReq)
 		if err != nil {
 			return fmt.Errorf("failed to leave comment for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
@@ -77,6 +79,7 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 		Labels:     labels,
 		RevisionId: t.Revision,
 	}
+	logging.Debugf(ctx, "change (host %s, cl %d, revision %s) is valid", t.Host, t.Number, t.Revision)
 	_, err = gc.SetReview(ctx, setReviewReq)
 	if err != nil {
 		return fmt.Errorf("failed to add label for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())

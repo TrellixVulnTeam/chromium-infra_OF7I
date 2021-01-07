@@ -35,6 +35,7 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 	}
 
 	if hostCfg == nil || hostCfg.RepoConfigs[t.Repo] == nil || hostCfg.RepoConfigs[t.Repo].BenignFilePattern == nil {
+		logging.Debugf(ctx, "there's no BenignFilePattern config for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision)
 		invalidFiles := make([]string, 0, len(resp.Files))
 		for file := range resp.Files {
 			if file == "/COMMIT_MSG" {
@@ -77,10 +78,6 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 			allowedPaths = allExtPaths
 		}
 
-		if len(allowedPaths) == 0 {
-			invalidFiles = append(invalidFiles, file)
-			continue
-		}
 		for _, p := range allowedPaths {
 			// Allow `**` to mean all paths under this repo
 			// TODO: implement more robust pattern matching
