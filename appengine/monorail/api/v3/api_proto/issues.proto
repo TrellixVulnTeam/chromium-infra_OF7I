@@ -251,6 +251,12 @@ message ListCommentsResponse {
   string next_page_token = 2;
 }
 
+// An attachment to upload to a comment or description.
+// Next available tag: 3
+message AttachmentUpload {
+  string filename = 1 [ (google.api.field_behavior) = REQUIRED ];
+  bytes content = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
 
 // Holds changes to one issue, used in ModifyIssuesRequest.
 // Next available tag: 9

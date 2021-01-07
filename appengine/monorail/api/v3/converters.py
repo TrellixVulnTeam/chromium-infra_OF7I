@@ -21,6 +21,7 @@ from api.v3.api_proto import project_objects_pb2
 from api.v3.api_proto import user_objects_pb2
 
 from framework import exceptions
+from framework import filecontent
 from framework import framework_bizobj
 from framework import framework_constants
 from framework import framework_helpers
@@ -441,6 +442,23 @@ class Converter(object):
         result.attachment_count = issue.attachment_count
       converted_issues.append(result)
     return converted_issues
+
+  def IngestAttachmentUploads(self, attachment_uploads):
+    # type: (Sequence[api_proto.issues_pb2.AttachmentUpload] ->
+    #     Sequence[framework_helpers.AttachmentUpload])
+    """Ingests protoc AttachmentUploads into framework_helpers.AttachUploads."""
+    ingested_uploads = []
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      for up in attachment_uploads:
+        if not up.filename or not up.content:
+          err_agg.AddErrorMessage(
+              'Uploaded atachment missing filename or content')
+        mimetype = filecontent.GuessContentTypeFromFilename(up.filename)
+        ingested_uploads.append(
+            framework_helpers.AttachmentUpload(
+                up.filename, up.content, mimetype))
+
+    return ingested_uploads
 
   def IngestIssueDeltas(self, issue_deltas):
     # type: (Sequence[api_proto.issues_pb2.IssueDelta]) ->

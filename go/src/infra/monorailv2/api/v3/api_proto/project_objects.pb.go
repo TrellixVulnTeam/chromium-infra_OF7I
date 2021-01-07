@@ -1210,6 +1210,10 @@ type ComponentDef struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Resource name of the component, aka identifier.
+	// the API will always return ComponentDef names with format:
+	// projects/{project}/componentDefs/<component_def_id>.
+	// However the API will accept ComponentDef names with formats:
+	// projects/{project}/componentDefs/<component_def_id>|<value>.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// String value of the component, ie 'Tools>Stability' or 'Blink'.
 	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`

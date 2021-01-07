@@ -26,6 +26,7 @@ from api.v3.api_proto import project_objects_pb2
 from framework import authdata
 from framework import exceptions
 from framework import framework_constants
+from framework import framework_helpers
 from framework import monorailcontext
 from testing import fake
 from testing import testing_helpers
@@ -892,6 +893,27 @@ class ConverterFunctionsTest(unittest.TestCase):
     issue.local_id = local_id
     issue.issue_id = project_id * 100 + local_id
     return issue
+
+  def testIngestAttachmentUploads(self):
+    up_1 = issues_pb2.AttachmentUpload(
+        filename='clown.gif', content='iTs prOUnOuNcED JIF')
+    up_2 = issues_pb2.AttachmentUpload(
+        filename='mowgli', content='cutest dog')
+
+    ingested = self.converter.IngestAttachmentUploads([up_1, up_2])
+    expected = [framework_helpers.AttachmentUpload(
+        'clown.gif', 'iTs prOUnOuNcED JIF', 'image/gif'),
+                framework_helpers.AttachmentUpload(
+                    'mowgli', 'cutest dog', 'text/plain')]
+    self.assertEqual(ingested, expected)
+
+  def testtIngestAttachmentUploads_Invalid(self):
+    up_1 = issues_pb2.AttachmentUpload(filename='clown.gif')
+    up_2 = issues_pb2.AttachmentUpload(content='cutest dog')
+
+    with self.assertRaisesRegexp(
+        exceptions.InputException, 'Uploaded .+\nUploaded .+'):
+      self.converter.IngestAttachmentUploads([up_1, up_2])
 
   def testIngestIssueDeltas(self):
     # Set up.

@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import collections
 import logging
 import random
 import string
@@ -33,6 +34,11 @@ from framework import urls
 from proto import user_pb2
 from services import client_config_svc
 
+# AttachmentUpload holds the information of an incoming uploaded
+# attachment before it gets saved as a gcs file and saved to the DB.
+AttachmentUpload = collections.namedtuple(
+    'AttachmentUpload', ['filename', 'contents', 'mimetype'])
+# type: (str, str, str) -> None
 
 # For random key generation
 RANDOM_KEY_LENGTH = 128
