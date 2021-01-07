@@ -15,12 +15,12 @@ func TestSortActions(t *testing.T) {
 		want []Action
 	}{
 		{
-			in:   []Action{StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
-			want: []Action{StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
+			in:   []Action{ServoVerification, StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
+			want: []Action{ServoVerification, StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
 		},
 		{
-			in:   []Action{InstallTestImage, SetupLabstation, InstallFirmware, UpdateLabel, VerifyRecoveryMode, RunPreDeployVerification, StageUSB},
-			want: []Action{StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
+			in:   []Action{InstallTestImage, SetupLabstation, InstallFirmware, UpdateLabel, VerifyRecoveryMode, RunPreDeployVerification, StageUSB, ServoVerification},
+			want: []Action{ServoVerification, StageUSB, InstallTestImage, InstallFirmware, VerifyRecoveryMode, SetupLabstation, UpdateLabel, RunPreDeployVerification},
 		},
 		{
 			in:   []Action{InstallTestImage, StageUSB},

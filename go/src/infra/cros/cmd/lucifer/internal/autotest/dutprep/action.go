@@ -18,6 +18,8 @@ type Action string
 const (
 	// NoAction can be used as a null Action value.
 	NoAction Action = "no-action"
+	// ServoVerification action
+	ServoVerification Action = "servo-verification"
 	// StageUSB action
 	StageUSB Action = "stage-usb"
 	// InstallTestImage action
@@ -33,6 +35,18 @@ const (
 	// RunPreDeployVerification action
 	RunPreDeployVerification Action = "run-pre-deploy-verification"
 )
+
+// actionSequence orders the actions as they should be executed on a host.
+var actionSequence = [...]Action{
+	ServoVerification,
+	StageUSB,
+	InstallTestImage,
+	InstallFirmware,
+	VerifyRecoveryMode,
+	SetupLabstation,
+	UpdateLabel,
+	RunPreDeployVerification,
+}
 
 // ParseAction parses the string argument accepted by lucifer and autotest
 // tools into an Action.
@@ -61,17 +75,6 @@ func SortActions(actions []Action) []Action {
 		}
 	}
 	return sorted
-}
-
-// actionSequence orders the actions as they should be executed on a host.
-var actionSequence = [...]Action{
-	StageUSB,
-	InstallTestImage,
-	InstallFirmware,
-	VerifyRecoveryMode,
-	SetupLabstation,
-	UpdateLabel,
-	RunPreDeployVerification,
 }
 
 func containsAction(as []Action, q Action) bool {
