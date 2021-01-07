@@ -23,6 +23,7 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
+	AdminService           string
 	InventoryService       string
 	UnifiedFleetService    string
 	SwarmingService        string
@@ -32,6 +33,8 @@ type Environment struct {
 
 // Prod is the environment for prod.
 var Prod = Environment{
+	// TODO(gregorynisbet): remove once stable version moves to UFS.
+	AdminService:     "chromeos-skylab-bot-fleet.appspot.com",
 	InventoryService: "cros-lab-inventory.appspot.com",
 	//TODO(eshwarn) : Change it to prod during release
 	UnifiedFleetService: "ufs.api.cr.dev",
@@ -43,6 +46,8 @@ var Prod = Environment{
 
 // Dev is the environment for dev.
 var Dev = Environment{
+	// TODO(gregorynisbet): remove once stable version moves to UFS.
+	AdminService:        "skylab-staging-bot-fleet.appspot.com",
 	InventoryService:    "cros-lab-inventory-dev.appspot.com",
 	UnifiedFleetService: "staging.ufs.api.cr.dev",
 	SwarmingService:     "https://chromium-swarm-dev.appspot.com/",
