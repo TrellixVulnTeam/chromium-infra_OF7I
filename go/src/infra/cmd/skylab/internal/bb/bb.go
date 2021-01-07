@@ -38,14 +38,17 @@ import (
 
 const dutLeaseTaskPriority = 15
 
-var maxServiceVersion = test_platform.ServiceVersion{SkylabTool: 1}
+var maxServiceVersion = &test_platform.ServiceVersion{SkylabTool: 1}
 
 func addServiceVersion(props *structpb.Struct) *structpb.Struct {
-	var err error
-	props.Fields["$chromeos/service_version"], err = protoToStructPB(&maxServiceVersion)
+	versionStructVal, err := protoToStructPB(maxServiceVersion)
 	if err != nil {
 		panic(err)
 	}
+	props.Fields["$chromeos/service_version"] = valueMapToStructValue(
+		map[string]*structpb.Value{
+			"version": versionStructVal,
+		})
 	return props
 }
 
@@ -559,13 +562,17 @@ func requestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value
 		}
 		fs[k] = v
 	}
+	return valueMapToStructValue(fs), nil
+}
+
+func valueMapToStructValue(from map[string]*structpb.Value) *structpb.Value {
 	return &structpb.Value{
 		Kind: &structpb.Value_StructValue{
 			StructValue: &structpb.Struct{
-				Fields: fs,
+				Fields: from,
 			},
 		},
-	}, nil
+	}
 }
 
 func isFinal(status buildbucket_pb.Status) bool {
