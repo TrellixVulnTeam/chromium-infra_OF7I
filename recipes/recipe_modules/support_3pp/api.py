@@ -303,9 +303,11 @@ import re
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
+from recipe_engine import config_types
 from recipe_engine import recipe_api
 
-from .resolved_spec import ResolvedSpec, parse_name_version, tool_platform
+from .resolved_spec import (ResolvedSpec, parse_name_version, tool_platform,
+                            get_cipd_pkg_name)
 from .resolved_spec import platform_for_host
 from .exceptions import BadParse, DuplicatePackage, UnsupportedPackagePlatform
 
@@ -383,7 +385,7 @@ def _flatten_spec_pb_for_platform(orig_spec, platform):
 class Support3ppApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(Support3ppApi, self).__init__(**kwargs)
-    # map of name -> (base_path, Spec)
+    # map of <cipd package name> -> (pkg_dir, Spec)
     self._loaded_specs = {}
     # map of (name, platform) -> ResolvedSpec
     self._resolved_packages = {}
@@ -401,13 +403,19 @@ class Support3ppApi(recipe_api.RecipeApi):
     # (required) The package prefix to use for built packages (not for package
     # sources).
     #
-    # NOTE: If `runtime.is_experimental`, then this is prepended with
-    # 'experimental/'.
+    # NOTE: If `runtime.is_experimental` or `self._experimental`, then this is
+    # prepended with 'experimental/'.
     self._package_prefix = ''
+
+    self._source_cache_prefix = 'sources'
+
+    # If running in experimental mode
+    self._experimental = False
 
   def initialize(self):
     self._cipd_spec_pool = cipd_spec.CIPDSpecPool(self.m)
     self._infra_3pp_hash.update(self._self_hash())
+    self._experimental = self.m.runtime.is_experimental
 
   def package_prefix(self, experimental=False):
     """Returns the CIPD package name prefix (str), if any is set.
@@ -416,12 +424,11 @@ class Support3ppApi(recipe_api.RecipeApi):
       * The recipe is running in experimental mode; OR
       * You pass experimental=True
     """
-    assert self._package_prefix, 'A non-empty package prefix is required.'
-    experimental = experimental or self.m.runtime.is_experimental
-    return (
-      ('experimental/' if experimental else '')
-      + self._package_prefix + '/'
-    )
+    pieces = []
+    if experimental or self._experimental:
+      pieces.append('experimental')
+    pieces.append(self._package_prefix)
+    return get_cipd_pkg_name(pieces)
 
   def set_package_prefix(self, prefix):
     """Set the CIPD package name prefix (str).
@@ -432,11 +439,21 @@ class Support3ppApi(recipe_api.RecipeApi):
     assert isinstance(prefix, str)
     self._package_prefix = prefix.strip('/')
 
+  def set_source_cache_prefix(self, prefix):
+    """Set the CIPD namespace (str) to store the source of the packages."""
+    assert isinstance(prefix, str)
+    assert prefix, 'A non-empty source cache prefix is required.'
+    self._source_cache_prefix = prefix.strip('/')
+
+  def set_experimental(self, experimental):
+    """Set the experimental mode (bool)."""
+    self._experimental = experimental
+
   BadParse = BadParse
   DuplicatePackage = DuplicatePackage
   UnsupportedPackagePlatform = UnsupportedPackagePlatform
 
-  def _resolve_for(self, pkgname, platform):
+  def _resolve_for(self, cipd_pkg_name, platform):
     """Resolves the build instructions for a package for the given platform.
 
     This will recursively resolve any 'deps' or 'tools' that the package needs.
@@ -446,27 +463,28 @@ class Support3ppApi(recipe_api.RecipeApi):
     The results of this method are cached.
 
     Args:
-      * pkgname (str) - The name of the package to resolve. Must be a package
-      registered via `load_packages_from_path`.
+      * cipd_pkg_name (str) - The CIPD package name to resolve, excluding the
+        package_prefix and platform suffix. Must be a package registered via
+        `load_packages_from_path`.
       * platform (str) - A CIPD `${platform}` value to resolve this package for.
-      Always in the form of `GOOS-GOARCH`, e.g. `windows-amd64`.
+        Always in the form of `GOOS-GOARCH`, e.g. `windows-amd64`.
 
     Returns a ResolvedSpec.
 
     Raises `UnsupportedPackagePlatform` if the package cannot be built for this
     platform.
     """
-    key = (pkgname, platform)
+    key = (cipd_pkg_name, platform)
     ret = self._resolved_packages.get(key)
     if ret:
       return ret
 
-    base_path, orig_spec = self._loaded_specs[pkgname]
+    pkg_dir, orig_spec = self._loaded_specs[cipd_pkg_name]
 
     spec = _flatten_spec_pb_for_platform(orig_spec, platform)
     if not spec:
       raise UnsupportedPackagePlatform(
-        "%s not supported for %s" % (pkgname, platform))
+        "%s not supported for %s" % (cipd_pkg_name, platform))
 
     create_pb = spec.create[0]
 
@@ -482,13 +500,13 @@ class Support3ppApi(recipe_api.RecipeApi):
 
     if not method:
       raise UnsupportedPackagePlatform(
-          "%s not supported for %s" % (pkgname, platform))
+          "%s not supported for %s" % (cipd_pkg_name, platform))
 
     if method == 'cipd':
       if not source_pb.cipd.original_download_url:  # pragma: no cover
         raise Exception(
           'CIPD Source for `%s/%s` must have `original_download_url`.' % (
-          pkgname, platform))
+          cipd_pkg_name, platform))
 
     assert source_pb.patch_version == source_pb.patch_version.strip('.'), (
       'source.patch_version has starting/trailing dots')
@@ -498,21 +516,22 @@ class Support3ppApi(recipe_api.RecipeApi):
 
     # Recursively resolve all deps
     deps = []
-    for dep in create_pb.build.dep:
-      deps.append(self._resolve_for(dep, platform))
+    for dep_cipd_pkg_name in create_pb.build.dep:
+      deps.append(self._resolve_for(dep_cipd_pkg_name, platform))
 
     # Recursively resolve all unpinned tools. Pinned tools are always
     # installed from CIPD.
     unpinned_tools = []
     for tool in create_pb.build.tool:
-      tool_name, tool_version = parse_name_version(tool)
+      tool_cipd_pkg_name, tool_version = parse_name_version(tool)
       if tool_version == 'latest':
         unpinned_tools.append(self._resolve_for(
-          tool_name, tool_platform(self.m, platform, spec)))
+          tool_cipd_pkg_name, tool_platform(self.m, platform, spec)))
 
     ret = ResolvedSpec(
       self.m, self._cipd_spec_pool, self.package_prefix(create_pb.experimental),
-      pkgname, platform, base_path, spec, deps, unpinned_tools)
+      self._source_cache_prefix, cipd_pkg_name, platform, pkg_dir, spec, deps,
+      unpinned_tools)
     self._resolved_packages[key] = ret
     return ret
 
@@ -528,10 +547,13 @@ class Support3ppApi(recipe_api.RecipeApi):
     Returns CIPDSpec for the built package.
     """
     return create.build_resolved_spec(
-      self.m, self._resolve_for, self._built_packages, force_build,
-      spec, version, self._infra_3pp_hash.hexdigest())
+        self.m, self._resolve_for, self._built_packages, force_build,
+        spec, version, self._infra_3pp_hash.hexdigest())
 
-  def load_packages_from_path(self, path):
+  def load_packages_from_path(self,
+                              base_path,
+                              glob_pattern='**/3pp.pb',
+                              check_dup=True):
     """Loads all package definitions from the given path.
 
     This will parse and intern all the 3pp.pb package definition files so that
@@ -545,9 +567,12 @@ class Support3ppApi(recipe_api.RecipeApi):
     This would parse path/pkgname/3pp.pb and register the "pkgname" package.
 
     Args:
-      * path (Path) - A path to a directory full of package definitions. Each
-        package definition is a directory containing at least a 3pp.pb file,
-        whose behavior is defined by 3pp.proto.
+      * base_path (Path) - A path of a directory where the glob_pattern will be
+        applied to.
+      * glob_pattern (str) - A glob pattern to look for package definition files
+        "3pp.pb" whose behavior is defined by 3pp.proto. Default to "*/3pp.pb".
+      * check_dup (bool): When set, it will raise DuplicatePackage error if
+        a package spec is already loaded. Default to True.
 
     Returns a set(str) containing the names of the packages which were loaded.
 
@@ -556,33 +581,57 @@ class Support3ppApi(recipe_api.RecipeApi):
     load_packages_from_path multiple times, and one of the later calls tries to
     load a package which was registered under one of the earlier calls.
     """
-    known_package_specs = self.m.file.glob_paths(
-      'find package specs', path,
-      self.m.path.join('*', '3pp.pb'))
+
+    known_package_specs = self.m.file.glob_paths('find package specs',
+                                                 base_path, glob_pattern)
 
     discovered = set()
 
     with self.m.step.nest('load package specs'):
-      # Add package hash each time recipe loads a package from path
-      self._infra_3pp_hash.update(self.m.file.compute_hash(
-                                            'Compute package hash',
-                                            [path], self.m.path['start_dir'],
-                                            'deadbeef'))
-      for spec in known_package_specs:
-        pkg = spec.pieces[-2]  # ../../<name>/3pp.pb
-        if pkg in self._loaded_specs:
-          raise DuplicatePackage(pkg)
+      for spec_path in known_package_specs:
+        # For foo/bar/3pp.pb:
+        #   * the pkg_name is "bar"
+        #   * the pkg_dir is "foo/bar"
+        # For foo/bar/3pp/3pp.pb:
+        #   * the pkg_name is "bar"
+        #   * the pkg_dir is "foo/bar/3pp"
 
-        data = self.m.file.read_text('read %r' % pkg, spec)
+        # Relative path to the base_path (splitted in list)
+        spec_path_rel = self.m.path.relpath(spec_path, base_path)
+        spec_path_rel_pieces = spec_path_rel.split(self.m.path.sep)
+        pkg_dir = base_path.join(*spec_path_rel_pieces[:-1])
+        try:
+          pkg_name = spec_path_rel_pieces[-2]
+          if pkg_name == '3pp':
+            pkg_name = spec_path_rel_pieces[-3]
+        except IndexError:
+          raise Exception('Fail to get package name from %r. Expecting '
+                          'the spec PB in a deeper folder' % spec_path)
+
+        data = self.m.file.read_text('read %r' % spec_path_rel, spec_path)
         if not data:
           self.m.step.active_result.presentation.status = self.m.step.FAILURE
-          raise self.m.step.StepFailure('Bad spec PB for %r' % pkg)
+          raise self.m.step.StepFailure('Bad spec PB for %r' % pkg_name)
 
         try:
-          self._loaded_specs[pkg] = (path, textpb.Merge(data, Spec()))
+          pkg_spec = textpb.Merge(data, Spec())
         except Exception as ex:
-          raise BadParse('While adding %r: %r' % (pkg, str(ex)))
-        discovered.add(pkg)
+          raise BadParse('While adding %r: %r' % (spec_path_rel, str(ex)))
+
+        # CIPD package name, excluding the package_prefix and platform suffix
+        cipd_pkg_name = get_cipd_pkg_name(
+            [pkg_spec.upload.pkg_prefix, pkg_name])
+        if cipd_pkg_name in self._loaded_specs:
+          if check_dup:
+            raise DuplicatePackage(cipd_pkg_name)
+        else:
+          # Add package hash each time recipe loads a new package
+          self._infra_3pp_hash.update(self.m.file.compute_hash(
+              'Compute hash for %r' % cipd_pkg_name, [pkg_dir],
+              self.m.path['start_dir'], 'deadbeef'))
+          self._loaded_specs[cipd_pkg_name] = (pkg_dir, pkg_spec)
+
+        discovered.add(cipd_pkg_name)
 
     return discovered
 
@@ -641,21 +690,21 @@ class Support3ppApi(recipe_api.RecipeApi):
     packages = packages or self._loaded_specs.keys()
     platform = platform or platform_for_host(self.m)
     for pkg in packages:
-      name, version = parse_name_version(pkg)
+      cipd_pkg_name, version = parse_name_version(pkg)
       try:
-        resolved = self._resolve_for(unicode(name), platform)
+        resolved = self._resolve_for(unicode(cipd_pkg_name), platform)
       except UnsupportedPackagePlatform:
         unsupported.add(pkg)
         continue
       explicit_build_plan.append((resolved, unicode(version)))
 
     expanded_build_plan = set()
-    for pkg, version in explicit_build_plan:
-      expanded_build_plan.add((pkg, version))
+    for spec, version in explicit_build_plan:
+      expanded_build_plan.add((spec, version))
       # Anything pulled in either via deps or tools dependencies should be
       # explicitly built at 'latest'.
-      for subpkg in pkg.all_possible_deps_and_tools:
-        expanded_build_plan.add((subpkg, 'latest'))
+      for sub_spec in spec.all_possible_deps_and_tools:
+        expanded_build_plan.add((sub_spec, 'latest'))
 
     ret = []
     with self.m.step.defer_results():

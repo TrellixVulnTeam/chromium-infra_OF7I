@@ -41,7 +41,7 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
   the remote server, it will return the CIPDSpec immediately (without attempting
   to build anything).
   """
-  keys = [(spec.name, version, spec.platform)]
+  keys = [(spec.cipd_pkg_name, version, spec.platform)]
   if keys[0] in cache:
     return cache[keys[0]]
 
@@ -50,11 +50,11 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       cache[k] = spec
     return spec
 
-  with api.step.nest('building %s' % (spec.name.encode('utf-8'),)):
+  with api.step.nest('building %s' % (spec.cipd_pkg_name.encode('utf-8'),)):
     env = {
       '_3PP_PLATFORM': spec.platform,
       '_3PP_TOOL_PLATFORM': spec.tool_platform,
-      '_3PP_PACKAGE_NAME': spec.name,
+      '_3PP_CIPD_PACKAGE_NAME': spec.cipd_pkg_name,
       # CIPD uses 'mac' instead of 'darwin' for historical reasons.
       'GOOS': spec.platform.split('-')[0].replace('mac', 'darwin'),
       # CIPD encodes the GOARCH/GOARM pair of ('arm', '6') as 'armv6l'.
@@ -73,7 +73,7 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       git_hash = ''
       if is_latest:
         version, git_hash = source.resolve_latest(api, spec)
-        keys.append((spec.name, version, spec.platform))
+        keys.append((spec.cipd_pkg_name, version, spec.platform))
         if keys[-1] in cache:
           return set_cache(cache[keys[-1]])
 
@@ -82,11 +82,11 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       if force_build or not cipd_spec.check():
         # Otherwise, build it
         _build_impl(
-          api, cipd_spec, is_latest, spec_lookup, force_build,
-          (lambda spec, version: build_resolved_spec(
-            api, spec_lookup, cache, force_build, spec, version,
-            ecosystem_hash)),
-          spec, version, git_hash, ecosystem_hash)
+            api, cipd_spec, is_latest, spec_lookup, force_build,
+            (lambda spec, version: build_resolved_spec(
+                api, spec_lookup, cache, force_build, spec, version,
+                ecosystem_hash)),
+            spec, version, git_hash, ecosystem_hash)
 
       return set_cache(cipd_spec)
 
@@ -119,8 +119,21 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
         verify.run_test(api, workdir, spec, cipd_spec)
 
     if not force_build:
-      with api.step.nest('do upload'):
+      with api.step.nest('do upload') as upload_presentation:
         extra_tags = {'3pp_ecosystem_hash': ecosystem_hash}
         if spec.create_pb.package.alter_version_re:
           extra_tags['real_version'] = version
         cipd_spec.ensure_uploaded(is_latest, extra_tags)
+
+        # the active_result could be from cipd.describe or cipd.register
+        upload_step_result = api.step.active_result
+        if upload_step_result.json.output:
+          pin_result = upload_step_result.json.output['result']
+          # When from cipd.describe, 'instance_id' and 'package' will be
+          # under the key 'pin'
+          if 'pin' in pin_result:
+            pin_result = pin_result['pin']
+          if 'instance_id' in pin_result and 'package' in pin_result:
+            upload_presentation.links[pin_result['instance_id']] = (
+                'https://chrome-infra-packages.appspot.com' +
+                '/p/%(package)s/+/%(instance_id)s' % pin_result)

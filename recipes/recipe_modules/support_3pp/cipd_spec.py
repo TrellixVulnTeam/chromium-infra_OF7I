@@ -233,6 +233,9 @@ class CIPDSpec(object):
     Args:
       * latest (bool) - If True, will also set the `latest` ref for the package
         we upload.
+      * extra_tags (dict) - Extra tags to attach to the package.
+      * force_update (bool) - If True, register the package on the CIPD server,
+        even if it already exists.
     """
     pkg_path = self.local_pkg_path()
     assert pkg_path

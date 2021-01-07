@@ -42,5 +42,5 @@ def run_test(api, workdir, spec, cipd_spec):
   rest = spec.create_pb.verify.test[1:] + [test_pkg]
   with api.context(cwd=workdir.verify, env_prefixes=env_prefixes):
     run_script(
-      api, workdir.script_dir(spec.name).join(script), *rest,
+        api, workdir.script_dir(spec).join(script), *rest,
       compile_platform=spec.platform, workdir=workdir)

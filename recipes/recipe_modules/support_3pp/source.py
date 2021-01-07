@@ -145,7 +145,7 @@ def resolve_latest(api, spec):
 
   # TODO(akashmukherjee): Get/compute hash for script method.
   elif method_name == 'script':
-    script = spec.host_dir.join(source_method_pb.name[0])
+    script = spec.pkg_dir.join(source_method_pb.name[0])
     args = map(str, source_method_pb.name[1:]) + ['latest']
     version = run_script(api,
       script, *args,
@@ -242,16 +242,20 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
   _source_checkout(api, workdir, spec, version,
                    source_cipd_spec, source_hash=source_hash)
 
-  # Iff we are going to do the 'build' operation, copy all the package
+  # Iff we are going to do the 'build' operation, copy all the necessary package
   # definition scripts into the checkout. If no build message is provided,
   # then we're planning to directly package the result of the checkout, and
   # we don't want to include these scripts.
   if spec.create_pb.HasField("build"):
-    # Copy all package definition stuff into the checkout
-    api.file.copytree(
-      'copy package definition',
-      spec.base_path,
-      workdir.script_dir_base)
+    # Copy all the necessary package definitions into the checkout
+    pkgs = [spec] + list(spec.all_possible_deps_and_tools)
+    # Sort to make sure the packages are in order, otherwise it will produce
+    # inconsistent recipe train result.
+    for pkg in sorted(pkgs):
+      api.file.copytree(
+        'copy package definition %s' % pkg.cipd_pkg_name,
+        pkg.pkg_dir,
+        workdir.script_dir(pkg))
 
 
 # TODO(akashmukherjee): Reconstruct the manifest object to beautify.
@@ -314,7 +318,7 @@ def _generate_download_manifest(api, spec, checkout_dir,
 
   elif method_name == 'script':
     # version is already in env as $_3PP_VERSION
-    script = spec.host_dir.join(source_method_pb.name[0])
+    script = spec.pkg_dir.join(source_method_pb.name[0])
     args = map(str, source_method_pb.name[1:]) + ['get_url']
     result = run_script(
         api,
@@ -322,7 +326,8 @@ def _generate_download_manifest(api, spec, checkout_dir,
         *args,
         stdout=api.json.output(),
         step_test_data=lambda: api.json.test_api.output_stream({
-            'url': ['https://some.internet.example.com/%s' % (spec.name,)],
+            'url': ['https://some.internet.example.com/%s' % (
+                spec.cipd_pkg_name,)],
             'ext': '.test',
             'name': ['test_source']
         }))
@@ -395,7 +400,7 @@ def _source_upload(api, checkout_dir,
         # building the source CIPDSpec into a source type package
         source_cipd_spec.build(
             root=checkout_dir,
-            install_mode=None,
+            install_mode='copy',
             version_file=None,
             exclusions=['\.git'] if method_name == 'git' else [])
         extra_tags = {'external_hash': external_hash} if external_hash else {}
@@ -498,6 +503,6 @@ def _source_checkout(api,
       patch_dir = str(patch_dir)
       patches.extend(
           api.file.glob_paths('find patches in %s' % patch_dir,
-                              spec.host_dir.join(*(patch_dir.split('/'))), '*'))
+                              spec.pkg_dir.join(*(patch_dir.split('/'))), '*'))
     with api.context(cwd=checkout_dir):
       api.git('apply', '-v', *patches)

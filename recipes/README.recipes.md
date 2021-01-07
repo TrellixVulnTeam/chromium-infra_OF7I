@@ -750,9 +750,9 @@ This module uses the following named caches:
   * `osx_sdk` - Cache for `depot_tools/osx_sdk`. Only on Mac.
   * `windows_sdk` - Cache for `depot_tools/windows_sdk`. Only on Windows.
 
-#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#383)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#385)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#623)(self, packages=(), platform='', force_build=False):**
+&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#672)(self, packages=(), platform='', force_build=False):**
 
 Executes entire {fetch,build,package,verify,upload} pipeline for all the
 packages listed, targeting the given platform.
@@ -768,9 +768,9 @@ Args:
 Returns (list[(cipd_pkg, cipd_version)], set[str]) of built CIPD packages
 and their tagged versions, as well as a list of unsupported packages.
 
-&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#408)(self):**
+&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#415)(self):**
 
-&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#534)(self, path):**
+&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#553)(self, base_path, glob_pattern='\*\*/3pp.pb', check_dup=True):**
 
 Loads all package definitions from the given path.
 
@@ -785,9 +785,12 @@ packages can be identified by their name. For example, if you pass:
 This would parse path/pkgname/3pp.pb and register the "pkgname" package.
 
 Args:
-  * path (Path) - A path to a directory full of package definitions. Each
-    package definition is a directory containing at least a 3pp.pb file,
-    whose behavior is defined by 3pp.proto.
+  * base_path (Path) - A path of a directory where the glob_pattern will be
+    applied to.
+  * glob_pattern (str) - A glob pattern to look for package definition files
+    "3pp.pb" whose behavior is defined by 3pp.proto. Default to "*/3pp.pb".
+  * check_dup (bool): When set, it will raise DuplicatePackage error if
+    a package spec is already loaded. Default to True.
 
 Returns a set(str) containing the names of the packages which were loaded.
 
@@ -796,7 +799,7 @@ whose name is already registered. This could occur if you call
 load_packages_from_path multiple times, and one of the later calls tries to
 load a package which was registered under one of the earlier calls.
 
-&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#412)(self, experimental=False):**
+&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#420)(self, experimental=False):**
 
 Returns the CIPD package name prefix (str), if any is set.
 
@@ -804,12 +807,20 @@ This will prepend 'experimental/' to the currently set prefix if:
   * The recipe is running in experimental mode; OR
   * You pass experimental=True
 
-&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#426)(self, prefix):**
+&mdash; **def [set\_experimental](/recipes/recipe_modules/support_3pp/api.py#448)(self, experimental):**
+
+Set the experimental mode (bool).
+
+&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#433)(self, prefix):**
 
 Set the CIPD package name prefix (str).
 
 All CIPDSpecs for built packages (not sources) will have this string
 prepended to them.
+
+&mdash; **def [set\_source\_cache\_prefix](/recipes/recipe_modules/support_3pp/api.py#442)(self, prefix):**
+
+Set the CIPD namespace (str) to store the source of the packages.
 ### *recipe_modules* / [sync\_submodules](/recipes/recipe_modules/sync_submodules)
 
 [DEPS](/recipes/recipe_modules/sync_submodules/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -911,7 +922,7 @@ Args:
 
 This recipe builds and packages third party software, such as Git.
 
-&mdash; **def [RunSteps](/recipes/recipes/3pp.py#69)(api, package_locations, to_build, platform, force_build, package_prefix):**
+&mdash; **def [RunSteps](/recipes/recipes/3pp.py#76)(api, package_locations, to_build, platform, force_build, package_prefix, source_cache_prefix):**
 ### *recipes* / [build\_conda\_cipd\_pkg](/recipes/recipes/build_conda_cipd_pkg.py)
 
 [DEPS](/recipes/recipes/build_conda_cipd_pkg.py#20): [conda](#recipe_modules-conda), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
@@ -1165,9 +1176,9 @@ Returns:
 Normalizes a string for use in a resource label.
 ### *recipes* / [support\_3pp:tests/full](/recipes/recipe_modules/support_3pp/tests/full.py)
 
-[DEPS](/recipes/recipe_modules/support_3pp/tests/full.py#7): [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/support_3pp/tests/full.py#8): [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/support_3pp/tests/full.py#26)(api, GOOS, GOARCH, load_dupe):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/support_3pp/tests/full.py#31)(api, GOOS, GOARCH, experimental, load_dupe, package_prefix, source_cache_prefix):**
 ### *recipes* / [sync\_submodules](/recipes/recipes/sync_submodules.py)
 
 [DEPS](/recipes/recipes/sync_submodules.py#7): [sync\_submodules](#recipe_modules-sync_submodules), [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]

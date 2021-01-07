@@ -7,11 +7,13 @@ class Workdir(object):
 
   All workdirs (`$WD`) are located at:
 
-      [START_DIR]/3pp/wd/${name}/${platform}/${version}
+      [START_DIR]/3pp/wd/${cipd_pkg_name}/${platform}/${version}
 
   e.g.
 
-      [START_DIR]/3pp/wd/python/linux-amd64/2.7.13.chromium16
+      [START_DIR]/3pp/wd/tools/python/linux-amd64/2.7.13.chromium16
+      where cipd_pkg_name is "tools/python", platform is "linux-amd64",
+      version is "2.7.13.chromium16"
 
   Each workdir contains the following subdirs:
 
@@ -37,9 +39,9 @@ class Workdir(object):
   copy is relatively small.
   """
   def __init__(self, api, spec, version):
-    self._base = (
-      api.path['start_dir'].join(
-        '3pp', 'wd', spec.name, spec.platform, version))
+    paths = (['3pp', 'wd'] + spec.cipd_pkg_name.split('/') +
+             [spec.platform, version])
+    self._base = api.path['start_dir'].join(*paths)
 
   @property
   def base(self):
@@ -69,9 +71,12 @@ class Workdir(object):
     """The directory where ALL of the package scripts are copied."""
     return self.checkout.join('.3pp')
 
-  def script_dir(self, package_name):
-    """The directory where `package_name`'s particular scripts are copied.'"""
-    return self.script_dir_base.join(package_name)
+  def script_dir(self, spec):
+    """The directory where stores the scripts of a given spec (ResolvedSpec).
+
+    Returns the Path to the spec scripts.
+    """
+    return self.script_dir_base.join(*spec.cipd_pkg_name.split('/'))
 
   @property
   def tools_prefix(self):

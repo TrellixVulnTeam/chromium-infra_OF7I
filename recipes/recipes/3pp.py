@@ -63,11 +63,18 @@ PROPERTIES = {
         'uploading into the prod namespace. If this recipe is run in '
         'experimental mode (according to the `runtime` module), then '
         'this will default to "experimental/support_3pp/".')),
+  'source_cache_prefix': Property(
+      kind=str, default='sources',
+      help=(
+        'Joins this CIPD namespace after the package_prefix to store the '
+        'source of all downloaded/uploaded packages. This gives the '
+        'flexibility to use different prefixes for different repos '
+        '(Default to "sources").')),
 }
 
 
 def RunSteps(api, package_locations, to_build, platform, force_build,
-             package_prefix):
+             package_prefix, source_cache_prefix):
   # NOTE: We essentially ignore the on-machine CIPD cache here. We do this in
   # order to make sure this builder always operates with the current set of tags
   # on the server... Practically speaking, when messing with these builders it's
@@ -93,6 +100,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
         raise
 
     api.support_3pp.set_package_prefix(package_prefix)
+    api.support_3pp.set_source_cache_prefix(source_cache_prefix)
 
     actual_repos = set()
     with api.step.nest('load packages from desired repos'):
@@ -159,6 +167,7 @@ def GenTests(api):
   )
   for pkg, spec in pkgs:
     test += api.step_data(
-      "load packages from desired repos.load package specs.read '%s'" % pkg,
+      "load packages from desired repos."
+      "load package specs.read '%s/3pp.pb'" % pkg,
       api.file.read_text(spec))
   yield test

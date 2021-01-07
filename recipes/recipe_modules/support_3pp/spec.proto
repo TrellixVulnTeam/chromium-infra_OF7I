@@ -19,7 +19,8 @@ message Spec {
   // All scripts are invoked with the following environment variables (unless
   // noted otherwise):
   //
-  //   * $_3PP_PACKAGE_NAME - the name of the package currently building
+  //   * $_3PP_CIPD_PACKAGE_NAME - the CIPD package name, excluding the
+  //     package_prefix and platform suffix.
   //     (if any patch version was set).
   //   * $_3PP_PATCH_VERSION - the `patch_version` set for this create block
   //   * $_3PP_PLATFORM - the platform we're targeting
@@ -141,9 +142,9 @@ message Spec {
       // You may specify specific versions with the notation (useful if the
       // current tool you're building is self-bootstrapping, like cmake):
       //
-      //   package_name@version
+      //   <pkg_prefix>/<package_name>@version
       //
-      // e.g. `ninja@1.8.2`
+      // e.g. `tools/ninja@1.8.2`
       //
       // Tools are always used with the host's ${platform} value (e.g. if cross
       // compiling on linux, the tools will likely be for linux-amd64,

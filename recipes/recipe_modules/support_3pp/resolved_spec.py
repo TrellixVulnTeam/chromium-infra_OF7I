@@ -52,22 +52,35 @@ def tool_platform(api, platform, _spec_pb):
   return platform_for_host(api)
 
 
+def get_cipd_pkg_name(pkg_pieces):
+  """Return the CIPD package name with given list of package pieces.
+
+  Pieces identified as False (like None, or empty string) will be skipped.
+  This is to make sure the returned cipd pacakge name
+    * Does not have leading & tailing '/'
+    * Does not have string like '//' inside
+  """
+  return '/'.join([str(piece) for piece in pkg_pieces if piece])
+
+
 class ResolvedSpec(object):
   """The ResolvedSpec represents a version of the Spec protobuf message, but
   resolved for a single target platform (e.g. "windows-amd64").
 
   It has helper methods and properties to read the resolved data.
   """
-  def __init__(self, api, cipd_spec_pool, package_prefix, name, platform,
-               base_path, spec, deps, unpinned_tools):
+  def __init__(self, api, cipd_spec_pool, package_prefix, source_cache_prefix,
+               cipd_pkg_name, platform, pkg_dir, spec, deps, unpinned_tools):
     self._api = api
-    self._package_prefix = package_prefix
+    self._package_prefix = package_prefix.strip('/')
+    self._source_cache_prefix = source_cache_prefix.strip('/')
     self._cipd_spec_pool = cipd_spec_pool
 
-    self._name = name                     # Name of the package
+    # CIPD package name, excluding the package_prefix and platform suffix
+    self._cipd_pkg_name = cipd_pkg_name
     self._platform = platform             # Platform resolved for
-    # Path to the directory containing the package definition folder
-    self._base_path = base_path
+    # Path to the directory containing the package definition file
+    self._pkg_dir = pkg_dir
     self._spec_pb = spec                  # spec_pb2.Spec
     self._deps = deps                     # list[ResolvedSpec]
     self._unpinned_tools = unpinned_tools # list[ResolvedSpec]
@@ -81,9 +94,9 @@ class ResolvedSpec(object):
       self._all_deps_and_tools.update(d.all_possible_deps_and_tools)
 
   @property
-  def name(self):
-    """The name of the package."""
-    return self._name
+  def cipd_pkg_name(self):
+    """CIPD package name, excluding the package_prefix and platform suffix."""
+    return self._cipd_pkg_name
 
   @property
   def source_cache(self):
@@ -91,10 +104,9 @@ class ResolvedSpec(object):
 
     For git method, source cache will be independent of platform, however due to
     fine grained fetch method for script method, cache will be platform
-    dependent. e.g. infra/3pp/sources/git/repo_url or
-    infra/3pp/sources/script/pkg/platform.
+    dependent. e.g. <package_prefix>/<source_cache_prefix>/git/repo_url or
+    <package_prefix>/<source_cache_prefix>/script/pkg/platform.
     """
-    pkg_prefix = self._package_prefix.strip('/')
     method, source_method_pb = self.source_method
     if method == 'git':
       repo_url = source_method_pb.repo
@@ -104,22 +116,16 @@ class ResolvedSpec(object):
         repo_url = repo_url[len('https://'):]
       elif repo_url.startswith('http://'):  # pragma: no cover
         repo_url = repo_url[len('http://'):]
-      _source_cache = '%s/sources/%s/%s' % (pkg_prefix, method,
-                                            repo_url.lower())
+      _source_cache = get_cipd_pkg_name([
+          self._package_prefix, self._source_cache_prefix, method,
+          repo_url.lower()])
     elif method == 'script' or method == 'url':
-      _source_cache = '%s/sources/%s/%s/%s' % (pkg_prefix, method, self._name,
-                                               self._platform)
+      _source_cache = get_cipd_pkg_name([
+          self._package_prefix, self._source_cache_prefix, method,
+          self._cipd_pkg_name, self._platform])
     else:
       _source_cache = None
     return _source_cache
-
-  @property
-  def base_path(self):
-    """Path to the directory containing the package folders.
-
-    This will be one of the paths passed to `load_packages_from_path`.
-    """
-    return self._base_path
 
   @property
   def tool_platform(self):
@@ -145,11 +151,6 @@ class ResolvedSpec(object):
     return self._spec_pb.create[0]
 
   @property
-  def upload_pb(self):
-    """The `spec_pb2.Spec.Upload` message."""
-    return self._spec_pb.upload
-
-  @property
   def source_method(self):
     """A tuple of (source_method_name, source_method_pb).
 
@@ -163,10 +164,10 @@ class ResolvedSpec(object):
     return method, getattr(pb, method)
 
   @property
-  def host_dir(self):
+  def pkg_dir(self):
     """Path to the folder containing this spec on the host (i.e. not the
     version copied into the checkout)."""
-    return self._base_path.join(self.name)
+    return self._pkg_dir
 
   @property
   def platform(self):
@@ -224,10 +225,10 @@ class ResolvedSpec(object):
     Args:
       * version (str) - The symver of this package to get the CIPDSpec for.
     """
-    pkg_name = '%s%s/%s' % (self._package_prefix, self.upload_pb.pkg_prefix,
-                            self.name)
+    cipd_pieces = [self._package_prefix, self._cipd_pkg_name]
     if not self._spec_pb.upload.universal:
-      pkg_name = '/'.join([pkg_name, self.platform])
+      cipd_pieces.append(self.platform)
+    full_cipd_pkg_name = get_cipd_pkg_name(cipd_pieces)
     patch_ver = self.create_pb.source.patch_version
 
     if self.create_pb.package.alter_version_re:
@@ -237,7 +238,7 @@ class ResolvedSpec(object):
           version)
     symver = '%s%s' % (version, '.'+patch_ver if patch_ver else '')
 
-    return self._cipd_spec_pool.get(pkg_name, symver)
+    return self._cipd_spec_pool.get(full_cipd_pkg_name, symver)
 
   def source_cipd_spec(self, version):
     """Returns a CIPDSpec object for the result of building this ResolvedSpec's
@@ -256,7 +257,7 @@ class ResolvedSpec(object):
     used as a last resort when sorting by dependencies fails."""
     return (
       len(self.all_possible_deps_and_tools),
-      self.name,
+      self.cipd_pkg_name,
       self.platform,
       id(self),
     )
