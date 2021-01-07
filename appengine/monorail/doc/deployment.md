@@ -330,6 +330,11 @@ errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
    ```
    make deploy_dev
    ```
+   1.  [Optional] If you encounter `ImportError: No module named six.moves`, try again after running:
+            [*commit SHA*]:
+            ```
+            sudo `which python` `which pip` install six
+            ```
 1. The new version should show up in pantheon's App Engine's Versions [page](https://pantheon.corp.google.com/appengine/versions?src=ac&project=monorail-dev&serviceId=default). Traffic allocation should be 0%.
 
 ### Migrating traffic to a previous or new version
