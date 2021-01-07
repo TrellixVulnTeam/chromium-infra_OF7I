@@ -203,7 +203,7 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		results := &tricium.Data_Results{}
 		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
 		So(len(results.Comments), ShouldEqual, 1)
-		So(results.Comments[0].Message, ShouldEqual, `"abbout" is a possible misspelling of "about".`)
+		So(results.Comments[0].Message, ShouldEqual, `"abbout" is a possible misspelling of "about" or "abbot".`)
 	})
 
 	Convey("Analyzing a .c file with several comments.", t, func() {
