@@ -1454,15 +1454,23 @@ def _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg):
 
 
 def PrepareIssueChanges(
-    cnxn, issue_delta_pairs, services, comment_content=None):
+    cnxn,
+    issue_delta_pairs,
+    services,
+    attachment_uploads=None,
+    comment_content=None):
   # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
-  #     Optional[str]) -> None
+  #     Optional[Sequence[work_env.AttachmentUpload]], Optional[str])
+  #     -> Mapping[int, int]
   """Clean the deltas and assert they are valid for each paired issue."""
   _EnforceNonMergeStatusDeltas(cnxn, issue_delta_pairs, services)
   _AssertIssueChangesValid(
       cnxn, issue_delta_pairs, services, comment_content=comment_content)
 
-  # TODO(crbug.com/monorail/8019): call _EnforceAttachmentQuotaLimits()
+  if attachment_uploads:
+    return _EnforceAttachmentQuotaLimits(
+        cnxn, issue_delta_pairs, services, attachment_uploads)
+  return {}
 
 
 def _EnforceAttachmentQuotaLimits(

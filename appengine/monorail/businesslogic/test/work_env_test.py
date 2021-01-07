@@ -3948,6 +3948,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.UpdateIssue = mock.Mock()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
     self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.project.UpdateProject = mock.Mock()
     self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
     self.SignIn(self.user_1.user_id)
     with self.work_env as we:
@@ -3964,6 +3965,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.UpdateIssue.assert_not_called()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
     self.services.issue.CreateIssueComment.assert_not_called()
+    self.services.project.UpdateProject.assert_not_called()
     self.services.issue.EnqueueIssuesForIndexing.assert_not_called()
     fake_bulk_notify.assert_not_called()
     fake_notify.assert_not_called()
@@ -3993,6 +3995,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.UpdateIssue = mock.Mock()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
     self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.project.UpdateProject = mock.Mock()
     self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
     self.SignIn(self.user_1.user_id)
 
@@ -4008,6 +4011,58 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.UpdateIssue.assert_not_called()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
     self.services.issue.CreateIssueComment.assert_called()
+    self.services.project.UpdateProject.assert_not_called()
+    self.services.issue.EnqueueIssuesForIndexing.assert_called()
+
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_called()
+    self.mr.cnxn.Commit.assert_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  @mock.patch('time.time')
+  def testModifyIssues_AttachmentsWithNoChanges(
+      self, fake_time, fake_bulk_notify, fake_notify):
+
+    fake_time.return_value = self.PAST_TIME
+
+    issue = _Issue(789, 1)
+    delta_empty = tracker_pb2.IssueDelta()
+
+    exp_issue = copy.deepcopy(issue)
+    exp_issue.modified_timestamp = self.PAST_TIME
+    exp_issue.assume_stale = False
+
+    self.services.issue.TestAddIssue(issue)
+
+    issue_delta_pairs = [(issue.issue_id, delta_empty)]
+
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.UpdateIssue = mock.Mock()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
+    self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.project.UpdateProject = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    self.SignIn(self.user_1.user_id)
+
+    upload = work_env.AttachmentUpload(
+        'BEAR-necessities', 'Forget about your worries and your strife',
+        'text/plain')
+
+    with self.work_env as we:
+      issues = we.ModifyIssues(issue_delta_pairs, attachment_uploads=[upload])
+
+    self.assertEqual(len(issues), 1)
+    self.assertEqual(exp_issue, issues[0])
+    self.assertEqual(
+        exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+
+    self.services.issue.UpdateIssue.assert_not_called()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
+    self.services.issue.CreateIssueComment.assert_called()
+    self.services.project.UpdateProject.assert_called()
     self.services.issue.EnqueueIssuesForIndexing.assert_called()
 
     fake_bulk_notify.assert_not_called()

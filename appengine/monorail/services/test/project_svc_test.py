@@ -476,7 +476,8 @@ class ProjectServiceTest(unittest.TestCase):
     self.project_service.project_tbl.SelectValue(
         self.cnxn, 'project_name', project_id=project_id).AndReturn('projN')
     self.project_service.project_tbl.Update(
-        self.cnxn, delta, project_id=project_id)
+        self.cnxn, delta, project_id=project_id, commit=False)
+    self.cnxn.Commit()
 
   def testUpdateProject(self):
     delta = {'summary': 'An even better one-line summary'}

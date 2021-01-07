@@ -445,7 +445,8 @@ class ProjectService(object):
       source_url=None,
       logo_gcs_id=None,
       logo_file_name=None,
-      issue_notify_always_detailed=None):
+      issue_notify_always_detailed=None,
+      commit=True):
     """Update the DB with the given project information."""
     exists = self.project_tbl.SelectValue(
       cnxn, 'project_name', project_id=project_id)
@@ -500,8 +501,10 @@ class ProjectService(object):
       delta['issue_notify_always_detailed'] = issue_notify_always_detailed
     if cached_content_timestamp is not None:
       delta['cached_content_timestamp'] = cached_content_timestamp
-    self.project_tbl.Update(cnxn, delta, project_id=project_id)
+    self.project_tbl.Update(cnxn, delta, project_id=project_id, commit=False)
     self.project_2lc.InvalidateKeys(cnxn, [project_id])
+    if commit:
+      cnxn.Commit()
 
   def UpdateCachedContentTimestamp(self, cnxn, project_id, now=None):
     now = now or int(time.time())

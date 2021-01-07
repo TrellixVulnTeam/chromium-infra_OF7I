@@ -1939,7 +1939,10 @@ class WorkEnv(object):
             reporter_id, send_email=send_email)
 
   def ModifyIssues(
-      self, issue_id_delta_pairs, is_description, comment_content=None,
+      self,
+      issue_id_delta_pairs,
+      attachment_uploads=None,
+      comment_content=None,
       send_email=True):
     # type: (Sequence[Tuple[int, IssueDelta]], Boolean, Optional[str],
     #     Optional[bool]) -> Sequence[Issue]
@@ -1951,7 +1954,8 @@ class WorkEnv(object):
     Args:
       issue_id_delta_pairs: List of Tuples containing IDs and IssueDeltas, one
         for each issue to modify.
-      is_description: Whether this is a description update or not.
+      attachment_uploads: List of AttachmentUpload tuples to be attached to the
+        new comments created for all modified issues in issue_id_delta_pairs.
       comment_content: The text for the comment this issue change will use.
       send_email: Whether this change sends an email or not.
 
@@ -1968,11 +1972,12 @@ class WorkEnv(object):
 
     # PHASE 1: Prepare these changes and assert they can be made.
     self._AssertUserCanModifyIssues(
-        issue_delta_pairs, is_description, comment_content=comment_content)
-    tracker_helpers.PrepareIssueChanges(
+        issue_delta_pairs, False, comment_content=comment_content)
+    new_bytes_by_pid = tracker_helpers.PrepareIssueChanges(
         self.mc.cnxn,
         issue_delta_pairs,
         self.services,
+        attachment_uploads=attachment_uploads,
         comment_content=comment_content)
     # TODO(crbug.com/monorail/8074): Assert we do not update more than 100
     # issues at once.
@@ -2021,7 +2026,7 @@ class WorkEnv(object):
       issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
       issue_modified = iid in changes.issues_to_update_dict
 
-      if not (issue_modified or comment_content):
+      if not (issue_modified or comment_content or attachment_uploads):
         # Skip issues that have neither amendments or comment changes.
         continue
 
@@ -2030,7 +2035,9 @@ class WorkEnv(object):
       old_components = changes.old_components_by_iid.get(issue.issue_id)
 
       # Adding this issue to issues_to_update, so its modified_timestamp gets
-      # updated in PHASE 7's UpdateIssues() call.
+      # updated in PHASE 7's UpdateIssues() call. Issues with NOOP changes
+      # but still need a new comment added for `comment_content` or
+      # `attachments` are added back here.
       changes.issues_to_update_dict[issue.issue_id] = issue
 
       issue.modified_timestamp = now_timestamp
@@ -2058,7 +2065,7 @@ class WorkEnv(object):
 
     # changes.issues_to_update includes all main issues or impacted
     # issues with updated fields and main issues that had noop changes
-    # but still need a comment created for `comment_content`.
+    # but still need a comment created for `comment_content` or `attachments`.
     for iid, issue in changes.issues_to_update_dict.items():
       # Update starrers for merged issues.
       new_starrers = changes.new_starrers_by_iid.get(iid)
@@ -2068,10 +2075,15 @@ class WorkEnv(object):
 
       # Create new issue comment for main issue changes.
       amendments = changes.amendments_by_iid.get(iid)
-      if (amendments or comment_content) and iid in main_issue_ids:
+      if (amendments or comment_content or
+          attachment_uploads) and iid in main_issue_ids:
         comments_by_iid[iid] = self.services.issue.CreateIssueComment(
-            self.mc.cnxn, issue, self.mc.auth.user_id, comment_content,
-            amendments=amendments, is_description=is_description,
+            self.mc.cnxn,
+            issue,
+            self.mc.auth.user_id,
+            comment_content,
+            amendments=amendments,
+            attachments=attachment_uploads,
             commit=False)
 
       # Create new issue comment for impacted issue changes.
@@ -2102,6 +2114,13 @@ class WorkEnv(object):
             content,
             amendments=filtered_imp_amendments,
             commit=False)
+
+    # Update used bytes for each impacted project.
+    for pid, new_bytes_used in new_bytes_by_pid.items():
+      self.services.project.UpdateProject(
+          self.mc.cnxn, pid, attachment_bytes_used=new_bytes_used, commit=False)
+
+    # Reindex issues and commit all DB changes.
     issues_to_reindex = set(
         comments_by_iid.keys() + impacted_comments_by_iid.keys())
     if issues_to_reindex:

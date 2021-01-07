@@ -1122,7 +1122,8 @@ class ProjectService(object):
       source_url=None,
       logo_gcs_id=None,
       logo_file_name=None,
-      issue_notify_always_detailed=None):
+      issue_notify_always_detailed=None,
+      commit=True):
     project = self.projects_by_id.get(project_id)
     if not project:
       raise exceptions.NoSuchProjectException(
