@@ -27,11 +27,11 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/utils"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 	"infra/libs/skylab/swarming"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -110,7 +110,7 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 	}
 
 	e := c.envFlags.Env()
-	icV2 := inv.NewInventoryClient(hc, e)
+	icV2 := inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions)
 	oldSpecs, err := getOldDeviceSpecs(ctx, icV2, hostname)
 	if err != nil {
 		return errors.Annotate(err, "update dut").Err()

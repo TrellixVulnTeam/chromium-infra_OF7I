@@ -12,9 +12,9 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
 // UpdateLabstation subcommand: update a labstation to inventory.
@@ -57,7 +57,7 @@ func (c *updateLabstationRun) innerRun(a subcommands.Application, args []string,
 	}
 	c.dutToAdd = skycmdlib.FixSuspiciousHostname(c.dutToAdd)
 	e := c.envFlags.Env()
-	ic := inv.NewInventoryClient(hc, e)
+	ic := inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions)
 	hostname := args[0]
 	res, err := ic.UpdateLabstations(ctx, hostname, c.servoToDelete, c.dutToAdd)
 	if err != nil {

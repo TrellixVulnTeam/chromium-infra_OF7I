@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package inventory includes gerrit-related functions.
+// Package legacyinventory includes gerrit-related functions.
 // This is a TEMP package to mitigate crbug.com/1011236 & b/142340801.
 // Mostly duplicated from crosskylabadmin, will delete it after inventory V2 is launched.
-package inventory
+package legacyinventory
 
 import (
 	"fmt"

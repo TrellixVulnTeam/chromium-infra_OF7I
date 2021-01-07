@@ -16,9 +16,9 @@ import (
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/flagx"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 	"infra/libs/skylab/swarming"
 )
 
@@ -111,7 +111,7 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 		}
 	}
 
-	ic := inv.NewInventoryClient(hc, c.envFlags.Env())
+	ic := inv.NewInventoryClient(hc, c.envFlags.Env().InventoryService, site.DefaultPRPCOptions)
 
 	var rawSwarmingHosts []string
 	for _, l := range listed {

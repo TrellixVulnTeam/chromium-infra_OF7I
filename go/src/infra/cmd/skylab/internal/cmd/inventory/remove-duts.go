@@ -23,11 +23,13 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	iv "infra/cmd/skylab/internal/inventory"
+	legacyIV "infra/cmd/skylab/internal/legacyinventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	iv "infra/libs/skylab/inventory/inventoryclient"
+	rem "infra/libs/skylab/inventory/removalreason"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -50,7 +52,7 @@ again.`,
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.delete, "delete", false, "Delete DUT from inventory (to-be-deprecated).")
-		c.removalReason.Register(&c.Flags)
+		skycmdlib.RegisterRemovalReason(&c.removalReason, &c.Flags)
 		return c
 	},
 }
@@ -61,7 +63,7 @@ type removeDutsRun struct {
 	envFlags      skycmdlib.EnvFlags
 	commonFlags   skycmdlib.CommonFlags
 	delete        bool
-	removalReason skycmdlib.RemovalReason
+	removalReason rem.RemovalReason
 }
 
 func (c *removeDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -110,7 +112,7 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		fmt.Fprintf(a.GetOut(), "\n")
 	}
 
-	ic := iv.NewInventoryClient(hc, e)
+	ic := iv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions)
 	modified, err := ic.DeleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
 	if err != nil {
 		return err
@@ -184,7 +186,7 @@ func printRemovals(w io.Writer, resp *fleet.RemoveDutsFromDronesResponse) error 
 // printDeletions prints a list of deleted DUTs.
 func printDeletions(w io.Writer, cn int, hostnames []string) error {
 	b := bufio.NewWriter(w)
-	url, err := iv.ChangeURL(cn)
+	url, err := legacyIV.ChangeURL(cn)
 	if err != nil {
 		return err
 	}

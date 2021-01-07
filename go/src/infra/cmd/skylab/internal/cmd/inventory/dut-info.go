@@ -20,10 +20,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
 // DutInfo subcommand: Get DUT inventory information
@@ -83,7 +83,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := inv.NewInventoryClient(hc, e)
+	ic := inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions)
 	dut, err := ic.GetDutInfo(ctx, args[0], true)
 
 	if err != nil {

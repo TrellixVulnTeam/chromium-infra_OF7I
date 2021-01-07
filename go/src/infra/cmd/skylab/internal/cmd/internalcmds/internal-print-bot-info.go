@@ -14,11 +14,11 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/dutstate"
 	"infra/libs/skylab/inventory"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 	"infra/libs/skylab/inventory/swarming"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
@@ -66,7 +66,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	siteEnv := c.envFlags.Env()
-	ic := inv.NewInventoryClient(hc, siteEnv)
+	ic := inv.NewInventoryClient(hc, siteEnv.InventoryService, site.DefaultPRPCOptions)
 	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname)
 	if err != nil {
 		return err

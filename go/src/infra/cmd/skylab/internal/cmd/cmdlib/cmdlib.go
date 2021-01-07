@@ -8,11 +8,11 @@ import (
 	"context"
 	"flag"
 	"strings"
-	"time"
 
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/metadata"
 	"infra/cmd/skylab/internal/site"
+	rem "infra/libs/skylab/inventory/removalreason"
 
 	lflag "go.chromium.org/luci/common/flag"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -59,17 +59,8 @@ func (f EnvFlags) Env() site.Environment {
 	return site.Prod
 }
 
-// RemovalReason is the reason that a DUT has been removed from the inventory.
-// Removal requires a buganizer or monorail bug and possibly a comment and
-// expiration time.
-type RemovalReason struct {
-	Bug     string
-	Comment string
-	Expire  time.Time
-}
-
-// Register sets up the command line arguments for specifying a removal reason.
-func (rr *RemovalReason) Register(f *flag.FlagSet) {
+// RegisterRemovalReason sets up the command line arguments for specifying a removal reason.
+func RegisterRemovalReason(rr *rem.RemovalReason, f *flag.FlagSet) {
 	f.StringVar(&rr.Bug, "bug", "", "Bug link for why DUT is being removed.  Required.")
 	f.StringVar(&rr.Comment, "comment", "", "Short comment about why DUT is being removed.")
 	f.Var(lflag.RelativeTime{T: &rr.Expire}, "expires-in", "Expire removal reason in `days`.")

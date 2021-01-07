@@ -9,8 +9,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"infra/cmd/skylab/internal/site"
 
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmdsupport/cmdlib"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
 // getInventoryClient produces an inventory client.
@@ -19,7 +19,7 @@ func getInventoryClient(ctx context.Context, authFlags *authcli.Flags, e site.En
 	if err != nil {
 		return nil, err
 	}
-	return inv.NewInventoryClient(hc, e), nil
+	return inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions), nil
 }
 
 // getModelForHost contacts the inventory v2 service and gets the model associated with

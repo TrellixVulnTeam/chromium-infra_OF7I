@@ -24,18 +24,17 @@ import (
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	invV1Api "infra/appengine/crosskylabadmin/api/fleet/v1"
-	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	"infra/cmd/skylab/internal/site"
 	protos "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 	"infra/libs/skylab/inventory"
+	rem "infra/libs/skylab/inventory/removalreason"
 )
 
 // Client defines the common interface for the inventory client used by
 // various command line tools.
 type Client interface {
 	GetDutInfo(context.Context, string, bool) (*inventory.DeviceUnderTest, error)
-	DeleteDUTs(context.Context, []string, *authcli.Flags, skycmdlib.RemovalReason, io.Writer) (bool, error)
+	DeleteDUTs(context.Context, []string, *authcli.Flags, rem.RemovalReason, io.Writer) (bool, error)
 	BatchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 	FilterDUTHostnames(context.Context, []string) ([]string, error)
 	UpdateLabstations(context.Context, string, string, string) (*invV2Api.UpdateLabstationsResponse, error)
@@ -47,12 +46,15 @@ type inventoryClientV2 struct {
 }
 
 // NewInventoryClient creates a new instance of inventory client.
-func NewInventoryClient(hc *http.Client, env site.Environment) Client {
+func NewInventoryClient(hc *http.Client,
+	inventoryService string,
+	options *prpc.Options,
+) Client {
 	return &inventoryClientV2{
 		ic: invV2Api.NewInventoryPRPCClient(&prpc.Client{
 			C:       hc,
-			Host:    env.InventoryService,
-			Options: site.DefaultPRPCOptions,
+			Host:    inventoryService,
+			Options: options,
 		}),
 	}
 }
@@ -147,7 +149,7 @@ func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHo
 	return invV2Api.AdaptToV1DutSpec(rsp.Data[0])
 }
 
-func (client *inventoryClientV2) DeleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {
+func (client *inventoryClientV2) DeleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr rem.RemovalReason, stdout io.Writer) (modified bool, err error) {
 	var devIds []*invV2Api.DeviceID
 	for _, h := range hostnames {
 		devIds = append(devIds, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: h}})

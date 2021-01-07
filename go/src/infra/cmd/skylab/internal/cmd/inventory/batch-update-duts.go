@@ -17,10 +17,10 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
+	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
 // BatchUpdateDuts subcommand: batch update duts with some common labels.
@@ -113,7 +113,7 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	}
 	e := c.envFlags.Env()
 
-	ic := inv.NewInventoryClient(hc, e)
+	ic := inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions)
 	return ic.BatchUpdateDUTs(ctx, req, a.GetOut())
 }
 
