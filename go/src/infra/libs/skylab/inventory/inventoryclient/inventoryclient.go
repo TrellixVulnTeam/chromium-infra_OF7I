@@ -41,7 +41,8 @@ type Client interface {
 	UpdateDUT(context.Context, *inventory.CommonDeviceSpecs) error
 }
 
-type inventoryClientV2 struct {
+// V2Client is an API client for the inventory V2 service.
+type V2Client struct {
 	ic invV2Api.InventoryClient
 }
 
@@ -49,8 +50,8 @@ type inventoryClientV2 struct {
 func NewInventoryClient(hc *http.Client,
 	inventoryService string,
 	options *prpc.Options,
-) Client {
-	return &inventoryClientV2{
+) *V2Client {
+	return &V2Client{
 		ic: invV2Api.NewInventoryPRPCClient(&prpc.Client{
 			C:       hc,
 			Host:    inventoryService,
@@ -59,7 +60,8 @@ func NewInventoryClient(hc *http.Client,
 	}
 }
 
-func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *inventory.CommonDeviceSpecs) error {
+// UpdateDUT takes the device specifications for a DUT and updates its entry in the inventory.
+func (client *V2Client) UpdateDUT(ctx context.Context, newSpecs *inventory.CommonDeviceSpecs) error {
 	// Copy from https://chromium.git.corp.google.com/infra/infra/+/d0b7fa7d180b2fa273ddd93cf6e6183b65c3b32a/go/src/infra/appengine/crosskylabadmin/app/frontend/inventory/clientv2.go#145
 	devicesToUpdate, labstations, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{newSpecs})
 	if err != nil {
@@ -92,7 +94,11 @@ func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *invent
 	return nil
 }
 
-func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete, dutToAdd string) (*invV2Api.UpdateLabstationsResponse, error) {
+// UpdateLabstations is similar to UpdateDUT but updates a labstation instead.
+// Since labstations manage devices like servos and DUTs, updating a labstation potentially
+// involves modifying multiple tracked by the inventory in a way that can't be done as a sequence
+// of individual steps without breaking invariants.
+func (client *V2Client) UpdateLabstations(ctx context.Context, hostname, servosToDelete, dutToAdd string) (*invV2Api.UpdateLabstationsResponse, error) {
 	req := &invV2Api.UpdateLabstationsRequest{
 		Hostname: hostname,
 	}
@@ -105,7 +111,8 @@ func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname
 	return client.ic.UpdateLabstations(ctx, req)
 }
 
-func (client *inventoryClientV2) BatchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
+// BatchUpdateDUTs updates many DUTs.
+func (client *V2Client) BatchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
 	properties := make([]*invV2Api.DeviceProperty, len(req.GetDutProperties()))
 	for i, r := range req.GetDutProperties() {
 		properties[i] = &invV2Api.DeviceProperty{
@@ -128,7 +135,7 @@ func (client *inventoryClientV2) BatchUpdateDUTs(ctx context.Context, req *fleet
 }
 
 // GetDutInfo gets the dut information from inventory v2 service.
-func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
+func (client *V2Client) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
 	devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: id}}
 	if byHostname {
 		devID = &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: id}}
@@ -149,7 +156,8 @@ func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHo
 	return invV2Api.AdaptToV1DutSpec(rsp.Data[0])
 }
 
-func (client *inventoryClientV2) DeleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr rem.RemovalReason, stdout io.Writer) (modified bool, err error) {
+// DeleteDUTs deletes DUTs from the inventory and tracks the reason for the removal.
+func (client *V2Client) DeleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr rem.RemovalReason, stdout io.Writer) (modified bool, err error) {
 	var devIds []*invV2Api.DeviceID
 	for _, h := range hostnames {
 		devIds = append(devIds, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: h}})
@@ -183,7 +191,7 @@ func (client *inventoryClientV2) DeleteDUTs(ctx context.Context, hostnames []str
 	return len(rsp.RemovedDevices) > 0, nil
 }
 
-func (client *inventoryClientV2) updateAssets(ctx context.Context, deletedDevices []*invV2Api.DeviceOpResult, b io.Writer) {
+func (client *V2Client) updateAssets(ctx context.Context, deletedDevices []*invV2Api.DeviceOpResult, b io.Writer) {
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
@@ -218,7 +226,7 @@ func (client *inventoryClientV2) updateAssets(ctx context.Context, deletedDevice
 }
 
 // FilterDUTHostnames produces a list of only the DUT hostnames that exist.
-func (client *inventoryClientV2) FilterDUTHostnames(ctx context.Context, hostnames []string) ([]string, error) {
+func (client *V2Client) FilterDUTHostnames(ctx context.Context, hostnames []string) ([]string, error) {
 	var out []string
 	// The RPC will fail if no hostnames are provided, so return early instead.
 	if len(hostnames) == 0 {
