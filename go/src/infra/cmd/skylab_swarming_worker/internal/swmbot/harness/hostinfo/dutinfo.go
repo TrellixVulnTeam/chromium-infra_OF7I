@@ -8,7 +8,8 @@ import (
 	"context"
 	"log"
 
-	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
+	"infra/libs/skylab/autotest/hostinfo"
+
 	"infra/libs/skylab/inventory"
 )
 

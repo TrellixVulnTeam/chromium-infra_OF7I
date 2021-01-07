@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
+	"infra/libs/skylab/autotest/hostinfo"
+
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 )
 

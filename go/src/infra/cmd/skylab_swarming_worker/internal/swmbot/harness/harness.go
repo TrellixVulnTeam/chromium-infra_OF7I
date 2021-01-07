@@ -23,7 +23,8 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 
-	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
+	"infra/libs/skylab/autotest/hostinfo"
+
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/botinfo"

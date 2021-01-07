@@ -14,7 +14,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
+	"infra/libs/skylab/autotest/hostinfo"
 )
 
 // File represents a hostinfo file exposed for Autotest to use.

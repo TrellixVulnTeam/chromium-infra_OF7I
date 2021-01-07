@@ -10,8 +10,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
+	"infra/libs/skylab/autotest/hostinfo"
 )
 
 func TestCopyToProvisioningLabels(t *testing.T) {
