@@ -304,7 +304,6 @@ func (c *updateDutRun) deployActions() string {
 	if c.installOS || c.installFirmware || c.updateLabels {
 		s = append(s, "update-label")
 	}
-	s = append(s, "servo-verification")
 	s = append(s, "run-pre-deploy-verification")
 	return strings.Join(s, ",")
 }
