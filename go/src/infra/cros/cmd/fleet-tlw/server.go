@@ -8,10 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -19,13 +21,15 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
+	"infra/libs/lro"
 	"infra/libs/sshpool"
 )
 
 type server struct {
 	tls.UnimplementedWiringServer
-	tMgr  *tunnelManager
-	tPool *sshpool.Pool
+	tMgr   *tunnelManager
+	tPool  *sshpool.Pool
+	lroMgr *lro.Manager
 }
 
 func (s server) Serve(l net.Listener) error {
@@ -35,6 +39,8 @@ func (s server) Serve(l net.Listener) error {
 	defer s.tPool.Close()
 	s.tMgr = newTunnelManager()
 	defer s.tMgr.Close()
+	s.lroMgr = lro.New()
+	longrunning.RegisterOperationsServer(server, s.lroMgr)
 	return server.Serve(l)
 }
 
@@ -78,6 +84,24 @@ func (s server) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutReq
 		ExposedPort:    int32(listenAddr.Port),
 	}
 	return response, nil
+}
+
+func (s server) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*longrunning.Operation, error) {
+	rawURL := req.GetUrl()
+	if rawURL == "" {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported url %s in request", rawURL))
+	}
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported url %s in request", rawURL))
+	}
+	dutName := req.GetDutName()
+	if dutName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported DutName %s in request", dutName))
+	}
+	op := s.lroMgr.NewOperation()
+	go s.cache(ctx, parsedURL, dutName, op.Name)
+	return op, status.Error(codes.OK, "Started: CacheForDut Operation.")
 }
 
 // lookupHost is a helper function that looks up the IP address of the provided
