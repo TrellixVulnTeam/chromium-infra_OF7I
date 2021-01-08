@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\x84\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x32\n\x0buse_cv_runs\x18\x03 \x01(\x0b\x32\x1d.migration.Settings.UseCVRuns\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a=\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a#\n\tUseCVRuns\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xc4\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x32\n\x0buse_cv_runs\x18\x03 \x01(\x0b\x32\x1d.migration.Settings.UseCVRuns\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a]\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x04 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a\x43\n\tUseCVRuns\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\t\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -48,7 +48,14 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='prod', full_name='migration.Settings.ApiHost.prod', index=2,
+      name='project_regexp_exclude', full_name='migration.Settings.ApiHost.project_regexp_exclude', index=2,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='prod', full_name='migration.Settings.ApiHost.prod', index=3,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -67,7 +74,7 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=230,
-  serialized_end=291,
+  serialized_end=323,
 )
 
 _SETTINGS_USECVRUNS = _descriptor.Descriptor(
@@ -85,6 +92,13 @@ _SETTINGS_USECVRUNS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='project_regexp_exclude', full_name='migration.Settings.UseCVRuns.project_regexp_exclude', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -97,8 +111,8 @@ _SETTINGS_USECVRUNS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=293,
-  serialized_end=328,
+  serialized_start=325,
+  serialized_end=392,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -143,7 +157,7 @@ _SETTINGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=328,
+  serialized_end=392,
 )
 
 
@@ -174,8 +188,8 @@ _PSSAMIGRATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=330,
-  serialized_end=373,
+  serialized_start=394,
+  serialized_end=437,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
