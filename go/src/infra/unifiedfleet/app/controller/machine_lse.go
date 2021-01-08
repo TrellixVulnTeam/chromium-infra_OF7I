@@ -594,6 +594,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 
 	lses := util.ToOSMachineLSEs(labConfigs)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os")
+	populateRackForMachineLSEs(ctx, lses)
 	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
@@ -721,6 +722,19 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 		}
 	}
 	return &allRes, nil
+}
+
+func populateRackForMachineLSEs(ctx context.Context, lses []*ufspb.MachineLSE) {
+	for _, lse := range lses {
+		if len(lse.GetMachines()) != 0 {
+			machine, err := registration.GetMachine(ctx, lse.GetMachines()[0])
+			if err != nil {
+				logging.Infof(ctx, "Failed to get machine %s", lse.GetMachines()[0])
+				continue
+			}
+			lse.Rack = machine.GetLocation().GetRack()
+		}
+	}
 }
 
 func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.MachineLSE, pageSize int, lseType string) (*ufsds.OpResults, error) {
