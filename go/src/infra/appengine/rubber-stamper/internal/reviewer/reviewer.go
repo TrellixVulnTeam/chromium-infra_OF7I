@@ -33,6 +33,10 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 		return err
 	}
 
+	if t.RevertOf != 0 {
+		// TODO: call reviewCleanRevert
+	}
+
 	invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gc, t)
 	if err != nil {
 		return err

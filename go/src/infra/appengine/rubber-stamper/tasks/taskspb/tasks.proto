@@ -20,4 +20,6 @@ message ChangeReviewTask {
   string repo = 4;
   // Whether the change has Auto-Submit label.
   bool auto_submit = 5;
+  // The numeric Change-Id of the change that this change reverts.
+  int64 revert_of = 6;
 }

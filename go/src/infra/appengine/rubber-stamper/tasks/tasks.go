@@ -39,6 +39,7 @@ func EnqueueChangeReviewTask(ctx context.Context, host string, cl *gerritpb.Chan
 		Revision:   cl.CurrentRevision,
 		Repo:       cl.Project,
 		AutoSubmit: (cl.Labels["Auto-Submit"] != nil) && (cl.Labels["Auto-Submit"].Approved != nil),
+		RevertOf:   cl.RevertOf,
 	}
 	dedupKey := fmt.Sprintf("change(%s,%d,%s)", t.Host, t.Number, t.Revision)
 

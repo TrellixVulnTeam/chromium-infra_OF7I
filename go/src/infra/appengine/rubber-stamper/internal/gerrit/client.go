@@ -80,6 +80,15 @@ type CLReaderClient interface {
 	//
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
 	ListFiles(ctx context.Context, in *gerritpb.ListFilesRequest, opts ...grpc.CallOption) (*gerritpb.ListFilesResponse, error)
+	// Check if the given change is a pure revert of the change it references in
+	// revertOf. See also ChangeInfo.revert_of.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-pure-revert
+	GetPureRevert(ctx context.Context, in *gerritpb.GetPureRevertRequest, opts ...grpc.CallOption) (*gerritpb.PureRevertInfo, error)
+	// Loads a change by id.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-change
+	GetChange(ctx context.Context, in *gerritpb.GetChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
 }
 
 // CLWriterClient defines a subset of Gerrit API used by rubber-stamper to
