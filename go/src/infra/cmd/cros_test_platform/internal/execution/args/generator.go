@@ -120,6 +120,8 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
 
+	// TODO(crbug.com/1162347) Delete after test_runner starts using structured
+	// dependencies.
 	provisionableDimensions, err := g.provisionableDimensions()
 	if err != nil {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
@@ -460,7 +462,8 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 	return &skylab_test_runner.Request{
 		Deadline: google.NewTimestamp(g.Deadline),
 		Prejob: &skylab_test_runner.Request_Prejob{
-			ProvisionableLabels: pl,
+			ProvisionableLabels:  pl,
+			SoftwareDependencies: g.Params.SoftwareDependencies,
 		},
 		// The hard coded "original_test" key is ignored in test_runner builds.
 		// All behavior will remain the same, until we start running multiple tests per test_runner build.
