@@ -15,6 +15,7 @@ import (
 
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/dumper"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -37,6 +38,7 @@ func main() {
 		}
 		srv.RunInBackground("ufs.config", cfgLoader.ReloadLoop)
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
+		srv.Context = external.WithServerInterface(srv.Context)
 
 		client, err := bigquery.NewClient(srv.Context, srv.Options.CloudProject)
 		if err != nil {
