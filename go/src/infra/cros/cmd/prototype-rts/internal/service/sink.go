@@ -2,15 +2,15 @@ package service
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net"
 
 	"go.chromium.org/chromiumos/config/go/api/test/rtd/v1"
 	"go.chromium.org/luci/common/logging"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 )
 
 type fakeProgressSinkService struct {
@@ -42,11 +42,32 @@ func (s fakeProgressSinkService) Serve(ctx context.Context, l net.Listener) *grp
 }
 
 func (*fakeProgressSinkService) ReportResult(ctx context.Context, req *rtd.ReportResultRequest) (*rtd.ReportResultResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportResult not implemented")
+	// Must use log rather than logging, since logging doesn't end up printing
+	// to stderr from this location.
+	log.Printf("got ReportResultRequest: %v", req)
+	return &rtd.ReportResultResponse{}, nil
 }
 func (*fakeProgressSinkService) ReportLog(srv rtd.ProgressSink_ReportLogServer) error {
-	return status.Errorf(codes.Unimplemented, "method ReportLog not implemented")
+	// Must use log rather than logging, since logging doesn't end up printing
+	// to stderr from this location.
+	log.Printf("starting ReportLog receiver")
+	for {
+		req, err := srv.Recv()
+		if err == io.EOF {
+			log.Printf("received ReportLog EOF")
+			break
+		}
+		if err != nil {
+			return err
+		}
+		log.Printf("received ReportLog: %v", req)
+	}
+	log.Printf("done with ReportLog receiver")
+	return nil
 }
 func (*fakeProgressSinkService) ArchiveArtifact(ctx context.Context, req *rtd.ArchiveArtifactRequest) (*rtd.ArchiveArtifactResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ArchiveArtifact not implemented")
+	// Must use log rather than logging, since logging doesn't end up printing
+	// to stderr from this location.
+	log.Printf("got ArchiveArtifactRequest: %v", req)
+	return &rtd.ArchiveArtifactResponse{}, nil
 }
