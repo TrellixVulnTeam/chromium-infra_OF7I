@@ -76,10 +76,16 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 				return err
 			}
 		}
-		_, err = registration.BatchUpdateAssets(ctx, []*ufspb.Asset{updatableAsset})
+		a, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{updatableAsset})
 		if err != nil {
 			return err
 		}
+
+		// Update the associated Machine from the updated asset
+		if err := updateMachineHelper(ctx, a[0]); err != nil {
+			return err
+		}
+
 		hc.LogAssetChanges(oldAsset, updatableAsset)
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -162,6 +168,45 @@ func addMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
 	}
 	hc.LogMachineChanges(nil, machine)
 	hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED)
+	return hc.SaveChangeEvents(ctx)
+}
+
+// updateMachineHelper updates a machine for the updated asset.
+//
+// This should be run inside a transaction.
+func updateMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
+	// Get the existing machine.
+	machine, err := registration.GetMachine(ctx, asset.GetName())
+	if err != nil {
+		if util.IsNotFoundError(err) {
+			// Create a new machine if the updated asset is a
+			// DUT or Labstation.
+			if asset.GetType() == ufspb.AssetType_DUT || asset.GetType() == ufspb.AssetType_LABSTATION {
+				return addMachineHelper(ctx, asset)
+			}
+			// Nothing to do if its a servo type.
+			// No machine is created for a servo asset.
+			return nil
+		}
+		return err
+	}
+	// If the machine exists and the updated asset is a servo
+	// then delete the associated machine.
+	if asset.GetType() == ufspb.AssetType_SERVO {
+		if err := validateDeleteAsset(ctx, asset); err != nil {
+			return errors.Annotate(err, "failed to update %s to SERVO type as there is a DUT associated with this asset.", asset.GetName()).Err()
+		}
+		return deleteMachineHelper(ctx, asset.GetName())
+	}
+	// Copy for logging
+	oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
+	hc := getMachineHistoryClient(machine)
+	//update the machine from the asset
+	updateMachineFromAsset(machine, asset)
+	if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+		return errors.Annotate(err, "unable to create machine").Err()
+	}
+	hc.LogMachineChanges(oldMachineCopy, machine)
 	return hc.SaveChangeEvents(ctx)
 }
 
@@ -427,4 +472,38 @@ func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
 		ResourceState: ufspb.State_STATE_REGISTERED,
 	}
 	return machine
+}
+
+// updateMachineFromAsset updates a machine from asset
+//
+// This must be used only for DUT or a Labstation.
+func updateMachineFromAsset(machine *ufspb.Machine, asset *ufspb.Asset) {
+	if asset == nil {
+		return
+	}
+	if machine.GetChromeosMachine() == nil {
+		machine.Device = &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: &ufspb.ChromeOSMachine{},
+		}
+	}
+	machine.SerialNumber = asset.GetInfo().GetSerialNumber()
+	machine.Location = asset.GetLocation()
+	machine.Realm = asset.GetRealm()
+	machine.GetChromeosMachine().ReferenceBoard = asset.GetInfo().GetReferenceBoard()
+	machine.GetChromeosMachine().BuildTarget = asset.GetInfo().GetBuildTarget()
+	machine.GetChromeosMachine().Model = asset.GetInfo().GetModel()
+	machine.GetChromeosMachine().GoogleCodeName = asset.GetInfo().GetGoogleCodeName()
+	machine.GetChromeosMachine().MacAddress = asset.GetInfo().GetEthernetMacAddress()
+	machine.GetChromeosMachine().Sku = asset.GetInfo().GetSku()
+	machine.GetChromeosMachine().Phase = asset.GetInfo().GetPhase()
+	machine.GetChromeosMachine().CostCenter = asset.GetInfo().GetCostCenter()
+	machine.GetChromeosMachine().Hwid = asset.GetInfo().GetHwid()
+	switch asset.GetType() {
+	case ufspb.AssetType_DUT:
+		machine.GetChromeosMachine().DeviceType = ufspb.ChromeOSDeviceType_DEVICE_CHROMEBOOK
+	case ufspb.AssetType_LABSTATION:
+		machine.GetChromeosMachine().DeviceType = ufspb.ChromeOSDeviceType_DEVICE_LABSTATION
+	default:
+		// Only DUTs and Labstations are stored as machines
+	}
 }
