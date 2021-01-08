@@ -1,7 +1,23 @@
 # Python 2 packages needed for production.
 
+# Uploaded Apr 19, 2020
+ezt==1.1 --hash=sha256:2131c2aa34d395433410b4e3cb71b22ab1471fae9da1c60e4426f74c86cb0104
+
+# Uploaded Feb 2, 2020
+# TODO(crbug/monorail/8271) clean up duplicate from third_party
+fakeredis==1.1.1 --hash=sha256:b8cf9c19fbcd53fe0512ece75b2df9430c46f75898111f50cff309c3a35b921d
+
 # Uploaded Feb 24, 2020
 google-cloud-tasks==1.5.0 --hash=sha256:36aa16f0c52aa9a292b1f919d2582725731e9760393c9ca98ce599c68cbf9996
+
+# TODO(crbug/monorail/8271) clean up duplicate from third_party
+# Uploaded Jun 1, 2020
+redis==3.5.3 --hash=sha256:432b788c4530cfe16d8d943a09d40ca6c16149727e4afe8c2c9d5580c59d9f24
+
+# TODO(crbug/monorail/8271) clean up duplicate from third_party
+# Required by fakeredis
+# Uploaded Nov 8, 2020
+sortedcontainers==2.3.0 --hash=sha256:37257a32add0a3ee490bb170b599e93095eed89a55da91fa9f48753ea12fd73f
 
 # Required by google-cloud-tasks
 # Uploaded Jun 3, 2020
@@ -10,9 +26,6 @@ googleapis-common-protos==1.52.0 --hash=sha256:c8961760f5aad9a711d37b675be103e0c
 # Required by google-cloud-tasks
 # Uploaded Mar 10, 2020
 enum34==1.1.10 --hash=sha256:a98a201d6de3f2ab3db284e70a33b0f896fbf35f8086594e8c9e74b909058d53
-
-# Uploaded Jan 5, 2021
-ezt==1.1 --hash=sha256:2131c2aa34d395433410b4e3cb71b22ab1471fae9da1c60e4426f74c86cb0104
 
 # Required by google-cloud-tasks
 # Uploaded Jul 10, 2019
