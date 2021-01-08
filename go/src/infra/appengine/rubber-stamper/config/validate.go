@@ -19,6 +19,12 @@ func validateConfig(c *validation.Context, cfg *Config) {
 		validateHostConfig(c, hostConfig)
 		c.Exit()
 	}
+
+	if cfg.DefaultTimeWindow != "" {
+		validateTimeWindow(c, cfg.DefaultTimeWindow)
+	} else {
+		c.Errorf("empty default_time_window")
+	}
 }
 
 func validateHostConfig(c *validation.Context, hostConfig *HostConfig) {
@@ -26,6 +32,10 @@ func validateHostConfig(c *validation.Context, hostConfig *HostConfig) {
 		c.Enter("repo_config %s", key)
 		validateRepoConfig(c, repoConfig)
 		c.Exit()
+	}
+
+	if hostConfig.CleanRevertTimeWindow != "" {
+		validateTimeWindow(c, hostConfig.CleanRevertTimeWindow)
 	}
 }
 
@@ -39,10 +49,8 @@ func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
 
 func validateCleanRevertPattern(c *validation.Context, cleanRevertPattern *CleanRevertPattern) {
 	tw := cleanRevertPattern.TimeWindow
-	unit := tw[len(tw)-1:]
-	_, err := strconv.Atoi(tw[:len(tw)-1])
-	if err != nil || !validTimeUnits[unit] {
-		c.Errorf("invalid time_window %s: %s", tw, err)
+	if tw != "" {
+		validateTimeWindow(c, tw)
 	}
 
 	for _, p := range cleanRevertPattern.ExcludedPaths {
@@ -54,5 +62,13 @@ func validateCleanRevertPattern(c *validation.Context, cleanRevertPattern *Clean
 		if _, err := path.Match(p, "src/"); err != nil {
 			c.Errorf("invalid path %s: %s", p, err)
 		}
+	}
+}
+
+func validateTimeWindow(c *validation.Context, tw string) {
+	unit := tw[len(tw)-1:]
+	_, err := strconv.Atoi(tw[:len(tw)-1])
+	if err != nil || !validTimeUnits[unit] {
+		c.Errorf("invalid time_window %s: %s", tw, err)
 	}
 }

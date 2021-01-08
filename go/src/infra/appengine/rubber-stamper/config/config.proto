@@ -14,6 +14,9 @@ message Config {
   // hosts (e.g. "chromium" or "chrome-internal"), values are corresponding
   // configs.
   map<string, HostConfig> host_configs = 1;
+  // A global default time window for clean reverts and cherry picks. The
+  // format is the same as that of CleanRevertPattern.time_window.
+  string default_time_window = 2;
 }
 
 // HostConfig describes the config to be used for a Gerrit host.
@@ -21,6 +24,11 @@ message HostConfig {
   // A map stores config for repositories, where keys are names of repos (e.g.
   // "chromium/src", "infra/infra") and values are corresponding configs.
   map<string, RepoConfig> repo_configs = 1;
+  // The default valid time window for clean reverts. This time window is
+  // applied at a host-level and the time window configured in repo-level
+  // configs will override this one. The format is the same as that of
+  // CleanRevertPattern.time_window.
+  string clean_revert_time_window = 2;
 }
 
 // RepoConfig describes the config to be used for a Gerrit repository.

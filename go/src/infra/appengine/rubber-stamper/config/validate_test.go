@@ -14,6 +14,7 @@ import (
 )
 
 var sampleConfigStr = `
+	default_time_window: "7d"
 	host_configs {
 		key: "test-host"
 		value: {
@@ -56,6 +57,10 @@ func TestConfigValidator(t *testing.T) {
 
 	Convey("validateConfig catches errors", t, func() {
 		cfg := createConfig()
+		Convey("empty default_time_window", func() {
+			cfg.DefaultTimeWindow = ""
+			So(validate(cfg), ShouldErrLike, "empty default_time_window")
+		})
 		Convey("validateCleanRevertPattern catches errors", func() {
 			crp := cfg.HostConfigs["test-host"].RepoConfigs["dummy"].CleanRevertPattern
 			Convey("invalid time window value", func() {
