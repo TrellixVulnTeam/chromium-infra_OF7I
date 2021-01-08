@@ -71,10 +71,6 @@ func (c *fetchCrashesRun) Run(a subcommands.Application, args []string, env subc
 }
 
 const (
-	// uploadAddressProd is the address to which we POST reports to crash/
-	uploadAddressProd = "https://clients2.google.com/cr/report"
-	// uploadAddressStaging is the address to which we POST reports to crash-staging/
-	uploadAddressStaging = "https://clients2.google.com/cr/staging_report"
 	// outputSubDir is the directory to which we write files indicating uploaded crash info.
 	outputSubDir = "test_runner"
 	// uploadedFile is the file to which we write info about uploaded crashes (to enable easier
@@ -436,7 +432,7 @@ func processCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[st
 		}
 
 		var err error
-		url, err = uploadCrash(ctx, fullCrash{info: info, blobs: blobs}, r.UseStaging)
+		url, err = uploadCrash(ctx, r.GetConfig().GetFetchCrashesStep(), fullCrash{info: info, blobs: blobs})
 		if err != nil {
 			return nil, errors.Annotate(err, "uploading crash for %s", info.ExecName).Err()
 		}
@@ -506,9 +502,9 @@ func addCrashesInDir(ctx context.Context, d string, crashes *map[string]bool) er
 	return nil
 }
 
-// uploadCrash uploads the given crash to either staging or prod (as specified by |useStaging|).
+// uploadCrash uploads the given crash to provided crash server url.
 // It returns the URL at which the uploaded crash can be found.
-func uploadCrash(ctx context.Context, crash fullCrash, useStaging bool) (string, error) {
+func uploadCrash(ctx context.Context, config *phosphorus.FetchCrashesStep, crash fullCrash) (string, error) {
 	buf, contentType, err := formatCrashForUpload(ctx, crash)
 	if err != nil {
 		return "", errors.Annotate(err, "build POST form").Err()
@@ -532,15 +528,9 @@ func uploadCrash(ctx context.Context, crash fullCrash, useStaging bool) (string,
 		toUpload = buf
 	}
 
-	// Choose destination based on specified flags.
-	url := uploadAddressProd
-	if useStaging {
-		url = uploadAddressStaging
-	}
-
 	// Do the Post request. cannot use http.Post() because it doesn't let us
 	// specify the Content-Encoding header.
-	req, err := http.NewRequest(http.MethodPost, url, &toUpload)
+	req, err := http.NewRequest(http.MethodPost, config.CrashServerReportUrl, &toUpload)
 	if err != nil {
 		return "", errors.Annotate(err, "creating upload request").Err()
 	}
@@ -561,11 +551,7 @@ func uploadCrash(ctx context.Context, crash fullCrash, useStaging bool) (string,
 	}
 	resp.Body.Close()
 
-	base := "https://crash.corp.google.com/"
-	if useStaging {
-		base = "https://crash-staging.corp.google.com/"
-	}
-	return base + id.String(), nil
+	return config.CrashServerViewUrl + "/" + id.String(), nil
 }
 
 // formatCrashForUpload takes the provided crash and turns it into a byte slice suitable for POSTing to crash/.
