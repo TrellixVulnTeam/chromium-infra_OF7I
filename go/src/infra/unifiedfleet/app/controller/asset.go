@@ -30,6 +30,12 @@ func AssetRegistration(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, e
 		if err := validateAssetRegistration(ctx, asset); err != nil {
 			return err
 		}
+		if asset.GetType() == ufspb.AssetType_DUT || asset.GetType() == ufspb.AssetType_LABSTATION {
+			//Create a new machine
+			if err := addMachineHelper(ctx, asset); err != nil {
+				return err
+			}
+		}
 		_, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{asset})
 		if err != nil {
 			return err
@@ -138,6 +144,25 @@ func DeleteAsset(ctx context.Context, name string) error {
 		return nil
 	}
 	return datastore.RunInTransaction(ctx, f, nil)
+}
+
+// addMachineHelper adds a machine for the newly added asset.
+//
+// asset should be a DUT or Labstation.
+// This should be run inside a transaction.
+func addMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
+	// Check if machine already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetMachineResource(asset.Name)}, nil); err != nil {
+		return err
+	}
+	machine := CreateMachineFromAsset(asset)
+	hc := getMachineHistoryClient(machine)
+	if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+		return errors.Annotate(err, "unable to create machine").Err()
+	}
+	hc.LogMachineChanges(nil, machine)
+	hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED)
+	return hc.SaveChangeEvents(ctx)
 }
 
 // deleteMachineHelper deletes a machine. If the machine is not found it return nil.
@@ -362,4 +387,44 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 		return oldAsset, nil
 	}
 	return nil, status.Error(codes.InvalidArgument, "processAssetUpdateMask - Invalid Input, No mask found")
+}
+
+// CreateMachineFromAsset creates machine from asset
+//
+// If the asset is either a DUT or Labstation, machine is returned, nil otherwise.
+func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
+	if asset == nil {
+		return nil
+	}
+	device := &ufspb.ChromeOSMachine{
+		ReferenceBoard: asset.GetInfo().GetReferenceBoard(),
+		BuildTarget:    asset.GetInfo().GetBuildTarget(),
+		Model:          asset.GetInfo().GetModel(),
+		GoogleCodeName: asset.GetInfo().GetGoogleCodeName(),
+		MacAddress:     asset.GetInfo().GetEthernetMacAddress(),
+		Sku:            asset.GetInfo().GetSku(),
+		Phase:          asset.GetInfo().GetPhase(),
+		CostCenter:     asset.GetInfo().GetCostCenter(),
+		Hwid:           asset.GetInfo().GetHwid(),
+	}
+	switch asset.GetType() {
+	case ufspb.AssetType_DUT:
+		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_CHROMEBOOK
+	case ufspb.AssetType_LABSTATION:
+		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_LABSTATION
+	default:
+		// Only DUTs and Labstations are stored as machines
+		return nil
+	}
+	machine := &ufspb.Machine{
+		Name:         asset.GetName(),
+		SerialNumber: asset.GetInfo().GetSerialNumber(),
+		Location:     asset.GetLocation(),
+		Device: &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: device,
+		},
+		Realm:         asset.GetRealm(),
+		ResourceState: ufspb.State_STATE_REGISTERED,
+	}
+	return machine
 }

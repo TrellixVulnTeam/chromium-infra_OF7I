@@ -218,7 +218,7 @@ func SyncMachinesFromAssets(ctx context.Context) error {
 					continue
 				}
 			}
-			aMachine := CreateMachineFromAsset(asset)
+			aMachine := controller.CreateMachineFromAsset(asset)
 			if aMachine == nil {
 				continue
 			}
@@ -405,44 +405,4 @@ func createAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 		a.Type = ufspb.AssetType_DUT
 	}
 	return a, nil
-}
-
-// CreateMachineFromAsset creates machine from asset
-//
-// If the asset is either a DUT or Labstation, machine is returned, nil otherwise.
-func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
-	if asset == nil {
-		return nil
-	}
-	device := &ufspb.ChromeOSMachine{
-		ReferenceBoard: asset.GetInfo().GetReferenceBoard(),
-		BuildTarget:    asset.GetInfo().GetBuildTarget(),
-		Model:          asset.GetInfo().GetModel(),
-		GoogleCodeName: asset.GetInfo().GetGoogleCodeName(),
-		MacAddress:     asset.GetInfo().GetEthernetMacAddress(),
-		Sku:            asset.GetInfo().GetSku(),
-		Phase:          asset.GetInfo().GetPhase(),
-		CostCenter:     asset.GetInfo().GetCostCenter(),
-		Hwid:           asset.GetInfo().GetHwid(),
-	}
-	switch asset.GetType() {
-	case ufspb.AssetType_DUT:
-		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_CHROMEBOOK
-	case ufspb.AssetType_LABSTATION:
-		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_LABSTATION
-	default:
-		// Only DUTs and Labstations are stored as machines
-		return nil
-	}
-	machine := &ufspb.Machine{
-		Name:         asset.GetName(),
-		SerialNumber: asset.GetInfo().GetSerialNumber(),
-		Location:     asset.GetLocation(),
-		Device: &ufspb.Machine_ChromeosMachine{
-			ChromeosMachine: device,
-		},
-		Realm:         asset.GetRealm(),
-		ResourceState: ufspb.State_STATE_REGISTERED,
-	}
-	return machine
 }

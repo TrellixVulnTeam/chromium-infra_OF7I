@@ -193,6 +193,8 @@ func (hc *HistoryClient) LogMachineChanges(oldData *ufspb.Machine, newData *ufsp
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine.realm", oldData.GetRealm(), newData.GetRealm())...)
 	if newData.GetChromeBrowserMachine() != nil {
 		hc.changes = append(hc.changes, logChromeBrowserMachine(resourceName, oldData.GetChromeBrowserMachine(), newData.GetChromeBrowserMachine())...)
+	} else {
+		hc.changes = append(hc.changes, logChromeOSMachine(resourceName, oldData.GetChromeosMachine(), newData.GetChromeosMachine())...)
 	}
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -686,6 +688,21 @@ func logChromeBrowserMachine(resourceName string, oldData, newData *ufspb.Chrome
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.deployment_ticket", oldData.GetDeploymentTicket(), newData.GetDeploymentTicket())...)
 	changes = append(changes, logKVMInterface(resourceName, oldData.GetKvmInterface(), newData.GetKvmInterface())...)
 	changes = append(changes, logRPMInterface(resourceName, oldData.GetRpmInterface(), newData.GetRpmInterface())...)
+	return changes
+}
+
+func logChromeOSMachine(resourceName string, oldData, newData *ufspb.ChromeOSMachine) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.reference_board", oldData.GetReferenceBoard(), newData.GetReferenceBoard())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.build_target", oldData.GetBuildTarget(), newData.GetBuildTarget())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.model", oldData.GetModel(), newData.GetModel())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.google_code_name", oldData.GetGoogleCodeName(), newData.GetGoogleCodeName())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.sku", oldData.GetSku(), newData.GetSku())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.phase", oldData.GetPhase(), newData.GetPhase())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.cost_center", oldData.GetCostCenter(), newData.GetCostCenter())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.hwid", oldData.GetHwid(), newData.GetHwid())...)
+	changes = append(changes, logCommon(resourceName, "machine.chrome_os_machine.device_type", oldData.GetDeviceType(), newData.GetDeviceType())...)
 	return changes
 }
 
