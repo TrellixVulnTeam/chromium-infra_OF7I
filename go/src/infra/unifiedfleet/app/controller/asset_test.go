@@ -197,37 +197,31 @@ func TestUpdateAsset(t *testing.T) {
 			a := mockAsset("C001003", "eve", "2", "chromeos6-row2-rack5", "3", "chromeos6-row2-rack3-host1", ufspb.AssetType_DUT, ufspb.Zone_ZONE_CHROMEOS6)
 			_, err = AssetRegistration(ctx, a)
 			So(err, ShouldBeNil)
-			ai := mockAssetInfo("MTV100212", "", "", "", "", "", "", "", "DVT")
+			ai := mockAssetInfo("", "", "", "", "", "", "", "", "DVT")
 			a.Info = ai
-			_, err = UpdateAsset(ctx, a, &field_mask.FieldMask{Paths: []string{"info.serial_number", "info.phase"}})
+			_, err = UpdateAsset(ctx, a, &field_mask.FieldMask{Paths: []string{"info.phase"}})
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "assets/C001003")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 3)
+			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "asset")
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[1].GetEventLabel(), ShouldEqual, "asset.info.serial_number")
-			So(changes[1].GetNewValue(), ShouldEqual, "MTV100212")
+			So(changes[1].GetEventLabel(), ShouldEqual, "asset.info.phase")
+			So(changes[1].GetNewValue(), ShouldEqual, "DVT")
 			So(changes[1].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetEventLabel(), ShouldEqual, "asset.info.phase")
-			So(changes[2].GetNewValue(), ShouldEqual, "DVT")
-			So(changes[2].GetOldValue(), ShouldEqual, "")
 
 			machine, err := registration.GetMachine(ctx, "C001003")
 			So(machine, ShouldNotBeNil)
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/C001003")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 3)
+			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[1].GetEventLabel(), ShouldEqual, "machine.serial_number")
-			So(changes[1].GetNewValue(), ShouldEqual, "MTV100212")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine.chrome_os_machine.phase")
+			So(changes[1].GetNewValue(), ShouldEqual, "DVT")
 			So(changes[1].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetEventLabel(), ShouldEqual, "machine.chrome_os_machine.phase")
-			So(changes[2].GetNewValue(), ShouldEqual, "DVT")
-			So(changes[2].GetOldValue(), ShouldEqual, "")
 		})
 
 		Convey("Update Asset with invalid mask", func() {
@@ -568,6 +562,72 @@ func TestDeleteAsset(t *testing.T) {
 			err = DeleteAsset(ctx, "asset-2")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "DUT dut-2 is referring this Asset")
+		})
+	})
+}
+
+func TestUpdateAssetMeta(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("UpdateAssetMeta for an OS machine", t, func() {
+		Convey("Update a non-OS machine", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-assetmeta-1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = UpdateAssetMeta(ctx, &ufspb.DutMeta{
+				ChromeosDeviceId: "machine-assetmeta-1",
+				Hostname:         "machinelse-labmeta-1",
+				SerialNumber:     "fake-serial",
+			})
+			// Update is skipped without error
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Update a OS machine - happy path", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-assetmeta-2",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+			}
+			req, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			So(req.GetSerialNumber(), ShouldBeEmpty)
+			So(req.GetChromeosMachine().GetHwid(), ShouldBeEmpty)
+			So(req.GetChromeosMachine().GetSku(), ShouldBeEmpty)
+
+			asset := &ufspb.Asset{
+				Name: "machine-assetmeta-2",
+				Info: &ufspb.AssetInfo{
+					AssetTag: "machine-assetmeta-2",
+				},
+				Type:     ufspb.AssetType_DUT,
+				Location: &ufspb.Location{},
+			}
+			asset, err = registration.CreateAsset(ctx, asset)
+			So(err, ShouldBeNil)
+			So(asset.GetInfo().GetSerialNumber(), ShouldBeEmpty)
+			So(asset.GetInfo().GetHwid(), ShouldBeEmpty)
+			So(asset.GetInfo().GetSku(), ShouldBeEmpty)
+
+			err = UpdateAssetMeta(ctx, &ufspb.DutMeta{
+				ChromeosDeviceId: "machine-assetmeta-2",
+				Hostname:         "machinelse-assetmeta-2",
+				SerialNumber:     "fake-serial",
+				HwID:             "fake-hwid",
+				DeviceSku:        "fake-devicesku",
+			})
+			So(err, ShouldBeNil)
+			asset, err = registration.GetAsset(ctx, "machine-assetmeta-2")
+			So(err, ShouldBeNil)
+			So(asset.GetInfo().GetSerialNumber(), ShouldEqual, "fake-serial")
+			So(asset.GetInfo().GetHwid(), ShouldEqual, "fake-hwid")
+			So(asset.GetInfo().GetSku(), ShouldEqual, "fake-devicesku")
 		})
 	})
 }

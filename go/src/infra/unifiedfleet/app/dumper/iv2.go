@@ -230,6 +230,14 @@ func SyncMachinesFromAssets(ctx context.Context) error {
 					logging.Warningf(ctx, "Unable to create machine %v %v", aMachine, err)
 				}
 			} else if ufsMachine != nil && !Compare(aMachine, ufsMachine) {
+				// Serial number, Hwid, Sku of UFS machine is updated by SSW in
+				// UpdateDutMeta https://source.corp.google.com/chromium_infra/go/src/infra/unifiedfleet/app/controller/machine.go;l=182
+				// Dont rely on Hart for Serial number, Hwid, Sku and
+				// macaddress. Copy back original values.
+				aMachine.SerialNumber = ufsMachine.GetSerialNumber()
+				aMachine.GetChromeosMachine().Hwid = ufsMachine.GetChromeosMachine().GetHwid()
+				aMachine.GetChromeosMachine().Sku = ufsMachine.GetChromeosMachine().GetSku()
+				aMachine.GetChromeosMachine().MacAddress = ufsMachine.GetChromeosMachine().GetMacAddress()
 				_, err := controller.UpdateMachine(ctx, aMachine, nil)
 				if err != nil {
 					logging.Warningf(ctx, "Failed to update machine %v %v", aMachine, err)

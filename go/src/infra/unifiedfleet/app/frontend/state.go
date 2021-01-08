@@ -132,6 +132,11 @@ func (fs *FleetServerImpl) UpdateDutState(ctx context.Context, req *api.UpdateDu
 		return nil, err
 	}
 
+	if err := controller.UpdateAssetMeta(ctx, req.GetDutMeta()); err != nil {
+		logging.Errorf(ctx, "fail to update asset meta: %s", err.Error())
+		return nil, err
+	}
+
 	if err := controller.UpdateLabMeta(ctx, req.GetLabMeta()); err != nil {
 		logging.Errorf(ctx, "fail to update lab meta: %s", err.Error())
 		return nil, err

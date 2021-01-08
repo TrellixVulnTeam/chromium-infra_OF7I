@@ -46,13 +46,11 @@ var UpdateAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.barcode, "barcode", "", "barcode of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.assetType, "type", "", "Type of asset. "+cmdhelp.AssetTypesHelpText)
 		c.Flags.StringVar(&c.model, "model", "", "model of the asset. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.serial, "serial", "", "Serial number of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.costcenter, "costcenter", "", "Cost center of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.gcn, "gcn", "", "Google code name of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.target, "target", "", "Build target of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.board, "board", "", "Reference board of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.mac, "mac", "", "Mac address of the asset. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.sku, "sku", "", "SKU of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.phase, "phase", "", "Phase of the asset. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
@@ -78,13 +76,11 @@ type updateAsset struct {
 	barcode    string
 	assetType  string
 	model      string
-	serial     string
 	costcenter string
 	gcn        string
 	target     string
 	board      string
 	mac        string
-	sku        string
 	phase      string
 }
 
@@ -148,13 +144,11 @@ func (c *updateAsset) innerRun(a subcommands.Application, args []string, env sub
 			"barcode":    "location.barcode_name",
 			"type":       "type",
 			"model":      "model",
-			"serial":     "info.serial_number",
 			"costcenter": "info.cost_center",
 			"gcn":        "info.google_code_name",
 			"target":     "info.build_target",
 			"board":      "info.reference_board",
 			"mac":        "info.ethernet_mac_address",
-			"sku":        "info.sku",
 			"phase":      "info.phase",
 		}),
 	})
@@ -233,11 +227,6 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 	} else {
 		asset.Model = c.model
 	}
-	if c.serial == utils.ClearFieldValue {
-		asset.Info.SerialNumber = ""
-	} else {
-		asset.Info.SerialNumber = c.serial
-	}
 	if c.costcenter == utils.ClearFieldValue {
 		asset.Info.CostCenter = ""
 	} else {
@@ -262,11 +251,6 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 		asset.Info.EthernetMacAddress = ""
 	} else {
 		asset.Info.EthernetMacAddress = c.mac
-	}
-	if c.sku == utils.ClearFieldValue {
-		asset.Info.Sku = ""
-	} else {
-		asset.Info.Sku = c.sku
 	}
 	if c.phase == utils.ClearFieldValue {
 		asset.Info.Phase = ""
@@ -315,9 +299,6 @@ func (c *updateAsset) validateArgs() error {
 		if c.model != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-model' cannot be specified at the same time.")
 		}
-		if c.serial != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-serial' cannot be specified at the same time.")
-		}
 		if c.costcenter != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-costcenter' cannot be specified at the same time.")
 		}
@@ -333,9 +314,6 @@ func (c *updateAsset) validateArgs() error {
 		if c.mac != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.sku != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-sku' cannot be specified at the same time.")
-		}
 		if c.phase != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-phase' cannot be specified at the same time.")
 		}
@@ -346,8 +324,8 @@ func (c *updateAsset) validateArgs() error {
 		}
 		if c.location == "" && c.zone == "" && c.aisle == "" && c.row == "" && c.shelf == "" &&
 			c.rack == "" && c.racknumber == "" && c.position == "" && c.barcode == "" && c.assetType == "" &&
-			c.model == "" && c.serial == "" && c.costcenter == "" && c.gcn == "" && c.target == "" &&
-			c.board == "" && c.mac == "" && c.sku == "" && c.phase == "" {
+			c.model == "" && c.costcenter == "" && c.gcn == "" && c.target == "" &&
+			c.board == "" && c.mac == "" && c.phase == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zone != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {

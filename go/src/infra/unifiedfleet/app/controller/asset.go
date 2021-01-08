@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
@@ -66,6 +67,14 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 		if err != nil {
 			return err
 		}
+
+		// Copy OUTPUT_ONLY fields
+		if asset.GetInfo() == nil {
+			asset.Info = &ufspb.AssetInfo{}
+		}
+		asset.GetInfo().SerialNumber = oldAsset.GetInfo().GetSerialNumber()
+		asset.GetInfo().Hwid = oldAsset.GetInfo().GetHwid()
+		asset.GetInfo().Sku = oldAsset.GetInfo().GetSku()
 
 		// updatableAsset will be used to update the asset
 		updatableAsset := asset
@@ -334,8 +343,6 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				if asset.GetModel() == "" {
 					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, no model given")
 				}
-			case "info.serial_number":
-				fallthrough
 			case "info.cost_center":
 				fallthrough
 			case "info.google_code_name":
@@ -345,8 +352,6 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 			case "info.reference_board":
 				fallthrough
 			case "info.ethernet_mac_address":
-				fallthrough
-			case "info.sku":
 				fallthrough
 			case "info.phase":
 				if asset.GetInfo() == nil {
@@ -411,8 +416,6 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 			case "location.zone":
 				oldAsset.Location.Zone = updatedAsset.Location.Zone
 				oldAsset.Realm = updatedAsset.Realm
-			case "info.serial_number":
-				oldAsset.Info.SerialNumber = updatedAsset.Info.SerialNumber
 			case "info.cost_center":
 				oldAsset.Info.CostCenter = updatedAsset.Info.CostCenter
 			case "info.google_code_name":
@@ -423,8 +426,6 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 				oldAsset.Info.ReferenceBoard = updatedAsset.Info.ReferenceBoard
 			case "info.ethernet_mac_address":
 				oldAsset.Info.EthernetMacAddress = updatedAsset.Info.EthernetMacAddress
-			case "info.sku":
-				oldAsset.Info.Sku = updatedAsset.Info.Sku
 			case "info.phase":
 				oldAsset.Info.Phase = updatedAsset.Info.Phase
 			}
@@ -432,6 +433,60 @@ func processAssetUpdateMask(updatedAsset, oldAsset *ufspb.Asset, mask *field_mas
 		return oldAsset, nil
 	}
 	return nil, status.Error(codes.InvalidArgument, "processAssetUpdateMask - Invalid Input, No mask found")
+}
+
+// UpdateAssetMeta updates only dut meta data portion of the Asset.
+//
+// It's a temporary method to correct Serial number, HWID and Sku.
+// Will remove once HaRT could provide us the correct info.
+func UpdateAssetMeta(ctx context.Context, meta *ufspb.DutMeta) error {
+	if meta == nil {
+		return nil
+	}
+	f := func(ctx context.Context) error {
+		machine, err := registration.GetMachine(ctx, meta.GetChromeosDeviceId())
+		if err != nil {
+			return errors.Annotate(err, "UpdateAssetMeta").Err()
+		}
+		if machine.GetChromeosMachine() == nil {
+			logging.Warningf(ctx, "UpdateAssetMeta - %s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
+			return nil
+		}
+
+		asset, err := registration.GetAsset(ctx, meta.GetChromeosDeviceId())
+		if err != nil {
+			return errors.Annotate(err, "UpdateAssetMeta").Err()
+		}
+		hc := &HistoryClient{}
+		// Copy for logging
+		oldAsset := proto.Clone(asset).(*ufspb.Asset)
+		if asset.GetInfo() == nil {
+			asset.Info = &ufspb.AssetInfo{}
+		}
+
+		if asset.GetInfo().GetSerialNumber() == meta.GetSerialNumber() &&
+			asset.GetInfo().GetHwid() == meta.GetHwID() &&
+			asset.GetInfo().GetSku() == meta.GetDeviceSku() {
+			logging.Warningf(ctx, "nothing to update: old serial number %q, old hwid %q, old device-sku %q", meta.GetSerialNumber(), meta.GetHwID(), meta.GetDeviceSku())
+			return nil
+		}
+
+		asset.GetInfo().SerialNumber = meta.GetSerialNumber()
+		asset.GetInfo().Hwid = meta.GetHwID()
+		asset.GetInfo().Sku = meta.GetDeviceSku()
+		// Update the asset
+		if _, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{asset}); err != nil {
+			return errors.Annotate(err, "Unable to update dut meta for %s", asset.Name).Err()
+		}
+		hc.LogAssetChanges(oldAsset, asset)
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "UpdateAssetMeta - %s", err.Error())
+		return err
+	}
+	return nil
 }
 
 // CreateMachineFromAsset creates machine from asset
@@ -486,7 +541,10 @@ func updateMachineFromAsset(machine *ufspb.Machine, asset *ufspb.Asset) {
 			ChromeosMachine: &ufspb.ChromeOSMachine{},
 		}
 	}
-	machine.SerialNumber = asset.GetInfo().GetSerialNumber()
+	// Serial number of UFS machine is updated by SSW in
+	// UpdateDutMeta https://source.corp.google.com/chromium_infra/go/src/infra/unifiedfleet/app/controller/machine.go;l=182
+	// Dont rely on Asset(user provided) for Serial number, Hwid, Sku.
+	// Leave them with original values and dont update them.
 	machine.Location = asset.GetLocation()
 	machine.Realm = asset.GetRealm()
 	machine.GetChromeosMachine().ReferenceBoard = asset.GetInfo().GetReferenceBoard()
@@ -494,10 +552,8 @@ func updateMachineFromAsset(machine *ufspb.Machine, asset *ufspb.Asset) {
 	machine.GetChromeosMachine().Model = asset.GetInfo().GetModel()
 	machine.GetChromeosMachine().GoogleCodeName = asset.GetInfo().GetGoogleCodeName()
 	machine.GetChromeosMachine().MacAddress = asset.GetInfo().GetEthernetMacAddress()
-	machine.GetChromeosMachine().Sku = asset.GetInfo().GetSku()
 	machine.GetChromeosMachine().Phase = asset.GetInfo().GetPhase()
 	machine.GetChromeosMachine().CostCenter = asset.GetInfo().GetCostCenter()
-	machine.GetChromeosMachine().Hwid = asset.GetInfo().GetHwid()
 	switch asset.GetType() {
 	case ufspb.AssetType_DUT:
 		machine.GetChromeosMachine().DeviceType = ufspb.ChromeOSDeviceType_DEVICE_CHROMEBOOK

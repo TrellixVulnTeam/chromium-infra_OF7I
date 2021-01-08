@@ -250,8 +250,9 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("happy path with no data", func() {
-			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id1", "rpc-dutstate-host1", "dut")
+			err := mockOSMachineAssetAndHost(ctx, "rpc-dutstate-id1", "rpc-dutstate-host1", "dut")
 			So(err, ShouldBeNil)
+
 			// Use osCtx as we will restrict ctx to include namespace in prod.
 			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
 				DutState: &chromeosLab.DutState{
@@ -265,6 +266,10 @@ func TestUpdateDutState(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(m.GetSerialNumber(), ShouldEqual, "")
 			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "")
+			a, err := registration.GetAsset(osCtx, "rpc-dutstate-id1")
+			So(err, ShouldBeNil)
+			So(a.GetInfo().GetSerialNumber(), ShouldEqual, "")
+			So(a.GetInfo().GetSku(), ShouldEqual, "")
 			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host1")
 			So(err, ShouldBeNil)
 			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
@@ -273,7 +278,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("happy path with dut meta", func() {
-			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id2", "rpc-dutstate-host2", "dut")
+			err := mockOSMachineAssetAndHost(ctx, "rpc-dutstate-id2", "rpc-dutstate-host2", "dut")
 			So(err, ShouldBeNil)
 			// Use osCtx as we will restrict ctx to include namespace in prod.
 			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
@@ -296,6 +301,11 @@ func TestUpdateDutState(t *testing.T) {
 			So(m.GetSerialNumber(), ShouldEqual, "real-serial")
 			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "real-sku")
 			So(m.GetChromeosMachine().GetHwid(), ShouldEqual, "real-hwid")
+			a, err := registration.GetAsset(osCtx, "rpc-dutstate-id2")
+			So(err, ShouldBeNil)
+			So(a.GetInfo().GetSerialNumber(), ShouldEqual, "real-serial")
+			So(a.GetInfo().GetSku(), ShouldEqual, "real-sku")
+			So(a.GetInfo().GetHwid(), ShouldEqual, "real-hwid")
 			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host2")
 			So(err, ShouldBeNil)
 			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
@@ -304,7 +314,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("happy path with lab meta", func() {
-			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id3", "rpc-dutstate-host3", "dut")
+			err := mockOSMachineAssetAndHost(ctx, "rpc-dutstate-id3", "rpc-dutstate-host3", "dut")
 			So(err, ShouldBeNil)
 			topology := &chromeosLab.ServoTopology{
 				Main: &chromeosLab.ServoTopologyItem{
@@ -333,6 +343,10 @@ func TestUpdateDutState(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(m.GetSerialNumber(), ShouldEqual, "")
 			So(m.GetChromeosMachine().GetSku(), ShouldEqual, "")
+			a, err := registration.GetAsset(osCtx, "rpc-dutstate-id3")
+			So(err, ShouldBeNil)
+			So(a.GetInfo().GetSerialNumber(), ShouldEqual, "")
+			So(a.GetInfo().GetSku(), ShouldEqual, "")
 			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host3")
 			So(err, ShouldBeNil)
 			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
@@ -341,7 +355,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("only dut meta update for labstation", func() {
-			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id4", "rpc-dutstate-host4", "labstation")
+			err := mockOSMachineAssetAndHost(ctx, "rpc-dutstate-id4", "rpc-dutstate-host4", "labstation")
 			So(err, ShouldBeNil)
 			// Use osCtx as we will restrict ctx to include namespace in prod.
 			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
@@ -366,6 +380,9 @@ func TestUpdateDutState(t *testing.T) {
 			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id4")
 			So(err, ShouldBeNil)
 			So(m.GetSerialNumber(), ShouldEqual, "real-serial")
+			a, err := registration.GetAsset(osCtx, "rpc-dutstate-id4")
+			So(err, ShouldBeNil)
+			So(a.GetInfo().GetSerialNumber(), ShouldEqual, "real-serial")
 			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host4")
 			So(err, ShouldBeNil)
 			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
@@ -374,7 +391,7 @@ func TestUpdateDutState(t *testing.T) {
 		})
 
 		Convey("no update for chrome device", func() {
-			err := mockOSMachineAndHost(ctx, "rpc-dutstate-id5", "rpc-dutstate-host5", "browser")
+			err := mockOSMachineAssetAndHost(ctx, "rpc-dutstate-id5", "rpc-dutstate-host5", "browser")
 			So(err, ShouldBeNil)
 			// Use osCtx as we will restrict ctx to include namespace in prod.
 			_, err = tf.Fleet.UpdateDutState(osCtx, &api.UpdateDutStateRequest{
@@ -399,6 +416,9 @@ func TestUpdateDutState(t *testing.T) {
 			m, err := registration.GetMachine(osCtx, "rpc-dutstate-id5")
 			So(err, ShouldBeNil)
 			So(m.GetSerialNumber(), ShouldEqual, "")
+			_, err = registration.GetAsset(osCtx, "rpc-dutstate-id5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "not found")
 			lse, err := inventory.GetMachineLSE(osCtx, "rpc-dutstate-host5")
 			So(err, ShouldBeNil)
 			So(lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().GetServoType(), ShouldBeEmpty)
@@ -408,13 +428,14 @@ func TestUpdateDutState(t *testing.T) {
 	})
 }
 
-func mockOSMachineAndHost(ctx context.Context, id, hostname, deviceType string) error {
+func mockOSMachineAssetAndHost(ctx context.Context, id, hostname, deviceType string) error {
 	osCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	if err != nil {
 		return err
 	}
 	var machineLSE1 *ufspb.MachineLSE
 	var machine *ufspb.Machine
+	var asset *ufspb.Asset
 	switch deviceType {
 	case "dut":
 		machineLSE1 = &ufspb.MachineLSE{
@@ -444,6 +465,14 @@ func mockOSMachineAndHost(ctx context.Context, id, hostname, deviceType string) 
 				ChromeosMachine: &ufspb.ChromeOSMachine{},
 			},
 		}
+		asset = &ufspb.Asset{
+			Name: id,
+			Info: &ufspb.AssetInfo{
+				AssetTag: id,
+			},
+			Type:     ufspb.AssetType_DUT,
+			Location: &ufspb.Location{},
+		}
 	case "labstation":
 		machineLSE1 = &ufspb.MachineLSE{
 			Name:     hostname,
@@ -469,6 +498,14 @@ func mockOSMachineAndHost(ctx context.Context, id, hostname, deviceType string) 
 				ChromeosMachine: &ufspb.ChromeOSMachine{},
 			},
 		}
+		asset = &ufspb.Asset{
+			Name: id,
+			Info: &ufspb.AssetInfo{
+				AssetTag: id,
+			},
+			Type:     ufspb.AssetType_LABSTATION,
+			Location: &ufspb.Location{},
+		}
 	case "browser":
 		machineLSE1 = &ufspb.MachineLSE{
 			Name:     hostname,
@@ -488,6 +525,11 @@ func mockOSMachineAndHost(ctx context.Context, id, hostname, deviceType string) 
 
 	if _, err := registration.CreateMachine(osCtx, machine); err != nil {
 		return err
+	}
+	if asset != nil {
+		if _, err := registration.CreateAsset(osCtx, asset); err != nil {
+			return err
+		}
 	}
 	if _, err := inventory.CreateMachineLSE(osCtx, machineLSE1); err != nil {
 		return err

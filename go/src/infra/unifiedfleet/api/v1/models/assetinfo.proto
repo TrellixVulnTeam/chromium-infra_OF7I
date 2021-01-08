@@ -10,18 +10,23 @@ package unifiedfleet.api.v1.models;
 
 option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
 
+import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
+
 message AssetInfo {
   string asset_tag = 1;
-  string serial_number = 2;
+  // User not allowed to update this field. SSW will update this field.
+  string serial_number = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   string cost_center = 3;
   string google_code_name = 4;
   string model = 5;
   string build_target = 6;
   string reference_board = 7;
   string ethernet_mac_address = 8;
-  string sku = 9;
+  // User not allowed to update this field. SSW will update this field.
+  string sku = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
   string phase = 10;
-  string hwid = 11;
+  // User not allowed to update this field. SSW will update this field.
+  string hwid = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 message AssetInfoRequest {
