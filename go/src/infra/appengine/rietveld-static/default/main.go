@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,10 +14,14 @@ import (
 	"strconv"
 	"strings"
 
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/storage"
+	"google.golang.org/api/idtoken"
 )
 
 const rietveldBucket = "chromiumcodereview"
+const privateProjectID = "chromiumcodereview-private"
+const privateProjectURL = "https://" + privateProjectID + ".appspot.com"
 
 // Attrs contains information for a GS object
 type Attrs struct {
@@ -64,9 +69,22 @@ func pathHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if attrs.Private {
-		// TODO(crbug.com/1146637): Redirect to login page and get user email.
-		http.Error(w, "login required", http.StatusUnauthorized)
-		return
+		// Private issues should only be accessed by a project protected with an
+		// IAP. Redirect to a protected project if necessary.
+		projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+		if projectID != privateProjectID {
+			log.Printf("redirecting to %s", privateProjectURL+path)
+			http.Redirect(w, req, privateProjectURL+path, http.StatusMovedPermanently)
+			return
+		}
+		// Validate that the IAP JWT is valid and the user is authorized when trying
+		// to access a private issue.
+		err = authorize(ctx, req)
+		if err != nil {
+			log.Printf("not authorized: %v", err)
+			http.Error(w, "not authorized", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	reader, err := obj.NewReader(ctx)
@@ -104,7 +122,7 @@ func fetchAttrs(ctx context.Context, obj *storage.ObjectHandle) (*Attrs, error) 
 	}
 	statusCode, err := strconv.Atoi(statusCodeStr)
 	if err != nil {
-		return nil, errors.New("expected object Status-Code attribute to be an integer: %v")
+		return nil, fmt.Errorf("expected object Status-Code attribute to be an integer: %v", statusCode)
 	}
 
 	return &Attrs{
@@ -112,4 +130,35 @@ func fetchAttrs(ctx context.Context, obj *storage.ObjectHandle) (*Attrs, error) 
 		StatusCode:  statusCode,
 		ContentType: attrs.ContentType,
 	}, nil
+}
+
+// authorize validates the JWT token present in the request and ensures that the
+// user is authorized to view private issues.
+func authorize(ctx context.Context, req *http.Request) error {
+	jwt := req.Header.Get("X-Goog-IAP-JWT-Assertion")
+	if len(jwt) == 0 {
+		return errors.New("X-Goog-IAP-JWT-Assertion header not present")
+	}
+
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	projectNumber, err := metadata.NumericProjectID()
+	if err != nil {
+		return fmt.Errorf("failed to fetch project number: %v", err)
+	}
+
+	aud := fmt.Sprintf("/projects/%s/apps/%s", projectNumber, projectID)
+	payload, err := idtoken.Validate(ctx, jwt, aud)
+	if err != nil {
+		return fmt.Errorf("idtoken.Validate: %v", err)
+	}
+
+	email, ok := payload.Claims["email"].(string)
+	if !ok {
+		return errors.New("email not present in JWT claims")
+	}
+	if !strings.HasSuffix(email, "@google.com") && !strings.HasSuffix(email, "@chromium.org") {
+		return fmt.Errorf("not a @google.com or @chromium.org account: %v", email)
+	}
+
+	return nil
 }
