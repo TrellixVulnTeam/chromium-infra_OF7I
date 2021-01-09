@@ -17,6 +17,7 @@ from api.v3 import issues_servicer
 from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
 from framework import exceptions
+from framework import framework_helpers
 from framework import monorailcontext
 from framework import permissions
 from proto import tracker_pb2
@@ -515,6 +516,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue)
     exp_issue = copy.deepcopy(issue)
 
+    self.services.issue.CreateIssueComment = mock.Mock()
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
 
@@ -527,6 +529,8 @@ class IssuesServicerTest(unittest.TestCase):
                         label='add-me')]),
                 update_mask=field_mask_pb2.FieldMask(paths=['labels']),
                 labels_remove=['remove-me'])],
+        uploads=[issues_pb2.AttachmentUpload(
+            filename='mowgli.gif', content='cute dog')],
         comment_content='Release the chicken.',
         notify_type=issues_pb2.NotifyType.Value('NO_NOTIFICATION'))
 
@@ -536,6 +540,22 @@ class IssuesServicerTest(unittest.TestCase):
     exp_issue.modified_timestamp = 12345
     exp_api_issue = self.issues_svcr.converter.ConvertIssue(exp_issue)
     self.assertEqual([iss for iss in response.issues], [exp_api_issue])
+
+    # All updated issues should have been fetched from DB, skipping cache.
+    # So we expect assume_stale=False was applied to all issues during the
+    # the fetch.
+    exp_issue.assume_stale = False
+    # These derived values get set to the following when an issue goes through
+    # the ApplyFilterRules path. (see filter_helpers._ComputeDerivedFields)
+    exp_issue.derived_owner_id = 0
+    exp_issue.derived_status = ''
+    exp_attachments = [framework_helpers.AttachmentUpload(
+        'mowgli.gif', 'cute dog', 'image/gif')]
+    exp_amendments = [tracker_pb2.Amendment(
+        field=tracker_pb2.FieldID.LABELS, newvalue='-remove-me add-me')]
+    self.services.issue.CreateIssueComment.assert_called_once_with(
+        self.cnxn, exp_issue, mc.auth.user_id, 'Release the chicken.',
+        attachments=exp_attachments, amendments=exp_amendments, commit=False)
     fake_notify.assert_called_once_with(
         issue.issue_id, 'testing-app.appspot.com', self.owner.user_id,
         comment_id=mock.ANY, old_owner_id=None, send_email=False)

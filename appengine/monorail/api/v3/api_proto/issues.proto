@@ -349,7 +349,7 @@ enum NotifyType {
 
 
 // The request message for Issues.ModifyIssues.
-// Next available tag: 4
+// Next available tag: 5
 message ModifyIssuesRequest {
   // The issue changes to make. A maximum of 100 issue changes can be requested.
   // There is also a constraint of 50 additional 'impacted issues' per
@@ -362,6 +362,8 @@ message ModifyIssuesRequest {
   // The comment text that should be added to each issue in delta.
   // Max length is 51200 characters.
   string comment_content = 3;
+  // The attachment that will be to each comment for each issue in delta.
+  repeated AttachmentUpload uploads = 4;
 }
 
 

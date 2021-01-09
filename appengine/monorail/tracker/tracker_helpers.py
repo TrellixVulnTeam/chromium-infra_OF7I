@@ -1460,7 +1460,7 @@ def PrepareIssueChanges(
     attachment_uploads=None,
     comment_content=None):
   # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
-  #     Optional[Sequence[work_env.AttachmentUpload]], Optional[str])
+  #     Optional[Sequence[framework_helpers.AttachmentUpload]], Optional[str])
   #     -> Mapping[int, int]
   """Clean the deltas and assert they are valid for each paired issue."""
   _EnforceNonMergeStatusDeltas(cnxn, issue_delta_pairs, services)
@@ -1476,7 +1476,8 @@ def PrepareIssueChanges(
 def _EnforceAttachmentQuotaLimits(
     cnxn, issue_delta_pairs, services, attachment_uploads):
   # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services
-  #     Optional[Sequence[work_env.AttachmentUpload]] -> Mapping[int, int]
+  #     Optional[Sequence[framework_helpers.AttachmentUpload]]
+  #     -> Mapping[int, int]
   """Assert that the attachments don't exceed project quotas."""
   issue_count_by_pid = collections.defaultdict(int)
   for issue, _delta in issue_delta_pairs:

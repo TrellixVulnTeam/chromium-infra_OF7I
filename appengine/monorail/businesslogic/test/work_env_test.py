@@ -23,6 +23,7 @@ from features import filterrules_helpers
 from framework import authdata
 from framework import exceptions
 from framework import framework_constants
+from framework import framework_helpers
 from framework import framework_views
 from framework import permissions
 from framework import sorting
@@ -4047,7 +4048,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
     self.SignIn(self.user_1.user_id)
 
-    upload = work_env.AttachmentUpload(
+    upload = framework_helpers.AttachmentUpload(
         'BEAR-necessities', 'Forget about your worries and your strife',
         'text/plain')
 

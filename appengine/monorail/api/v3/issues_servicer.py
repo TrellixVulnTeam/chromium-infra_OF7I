@@ -279,6 +279,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       issues = we.ModifyIssues(
           iid_delta_pairs,
+          attachment_uploads=self.converter.IngestAttachmentUploads(
+              request.uploads),
           comment_content=request.comment_content,
           send_email=self.converter.IngestNotifyType(request.notify_type))
 
