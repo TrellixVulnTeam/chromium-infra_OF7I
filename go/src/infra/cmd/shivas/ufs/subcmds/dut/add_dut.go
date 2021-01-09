@@ -48,6 +48,9 @@ var AddDUTCmd = &subcommands.Command{
 	CommandRun: func() subcommands.CommandRun {
 		c := &addDUT{
 			pools:         []string{},
+			chameleons:    []string{},
+			cameras:       []string{},
+			cables:        []string{},
 			deployTags:    shivasTags,
 			deployActions: defaultDeployTaskActions,
 		}
@@ -62,12 +65,12 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo. Can skip for Servo V3.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns REGULAR if unassigned.")
-		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the DUT. 'DUT_POOL_QUOTA' is used if nothing is specified")
+		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma separated pools assigned to the DUT. 'DUT_POOL_QUOTA' is used if nothing is specified")
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT.")
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
 		c.Flags.BoolVar(&c.ignoreUFS, "ignore-ufs", false, "skip updating UFS create a deploy task.")
-		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task.")
+		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma separated tags for deployment task.")
 		c.Flags.BoolVar(&c.deploySkipDownloadImage, "deploy-skip-download-image", false, "skips downloading image and staging usb")
 		c.Flags.BoolVar(&c.deploySkipInstallFirmware, "deploy-skip-install-fw", false, "skips installing firmware")
 		c.Flags.BoolVar(&c.deploySkipInstallOS, "deploy-skip-install-os", false, "skips installing os image")
@@ -75,6 +78,25 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags.")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine.")
+
+		// ACS DUT fields
+		c.Flags.Var(utils.CSVString(&c.chameleons), "chameleons", cmdhelp.ChameleonTypeHelpText)
+		c.Flags.Var(utils.CSVString(&c.cameras), "cameras", cmdhelp.CameraTypeHelpText)
+		c.Flags.Var(utils.CSVString(&c.cables), "cables", cmdhelp.CableTypeHelpText)
+		c.Flags.StringVar(&c.antennaConnection, "antennaconnection", "", cmdhelp.AntennaConnectionHelpText)
+		c.Flags.StringVar(&c.router, "router", "", cmdhelp.RouterHelpText)
+		c.Flags.StringVar(&c.facing, "facing", "", cmdhelp.FacingHelpText)
+		c.Flags.StringVar(&c.light, "light", "", cmdhelp.LightHelpText)
+		c.Flags.StringVar(&c.carrier, "carrier", "", "name of the carrier.")
+		c.Flags.BoolVar(&c.audioBoard, "audioboard", false, "adding this flag will specify if audioboard is present")
+		c.Flags.BoolVar(&c.audioBox, "audiobox", false, "adding this flag will specify if audiobox is present")
+		c.Flags.BoolVar(&c.atrus, "atrus", false, "adding this flag will specify if atrus is present")
+		c.Flags.BoolVar(&c.wifiCell, "wificell", false, "adding this flag will specify if wificell is present")
+		c.Flags.BoolVar(&c.touchMimo, "touchmimo", false, "adding this flag will specify if touchmimo is present")
+		c.Flags.BoolVar(&c.cameraBox, "camerabox", false, "adding this flag will specify if camerabox is present")
+		c.Flags.BoolVar(&c.chaos, "chaos", false, "adding this flag will specify if chaos is present")
+		c.Flags.BoolVar(&c.audioCable, "audiocable", false, "adding this flag will specify if audiocable is present")
+		c.Flags.BoolVar(&c.smartUSBHub, "smartusbhub", false, "adding this flag will specify if smartusbhub is present")
 		return c
 	},
 }
@@ -106,6 +128,25 @@ type addDUT struct {
 	tags                      []string
 	state                     string
 	description               string
+
+	// ACS DUT fields
+	chameleons        []string
+	cameras           []string
+	antennaConnection string
+	router            string
+	cables            []string
+	facing            string
+	light             string
+	carrier           string
+	audioBoard        bool
+	audioBox          bool
+	atrus             bool
+	wifiCell          bool
+	touchMimo         bool
+	cameraBox         bool
+	chaos             bool
+	audioCable        bool
+	smartUSBHub       bool
 }
 
 var mcsvFields = []string{
@@ -223,6 +264,33 @@ func (c addDUT) validateArgs() error {
 		if (c.rpm != "" && c.rpmOutlet == "") || (c.rpm == "" && c.rpmOutlet != "") {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need both rpm and its outlet. %s:%s is invalid", c.rpm, c.rpmOutlet)
 		}
+		for _, cp := range c.chameleons {
+			if !ufsUtil.IsChameleonType(cp) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid chameleon type name, please check help info for '-chameleons'.", cp)
+			}
+		}
+		for _, cp := range c.cameras {
+			if !ufsUtil.IsCameraType(cp) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid camera type name, please check help info for '-cameras'.", cp)
+			}
+		}
+		for _, cp := range c.cables {
+			if !ufsUtil.IsCableType(cp) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid cable type name, please check help info for '-cables'.", cp)
+			}
+		}
+		if c.antennaConnection != "" && !ufsUtil.IsAntennaConnection(c.antennaConnection) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid antenna connection name, please check help info for '-antennaconnection'.", c.antennaConnection)
+		}
+		if c.router != "" && !ufsUtil.IsRouter(c.router) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid router name, please check help info for '-router'.", c.router)
+		}
+		if c.facing != "" && !ufsUtil.IsFacing(c.facing) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid facing name, please check help info for '-facing'.", c.facing)
+		}
+		if c.light != "" && !ufsUtil.IsLight(c.light) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid light name, please check help info for '-light'.", c.light)
+		}
 	}
 	if c.newSpecsFile == "" && c.hostname == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Need hostname to create a DUT")
@@ -312,8 +380,13 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 						Device: &ufspb.ChromeOSDeviceLSE_Dut{
 							Dut: &lab.DeviceUnderTest{
 								Peripherals: &lab.Peripherals{
-									Servo: &lab.Servo{},
-									Rpm:   &lab.RPM{},
+									Chameleon:     &lab.Chameleon{},
+									Servo:         &lab.Servo{},
+									Rpm:           &lab.RPM{},
+									Audio:         &lab.Audio{},
+									Wifi:          &lab.Wifi{},
+									Touch:         &lab.Touch{},
+									CameraboxInfo: &lab.Camerabox{},
 								},
 							},
 						},
@@ -378,17 +451,55 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	lse.Tags = c.tags
 	lse.ResourceState = resourceState
 
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoHostname = servoHost
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoPort = servoPort
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSerial = servoSerial
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSetup = servoSetup
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitName = rpmHost
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitOutlet = rpmOutlet
+	peripherals := lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+	peripherals.GetServo().ServoHostname = servoHost
+	peripherals.GetServo().ServoPort = servoPort
+	peripherals.GetServo().ServoSerial = servoSerial
+	peripherals.GetServo().ServoSetup = servoSetup
+	peripherals.GetRpm().PowerunitName = rpmHost
+	peripherals.GetRpm().PowerunitOutlet = rpmOutlet
 	if len(pools) > 0 && pools[0] != "" {
 		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = pools
 	} else {
 		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = defaultPools
 	}
+
+	// ACS DUT fields
+	chameleons := make([]lab.ChameleonType, 0, len(c.chameleons))
+	for _, cp := range c.chameleons {
+		chameleons = append(chameleons, ufsUtil.ToChameleonType(cp))
+	}
+	cameras := make([]*lab.Camera, 0, len(c.cameras))
+	for _, cp := range c.cameras {
+		camera := &lab.Camera{
+			CameraType: ufsUtil.ToCameraType(cp),
+		}
+		cameras = append(cameras, camera)
+	}
+	cables := make([]*lab.Cable, 0, len(c.cables))
+	for _, cp := range c.cables {
+		cable := &lab.Cable{
+			Type: ufsUtil.ToCableType(cp),
+		}
+		cables = append(cables, cable)
+	}
+	peripherals.GetChameleon().ChameleonPeripherals = chameleons
+	peripherals.ConnectedCamera = cameras
+	peripherals.Cable = cables
+	peripherals.GetWifi().AntennaConn = ufsUtil.ToAntennaConnection(c.antennaConnection)
+	peripherals.GetWifi().Router = ufsUtil.ToRouter(c.router)
+	peripherals.GetCameraboxInfo().Facing = ufsUtil.ToFacing(c.facing)
+	peripherals.GetCameraboxInfo().Light = ufsUtil.ToLight(c.light)
+	peripherals.GetChameleon().AudioBoard = c.audioBoard
+	peripherals.GetAudio().AudioBox = c.audioBox
+	peripherals.GetAudio().Atrus = c.atrus
+	peripherals.GetAudio().AudioCable = c.audioCable
+	peripherals.GetWifi().Wificell = c.wifiCell
+	peripherals.GetTouch().Mimo = c.touchMimo
+	peripherals.Carrier = c.carrier
+	peripherals.Camerabox = c.cameraBox
+	peripherals.Chaos = c.chaos
+	peripherals.SmartUsbhub = c.smartUSBHub
 	return lse, nil
 }
 

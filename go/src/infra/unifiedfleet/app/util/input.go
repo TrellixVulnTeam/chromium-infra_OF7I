@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/info"
 	"google.golang.org/genproto/googleapis/api/annotations"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 )
@@ -428,6 +429,237 @@ func ToUFSDeviceType(devicetype string) ufspb.ChromeOSDeviceType {
 		return ufspb.ChromeOSDeviceType_CHROME_OS_DEVICE_TYPE_UNSPECIFIED
 	}
 	return ufspb.ChromeOSDeviceType(ufspb.ChromeOSDeviceType_value[v])
+}
+
+// StrToChameleonType refers a map between a string to a ChameleonType map.
+var StrToChameleonType = map[string]string{
+	"invalid":    "CHAMELEON_TYPE_INVALID",
+	"bthid":      "CHAMELEON_TYPE_BT_HID",
+	"dp":         "CHAMELEON_TYPE_DP",
+	"dphdmi":     "CHAMELEON_TYPE_DP_HDMI",
+	"vga":        "CHAMELEON_TYPE_VGA",
+	"hdmi":       "CHAMELEON_TYPE_HDMI",
+	"btblehid":   "CHAMELEON_TYPE_BT_BLE_HID",
+	"bta2dpsink": "CHAMELEON_TYPE_BT_A2DP_SINK",
+	"btpeer":     "CHAMELEON_TYPE_BT_PEER",
+}
+
+// IsChameleonType checks if a string refers to a valid ChameleonType.
+func IsChameleonType(chameleonType string) bool {
+	_, ok := StrToChameleonType[chameleonType]
+	return ok
+}
+
+// ValidChameleonTypeStr returns a valid str list for Chameleontype strings.
+func ValidChameleonTypeStr() []string {
+	ks := make([]string, 0, len(StrToChameleonType))
+	for k := range StrToChameleonType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToChameleonType converts devicetype string to a Chameleon type enum.
+func ToChameleonType(chameleonType string) chromeosLab.ChameleonType {
+	chameleonType = RemoveGivenPrefix(chameleonType, "chameleon_type_")
+	v, ok := StrToChameleonType[chameleonType]
+	if !ok {
+		return chromeosLab.ChameleonType_CHAMELEON_TYPE_INVALID
+	}
+	return chromeosLab.ChameleonType(chromeosLab.ChameleonType_value[v])
+}
+
+// StrToCameraType refers a map between a string to a CameraType map.
+var StrToCameraType = map[string]string{
+	"invalid": "CAMERA_INVALID",
+	"huddly":  "CAMERA_HUDDLY",
+	"ptzpro2": "CAMERA_PTZPRO2",
+}
+
+// IsCameraType checks if a string refers to a valid CameraType.
+func IsCameraType(cameraType string) bool {
+	_, ok := StrToCameraType[cameraType]
+	return ok
+}
+
+// ValidCameraTypeStr returns a valid str list for CameraType strings.
+func ValidCameraTypeStr() []string {
+	ks := make([]string, 0, len(StrToCameraType))
+	for k := range StrToCameraType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToCameraType converts cameraType string to a Camera type enum.
+func ToCameraType(cameraType string) chromeosLab.CameraType {
+	cameraType = RemoveGivenPrefix(cameraType, "camera_")
+	v, ok := StrToCameraType[cameraType]
+	if !ok {
+		return chromeosLab.CameraType_CAMERA_INVALID
+	}
+	return chromeosLab.CameraType(chromeosLab.CameraType_value[v])
+}
+
+// StrToAntennaConnection refers a map between a string to a AntennaConnection map.
+var StrToAntennaConnection = map[string]string{
+	"unknown":    "CONN_UNKNOWN",
+	"conductive": "CONN_CONDUCTIVE",
+	"ota":        "CONN_OTA",
+}
+
+// IsAntennaConnection checks if a string refers to a valid AntennaConnection.
+func IsAntennaConnection(antennaConnection string) bool {
+	_, ok := StrToAntennaConnection[antennaConnection]
+	return ok
+}
+
+// ValidAntennaConnectionStr returns a valid str list for AntennaConnection strings.
+func ValidAntennaConnectionStr() []string {
+	ks := make([]string, 0, len(StrToAntennaConnection))
+	for k := range StrToAntennaConnection {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToAntennaConnection converts antennaConnection string to a Wifi_AntennaConnection enum.
+func ToAntennaConnection(antennaConnection string) chromeosLab.Wifi_AntennaConnection {
+	antennaConnection = RemoveGivenPrefix(antennaConnection, "conn_")
+	v, ok := StrToAntennaConnection[antennaConnection]
+	if !ok {
+		return chromeosLab.Wifi_CONN_UNKNOWN
+	}
+	return chromeosLab.Wifi_AntennaConnection(chromeosLab.Wifi_AntennaConnection_value[v])
+}
+
+// StrToRouter refers a map between a string to a Router map.
+var StrToRouter = map[string]string{
+	"unspecified": "ROUTER_UNSPECIFIED",
+	"80211ax":     "ROUTER_802_11AX",
+}
+
+// IsRouter checks if a string refers to a valid Router.
+func IsRouter(router string) bool {
+	_, ok := StrToRouter[router]
+	return ok
+}
+
+// ValidRouterStr returns a valid str list for Router strings.
+func ValidRouterStr() []string {
+	ks := make([]string, 0, len(StrToRouter))
+	for k := range StrToRouter {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToRouter converts router string to a Wifi_Router enum.
+func ToRouter(router string) chromeosLab.Wifi_Router {
+	router = RemoveGivenPrefix(router, "router_")
+	v, ok := StrToRouter[router]
+	if !ok {
+		return chromeosLab.Wifi_ROUTER_UNSPECIFIED
+	}
+	return chromeosLab.Wifi_Router(chromeosLab.Wifi_Router_value[v])
+}
+
+// StrToCableType refers a map between a string to a CableType map.
+var StrToCableType = map[string]string{
+	"invalid":     "CABLE_INVALID",
+	"audiojack":   "CABLE_AUDIOJACK",
+	"usbaudio":    "CABLE_USBAUDIO",
+	"usbprinting": "CABLE_USBPRINTING",
+	"hdmiaudio":   "CABLE_HDMIAUDIO",
+}
+
+// IsCableType checks if a string refers to a valid CableType.
+func IsCableType(cableType string) bool {
+	_, ok := StrToCableType[cableType]
+	return ok
+}
+
+// ValidCableTypeStr returns a valid str list for CableType strings.
+func ValidCableTypeStr() []string {
+	ks := make([]string, 0, len(StrToCableType))
+	for k := range StrToCableType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToCableType converts cableType string to a Cable type enum.
+func ToCableType(cableType string) chromeosLab.CableType {
+	cableType = RemoveGivenPrefix(cableType, "cable_")
+	v, ok := StrToCableType[cableType]
+	if !ok {
+		return chromeosLab.CableType_CABLE_INVALID
+	}
+	return chromeosLab.CableType(chromeosLab.CableType_value[v])
+}
+
+// StrToFacing refers a map between a string to a Facing map.
+var StrToFacing = map[string]string{
+	"unkwnown": "FACING_UNKNOWN",
+	"back":     "FACING_BACK",
+	"front":    "FACING_FRONT",
+}
+
+// IsFacing checks if a string refers to a valid Facing.
+func IsFacing(facing string) bool {
+	_, ok := StrToFacing[facing]
+	return ok
+}
+
+// ValidFacingStr returns a valid str list for Facing strings.
+func ValidFacingStr() []string {
+	ks := make([]string, 0, len(StrToFacing))
+	for k := range StrToFacing {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToFacing converts facing string to a Camerabox_Facing enum.
+func ToFacing(facing string) chromeosLab.Camerabox_Facing {
+	facing = RemoveGivenPrefix(facing, "facing_")
+	v, ok := StrToFacing[facing]
+	if !ok {
+		return chromeosLab.Camerabox_FACING_UNKNOWN
+	}
+	return chromeosLab.Camerabox_Facing(chromeosLab.Camerabox_Facing_value[v])
+}
+
+// StrToLight refers a map between a string to a Light map.
+var StrToLight = map[string]string{
+	"unkwnown": "LIGHT_UNKNOWN",
+	"led":      "LIGHT_LED",
+	"noled":    "LIGHT_NOLED",
+}
+
+// IsLight checks if a string refers to a valid Light.
+func IsLight(light string) bool {
+	_, ok := StrToLight[light]
+	return ok
+}
+
+// ValidLightStr returns a valid str list for Light strings.
+func ValidLightStr() []string {
+	ks := make([]string, 0, len(StrToLight))
+	for k := range StrToLight {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToLight converts light string to a Camerabox_Light enum.
+func ToLight(light string) chromeosLab.Camerabox_Light {
+	light = RemoveGivenPrefix(light, "light_")
+	v, ok := StrToLight[light]
+	if !ok {
+		return chromeosLab.Camerabox_LIGHT_UNKNOWN
+	}
+	return chromeosLab.Camerabox_Light(chromeosLab.Camerabox_Light_value[v])
 }
 
 // List of regexps for recognizing assets stored with googlers or out of lab.

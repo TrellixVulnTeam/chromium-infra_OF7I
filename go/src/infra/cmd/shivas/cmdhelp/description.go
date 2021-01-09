@@ -1260,6 +1260,34 @@ Operation will be faster as only name/id will be retrieved from the service.`
 		"You can either use the below strings or prefix \"ZONE_\" to the below strings(for JSON input) to specify the exact enum name. "+
 		"Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", "))
 
+	//ChameleonTypeHelpText help text for chameleontype command line options
+	ChameleonTypeHelpText string = fmt.Sprintf("the name of the chameleontype. Can specify multiple comma separated values. "+
+		"Valid ChameleonType strings: [%s]", strings.Join(ufsUtil.ValidChameleonTypeStr(), ", "))
+
+	//CameraTypeHelpText help text for cameratype command line options
+	CameraTypeHelpText string = fmt.Sprintf("the name of the cameratype. Can specify multiple comma separated values. "+
+		"Valid CameraType strings: [%s]", strings.Join(ufsUtil.ValidCameraTypeStr(), ", "))
+
+	//AntennaConnectionHelpText help text for antennaconnection command line options
+	AntennaConnectionHelpText string = fmt.Sprintf("the name of the wifi antennaconnection. "+
+		"Valid AntennaConnection strings: [%s]", strings.Join(ufsUtil.ValidAntennaConnectionStr(), ", "))
+
+	//RouterHelpText help text for router command line options
+	RouterHelpText string = fmt.Sprintf("the name of the wifi router. "+
+		"Valid Router strings: [%s]", strings.Join(ufsUtil.ValidRouterStr(), ", "))
+
+	//FacingHelpText help text for facing command line options
+	FacingHelpText string = fmt.Sprintf("the name of the camerabox info facing. "+
+		"Valid Facing strings: [%s]", strings.Join(ufsUtil.ValidFacingStr(), ", "))
+
+	//LightHelpText help text for light command line options
+	LightHelpText string = fmt.Sprintf("the name of the camerabox info light. "+
+		"Valid Light strings: [%s]", strings.Join(ufsUtil.ValidLightStr(), ", "))
+
+	//CableTypeHelpText help text for cabletype command line options
+	CableTypeHelpText string = fmt.Sprintf("the name of the cabletype. Can specify multiple comma separated values. "+
+		"Valid CableType strings: [%s]", strings.Join(ufsUtil.ValidCableTypeStr(), ", "))
+
 	// AddRPMLongDesc long description for AddRPMCmd
 	AddRPMLongDesc string = `Add a rpm to UFS.
 
