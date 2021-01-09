@@ -60,7 +60,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
 	case "GetMachine", "GetState":
 		group = append(group, "chromeos-inventory-readonly-access", "machine-db-readers")
-	case "UpdateState":
+	case "UpdateState", "UpdateDutState":
 		group = append(group, "chromeos-inventory-status-label-write-access")
 	case "/pubsub/hart":
 		//TODO(anushruth): Rename group to UFS-pubsub-push-access after removing functionality from IV2
