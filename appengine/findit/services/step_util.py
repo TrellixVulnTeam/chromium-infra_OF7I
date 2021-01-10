@@ -18,6 +18,8 @@ from gae_libs.caches import PickledMemCache
 from infra_api_clients import logdog_util
 from libs.cache_decorator import Cached
 from libs.test_results.blink_web_test_results import BlinkWebTestResults
+from libs.test_results.resultdb_test_results import (ResultDBTestResults,
+                                                     ResultDBTestType)
 from model.isolated_target import IsolatedTarget
 from services import constants
 from services import swarming
@@ -183,9 +185,10 @@ def GetBoundingIsolatedTargets(master_name, builder_name, target_name,
 
 
 # TODO(crbug/804617): Modify this function to use new LUCI API when ready.
-def GetValidBoundingBuildsForStep(
-    master_name, builder_name, step_name, lower_bound_build_number,
-    upper_bound_build_number, requested_commit_position):
+def GetValidBoundingBuildsForStep(master_name, builder_name, step_name,
+                                  lower_bound_build_number,
+                                  upper_bound_build_number,
+                                  requested_commit_position):
   """Finds the two builds immediately before and after a commit position.
 
   TODO (lijeffrey): use case in regression_range_analysis_pipeline.py is not
@@ -272,9 +275,10 @@ def GetValidBoundingBuildsForStep(
       return latest_build_info, None
 
   # Gets candidata builds.
-  upper_bound, lower_bound = _GetCandidateBounds(
-      master_name, builder_name, upper_bound_build_number,
-      lower_bound_build_number, requested_commit_position)
+  upper_bound, lower_bound = _GetCandidateBounds(master_name, builder_name,
+                                                 upper_bound_build_number,
+                                                 lower_bound_build_number,
+                                                 requested_commit_position)
 
   # Get valid builds at or near the candidate build bounds.
   lower_bound_build = GetValidBuild(master_name, builder_name, lower_bound,
@@ -310,6 +314,11 @@ def IsStepSupportedByFindit(test_result_object, step_name, master_name):
   if (isinstance(test_result_object, BlinkWebTestResults) and
       step_name not in SUPPORTED_ISOLATED_SCRIPT_TESTS):
     return False
+
+  if (isinstance(test_result_object, ResultDBTestResults) and
+      test_result_object.test_type() == ResultDBTestType.OTHER):
+    return False
+
   return True
 
 
@@ -330,8 +339,8 @@ def _ParseStepLogIfAppropriate(data, log_name):
     try:
       return json.loads(data) if data else None
     except ValueError:
-      logging.error(
-          'Failed to json load data for %s. Data is: %s.' % (log_name, data))
+      logging.error('Failed to json load data for %s. Data is: %s.' %
+                    (log_name, data))
       return None
 
   return data
@@ -393,8 +402,9 @@ def GetStepLogFromBuildObject(build,
   log_view_url = _GetStepLogViewUrl(build, full_step_name, log_name,
                                     partial_match)
   if not log_view_url:
-    logging.exception('Didn\'t retrieve log_view_url at build: %s for %s of %s.'
-                      % (build.id, log_name, full_step_name))
+    logging.exception(
+        'Didn\'t retrieve log_view_url at build: %s for %s of %s.' %
+        (build.id, log_name, full_step_name))
     return None
 
   data = logdog_util.GetLogFromViewUrl(log_view_url, http_client)

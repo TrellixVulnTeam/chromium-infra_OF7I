@@ -100,16 +100,15 @@ def _StartTestLevelCheckForFirstFailure(master_name,
   test_results_object = None
   if use_resultdb:
     all_results = QueryResultDBForFailedTestInSteps(failed_step)
-    # TODO(crbug.com/981066): Continue the workflow after this is implemented
-    test_results_object = ResultDBTestResults(all_results)
-    return False
-  list_isolated_data = failed_step.list_isolated_data
-  list_isolated_data = (
-      list_isolated_data.ToSerializable() if list_isolated_data else [])
-  result_log = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-      list_isolated_data, http_client)
-
-  test_results_object = test_results_util.GetTestResultObject(result_log)
+    if all_results:
+      test_results_object = ResultDBTestResults(all_results)
+  else:
+    list_isolated_data = failed_step.list_isolated_data
+    list_isolated_data = (
+        list_isolated_data.ToSerializable() if list_isolated_data else [])
+    result_log = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
+        list_isolated_data, http_client)
+    test_results_object = test_results_util.GetTestResultObject(result_log)
 
   if not test_results_object or not step_util.IsStepSupportedByFindit(
       test_results_object,

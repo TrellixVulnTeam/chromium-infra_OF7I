@@ -12,11 +12,16 @@ from parameterized import parameterized
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
+from go.chromium.org.luci.resultdb.proto.v1 import (
+    common_pb2 as rdb_common_pb2,
+    test_result_pb2,
+)
 
 from common.waterfall import buildbucket_client
 from infra_api_clients import logdog_util
 from libs.test_results.gtest_test_results import GtestTestResults
 from libs.test_results.blink_web_test_results import BlinkWebTestResults
+from libs.test_results.resultdb_test_results import ResultDBTestResults
 from model.isolated_target import IsolatedTarget
 from model.wf_build import WfBuild
 from services import step_util
@@ -78,10 +83,11 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
         'hash_2', upper_bound_commit_position, upper_bound_revision)
     upper_bound_target.put()
 
-    self.assertEqual((lower_bound_target, upper_bound_target),
-                     step_util.GetBoundingIsolatedTargets(
-                         master_name, builder_name, target_name,
-                         requested_commit_position))
+    self.assertEqual(
+        (lower_bound_target, upper_bound_target),
+        step_util.GetBoundingIsolatedTargets(master_name, builder_name,
+                                             target_name,
+                                             requested_commit_position))
 
   @mock.patch.object(build_util, 'GetBuildInfo')
   def testGetValidBuildSearchAscendingWithinRange(self, mocked_get_build_info):
@@ -252,6 +258,36 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(
         step_util.IsStepSupportedByFindit(
             GtestTestResults(None), 'browser_tests', 'm'))
+
+  @mock.patch.object(
+      waterfall_config, 'StepIsSupportedForMaster', return_value=True)
+  def testIsStepSupportedByFinditResultDBGTest(self, _):
+    test_results = ResultDBTestResults([
+        test_result_pb2.TestResult(
+            test_id="ninja://gpu:gl_tests/SharedImageDawnTest.Basic",
+            tags=[rdb_common_pb2.StringPair(key="gtest_status", value="PASS")],
+        )
+    ])
+    self.assertTrue(
+        step_util.IsStepSupportedByFindit(test_results, 'browser_tests', 'm'))
+
+  @mock.patch.object(
+      waterfall_config, 'StepIsSupportedForMaster', return_value=True)
+  def testIsStepSupportedByFinditResultDBBlinkWebTest(self, _):
+    test_results = ResultDBTestResults([
+        test_result_pb2.TestResult(
+            test_id="ninja://:blink_web_tests/accessibility/role.html",)
+    ])
+    self.assertTrue(
+        step_util.IsStepSupportedByFindit(test_results, 'blink_web_tests', 'm'))
+
+  @mock.patch.object(
+      waterfall_config, 'StepIsSupportedForMaster', return_value=True)
+  def testIsStepSupportedByFinditResultDBOtherTest(self, _):
+    test_results = ResultDBTestResults(
+        [test_result_pb2.TestResult(test_id="some other test",)])
+    self.assertFalse(
+        step_util.IsStepSupportedByFindit(test_results, 'browser_tests', 'm'))
 
   @parameterized.expand([
       ({
@@ -507,15 +543,13 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
                                         'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 1)
     # Returns the valid step_metadata and cache it.
-    self.assertEqual({
-        'canonical_step_name': 'step_name'
-    }, step_util.LegacyGetStepMetadata('m', 'b', 201,
-                                       'step_name on a platform'))
+    self.assertEqual({'canonical_step_name': 'step_name'},
+                     step_util.LegacyGetStepMetadata('m', 'b', 201,
+                                                     'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 2)
-    self.assertEqual({
-        'canonical_step_name': 'step_name'
-    }, step_util.LegacyGetStepMetadata('m', 'b', 201,
-                                       'step_name on a platform'))
+    self.assertEqual({'canonical_step_name': 'step_name'},
+                     step_util.LegacyGetStepMetadata('m', 'b', 201,
+                                                     'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 2)
 
   @mock.patch.object(step_util, 'GetStepLogForLuciBuild')
@@ -526,13 +560,11 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
                      step_util.GetStepMetadata(123, 'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 1)
     # Returns the valid step_metadata and cache it.
-    self.assertEqual({
-        'canonical_step_name': 'step_name'
-    }, step_util.GetStepMetadata(123, 'step_name on a platform'))
+    self.assertEqual({'canonical_step_name': 'step_name'},
+                     step_util.GetStepMetadata(123, 'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 2)
-    self.assertEqual({
-        'canonical_step_name': 'step_name'
-    }, step_util.GetStepMetadata(123, 'step_name on a platform'))
+    self.assertEqual({'canonical_step_name': 'step_name'},
+                     step_util.GetStepMetadata(123, 'step_name on a platform'))
     self.assertTrue(mock_fn.call_count == 2)
 
   @mock.patch.object(
@@ -650,5 +682,5 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
 
     self.assertEqual((start_time, end_time),
                      step_util.GetStepStartAndEndTime(build, 's'))
-    self.assertEqual((None, None), step_util.GetStepStartAndEndTime(
-        build, 's2'))
+    self.assertEqual((None, None),
+                     step_util.GetStepStartAndEndTime(build, 's2'))
