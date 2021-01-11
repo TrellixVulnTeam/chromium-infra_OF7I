@@ -8,7 +8,7 @@ import "google/protobuf/duration.proto";
 
 package crosskylabadmin.config;
 
-option go_package = "config";
+option go_package = "infra/appengine/crosskylabadmin/app/config";
 
 // Note: docstrings use generated go style variable names.
 

@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package crosskylabadmin.fleet;
 
-option go_package = "fleet";
+option go_package = "infra/appengine/crosskylabadmin/api/fleet/v1;fleet";
 
 // BotSelector is used in various fleet RPCs to filter the Swarming bots that
 // the RPC applies to.

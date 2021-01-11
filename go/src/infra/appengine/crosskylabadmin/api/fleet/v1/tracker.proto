@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package crosskylabadmin.fleet;
 
-option go_package = "fleet";
+option go_package = "infra/appengine/crosskylabadmin/api/fleet/v1;fleet";
 
 // Tracker service exposes rpcs to summarize the state of ChromeOS Skylab
 // Swarming bot fleet.

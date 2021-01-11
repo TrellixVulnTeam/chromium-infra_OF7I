@@ -9,7 +9,7 @@ import "infra/appengine/crosskylabadmin/api/fleet/v1/common.proto";
 
 package crosskylabadmin.fleet;
 
-option go_package = "fleet";
+option go_package = "infra/appengine/crosskylabadmin/api/fleet/v1;fleet";
 
 
 // Inventory service helps manage ChromeOS Dut Pools.
