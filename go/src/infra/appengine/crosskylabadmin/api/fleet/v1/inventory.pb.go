@@ -5385,6 +5385,9 @@ type InventoryClient interface {
 	// ListRemovedDuts lists removed DUTs (DUTs not assigned to any drone).
 	ListRemovedDuts(ctx context.Context, in *ListRemovedDutsRequest, opts ...grpc.CallOption) (*ListRemovedDutsResponse, error)
 	// PushInventoryToQueen is called by a cron job.
+	//
+	// This RPC is deprecated. The cron job is moved to InventoryV2[pushToDroneQueenCronHandler].
+	// https://source.corp.google.com/chromium_infra/go/src/infra/appengine/cros/lab_inventory/app/cron/cron.go;l=312
 	PushInventoryToQueen(ctx context.Context, in *PushInventoryToQueenRequest, opts ...grpc.CallOption) (*PushInventoryToQueenResponse, error)
 	// UpdateDutLabels sets the SchedulableLabels of a DUT.
 	//
@@ -5880,6 +5883,9 @@ type InventoryServer interface {
 	// ListRemovedDuts lists removed DUTs (DUTs not assigned to any drone).
 	ListRemovedDuts(context.Context, *ListRemovedDutsRequest) (*ListRemovedDutsResponse, error)
 	// PushInventoryToQueen is called by a cron job.
+	//
+	// This RPC is deprecated. The cron job is moved to InventoryV2[pushToDroneQueenCronHandler].
+	// https://source.corp.google.com/chromium_infra/go/src/infra/appengine/cros/lab_inventory/app/cron/cron.go;l=312
 	PushInventoryToQueen(context.Context, *PushInventoryToQueenRequest) (*PushInventoryToQueenResponse, error)
 	// UpdateDutLabels sets the SchedulableLabels of a DUT.
 	//

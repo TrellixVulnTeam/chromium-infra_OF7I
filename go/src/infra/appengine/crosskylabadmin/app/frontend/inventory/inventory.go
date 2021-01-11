@@ -35,18 +35,14 @@ import (
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/gitstore"
-	"infra/appengine/drone-queen/api"
 	"infra/cros/lab_inventory/manufacturingconfig"
 	sv "infra/cros/stableversion"
 	"infra/libs/git"
@@ -436,37 +432,10 @@ func setOrAppend(attrs []*inventory.KeyValue, key string, value string) []*inven
 }
 
 // PushInventoryToQueen implements the method from fleet.InventoryServer interface.
+//
+// This RPC is deprecated. The cron job is moved to InventoryV2[pushToDroneQueenCronHandler].
+// https://source.corp.google.com/chromium_infra/go/src/infra/appengine/cros/lab_inventory/app/cron/cron.go;l=312
 func (is *ServerImpl) PushInventoryToQueen(ctx context.Context, req *fleet.PushInventoryToQueenRequest) (resp *fleet.PushInventoryToQueenResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	cfg := config.Get(ctx).Inventory
-	if cfg.QueenService == "" {
-		return &fleet.PushInventoryToQueenResponse{}, nil
-	}
-	e, err := dronecfg.Get(ctx, queenDroneName(cfg.Environment))
-	if err != nil {
-		return nil, err
-	}
-	duts := make([]string, len(e.DUTs))
-	for i, d := range e.DUTs {
-		duts[i] = d.Hostname
-	}
-
-	ts, err := auth.GetTokenSource(ctx, auth.AsSelf)
-	if err != nil {
-		return nil, err
-	}
-	h := oauth2.NewClient(ctx, ts)
-	c := api.NewInventoryProviderPRPCClient(&prpc.Client{
-		C:    h,
-		Host: cfg.QueenService,
-	})
-	logging.Debugf(ctx, "DUTs to declare: %#v", duts)
-	_, err = c.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
-	if err != nil {
-		return nil, err
-	}
 	return &fleet.PushInventoryToQueenResponse{}, nil
 }
 

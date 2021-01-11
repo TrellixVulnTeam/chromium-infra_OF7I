@@ -109,6 +109,9 @@ service Inventory {
   // RPCs used internally by the infrastructure. Not for end-user tools.
 
   // PushInventoryToQueen is called by a cron job.
+  //
+  // This RPC is deprecated. The cron job is moved to InventoryV2[pushToDroneQueenCronHandler].
+  // https://source.corp.google.com/chromium_infra/go/src/infra/appengine/cros/lab_inventory/app/cron/cron.go;l=312
   rpc PushInventoryToQueen(PushInventoryToQueenRequest) returns (PushInventoryToQueenResponse);
 
   // UpdateDutLabels sets the SchedulableLabels of a DUT.

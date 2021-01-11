@@ -78,8 +78,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	// Report inventory metrics
 	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 
-	r.GET("/internal/cron/push-inventory-to-queen", mwCron, logAndSetHTTPErr(pushInventoryToQueenCronHandler))
-
 	// dump information from stable version file to datastore
 	r.GET("/internal/cron/dump-stable-version-to-datastore", mwCron, logAndSetHTTPErr(dumpStableVersionToDatastoreHandler))
 }
@@ -214,15 +212,6 @@ func reportInventoryCronHandler(c *router.Context) (err error) {
 	_, err = inv.ReportInventory(c.Context, &fleet.ReportInventoryRequest{
 		SkipInventoryMetrics: cfg.GetInventoryProvider().GetInventoryV2Only(),
 	})
-	return err
-}
-
-func pushInventoryToQueenCronHandler(c *router.Context) (err error) {
-	defer func() {
-		pushInventoryToQueenTick.Add(c.Context, 1, err == nil)
-	}()
-	inv := createInventoryServer(c)
-	_, err = inv.PushInventoryToQueen(c.Context, &fleet.PushInventoryToQueenRequest{})
 	return err
 }
 
