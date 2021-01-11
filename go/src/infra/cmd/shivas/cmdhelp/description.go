@@ -89,12 +89,12 @@ Example DUT:
 				"peripherals": {
 					"servo": {
 						"servoHostname": "chromeos1-row1-rack11-labstation",
-						"servoPort": 9904,
+						"servoPort": 9904
 					},
 					"rpm": {
 						"powerunitName": "chromeos1-row2-rack3-rpm",
 						"powerunitOutlet": ".A1"
-					},
+					}
 				},
 				"pools": [
 						"DUT_POOL_QUOTA"
@@ -106,7 +106,7 @@ Example DUT:
 		"1156928"
 	],
 	"deploymentTicket": "crbug.com/123456",
-	"description": "Fixed and replaced",
+	"description": "Fixed and replaced"
 }
 
 Example DUT with peripherals:
@@ -184,6 +184,128 @@ dut-1,asset-1,servo-1,9998,ServoXdw,REGULAR,rpm-1,23,"CTS QUOTA"
 dut-2,asset-2,servo-2,9998,ServoYdw,,rpm-2,43,QUOTA
 dut-3,asset-3,chromeos6-row2-rack3-host4-servo,,,,,,,`
 
+	// DUTUpdateFileText description for json file input
+	DUTUpdateFileText string = `Path to a file(.json) containing DUT specification.
+
+[JSON Mode]
+The file must contain one DUT specification. This specification overwrites everything. Empty value for a field will assign
+nil/default value.
+Example DUT:
+{
+	"name": "chromeos1-row1-rack11-host4",
+	"machineLsePrototype": "atl:standard",
+	"hostname": "chromeos1-row1-rack11-host4",
+	"chromeosMachineLse": {
+		"deviceLse": {
+			"dut": {
+				"hostname": "chromeos1-row1-rack11-host4",
+				"peripherals": {
+					"servo": {
+						"servoHostname": "chromeos1-row1-rack11-labstation",
+						"servoPort": 9998,
+					},
+					"rpm": {
+						"powerunitName": "chromeos1-row2-rack3-rpm",
+						"powerunitOutlet": ".A1"
+					},
+				},
+				"pools": [
+						"DUT_POOL_QUOTA"
+				]
+			}
+		}
+	},
+	"machines": [
+		"1156928"
+	],
+	"deploymentTicket": "crbug.com/123456",
+	"description": "Fixed and replaced",
+}
+
+Example DUT with peripherals:
+{
+	"name": "chromeos1-row1-rack11-host4",
+	"machineLsePrototype": "atl:standard",
+	"hostname": "chromeos1-row1-rack11-host4",
+	"chromeosMachineLse": {
+		"deviceLse": {
+			"dut": {
+				"hostname": "chromeos1-row1-rack11-host4",
+				"peripherals": {
+					"servo": {
+						"servoHostname": "chromeos1-row1-rack11-labstation",
+						"servoPort": 9904,
+					},
+					"rpm": {
+						"powerunitName": "chromeos1-row2-rack3-rpm",
+						"powerunitOutlet": ".A1"
+					},
+					"chameleon": {
+						"chameleon_peripherals": [1],
+						"audioBoard": false,
+					},
+					"connectedCamera": [{
+						"cameraType": 1,
+					}],
+					"audio": {
+						"audioBox": false,
+						"atrus": false,
+						"audioCable": true,
+					},
+					"wifi": {
+						"wificell": true,
+						"antennaConn": 1,
+						"router": 1,
+					},
+					"touch": {
+						"mimo": false,
+					},
+					"carrier": "att",
+					"camerabox": false,
+					"chaos": false,
+					"cable": [{
+						"type": 1,
+					}],
+					"cameraboxInfo": {
+						"facing": 1,
+						"light": 1,
+					},
+					"smartUsbhub": false
+				},
+				"pools": [
+					"DUT_POOL_QUOTA"
+				]
+			}
+		}
+	},
+	"machines": [
+		"1156928"
+	],
+	"deploymentTicket": "crbug.com/123456",
+	"description": "Fixed and replaced",
+}
+
+The protobuf definition of machine lse is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+The protobuf definition of DeviceUnderTest is a part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
+
+`
+
+	// UpdateDUTLongDesc long description for UpdateDUTCmd
+	UpdateDUTLongDesc string = `Update a DUT by name. This runs a deploy task on the updated DUT by default.
+
+Examples:
+shivas update dut -f dut.json
+Update a DUT by reading a JSON file input.
+
+
+shivas update dut -f dut.json -ignore-deploy
+Update a DUT by reading a JSON file input and skip running deploy task.
+
+shivas update dut -f dut.json -ignore-ufs
+Trigger a deploy task on dut from reading dut.json. Ignore updating UFS.
+`
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
 
