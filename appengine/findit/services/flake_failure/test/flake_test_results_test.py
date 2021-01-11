@@ -5,6 +5,7 @@
 import mock
 
 from libs.test_results.gtest_test_results import GtestTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from services.flake_failure import flake_test_results
 from waterfall.test import wf_testcase
 
@@ -14,21 +15,20 @@ _GTEST_RESULT = GtestTestResults(None)
 class FlakeTestResultsTest(wf_testcase.WaterfallTestCase):
 
   def testGetCountsFromSwarmingRerunInvalidResults(self):
-    test_results = 'invalid'
-    self.assertEqual(
-        (None, None),
-        flake_test_results.GetCountsFromSwarmingRerun(test_results))
+    self.assertEqual((None, None),
+                     flake_test_results.GetCountsFromSwarmingRerun(None))
 
   def testGetCountsFromSwarmingRerunTestNotExistYet(self):
-    test_results = {
+    output = {
         'all_tests': [],
         'per_iteration_data': [],
     }
+    test_results = GtestTestResults(output)
     self.assertEqual(
         (0, 0), flake_test_results.GetCountsFromSwarmingRerun(test_results))
 
   def testGetCountsFromSwarmingRerun(self):
-    test_results = {
+    output = {
         'all_tests': [
             'Unittest1.Subtest1', 'Unittest1.PRE_PRE_Subtest1',
             'Unittest1.PRE_Subtest1'
@@ -57,11 +57,12 @@ class FlakeTestResultsTest(wf_testcase.WaterfallTestCase):
             }]
         }]
     }
+    test_results = GtestTestResults(output)
     self.assertEqual(
         (3, 1), flake_test_results.GetCountsFromSwarmingRerun(test_results))
 
   def testGetCountsFromSwarmingRerunBlinkWebTest(self):
-    test_results = {
+    output = {
         'seconds_since_epoch': 1522268603,
         'tests': {
             'bluetooth': {
@@ -111,5 +112,6 @@ class FlakeTestResultsTest(wf_testcase.WaterfallTestCase):
         'random_order_seed': 4,
         'builder_name': ''
     }
+    test_results = BlinkWebTestResults(output)
     self.assertEqual(
         (7, 2), flake_test_results.GetCountsFromSwarmingRerun(test_results))

@@ -36,32 +36,25 @@ class FlakeTryJobServiceTest(TestCase):
     self.assertFalse(flake_try_job.IsTryJobResultAtRevisionValid(None, 'r'))
     self.assertFalse(flake_try_job.IsTryJobResultAtRevisionValid({}, 'r'))
     self.assertFalse(
-        flake_try_job.IsTryJobResultAtRevisionValid({
-            'report': {}
-        }, 'r'))
+        flake_try_job.IsTryJobResultAtRevisionValid({'report': {}}, 'r'))
     self.assertFalse(
-        flake_try_job.IsTryJobResultAtRevisionValid({
-            'report': {
-                'result': {}
-            }
-        }, 'r'))
+        flake_try_job.IsTryJobResultAtRevisionValid({'report': {
+            'result': {}
+        }}, 'r'))
     self.assertTrue(
-        flake_try_job.IsTryJobResultAtRevisionValid({
-            'report': {
+        flake_try_job.IsTryJobResultAtRevisionValid(
+            {'report': {
                 'result': {
                     'r': {}
                 }
-            }
-        }, 'r'))
+            }}, 'r'))
 
   @mock.patch.object(_GTEST_RESULTS, 'IsTestResultUseful', return_value=False)
   @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
-  @mock.patch.object(swarmed_test_util, 'GetTestResultForSwarmingTask')
-  def testGetSwarmingTaskIdForTryJobNotFoundTaskWithResult(self, mock_fn, *_):
-    output_json = {'per_iteration_data': [{}, {}]}
-    mock_fn.return_result = output_json
-
+      swarmed_test_util,
+      'GetTestResultForSwarmingTask',
+      return_value=_GTEST_RESULTS)
+  def testGetSwarmingTaskIdForTryJobNotFoundTaskWithResult(self, *_):
     revision = 'r0'
     step_name = 'gl_tests'
     test_name = 'Test.One'
@@ -172,37 +165,31 @@ class FlakeTryJobServiceTest(TestCase):
 
   def testIsTryJobResultAtRevisionValidForStep(self):
     self.assertTrue(
-        flake_try_job.IsTryJobResultAtRevisionValidForStep({
-            'browser_tests': {
+        flake_try_job.IsTryJobResultAtRevisionValidForStep(
+            {'browser_tests': {
                 'valid': True
-            }
-        }, 'browser_tests'))
+            }}, 'browser_tests'))
     self.assertFalse(
         flake_try_job.IsTryJobResultAtRevisionValidForStep(
             None, 'browser_tests'))
     self.assertFalse(
-        flake_try_job.IsTryJobResultAtRevisionValidForStep({
-            'browser_tests': {
+        flake_try_job.IsTryJobResultAtRevisionValidForStep(
+            {'browser_tests': {
                 'valid': False
-            }
-        }, 'browser_tests'))
+            }}, 'browser_tests'))
     self.assertFalse(
-        flake_try_job.IsTryJobResultAtRevisionValidForStep({
-            'some_tests': {
+        flake_try_job.IsTryJobResultAtRevisionValidForStep(
+            {'some_tests': {
                 'valid': True
-            }
-        }, 'wrong_tests'))
+            }}, 'wrong_tests'))
 
   @mock.patch.object(
       _GTEST_RESULTS, 'IsTestResultUseful', side_effect=[False, True])
   @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
-  @mock.patch.object(swarmed_test_util, 'GetTestResultForSwarmingTask')
-  def testGetSwarmingTaskIdForTryJob(self, mock_fn, *_):
-    output_json_1 = {'per_iteration_data': [{}, {}]}
-    output_json_2 = {'per_iteration_data': [{'Test.One': 'log for Test.One'}]}
-    mock_fn.side_effect = [output_json_1, output_json_2]
-
+      swarmed_test_util,
+      'GetTestResultForSwarmingTask',
+      return_value=_GTEST_RESULTS)
+  def testGetSwarmingTaskIdForTryJob(self, *_):
     revision = 'r0'
     step_name = 'gl_tests'
     test_name = 'Test.One'
@@ -233,12 +220,11 @@ class FlakeTryJobServiceTest(TestCase):
 
   def testGetPassFailCounts(self):
     self.assertEquals((0.9, 10),
-                      flake_try_job._GetPassRateAndTries({
-                          't': {
+                      flake_try_job._GetPassRateAndTries(
+                          {'t': {
                               'pass_count': 9,
                               'fail_count': 1,
-                          }
-                      }, 't'))
+                          }}, 't'))
     self.assertEquals((flake_constants.PASS_RATE_TEST_NOT_FOUND, 0),
                       flake_try_job._GetPassRateAndTries({}, 't'))
 

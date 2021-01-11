@@ -25,6 +25,7 @@ _SAMPLE_OUTPUT = {
         'is_dict': True
     }]
 }
+_SAMPLE_TEST_RESULTS = GtestTestResults(_SAMPLE_OUTPUT)
 
 
 class StepMapperTest(wf_testcase.WaterfallTestCase):
@@ -54,7 +55,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       swarmed_test_util,
       'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
+      return_value=_SAMPLE_TEST_RESULTS)
   @mock.patch.object(
       waterfall_config, 'StepIsSupportedForMaster', return_value=True)
   def testFindMatchingWaterfallStep(self, *_):
@@ -102,9 +103,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
       swarming,
       'ListSwarmingTasksDataByTags',
       return_value=[
-          SwarmingTaskData({
-              'tags': ['stepname:browser_tests on platform']
-          })
+          SwarmingTaskData({'tags': ['stepname:browser_tests on platform']})
       ])
   def testGetMatchingWaterfallBuildStep(self, *_):
     master_name, builder_name, build_number, step_name, step_metadata = (
@@ -171,7 +170,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       swarmed_test_util,
       'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
+      return_value=_SAMPLE_TEST_RESULTS)
   @mock.patch.object(
       step_util,
       'LegacyGetStepMetadata',
@@ -184,23 +183,16 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       swarmed_test_util,
       'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
+      return_value=BlinkWebTestResults(None))
   @mock.patch.object(
       step_util,
       'LegacyGetStepMetadata',
       return_value=wf_testcase.SAMPLE_STEP_METADATA)
-  @mock.patch.object(test_results_util, 'GetTestResultObject')
-  def testFindMatchingWaterfallStepNotSupportOtherIsolatedScriptTests(
-      self, mock_object, *_):
-    mock_object.return_value = BlinkWebTestResults(None)
+  def testFindMatchingWaterfallStepNotSupportOtherIsolatedScriptTests(self, *_):
     step_mapper.FindMatchingWaterfallStep(self.wf_build_step, 'test1')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertFalse(self.wf_build_step.supported)
 
-  @mock.patch.object(
-      swarmed_test_util,
-      'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
   @mock.patch.object(
       step_util,
       'LegacyGetStepMetadata',
@@ -208,21 +200,20 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(step_util, 'IsStepSupportedByFindit', return_value=True)
   @mock.patch.object(
       BlinkWebTestResults, 'DoesTestExist', side_effect=[False, True])
-  @mock.patch.object(test_results_util, 'GetTestResultObject')
+  @mock.patch.object(swarmed_test_util, 'GetTestResultForSwarmingTask')
   def testFindMatchingWaterfallStepCheckAllShards(self, mock_object, *_):
     mock_object.side_effect = [
         BlinkWebTestResults({}, partial_result=True),
         BlinkWebTestResults({}, partial_result=True)
     ]
-    step_mapper.FindMatchingWaterfallStep(self.wf_build_step,
-                                          'blink_web_tests')
+    step_mapper.FindMatchingWaterfallStep(self.wf_build_step, 'blink_web_tests')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertTrue(self.wf_build_step.supported)
 
   @mock.patch.object(
       swarmed_test_util,
       'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
+      return_value=_SAMPLE_TEST_RESULTS)
   @mock.patch.object(
       step_util,
       'LegacyGetStepMetadata',
@@ -230,8 +221,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       test_results_util, 'GetTestResultObject', return_value=None)
   def testFindMatchingWaterfallStepNoTestResultObject(self, *_):
-    step_mapper.FindMatchingWaterfallStep(self.wf_build_step,
-                                          'blink_web_tests')
+    step_mapper.FindMatchingWaterfallStep(self.wf_build_step, 'blink_web_tests')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertFalse(self.wf_build_step.supported)
 
@@ -243,7 +233,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       swarmed_test_util,
       'GetTestResultForSwarmingTask',
-      return_value=_SAMPLE_OUTPUT)
+      return_value=_SAMPLE_TEST_RESULTS)
   @mock.patch.object(GtestTestResults, 'DoesTestExist', return_value=False)
   @mock.patch.object(
       waterfall_config, 'StepIsSupportedForMaster', return_value=True)

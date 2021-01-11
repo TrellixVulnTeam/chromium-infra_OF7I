@@ -29,6 +29,7 @@ remote_api.EnableRemoteApi(app_id='findit-for-me')
 
 from infra_api_clients.swarming import swarming_util
 from common.findit_http_client import FinditHttpClient
+from libs.test_results import test_results_util
 from services import constants
 from services import swarming
 from services.flake_failure import flake_test_results
@@ -73,11 +74,12 @@ def ResultsForBatch(experiment_id, batch):
       batch['task_results'][task_id] = {}
     elif 'complete' in batch['task_results'][task_id]:
       continue
-    task_data, task_output, error = GetSwarmingTaskDataAndResult(task_id)
+    task_data, test_results, error = GetSwarmingTaskDataAndResult(task_id)
     if task_data.get('state') == constants.STATE_COMPLETED:
       batch['task_results'][task_id]['complete'] = True
       batch['task_results'][task_id]['bot'] = task_data.get('bot_id')
-      tries, passes = flake_test_results.GetCountsFromSwarmingRerun(task_output)
+      tries, passes = flake_test_results.GetCountsFromSwarmingRerun(
+          test_results)
       if tries is None or passes is None:
         errored_tasks += 1
         error_bots.add(task_data.get('bot_id'))
@@ -126,8 +128,8 @@ def main(experiment_path):
       if (not row.get('results') or row['results'].get('incomplete_tasks') or
           len(row.get('task_results')) != row['results']['total_tasks']):
         row = ResultsForBatch(experiment['experiment_id'], row)
-      total_incomplete_tasks += row.get('results', {}).get(
-          'incomplete_tasks', 0)
+      total_incomplete_tasks += row.get('results',
+                                        {}).get('incomplete_tasks', 0)
     if total_incomplete_tasks:
       print '%d pending/running tasks' % total_incomplete_tasks
     else:

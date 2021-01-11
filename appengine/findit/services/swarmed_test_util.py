@@ -34,8 +34,10 @@ def GetOutputJsonByOutputsRef(outputs_ref, http_client):
 def GetSwarmingTaskDataAndResult(task_id, http_client=_FINDIT_HTTP_CLIENT):
   """Gets information about a swarming task.
 
-  Returns:
-       (str, dict, dict): The state, test result and error for a swarming task.
+  Returns: A tuple of 3 elements
+    Data of swarming task: dict
+    Test results for swarming task: subclass of BaseTestResults
+    Error for swarming task: dict
   """
   data, error = swarming_util.GetSwarmingTaskResultById(swarming.SwarmingHost(),
                                                         task_id, http_client)
@@ -66,14 +68,17 @@ def GetSwarmingTaskDataAndResult(task_id, http_client=_FINDIT_HTTP_CLIENT):
                     task_state)
       error = SwarmingTaskError.GenerateError(
           swarming_task_error.STATES_NOT_RUNNING_TO_ERROR_CODES[task_state])
-  return data, output_json, error
+
+  test_results = None if not output_json \
+      else test_results_util.GetTestResultObject(output_json)
+  return data, test_results, error
 
 
 def GetTestResultForSwarmingTask(task_id, http_client=_FINDIT_HTTP_CLIENT):
-  """Get isolated output for a swarming task based on it's id."""
-  _data, test_result_log, _error = GetSwarmingTaskDataAndResult(
+  """Get test results object for a swarming task based on it's id."""
+  _data, test_results, _error = GetSwarmingTaskDataAndResult(
       task_id, http_client)
-  return test_result_log
+  return test_results
 
 
 def GetTestLocation(task_id, test_name):
@@ -88,8 +93,7 @@ def GetTestLocation(task_id, test_name):
         if the test location was not be retrieved.
 
   """
-  test_results_log = GetTestResultForSwarmingTask(task_id, _FINDIT_HTTP_CLIENT)
-  test_results = test_results_util.GetTestResultObject(test_results_log)
+  test_results = GetTestResultForSwarmingTask(task_id, _FINDIT_HTTP_CLIENT)
   test_location, error = test_results.GetTestLocation(
       test_name) if test_results else (None, constants.WRONG_FORMAT_LOG)
   if error:

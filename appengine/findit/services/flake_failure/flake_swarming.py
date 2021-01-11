@@ -19,7 +19,7 @@ from services.flake_failure import flake_test_results
 _FINDIT_HTTP_CLIENT = FinditHttpClient()
 
 
-def _ParseFlakeSwarmingTaskOutput(task_data, output_json, error, parameters):
+def _ParseFlakeSwarmingTaskOutput(task_data, test_results, error, parameters):
   """Returns swarming task results as a FlakeswarmingTaskOutput object.
 
   Assumption: only 1 test was run in the Swarming task.
@@ -28,11 +28,11 @@ def _ParseFlakeSwarmingTaskOutput(task_data, output_json, error, parameters):
 
   iterations = parameters.iterations
 
-  if output_json:
+  if test_results:
     # Gets the total numbers of runs and number of successful runs from
     # test results
     tries, successes = flake_test_results.GetCountsFromSwarmingRerun(
-        output_json)
+        test_results)
 
     if tries is None or successes is None:
       # Something went wrong preventing even a single test from being processed
@@ -79,14 +79,14 @@ def OnSwarmingTaskTimeout(parameters, task_id):
     # The pipeline timedout without successfully triggering a task.
     return OnSwarmingTaskError(None, timeout_error)
 
-  task_data, output_json, error = (
+  task_data, test_results, error = (
       swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not task_data or not task_data.get('state'):
     return OnSwarmingTaskError(task_id, error or timeout_error)
 
   # Attempt to salvage whatever is available, but still report an error.
-  return _ParseFlakeSwarmingTaskOutput(task_data, output_json, error or
+  return _ParseFlakeSwarmingTaskOutput(task_data, test_results, error or
                                        timeout_error, parameters)
 
 
@@ -104,7 +104,7 @@ def OnSwarmingTaskError(task_id, error):
 
 def OnSwarmingTaskStateChanged(parameters, task_id):
   """To be called when a swarming task's status changes."""
-  task_data, output_json, error = (
+  task_data, test_results, error = (
       swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not task_data or not task_data.get('state'):
@@ -118,13 +118,14 @@ def OnSwarmingTaskStateChanged(parameters, task_id):
   # The task is completed e.g. task_state == constants.STATE_COMPLETED. Even
   # if there is an error, attempt to salvage any usable information, but
   # still report the error.
-  return _ParseFlakeSwarmingTaskOutput(task_data, output_json, error,
+  return _ParseFlakeSwarmingTaskOutput(task_data, test_results, error,
                                        parameters)
 
 
-def CreateNewSwarmingTaskRequest(
-    runner_id, ref_task_id, ref_request, master_name, builder_name, step_name,
-    test_name, isolate_sha, iterations, timeout_seconds):
+def CreateNewSwarmingTaskRequest(runner_id, ref_task_id, ref_request,
+                                 master_name, builder_name, step_name,
+                                 test_name, isolate_sha, iterations,
+                                 timeout_seconds):
   """Creates a SwarmingTaskRequest to trigger against specified parameters."""
   # Create swarming task request template.
   new_request = swarming.CreateNewSwarmingTaskRequestTemplate(
@@ -172,13 +173,16 @@ def TriggerSwarmingTask(master_name, builder_name, reference_build_number,
 
   # 2. Create a swarming task request from the reference request with desired
   # fields updated.
-  new_request = CreateNewSwarmingTaskRequest(
-      runner_id, ref_task_id, ref_request, master_name, builder_name, step_name,
-      test_name, isolate_sha, iterations, timeout_seconds)
+  new_request = CreateNewSwarmingTaskRequest(runner_id, ref_task_id,
+                                             ref_request, master_name,
+                                             builder_name, step_name, test_name,
+                                             isolate_sha, iterations,
+                                             timeout_seconds)
 
   # 3. Trigger a new swarming task.
-  task_id, _ = swarming_util.TriggerSwarmingTask(
-      swarming.SwarmingHost(), new_request, _FINDIT_HTTP_CLIENT)
+  task_id, _ = swarming_util.TriggerSwarmingTask(swarming.SwarmingHost(),
+                                                 new_request,
+                                                 _FINDIT_HTTP_CLIENT)
 
   # Monitoring.
   monitoring.OnSwarmingTaskStatusChange('trigger', 'identify-regression-range')

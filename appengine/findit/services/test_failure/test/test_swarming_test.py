@@ -39,17 +39,12 @@ from services.test_failure import test_swarming
 from waterfall.test import wf_testcase
 
 _SAMPLE_REQUEST_JSON = {
-    'expiration_secs':
-        '3600',
-    'name':
-        'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
-    'parent_task_id':
-        '',
-    'priority':
-        '25',
+    'expiration_secs': '3600',
+    'name': 'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
+    'parent_task_id': '',
+    'priority': '25',
     'properties': {
-        'command':
-            'cmd',
+        'command': 'cmd',
         'dimensions': [{
             'key': 'k',
             'value': 'v'
@@ -58,8 +53,7 @@ _SAMPLE_REQUEST_JSON = {
             'key': 'a',
             'value': '1'
         },],
-        'execution_timeout_secs':
-            '10',
+        'execution_timeout_secs': '10',
         'extra_args': [
             '--flag=value',
             '--gtest_filter=a.b:a.c',
@@ -67,16 +61,13 @@ _SAMPLE_REQUEST_JSON = {
             '--test-launcher-retry-limit=0',
             '--gtest_also_run_disabled_tests',
         ],
-        'grace_period_secs':
-            '30',
-        'idempotent':
-            False,
+        'grace_period_secs': '30',
+        'idempotent': False,
         'inputs_ref': {
             'isolatedserver': 'isolatedserver',
             'isolated': 'sha'
         },
-        'io_timeout_secs':
-            '1200',
+        'io_timeout_secs': '1200',
     },
     'tags': [
         'ref_master:m',
@@ -85,16 +76,10 @@ _SAMPLE_REQUEST_JSON = {
         'ref_stepname:s',
         'ref_name:test',
     ],
-    'user':
-        '',
-    'pubsub_auth_token':
-        'auth_token',
-    'pubsub_topic':
-        'projects/app-id/topics/swarming',
-    'pubsub_userdata':
-        json.dumps({
-            'runner_id': 'runner_id'
-        }),
+    'user': '',
+    'pubsub_auth_token': 'auth_token',
+    'pubsub_topic': 'projects/app-id/topics/swarming',
+    'pubsub_userdata': json.dumps({'runner_id': 'runner_id'}),
 }
 
 _GTEST_RESULTS = GtestTestResults(None)
@@ -176,17 +161,12 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
     tests = ['t']
     iterations = 100
     new_request = {
-        'expiration_secs':
-            '3600',
-        'name':
-            'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
-        'parent_task_id':
-            '',
-        'priority':
-            '25',
+        'expiration_secs': '3600',
+        'name': 'findit/ref_task_id/ref_task_id/2018-03-15 00:00:00 000000',
+        'parent_task_id': '',
+        'priority': '25',
         'properties': {
-            'command':
-                'cmd',
+            'command': 'cmd',
             'dimensions': [{
                 'key': 'k',
                 'value': 'v'
@@ -195,8 +175,7 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
                 'key': 'a',
                 'value': '1'
             },],
-            'execution_timeout_secs':
-                '10',
+            'execution_timeout_secs': '10',
             'extra_args': [
                 '--flag=value',
                 '--gtest_filter=a.b:a.c',
@@ -204,16 +183,13 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
                 '--test-launcher-retry-limit=0',
                 '--gtest_also_run_disabled_tests',
             ],
-            'grace_period_secs':
-                '30',
-            'idempotent':
-                False,
+            'grace_period_secs': '30',
+            'idempotent': False,
             'inputs_ref': {
                 'isolatedserver': 'isolatedserver',
                 'isolated': 'sha'
             },
-            'io_timeout_secs':
-                '1200',
+            'io_timeout_secs': '1200',
         },
         'tags': [
             'ref_master:m',
@@ -222,16 +198,10 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
             'ref_stepname:s',
             'ref_name:test',
         ],
-        'user':
-            '',
-        'pubsub_auth_token':
-            'auth_token',
-        'pubsub_topic':
-            'projects/app-id/topics/swarming',
-        'pubsub_userdata':
-            json.dumps({
-                'runner_id': 'runner_id'
-            }),
+        'user': '',
+        'pubsub_auth_token': 'auth_token',
+        'pubsub_topic': 'projects/app-id/topics/swarming',
+        'pubsub_userdata': json.dumps({'runner_id': 'runner_id'}),
     }
     test_swarming.OnSwarmingTaskTriggered(
         master_name, builder_name, build_number, step_name, tests, 'task_id',
@@ -244,13 +214,11 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
       _GTEST_RESULTS, 'GetClassifiedTestResults', return_value={})
   @mock.patch.object(test_results_util, 'IsTestResultsValid', return_value=True)
   @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
-  @mock.patch.object(
       swarmed_test_util,
       'GetSwarmingTaskDataAndResult',
       return_value=({
           'state': constants.STATE_COMPLETED
-      }, 'content', None))
+      }, _GTEST_RESULTS, None))
   @mock.patch.object(test_swarming, '_RecordSwarmingTaskStateChange')
   def testOnSwarmingTaskTimeoutGotResult(self, mock_mon, *_):
     master_name = 'm'
@@ -274,10 +242,11 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
                                        step_name)
     self.assertEqual(analysis_status.COMPLETED, swarming_task.status)
     self.assertEqual({}, swarming_task.tests_statuses)
-    self.assertEqual({
-        'code': swarming_task_error.RUNNER_TIMEOUT,
-        'message': 'Runner to run swarming task timed out'
-    }, swarming_task.error)
+    self.assertEqual(
+        {
+            'code': swarming_task_error.RUNNER_TIMEOUT,
+            'message': 'Runner to run swarming task timed out'
+        }, swarming_task.error)
     mock_mon.assert_called_once_with(master_name, builder_name, build_number,
                                      step_name, analysis_status.COMPLETED,
                                      analysis_approach_type.SWARMING)
@@ -307,18 +276,17 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
     swarming_task = WfSwarmingTask.Get(master_name, builder_name, build_number,
                                        step_name)
     self.assertEqual(analysis_status.ERROR, swarming_task.status)
-    self.assertEqual({
-        'code': swarming_task_error.RUNNER_TIMEOUT,
-        'message': 'Runner to run swarming task timed out'
-    }, swarming_task.error)
+    self.assertEqual(
+        {
+            'code': swarming_task_error.RUNNER_TIMEOUT,
+            'message': 'Runner to run swarming task timed out'
+        }, swarming_task.error)
     mock_mon.assert_called_once_with(master_name, builder_name, build_number,
                                      step_name, analysis_status.ERROR,
                                      analysis_approach_type.SWARMING)
 
   @mock.patch.object(
       _GTEST_RESULTS, 'GetClassifiedTestResults', return_value={})
-  @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=_GTEST_RESULTS)
   @mock.patch.object(test_swarming, '_RecordSwarmingTaskStateChange')
   def testOnSwarmingTaskCompleted(self, mock_mon, *_):
     master_name = 'm'
@@ -335,8 +303,9 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
         'completed_ts': '2015-07-30T18:15:16.743220'
     }
 
-    test_swarming.OnSwarmingTaskCompleted(
-        master_name, builder_name, build_number, step_name, data, 'output_json')
+    test_swarming.OnSwarmingTaskCompleted(master_name, builder_name,
+                                          build_number, step_name, data,
+                                          _GTEST_RESULTS)
 
     swarming_task = WfSwarmingTask.Get(master_name, builder_name, build_number,
                                        step_name)
@@ -382,9 +351,10 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
 
     result = test_swarming.OnSwarmingTaskStateChanged(parameters, 'task_id')
     self.assertTrue(result)
-    mock_complete.assert_called_once_with(
-        master_name, builder_name, build_number, step_name,
-        {'state': constants.STATE_COMPLETED}, 'content')
+    mock_complete.assert_called_once_with(master_name, builder_name,
+                                          build_number, step_name,
+                                          {'state': constants.STATE_COMPLETED},
+                                          'content')
 
   @mock.patch.object(
       swarmed_test_util,
@@ -504,9 +474,10 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
     WfSwarmingTask.Create(master_name, builder_name, build_number,
                           step_name).put()
     error = {'code': 1, 'message': 'error'}
-    test_swarming.OnSwarmingTaskError(
-        master_name, builder_name, build_number, step_name,
-        SwarmingTaskError.FromSerializable(error), False)
+    test_swarming.OnSwarmingTaskError(master_name, builder_name, build_number,
+                                      step_name,
+                                      SwarmingTaskError.FromSerializable(error),
+                                      False)
 
     swarming_task = WfSwarmingTask.Get(master_name, builder_name, build_number,
                                        step_name)
@@ -671,8 +642,9 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(test_failure_analysis,
                      'UpdateAnalysisWithFlakesFoundBySwarmingReruns')
   @mock.patch.object(monitoring, 'OnFlakeIdentified')
-  def testCollectSwarmingTaskResultsAllFlaky(
-      self, mock_monitoring, mock_update_analysis, mock_save_flakes, _):
+  def testCollectSwarmingTaskResultsAllFlaky(self, mock_monitoring,
+                                             mock_update_analysis,
+                                             mock_save_flakes, _):
     master_name = 'm'
     builder_name = 'b'
     build_number = 17
@@ -746,9 +718,9 @@ class TestSwarmingTest(wf_testcase.WaterfallTestCase):
             build_number=build_number),
         heuristic_result=heuristic_result,
         force=False)
-    self.assertEqual({
-        'step': ['test']
-    }, test_swarming.GetFirstTimeTestFailuresToRunSwarmingTasks(params))
+    self.assertEqual(
+        {'step': ['test']},
+        test_swarming.GetFirstTimeTestFailuresToRunSwarmingTasks(params))
     mock_fn.assert_called_once_with(master_name, builder_name, build_number,
                                     failure_info, False)
 

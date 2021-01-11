@@ -134,15 +134,13 @@ def FindMatchingWaterfallStep(build_step, test_name):
   if build_step.swarmed:
     need_to_continue = False
     for task_id in metadata['swarm_task_ids']:
-      output = swarmed_test_util.GetTestResultForSwarmingTask(
+      test_result_object = swarmed_test_util.GetTestResultForSwarmingTask(
           task_id, http_client)
-      if output:
-        # Guess from the format.
-        test_result_object = test_results_util.GetTestResultObject(
-            output, partial_result=True)
-        if not test_result_object:
-          build_step.supported = False
-        elif not step_util.IsStepSupportedByFindit(
+      if not test_result_object:
+        build_step.supported = False
+      else:
+        test_result_object.partial_result = True
+        if not step_util.IsStepSupportedByFindit(
             test_result_object,
             metadata.get('canonical_step_name') or build_step.step_name,
             build_step.wf_master_name):

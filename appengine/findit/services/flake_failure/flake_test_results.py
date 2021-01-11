@@ -7,7 +7,7 @@
 from libs.test_results import test_results_util
 
 
-def GetCountsFromSwarmingRerun(test_results_json):
+def GetCountsFromSwarmingRerun(test_results_obj):
   """Gets the total number of runs and passes from the test result of a swarming
     rerun determining pass_rate.
 
@@ -20,12 +20,11 @@ def GetCountsFromSwarmingRerun(test_results_json):
   So counts results based on pass/fail only, rather than expected/unexpected.
 
   Args:
-    test_results_json(dict): Test results log.
+    test_results_obj: Test results object, subclass of BaseTestResults.
 
   Returns:
     (int, int) total number of tries and number of successful runs.
   """
-  test_results_obj = test_results_util.GetTestResultObject(test_results_json)
   if not test_results_obj:
     return None, None
 

@@ -84,9 +84,11 @@ def TriggerSwarmingTask(run_swarming_task_parameters, runner_id):
   # 2. Update/Overwrite parameters for the re-run.
   iterations_to_rerun = waterfall_config.GetSwarmingSettings().get(
       'iterations_to_rerun')
-  new_request = CreateNewSwarmingTaskRequest(
-      runner_id, ref_task_id, ref_request, master_name, builder_name,
-      build_number, step_name, tests, iterations_to_rerun)
+  new_request = CreateNewSwarmingTaskRequest(runner_id, ref_task_id,
+                                             ref_request, master_name,
+                                             builder_name, build_number,
+                                             step_name, tests,
+                                             iterations_to_rerun)
 
   # 3. Trigger a new Swarming task to re-run the failed tests.
   task_id, _ = swarming_util.TriggerSwarmingTask(swarming.SwarmingHost(),
@@ -179,11 +181,10 @@ def OnSwarmingTaskTimeout(run_swarming_task_params, task_id):
 
   error = SwarmingTaskError.GenerateError(swarming_task_error.RUNNER_TIMEOUT)
 
-  data, output_json, _ = swarmed_test_util.GetSwarmingTaskDataAndResult(task_id)
-  if output_json and test_results_util.IsTestResultsValid(output_json):
-    test_results = test_results_util.GetTestResultObject(output_json)
-    classified_test_results = (
-        test_results.GetClassifiedTestResults() if test_results else {})
+  data, test_results, _ = swarmed_test_util.GetSwarmingTaskDataAndResult(
+      task_id)
+  if test_results:
+    classified_test_results = test_results.GetClassifiedTestResults()
     _UpdateSwarmingTaskEntity(
         master_name,
         builder_name,
@@ -240,8 +241,7 @@ def OnSwarmingTaskError(master_name,
 
 
 def OnSwarmingTaskCompleted(master_name, builder_name, build_number, step_name,
-                            data, output_json):
-  test_results = test_results_util.GetTestResultObject(output_json)
+                            data, test_results):
   classified_test_results = (
       test_results.GetClassifiedTestResults() if test_results else {})
   _UpdateSwarmingTaskEntity(
@@ -265,7 +265,7 @@ def OnSwarmingTaskStateChanged(run_swarming_task_parameters, task_id):
       run_swarming_task_parameters.build_key.GetParts())
   step_name = run_swarming_task_parameters.step_name
 
-  data, output_json, error = (
+  data, test_results, error = (
       swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not data or not data.get('state'):
@@ -275,10 +275,9 @@ def OnSwarmingTaskStateChanged(run_swarming_task_parameters, task_id):
     return None
 
   task_state = data['state']
-  if (task_state == constants.STATE_COMPLETED and output_json and
-      test_results_util.IsTestResultsValid(output_json)):
+  if (task_state == constants.STATE_COMPLETED and test_results):
     return OnSwarmingTaskCompleted(master_name, builder_name, build_number,
-                                   step_name, data, output_json)
+                                   step_name, data, test_results)
   elif task_state in constants.STATE_NOT_STOP:
     if task_state == constants.STATE_RUNNING:  # pragma: no branch
       _UpdateSwarmingTaskEntity(
@@ -315,8 +314,9 @@ def GetStepsToCollectSwarmingTaskResults(collect_consistent_failure_inputs):
 
   master_name, builder_name, build_number = (
       collect_consistent_failure_inputs.build_key.GetParts())
-  return test_failure_analysis.GetFirstTimeFailedSteps(
-      master_name, builder_name, build_number)
+  return test_failure_analysis.GetFirstTimeFailedSteps(master_name,
+                                                       builder_name,
+                                                       build_number)
 
 
 def GetConsistentFailuresWhenAllTasksComplete(collect_consistent_failure_inputs,
@@ -410,9 +410,8 @@ def GetConsistentFailuresWhenAllTasksComplete(collect_consistent_failure_inputs,
       monitoring.OnFlakeIdentified(canonical_step_name, isolate_target_name,
                                    'skip', len(tests))
 
-  return (CollectSwarmingTaskResultsOutputs.FromSerializable({
-      'consistent_failures': consistent_failures
-  }) if consistent_failures else
+  return (CollectSwarmingTaskResultsOutputs.FromSerializable(
+      {'consistent_failures': consistent_failures}) if consistent_failures else
           CollectSwarmingTaskResultsOutputs.FromSerializable({}))
 
 

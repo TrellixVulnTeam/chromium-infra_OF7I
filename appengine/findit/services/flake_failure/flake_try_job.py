@@ -96,12 +96,12 @@ def GetSwarmingTaskIdForTryJob(report, revision, step_name, test_name):
     return task_ids[0] if task_ids else None
 
   for task_id in task_ids:
-    output_json = swarmed_test_util.GetTestResultForSwarmingTask(
+    test_results = swarmed_test_util.GetTestResultForSwarmingTask(
         task_id, http_client)
-    test_results = test_results_util.GetTestResultObject(
-        output_json, partial_result=True)
-    if output_json and test_results and test_results.IsTestResultUseful():
-      return task_id
+    if test_results:
+      test_results.partial_result = True
+      if test_results.IsTestResultUseful():
+        return task_id
 
   return None
 
@@ -168,8 +168,9 @@ def OnTryJobStateChanged(try_job_id, build_json):
   Returns:
     FlakeTryJobResult if the try job has completed; otherwise None.
   """
-  result, _ = try_job_service.OnTryJobStateChanged(
-      try_job_id, failure_type.FLAKY_TEST, build_json)
+  result, _ = try_job_service.OnTryJobStateChanged(try_job_id,
+                                                   failure_type.FLAKY_TEST,
+                                                   build_json)
 
   if result is not None:
     result = FlakeTryJobResult.FromSerializable(result)
