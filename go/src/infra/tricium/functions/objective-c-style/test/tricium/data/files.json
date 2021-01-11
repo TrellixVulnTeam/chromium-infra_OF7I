@@ -1,6 +1,8 @@
 {
 	"files": [
     { "path": "src/bad_get.mm" },
-    { "path": "src/good_get.mm" }
+    { "path": "src/good_get.mm" },
+    { "path": "src/bad_delegate.mm" },
+    { "path": "src/good_delegate.mm" }
 	]
 }

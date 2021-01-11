@@ -24,8 +24,11 @@ const (
 var (
 	fileAllowlist = []string{".m", ".mm"}
 
-	// Captures return type and selector.
+	// Matches methods with get prefix. Captures return type and selector.
 	methodImplementationRegexp = regexp.MustCompile(`[-+]\s\((.+)\)(get.*)\s\{`)
+
+	// Matches delegate properties. Captures property specifiers.
+	propertyRegexp = regexp.MustCompile(`@property\((.*)\)\s*id<.*>\s.*[dD]elegate;`)
 )
 
 func main() {
@@ -54,7 +57,7 @@ func main() {
 			log.Printf("Skipping file: %q.", file.Path)
 			continue
 		}
-		if comments := checkGetPrefix(*inputDir, file.Path); comments != nil {
+		if comments := checkSourceFile(*inputDir, file.Path); comments != nil {
 			for _, comment := range comments {
 				log.Printf("%s: %s", file.Path, comment.Category)
 				output.Comments = append(output.Comments, comment)
@@ -79,13 +82,14 @@ func isAllowed(path string) bool {
 	return false
 }
 
-// checkGetPrefix looks for instances of methods starting with "get"
-// in the given file and returns comments, for methods where "get" prefix was
-// misused.
+// checkSourceFile looks performs various regex based checks and return comments
+// for found violations. Current checks include:
+// - flagging methods where "get" prefix was misused
+// - flagging strong delegates
 //
 // dirPath is the path to the repo directory base path, and filePath
 // is the relative path from the base to the file.
-func checkGetPrefix(base string, path string) []*tricium.Data_Comment {
+func checkSourceFile(base string, path string) []*tricium.Data_Comment {
 	content, err := ioutil.ReadFile(filepath.Join(base, path))
 	if err != nil {
 		log.Panicf("Failed to read file: %v", err)
@@ -94,6 +98,7 @@ func checkGetPrefix(base string, path string) []*tricium.Data_Comment {
 	contentString := string(content)
 	matches := methodImplementationRegexp.FindAllStringSubmatchIndex(contentString, -1)
 
+	// Look for methods where "get" prefix was misused.
 	var comments []*tricium.Data_Comment = nil
 	converter := newCharIndexToLineConverter(contentString)
 	for _, match := range matches {
@@ -111,6 +116,26 @@ func checkGetPrefix(base string, path string) []*tricium.Data_Comment {
 			comments = append(comments, comment)
 		}
 	}
+
+	// Look for strong delegate properties. In Objective-C the normal convention
+	// is to have "weak" delegate properties. "strong" delegate properties can
+	// cause retain cycles, which is quite error prone, because "strong" is
+	// default.
+	matches = propertyRegexp.FindAllStringSubmatchIndex(contentString, -1)
+	for _, match := range matches {
+		propertyStartIndex := match[0]
+		propertyEndIndex := match[1]
+		specifiers := contentString[match[2]:match[3]]
+		if !strings.Contains(specifiers, "weak") {
+			propertyStartLine := converter.getStartLine(propertyStartIndex)
+			comment := foundStrongDelegate(path,
+				propertyStartLine,
+				converter.getEndLine(propertyEndIndex),
+				converter.getEndChar(propertyStartLine))
+			comments = append(comments, comment)
+		}
+	}
+
 	return comments
 }
 
@@ -120,6 +145,18 @@ func foundGetPrefix(path string, startLine int, endLine int, functionEndChar int
 		Message: "The use of \"get\" is unnecessary, unless one or more values " +
 			"are returned indirectly. See: " +
 			"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CodingGuidelines/Articles/NamingMethods.html#:~:text=The%20use%20of%20%22get%22%20is%20unnecessary,%20unless%20one%20or%20more%20values%20are%20returned%20indirectly.",
+		Path:      path,
+		StartLine: int32(startLine),
+		EndLine:   int32(endLine),
+		StartChar: 0, // always zero
+		EndChar:   int32(functionEndChar),
+	}
+}
+
+func foundStrongDelegate(path string, startLine int, endLine int, functionEndChar int) *tricium.Data_Comment {
+	return &tricium.Data_Comment{
+		Category:  fmt.Sprintf("ObjectiveCStyle/StrongDelegate"),
+		Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
 		Path:      path,
 		StartLine: int32(startLine),
 		EndLine:   int32(endLine),

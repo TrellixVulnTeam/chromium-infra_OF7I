@@ -14,18 +14,125 @@ import (
 // These tests read from files on the filesystem, so modifying the tests may
 // require modifying the example test files.
 const (
-	good string = "test/src/good_get.mm"
-	bad  string = "test/src/bad_get.mm"
+	goodGet      string = "test/src/good_get.mm"
+	badGet       string = "test/src/bad_get.mm"
+	goodDelegate string = "test/src/good_delegate.mm"
+	badDelegate  string = "test/src/bad_delegate.mm"
 )
 
 func TestGetPrefix(t *testing.T) {
 
 	Convey("Produces no comment for file with correct function names", t, func() {
-		So(checkGetPrefix("", good), ShouldBeNil)
+		So(checkSourceFile("", goodGet), ShouldBeNil)
+	})
+
+	Convey("Produces no comment for file with correct delegate specifiers", t, func() {
+		So(checkSourceFile("", goodDelegate), ShouldBeNil)
+	})
+
+	Convey("Flags strong delegates", t, func() {
+		c := checkSourceFile("", badDelegate)
+		So(c, ShouldNotBeNil)
+		So(c, ShouldResemble, []*tricium.Data_Comment{
+
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 4,
+				EndLine:   4,
+				StartChar: 0,
+				EndChar:   43,
+			},
+
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 5,
+				EndLine:   5,
+				StartChar: 0,
+				EndChar:   53,
+			},
+
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 6,
+				EndLine:   6,
+				StartChar: 0,
+				EndChar:   54,
+			},
+
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 7,
+				EndLine:   7,
+				StartChar: 0,
+				EndChar:   51,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 8,
+				EndLine:   8,
+				StartChar: 0,
+				EndChar:   54,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 9,
+				EndLine:   9,
+				StartChar: 0,
+				EndChar:   43,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 10,
+				EndLine:   10,
+				StartChar: 0,
+				EndChar:   46,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 11,
+				EndLine:   11,
+				StartChar: 0,
+				EndChar:   46,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 12,
+				EndLine:   12,
+				StartChar: 0,
+				EndChar:   45,
+			},
+			{
+				Category:  "ObjectiveCStyle/StrongDelegate",
+				Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 13,
+				EndLine:   13,
+				StartChar: 0,
+				EndChar:   50,
+			},
+		})
 	})
 
 	Convey("Flags functions have unnecessary get prefixes", t, func() {
-		c := checkGetPrefix("", bad)
+		c := checkSourceFile("", badGet)
 		So(c, ShouldNotBeNil)
 		So(c, ShouldResemble, []*tricium.Data_Comment{
 			{
