@@ -29,6 +29,8 @@ message Machine {
     // The format will be machines/asset:XXX or machines/sn:XXX
     string name = 1;
     // serial_number of the machine.
+    // for chromeOS machine, user is not allowed to update this field.
+    // SSW will update this field.
     string serial_number = 2;
 
     // Location details of where the machine is placed
@@ -105,13 +107,15 @@ message ChromeOSMachine {
     string google_code_name = 5;
     // HaRT doesn't guarantee its existence.
     string mac_address = 6;
-    string sku = 7;
+    // User not allowed to update this field. SSW will update this field.
+    string sku = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
     // Phase of the device [PVT, EVT, etc,.] if available.
     string phase = 8;
     // Cost center associated with the asset.
     string cost_center = 9;
     // The manufacturing ID for a given DUT
-    string hwid = 10;
+    // User not allowed to update this field. SSW will update this field.
+    string hwid = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // ChromeOSDeviceType refers to the different types of

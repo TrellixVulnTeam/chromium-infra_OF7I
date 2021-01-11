@@ -125,6 +125,14 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			machine.GetChromeBrowserMachine().DracObject = nil
 		}
 
+		if machine.GetChromeosMachine() != nil {
+			// OUTPUT_ONLY fields for chrome os machine.
+			// copy back original values.
+			machine.SerialNumber = oldMachine.GetSerialNumber()
+			machine.GetChromeosMachine().Sku = oldMachine.GetChromeosMachine().GetSku()
+			machine.GetChromeosMachine().Hwid = oldMachine.GetChromeosMachine().GetHwid()
+		}
+
 		// Do not let updating from browser to os or vice versa change for machine.
 		if oldMachine.GetChromeBrowserMachine() != nil && machine.GetChromeosMachine() != nil {
 			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update a browser machine to os machine. Please delete the browser machine and create a new os machine")
