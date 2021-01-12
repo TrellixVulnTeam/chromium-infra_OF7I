@@ -744,6 +744,7 @@ SPECS.update({
         Universal('paramiko', '2.4.1'),
         Universal('paramiko', '2.7.2'),
         Universal('pathlib2', '2.3.3'),
+        Universal('pathos', '0.2.7'),
         Universal('pbr', '3.0.0'),
         Universal('pipenv', '2018.11.26', pyversions=['py2']),
         Universal('pipenv', '2018.11.26', pyversions=['py3']),

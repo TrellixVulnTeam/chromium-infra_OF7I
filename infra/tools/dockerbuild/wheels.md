@@ -2816,6 +2816,20 @@ wheel: <
 
 * *universal*
 
+## **pathos**
+
+### 0.2.7
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pathos-py2_py3"
+  version: "version:0.2.7"
+>
+```
+
+
+* *universal*
+
 ## **pbr**
 
 ### 3.0.0
