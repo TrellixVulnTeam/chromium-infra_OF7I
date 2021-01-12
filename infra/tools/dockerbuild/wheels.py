@@ -359,6 +359,7 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
+            skip_plat=['linux-arm64-py3'],
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(

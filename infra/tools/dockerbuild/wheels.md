@@ -3224,7 +3224,6 @@ wheel: <
 
 
 * *linux-arm64*
-* *linux-arm64-py3*
 * *linux-armv6*
 * *linux-mips*
 * *linux-mips64*
