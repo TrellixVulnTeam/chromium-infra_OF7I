@@ -113,6 +113,9 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	nic.Name = ufsUtil.AddPrefix(ufsUtil.NicCollection, nic.Name)
+	if !ufsUtil.ValidateTags(nic.Tags) {
+		return errors.New(fmt.Sprintf("tags field contains invalidate characters."))
+	}
 	res, err := ic.UpdateNic(ctx, &ufsAPI.UpdateNicRequest{
 		Nic: &nic,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{

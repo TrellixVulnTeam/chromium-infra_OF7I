@@ -735,3 +735,16 @@ func GetSuffixAfterSeparator(name, seprator string) string {
 
 // ServoV3HostnameRegex is used to identify servo V3 hosts.
 var ServoV3HostnameRegex = regexp.MustCompile(`.*-servo`)
+
+// Invalid characters for tags field. Used by Contains/ContainsAny method.
+var invalidTagChars string = "="
+
+// ValidateTags checks if the tags contain only valid characters
+func ValidateTags(tags []string) bool {
+	for _, t := range tags {
+		if strings.ContainsAny(t, invalidTagChars) {
+			return false
+		}
+	}
+	return true
+}

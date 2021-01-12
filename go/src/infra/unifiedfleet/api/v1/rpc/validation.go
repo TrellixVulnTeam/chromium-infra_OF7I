@@ -605,6 +605,9 @@ func validateNic(nic *ufspb.Nic) error {
 	if nic.GetMacAddress() == "" {
 		return status.Errorf(codes.InvalidArgument, "nic macAddress cannot be empty")
 	}
+	if !util.ValidateTags(nic.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, "tags field contains invalidate characters.")
+	}
 	newMac, err := util.ParseMac(nic.GetMacAddress())
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, err.Error())
@@ -704,6 +707,9 @@ func (r *UpdateNicRequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		r.Nic.MacAddress = newMac
+	}
+	if !util.ValidateTags(r.Nic.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, "tags field contains invalidate characters.")
 	}
 	return validateResourceName(nicRegex, NicNameFormat, r.Nic.GetName())
 }
