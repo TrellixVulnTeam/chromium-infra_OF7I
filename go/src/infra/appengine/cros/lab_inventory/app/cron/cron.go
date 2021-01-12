@@ -323,10 +323,14 @@ func pushToDroneQueenCronHandler(c *router.Context) error {
 		return err
 	}
 
-	duts := make([]string, len(droneQueenRecord.DUTs))
-	for i := range duts {
-		duts[i] = droneQueenRecord.DUTs[i].Hostname
+	availableDuts := make([]*dronequeenapi.DeclareDutsRequest_Dut, len(droneQueenRecord.DUTs))
+	for i := range availableDuts {
+		availableDuts[i] = &dronequeenapi.DeclareDutsRequest_Dut{
+			Name: droneQueenRecord.DUTs[i].Hostname,
+			Hive: GetHiveForDut(droneQueenRecord.DUTs[i].Hostname),
+		}
 	}
+
 	ts, err := auth.GetTokenSource(ctx, auth.AsSelf)
 	if err != nil {
 		return err
@@ -336,12 +340,28 @@ func pushToDroneQueenCronHandler(c *router.Context) error {
 		C:    h,
 		Host: queenHostname,
 	})
-	logging.Debugf(ctx, "DUTs to declare: %#v", duts)
-	_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{Duts: duts})
+	logging.Debugf(ctx, "DUTs to declare: %#v", availableDuts)
+	_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{AvailableDuts: availableDuts})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// satlabRegex regular espression to get the hive value from a DUT hostname
+var satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
+
+// GetHiveForDut returns the hive value for a DUT.
+//
+// hive value is derived from the DUT hostname.
+func GetHiveForDut(d string) string {
+	/* TODO(eshwarn): Add logic to get hive for gTransit DUTs*/
+	// Satlab DUTs.
+	if satlabRegex.MatchString(d) {
+		return satlabRegex.FindString(d)
+	}
+	// Main lab DUTs.
+	return ""
 }
 
 func reportInventoryCronHandler(c *router.Context) error {
