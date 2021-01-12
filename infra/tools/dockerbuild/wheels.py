@@ -669,6 +669,7 @@ SPECS.update({
         Universal('cheroot', '6.2.4'),
         Universal('colorama', '0.4.1'),
         Universal('contextlib2', '0.5.5'),
+        Universal('dill', '0.3.3'),
         Universal('docker', '2.7.0'),
         Universal('docker-pycreds', '0.2.1'),
         Universal('enum34', '1.1.6', pyversions=['py2']),
