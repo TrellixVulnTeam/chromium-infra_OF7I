@@ -75,7 +75,9 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 // Approve a CL.
 func approveChange(ctx context.Context, gc gerrit.Client, t *taskspb.ChangeReviewTask) error {
 	labels := map[string]int32{"Bot-Commit": 1}
-	// TODO: conditional CQ+2
+	if t.AutoSubmit {
+		labels["Commit-Queue"] = 2
+	}
 
 	setReviewReq := &gerritpb.SetReviewRequest{
 		Number:     t.Number,
