@@ -273,11 +273,10 @@ func TestGetUnassignedDUTs(t *testing.T) {
 
 func TestAssignNewDUTs(t *testing.T) {
 	t.Parallel()
-	type loadIndicators = api.ReportDroneRequest_LoadIndicators
 	cases := []struct {
 		desc    string
 		initial []*entities.DUT
-		li      loadIndicators
+		li      *api.ReportDroneRequest_LoadIndicators
 		want    []*entities.DUT
 	}{
 		{
@@ -286,7 +285,7 @@ func TestAssignNewDUTs(t *testing.T) {
 				{ID: "ionasal"},
 				{ID: "nayaflask"},
 			},
-			li: loadIndicators{DutCapacity: 2},
+			li: &api.ReportDroneRequest_LoadIndicators{DutCapacity: 2},
 			want: []*entities.DUT{
 				{ID: "ionasal", AssignedDrone: "earthes"},
 				{ID: "nayaflask", AssignedDrone: "earthes"},
@@ -298,7 +297,7 @@ func TestAssignNewDUTs(t *testing.T) {
 				{ID: "ionasal"},
 				{ID: "nei", Draining: true},
 			},
-			li: loadIndicators{DutCapacity: 2},
+			li: &api.ReportDroneRequest_LoadIndicators{DutCapacity: 2},
 			want: []*entities.DUT{
 				{ID: "ionasal", AssignedDrone: "earthes"},
 			},
@@ -309,7 +308,7 @@ func TestAssignNewDUTs(t *testing.T) {
 				{ID: "ionasal", AssignedDrone: "earthes"},
 				{ID: "nei"},
 			},
-			li: loadIndicators{DutCapacity: 2},
+			li: &api.ReportDroneRequest_LoadIndicators{DutCapacity: 2},
 			want: []*entities.DUT{
 				{ID: "ionasal", AssignedDrone: "earthes"},
 				{ID: "nei", AssignedDrone: "earthes"},
@@ -322,7 +321,7 @@ func TestAssignNewDUTs(t *testing.T) {
 				{ID: "nei", AssignedDrone: "earthes"},
 				{ID: "casty"},
 			},
-			li: loadIndicators{DutCapacity: 1},
+			li: &api.ReportDroneRequest_LoadIndicators{DutCapacity: 1},
 			want: []*entities.DUT{
 				{ID: "ionasal", AssignedDrone: "earthes"},
 				{ID: "nei", AssignedDrone: "earthes"},
@@ -343,7 +342,7 @@ func TestAssignNewDUTs(t *testing.T) {
 			var got []*entities.DUT
 			f := func(ctx context.Context) error {
 				var err error
-				got, err = AssignNewDUTs(ctx, "earthes", &c.li, "")
+				got, err = AssignNewDUTs(ctx, "earthes", c.li, "")
 				return err
 			}
 			if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
