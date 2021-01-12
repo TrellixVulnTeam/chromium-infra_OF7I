@@ -76,14 +76,15 @@ def GetMetricsBasedOnCoverageTool(coverage_tool):
     {'name': clang, 'detail': blala}, where the name is the name of the metric
     and detail is an explanation of what the metric stands for.
   """
-  assert coverage_tool in ('clang', 'jacoco'), (
-      'Unrecognized coverage tool: %s' % coverage_tool)
-
   metrics = []
   if coverage_tool == 'clang':
     metrics = ['line', 'function', 'region']
-  else:
+  elif coverage_tool == 'v8':
+    metrics = ['line']
+  elif coverage_tool == 'jacoco':
     metrics = ['line', 'branch', 'instruction']
+  else:
+    raise AssertionError('Unrecognized coverage tool: %s' % coverage_tool)
 
   return [{
       'name': m,
