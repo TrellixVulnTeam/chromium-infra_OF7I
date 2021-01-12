@@ -3231,7 +3231,6 @@ wheel: <
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
-* *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
