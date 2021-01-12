@@ -359,7 +359,7 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
-            pyversions=['py2'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'psutil',
