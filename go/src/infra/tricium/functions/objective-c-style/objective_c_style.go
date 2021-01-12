@@ -82,8 +82,8 @@ func isAllowed(path string) bool {
 	return false
 }
 
-// checkSourceFile looks performs various regex based checks and return comments
-// for found violations. Current checks include:
+// checkSourceFile performs various regex based checks and return comments for
+// found violations. Current checks include:
 // - flagging methods where "get" prefix was misused
 // - flagging strong delegates
 //
