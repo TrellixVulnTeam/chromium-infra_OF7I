@@ -113,7 +113,6 @@ func AssignNewDUTs(ctx context.Context, d entities.DroneID, li *api.ReportDroneR
 	}
 	dutsNeeded := uint32ToInt(li.GetDutCapacity()) - len(currentDUTs)
 
-	// TODO (anhdle): Update this during full Satlab implementation.
 	newDUTs, err := getUnassignedDUTs(ctx, int32(dutsNeeded), hive)
 	if err != nil {
 		return nil, errors.Annotate(err, "assign new DUTs to %v", d).Err()

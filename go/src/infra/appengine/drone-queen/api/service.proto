@@ -48,6 +48,9 @@ message ReportDroneRequest {
     // total DUTs the drone can support.
     uint32 dut_capacity = 1;
   }
+  // hive value for the drone agent. This is used for DUT/drone affinity.
+  // DUTs with same hive value will be assigned to this drone.
+  string hive = 4;
 }
 message ReportDroneResponse {
   // status reports the status of the call.  It is important to check
