@@ -352,7 +352,14 @@ type DeclareDutsRequest struct {
 
 	// duts is all of the DUTs to be made available to drones.  DUTs
 	// omitted from this list will be drained and deleted.
+	// duts field is deprecated and will be removed.  Use available_duts instead.
+	//
+	// Deprecated: Do not use.
 	Duts []string `protobuf:"bytes,1,rep,name=duts,proto3" json:"duts,omitempty"`
+	// available_duts is a list of DUTs made available to drones.  It contains
+	// assignment information for a DUT.  DUTs omitted from this list will be
+	// drained and deleted.
+	AvailableDuts []*DeclareDutsRequest_Dut `protobuf:"bytes,2,rep,name=available_duts,json=availableDuts,proto3" json:"available_duts,omitempty"`
 }
 
 func (x *DeclareDutsRequest) Reset() {
@@ -387,9 +394,17 @@ func (*DeclareDutsRequest) Descriptor() ([]byte, []int) {
 	return file_infra_appengine_drone_queen_api_service_proto_rawDescGZIP(), []int{4}
 }
 
+// Deprecated: Do not use.
 func (x *DeclareDutsRequest) GetDuts() []string {
 	if x != nil {
 		return x.Duts
+	}
+	return nil
+}
+
+func (x *DeclareDutsRequest) GetAvailableDuts() []*DeclareDutsRequest_Dut {
+	if x != nil {
+		return x.AvailableDuts
 	}
 	return nil
 }
@@ -651,6 +666,64 @@ func (x *ReportDroneRequest_LoadIndicators) GetDutCapacity() uint32 {
 	return 0
 }
 
+type DeclareDutsRequest_Dut struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// name of the DUT.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// hive value of the DUT.  This is used for DUT/drone affinity.
+	// The DUT is assigned to a drone with same hive value.
+	Hive string `protobuf:"bytes,2,opt,name=hive,proto3" json:"hive,omitempty"`
+}
+
+func (x *DeclareDutsRequest_Dut) Reset() {
+	*x = DeclareDutsRequest_Dut{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeclareDutsRequest_Dut) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeclareDutsRequest_Dut) ProtoMessage() {}
+
+func (x *DeclareDutsRequest_Dut) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeclareDutsRequest_Dut.ProtoReflect.Descriptor instead.
+func (*DeclareDutsRequest_Dut) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_drone_queen_api_service_proto_rawDescGZIP(), []int{4, 0}
+}
+
+func (x *DeclareDutsRequest_Dut) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeclareDutsRequest_Dut) GetHive() string {
+	if x != nil {
+		return x.Hive
+	}
+	return ""
+}
+
 type ListDronesResponse_Drone struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -664,7 +737,7 @@ type ListDronesResponse_Drone struct {
 func (x *ListDronesResponse_Drone) Reset() {
 	*x = ListDronesResponse_Drone{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[11]
+		mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -677,7 +750,7 @@ func (x *ListDronesResponse_Drone) String() string {
 func (*ListDronesResponse_Drone) ProtoMessage() {}
 
 func (x *ListDronesResponse_Drone) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[11]
+	mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -727,7 +800,7 @@ type ListDutsResponse_Dut struct {
 func (x *ListDutsResponse_Dut) Reset() {
 	*x = ListDutsResponse_Dut{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[12]
+		mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -740,7 +813,7 @@ func (x *ListDutsResponse_Dut) String() string {
 func (*ListDutsResponse_Dut) ProtoMessage() {}
 
 func (x *ListDutsResponse_Dut) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[12]
+	mi := &file_infra_appengine_drone_queen_api_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,9 +901,17 @@ var file_infra_appengine_drone_queen_api_service_proto_rawDesc = []byte{
 	0x65, 0x55, 0x75, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x75, 0x74, 0x73, 0x18, 0x02, 0x20,
 	0x03, 0x28, 0x09, 0x52, 0x04, 0x64, 0x75, 0x74, 0x73, 0x22, 0x15, 0x0a, 0x13, 0x52, 0x65, 0x6c,
 	0x65, 0x61, 0x73, 0x65, 0x44, 0x75, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x28, 0x0a, 0x12, 0x44, 0x65, 0x63, 0x6c, 0x61, 0x72, 0x65, 0x44, 0x75, 0x74, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x75, 0x74, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x64, 0x75, 0x74, 0x73, 0x22, 0x15, 0x0a, 0x13, 0x44, 0x65,
+	0x22, 0xa7, 0x01, 0x0a, 0x12, 0x44, 0x65, 0x63, 0x6c, 0x61, 0x72, 0x65, 0x44, 0x75, 0x74, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x04, 0x64, 0x75, 0x74, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52, 0x04, 0x64, 0x75, 0x74, 0x73, 0x12,
+	0x4a, 0x0a, 0x0e, 0x61, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x64, 0x75, 0x74,
+	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x64, 0x72, 0x6f, 0x6e, 0x65, 0x5f,
+	0x71, 0x75, 0x65, 0x65, 0x6e, 0x2e, 0x44, 0x65, 0x63, 0x6c, 0x61, 0x72, 0x65, 0x44, 0x75, 0x74,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x44, 0x75, 0x74, 0x52, 0x0d, 0x61, 0x76,
+	0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x44, 0x75, 0x74, 0x73, 0x1a, 0x2d, 0x0a, 0x03, 0x44,
+	0x75, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x69, 0x76, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x69, 0x76, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x44, 0x65,
 	0x63, 0x6c, 0x61, 0x72, 0x65, 0x44, 0x75, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x22, 0x13, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x44, 0x72, 0x6f, 0x6e, 0x65, 0x73, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xdf, 0x01, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x44,
@@ -905,7 +986,7 @@ func file_infra_appengine_drone_queen_api_service_proto_rawDescGZIP() []byte {
 }
 
 var file_infra_appengine_drone_queen_api_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_infra_appengine_drone_queen_api_service_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_infra_appengine_drone_queen_api_service_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_infra_appengine_drone_queen_api_service_proto_goTypes = []interface{}{
 	(ReportDroneResponse_Status)(0),           // 0: drone_queen.ReportDroneResponse.Status
 	(*ReportDroneRequest)(nil),                // 1: drone_queen.ReportDroneRequest
@@ -919,32 +1000,34 @@ var file_infra_appengine_drone_queen_api_service_proto_goTypes = []interface{}{
 	(*ListDutsRequest)(nil),                   // 9: drone_queen.ListDutsRequest
 	(*ListDutsResponse)(nil),                  // 10: drone_queen.ListDutsResponse
 	(*ReportDroneRequest_LoadIndicators)(nil), // 11: drone_queen.ReportDroneRequest.LoadIndicators
-	(*ListDronesResponse_Drone)(nil),          // 12: drone_queen.ListDronesResponse.Drone
-	(*ListDutsResponse_Dut)(nil),              // 13: drone_queen.ListDutsResponse.Dut
-	(*timestamppb.Timestamp)(nil),             // 14: google.protobuf.Timestamp
+	(*DeclareDutsRequest_Dut)(nil),            // 12: drone_queen.DeclareDutsRequest.Dut
+	(*ListDronesResponse_Drone)(nil),          // 13: drone_queen.ListDronesResponse.Drone
+	(*ListDutsResponse_Dut)(nil),              // 14: drone_queen.ListDutsResponse.Dut
+	(*timestamppb.Timestamp)(nil),             // 15: google.protobuf.Timestamp
 }
 var file_infra_appengine_drone_queen_api_service_proto_depIdxs = []int32{
 	11, // 0: drone_queen.ReportDroneRequest.load_indicators:type_name -> drone_queen.ReportDroneRequest.LoadIndicators
 	0,  // 1: drone_queen.ReportDroneResponse.status:type_name -> drone_queen.ReportDroneResponse.Status
-	14, // 2: drone_queen.ReportDroneResponse.expiration_time:type_name -> google.protobuf.Timestamp
-	12, // 3: drone_queen.ListDronesResponse.drones:type_name -> drone_queen.ListDronesResponse.Drone
-	13, // 4: drone_queen.ListDutsResponse.duts:type_name -> drone_queen.ListDutsResponse.Dut
-	14, // 5: drone_queen.ListDronesResponse.Drone.expiration_time:type_name -> google.protobuf.Timestamp
-	1,  // 6: drone_queen.Drone.ReportDrone:input_type -> drone_queen.ReportDroneRequest
-	3,  // 7: drone_queen.Drone.ReleaseDuts:input_type -> drone_queen.ReleaseDutsRequest
-	5,  // 8: drone_queen.InventoryProvider.DeclareDuts:input_type -> drone_queen.DeclareDutsRequest
-	7,  // 9: drone_queen.Inspect.ListDrones:input_type -> drone_queen.ListDronesRequest
-	9,  // 10: drone_queen.Inspect.ListDuts:input_type -> drone_queen.ListDutsRequest
-	2,  // 11: drone_queen.Drone.ReportDrone:output_type -> drone_queen.ReportDroneResponse
-	4,  // 12: drone_queen.Drone.ReleaseDuts:output_type -> drone_queen.ReleaseDutsResponse
-	6,  // 13: drone_queen.InventoryProvider.DeclareDuts:output_type -> drone_queen.DeclareDutsResponse
-	8,  // 14: drone_queen.Inspect.ListDrones:output_type -> drone_queen.ListDronesResponse
-	10, // 15: drone_queen.Inspect.ListDuts:output_type -> drone_queen.ListDutsResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	15, // 2: drone_queen.ReportDroneResponse.expiration_time:type_name -> google.protobuf.Timestamp
+	12, // 3: drone_queen.DeclareDutsRequest.available_duts:type_name -> drone_queen.DeclareDutsRequest.Dut
+	13, // 4: drone_queen.ListDronesResponse.drones:type_name -> drone_queen.ListDronesResponse.Drone
+	14, // 5: drone_queen.ListDutsResponse.duts:type_name -> drone_queen.ListDutsResponse.Dut
+	15, // 6: drone_queen.ListDronesResponse.Drone.expiration_time:type_name -> google.protobuf.Timestamp
+	1,  // 7: drone_queen.Drone.ReportDrone:input_type -> drone_queen.ReportDroneRequest
+	3,  // 8: drone_queen.Drone.ReleaseDuts:input_type -> drone_queen.ReleaseDutsRequest
+	5,  // 9: drone_queen.InventoryProvider.DeclareDuts:input_type -> drone_queen.DeclareDutsRequest
+	7,  // 10: drone_queen.Inspect.ListDrones:input_type -> drone_queen.ListDronesRequest
+	9,  // 11: drone_queen.Inspect.ListDuts:input_type -> drone_queen.ListDutsRequest
+	2,  // 12: drone_queen.Drone.ReportDrone:output_type -> drone_queen.ReportDroneResponse
+	4,  // 13: drone_queen.Drone.ReleaseDuts:output_type -> drone_queen.ReleaseDutsResponse
+	6,  // 14: drone_queen.InventoryProvider.DeclareDuts:output_type -> drone_queen.DeclareDutsResponse
+	8,  // 15: drone_queen.Inspect.ListDrones:output_type -> drone_queen.ListDronesResponse
+	10, // 16: drone_queen.Inspect.ListDuts:output_type -> drone_queen.ListDutsResponse
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_drone_queen_api_service_proto_init() }
@@ -1086,7 +1169,7 @@ func file_infra_appengine_drone_queen_api_service_proto_init() {
 			}
 		}
 		file_infra_appengine_drone_queen_api_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListDronesResponse_Drone); i {
+			switch v := v.(*DeclareDutsRequest_Dut); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1098,6 +1181,18 @@ func file_infra_appengine_drone_queen_api_service_proto_init() {
 			}
 		}
 		file_infra_appengine_drone_queen_api_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListDronesResponse_Drone); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_drone_queen_api_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListDutsResponse_Dut); i {
 			case 0:
 				return &v.state
@@ -1116,7 +1211,7 @@ func file_infra_appengine_drone_queen_api_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_drone_queen_api_service_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

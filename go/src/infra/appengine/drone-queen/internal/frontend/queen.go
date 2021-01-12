@@ -159,6 +159,7 @@ func (q *DroneQueenImpl) DeclareDuts(ctx context.Context, req *api.DeclareDutsRe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	// TODO(eshwarn): This will be removed in the next CL (http://crrev.com/c/2611744)
 	f := func(ctx context.Context) error {
 		// Get existing DUTs.
 		q := datastore.NewQuery(entities.DUTKind).Ancestor(entities.DUTGroupKey(ctx))
@@ -206,8 +207,73 @@ func (q *DroneQueenImpl) DeclareDuts(ctx context.Context, req *api.DeclareDutsRe
 		}
 		return nil
 	}
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return nil, err
+	fa := func(ctx context.Context) error {
+		// Group key for DUT entity.
+		dutGroupKey := entities.DUTGroupKey(ctx)
+		// Get existing DUTs from datastore.
+		q := datastore.NewQuery(entities.DUTKind).Ancestor(dutGroupKey)
+		var existingDuts []entities.DUT
+		if err := datastore.GetAll(ctx, q, &existingDuts); err != nil {
+			return errors.Annotate(err, "get existing DUTs").Err()
+		}
+		// Create a map of existing DUTs for easy search.
+		existingMap := make(map[entities.DUTID]*entities.DUT)
+		for i := range existingDuts {
+			existingMap[existingDuts[i].ID] = &existingDuts[i]
+		}
+		// Aggregate the DUTs to be created/updated.
+		var updatedDuts []*entities.DUT
+		// To track the DUTs which are declared in this call.
+		declared := make(map[entities.DUTID]bool)
+		for _, availableDut := range req.GetAvailableDuts() {
+			if availableDut.GetName() == "" {
+				continue
+			}
+			dutID := entities.DUTID(availableDut.GetName())
+			if dut, ok := existingMap[dutID]; ok {
+				// This is an already existing DUT.
+				if dut.Draining || dut.Hive != availableDut.GetHive() {
+					// DUT is updated only if it's draining (as it is redeclared)
+					// or the hive value is changed.
+					// Undrain it as it is a re-declared DUT.
+					dut.Draining = false
+					// Update the hive value of the DUT.
+					dut.Hive = availableDut.GetHive()
+					updatedDuts = append(updatedDuts, dut)
+				}
+			} else {
+				// This is a newly declared DUT.
+				updatedDuts = append(updatedDuts,
+					&entities.DUT{
+						ID:    dutID,
+						Group: dutGroupKey,
+						Hive:  availableDut.GetHive(),
+					})
+			}
+			// Mark the DUT as declared in this call.
+			declared[dutID] = true
+		}
+		// Drain existing DUTs that were not declared.
+		for i := range existingDuts {
+			if !declared[existingDuts[i].ID] {
+				existingDuts[i].Draining = true
+				updatedDuts = append(updatedDuts, &existingDuts[i])
+			}
+		}
+		// Update modified DUTs and add newly declared DUTs.
+		if err := datastore.Put(ctx, updatedDuts); err != nil {
+			return errors.Annotate(err, "add DUTs").Err()
+		}
+		return nil
+	}
+	if len(req.GetAvailableDuts()) == 0 {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := datastore.RunInTransaction(ctx, fa, nil); err != nil {
+			return nil, err
+		}
 	}
 	return &api.DeclareDutsResponse{}, nil
 }

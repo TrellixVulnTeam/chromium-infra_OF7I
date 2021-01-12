@@ -134,6 +134,54 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		}
 		assertDatastoreDUTs(ctx, t, want)
 	})
+	t.Run("declare new DUTs with hive", func(t *testing.T) {
+		t.Parallel()
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		var d DroneQueenImpl
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion", Hive: "hive-A"},
+			{Name: "nelo", Hive: "hive-B"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
+		if err != nil {
+			t.Fatal(err)
+		}
+		k := entities.DUTGroupKey(ctx)
+		want := []*entities.DUT{
+			{ID: "ion", Hive: "hive-A", Group: k},
+			{ID: "nelo", Hive: "hive-B", Group: k},
+		}
+		assertDatastoreDUTs(ctx, t, want)
+	})
+	t.Run("declare DUTs with updated hive", func(t *testing.T) {
+		t.Parallel()
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		var d DroneQueenImpl
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion", Hive: "hive-A"},
+			{Name: "nelo", Hive: "hive-B"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
+		if err != nil {
+			t.Fatal(err)
+		}
+		availableDuts = []*api.DeclareDutsRequest_Dut{
+			{Name: "ion", Hive: "hive-C"},
+			{Name: "nelo", Hive: "hive-B"},
+		}
+		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
+		if err != nil {
+			t.Fatal(err)
+		}
+		k := entities.DUTGroupKey(ctx)
+		want := []*entities.DUT{
+			{ID: "ion", Hive: "hive-C", Group: k},
+			{ID: "nelo", Hive: "hive-B", Group: k},
+		}
+		assertDatastoreDUTs(ctx, t, want)
+	})
 }
 
 func TestDroneQueenImpl_ReleaseDuts(t *testing.T) {
@@ -313,10 +361,12 @@ func TestDroneQueenImpl_ReportDrone(t *testing.T) {
 
 func TestDroneQueenImpl_workflows(t *testing.T) {
 	t.Parallel()
+	// TODO(eshwarn): This will be removed in next CL (http://crrev.com/c/2611744)
+	t.Run("happy path Duts", testHappyPathDuts)
 	t.Run("happy path", testHappyPath)
 }
 
-func testHappyPath(t *testing.T) {
+func testHappyPathDuts(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
@@ -357,6 +407,59 @@ func testHappyPath(t *testing.T) {
 		t.Errorf("Got %v DUTs; expected 1", n)
 	}
 	assertSubsetStrings(t, duts, res.AssignedDuts)
+	if len(res.DrainingDuts) != 0 {
+		t.Errorf("Got draining DUTs %v; want none", res.DrainingDuts)
+	}
+	if e := goTime(res.ExpirationTime); !e.After(now) {
+		t.Errorf("Got expiration time %v; expected time after %v", e, now)
+	}
+}
+
+func testHappyPath(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	now := time.Date(2000, 1, 2, 3, 4, 5, 6, time.UTC)
+	d := DroneQueenImpl{
+		nowFunc: staticTime(now),
+	}
+	// Declare some DUTs.
+	availableDuts := []*api.DeclareDutsRequest_Dut{
+		{Name: "ion", Hive: "hive-A"},
+		{Name: "casty", Hive: "hive-A"},
+		{Name: "nelo", Hive: "hive-B"},
+	}
+	_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
+	if err != nil {
+		t.Fatal(err)
+	}
+	k := entities.DUTGroupKey(ctx)
+	want := []*entities.DUT{
+		{ID: "ion", Hive: "hive-A", Group: k},
+		{ID: "casty", Hive: "hive-A", Group: k},
+		{ID: "nelo", Hive: "hive-B", Group: k},
+	}
+	assertDatastoreDUTs(ctx, t, want)
+	// Call ReportDrone.
+	res, err := d.ReportDrone(ctx, &api.ReportDroneRequest{
+		LoadIndicators: &api.ReportDroneRequest_LoadIndicators{
+			DutCapacity: 2,
+		},
+		Hive: "hive-A",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := res.Status; s != api.ReportDroneResponse_OK {
+		t.Errorf("Got report status %v; want OK", s)
+	}
+	if res.DroneUuid == "" {
+		t.Errorf("Got empty drone UUID; expected a new UUID to be assigned")
+	}
+	if n := len(res.AssignedDuts); n != 2 {
+		t.Errorf("Got %v DUTs; expected 2", n)
+	}
+	assertSameStrings(t, []string{"ion", "casty"}, res.AssignedDuts)
 	if len(res.DrainingDuts) != 0 {
 		t.Errorf("Got draining DUTs %v; want none", res.DrainingDuts)
 	}
