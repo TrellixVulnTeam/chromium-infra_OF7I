@@ -266,7 +266,8 @@ def OnSwarmingTaskStateChanged(run_swarming_task_parameters, task_id):
   step_name = run_swarming_task_parameters.step_name
 
   data, test_results, error = (
-      swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
+      swarmed_test_util.GetSwarmingTaskDataAndResult(
+          task_id, use_resultdb=False))
 
   if not data or not data.get('state'):
     # Error when get task state.

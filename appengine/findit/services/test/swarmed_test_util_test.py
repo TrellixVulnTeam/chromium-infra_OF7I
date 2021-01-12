@@ -14,9 +14,12 @@ from libs import analysis_status
 from libs.test_results import test_results_util
 from libs.test_results.gtest_test_results import GtestTestResults
 from libs.test_results.blink_web_test_results import BlinkWebTestResults
+from libs.test_results.resultdb_test_results import ResultDBTestResults
+from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2
 from model.wf_swarming_task import WfSwarmingTask
 from services import constants
 from services import isolate
+from services import resultdb
 from services import swarmed_test_util
 from waterfall import waterfall_config
 from waterfall.test import wf_testcase
@@ -308,6 +311,29 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
     self.assertIsInstance(result, GtestTestResults)
     self.assertIsNone(error)
     mock_fn.assert_called_once_with('chromium-swarm.appspot.com', task_id, None)
+
+  @mock.patch.object(
+      swarming_util,
+      'GetSwarmingTaskResultById',
+      return_value=({
+          'state': constants.STATE_COMPLETED
+      }, None))
+  @mock.patch.object(
+      swarming_util,
+      'GetInvocationNameForSwarmingTask',
+      return_value="inv_name")
+  @mock.patch.object(resultdb, 'query_resultdb')
+  def testGetTestResultForSwarmingTaskWithResultDBEnabled(
+      self, resultdb_mock, *_):
+    resultdb_mock.return_value = [
+        test_result_pb2.TestResult(
+            test_id="ninja://gpu:gl_tests/SharedImageTest.Basic")
+    ]
+    data, result, error = swarmed_test_util.GetSwarmingTaskDataAndResult(
+        'task_id', use_resultdb=True)
+    self.assertEqual({'state': constants.STATE_COMPLETED}, data)
+    self.assertIsInstance(result, ResultDBTestResults)
+    self.assertIsNone(error)
 
   @mock.patch.object(
       swarmed_test_util,

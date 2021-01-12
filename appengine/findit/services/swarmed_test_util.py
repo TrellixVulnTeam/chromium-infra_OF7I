@@ -15,8 +15,10 @@ from dto.swarming_task_error import SwarmingTaskError
 from dto.test_location import TestLocation
 from infra_api_clients.swarming import swarming_util
 from libs.test_results import test_results_util
+from libs.test_results.resultdb_test_results import ResultDBTestResults
 from services import isolate
 from services import constants
+from services import resultdb
 from services import swarming
 from waterfall import waterfall_config
 
@@ -31,7 +33,9 @@ def GetOutputJsonByOutputsRef(outputs_ref, http_client):
   return json.loads(file_content) if file_content else None, error
 
 
-def GetSwarmingTaskDataAndResult(task_id, http_client=_FINDIT_HTTP_CLIENT):
+def GetSwarmingTaskDataAndResult(task_id,
+                                 http_client=_FINDIT_HTTP_CLIENT,
+                                 use_resultdb=False):
   """Gets information about a swarming task.
 
   Returns: A tuple of 3 elements
@@ -47,30 +51,38 @@ def GetSwarmingTaskDataAndResult(task_id, http_client=_FINDIT_HTTP_CLIENT):
     return None, None, error
 
   task_state = data['state']
+  test_results = None
   output_json = None
   if task_state not in constants.STATE_NOT_STOP:
     if task_state == constants.STATE_COMPLETED:
-      outputs_ref = data.get('outputs_ref')
-
-      # If swarming task aborted because of errors in request arguments,
-      # it's possible that there is no outputs_ref.
-      if not outputs_ref:
-        error = error or SwarmingTaskError.GenerateError(
-            swarming_task_error.NO_TASK_OUTPUTS)
+      if use_resultdb:
+        inv_name = swarming_util.GetInvocationNameForSwarmingTask(
+            swarming.SwarmingHost(), task_id)
+        res = resultdb.query_resultdb(
+            inv_name, only_variants_with_unexpected_results=False)
+        if res:
+          test_results = ResultDBTestResults(res)
       else:
-        output_json, error = GetOutputJsonByOutputsRef(outputs_ref, http_client)
-        if not output_json:
+        outputs_ref = data.get('outputs_ref')
+
+        # If swarming task aborted because of errors in request arguments,
+        # it's possible that there is no outputs_ref.
+        if not outputs_ref:
           error = error or SwarmingTaskError.GenerateError(
-              swarming_task_error.NO_OUTPUT_JSON)
+              swarming_task_error.NO_TASK_OUTPUTS)
+        else:
+          output_json, error = GetOutputJsonByOutputsRef(
+              outputs_ref, http_client)
+          if not output_json:
+            error = error or SwarmingTaskError.GenerateError(
+                swarming_task_error.NO_OUTPUT_JSON)
+          test_results = test_results_util.GetTestResultObject(output_json)
     else:
       # The swarming task did not complete successfully.
       logging.error('Swarming task %s stopped with status: %s', task_id,
                     task_state)
       error = SwarmingTaskError.GenerateError(
           swarming_task_error.STATES_NOT_RUNNING_TO_ERROR_CODES[task_state])
-
-  test_results = None if not output_json \
-      else test_results_util.GetTestResultObject(output_json)
   return data, test_results, error
 
 
