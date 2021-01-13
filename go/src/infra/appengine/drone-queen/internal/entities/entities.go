@@ -71,6 +71,7 @@ type Drone struct {
 	ID          DroneID `gae:"$id"`
 	Expiration  time.Time
 	Description string
+	Hive        string
 }
 
 // Equal implements equality.

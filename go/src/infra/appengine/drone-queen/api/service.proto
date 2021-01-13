@@ -112,6 +112,7 @@ message ListDronesResponse {
     string id = 1;
     google.protobuf.Timestamp expiration_time = 2;
     string drone_description = 3;
+    string hive = 4;
   }
   repeated Drone drones = 1;
 }

@@ -66,6 +66,7 @@ func (q *DroneQueenImpl) ReportDrone(ctx context.Context, req *api.ReportDroneRe
 		}
 		d.Expiration = q.now().Add(config.AssignmentDuration(ctx)).UTC()
 		d.Description = req.GetDroneDescription()
+		d.Hive = req.GetHive()
 		if err = datastore.Put(ctx, &d); err != nil {
 			return errors.Annotate(err, "refresh drone expiration").Err()
 		}
@@ -232,6 +233,7 @@ func (q *DroneQueenImpl) ListDrones(ctx context.Context, req *api.ListDronesRequ
 			Id:               string(d.ID),
 			ExpirationTime:   t,
 			DroneDescription: d.Description,
+			Hive:             d.Hive,
 		})
 	}
 	return res, nil
