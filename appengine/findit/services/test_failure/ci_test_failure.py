@@ -20,6 +20,7 @@ from model.wf_step import WfStep
 from services import ci_failure
 from services import constants
 from services import resultdb
+from services import resultdb_util
 from services import step_util
 from services import swarmed_test_util
 from services import swarming
@@ -74,21 +75,6 @@ def _SaveIsolatedResultToStep(master_name, builder_name, build_number,
     step.put()
 
 
-def QueryResultDBForFailedTestInSteps(failed_step):
-  all_results = []
-  # TODO (nqmtuan): Consider running this in parallel
-  for swarming_id in failed_step.swarming_ids:
-    inv_name = swarming_util.GetInvocationNameForSwarmingTask(
-        swarming.SwarmingHost(), swarming_id)
-    if not inv_name:
-      logging.error("Could not get invocation for swarming task %s",
-                    swarming_id)
-      continue
-    res = resultdb.query_resultdb(inv_name)
-    all_results.extend(res)
-  return all_results
-
-
 def _StartTestLevelCheckForFirstFailure(master_name,
                                         builder_name,
                                         build_number,
@@ -99,9 +85,7 @@ def _StartTestLevelCheckForFirstFailure(master_name,
   """Downloads test results and initiates first failure info at test level."""
   test_results_object = None
   if use_resultdb:
-    all_results = QueryResultDBForFailedTestInSteps(failed_step)
-    if all_results:
-      test_results_object = ResultDBTestResults(all_results)
+    test_results_object = resultdb_util.get_failed_tests_in_step(failed_step)
   else:
     list_isolated_data = failed_step.list_isolated_data
     list_isolated_data = (

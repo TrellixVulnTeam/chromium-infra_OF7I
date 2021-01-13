@@ -7,10 +7,13 @@ import json
 import mock
 import os
 
+from go.chromium.org.luci.resultdb.proto.v1 import common_pb2, test_result_pb2
 from libs.test_results import test_results_util
+from libs.test_results.resultdb_test_results import ResultDBTestResults
 from model.wf_analysis import WfAnalysis
 from model.wf_step import WfStep
 from services import extract_signal
+from services import resultdb_util
 from services import step_util
 from services import swarmed_test_util
 from services.parameters import TestFailureInfo
@@ -139,9 +142,8 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
 
     self.assertIsNotNone(step)
     self.assertIsNotNone(step.log_data)
-    self.assertEqual({
-        'third_party/blink/web_tests/fast/test.html': []
-    }, signals['blink_web_tests']['files'])
+    self.assertEqual({'third_party/blink/web_tests/fast/test.html': []},
+                     signals['blink_web_tests']['files'])
 
   @mock.patch.object(
       step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)
@@ -490,3 +492,89 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
         expected_signals,
         extract_test_signal.ExtractSignalsForTestFailure(
             TestFailureInfo.FromSerializable(failure_info), None))
+
+  @mock.patch.object(resultdb_util, 'get_failed_tests_in_step')
+  def testExtractSignalsForTestFailureWithResultDBEnabled(self, mock_resultdb):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 223
+
+    failure_info = {
+        'master_name': master_name,
+        'builder_name': builder_name,
+        'build_number': build_number,
+        'failed': True,
+        'chromium_revision': 'a_git_hash',
+        'failed_steps': {
+            'abc_test': {
+                'last_pass': 221,
+                'current_failure': 223,
+                'first_failure': 222,
+                'supported': True,
+                'tests': {
+                    'Unittest2.Subtest1': {
+                        'current_failure': 223,
+                        'first_failure': 222,
+                        'last_pass': 221
+                    },
+                    'Unittest3.Subtest2': {
+                        'current_failure': 223,
+                        'first_failure': 222,
+                        'last_pass': 221
+                    }
+                }
+            }
+        }
+    }
+    mock_resultdb.return_value = ResultDBTestResults([
+        test_result_pb2.TestResult(
+            test_id="ninja://Unittest2.Subtest1",
+            tags=[
+                common_pb2.StringPair(
+                    key="test_name", value="Unittest2.Subtest1"),
+            ],
+            status=test_result_pb2.TestStatus.CRASH,
+            summary_html='ERROR:x_test.cc:1234\na/b/u2s1.cc:567: Failure\nERROR:[2]: '  # pylint: disable=line-too-long
+            '2594735000 bogo-microseconds\nERROR:x_test.cc:1234\na/b/'
+            'u3s2.cc:123: Failure\n',
+        ),
+        test_result_pb2.TestResult(
+            test_id="ninja://Unittest3.Subtest2",
+            tags=[
+                common_pb2.StringPair(
+                    key="test_name", value="Unittest3.Subtest2"),
+            ],
+            status=test_result_pb2.TestStatus.CRASH,
+            summary_html='a/b/u3s2.cc:110: Failure\na/b/u3s2.cc:123: Failure\n',
+        ),
+    ])
+
+    expected_signals = {
+        'abc_test': {
+            'files': {
+                'a/b/u2s1.cc': [567],
+                'a/b/u3s2.cc': [123, 110]
+            },
+            'tests': {
+                'Unittest2.Subtest1': {
+                    'files': {
+                        'a/b/u2s1.cc': [567],
+                        'a/b/u3s2.cc': [123]
+                    },
+                    'keywords': {}
+                },
+                'Unittest3.Subtest2': {
+                    'files': {
+                        'a/b/u3s2.cc': [110, 123]
+                    },
+                    'keywords': {}
+                }
+            }
+        }
+    }
+    self.assertEqual(
+        expected_signals,
+        extract_test_signal.ExtractSignalsForTestFailure(
+            TestFailureInfo.FromSerializable(failure_info),
+            None,
+            use_resultdb=True))

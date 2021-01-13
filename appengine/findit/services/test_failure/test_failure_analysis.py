@@ -206,6 +206,7 @@ def HeuristicAnalysisForTest(heuristic_params):
   master_name = failure_info.master_name
   builder_name = failure_info.builder_name
   build_number = failure_info.build_number
+  use_resultdb = False
 
   # 1. Detects first failed builds for failed test step, updates failure_info.
   failure_info = ci_failure.CheckForFirstKnownFailure(master_name, builder_name,
@@ -214,7 +215,11 @@ def HeuristicAnalysisForTest(heuristic_params):
 
   # Checks first failed builds for each failed test.
   ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
-      master_name, builder_name, build_number, failure_info, use_resultdb=False)
+      master_name,
+      builder_name,
+      build_number,
+      failure_info,
+      use_resultdb=use_resultdb)
 
   analysis = WfAnalysis.Get(master_name, builder_name, build_number)
   analysis.failure_info = failure_info.ToSerializable()
@@ -226,7 +231,7 @@ def HeuristicAnalysisForTest(heuristic_params):
 
   # 2. Extracts failure signal.
   signals = extract_test_signal.ExtractSignalsForTestFailure(
-      failure_info, FinditHttpClient())
+      failure_info, FinditHttpClient(), use_resultdb=use_resultdb)
 
   # 3. Gets change_logs.
   change_logs = git.PullChangeLogs(

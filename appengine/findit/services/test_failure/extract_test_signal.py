@@ -15,13 +15,14 @@ from libs.test_results import test_results_util
 from model.wf_step import WfStep
 from services import extract_signal
 from services import constants
+from services import resultdb_util
 from services import swarmed_test_util
 from services.test_failure import test_results_service
 from waterfall import extractors
 from waterfall.failure_signal import FailureSignal
 
 
-def ExtractSignalsForTestFailure(failure_info, http_client):
+def ExtractSignalsForTestFailure(failure_info, http_client, use_resultdb=False):
   signals = {}
 
   master_name = failure_info.master_name
@@ -43,39 +44,45 @@ def ExtractSignalsForTestFailure(failure_info, http_client):
       failure_log = step.log_data
     else:
       json_formatted_log = True
+      test_results = None
       # 2. Gets test results.
-      list_isolated_data = failed_steps[step_name].list_isolated_data
-      list_isolated_data = (
-          list_isolated_data.ToSerializable() if list_isolated_data else [])
-      merged_test_results = (
-          swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-              list_isolated_data, http_client))
-      if merged_test_results:
-        test_results = test_results_util.GetTestResultObject(
-            merged_test_results)
-        if test_results:
-          failure_log, _ = (
-              test_results_service.GetFailedTestsInformationFromTestResult(
-                  test_results))
-          failure_log = json.dumps(
-              failure_log) if failure_log else constants.FLAKY_FAILURE_LOG
-        else:
-          failure_log = constants.WRONG_FORMAT_LOG
+      if not use_resultdb:
+        list_isolated_data = failed_steps[step_name].list_isolated_data
+        list_isolated_data = (
+            list_isolated_data.ToSerializable() if list_isolated_data else [])
+        merged_test_results = (
+            swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
+                list_isolated_data, http_client))
+        if merged_test_results:
+          test_results = test_results_util.GetTestResultObject(
+              merged_test_results)
+      else:  # Use resultdb
+        test_results = resultdb_util.get_failed_tests_in_step(
+            failed_steps[step_name])
 
-      if not merged_test_results or failure_log in [
+      if test_results:
+        failure_log, _ = (
+            test_results_service.GetFailedTestsInformationFromTestResult(
+                test_results))
+        failure_log = json.dumps(
+            failure_log) if failure_log else constants.FLAKY_FAILURE_LOG
+      else:
+        failure_log = constants.WRONG_FORMAT_LOG
+
+      if not test_results or failure_log in [
           constants.INVALID_FAILURE_LOG, constants.WRONG_FORMAT_LOG
       ]:
         # 3. Gets stdout log.
         json_formatted_log = False
-        failure_log = extract_signal.GetStdoutLog(
-            master_name, builder_name, build_number, step_name, http_client)
-
+        failure_log = extract_signal.GetStdoutLog(master_name, builder_name,
+                                                  build_number, step_name,
+                                                  http_client)
       try:
         if not failure_log:
           raise extract_signal.FailedToGetFailureLogError(
               'Failed to pull failure log (stdio or ninja output) of step %s of'
-              ' %s/%s/%d' % (step_name, master_name, builder_name,
-                             build_number))
+              ' %s/%s/%d' %
+              (step_name, master_name, builder_name, build_number))
       except extract_signal.FailedToGetFailureLogError:
         return {}
 
@@ -113,7 +120,8 @@ def ExtractSignalsForTestFailure(failure_info, http_client):
 
       signals[step_name]['files'] = step_signal.files
     else:
-      signals[step_name] = extractors.ExtractSignal(
-          master_name, builder_name, step_name, None, failure_log).ToDict()
+      signals[step_name] = extractors.ExtractSignal(master_name, builder_name,
+                                                    step_name, None,
+                                                    failure_log).ToDict()
 
   return signals
