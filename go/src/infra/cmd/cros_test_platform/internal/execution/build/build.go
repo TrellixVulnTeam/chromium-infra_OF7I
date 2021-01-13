@@ -81,8 +81,8 @@ func (i *InvocationStepUpdater) NotifyNewTask(task *skylab.Task) {
 
 const (
 	// Include a leading newline to separate from the step name.
-	latestAttemptTemplate    = "    * [latest attempt](%s)"
-	previousAttemptsTemplate = "    * previous failed attempts: %s"
+	latestAttemptTemplate    = "*    [latest attempt](%s)"
+	previousAttemptsTemplate = "*    previous failed attempts: %s"
 )
 
 func (i *InvocationStepUpdater) summary() string {
