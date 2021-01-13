@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
+	invV2cron "infra/appengine/cros/lab_inventory/app/cron"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/drone-queen/api"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
@@ -71,9 +72,12 @@ func (c *pushDutsRun) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return err
 	}
-	duts := make([]string, len(res.GetDuts()))
+	availableDuts := make([]*api.DeclareDutsRequest_Dut, len(res.GetDuts()))
 	for i, d := range res.GetDuts() {
-		duts[i] = d.GetHostname()
+		availableDuts[i] = &api.DeclareDutsRequest_Dut{
+			Name: d.GetHostname(),
+			Hive: invV2cron.GetHiveForDut(d.GetHostname()),
+		}
 	}
 
 	qc := api.NewInventoryProviderPRPCClient(&prpc.Client{
@@ -81,7 +85,7 @@ func (c *pushDutsRun) innerRun(a subcommands.Application, args []string, env sub
 		Host:    e.QueenService,
 		Options: site.DefaultPRPCOptions,
 	})
-	_, err = qc.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+	_, err = qc.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 	if err != nil {
 		return err
 	}
