@@ -254,6 +254,7 @@ func (q *DroneQueenImpl) ListDuts(ctx context.Context, req *api.ListDutsRequest)
 			Id:            string(d.ID),
 			AssignedDrone: string(d.AssignedDrone),
 			Draining:      d.Draining,
+			Hive:          d.Hive,
 		})
 	}
 	return res, nil

@@ -123,6 +123,7 @@ message ListDutsResponse {
     string id = 1;
     string assigned_drone = 2;
     bool draining = 3;
+    string hive = 4;
   }
   repeated Dut duts = 1;
 }
