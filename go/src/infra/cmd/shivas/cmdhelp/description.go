@@ -299,12 +299,23 @@ Examples:
 shivas update dut -f dut.json
 Update a DUT by reading a JSON file input.
 
-
-shivas update dut -f dut.json -ignore-deploy
-Update a DUT by reading a JSON file input and skip running deploy task.
-
-shivas update dut -f dut.json -ignore-ufs
+shivas update dut -f dut.json -deploy-only
 Trigger a deploy task on dut from reading dut.json. Ignore updating UFS.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -servo chromeos6-rack3-row2-labstation1:0 -servo-serial C1024356789
+Update servo connected to the DUT.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -servo -
+Delete servo connected to the DUT.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -rpm -
+Delete rpm connected to the DUT.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -tags kevin,no-test
+Add tags to an existing DUT and skip running deploy task.
+
+shivas update dut -f switch.json
+Update a DUT by reading a JSON file input.
 `
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
