@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 
 	"infra/appengine/drone-queen/api"
@@ -163,8 +164,8 @@ func (c *stubClient) ReportDrone(ctx context.Context, req *api.ReportDroneReques
 	c.m.Lock()
 	defer c.m.Unlock()
 	// Make a copy to prevent concurrent access.
-	res := *c.res
-	return &res, c.err
+	res := proto.Clone(c.res).(*api.ReportDroneResponse)
+	return res, c.err
 }
 
 func (c *stubClient) ReleaseDuts(ctx context.Context, req *api.ReleaseDutsRequest, _ ...grpc.CallOption) (*api.ReleaseDutsResponse, error) {
