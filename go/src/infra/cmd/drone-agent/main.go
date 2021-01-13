@@ -47,6 +47,9 @@ var (
 		ServiceAccountJSONPath: os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"),
 	}
 	workingDirPath = filepath.Join(os.Getenv("HOME"), "skylab_bots")
+	// hive value of the drone agent.  This is used for DUT/drone affinity.
+	// A drone is assigned DUTs with same hive value.
+	hive = os.Getenv("DRONE_AGENT_HIVE")
 )
 
 func main() {
@@ -94,6 +97,7 @@ func innerMain() error {
 		ReportingInterval: reportingInterval,
 		DUTCapacity:       dutCapacity,
 		StartBotFunc:      bot.NewStarter(h).Start,
+		Hive:              hive,
 	}
 	a.Run(ctx)
 	return nil

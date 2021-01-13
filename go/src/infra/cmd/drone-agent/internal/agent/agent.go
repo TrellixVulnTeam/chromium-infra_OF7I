@@ -48,6 +48,9 @@ type Agent struct {
 	// used for instrumenting the state for testing.  If nil, this
 	// is a no-op.
 	wrapStateFunc func(*state.State) stateInterface
+	// hive value of the drone agent.  This is used for DUT/drone affinity.
+	// A drone is assigned DUTs with same hive value.
+	Hive string
 }
 
 // logger defines the logging interface used by Agent.
@@ -250,6 +253,7 @@ func (a *Agent) reportRequest(ctx context.Context, uuid string) *api.ReportDrone
 			DutCapacity: intToUint32(a.DUTCapacity),
 		},
 		DroneDescription: hostname,
+		Hive:             a.Hive,
 	}
 	if shouldRefuseNewDUTs(ctx) {
 		req.LoadIndicators.DutCapacity = 0
