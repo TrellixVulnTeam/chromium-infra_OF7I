@@ -338,6 +338,13 @@ def _between(value, low, high):  # pragma: no cover
   return True
 
 
+status_v1_to_v2 = {
+    StatusFilter.STARTED: common_pb2.STARTED,
+    StatusFilter.SCHEDULED: common_pb2.SCHEDULED,
+    StatusFilter.COMPLETED: common_pb2.ENDED_MASK,
+}
+
+
 @ndb.tasklet
 def _query_search_async(q):
   """Searches for builds using NDB query. For args doc, see search().
@@ -372,20 +379,18 @@ def _query_search_async(q):
     dq = dq.filter(model.Build.tags == t)
   filter_if = lambda p, v: dq if v is None else dq.filter(p == v)
 
+  # convert v1 status to v2 status except for StatusFilter.INCOMPLETE.
+  q.status = status_v1_to_v2.get(q.status, q.status)
   expected_statuses_v1 = None
   if q.status == common_pb2.ENDED_MASK:
     dq = dq.filter(model.Build.incomplete == False)
-  elif not q.status_is_legacy:
-    dq = dq.filter(model.Build.status == q.status)
   elif q.status == StatusFilter.INCOMPLETE:
     expected_statuses_v1 = (
         model.BuildStatus.SCHEDULED, model.BuildStatus.STARTED
     )
     dq = dq.filter(model.Build.incomplete == True)
   elif q.status is not None:
-    s = model.BuildStatus.lookup_by_number(q.status.number)
-    expected_statuses_v1 = (s,)
-    dq = dq.filter(model.Build.status_legacy == s)
+    dq = dq.filter(model.Build.status == q.status)
 
   dq = filter_if(model.Build.result, q.result)
   dq = filter_if(model.Build.failure_reason, q.failure_reason)
