@@ -35,7 +35,7 @@ queue:
 
 - name: recomputederivedfields
   rate: 1/s
-  max_concurrent_requests: 10
+  max_concurrent_requests: 5
   retry_parameters:
     task_age_limit: 24h
     min_backoff_seconds: 60
