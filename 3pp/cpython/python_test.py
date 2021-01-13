@@ -148,8 +148,13 @@ class TestPython(unittest.TestCase):
       '-vpython-root', os.path.join(self.test_tdir, 'vpython'),
       '-c', script,
     ]
-    rv = subprocess.call(cmd, env=self.env)
-    self.assertEqual(rv, 0)
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=self.env)
+    stdout, _ = proc.communicate()
+    self.assertEqual(
+        proc.returncode, 0,
+        'Failed to import openssl libraries (return code %d). output:\n%s' %
+        (proc.returncode, stdout))
 
 
 if __name__ == '__main__':
