@@ -205,6 +205,15 @@ luci.notifier(
 )
 
 luci.notifier(
+    name = "tandrii-spam",
+    on_success = True,
+    on_failure = True,
+    notify_emails = ["tandrii+spam@google.com"],
+    template = "mdtest",
+    notified_by = ["infra-continuous-xenial-64"],
+)
+
+luci.notifier(
     name = "luci-notify-test-alerts",
     on_success = True,
     on_failure = True,
@@ -233,5 +242,18 @@ luci.notifier_template(
   <li>{{$s.Name}}</li>
 {{end}}
 </ol>
+""",
+)
+
+luci.notifier_template(
+    name = "mdtest",
+    body = """{{.Build.Builder | formatBuilderID}} notification
+
+<a href="{{buildUrl .}}">Build {{.Build.Number}}</a>
+has completed.
+
+<p>=== Markdown is here ===</p>
+{{.Build.SummaryMarkdown | markdown}}
+<p>=== Markdown ended above ===</p>
 """,
 )

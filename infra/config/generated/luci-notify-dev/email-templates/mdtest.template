@@ -1,0 +1,8 @@
+{{.Build.Builder | formatBuilderID}} notification
+
+<a href="{{buildUrl .}}">Build {{.Build.Number}}</a>
+has completed.
+
+<p>=== Markdown is here ===</p>
+{{.Build.SummaryMarkdown | markdown}}
+<p>=== Markdown ended above ===</p>
