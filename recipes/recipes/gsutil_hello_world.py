@@ -11,9 +11,7 @@ DEPS = [
   'recipe_engine/file',
   'recipe_engine/path',
   'recipe_engine/platform',
-  'recipe_engine/properties',
   'recipe_engine/python',
-  'recipe_engine/step',
   'recipe_engine/time',
 ]
 
@@ -32,9 +30,4 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-      api.test('linux') +
-      api.platform.name('linux') +
-      api.properties.generic(
-          buildername='test_builder',
-          mastername='test_master'))
+  yield api.test('linux') + api.platform.name('linux')

@@ -1039,11 +1039,11 @@ code.
 &mdash; **def [RunSteps](/recipes/recipes/gsubtreed.py#45)(api, target_repo, cycle_time_sec, max_error_count):**
 ### *recipes* / [gsutil\_hello\_world](/recipes/recipes/gsutil_hello_world.py)
 
-[DEPS](/recipes/recipes/gsutil_hello_world.py#8): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/gsutil_hello_world.py#8): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
-&mdash; **def [RunSteps](/recipes/recipes/gsutil_hello_world.py#21)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/gsutil_hello_world.py#19)(api):**
 ### *recipes* / [images\_builder](/recipes/recipes/images_builder.py)
 
 [DEPS](/recipes/recipes/images_builder.py#10): [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
