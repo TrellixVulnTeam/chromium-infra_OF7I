@@ -6,7 +6,7 @@ indexes:
 - kind: Build
   properties:
     - name: builder_id
-    - name: status
+    - name: status_v2
 
 # Milo builder page uses this index to load ended builds.
 - kind: Build
