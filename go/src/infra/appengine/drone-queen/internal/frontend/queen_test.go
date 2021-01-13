@@ -37,8 +37,11 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
 		var d DroneQueenImpl
-		duts := []string{"ion", "nelo"}
-		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,8 +57,13 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
 		var d DroneQueenImpl
-		duts := []string{"ion", "nelo", "", ""}
-		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+			{Name: ""},
+			{Name: ""},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -71,13 +79,20 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
 		var d DroneQueenImpl
-		duts := []string{"ion", "nelo"}
-		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
-		duts = []string{"ion", "nelo", "casty"}
-		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts = []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+			{Name: "casty"},
+		}
+		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -94,13 +109,18 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
 		var d DroneQueenImpl
-		duts := []string{"ion", "nelo"}
-		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
-		duts = []string{"ion"}
-		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts = []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+		}
+		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -116,13 +136,19 @@ func TestDroneQueenImpl_DeclareDuts(t *testing.T) {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
 		var d DroneQueenImpl
-		duts := []string{"ion", "nelo"}
-		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts := []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "nelo"},
+		}
+		_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
-		duts = []string{"ion", "casty"}
-		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{Duts: duts})
+		availableDuts = []*api.DeclareDutsRequest_Dut{
+			{Name: "ion"},
+			{Name: "casty"},
+		}
+		_, err = d.DeclareDuts(ctx, &api.DeclareDutsRequest{AvailableDuts: availableDuts})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -361,58 +387,7 @@ func TestDroneQueenImpl_ReportDrone(t *testing.T) {
 
 func TestDroneQueenImpl_workflows(t *testing.T) {
 	t.Parallel()
-	// TODO(eshwarn): This will be removed in next CL (http://crrev.com/c/2611744)
-	t.Run("happy path Duts", testHappyPathDuts)
 	t.Run("happy path", testHappyPath)
-}
-
-func testHappyPathDuts(t *testing.T) {
-	t.Parallel()
-	ctx := gaetesting.TestingContextWithAppID("go-test")
-	datastore.GetTestable(ctx).Consistent(true)
-	now := time.Date(2000, 1, 2, 3, 4, 5, 6, time.UTC)
-	d := DroneQueenImpl{
-		nowFunc: staticTime(now),
-	}
-	// Declare some DUTs.
-	duts := []string{"ion", "nelo"}
-	_, err := d.DeclareDuts(ctx, &api.DeclareDutsRequest{
-		Duts: duts,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	k := entities.DUTGroupKey(ctx)
-	want := []*entities.DUT{
-		{ID: "ion", Group: k},
-		{ID: "nelo", Group: k},
-	}
-	assertDatastoreDUTs(ctx, t, want)
-	// Call ReportDrone.
-	res, err := d.ReportDrone(ctx, &api.ReportDroneRequest{
-		LoadIndicators: &api.ReportDroneRequest_LoadIndicators{
-			DutCapacity: 1,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if s := res.Status; s != api.ReportDroneResponse_OK {
-		t.Errorf("Got report status %v; want OK", s)
-	}
-	if res.DroneUuid == "" {
-		t.Errorf("Got empty drone UUID; expected a new UUID to be assigned")
-	}
-	if n := len(res.AssignedDuts); n != 1 {
-		t.Errorf("Got %v DUTs; expected 1", n)
-	}
-	assertSubsetStrings(t, duts, res.AssignedDuts)
-	if len(res.DrainingDuts) != 0 {
-		t.Errorf("Got draining DUTs %v; want none", res.DrainingDuts)
-	}
-	if e := goTime(res.ExpirationTime); !e.After(now) {
-		t.Errorf("Got expiration time %v; expected time after %v", e, now)
-	}
 }
 
 func testHappyPath(t *testing.T) {

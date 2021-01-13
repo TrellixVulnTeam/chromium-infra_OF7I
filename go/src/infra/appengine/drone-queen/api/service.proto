@@ -88,10 +88,9 @@ message ReleaseDutsRequest {
 message ReleaseDutsResponse {}
 
 message DeclareDutsRequest {
-  // duts is all of the DUTs to be made available to drones.  DUTs
-  // omitted from this list will be drained and deleted.
-  // duts field is deprecated and will be removed.  Use available_duts instead.
-  repeated string duts = 1 [deprecated=true];
+  // duts is deprecated.  Use available_duts instead.
+  reserved 1;
+  reserved "duts";
 
   message Dut {
     // name of the DUT.
