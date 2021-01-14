@@ -24,7 +24,7 @@ for device in android cros; do
     -t "${image}:${date}" \
     -t "${image}:latest" \
     "${context_dir}" \
-    -f "${context_dir}/Dockerfile"
+    -f "Dockerfile"
 done
 
 exit 0
