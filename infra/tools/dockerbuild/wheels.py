@@ -310,7 +310,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'numpy',
             '1.19.2',
-            skip_plat=('mac-x64-cp38',),
+            skip_plat=['mac-x64-cp38', 'windows-x64-py3'],
             packaged=[],
             pyversions=['py3'],
         ),
