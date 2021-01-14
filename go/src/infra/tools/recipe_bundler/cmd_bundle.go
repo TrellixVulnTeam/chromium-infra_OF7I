@@ -412,7 +412,16 @@ func (c *cmdBundle) run(ctx context.Context) error {
 
 				return parallel.FanOutIn(func(chSpec chan<- func() error) {
 					for _, specref := range strings.Split(spec.ref, ",") {
-						resolvedSpecs, err := repo.resolveSpec(ctx, fetchSpec{spec.revision, specref})
+						fspec := fetchSpec{spec.revision, specref}
+						resolvedSpecs, err := repo.resolveSpec(ctx, fspec)
+						if err != nil {
+							err = errors.Annotate(err, "resolving git spec: %+v", fspec).Err()
+							chSpec <- func() error {
+								return err
+							}
+							continue
+						}
+
 						for _, resolvedSpec := range resolvedSpecs {
 							specref, resolvedSpec := specref, resolvedSpec
 							chSpec <- func() error {
