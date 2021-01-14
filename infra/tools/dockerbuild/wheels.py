@@ -755,6 +755,7 @@ SPECS.update({
         Universal('pluggy', '0.8.1'),
         Universal('ply', '3.11'),
         Universal('portend', '2.2'),
+        Universal('pox', '0.2.9'),
         Universal('protobuf', '3.2.0'),
         Universal('protobuf', '3.6.0'),
         Universal('protobuf', '3.6.1'),

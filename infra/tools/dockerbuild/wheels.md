@@ -3054,6 +3054,20 @@ wheel: <
 
 * *universal*
 
+## **pox**
+
+### 0.2.9
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pox-py2_py3"
+  version: "version:0.2.9"
+>
+```
+
+
+* *universal*
+
 ## **protobuf**
 
 ### 3.10.0
