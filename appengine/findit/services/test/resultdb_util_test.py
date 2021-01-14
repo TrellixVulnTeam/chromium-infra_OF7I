@@ -32,3 +32,11 @@ class ResultDBTest(wf_testcase.WaterfallTestCase):
     failed_step.swarming_ids = []
     test_results = resultdb_util.get_failed_tests_in_step(failed_step)
     self.assertIsNone(test_results)
+
+  @mock.patch.object(
+      swarming_util, 'GetInvocationNameForSwarmingTask', return_value=None)
+  def testGetFailedTestInStepWithNoInvocationName(self, *_):
+    failed_step = parameters.TestFailedStep()
+    failed_step.swarming_ids = ["1", "2"]
+    test_results = resultdb_util.get_failed_tests_in_step(failed_step)
+    self.assertIsNone(test_results)

@@ -105,6 +105,24 @@ class ResultDBTestResults(BaseTestResults):
             'UNSPECIFIED'] = test_info["num_unspecified"]
     return classified_results
 
+  def GetTestLocation(self, test_name):
+    """Gets test location for a specific test.
+    Returns: A tuple containing
+      * A dictionary of {
+          "line": line number of the test
+          "file": file path to the test
+        }
+      * A possible error string
+    """
+    location = None
+    for _, test_info in self.test_results.items():
+      if test_info["test_name"] == test_name:
+        location = test_info["test_location"]
+        break
+    if not location:
+      return None, 'test location not found'
+    return location, None
+
   @staticmethod
   def group_test_results_by_test_id(test_results):
     """Returns a dictionary of
@@ -114,6 +132,7 @@ class ResultDBTestResults(BaseTestResults):
         "reliable_failure": whether the test fail consistently
         "failure_logs": array of failure logs
         "test_type": type of test
+        "test_location": location of the test
         "total_run": number of runs for the test
         "num_expected_results": number of expected runs
         "num_unexpected_results": number of unexpected runs
@@ -143,6 +162,8 @@ class ResultDBTestResults(BaseTestResults):
             "failure_logs": [log] if is_failure else [],
             "test_type":
                 ResultDBTestResults.test_type_for_test_result(test_result),
+            "test_location":
+                ResultDBTestResults.test_location_for_test_result(test_result),
             "total_run":
                 0,
             "num_expected_results":
@@ -198,7 +219,7 @@ class ResultDBTestResults(BaseTestResults):
         classified_results["num_skipped"] += 1
       else:
         classified_results["num_notrun"] += 1
-    elif test_result.status == test_result_pb2.TestStatus.STATUS_UNSPECIFIED:
+    else:
       classified_results["num_unspecified"] += 1
 
   @staticmethod
@@ -232,3 +253,15 @@ class ResultDBTestResults(BaseTestResults):
         if "gtest" in tag.key:
           return ResultDBTestType.GTEST
     return ResultDBTestType.OTHER
+
+  @staticmethod
+  def test_location_for_test_result(test_result):
+    """Return test location for test_result"""
+    if (not test_result.test_metadata or
+        not test_result.test_metadata.location or
+        not test_result.test_metadata.location.file_name):
+      return None
+    return {
+        "line": test_result.test_metadata.location.line,
+        "file": test_result.test_metadata.location.file_name
+    }

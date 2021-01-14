@@ -5,7 +5,8 @@
 import base64
 import mock
 
-from go.chromium.org.luci.resultdb.proto.v1 import common_pb2, test_result_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import (common_pb2, test_result_pb2,
+                                                    test_metadata_pb2)
 from libs.test_results.resultdb_test_results import (ResultDBTestResults,
                                                      ResultDBTestType)
 from waterfall.test import wf_testcase
@@ -20,7 +21,12 @@ _SAMPLE_TEST_RESULTS = [
         ],
         status=test_result_pb2.TestStatus.CRASH,
         summary_html="summary",
-    ),
+        test_metadata=test_metadata_pb2.TestMetadata(
+            name="SharedImageTest.Basic",
+            location=test_metadata_pb2.TestLocation(
+                repo="https://chromium.googlesource.com/chromium/src",
+                file_name="/path/to/test",
+                line=123))),
     test_result_pb2.TestResult(
         test_id="ninja://gpu:gl_tests/SharedImageTest.Basic",
         tags=[
@@ -153,6 +159,10 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "reliable_failure": False,
                 "failure_logs": [u"summary"],
                 "test_type": ResultDBTestType.GTEST,
+                "test_location": {
+                    "file": "/path/to/test",
+                    "line": 123
+                },
                 "total_run": 2,
                 "num_expected_results": 1,
                 "num_unexpected_results": 1,
@@ -169,6 +179,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "reliable_failure": True,
                 "failure_logs": [u"summary1", u"summary2"],
                 "test_type": ResultDBTestType.GTEST,
+                "test_location": None,
                 "total_run": 2,
                 "num_expected_results": 0,
                 "num_unexpected_results": 2,
@@ -185,6 +196,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "reliable_failure": True,
                 "failure_logs": ['summary3'],
                 "test_type": ResultDBTestType.GTEST,
+                "test_location": None,
                 "total_run": 1,
                 "num_expected_results": 0,
                 "num_unexpected_results": 1,
@@ -201,6 +213,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "reliable_failure": False,
                 "failure_logs": [],
                 "test_type": ResultDBTestType.GTEST,
+                "test_location": None,
                 "total_run": 1,
                 "num_expected_results": 1,
                 "num_unexpected_results": 0,
@@ -217,6 +230,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "reliable_failure": False,
                 "failure_logs": [],
                 "test_type": ResultDBTestType.GTEST,
+                "test_location": None,
                 "total_run": 2,
                 "num_expected_results": 0,
                 "num_unexpected_results": 2,
@@ -327,3 +341,12 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
     for test_name, expected_test_result in expected_statuses.iteritems():
       self.assertEqual(expected_test_result,
                        classified_results[test_name].ToDict())
+
+  def testGetTestLocation(self):
+    rdb_test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
+    location, err = rdb_test_results.GetTestLocation("SharedImageTest.Basic")
+    self.assertEqual(location, {"file": "/path/to/test", "line": 123})
+    self.assertIsNone(err)
+    location, err = rdb_test_results.GetTestLocation("InvalidTest")
+    self.assertIsNone(location)
+    self.assertIsNotNone(err)
