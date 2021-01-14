@@ -53,7 +53,7 @@ const SHORTCUT_DOC_GROUPS = [
       },
       {
         keys: ['Ctrl+Enter', '\u2318+Enter'],
-        tip: 'save issue reply',
+        tip: 'save issue reply (submit issue on issue filing page)',
       },
     ],
   },

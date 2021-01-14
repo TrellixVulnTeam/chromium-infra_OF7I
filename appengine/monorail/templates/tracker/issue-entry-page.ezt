@@ -422,6 +422,13 @@ runOnLoad(function() {
     });
   }
 
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      $('submit_btn').click();
+    }
+  })
+
   window.onsubmit = function() {
     TKR_initialFormValues = TKR_currentFormValues();
   };
