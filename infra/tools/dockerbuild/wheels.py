@@ -318,7 +318,7 @@ SPECS.update({
             'pandas',
             '1.1.3',
             packaged=[],
-            skip_plat=['mac-x64-cp38'],
+            skip_plat=['mac-x64-cp38', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
