@@ -8,8 +8,8 @@
     "url": "https://chromium.googlesource.com/infra/infra"
   },
   "devDependencies": {
-    "acorn": "^7.1.0",
-    "eslint": "latest",
-    "eslint-config-google": "latest"
+    "acorn": "^8.0.4",
+    "eslint": "^7.17.0",
+    "eslint-config-google": "^0.14.0"
   }
 }
