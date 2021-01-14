@@ -76,10 +76,10 @@ func (c *inspectDutsRun) innerRun(a subcommands.Application, args []string, env 
 	defer bw.Flush()
 	tw := tabwriter.NewWriter(bw, 0, 2, 2, ' ', 0)
 	defer tw.Flush()
-	fmt.Fprintf(tw, "DUT\tDrone\tDraining\t\n")
+	fmt.Fprintf(tw, "DUT\tHive\tDrone\tDraining\t\n")
 	for _, d := range res.GetDuts() {
-		fmt.Fprintf(tw, "%v\t%v\t%v\t\n",
-			d.GetId(), d.GetAssignedDrone(), d.GetDraining())
+		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\t\n",
+			d.GetId(), d.GetHive(), d.GetAssignedDrone(), d.GetDraining())
 	}
 	return nil
 }
