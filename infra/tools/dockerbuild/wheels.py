@@ -873,7 +873,7 @@ SPECS.update({
             '2.6.1',
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
-            skip_plat=['mac-x64-cp38', 'linux-arm64-py3']),
+            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3']),
     )
 })
 
