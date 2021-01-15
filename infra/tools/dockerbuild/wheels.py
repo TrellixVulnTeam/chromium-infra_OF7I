@@ -865,16 +865,33 @@ SPECS.update({
 })
 
 from .wheel_cryptography import CryptographyPyPI
+_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS = [
+    'manylinux-x86',
+    'manylinux-x64',
+    'mac-x64',
+    'windows-x86',
+    'windows-x64',
+],
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'CryptographyPyPI',
-        CryptographyPyPI('cryptography', '2.0.3', openssl='1.1.0f'),
+        CryptographyPyPI(
+            'cryptography',
+            '2.0.3',
+            openssl='1.1.0f',
+            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
             'cryptography',
             '2.6.1',
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
-            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3']),
+            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3'],
+            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
+        CryptographyPyPI(
+            'cryptography',
+            '3.3.1',
+            openssl='1.1.1i',
+            pyversions=['py2', 'py3']),
     )
 })
 

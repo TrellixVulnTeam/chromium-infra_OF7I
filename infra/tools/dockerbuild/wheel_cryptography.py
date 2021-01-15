@@ -68,21 +68,24 @@ class Cryptography(Builder):
           dx,
           tdir,
           [
-            '#!/bin/bash',
-            'set -e',
-            'export NUM_CPU="$(getconf _NPROCESSORS_ONLN)"',
-            'echo "Using ${NUM_CPU} CPU(s)"',
-            ' '.join([
-              './Configure',
-              '-fPIC',
-              '--prefix=%s' % (prefix,),
-              'no-shared',
-              'no-afalgeng',  # https://github.com/openssl/openssl/issues/1685
-              'no-ssl3',
-              wheel.plat.openssl_target,
-            ]),
-            'make -j${NUM_CPU}',
-            'make install',
+              '#!/bin/bash',
+              'set -e',
+              'export NUM_CPU="$(getconf _NPROCESSORS_ONLN)"',
+              'echo "Using ${NUM_CPU} CPU(s)"',
+              ' '.join([
+                  './Configure',
+                  '-fPIC',
+                  '--prefix=%s' % (prefix,),
+                  # We already pass the full path in CC etc variables
+                  '--cross-compile-prefix=',
+                  'no-shared',
+                  # https://github.com/openssl/openssl/issues/1685
+                  'no-afalgeng',
+                  'no-ssl3',
+                  wheel.plat.openssl_target,
+              ]),
+              'make -j${NUM_CPU}',
+              'make install',
           ],
           cwd=openssl_dir,
       )
@@ -159,12 +162,5 @@ class CryptographyPyPI(Cryptography):
         arch_map={
             'mac-x64': ['macosx_10_6_intel'],
         },
-        packaged=[
-            'manylinux-x86',
-            'manylinux-x64',
-            'mac-x64',
-            'windows-x86',
-            'windows-x64',
-        ],
         pyversions=pyversions,
         **kwargs)
