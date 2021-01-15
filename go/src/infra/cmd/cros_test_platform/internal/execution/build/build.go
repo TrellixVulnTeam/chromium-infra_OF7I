@@ -8,7 +8,7 @@ package build
 
 import (
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 	"strings"
 	"time"
 
@@ -69,12 +69,12 @@ func (r *RequestStepUpdater) Close() error {
 // execution of an invocation.
 type InvocationStepUpdater struct {
 	step  *bbpb.Step
-	tasks []*skylab.Task
+	tasks []*testrunner.Build
 }
 
 // NotifyNewTask notifies the InvocationStepUpdater of the creation of a new
 // task for an invocation.
-func (i *InvocationStepUpdater) NotifyNewTask(task *skylab.Task) {
+func (i *InvocationStepUpdater) NotifyNewTask(task *testrunner.Build) {
 	i.tasks = append(i.tasks, task)
 	i.step.SummaryMarkdown = i.summary()
 }

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package skylab contains the logic for running individual test tasks.
-package skylab
+// Package testrunner exposes a way to interact with test_runner builds.
+package testrunner
 
 import (
 	"context"
@@ -61,8 +61,8 @@ func ValidateDependencies(ctx context.Context, c trservice.Client, argsGenerator
 	return nil, nil
 }
 
-// Task represents an individual test task.
-type Task struct {
+// Build represents an individual test_runner build.
+type Build struct {
 	argsGenerator  ArgsGenerator
 	args           request.Args
 	result         *skylab_test_runner.Result
@@ -72,10 +72,9 @@ type Task struct {
 	url            string
 }
 
-// NewTask creates a new buildbucket or swarming task for a test with the given
-// arguments.
-func NewTask(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerator) (*Task, error) {
-	t := &Task{argsGenerator: argsGenerator}
+// NewBuild creates a new test_runner build.
+func NewBuild(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerator) (*Build, error) {
+	t := &Build{argsGenerator: argsGenerator}
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "new task for %s", t.name()).Err()
@@ -92,13 +91,13 @@ func NewTask(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerato
 	return t, nil
 }
 
-// name is the task name as it is displayed in the UI.
-func (t *Task) name() string {
-	return t.args.Cmd.TaskName
+// name is the build name as it is displayed in the UI.
+func (b *Build) name() string {
+	return b.args.Cmd.TaskName
 }
 
-func (t *Task) autotestResult() *skylab_test_runner.Result_Autotest {
-	return t.result.GetAutotestResult()
+func (b *Build) autotestResult() *skylab_test_runner.Result_Autotest {
+	return b.result.GetAutotestResult()
 }
 
 // LifeCyclesWithResults lists all task states which have a chance of producing
@@ -113,27 +112,27 @@ var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
 	test_platform.TaskState_LIFE_CYCLE_RUNNING: true,
 }
 
-// Completed returns whether the current task is complete.
-func (t *Task) Completed() bool {
-	return !transientLifeCycles[t.lifeCycle]
+// Completed returns whether the current build is complete.
+func (b *Build) Completed() bool {
+	return !transientLifeCycles[b.lifeCycle]
 }
 
 // verdict aggregates the information about test cases contained in a task into
 // a single verdict.
-func (t *Task) verdict() test_platform.TaskState_Verdict {
-	if !t.Completed() {
+func (b *Build) verdict() test_platform.TaskState_Verdict {
+	if !b.Completed() {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if t.autotestResult() == nil {
+	if b.autotestResult() == nil {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if t.autotestResult().Incomplete {
+	if b.autotestResult().Incomplete {
 		return test_platform.TaskState_VERDICT_FAILED
 	}
 
 	// By default (if no test cases ran), then there is no verdict.
 	verdict := test_platform.TaskState_VERDICT_NO_VERDICT
-	for _, c := range t.autotestResult().GetTestCases() {
+	for _, c := range b.autotestResult().GetTestCases() {
 		switch c.Verdict {
 		case skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL:
 			// Any case failing means the flat verdict is a failure.
@@ -148,27 +147,27 @@ func (t *Task) verdict() test_platform.TaskState_Verdict {
 	return verdict
 }
 
-// Refresh fetches the state of the given task and updates the task
-// accordingly.
-func (t *Task) Refresh(ctx context.Context, c trservice.Client) error {
-	resp, err := c.FetchResults(ctx, t.taskReference)
+// Refresh fetches and updates the state of the given build from the test_runner
+// service.
+func (b *Build) Refresh(ctx context.Context, c trservice.Client) error {
+	resp, err := c.FetchResults(ctx, b.taskReference)
 
 	if err != nil {
 		return errors.Annotate(err, "refresh task").Err()
 	}
 
-	t.swarmingTaskID = c.SwarmingTaskID(t.taskReference)
-	t.lifeCycle = resp.LifeCycle
+	b.swarmingTaskID = c.SwarmingTaskID(b.taskReference)
+	b.lifeCycle = resp.LifeCycle
 
-	// The task is still running.
-	if transientLifeCycles[t.lifeCycle] {
+	// The build is still running.
+	if transientLifeCycles[b.lifeCycle] {
 		return nil
 	}
 
-	t.result = resp.Result
-	// If the autotest result is missing, treat the task as incomplete.
-	if t.autotestResult() == nil {
-		t.result = &skylab_test_runner.Result{
+	b.result = resp.Result
+	// If the autotest result is missing, treat the build as incomplete.
+	if b.autotestResult() == nil {
+		b.result = &skylab_test_runner.Result{
 			Harness: &skylab_test_runner.Result_AutotestResult{
 				AutotestResult: &skylab_test_runner.Result_Autotest{Incomplete: true},
 			},
@@ -183,9 +182,9 @@ var liftTestCaseRunnerVerdict = map[skylab_test_runner.Result_Autotest_TestCase_
 	skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL: test_platform.TaskState_VERDICT_FAILED,
 }
 
-// testCases unpacks test cases contained in the results of a task.
-func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
-	tcs := t.autotestResult().GetTestCases()
+// testCases unpacks test cases contained in the results of a build.
+func (b *Build) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
+	tcs := b.autotestResult().GetTestCases()
 	if len(tcs) == 0 {
 		// Prefer a nil over an empty slice since it's the proto default.
 		return nil
@@ -201,20 +200,20 @@ func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 	return ret
 }
 
-// Result constructs a TaskResults out of the data already contained in the
-// Task object. In order to get the latest result, FetchResult needs to be
-// called first.
-func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
+// Result constructs a TaskResults out of the last known state of the Build.
+//
+// In order to get the latest result, FetchResult needs to be called first.
+func (b *Build) Result() *steps.ExecuteResponse_TaskResult {
 	r := &steps.ExecuteResponse_TaskResult{
-		Name: t.name(),
+		Name: b.name(),
 		State: &test_platform.TaskState{
-			LifeCycle: t.lifeCycle,
-			Verdict:   t.verdict(),
+			LifeCycle: b.lifeCycle,
+			Verdict:   b.verdict(),
 		},
-		TaskUrl:   t.url,
-		TestCases: t.testCases(),
+		TaskUrl:   b.url,
+		TestCases: b.testCases(),
 	}
-	if ld := t.result.GetLogData(); ld != nil {
+	if ld := b.result.GetLogData(); ld != nil {
 		r.LogData = proto.Clone(ld).(*common.TaskLogData)
 		// Clients use r.LogUrl to link to logs as it pre-dates the introduction
 		// of r.LogData.StainlessUrl
@@ -223,14 +222,14 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 	return r
 }
 
-// Retry creates a new task to retry the current task.
+// Retry creates a new build to retry the current build.
 //
-// Retry does not check whether the current task is complete.
-func (t *Task) Retry(ctx context.Context, c trservice.Client) (*Task, error) {
-	return NewTask(ctx, c, t.argsGenerator)
+// Retry does not check whether the current build is complete.
+func (b *Build) Retry(ctx context.Context, c trservice.Client) (*Build, error) {
+	return NewBuild(ctx, c, b.argsGenerator)
 }
 
 // TaskURL returns the URL to the buildbucket build for this task.
-func (t *Task) TaskURL() string {
-	return t.url
+func (b *Build) TaskURL() string {
+	return b.url
 }

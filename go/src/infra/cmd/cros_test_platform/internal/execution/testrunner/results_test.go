@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package skylab
+package testrunner
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func (c *fakeClient) URL(trservice.TaskReference) string {
 
 func TestResultBeforeRefresh(t *testing.T) {
 	Convey("Give a single task that has not be Refresh()ed", t, func() {
-		t, err := NewTask(
+		t, err := NewBuild(
 			context.Background(),
 			&fakeClient{},
 			&fakeArgsGenerator{
@@ -294,7 +294,7 @@ func TestAutotestTestCases(t *testing.T) {
 }
 
 func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
-	t := &Task{
+	t := &Build{
 		result: &skylab_test_runner.Result{
 			Harness: &skylab_test_runner.Result_AutotestResult{
 				AutotestResult: autotestResult,

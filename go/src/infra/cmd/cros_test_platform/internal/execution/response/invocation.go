@@ -5,7 +5,7 @@
 package response
 
 import (
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -16,7 +16,7 @@ type Invocation struct {
 	Name             string
 	runnable         bool
 	rejectedTaskDims map[string]string
-	tasks            []*skylab.Task
+	tasks            []*testrunner.Build
 }
 
 // NewInvocation returns a new Invocation with the given name.
@@ -25,7 +25,7 @@ func NewInvocation(name string) *Invocation {
 }
 
 // NotifyTask notifies the test task set of a new task for the test.
-func (t *Invocation) NotifyTask(task *skylab.Task) {
+func (t *Invocation) NotifyTask(task *testrunner.Build) {
 	t.tasks = append(t.tasks, task)
 }
 
@@ -101,7 +101,7 @@ func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
 	return ret
 }
 
-func (t *Invocation) getLatestTask() *skylab.Task {
+func (t *Invocation) getLatestTask() *testrunner.Build {
 	if len(t.tasks) == 0 {
 		return nil
 	}

@@ -11,7 +11,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/build"
 	"infra/cmd/cros_test_platform/internal/execution/response"
 	"infra/cmd/cros_test_platform/internal/execution/retry"
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/cmd/cros_test_platform/internal/execution/types"
 	"time"
@@ -33,7 +33,7 @@ type RequestTaskSet struct {
 
 	argsGenerators      map[types.InvocationID]*args.Generator
 	invocationResponses map[types.InvocationID]*response.Invocation
-	activeTasks         map[types.InvocationID]*skylab.Task
+	activeTasks         map[types.InvocationID]*testrunner.Build
 	retryCounter        retry.Counter
 
 	step            *build.RequestStepUpdater
@@ -89,7 +89,7 @@ func NewRequestTaskSet(
 		argsGenerators:      argsGenerators,
 		invocationIDs:       invocationIDs,
 		invocationResponses: invocationResponses,
-		activeTasks:         make(map[types.InvocationID]*skylab.Task),
+		activeTasks:         make(map[types.InvocationID]*testrunner.Build),
 		retryCounter:        retry.NewCounter(params, tm),
 		invocationSteps:     invocationSteps,
 		step:                step,
@@ -108,8 +108,8 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c trservice.Client) er
 		ts := r.getInvocationResponse(iid)
 		ag := r.getArgsGenerator(iid)
 
-		if rejected, err := skylab.ValidateDependencies(ctx, c, ag); err != nil {
-			if !skylab.InvalidDependencies.In(err) {
+		if rejected, err := testrunner.ValidateDependencies(ctx, c, ag); err != nil {
+			if !testrunner.InvalidDependencies.In(err) {
 				return err
 			}
 			logging.Warningf(ctx, "Dependency validation failed for %s: %s.", ts.Name, err)
@@ -117,7 +117,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c trservice.Client) er
 			continue
 		}
 
-		task, err := skylab.NewTask(ctx, c, ag)
+		task, err := testrunner.NewBuild(ctx, c, ag)
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func (r *RequestTaskSet) getInvocationStep(iid types.InvocationID) *build.Invoca
 // unnecessary)
 func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c trservice.Client) (bool, error) {
 	completedTests := make([]types.InvocationID, len(r.activeTasks))
-	newTasks := make(map[types.InvocationID]*skylab.Task)
+	newTasks := make(map[types.InvocationID]*testrunner.Build)
 	for iid, task := range r.activeTasks {
 		rerr := task.Refresh(ctx, c)
 		tr := task.Result()
