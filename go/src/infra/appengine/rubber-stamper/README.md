@@ -40,7 +40,7 @@ in `chromium/src`, and a few subpaths for`.txt` files.
       key: "chromium/src"
       value: {
         benign_file_pattern {
-          paths: "**.xtb"
+          paths: "*.xtb"
           paths: "a/b.txt"
           paths: "a/*/c.txt"
           paths: "z/*"
@@ -64,6 +64,57 @@ outcome. We also follow this rule here. For example, with the following
           paths: "!test/a/b/*",
         }
       }
+    }
+
+Note: when a revert cannot pass the `clean_revert_pattern` check, but
+can pass the `benign_file_pattern` check, we will still approve the CL because
+`benign_file_pattern` is used as a fallback in our design.
+
+#### Examples of clean revert patterns
+
+A revert will be approved if the Gerrit API marks it as a [pure revert](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-pure-revert),
+it is within the configured `time_window` in the config, and none of the
+modified files is in the `excluded_paths`.
+
+A `time_window` represents a length of time in `<int><unit>` form. Reverts need
+to be within this `time_window` to be valid. Valid units are `s`, `m`, `h`,
+`d`, meaning "seconds", "minutes", "hours", "days" respectively. By default,
+Rubber-Stamper has a global `default_time_window` of `7d`, which allows reverts
+that are reverted no later than 7 days. You can override this value at a
+host-level (by modifying `clean_revert_time_window` in `host_configs`) or
+repo-level (by modifying `time_window` in `clean_revert_pattern` of
+`repo_configs`). It is always the more granular level that is applied. For
+example, in the following config, the global `7d`, host-level `1h` will all be
+overriden by repo-level `5m`.
+
+    default_time_window: "7d"
+
+    host_configs {
+      key: "chromium"
+      value: {
+        clean_revert_time_window: "1h"
+        repo_configs {
+          key: "infra/experimental"
+          value: {
+            clean_revert_pattern {
+              time_window: "5m"
+            }
+          }
+        }
+      }
+    }
+
+`excluded_paths` defines files/directories that always require a human to
+review. If a revert modifies any file that is contained in `excluded_paths`,
+the revert will not be approved by Rubber-Stamper. The syntax of
+`excluded_paths` is the same as that of `.gitignore` files. Gitignore file
+syntax is documented in [gitignore](https://git-scm.com/docs/gitignore). In the
+following sample config, any revert that changes `a/b.md` or any files ending
+in `.go` will not be approved.
+
+    clean_revert_pattern {
+      excluded_paths: "a/b.md"
+      excluded_paths: "*.go"
     }
 
 ### Have Rubber-Stamper review your CLs

@@ -100,7 +100,7 @@ func TestReviewChange(t *testing.T) {
 				gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 					Number:     t.Number,
 					RevisionId: t.Revision,
-					Message:    "The change cannot be auto-reviewed. The following files do not match the benign file configuration: a/d.txt, a/e/p/p.txt, a/f/z.txt, a/p",
+					Message:    "The change cannot be auto-reviewed. The following files do not match the benign file configuration: a/d.txt, a/e/p/p.txt, a/f/z.txt, a/p. Learn more: go/rubber-stamper-user-guide.",
 				})).Return(&gerritpb.ReviewResult{}, nil)
 				gerritMock.EXPECT().DeleteReviewer(gomock.Any(), proto.MatcherEqual(&gerritpb.DeleteReviewerRequest{
 					Number:    t.Number,
@@ -215,7 +215,7 @@ func TestReviewChange(t *testing.T) {
 				gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 					Number:     t.Number,
 					RevisionId: t.Revision,
-					Message:    "Gerrit GetPureRevert API does not mark this CL as a pure revert.",
+					Message:    "Gerrit GetPureRevert API does not mark this CL as a pure revert. Learn more: go/rubber-stamper-user-guide.",
 				})).Return(&gerritpb.ReviewResult{}, nil)
 				gerritMock.EXPECT().DeleteReviewer(gomock.Any(), proto.MatcherEqual(&gerritpb.DeleteReviewerRequest{
 					Number:    t.Number,

@@ -81,7 +81,7 @@ func reviewCleanRevert(ctx context.Context, cfg *config.Config, gc gerrit.Client
 			return "", err
 		}
 		if len(excludedFiles) > 0 {
-			msg := "The change contains the following files which require a human reviewer: " + strings.Join(excludedFiles[:], ", ")
+			msg := "The change contains the following files which require a human reviewer: " + strings.Join(excludedFiles[:], ", ") + "."
 			return msg, nil
 		}
 	}

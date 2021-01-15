@@ -217,7 +217,7 @@ func TestReviewCleanRevert(t *testing.T) {
 			}, nil)
 			msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
 			So(err, ShouldBeNil)
-			So(msg, ShouldEqual, "The change contains the following files which require a human reviewer: a/a/c/a.md, a/b/c.txt")
+			So(msg, ShouldEqual, "The change contains the following files which require a human reviewer: a/a/c/a.md, a/b/c.txt.")
 		})
 		Convey("returns error", func() {
 			Convey("GetPureRevert API error", func() {

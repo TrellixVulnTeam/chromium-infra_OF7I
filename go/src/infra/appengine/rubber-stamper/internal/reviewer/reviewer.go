@@ -59,12 +59,9 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 	}
 	if len(invalidFiles) > 0 {
 		// Invalid BenignFileChange.
-		// TODO: Add a go link in the msg, which tells users what the config
-		// looks like, what classes of CLs are safe, and how to send a CL to
-		// update the config to add a fileset.
 		if msg == "" {
 			msg = "The change cannot be auto-reviewed. The following files do not match the benign file configuration: " +
-				strings.Join(invalidFiles[:], ", ")
+				strings.Join(invalidFiles[:], ", ") + "."
 		}
 		return declineChange(ctx, gc, t, msg)
 	}
@@ -94,6 +91,7 @@ func approveChange(ctx context.Context, gc gerrit.Client, t *taskspb.ChangeRevie
 
 // Decline a CL. The msg tells why the CL shouldn't be approved.
 func declineChange(ctx context.Context, gc gerrit.Client, t *taskspb.ChangeReviewTask, msg string) error {
+	msg = msg + " Learn more: go/rubber-stamper-user-guide."
 	setReviewReq := &gerritpb.SetReviewRequest{
 		Number:     t.Number,
 		RevisionId: t.Revision,
