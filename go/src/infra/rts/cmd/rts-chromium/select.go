@@ -115,12 +115,12 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 		return r.done(err)
 	}
 
-	if t := r.chooseThreshold(); t == nil {
+	threshold := r.chooseThreshold()
+	if threshold == nil {
 		return r.done(errors.Reason("no threshold for target change recall %.4f", r.targetChangeRecall).Err())
-	} else {
-		r.strategy.Threshold = t.Value
-		logging.Infof(ctx, "chosen threshold: %#v", r.strategy.Threshold)
 	}
+	r.strategy.Threshold = threshold.Value
+	logging.Infof(ctx, "chosen threshold: %#v", r.strategy.Threshold)
 
 	f, err := os.Create(r.skipTestFilesPath)
 	if err != nil {
