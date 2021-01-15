@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package bb implements a skylab.Client using calls to BuildBucket.
-package bb
+// Package service implements a skylab.Client using calls to BuildBucket.
+package service
 
 import (
 	"bytes"
