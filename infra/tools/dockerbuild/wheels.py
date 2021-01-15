@@ -891,7 +891,9 @@ SPECS.update({
             'cryptography',
             '3.3.1',
             openssl='1.1.1i',
-            pyversions=['py2', 'py3']),
+            pyversions=['py2', 'py3'],
+            skip_plat=['windows-x64-py3'],
+        ),
     )
 })
 

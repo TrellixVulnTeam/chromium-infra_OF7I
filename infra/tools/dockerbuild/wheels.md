@@ -1173,7 +1173,6 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 * *windows-x64*
-* *windows-x64-py3*
 * *windows-x86*
 
 ## **debugpy**
