@@ -6,14 +6,8 @@ package testrunner
 
 import (
 	"context"
-	"errors"
-	"infra/libs/skylab/request"
-	"infra/libs/skylab/worker"
 	"sort"
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
@@ -21,6 +15,11 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
+	"infra/libs/skylab/request"
+	"infra/libs/skylab/worker"
+
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 type fakeArgsGenerator struct {
@@ -35,29 +34,11 @@ func (g *fakeArgsGenerator) CheckConsistency() error {
 	return nil
 }
 
-type fakeClient struct{}
-
-func (c *fakeClient) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
-	return true, nil, nil
-}
-func (c *fakeClient) LaunchTask(context.Context, *request.Args) (trservice.TaskReference, error) {
-	return "fake-task-reference", nil
-}
-func (c *fakeClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
-	return nil, errors.New("not implemented in fake")
-}
-func (c *fakeClient) SwarmingTaskID(trservice.TaskReference) string {
-	return ""
-}
-func (c *fakeClient) URL(trservice.TaskReference) string {
-	return ""
-}
-
 func TestResultBeforeRefresh(t *testing.T) {
 	Convey("Give a single task that has not be Refresh()ed", t, func() {
 		t, err := NewBuild(
 			context.Background(),
-			&fakeClient{},
+			trservice.StubClient{},
 			&fakeArgsGenerator{
 				cannedArgs: request.Args{
 					Cmd: worker.Command{
