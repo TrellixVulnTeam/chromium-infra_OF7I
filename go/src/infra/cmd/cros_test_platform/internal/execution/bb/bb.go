@@ -15,21 +15,20 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
-	"google.golang.org/genproto/protobuf/field_mask"
-
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/luci/auth"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/request"
+	"infra/libs/skylab/swarming"
 )
 
 type task struct {
@@ -50,7 +49,7 @@ type swarmingClient interface {
 
 // NewSkylabClient creates a new skylab.Client.
 func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
-	sc, err := swarming.NewClient(ctx, cfg.SkylabSwarming)
+	sc, err := newSwarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return nil, errors.Annotate(err, "create Skylab client").Err()
 	}
@@ -82,11 +81,40 @@ func newBBClient(ctx context.Context, cfg *config.Config_Buildbucket) (buildbuck
 	return buildbucket_pb.NewBuildsPRPCClient(pClient), nil
 }
 
-// TODO(crbug.com/1058585): dedupe with swarming.httpClient.
+// TODO(crbug.com/1115207): dedupe with swarmingHTTPClient.
 func httpClient(ctx context.Context) (*http.Client, error) {
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, auth.Options{
 		Scopes: []string{auth.OAuthScopeEmail},
 	})
+	h, err := a.Client()
+	if err != nil {
+		return nil, errors.Annotate(err, "create http client").Err()
+	}
+	return h, nil
+}
+
+func newSwarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
+	logging.Infof(ctx, "Creating swarming client from config %v", c)
+	hClient, err := swarmingHTTPClient(ctx, c.AuthJsonPath)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := swarming.NewClient(hClient, c.Server)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// TODO(crbug.com/1115207): dedupe with httpClient
+func swarmingHTTPClient(ctx context.Context, authJSONPath string) (*http.Client, error) {
+	options := auth.Options{
+		ServiceAccountJSONPath: authJSONPath,
+		Scopes:                 []string{auth.OAuthScopeEmail},
+	}
+	a := auth.NewAuthenticator(ctx, auth.SilentLogin, options)
 	h, err := a.Client()
 	if err != nil {
 		return nil, errors.Annotate(err, "create http client").Err()
