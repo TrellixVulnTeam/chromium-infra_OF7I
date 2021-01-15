@@ -148,6 +148,8 @@ def _main_wheel_build(args, system):
     build = wheels.SPECS[spec_name]
     seen = set()
     for plat in platforms:
+      if not build.supported(plat):
+        continue
       try:
         w = build.wheel(system, plat)
       except PlatformNotSupported:
