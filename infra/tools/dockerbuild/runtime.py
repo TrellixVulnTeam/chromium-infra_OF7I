@@ -141,6 +141,10 @@ class System(object):
         return dx
 
     if plat.dockcross_base:
+      if sys.platform != 'linux2':
+        raise PlatformNotSupported(
+            ('Docker builds are only supported on Linux, skipping %r' %
+             plat.name))
       builder = dockcross.Builder(self)
       dx = builder.build(plat, rebuild=rebuild)
     else:
