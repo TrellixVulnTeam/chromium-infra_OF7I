@@ -26,7 +26,8 @@ def RunSteps(api):
   # Set MACOSX_DEPLOYMENT_TARGET to 10.13 to ensure compatibility regardless of
   # the OS version the bot is running. This environment variable is unnecessary
   # but harmless on other OSes, so we just set it unconditionally.
-  with api.context(
+  # Note: osx_sdk is a no-op on non-Mac platforms.
+  with api.osx_sdk('mac'), api.context(
       cwd=solution_path.join('infra'),
       env={'MACOSX_DEPLOYMENT_TARGET': '10.13'}):
     api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
