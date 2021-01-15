@@ -109,8 +109,12 @@ def _StartTestLevelCheckForFirstFailure(master_name,
   return _InitiateTestLevelFirstFailure(reliable_failed_tests, failed_step)
 
 
-def _GetTestLevelLogForAStep(master_name, builder_name, build_number, step_name,
-                             http_client):
+def _GetTestLevelLogForAStep(master_name,
+                             builder_name,
+                             build_number,
+                             step_name,
+                             http_client,
+                             use_resultdb=False):
   """Downloads swarming test results for a step from a build and returns logs
     for failed tests.
 
@@ -133,19 +137,26 @@ def _GetTestLevelLogForAStep(master_name, builder_name, build_number, step_name,
           (step.log_data, master_name, builder_name, build_number, step_name))
       return None
 
-  # Sends request to swarming server for isolated data.
-  step_isolated_data = swarming.GetIsolatedDataForStep(builder_name,
-                                                       build_number, step_name,
-                                                       http_client)
+  test_results = None
+  if use_resultdb:
+    swarming_tasks = swarming.ListSwarmingTasksDataByTags(
+        http_client, builder_name, build_number, step_name)
+    swarming_ids = list(map(lambda task: task.task_id, swarming_tasks))
+    test_results = resultdb_util.get_failed_tests_for_swarming_ids(swarming_ids)
+  else:
+    # Sends request to swarming server for isolated data.
+    step_isolated_data = swarming.GetIsolatedDataForStep(
+        builder_name, build_number, step_name, http_client)
 
-  if not step_isolated_data:
-    logging.warning('Failed to get step_isolated_data for build %s/%s/%d/%s.' %
-                    (master_name, builder_name, build_number, step_name))
-    return None
+    if not step_isolated_data:
+      logging.warning(
+          'Failed to get step_isolated_data for build %s/%s/%d/%s.' %
+          (master_name, builder_name, build_number, step_name))
+      return None
 
-  result_log = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-      step_isolated_data, http_client)
-  test_results = test_results_util.GetTestResultObject(result_log)
+    result_log = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
+        step_isolated_data, http_client)
+    test_results = test_results_util.GetTestResultObject(result_log)
 
   if not test_results:
     logging.warning(

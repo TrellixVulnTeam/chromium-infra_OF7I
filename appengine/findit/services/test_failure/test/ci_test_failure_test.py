@@ -2,16 +2,21 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import base64
 import mock
 
 from google.appengine.api import datastore_errors
 
 from common.findit_http_client import FinditHttpClient
+from go.chromium.org.luci.resultdb.proto.v1 import (common_pb2, test_result_pb2)
 from infra_api_clients.swarming import swarming_util
+from infra_api_clients.swarming.swarming_task_data import SwarmingTaskData
+from libs.test_results.resultdb_test_results import ResultDBTestResults
 from model.wf_step import WfStep
 from services import ci_failure
 from services import constants
 from services import resultdb
+from services import resultdb_util
 from services import step_util
 from services import swarmed_test_util
 from services import swarming
@@ -1144,3 +1149,51 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         expected_result,
         ci_test_failure.GetContinuouslyFailedTestsInLaterBuilds(
             master_name, builder_name, build_number, failure_to_culprit_map))
+
+  @mock.patch.object(swarming, 'ListSwarmingTasksDataByTags')
+  @mock.patch.object(resultdb_util, 'get_failed_tests_for_swarming_ids')
+  def testGetTestLevelLogForAStepWithResultDbEnabled(self, mock_resultdb,
+                                                     mock_swarming):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 121
+    step_name = 'atest'
+    mock_swarming.return_value = [
+        SwarmingTaskData({'task_id': 'task_1'}),
+        SwarmingTaskData({'task_id': 'task_2'}),
+    ]
+    mock_resultdb.return_value = ResultDBTestResults([
+        test_result_pb2.TestResult(
+            test_id="ninja://gpu:gl_tests/SharedImageTest.Basic1",
+            tags=[
+                common_pb2.StringPair(
+                    key="test_name", value="SharedImageTest.Basic1"),
+                common_pb2.StringPair(key="gtest_status", value="FAIL"),
+            ],
+            status=test_result_pb2.TestStatus.FAIL,
+            summary_html="summary1",
+        ),
+        test_result_pb2.TestResult(
+            test_id="ninja://gpu:gl_tests/SharedImageTest.Basic2",
+            tags=[
+                common_pb2.StringPair(
+                    key="test_name", value="SharedImageTest.Basic2"),
+                common_pb2.StringPair(key="gtest_status", value="ABORT"),
+            ],
+            status=test_result_pb2.TestStatus.ABORT,
+            summary_html="summary2",
+        ),
+    ])
+    expected = {
+        "SharedImageTest.Basic1": base64.b64encode("summary1"),
+        "SharedImageTest.Basic2": base64.b64encode("summary2")
+    }
+    self.assertEqual(
+        ci_test_failure._GetTestLevelLogForAStep(
+            master_name,
+            builder_name,
+            build_number,
+            step_name,
+            None,
+            use_resultdb=True), expected)
+    mock_resultdb.assert_called_once_with(["task_1", "task_2"])

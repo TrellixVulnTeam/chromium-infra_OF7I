@@ -11,16 +11,16 @@ from services import resultdb
 from services import swarming
 
 
-def get_failed_tests_in_step(failed_step):
-  """Given a failed step, query ResultDB for failed test
+def get_failed_tests_for_swarming_ids(swarming_ids):
+  """Given a list of swarming_ids, queries ResultDB for failed test
   Arguments:
-    failed_step: a TestFailedStep instance
+    swarming_ids: a list of swarming id
   Returns:
     A ResultDBTestResults instance containing the results, or None if no result
   """
   all_results = []
   # TODO (nqmtuan): Consider running this in parallel
-  for swarming_id in failed_step.swarming_ids:
+  for swarming_id in swarming_ids:
     inv_name = swarming_util.GetInvocationNameForSwarmingTask(
         swarming.SwarmingHost(), swarming_id)
     if not inv_name:
@@ -32,3 +32,13 @@ def get_failed_tests_in_step(failed_step):
   if all_results:
     return ResultDBTestResults(all_results)
   return None
+
+
+def get_failed_tests_in_step(failed_step):
+  """Given a failed step, queries ResultDB for failed test
+  Arguments:
+    failed_step: a TestFailedStep instance
+  Returns:
+    A ResultDBTestResults instance containing the results, or None if no result
+  """
+  return get_failed_tests_for_swarming_ids(failed_step.swarming_ids)
