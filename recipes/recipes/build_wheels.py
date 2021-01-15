@@ -4,6 +4,7 @@
 
 DEPS = [
     'depot_tools/gclient',
+    'depot_tools/osx_sdk',
     'recipe_engine/context',
     'recipe_engine/file',
     'recipe_engine/path',
