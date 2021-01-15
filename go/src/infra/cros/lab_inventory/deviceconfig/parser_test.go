@@ -38,6 +38,7 @@ func TestParseConfigBundle(t *testing.T) {
 				switch modelWithSku {
 				case "FAKE-REF-DESIGN:2147483647":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
@@ -54,6 +55,8 @@ func TestParseConfigBundle(t *testing.T) {
 					fallthrough
 				case "FAKE-REF-DESIGN:2":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
@@ -68,6 +71,7 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetEc(), ShouldEqual, device.Config_EC_CHROME)
 				case "PROJECT-A:32":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CONVERTIBLE)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
@@ -82,6 +86,7 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 				case "PROJECT-B:33":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CONVERTIBLE)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
@@ -95,6 +100,7 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 				case "PROJECT-C:34":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,
@@ -107,7 +113,8 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 				case "PROJECT-WL:64":
-					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
+					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CHROMEBIT)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_AC_ONLY)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
 						device.Config_HARDWARE_FEATURE_BLUETOOTH,
 						device.Config_HARDWARE_FEATURE_INTERNAL_DISPLAY,

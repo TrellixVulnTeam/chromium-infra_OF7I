@@ -116,8 +116,7 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 				Ec:      parseEcType(c.GetHardwareFeatures()),
 
 				// TODO(xixuan): GpuFamily, gpu_family in Component.Soc hasn't been set
-				// TODO(xixuan): Power, a new power topology hasn't been set
-				// label-power is used in swarming now: https://screenshot.googleplex.com/8EAUwGeoVeBtez7
+				Power: parsePowerSupply(c.GetHardwareFeatures().GetFormFactor().GetFormFactor()),
 				// Graphics: removed from boxster for now
 				// TODO(xixuan): VideoAccelerationSupports, a new video acceleration topology hasn't been set
 				// label-video_acceleration is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/86h2scqNsStwoiW
@@ -156,6 +155,17 @@ func parseFormFactor(ff api.HardwareFeatures_FormFactor_FormFactorType) device.C
 		return device.Config_FORM_FACTOR_CHROMESLATE
 	default:
 		return device.Config_FORM_FACTOR_UNSPECIFIED
+	}
+}
+
+func parsePowerSupply(ff api.HardwareFeatures_FormFactor_FormFactorType) device.Config_PowerSupply {
+	switch ff {
+	case api.HardwareFeatures_FormFactor_CHROMEBASE, api.HardwareFeatures_FormFactor_CHROMEBOX, api.HardwareFeatures_FormFactor_CHROMEBIT:
+		return device.Config_POWER_SUPPLY_AC_ONLY
+	case api.HardwareFeatures_FormFactor_FORM_FACTOR_UNKNOWN:
+		return device.Config_POWER_SUPPLY_UNSPECIFIED
+	default:
+		return device.Config_POWER_SUPPLY_BATTERY
 	}
 }
 

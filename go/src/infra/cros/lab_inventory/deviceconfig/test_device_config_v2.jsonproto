@@ -804,7 +804,7 @@
                   "location": 5
                 },
                 "formFactor": {
-                  "formFactor": 1
+                  "formFactor": 6
                 },
                 "keyboard": {
                   "backlight": 1,
@@ -843,10 +843,10 @@
                   },
                   "hardwareFeature": {
                     "formFactor": {
-                      "formFactor": 1
+                      "formFactor": 6
                     }
                   },
-                  "id": "CLAMSHELL",
+                  "id": "CHROMEBIT",
                   "type": 2
                 },
                 "keyboard": {
