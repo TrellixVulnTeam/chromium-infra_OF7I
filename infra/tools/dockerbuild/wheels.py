@@ -391,7 +391,7 @@ SPECS.update({
             'pynacl',
             '1.2.1',
             packaged=(),
-            skip_plat=['mac-x64-cp38', 'linux-arm64-py3'],
+            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(

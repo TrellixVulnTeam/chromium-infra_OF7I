@@ -3659,7 +3659,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
-* *windows-x64-py3*
 
 ## **pyobjc**
 
