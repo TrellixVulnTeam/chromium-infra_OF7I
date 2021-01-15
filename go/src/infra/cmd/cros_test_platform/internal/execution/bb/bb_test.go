@@ -40,14 +40,7 @@ func newFakeSwarming() *fakeSwarming {
 	}
 }
 
-func (f *fakeSwarming) CreateTask(context.Context, *swarming_api.SwarmingRpcsNewTaskRequest) (*swarming_api.SwarmingRpcsTaskRequestMetadata, error) {
-	return nil, nil
-}
-
-func (f *fakeSwarming) GetResults(context.Context, []string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
-	return nil, nil
-}
-
+// BotExists implements swarmingClient interface.
 func (f *fakeSwarming) BotExists(_ context.Context, dims []*swarming_api.SwarmingRpcsStringPair) (bool, error) {
 	for _, dim := range dims {
 		if dim.Key == "label-board" {
@@ -55,10 +48,6 @@ func (f *fakeSwarming) BotExists(_ context.Context, dims []*swarming_api.Swarmin
 		}
 	}
 	return false, nil
-}
-
-func (f *fakeSwarming) GetTaskURL(string) string {
-	return ""
 }
 
 func (f *fakeSwarming) addBot(board string) {

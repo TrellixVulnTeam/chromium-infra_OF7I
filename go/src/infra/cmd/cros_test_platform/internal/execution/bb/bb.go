@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/luci/auth"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
+	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
@@ -37,10 +38,14 @@ type task struct {
 }
 
 type bbSkylabClient struct {
-	swarmingClient swarming.Client
+	swarmingClient swarmingClient
 	bbClient       buildbucket_pb.BuildsClient
 	builder        *buildbucket_pb.BuilderID
 	knownTasks     map[skylab.TaskReference]*task
+}
+
+type swarmingClient interface {
+	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
 }
 
 // NewSkylabClient creates a new skylab.Client.
