@@ -20,7 +20,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 
-	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 )
 
 type fakeArgsGenerator struct {
@@ -40,16 +40,16 @@ type fakeClient struct{}
 func (c *fakeClient) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
 	return true, nil, nil
 }
-func (c *fakeClient) LaunchTask(context.Context, *request.Args) (test_runner_service.TaskReference, error) {
+func (c *fakeClient) LaunchTask(context.Context, *request.Args) (trservice.TaskReference, error) {
 	return "fake-task-reference", nil
 }
-func (c *fakeClient) FetchResults(context.Context, test_runner_service.TaskReference) (*test_runner_service.FetchResultsResponse, error) {
+func (c *fakeClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
 	return nil, errors.New("not implemented in fake")
 }
-func (c *fakeClient) SwarmingTaskID(test_runner_service.TaskReference) string {
+func (c *fakeClient) SwarmingTaskID(trservice.TaskReference) string {
 	return ""
 }
-func (c *fakeClient) URL(test_runner_service.TaskReference) string {
+func (c *fakeClient) URL(trservice.TaskReference) string {
 	return ""
 }
 

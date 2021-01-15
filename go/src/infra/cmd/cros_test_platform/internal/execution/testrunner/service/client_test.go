@@ -57,7 +57,7 @@ func TestNonExistentBot(t *testing.T) {
 	Convey("When arguments ask for a non-existent bot", t, func() {
 		swarming := newFakeSwarming()
 		swarming.addBot("existing-board")
-		skylab := &bbSkylabClient{
+		skylab := &clientImpl{
 			swarmingClient: swarming,
 		}
 		var ml memlogger.MemLogger
@@ -99,7 +99,7 @@ func TestExistingBot(t *testing.T) {
 	Convey("When arguments ask for an existing bot", t, func() {
 		swarming := newFakeSwarming()
 		swarming.addBot("existing-board")
-		skylab := &bbSkylabClient{
+		skylab := &clientImpl{
 			swarmingClient: swarming,
 		}
 		var args request.Args
@@ -155,7 +155,7 @@ func TestLaunchRequest(t *testing.T) {
 	})
 }
 
-func setBuilder(skylab *bbSkylabClient, project string, bucket string, builder string) {
+func setBuilder(skylab *clientImpl, project string, bucket string, builder string) {
 	skylab.builder = &buildbucket_pb.BuilderID{
 		Project: project,
 		Bucket:  bucket,
@@ -326,7 +326,7 @@ func TestAbortedTask(t *testing.T) {
 type testFixture struct {
 	ctx    context.Context
 	bb     *buildbucket_pb.MockBuildsClient
-	skylab *bbSkylabClient
+	skylab *clientImpl
 }
 
 func newTestFixture(t *testing.T) (*testFixture, func()) {
@@ -335,7 +335,7 @@ func newTestFixture(t *testing.T) (*testFixture, func()) {
 	return &testFixture{
 		ctx: context.Background(),
 		bb:  bb,
-		skylab: &bbSkylabClient{
+		skylab: &clientImpl{
 			bbClient:   bb,
 			knownTasks: make(map[TaskReference]*task),
 		},

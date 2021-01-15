@@ -35,7 +35,7 @@ import (
 	"go.chromium.org/luci/luciexe/exe"
 
 	"infra/cmd/cros_test_platform/internal/execution"
-	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
@@ -99,21 +99,21 @@ func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[str
 	return s.botExists, s.rejectedTaskDims, nil
 }
 
-func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (test_runner_service.TaskReference, error) {
+func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (trservice.TaskReference, error) {
 	defer s.callback()
 	if s.nextError != nil {
-		return test_runner_service.TaskReference(""), s.nextError
+		return trservice.TaskReference(""), s.nextError
 	}
 	s.launchCalls = append(s.launchCalls, req)
-	return test_runner_service.TaskReference(""), nil
+	return trservice.TaskReference(""), nil
 }
 
-func (s *fakeSkylab) FetchResults(context.Context, test_runner_service.TaskReference) (*test_runner_service.FetchResultsResponse, error) {
+func (s *fakeSkylab) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
 	s.numResultsCalls += 1
 	if s.nextError != nil {
 		return nil, s.nextError
 	}
-	return &test_runner_service.FetchResultsResponse{
+	return &trservice.FetchResultsResponse{
 		Result: &skylab_test_runner.Result{
 			Harness: &skylab_test_runner.Result_AutotestResult{
 				AutotestResult: s.autotestResultGenerator(),
@@ -123,11 +123,11 @@ func (s *fakeSkylab) FetchResults(context.Context, test_runner_service.TaskRefer
 	}, nil
 }
 
-func (s *fakeSkylab) SwarmingTaskID(test_runner_service.TaskReference) string {
+func (s *fakeSkylab) SwarmingTaskID(trservice.TaskReference) string {
 	return ""
 }
 
-func (s *fakeSkylab) URL(test_runner_service.TaskReference) string {
+func (s *fakeSkylab) URL(trservice.TaskReference) string {
 	return s.url
 }
 
@@ -200,11 +200,11 @@ func basicParams() *test_platform.Request_Params {
 	}
 }
 
-func runWithDefaults(ctx context.Context, skylab test_runner_service.Client, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+func runWithDefaults(ctx context.Context, skylab trservice.Client, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
 	return runWithParams(ctx, skylab, basicParams(), invs)
 }
 
-func runWithParams(ctx context.Context, skylab test_runner_service.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+func runWithParams(ctx context.Context, skylab trservice.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
 	args := execution.Args{
 		Build: &bbpb.Build{},
 		Send:  exe.BuildSender(func() {}),
@@ -1526,7 +1526,7 @@ func (s *buildAccumulator) GetLatestBuild() *bbpb.Build {
 	return s.Sent[len(s.Sent)-1]
 }
 
-func runWithBuildAccumulator(ctx context.Context, skylab test_runner_service.Client, ba *buildAccumulator, request steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
+func runWithBuildAccumulator(ctx context.Context, skylab trservice.Client, ba *buildAccumulator, request steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
 	args := execution.Args{
 		Build:   ba.Input,
 		Send:    exe.BuildSender(ba.Send),

@@ -70,9 +70,9 @@ type task struct {
 	swarmingTaskID string
 }
 
-// bbSkylabClient is a concrete Client implementation to interact with
+// clientImpl is a concrete Client implementation to interact with
 // test_runner as a service.
-type bbSkylabClient struct {
+type clientImpl struct {
 	swarmingClient swarmingClient
 	bbClient       buildbucket_pb.BuildsClient
 	builder        *buildbucket_pb.BuilderID
@@ -80,7 +80,7 @@ type bbSkylabClient struct {
 }
 
 // Ensure we satisfy the promised interface.
-var _ Client = &bbSkylabClient{}
+var _ Client = &clientImpl{}
 
 type swarmingClient interface {
 	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
@@ -90,13 +90,13 @@ type swarmingClient interface {
 func NewClient(ctx context.Context, cfg *config.Config) (Client, error) {
 	sc, err := newSwarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
-		return nil, errors.Annotate(err, "create Skylab client").Err()
+		return nil, errors.Annotate(err, "create test_runner service client").Err()
 	}
 	bbc, err := newBBClient(ctx, cfg.TestRunner.Buildbucket)
 	if err != nil {
-		return nil, errors.Annotate(err, "create Skylab client").Err()
+		return nil, errors.Annotate(err, "create test_runner service client").Err()
 	}
-	return &bbSkylabClient{
+	return &clientImpl{
 		swarmingClient: sc,
 		bbClient:       bbc,
 		builder: &buildbucket_pb.BuilderID{
@@ -167,7 +167,7 @@ func swarmingHTTPClient(ctx context.Context, authJSONPath string) (*http.Client,
 // Any changes to this implementation should be also reflected in
 // rawSwarmingSkylabClient.ValidateArgs
 // TODO(crbug.com/1033287): Remove the rawSwarmingSkylabClient implementation.
-func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (botExists bool, rejectedTaskDims map[string]string, err error) {
+func (c *clientImpl) ValidateArgs(ctx context.Context, args *request.Args) (botExists bool, rejectedTaskDims map[string]string, err error) {
 	dims, err := args.StaticDimensions()
 	if err != nil {
 		err = errors.Annotate(err, "validate dependencies").Err()
@@ -189,7 +189,7 @@ func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (
 }
 
 // LaunchTask sends an RPC request to start the task.
-func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
+func (c *clientImpl) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
 	req, err := args.NewBBRequest(c.builder)
 	if err != nil {
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
@@ -216,7 +216,7 @@ var getBuildFieldMask = []string{
 }
 
 // FetchResults fetches the latest state and results of the given task.
-func (c *bbSkylabClient) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+func (c *clientImpl) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
 	task, ok := c.knownTasks[t]
 	if !ok {
 		return nil, errors.Reason("fetch results: could not find task among launched tasks").Err()
@@ -300,12 +300,12 @@ func decompress(from string) ([]byte, error) {
 }
 
 // URL is the Buildbucket URL of the task.
-func (c *bbSkylabClient) URL(t TaskReference) string {
+func (c *clientImpl) URL(t TaskReference) string {
 	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
 		c.builder.Project, c.builder.Bucket, c.builder.Builder, c.knownTasks[t].bbID)
 }
 
 // SwarmingTaskID is the Swarming ID of the underlying task.
-func (c *bbSkylabClient) SwarmingTaskID(t TaskReference) string {
+func (c *clientImpl) SwarmingTaskID(t TaskReference) string {
 	return c.knownTasks[t].swarmingTaskID
 }

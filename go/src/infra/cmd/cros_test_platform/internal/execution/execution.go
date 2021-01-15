@@ -17,7 +17,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/exe"
 
-	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 )
 
 // Args bundles together the arguments for an execution.
@@ -37,7 +37,7 @@ type Args struct {
 // Run runs an execution until success.
 //
 // Run may be aborted by cancelling the supplied context.
-func Run(ctx context.Context, c test_runner_service.Client, args Args) (map[string]*steps.ExecuteResponse, error) {
+func Run(ctx context.Context, c trservice.Client, args Args) (map[string]*steps.ExecuteResponse, error) {
 	// Build may be updated as each of the task sets is Close()ed by a deferred
 	// function. Send() one last time to capture those changes.
 	defer args.Send()
@@ -98,7 +98,7 @@ type runner struct {
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *runner) LaunchAndWait(ctx context.Context, c test_runner_service.Client) error {
+func (r *runner) LaunchAndWait(ctx context.Context, c trservice.Client) error {
 	if err := r.launchTasks(ctx, c); err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (r *runner) LaunchAndWait(ctx context.Context, c test_runner_service.Client
 	}
 }
 
-func (r *runner) launchTasks(ctx context.Context, c test_runner_service.Client) error {
+func (r *runner) launchTasks(ctx context.Context, c trservice.Client) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.LaunchTasks(ctx, c); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
@@ -141,7 +141,7 @@ func (r *runner) launchTasks(ctx context.Context, c test_runner_service.Client) 
 
 // Returns whether all tasks are complete (so future calls to this function are
 // unnecessary)
-func (r *runner) checkTasksAndRetry(ctx context.Context, c test_runner_service.Client) (bool, error) {
+func (r *runner) checkTasksAndRetry(ctx context.Context, c trservice.Client) (bool, error) {
 	allDone := true
 	for t, ts := range r.requestTaskSets {
 		c, err := ts.CheckTasksAndRetry(ctx, c)

@@ -27,7 +27,7 @@ import (
 	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution"
-	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/cmd/cros_test_platform/luciexe/common"
 )
 
@@ -53,7 +53,7 @@ func Run(ctx context.Context, args Args) error {
 	}
 
 	cfg := extractOneConfig(request.TaggedRequests)
-	skylab, err := test_runner_service.NewClient(ctx, cfg)
+	skylab, err := trservice.NewClient(ctx, cfg)
 	if err != nil {
 		return err
 	}
