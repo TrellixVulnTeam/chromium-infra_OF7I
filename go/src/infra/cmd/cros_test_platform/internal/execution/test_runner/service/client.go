@@ -15,6 +15,7 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
@@ -26,29 +27,67 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
 
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/swarming"
 )
+
+// TaskReference is an implementation-independent way to identify test_runner tasks.
+type TaskReference string
+
+// NewTaskReference creates a unique task reference.
+func NewTaskReference() TaskReference {
+	return TaskReference(uuid.New().String())
+}
+
+// FetchResultsResponse is an implementation-independent container for
+// information about running and finished tasks.
+type FetchResultsResponse struct {
+	Result    *skylab_test_runner.Result
+	LifeCycle test_platform.TaskState_LifeCycle
+}
+
+// Client defines an interface used to interact with test_runner as a service.
+type Client interface {
+	// ValidateArgs validates that a test_runner build can be created with
+	// the give arguments.
+	ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error)
+
+	// LaunchTask creates a new test_runner task with the given arguments.
+	LaunchTask(context.Context, *request.Args) (TaskReference, error)
+
+	// FetchResults fetches results for a previously launched test_runner task.
+	FetchResults(context.Context, TaskReference) (*FetchResultsResponse, error)
+
+	// SwarmingTaskID returns the swarming task ID for a test_runner build.
+	SwarmingTaskID(TaskReference) string
+
+	// URL returns a canonical URL for a test_runner build.
+	URL(TaskReference) string
+}
 
 type task struct {
 	bbID           int64
 	swarmingTaskID string
 }
 
+// bbSkylabClient is a concrete Client implementation to interact with
+// test_runner as a service.
 type bbSkylabClient struct {
 	swarmingClient swarmingClient
 	bbClient       buildbucket_pb.BuildsClient
 	builder        *buildbucket_pb.BuilderID
-	knownTasks     map[skylab.TaskReference]*task
+	knownTasks     map[TaskReference]*task
 }
+
+// Ensure we satisfy the promised interface.
+var _ Client = &bbSkylabClient{}
 
 type swarmingClient interface {
 	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
 }
 
-// NewClient creates a new skylab.Client.
-func NewClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
+// NewClient creates a concrete instance of a Client.
+func NewClient(ctx context.Context, cfg *config.Config) (Client, error) {
 	sc, err := newSwarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return nil, errors.Annotate(err, "create Skylab client").Err()
@@ -65,7 +104,7 @@ func NewClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
 			Bucket:  cfg.TestRunner.Buildbucket.Bucket,
 			Builder: cfg.TestRunner.Buildbucket.Builder,
 		},
-		knownTasks: make(map[skylab.TaskReference]*task),
+		knownTasks: make(map[TaskReference]*task),
 	}, nil
 }
 
@@ -150,7 +189,7 @@ func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (
 }
 
 // LaunchTask sends an RPC request to start the task.
-func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (skylab.TaskReference, error) {
+func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
 	req, err := args.NewBBRequest(c.builder)
 	if err != nil {
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
@@ -159,7 +198,7 @@ func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (sk
 	if err != nil {
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
 	}
-	tr := skylab.NewTaskReference()
+	tr := NewTaskReference()
 	c.knownTasks[tr] = &task{
 		bbID: resp.Id,
 	}
@@ -177,7 +216,7 @@ var getBuildFieldMask = []string{
 }
 
 // FetchResults fetches the latest state and results of the given task.
-func (c *bbSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReference) (*skylab.FetchResultsResponse, error) {
+func (c *bbSkylabClient) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
 	task, ok := c.knownTasks[t]
 	if !ok {
 		return nil, errors.Reason("fetch results: could not find task among launched tasks").Err()
@@ -194,8 +233,8 @@ func (c *bbSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReferenc
 	task.swarmingTaskID = b.GetInfra().GetSwarming().GetTaskId()
 
 	lc := bbStatusToLifeCycle[b.Status]
-	if !skylab.LifeCyclesWithResults[lc] {
-		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
+	if !lifeCyclesWithResults[lc] {
+		return &FetchResultsResponse{LifeCycle: lc}, nil
 	}
 
 	res, err := extractResult(b)
@@ -203,10 +242,16 @@ func (c *bbSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReferenc
 		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
 	}
 
-	return &skylab.FetchResultsResponse{
+	return &FetchResultsResponse{
 		Result:    res,
 		LifeCycle: lc,
 	}, nil
+}
+
+// lifeCyclesWithResults lists all task states which have a chance of producing
+// test cases results. E.g. this excludes killed tasks.
+var lifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
+	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
 }
 
 var bbStatusToLifeCycle = map[buildbucket_pb.Status]test_platform.TaskState_LifeCycle{
@@ -255,12 +300,12 @@ func decompress(from string) ([]byte, error) {
 }
 
 // URL is the Buildbucket URL of the task.
-func (c *bbSkylabClient) URL(t skylab.TaskReference) string {
+func (c *bbSkylabClient) URL(t TaskReference) string {
 	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
 		c.builder.Project, c.builder.Bucket, c.builder.Builder, c.knownTasks[t].bbID)
 }
 
 // SwarmingTaskID is the Swarming ID of the underlying task.
-func (c *bbSkylabClient) SwarmingTaskID(t skylab.TaskReference) string {
+func (c *bbSkylabClient) SwarmingTaskID(t TaskReference) string {
 	return c.knownTasks[t].swarmingTaskID
 }

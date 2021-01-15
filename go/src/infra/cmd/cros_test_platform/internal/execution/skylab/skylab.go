@@ -7,7 +7,6 @@ package skylab
 
 import (
 	"context"
-	"infra/libs/skylab/request"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -16,6 +15,9 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+
+	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
+	"infra/libs/skylab/request"
 )
 
 // ArgsGenerator is used to generate arguments to buildbucket / swarming.
@@ -39,7 +41,7 @@ var InvalidDependencies = errors.BoolTag{Key: errors.NewTagKey("invalid test dep
 // Optionally returns a map of the unsatisfiable dependencies.
 //
 // Errors encountered in dependency validation are returned as generic errors.
-func ValidateDependencies(ctx context.Context, c Client, argsGenerator ArgsGenerator) (map[string]string, error) {
+func ValidateDependencies(ctx context.Context, c test_runner_service.Client, argsGenerator ArgsGenerator) (map[string]string, error) {
 	if err := argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed: %s.", err)
 		return nil, InvalidDependencies.Apply(err)
@@ -66,13 +68,13 @@ type Task struct {
 	result         *skylab_test_runner.Result
 	lifeCycle      test_platform.TaskState_LifeCycle
 	swarmingTaskID string
-	taskReference  TaskReference
+	taskReference  test_runner_service.TaskReference
 	url            string
 }
 
 // NewTask creates a new buildbucket or swarming task for a test with the given
 // arguments.
-func NewTask(ctx context.Context, c Client, argsGenerator ArgsGenerator) (*Task, error) {
+func NewTask(ctx context.Context, c test_runner_service.Client, argsGenerator ArgsGenerator) (*Task, error) {
 	t := &Task{argsGenerator: argsGenerator}
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
@@ -148,7 +150,7 @@ func (t *Task) verdict() test_platform.TaskState_Verdict {
 
 // Refresh fetches the state of the given task and updates the task
 // accordingly.
-func (t *Task) Refresh(ctx context.Context, c Client) error {
+func (t *Task) Refresh(ctx context.Context, c test_runner_service.Client) error {
 	resp, err := c.FetchResults(ctx, t.taskReference)
 
 	if err != nil {
@@ -224,7 +226,7 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 // Retry creates a new task to retry the current task.
 //
 // Retry does not check whether the current task is complete.
-func (t *Task) Retry(ctx context.Context, c Client) (*Task, error) {
+func (t *Task) Retry(ctx context.Context, c test_runner_service.Client) (*Task, error) {
 	return NewTask(ctx, c, t.argsGenerator)
 }
 

@@ -24,7 +24,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
 
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
@@ -338,7 +337,7 @@ func newTestFixture(t *testing.T) (*testFixture, func()) {
 		bb:  bb,
 		skylab: &bbSkylabClient{
 			bbClient:   bb,
-			knownTasks: make(map[skylab.TaskReference]*task),
+			knownTasks: make(map[TaskReference]*task),
 		},
 	}, ctrl.Finish
 }

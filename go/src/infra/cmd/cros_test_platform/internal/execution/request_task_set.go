@@ -12,6 +12,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/response"
 	"infra/cmd/cros_test_platform/internal/execution/retry"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	test_runner_service "infra/cmd/cros_test_platform/internal/execution/test_runner/service"
 	"infra/cmd/cros_test_platform/internal/execution/types"
 	"time"
 
@@ -101,7 +102,7 @@ func (r *RequestTaskSet) completed() bool {
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
-func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
+func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c test_runner_service.Client) error {
 	r.launched = true
 	for _, iid := range r.invocationIDs {
 		ts := r.getInvocationResponse(iid)
@@ -156,7 +157,7 @@ func (r *RequestTaskSet) getInvocationStep(iid types.InvocationID) *build.Invoca
 //
 // Returns whether all tasks are complete (so future calls to this function are
 // unnecessary)
-func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) (bool, error) {
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c test_runner_service.Client) (bool, error) {
 	completedTests := make([]types.InvocationID, len(r.activeTasks))
 	newTasks := make(map[types.InvocationID]*skylab.Task)
 	for iid, task := range r.activeTasks {
