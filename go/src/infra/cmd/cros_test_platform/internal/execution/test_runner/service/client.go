@@ -47,8 +47,8 @@ type swarmingClient interface {
 	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
 }
 
-// NewSkylabClient creates a new skylab.Client.
-func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
+// NewClient creates a new skylab.Client.
+func NewClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
 	sc, err := newSwarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return nil, errors.Annotate(err, "create Skylab client").Err()
