@@ -60,6 +60,7 @@ message AutoRevertsPerDay {}
 
 message ChangeReviewed {
     repeated string robots = 1;
+    string message = 2;
 }
 
 message CulpritAge {}

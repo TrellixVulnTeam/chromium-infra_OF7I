@@ -257,33 +257,42 @@ func TestTBRRules(t *testing.T) {
 		testClients := &Clients{}
 		testClients.gerrit = &mockGerritClient{q: q}
 
+		const msgFail = "Please review"
 		expectedStatus := RuleInvalid
-		var gerritCalls []string
+		msg := ""
+		c := ChangeReviewed{
+			&cpb.ChangeReviewed{
+				Robots:  []string{"robot1@example.com", "robot2@example.com"},
+				Message: msgFail,
+			},
+		}
 
 		Convey("Pass", func() {
 			expectedStatus = RulePassed
 		})
 
 		Convey("Non-Pass", func() {
+			rc.CommitHash = "7b12c0de2"
+			expectedStatus = RuleFailed
+			msg = msgFail
 			Convey("Fail", func() {
-				rc.CommitHash = "7b12c0de2"
-				expectedStatus = RuleFailed
 			})
 
 			Convey("Pending - no notification", func() {
-				rc.CommitHash = "7b12c0de2"
 				rc.CommitTime = time.Now().Add(-23 * time.Hour)
-				expectedStatus = RuleFailed
 			})
 
 			Convey("Pending - send notification", func() {
-				rc.CommitHash = "7b12c0de2"
 				rc.CommitTime = time.Now().Add(-25 * time.Hour)
 				rc.Result = append(rc.Result, RuleResult{
 					RuleName:         "ChangeReviewed",
 					RuleResultStatus: RulePending,
 				})
-				expectedStatus = RuleFailed
+			})
+
+			Convey("Default message", func() {
+				c.Message = ""
+				msg = chromeTBRMessage
 			})
 		})
 
@@ -305,6 +314,7 @@ func TestTBRRules(t *testing.T) {
 		Convey("Self-reviewed OS CL fail", func() {
 			rc.CommitHash = "7b12c0de5"
 			expectedStatus = RuleFailed
+			msg = msgFail
 		})
 
 		Convey("Reviewed OS CL pass", func() {
@@ -312,13 +322,9 @@ func TestTBRRules(t *testing.T) {
 			expectedStatus = RulePassed
 		})
 
-		c := ChangeReviewed{
-			&cpb.ChangeReviewed{
-				Robots: []string{"robot1@example.com", "robot2@example.com"},
-			},
-		}
 		rr, _ := c.Run(ctx, ap, rc, testClients)
 		So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
-		So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, gerritCalls)
+		So(rr.Message, ShouldEqual, msg)
+		So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, []string(nil))
 	})
 }
