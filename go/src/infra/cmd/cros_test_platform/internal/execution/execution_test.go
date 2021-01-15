@@ -52,8 +52,6 @@ var (
 
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
-	botExists               bool
-	rejectedTaskDims        map[string]string
 	callback                func()
 	launchCalls             []*request.Args
 	nextError               error
@@ -65,7 +63,6 @@ type fakeSkylab struct {
 func newFakeSkylab() *fakeSkylab {
 	return &fakeSkylab{
 		autotestResultGenerator: autotestResultAlwaysPass,
-		botExists:               true,
 		callback:                func() {},
 		nextLifeCycle:           test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
@@ -96,7 +93,7 @@ func (s *fakeSkylab) setAutotestResultGenerator(f autotestResultGenerator) {
 }
 
 func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
-	return s.botExists, s.rejectedTaskDims, nil
+	return true, nil, nil
 }
 
 func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (trservice.TaskReference, error) {
@@ -232,42 +229,51 @@ func runWithParams(ctx context.Context, skylab trservice.Client, params *test_pl
 }
 
 func TestLaunchForNonExistentBot(t *testing.T) {
-	Convey("Given one test invocation but non existent bots", t, func() {
-		ctx := context.Background()
-
-		skylab := newFakeSkylab()
-		skylab.botExists = false
-		rejectedTaskDims := map[string]string{
-			"foo-key": "foo-rejected-value",
-			"bar-key": "bar-rejected-value",
+	Convey("In an execution with one invocation but not bots", t, func() {
+		trc := trservice.ClientCallCountingWrapper{
+			Client: trservice.NewBotsAwareFakeClient(),
 		}
-		skylab.rejectedTaskDims = rejectedTaskDims
+		resps, err := runWithParams(
+			context.Background(),
+			trc,
+			&test_platform.Request_Params{
+				FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
+					SwarmingDimensions: []string{"freeform-key:freeform-value"},
+				},
+				// Irrelevant required fields follow.
+				Scheduling: &test_platform.Request_Params_Scheduling{
+					Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
+						ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ,
+					},
+					Priority: 79,
+				},
+				Time: &test_platform.Request_Params_Time{
+					MaximumDuration: &duration.Duration{Seconds: 60},
+				},
+			},
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				clientTestInvocation("", ""),
+			},
+		)
+		So(err, ShouldBeNil)
 
-		invs := []*steps.EnumerationResponse_AutotestInvocation{
-			clientTestInvocation("", ""),
-		}
+		resp := extractSingleResponse(resps)
 
-		Convey("when running a skylab execution", func() {
-			resps, err := runWithDefaults(ctx, skylab, invs)
-			So(err, ShouldBeNil)
-			resp := extractSingleResponse(resps)
-
-			Convey("then task result is complete with unspecified verdict.", func() {
-				So(resp.TaskResults, ShouldHaveLength, 1)
-				tr := resp.TaskResults[0]
-				So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
-				So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
-				So(tr.RejectedTaskDimensions, ShouldResemble, rejectedTaskDims)
-
-			})
-			Convey("and overall result is complete with failed verdict.", func() {
-				So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
-				So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
-			})
-			Convey("and no skylab tasks are created.", func() {
-				So(skylab.launchCalls, ShouldHaveLength, 0)
-				So(skylab.numResultsCalls, ShouldEqual, 0)
-			})
+		Convey("then task result is complete with unspecified verdict.", func() {
+			So(resp.TaskResults, ShouldHaveLength, 1)
+			tr := resp.TaskResults[0]
+			So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
+			So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
+			So(tr.RejectedTaskDimensions, ShouldContainKey, "freeform-key")
+		})
+		Convey("and overall result is complete with failed verdict.", func() {
+			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
+			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
+		})
+		Convey("and no skylab tasks are created.", func() {
+			counts := trc.MethodCallCounts()
+			So(counts.LaunchTask, ShouldEqual, 0)
+			So(counts.FetchResults, ShouldEqual, 0)
 		})
 	})
 }
