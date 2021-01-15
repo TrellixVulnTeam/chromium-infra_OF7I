@@ -35,15 +35,14 @@ class ResultDBTestResults(BaseTestResults):
       the results are from all shards
     """
     self.partial_result = partial_result
-    self.test_results = ResultDBTestResults.group_test_results_by_test_id(
+    self.test_results = ResultDBTestResults.group_test_results_by_test_name(
         test_results)
 
   def GetFailedTestsInformation(self):
     failed_test_log = {}
     reliable_failed_tests = {}
-    for _, result in self.test_results.items():
-      test_name = result["test_name"]
-      if result["reliable_failure"] and test_name:
+    for test_name, result in self.test_results.items():
+      if result["reliable_failure"]:
         merged_test_log = '\n'.join(result["failure_logs"])
         failed_test_log[test_name] = base64.b64encode(merged_test_log)
         reliable_failed_tests[test_name] = test_name
@@ -75,8 +74,7 @@ class ResultDBTestResults(BaseTestResults):
         unknowns, notruns.
     """
     classified_results = ClassifiedTestResults()
-    for _, test_info in self.test_results.items():
-      test_name = test_info["test_name"]
+    for test_name, test_info in self.test_results.items():
       classified_results[test_name].total_run = test_info["total_run"]
       classified_results[test_name].num_expected_results = test_info[
           "num_expected_results"]
@@ -114,21 +112,16 @@ class ResultDBTestResults(BaseTestResults):
         }
       * A possible error string
     """
-    location = None
-    for _, test_info in self.test_results.items():
-      if test_info["test_name"] == test_name:
-        location = test_info["test_location"]
-        break
+    location = self.test_results.get(test_name, {}).get('test_location')
     if not location:
       return None, 'test location not found'
     return location, None
 
   @staticmethod
-  def group_test_results_by_test_id(test_results):
+  def group_test_results_by_test_name(test_results):
     """Returns a dictionary of
     {
-      <test_id>:{
-        "test_name": <test name>
+      <test_name>:{
         "reliable_failure": whether the test fail consistently
         "failure_logs": array of failure logs
         "test_type": type of test
@@ -150,13 +143,13 @@ class ResultDBTestResults(BaseTestResults):
     """
     results = defaultdict(dict)
     for test_result in test_results:
-      test_id = test_result.test_id
+      test_name = ResultDBTestResults.test_name_for_test_result(test_result)
+      if not test_name:
+        continue
       is_failure = ResultDBTestResults.is_failure(test_result)
       log = ResultDBTestResults.summary_html_for_test_result(test_result)
-      if not results.get(test_id):
-        results[test_id] = {
-            "test_name":
-                ResultDBTestResults.test_name_for_test_result(test_result),
+      if not results.get(test_name):
+        results[test_name] = {
             "reliable_failure":
                 is_failure,
             "failure_logs": [log] if is_failure else [],
@@ -186,12 +179,12 @@ class ResultDBTestResults(BaseTestResults):
                 0,
         }
       else:
-        results[test_id]["reliable_failure"] = results[test_id][
+        results[test_name]["reliable_failure"] = results[test_name][
             "reliable_failure"] and is_failure
         if is_failure:
-          results[test_id]["failure_logs"].append(log)
+          results[test_name]["failure_logs"].append(log)
       ResultDBTestResults._update_classified_test_results(
-          results[test_id], test_result)
+          results[test_name], test_result)
     return results
 
   @staticmethod

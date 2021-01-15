@@ -7,7 +7,7 @@ from services import parameters
 from services import resultdb
 from waterfall.test import wf_testcase
 
-from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import (common_pb2, test_result_pb2)
 from infra_api_clients.swarming import swarming_util
 from services import resultdb
 from services import resultdb_util
@@ -24,8 +24,20 @@ class ResultDBTest(wf_testcase.WaterfallTestCase):
     failed_step = parameters.TestFailedStep()
     failed_step.swarming_ids = ["1", "2"]
     mock_result_db.side_effect = [
-        [test_result_pb2.TestResult(test_id="test_id_1")],
-        [test_result_pb2.TestResult(test_id="test_id_2")],
+        [
+            test_result_pb2.TestResult(
+                test_id="test_id_1",
+                tags=[
+                    common_pb2.StringPair(key="test_name", value="test_id_1"),
+                ])
+        ],
+        [
+            test_result_pb2.TestResult(
+                test_id="test_id_2",
+                tags=[
+                    common_pb2.StringPair(key="test_name", value="test_id_2"),
+                ])
+        ],
     ]
     test_results = resultdb_util.get_failed_tests_in_step(failed_step)
     self.assertEqual(len(test_results.test_results), 2)

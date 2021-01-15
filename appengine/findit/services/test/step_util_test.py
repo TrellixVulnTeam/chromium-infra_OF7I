@@ -265,7 +265,11 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
     test_results = ResultDBTestResults([
         test_result_pb2.TestResult(
             test_id="ninja://gpu:gl_tests/SharedImageDawnTest.Basic",
-            tags=[rdb_common_pb2.StringPair(key="gtest_status", value="PASS")],
+            tags=[
+                rdb_common_pb2.StringPair(
+                    key="test_name", value="SharedImageTest.Basic"),
+                rdb_common_pb2.StringPair(key="gtest_status", value="PASS"),
+            ],
         )
     ])
     self.assertTrue(
@@ -276,7 +280,10 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
   def testIsStepSupportedByFinditResultDBBlinkWebTest(self, _):
     test_results = ResultDBTestResults([
         test_result_pb2.TestResult(
-            test_id="ninja://:blink_web_tests/accessibility/role.html",)
+            test_id="ninja://:blink_web_tests/accessibility/role.html",
+            tags=[
+                rdb_common_pb2.StringPair(key="test_name", value="role.html"),
+            ])
     ])
     self.assertTrue(
         step_util.IsStepSupportedByFindit(test_results, 'blink_web_tests', 'm'))

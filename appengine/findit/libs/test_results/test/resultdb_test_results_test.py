@@ -154,8 +154,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
     rdb_test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
     self.assertEqual(
         rdb_test_results.test_results, {
-            u"ninja://gpu:gl_tests/SharedImageTest.Basic": {
-                "test_name": u"SharedImageTest.Basic",
+            u"SharedImageTest.Basic": {
                 "reliable_failure": False,
                 "failure_logs": [u"summary"],
                 "test_type": ResultDBTestType.GTEST,
@@ -174,8 +173,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "num_notrun": 0,
                 "num_unspecified": 0
             },
-            u"ninja://gpu:gl_tests/SharedImageTest.Basic1": {
-                "test_name": u"SharedImageTest.Basic1",
+            u"SharedImageTest.Basic1": {
                 "reliable_failure": True,
                 "failure_logs": [u"summary1", u"summary2"],
                 "test_type": ResultDBTestType.GTEST,
@@ -191,8 +189,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "num_notrun": 0,
                 "num_unspecified": 0
             },
-            u"ninja://gpu:gl_tests/SharedImageTest.Basic2": {
-                "test_name": u"SharedImageTest.Basic2",
+            u"SharedImageTest.Basic2": {
                 "reliable_failure": True,
                 "failure_logs": ['summary3'],
                 "test_type": ResultDBTestType.GTEST,
@@ -208,8 +205,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "num_notrun": 0,
                 "num_unspecified": 0
             },
-            u"ninja://gpu:gl_tests/SharedImageTest.Basic3": {
-                "test_name": u"SharedImageTest.Basic3",
+            u"SharedImageTest.Basic3": {
                 "reliable_failure": False,
                 "failure_logs": [],
                 "test_type": ResultDBTestType.GTEST,
@@ -225,8 +221,7 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 "num_notrun": 0,
                 "num_unspecified": 0
             },
-            u"ninja://gpu:gl_tests/SharedImageTest.Basic4": {
-                "test_name": u"SharedImageTest.Basic4",
+            u"SharedImageTest.Basic4": {
                 "reliable_failure": False,
                 "failure_logs": [],
                 "test_type": ResultDBTestType.GTEST,
