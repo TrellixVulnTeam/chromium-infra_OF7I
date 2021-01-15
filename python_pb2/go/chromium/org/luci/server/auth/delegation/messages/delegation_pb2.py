@@ -17,9 +17,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/server/auth/delegation/messages/delegation.proto',
   package='messages',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z4go.chromium.org/luci/server/auth/delegation/messages',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\nEgo.chromium.org/luci/server/auth/delegation/messages/delegation.proto\x12\x08messages\"y\n\x0f\x44\x65legationToken\x12\x11\n\tsigner_id\x18\x02 \x01(\t\x12\x16\n\x0esigning_key_id\x18\x03 \x01(\t\x12\x18\n\x10pkcs1_sha256_sig\x18\x04 \x01(\x0c\x12\x1b\n\x13serialized_subtoken\x18\x05 \x01(\x0cJ\x04\x08\x01\x10\x02\"\x99\x02\n\x08Subtoken\x12%\n\x04kind\x18\x08 \x01(\x0e\x32\x17.messages.Subtoken.Kind\x12\x13\n\x0bsubtoken_id\x18\x04 \x01(\x03\x12\x1a\n\x12\x64\x65legated_identity\x18\x01 \x01(\t\x12\x1a\n\x12requestor_identity\x18\x07 \x01(\t\x12\x15\n\rcreation_time\x18\x02 \x01(\x03\x12\x19\n\x11validity_duration\x18\x03 \x01(\x05\x12\x10\n\x08\x61udience\x18\x05 \x03(\t\x12\x10\n\x08services\x18\x06 \x03(\t\x12\x0c\n\x04tags\x18\t \x03(\t\"5\n\x04Kind\x12\x10\n\x0cUNKNOWN_KIND\x10\x00\x12\x1b\n\x17\x42\x45\x41RER_DELEGATION_TOKEN\x10\x01\x62\x06proto3'
+  serialized_pb=b'\nEgo.chromium.org/luci/server/auth/delegation/messages/delegation.proto\x12\x08messages\"y\n\x0f\x44\x65legationToken\x12\x11\n\tsigner_id\x18\x02 \x01(\t\x12\x16\n\x0esigning_key_id\x18\x03 \x01(\t\x12\x18\n\x10pkcs1_sha256_sig\x18\x04 \x01(\x0c\x12\x1b\n\x13serialized_subtoken\x18\x05 \x01(\x0cJ\x04\x08\x01\x10\x02\"\x99\x02\n\x08Subtoken\x12%\n\x04kind\x18\x08 \x01(\x0e\x32\x17.messages.Subtoken.Kind\x12\x13\n\x0bsubtoken_id\x18\x04 \x01(\x03\x12\x1a\n\x12\x64\x65legated_identity\x18\x01 \x01(\t\x12\x1a\n\x12requestor_identity\x18\x07 \x01(\t\x12\x15\n\rcreation_time\x18\x02 \x01(\x03\x12\x19\n\x11validity_duration\x18\x03 \x01(\x05\x12\x10\n\x08\x61udience\x18\x05 \x03(\t\x12\x10\n\x08services\x18\x06 \x03(\t\x12\x0c\n\x04tags\x18\t \x03(\t\"5\n\x04Kind\x12\x10\n\x0cUNKNOWN_KIND\x10\x00\x12\x1b\n\x17\x42\x45\x41RER_DELEGATION_TOKEN\x10\x01\x42\x36Z4go.chromium.org/luci/server/auth/delegation/messagesb\x06proto3'
 )
 
 
@@ -212,4 +212,5 @@ Subtoken = _reflection.GeneratedProtocolMessageType('Subtoken', (_message.Messag
 _sym_db.RegisterMessage(Subtoken)
 
 
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

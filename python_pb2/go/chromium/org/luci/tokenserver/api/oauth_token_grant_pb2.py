@@ -18,9 +18,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/tokenserver/api/oauth_token_grant.proto',
   package='tokenserver',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z0go.chromium.org/luci/tokenserver/api;tokenserver',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n<go.chromium.org/luci/tokenserver/api/oauth_token_grant.proto\x12\x0btokenserver\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x01\n\x13OAuthTokenGrantBody\x12\x10\n\x08token_id\x18\x01 \x01(\x03\x12\x17\n\x0fservice_account\x18\x02 \x01(\t\x12\r\n\x05proxy\x18\x03 \x01(\t\x12\x10\n\x08\x65nd_user\x18\x04 \x01(\t\x12-\n\tissued_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x19\n\x11validity_duration\x18\x06 \x01(\x03\"W\n\x17OAuthTokenGrantEnvelope\x12\x12\n\ntoken_body\x18\x01 \x01(\x0c\x12\x0e\n\x06key_id\x18\x02 \x01(\t\x12\x18\n\x10pkcs1_sha256_sig\x18\x03 \x01(\x0c\x62\x06proto3'
+  serialized_pb=b'\n<go.chromium.org/luci/tokenserver/api/oauth_token_grant.proto\x12\x0btokenserver\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x01\n\x13OAuthTokenGrantBody\x12\x10\n\x08token_id\x18\x01 \x01(\x03\x12\x17\n\x0fservice_account\x18\x02 \x01(\t\x12\r\n\x05proxy\x18\x03 \x01(\t\x12\x10\n\x08\x65nd_user\x18\x04 \x01(\t\x12-\n\tissued_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x19\n\x11validity_duration\x18\x06 \x01(\x03\"W\n\x17OAuthTokenGrantEnvelope\x12\x12\n\ntoken_body\x18\x01 \x01(\x0c\x12\x0e\n\x06key_id\x18\x02 \x01(\t\x12\x18\n\x10pkcs1_sha256_sig\x18\x03 \x01(\x0c\x42\x32Z0go.chromium.org/luci/tokenserver/api;tokenserverb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
@@ -159,4 +159,5 @@ OAuthTokenGrantEnvelope = _reflection.GeneratedProtocolMessageType('OAuthTokenGr
 _sym_db.RegisterMessage(OAuthTokenGrantEnvelope)
 
 
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

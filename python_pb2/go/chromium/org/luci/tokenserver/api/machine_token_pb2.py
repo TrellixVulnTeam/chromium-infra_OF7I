@@ -18,9 +18,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/tokenserver/api/machine_token.proto',
   package='tokenserver',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z0go.chromium.org/luci/tokenserver/api;tokenserver',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n8go.chromium.org/luci/tokenserver/api/machine_token.proto\x12\x0btokenserver\"\x80\x01\n\x10MachineTokenBody\x12\x14\n\x0cmachine_fqdn\x18\x01 \x01(\t\x12\x11\n\tissued_by\x18\x02 \x01(\t\x12\x11\n\tissued_at\x18\x03 \x01(\x04\x12\x10\n\x08lifetime\x18\x04 \x01(\x04\x12\r\n\x05\x63\x61_id\x18\x05 \x01(\x03\x12\x0f\n\x07\x63\x65rt_sn\x18\x06 \x01(\x04\"N\n\x14MachineTokenEnvelope\x12\x12\n\ntoken_body\x18\x01 \x01(\x0c\x12\x0e\n\x06key_id\x18\x02 \x01(\t\x12\x12\n\nrsa_sha256\x18\x03 \x01(\x0c*<\n\x10MachineTokenType\x12\x10\n\x0cUNKNOWN_TYPE\x10\x00\x12\x16\n\x12LUCI_MACHINE_TOKEN\x10\x02\x62\x06proto3'
+  serialized_pb=b'\n8go.chromium.org/luci/tokenserver/api/machine_token.proto\x12\x0btokenserver\"\x80\x01\n\x10MachineTokenBody\x12\x14\n\x0cmachine_fqdn\x18\x01 \x01(\t\x12\x11\n\tissued_by\x18\x02 \x01(\t\x12\x11\n\tissued_at\x18\x03 \x01(\x04\x12\x10\n\x08lifetime\x18\x04 \x01(\x04\x12\r\n\x05\x63\x61_id\x18\x05 \x01(\x03\x12\x0f\n\x07\x63\x65rt_sn\x18\x06 \x01(\x04\"N\n\x14MachineTokenEnvelope\x12\x12\n\ntoken_body\x18\x01 \x01(\x0c\x12\x0e\n\x06key_id\x18\x02 \x01(\t\x12\x12\n\nrsa_sha256\x18\x03 \x01(\x0c*<\n\x10MachineTokenType\x12\x10\n\x0cUNKNOWN_TYPE\x10\x00\x12\x16\n\x12LUCI_MACHINE_TOKEN\x10\x02\x42\x32Z0go.chromium.org/luci/tokenserver/api;tokenserverb\x06proto3'
 )
 
 _MACHINETOKENTYPE = _descriptor.EnumDescriptor(
@@ -186,4 +186,5 @@ MachineTokenEnvelope = _reflection.GeneratedProtocolMessageType('MachineTokenEnv
 _sym_db.RegisterMessage(MachineTokenEnvelope)
 
 
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

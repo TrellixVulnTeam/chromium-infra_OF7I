@@ -17,9 +17,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/tokenserver/api/token_file.proto',
   package='tokenserver',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z0go.chromium.org/luci/tokenserver/api;tokenserver',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/tokenserver/api/token_file.proto\x12\x0btokenserver\"\xf3\x02\n\tTokenFile\x12\"\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\tR\x0c\x61\x63\x63\x65ss_token\x12\x1e\n\ntoken_type\x18\x02 \x01(\tR\ntoken_type\x12.\n\x12luci_machine_token\x18\x03 \x01(\tR\x12luci_machine_token\x12\x16\n\x06\x65xpiry\x18\x04 \x01(\x03R\x06\x65xpiry\x12 \n\x0blast_update\x18\x05 \x01(\x03R\x0blast_update\x12 \n\x0bnext_update\x18\x06 \x01(\x03R\x0bnext_update\x12\x34\n\x15service_account_email\x18\x07 \x01(\tR\x15service_account_email\x12<\n\x19service_account_unique_id\x18\x08 \x01(\tR\x19service_account_unique_id\x12\"\n\x0ctokend_state\x18\x32 \x01(\x0cR\x0ctokend_stateb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/tokenserver/api/token_file.proto\x12\x0btokenserver\"\xf3\x02\n\tTokenFile\x12\"\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\tR\x0c\x61\x63\x63\x65ss_token\x12\x1e\n\ntoken_type\x18\x02 \x01(\tR\ntoken_type\x12.\n\x12luci_machine_token\x18\x03 \x01(\tR\x12luci_machine_token\x12\x16\n\x06\x65xpiry\x18\x04 \x01(\x03R\x06\x65xpiry\x12 \n\x0blast_update\x18\x05 \x01(\x03R\x0blast_update\x12 \n\x0bnext_update\x18\x06 \x01(\x03R\x0bnext_update\x12\x34\n\x15service_account_email\x18\x07 \x01(\tR\x15service_account_email\x12<\n\x19service_account_unique_id\x18\x08 \x01(\tR\x19service_account_unique_id\x12\"\n\x0ctokend_state\x18\x32 \x01(\x0cR\x0ctokend_stateB2Z0go.chromium.org/luci/tokenserver/api;tokenserverb\x06proto3'
 )
 
 
@@ -123,4 +123,5 @@ TokenFile = _reflection.GeneratedProtocolMessageType('TokenFile', (_message.Mess
 _sym_db.RegisterMessage(TokenFile)
 
 
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

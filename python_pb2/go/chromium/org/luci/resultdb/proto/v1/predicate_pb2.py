@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x10luci.resultdb.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xac\x02\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\x12\x44\n\nexpectancy\x18\x03 \x01(\x0e\x32\x30.luci.resultdb.v1.TestResultPredicate.Expectancy\x12\x1a\n\x12\x65xclude_exonerated\x18\x04 \x01(\x08\"f\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\x12)\n%VARIANTS_WITH_ONLY_UNEXPECTED_RESULTS\x10\x02\"g\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\"{\n\x10VariantPredicate\x12+\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x12-\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x42\x0b\n\tpredicateB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x10luci.resultdb.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xac\x02\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\x12\x44\n\nexpectancy\x18\x03 \x01(\x0e\x32\x30.luci.resultdb.v1.TestResultPredicate.Expectancy\x12\x1a\n\x12\x65xclude_exonerated\x18\x04 \x01(\x08\"f\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\x12)\n%VARIANTS_WITH_ONLY_UNEXPECTED_RESULTS\x10\x02\"g\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\"{\n\x10VariantPredicate\x12+\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x12-\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x42\x0b\n\tpredicate\"\xfa\x01\n\x11\x41rtifactPredicate\x12\x45\n\x0c\x66ollow_edges\x18\x01 \x01(\x0b\x32/.luci.resultdb.v1.ArtifactPredicate.EdgeTypeSet\x12\x44\n\x15test_result_predicate\x18\x02 \x01(\x0b\x32%.luci.resultdb.v1.TestResultPredicate\x12\x15\n\rcontent_types\x18\x03 \x03(\t\x1a\x41\n\x0b\x45\x64geTypeSet\x12\x1c\n\x14included_invocations\x18\x01 \x01(\x08\x12\x14\n\x0ctest_results\x18\x02 \x01(\x08\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
   dependencies=[go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_common__pb2.DESCRIPTOR,])
 
@@ -193,6 +193,90 @@ _VARIANTPREDICATE = _descriptor.Descriptor(
   serialized_end=660,
 )
 
+
+_ARTIFACTPREDICATE_EDGETYPESET = _descriptor.Descriptor(
+  name='EdgeTypeSet',
+  full_name='luci.resultdb.v1.ArtifactPredicate.EdgeTypeSet',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='included_invocations', full_name='luci.resultdb.v1.ArtifactPredicate.EdgeTypeSet.included_invocations', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='test_results', full_name='luci.resultdb.v1.ArtifactPredicate.EdgeTypeSet.test_results', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=848,
+  serialized_end=913,
+)
+
+_ARTIFACTPREDICATE = _descriptor.Descriptor(
+  name='ArtifactPredicate',
+  full_name='luci.resultdb.v1.ArtifactPredicate',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='follow_edges', full_name='luci.resultdb.v1.ArtifactPredicate.follow_edges', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='test_result_predicate', full_name='luci.resultdb.v1.ArtifactPredicate.test_result_predicate', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='content_types', full_name='luci.resultdb.v1.ArtifactPredicate.content_types', index=2,
+      number=3, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_ARTIFACTPREDICATE_EDGETYPESET, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=663,
+  serialized_end=913,
+)
+
 _TESTRESULTPREDICATE.fields_by_name['variant'].message_type = _VARIANTPREDICATE
 _TESTRESULTPREDICATE.fields_by_name['expectancy'].enum_type = _TESTRESULTPREDICATE_EXPECTANCY
 _TESTRESULTPREDICATE_EXPECTANCY.containing_type = _TESTRESULTPREDICATE
@@ -205,9 +289,13 @@ _VARIANTPREDICATE.fields_by_name['equals'].containing_oneof = _VARIANTPREDICATE.
 _VARIANTPREDICATE.oneofs_by_name['predicate'].fields.append(
   _VARIANTPREDICATE.fields_by_name['contains'])
 _VARIANTPREDICATE.fields_by_name['contains'].containing_oneof = _VARIANTPREDICATE.oneofs_by_name['predicate']
+_ARTIFACTPREDICATE_EDGETYPESET.containing_type = _ARTIFACTPREDICATE
+_ARTIFACTPREDICATE.fields_by_name['follow_edges'].message_type = _ARTIFACTPREDICATE_EDGETYPESET
+_ARTIFACTPREDICATE.fields_by_name['test_result_predicate'].message_type = _TESTRESULTPREDICATE
 DESCRIPTOR.message_types_by_name['TestResultPredicate'] = _TESTRESULTPREDICATE
 DESCRIPTOR.message_types_by_name['TestExonerationPredicate'] = _TESTEXONERATIONPREDICATE
 DESCRIPTOR.message_types_by_name['VariantPredicate'] = _VARIANTPREDICATE
+DESCRIPTOR.message_types_by_name['ArtifactPredicate'] = _ARTIFACTPREDICATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 TestResultPredicate = _reflection.GeneratedProtocolMessageType('TestResultPredicate', (_message.Message,), {
@@ -230,6 +318,21 @@ VariantPredicate = _reflection.GeneratedProtocolMessageType('VariantPredicate', 
   # @@protoc_insertion_point(class_scope:luci.resultdb.v1.VariantPredicate)
   })
 _sym_db.RegisterMessage(VariantPredicate)
+
+ArtifactPredicate = _reflection.GeneratedProtocolMessageType('ArtifactPredicate', (_message.Message,), {
+
+  'EdgeTypeSet' : _reflection.GeneratedProtocolMessageType('EdgeTypeSet', (_message.Message,), {
+    'DESCRIPTOR' : _ARTIFACTPREDICATE_EDGETYPESET,
+    '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.predicate_pb2'
+    # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ArtifactPredicate.EdgeTypeSet)
+    })
+  ,
+  'DESCRIPTOR' : _ARTIFACTPREDICATE,
+  '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.predicate_pb2'
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ArtifactPredicate)
+  })
+_sym_db.RegisterMessage(ArtifactPredicate)
+_sym_db.RegisterMessage(ArtifactPredicate.EdgeTypeSet)
 
 
 DESCRIPTOR._options = None
