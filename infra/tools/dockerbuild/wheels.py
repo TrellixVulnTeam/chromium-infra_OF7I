@@ -893,6 +893,7 @@ SPECS.update({
             openssl='1.1.1i',
             pyversions=['py2', 'py3'],
             skip_plat=['windows-x64-py3'],
+            packaged=['windows-x86', 'windows-x64'],
         ),
     )
 })
