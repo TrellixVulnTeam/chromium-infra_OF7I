@@ -42,7 +42,7 @@ class Cipd(object):
       # we run seem to need quotes, so this is easy enough.  Plus this is only
       # for debugging purposes, and devs are smrat.
       util.LOGGER.info('[dryrun] would have run: %s', ' '.join(cmd))
-      return run_fn(['true'])
+      return 0, ''
 
     return run_fn(cmd, env={'CIPD_CACHE_DIR': self._cache_dir})
 
