@@ -194,13 +194,13 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 	f := func(ctx context.Context) error {
 		machine, err := registration.GetMachine(ctx, meta.GetChromeosDeviceId())
 		if err != nil {
-			return errors.Annotate(err, "UpdateDutMeta").Err()
+			return err
 		}
 		hc := getMachineHistoryClient(machine)
 
 		osMachine := machine.GetChromeosMachine()
 		if osMachine == nil {
-			logging.Warningf(ctx, "UpdateDutMeta - %s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
+			logging.Warningf(ctx, "%s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
 			return nil
 		}
 		// Copy for logging
@@ -227,7 +227,7 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateDutMeta - %s", err.Error())
+		logging.Errorf(ctx, "UpdateDutMeta (%s, %s) - %s", meta.GetChromeosDeviceId(), meta.GetHostname(), err.Error())
 		return err
 	}
 	return nil

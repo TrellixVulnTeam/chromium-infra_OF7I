@@ -446,16 +446,16 @@ func UpdateAssetMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 	f := func(ctx context.Context) error {
 		machine, err := registration.GetMachine(ctx, meta.GetChromeosDeviceId())
 		if err != nil {
-			return errors.Annotate(err, "UpdateAssetMeta").Err()
+			return err
 		}
 		if machine.GetChromeosMachine() == nil {
-			logging.Warningf(ctx, "UpdateAssetMeta - %s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
+			logging.Warningf(ctx, "%s is not a valid Chromeos machine", meta.GetChromeosDeviceId())
 			return nil
 		}
 
 		asset, err := registration.GetAsset(ctx, meta.GetChromeosDeviceId())
 		if err != nil {
-			return errors.Annotate(err, "UpdateAssetMeta").Err()
+			return err
 		}
 		hc := &HistoryClient{}
 		// Copy for logging
@@ -483,7 +483,7 @@ func UpdateAssetMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateAssetMeta - %s", err.Error())
+		logging.Errorf(ctx, "UpdateAssetMeta (%s, %s) - %s", meta.GetChromeosDeviceId(), meta.GetHostname(), err.Error())
 		return err
 	}
 	return nil

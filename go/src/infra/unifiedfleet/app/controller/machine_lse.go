@@ -1409,13 +1409,13 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 	f := func(ctx context.Context) error {
 		lse, err := inventory.GetMachineLSE(ctx, meta.GetHostname())
 		if err != nil {
-			return errors.Annotate(err, "UpdateLabMeta").Err()
+			return err
 		}
 		hc := getHostHistoryClient(lse)
 
 		dut := lse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 		if dut == nil {
-			logging.Warningf(ctx, "UpdateLabMeta - %s is not a valid Chromeos DUT", meta.GetHostname())
+			logging.Warningf(ctx, "%s is not a valid Chromeos DUT", meta.GetHostname())
 			return nil
 		}
 
@@ -1437,7 +1437,7 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateLabMeta - %s", err)
+		logging.Errorf(ctx, "UpdateLabMeta (%s, %s) - %s", meta.GetChromeosDeviceId(), meta.GetHostname(), err)
 		return err
 	}
 	return nil

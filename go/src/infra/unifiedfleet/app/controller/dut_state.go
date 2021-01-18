@@ -22,7 +22,7 @@ func UpdateDutState(ctx context.Context, ds *chromeosLab.DutState) (*chromeosLab
 		// It's not ok that no such DUT (machine lse) exists in UFS.
 		_, err := inventory.GetMachineLSE(ctx, ds.GetHostname())
 		if err != nil {
-			return errors.Annotate(err, "UpdateDutState").Err()
+			return err
 		}
 		hc := &HistoryClient{}
 		// It's ok that no old dut state for this DUT exists before.
@@ -36,7 +36,7 @@ func UpdateDutState(ctx context.Context, ds *chromeosLab.DutState) (*chromeosLab
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateDutState - %s", err)
+		logging.Errorf(ctx, "UpdateDutState (%s, %s) - %s", ds.GetId().GetValue(), ds.GetHostname(), err)
 		return nil, err
 	}
 	return ds, nil
