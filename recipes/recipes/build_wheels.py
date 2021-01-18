@@ -13,7 +13,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  solution_path = api.path['cache'].join('builder', 'solution')
+  solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
   with api.context(cwd=solution_path):
     api.gclient.set_config('infra')

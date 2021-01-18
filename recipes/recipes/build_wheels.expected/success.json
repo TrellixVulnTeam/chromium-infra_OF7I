@@ -9,7 +9,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/builder/solution"
+      "[CACHE]/builder/build_wheels"
     ],
     "infra_step": true,
     "name": "init cache if it doesn't exist"
@@ -23,7 +23,7 @@
       "--spec",
       "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -54,7 +54,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -86,7 +86,7 @@
       "user.name",
       "local_bot"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -107,7 +107,7 @@
       "user.email",
       "local_bot@example.com"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -124,7 +124,7 @@
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -136,7 +136,7 @@
     "cmd": [
       "python",
       "-u",
-      "[CACHE]/builder/solution/infra/run.py",
+      "[CACHE]/builder/build_wheels/infra/run.py",
       "infra.tools.dockerbuild",
       "--root",
       "[CLEANUP]/.dockerbuild_tmp_1",
@@ -144,7 +144,7 @@
       "wheel-build",
       "--upload"
     ],
-    "cwd": "[CACHE]/builder/solution/infra",
+    "cwd": "[CACHE]/builder/build_wheels/infra",
     "env": {
       "MACOSX_DEPLOYMENT_TARGET": "10.13"
     },
