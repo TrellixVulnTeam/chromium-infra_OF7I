@@ -28,7 +28,7 @@ func cmdFetchDurations(authOpt *auth.Options) *subcommands.Command {
 			r := &fetchDurationsRun{}
 			r.authOpt = authOpt
 			r.RegisterBaseFlags(&r.Flags)
-			r.Flags.Float64Var(&r.frac, "frac", 0.001, "Fraction of the data to fetch")
+			r.Flags.Float64Var(&r.frac, "frac", 0.1, "Fraction of the data to fetch")
 			r.Flags.DurationVar(&r.minDuration, "min-duration", time.Second, "Minimum duration to fetch")
 			return r
 		},

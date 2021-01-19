@@ -61,7 +61,7 @@ func readHistoryRecords(dir string, callback func(entry []byte) error) error {
 
 				// Split by line.
 				scan := bufio.NewScanner(gz)
-				scan.Buffer(nil, 1e7) // 10 MB.
+				scan.Buffer(nil, 1e8) // 100 MB.
 				for scan.Scan() {
 					if err := callback(scan.Bytes()); err != nil {
 						return err
