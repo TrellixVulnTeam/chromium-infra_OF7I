@@ -28,6 +28,7 @@ var (
 	HostnamePattern               string = "Name must match the regular expression `^[a-zA-Z0-9-.]{1,63}$`"
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidHostname               string = fmt.Sprintf("%s%s", "Invalid input - ", HostnamePattern)
+	InvalidTags                   string = "Invalid input - Tags must not include '='."
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	AssetNameFormat               string = "Invalid input - Entity Name pattern should be assets/{asset}."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
@@ -172,6 +173,9 @@ func (r *CreateChromePlatformRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if !util.ValidateTags(r.ChromePlatform.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -179,6 +183,9 @@ func (r *CreateChromePlatformRequest) Validate() error {
 func (r *UpdateChromePlatformRequest) Validate() error {
 	if r.ChromePlatform == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !util.ValidateTags(r.ChromePlatform.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(chromePlatformRegex, ChromePlatformNameFormat, r.ChromePlatform.GetName())
 }
@@ -431,6 +438,9 @@ func (r *CreateMachineLSERequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 		}
 	}
+	if !util.ValidateTags(r.MachineLSE.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -606,7 +616,7 @@ func validateNic(nic *ufspb.Nic) error {
 		return status.Errorf(codes.InvalidArgument, "nic macAddress cannot be empty")
 	}
 	if !util.ValidateTags(nic.GetTags()) {
-		return status.Errorf(codes.InvalidArgument, "tags field contains invalidate characters.")
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	newMac, err := util.ParseMac(nic.GetMacAddress())
 	if err != nil {
@@ -709,7 +719,7 @@ func (r *UpdateNicRequest) Validate() error {
 		r.Nic.MacAddress = newMac
 	}
 	if !util.ValidateTags(r.Nic.GetTags()) {
-		return status.Errorf(codes.InvalidArgument, "tags field contains invalidate characters.")
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(nicRegex, NicNameFormat, r.Nic.GetName())
 }
@@ -754,6 +764,9 @@ func (r *CreateKVMRequest) Validate() error {
 		}
 		r.KVM.MacAddress = newMac
 	}
+	if !util.ValidateTags(r.KVM.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -768,6 +781,9 @@ func (r *UpdateKVMRequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		r.KVM.MacAddress = newMac
+	}
+	if !util.ValidateTags(r.KVM.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(kvmRegex, KVMNameFormat, r.KVM.GetName())
 }
@@ -873,6 +889,9 @@ func validateDrac(drac *ufspb.Drac) error {
 	if drac.GetMacAddress() == "" {
 		return status.Errorf(codes.InvalidArgument, "drac macAddress cannot be empty")
 	}
+	if !util.ValidateTags(drac.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	newMac, err := util.ParseMac(drac.GetMacAddress())
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, err.Error())
@@ -892,6 +911,9 @@ func (r *UpdateDracRequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		r.Drac.MacAddress = newMac
+	}
+	if !util.ValidateTags(r.Drac.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(dracRegex, DracNameFormat, r.Drac.GetName())
 }

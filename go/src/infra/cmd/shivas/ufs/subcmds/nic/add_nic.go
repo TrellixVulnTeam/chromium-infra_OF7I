@@ -111,7 +111,7 @@ func (c *addNic) innerRun(a subcommands.Application, args []string, env subcomma
 		}
 	}
 	if !ufsUtil.ValidateTags(nic.Tags) {
-		return errors.New(fmt.Sprintf("tags field contains invalidate characters."))
+		return fmt.Errorf(ufsAPI.InvalidTags)
 	}
 	res, err := ic.CreateNic(ctx, &ufsAPI.CreateNicRequest{
 		Nic:   &nic,

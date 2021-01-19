@@ -126,6 +126,10 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		c.parseArgs(&machinelse, machine.GetLocation().GetZone())
 	}
 
+	if !ufsUtil.ValidateTags(machinelse.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
+
 	req := &ufsAPI.CreateMachineLSERequest{
 		MachineLSE:    &machinelse,
 		MachineLSEId:  machinelse.GetName(),

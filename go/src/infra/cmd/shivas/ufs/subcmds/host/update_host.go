@@ -145,6 +145,9 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	}
 
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
+	if !ufsUtil.ValidateTags(machinelse.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
 		NetworkOptions: networkOptions,

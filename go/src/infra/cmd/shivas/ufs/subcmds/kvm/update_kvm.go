@@ -123,6 +123,9 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	kvm.Name = ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name)
+	if !ufsUtil.ValidateTags(kvm.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateKVM(ctx, &ufsAPI.UpdateKVMRequest{
 		KVM: &kvm,
 		NetworkOption: &ufsAPI.NetworkOption{

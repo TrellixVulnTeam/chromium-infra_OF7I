@@ -120,6 +120,9 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	drac.Name = ufsUtil.AddPrefix(ufsUtil.DracCollection, drac.Name)
+	if !ufsUtil.ValidateTags(drac.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateDrac(ctx, &ufsAPI.UpdateDracRequest{
 		Drac: &drac,
 		NetworkOption: &ufsAPI.NetworkOption{

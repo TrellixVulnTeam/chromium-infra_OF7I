@@ -110,6 +110,9 @@ func (c *addDrac) innerRun(a subcommands.Application, args []string, env subcomm
 			c.parseArgs(&drac)
 		}
 	}
+	if !ufsUtil.ValidateTags(drac.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.CreateDrac(ctx, &ufsAPI.CreateDracRequest{
 		Drac:   &drac,
 		DracId: drac.GetName(),

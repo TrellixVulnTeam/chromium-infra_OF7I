@@ -347,6 +347,9 @@ func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
 }
 
 func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
+	if !ufsUtil.ValidateTags(lse.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
 		MachineLSE:   lse,
 		MachineLSEId: lse.GetName(),

@@ -108,6 +108,9 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 			c.parseArgs(&kvm)
 		}
 	}
+	if !ufsUtil.ValidateTags(kvm.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.CreateKVM(ctx, &ufsAPI.CreateKVMRequest{
 		KVM:   &kvm,
 		KVMId: kvm.GetName(),

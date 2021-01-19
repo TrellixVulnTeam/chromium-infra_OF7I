@@ -101,6 +101,9 @@ func (c *addChromePlatform) innerRun(a subcommands.Application, args []string, e
 			c.parseArgs(&chromePlatform)
 		}
 	}
+	if !ufsUtil.ValidateTags(chromePlatform.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.CreateChromePlatform(ctx, &ufsAPI.CreateChromePlatformRequest{
 		ChromePlatform:   &chromePlatform,
 		ChromePlatformId: chromePlatform.GetName(),

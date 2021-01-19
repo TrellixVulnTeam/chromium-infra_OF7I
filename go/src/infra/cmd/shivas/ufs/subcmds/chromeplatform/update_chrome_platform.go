@@ -105,6 +105,9 @@ func (c *updateChromePlatform) innerRun(a subcommands.Application, args []string
 		return err
 	}
 	chromePlatform.Name = ufsUtil.AddPrefix(ufsUtil.ChromePlatformCollection, chromePlatform.Name)
+	if !ufsUtil.ValidateTags(chromePlatform.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateChromePlatform(ctx, &ufsAPI.UpdateChromePlatformRequest{
 		ChromePlatform: &chromePlatform,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
