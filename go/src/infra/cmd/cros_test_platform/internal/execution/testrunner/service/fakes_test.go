@@ -8,7 +8,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/common/data/stringset"
 
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
@@ -82,27 +81,16 @@ func TestBotsAwareFakeClient(t *testing.T) {
 }
 
 func TestClientCallCountingWrapper(t *testing.T) {
-	c := trservice.ClientCallCountingWrapper{
+	c := trservice.CallCountingClientWrapper{
 		Client: trservice.StubClient{},
 	}
-	if diff := pretty.Compare(trservice.ClientMethodCallCounts{}, c.MethodCallCounts()); diff != "" {
-		t.Fatalf("precondition counts differ, -want, +got: %s", diff)
-	}
-
 	c.ValidateArgs(context.Background(), nil)
 	c.LaunchTask(context.Background(), nil)
-	c.FetchResults(context.Background(), "")
-	c.SwarmingTaskID("")
-	c.URL("")
-	want := trservice.ClientMethodCallCounts{
-		ValidateArgs:   1,
-		LaunchTask:     1,
-		FetchResults:   1,
-		SwarmingTaskID: 1,
-		URL:            1,
+	if c.CallCounts.ValidateArgs != 1 {
+		t.Errorf("ValidateArgs counts is %d, want 1", c.CallCounts.ValidateArgs)
 	}
-	if diff := pretty.Compare(want, c.MethodCallCounts()); diff != "" {
-		t.Fatalf("post-condition counts differ, -want, +got: %s", diff)
+	if c.CallCounts.LaunchTask != 1 {
+		t.Errorf("LaunchTask counts is %d, want 1", c.CallCounts.LaunchTask)
 	}
 }
 

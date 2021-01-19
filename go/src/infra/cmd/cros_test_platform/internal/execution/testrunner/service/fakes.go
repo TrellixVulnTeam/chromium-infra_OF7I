@@ -105,65 +105,6 @@ func (c BotsAwareFakeClient) ValidateArgs(ctx context.Context, args *request.Arg
 	return false, rejected, nil
 }
 
-// ClientMethodCallCounts is a POD that contains the number of each time each
-// method in Client was called.
-type ClientMethodCallCounts struct {
-	ValidateArgs   int
-	LaunchTask     int
-	FetchResults   int
-	SwarmingTaskID int
-	URL            int
-}
-
-// ClientCallCountingWrapper is a Client wrapper that additionally counts the
-// number of times each Client method is called.
-type ClientCallCountingWrapper struct {
-	// Name the wrapped client to avoid accidental forwarding of method calls
-	// without counting.
-	Client Client
-
-	counts ClientMethodCallCounts
-}
-
-// Ensure we implement the promised interface.
-var _ Client = &ClientCallCountingWrapper{Client: StubClient{}}
-
-// ValidateArgs implements Client interface.
-func (c *ClientCallCountingWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
-	c.counts.ValidateArgs++
-	return c.Client.ValidateArgs(ctx, args)
-}
-
-// LaunchTask implements Client interface.
-func (c *ClientCallCountingWrapper) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
-	c.counts.LaunchTask++
-	return c.Client.LaunchTask(ctx, args)
-}
-
-// FetchResults implements Client interface.
-func (c *ClientCallCountingWrapper) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
-	c.counts.FetchResults++
-	return c.Client.FetchResults(ctx, t)
-}
-
-// SwarmingTaskID implements Client interface.
-func (c *ClientCallCountingWrapper) SwarmingTaskID(t TaskReference) string {
-	c.counts.SwarmingTaskID++
-	return c.Client.SwarmingTaskID(t)
-}
-
-// URL implements Client interface.
-func (c *ClientCallCountingWrapper) URL(t TaskReference) string {
-	c.counts.URL++
-	return c.Client.URL(t)
-}
-
-// MethodCallCounts the number of times the Client methods have been called so
-// far on the wrapped Client.
-func (c *ClientCallCountingWrapper) MethodCallCounts() ClientMethodCallCounts {
-	return c.counts
-}
-
 // StubClientWithCannedResults is a stub Client that always returns canned
 // result for the FetchResults method.
 type StubClientWithCannedResults struct {
@@ -270,6 +211,57 @@ func deepCopyFetchResultsResponse(r FetchResultsResponse) FetchResultsResponse {
 		panic(fmt.Sprintf("Error when copying canned response: %s; marshalled result: %s", err, d))
 	}
 	return resp
+}
+
+// CallCountingClientWrapper is a Client wrapper that additionally counts the
+// number of times each Client method is called.
+type CallCountingClientWrapper struct {
+	// Name the wrapped client to avoid accidental forwarding of method calls
+	// without counting.
+	Client Client
+
+	// CallCounts is a POD value that contains the number of each time each method
+	// in Client was called.
+	CallCounts struct {
+		ValidateArgs   int
+		LaunchTask     int
+		FetchResults   int
+		SwarmingTaskID int
+		URL            int
+	}
+}
+
+// Ensure we implement the promised interface.
+var _ Client = &CallCountingClientWrapper{Client: StubClient{}}
+
+// ValidateArgs implements Client interface.
+func (c *CallCountingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+	c.CallCounts.ValidateArgs++
+	return c.Client.ValidateArgs(ctx, args)
+}
+
+// LaunchTask implements Client interface.
+func (c *CallCountingClientWrapper) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
+	c.CallCounts.LaunchTask++
+	return c.Client.LaunchTask(ctx, args)
+}
+
+// FetchResults implements Client interface.
+func (c *CallCountingClientWrapper) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+	c.CallCounts.FetchResults++
+	return c.Client.FetchResults(ctx, t)
+}
+
+// SwarmingTaskID implements Client interface.
+func (c *CallCountingClientWrapper) SwarmingTaskID(t TaskReference) string {
+	c.CallCounts.SwarmingTaskID++
+	return c.Client.SwarmingTaskID(t)
+}
+
+// URL implements Client interface.
+func (c *CallCountingClientWrapper) URL(t TaskReference) string {
+	c.CallCounts.URL++
+	return c.Client.URL(t)
 }
 
 // ArgsCollectingClientWrapper collects arguments provided to the Client method
