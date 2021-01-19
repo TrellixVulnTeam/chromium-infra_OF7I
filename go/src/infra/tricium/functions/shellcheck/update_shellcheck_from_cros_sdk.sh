@@ -28,7 +28,7 @@ old_archive="shellcheck-${old_version}.tbz2"
 old_sumfile="${old_archive}.sum"
 
 sdk_version=$(
-	curl -s 'https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/master/chromeos/binhost/host/sdk_version.conf?format=TEXT' |
+	curl -s 'https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/HEAD/chromeos/binhost/host/sdk_version.conf?format=TEXT' |
 	base64 -d - |
 	grep '^SDK_LATEST_VERSION=' |
         grep -o '[0-9.]*'
