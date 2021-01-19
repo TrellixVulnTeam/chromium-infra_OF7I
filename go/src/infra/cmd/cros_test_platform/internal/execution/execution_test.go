@@ -195,7 +195,7 @@ func runWithParams(ctx context.Context, skylab trservice.Client, params *test_pl
 
 func TestLaunchForNonExistentBot(t *testing.T) {
 	Convey("In an execution with one invocation but not bots", t, func() {
-		trc := trservice.ClientCallCountingWrapper{
+		trc := &trservice.ClientCallCountingWrapper{
 			Client: trservice.NewBotsAwareFakeClient(),
 		}
 		resps, err := runWithParams(
@@ -245,14 +245,18 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 
 func TestLaunchAndWaitTest(t *testing.T) {
 	Convey("Given two enumerated test", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-
-		var invs []*steps.EnumerationResponse_AutotestInvocation
-		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
-
 		Convey("when running a skylab execution", func() {
-			resps, err := runWithDefaults(ctx, skylab, invs)
+			trClient := &trservice.ClientCallCountingWrapper{
+				Client: trservice.StubClient{},
+			}
+			resps, err := runWithDefaults(
+				context.Background(),
+				trClient,
+				[]*steps.EnumerationResponse_AutotestInvocation{
+					clientTestInvocation("", ""),
+					clientTestInvocation("", ""),
+				},
+			)
 			So(err, ShouldBeNil)
 			resp := extractSingleResponse(resps)
 
@@ -262,9 +266,10 @@ func TestLaunchAndWaitTest(t *testing.T) {
 					So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 				}
 			})
-			Convey("then the expected number of external Skylab calls are made.", func() {
-				So(skylab.launchCalls, ShouldHaveLength, 2)
-				So(skylab.numResultsCalls, ShouldEqual, 2)
+			Convey("then the expected number of external test_runner calls are made.", func() {
+				counts := trClient.MethodCallCounts()
+				So(counts.LaunchTask, ShouldEqual, 2)
+				So(counts.FetchResults, ShouldEqual, 2)
 			})
 		})
 	})
@@ -932,7 +937,7 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				trClient := trservice.ClientCallCountingWrapper{
+				trClient := &trservice.ClientCallCountingWrapper{
 					Client: c.trClient,
 				}
 				resps, err := runWithParams(ctx, trClient, params, c.invocations)
@@ -1214,11 +1219,17 @@ func TestIncompatibleDependencies(t *testing.T) {
 			},
 		}
 
-		ctx := context.Background()
-		skylab := newFakeSkylab()
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				resps, err := runWithParams(ctx, skylab, c.Params, c.Invs)
+				trClient := &trservice.ClientCallCountingWrapper{
+					Client: trservice.StubClient{},
+				}
+				resps, err := runWithParams(
+					context.Background(),
+					trClient,
+					c.Params,
+					c.Invs,
+				)
 				So(err, ShouldBeNil)
 				resp := extractSingleResponse(resps)
 
@@ -1234,8 +1245,9 @@ func TestIncompatibleDependencies(t *testing.T) {
 					So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 				})
 				Convey("and no skylab swarming tasks are created.", func() {
-					So(skylab.launchCalls, ShouldHaveLength, 0)
-					So(skylab.numResultsCalls, ShouldEqual, 0)
+					counts := trClient.MethodCallCounts()
+					So(counts.LaunchTask, ShouldEqual, 0)
+					So(counts.FetchResults, ShouldEqual, 0)
 				})
 			})
 		}

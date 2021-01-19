@@ -126,41 +126,41 @@ type ClientCallCountingWrapper struct {
 }
 
 // Ensure we implement the promised interface.
-var _ Client = ClientCallCountingWrapper{Client: StubClient{}}
+var _ Client = &ClientCallCountingWrapper{Client: StubClient{}}
 
 // ValidateArgs implements Client interface.
-func (c ClientCallCountingWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+func (c *ClientCallCountingWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
 	c.counts.ValidateArgs++
 	return c.Client.ValidateArgs(ctx, args)
 }
 
 // LaunchTask implements Client interface.
-func (c ClientCallCountingWrapper) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
+func (c *ClientCallCountingWrapper) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
 	c.counts.LaunchTask++
 	return c.Client.LaunchTask(ctx, args)
 }
 
 // FetchResults implements Client interface.
-func (c ClientCallCountingWrapper) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+func (c *ClientCallCountingWrapper) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
 	c.counts.FetchResults++
 	return c.Client.FetchResults(ctx, t)
 }
 
 // SwarmingTaskID implements Client interface.
-func (c ClientCallCountingWrapper) SwarmingTaskID(t TaskReference) string {
+func (c *ClientCallCountingWrapper) SwarmingTaskID(t TaskReference) string {
 	c.counts.SwarmingTaskID++
 	return c.Client.SwarmingTaskID(t)
 }
 
 // URL implements Client interface.
-func (c ClientCallCountingWrapper) URL(t TaskReference) string {
+func (c *ClientCallCountingWrapper) URL(t TaskReference) string {
 	c.counts.URL++
 	return c.Client.URL(t)
 }
 
 // MethodCallCounts the number of times the Client methods have been called so
 // far on the wrapped Client.
-func (c ClientCallCountingWrapper) MethodCallCounts() ClientMethodCallCounts {
+func (c *ClientCallCountingWrapper) MethodCallCounts() ClientMethodCallCounts {
 	return c.counts
 }
 
