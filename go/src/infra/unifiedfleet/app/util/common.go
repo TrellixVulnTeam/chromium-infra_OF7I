@@ -8,6 +8,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
 )
 
 // message for filtering
@@ -103,4 +108,52 @@ func GetNewNicNameForRenameMachine(oldNicName, oldMachineName, newMachineName st
 		return newMachineName + strings.TrimPrefix(oldNicName, oldMachineName)
 	}
 	return oldNicName
+}
+
+// ContainsAnyStrings returns true if any of the inputs are in list.
+func ContainsAnyStrings(list []string, inputs ...string) bool {
+	for _, a := range list {
+		for _, b := range inputs {
+			if b == a {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ProtoEqual compares the given protos i, j and returns true if Type(i) == Type(j) and one of the following holds
+// 1. i == j == nil
+// 2. For each exported field(proto message field) x in Type(i), i.Equal(j) or i.x == j.y.
+// returns false otherwise.
+func ProtoEqual(i, j proto.Message) bool {
+	// Check if both the inputs are of same type. Cannot compare dissimilar protos.
+	if proto.MessageReflect(i).Descriptor().FullName() != proto.MessageReflect(j).Descriptor().FullName() {
+		return false
+	}
+
+	if i == nil || j == nil {
+		return i == j
+	}
+
+	// Create a ignore unexported paths filter for comparision.
+	opt := cmp.FilterPath(func(p cmp.Path) bool {
+		// Filters the unexported paths from the given protos. Returns true if path is unexported.
+
+		// Get the last path Ex: MachineLSE.ChromeosMachineLse.DeviceLse.Dut.Peripherals.Servo -> Servo
+		lPath := p.Index(-1)
+		// Check if its a struct field.
+		sf, ok := lPath.(cmp.StructField)
+		if !ok {
+			// path is a pointer to struct. Compare the struct.
+			return false
+		}
+		// Decode the first rune in the variable name
+		r, _ := utf8.DecodeRuneInString(sf.Name())
+		// Exported field names start with upper case alphabet. Check if it's Upper case.
+		return !unicode.IsUpper(r)
+	}, cmp.Ignore()) // Ignore the unexported paths.
+
+	// Compare the proto message.
+	return cmp.Equal(i, j, opt)
 }

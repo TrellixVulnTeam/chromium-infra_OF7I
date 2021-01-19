@@ -297,13 +297,19 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 Examples:
 shivas update dut -f dut.json
-Update a DUT by reading a JSON file input.
+Update a DUT by reading a JSON file input. Triggers deploy task if required.
 
-shivas update dut -f dut.json -deploy-only
-Trigger a deploy task on dut from reading dut.json. Ignore updating UFS.
+shivas update dut -f dut.json -force-deploy
+Update DUT to UFS if changed. Trigger a deploy task.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -force-deploy
+Trigger a deploy task on the given DUT. Nothing is updated.
 
 shivas update dut -name chromeos6-rack3-row2-host1 -servo chromeos6-rack3-row2-labstation1:0 -servo-serial C1024356789
 Update servo connected to the DUT.
+
+shivas update dut -name chromeos6-rack3-row2-host1 -rpm chromeos6-row11_12-rack24-rpm1 -outlet .A22
+Update rpm connected to the DUT.
 
 shivas update dut -name chromeos6-rack3-row2-host1 -servo -
 Delete servo connected to the DUT.
@@ -312,10 +318,11 @@ shivas update dut -name chromeos6-rack3-row2-host1 -rpm -
 Delete rpm connected to the DUT.
 
 shivas update dut -name chromeos6-rack3-row2-host1 -tags kevin,no-test
-Add tags to an existing DUT and skip running deploy task.
+Add tags to an existing DUT.
 
-shivas update dut -f switch.json
-Update a DUT by reading a JSON file input.
+shivas update dut -name chromeos6-rack3-row2-host1 -tags -
+Delete tags to an existing DUT.
+
 `
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
