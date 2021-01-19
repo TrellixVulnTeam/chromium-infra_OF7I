@@ -6,6 +6,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"infra/libs/skylab/request"
 
@@ -161,4 +162,39 @@ func (c ClientCallCountingWrapper) URL(t TaskReference) string {
 // far on the wrapped Client.
 func (c ClientCallCountingWrapper) MethodCallCounts() ClientMethodCallCounts {
 	return c.counts
+}
+
+// StubClientWithCannedResults is a stub Client that always returns a canned
+// result for the FetchResults method.
+type StubClientWithCannedResults struct {
+	StubClient
+	CannedResponse FetchResultsResponse
+}
+
+// FetchResults implements Client interface.
+func (c StubClientWithCannedResults) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+	// Deep-copy to avoid leaking pointer to internal data
+	d, err := json.Marshal(c.CannedResponse)
+	if err != nil {
+		panic(fmt.Sprintf("Error when copying canned response: %s", err))
+	}
+	var resp FetchResultsResponse
+	if err := json.Unmarshal(d, &resp); err != nil {
+		panic(fmt.Sprintf("Error when copying canned response: %s", err))
+	}
+	return &resp, nil
+}
+
+// NewStubClientWithCannedIncompleteTasks returns a new StubWithCannedResultsClient
+// where all tasks are deemed incomplete with the given lifeCycle.
+//
+// In particular, this means that no detailed test_runner response is available
+// in the response for FetchResults.
+func NewStubClientWithCannedIncompleteTasks(lifeCycle test_platform.TaskState_LifeCycle) StubClientWithCannedResults {
+	return StubClientWithCannedResults{
+		CannedResponse: FetchResultsResponse{
+			LifeCycle: lifeCycle,
+			Result:    nil,
+		},
+	}
 }

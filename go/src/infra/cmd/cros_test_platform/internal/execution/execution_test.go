@@ -54,7 +54,6 @@ var (
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
 	launchCalls             []*request.Args
-	nextLifeCycle           test_platform.TaskState_LifeCycle
 	numResultsCalls         int
 	url                     string
 }
@@ -62,16 +61,11 @@ type fakeSkylab struct {
 func newFakeSkylab() *fakeSkylab {
 	return &fakeSkylab{
 		autotestResultGenerator: autotestResultAlwaysPass,
-		nextLifeCycle:           test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
 }
 
 func (s *fakeSkylab) setURL(url string) {
 	s.url = url
-}
-
-func (s *fakeSkylab) setLifeCycle(lc test_platform.TaskState_LifeCycle) {
-	s.nextLifeCycle = lc
 }
 
 func (s *fakeSkylab) setAutotestResultGenerator(f autotestResultGenerator) {
@@ -95,7 +89,7 @@ func (s *fakeSkylab) FetchResults(context.Context, trservice.TaskReference) (*tr
 				AutotestResult: s.autotestResultGenerator(),
 			},
 		},
-		LifeCycle: s.nextLifeCycle,
+		LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}, nil
 }
 
@@ -291,11 +285,6 @@ func TestLaunchAndWaitTest(t *testing.T) {
 // For detailed tests on the handling of autotest test results, see results_test.go.
 func TestTaskStates(t *testing.T) {
 	Convey("Given a single test", t, func() {
-		ctx := context.Background()
-
-		var invs []*steps.EnumerationResponse_AutotestInvocation
-		invs = append(invs, clientTestInvocation("", ""))
-
 		cases := []struct {
 			description   string
 			lifeCycle     test_platform.TaskState_LifeCycle
@@ -319,11 +308,13 @@ func TestTaskStates(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.description, func() {
-				skylab := newFakeSkylab()
-				skylab.setLifeCycle(c.lifeCycle)
-				skylab.setAutotestResultGenerator(autotestResultAlwaysEmpty)
-
-				resps, err := runWithDefaults(ctx, skylab, invs)
+				resps, err := runWithDefaults(
+					context.Background(),
+					trservice.NewStubClientWithCannedIncompleteTasks(c.lifeCycle),
+					[]*steps.EnumerationResponse_AutotestInvocation{
+						clientTestInvocation("", ""),
+					},
+				)
 				So(err, ShouldBeNil)
 				resp := extractSingleResponse(resps)
 
@@ -400,18 +391,18 @@ func TestTaskURL(t *testing.T) {
 func TestIncompleteWait(t *testing.T) {
 	Convey("Given a run that is cancelled while running, response reflects cancellation.", t, func() {
 		ctx, cancel := context.WithCancel(context.Background())
-
-		skylab := newFakeSkylab()
-		skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
-
-		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-
 		var gresps map[string]*steps.ExecuteResponse
 		var gerr error
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			gresps, gerr = runWithDefaults(ctx, skylab, invs)
+			gresps, gerr = runWithDefaults(
+				ctx,
+				trservice.NewStubClientWithCannedIncompleteTasks(test_platform.TaskState_LIFE_CYCLE_RUNNING),
+				[]*steps.EnumerationResponse_AutotestInvocation{
+					clientTestInvocation("", ""),
+				},
+			)
 			wg.Done()
 		}()
 
@@ -1151,14 +1142,18 @@ func TestResponseVerdict(t *testing.T) {
 		})
 
 		Convey("when execution is aborted (e.g., timeout), response verdict is correct.", func() {
-			skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
-
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			var resps map[string]*steps.ExecuteResponse
 			var err error
 			go func() {
-				resps, err = runWithDefaults(ctx, skylab, invs)
+				resps, err = runWithDefaults(
+					ctx,
+					trservice.NewStubClientWithCannedIncompleteTasks(test_platform.TaskState_LIFE_CYCLE_RUNNING),
+					[]*steps.EnumerationResponse_AutotestInvocation{
+						serverTestInvocation("name1", ""),
+					},
+				)
 				wg.Done()
 			}()
 
