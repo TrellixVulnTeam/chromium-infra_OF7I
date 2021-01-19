@@ -2,23 +2,23 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Package execution_test contains blackbox tests for the execution package.
+//
+// Tests are split across multiple files, grouping together logically related
+// tests. `execution_test.go` contains unclassified tests and common helpers.
 package execution_test
 
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sort"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -37,158 +37,8 @@ import (
 
 	"infra/cmd/cros_test_platform/internal/execution"
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
-	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
-
-func invocation(name string, args string, e build_api.AutotestTest_ExecutionEnvironment) *steps.EnumerationResponse_AutotestInvocation {
-	return &steps.EnumerationResponse_AutotestInvocation{
-		Test:     &build_api.AutotestTest{Name: name, ExecutionEnvironment: e},
-		TestArgs: args,
-	}
-}
-
-func clientTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
-	return &steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
-			Name:                 name,
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
-		},
-		TestArgs: args,
-	}
-}
-
-func serverTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
-	return &steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
-			Name:                 name,
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
-		},
-		TestArgs: args,
-	}
-}
-
-func addAutotestDependency(inv *steps.EnumerationResponse_AutotestInvocation, dep string) {
-	inv.Test.Dependencies = append(inv.Test.Dependencies, &api.AutotestTaskDependency{Label: dep})
-}
-
-func basicParams() *test_platform.Request_Params {
-	return &test_platform.Request_Params{
-		SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
-			BuildTarget: &chromiumos.BuildTarget{Name: "foo-board"},
-		},
-		HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
-			Model: "foo-model",
-		},
-		FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
-			SwarmingDimensions: []string{"freeform-key:freeform-value"},
-		},
-		SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
-			{
-				Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "foo-build"},
-			},
-			{
-				Dep: &test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild{RoFirmwareBuild: "foo-ro-firmware"},
-			},
-			{
-				Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{RwFirmwareBuild: "foo-rw-firmware"},
-			},
-		},
-		Scheduling: &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
-				ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ,
-			},
-			Priority: 79,
-		},
-		Time: &test_platform.Request_Params_Time{
-			MaximumDuration: &duration.Duration{Seconds: 60},
-		},
-		Decorations: &test_platform.Request_Params_Decorations{
-			AutotestKeyvals: map[string]string{"k1": "v1"},
-			Tags:            []string{"foo-tag1", "foo-tag2"},
-		},
-	}
-}
-
-func runWithDefaults(ctx context.Context, skylab trservice.Client, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
-	return runWithParams(ctx, skylab, basicParams(), invs)
-}
-
-func runWithParams(ctx context.Context, skylab trservice.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
-	args := execution.Args{
-		Build: &bbpb.Build{},
-		Send:  exe.BuildSender(func() {}),
-		Request: steps.ExecuteRequests{
-			TaggedRequests: map[string]*steps.ExecuteRequest{
-				"12345678/foo": {
-					RequestParams: params,
-					Enumeration: &steps.EnumerationResponse{
-						AutotestInvocations: invs,
-					},
-				},
-			},
-			Build: &execute.Build{
-				Id: 42,
-			},
-		},
-		WorkerConfig: &config.Config_SkylabWorker{
-			LuciProject: "foo-luci-project",
-			LogDogHost:  "foo-logdog-host",
-		},
-		ParentTaskID: "foo-parent-task-id",
-		Deadline:     time.Now().Add(time.Hour),
-	}
-	return execution.Run(ctx, skylab, args)
-}
-
-func TestLaunchForNonExistentBot(t *testing.T) {
-	Convey("In an execution with one invocation but not bots", t, func() {
-		trc := &trservice.CallCountingClientWrapper{
-			Client: trservice.NewBotsAwareFakeClient(),
-		}
-		resps, err := runWithParams(
-			context.Background(),
-			trc,
-			&test_platform.Request_Params{
-				FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
-					SwarmingDimensions: []string{"freeform-key:freeform-value"},
-				},
-				// Irrelevant required fields follow.
-				Scheduling: &test_platform.Request_Params_Scheduling{
-					Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
-						ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ,
-					},
-					Priority: 79,
-				},
-				Time: &test_platform.Request_Params_Time{
-					MaximumDuration: &duration.Duration{Seconds: 60},
-				},
-			},
-			[]*steps.EnumerationResponse_AutotestInvocation{
-				clientTestInvocation("", ""),
-			},
-		)
-		So(err, ShouldBeNil)
-
-		resp := extractSingleResponse(resps)
-
-		Convey("then task result is complete with unspecified verdict.", func() {
-			So(resp.TaskResults, ShouldHaveLength, 1)
-			tr := resp.TaskResults[0]
-			So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
-			So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
-			So(tr.RejectedTaskDimensions, ShouldContainKey, "freeform-key")
-		})
-		Convey("and overall result is complete with failed verdict.", func() {
-			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
-			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
-		})
-		Convey("and no skylab tasks are created.", func() {
-			So(trc.CallCounts.LaunchTask, ShouldEqual, 0)
-			So(trc.CallCounts.FetchResults, ShouldEqual, 0)
-		})
-	})
-}
 
 func TestLaunchAndWaitTest(t *testing.T) {
 	Convey("Given two enumerated test", t, func() {
@@ -271,15 +121,6 @@ func TestTaskStates(t *testing.T) {
 	})
 }
 
-type errorProneLaunchTaskClient struct {
-	trservice.StubClient
-}
-
-// LaunchTask implements Client interface.
-func (c errorProneLaunchTaskClient) LaunchTask(ctx context.Context, args *request.Args) (trservice.TaskReference, error) {
-	return "", errors.Reason("simulated error from fake client").Err()
-}
-
 func TestLaunchTaskError(t *testing.T) {
 	Convey("Error in creating test_runner builds is surfaced correctly", t, func() {
 		_, err := runWithDefaults(
@@ -291,16 +132,15 @@ func TestLaunchTaskError(t *testing.T) {
 		So(err.Error(), ShouldContainSubstring, "new task")
 		So(err.Error(), ShouldContainSubstring, "simulated error from fake client")
 	})
-
 }
 
-type errorProneFetchResultsClient struct {
+type errorProneLaunchTaskClient struct {
 	trservice.StubClient
 }
 
-// FetchResults implements Client interface.
-func (c errorProneFetchResultsClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
-	return nil, errors.Reason("simulated error from fake client").Err()
+// LaunchTask implements Client interface.
+func (c errorProneLaunchTaskClient) LaunchTask(ctx context.Context, args *request.Args) (trservice.TaskReference, error) {
+	return "", errors.Reason("simulated error from fake client").Err()
 }
 
 func TestFetchResultsError(t *testing.T) {
@@ -314,6 +154,15 @@ func TestFetchResultsError(t *testing.T) {
 		So(err.Error(), ShouldContainSubstring, "tick for task")
 		So(err.Error(), ShouldContainSubstring, "simulated error from fake client")
 	})
+}
+
+type errorProneFetchResultsClient struct {
+	trservice.StubClient
+}
+
+// FetchResults implements Client interface.
+func (c errorProneFetchResultsClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
+	return nil, errors.Reason("simulated error from fake client").Err()
 }
 
 func TestTaskURL(t *testing.T) {
@@ -364,219 +213,6 @@ func TestIncompleteWait(t *testing.T) {
 	})
 }
 
-func TestRequestArguments(t *testing.T) {
-	Convey("Given a server test with autotest labels", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-
-		inv := serverTestInvocation("name1", "foo-arg1 foo-arg2")
-		addAutotestDependency(inv, "cr50:pvt")
-		addAutotestDependency(inv, "cleanup-reboot")
-		inv.DisplayName = "given_name"
-		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
-
-		_, err := runWithDefaults(
-			context.Background(),
-			trClient,
-			invs,
-		)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request should have correct parameters.", func() {
-			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-			launchArgs := trClient.Calls.LaunchTask[0].Args
-
-			So(launchArgs.SwarmingTags, ShouldContain, "parent_buildbucket_id:42")
-			So(launchArgs.SwarmingTags, ShouldContain, "luci_project:foo-luci-project")
-			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag1")
-			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag2")
-			So(launchArgs.ParentTaskID, ShouldEqual, "foo-parent-task-id")
-			So(launchArgs.ParentRequestUID, ShouldEqual, "TestPlanRuns/42/12345678/foo")
-
-			So(launchArgs.Priority, ShouldEqual, 79)
-
-			prefix := "log_location:"
-			var logdogURL string
-			matchingTags := 0
-			for _, tag := range launchArgs.SwarmingTags {
-				if strings.HasPrefix(tag, prefix) {
-					matchingTags++
-					So(tag, ShouldEndWith, "+/annotations")
-
-					logdogURL = strings.TrimPrefix(tag, "log_location:")
-				}
-			}
-			So(matchingTags, ShouldEqual, 1)
-			So(logdogURL, ShouldStartWith, "logdog://foo-logdog-host/foo-luci-project/skylab/")
-			So(logdogURL, ShouldEndWith, "/+/annotations")
-
-			So(launchArgs.Cmd.TaskName, ShouldEqual, "name1")
-			So(launchArgs.Cmd.ClientTest, ShouldBeFalse)
-
-			// Logdog annotation url argument should match the associated tag's url.
-			So(launchArgs.Cmd.LogDogAnnotationURL, ShouldEqual, logdogURL)
-
-			So(launchArgs.Cmd.TestArgs, ShouldEqual, "foo-arg1 foo-arg2")
-
-			So(launchArgs.Cmd.Keyvals["k1"], ShouldEqual, "v1")
-			So(launchArgs.Cmd.Keyvals["parent_job_id"], ShouldEqual, "foo-parent-task-id")
-			So(launchArgs.Cmd.Keyvals["label"], ShouldEqual, "given_name")
-
-			So(launchArgs.ProvisionableDimensions, ShouldHaveLength, 3)
-			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-cros-version:foo-build")
-			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwro-version:foo-ro-firmware")
-			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwrw-version:foo-rw-firmware")
-
-			So(launchArgs.ProvisionableDimensionExpiration, ShouldEqual, time.Minute)
-
-			So(launchArgs.SchedulableLabels.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
-			So(launchArgs.SchedulableLabels.GetModel(), ShouldEqual, "foo-model")
-			So(launchArgs.SchedulableLabels.GetBoard(), ShouldEqual, "foo-board")
-			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
-			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_CQ)
-
-			So(launchArgs.Dimensions, ShouldHaveLength, 1)
-			So(launchArgs.Dimensions, ShouldContain, "freeform-key:freeform-value")
-		})
-	})
-}
-
-var keyvalsPattern = regexp.MustCompile(`\-keyvals\s*\{([\w\s":,-/]+)\}`)
-
-func extractKeyvalsArgument(cmd string) string {
-	ms := keyvalsPattern.FindAllStringSubmatch(cmd, -1)
-	So(ms, ShouldHaveLength, 1)
-	m := ms[0]
-	// Guaranteed by the constant regexp definition.
-	if len(m) != 2 {
-		panic(fmt.Sprintf("Match %s of regexp %s has length %d, want 2", m, keyvalsPattern, len(m)))
-	}
-	return m[1]
-}
-
-func TestInvocationKeyvals(t *testing.T) {
-	Convey("Given an enumeration with a suite keyval", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-		invs := []*steps.EnumerationResponse_AutotestInvocation{
-			{
-				Test: &api.AutotestTest{
-					Name:                 "someTest",
-					ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
-				},
-				ResultKeyvals: map[string]string{
-					"suite": "someSuite",
-				},
-			},
-		}
-
-		Convey("and a request without keyvals", func() {
-			p := basicParams()
-			p.Decorations = nil
-			_, err := runWithDefaults(context.Background(), trClient, invs)
-			So(err, ShouldBeNil)
-
-			Convey("created command includes invocation suite keyval", func() {
-				So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-				launchArgs := trClient.Calls.LaunchTask[0].Args
-				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
-				keyvals := extractKeyvalsArgument(flatCommand)
-				So(keyvals, ShouldContainSubstring, `"suite":"someSuite"`)
-				So(keyvals, ShouldContainSubstring, `"label":"foo-build/someSuite/someTest"`)
-			})
-		})
-
-		Convey("and a request with different suite keyvals", func() {
-			p := basicParams()
-			p.Decorations = &test_platform.Request_Params_Decorations{
-				AutotestKeyvals: map[string]string{
-					"suite": "someOtherSuite",
-				},
-			}
-
-			_, err := runWithParams(context.Background(), trClient, p, invs)
-			So(err, ShouldBeNil)
-
-			Convey("created command includes request suite keyval", func() {
-				So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-				launchArgs := trClient.Calls.LaunchTask[0].Args
-				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
-				keyvals := extractKeyvalsArgument(flatCommand)
-				So(keyvals, ShouldContainSubstring, `"suite":"someOtherSuite"`)
-				So(keyvals, ShouldContainSubstring, `"label":"foo-build/someOtherSuite/someTest"`)
-			})
-		})
-	})
-}
-
-func invocationsWithServerTests(names ...string) []*steps.EnumerationResponse_AutotestInvocation {
-	ret := make([]*steps.EnumerationResponse_AutotestInvocation, len(names))
-	for i, n := range names {
-		ret[i] = serverTestInvocation(n, "")
-	}
-	return ret
-}
-
-func loggerInfo(ml memlogger.MemLogger) string {
-	out := ""
-	for _, m := range ml.Messages() {
-		if m.Level == logging.Info {
-			out = out + m.Msg
-		}
-	}
-	return out
-}
-func TestKeyvalsAcrossTestRuns(t *testing.T) {
-	Convey("Given a request with a suite keyval", t, func() {
-		p := basicParams()
-		p.Decorations = &test_platform.Request_Params_Decorations{
-			AutotestKeyvals: map[string]string{
-				"suite": "someSuite",
-			},
-		}
-
-		Convey("and two enumerations with different test names", func() {
-
-			invs := []*steps.EnumerationResponse_AutotestInvocation{
-				{
-					Test: &api.AutotestTest{
-						Name:                 "firstTest",
-						ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
-					},
-				},
-				{
-					Test: &api.AutotestTest{
-						Name:                 "secondTest",
-						ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
-					},
-				},
-			}
-
-			Convey("created commands include common suite keyval and different label keyvals", func() {
-				trClient := &trservice.ArgsCollectingClientWrapper{
-					Client: trservice.StubClient{},
-				}
-				_, err := runWithParams(context.Background(), trClient, p, invs)
-				So(err, ShouldBeNil)
-
-				So(trClient.Calls.LaunchTask, ShouldHaveLength, 2)
-				cmd := make([]string, 2)
-				for i, lt := range trClient.Calls.LaunchTask {
-					cmd[i] = strings.Join(lt.Args.Cmd.Args(), " ")
-				}
-				kv0 := extractKeyvalsArgument(cmd[0])
-				So(kv0, ShouldContainSubstring, `"suite":"someSuite"`)
-				So(kv0, ShouldContainSubstring, `"label":"foo-build/someSuite/firstTest"`)
-				kv1 := extractKeyvalsArgument(cmd[1])
-				So(kv1, ShouldContainSubstring, `"suite":"someSuite"`)
-				So(kv1, ShouldContainSubstring, `"label":"foo-build/someSuite/secondTest"`)
-			})
-		})
-	})
-}
-
 func TestEnumerationResponseWithRetries(t *testing.T) {
 	Convey("Given a request with retry enabled", t, func() {
 		ctx := setFakeTimeWithImmediateTimeout(context.Background())
@@ -623,16 +259,6 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 			})
 		})
 	})
-}
-
-func setFakeTimeWithImmediateTimeout(ctx context.Context) context.Context {
-	ctx, ts := testclock.UseTime(ctx, time.Now())
-	// Setup testclock to immediately advance whenever timer is set; this
-	// avoids slowdown due to timer inside of LaunchAndWait.
-	ts.SetTimerCallback(func(d time.Duration, t clock.Timer) {
-		ts.Add(2 * d)
-	})
-	return ctx
 }
 
 func TestRetries(t *testing.T) {
@@ -892,173 +518,6 @@ func TestRetries(t *testing.T) {
 	})
 }
 
-func extractLogdogUrlFromCommand(command []string) (string, bool) {
-	for i, s := range command[:len(command)-1] {
-		if s == "-logdog-annotation-url" {
-			return command[i+1], true
-		}
-	}
-	return "", false
-}
-
-func extractLogdogUrlFromTags(tags []string) string {
-	for _, s := range tags {
-		if strings.HasPrefix(s, "log_location:") {
-			return s[len("log_location:"):]
-		}
-	}
-	return ""
-}
-
-func TestClientTestArg(t *testing.T) {
-	Convey("Given a client test", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-		_, err := runWithDefaults(
-			context.Background(),
-			trClient,
-			[]*steps.EnumerationResponse_AutotestInvocation{
-				clientTestInvocation("name1", ""),
-			},
-		)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request should have correct parameters.", func() {
-			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-			So(trClient.Calls.LaunchTask[0].Args.Cmd.ClientTest, ShouldBeTrue)
-		})
-	})
-}
-
-func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
-	Convey("Given a client test and a quota account", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-		params := basicParams()
-		params.Scheduling = &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_UnmanagedPool{
-				UnmanagedPool: "foo-pool",
-			},
-			QsAccount: "foo-account",
-		}
-		_, err := runWithParams(
-			context.Background(),
-			trClient,
-			params,
-			[]*steps.EnumerationResponse_AutotestInvocation{
-				serverTestInvocation("name1", ""),
-			},
-		)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request should have a tag specifying the correct quota account and run in foo-pool.", func() {
-			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-			launchArgs := trClient.Calls.LaunchTask[0].Args
-			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:foo-account")
-			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 1)
-			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 0)
-			So(launchArgs.SchedulableLabels.GetSelfServePools()[0], ShouldEqual, "foo-pool")
-		})
-	})
-}
-
-func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
-	Convey("Given a client test and a fake quota account set by user", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-		params := basicParams()
-		params.Scheduling = &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
-				ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_QUOTA,
-			},
-			QsAccount: "real-account",
-		}
-		params.Decorations = &test_platform.Request_Params_Decorations{
-			Tags: []string{"qs_account:fake-account"},
-		}
-
-		_, err := runWithParams(
-			context.Background(),
-			trClient,
-			params,
-			[]*steps.EnumerationResponse_AutotestInvocation{
-				serverTestInvocation("name1", ""),
-			},
-		)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
-			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-			launchArgs := trClient.Calls.LaunchTask[0].Args
-			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:real-account")
-			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 0)
-			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
-			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_QUOTA)
-		})
-	})
-}
-
-func TestRequestShouldNotSetBothQSAccountAndPriority(t *testing.T) {
-	Convey("Given a client test with both quota account and priority set", t, func() {
-		params := basicParams()
-		params.Scheduling = &test_platform.Request_Params_Scheduling{
-			Pool: &test_platform.Request_Params_Scheduling_UnmanagedPool{
-				UnmanagedPool: "foo-pool",
-			},
-			QsAccount: "foo-account",
-			Priority:  50,
-		}
-		Convey("The test should end up with a panic.", func() {
-			So(
-				func() {
-					runWithParams(
-						context.Background(),
-						trservice.StubClient{},
-						params,
-						[]*steps.EnumerationResponse_AutotestInvocation{
-							serverTestInvocation("name1", ""),
-						},
-					)
-				},
-				ShouldPanic,
-			)
-		})
-	})
-}
-
-func TestUnmanagedPool(t *testing.T) {
-	Convey("Given a client test and an unmanaged pool.", t, func() {
-		trClient := &trservice.ArgsCollectingClientWrapper{
-			Client: trservice.StubClient{},
-		}
-		params := basicParams()
-		params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{
-			UnmanagedPool: "foo-pool",
-		}
-
-		_, err := runWithParams(
-			context.Background(),
-			trClient,
-			params,
-			[]*steps.EnumerationResponse_AutotestInvocation{
-				serverTestInvocation("name1", ""),
-			},
-		)
-		So(err, ShouldBeNil)
-
-		Convey("the launched task request run in the unmanaged pool.", func() {
-			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
-			launchArgs := trClient.Calls.LaunchTask[0].Args
-			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 0)
-			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 1)
-			So(launchArgs.SchedulableLabels.GetSelfServePools()[0], ShouldEqual, "foo-pool")
-		})
-	})
-}
-
 func TestResponseVerdict(t *testing.T) {
 	Convey("Given a client test", t, func() {
 		ctx := context.Background()
@@ -1126,96 +585,111 @@ func TestResponseVerdict(t *testing.T) {
 	})
 }
 
-func TestIncompatibleDependencies(t *testing.T) {
-
-	Convey("In testing context", t, func() {
-		cases := []struct {
-			Tag    string
-			Params *test_platform.Request_Params
-			Invs   []*steps.EnumerationResponse_AutotestInvocation
-		}{
-			{
-				Tag: "incompatible build target between enumeration and request",
-				Params: &test_platform.Request_Params{
-					SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
-						BuildTarget: &chromiumos.BuildTarget{Name: "requested"},
-					},
-					Time: &test_platform.Request_Params_Time{
-						MaximumDuration: &duration.Duration{Seconds: 3600},
-					},
-				},
-				Invs: []*steps.EnumerationResponse_AutotestInvocation{
-					testInvocationWithDependency("some_test", "board:enumerated"),
-				},
-			},
-			{
-				Tag: "incompatible model between enumeration and request",
-				Params: &test_platform.Request_Params{
-					HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
-						Model: "requested",
-					},
-					Time: &test_platform.Request_Params_Time{
-						MaximumDuration: &duration.Duration{Seconds: 3600},
-					},
-				},
-				Invs: []*steps.EnumerationResponse_AutotestInvocation{
-					testInvocationWithDependency("some_test", "model:enumerated"),
-				},
-			},
-			{
-				Tag:    "unsupported dependencies",
-				Params: basicParams(),
-				Invs: []*steps.EnumerationResponse_AutotestInvocation{
-					testInvocationWithDependency("some_test", "some_unsupported_dependency"),
-				},
-			},
-		}
-
-		for _, c := range cases {
-			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				trClient := &trservice.CallCountingClientWrapper{
-					Client: trservice.StubClient{},
-				}
-				resps, err := runWithParams(
-					context.Background(),
-					trClient,
-					c.Params,
-					c.Invs,
-				)
-				So(err, ShouldBeNil)
-				resp := extractSingleResponse(resps)
-
-				Convey("then task result is rejected with unspecified verdict.", func() {
-					So(resp.TaskResults, ShouldHaveLength, 1)
-					tr := resp.TaskResults[0]
-					So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
-					So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
-
-				})
-				Convey("and overall result is complete with failed verdict.", func() {
-					So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
-					So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
-				})
-				Convey("and no skylab swarming tasks are created.", func() {
-					So(trClient.CallCounts.LaunchTask, ShouldEqual, 0)
-					So(trClient.CallCounts.FetchResults, ShouldEqual, 0)
-				})
-			})
-		}
-	})
+func runWithDefaults(ctx context.Context, skylab trservice.Client, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+	return runWithParams(ctx, skylab, basicParams(), invs)
 }
 
-func testInvocationWithDependency(name string, deps ...string) *steps.EnumerationResponse_AutotestInvocation {
-	inv := steps.EnumerationResponse_AutotestInvocation{
+func runWithParams(ctx context.Context, skylab trservice.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+	args := execution.Args{
+		Build: &bbpb.Build{},
+		Send:  exe.BuildSender(func() {}),
+		Request: steps.ExecuteRequests{
+			TaggedRequests: map[string]*steps.ExecuteRequest{
+				"12345678/foo": {
+					RequestParams: params,
+					Enumeration: &steps.EnumerationResponse{
+						AutotestInvocations: invs,
+					},
+				},
+			},
+			Build: &execute.Build{
+				Id: 42,
+			},
+		},
+		WorkerConfig: &config.Config_SkylabWorker{
+			LuciProject: "foo-luci-project",
+			LogDogHost:  "foo-logdog-host",
+		},
+		ParentTaskID: "foo-parent-task-id",
+		Deadline:     time.Now().Add(time.Hour),
+	}
+	return execution.Run(ctx, skylab, args)
+}
+
+func basicParams() *test_platform.Request_Params {
+	return &test_platform.Request_Params{
+		SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+			BuildTarget: &chromiumos.BuildTarget{Name: "foo-board"},
+		},
+		HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
+			Model: "foo-model",
+		},
+		FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
+			SwarmingDimensions: []string{"freeform-key:freeform-value"},
+		},
+		SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+			{
+				Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "foo-build"},
+			},
+			{
+				Dep: &test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild{RoFirmwareBuild: "foo-ro-firmware"},
+			},
+			{
+				Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{RwFirmwareBuild: "foo-rw-firmware"},
+			},
+		},
+		Scheduling: &test_platform.Request_Params_Scheduling{
+			Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
+				ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ,
+			},
+			Priority: 79,
+		},
+		Time: &test_platform.Request_Params_Time{
+			MaximumDuration: &duration.Duration{Seconds: 60},
+		},
+		Decorations: &test_platform.Request_Params_Decorations{
+			AutotestKeyvals: map[string]string{"k1": "v1"},
+			Tags:            []string{"foo-tag1", "foo-tag2"},
+		},
+	}
+}
+
+func invocationsWithServerTests(names ...string) []*steps.EnumerationResponse_AutotestInvocation {
+	ret := make([]*steps.EnumerationResponse_AutotestInvocation, len(names))
+	for i, n := range names {
+		ret[i] = serverTestInvocation(n, "")
+	}
+	return ret
+}
+
+func serverTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
+	return &steps.EnumerationResponse_AutotestInvocation{
 		Test: &build_api.AutotestTest{
 			Name:                 name,
 			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
 		},
+		TestArgs: args,
 	}
-	for _, d := range deps {
-		inv.Test.Dependencies = append(inv.Test.Dependencies, &build_api.AutotestTaskDependency{Label: d})
+}
+
+func clientTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
+	return &steps.EnumerationResponse_AutotestInvocation{
+		Test: &build_api.AutotestTest{
+			Name:                 name,
+			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
+		},
+		TestArgs: args,
 	}
-	return &inv
+}
+
+func setFakeTimeWithImmediateTimeout(ctx context.Context) context.Context {
+	ctx, ts := testclock.UseTime(ctx, time.Now())
+	// Setup testclock to immediately advance whenever timer is set; this
+	// avoids slowdown due to timer inside of LaunchAndWait.
+	ts.SetTimerCallback(func(d time.Duration, t clock.Timer) {
+		ts.Add(2 * d)
+	})
+	return ctx
 }
 
 func extractSingleResponse(resps map[string]*steps.ExecuteResponse) *steps.ExecuteResponse {
@@ -1227,348 +701,12 @@ func extractSingleResponse(resps map[string]*steps.ExecuteResponse) *steps.Execu
 	panic("unreachable")
 }
 
-func TestFinalBuildForSingleInvocation(t *testing.T) {
-	Convey("For a run with one request with one invocation", t, func() {
-		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(
-			context.Background(),
-			stubTestRunnerClientWithCannedURL{
-				Client:    trservice.NewStubClientWithSuccessfulTasks(),
-				CannedURL: exampleTestRunnerURL,
-			},
-			ba,
-			steps.ExecuteRequests{
-				TaggedRequests: map[string]*steps.ExecuteRequest{
-					"request-with-single-invocation": {
-						RequestParams: basicParams(),
-						Enumeration: &steps.EnumerationResponse{
-							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
-								clientTestInvocation("first-invocation", ""),
-							},
-						},
-					},
-				},
-			},
-		)
-		So(err, ShouldBeNil)
-
-		b := ba.GetLatestBuild()
-		So(b, ShouldNotBeNil)
-		So(b.GetSteps(), ShouldHaveLength, 2)
-
-		rs := stepForRequest(b, "request-with-single-invocation")
-		So(rs, ShouldNotBeNil)
-
-		is := stepForInvocation(b, "first-invocation")
-		So(is, ShouldNotBeNil)
-		So(is.Name, ShouldContainSubstring, "request-with-single-invocation")
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-	})
-}
-
-const exampleTestRunnerURL = "https://ci.chromium.org/p/chromeos/builders/test_runner/test_runner/b8872341436802087200"
-
-func TestFinalBuildForTwoInvocations(t *testing.T) {
-	Convey("For a run with one request with two invocations", t, func() {
-		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(
-			context.Background(),
-			stubTestRunnerClientWithCannedURL{
-				Client:    trservice.NewStubClientWithSuccessfulTasks(),
-				CannedURL: exampleTestRunnerURL,
-			},
-			ba,
-			steps.ExecuteRequests{
-				TaggedRequests: map[string]*steps.ExecuteRequest{
-					"request-with-two-invocations": {
-						RequestParams: basicParams(),
-						Enumeration: &steps.EnumerationResponse{
-							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
-								clientTestInvocation("first-invocation", ""),
-								clientTestInvocation("second-invocation", ""),
-							},
-						},
-					},
-				},
-			},
-		)
-		So(err, ShouldBeNil)
-
-		b := ba.GetLatestBuild()
-		So(b, ShouldNotBeNil)
-		So(b.GetSteps(), ShouldHaveLength, 3)
-
-		rs := stepForRequest(b, "request-with-two-invocations")
-		So(rs, ShouldNotBeNil)
-
-		is := stepForInvocation(b, "first-invocation")
-		So(is, ShouldNotBeNil)
-		So(is.Name, ShouldContainSubstring, "request-with-two-invocations")
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-
-		is = stepForInvocation(b, "second-invocation")
-		So(is, ShouldNotBeNil)
-		So(is.Name, ShouldContainSubstring, "request-with-two-invocations")
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-	})
-}
-
-func TestFinalBuildForTwoRequests(t *testing.T) {
-	Convey("For a run with two requests with one invocation each", t, func() {
-		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(
-			context.Background(),
-			stubTestRunnerClientWithCannedURL{
-				Client:    trservice.NewStubClientWithSuccessfulTasks(),
-				CannedURL: exampleTestRunnerURL,
-			},
-			ba,
-			steps.ExecuteRequests{
-				TaggedRequests: map[string]*steps.ExecuteRequest{
-					"first-request": {
-						RequestParams: basicParams(),
-						Enumeration: &steps.EnumerationResponse{
-							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
-								clientTestInvocation("first-request-invocation", ""),
-							},
-						},
-					},
-					"second-request": {
-						RequestParams: basicParams(),
-						Enumeration: &steps.EnumerationResponse{
-							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
-								clientTestInvocation("second-request-invocation", ""),
-							},
-						},
-					},
-				},
-			},
-		)
-		So(err, ShouldBeNil)
-
-		b := ba.GetLatestBuild()
-		So(b, ShouldNotBeNil)
-		So(b.GetSteps(), ShouldHaveLength, 4)
-
-		rs := stepForRequest(b, "first-request")
-		So(rs, ShouldNotBeNil)
-		is := stepForInvocation(b, "first-request-invocation")
-		So(is, ShouldNotBeNil)
-		So(is.Name, ShouldContainSubstring, "first-request")
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-
-		rs = stepForRequest(b, "second-request")
-		So(rs, ShouldNotBeNil)
-		is = stepForInvocation(b, "second-request-invocation")
-		So(is, ShouldNotBeNil)
-		So(is.Name, ShouldContainSubstring, "second-request")
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-	})
-}
-
-type stubTestRunnerClientWithCannedURL struct {
-	trservice.Client
-	CannedURL string
-}
-
-// URL implements Client interface.
-func (c stubTestRunnerClientWithCannedURL) URL(trservice.TaskReference) string {
-	return c.CannedURL
-}
-
-func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
-	Convey("For a run with one request with one invocation that needs 1 retry", t, func() {
-		params := basicParams()
-		params.Retry = &test_platform.Request_Params_Retry{
-			Allow: true,
-			Max:   1,
-		}
-		inv := clientTestInvocation("failing-invocation", "")
-		inv.Test.AllowRetries = true
-		req := steps.ExecuteRequests{
-			TaggedRequests: map[string]*steps.ExecuteRequest{
-				"request-with-one-retry-allowed": {
-					RequestParams: params,
-					Enumeration: &steps.EnumerationResponse{
-						AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{inv},
-					},
-				},
-			},
-		}
-
-		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(
-			setFakeTimeWithImmediateTimeout(context.Background()),
-			stubTestRunnerClientWithCannedURL{
-				Client:    trservice.NewStubClientWithFailedTasks(),
-				CannedURL: exampleTestRunnerURL,
-			},
-			ba,
-			req,
-		)
-		So(err, ShouldBeNil)
-
-		b := ba.GetLatestBuild()
-		So(b, ShouldNotBeNil)
-		So(b.GetSteps(), ShouldHaveLength, 2)
-
-		is := stepForInvocation(b, "failing-invocation")
-		So(is, ShouldNotBeNil)
-
-		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
-		markdownContainsURL(is.GetSummaryMarkdown(), "1", exampleTestRunnerURL)
-	})
-}
-
-func TestBuildUpdatesWithRetries(t *testing.T) {
-	Convey("Compared to a run without retries", t, func() {
-		inv := clientTestInvocation("failing-invocation", "")
-		inv.Test.AllowRetries = true
-		e := &steps.EnumerationResponse{
-			AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{inv},
-		}
-		req := steps.ExecuteRequests{
-			TaggedRequests: map[string]*steps.ExecuteRequest{
-				"no-retry": {
-					RequestParams: basicParams(),
-					Enumeration:   e,
-				},
-			},
-		}
-
-		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(
-			setFakeTimeWithImmediateTimeout(context.Background()),
-			stubTestRunnerClientWithCannedURL{
-				Client:    trservice.NewStubClientWithFailedTasks(),
-				CannedURL: exampleTestRunnerURL,
-			},
-			ba,
-			req,
-		)
-		So(err, ShouldBeNil)
-		noRetryUpdateCount := len(ba.Sent)
-		_ = noRetryUpdateCount
-
-		Convey("a run with a retry should send more updates", func() {
-			params := basicParams()
-			params.Retry = &test_platform.Request_Params_Retry{
-				Allow: true,
-				Max:   1,
-			}
-			req := steps.ExecuteRequests{
-				TaggedRequests: map[string]*steps.ExecuteRequest{
-					"one-retry": {
-						RequestParams: params,
-						Enumeration:   e,
-					},
-				},
-			}
-
-			ba := newBuildAccumulator()
-			_, err := runWithBuildAccumulator(
-				setFakeTimeWithImmediateTimeout(context.Background()),
-				stubTestRunnerClientWithCannedURL{
-					Client:    trservice.NewStubClientWithFailedTasks(),
-					CannedURL: exampleTestRunnerURL,
-				},
-				ba,
-				req,
-			)
-			So(err, ShouldBeNil)
-			oneRetryUpdateCount := len(ba.Sent)
-
-			So(oneRetryUpdateCount, ShouldBeGreaterThan, noRetryUpdateCount)
-		})
-	})
-}
-
-// buildAccumulator supports a Send method to accumulate the bbpb.Build sent
-// to the host application.
-//
-// Typical usage:
-//
-//   ba := newBuildAccumulator()
-//   err := runWithBuildAccumulator(..., ba, ...)
-//   So(err, ShouldBeNil)
-//   So(ba.GetLatestBuild(), ShouldNotBeNil)
-//   ...
-type buildAccumulator struct {
-	Input *bbpb.Build
-	Sent  []*bbpb.Build
-}
-
-func newBuildAccumulator() *buildAccumulator {
-	return &buildAccumulator{
-		Input: &bbpb.Build{},
-		Sent:  []*bbpb.Build{},
-	}
-}
-
-func (s *buildAccumulator) Send() {
-	s.Sent = append(s.Sent, proto.Clone(s.Input).(*bbpb.Build))
-}
-
-func (s *buildAccumulator) GetLatestBuild() *bbpb.Build {
-	if len(s.Sent) == 0 {
-		return nil
-	}
-	return s.Sent[len(s.Sent)-1]
-}
-
-func runWithBuildAccumulator(ctx context.Context, skylab trservice.Client, ba *buildAccumulator, request steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
-	args := execution.Args{
-		Build:   ba.Input,
-		Send:    exe.BuildSender(ba.Send),
-		Request: request,
-		WorkerConfig: &config.Config_SkylabWorker{
-			LuciProject: "foo-luci-project",
-			LogDogHost:  "foo-logdog-host",
-		},
-		ParentTaskID: "foo-parent-task-id",
-		Deadline:     time.Now().Add(time.Hour),
-	}
-	return execution.Run(ctx, skylab, args)
-}
-
-// stepForRequest returns the first step for a request with the given name.
-//
-// Returns nil if no such step is found.
-func stepForRequest(build *bbpb.Build, name string) *bbpb.Step {
-	for _, s := range build.Steps {
-		if isRequestStep(s.GetName()) && strings.Contains(s.GetName(), name) {
-			return s
+func loggerInfo(ml memlogger.MemLogger) string {
+	out := ""
+	for _, m := range ml.Messages() {
+		if m.Level == logging.Info {
+			out = out + m.Msg
 		}
 	}
-	return nil
-}
-
-// stepForInvocation returns the first step for an invocation with the given
-// name.
-//
-// Returns nil if no such step is found.
-func stepForInvocation(build *bbpb.Build, name string) *bbpb.Step {
-	for _, s := range build.Steps {
-		if isInvocationStep(s.GetName()) && strings.Contains(s.GetName(), name) {
-			return s
-		}
-	}
-	return nil
-}
-
-var (
-	requestStepRe    = regexp.MustCompile(`\s*request.*\|\s*invocation.*`)
-	invocationStepRe = regexp.MustCompile(`.*|\s*invocation.*`)
-)
-
-func isRequestStep(name string) bool {
-	return requestStepRe.Match([]byte(name))
-}
-
-func isInvocationStep(name string) bool {
-	return invocationStepRe.Match([]byte(name))
-}
-
-func markdownContainsURL(md string, target string, url string) {
-	So(md, ShouldContainSubstring, fmt.Sprintf("[%s](%s)", target, url))
+	return out
 }
