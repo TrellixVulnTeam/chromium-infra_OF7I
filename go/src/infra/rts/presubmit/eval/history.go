@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/sync/parallel"
 
 	evalpb "infra/rts/presubmit/eval/proto"
@@ -36,6 +37,15 @@ func readTestDurations(ctx context.Context, dir string, dest chan<- *evalpb.Test
 // readHistoryRecords reads JSON values from .jsonl.gz files in the given
 // directory.
 func readHistoryRecords(dir string, callback func(entry []byte) error) error {
+	// Check dir existance first, because filepath.Glob quietly returns an empty
+	// slice if the directory doesn't exist.
+	switch st, err := os.Stat(dir); {
+	case err != nil:
+		return err
+	case !st.IsDir():
+		return errors.Reason("%q is not a directory", dir).Err()
+	}
+
 	files, err := filepath.Glob(filepath.Join(dir, "*.jsonl.gz"))
 	if err != nil {
 		return err
