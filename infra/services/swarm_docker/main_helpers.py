@@ -207,23 +207,29 @@ def launch_containers(
         [cd.name for cd in draining_container_descriptors],
         [cd.shutdown_file for cd in draining_container_descriptors])
 
+  # Cleanup old containers that were stopped from a previous run.
+  # TODO(bpastene): Maybe enable auto cleanup with the -rm option?
+  docker_client.delete_stopped_containers()
+
   running_containers = docker_client.get_running_containers()
+
+  # If there are no running containers, use this as an opportunity  to clean
+  # up old images. It shouldn't take long.
+  image_url = (
+      _REGISTRY_URL + '/' + args.registry_project + '/' + args.image_name)
+  if not running_containers:
+    docker_client.remove_outdated_images(image_url)
+
   if (not draining_host and not rebooting_host and args.max_host_uptime
       and reboot_gracefully(args, running_containers)):
     return
 
   # Fetch the image from the registry if it's not present locally.
-  image_url = (_REGISTRY_URL + '/' + args.registry_project + '/' +
-      args.image_name)
   if not docker_client.has_image(image_url):
     logging.debug('Local image missing. Fetching %s ...', image_url)
     docker_client.login(_REGISTRY_URL, args.credentials_file)
     docker_client.pull(image_url)
     logging.debug('Image %s fetched.', image_url)
-
-  # Cleanup old containers that were stopped from a previous run.
-  # TODO(bpastene): Maybe enable auto cleanup with the -rm option?
-  docker_client.delete_stopped_containers()
 
   # Send SIGTERM to bots in containers that have been running for too long, or
   # all of them regardless of uptime if draining. For Android containers (see
@@ -246,12 +252,19 @@ def launch_containers(
         running_containers, args.max_container_uptime)
 
     # Also stop any outdated container.
-    if current_cipd_version is not None:
-      for c in running_containers:
+    for c in running_containers:
+      if current_cipd_version is not None:
         if c.labels.get('cipd_version') != current_cipd_version:
           logging.debug(
-              'Container %s is out of date. Shutting it down.', c.name)
+              'CIPD pkg version used to launch container %s has changed. '
+              'Shutting the container down.', c.name)
           c.kill_swarming_bot()
+          continue
+      if not docker_client.image_matches_url(c.image, image_url):
+        logging.debug(
+            'Image of container %s is outdated. Shutting the container down.',
+            c.name)
+        c.kill_swarming_bot()
 
     # Make sure all requested containers are running.
     def _create_container(container_desc):

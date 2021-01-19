@@ -35,14 +35,30 @@ class FakeClient(object):
       raise docker.errors.APIError('omg engine not running')
 
 
+class FakeImage(object):
+
+  def __init__(self, image_id, image_url):
+    self.id = image_id
+    self.tags = [image_url]
+
+
 class FakeImageList(object):
   def __init__(self):
     self.images = []
 
-  def get(self, image):
-    if image not in self.images:
-      raise docker.errors.ImageNotFound('omg no image')
-    return True
+  def list(self):
+    return self.images
+
+  def get(self, image_url):
+    for i in self.images:
+      if image_url in i.tags:
+        return True
+    raise docker.errors.ImageNotFound('omg no image')
+
+  def remove(self, image_id):
+    for i in self.images[:]:
+      if i.id == image_id:
+        self.images.remove(i)
 
   def pull(self, image):
     self.images.append(image)
@@ -79,6 +95,7 @@ class FakeContainerBackend(object):
     self.exec_inputs = []
     self.attrs = {}
     self.devices = devices
+    self.image = ''
 
   def remove(self, **_kwargs):
     self.was_deleted = True
@@ -210,13 +227,53 @@ class TestDockerClient(unittest.TestCase):
     self.assertEquals(self.fake_client.creds[1], 'omg creds')
 
   @mock.patch('docker.from_env')
-  def test_has_image(self, mock_from_env):
-    self.fake_client.images.images.append('image1')
+  def test_images(self, mock_from_env):
+    img1 = FakeImage('image1-id', 'image1-url')
+    self.fake_client.images.images.append(img1)
     mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
-    self.assertTrue(client.has_image('image1'))
-    self.assertFalse(client.has_image('image99'))
+    self.assertEqual(client.images(), [img1])
+
+  @mock.patch('docker.from_env')
+  def test_has_image(self, mock_from_env):
+    self.fake_client.images.images.append(FakeImage('image1-id', 'image1-url'))
+    mock_from_env.return_value = self.fake_client
+
+    client = containers.DockerClient()
+    self.assertTrue(client.has_image('image1-url'))
+    self.assertFalse(client.has_image('image99-url'))
+
+  @mock.patch('docker.from_env')
+  def test_remove_image(self, mock_from_env):
+    self.fake_client.images.images.append(FakeImage('image1-id', 'image1-url'))
+    mock_from_env.return_value = self.fake_client
+
+    client = containers.DockerClient()
+    client.remove_image('image1-id')
+    self.assertEqual(client.images(), [])
+
+  @mock.patch('docker.from_env')
+  def test_remove_outdated_images(self, mock_from_env):
+    old_img = FakeImage('old-image-id', 'old-image-url')
+    new_img = FakeImage('new-image-id', 'new-image-url')
+    self.fake_client.images.images = [old_img, new_img]
+    mock_from_env.return_value = self.fake_client
+
+    client = containers.DockerClient()
+    client.remove_outdated_images('new-image-url')
+    self.assertEqual(client.images(), [new_img])
+
+  @mock.patch('docker.from_env')
+  def test_remove_outdated_images_no_op(self, mock_from_env):
+    """remove_outdated_images() is a no-op. Needed for 100% coverage."""
+    new_img = FakeImage('new-image-id', 'new-image-url')
+    self.fake_client.images.images = [new_img]
+    mock_from_env.return_value = self.fake_client
+
+    client = containers.DockerClient()
+    client.remove_outdated_images('new-image-url')
+    self.assertEqual(client.images(), [new_img])
 
   @mock.patch('docker.from_env')
   def test_pull(self, mock_from_env):
@@ -443,6 +500,10 @@ class TestContainer(unittest.TestCase):
     self.container_backend.attrs = {'State': {'Status': 'running'}}
     status = self.container.state
     self.assertEquals(status, 'running')
+
+  def test_get_image(self):
+    self.container_backend.image = 'test-image'
+    self.assertEquals(self.container.image, 'test-image')
 
   def test_get_container_uptime(self):
     now = datetime.strptime(

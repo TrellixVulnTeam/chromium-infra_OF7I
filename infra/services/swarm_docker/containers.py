@@ -120,6 +120,11 @@ class DockerClient(object):
     self._num_configured_containers = None
     self.volumes = _DOCKER_VOLUMES.copy()
 
+  @staticmethod
+  def image_matches_url(image, image_url):
+    """Checks if the passed in image matches the given URL."""
+    return any(t == image_url for t in image.tags)
+
   def ping(self, retries=5):
     """Checks if the engine is responsive.
 
@@ -156,18 +161,40 @@ class DockerClient(object):
     )
     self.logged_in = True
 
-  def pull(self, image):
+  def pull(self, image_url):
     if not self.logged_in:
       raise Exception('Must login before pulling an image.')
 
-    self._client.images.pull(image)
+    self._client.images.pull(image_url)
 
-  def has_image(self, image):
+  def images(self):
+    """Lists all local images.
+
+    Note: this returns a list of Image objects with 'id' and 'tags', the former
+    being a checksum of the image contents and the latter a list of the
+    human-readable URLs. Various APIs expect either one or the other, so we need
+    to provide both here unfortunately.
+    """
+    return self._client.images.list()
+
+  def has_image(self, image_url):
     try:
-      self._client.images.get(image)
+      self._client.images.get(image_url)
       return True
     except docker.errors.ImageNotFound:
       return False
+
+  def remove_image(self, image_id):
+    self._client.images.remove(image_id)
+
+  def remove_outdated_images(self, most_recent_image_url):
+    """Removes all local images but for most_recent_image_url."""
+    for image in self.images():
+      if not self.image_matches_url(image, most_recent_image_url):
+        logging.info(
+            'Current image (%s) not found in the tags of %s: [%s]. Deleting.',
+            most_recent_image_url, image.id, ' '.join(image.tags))
+        self.remove_image(image.id)
 
   def _get_containers_by_status(self, status):
     return [
@@ -296,6 +323,10 @@ class Container(object):
   @property
   def attrs(self):
     return self._container.attrs
+
+  @property
+  def image(self):
+    return self._container.image
 
   def exec_run(self, cmd):
     return self._container.exec_run(cmd)
