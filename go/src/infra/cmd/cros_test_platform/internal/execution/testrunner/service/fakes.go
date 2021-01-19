@@ -6,10 +6,10 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"infra/libs/skylab/request"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
@@ -164,25 +164,24 @@ func (c ClientCallCountingWrapper) MethodCallCounts() ClientMethodCallCounts {
 	return c.counts
 }
 
-// StubClientWithCannedResults is a stub Client that always returns a canned
+// StubClientWithCannedResults is a stub Client that always returns canned
 // result for the FetchResults method.
 type StubClientWithCannedResults struct {
 	StubClient
-	CannedResponse FetchResultsResponse
+	CannedResponses []FetchResultsResponse
 }
 
+// Ensure we implement the promised interface.
+var _ Client = &StubClientWithCannedResults{}
+
 // FetchResults implements Client interface.
-func (c StubClientWithCannedResults) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
-	// Deep-copy to avoid leaking pointer to internal data
-	d, err := json.Marshal(c.CannedResponse)
-	if err != nil {
-		panic(fmt.Sprintf("Error when copying canned response: %s", err))
+func (c *StubClientWithCannedResults) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+	if len(c.CannedResponses) == 0 {
+		panic("ran out of canned responses!")
 	}
-	var resp FetchResultsResponse
-	if err := json.Unmarshal(d, &resp); err != nil {
-		panic(fmt.Sprintf("Error when copying canned response: %s", err))
-	}
-	return &resp, nil
+	r := c.CannedResponses[0]
+	c.CannedResponses = c.CannedResponses[1:]
+	return &r, nil
 }
 
 // NewStubClientWithCannedIncompleteTasks returns a new StubWithCannedResultsClient
@@ -190,11 +189,85 @@ func (c StubClientWithCannedResults) FetchResults(ctx context.Context, t TaskRef
 //
 // In particular, this means that no detailed test_runner response is available
 // in the response for FetchResults.
-func NewStubClientWithCannedIncompleteTasks(lifeCycle test_platform.TaskState_LifeCycle) StubClientWithCannedResults {
-	return StubClientWithCannedResults{
-		CannedResponse: FetchResultsResponse{
+func NewStubClientWithCannedIncompleteTasks(lifeCycle test_platform.TaskState_LifeCycle) *StubClientWithCannedResults {
+	return &StubClientWithCannedResults{
+		CannedResponses: repeatManyTimes(FetchResultsResponse{
 			LifeCycle: lifeCycle,
 			Result:    nil,
-		},
+		}),
 	}
+}
+
+// NewStubClientWithSuccessfulTasks returns a new StubWithCannedResultsClient
+// where all tasks are deemed to have completed successfully.
+func NewStubClientWithSuccessfulTasks() *StubClientWithCannedResults {
+	return &StubClientWithCannedResults{
+		CannedResponses: repeatManyTimes(FetchResultsResponse{
+			LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+			Result: &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						Incomplete: false,
+						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+							{
+								Name:    unguessableString(),
+								Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+							},
+						},
+					},
+				},
+			},
+		}),
+	}
+}
+
+// NewStubClientWithFailedTasks returns a new StubWithCannedResultsClient
+// where all tasks are deemed to have completed, but unsuccessfully.
+func NewStubClientWithFailedTasks() *StubClientWithCannedResults {
+	return &StubClientWithCannedResults{
+		CannedResponses: repeatManyTimes(FetchResultsResponse{
+			LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+			Result: &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						Incomplete: false,
+						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+							{
+								Name:    unguessableString(),
+								Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
+							},
+						},
+					},
+				},
+			},
+		}),
+	}
+}
+
+var oughtToBeEnoughForAnybody = 64 // *10*1024 if rumours are to be believed.
+
+func repeatManyTimes(r FetchResultsResponse) []FetchResultsResponse {
+	rs := make([]FetchResultsResponse, oughtToBeEnoughForAnybody)
+	for i := range rs {
+		rs[i] = deepCopyFetchResultsResponse(r)
+	}
+	return rs
+}
+
+func deepCopyFetchResultsResponse(r FetchResultsResponse) FetchResultsResponse {
+	m := jsonpb.Marshaler{}
+	resp := FetchResultsResponse{LifeCycle: r.LifeCycle}
+	if r.Result == nil {
+		return resp
+	}
+
+	resp.Result = &skylab_test_runner.Result{}
+	d, err := m.MarshalToString(r.Result)
+	if err != nil {
+		panic(fmt.Sprintf("Error when copying canned response: %s", err))
+	}
+	if err := jsonpb.UnmarshalString(d, resp.Result); err != nil {
+		panic(fmt.Sprintf("Error when copying canned response: %s; marshalled result: %s", err, d))
+	}
+	return resp
 }

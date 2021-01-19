@@ -668,22 +668,24 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 
 func TestEnumerationResponseWithRetries(t *testing.T) {
 	Convey("Given a request with retry enabled", t, func() {
-		ctx := context.Background()
-		ctx = setFakeTimeWithImmediateTimeout(ctx)
+		ctx := setFakeTimeWithImmediateTimeout(context.Background())
 		params := basicParams()
 		params.Retry = &test_platform.Request_Params_Retry{
 			Allow: true,
 		}
-		skylab := newFakeSkylab()
 		Convey("and two tests that always fail and retry limit", func() {
-			skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
 			invs := invocationsWithServerTests("name1", "name2")
 			for _, inv := range invs {
 				inv.Test.AllowRetries = true
 				inv.Test.MaxRetries = 2
 			}
 			Convey("for skylab execution", func() {
-				resps, err := runWithParams(ctx, skylab, params, invs)
+				resps, err := runWithParams(
+					ctx,
+					trservice.NewStubClientWithFailedTasks(),
+					params,
+					invs,
+				)
 				So(err, ShouldBeNil)
 				resp := extractSingleResponse(resps)
 				Convey("response should contain two enumerated results", func() {
@@ -732,16 +734,14 @@ func TestRetries(t *testing.T) {
 			ts.Add(2 * d)
 		})
 		params := basicParams()
-		skylab := newFakeSkylab()
 
 		cases := []struct {
-			name        string
-			invocations []*steps.EnumerationResponse_AutotestInvocation
-			// autotestResult will be returned by all attempts of this test.
-			autotestResultGenerator autotestResultGenerator
-			retryParams             *test_platform.Request_Params_Retry
-			testAllowRetry          bool
-			testMaxRetry            int32
+			name           string
+			invocations    []*steps.EnumerationResponse_AutotestInvocation
+			trClient       trservice.Client
+			retryParams    *test_platform.Request_Params_Retry
+			testAllowRetry bool
+			testMaxRetry   int32
 
 			// Total number of expected tasks is this +1
 			expectedRetryCount          int
@@ -750,9 +750,9 @@ func TestRetries(t *testing.T) {
 			expectedLogShouldNotContain string
 		}{
 			{
-				name:                    "1 test; no retry configuration in test or request params",
-				invocations:             invocationsWithServerTests("name1"),
-				autotestResultGenerator: autotestResultAlwaysFail,
+				name:        "1 test; no retry configuration in test or request params",
+				invocations: invocationsWithServerTests("name1"),
+				trClient:    trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:       0,
 				expectedSummaryVerdict:   test_platform.TaskState_VERDICT_FAILED,
@@ -764,9 +764,9 @@ func TestRetries(t *testing.T) {
 				retryParams: &test_platform.Request_Params_Retry{
 					Allow: true,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            1,
-				autotestResultGenerator: autotestResultAlwaysPass,
+				testAllowRetry: true,
+				testMaxRetry:   1,
+				trClient:       trservice.NewStubClientWithSuccessfulTasks(),
 
 				expectedRetryCount:          0,
 				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_PASSED,
@@ -778,9 +778,9 @@ func TestRetries(t *testing.T) {
 				retryParams: &test_platform.Request_Params_Retry{
 					Allow: false,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            1,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				testMaxRetry:   1,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:          0,
 				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
@@ -793,9 +793,9 @@ func TestRetries(t *testing.T) {
 				retryParams: &test_platform.Request_Params_Retry{
 					Allow: true,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            1,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				testMaxRetry:   1,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:     1,
 				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
@@ -806,8 +806,8 @@ func TestRetries(t *testing.T) {
 				retryParams: &test_platform.Request_Params_Retry{
 					Allow: true,
 				},
-				testAllowRetry:          false,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: false,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:     0,
 				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
@@ -818,9 +818,9 @@ func TestRetries(t *testing.T) {
 				retryParams: &test_platform.Request_Params_Retry{
 					Allow: true,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            10,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				testMaxRetry:   10,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:     10,
 				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
@@ -832,8 +832,8 @@ func TestRetries(t *testing.T) {
 					Allow: true,
 					Max:   5,
 				},
-				testAllowRetry:          true,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:     5,
 				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
@@ -845,9 +845,9 @@ func TestRetries(t *testing.T) {
 					Allow: true,
 					Max:   5,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            7,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				testMaxRetry:   7,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:          5,
 				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
@@ -861,9 +861,9 @@ func TestRetries(t *testing.T) {
 					Allow: true,
 					Max:   7,
 				},
-				testAllowRetry:          true,
-				testMaxRetry:            5,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				testMaxRetry:   5,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:          5,
 				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
@@ -877,8 +877,8 @@ func TestRetries(t *testing.T) {
 					Allow: true,
 					Max:   5,
 				},
-				testAllowRetry:          true,
-				autotestResultGenerator: autotestResultAlwaysFail,
+				testAllowRetry: true,
+				trClient:       trservice.NewStubClientWithFailedTasks(),
 
 				expectedRetryCount:     5,
 				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
@@ -891,18 +891,42 @@ func TestRetries(t *testing.T) {
 					Allow: true,
 				},
 				testAllowRetry: true,
-				autotestResultGenerator: generateAutotestResultsFromSlice([]*skylab_test_runner.Result_Autotest{
-					{
-						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
-							{Name: "foo", Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL},
+				trClient: &trservice.StubClientWithCannedResults{
+					CannedResponses: []trservice.FetchResultsResponse{
+						{
+							LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+							Result: &skylab_test_runner.Result{
+								Harness: &skylab_test_runner.Result_AutotestResult{
+									AutotestResult: &skylab_test_runner.Result_Autotest{
+										Incomplete: false,
+										TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+											{
+												Name:    "foo",
+												Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+							Result: &skylab_test_runner.Result{
+								Harness: &skylab_test_runner.Result_AutotestResult{
+									AutotestResult: &skylab_test_runner.Result_Autotest{
+										Incomplete: false,
+										TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+											{
+												Name:    "foo",
+												Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+											},
+										},
+									},
+								},
+							},
 						},
 					},
-					{
-						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
-							{Name: "foo", Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
-						},
-					},
-				}),
+				},
 
 				expectedRetryCount: 1,
 				// TODO(crbug.com/1005609) Indicate in *some way* that a test
@@ -914,7 +938,6 @@ func TestRetries(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.name, func() {
-				skylab.setAutotestResultGenerator(c.autotestResultGenerator)
 				params.Retry = c.retryParams
 				for _, inv := range c.invocations {
 					inv.Test.AllowRetries = c.testAllowRetry
@@ -922,28 +945,13 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				resps, err := runWithParams(ctx, skylab, params, c.invocations)
+				trClient := trservice.ClientCallCountingWrapper{
+					Client: c.trClient,
+				}
+				resps, err := runWithParams(ctx, trClient, params, c.invocations)
 				So(err, ShouldBeNil)
 				resp := extractSingleResponse(resps)
 
-				Convey("each attempt request should have a unique logdog url in the.", func() {
-					s := map[string]bool{}
-					for _, req := range skylab.launchCalls {
-						url, ok := extractLogdogUrlFromCommand(req.Cmd.Args())
-						So(ok, ShouldBeTrue)
-						s[url] = true
-					}
-					So(s, ShouldHaveLength, len(skylab.launchCalls))
-				})
-				// TODO(crbug.com/1003874, pprabhu) This test case is in the wrong place.
-				// Once the hack to manipulate logdog URL is removed, this block can also be dropped.
-				Convey("the logdog url in the command and in tags should match.", func() {
-					for _, req := range skylab.launchCalls {
-						cmdURL, _ := extractLogdogUrlFromCommand(req.Cmd.Args())
-						tagURL := extractLogdogUrlFromTags(req.SwarmingTags)
-						So(cmdURL, ShouldEqual, tagURL)
-					}
-				})
 				Convey("then the launched task count should be correct.", func() {
 					// Each test is tried at least once.
 					attemptCount := len(c.invocations) + c.expectedRetryCount
@@ -1120,12 +1128,14 @@ func TestResponseVerdict(t *testing.T) {
 			ts.Add(2 * d)
 		})
 
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
-
 		Convey("when the test passed, response verdict is correct.", func() {
-			skylab.setAutotestResultGenerator(autotestResultAlwaysPass)
-			resps, err := runWithDefaults(ctx, skylab, invs)
+			resps, err := runWithDefaults(
+				ctx,
+				trservice.NewStubClientWithSuccessfulTasks(),
+				[]*steps.EnumerationResponse_AutotestInvocation{
+					serverTestInvocation("name1", ""),
+				},
+			)
 			So(err, ShouldBeNil)
 			resp := extractSingleResponse(resps)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
@@ -1133,8 +1143,13 @@ func TestResponseVerdict(t *testing.T) {
 		})
 
 		Convey("when the test failed, response verdict is correct.", func() {
-			skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
-			resps, err := runWithDefaults(ctx, skylab, invs)
+			resps, err := runWithDefaults(
+				ctx,
+				trservice.NewStubClientWithFailedTasks(),
+				[]*steps.EnumerationResponse_AutotestInvocation{
+					serverTestInvocation("name1", ""),
+				},
+			)
 			So(err, ShouldBeNil)
 			resp := extractSingleResponse(resps)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
