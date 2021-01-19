@@ -30,6 +30,7 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
 	"go.chromium.org/luci/luciexe/exe"
@@ -52,9 +53,7 @@ var (
 
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
-	callback                func()
 	launchCalls             []*request.Args
-	nextError               error
 	nextLifeCycle           test_platform.TaskState_LifeCycle
 	numResultsCalls         int
 	url                     string
@@ -63,21 +62,8 @@ type fakeSkylab struct {
 func newFakeSkylab() *fakeSkylab {
 	return &fakeSkylab{
 		autotestResultGenerator: autotestResultAlwaysPass,
-		callback:                func() {},
 		nextLifeCycle:           test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
-}
-
-// setError causes this fake to start returning the given error on all
-// future API calls.
-func (s *fakeSkylab) setError(err error) {
-	s.nextError = err
-}
-
-// setCallback causes this fake to call the given callback function, immediately
-// prior to the return of every future API call.
-func (s *fakeSkylab) setCallback(fn func()) {
-	s.callback = fn
 }
 
 func (s *fakeSkylab) setURL(url string) {
@@ -97,19 +83,12 @@ func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[str
 }
 
 func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (trservice.TaskReference, error) {
-	defer s.callback()
-	if s.nextError != nil {
-		return trservice.TaskReference(""), s.nextError
-	}
 	s.launchCalls = append(s.launchCalls, req)
 	return trservice.TaskReference(""), nil
 }
 
 func (s *fakeSkylab) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
 	s.numResultsCalls += 1
-	if s.nextError != nil {
-		return nil, s.nextError
-	}
 	return &trservice.FetchResultsResponse{
 		Result: &skylab_test_runner.Result{
 			Harness: &skylab_test_runner.Result_AutotestResult{
@@ -358,29 +337,48 @@ func TestTaskStates(t *testing.T) {
 	})
 }
 
-func TestServiceError(t *testing.T) {
-	Convey("Given a single enumerated test", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
+type errorProneLaunchTaskClient struct {
+	trservice.StubClient
+}
 
-		Convey("when the skylab service immediately returns errors, that error is surfaced as a launch error.", func() {
-			skylab.setError(fmt.Errorf("foo error"))
-			_, err := runWithDefaults(ctx, skylab, invs)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "new task")
-			So(err.Error(), ShouldContainSubstring, "foo error")
-		})
+// LaunchTask implements Client interface.
+func (c errorProneLaunchTaskClient) LaunchTask(ctx context.Context, args *request.Args) (trservice.TaskReference, error) {
+	return "", errors.Reason("simulated error from fake client").Err()
+}
 
-		Convey("when the skylab service starts returning errors after the initial launch calls, that errors is surfaced as a wait error.", func() {
-			skylab.setCallback(func() {
-				skylab.setError(fmt.Errorf("foo error"))
-			})
-			_, err := runWithDefaults(ctx, skylab, invs)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "tick for task")
-			So(err.Error(), ShouldContainSubstring, "foo error")
-		})
+func TestLaunchTaskError(t *testing.T) {
+	Convey("Error in creating test_runner builds is surfaced correctly", t, func() {
+		_, err := runWithDefaults(
+			context.Background(),
+			errorProneLaunchTaskClient{},
+			[]*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")},
+		)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "new task")
+		So(err.Error(), ShouldContainSubstring, "simulated error from fake client")
+	})
+
+}
+
+type errorProneFetchResultsClient struct {
+	trservice.StubClient
+}
+
+// FetchResults implements Client interface.
+func (c errorProneFetchResultsClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
+	return nil, errors.Reason("simulated error from fake client").Err()
+}
+
+func TestFetchResultsError(t *testing.T) {
+	Convey("Error in fetching test_runner results is surfaced correctly", t, func() {
+		_, err := runWithDefaults(
+			context.Background(),
+			errorProneFetchResultsClient{},
+			[]*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")},
+		)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "tick for task")
+		So(err.Error(), ShouldContainSubstring, "simulated error from fake client")
 	})
 }
 
