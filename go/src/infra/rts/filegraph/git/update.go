@@ -37,16 +37,7 @@ func (g *Graph) Update(ctx context.Context, repoDir, rev string, opt UpdateOptio
 	}
 
 	return readLog(ctx, repoDir, g.Commit, rev, func(c commit) error {
-		switch {
-		case len(c.Files) == 1:
-			// Skip this commit. It provides no signal about file relatedness.
-			return nil
-		case opt.MaxCommitSize != 0 && len(c.Files) > opt.MaxCommitSize:
-			// Skip this commit - too large.
-			return nil
-		}
-
-		if err := g.apply(c.Files); err != nil {
+		if err := g.apply(c.Files, opt.MaxCommitSize); err != nil {
 			return errors.Annotate(err, "failed to apply commit %s", c.Hash).Err()
 		}
 
@@ -63,7 +54,7 @@ func (g *Graph) Update(ctx context.Context, repoDir, rev string, opt UpdateOptio
 }
 
 // apply applies the file changes to the graph.
-func (g *Graph) apply(fileChanges []fileChange) error {
+func (g *Graph) apply(fileChanges []fileChange, maxFileCount int) error {
 	files := make([]*node, 0, len(fileChanges))
 	for _, fc := range fileChanges {
 		switch {
@@ -90,11 +81,20 @@ func (g *Graph) apply(fileChanges []fileChange) error {
 	}
 
 	// Create edges between each file pair.
-	// This is O(FILES * (FILES + EDGES_PER_FILE))
+	// This is O(FILES * (FILES + EDGES_PER_FILE)),
+	// so skip the commit if there are too many files.
+	switch {
+	case len(files) <= 1:
+		// Skip this commit. It provides no signal about file relatedness.
+		return nil
 
-	// Skip this commit if there is only one file to process,
-	// since it does not provide any signal.
-	if len(files) <= 1 {
+	case maxFileCount != 0 && len(files) > maxFileCount:
+		// Skip this commit - too large.
+
+		// NOTE: it is important to exit *after* we've processed renames above.
+		// Large commits are often file moves.
+		// If we didn't process them, the filegraph would be missing large sets
+		// of files.
 		return nil
 	}
 

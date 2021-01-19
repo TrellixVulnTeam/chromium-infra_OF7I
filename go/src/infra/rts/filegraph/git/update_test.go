@@ -5,6 +5,7 @@
 package git
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,7 +19,7 @@ func TestApply(t *testing.T) {
 		g.ensureInitialized()
 
 		applyChanges := func(changes []fileChange) {
-			err := g.apply(changes)
+			err := g.apply(changes, 100)
 			So(err, ShouldBeNil)
 		}
 
@@ -199,6 +200,29 @@ func TestApply(t *testing.T) {
 					},
 				})
 			})
+		})
+
+		Convey(`Great migration`, func() {
+			addFiles := make([]fileChange, 1000)
+			for i := range addFiles {
+				addFiles[i] = fileChange{Path: fmt.Sprintf("%d", i), Status: 'A'}
+			}
+			applyChanges(addFiles)
+
+			greatMigration := make([]fileChange, len(addFiles))
+			for i, add := range addFiles {
+				greatMigration[i] = fileChange{
+					Path:   add.Path,
+					Path2:  "new/" + add.Path,
+					Status: 'R',
+				}
+			}
+			applyChanges(greatMigration)
+
+			old54 := g.node("//54")
+			new54 := g.node("//new/54")
+			So(new54, ShouldNotBeNil)
+			So(new54.edges, ShouldResemble, []edge{{to: old54}})
 		})
 	})
 }

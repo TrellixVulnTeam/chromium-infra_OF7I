@@ -26,7 +26,7 @@ func TestEvalStrategy(t *testing.T) {
 		g.ensureInitialized()
 
 		applyChanges := func(changes []fileChange) {
-			err := g.apply(changes)
+			err := g.apply(changes, 100)
 			So(err, ShouldBeNil)
 		}
 
