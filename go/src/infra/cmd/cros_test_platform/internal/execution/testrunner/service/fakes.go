@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"infra/libs/skylab/request"
 
+	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/luci/common/data/stringset"
@@ -28,7 +29,7 @@ func (c StubClient) ValidateArgs(context.Context, *request.Args) (bool, map[stri
 
 // LaunchTask implements Client interface.
 func (c StubClient) LaunchTask(context.Context, *request.Args) (TaskReference, error) {
-	return "stub-task-reference", nil
+	return TaskReference(unguessableString()), nil
 }
 
 // FetchResults implements Client interface.
@@ -41,12 +42,20 @@ func (c StubClient) FetchResults(context.Context, TaskReference) (*FetchResultsR
 
 // SwarmingTaskID implements Client interface.
 func (c StubClient) SwarmingTaskID(TaskReference) string {
-	return "stub-swarming-task-id"
+	return unguessableString()
 }
 
 // URL implements Client interface.
 func (c StubClient) URL(TaskReference) string {
-	return "stub-url"
+	return unguessableString()
+}
+
+// Hard-coding strings returned from the stub/fake Client implementations in
+// unit-test expectations makes for unreadable, brittle tests.
+//
+// Make this practice impossible by returning an unstable string.
+func unguessableString() string {
+	return uuid.New().String()
 }
 
 // BotsAwareFakeClient implements a fake Client which is aware of the available
