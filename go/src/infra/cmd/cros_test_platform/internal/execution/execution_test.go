@@ -64,14 +64,6 @@ func newFakeSkylab() *fakeSkylab {
 	}
 }
 
-func (s *fakeSkylab) setURL(url string) {
-	s.url = url
-}
-
-func (s *fakeSkylab) setAutotestResultGenerator(f autotestResultGenerator) {
-	s.autotestResultGenerator = f
-}
-
 func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
 	return true, nil, nil
 }
@@ -375,12 +367,16 @@ func TestFetchResultsError(t *testing.T) {
 
 func TestTaskURL(t *testing.T) {
 	Convey("Given a single enumerated test running to completion, its task URL is propagated correctly.", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		skylab.setURL("foo-url")
-
-		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		resps, err := runWithDefaults(ctx, skylab, invs)
+		resps, err := runWithDefaults(
+			context.Background(),
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithSuccessfulTasks(),
+				CannedURL: "foo-url",
+			},
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				clientTestInvocation("", ""),
+			},
+		)
 		So(err, ShouldBeNil)
 		resp := extractSingleResponse(resps)
 		So(resp.TaskResults, ShouldHaveLength, 1)
@@ -531,15 +527,6 @@ func autotestResultAlwaysPass() *skylab_test_runner.Result_Autotest {
 		Incomplete: false,
 		TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
 			{Name: "foo", Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
-		},
-	}
-}
-
-func autotestResultAlwaysFail() *skylab_test_runner.Result_Autotest {
-	return &skylab_test_runner.Result_Autotest{
-		Incomplete: false,
-		TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
-			{Name: "foo", Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL},
 		},
 	}
 }
@@ -1279,12 +1266,13 @@ func extractSingleResponse(resps map[string]*steps.ExecuteResponse) *steps.Execu
 
 func TestFinalBuildForSingleInvocation(t *testing.T) {
 	Convey("For a run with one request with one invocation", t, func() {
-		skylab := newFakeSkylab()
-		skylab.setURL(exampleTestRunnerURL)
 		ba := newBuildAccumulator()
 		_, err := runWithBuildAccumulator(
 			context.Background(),
-			skylab,
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithSuccessfulTasks(),
+				CannedURL: exampleTestRunnerURL,
+			},
 			ba,
 			steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
@@ -1319,12 +1307,13 @@ const exampleTestRunnerURL = "https://ci.chromium.org/p/chromeos/builders/test_r
 
 func TestFinalBuildForTwoInvocations(t *testing.T) {
 	Convey("For a run with one request with two invocations", t, func() {
-		skylab := newFakeSkylab()
-		skylab.setURL(exampleTestRunnerURL)
 		ba := newBuildAccumulator()
 		_, err := runWithBuildAccumulator(
 			context.Background(),
-			skylab,
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithSuccessfulTasks(),
+				CannedURL: exampleTestRunnerURL,
+			},
 			ba,
 			steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
@@ -1363,12 +1352,13 @@ func TestFinalBuildForTwoInvocations(t *testing.T) {
 
 func TestFinalBuildForTwoRequests(t *testing.T) {
 	Convey("For a run with two requests with one invocation each", t, func() {
-		skylab := newFakeSkylab()
-		skylab.setURL(exampleTestRunnerURL)
 		ba := newBuildAccumulator()
 		_, err := runWithBuildAccumulator(
 			context.Background(),
-			skylab,
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithSuccessfulTasks(),
+				CannedURL: exampleTestRunnerURL,
+			},
 			ba,
 			steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
@@ -1413,6 +1403,16 @@ func TestFinalBuildForTwoRequests(t *testing.T) {
 	})
 }
 
+type stubTestRunnerClientWithCannedURL struct {
+	trservice.Client
+	CannedURL string
+}
+
+// URL implements Client interface.
+func (c stubTestRunnerClientWithCannedURL) URL(trservice.TaskReference) string {
+	return c.CannedURL
+}
+
 func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
 	Convey("For a run with one request with one invocation that needs 1 retry", t, func() {
 		params := basicParams()
@@ -1433,13 +1433,16 @@ func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
 			},
 		}
 
-		skylab := newFakeSkylab()
-		skylab.setURL(exampleTestRunnerURL)
-		skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
-
 		ba := newBuildAccumulator()
-		ctx := setFakeTimeWithImmediateTimeout(context.Background())
-		_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+		_, err := runWithBuildAccumulator(
+			setFakeTimeWithImmediateTimeout(context.Background()),
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithFailedTasks(),
+				CannedURL: exampleTestRunnerURL,
+			},
+			ba,
+			req,
+		)
 		So(err, ShouldBeNil)
 
 		b := ba.GetLatestBuild()
@@ -1456,12 +1459,6 @@ func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
 
 func TestBuildUpdatesWithRetries(t *testing.T) {
 	Convey("Compared to a run without retries", t, func() {
-		ctx := setFakeTimeWithImmediateTimeout(context.Background())
-
-		skylab := newFakeSkylab()
-		skylab.setURL(exampleTestRunnerURL)
-		skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
-
 		inv := clientTestInvocation("failing-invocation", "")
 		inv.Test.AllowRetries = true
 		e := &steps.EnumerationResponse{
@@ -1477,7 +1474,15 @@ func TestBuildUpdatesWithRetries(t *testing.T) {
 		}
 
 		ba := newBuildAccumulator()
-		_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+		_, err := runWithBuildAccumulator(
+			setFakeTimeWithImmediateTimeout(context.Background()),
+			stubTestRunnerClientWithCannedURL{
+				Client:    trservice.NewStubClientWithFailedTasks(),
+				CannedURL: exampleTestRunnerURL,
+			},
+			ba,
+			req,
+		)
 		So(err, ShouldBeNil)
 		noRetryUpdateCount := len(ba.Sent)
 		_ = noRetryUpdateCount
@@ -1498,7 +1503,15 @@ func TestBuildUpdatesWithRetries(t *testing.T) {
 			}
 
 			ba := newBuildAccumulator()
-			_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+			_, err := runWithBuildAccumulator(
+				setFakeTimeWithImmediateTimeout(context.Background()),
+				stubTestRunnerClientWithCannedURL{
+					Client:    trservice.NewStubClientWithFailedTasks(),
+					CannedURL: exampleTestRunnerURL,
+				},
+				ba,
+				req,
+			)
 			So(err, ShouldBeNil)
 			oneRetryUpdateCount := len(ba.Sent)
 
