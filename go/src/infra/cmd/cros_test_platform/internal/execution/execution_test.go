@@ -41,58 +41,6 @@ import (
 	"infra/libs/skylab/request"
 )
 
-var (
-	noDeadline        time.Time
-	fakeTaskSetConfig = &execution.TaskSetConfig{
-		ParentTaskID:  "foo-parent-task-id",
-		ParentBuildID: 42,
-		RequestUID:    "TestPlanRuns/12345678/foo",
-		Deadline:      noDeadline,
-	}
-)
-
-type fakeSkylab struct {
-	autotestResultGenerator autotestResultGenerator
-	launchCalls             []*request.Args
-	numResultsCalls         int
-	url                     string
-}
-
-func newFakeSkylab() *fakeSkylab {
-	return &fakeSkylab{
-		autotestResultGenerator: autotestResultAlwaysPass,
-	}
-}
-
-func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
-	return true, nil, nil
-}
-
-func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (trservice.TaskReference, error) {
-	s.launchCalls = append(s.launchCalls, req)
-	return trservice.TaskReference(""), nil
-}
-
-func (s *fakeSkylab) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
-	s.numResultsCalls += 1
-	return &trservice.FetchResultsResponse{
-		Result: &skylab_test_runner.Result{
-			Harness: &skylab_test_runner.Result_AutotestResult{
-				AutotestResult: s.autotestResultGenerator(),
-			},
-		},
-		LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	}, nil
-}
-
-func (s *fakeSkylab) SwarmingTaskID(trservice.TaskReference) string {
-	return ""
-}
-
-func (s *fakeSkylab) URL(trservice.TaskReference) string {
-	return s.url
-}
-
 func invocation(name string, args string, e build_api.AutotestTest_ExecutionEnvironment) *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
 		Test:     &build_api.AutotestTest{Name: name, ExecutionEnvironment: e},
@@ -420,8 +368,9 @@ func TestIncompleteWait(t *testing.T) {
 
 func TestRequestArguments(t *testing.T) {
 	Convey("Given a server test with autotest labels", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
 
 		inv := serverTestInvocation("name1", "foo-arg1 foo-arg2")
 		addAutotestDependency(inv, "cr50:pvt")
@@ -429,12 +378,16 @@ func TestRequestArguments(t *testing.T) {
 		inv.DisplayName = "given_name"
 		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
 
-		_, err := runWithDefaults(ctx, skylab, invs)
+		_, err := runWithDefaults(
+			context.Background(),
+			trClient,
+			invs,
+		)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			launchArgs := skylab.launchCalls[0]
+			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+			launchArgs := trClient.Calls.LaunchTask[0].Args
 
 			So(launchArgs.SwarmingTags, ShouldContain, "parent_buildbucket_id:42")
 			So(launchArgs.SwarmingTags, ShouldContain, "luci_project:foo-luci-project")
@@ -504,43 +457,11 @@ func extractKeyvalsArgument(cmd string) string {
 	return m[1]
 }
 
-type autotestResultGenerator func() *skylab_test_runner.Result_Autotest
-
-func autotestResultAlwaysEmpty() *skylab_test_runner.Result_Autotest {
-	return nil
-}
-
-// generateAutotestResultsFromSlice returns a autotestResultGenerator that
-// sequentially returns the provided results.
-//
-// An attempt to generate more results than provided results in panic().
-func generateAutotestResultsFromSlice(canned []*skylab_test_runner.Result_Autotest) autotestResultGenerator {
-	i := 0
-	f := func() *skylab_test_runner.Result_Autotest {
-		if i >= len(canned) {
-			panic(fmt.Sprintf("requested more results than available (%d)", len(canned)))
-		}
-		r := canned[i]
-		i++
-		return r
-	}
-	return f
-}
-
-func autotestResultAlwaysPass() *skylab_test_runner.Result_Autotest {
-	return &skylab_test_runner.Result_Autotest{
-		Incomplete: false,
-		TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
-			{Name: "foo", Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
-		},
-	}
-}
-
 func TestInvocationKeyvals(t *testing.T) {
 	Convey("Given an enumeration with a suite keyval", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			{
 				Test: &api.AutotestTest{
@@ -556,12 +477,12 @@ func TestInvocationKeyvals(t *testing.T) {
 		Convey("and a request without keyvals", func() {
 			p := basicParams()
 			p.Decorations = nil
-			_, err := runWithDefaults(ctx, skylab, invs)
+			_, err := runWithDefaults(context.Background(), trClient, invs)
 			So(err, ShouldBeNil)
 
 			Convey("created command includes invocation suite keyval", func() {
-				So(skylab.launchCalls, ShouldHaveLength, 1)
-				launchArgs := skylab.launchCalls[0]
+				So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+				launchArgs := trClient.Calls.LaunchTask[0].Args
 				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
 				keyvals := extractKeyvalsArgument(flatCommand)
 				So(keyvals, ShouldContainSubstring, `"suite":"someSuite"`)
@@ -577,12 +498,12 @@ func TestInvocationKeyvals(t *testing.T) {
 				},
 			}
 
-			_, err := runWithParams(ctx, skylab, p, invs)
+			_, err := runWithParams(context.Background(), trClient, p, invs)
 			So(err, ShouldBeNil)
 
 			Convey("created command includes request suite keyval", func() {
-				So(skylab.launchCalls, ShouldHaveLength, 1)
-				launchArgs := skylab.launchCalls[0]
+				So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+				launchArgs := trClient.Calls.LaunchTask[0].Args
 				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
 				keyvals := extractKeyvalsArgument(flatCommand)
 				So(keyvals, ShouldContainSubstring, `"suite":"someOtherSuite"`)
@@ -611,9 +532,6 @@ func loggerInfo(ml memlogger.MemLogger) string {
 }
 func TestKeyvalsAcrossTestRuns(t *testing.T) {
 	Convey("Given a request with a suite keyval", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-
 		p := basicParams()
 		p.Decorations = &test_platform.Request_Params_Decorations{
 			AutotestKeyvals: map[string]string{
@@ -639,13 +557,16 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			}
 
 			Convey("created commands include common suite keyval and different label keyvals", func() {
-				_, err := runWithParams(ctx, skylab, p, invs)
+				trClient := &trservice.ArgsCollectingClientWrapper{
+					Client: trservice.StubClient{},
+				}
+				_, err := runWithParams(context.Background(), trClient, p, invs)
 				So(err, ShouldBeNil)
 
-				So(skylab.launchCalls, ShouldHaveLength, 2)
+				So(trClient.Calls.LaunchTask, ShouldHaveLength, 2)
 				cmd := make([]string, 2)
-				for i, ls := range skylab.launchCalls {
-					cmd[i] = strings.Join(ls.Cmd.Args(), " ")
+				for i, lt := range trClient.Calls.LaunchTask {
+					cmd[i] = strings.Join(lt.Args.Cmd.Args(), " ")
 				}
 				kv0 := extractKeyvalsArgument(cmd[0])
 				So(kv0, ShouldContainSubstring, `"suite":"someSuite"`)
@@ -993,26 +914,30 @@ func extractLogdogUrlFromTags(tags []string) string {
 
 func TestClientTestArg(t *testing.T) {
 	Convey("Given a client test", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-
-		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
-
-		_, err := runWithDefaults(ctx, skylab, invs)
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
+		_, err := runWithDefaults(
+			context.Background(),
+			trClient,
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				clientTestInvocation("name1", ""),
+			},
+		)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			So(skylab.launchCalls[0].Cmd.ClientTest, ShouldBeTrue)
+			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+			So(trClient.Calls.LaunchTask[0].Args.Cmd.ClientTest, ShouldBeTrue)
 		})
 	})
 }
 
 func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 	Convey("Given a client test and a quota account", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
 		params := basicParams()
 		params.Scheduling = &test_platform.Request_Params_Scheduling{
 			Pool: &test_platform.Request_Params_Scheduling_UnmanagedPool{
@@ -1020,13 +945,19 @@ func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 			},
 			QsAccount: "foo-account",
 		}
-
-		_, err := runWithParams(ctx, skylab, params, invs)
+		_, err := runWithParams(
+			context.Background(),
+			trClient,
+			params,
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				serverTestInvocation("name1", ""),
+			},
+		)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in foo-pool.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			launchArgs := skylab.launchCalls[0]
+			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+			launchArgs := trClient.Calls.LaunchTask[0].Args
 			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:foo-account")
 			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 1)
 			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 0)
@@ -1037,9 +968,9 @@ func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 
 func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 	Convey("Given a client test and a fake quota account set by user", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
 		params := basicParams()
 		params.Scheduling = &test_platform.Request_Params_Scheduling{
 			Pool: &test_platform.Request_Params_Scheduling_ManagedPool_{
@@ -1051,12 +982,19 @@ func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 			Tags: []string{"qs_account:fake-account"},
 		}
 
-		_, err := runWithParams(ctx, skylab, params, invs)
+		_, err := runWithParams(
+			context.Background(),
+			trClient,
+			params,
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				serverTestInvocation("name1", ""),
+			},
+		)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			launchArgs := skylab.launchCalls[0]
+			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+			launchArgs := trClient.Calls.LaunchTask[0].Args
 			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:real-account")
 			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 0)
 			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
@@ -1067,9 +1005,6 @@ func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 
 func TestRequestShouldNotSetBothQSAccountAndPriority(t *testing.T) {
 	Convey("Given a client test with both quota account and priority set", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 		params.Scheduling = &test_platform.Request_Params_Scheduling{
 			Pool: &test_platform.Request_Params_Scheduling_UnmanagedPool{
@@ -1079,27 +1014,46 @@ func TestRequestShouldNotSetBothQSAccountAndPriority(t *testing.T) {
 			Priority:  50,
 		}
 		Convey("The test should end up with a panic.", func() {
-			So(func() { runWithParams(ctx, skylab, params, invs) }, ShouldPanic)
+			So(
+				func() {
+					runWithParams(
+						context.Background(),
+						trservice.StubClient{},
+						params,
+						[]*steps.EnumerationResponse_AutotestInvocation{
+							serverTestInvocation("name1", ""),
+						},
+					)
+				},
+				ShouldPanic,
+			)
 		})
 	})
 }
 
 func TestUnmanagedPool(t *testing.T) {
 	Convey("Given a client test and an unmanaged pool.", t, func() {
-		ctx := context.Background()
-		skylab := newFakeSkylab()
-		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
+		trClient := &trservice.ArgsCollectingClientWrapper{
+			Client: trservice.StubClient{},
+		}
 		params := basicParams()
 		params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{
 			UnmanagedPool: "foo-pool",
 		}
 
-		_, err := runWithParams(ctx, skylab, params, invs)
+		_, err := runWithParams(
+			context.Background(),
+			trClient,
+			params,
+			[]*steps.EnumerationResponse_AutotestInvocation{
+				serverTestInvocation("name1", ""),
+			},
+		)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request run in the unmanaged pool.", func() {
-			So(skylab.launchCalls, ShouldHaveLength, 1)
-			launchArgs := skylab.launchCalls[0]
+			So(trClient.Calls.LaunchTask, ShouldHaveLength, 1)
+			launchArgs := trClient.Calls.LaunchTask[0].Args
 			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 0)
 			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 1)
 			So(launchArgs.SchedulableLabels.GetSelfServePools()[0], ShouldEqual, "foo-pool")

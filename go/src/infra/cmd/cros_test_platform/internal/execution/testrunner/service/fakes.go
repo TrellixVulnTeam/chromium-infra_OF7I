@@ -271,3 +271,84 @@ func deepCopyFetchResultsResponse(r FetchResultsResponse) FetchResultsResponse {
 	}
 	return resp
 }
+
+// ArgsCollectingClientWrapper collects arguments provided to the Client method
+// calls before forwarding them to the wrapped Client.
+type ArgsCollectingClientWrapper struct {
+	// Name the wrapped client to avoid accidental forwarding of method calls
+	// without counting.
+	Client Client
+
+	// Calls is a POD that contains the arguments to all Client method calls
+	// through a ArgsCollectingClientWrapper.
+	Calls struct {
+		ValidateArgs []struct {
+			Args *request.Args
+		}
+		LaunchTask []struct {
+			Args *request.Args
+		}
+		FetchResults []struct {
+			T TaskReference
+		}
+		SwarmingTaskID []struct {
+			T TaskReference
+		}
+		URL []struct {
+			T TaskReference
+		}
+	}
+}
+
+// Ensure we implement the promised interface.
+var _ Client = &ArgsCollectingClientWrapper{Client: StubClient{}}
+
+// ValidateArgs implements Client interface.
+func (c *ArgsCollectingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+	c.Calls.ValidateArgs = append(c.Calls.ValidateArgs, struct {
+		Args *request.Args
+	}{
+		Args: args,
+	})
+	return c.Client.ValidateArgs(ctx, args)
+}
+
+// LaunchTask implements Client interface.
+func (c *ArgsCollectingClientWrapper) LaunchTask(ctx context.Context, args *request.Args) (TaskReference, error) {
+	c.Calls.LaunchTask = append(c.Calls.LaunchTask, struct {
+		Args *request.Args
+	}{
+		Args: args,
+	})
+	return c.Client.LaunchTask(ctx, args)
+}
+
+// FetchResults implements Client interface.
+func (c *ArgsCollectingClientWrapper) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
+	c.Calls.FetchResults = append(c.Calls.FetchResults, struct {
+		T TaskReference
+	}{
+		T: t,
+	})
+	return c.Client.FetchResults(ctx, t)
+}
+
+// SwarmingTaskID implements Client interface.
+func (c *ArgsCollectingClientWrapper) SwarmingTaskID(t TaskReference) string {
+	c.Calls.SwarmingTaskID = append(c.Calls.SwarmingTaskID, struct {
+		T TaskReference
+	}{
+		T: t,
+	})
+	return c.Client.SwarmingTaskID(t)
+}
+
+// URL implements Client interface.
+func (c *ArgsCollectingClientWrapper) URL(t TaskReference) string {
+	c.Calls.URL = append(c.Calls.URL, struct {
+		T TaskReference
+	}{
+		T: t,
+	})
+	return c.Client.URL(t)
+}
