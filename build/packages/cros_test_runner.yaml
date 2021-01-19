@@ -1,0 +1,10 @@
+package: chromiumos/infra/cros_test_runner/${platform}
+description: Program for running tests against a DUT and processing results.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/cros_test_runner
+root: ../../go/bin
+data:
+  - file: cros_test_runner${exe_suffix}
+  - version_file: .versions/cros_test_runner${exe_suffix}.cipd_version
