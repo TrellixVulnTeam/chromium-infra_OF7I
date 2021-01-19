@@ -284,11 +284,11 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     step.put()
 
     ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
-        master_name, builder_name, build_number, failure_info)
+        master_name, builder_name, build_number, failure_info, False)
     mock_fun.assert_called_once_with(
         master_name, builder_name, build_number, step_name,
         TestFailedStep.FromSerializable(failed_steps[step_name]),
-        ['223', '222', '221'], None)
+        ['223', '222', '221'], None, False)
 
   @mock.patch.object(ci_test_failure, 'UpdateSwarmingSteps', return_value=False)
   def testCheckFirstKnownFailureForSwarmingTestsNoResult(self, _):

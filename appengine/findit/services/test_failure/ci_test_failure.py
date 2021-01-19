@@ -197,9 +197,14 @@ def _UpdateFirstFailureInfoForStep(current_build_number, failed_step):
     failed_step.last_pass = earliest_test_last_pass
 
 
-def _UpdateFirstFailureOnTestLevel(master_name, builder_name,
-                                   current_build_number, step_name, failed_step,
-                                   build_numbers, http_client):
+def _UpdateFirstFailureOnTestLevel(master_name,
+                                   builder_name,
+                                   current_build_number,
+                                   step_name,
+                                   failed_step,
+                                   build_numbers,
+                                   http_client,
+                                   use_resultdb=False):
   """Iterates backwards through builds to get first failure at test level.
 
   Args:
@@ -226,7 +231,7 @@ def _UpdateFirstFailureOnTestLevel(master_name, builder_name,
     # since there might be some abnormalities in build 0.
     failed_test_log = _GetTestLevelLogForAStep(master_name, builder_name,
                                                build_number, step_name,
-                                               http_client)
+                                               http_client, use_resultdb)
     _SaveIsolatedResultToStep(master_name, builder_name, build_number,
                               step_name, failed_test_log)
     if failed_test_log is None:
@@ -345,7 +350,7 @@ def CheckFirstKnownFailureForSwarmingTests(master_name,
       # Iterates backwards to get a more precise failed_steps info.
       _UpdateFirstFailureOnTestLevel(master_name, builder_name, build_number,
                                      step_name, failed_step, failed_builds,
-                                     _HTTP_CLIENT)
+                                     _HTTP_CLIENT, use_resultdb)
 
   _UpdateFailureInfoBuilds(failed_steps, failure_info.builds)
 
