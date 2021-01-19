@@ -8,18 +8,19 @@ import (
 	"context"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
-	"infra/unifiedfleet/app/model/datastore"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
 // ImportStates imports states of UFS resources.
-func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*crimson.Rack, hosts []*crimson.PhysicalHost, vms []*crimson.VM, vlans []*crimson.VLAN, kvms []*crimson.KVM, switches []*crimson.Switch, pageSize int) (*datastore.OpResults, error) {
+func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*crimson.Rack, hosts []*crimson.PhysicalHost, vms []*crimson.VM, vlans []*crimson.VLAN, kvms []*crimson.KVM, switches []*crimson.Switch, pageSize int) (*ufsds.OpResults, error) {
 	states := make([]*ufspb.StateRecord, 0)
 	logging.Infof(ctx, "collecting states of machines")
 	for _, m := range machines {
@@ -86,7 +87,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 	}
 
 	deleteNonExistingStates(ctx, states, pageSize)
-	allRes := make(datastore.OpResults, 0)
+	allRes := make(ufsds.OpResults, 0)
 	logging.Infof(ctx, "Importing %d states", len(states))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(states))
@@ -102,7 +103,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 	return &allRes, nil
 }
 
-func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, pageSize int) (*datastore.OpResults, error) {
+func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, pageSize int) (*ufsds.OpResults, error) {
 	resMap := make(map[string]bool)
 	for _, r := range states {
 		resMap[r.GetResourceName()] = true
@@ -128,37 +129,17 @@ func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, p
 
 // UpdateState updates state record for a resource.
 func UpdateState(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
-
-	// TODO(eshwarn): Remove this code block - once all state data is migrated to os namespace
-	// First - update in os namespace
-	newCtx, err := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-	if err != nil {
-		logging.Debugf(ctx, "UpdateState - Failed to set os namespace in context", err)
-	} else {
-		// Update in os namespace
-		sros := proto.Clone(stateRecord).(*ufspb.StateRecord)
-		_, err = state.UpdateStateRecord(newCtx, sros)
-		if err != nil {
-			logging.Errorf(ctx, "UpdateState - Failed to update in os namespace", err)
+	f := func(ctx context.Context) error {
+		hc := getStateRecordHistoryClient(stateRecord)
+		if err := hc.stUdt.updateStateHelper(ctx, stateRecord.GetState()); err != nil {
+			return err
 		}
+		return hc.SaveChangeEvents(ctx)
 	}
-
-	// Second - update in default namespace
-	newCtx, err = util.SetupDatastoreNamespace(ctx, "")
-	if err != nil {
-		logging.Debugf(ctx, "UpdateState - Failed to set default namespace in context", err)
-	} else {
-		// Update in default namespace
-		srdefault := proto.Clone(stateRecord).(*ufspb.StateRecord)
-		_, err = state.UpdateStateRecord(newCtx, srdefault)
-		if err != nil {
-			logging.Errorf(ctx, "UpdateState - Failed to update in default namespace", err)
-		}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "UpdateState - failed to update %s", stateRecord.GetResourceName()).Err()
 	}
-	// TODO(eshwarn): Remove this code block - once all state data is migrated to os namespace
-
-	// Third - Update in whatever namespace provided by client and return
-	return state.UpdateStateRecord(ctx, stateRecord)
+	return stateRecord, nil
 }
 
 // GetState returns state record for a resource.
@@ -183,4 +164,12 @@ func GetState(ctx context.Context, resourceName string) (*ufspb.StateRecord, err
 	}
 
 	return state.GetStateRecord(newCtx, resourceName)
+}
+
+func getStateRecordHistoryClient(sr *ufspb.StateRecord) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: sr.GetResourceName(),
+		},
+	}
 }

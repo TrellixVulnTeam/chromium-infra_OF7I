@@ -11,6 +11,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
@@ -79,103 +80,64 @@ func TestUpdateState(t *testing.T) {
 	// os namespace context
 	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	Convey("UpdateState", t, func() {
-		Convey("UpdateState for machine in both namespace", func() {
-			// creating in default namespace
-			state.UpdateStateRecord(ctx, &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-1",
-				State:        ufspb.State_STATE_REGISTERED,
-			})
-			// creating in os namespace
-			state.UpdateStateRecord(osCtx, &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-1",
-				State:        ufspb.State_STATE_SERVING,
-			})
-
-			sr := &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-1",
-				State:        ufspb.State_STATE_NEEDS_REPAIR,
-			}
-			res, err := UpdateState(ctx, sr)
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(ctx, "machine/os-machine-1")
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(osCtx, "machine/os-machine-1")
-			So(err, ShouldBeNil)
-			So(res.GetResourceName(), ShouldEqual, "machine/os-machine-1")
-			So(res.GetState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
-		})
-
-		Convey("UpdateState for machine only in default namespace", func() {
-			// creating in default namespace
-			state.UpdateStateRecord(ctx, &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-2",
-				State:        ufspb.State_STATE_REGISTERED,
-			})
-
-			sr := &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-2",
-				State:        ufspb.State_STATE_NEEDS_REPAIR,
-			}
-			res, err := UpdateState(ctx, sr)
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(ctx, "machine/os-machine-2")
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(osCtx, "machine/os-machine-2")
-			So(err, ShouldBeNil)
-			So(res.GetResourceName(), ShouldEqual, "machine/os-machine-2")
-			So(res.GetState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
-		})
-
 		Convey("UpdateState for machine only in os namespace", func() {
 			// creating in os namespace
 			state.UpdateStateRecord(osCtx, &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-3",
+				ResourceName: "machines/os-machine-1",
 				State:        ufspb.State_STATE_SERVING,
 			})
 
 			sr := &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-3",
+				ResourceName: "machines/os-machine-1",
 				State:        ufspb.State_STATE_NEEDS_REPAIR,
 			}
-			res, err := UpdateState(ctx, sr)
+			res, err := UpdateState(osCtx, sr)
 			So(err, ShouldBeNil)
 			So(res, ShouldResembleProto, sr)
 
-			res, err = state.GetStateRecord(ctx, "machine/os-machine-3")
+			res, err = state.GetStateRecord(osCtx, "machines/os-machine-1")
 			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(osCtx, "machine/os-machine-3")
-			So(err, ShouldBeNil)
-			So(res.GetResourceName(), ShouldEqual, "machine/os-machine-3")
+			So(res.GetResourceName(), ShouldEqual, "machines/os-machine-1")
 			So(res.GetState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
+
+			changes, err := history.QueryChangesByPropertyName(osCtx, "name", "states/machines/os-machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetName(), ShouldEqual, "states/machines/os-machine-1")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR.String())
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(osCtx, "resource_name", "states/machines/os-machine-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
-		Convey("UpdateState for non-existing machine in none of the namespace", func() {
+		Convey("UpdateState for non-existing machine in os namespace", func() {
 			sr := &ufspb.StateRecord{
-				ResourceName: "machine/os-machine-4",
+				ResourceName: "machines/os-machine-2",
 				State:        ufspb.State_STATE_NEEDS_REPAIR,
 			}
-			res, err := UpdateState(ctx, sr)
+			res, err := UpdateState(osCtx, sr)
 			So(err, ShouldBeNil)
 			So(res, ShouldResembleProto, sr)
 
-			res, err = state.GetStateRecord(ctx, "machine/os-machine-4")
+			res, err = state.GetStateRecord(osCtx, "machines/os-machine-2")
 			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, sr)
-
-			res, err = state.GetStateRecord(osCtx, "machine/os-machine-4")
-			So(err, ShouldBeNil)
-			So(res.GetResourceName(), ShouldEqual, "machine/os-machine-4")
+			So(res.GetResourceName(), ShouldEqual, "machines/os-machine-2")
 			So(res.GetState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
+
+			changes, err := history.QueryChangesByPropertyName(osCtx, "name", "states/machines/os-machine-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetName(), ShouldEqual, "states/machines/os-machine-2")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR.String())
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(osCtx, "resource_name", "states/machines/os-machine-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 	})
 }

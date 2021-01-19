@@ -56,6 +56,7 @@ func TestImportStates(t *testing.T) {
 func TestUpdateState(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("Update state", t, func() {
@@ -66,11 +67,12 @@ func TestUpdateState(t *testing.T) {
 					State:        ufspb.State_STATE_RESERVED,
 				},
 			}
-			res, err := tf.Fleet.UpdateState(ctx, req)
+			_, err := tf.Fleet.UpdateState(osCtx, req)
 			So(err, ShouldBeNil)
-			s, err := state.GetStateRecord(ctx, "hosts/chromeos1-row2-rack3-host4")
+			s, err := state.GetStateRecord(osCtx, "hosts/chromeos1-row2-rack3-host4")
 			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, s)
+			So(s.GetResourceName(), ShouldEqual, "hosts/chromeos1-row2-rack3-host4")
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_RESERVED)
 		})
 		Convey("invalid resource prefix", func() {
 			req := &api.UpdateStateRequest{
@@ -79,7 +81,7 @@ func TestUpdateState(t *testing.T) {
 					State:        ufspb.State_STATE_RESERVED,
 				},
 			}
-			_, err := tf.Fleet.UpdateState(ctx, req)
+			_, err := tf.Fleet.UpdateState(osCtx, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
@@ -90,7 +92,7 @@ func TestUpdateState(t *testing.T) {
 					State:        ufspb.State_STATE_RESERVED,
 				},
 			}
-			_, err := tf.Fleet.UpdateState(ctx, req)
+			_, err := tf.Fleet.UpdateState(osCtx, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
@@ -101,7 +103,7 @@ func TestUpdateState(t *testing.T) {
 					State:        ufspb.State_STATE_RESERVED,
 				},
 			}
-			_, err := tf.Fleet.UpdateState(ctx, req)
+			_, err := tf.Fleet.UpdateState(osCtx, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
