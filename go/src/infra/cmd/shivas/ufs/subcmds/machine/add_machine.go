@@ -109,6 +109,10 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		c.parseArgs(&machineRegistrationReq)
 	}
 
+	if !ufsUtil.ValidateTags(machineRegistrationReq.Machine.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
+
 	res, err := ic.MachineRegistration(ctx, &machineRegistrationReq)
 	if err != nil {
 		return err

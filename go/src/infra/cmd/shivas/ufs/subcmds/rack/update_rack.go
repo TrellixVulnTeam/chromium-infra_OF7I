@@ -102,6 +102,9 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	rack.Name = ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name)
+	if !ufsUtil.ValidateTags(rack.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateRack(ctx, &ufsAPI.UpdateRackRequest{
 		Rack: &rack,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{

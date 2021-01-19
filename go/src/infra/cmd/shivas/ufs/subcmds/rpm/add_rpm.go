@@ -133,6 +133,11 @@ func (c *addRPM) innerRun(a subcommands.Application, args []string, env subcomma
 	}
 
 	for _, r := range rpms {
+		if !ufsUtil.ValidateTags(r.Tags) {
+			fmt.Printf("Failed to add rpm %s. Tags field contains invalidate characters.\n", r.GetName())
+			continue
+		}
+
 		res, err := ic.CreateRPM(ctx, &ufsAPI.CreateRPMRequest{
 			RPM:   r,
 			RPMId: r.GetName(),

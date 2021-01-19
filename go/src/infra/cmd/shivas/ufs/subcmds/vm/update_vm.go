@@ -139,6 +139,9 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	}
 
 	vm.Name = ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.Name)
+	if !ufsUtil.ValidateTags(vm.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
 		Vm:            &vm,
 		NetworkOption: nwOpt,

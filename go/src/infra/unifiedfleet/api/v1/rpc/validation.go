@@ -114,6 +114,9 @@ func (r *RackRegistrationRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, "Rack "+InvalidCharacters)
 	}
+	if !util.ValidateTags(r.Rack.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 
 	if r.GetRack().GetChromeBrowserRack() != nil {
 		if r.GetRack().GetChromeBrowserRack().GetSwitchObjects() != nil {
@@ -310,6 +313,9 @@ func (r *MachineRegistrationRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, "Machine "+InvalidCharacters)
 	}
+	if !util.ValidateTags(r.Machine.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 
 	if r.GetMachine().GetChromeBrowserMachine() != nil {
 		if r.GetMachine().GetChromeBrowserMachine().GetNicObjects() != nil {
@@ -354,6 +360,9 @@ func (r *UpdateMachineRequest) Validate() error {
 	if r.Machine == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
+	if !util.ValidateTags(r.Machine.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return validateResourceName(machineRegex, MachineNameFormat, r.Machine.GetName())
 }
 
@@ -387,6 +396,9 @@ func (r *RenameMachineRequest) Validate() error {
 func (r *UpdateRackRequest) Validate() error {
 	if r.Rack == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !util.ValidateTags(r.Rack.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(rackRegex, RackNameFormat, r.Rack.GetName())
 }
@@ -449,6 +461,9 @@ func (r *UpdateMachineLSERequest) Validate() error {
 	if r.MachineLSE == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
+	if !util.ValidateTags(r.MachineLSE.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	for k, v := range r.GetNetworkOptions() {
 		if err := validateNetworkOption(v); err != nil {
 			return errors.Annotate(err, "fail to validate host %s", k).Err()
@@ -500,6 +515,9 @@ func (r *CreateVMRequest) Validate() error {
 	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
 		return err
 	}
+	if !util.ValidateTags(r.Vm.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -527,6 +545,9 @@ func (r *UpdateVMRequest) Validate() error {
 	}
 	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
 		return err
+	}
+	if !util.ValidateTags(r.Vm.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(vmRegex, VMNameFormat, r.Vm.GetName())
 }
@@ -828,6 +849,9 @@ func (r *CreateRPMRequest) Validate() error {
 		}
 		r.RPM.MacAddress = newMac
 	}
+	if !util.ValidateTags(r.RPM.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -842,6 +866,9 @@ func (r *UpdateRPMRequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		r.RPM.MacAddress = newMac
+	}
+	if !util.ValidateTags(r.RPM.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(rpmRegex, RPMNameFormat, r.RPM.GetName())
 }
@@ -951,6 +978,9 @@ func (r *CreateSwitchRequest) Validate() error {
 	if r.GetSwitch().GetRack() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyRackName)
 	}
+	if !util.ValidateTags(r.Switch.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -958,6 +988,9 @@ func (r *CreateSwitchRequest) Validate() error {
 func (r *UpdateSwitchRequest) Validate() error {
 	if r.Switch == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !util.ValidateTags(r.Switch.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(switchRegex, SwitchNameFormat, r.Switch.GetName())
 }

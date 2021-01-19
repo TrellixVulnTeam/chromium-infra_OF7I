@@ -119,6 +119,9 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 	} else {
 		c.parseArgs(&vm)
 	}
+	if !ufsUtil.ValidateTags(vm.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.CreateVM(ctx, &ufsAPI.CreateVMRequest{
 		Vm:            &vm,
 		NetworkOption: c.parseNetworkOpt(),

@@ -107,6 +107,9 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
+	if !ufsUtil.ValidateTags(s.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
 		Switch: &s,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{

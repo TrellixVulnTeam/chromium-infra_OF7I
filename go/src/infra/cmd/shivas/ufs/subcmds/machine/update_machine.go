@@ -121,6 +121,9 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	machine.Name = ufsUtil.AddPrefix(ufsUtil.MachineCollection, machine.Name)
+	if !ufsUtil.ValidateTags(machine.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateMachine(ctx, &ufsAPI.UpdateMachineRequest{
 		Machine: &machine,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{

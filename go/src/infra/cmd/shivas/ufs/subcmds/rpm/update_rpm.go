@@ -117,6 +117,9 @@ func (c *updateRPM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	rpm.Name = ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpm.Name)
+	if !ufsUtil.ValidateTags(rpm.Tags) {
+		return fmt.Errorf(ufsAPI.InvalidTags)
+	}
 	res, err := ic.UpdateRPM(ctx, &ufsAPI.UpdateRPMRequest{
 		RPM: &rpm,
 		NetworkOption: &ufsAPI.NetworkOption{

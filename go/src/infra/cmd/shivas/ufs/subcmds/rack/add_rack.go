@@ -123,6 +123,11 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		reqs = append(reqs, &rackRegistrationReq)
 	}
 	for _, r := range reqs {
+		if !ufsUtil.ValidateTags(r.Rack.Tags) {
+			fmt.Printf("Failed to add rack %s. Tags field contains invalidate characters.\n", r.Rack.GetName())
+			continue
+		}
+
 		res, err := ic.RackRegistration(ctx, r)
 		if err != nil {
 			fmt.Printf("Failed to add rack %s. %s\n", r.Rack.GetName(), err)

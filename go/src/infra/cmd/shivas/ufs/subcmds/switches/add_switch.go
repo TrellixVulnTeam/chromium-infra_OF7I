@@ -128,6 +128,11 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 		switches = append(switches, &s)
 	}
 	for _, r := range switches {
+		if !ufsUtil.ValidateTags(r.Tags) {
+			fmt.Printf("Failed to add switch %s. Tags field contains invalidate characters.\n", r.GetName())
+			continue
+		}
+
 		res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
 			Switch:   r,
 			SwitchId: r.GetName(),
