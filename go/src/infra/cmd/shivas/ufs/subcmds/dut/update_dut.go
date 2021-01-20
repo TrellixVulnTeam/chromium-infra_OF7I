@@ -7,6 +7,7 @@ package dut
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -46,6 +47,10 @@ const (
 
 	// DUT related UpdateMask paths.
 	poolsPath = "dut.pools"
+
+	// Operations string for Summary table.
+	ufsOp   = "Update to Database"
+	swarmOp = "Deployment"
 )
 
 // partialUpdateDeployPaths is a collection of paths for which there is a partial update on servo/rpm.
@@ -149,6 +154,9 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 	// Using a map to collect deploy actions. This ensures single deploy task per DUT.
 	var deployTasks map[string][]string
 
+	// Create a summary results table with 3 columns.
+	resTable := utils.NewSummaryResultsTable([]string{"DUT", ufsOp, swarmOp})
+
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -192,14 +200,19 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 			return err
 		}
 
-		// Attempt to update UFS. Ignore failure if force-deploy.
-		if err := c.updateDUTToUFS(ctx, ic, req); err != nil {
+		// Attempt to update UFS.
+		err = c.updateDUTToUFS(ctx, ic, req)
+		// Record the result of the action.
+		resTable.RecordResult(ufsOp, req.MachineLSE.GetName(), err)
+		if err != nil {
 			// Print err and skip deployment if it's not forced.
 			if !c.forceDeploy {
-				fmt.Printf("Error updating UFS. Skip triggering deploy task. %s\n", err.Error())
+				fmt.Printf("[%s] Error updating UFS. Skip triggering deploy task. %s\n", req.MachineLSE.GetName(), err.Error())
+				// Record the skip result.
+				resTable.RecordSkip(swarmOp, req.MachineLSE.GetName(), err.Error())
 				continue
 			}
-			fmt.Printf("Failed to update UFS. Attempting to trigger deploy task '-force-deploy'. %s\n", err.Error())
+			fmt.Printf("[%s] Failed to update UFS. Attempting to trigger deploy task '-force-deploy'. %s\n", req.MachineLSE.GetName(), err.Error())
 		}
 		deployTasks[req.MachineLSE.GetName()] = actions
 
@@ -230,8 +243,10 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 			// Start a swarming deploy task for the DUT.
 			if err := c.deployDUTToSwarming(ctx, tc, req.GetMachineLSE(), actions); err != nil {
 				// Print err and continue to trigger next one
-				fmt.Printf("Failed to deploy task for %s. %s", req.GetMachineLSE().GetName(), err.Error())
+				fmt.Printf("[%s] Failed to deploy task. %s", req.GetMachineLSE().GetName(), err.Error())
 			}
+			resTable.RecordResult(swarmOp, req.MachineLSE.GetHostname(), err)
+
 			// Remove the task entry to avoid triggering multiple tasks.
 			delete(deployTasks, req.MachineLSE.GetName())
 		}
@@ -239,6 +254,9 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 
 	// Display URL for all tasks if there are more than one.
 	fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", tc.SessionTasksURL())
+
+	fmt.Printf("Summary of results:\n\n")
+	resTable.PrintResultsTable(os.Stdout, true)
 
 	return nil
 }

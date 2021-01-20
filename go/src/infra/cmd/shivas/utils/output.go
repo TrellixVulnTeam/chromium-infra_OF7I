@@ -6,6 +6,7 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,11 +19,31 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
+	"golang.org/x/crypto/ssh/terminal"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
+)
+
+const (
+	// SummaryResultsLegendPass is the symbol displayed in summary results table for pass.
+	SummaryResultsLegendPass = "✔"
+	// SummaryResultsLegendFail is the symbol displayed in summary results table for fail.
+	SummaryResultsLegendFail = "✗"
+	// SummaryResultsLegendSkip is the symbol displayed in summary results table for skip.
+	SummaryResultsLegendSkip = "-"
+	// SummaryResultsMinCommentSize is the minimum length of the comment string to be displayed.
+	SummaryResultsMinCommentSize = 15
+	// SummaryResultsTableMinWidth is the min width of a cell including padding in the summary results table.
+	SummaryResultsTableMinWidth = 2
+	// SummaryResultsTableTabWidth is the tab width to be used in the summary results table.
+	SummaryResultsTableTabWidth = 2
+	// SummaryResultsTablePadding is the padding added to the cell before computing its width.
+	SummaryResultsTablePadding = 4
+	// SummaryResultsTablePadChar is the char used for padding a cell in the table.
+	SummaryResultsTablePadChar = ' '
 )
 
 // Titles for printing table format list
@@ -67,6 +88,20 @@ type printNormalFunc func(res []proto.Message, tsv, keysOnly bool) error
 type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
 type getSingleFunc func(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error)
 type deleteSingleFunc func(ctx context.Context, ic ufsAPI.FleetClient, name string) error
+
+// Enum to represent states of SummaryResults
+const (
+	SummaryResultsSkipped = iota // To represent that the operation was skipped.
+	SummaryResultsPass           // To represent that the operation was a success.
+	SummaryResultsFail           // To represent that the operation failed.
+)
+
+// SummaryResultsTable is used to print the summary of operations.
+type SummaryResultsTable struct {
+	columns  []string          // List of column names.
+	results  map[string][]int  // Map of results for each operation on entity.
+	comments map[string]string // Optional comment to be displayed on the row
+}
 
 // PrintEntities a batch of entities based on user parameters
 func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, printJSON printJSONFunc, printFull printFullFunc, printNormal printNormalFunc, json, emit, full, tsv, keysOnly bool) error {
@@ -1547,4 +1582,116 @@ func PrintAllNormal(title []string, res [][]string, keysOnly bool) {
 		}
 		fmt.Fprintln(tw, out)
 	}
+}
+
+// NewSummaryResultsTable constructs a new SummaryResultsTable.
+func NewSummaryResultsTable(cols []string) *SummaryResultsTable {
+	if len(cols) == 0 {
+		return nil
+	}
+	res := make(map[string][]int)
+	comms := make(map[string]string)
+	return &SummaryResultsTable{
+		columns:  cols,
+		results:  res,
+		comments: comms,
+	}
+}
+
+// RecordResult records the res for operation on entity.
+func (sRes *SummaryResultsTable) RecordResult(operation, entity string, res error) {
+	if _, ok := sRes.results[entity]; !ok {
+		// Create a new entry for entity if one doesn't exist.
+		sRes.results[entity] = make([]int, len(sRes.columns))
+	}
+	for idx, col := range sRes.columns {
+		if col == operation {
+			if res == nil {
+				// If there is no error. Record SummaryResultsPass.
+				sRes.results[entity][idx] = SummaryResultsPass
+			} else {
+				// If there is an error. Record the result and error string as comment.
+				sRes.results[entity][idx] = SummaryResultsFail
+				sRes.comments[entity] = res.Error()
+			}
+		}
+	}
+}
+
+// RecordSkip records an operation that was skipped.
+func (sRes *SummaryResultsTable) RecordSkip(operation, entity, reason string) {
+	if _, ok := sRes.results[entity]; !ok {
+		// Create a new entry for entity if one doesn't exist.
+		sRes.results[entity] = make([]int, len(sRes.columns))
+	}
+	for idx, col := range sRes.columns {
+		if col == operation {
+			sRes.results[entity][idx] = SummaryResultsSkipped
+			if reason != "" {
+				sRes.comments[entity] = reason
+			}
+		}
+	}
+}
+
+// PrintResultsTable prints a summary table of the results of operations. Comments are truncated to
+// fit terminal width if fitWidth is true. Doesn't truncate anything, if it results in comment
+// becoming smaller than SummaryResultsMinCommentSize.
+func (sRes *SummaryResultsTable) PrintResultsTable(out *os.File, fitWidth bool) {
+	// Use a buffer to create a table. This allows us to truncate long strings in comment section.
+	var buf bytes.Buffer
+	// Construct the rows
+	printRows := [][]string{}
+
+	// Generate a tabwriter out of the bytes buffer.
+	bufTw := tabwriter.NewWriter(&buf, SummaryResultsTableMinWidth, SummaryResultsTableTabWidth, SummaryResultsTablePadding, SummaryResultsTablePadChar, 0)
+
+	// Construct the header
+	header := append(sRes.columns, "Comments")
+	fmt.Fprintln(bufTw, strings.Join(header, "\t"))
+
+	// Add header to the printRows
+	printRows = append(printRows, header)
+	for name, row := range sRes.results {
+		// Include entity in the first column.
+		rowElements := []string{name}
+		// Skip the first row as the first column is entity.
+		for _, r := range row[1:] {
+			switch r {
+			case SummaryResultsPass:
+				rowElements = append(rowElements, SummaryResultsLegendPass)
+			case SummaryResultsFail:
+				rowElements = append(rowElements, SummaryResultsLegendFail)
+			case SummaryResultsSkipped:
+				rowElements = append(rowElements, SummaryResultsLegendSkip)
+			}
+		}
+		rowElements = append(rowElements, sRes.comments[name])
+		printRows = append(printRows, rowElements)
+		fmt.Fprintln(bufTw, strings.Join(rowElements, "\t"))
+	}
+	bufTw.Flush()
+	output := buf.String()
+	// If fitWidth is true, Check and truncate the comment row.
+	if width, _, err := terminal.GetSize(int(out.Fd())); fitWidth && err == nil && width > 3 {
+		for idx, line := range strings.Split(output, "\n") {
+			if line == "" {
+				// Skip empty line. Sometimes added by strings.Split
+				continue
+			}
+			// Last string is the comment.
+			comment := printRows[idx][len(printRows[idx])-1]
+			// Check if the line is larger than width and if the comment can be truncated. Don't truncate line if it requires truncating any other column.
+			if len(line) > width && len(comment) > (len(line)-width+SummaryResultsMinCommentSize) {
+				line = line[:(width-3)] + "..."
+			}
+			fmt.Fprintln(out, line)
+		}
+	} else {
+		// Print table as is, if truncating comments is not possible.
+		fmt.Fprintln(out, output)
+	}
+
+	// Print legend for easy reference.
+	fmt.Fprintf(out, "\n\nLegend:\n\tSuccess\t%s\n\tFail\t%s\n\tSkip\t%s\n", SummaryResultsLegendPass, SummaryResultsLegendFail, SummaryResultsLegendSkip)
 }
