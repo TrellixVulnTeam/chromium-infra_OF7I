@@ -38,6 +38,7 @@ var bannedTestFileWords = []string{
 	"media_router_integration_browsertest",
 	"extension_settings_browsertest",
 	"mojo_core_unittest",
+	"vaapi_unittest",
 }
 
 func init() {
