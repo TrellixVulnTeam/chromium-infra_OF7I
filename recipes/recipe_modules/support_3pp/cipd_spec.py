@@ -186,7 +186,12 @@ class CIPDSpec(object):
 
     return ret
 
-  def build(self, root, install_mode, version_file, exclusions=None):
+  def build(self,
+            root,
+            install_mode,
+            version_file,
+            exclusions=None,
+            preserve_writable=False):
     """Builds the CIPD package from local files.
 
     This will populate the local CIPD package cache, and will allow uploading
@@ -208,8 +213,12 @@ class CIPDSpec(object):
       * exclusions (list[str]) - A list of regexps to exclude when scanning the
         given directory. These will be tested against the forward-slash path
         to the file relative to `dir_path`.
+      * preserve_writable (bool) - If set, pass this value through to the
+        `cipd` recipe module build.
     """
     pkg_def = self._api.cipd.PackageDefinition(self._pkg, root, install_mode)
+    if preserve_writable:
+      pkg_def.preserve_writable = True
     pkg_def.add_dir(root, exclusions)
     if version_file:
       pkg_def.add_version_file(str(version_file))

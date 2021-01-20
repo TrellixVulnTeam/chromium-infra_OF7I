@@ -407,6 +407,8 @@ def _source_upload(api, checkout_dir,
         source_cipd_spec.build(
             root=checkout_dir,
             install_mode='copy',
+            # Some build systems overwrite files, make sure they're writable.
+            preserve_writable=True,
             version_file=None,
             exclusions=['\.git'] if method_name == 'git' else [])
         extra_tags = {'external_hash': external_hash} if external_hash else {}
