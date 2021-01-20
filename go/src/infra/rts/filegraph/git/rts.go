@@ -24,12 +24,12 @@ type SelectionStrategy struct {
 
 // Select calls skipTestFile for each test file that should be skipped.
 func (s *SelectionStrategy) Select(changedFiles []string, skipFile func(name string) (keepGoing bool)) {
-	runRTSQuery(s.Graph, changedFiles, func(sp *filegraph.ShortestPath, rank int) bool {
-		if rank <= s.Threshold.Rank || sp.Distance <= s.Threshold.Distance {
+	runRTSQuery(s.Graph, changedFiles, func(name string, af rts.Affectedness) bool {
+		if af.Rank <= s.Threshold.Rank || af.Distance <= s.Threshold.Distance {
 			// This file too close to skip it.
 			return true
 		}
-		return skipFile(sp.Node.Name())
+		return skipFile(name)
 	})
 }
 
@@ -47,43 +47,39 @@ func (g *Graph) EvalStrategy(ctx context.Context, in eval.Input, out *eval.Outpu
 		changedFiles[i] = f.Path
 	}
 
-	affectedness := make(map[filegraph.Node]rts.Affectedness, len(in.TestVariants))
-	testNodes := make([]filegraph.Node, len(in.TestVariants))
-	for i, tv := range in.TestVariants {
-		if n := g.Node(tv.FileName); n != nil {
-			// Too far away by default.
-			affectedness[n] = rts.Affectedness{Distance: math.Inf(1), Rank: math.MaxInt32}
-			testNodes[i] = n
+	affectedness := make(map[string]rts.Affectedness, len(in.TestVariants))
+	for _, tv := range in.TestVariants {
+		// If the test file is in the graph, then by default it is not affected.
+		if g.node(tv.FileName) != nil {
+			affectedness[tv.FileName] = rts.Affectedness{Distance: math.Inf(1), Rank: math.MaxInt32}
 		}
 	}
 
 	found := 0
-	runAllTests := runRTSQuery(g, changedFiles, func(sp *filegraph.ShortestPath, rank int) (keepGoing bool) {
-		if _, ok := affectedness[sp.Node]; ok {
-			affectedness[sp.Node] = rts.Affectedness{Distance: sp.Distance, Rank: rank}
+	runRTSQuery(g, changedFiles, func(name string, af rts.Affectedness) (keepGoing bool) {
+		if _, ok := affectedness[name]; ok {
+			affectedness[name] = af
 			found++
 		}
 		return found < len(affectedness)
 	})
-	if runAllTests {
-		return nil
-	}
 
-	for i, n := range testNodes {
-		if n != nil {
-			out.TestVariantAffectedness[i] = affectedness[n]
-		}
+	for i, tv := range in.TestVariants {
+		// If tv.FileName is empty (not in the map), then zero value is used
+		// which means very affected.
+		out.TestVariantAffectedness[i] = affectedness[tv.FileName]
 	}
 	return nil
 }
 
-type rtsCallback func(sp *filegraph.ShortestPath, rank int) (keepGoing bool)
+type rtsCallback func(name string, af rts.Affectedness) (keepGoing bool)
 
 // runRTSQuery walks the file graph from the changed files, along reversed edges
 // and calls back for each found file.
-func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) (runAllTests bool) {
+// If a changed file is not in the graph, then it is treated as very affected.
+func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) {
 	q := &filegraph.Query{
-		Sources: make([]filegraph.Node, len(changedFiles)),
+		Sources: make([]filegraph.Node, 0, len(changedFiles)),
 		EdgeReader: &EdgeReader{
 			// We run the query from changed files, but we need distance
 			// from test files to changed files, and not the other way around.
@@ -91,12 +87,14 @@ func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) (runAllT
 		},
 	}
 
-	for i, f := range changedFiles {
-		if q.Sources[i] = g.Node(f); q.Sources[i] == nil {
-			// TODO(nodir): consider not bailing.
-			// We are bailing on all CLs where at least one file is new.
-			runAllTests = true
-			return
+	for _, f := range changedFiles {
+		n := g.Node(f)
+		if n != nil {
+			// If the node exists, then include it in the Dijkstra walk.
+			q.Sources = append(q.Sources, n)
+		} else {
+			// Otherwise assume the file is new and treat it as very affected.
+			callback(f, rts.Affectedness{})
 		}
 	}
 
@@ -104,7 +102,7 @@ func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) (runAllT
 	q.Run(func(sp *filegraph.ShortestPath) (keepGoing bool) {
 		// Note: the files are enumerated in the order of distance.
 		rank++
-		return callback(sp, rank)
+		return callback(sp.Node.Name(), rts.Affectedness{Distance: sp.Distance, Rank: rank})
 	})
 	return
 }

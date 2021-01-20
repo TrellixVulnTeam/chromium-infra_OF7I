@@ -96,6 +96,18 @@ func TestEvalStrategy(t *testing.T) {
 			assertAffectedness(in, 0, 0)
 		})
 
+		Convey(`New test`, func() {
+			in := eval.Input{
+				ChangedFiles: []*evalpb.SourceFile{
+					{Path: "//new_test"},
+				},
+				TestVariants: []*evalpb.TestVariant{
+					{FileName: "//new_test"},
+				},
+			}
+			assertAffectedness(in, 0, 0)
+		})
+
 		Convey(`One of tests is unknown`, func() {
 			in := eval.Input{
 				ChangedFiles: []*evalpb.SourceFile{
@@ -138,7 +150,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//b"},
 				},
 			}
-			assertAffectedness(in, 0, 0)
+			assertAffectedness(in, math.Inf(1), math.MaxInt32)
 		})
 	})
 }
