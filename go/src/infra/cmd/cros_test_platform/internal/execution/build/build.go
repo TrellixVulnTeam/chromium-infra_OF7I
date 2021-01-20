@@ -44,7 +44,7 @@ func NewRequestStep(name string, build *bbpb.Build) *RequestStepUpdater {
 // this invocation as the execution proceeds.
 func (r *RequestStepUpdater) NewInvocationStep(name string) *InvocationStepUpdater {
 	s := &InvocationStepUpdater{
-		step: appendNewStep(r.build, fmt.Sprintf("%s|invocation %s", r.step.Name, name)),
+		step: appendNewStep(r.build, fmt.Sprintf("%s|invocation %d. %s", r.step.Name, 1+len(r.invocations), name)),
 	}
 	r.invocations = append(r.invocations, s)
 	return s
