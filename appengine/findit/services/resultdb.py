@@ -49,6 +49,27 @@ def query_resultdb(inv_name, only_variants_with_unexpected_results=True):
   return results
 
 
+def list_artifacts(test_result_name):
+  """Queries ResultDB for list of artifact for a test result
+  Arguments:
+    test_result_name: Name of the test result
+  Returns:
+    A list of artifacts
+  """
+  logging.info("List artifact for test_result %s", test_result_name)
+  req = resultdb_pb2.ListArtifactsRequest(
+      parent=test_result_name,
+      page_size=1000,
+  )
+  client = resultdb_client(RESULTDB_HOSTNAME)
+  resp = client.ListArtifacts(
+      req,
+      credentials=prpc_client.service_account_credentials(),
+  )
+  logging.info("Got %d artifacts", len(resp.artifacts))
+  return resp.artifacts
+
+
 def resultdb_client(hostname):
   return prpc_client.Client(hostname,
                             resultdb_prpc_pb2.ResultDBServiceDescription)

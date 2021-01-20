@@ -7,14 +7,18 @@ import base64
 import logging
 
 from collections import defaultdict
+from common.findit_http_client import FinditHttpClient
 from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2
+from infra_api_clients import http_client_util
 from libs.test_results.base_test_results import BaseTestResults
 from libs.test_results.classified_test_results import ClassifiedTestResults
+from services import resultdb
 
 _FAILURE_STATUSES = [
     test_result_pb2.TestStatus.FAIL, test_result_pb2.TestStatus.CRASH,
     test_result_pb2.TestStatus.ABORT
 ]
+_FINDIT_HTTP_CLIENT = FinditHttpClient()
 
 
 class ResultDBTestType(object):
@@ -43,7 +47,12 @@ class ResultDBTestResults(BaseTestResults):
     reliable_failed_tests = {}
     for test_name, result in self.test_results.items():
       if result["reliable_failure"]:
-        merged_test_log = '\n'.join(result["failure_logs"])
+        test_type = result["test_type"]
+        # TODO(crbug.com/981066): Consider running this in parallel
+        real_logs = map(
+            lambda l: ResultDBTestResults.get_detailed_failure_log(
+                test_type, l), result["failure_logs"])
+        merged_test_log = '\n'.join(real_logs)
         failed_test_log[test_name] = base64.b64encode(merged_test_log)
         reliable_failed_tests[test_name] = test_name
     return failed_test_log, reliable_failed_tests
@@ -119,11 +128,15 @@ class ResultDBTestResults(BaseTestResults):
 
   @staticmethod
   def group_test_results_by_test_name(test_results):
+    # pylint: disable=line-too-long
     """Returns a dictionary of
     {
       <test_name>:{
         "reliable_failure": whether the test fail consistently
-        "failure_logs": array of failure logs
+        "failure_logs": array of dictionary {
+          "name": test result name (e.g. invocations/task-chromium-swarm.appspot.com-508dcba4306cae11/tests/ninja:%2F%2Fgpu:gl_tests%2FSharedImageGLBackingProduceDawnTest.Basic/results/c649f775-00777)
+          "summary_html": summary_html of a run
+        }
         "test_type": type of test
         "test_location": location of the test
         "total_run": number of runs for the test
@@ -147,7 +160,12 @@ class ResultDBTestResults(BaseTestResults):
       if not test_name:
         continue
       is_failure = ResultDBTestResults.is_failure(test_result)
-      log = ResultDBTestResults.summary_html_for_test_result(test_result)
+      log = {
+          "name":
+              test_result.name,
+          "summary_html":
+              ResultDBTestResults.summary_html_for_test_result(test_result)
+      }
       if not results.get(test_name):
         results[test_name] = {
             "reliable_failure":
@@ -258,3 +276,35 @@ class ResultDBTestResults(BaseTestResults):
         "line": test_result.test_metadata.location.line,
         "file": test_result.test_metadata.location.file_name
     }
+
+  @staticmethod
+  def get_detailed_failure_log(test_type, failure_log):
+    """Gets the detailed failure log from artifact if possible
+      For gtest, if there is stack_trace artifact, download the content of the
+      artifact. Otherwise, just return summaryHTML
+    Argument:
+      test_type: ResultDBTestType
+      failure_log: Dictionary of {"name":..., "summary_html":...}
+    Returns:
+      A string for the detailed failure logs
+    """
+    summary_html = failure_log["summary_html"]
+    if test_type != ResultDBTestType.GTEST:
+      return summary_html
+    # We only check for "stack_trace" artifact if "stack_trace" presents in
+    # summary_html
+    if "stack_trace" not in summary_html:
+      return summary_html
+    test_result_name = failure_log["name"]
+    artifacts = resultdb.list_artifacts(test_result_name) or []
+    stack_trace_artifact = next(
+        (a for a in artifacts if a.artifact_id == "stack_trace"), None)
+    if not stack_trace_artifact:
+      return summary_html
+    fetch_url = stack_trace_artifact.fetch_url
+    content, error = http_client_util.SendRequestToServer(
+        fetch_url, _FINDIT_HTTP_CLIENT)
+    if not error:
+      return content
+    logging.warning("Unable to fetch content from %s: %s", fetch_url, error)
+    return summary_html

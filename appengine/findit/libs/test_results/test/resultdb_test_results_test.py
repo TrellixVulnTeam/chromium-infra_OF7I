@@ -5,15 +5,19 @@
 import base64
 import mock
 
-from go.chromium.org.luci.resultdb.proto.v1 import (common_pb2, test_result_pb2,
+from go.chromium.org.luci.resultdb.proto.v1 import (artifact_pb2, common_pb2,
+                                                    test_result_pb2,
                                                     test_metadata_pb2)
+from infra_api_clients import http_client_util
 from libs.test_results.resultdb_test_results import (ResultDBTestResults,
                                                      ResultDBTestType)
+from services import resultdb
 from waterfall.test import wf_testcase
 
 _SAMPLE_TEST_RESULTS = [
     test_result_pb2.TestResult(
         test_id="ninja://gpu:gl_tests/SharedImageTest.Basic",
+        name="name1",
         tags=[
             common_pb2.StringPair(
                 key="test_name", value="SharedImageTest.Basic"),
@@ -39,6 +43,7 @@ _SAMPLE_TEST_RESULTS = [
     ),
     test_result_pb2.TestResult(
         test_id="ninja://gpu:gl_tests/SharedImageTest.Basic1",
+        name="name2",
         tags=[
             common_pb2.StringPair(
                 key="test_name", value="SharedImageTest.Basic1"),
@@ -49,6 +54,7 @@ _SAMPLE_TEST_RESULTS = [
     ),
     test_result_pb2.TestResult(
         test_id="ninja://gpu:gl_tests/SharedImageTest.Basic1",
+        name="name3",
         tags=[
             common_pb2.StringPair(
                 key="test_name", value="SharedImageTest.Basic1"),
@@ -59,6 +65,7 @@ _SAMPLE_TEST_RESULTS = [
     ),
     test_result_pb2.TestResult(
         test_id="ninja://gpu:gl_tests/SharedImageTest.Basic2",
+        name="name4",
         tags=[
             common_pb2.StringPair(
                 key="test_name", value="SharedImageTest.Basic2"),
@@ -150,13 +157,16 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
         ResultDBTestResults.test_name_for_test_result(test_result),
         "SharedImageTest.Basic")
 
-  def testGroupTestResultsByTestId(self):
+  def testGroupTestResultsByTestName(self):
     rdb_test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
     self.assertEqual(
         rdb_test_results.test_results, {
             u"SharedImageTest.Basic": {
                 "reliable_failure": False,
-                "failure_logs": [u"summary"],
+                "failure_logs": [{
+                    "name": "name1",
+                    "summary_html": "summary"
+                }],
                 "test_type": ResultDBTestType.GTEST,
                 "test_location": {
                     "file": "/path/to/test",
@@ -175,7 +185,13 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
             },
             u"SharedImageTest.Basic1": {
                 "reliable_failure": True,
-                "failure_logs": [u"summary1", u"summary2"],
+                "failure_logs": [{
+                    "name": "name2",
+                    "summary_html": "summary1"
+                }, {
+                    "name": "name3",
+                    "summary_html": "summary2"
+                }],
                 "test_type": ResultDBTestType.GTEST,
                 "test_location": None,
                 "total_run": 2,
@@ -191,7 +207,10 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
             },
             u"SharedImageTest.Basic2": {
                 "reliable_failure": True,
-                "failure_logs": ['summary3'],
+                "failure_logs": [{
+                    "name": "name4",
+                    "summary_html": "summary3"
+                }],
                 "test_type": ResultDBTestType.GTEST,
                 "test_location": None,
                 "total_run": 1,
@@ -239,14 +258,16 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
             },
         })
 
-  def testGetFailedTestsInformation(self):
+  @mock.patch.object(ResultDBTestResults, 'get_detailed_failure_log')
+  def testGetFailedTestsInformation(self, mock_get_log):
+    mock_get_log.side_effect = ["content1", "content2", "content3"]
     rdb_test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
     self.assertTrue(rdb_test_results.contains_all_tests)
     failed_test_log, reliable_failed_tests = rdb_test_results.GetFailedTestsInformation()  # pylint: disable=line-too-long
     self.assertEqual(
         failed_test_log, {
-            "SharedImageTest.Basic1": base64.b64encode("summary1\nsummary2"),
-            "SharedImageTest.Basic2": base64.b64encode("summary3"),
+            "SharedImageTest.Basic1": base64.b64encode("content1\ncontent2"),
+            "SharedImageTest.Basic2": base64.b64encode("content3"),
         })
     self.assertEqual(
         reliable_failed_tests, {
@@ -345,3 +366,87 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
     location, err = rdb_test_results.GetTestLocation("InvalidTest")
     self.assertIsNone(location)
     self.assertIsNotNone(err)
+
+  def testGetDetailedFailureLogNonGtestTestType(self):
+    test_type = ResultDBTestType.BLINK
+    log = {"name": "test_result_name", "summary_html": "summary_html"}
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log),
+        "summary_html")
+
+  def testGetDetailedFailureLogStackTraceNotInSummaryHTML(self):
+    test_type = ResultDBTestType.GTEST
+    log = {"name": "test_result_name", "summary_html": "summary_html"}
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log),
+        "summary_html")
+
+  @mock.patch.object(resultdb, 'list_artifacts')
+  def testGetDetailedFailureLogNoArtifact(self, mock_list_artifacts):
+    test_type = ResultDBTestType.GTEST
+    log = {
+        "name": "test_result_name",
+        "summary_html": "Please see stack_trace artifact"
+    }
+    mock_list_artifacts.return_value = []
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log),
+        "Please see stack_trace artifact")
+    mock_list_artifacts.assert_called_once_with("test_result_name")
+
+  @mock.patch.object(resultdb, 'list_artifacts')
+  def testGetDetailedFailureLogNoStackTraceArtifact(self, mock_list_artifacts):
+    test_type = ResultDBTestType.GTEST
+    log = {
+        "name": "test_result_name",
+        "summary_html": "Please see stack_trace artifact"
+    }
+    mock_list_artifacts.return_value = [
+        artifact_pb2.Artifact(
+            artifact_id="some_artifact", fetch_url="https://abc.xyz/some_url")
+    ]
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log),
+        "Please see stack_trace artifact")
+    mock_list_artifacts.assert_called_once_with("test_result_name")
+
+  @mock.patch.object(resultdb, 'list_artifacts')
+  @mock.patch.object(http_client_util, 'SendRequestToServer')
+  def testGetDetailedFailureLogFetchError(self, mock_http_client,
+                                          mock_list_artifacts):
+    test_type = ResultDBTestType.GTEST
+    log = {
+        "name": "test_result_name",
+        "summary_html": "Please see stack_trace artifact"
+    }
+    mock_list_artifacts.return_value = [
+        artifact_pb2.Artifact(
+            artifact_id="some_artifact", fetch_url="https://abc.xyz/some_url"),
+        artifact_pb2.Artifact(
+            artifact_id="stack_trace",
+            fetch_url="https://abc.xyz/some_other_url"),
+    ]
+    mock_http_client.return_value = (None, "some error")
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log),
+        "Please see stack_trace artifact")
+    mock_list_artifacts.assert_called_once_with("test_result_name")
+
+  @mock.patch.object(resultdb, 'list_artifacts')
+  @mock.patch.object(http_client_util, 'SendRequestToServer')
+  def testGetDetailedFailureLog(self, mock_http_client, mock_list_artifacts):
+    test_type = ResultDBTestType.GTEST
+    log = {
+        "name": "test_result_name",
+        "summary_html": "Please see stack_trace artifact"
+    }
+    mock_list_artifacts.return_value = [
+        artifact_pb2.Artifact(
+            artifact_id="some_artifact", fetch_url="https://abc.xyz/some_url"),
+        artifact_pb2.Artifact(
+            artifact_id="stack_trace",
+            fetch_url="https://abc.xyz/some_other_url"),
+    ]
+    mock_http_client.return_value = ("content", None)
+    self.assertEqual(
+        ResultDBTestResults.get_detailed_failure_log(test_type, log), "content")

@@ -5,7 +5,8 @@
 import mock
 from services import resultdb
 from waterfall.test import wf_testcase
-from go.chromium.org.luci.resultdb.proto.v1 import predicate_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import (artifact_pb2, predicate_pb2,
+                                                    resultdb_pb2)
 from components.prpc import client as prpc_client
 
 
@@ -40,3 +41,15 @@ class ResultDBTest(wf_testcase.WaterfallTestCase):
     req = resultdb.resultdb_req("inv_name", False)
     self.assertEqual(req.predicate.expectancy,
                      predicate_pb2.TestResultPredicate.Expectancy.ALL)
+
+  @mock.patch.object(prpc_client, 'service_account_credentials')
+  @mock.patch('components.prpc.client.Client')
+  def test_list_artifacts(self, mock_client, *_):
+    # pylint: disable=line-too-long
+    mock_client.return_value.ListArtifacts.return_value = resultdb_pb2.ListArtifactsResponse(
+        artifacts=[
+            artifact_pb2.Artifact(artifact_id="stack_trace"),
+            artifact_pb2.Artifact(artifact_id="stack_trace1"),
+        ])
+    results = resultdb.list_artifacts("test_result_name")
+    self.assertEqual(len(results), 2)
