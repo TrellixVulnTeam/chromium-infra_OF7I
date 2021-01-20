@@ -67,12 +67,17 @@ def create_invocations_async(builds_and_configs):
     )
 
     for build, cfg in batch:
+      history_options = invocation_pb2.HistoryOptions()
+      history_options.use_invocation_timestamp = (
+          cfg.resultdb.history_options.use_invocation_timestamp
+      )
       req.requests.add(
           invocation_id='build-%d' % build.proto.id,
           invocation=invocation_pb2.Invocation(
               realm=build.realm,
               bigquery_exports=cfg.resultdb.bq_exports,
               producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
+              history_options=history_options,
           ),
       )
 

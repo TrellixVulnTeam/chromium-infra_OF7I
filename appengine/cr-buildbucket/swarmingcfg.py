@@ -69,6 +69,12 @@ def _validate_tag(tag, ctx):
     )
 
 
+def _validate_resultdb(resultdb, ctx):
+  with ctx.prefix('history_options: '):
+    if resultdb.history_options.HasField('commit'):
+      ctx.error('commit must be unset')
+
+
 def _validate_dimensions(field_name, dimensions, ctx):
   parsed = collections.defaultdict(set)  # {key: {(value, expiration_secs)}}
   expirations = set()
@@ -249,6 +255,8 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
       _validate_tag(t, ctx)
 
   _validate_dimensions('dimension', builder.dimensions, ctx)
+  with ctx.prefix('resultdb:'):
+    _validate_resultdb(builder.resultdb, ctx)
 
   cache_paths = set()
   cache_names = set()

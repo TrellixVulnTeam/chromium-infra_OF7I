@@ -97,7 +97,11 @@ class ResultDBTest(testing.AppengineTestCase):
     self.assertFalse(net.request_async.called)
 
   def test_invocation_created(self):
-    self.builds_and_configs = [_make_build_and_config(4)]
+    builder_cfg = _make_builder_cfg()
+    builder_cfg.resultdb.history_options.use_invocation_timestamp = True
+    self.builds_and_configs = [
+        _make_build_and_config(4, builder_cfg=builder_cfg)
+    ]
 
     self.rpc_mock.return_value = future(
         recorder_pb2.BatchCreateInvocationsResponse(
@@ -124,6 +128,7 @@ class ResultDBTest(testing.AppengineTestCase):
                         ],
                         producer_resource='//buildbucket.example.com/builds/4',
                         realm='chromium:try',
+                        history_options=dict(use_invocation_timestamp=True),
                     ),
                 )
             ],

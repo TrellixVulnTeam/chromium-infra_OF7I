@@ -543,6 +543,33 @@ class ProjectCfgTest(testing.AppengineTestCase):
     swarmingcfg._validate_dimensions('dimension', dimensions, ctx)
     self.assert_errors(ctx, [expected_error] if expected_error else [])
 
+  def test_validate_resultdb(self):
+
+    def test(resultdb_text, expected_error):
+      resultdb = project_config_pb2.Builder.ResultDB()
+      protobuf.text_format.Merge(resultdb_text, resultdb)
+      ctx = config_component.validation.Context()
+      swarmingcfg._validate_resultdb(resultdb, ctx)
+      self.assert_errors(ctx, [expected_error] if expected_error else [])
+
+    test(
+        '''
+      history_options {
+        use_invocation_timestamp: true
+      }
+    ''', None
+    )
+    test('', None)
+    test(
+        '''
+      history_options {
+        commit{
+          position: 123
+        }
+      }
+    ''', 'history_options: commit must be unset'
+    )
+
   def test_default_recipe(self):
     self.cfg_test(
         '''
