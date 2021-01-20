@@ -5,6 +5,7 @@
 """Implements the source version checking and acquisition logic."""
 
 import functools
+import itertools
 import operator
 import re
 
@@ -248,10 +249,15 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
   # we don't want to include these scripts.
   if spec.create_pb.HasField("build"):
     # Copy all the necessary package definitions into the checkout
-    pkgs = [spec] + list(spec.all_possible_deps_and_tools)
+    # We want to uniquify by package name, even if the same package is
+    # present for more than one platform (in the case of cross-compiling).
+    unique_pkgs = {
+        s.cipd_pkg_name: s
+        for s in itertools.chain([spec], spec.all_possible_deps_and_tools)
+    }
     # Sort to make sure the packages are in order, otherwise it will produce
     # inconsistent recipe train result.
-    for pkg in sorted(pkgs):
+    for pkg in sorted(unique_pkgs.itervalues()):
       api.file.copytree(
         'copy package definition %s' % pkg.cipd_pkg_name,
         pkg.pkg_dir,

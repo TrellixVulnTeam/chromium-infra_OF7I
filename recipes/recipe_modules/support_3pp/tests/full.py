@@ -610,6 +610,27 @@ def GenTests(api):
       + api.post_process(post_process.DropExpectation)
   )
 
+  # Tools may need to depend on themselves for a host version to use when
+  # cross-compiling.
+  spec = '''
+  create {
+    source { script { name: "fetch.py" } }
+  }
+  create {
+    platform_re: "linux-arm.*"
+    build { tool: "tools/self_dependency" }
+  }
+  upload { pkg_prefix: "tools" }
+  '''
+  yield (api.test('cross-compile-self-dep') + api.platform('linux', 64) +
+         api.properties(GOOS='linux', GOARCH='arm64') + api.step_data(
+             'find package specs',
+             api.file.glob_paths(['dir_build_tools/self_dependency/3pp.pb'])) +
+         api.step_data(
+             mk_name("load package specs",
+                     "read 'dir_build_tools/self_dependency/3pp.pb'"),
+             api.file.read_text(spec)))
+
   def links_include(check, step_odict, step, link_name):
     check(
         'step result for %s contained link named %s' % (step, link_name),
