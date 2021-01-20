@@ -9,11 +9,14 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
 	"infra/rts/filegraph"
 	"infra/rts/filegraph/internal/gitutil"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 // BenchmarkE2E measures performance of this package end to end:
@@ -81,6 +84,41 @@ func BenchmarkE2E(b *testing.B) {
 	}
 }
 
+func TestE2E(t *testing.T) {
+	t.Parallel()
+
+	repoDir := benchRepoDir(t)
+	Convey(`E2E`, t, func() {
+		ctx := context.Background()
+
+		// Build the graph from scratch.
+		g := &Graph{}
+		err := g.Update(ctx, repoDir, "refs/remotes/origin/master", UpdateOptions{})
+		So(err, ShouldBeNil)
+
+		// Ensure each file in the repo is also present in the graph.
+		gitListFiles(ctx, repoDir, "origin/master", func(file string) {
+			n := g.node("//" + file)
+			t.Log(file)
+			So(n, ShouldNotBeNil)
+		})
+	})
+}
+
+func gitListFiles(ctx context.Context, dir, ref string, callback func(file string)) {
+	cmd := exec.CommandContext(ctx, "git", "-C", dir, "ls-files", ref)
+	stdout, err := cmd.StdoutPipe()
+	So(err, ShouldBeNil)
+	So(cmd.Start(), ShouldBeNil)
+
+	scan := bufio.NewScanner(stdout)
+	for scan.Scan() {
+		callback(scan.Text())
+	}
+	So(scan.Err(), ShouldBeNil)
+	So(cmd.Wait(), ShouldBeNil)
+}
+
 func printStats(g *Graph, b *testing.B) {
 	nodes := 0
 	edges := 0
@@ -92,7 +130,7 @@ func printStats(g *Graph, b *testing.B) {
 	b.Logf("%d nodes, %d edges", nodes, edges)
 }
 
-func benchRepoDir(b *testing.B) string {
+func benchRepoDir(b testing.TB) string {
 	if repoDir := os.Getenv("FILEGRAPH_BENCH_CHECKOUT"); repoDir != "" {
 		return repoDir
 	}
