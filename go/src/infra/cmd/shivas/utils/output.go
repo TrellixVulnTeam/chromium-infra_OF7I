@@ -1618,6 +1618,23 @@ func (sRes *SummaryResultsTable) RecordResult(operation, entity string, res erro
 	}
 }
 
+// IsSuccessForAny returns true if the operation succeeded for any of the entities.
+func (sRes *SummaryResultsTable) IsSuccessForAny(operation string) bool {
+	for idx, col := range sRes.columns {
+		// Find the idx of the operation.
+		if col == operation {
+			for _, res := range sRes.results {
+				// Return true if sucess was recorded for any of the entites.
+				if res[idx] == SummaryResultsPass {
+					return true
+				}
+			}
+			break
+		}
+	}
+	return false
+}
+
 // RecordSkip records an operation that was skipped.
 func (sRes *SummaryResultsTable) RecordSkip(operation, entity, reason string) {
 	if _, ok := sRes.results[entity]; !ok {

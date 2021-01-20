@@ -37,7 +37,7 @@ var shivasTags = []string{"shivas:" + site.VersionNumber, "triggered_using:shiva
 // defaultPools contains the list of pools used by default.
 var defaultPools = []string{"DUT_POOL_QUOTA"}
 
-// deafultSwarmingPool is the swarming pool used for all DUTs.
+// defaultSwarmingPool is the swarming pool used for all DUTs.
 var defaultSwarmingPool = "ChromeOSSkylab"
 
 // AddDUTCmd adds a MachineLSE to the database. And starts a swarming job to deploy.
