@@ -18,6 +18,7 @@ from model.base_build_model import BaseBuildModel
 from model.wf_analysis import WfAnalysis
 from services import build_failure_analysis
 from services import ci_failure
+from services import constants
 from services import deps
 from services import git
 from services import monitoring
@@ -206,7 +207,7 @@ def HeuristicAnalysisForTest(heuristic_params):
   master_name = failure_info.master_name
   builder_name = failure_info.builder_name
   build_number = failure_info.build_number
-  use_resultdb = False
+  use_resultdb = constants.USE_RESULTDB
 
   # 1. Detects first failed builds for failed test step, updates failure_info.
   failure_info = ci_failure.CheckForFirstKnownFailure(master_name, builder_name,

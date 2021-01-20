@@ -89,7 +89,7 @@ def GetSwarmingTaskDataAndResult(task_id,
 def GetTestResultForSwarmingTask(task_id, http_client=_FINDIT_HTTP_CLIENT):
   """Get test results object for a swarming task based on it's id."""
   _data, test_results, _error = GetSwarmingTaskDataAndResult(
-      task_id, http_client)
+      task_id, http_client, use_resultdb=constants.USE_RESULTDB)
   return test_results
 
 

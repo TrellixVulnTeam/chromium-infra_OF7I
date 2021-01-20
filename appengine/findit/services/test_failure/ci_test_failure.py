@@ -430,7 +430,8 @@ def GetContinuouslyFailedTestsInLaterBuilds(master_name, builder_name,
 
       failed_test_log = _GetTestLevelLogForAStep(master_name, builder_name,
                                                  newer_build_number, step_name,
-                                                 _HTTP_CLIENT)
+                                                 _HTTP_CLIENT,
+                                                 constants.USE_RESULTDB)
       if not failed_test_log:
         # Failed to get failed_tests for a failed step, treats this step as if
         # it succeeded in the build.

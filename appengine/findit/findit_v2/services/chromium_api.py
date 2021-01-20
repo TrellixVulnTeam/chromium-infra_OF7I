@@ -16,6 +16,7 @@ from common.findit_http_client import FinditHttpClient
 from common.rotations import current_sheriffs
 from common.waterfall import buildbucket_client
 from infra_api_clients import logdog_util
+from services import constants
 from services import git
 from services.compile_failure import extract_compile_signal
 from services.compile_failure import compile_failure_analysis
@@ -37,7 +38,7 @@ class ChromiumProjectAPI(ProjectAPI):
 
   def ExtractSignalsForTestFailure(self, failure_info):
     return extract_test_signal.ExtractSignalsForTestFailure(
-        failure_info, FinditHttpClient())
+        failure_info, FinditHttpClient(), use_resultdb=constants.USE_RESULTDB)
 
   def ClassifyStepType(self, _build, step):
     if step.name == 'compile':

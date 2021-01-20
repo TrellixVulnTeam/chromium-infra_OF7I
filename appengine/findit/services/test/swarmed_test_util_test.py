@@ -343,4 +343,5 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         'content',
         swarmed_test_util.GetTestResultForSwarmingTask('task_id', None))
-    mock_fn.assert_called_once_with('task_id', None)
+    mock_fn.assert_called_once_with(
+        'task_id', None, use_resultdb=constants.USE_RESULTDB)
