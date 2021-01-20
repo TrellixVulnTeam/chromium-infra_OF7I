@@ -34,7 +34,7 @@ func (r *selectRun) selectTests(skipFile func(name string) error) (err error) {
 func (r *createModelRun) selectTests(ctx context.Context, in eval.Input, out *eval.Output) error {
 	for _, f := range in.ChangedFiles {
 		switch {
-		case f.Repo != "https://chromium-review.googlesource.com/chromium/src":
+		case f.Repo != "https://chromium.googlesource.com/chromium/src":
 			return errors.Reason("unexpected repo %q", f.Repo).Err()
 		case requiresAllTests(f.Path):
 			return nil

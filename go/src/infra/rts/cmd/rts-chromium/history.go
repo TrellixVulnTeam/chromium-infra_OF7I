@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
 
@@ -407,12 +406,10 @@ func (r *presubmitHistoryRun) populateChangedFiles(ctx context.Context, ps *eval
 		return errPatchsetDeleted
 	}
 
-	repo := fmt.Sprintf("https://%s/%s", ps.Change.Host, strings.TrimSuffix(ps.Change.Project, ".git"))
-
 	ps.ChangedFiles = make([]*evalpb.SourceFile, len(changedFiles))
 	for i, path := range changedFiles {
 		ps.ChangedFiles[i] = &evalpb.SourceFile{
-			Repo: repo,
+			Repo: "https://chromium.googlesource.com/chromium/src",
 			Path: "//" + path,
 		}
 	}
