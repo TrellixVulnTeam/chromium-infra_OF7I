@@ -173,7 +173,8 @@ class ServletRegistry(object):
     self._RegisterInboundMail()
 
     # Register pRPC API routes
-    prpc_server = prpc.Server(allow_cors=False)
+    prpc_server = prpc.Server(
+        allowed_origins=client_config_svc.GetAllowedOriginsSet())
     api_routes_v0.RegisterApiHandlers(prpc_server, services)
     api_routes_v3.RegisterApiHandlers(prpc_server, services)
     self.routes.extend(prpc_server.get_routes())

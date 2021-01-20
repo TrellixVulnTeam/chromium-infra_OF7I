@@ -38,6 +38,7 @@ LUCI_CONFIG_URL = (
 client_config_svc = None
 service_account_map = None
 qpm_dict = None
+allowed_origins_set = None
 
 
 class ClientConfig(db.Model):
@@ -196,6 +197,14 @@ class ClientConfigService(object):
         qpm_map[client.client_email] = client.qpm_limit
     return qpm_map
 
+  def GetAllowedOriginsSet(self):
+    """Get the set of all allowed origins."""
+    self.GetConfigs(use_cache=True)
+    origins = set()
+    for client in self.client_configs.clients:
+      origins.update(client.allowed_origins)
+    return origins
+
 
 def GetClientConfigSvc():
   global client_config_svc
@@ -218,3 +227,10 @@ def GetQPMDict():
   if qpm_dict is None:
     qpm_dict = GetClientConfigSvc().GetQPM()
   return qpm_dict
+
+
+def GetAllowedOriginsSet():
+  global allowed_origins_set
+  if allowed_origins_set is None:
+    allowed_origins_set = GetClientConfigSvc().GetAllowedOriginsSet()
+  return allowed_origins_set

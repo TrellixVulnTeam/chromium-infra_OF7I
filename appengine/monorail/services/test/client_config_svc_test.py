@@ -58,6 +58,7 @@ class ClientConfigServiceTest(unittest.TestCase):
     self.client_config_svc = client_config_svc.GetClientConfigSvc()
     self.client_email = '123456789@developer.gserviceaccount.com'
     self.client_id = '123456789.apps.googleusercontent.com'
+    self.allowed_origins = {'chicken.test', 'cow.test', 'goat.test'}
 
   def testGetDisplayNames(self):
     display_names_map = self.client_config_svc.GetDisplayNames()
@@ -75,6 +76,10 @@ class ClientConfigServiceTest(unittest.TestCase):
     auth_client_ids, auth_emails = self.client_config_svc.GetClientIDEmails()
     self.assertIn(self.client_id, auth_client_ids)
     self.assertIn(self.client_email, auth_emails)
+
+  def testGetAllowedOriginsSet(self):
+    origins = self.client_config_svc.GetAllowedOriginsSet()
+    self.assertEqual(self.allowed_origins, origins)
 
   def testForceLoad(self):
     EXPIRES_IN = client_config_svc.ClientConfigService.EXPIRES_IN
@@ -107,6 +112,7 @@ class ClientConfigServiceFunctionsTest(unittest.TestCase):
 
   def setUp(self):
     self.client_email = '123456789@developer.gserviceaccount.com'
+    self.allowed_origins = {'chicken.test', 'cow.test', 'goat.test'}
 
   def testGetServiceAccountMap(self):
     service_account_map = client_config_svc.GetServiceAccountMap()
@@ -121,3 +127,7 @@ class ClientConfigServiceFunctionsTest(unittest.TestCase):
     self.assertIn(self.client_email, qpm_map)
     self.assertEqual(1, qpm_map[self.client_email])
     self.assertNotIn('bugdroid1@chromium.org', qpm_map)
+
+  def testGetAllowedOriginsSet(self):
+    allowed_origins = client_config_svc.GetAllowedOriginsSet()
+    self.assertEqual(self.allowed_origins, allowed_origins)

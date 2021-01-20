@@ -22,10 +22,12 @@ message ProjectPermission {
   repeated string extra_permissions = 3;
 }
 
+// Next available tag: 11
 message Client {
   optional string client_email = 1;
   optional string display_name = 2;
   optional string client_id = 3;
+  repeated string allowed_origins = 10;
   optional string description = 4;
   repeated ProjectPermission project_permissions = 5;
   optional int32 period_limit = 6 [default = 100000];
