@@ -450,3 +450,14 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
     mock_http_client.return_value = ("content", None)
     self.assertEqual(
         ResultDBTestResults.get_detailed_failure_log(test_type, log), "content")
+
+  def TestDoesTestExist(self):
+    test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
+    self.assertFalse(test_results.DoesTestExist('some_name'))
+    self.assertTrue(test_results.DoesTestExist('SharedImageTest.Basic'))
+
+  def TestIsTestResultUseful(self):
+    test_results = ResultDBTestResults(_SAMPLE_TEST_RESULTS)
+    self.assertTrue(test_results.IsTestResultUseful())
+    test_results = ResultDBTestResults([])
+    self.assertFalse(test_results.IsTestResultUseful())

@@ -126,6 +126,12 @@ class ResultDBTestResults(BaseTestResults):
       return None, 'test location not found'
     return location, None
 
+  def DoesTestExist(self, test_name):
+    return test_name in self.test_results
+
+  def IsTestResultUseful(self):
+    return len(self.test_results) > 0
+
   @staticmethod
   def group_test_results_by_test_name(test_results):
     # pylint: disable=line-too-long
