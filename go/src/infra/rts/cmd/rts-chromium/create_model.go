@@ -181,6 +181,7 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 }
 
 // writeTestFileSet writes the test file set in Chromium to the file.
+// It skips tests that match neverSkipTestFileRegexp.
 func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) error {
 	// Grab all test file names in the past 1 week.
 	// Use ci_test_results table (not CQ) because it is smaller and it does not
@@ -193,9 +194,13 @@ func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) 
 		)
 		SELECT DISTINCT FileName
 		FROM file_names
-		WHERE FileName != ''
+		WHERE FileName != '' AND NOT REGEXP_CONTAINS(FileName, @exclusions)
 		ORDER BY FileName
 	`)
+	q.Parameters = append(q.Parameters, bigquery.QueryParameter{
+		Name:  "exclusions",
+		Value: neverSkipTestFileRegexp.String(),
+	})
 	it, err := q.Read(ctx)
 	if err != nil {
 		return err
