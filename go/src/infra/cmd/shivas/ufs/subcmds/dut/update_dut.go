@@ -7,6 +7,7 @@ package dut
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -145,9 +146,13 @@ func (c *updateDUT) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	// Using a map to collect deploy actions. This ensures single deploy task per DUT.
+	var deployTasks map[string][]string
+
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
+
 	ctx := cli.GetContext(a, c, env)
 	ns, err := c.envFlags.Namespace()
 	if err != nil {
@@ -165,10 +170,13 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 		fmt.Printf("Using swarming service %s \n", e.SwarmingService)
 	}
 
-	req, err := c.parseArgs()
+	requests, err := c.parseArgs()
 	if err != nil {
 		return err
 	}
+
+	// Create a map of DUTs to avoid triggering multiple tasks.
+	deployTasks = make(map[string][]string)
 
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
@@ -176,42 +184,61 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 
-	// Collect the deploy actions required for the request. This is done before DUT is changed on UFS.
-	actions, err := c.getDeployActions(ctx, ic, req)
-	if err != nil {
-		return err
-	}
+	for _, req := range requests {
 
-	// Attempt to update UFS. Ignore failure if force-deploy.
-	if err := c.updateDUTToUFS(ctx, ic, req); err != nil {
-		// Return err if deployment is not forced.
-		if !c.forceDeploy {
-			return err
-		}
-		fmt.Printf("Failed to update UFS. Attempting to trigger deploy task '-force-deploy'. %s\n", err.Error())
-	}
-
-	// Swarm a deploy task if required or enforced.
-	if len(actions) > 0 || c.forceDeploy {
-		// If deploy task is enforced and we don't need to deploy use partialUpdatedeployActions for deploy.
-		if len(actions) == 0 && c.forceDeploy {
-			actions = partialUpdateDeployActions
-		}
-
-		// Include any enforced actions.
-		actions = c.updateDeployActions(actions)
-
-		tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
+		// Collect the deploy actions required for the request. This is done before DUT is changed on UFS.
+		actions, err := c.getDeployActions(ctx, ic, req)
 		if err != nil {
 			return err
 		}
-		tc.LogdogService = e.LogdogService
-		tc.SwarmingServiceAccount = e.SwarmingServiceAccount
-		// Start a swarming deploy task for the DUT.
-		if err := c.deployDUTToSwarming(ctx, tc, req.GetMachineLSE(), actions); err != nil {
-			return err
+
+		// Attempt to update UFS. Ignore failure if force-deploy.
+		if err := c.updateDUTToUFS(ctx, ic, req); err != nil {
+			// Print err and skip deployment if it's not forced.
+			if !c.forceDeploy {
+				fmt.Printf("Error updating UFS. Skip triggering deploy task. %s\n", err.Error())
+				continue
+			}
+			fmt.Printf("Failed to update UFS. Attempting to trigger deploy task '-force-deploy'. %s\n", err.Error())
+		}
+		deployTasks[req.MachineLSE.GetName()] = actions
+
+	}
+
+	tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
+	if err != nil {
+		return err
+	}
+	tc.LogdogService = e.LogdogService
+	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
+	for _, req := range requests {
+		// Check if the deployment is needed.
+		actions, ok := deployTasks[req.MachineLSE.GetName()]
+		if !ok {
+			// Deploy Task not required.
+			continue
+		}
+		// Swarm a deploy task if required or enforced.
+		if len(actions) > 0 || c.forceDeploy {
+			// If deploy task is enforced and len(actions) = 0 and use partialUpdatedeployActions as default.
+			if len(actions) == 0 && c.forceDeploy {
+				actions = partialUpdateDeployActions
+			}
+
+			// Include any enforced actions.
+			actions = c.updateDeployActions(actions)
+			// Start a swarming deploy task for the DUT.
+			if err := c.deployDUTToSwarming(ctx, tc, req.GetMachineLSE(), actions); err != nil {
+				// Print err and continue to trigger next one
+				fmt.Printf("Failed to deploy task for %s. %s", req.GetMachineLSE().GetName(), err.Error())
+			}
+			// Remove the task entry to avoid triggering multiple tasks.
+			delete(deployTasks, req.MachineLSE.GetName())
 		}
 	}
+
+	// Display URL for all tasks if there are more than one.
+	fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", tc.SessionTasksURL())
 
 	return nil
 }
@@ -285,10 +312,10 @@ func (c *updateDUT) validateRequest(ctx context.Context, req *ufsAPI.UpdateMachi
 }
 
 // parseArgs reads input from the cmd line parameters and generates update dut request.
-func (c *updateDUT) parseArgs() (*ufsAPI.UpdateMachineLSERequest, error) {
+func (c *updateDUT) parseArgs() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 	if c.newSpecsFile != "" {
 		if utils.IsCSVFile(c.newSpecsFile) {
-			return nil, fmt.Errorf("Not implemented yet")
+			return c.parseMCSV()
 		}
 		machineLse := &ufspb.MachineLSE{}
 		if err := utils.ParseJSONFile(c.newSpecsFile, machineLse); err != nil {
@@ -298,34 +325,84 @@ func (c *updateDUT) parseArgs() (*ufsAPI.UpdateMachineLSERequest, error) {
 			return nil, cmdlib.NewQuietUsageError(c.Flags, "Missing asset. Use 'machines' to assign asset in json file. Check --help")
 		}
 		// json input updates without a mask.
-		return &ufsAPI.UpdateMachineLSERequest{
+		return []*ufsAPI.UpdateMachineLSERequest{{
 			MachineLSE: machineLse,
-		}, nil
+		}}, nil
 	}
 
-	lse, mask, err := c.initializeLSEAndMask()
+	lse, mask, err := c.initializeLSEAndMask(nil)
 	if err != nil {
 		return nil, err
 	}
-	return &ufsAPI.UpdateMachineLSERequest{
+	return []*ufsAPI.UpdateMachineLSERequest{{
 		MachineLSE: lse,
 		UpdateMask: mask,
-	}, nil
+	}}, nil
 }
 
-// initializeLSEAndMask reads inputs from cmd line inputs and generates LSE and corresponding mask.
-func (c *updateDUT) initializeLSEAndMask() (*ufspb.MachineLSE, *field_mask.FieldMask, error) {
+// parseMCSV generates update request from mcsv file.
+func (c *updateDUT) parseMCSV() ([]*ufsAPI.UpdateMachineLSERequest, error) {
+	records, err := utils.ParseMCSVFile(c.newSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+	var requests []*ufsAPI.UpdateMachineLSERequest
+	for i, rec := range records {
+		if i == 0 && utils.LooksLikeHeader(rec) {
+			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		recMap := make(map[string]string)
+		for j, title := range mcsvFields {
+			recMap[title] = rec[j]
+		}
+		lse, mask, err := c.initializeLSEAndMask(recMap)
+		if err != nil {
+			// Print the error and the line number and continue to next one.
+			fmt.Printf("Error [%s:%v]: %s\n", c.newSpecsFile, i+1, err.Error())
+			continue
+		}
+		requests = append(requests, &ufsAPI.UpdateMachineLSERequest{
+			MachineLSE: lse,
+			UpdateMask: mask,
+		})
+	}
+	return requests, nil
+}
+
+func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.MachineLSE, *field_mask.FieldMask, error) {
 	var name, servo, servoSerial, servoSetup, rpmHost, rpmOutlet string
-	var machines, pools []string
-	// command line parameters
-	name = c.hostname
-	servo = c.servo
-	servoSerial = c.servoSerial
-	servoSetup = c.servoSetupType
-	rpmHost = c.rpm
-	rpmOutlet = c.rpmOutlet
-	machines = []string{c.machine}
-	pools = c.pools
+	var pools, machines []string
+	if recMap != nil {
+		// CSV map. Assign all the params to the variables.
+		name = recMap["name"]
+		// Generate cmdline servo input. This allows for easier validation and assignment.
+		if recMap["servo_host"] != "" || recMap["servo_port"] != "" {
+			servo = fmt.Sprintf("%s:%s", recMap["servo_host"], recMap["servo_port"])
+		}
+		servoSerial = recMap["servo_serial"]
+		if recMap["servo_setup"] != "" {
+			servoSetup = appendServoSetupPrefix(recMap["servo_setup"])
+		}
+		rpmHost = recMap["rpm_host"]
+		rpmOutlet = recMap["rpm_outlet"]
+		machines = []string{recMap["asset"]}
+		pools = strings.Fields(recMap["pools"])
+	} else {
+		// command line parameters. Update vars with the correct values.
+		name = c.hostname
+		servo = c.servo
+		servoSerial = c.servoSerial
+		if c.servoSetupType != "" {
+			servoSetup = appendServoSetupPrefix(c.servoSetupType)
+		}
+		rpmHost = c.rpm
+		rpmOutlet = c.rpmOutlet
+		machines = []string{c.machine}
+		pools = c.pools
+	}
 
 	// Generate lse and mask
 	lse := &ufspb.MachineLSE{
@@ -354,6 +431,7 @@ func (c *updateDUT) initializeLSEAndMask() (*ufspb.MachineLSE, *field_mask.Field
 		mask.Paths = append(mask.Paths, machinesPath)
 	}
 
+	// Check and update pools if required.
 	if len(pools) > 0 && pools[0] != "" {
 		mask.Paths = append(mask.Paths, poolsPath)
 		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = pools
@@ -406,6 +484,7 @@ func (c *updateDUT) initializeLSEAndMask() (*ufspb.MachineLSE, *field_mask.Field
 	if !c.forceDeploy && (len(mask.Paths) == 0 || mask.Paths[0] == "") {
 		return nil, nil, cmdlib.NewQuietUsageError(c.Flags, "Nothing to update")
 	}
+
 	return lse, mask, nil
 }
 
@@ -603,6 +682,8 @@ func (c *updateDUT) updateDUTToUFS(ctx context.Context, ic ufsAPI.FleetClient, r
 	if err != nil {
 		return err
 	}
+	// Remove prefix from the request. It's used for comparison later.
+	req.MachineLSE.Name = ufsUtil.RemovePrefix(req.MachineLSE.Name)
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully updated DUT to UFS: %s \n", res.GetName())
