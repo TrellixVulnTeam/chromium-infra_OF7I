@@ -46,7 +46,7 @@ def get_download_url(version, platform):
 
   partial_manifest = {
     'url': [download_url],
-    'ext': '.exe',
+    'ext': '.7z.exe',
   }
   print(json.dumps(partial_manifest))
 
