@@ -559,7 +559,7 @@ func TestResponseVerdict(t *testing.T) {
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
 
-		Convey("when execution is aborted (e.g., timeout), response verdict is correct.", func() {
+		SkipConvey("when execution is aborted (e.g., timeout), response verdict is correct.", func() {
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			var resps map[string]*steps.ExecuteResponse
