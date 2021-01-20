@@ -93,12 +93,23 @@ func (p *rejectionPrinter) testVariant(testVariants []*evalpb.TestVariant) {
 			return ts[i].Id < ts[j].Id
 		})
 
-		p.Level++
+		byFileName := map[string][]string{}
 		for _, t := range ts {
-			p.printf("- %s\n", t.Id)
-			if t.FileName != "" {
-				p.printf("  in %s\n", t.FileName)
+			byFileName[t.FileName] = append(byFileName[t.FileName], t.Id)
+		}
+
+		p.Level++
+		for fileName, testIDs := range byFileName {
+			if fileName != "" {
+				p.printf("in %s\n", fileName)
+			} else {
+				p.printf("in <unknown file>\n")
 			}
+			p.Level++
+			for _, id := range testIDs {
+				p.printf("%s\n", id)
+			}
+			p.Level--
 		}
 		p.Level--
 	}

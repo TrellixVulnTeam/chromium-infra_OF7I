@@ -55,7 +55,8 @@ func TestPrintLostRejection(t *testing.T) {
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- <empty test variant>
-			- test1
+			in <unknown file>
+			  test1
 `)
 		})
 
@@ -73,8 +74,8 @@ func TestPrintLostRejection(t *testing.T) {
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- <empty test variant>
-			- test1
-				in test.cc
+			in test.cc
+			  test1
 `)
 		})
 
@@ -102,10 +103,12 @@ func TestPrintLostRejection(t *testing.T) {
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- a:0
-			- test1
-			- test2
+		  in <unknown file>
+			  test1
+			  test2
 		- a:0 | b:0
-			- test1
+		  in <unknown file>
+		    test1
 `)
 		})
 
@@ -122,7 +125,8 @@ func TestPrintLostRejection(t *testing.T) {
 		https://chromium-review.googlesource.com/c/223/4
 	Failed and not selected tests:
 		- <empty test variant>
-			- test1
+			in <unknown file>
+			  test1
 `)
 		})
 	})
