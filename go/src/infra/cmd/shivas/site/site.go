@@ -29,6 +29,7 @@ type Environment struct {
 	SwarmingService        string
 	SwarmingServiceAccount string
 	LogdogService          string
+	QueenService           string
 }
 
 // Prod is the environment for prod.
@@ -42,6 +43,7 @@ var Prod = Environment{
 	// TODO(crbug/1128496): remove when fixed
 	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
 	LogdogService:          "luci-logdog.appspot.com",
+	QueenService:           "drone-queen-prod.appspot.com",
 }
 
 // Dev is the environment for dev.
@@ -54,6 +56,7 @@ var Dev = Environment{
 	// TODO(crbug/1128496): remove when fixed
 	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 	LogdogService:          "luci-logdog-dev.appspot.com",
+	QueenService:           "drone-queen-dev.appspot.com",
 }
 
 // CommonFlags controls some commonly-used CLI flags.

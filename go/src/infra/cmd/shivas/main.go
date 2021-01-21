@@ -17,6 +17,7 @@ import (
 
 	"infra/cmd/shivas/audit"
 	"infra/cmd/shivas/meta"
+	queen_cmds "infra/cmd/shivas/queen/cmds"
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
@@ -58,6 +59,10 @@ Full documentation http://go/shivas-cli`,
 			subcommands.Section("State"),
 			sw_cmds.ReserveDutsCmd,
 			state.DutStateCmd,
+			subcommands.Section("Drone Queen Inspection"),
+			queen_cmds.InspectDuts,
+			queen_cmds.InspectDrones,
+			queen_cmds.PushDuts,
 		},
 	}
 }
