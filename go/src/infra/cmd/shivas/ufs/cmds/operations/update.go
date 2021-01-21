@@ -14,6 +14,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/dut"
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
+	"infra/cmd/shivas/ufs/subcmds/labstation"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/ufs/subcmds/nic"
@@ -59,6 +60,7 @@ func (c updateApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		asset.UpdateAssetCmd,
 		dut.UpdateDUTCmd,
+		labstation.UpdateLabstationCmd,
 		machine.UpdateMachineCmd,
 		host.UpdateHostCmd,
 		kvm.UpdateKVMCmd,

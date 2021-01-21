@@ -87,6 +87,21 @@ Adds a Labstation to UFS using a json description file.
 shivas add labstation -f labstation.json
 Adds Labstation(s) to UFS using a csv description file.
 `
+	// UpdateLabstationLongDesc long description for UpdateLabstationCmd
+	UpdateLabstationLongDesc string = `Update and/or deploy a Labstation.
+Examples:
+shivas update labstation -name {hostname} -rpm {rpm host} -outlet {rpm outlet}
+Update RPM connected to the Labstation.
+
+shivas update labstation -name {hostname} -rpm -
+Delete RPM connected to the Labstation.
+
+shivas update labstation -name {hostname} -pool {labstation pool}
+Update pool assigned to the Labstation.
+
+shivas update labstation -f {json/csv file}
+Update Labstation(s) with input from JSON/CSV file.
+`
 
 	// DUTRegistrationFileText description for json file input
 	DUTRegistrationFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing DUT specification.
@@ -367,6 +382,55 @@ labstation-1,asset-1,rpm-1,A2,labstation_main
 labstation-2,asset-2,rpm-2,A2,"labstation_main labstation_tryjob"
 labstation-3,asset-3,rpm-3,A2,labstation_main
 
+`
+	// LabstationUpdateFileText description for json file input
+	LabstationUpdateFileText string = `Path to a file(.json) containing Labstation specification.
+
+[JSON Mode]
+The file must contain one DUT specification. This specification overwrites everything. Empty value for a field will assign
+nil/default value.
+Example Labstation:
+{
+        "name": "chromeos6-row10-rack22-labstation1",
+        "machineLsePrototype": "atl:labstation",
+        "chromeosMachineLse": {
+                "deviceLse": {
+                        "labstation": {
+                                "rpm": {
+                                        "powerunitName": "chromeos6-row9_10-rack22-rpm3",
+                                        "powerunitOutlet": "AA3"
+                                },
+                                "pools": [
+                                        "labstation_main"
+                                ]
+                        }
+                }
+        },
+        "tags": ["fizz_labstation", "chromeos6-row10"],
+        "zone": "ZONE_CHROMEOS6",
+        "deploymentTicket": "crbug.com/c/35007",
+        "description": "CrOS6-ro10-r22 labstation",
+}
+
+The protobuf definition of machine lse is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+
+The protobuf definition of Labstation is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
+
+The file may have multiple or one labstation csv record.
+The header format and sequence should be: [name,asset,rpm_host,rpm_outlet,pools]
+
+Example mcsv format:
+name,asset,rpm_host,rpm_outlet,pools
+labstation-1,,rpm-1,A2,labstation_main
+labstation-2,asset-1,,,
+labstation-3,,,,"labstation_main labstation_tryjob"
+
+Example mcsv format (delete/clear support. Use - to clear a field where available):
+name,asset,rpm_host,rpm_outlet,pools
+labstation-1,,-,,labstation_main
+labstation-2,asset-1,-,,
 `
 
 	// UpdateDUTLongDesc long description for UpdateDUTCmd
