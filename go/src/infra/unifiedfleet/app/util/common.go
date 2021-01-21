@@ -6,6 +6,7 @@ package util
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -26,6 +27,9 @@ const (
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	OperationPageSize int = 500
 )
+
+// satlabRegex regular espression to get the hive value from a DUT hostname
+var satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
 
 // Key is a type for use in adding values to context. It is not recommended to use plain string as key.
 type Key string
@@ -156,4 +160,17 @@ func ProtoEqual(i, j proto.Message) bool {
 
 	// Compare the proto message.
 	return cmp.Equal(i, j, opt)
+}
+
+// GetHiveForDut returns the hive value for a DUT.
+//
+// hive value is derived from the DUT hostname.
+func GetHiveForDut(hostname string) string {
+	/* TODO(eshwarn): Add logic to get hive for gTransit DUTs*/
+	// Satlab DUTs.
+	if satlabRegex.MatchString(hostname) {
+		return satlabRegex.FindString(hostname)
+	}
+	// Main lab DUTs.
+	return ""
 }

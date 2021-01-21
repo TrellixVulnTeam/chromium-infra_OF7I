@@ -46,4 +46,10 @@ var (
 		nil,
 		field.Bool("success"),
 	)
+	dumpPushToDroneQueenTick = metric.NewCounter(
+		"chromeos/ufs/dumper/push_to_drone_queen",
+		"push to drone queen attempt",
+		nil,
+		field.Bool("success"),
+	)
 )

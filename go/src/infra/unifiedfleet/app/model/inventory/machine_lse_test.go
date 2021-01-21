@@ -255,3 +255,33 @@ func TestQueryMachineLSEByPropertyName(t *testing.T) {
 		})
 	})
 }
+
+func TestListAllMachineLSEs(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
+		machineLSE1.Description = "Test machineLSE"
+		resp, _ := CreateMachineLSE(ctx, machineLSE1)
+		machineLSEs = append(machineLSEs, resp)
+	}
+	Convey("ListAllMachineLSEs", t, func() {
+		Convey("List all machineLSEs - keysOnly", func() {
+			resp, _ := ListAllMachineLSEs(ctx, true)
+			So(resp, ShouldNotBeNil)
+			So(len(resp), ShouldEqual, 4)
+			for i := 0; i < 4; i++ {
+				So(resp[i].GetName(), ShouldEqual, fmt.Sprintf("machineLSE-%d", i))
+				So(resp[i].GetDescription(), ShouldBeEmpty)
+			}
+		})
+
+		Convey("List all machineLSEs", func() {
+			resp, _ := ListAllMachineLSEs(ctx, false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machineLSEs)
+		})
+	})
+}

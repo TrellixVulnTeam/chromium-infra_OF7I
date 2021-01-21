@@ -19,6 +19,8 @@ message Config {
   string self_storage_bucket = 6;
   PubSub hart = 8;
   string sheet_service_account = 9;
+  // The hostname of drone-queen service to push inventory to.
+  string queen_service = 10;
 }
 
 message OSNetworkConfig {

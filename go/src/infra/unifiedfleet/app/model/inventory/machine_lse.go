@@ -238,6 +238,31 @@ func ListFreeMachineLSEs(ctx context.Context, requiredSize int32, filterMap map[
 	return
 }
 
+// ListAllMachineLSEs returns all machine lses in datastore.
+func ListAllMachineLSEs(ctx context.Context, keysOnly bool) (res []*ufspb.MachineLSE, err error) {
+	var entities []*MachineLSEEntity
+	q := datastore.NewQuery(MachineLSEKind).KeysOnly(keysOnly).FirestoreMode(true)
+	if err = datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	for _, ent := range entities {
+		if keysOnly {
+			res = append(res, &ufspb.MachineLSE{
+				Name: ent.ID,
+			})
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil, err
+			}
+			machineLSE := pm.(*ufspb.MachineLSE)
+			res = append(res, machineLSE)
+		}
+	}
+	return
+}
+
 // DeleteMachineLSE deletes the machineLSE in datastore
 func DeleteMachineLSE(ctx context.Context, id string) error {
 	return ufsds.Delete(ctx, &ufspb.MachineLSE{Name: id}, newMachineLSEEntity)
