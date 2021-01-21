@@ -125,9 +125,11 @@ class LoggingInterceptor(HttpInterceptorBase):
   def OnResponse(self, request, response):
     if response.get('status_code') != 200 and response.get(
         'status_code') not in self.no_error_logging_statuses:
-      logging.info('request to %s responded with %d http status and headers %s',
-                   request.get('url'), response.get('status_code', 0),
-                   json.dumps(response.get('headers', {}).items()))
+      logging.info(
+          'request to %s responded with %d http status, headers %s, and content %s',  # pylint: disable=line-too-long
+          request.get('url'), response.get('status_code', 0),
+          json.dumps(response.get('headers', {}).items()),
+          response.get('content', ''))
 
     # Call the base's OnResponse to keep the retry functionality.
     return super(LoggingInterceptor, self).OnResponse(request, response)

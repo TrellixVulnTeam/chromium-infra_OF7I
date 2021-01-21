@@ -50,12 +50,13 @@ def GetDimensionsForBuilder(
   Returns:
     A list of colon separated strings of the form "key:value".
   """
+  # As we only care about chromium project, hardcode for now
+  if "." not in bucket:
+    bucket = "luci.chromium." + bucket
   request = {
       'build_request': {
           'bucket': bucket,
-          'parameters_json': json.dumps({
-              'builder_name': builder
-          })
+          'parameters_json': json.dumps({'builder_name': builder})
       }
   }
 
@@ -69,8 +70,8 @@ def GetDimensionsForBuilder(
   task_def = json.loads(response.get('task_definition', '{}'))
   if not task_def:
     return []
-  dimensions = task_def['task_slices'][0].get('properties', {}).get(
-      'dimensions', [])
+  dimensions = task_def['task_slices'][0].get('properties',
+                                              {}).get('dimensions', [])
   if dimensions_allowlist is None:
     return [
         '%s:%s' % (d.get('key', ''), d.get('value', '')) for d in dimensions

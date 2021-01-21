@@ -97,8 +97,8 @@ class InterceptorTest(testing.AppengineTestCase):
     self.assertEqual(content, 'Not_Found')
     self.assertEqual(response_headers, {})
     mock_logging.assert_called_once_with(
-        'request to %s responded with %d http status and headers %s', url, 404,
-        '[]')
+        'request to %s responded with %d http status, headers %s, and content %s',  # pylint: disable=line-too-long
+        url, 404, '[]', 'Not_Found')
 
   @mock.patch.object(logging, 'info')
   def testNoExceptionHttpErrorNoLog(self, mock_logging):

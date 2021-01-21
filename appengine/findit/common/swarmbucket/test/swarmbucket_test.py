@@ -62,6 +62,15 @@ class SwarmbucketTest(testing.AppengineTestCase):
                                                      'Linux x64')
     self.assertFalse(dimensions)
 
+  @mock.patch.object(swarmbucket, '_CallSwarmbucketAPI', return_value={})
+  def testGetDimensionsCorrectBucket(self, mock_api):
+    swarmbucket.GetDimensionsForBuilder('ci', 'builder')
+    args, _kwargs = mock_api.call_args
+    self.assertEqual(args[2]['build_request']['bucket'], 'luci.chromium.ci')
+    swarmbucket.GetDimensionsForBuilder('luci.chromium.ci', 'builder')
+    args, _kwargs = mock_api.call_args
+    self.assertEqual(args[2]['build_request']['bucket'], 'luci.chromium.ci')
+
   @mock.patch.object(http_client_appengine.urlfetch, 'fetch')
   def testGetBuilders(self, mock_fetch):
     mock_builders_response = json.dumps({
@@ -74,8 +83,7 @@ class SwarmbucketTest(testing.AppengineTestCase):
                     'name': 'linux_chromium_bot_db_exporter',
                 },
             ],
-            'name':
-                'luci.chromium.findit'
+            'name': 'luci.chromium.findit'
         },]
     })
     mock_fetch.return_value = collections.namedtuple(
