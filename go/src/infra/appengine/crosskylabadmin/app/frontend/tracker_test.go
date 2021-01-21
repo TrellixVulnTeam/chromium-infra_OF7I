@@ -226,14 +226,15 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			}
 			return arr
 		}
-		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey string, qPath string, botIDs []string) {
+		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey, qPath string, botIDs []string) {
 			fmt.Println(tasks)
 			repairTasks, ok := tasks[qKey]
 			So(ok, ShouldBeTrue)
 			repairPaths := appendPaths(repairTasks)
 			var expectedPaths []string
+			actions := "verify-dut-storage-verify-servo-usb-drive-verify-servo-fw-flash-servo-keyboard-map-verify-dut-macaddr"
 			for _, botID := range botIDs {
-				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s", qPath, botID))
+				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s/%s", qPath, botID, actions))
 			}
 			So(repairPaths, ShouldResemble, expectedPaths)
 		}

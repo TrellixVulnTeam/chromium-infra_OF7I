@@ -116,10 +116,10 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
 	}
 	logging.Infof(ctx, "successfully get %d alive cros bots", len(bots))
-
+	actions := []string{"verify-dut-storage", "verify-servo-usb-drive", "verify-servo-fw", "flash-servo-keyboard-map", "verify-dut-macaddr"}
 	// Parse BOT id to schedule tasks for readability.
 	botIDs := identifyBotsForAudit(ctx, bots)
-	err = clients.PushAuditDUTs(ctx, botIDs)
+	err = clients.PushAuditDUTs(ctx, botIDs, actions)
 	if err != nil {
 		logging.Infof(ctx, "failed push audit bots: %v", err)
 		return nil, errors.New("failed to push audit bots")

@@ -17,6 +17,7 @@ package clients
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/taskqueue"
@@ -31,24 +32,30 @@ const auditBotsQueue = "audit-bots"
 // PushRepairLabstations pushes BOT ids to taskqueue repairLabstationQueue for
 // upcoming repair jobs.
 func PushRepairLabstations(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, botIDs, repairLabstationQueue, labstationRepairTask)
+	return pushDUTs(ctx, repairLabstationQueue, createTasks(botIDs, labstationRepairTask))
 }
 
 // PushRepairDUTs pushes BOT ids to taskqueue repairBotsQueue for upcoming repair
 // jobs.
 func PushRepairDUTs(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, botIDs, repairBotsQueue, crosRepairTask)
+	return pushDUTs(ctx, repairBotsQueue, createTasks(botIDs, crosRepairTask))
 }
 
 // PushResetDUTs pushes BOT ids to taskqueue resetBotsQueue for upcoming reset
 // jobs.
 func PushResetDUTs(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, botIDs, resetBotsQueue, resetTask)
+	return pushDUTs(ctx, resetBotsQueue, createTasks(botIDs, resetTask))
 }
 
 // PushAuditDUTs pushes BOT ids to taskqueue auditBotsQueue for upcoming audit jobs.
-func PushAuditDUTs(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, botIDs, auditBotsQueue, crosAuditTask)
+func PushAuditDUTs(ctx context.Context, botIDs, actions []string) error {
+	actionsCSV := strings.Join(actions, ",")
+	actionsStr := strings.Join(actions, "-")
+	tasks := make([]*taskqueue.Task, 0, len(botIDs))
+	for _, id := range botIDs {
+		tasks = append(tasks, crosAuditTask(id, actionsCSV, actionsStr))
+	}
+	return pushDUTs(ctx, auditBotsQueue, tasks)
 }
 
 func crosRepairTask(botID string) *taskqueue.Task {
@@ -69,17 +76,21 @@ func resetTask(botID string) *taskqueue.Task {
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/reset/%s", botID), values)
 }
 
-func crosAuditTask(botID string) *taskqueue.Task {
+func crosAuditTask(botID, actionsCSV, actionsStr string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
-	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s", botID), values)
+	values.Set("actions", actionsCSV)
+	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s/%s", botID, actionsStr), values)
 }
 
-func pushDUTs(ctx context.Context, botIDs []string, queueName string, taskGenerator func(string) *taskqueue.Task) error {
+func createTasks(botIDs []string, taskGenerator func(string) *taskqueue.Task) []*taskqueue.Task {
 	tasks := make([]*taskqueue.Task, 0, len(botIDs))
 	for _, id := range botIDs {
 		tasks = append(tasks, taskGenerator(id))
 	}
+	return tasks
+}
+func pushDUTs(ctx context.Context, queueName string, tasks []*taskqueue.Task) error {
 	if err := taskqueue.Add(ctx, queueName, tasks...); err != nil {
 		return err
 	}

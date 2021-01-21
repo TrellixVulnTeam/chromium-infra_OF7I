@@ -82,7 +82,8 @@ func TestSuccessfulPushAuditTasks(t *testing.T) {
 		qn := "audit-bots"
 		tqt.CreateQueue(qn)
 		hosts := []string{"host1", "host2"}
-		err := PushAuditDUTs(ctx, hosts)
+		actions := []string{"action1", "action2"}
+		err := PushAuditDUTs(ctx, hosts, actions)
 		So(err, ShouldBeNil)
 		tasks := tqt.GetScheduledTasks()
 		t, ok := tasks[qn]
@@ -94,8 +95,8 @@ func TestSuccessfulPushAuditTasks(t *testing.T) {
 		}
 		sort.Strings(taskPaths)
 		sort.Strings(taskParams)
-		expectedPaths := []string{"/internal/task/audit/host1", "/internal/task/audit/host2"}
-		expectedParams := []string{"botID=host1", "botID=host2"}
+		expectedPaths := []string{"/internal/task/audit/host1/action1-action2", "/internal/task/audit/host2/action1-action2"}
+		expectedParams := []string{"actions=action1%2Caction2&botID=host1", "actions=action1%2Caction2&botID=host2"}
 		So(taskPaths, ShouldResemble, expectedPaths)
 		So(taskParams, ShouldResemble, expectedParams)
 	})
