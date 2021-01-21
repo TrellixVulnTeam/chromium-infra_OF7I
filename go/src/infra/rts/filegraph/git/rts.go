@@ -88,8 +88,7 @@ func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) {
 	}
 
 	for _, f := range changedFiles {
-		n := g.Node(f)
-		if n != nil {
+		if n := g.Node(f); n != nil {
 			// If the node exists, then include it in the Dijkstra walk.
 			q.Sources = append(q.Sources, n)
 		} else {
