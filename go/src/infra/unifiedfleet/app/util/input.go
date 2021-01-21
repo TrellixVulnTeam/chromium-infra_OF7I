@@ -326,6 +326,7 @@ var StrToUFSZone = map[string]string{
 	"fuchsia":           "ZONE_FUCHSIA",
 	"unspecified":       "ZONE_UNSPECIFIED",
 	"cros_googler_desk": "ZONE_CROS_GOOGLER_DESK",
+	"mtv1950_testing":   "ZONE_MTV1950_TESTING",
 }
 
 // IsUFSZone checks if a string refers to a valid UFS zone.
@@ -671,6 +672,9 @@ var googlers = []*regexp.Regexp{
 
 // LabToZone converts deprecated Lab type to Zone
 func LabToZone(lab string) ufspb.Zone {
+	if strings.Contains(lab, "mtv1950-testing") {
+		return ufspb.Zone_ZONE_MTV1950_TESTING
+	}
 	switch oslabRegexp.FindString(lab) {
 	case "chromeos1":
 		return ufspb.Zone_ZONE_CHROMEOS1
