@@ -28,7 +28,10 @@ var (
 	methodImplementationRegexp = regexp.MustCompile(`[-+]\s\((.+)\)(get.*)\s\{`)
 
 	// Matches delegate properties. Captures property specifiers.
-	propertyRegexp = regexp.MustCompile(`@property\((.*)\)\s*id<.*>\s.*[dD]elegate;`)
+	delegatePropertyRegexp = regexp.MustCompile(`@property\((.*)\)\s*id<.*>\s.*[dD]elegate;`)
+
+	// Matches all pointer properties. Captures property specifiers.
+	pointerPropertyRegexp = regexp.MustCompile(`@property(.*)(\*|id<.*>).*;`)
 )
 
 func main() {
@@ -121,7 +124,7 @@ func checkSourceFile(base string, path string) []*tricium.Data_Comment {
 	// is to have "weak" delegate properties. "strong" delegate properties can
 	// cause retain cycles, which is quite error prone, because "strong" is
 	// default.
-	matches = propertyRegexp.FindAllStringSubmatchIndex(contentString, -1)
+	matches = delegatePropertyRegexp.FindAllStringSubmatchIndex(contentString, -1)
 	for _, match := range matches {
 		propertyStartIndex := match[0]
 		propertyEndIndex := match[1]
@@ -129,6 +132,26 @@ func checkSourceFile(base string, path string) []*tricium.Data_Comment {
 		if !strings.Contains(specifiers, "weak") {
 			propertyStartLine := converter.getStartLine(propertyStartIndex)
 			comment := foundStrongDelegate(path,
+				propertyStartLine,
+				converter.getEndLine(propertyEndIndex),
+				converter.getEndChar(propertyStartLine))
+			comments = append(comments, comment)
+		}
+	}
+
+	// Look for properties that do not have any ownership specifier. By default,
+	// properties have "strong" ownership, which can lead to dependency cycles.
+	matches = pointerPropertyRegexp.FindAllStringSubmatchIndex(contentString, -1)
+	for _, match := range matches {
+		propertyStartIndex := match[0]
+		propertyEndIndex := match[1]
+		specifiers := contentString[match[2]:match[3]]
+		if !strings.Contains(specifiers, "weak") &&
+			!strings.Contains(specifiers, "strong") &&
+			!strings.Contains(specifiers, "copy") &&
+			!strings.Contains(specifiers, "assign") {
+			propertyStartLine := converter.getStartLine(propertyStartIndex)
+			comment := foundPropertyWithNoOwnershipSpecifier(path,
 				propertyStartLine,
 				converter.getEndLine(propertyEndIndex),
 				converter.getEndChar(propertyStartLine))
@@ -157,6 +180,18 @@ func foundStrongDelegate(path string, startLine int, endLine int, functionEndCha
 	return &tricium.Data_Comment{
 		Category:  fmt.Sprintf("ObjectiveCStyle/StrongDelegate"),
 		Message:   "In Objective-C delegates are normally weak. Strong delegates can cause retain cycles.",
+		Path:      path,
+		StartLine: int32(startLine),
+		EndLine:   int32(endLine),
+		StartChar: 0, // always zero
+		EndChar:   int32(functionEndChar),
+	}
+}
+
+func foundPropertyWithNoOwnershipSpecifier(path string, startLine, endLine, functionEndChar int) *tricium.Data_Comment {
+	return &tricium.Data_Comment{
+		Category:  "ObjectiveCStyle/ExplicitOwnership",
+		Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
 		Path:      path,
 		StartLine: int32(startLine),
 		EndLine:   int32(endLine),

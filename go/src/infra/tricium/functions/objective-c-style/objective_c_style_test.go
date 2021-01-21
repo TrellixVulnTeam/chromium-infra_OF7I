@@ -18,6 +18,8 @@ const (
 	badGet       string = "test/src/bad_get.mm"
 	goodDelegate string = "test/src/good_delegate.mm"
 	badDelegate  string = "test/src/bad_delegate.mm"
+	goodProperty string = "test/src/good_property.mm"
+	badProperty  string = "test/src/bad_property.mm"
 )
 
 func TestGetPrefix(t *testing.T) {
@@ -28,6 +30,10 @@ func TestGetPrefix(t *testing.T) {
 
 	Convey("Produces no comment for file with correct delegate specifiers", t, func() {
 		So(checkSourceFile("", goodDelegate), ShouldBeNil)
+	})
+
+	Convey("Produces no comment for file with correct delegate specifiers", t, func() {
+		So(checkSourceFile("", goodProperty), ShouldBeNil)
 	})
 
 	Convey("Flags strong delegates", t, func() {
@@ -128,9 +134,115 @@ func TestGetPrefix(t *testing.T) {
 				StartChar: 0,
 				EndChar:   50,
 			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 9,
+				EndLine:   9,
+				StartChar: 0,
+				EndChar:   43,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 10,
+				EndLine:   10,
+				StartChar: 0,
+				EndChar:   46,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 11,
+				EndLine:   11,
+				StartChar: 0,
+				EndChar:   46,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 12,
+				EndLine:   12,
+				StartChar: 0,
+				EndChar:   45,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_delegate.mm",
+				StartLine: 13,
+				EndLine:   13,
+				StartChar: 0,
+				EndChar:   50,
+			},
 		})
 	})
 
+	Convey("Flags properties without explicit ownership", t, func() {
+		c := checkSourceFile("", badProperty)
+		So(c, ShouldNotBeNil)
+		So(c, ShouldResemble, []*tricium.Data_Comment{
+
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 4,
+				EndLine:   4,
+				StartChar: 0,
+				EndChar:   22,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 5,
+				EndLine:   5,
+				StartChar: 0,
+				EndChar:   19,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 6,
+				EndLine:   6,
+				StartChar: 0,
+				EndChar:   27,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 7,
+				EndLine:   7,
+				StartChar: 0,
+				EndChar:   30,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 8,
+				EndLine:   8,
+				StartChar: 0,
+				EndChar:   29,
+			},
+			{
+				Category:  "ObjectiveCStyle/ExplicitOwnership",
+				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
+				Path:      "test/src/bad_property.mm",
+				StartLine: 9,
+				EndLine:   9,
+				StartChar: 0,
+				EndChar:   44,
+			},
+		})
+	})
 	Convey("Flags functions have unnecessary get prefixes", t, func() {
 		c := checkSourceFile("", badGet)
 		So(c, ShouldNotBeNil)
