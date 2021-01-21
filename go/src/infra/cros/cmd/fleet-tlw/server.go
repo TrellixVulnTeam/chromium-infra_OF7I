@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -25,7 +26,7 @@ import (
 	"infra/libs/sshpool"
 )
 
-type server struct {
+type tlwServer struct {
 	tls.UnimplementedWiringServer
 	grpcServ *grpc.Server
 	lroMgr   *lro.Manager
@@ -33,8 +34,8 @@ type server struct {
 	tPool    *sshpool.Pool
 }
 
-func newServer() server {
-	s := server{
+func newServer() tlwServer {
+	s := tlwServer{
 		grpcServ: grpc.NewServer(),
 		lroMgr:   lro.New(),
 		tPool:    sshpool.New(getSSHClientConfig()),
@@ -45,19 +46,19 @@ func newServer() server {
 	return s
 }
 
-func (s server) Serve(l net.Listener) error {
+func (s tlwServer) Serve(l net.Listener) error {
 	return s.grpcServ.Serve(l)
 }
 
 // Close closes all open server resources.
-func (s server) Close() {
+func (s tlwServer) Close() {
 	s.tMgr.Close()
 	s.tPool.Close()
 	s.lroMgr.Close()
 	s.grpcServ.GracefulStop()
 }
 
-func (s server) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
+func (s tlwServer) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
 	addr, err := lookupHost(req.GetName())
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, err.Error())
@@ -68,7 +69,7 @@ func (s server) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*
 	}, nil
 }
 
-func (s server) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutRequest) (*tls.ExposePortToDutResponse, error) {
+func (s tlwServer) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutRequest) (*tls.ExposePortToDutResponse, error) {
 	localServicePort := req.GetLocalPort()
 	dutName := req.GetDutName()
 	if dutName == "" {
@@ -99,7 +100,7 @@ func (s server) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutReq
 	return response, nil
 }
 
-func (s server) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*longrunning.Operation, error) {
+func (s tlwServer) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*longrunning.Operation, error) {
 	rawURL := req.GetUrl()
 	if rawURL == "" {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported url %s in request", rawURL))
@@ -115,6 +116,20 @@ func (s server) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*
 	op := s.lroMgr.NewOperation()
 	go s.cache(ctx, parsedURL, dutName, op.Name)
 	return op, status.Error(codes.OK, "Started: CacheForDut Operation.")
+}
+
+// cache implements the logic for the CacheForDut method and runs as a goroutine.
+func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, dutName, opName string) {
+	log.Printf("CacheForDut: Started Operation = %v", opName)
+	// Devserver URL to be used. In the "real" CacheForDut implementation,
+	// devservers should be resolved here.
+	const baseURL = "http://chromeos6-devserver2:8888/download/"
+	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{
+		Url: baseURL + parsedURL.Host + parsedURL.Path,
+	}); err != nil {
+		log.Printf("CacheForDut: failed while updating result due to: %s", err)
+	}
+	log.Printf("CacheForDut: Operation Completed = %v", opName)
 }
 
 // lookupHost is a helper function that looks up the IP address of the provided
