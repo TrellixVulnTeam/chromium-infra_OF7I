@@ -545,10 +545,13 @@ def schedule_build_multi(batch):
   def get_bucket_id(req):
     return config.format_bucket_id(req.builder.project, req.builder.bucket)
 
-  valid_items = [
-      _ScheduleItem(req_fut.get_result(), res, mask)
-      for req_fut, res, mask in valid_entries
-  ]
+  valid_items = []
+  for req_fut, res, mask in valid_entries:
+    try:
+      valid_items.append(_ScheduleItem(req_fut.get_result(), res, mask))
+    except StatusError as ex:
+      res.error.code = ex.code.value
+      res.error.message = ex.message
 
   bucket_ids = {get_bucket_id(x.request) for x in valid_items}
   can_add = user.filter_buckets_by_perm(user.PERM_BUILDS_ADD, bucket_ids)

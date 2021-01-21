@@ -1009,6 +1009,28 @@ class BatchTests(BaseTestCase):
     self.assertTrue(len(res.responses[1].schedule_build.tags))
     self.assertEqual(res.responses[2].schedule_build.id, 44)
 
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_build_requests_error(self, get_async):
+    get_async.return_value = future(None)
+    req = rpc_pb2.BatchRequest(
+        requests=[
+            dict(schedule_build=dict(template_build_id=121)),
+        ],
+    )
+    self.assertEqual(
+        self.call(self.api.Batch, req),
+        rpc_pb2.BatchResponse(
+            responses=[
+                dict(
+                    error=dict(
+                        code=prpc.StatusCode.NOT_FOUND.value,
+                        message='build 121 is not found',
+                    ),
+                ),
+            ]
+        )
+    )
+
 
 class BuildPredicateToSearchQueryTests(BaseTestCase):
 
