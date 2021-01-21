@@ -9,20 +9,21 @@ mode = sys.argv[1]
 assert mode in ('ref', 'repo')
 
 d = json.load(sys.stdin)  # swarming task def
-cmdline = d['task_slices'][0]['properties']['command']
-for i, arg in enumerate(cmdline):
-  if arg == '-properties':
-    properties = json.loads(cmdline[i+1])
-    break
-build_input = properties['$recipe_engine/buildbucket']['build']['input']
-cl_info = build_input['gerritChanges'][0]
+build_input = d['buildbucket']['bbagent_args']['build']['input']
+cl_info = build_input['gerrit_changes'][0]
 if mode == 'ref':
-  print('refs/changes/%d/%s/%s' % (
-    int(cl_info['change'])%100, cl_info['change'], cl_info['patchset']))
+  print 'refs/changes/%d/%s/%s' % (int(cl_info['change']) % 100,
+                                   cl_info['change'], cl_info['patchset'])
 elif mode == 'repo':
   # Get the git host url from the code review url
-  # chromium-review.googlesource.com -> chromium.googlesource.com
-  # chrome-internal-review.googlesource.com -> chrome-internal.googlesource.com
-  host = cl_info['host'].replace('-review', '')
-  repo = cl_info['project']
-  print('https://%s/%s' % (host, repo))
+  gerrit_host = cl_info['host']
+  if gerrit_host == 'chromium-review.googlesource.com':
+    git_host = 'chromium.googlesource.com'
+  elif gerrit_host == 'chrome-internal-review.googlesource.com':
+    git_host = 'chrome-internal.googlesource.com'
+  else:
+    print >> sys.stderr, 'Unknown gerrit host: %s' % gerrit_host
+    sys.exit(1)
+
+  git_repo = cl_info['project']
+  print 'https://%s/%s' % (git_host, git_repo)

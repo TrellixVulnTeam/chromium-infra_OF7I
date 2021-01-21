@@ -115,11 +115,9 @@ set +x
 #   https://host.example.com/actual/repo
 #   refs/whatever/thingy
 #
-# `led launch` knows how to calculate these, and reimplementing them would be
-# a pain, so we cheat and have `led launch` dump the task as swarming JSON,
-# then extract these back. It's gross.
+# These can be extracted from the output of `led edit-cr-cl`
 RAW_TMP=$TMPFILE.raw
-led edit-crl-cl $CL_URL < $TMPFILE | led launch -dump > $RAW_TMP 2> /dev/null
+led edit-cr-cl $CL_URL < $TMPFILE > $RAW_TMP 2> /dev/null
 REPO=$(python ./run_remotely_extract_repo_ref.py repo < $RAW_TMP)
 REF=$(python ./run_remotely_extract_repo_ref.py ref < $RAW_TMP)
 rm $RAW_TMP
