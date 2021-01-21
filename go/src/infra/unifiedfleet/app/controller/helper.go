@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -275,6 +276,9 @@ func testServoEq(a, b []*chromeosLab.Servo) bool {
 	if len(a) != len(b) {
 		return false
 	}
+	// Sort by port and compare. Stable sort is not needed as ports are unique.
+	sort.Slice(a, func(i, j int) bool { return a[i].GetServoPort() > a[j].GetServoPort() })
+	sort.Slice(b, func(i, j int) bool { return b[i].GetServoPort() > b[j].GetServoPort() })
 	for i := range a {
 		if !proto.Equal(a[i], b[i]) {
 			return false

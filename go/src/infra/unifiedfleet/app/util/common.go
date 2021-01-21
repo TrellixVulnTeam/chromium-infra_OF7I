@@ -110,7 +110,7 @@ func GetNewNicNameForRenameMachine(oldNicName, oldMachineName, newMachineName st
 	return oldNicName
 }
 
-// ContainsAnyStrings returns true if any of the inputs are in list.
+// ContainsAnyStrings returns true if at least one of the inputs is in list.
 func ContainsAnyStrings(list []string, inputs ...string) bool {
 	for _, a := range list {
 		for _, b := range inputs {

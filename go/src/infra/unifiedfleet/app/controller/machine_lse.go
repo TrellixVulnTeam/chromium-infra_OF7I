@@ -40,7 +40,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *
 	// Labstation
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
-		return createLabstation(ctx, machinelse)
+		return CreateLabstation(ctx, machinelse)
 	}
 
 	// DUT
@@ -52,51 +52,6 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *
 
 	// Browser lab servers
 	return createBrowserServer(ctx, machinelse, nwOpt)
-}
-
-func createLabstation(ctx context.Context, lse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
-	f := func(ctx context.Context) error {
-		hc := getHostHistoryClient(lse)
-
-		// Get machine to get zone and rack info for machinelse table indexing
-		machine, err := GetMachine(ctx, lse.GetMachines()[0])
-		if err != nil {
-			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
-		}
-
-		// Validate input
-		if err := validateCreateMachineLSE(ctx, lse, nil, machine); err != nil {
-			return errors.Annotate(err, "Validation error - Failed to create labstation").Err()
-		}
-
-		//Copy for logging
-		oldMachine := proto.Clone(machine).(*ufspb.Machine)
-
-		machine.ResourceState = ufspb.State_STATE_SERVING
-		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
-		setOutputField(ctx, machine, lse)
-
-		// Create the machinelse
-		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
-			return errors.Annotate(err, "Fail to update machine %s", machine.GetName()).Err()
-		}
-		hc.LogMachineChanges(oldMachine, machine)
-		lse.ResourceState = ufspb.State_STATE_REGISTERED
-		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
-			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", lse.Name).Err()
-		}
-
-		if err := hc.stUdt.addLseStateHelper(ctx, lse, machine); err != nil {
-			return errors.Annotate(err, "Fail to update host state").Err()
-		}
-		hc.LogMachineLSEChanges(nil, lse)
-		return hc.SaveChangeEvents(ctx)
-	}
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create machinelse in datastore: %s", err)
-		return nil, err
-	}
-	return lse, nil
 }
 
 func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
@@ -183,6 +138,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 	// Labstation hostname must be same as the machinelse hostname
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
+		return UpdateLabstation(ctx, machinelse, mask)
 	}
 
 	// If its a DUT
