@@ -66,11 +66,18 @@ func reviewCleanRevert(ctx context.Context, cfg *config.Config, gc gerrit.Client
 	if crp != nil && crp.TimeWindow != "" {
 		tw = crp.TimeWindow
 	}
-	ok, err := checkTimeWindow(ctx, tw, gc, t)
+	validTime, err := getValidTimeFromTimeWindow(tw)
 	if err != nil {
 		return "", err
 	}
-	if !ok {
+	originalClInfo, err := gc.GetChange(ctx, &gerritpb.GetChangeRequest{
+		Number:  t.RevertOf,
+		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to call Gerrit GetChange API: %v", err)
+	}
+	if originalClInfo.Revisions[originalClInfo.CurrentRevision].Created.AsTime().Before(validTime) {
 		return fmt.Sprintf("The change is not in the configured time window. Rubber Stamper is only allowed to review reverts within %s %s.", tw[:len(tw)-1], timeWindowToStr[tw[len(tw)-1:]]), nil
 	}
 
@@ -90,23 +97,13 @@ func reviewCleanRevert(ctx context.Context, cfg *config.Config, gc gerrit.Client
 	return "", nil
 }
 
-// Check whether the change is inside a valid time window.
-func checkTimeWindow(ctx context.Context, tw string, gc gerrit.Client, t *taskspb.ChangeReviewTask) (bool, error) {
+func getValidTimeFromTimeWindow(tw string) (time.Time, error) {
 	val, err := strconv.Atoi(tw[:len(tw)-1])
 	if err != nil || timeWindowToStr[tw[len(tw)-1:]] == "" {
-		return false, fmt.Errorf("invalid time_window config %s: %v", tw, err)
+		return time.Time{}, fmt.Errorf("invalid time_window config %s: %v", tw, err)
 	}
 	duration := timeWindowToDuration[tw[len(tw)-1:]] * time.Duration(val)
-	validTime := time.Now().Add(-duration)
-
-	resp, err := gc.GetChange(ctx, &gerritpb.GetChangeRequest{
-		Number:  t.RevertOf,
-		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
-	})
-	if resp.Revisions[resp.CurrentRevision].Created.AsTime().Before(validTime) {
-		return false, nil
-	}
-	return true, nil
+	return time.Now().Add(-duration), nil
 }
 
 // Check whether the change alters any excluded files. Returns a list of

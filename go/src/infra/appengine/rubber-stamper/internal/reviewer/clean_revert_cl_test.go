@@ -24,7 +24,7 @@ import (
 )
 
 func TestReviewCleanRevert(t *testing.T) {
-	Convey("review benign file change", t, func() {
+	Convey("review clean revert", t, func() {
 		ctx := memory.Use(context.Background())
 
 		ctl := gomock.NewController(t)
@@ -228,6 +228,21 @@ func TestReviewCleanRevert(t *testing.T) {
 				msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
 				So(msg, ShouldEqual, "")
 				So(err, ShouldErrLike, "failed to call Gerrit GetPureRevert API")
+			})
+			Convey("GetChange API error", func() {
+				gerritMock.EXPECT().GetPureRevert(gomock.Any(), proto.MatcherEqual(&gerritpb.GetPureRevertRequest{
+					Number:  t.Number,
+					Project: t.Repo,
+				})).Return(&gerritpb.PureRevertInfo{
+					IsPureRevert: true,
+				}, nil)
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.RevertOf,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+				msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
+				So(msg, ShouldEqual, "")
+				So(err, ShouldErrLike, "failed to call Gerrit GetChange API")
 			})
 			Convey("time window config error", func() {
 				cfg.HostConfigs["test-host"].CleanRevertTimeWindow = "1.2d"
