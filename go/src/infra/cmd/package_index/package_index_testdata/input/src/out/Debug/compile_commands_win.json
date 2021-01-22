@@ -1,6 +1,6 @@
 [
   {
-    "directory": "package_index_testdata/input.expected/src/out/Debug",
+    "directory": "package_index_testdata/input/src/out/Debug",
     "command": "path\\\\to\\\\clang-cl.exe --driver-mode=cl -imsvcfoo\\\\bar\\\\baz \"-DSK_USER_CONFIG_HEADER=\\\"../../skia/config/SkUserConfig.h\\\"\" \"-DSK_GPU_WORKAROUNDS_HEADER=\\\"gpu/config/gpu_driver_bug_workaround_autogen.h\\\"\" /c test.cc /Fotest.obj",
     "file": "../../test.cc"
   }

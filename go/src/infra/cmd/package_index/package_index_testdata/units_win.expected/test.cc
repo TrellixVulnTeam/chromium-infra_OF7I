@@ -88,7 +88,7 @@ unit {
   argument: "-w"
   source_file: "../../test.cc"
   output_key: "test.obj"
-  working_directory: "package_index_testdata/input.expected/src/out/Debug"
+  working_directory: "package_index_testdata/input/src/out/Debug"
   details {
     [kythe.io/proto/kythe.proto.BuildDetails] {
       build_config: "win"

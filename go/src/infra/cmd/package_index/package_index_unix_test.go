@@ -53,7 +53,7 @@ func TestPackageIndexUnix(t *testing.T) {
 		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
 		defer cancel()
 		testDir := filepath.Join(cwd, "package_index_testdata")
-		rootDir := filepath.Join(testDir, "input.expected")
+		rootDir := filepath.Join(testDir, "input")
 		kzipPath := filepath.Join(rootDir, "src", "out", "Debug", "kzip")
 		compDbPath := filepath.Join(rootDir, "src", "out", "Debug", "compile_commands.json")
 		gnPath := filepath.Join(rootDir, "src", "out", "Debug", "gn_targets.json")
