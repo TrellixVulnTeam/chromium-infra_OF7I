@@ -89,6 +89,10 @@ type CLReaderClient interface {
 	//
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-change
 	GetChange(ctx context.Context, in *gerritpb.GetChangeRequest, opts ...grpc.CallOption) (*gerritpb.ChangeInfo, error)
+	// Gets Mergeable status for a change.
+	//
+	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-mergeable
+	GetMergeable(ctx context.Context, in *gerritpb.GetMergeableRequest, opts ...grpc.CallOption) (*gerritpb.MergeableInfo, error)
 }
 
 // CLWriterClient defines a subset of Gerrit API used by rubber-stamper to
