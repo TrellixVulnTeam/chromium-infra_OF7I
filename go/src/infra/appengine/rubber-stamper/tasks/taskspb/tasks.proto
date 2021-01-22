@@ -14,7 +14,7 @@ message ChangeReviewTask {
   string host = 1;
   // The change number.
   int64 number = 2;
-  // Revision of the change.
+  // Current revision of the change.
   string revision = 3;
   // The Gerrit Repo.
   string repo = 4;
@@ -22,4 +22,9 @@ message ChangeReviewTask {
   bool auto_submit = 5;
   // The numeric Change-Id of the change that this change reverts.
   int64 revert_of = 6;
+  // The numeric Change-Id of the change that this change was cherry-picked
+  // from.
+  int64 cherry_pick_of_change = 7;
+  // The number of revisions.
+  int64 revisions_count = 8;
 }

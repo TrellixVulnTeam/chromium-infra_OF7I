@@ -45,7 +45,7 @@ func TestScheduleReviews(t *testing.T) {
 
 		gerritMock.EXPECT().ListChanges(gomock.Any(), proto.MatcherEqual(&gerritpb.ListChangesRequest{
 			Query:   "status:open r:srv-account@example.com",
-			Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION, gerritpb.QueryOption_LABELS},
+			Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS},
 		})).Return(&gerritpb.ListChangesResponse{
 			Changes: []*gerritpb.ChangeInfo{
 				{

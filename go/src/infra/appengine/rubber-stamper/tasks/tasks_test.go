@@ -54,12 +54,17 @@ func TestQueue(t *testing.T) {
 					Labels: map[string]*gerritpb.LabelInfo{
 						"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
 					},
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"123abc": {},
+					},
 				},
 				{
 					Number:          12345,
 					CurrentRevision: "456789",
 					Project:         "dummy",
-					Labels:          map[string]*gerritpb.LabelInfo{},
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"123abc": {},
+					},
 				},
 			}
 
@@ -87,18 +92,20 @@ func TestQueue(t *testing.T) {
 			sched.Run(ctx, tqtesting.StopWhenDrained())
 			So(len(succeeded.Payloads()), ShouldEqual, 2)
 			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:       "host",
-				Number:     12345,
-				Revision:   "123abc",
-				Repo:       "dummy",
-				AutoSubmit: true,
+				Host:           "host",
+				Number:         12345,
+				Revision:       "123abc",
+				Repo:           "dummy",
+				AutoSubmit:     true,
+				RevisionsCount: 1,
 			})
 			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:       "host",
-				Number:     12345,
-				Revision:   "456789",
-				Repo:       "dummy",
-				AutoSubmit: false,
+				Host:           "host",
+				Number:         12345,
+				Revision:       "456789",
+				Repo:           "dummy",
+				AutoSubmit:     false,
+				RevisionsCount: 1,
 			})
 		})
 	})
