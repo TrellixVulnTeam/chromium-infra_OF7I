@@ -1356,11 +1356,14 @@ class ServeCodeCoverageData(BaseHandler):
     if self.request.path == '/coverage/api/coverage-data':
       return self._ServePerCLCoverageData()
 
-    match = _LUCI_PROJECT_REGEX.match(self.request.path)
-    if not match:
+    def _GetLuciProject(path):
+      match = _LUCI_PROJECT_REGEX.match(path)
+      return match.group(1) if match else None
+
+    luci_project = _GetLuciProject(self.request.path)
+    if not luci_project:
       return BaseHandler.CreateError('Invalid url path %s' % self.request.path,
                                      400)
-    luci_project = match.group(1)
 
     default_config = _GetPostsubmitDefaultReportConfig(luci_project)
     if not default_config:
@@ -1372,15 +1375,11 @@ class ServeCodeCoverageData(BaseHandler):
     host = self.request.get('host', default_config['host'])
     project = self.request.get('project', default_config['project'])
     ref = self.request.get('ref', default_config['ref'])
-
     revision = self.request.get('revision')
+    platform = self.request.get('platform', default_config['platform'])
+    list_reports = self.request.get('list_reports', "False").lower() == 'true'
     path = self.request.get('path')
     data_type = self.request.get('data_type')
-    platform = self.request.get('platform', default_config['platform'])
-    list_reports = self.request.get('list_reports', False)
-    if isinstance(list_reports, str):
-      list_reports = (list_reports.lower() == 'true')
-
     if not data_type and path:
       if path.endswith('/'):
         data_type = 'dirs'
@@ -1419,6 +1418,7 @@ class ServeCodeCoverageData(BaseHandler):
     template = None
     if not data_type:
       data_type = 'dirs'
+    # Get latest report if revision not specified
     if not revision:
       query = PostsubmitReport.query(
           PostsubmitReport.gitiles_commit.server_host == host,
@@ -1429,7 +1429,6 @@ class ServeCodeCoverageData(BaseHandler):
       entities = query.fetch(limit=1)
       report = entities[0]
       revision = report.gitiles_commit.revision
-
     else:
       report = PostsubmitReport.Get(
           server_host=host,
@@ -1450,7 +1449,6 @@ class ServeCodeCoverageData(BaseHandler):
       if data_type != 'files':
         return BaseHandler.CreateError(
             'Expected data_type to be "files", but got "%s"' % data_type, 400)
-
       template = 'coverage/file_view.html'
 
     path = path or default_path
