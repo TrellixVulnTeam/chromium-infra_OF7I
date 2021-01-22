@@ -660,44 +660,6 @@ class ValidateStepsTests(BaseTestCase):
 
     self.assert_invalid(steps, r'parent to u\'a\|b\|c\|d\|e\' must precede')
 
-  def test_unstarted_parent(self):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.SCHEDULED),
-        step_pb2.Step(name='a|b', status=common_pb2.SCHEDULED),
-    ]
-    self.assert_invalid(steps, 'parent u\'a\' must be at least STARTED')
-
-  @parameterized.expand(
-      [
-          (common_pb2.SCHEDULED, common_pb2.SUCCESS, False),
-          (common_pb2.SCHEDULED, common_pb2.FAILURE, False),
-          (common_pb2.SCHEDULED, common_pb2.INFRA_FAILURE, False),
-          (common_pb2.SCHEDULED, common_pb2.CANCELED, False),
-          (common_pb2.STARTED, common_pb2.SUCCESS, True),
-          (common_pb2.STARTED, common_pb2.FAILURE, True),
-          (common_pb2.STARTED, common_pb2.INFRA_FAILURE, True),
-          (common_pb2.STARTED, common_pb2.CANCELED, True),
-      ],
-      testcase_func_name=_testcase_func_name,
-  )
-  def test_nonterminal_with_terminal_parent(self, child, parent, needs_start):
-    steps = [
-        step_pb2.Step(name='a', status=parent),
-        step_pb2.Step(name='a|b', status=common_pb2.SUCCESS),
-        step_pb2.Step(name='a|c', status=child),
-    ]
-    for i in range(3):
-      if i < 2 or needs_start:
-        steps[i].start_time.FromDatetime(datetime.datetime(2018, 1, 1))
-      if i < 2:
-        steps[i].end_time.FromDatetime(datetime.datetime(2019, 1, 1))
-
-    self.assert_invalid(
-        steps,
-        r'non-terminal \(%s\) u\'a\|c\' must have STARTED parent u\'a\' \(%s\)'
-        % (status_name(child), status_name(parent))
-    )
-
   @parameterized.expand(
       [
           (common_pb2.SUCCESS, common_pb2.STARTED, False),
@@ -727,61 +689,6 @@ class ValidateStepsTests(BaseTestCase):
         steps[i].end_time.FromDatetime(datetime.datetime(2019, 1, 1))
 
     self.assert_valid(steps)
-
-  def test_start_before_parent_start(self):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.SUCCESS),
-        step_pb2.Step(name='a|b', status=common_pb2.SUCCESS),
-    ]
-    steps[0].start_time.FromDatetime(datetime.datetime(2019, 1, 1))
-    steps[0].end_time.FromDatetime(datetime.datetime(2019, 2, 1))
-    steps[1].start_time.FromDatetime(datetime.datetime(2018, 1, 1))
-    steps[1].end_time.FromDatetime(datetime.datetime(2018, 2, 1))
-
-    self.assert_invalid(
-        steps, r'start_time: cannot precede parent u\'a\'\'s start time'
-    )
-
-  def test_start_after_parent_end(self):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.FAILURE),
-        step_pb2.Step(name='a|b', status=common_pb2.FAILURE),
-    ]
-    steps[0].start_time.FromDatetime(datetime.datetime(2018, 1, 1))
-    steps[0].end_time.FromDatetime(datetime.datetime(2018, 2, 1))
-    steps[1].start_time.FromDatetime(datetime.datetime(2019, 1, 1))
-    steps[1].end_time.FromDatetime(datetime.datetime(2019, 2, 1))
-
-    self.assert_invalid(
-        steps, r'start_time: cannot follow parent u\'a\'\'s end time'
-    )
-
-  def test_end_before_parent_start(self):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.INFRA_FAILURE),
-        step_pb2.Step(name='a|b', status=common_pb2.INFRA_FAILURE),
-    ]
-    steps[0].start_time.FromDatetime(datetime.datetime(2019, 1, 1))
-    steps[0].end_time.FromDatetime(datetime.datetime(2019, 2, 1))
-    steps[1].end_time.FromDatetime(datetime.datetime(2018, 2, 1))
-
-    self.assert_invalid(
-        steps, r'end_time: cannot precede parent u\'a\'\'s start time'
-    )
-
-  def test_end_after_parent_end(self):
-    steps = [
-        step_pb2.Step(name='a', status=common_pb2.FAILURE),
-        step_pb2.Step(name='a|b', status=common_pb2.FAILURE),
-    ]
-    steps[0].start_time.FromDatetime(datetime.datetime(2018, 1, 1))
-    steps[0].end_time.FromDatetime(datetime.datetime(2019, 1, 1))
-    steps[1].start_time.FromDatetime(datetime.datetime(2018, 2, 1))
-    steps[1].end_time.FromDatetime(datetime.datetime(2019, 2, 1))
-
-    self.assert_invalid(
-        steps, r'end_time: cannot follow parent u\'a\'\'s end time'
-    )
 
   @parameterized.expand(
       [

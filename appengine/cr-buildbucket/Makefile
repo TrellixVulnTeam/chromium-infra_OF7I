@@ -2,23 +2,30 @@
 # Use of this source code is governed by the Apache v2.0 license that can be
 # found in the LICENSE file.
 
+.PHONY: update-protos
 update-protos:
 	cd ../../python_pb2 && $(MAKE)
 
+.PHONY: test
 test:
 	tools/run_tests.sh
 
+.PHONY: deploy
 deploy:
 	tools/gae upload -x
 
+.PHONY: upload
 upload:
 	tools/gae upload
 
+.PHONY: rollback
 rollback:
 	appcfg.py -V `tools/gae version` rollback .
 
+.PHONY: format
 format:
 	git cl format --python --full
 
+.PHONY: format-all
 format-all:
 	find . -iname \*.py -type f | xargs yapf -i

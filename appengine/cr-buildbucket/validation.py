@@ -361,13 +361,19 @@ def validate_step(step, steps):
 
   name_path = step.name.split(STEP_SEP)
   parent_name = STEP_SEP.join(name_path[:-1])
-  if parent_name:
-    if parent_name not in steps:
-      _err('parent to %r must precede', step.name)
-    parent = steps[parent_name]
+  if parent_name and parent_name not in steps:
+    _err('parent to %r must precede', step.name)
 
-    validate_status_consistency(step, parent)
-    validate_timing_consistency(step, parent)
+  # NOTE: We used to validate consistency of timestamps and status between
+  # parent and child. However with client-side protocols such as luciexe, the
+  # parent and child steps may actually belong to separate processes on the
+  # machine, and can race each other in `bbagent`.
+  #
+  # Additionally, there's no way to guarantee that these two processes would
+  # have a consistent monotonic clock state that's shared between them (this is
+  # possible, but would take a fair amount of work) and events such as Daylight
+  # Savings Time shifts could lead to up to an hour of inconsistency between
+  # step timestamps.
 
   steps[step.name] = step
 
@@ -397,47 +403,6 @@ def validate_internal_timing_consistency(step):
   if (step.HasField('end_time') and
       step.start_time.ToDatetime() > step.end_time.ToDatetime()):
     _err('start_time after end_time')
-
-
-def validate_status_consistency(child, parent):
-  """Validates inter-step status consistency."""
-
-  c, p = child.status, parent.status
-  c_name, p_name = common_pb2.Status.Name(c), common_pb2.Status.Name(p)
-
-  if p == common_pb2.SCHEDULED:
-    _enter_err('status', 'parent %r must be at least STARTED', parent.name)
-
-  if not bool(c & common_pb2.ENDED_MASK) and p != common_pb2.STARTED:
-    _enter_err(
-        'status', 'non-terminal (%s) %r must have STARTED parent %r (%s)',
-        c_name, child.name, parent.name, p_name
-    )
-
-
-def validate_timing_consistency(child, parent):
-  """Validates inter-step timing consistency."""
-
-  parent_start = parent.start_time.ToDatetime(
-  ) if parent.HasField('start_time') else None
-  parent_end = parent.end_time.ToDatetime(
-  ) if parent.HasField('end_time') else None
-
-  if child.HasField('start_time'):
-    child_start = child.start_time.ToDatetime()
-    with _enter('start_time'):
-      if parent_start and parent_start > child_start:
-        _err('cannot precede parent %r\'s start time', parent.name)
-      if parent_end and parent_end < child_start:
-        _err('cannot follow parent %r\'s end time', parent.name)
-
-  if child.HasField('end_time'):
-    child_end = child.end_time.ToDatetime()
-    with _enter('end_time'):
-      if parent_start and parent_start > child_end:
-        _err('cannot precede parent %r\'s start time', parent.name)
-      if parent_end and parent_end < child_end:
-        _err('cannot follow parent %r\'s end time', parent.name)
 
 
 def validate_log(log, names):
