@@ -1378,14 +1378,12 @@ class ServeCodeCoverageData(BaseHandler):
     platform = self.request.get('platform', default_config['platform'])
     list_reports = self.request.get('list_reports', "False").lower() == 'true'
     path = self.request.get('path')
-    data_type = self.request.get('data_type')
-    if not data_type and path:
-      if path.endswith('/'):
-        data_type = 'dirs'
-      elif path and '>' in path:
-        data_type = 'components'
-      else:
-        data_type = 'files'
+    if not path or path.endswith('/'):
+      data_type = 'dirs'
+    elif '>' in path:
+      data_type = 'components'
+    else:
+      data_type = 'files'
 
     logging.info('host=%s', host)
     logging.info('project=%s', project)
@@ -1414,9 +1412,6 @@ class ServeCodeCoverageData(BaseHandler):
                                                 ref, revision, platform, bucket,
                                                 builder)
 
-    template = None
-    if not data_type:
-      data_type = 'dirs'
     # Get latest report if revision not specified
     if not revision:
       query = PostsubmitReport.query(
