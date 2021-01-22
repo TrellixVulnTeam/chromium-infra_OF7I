@@ -34,31 +34,31 @@ type tlwServer struct {
 	tPool    *sshpool.Pool
 }
 
-func newTLWServer() tlwServer {
-	s := tlwServer{
+func newTLWServer() *tlwServer {
+	s := &tlwServer{
 		grpcServ: grpc.NewServer(),
 		lroMgr:   lro.New(),
 		tPool:    sshpool.New(getSSHClientConfig()),
 		tMgr:     newTunnelManager(),
 	}
-	tls.RegisterWiringServer(s.grpcServ, &s)
+	tls.RegisterWiringServer(s.grpcServ, s)
 	longrunning.RegisterOperationsServer(s.grpcServ, s.lroMgr)
 	return s
 }
 
-func (s tlwServer) Serve(l net.Listener) error {
+func (s *tlwServer) Serve(l net.Listener) error {
 	return s.grpcServ.Serve(l)
 }
 
 // Close closes all open server resources.
-func (s tlwServer) Close() {
+func (s *tlwServer) Close() {
 	s.tMgr.Close()
 	s.tPool.Close()
 	s.lroMgr.Close()
 	s.grpcServ.GracefulStop()
 }
 
-func (s tlwServer) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
+func (s *tlwServer) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
 	addr, err := lookupHost(req.GetName())
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, err.Error())
@@ -69,7 +69,7 @@ func (s tlwServer) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest)
 	}, nil
 }
 
-func (s tlwServer) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutRequest) (*tls.ExposePortToDutResponse, error) {
+func (s *tlwServer) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDutRequest) (*tls.ExposePortToDutResponse, error) {
 	localServicePort := req.GetLocalPort()
 	dutName := req.GetDutName()
 	if dutName == "" {
@@ -100,7 +100,7 @@ func (s tlwServer) ExposePortToDut(ctx context.Context, req *tls.ExposePortToDut
 	return response, nil
 }
 
-func (s tlwServer) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*longrunning.Operation, error) {
+func (s *tlwServer) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest) (*longrunning.Operation, error) {
 	rawURL := req.GetUrl()
 	if rawURL == "" {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported url %s in request", rawURL))
