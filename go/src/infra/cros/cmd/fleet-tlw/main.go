@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("fleet-tlw: %s", err)
 	}
 	sigChan := make(chan os.Signal, 1)
-	s := newServer()
+	s := newTLWServer()
 	go func() {
 		SetUpSignalHandler(sigChan)
 		sig := <-sigChan

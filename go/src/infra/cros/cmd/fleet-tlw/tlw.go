@@ -34,7 +34,7 @@ type tlwServer struct {
 	tPool    *sshpool.Pool
 }
 
-func newServer() tlwServer {
+func newTLWServer() tlwServer {
 	s := tlwServer{
 		grpcServ: grpc.NewServer(),
 		lroMgr:   lro.New(),
