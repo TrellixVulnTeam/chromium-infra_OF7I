@@ -21,6 +21,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	cipdClient "go.chromium.org/luci/cipd/client/cipd"
+	"go.chromium.org/luci/cipd/client/cipd/plugin/host"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/common/system/environ"
@@ -75,6 +76,10 @@ var defaultConfig = application.Config{
 }
 
 func mainImpl(c context.Context, argv []string, env environ.Env) int {
+	// Enable plugins support. Important to call it before LoadFromEnv to make
+	// sure plugin related env vars are recognized.
+	cipdPackageLoader.Options.PluginHost = &host.Host{PluginsContext: c}
+
 	// Initialize our CIPD package loader from the environment.
 	//
 	// If we don't have an environment-specific CIPD cache directory, use one
@@ -92,9 +97,6 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 				"Failed to resolve user home directory. No CIPD cache will be enabled.")
 		}
 	}
-
-	// Redirect logs from CIPD plugins to our main logger.
-	cipdPackageLoader.Options.PluginsContext = c
 
 	// Determine if we're bypassing "vpython".
 	defaultConfig.Bypass = env.GetEmpty(BypassENV) == BypassSentinel
