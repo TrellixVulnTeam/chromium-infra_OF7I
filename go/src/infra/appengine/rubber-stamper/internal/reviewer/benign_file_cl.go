@@ -6,6 +6,7 @@ package reviewer
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -30,7 +31,7 @@ func reviewBenignFileChange(ctx context.Context, hostCfg *config.HostConfig, gc 
 	}
 	resp, err := gc.ListFiles(ctx, listReq)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gerrit ListFiles rpc call failed with error: %v", err)
 	}
 
 	if hostCfg == nil || hostCfg.RepoConfigs[t.Repo] == nil || hostCfg.RepoConfigs[t.Repo].BenignFilePattern == nil {

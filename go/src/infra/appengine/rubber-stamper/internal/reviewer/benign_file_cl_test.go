@@ -12,7 +12,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/proto"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
@@ -86,6 +89,15 @@ func TestReviewBenignFileChange(t *testing.T) {
 			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
 			So(err, ShouldBeNil)
 			So(invalidFiles, ShouldResemble, []string{"test/override/1.txt", "test/override/a/b/3.txt", "test/override/ab/5.txt"})
+		})
+		Convey("gerrit ListFiles API returns error", func() {
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+			})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+			invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gerritMock, t)
+			So(err, ShouldErrLike, "gerrit ListFiles rpc call failed with error")
+			So(len(invalidFiles), ShouldEqual, 0)
 		})
 	})
 }

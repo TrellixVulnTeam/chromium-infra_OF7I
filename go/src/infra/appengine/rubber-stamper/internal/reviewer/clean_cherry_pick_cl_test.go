@@ -295,7 +295,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 				})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
 				So(msg, ShouldEqual, "")
-				So(err, ShouldErrLike, "failed to call Gerrit ListFiles API")
+				So(err, ShouldErrLike, "gerrit ListFiles rpc call failed with error")
 			})
 			Convey("Gerrit GetMergeable API returns error", func() {
 				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{

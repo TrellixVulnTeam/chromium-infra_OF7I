@@ -227,7 +227,7 @@ func TestReviewCleanRevert(t *testing.T) {
 				})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 				msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
 				So(msg, ShouldEqual, "")
-				So(err, ShouldErrLike, "failed to call Gerrit GetPureRevert API")
+				So(err, ShouldErrLike, "gerrit GetPureRevert rpc call failed with error")
 			})
 			Convey("GetChange API error", func() {
 				gerritMock.EXPECT().GetPureRevert(gomock.Any(), proto.MatcherEqual(&gerritpb.GetPureRevertRequest{
@@ -242,7 +242,7 @@ func TestReviewCleanRevert(t *testing.T) {
 				})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 				msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
 				So(msg, ShouldEqual, "")
-				So(err, ShouldErrLike, "failed to call Gerrit GetChange API")
+				So(err, ShouldErrLike, "gerrit GetChange rpc call failed with error")
 			})
 			Convey("time window config error", func() {
 				cfg.HostConfigs["test-host"].CleanRevertTimeWindow = "1.2d"
@@ -285,7 +285,7 @@ func TestReviewCleanRevert(t *testing.T) {
 				})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 				msg, err := reviewCleanRevert(ctx, cfg, gerritMock, t)
 				So(msg, ShouldEqual, "")
-				So(err, ShouldErrLike, "failed to call Gerrit ListFiles API")
+				So(err, ShouldErrLike, "gerrit ListFiles rpc call failed with error")
 			})
 		})
 	})
