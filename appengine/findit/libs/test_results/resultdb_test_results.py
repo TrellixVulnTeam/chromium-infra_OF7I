@@ -84,6 +84,11 @@ class ResultDBTestResults(BaseTestResults):
     """
     classified_results = ClassifiedTestResults()
     for test_name, test_info in self.test_results.items():
+      # We don't care about the tests that were skipped on purpose
+      if (test_info["num_passed"] == 0 and test_info["num_failed"] == 0 and
+          test_info["num_crashed"] == 0 and test_info["num_aborted"] == 0 and
+          test_info["num_notrun"] == 0 and test_info["num_unspecified"] == 0):
+        continue
       classified_results[test_name].total_run = test_info["total_run"]
       classified_results[test_name].num_expected_results = test_info[
           "num_expected_results"]

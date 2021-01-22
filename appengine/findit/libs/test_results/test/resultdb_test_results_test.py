@@ -321,20 +321,6 @@ class ResultDBTestResultsTest(wf_testcase.WaterfallTestCase):
                 'notruns': {},
             }
         },
-        'SharedImageTest.Basic3': {
-            'total_run': 1,
-            'num_expected_results': 1,
-            'num_unexpected_results': 0,
-            'results': {
-                'passes': {},
-                'failures': {},
-                'skips': {
-                    'SKIP': 1
-                },
-                'unknowns': {},
-                'notruns': {},
-            }
-        },
         'SharedImageTest.Basic4': {
             'total_run': 2,
             'num_expected_results': 0,
