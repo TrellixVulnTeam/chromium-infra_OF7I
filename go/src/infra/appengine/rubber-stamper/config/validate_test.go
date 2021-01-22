@@ -31,6 +31,10 @@ var sampleConfigStr = `
 						time_window: "7d"
 						excluded_paths: "a/b/*"
 					}
+					clean_cherry_pick_pattern {
+						time_window: "12m"
+						excluded_paths: "*.xtb"
+					}
 				}
 			}
 		}
@@ -71,9 +75,16 @@ func TestConfigValidator(t *testing.T) {
 				crp.TimeWindow = "12t"
 				So(validate(cfg), ShouldErrLike, "invalid time_window 12t")
 			})
-			Convey("invalid path", func() {
-				crp.ExcludedPaths[0] = "\\"
-				So(validate(cfg), ShouldErrLike, "invalid path \\")
+		})
+		Convey("validateCleanCherryPickPattern catches errors", func() {
+			ccpp := cfg.HostConfigs["test-host"].RepoConfigs["dummy"].CleanCherryPickPattern
+			Convey("invalid time window value", func() {
+				ccpp.TimeWindow = "a1s"
+				So(validate(cfg), ShouldErrLike, "invalid time_window a1s")
+			})
+			Convey("invalid time window unit", func() {
+				ccpp.TimeWindow = "12t"
+				So(validate(cfg), ShouldErrLike, "invalid time_window 12t")
 			})
 		})
 	})

@@ -5,7 +5,6 @@
 package config
 
 import (
-	"path"
 	"strconv"
 
 	"go.chromium.org/luci/config/validation"
@@ -45,6 +44,11 @@ func validateRepoConfig(c *validation.Context, repoConfig *RepoConfig) {
 		validateCleanRevertPattern(c, repoConfig.CleanRevertPattern)
 		c.Exit()
 	}
+	if repoConfig.CleanCherryPickPattern != nil {
+		c.Enter("clean_cherry_pick_pattern")
+		validateCleanCherryPickPattern(c, repoConfig.CleanCherryPickPattern)
+		c.Exit()
+	}
 }
 
 func validateCleanRevertPattern(c *validation.Context, cleanRevertPattern *CleanRevertPattern) {
@@ -52,16 +56,12 @@ func validateCleanRevertPattern(c *validation.Context, cleanRevertPattern *Clean
 	if tw != "" {
 		validateTimeWindow(c, tw)
 	}
+}
 
-	for _, p := range cleanRevertPattern.ExcludedPaths {
-		// This two match statements validate that it's a valid-enough
-		// path. They should not error when trying to match on it.
-		if _, err := path.Match(p, "test"); err != nil {
-			c.Errorf("invalid path %s: %s", p, err)
-		}
-		if _, err := path.Match(p, "src/"); err != nil {
-			c.Errorf("invalid path %s: %s", p, err)
-		}
+func validateCleanCherryPickPattern(c *validation.Context, cleanCherryPickPattern *CleanCherryPickPattern) {
+	tw := cleanCherryPickPattern.TimeWindow
+	if tw != "" {
+		validateTimeWindow(c, tw)
 	}
 }
 

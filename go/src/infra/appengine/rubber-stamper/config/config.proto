@@ -29,12 +29,18 @@ message HostConfig {
   // configs will override this one. The format is the same as that of
   // CleanRevertPattern.time_window.
   string clean_revert_time_window = 2;
+  // The default valid time window for clean cherry-picks. This time window is
+  // applied at a host-level and the time window configured in repo-level
+  // configs will override this one. The format is the same as that of
+  // CleanCherryPickPattern.time_window.
+  string clean_cherry_pick_time_window = 3;
 }
 
 // RepoConfig describes the config to be used for a Gerrit repository.
 message RepoConfig {
   BenignFilePattern benign_file_pattern = 1;
   CleanRevertPattern clean_revert_pattern = 2;
+  CleanCherryPickPattern clean_cherry_pick_pattern = 3;
 }
 
 // BenignFilePattern describes pattern of changes to benign files.
@@ -53,6 +59,15 @@ message CleanRevertPattern {
   // time_window to be valid.
   // Valid units are "s", "m", "h", "d", meaning "seconds", "minutes",
   // "hours", "days" respectively.
+  string time_window = 1;
+
+  // Paths that must have a human reviewer.
+  repeated string excluded_paths = 2;
+}
+
+message CleanCherryPickPattern {
+  // The length of time in <int><unit> form. Has the same format as the
+  // `time_window` in CleanRevertPattern.
   string time_window = 1;
 
   // Paths that must have a human reviewer.
