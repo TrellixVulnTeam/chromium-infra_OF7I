@@ -23,12 +23,12 @@ import (
 
 // DeleteVMCmd deletes vm on a host.
 var DeleteVMCmd = &subcommands.Command{
-	UsageLine: "vm -host {Hostname} {VM name}",
+	UsageLine: "vm {VM name}",
 	ShortDesc: "Delete a VM on a host",
 	LongDesc: `Delete a VM on a host.
 
 Example:
-shivas delete vm -host {Hostname} {VM name}
+shivas delete vm {VM name}
 Deletes the VM on a host.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &deleteVM{}
