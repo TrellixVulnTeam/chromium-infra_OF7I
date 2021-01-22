@@ -1364,7 +1364,6 @@ class ServeCodeCoverageData(BaseHandler):
     if not luci_project:
       return BaseHandler.CreateError('Invalid url path %s' % self.request.path,
                                      400)
-
     default_config = _GetPostsubmitDefaultReportConfig(luci_project)
     if not default_config:
       return BaseHandler.CreateError(
@@ -1496,15 +1495,8 @@ class ServeCodeCoverageData(BaseHandler):
             bucket=bucket,
             builder=builder)
 
-    metadata = entity.data
-    data = {
-        'metadata': metadata,
-    }
-
-    line_to_data = None
-    if data_type == 'files':
+    def _GetLineToData(report, path, metadata):
       line_to_data = collections.defaultdict(dict)
-
       if metadata.get('revision', ''):
         gs_path = _ComposeSourceFileGsPath(report, path, metadata['revision'])
         file_content = _GetFileContentFromGs(gs_path)
@@ -1546,9 +1538,15 @@ class ServeCodeCoverageData(BaseHandler):
             else:
               line_to_data[line_num]['is_partially_covered'] = False
 
-      line_to_data = list(line_to_data.iteritems())
-      line_to_data.sort(key=lambda x: x[0])
-      data['line_to_data'] = line_to_data
+        line_to_data = list(line_to_data.iteritems())
+        line_to_data.sort(key=lambda x: x[0])
+        return line_to_data
+
+    data = {
+        'metadata': entity.data,
+    }
+    if data_type == 'files':
+      data['line_to_data'] = _GetLineToData(report, path, entity.data)
 
     # Compute the mapping of the name->path mappings in order.
     path_parts = _GetNameToPathSeparator(path, data_type)
