@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"google.golang.org/grpc"
 )
@@ -25,13 +24,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("fleet-tlw: %s", err)
 	}
-	sigChan := make(chan os.Signal, 1)
 	s := grpc.NewServer()
 	tlw := newTLWServer()
 	tlw.registerWith(s)
+	c := setupSignalHandler()
 	go func() {
-		SetUpSignalHandler(sigChan)
-		sig := <-sigChan
+		sig := <-c
 		log.Printf("Captured %v, stopping fleet-tlw service and cleaning up...", sig)
 		s.GracefulStop()
 		tlw.Close()

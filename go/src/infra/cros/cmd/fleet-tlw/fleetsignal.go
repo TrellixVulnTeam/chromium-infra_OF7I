@@ -13,7 +13,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// SetUpSignalHandler monitors if any OS signals are received.
-func SetUpSignalHandler(sigChan chan os.Signal) {
-	signal.Notify(sigChan, unix.SIGINT, unix.SIGHUP, unix.SIGTERM, unix.SIGQUIT)
+func setupSignalHandler() <-chan os.Signal {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, unix.SIGINT, unix.SIGHUP, unix.SIGTERM, unix.SIGQUIT)
+	return c
 }

@@ -10,7 +10,6 @@ import (
 	"os"
 )
 
-// SetUpSignalHandler monitors if any OS signals are received.
-func SetUpSignalHandler(sigChan chan os.Signal) {
+func setupSignalHandler() <-chan os.Signal {
 	panic("windows not supported")
 }
