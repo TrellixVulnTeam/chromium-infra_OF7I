@@ -53,6 +53,7 @@
   },
   "//:test_mojom2__generator": {
     "args": [
+      "../../mojo/public/tools/bindings/mojom_bindings_generator.py",
       "--use_bundled_pylibs",
       "generate",
       "-d",
@@ -69,7 +70,7 @@
       "--typemap",
       "gen/mojo_bindings__type_mappings"
     ],
-    "script": "//mojo/mojom_bindings_generator.py",
+    "script": "//build/util/python2_action.py",
     "sources": ["//test2.mojom"],
     "outputs": ["//out/Debug/gen/test2.mojom.h"]
   },

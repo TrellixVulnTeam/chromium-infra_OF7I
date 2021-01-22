@@ -16,6 +16,8 @@ import (
 	kpb "infra/cmd/package_index/kythe/proto"
 )
 
+const mojomScript = "/mojom_bindings_generator.py"
+
 // mojomImportRe is used for finding required_input for a Mojom target,
 // by finding the imports in its source.
 // This could possibly have false positives (e.g. if there's an import in a
@@ -68,16 +70,19 @@ func newMojomTarget(ctx context.Context, gnTargetDict map[string]gnTargetInfo, t
 // from each of these tools. In particular, definitions gated on disabled
 // features are removed from the AST directly by the parser tool.
 func (m *mojomTarget) mergeFeatureArgs(gnTargetDict map[string]gnTargetInfo) []string {
-	var featureArgs []string
+	args := gnTargetDict[m.targetName].Args
+	if len(args) > 0 && strings.HasSuffix(args[0], mojomScript) {
+		args = args[1:]
+	}
 	parserTarget := m.targetName[:len(m.targetName)-len("__generator")] + "__parser"
 	parserTargetDict := gnTargetDict[parserTarget]
 	parserTargetArgs := parserTargetDict.Args
 	for i := 0; i < len(parserTargetArgs)-1; i++ {
 		if parserTargetArgs[i] == "--enable_feature" {
-			featureArgs = append(featureArgs, parserTargetArgs[i:i+2]...)
+			args = append(args, parserTargetArgs[i:i+2]...)
 		}
 	}
-	return append(gnTargetDict[m.targetName].Args, featureArgs...)
+	return args
 }
 
 // findMojomImports finds the direct imports of a Mojom target.
@@ -220,7 +225,15 @@ func isMojomTarget(t *gnTarget) bool {
 		return false
 	}
 
-	if !strings.HasSuffix(t.targetInfo.Script, "/mojom_bindings_generator.py") {
+	script := t.targetInfo.Script
+
+	// Determine if wrapper script is used. If it is, extract actual script
+	// which is located at the very first argument.
+	if strings.HasSuffix(script, "/python2_action.py") && len(t.targetInfo.Args) > 0 {
+		script = t.targetInfo.Args[0]
+	}
+
+	if !strings.HasSuffix(script, mojomScript) {
 		return false
 	}
 
