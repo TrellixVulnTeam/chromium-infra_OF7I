@@ -113,7 +113,7 @@ WITH
 	test_results AS (
 		SELECT
 			CAST(REGEXP_EXTRACT(exported.id, r'build-(\d+)') as INT64) as build_id,
-			IFNULL(test_location.file_name, '') as file_name,
+			IFNULL(test_metadata.location.file_name, '') as file_name,
 			test_id,
 			variant,
 			duration,
@@ -124,12 +124,21 @@ WITH
 			AND (@builder_regexp = '' OR EXISTS (SELECT 0 FROM tr.variant WHERE key='builder' AND REGEXP_CONTAINS(value, @builder_regexp)))
 			AND duration > @minDuration
 
-			-- Exclude broken test locations.
-			-- TODO(nodir): remove this after crbug.com/1130425 is fixed.
-			AND REGEXP_CONTAINS(IFNULL(test_location.file_name, ''), r'(?i)^(|.*\.(cc|html|m|c|cpp))$')
-			-- Exclude broken prefixes.
-			-- TODO(nodir): remove after crbug.com/1017288 is fixed.
-			AND (test_id NOT LIKE 'ninja://:blink_web_tests/%' OR test_location.file_name LIKE '//third_party/%')
+			# Exclude tests which don't have a file name.
+			# This means the prediction is less representative of the build-level
+			# savings, but on the other hand it excludes the noise created by
+			# test frameworks that don't report file names yet (i.e. things that the
+			# candidate strategy doesn't have control over), thus providing a stronger
+			# signal for the strategy.
+			AND test_metadata.location.file_name != ''
+
+			# Exclude third-party tests (except Web Tests) because they test code
+			# which isn't in src.git.
+			# As of January 2021, this excludes ~2% of test results.
+			AND (
+				test_metadata.location.file_name NOT LIKE '%/third_party/%'
+				OR test_metadata.location.file_name LIKE '//third_party/blink/%'
+			)
 	)
 
 -- Join all tables and produce rows in the TestDurationRecord protojson format.

@@ -11,6 +11,9 @@ import (
 	"infra/rts"
 	"infra/rts/filegraph"
 	"infra/rts/presubmit/eval"
+
+	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
 )
 
 // SelectionStrategy implements a selection strategy based on a git graph.
@@ -43,8 +46,10 @@ func (s *SelectionStrategy) Select(changedFiles []string, skipFile func(name str
 // patterns that must be exempted from RTS.
 func (g *Graph) EvalStrategy(ctx context.Context, in eval.Input, out *eval.Output) error {
 	changedFiles := make([]string, len(in.ChangedFiles))
+	changedFileSet := stringset.New(len(in.ChangedFiles))
 	for i, f := range in.ChangedFiles {
 		changedFiles[i] = f.Path
+		changedFileSet.Add(f.Path)
 	}
 
 	affectedness := make(map[string]rts.Affectedness, len(in.TestVariants))
@@ -52,6 +57,11 @@ func (g *Graph) EvalStrategy(ctx context.Context, in eval.Input, out *eval.Outpu
 		// If the test file is in the graph, then by default it is not affected.
 		if g.node(tv.FileName) != nil {
 			affectedness[tv.FileName] = rts.Affectedness{Distance: math.Inf(1), Rank: math.MaxInt32}
+		} else if tv.FileName != "" && !changedFileSet.Has(tv.FileName) {
+			// This file is not new and yet the filegraph doesn't have it.
+			// This might mean that the filegraph is incomplete/stale
+			// or that the reported test file name is incorrect (data bug).
+			logging.Warningf(ctx, "test file not found: %s", tv.FileName)
 		}
 	}
 
