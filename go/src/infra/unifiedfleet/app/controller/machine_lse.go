@@ -460,7 +460,9 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 				oldLabstation := proto.Clone(existingLabstationMachinelse).(*ufspb.MachineLSE)
 
 				// remove the servo entry from labstation
-				removeServoEntryFromLabstation(existingServo, existingLabstationMachinelse)
+				if err := removeServoEntryFromLabstation(ctx, existingServo, existingLabstationMachinelse); err != nil {
+					return err
+				}
 
 				// BatchUpdate Labstation - Using Batch update and not UpdateMachineLSE,
 				// because we cant have nested transaction in datastore
@@ -814,36 +816,157 @@ func getLabstationMachineLSE(ctx context.Context, labstationMachinelseName strin
 	return labstationMachinelse, nil
 }
 
-// appendServoEntryToLabstation append servo entry to the Labstation
-func appendServoEntryToLabstation(newServo *chromeosLab.Servo, labstationMachinelse *ufspb.MachineLSE) {
-	existingServos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
-	existingServos = append(existingServos, newServo)
-	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = existingServos
+// appendServoEntryToLabstation append servo entry to the Labstation.
+//
+// servo => Servo to be added to the DUT.
+// labstation => Current labstation configuration.
+func appendServoEntryToLabstation(ctx context.Context, servo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
+	if servo == nil || servo.GetServoHostname() == "" {
+		// Nothing to append.
+		return status.Errorf(codes.FailedPrecondition, "Servo/ServoHost is nil")
+	}
+	// Check if the servo is a V3 device. They can be updated without servo serial.
+	if util.ServoV3HostnameRegex.MatchString(labstation.GetHostname()) {
+		return updateServoV3EntryInLabstation(ctx, servo, labstation)
+	}
+	// If not a servo V3 device. Servo serial should not be empty.
+	if servo.GetServoSerial() == "" {
+		return status.Errorf(codes.FailedPrecondition, "Missing servo serial. Cannot assign servo")
+	}
+	// Not a servo v3 device. Validate port in range.
+	if port := servo.GetServoPort(); port > servoPortMax || port < servoPortMin {
+		return status.Errorf(codes.FailedPrecondition, "Port %v, out of range for servo", port)
+	}
+	// Ensure we can add the servo to the labstation.
+	if err := validateServoForLabstation(ctx, servo, labstation); err != nil {
+		return errors.Annotate(err, "appendServoEntryToLabstation - Cannot add servo to labstation").Err()
+	}
+	existingServos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	existingServos = append(existingServos, servo)
+	labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = existingServos
+	return nil
 }
 
-// replaceServoEntryInLabstation replaces oldServo entry with newServo entry in the Labstation
-func replaceServoEntryInLabstation(oldServo, newServo *chromeosLab.Servo, labstationMachinelse *ufspb.MachineLSE) {
-	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
-	for i, s := range servos {
-		if s.GetServoHostname() == oldServo.GetServoHostname() && s.GetServoPort() == oldServo.GetServoPort() {
-			servos[i] = newServo
-			break
+// validateServoForLabstation checks if the given servo can be used on the labstation.
+func validateServoForLabstation(ctx context.Context, servo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
+	if servo == nil || servo.GetServoHostname() == "" {
+		// Nothing to append.
+		return status.Errorf(codes.FailedPrecondition, "validateServoForLabstation - Servo/ServoHost is nil")
+	}
+	if labstation == nil {
+		return status.Errorf(codes.FailedPrecondition, "validateServoForLabstation - Labstation is nil")
+	}
+
+	if servo.GetServoHostname() != labstation.GetHostname() {
+		status.Errorf(codes.Internal, "Cannot add servo %s:%v on %s labstation", servo.GetServoHostname(), servo.GetServoPort(), labstation.GetHostname())
+	}
+	// Check for port/serial number conflicts.
+	for _, s := range labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos() {
+		// Check if servo already exists on the labstation.
+		if s.GetServoSerial() == servo.GetServoSerial() {
+			return status.Errorf(codes.FailedPrecondition, "Servo serial %s already exists on %s", s.GetServoSerial(), labstation.GetHostname())
+		}
+		// Check if servo port is available
+		if s.GetServoPort() == servo.GetServoPort() {
+			return status.Errorf(codes.FailedPrecondition, "Servo port %v is in use on %s", s.GetServoPort(), labstation.GetHostname())
 		}
 	}
-	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
+	return nil
 }
 
-// removeServoEntryFromLabstation removes servo entry from the Labstation
-func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinelse *ufspb.MachineLSE) {
-	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+// updateServoV3EntryInLabstation adds servo entry to labstation
+func updateServoV3EntryInLabstation(ctx context.Context, servo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
+	if servo == nil || servo.GetServoHostname() == "" {
+		// Nothing to append.
+		return status.Errorf(codes.FailedPrecondition, "updateServoV3EntryInLabstation - Servo/ServoHost is nil")
+	}
+	if labstation == nil {
+		return status.Errorf(codes.FailedPrecondition, "updateServoV3EntryInLabstation - Labstation is nil")
+	}
+
+	if !util.ServoV3HostnameRegex.MatchString(labstation.GetHostname()) {
+		return status.Errorf(codes.Internal, "Not a servo V3 device")
+	}
+	servos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	if len(servos) > 1 {
+		logging.Errorf(ctx, "Servo V3 host %s cannot contain more than one servo (has %v)", labstation.GetHostname(), len(servos))
+	}
+	// Remove the existing record to delete oldServo.
+	labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = nil
+	if servo == nil {
+		// Deleting the servos.
+		return nil
+	}
+	// Enforce port 9999 for all servo V3
+	servo.ServoPort = int32(9999)
+	// Don't store servo serial for servo V3.
+	servo.ServoSerial = ""
+	labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
+	return nil
+}
+
+// replaceServoEntryInLabstation replaces oldServo entry with newServo entry in the Labstation.
+// oldServo => old record of servo as found in the DUT.
+// newServo => new servo replacing the old one.
+// labstation => current machine lse of the labstation.
+func replaceServoEntryInLabstation(ctx context.Context, oldServo, newServo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
+	if newServo == nil {
+		// Don't use this API to remove servo from labstation.
+		return status.Errorf(codes.Internal, "replaceServoEntryInLabstation[Wrong Usage]: Use removeServoEntryFromLabstation")
+	}
+	if oldServo == nil {
+		// Don't use this API to append servo to labstation.
+		return status.Errorf(codes.Internal, "replaceServoEntryInLabstation[Wrong Usage]: Use appendServoEntryToLabstation")
+	}
+	// Check if its a servo V3 device.
+	if util.ServoV3HostnameRegex.MatchString(labstation.GetHostname()) {
+		return updateServoV3EntryInLabstation(ctx, newServo, labstation)
+	}
+	// Remove oldServo from labstation.
+	if err := removeServoEntryFromLabstation(ctx, oldServo, labstation); err != nil {
+		return errors.Annotate(err, "replaceServoEntryInLabstation - Cannot remove old servo entry").Err()
+	}
+	// Append newServo to the labstation.
+	if err := appendServoEntryToLabstation(ctx, newServo, labstation); err != nil {
+		return errors.Annotate(err, "replaceServoEntryInLabstation - Cannot add new servo entry to labstation").Err()
+	}
+	return nil
+}
+
+// removeServoEntryFromLabstation removes servo entry from the Labstation.
+//
+// servo => dut record of the servo.
+// labstation => lse of the labstation.
+// Servo is removed from labstation by matching servo serial except for servo V3 devices.
+func removeServoEntryFromLabstation(ctx context.Context, servo *chromeosLab.Servo, labstation *ufspb.MachineLSE) error {
+	logging.Warningf(ctx, "Deleting %s", servo)
+	if servo == nil || labstation == nil {
+		return status.Errorf(codes.Internal, "removeServoEntryFromLabstation - Invalid use of API")
+	}
+	// Check if it's a servo v3 device.
+	if util.ServoV3HostnameRegex.MatchString(labstation.GetHostname()) {
+		// Need not delete a servo v3 labstation entry
+		return nil
+	}
+	if servo.GetServoSerial() == "" {
+		return status.Errorf(codes.InvalidArgument, "Cannot remove unkown servo %s:%v. Missing serial number", labstation.GetHostname(), servo.GetServoPort())
+	}
+	servos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	// Attempt to remove by comparing servo serial first.
 	for i, s := range servos {
-		if s.GetServoHostname() == servo.GetServoHostname() && s.GetServoPort() == servo.GetServoPort() {
+		if s.GetServoSerial() == servo.GetServoSerial() {
+			// Delete the servo. Check if port is mismatched.
+			if dutSP := servo.GetServoPort(); s.GetServoPort() != dutSP {
+				// Mismatch on servo record in DUT and labstation.
+				logging.Warningf(ctx, "servo  %s port mismatch between dut[%s] and labstation[%s] record", s.GetServoSerial(), dutSP, s.GetServoPort())
+			}
 			servos[i] = servos[len(servos)-1]
 			servos = servos[:len(servos)-1]
-			break
+			labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
+			return nil
 		}
 	}
-	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
+	return status.Errorf(codes.FailedPrecondition, "Cannot remove servo %v from labstation %s as it contains no such record. %v", servo, labstation.GetHostname(), servos)
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.

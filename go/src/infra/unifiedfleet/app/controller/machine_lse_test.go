@@ -419,12 +419,12 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 
 	servo1 := &chromeosLab.Servo{
 		ServoHostname: "BlueLabstation-10",
-		ServoPort:     21,
+		ServoPort:     9921,
 		ServoSerial:   "Serial-1",
 	}
 	servo2 := &chromeosLab.Servo{
 		ServoHostname: "BlueLabstation-10",
-		ServoPort:     22,
+		ServoPort:     9922,
 		ServoSerial:   "Serial-2",
 	}
 
@@ -450,7 +450,6 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	inventory.CreateMachineLSE(ctx, dutMachinelse2)
 
 	labstationMachinelse, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
-	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 	Convey("UpdateMachineLSE for a DUT", t, func() {
 		Convey("Update non-existing machineLSE DUT", func() {
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-23")
@@ -460,10 +459,10 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
-		Convey("Update machineLSE DUT with same ServerPort and same ServoHostname", func() {
+		Convey("Update machineLSE DUT with same ServoPort and same ServoHostname", func() {
 			servo3 := &chromeosLab.Servo{
 				ServoHostname: "BlueLabstation-10",
-				ServoPort:     21,
+				ServoPort:     9921,
 				ServoSerial:   "Serial-1",
 			}
 			peripherals3 := &chromeosLab.Peripherals{
@@ -478,10 +477,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldResembleProto, dutMachinelse3)
 
 			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
-			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldResembleProto, servos)
-			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-21")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED)
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldHaveLength, 2)
 			// Labstation host is not updated
 			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-10")
 			So(err, ShouldNotBeNil)
@@ -491,7 +487,8 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 		Convey("Update machineLSE DUT with different ServerPort and same ServoHostname", func() {
 			servo3 := &chromeosLab.Servo{
 				ServoHostname: "BlueLabstation-10",
-				ServoPort:     358,
+				ServoPort:     9958,
+				ServoSerial:   "Serial-2",
 			}
 			peripherals3 := &chromeosLab.Peripherals{
 				Servo: servo3,
@@ -501,8 +498,8 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
 			dutMachinelse3.ResourceState = ufspb.State_STATE_SERVING
 			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
-			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse3)
 
 			dummyServos := []*chromeosLab.Servo{servo1, servo3}
@@ -510,9 +507,6 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
 			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldResembleProto, dummyServos)
 
-			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-22")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 			// Labstation host is not updated
 			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-10")
 			So(err, ShouldNotBeNil)
@@ -522,19 +516,21 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 		Convey("Update machineLSE DUT with different ServoHostname", func() {
 			servo1 := &chromeosLab.Servo{
 				ServoHostname: "BlueLabstation-17",
-				ServoPort:     17,
+				ServoPort:     9917,
+				ServoSerial:   "Serial-17",
 			}
 			labstationMachinelse1 := mockLabstationMachineLSE("BlueLabstation-17")
-			labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo1}
+			labstationMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo1}
 			_, err := inventory.CreateMachineLSE(ctx, labstationMachinelse1)
 			So(err, ShouldBeNil)
 
 			servo2 := &chromeosLab.Servo{
 				ServoHostname: "BlueLabstation-18",
-				ServoPort:     18,
+				ServoPort:     9918,
+				ServoSerial:   "Serial-18",
 			}
 			labstationMachinelse2 := mockLabstationMachineLSE("BlueLabstation-18")
-			labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo2}
+			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{}
 			_, err = inventory.CreateMachineLSE(ctx, labstationMachinelse2)
 			So(err, ShouldBeNil)
 
@@ -572,9 +568,6 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			servos = resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 			So(servo2, ShouldResembleProto, servos[0])
 
-			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-17")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED)
 			// Labstation host is not updated
 			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-17")
 			So(err, ShouldNotBeNil)
@@ -1308,6 +1301,7 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			servo := &chromeosLab.Servo{
 				ServoHostname: "RedLabstation-92",
 				ServoPort:     92,
+				ServoSerial:   "RedSerial-92",
 			}
 
 			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-92")

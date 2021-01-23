@@ -32,7 +32,7 @@ const (
 	// https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/servo/servod.py#50
 	// However, as there are devices with servo ports < 9980. Limit the validation to 9900.
 	servoPortMax = 9999
-	servoPortMin = 9900
+	servoPortMin = 9000
 )
 
 var defaultPools = []string{"DUT_POOL_QUOTA"}
@@ -92,7 +92,9 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			cleanPreDeployFields(newServo)
 			// Update the Labstation MachineLSE with new Servo information.
 			// Append the new Servo entry to the Labstation
-			appendServoEntryToLabstation(newServo, labstationMachinelse)
+			if err := appendServoEntryToLabstation(ctx, newServo, labstationMachinelse); err != nil {
+				return err
+			}
 			machinelses = append(machinelses, labstationMachinelse)
 			// Log labstation changes to history client.
 			hcLabstation.LogMachineLSEChanges(oldLabstationMachineLseCopy, labstationMachinelse)
@@ -143,6 +145,10 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		if err != nil {
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
 		}
+		// Validate that we are updating a DUT. Will lead to segfault later otherwise.
+		if oldMachinelse.GetChromeosMachineLse() == nil || oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() == nil {
+			return errors.Reason("%s is not a DUT. Cannot update", machinelse.GetName()).Err()
+		}
 
 		// Validate the input. Not passing the update mask as there is a different validation for dut.
 		if err := validateUpdateMachineLSE(ctx, oldMachinelse, machinelse, nil); err != nil {
@@ -160,85 +166,115 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 			if err != nil {
 				return err
 			}
-			// Ignore error as this check is done in validateUpdateMachineLSE and process mask functions
-			machine, _ = GetMachine(ctx, machinelse.GetMachines()[0])
 		} else {
 			// Full update, Machines cannot be empty.
 			if len(machinelse.GetMachines()) > 0 {
-				// Ignore error as validateUpdateMachineLSE verifies that the given machine exists.
-				machine, _ = GetMachine(ctx, machinelse.GetMachines()[0])
-				setOutputField(ctx, machine, machinelse)
+				if len(oldMachinelse.GetMachines()) == 0 {
+					return errors.Reason("DUT in invalid state. Delete DUT and recreate").Err()
+				}
+				// Check if the machines have been changed.
+				if machinelse.GetMachines()[0] != oldMachinelse.GetMachines()[0] {
+					// Ignore error as validateUpdateMachineLSE verifies that the given machine exists.
+					machine, _ = GetMachine(ctx, machinelse.GetMachines()[0])
+					setOutputField(ctx, machine, machinelse)
+				}
 			} else {
 				// Empty machines field, Invalid update.
 				return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
+			}
+			// Copy state if its not updated.
+			if machinelse.GetResourceState() == ufspb.State_STATE_UNSPECIFIED {
+				machinelse.ResourceState = oldMachinelse.GetResourceState()
 			}
 		}
 
 		machinelses := []*ufspb.MachineLSE{machinelse}
 
-		// Check if the DUT has Servo information.
-		// Update Labstation MachineLSE with new Servo info.
+		// Extract old and new servo.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-		if newServo != nil {
-			// Check if the Labstation MachineLSE exists in the system.
-			newLabstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+		oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+
+		// Common refs to avoid multiple queries
+		var newLabstationMachinelse *ufspb.MachineLSE
+		var hcNewLabstation *HistoryClient
+
+		// Process newServo and getNewLabstationMachinelse if available. This is done initially to avoid having to repeat it twice
+		// in same labstation logic and different labstation logic.
+		if newServo != nil && newServo.GetServoHostname() != "" {
+			// Check if the Labstation MachineLSE exists in the system first. No use doing anything if it doesn't exist.
+			newLabstationMachinelse, err = getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
 				return err
 			}
+
 			// Check if a servo port is assigned. Assign one if its not.
 			if err := assignServoPortIfMissing(newLabstationMachinelse, newServo); err != nil {
 				return err
 			}
-			cleanPreDeployFields(newServo)
+
 			// Check if the ServoHostName and ServoPort are already in use.
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
-
 			// For logging new Labstation changes.
-			hcNewLabstation := getHostHistoryClient(newLabstationMachinelse)
+			hcNewLabstation = getHostHistoryClient(newLabstationMachinelse)
+		}
 
-			// Update the Labstation MachineLSE with new Servo information.
-			oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-			// check if the DUT is connected to the same Labstation or different Labstation.
-			if newServo.GetServoHostname() == oldServo.GetServoHostname() {
-				newLabstationMachinelseClone := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
-				// DUT is connected to the same Labstation,
-				// replace the oldServo entry from the Labstation with the newServo entry
-				replaceServoEntryInLabstation(oldServo, newServo, newLabstationMachinelse)
-				machinelses = append(machinelses, newLabstationMachinelse)
-				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseClone, newLabstationMachinelse)
-			} else {
-				// DUT is connected to a different Labstation,
-				// remove the oldServo entry of DUT form oldLabstationMachinelse
+		// Need to replace oldServo with newServo. If the servos are connected to same labstation then we already have the labstation lse.
+		// Replace the oldServo entry with newServo entry.
+		if oldServo != nil && oldServo.GetServoHostname() != "" && newServo != nil && newServo.GetServoHostname() != "" && oldServo.GetServoHostname() == newServo.GetServoHostname() {
+			newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
+			if err := replaceServoEntryInLabstation(ctx, oldServo, newServo, newLabstationMachinelse); err != nil {
+				return err
+			}
+			machinelses = append(machinelses, newLabstationMachinelse)
+			hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
+			if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
+				return err
+			}
+		} else {
+			// Servos might be connected to different labstations or either/both of them are nil. Remove oldServo entry if available
+			if oldServo != nil && oldServo.GetServoHostname() != "" {
+				// Remove the servo from the labstation
 				oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
 				if err != nil {
 					return err
 				}
+
+				// Copy for logging history
+				oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
 				hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
-				// Make a copy to log the changes for the labstation (servo host) being replaced.
-				oldLabstationMachinelseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
 
-				removeServoEntryFromLabstation(oldServo, oldLabstationMachinelse)
-
-				// Log changes to history.
-				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelseCopy, oldLabstationMachinelse)
-				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+				// Remove servo from labstation
+				if err := removeServoEntryFromLabstation(ctx, oldServo, oldLabstationMachineLseCopy); err != nil {
 					return err
 				}
 
-				machinelses = append(machinelses, oldLabstationMachinelse)
-
-				// Make a copy to log changes for the replacing labstation (servo host).
-				newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
-				// Append the newServo entry of DUT to the newLabstationMachinelse.
-				appendServoEntryToLabstation(newServo, newLabstationMachinelse)
-				machinelses = append(machinelses, newLabstationMachinelse)
-				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
+				// Record labstation change
+				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelse, oldLabstationMachineLseCopy)
+				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+					return err
+				}
+				machinelses = append(machinelses, oldLabstationMachineLseCopy)
 			}
-			if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
-				return err
+
+			// Add new servo information if available
+			if newServo != nil && newServo.GetServoHostname() != "" {
+
+				// Make a copy to log changes for the labstation.
+				newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
+
+				// Append the newServo entry of DUT to the newLabstationMachinelse.
+				if err := appendServoEntryToLabstation(ctx, newServo, newLabstationMachinelse); err != nil {
+					return err
+				}
+
+				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
+				if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
+					return err
+				}
+				machinelses = append(machinelses, newLabstationMachinelse)
 			}
 		}
 
@@ -250,15 +286,16 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		}
 		hc.LogMachineLSEChanges(oldMachinelse, machinelse)
 
-		// Update states
-		if err := hc.stUdt.addLseStateHelper(ctx, machinelse, machine); err != nil {
+		// Update state changes.
+		dutState := machinelse.GetResourceState()
+		if err := hc.stUdt.updateStateHelper(ctx, dutState); err != nil {
 			return err
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to update MachineLSE DUT in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateDUT - failed transaction").Err()
 	}
 	return machinelse, nil
 }
@@ -268,11 +305,11 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Servo) error {
 	// If servo port is assigned, nothing is modified.
 	if newServo.GetServoPort() != 0 {
+		// If the servo is assigned in an invalid range return error
+		if port := newServo.GetServoPort(); int(port) > servoPortMax || int(port) < servoPortMin {
+			return errors.Reason("Servo port %v is invalid. Valid servo port range [%v, %v]", port, servoPortMax, servoPortMin).Err()
+		}
 		return nil
-	}
-	// If the servo is assigned in an invalid range return error
-	if port := newServo.GetServoPort(); port > servoPortMax || port < servoPortMin {
-		return errors.Reason("Servo port %v is invalid. Valid servo port range [%v, %v]", port, servoPortMax, servoPortMin).Err()
 	}
 	// If servo is  a servo v3 host then assign port 9999
 	// TODO(anushruth): Avoid hostname regex by querying machine.
@@ -289,10 +326,10 @@ func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Ser
 		// Assign the highest port available to the servo
 		if _, ok := ports[idx]; !ok {
 			newServo.ServoPort = int32(idx)
-			break
+			return nil
 		}
 	}
-	return nil
+	return errors.Reason("Unable to assign a servo port. Check if %s has ports available", labstation.GetHostname()).Err()
 }
 
 // validateDeviceConfig checks if the corresponding device config exists in IV2
@@ -413,6 +450,8 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 		case "dut.servo.port":
 		case "dut.servo.serial":
 		case "dut.servo.setup":
+		case "dut.servo.type":
+		case "dut.servo.topology":
 			// valid fields, nothing to validate.
 		default:
 			return status.Errorf(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - unsupported update mask path %q", path)
@@ -430,14 +469,28 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 	newDut := newMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 	if oldDut != nil {
 		if oldPeripherals := oldDut.GetPeripherals(); oldPeripherals != nil {
+			// Assign empty structs to avoid panics
 			oldServo = oldPeripherals.GetServo()
+			if oldServo == nil {
+				oldServo = &ufslab.Servo{}
+			}
 			oldRPM = oldPeripherals.GetRpm()
+			if oldRPM == nil {
+				oldRPM = &ufslab.RPM{}
+			}
 		}
 	}
 	if newDut != nil {
 		if newPeripherals := newDut.GetPeripherals(); newPeripherals != nil {
+			// Assign empty structs to avoid panics
 			newServo = newPeripherals.GetServo()
+			if newServo == nil {
+				newServo = &ufslab.Servo{}
+			}
 			newRPM = newPeripherals.GetRpm()
+			if newRPM == nil {
+				newRPM = &ufslab.RPM{}
+			}
 		}
 	}
 	for _, path := range mask.Paths {
@@ -457,7 +510,10 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 		case "mlseprototype":
 			oldMachineLse.MachineLsePrototype = newMachineLse.GetMachineLsePrototype()
 		case "resourceState":
-			oldMachineLse.ResourceState = newMachineLse.GetResourceState()
+			// Avoid setting unspecified state.
+			if newMachineLse.GetResourceState() != ufspb.State_STATE_UNSPECIFIED {
+				oldMachineLse.ResourceState = newMachineLse.GetResourceState()
+			}
 		case "tags":
 			if tags := newMachineLse.GetTags(); tags != nil && len(tags) > 0 {
 				// Regular tag updates append to the existing tags.
@@ -518,6 +574,10 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *ufslab.Servo, path str
 		oldServo.ServoPort = newServo.GetServoPort()
 	case "dut.servo.serial":
 		oldServo.ServoSerial = newServo.GetServoSerial()
+	case "dut.servo.type":
+		oldServo.ServoType = newServo.GetServoType()
+	case "dut.servo.topology":
+		oldServo.ServoTopology = newServo.GetServoTopology()
 	}
 }
 
