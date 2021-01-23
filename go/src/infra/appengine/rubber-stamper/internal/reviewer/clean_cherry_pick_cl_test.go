@@ -46,6 +46,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 			Revision:           "123abc",
 			Repo:               "dummy",
 			AutoSubmit:         false,
+			RevisionsCount:     1,
 			CherryPickOfChange: 12121,
 		}
 
@@ -70,19 +71,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
 						},
 					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
-						},
-					},
 				}, nil)
 				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
 				So(err, ShouldBeNil)
@@ -101,19 +89,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 						},
 						"789aaa": {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
-						},
-					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
 						},
 					},
 				}, nil)
@@ -141,19 +116,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
 						},
 					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
-						},
-					},
 				}, nil)
 				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
 				So(err, ShouldBeNil)
@@ -177,19 +139,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					},
 					"789aaa": {
 						Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
-					},
-				},
-				Labels: map[string]*gerritpb.LabelInfo{
-					"Bot-Commit": {
-						All: []*gerritpb.ApprovalInfo{
-							{
-								User: &gerritpb.AccountInfo{
-									Name:  "a cute bot",
-									Email: "bot@example.com",
-								},
-								Value: 1,
-							},
-						},
 					},
 				},
 			}, nil)
@@ -219,19 +168,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					},
 					"789aaa": {
 						Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
-					},
-				},
-				Labels: map[string]*gerritpb.LabelInfo{
-					"Bot-Commit": {
-						All: []*gerritpb.ApprovalInfo{
-							{
-								User: &gerritpb.AccountInfo{
-									Name:  "a cute bot",
-									Email: "bot@example.com",
-								},
-								Value: 1,
-							},
-						},
 					},
 				},
 			}, nil)
@@ -275,19 +211,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
 						},
 					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
-						},
-					},
 				}, nil)
 				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 					Number:     t.Number,
@@ -309,19 +232,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 						},
 						"789aaa": {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
-						},
-					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
 						},
 					},
 				}, nil)
@@ -347,19 +257,6 @@ func TestReviewCleanCherryPick(t *testing.T) {
 						},
 						"789aaa": {
 							Created: timestamppb.New(time.Now().Add(-9 * 24 * time.Hour)),
-						},
-					},
-					Labels: map[string]*gerritpb.LabelInfo{
-						"Bot-Commit": {
-							All: []*gerritpb.ApprovalInfo{
-								{
-									User: &gerritpb.AccountInfo{
-										Name:  "a cute bot",
-										Email: "bot@example.com",
-									},
-									Value: 1,
-								},
-							},
 						},
 					},
 				}, nil)

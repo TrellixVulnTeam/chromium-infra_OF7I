@@ -53,6 +53,17 @@ func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
 		}
 	}
 
+	if t.CherryPickOfChange != 0 {
+		// The change is a possible clean cherry-pick.
+		msg, err = reviewCleanCherryPick(ctx, cfg, gc, t)
+		if err != nil {
+			return err
+		}
+		if msg == "" {
+			return approveChange(ctx, gc, t)
+		}
+	}
+
 	invalidFiles, err := reviewBenignFileChange(ctx, hostCfg, gc, t)
 	if err != nil {
 		return err

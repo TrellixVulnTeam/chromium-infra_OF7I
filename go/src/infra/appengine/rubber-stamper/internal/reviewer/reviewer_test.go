@@ -226,5 +226,120 @@ func TestReviewChange(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 		})
+		Convey("CleanCherryPick", func() {
+			t := &taskspb.ChangeReviewTask{
+				Host:               "test-host",
+				Number:             12345,
+				Revision:           "123abc",
+				Repo:               "dummy",
+				AutoSubmit:         false,
+				RevisionsCount:     1,
+				CherryPickOfChange: 45678,
+			}
+			Convey("valid CherryPick", func() {
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.Now(),
+						},
+					},
+				}, nil)
+				gerritMock.EXPECT().GetMergeable(gomock.Any(), proto.MatcherEqual(&gerritpb.GetMergeableRequest{
+					Number:     t.Number,
+					Project:    t.Repo,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.MergeableInfo{
+					Mergeable: true,
+				}, nil)
+				gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+					Labels:     map[string]int32{"Bot-Commit": 1},
+				})).Return(&gerritpb.ReviewResult{}, nil)
+
+				err := ReviewChange(ctx, t)
+				So(err, ShouldBeNil)
+			})
+			Convey("invalid CherryPick but can pass the BenignFilePattern", func() {
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.Now(),
+						},
+					},
+				}, nil)
+				gerritMock.EXPECT().GetMergeable(gomock.Any(), proto.MatcherEqual(&gerritpb.GetMergeableRequest{
+					Number:     t.Number,
+					Project:    t.Repo,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.MergeableInfo{
+					Mergeable: false,
+				}, nil)
+				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.ListFilesResponse{
+					Files: map[string]*gerritpb.FileInfo{
+						"a/faaa.txt": nil,
+					},
+				}, nil)
+				gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+					Labels:     map[string]int32{"Bot-Commit": 1},
+				})).Return(&gerritpb.ReviewResult{}, nil)
+
+				err := ReviewChange(ctx, t)
+				So(err, ShouldBeNil)
+			})
+			Convey("invalid CherryPick", func() {
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.Now(),
+						},
+					},
+				}, nil)
+				gerritMock.EXPECT().GetMergeable(gomock.Any(), proto.MatcherEqual(&gerritpb.GetMergeableRequest{
+					Number:     t.Number,
+					Project:    t.Repo,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.MergeableInfo{
+					Mergeable: false,
+				}, nil)
+				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+				})).Return(&gerritpb.ListFilesResponse{
+					Files: map[string]*gerritpb.FileInfo{
+						"a/invalid.md": nil,
+					},
+				}, nil)
+				gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
+					Number:     t.Number,
+					RevisionId: t.Revision,
+					Message:    "The change is not mergeable. Learn more: go/rubber-stamper-user-guide.",
+				})).Return(&gerritpb.ReviewResult{}, nil)
+				gerritMock.EXPECT().DeleteReviewer(gomock.Any(), proto.MatcherEqual(&gerritpb.DeleteReviewerRequest{
+					Number:    t.Number,
+					AccountId: "srv-account@example.com",
+				})).Return(nil, nil)
+
+				err := ReviewChange(ctx, t)
+				So(err, ShouldBeNil)
+			})
+		})
 	})
 }

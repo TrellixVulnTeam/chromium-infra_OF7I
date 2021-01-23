@@ -36,7 +36,7 @@ func SetupTestingContext(ctx context.Context, cfg *config.Config, serviceAccount
 	defer ctl.Finish()
 	gerritMock := gerritpb.NewMockGerritClient(ctl)
 	clientMap := map[string]gerrit.Client{
-		"test-host-review.googlesource.com": gerritMock,
+		host + "-review.googlesource.com": gerritMock,
 	}
 	ctx = gerrit.SetTestClientFactory(ctx, clientMap)
 

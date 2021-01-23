@@ -52,6 +52,9 @@ func TestScheduleReviews(t *testing.T) {
 					Number:          00000,
 					CurrentRevision: "123abc",
 					Project:         "dummy",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"123abc": {},
+					},
 					Labels: map[string]*gerritpb.LabelInfo{
 						"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
 					},
@@ -60,6 +63,19 @@ func TestScheduleReviews(t *testing.T) {
 					Number:          00001,
 					CurrentRevision: "234abc",
 					Project:         "dummy",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"234abc": {},
+					},
+				},
+				{
+					Number:             00002,
+					CurrentRevision:    "789012",
+					Project:            "dummy",
+					CherryPickOfChange: 11234,
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"112233": {},
+						"456123": {},
+					},
 				},
 			},
 			MoreChanges: false,
@@ -80,6 +96,14 @@ func TestScheduleReviews(t *testing.T) {
 				"a/q/y": nil,
 			},
 		}, nil)
+		gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+			Number:     00002,
+			RevisionId: "789012",
+		})).Return(&gerritpb.ListFilesResponse{
+			Files: map[string]*gerritpb.FileInfo{
+				"a/q/zz": nil,
+			},
+		}, nil)
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00000,
 			RevisionId: "123abc",
@@ -90,6 +114,15 @@ func TestScheduleReviews(t *testing.T) {
 			RevisionId: "234abc",
 			Labels:     map[string]int32{"Bot-Commit": 1},
 		})).Return(&gerritpb.ReviewResult{}, nil)
+		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
+			Number:     00002,
+			RevisionId: "789012",
+			Message:    "The change cannot be reviewed. There are more than one revision uploaded. Learn more: go/rubber-stamper-user-guide.",
+		})).Return(&gerritpb.ReviewResult{}, nil)
+		gerritMock.EXPECT().DeleteReviewer(gomock.Any(), proto.MatcherEqual(&gerritpb.DeleteReviewerRequest{
+			Number:    00002,
+			AccountId: "srv-account@example.com",
+		})).Return(nil, nil)
 
 		err := ScheduleReviews(ctx)
 		So(err, ShouldBeNil)
@@ -97,18 +130,29 @@ func TestScheduleReviews(t *testing.T) {
 		sched.Run(ctx, tqtesting.StopWhenDrained())
 		So(succeeded.Payloads(), ShouldResembleProto, []*taskspb.ChangeReviewTask{
 			{
-				Host:       "test-host",
-				Number:     00000,
-				Revision:   "123abc",
-				Repo:       "dummy",
-				AutoSubmit: true,
+				Host:           "test-host",
+				Number:         00000,
+				Revision:       "123abc",
+				Repo:           "dummy",
+				AutoSubmit:     true,
+				RevisionsCount: 1,
 			},
 			{
-				Host:       "test-host",
-				Number:     00001,
-				Revision:   "234abc",
-				Repo:       "dummy",
-				AutoSubmit: false,
+				Host:           "test-host",
+				Number:         00001,
+				Revision:       "234abc",
+				Repo:           "dummy",
+				AutoSubmit:     false,
+				RevisionsCount: 1,
+			},
+			{
+				Host:               "test-host",
+				Number:             00002,
+				Revision:           "789012",
+				Repo:               "dummy",
+				AutoSubmit:         false,
+				CherryPickOfChange: 11234,
+				RevisionsCount:     2,
 			},
 		})
 	})
