@@ -187,20 +187,12 @@ func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) 
 	// Use ci_test_results table (not CQ) because it is smaller and it does not
 	// include test file names that never made it to the repo.
 	q := r.bqClient.Query(`
-		WITH file_names AS (
-			SELECT IFNULL(IFNULL(tr.test_metadata.location.file_name, tr.test_location.file_name), '') FileName
-			FROM luci-resultdb.chromium.ci_test_results tr
-			WHERE partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
-		)
-		SELECT DISTINCT FileName
-		FROM file_names
-		WHERE FileName != '' AND NOT REGEXP_CONTAINS(FileName, @exclusions)
+		SELECT DISTINCT tr.test_metadata.location.file_name FileName
+		FROM luci-resultdb.chromium.ci_test_results tr
+		WHERE partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+			AND tr.test_metadata.location.file_name != ''
 		ORDER BY FileName
 	`)
-	q.Parameters = append(q.Parameters, bigquery.QueryParameter{
-		Name:  "exclusions",
-		Value: neverSkipTestFileRegexp.String(),
-	})
 	it, err := q.Read(ctx)
 	if err != nil {
 		return err
@@ -224,6 +216,9 @@ func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) 
 			return nil
 		case err != nil:
 			return err
+
+		case mustAlwaysRunTest(row.FileName):
+			continue
 		}
 
 		if _, err := fmt.Fprintln(f, row.FileName); err != nil {

@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 
@@ -16,9 +17,31 @@ import (
 	"infra/rts/presubmit/eval"
 )
 
+// mustAlwaysRunTest returns true if the test file must never be skipped.
+func mustAlwaysRunTest(testFile string) bool {
+	switch {
+	// Skip C++ files that may have main() function or be a dependency of another test.
+	case cppFileRegexp.MatchString(testFile) && alwaysRunCPPBaseTestFileRegexp.MatchString(path.Base(testFile)):
+		return true
+
+	// Always run all third-party tests (never skip them),
+	// except //third_party/blink which is actually first party.
+	case strings.Contains(testFile, "/third_party/") && !strings.HasPrefix(testFile, "//third_party/blink/"):
+		return true
+
+	default:
+		return false
+	}
+}
+
 var (
-	requireAllTestsRegexp   *regexp.Regexp
-	neverSkipTestFileRegexp *regexp.Regexp
+	requireAllTestsRegexp          *regexp.Regexp
+	alwaysRunCPPBaseTestFileRegexp *regexp.Regexp
+	// This list of extensions is derived from
+	// https://source.chromium.org/search?q=-f:%5C.(cpp%7Cc%7Ccc%7Ccxx%7Ch%7Chh%7Chpp%7Chxx%7Cmm%7Cm%7Cinc)$%20lang:cpp%20-f:third_party%20-f:aosp
+	// The fact that this query returns 0 results means the list of extensions
+	// is exhaustive.
+	cppFileRegexp = regexp.MustCompile(`(?i)\.(cpp|c|cc|cxx|h|hh|hpp|hxx|mm|m|inc)$`)
 )
 
 // requireAllTests is a list of patterns of files that require running all
@@ -32,10 +55,11 @@ var requireAllTests = []string{
 	"//DEPS",
 }
 
-// bannedTestFileWords is the list of words in test file names that indicate
-// that the test file is likely to be unsafe to exclude. For example, it
-// contains the main() function, or is dependency of another test file.
-var bannedTestFileWords = []string{
+// bannedCPPBaseTestFileWords is the list of words in a test's filename
+// without directory name (AKA base name of a test file) that indicate that
+// the test file is likely to be unsafe to exclude. For example, it contains the
+// main() function, or is dependency of another test file.
+var bannedCPPBaseTestFileWords = []string{
 	"base",
 	"common",
 	"helper",
@@ -43,7 +67,6 @@ var bannedTestFileWords = []string{
 	"main",
 	"run",
 	"runner",
-	"third_party",
 	"util",
 
 	// These are concrete test file names that have main() function.
@@ -61,12 +84,12 @@ func init() {
 	// Ensure bannedTestFileWords contain only alphanumeric runes, otherwise
 	// regexp below won't work correctly.
 	nonAlphanumeric := regexp.MustCompile(`\W`)
-	for _, w := range bannedTestFileWords {
+	for _, w := range bannedCPPBaseTestFileWords {
 		if nonAlphanumeric.MatchString(w) {
 			panic("bad word: " + w)
 		}
 	}
-	neverSkipTestFileRegexp = regexp.MustCompile(fmt.Sprintf(`(?i)[_\W^](%s)[_\W$]`, strings.Join(bannedTestFileWords, "|")))
+	alwaysRunCPPBaseTestFileRegexp = regexp.MustCompile(fmt.Sprintf(`(?i)[_\W^](%s)[_\W$]`, strings.Join(bannedCPPBaseTestFileWords, "|")))
 }
 
 // selectTests calls skipFile for test files that should be skipped.
@@ -103,7 +126,7 @@ func (r *createModelRun) selectTests(ctx context.Context, in eval.Input, out *ev
 
 	// No matter what filegraph said, never skip certain tests.
 	for i, tv := range in.TestVariants {
-		if neverSkipTestFileRegexp.MatchString(tv.FileName) {
+		if mustAlwaysRunTest(tv.FileName) {
 			out.TestVariantAffectedness[i] = rts.Affectedness{Distance: 0}
 		}
 	}

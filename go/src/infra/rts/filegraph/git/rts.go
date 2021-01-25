@@ -113,5 +113,4 @@ func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) {
 		rank++
 		return callback(sp.Node.Name(), rts.Affectedness{Distance: sp.Distance, Rank: rank})
 	})
-	return
 }
