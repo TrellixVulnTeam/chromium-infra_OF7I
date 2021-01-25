@@ -1378,18 +1378,11 @@ class ServeCodeCoverageData(BaseHandler):
     platform = self.request.get('platform', default_config['platform'])
     list_reports = self.request.get('list_reports', "False").lower() == 'true'
     path = self.request.get('path')
-    if not path or path.endswith('/'):
-      data_type = 'dirs'
-    elif '>' in path:
-      data_type = 'components'
-    else:
-      data_type = 'files'
 
     logging.info('host=%s', host)
     logging.info('project=%s', project)
     logging.info('ref=%s', ref)
     logging.info('revision=%s', revision)
-    logging.info('data_type=%s', data_type)
     logging.info('path=%s', path)
     logging.info('platform=%s', platform)
 
@@ -1434,15 +1427,22 @@ class ServeCodeCoverageData(BaseHandler):
       if not report:
         return BaseHandler.CreateError('Report record not found', 404)
 
-    template = 'coverage/summary_view.html'
+    def _GetDataType(path):
+      if not path or path.endswith('/'):
+        return 'dirs'
+      elif '>' in path:
+        return 'components'
+      else:
+        return 'files'
+
+    data_type = _GetDataType(path)
     if data_type == 'dirs':
       default_path = '//'
+      template = 'coverage/summary_view.html'
     elif data_type == 'components':
       default_path = '>>'
+      template = 'coverage/summary_view.html'
     else:
-      if data_type != 'files':
-        return BaseHandler.CreateError(
-            'Expected data_type to be "files", but got "%s"' % data_type, 400)
       template = 'coverage/file_view.html'
 
     path = path or default_path
