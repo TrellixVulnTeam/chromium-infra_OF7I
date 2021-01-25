@@ -670,7 +670,6 @@ SPECS.update({
         Universal('cheroot', '6.2.4'),
         Universal('colorama', '0.4.1'),
         Universal('contextlib2', '0.5.5'),
-        Universal('dill', '0.3.3'),
         Universal('docker', '2.7.0'),
         Universal('docker-pycreds', '0.2.1'),
         Universal('enum34', '1.1.6', pyversions=['py2']),
@@ -746,7 +745,6 @@ SPECS.update({
         Universal('paramiko', '2.4.1'),
         Universal('paramiko', '2.7.2'),
         Universal('pathlib2', '2.3.3'),
-        Universal('pathos', '0.2.7'),
         Universal('pbr', '3.0.0'),
         Universal('pipenv', '2018.11.26', pyversions=['py2']),
         Universal('pipenv', '2018.11.26', pyversions=['py3']),
@@ -755,7 +753,6 @@ SPECS.update({
         Universal('pluggy', '0.8.1'),
         Universal('ply', '3.11'),
         Universal('portend', '2.2'),
-        Universal('pox', '0.2.9'),
         Universal('protobuf', '3.2.0'),
         Universal('protobuf', '3.6.0'),
         Universal('protobuf', '3.6.1'),
@@ -902,6 +899,16 @@ from .wheel_wheel import MultiWheel
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'MultiWheel',
+        MultiWheel('pathos', '0.2.7', ([
+            Universal('dill', '0.3.3'),
+            SourceOrPrebuilt(
+                'multiprocess',
+                '0.70.11.1',
+                pyversions=['py2', 'py3'],
+            ),
+            Universal('pathos', '0.2.7'),
+            Universal('pox', '0.2.9'),
+        ])),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of
         # available packages.
         #

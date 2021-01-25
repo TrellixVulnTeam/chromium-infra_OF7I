@@ -1193,20 +1193,6 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-## **dill**
-
-### 0.3.3
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/dill-py2_py3"
-  version: "version:0.3.3"
->
-```
-
-
-* *universal*
-
 ## **distlib-py2**
 
 ### 0.3.0
@@ -3073,20 +3059,6 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/portpicker-py2_py3"
   version: "version:1.3.1"
->
-```
-
-
-* *universal*
-
-## **pox**
-
-### 0.2.9
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/pox-py2_py3"
-  version: "version:0.2.9"
 >
 ```
 
