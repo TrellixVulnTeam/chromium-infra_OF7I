@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 
 	"google.golang.org/grpc"
 )
@@ -19,6 +20,12 @@ var (
 )
 
 func main() {
+	if err := innerMain(); err != nil {
+		log.Fatalf("fleet-tlw: %s", err)
+	}
+}
+
+func innerMain() error {
 	flag.Parse()
 	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *port))
 	if err != nil {
@@ -28,13 +35,15 @@ func main() {
 	tlw := newTLWServer()
 	tlw.registerWith(s)
 	c := setupSignalHandler()
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		sig := <-c
 		log.Printf("Captured %v, stopping fleet-tlw service and cleaning up...", sig)
 		s.GracefulStop()
 		tlw.Close()
 	}()
-	if err := s.Serve(l); err != nil {
-		log.Fatalf("fleet-tlw: %s", err)
-	}
+	return s.Serve(l)
 }
