@@ -170,7 +170,7 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 		return err
 	}
 
-	res.Print(os.Stdout, 0.9)
+	res.Print(os.Stdout, 0.97)
 
 	f, err := os.Create(fileName)
 	if err != nil {
