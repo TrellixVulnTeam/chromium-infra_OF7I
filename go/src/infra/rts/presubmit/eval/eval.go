@@ -158,6 +158,10 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid,
 		return nil, errors.New("no change rejections")
 	}
 
+	if len(furthest) > 0 {
+		furthest.LogAndClear(ctx)
+	}
+
 	// Initialize the grid.
 	// Compute distance/rank thresholds by taking distance/rank percentiles in
 	// changeAffectedness. Row/column indexes represent ChangeRecall scores.
@@ -165,9 +169,6 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid,
 	distancePercentiles, rankPercentiles := grid.init(changeAffectedness)
 	logging.Infof(ctx, "Distance percentiles: %v", distancePercentiles)
 	logging.Infof(ctx, "Rank percentiles: %v", rankPercentiles)
-	if len(furthest) > 0 {
-		furthest.LogAndClear(ctx)
-	}
 
 	// Evaluate safety of *combinations* of thresholds.
 
