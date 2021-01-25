@@ -89,7 +89,7 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		defer c()
 	}
 
-	if r.UseTls {
+	if shouldRunTLSProvision(&r) {
 		resp, err := runTLSProvision(ctx, r)
 		if err != nil {
 			return err
@@ -102,6 +102,38 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		return err
 	}
 	return WriteJSONPB(c.OutputPath, resp)
+}
+
+func shouldRunTLSProvision(r *phosphorus.PrejobRequest) bool {
+	e := r.GetConfig().GetPrejobStep().GetProvisionDutExperiment()
+	if e == nil {
+		return false
+	}
+	if !e.Enabled {
+		return false
+	}
+
+	v := crosVersionLabelOrEmpty(r.DesiredProvisionableLabels)
+	switch fs := e.GetCrosVersionSelector().(type) {
+	case *phosphorus.ProvisionDutExperiment_CrosVersionAllowList:
+		for _, p := range fs.CrosVersionAllowList.Prefixes {
+			if strings.HasPrefix(v, p) {
+				return true
+			}
+		}
+		return false
+	case *phosphorus.ProvisionDutExperiment_CrosVersionDisallowList:
+		for _, p := range fs.CrosVersionDisallowList.Prefixes {
+			if strings.HasPrefix(v, p) {
+				return false
+			}
+		}
+		return true
+	default:
+		// Arbitrary default. We don't actually want the config to ever leave
+		// this oneof unset.
+		return false
+	}
 }
 
 // This function will be obsoleted once runTLSProvision is globally enabled.
@@ -269,10 +301,17 @@ const (
 // hoisted up to the clients of test platform. This hack is a step in the
 // direction of hoisting the computation up through the stack.
 func gsPathToImage(labels map[string]string) (string, error) {
-	for k, v := range labels {
-		if k == osVersionKey {
-			return fmt.Sprintf("%s/%s", gsImageArchivePrefix, v), nil
-		}
+	if v := crosVersionLabelOrEmpty(labels); v != "" {
+		return fmt.Sprintf("%s/%s", gsImageArchivePrefix, v), nil
 	}
 	return "", errors.Reason("failed to determine GS location for image").Err()
+}
+
+func crosVersionLabelOrEmpty(labels map[string]string) string {
+	for k, v := range labels {
+		if k == osVersionKey {
+			return v
+		}
+	}
+	return ""
 }
