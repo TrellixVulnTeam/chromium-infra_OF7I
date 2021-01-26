@@ -90,7 +90,7 @@ func init() {
 			panic("bad word: " + w)
 		}
 	}
-	alwaysRunCPPBaseTestFileRegexp = regexp.MustCompile(fmt.Sprintf(`(?i)[_\W^](%s)[_\W$]`, strings.Join(bannedCPPBaseTestFileWords, "|")))
+	alwaysRunCPPBaseTestFileRegexp = regexp.MustCompile(fmt.Sprintf(`(?i)(^|[_\W])(%s)($|[_\W])`, strings.Join(bannedCPPBaseTestFileWords, "|")))
 }
 
 // selectTests calls skipFile for test files that should be skipped.
