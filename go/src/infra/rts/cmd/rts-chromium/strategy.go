@@ -75,6 +75,7 @@ var bannedCPPBaseTestFileWords = []string{
 	"gles2_cmd_decoder_unittest",
 	"media_router_integration_browsertest",
 	"mojo_core_unittest",
+	"site_per_process_browsertest",
 	"vaapi_unittest",
 }
 
