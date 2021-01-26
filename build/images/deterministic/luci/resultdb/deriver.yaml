@@ -1,9 +1,0 @@
-name: luci/resultdb/deriver
-extends: ../../../base.yaml
-
-contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/deriver/docker
-deterministic: true
-
-build:
-  - go_binary: go.chromium.org/luci/resultdb/cmd/deriver
-    dest: ${contextdir}/bin/deriver
