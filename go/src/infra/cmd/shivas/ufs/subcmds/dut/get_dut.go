@@ -7,6 +7,7 @@ package dut
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
@@ -14,6 +15,10 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
+
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/libs/skylab/autotest/hostinfo"
+	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
@@ -116,6 +121,11 @@ func (c *getDut) innerRun(a subcommands.Application, args []string, env subcomma
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+
+	if c.wantHostInfoStore {
+		return c.getHostInfoStore(ctx, hc, e.InventoryService, e.AdminService, args)
+	}
+
 	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
 	full := utils.FullMode(c.outputFlags.Full())
 	var res []proto.Message
@@ -129,6 +139,33 @@ func (c *getDut) innerRun(a subcommands.Application, args []string, env subcomma
 	}
 	return utils.PrintEntities(ctx, ic, res, utils.PrintMachineLSEsJSON, printDutFull, printDutNormal,
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
+}
+
+func (c *getDut) getHostInfoStore(ctx context.Context, hc *http.Client, inventoryService string, adminService string, hostnames []string) error {
+	invWithSVClient := fleet.NewInventoryPRPCClient(
+		&prpc.Client{
+			C:       hc,
+			Host:    adminService,
+			Options: site.DefaultPRPCOptions,
+		},
+	)
+
+	invC := inventoryclient.NewInventoryClient(
+		hc,
+		inventoryService,
+		nil,
+	)
+
+	g := hostinfo.NewGetter(invC, invWithSVClient)
+	for _, hostname := range hostnames {
+		contents, err := g.GetContentsForHostname(ctx, hostname)
+		if err != nil {
+			// TODO: log an error message
+			continue
+		}
+		fmt.Printf("%s\n", contents)
+	}
+	return nil
 }
 
 func (c *getDut) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
