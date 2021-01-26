@@ -39,9 +39,10 @@ var Prod = Environment{
 	InventoryService: "cros-lab-inventory.appspot.com",
 	//TODO(eshwarn) : Change it to prod during release
 	UnifiedFleetService: "ufs.api.cr.dev",
-	SwarmingService:     "https://chromeos-swarming.appspot.com/",
+	// TODO(anushruth): Change to chromeos-swarming.appspot.com for final release.
+	SwarmingService: "https://chromium-swarm-dev.appspot.com/",
 	// TODO(crbug/1128496): remove when fixed
-	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
+	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 	LogdogService:          "luci-logdog.appspot.com",
 	QueenService:           "drone-queen-prod.appspot.com",
 }
