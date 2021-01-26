@@ -24,7 +24,7 @@ function _replace(elem, node) {
 // issue and pathset pages.
 function _filterPatchSetContents(body) {
   const issueListElems = body.getElementsByClassName('issue-list');
-  if (!issueListElems) {
+  if (!issueListElems || !issueListElems.length) {
     return;
   }
   const issueList = issueListElems[0];
@@ -88,7 +88,8 @@ window.onload = function() {
     }
   });
 
-  // Remove links to close and star issues, and draft comment warnings.
+  // Remove links to close and star issues, draft comment warnings, and links to
+  // expand common lines.
   Array.from(document.getElementsByTagName('span')).forEach((span) => {
     if (span.id.startsWith('issue-')) {
       // Remove links to star and close issues.
@@ -96,8 +97,19 @@ window.onload = function() {
     } else if (span.style.color == 'red') {
       // Remove 'Draft comments are only viewable by you.' warnings.
       _remove(span);
+    } else if (span.id == 'skiplinks-10') {
+      // Remove links to expand common lines on side-by-side diff view.
+      _remove(span);
     }
   });
+
+  // Remove form to select view options like number of lines to show for
+  // context, column width and tab spaces.
+  const contextOptions = document.getElementById('id_context');
+  if (contextOptions) {
+    const viewOptionsForm = contextOptions.parentElement.parentElement;
+    _remove(viewOptionsForm);
+  }
 
   _filterPatchSetContents(document.body);
 }
