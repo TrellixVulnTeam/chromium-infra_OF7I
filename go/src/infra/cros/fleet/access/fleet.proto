@@ -1,0 +1,90 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromiumos.fleet.access;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "infra/cros/fleet/access";
+
+// These APIs are specific to the Fleet environment and are not
+// exposed to RTDs.
+//
+// The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+// NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
+// "OPTIONAL" in this document are to be interpreted as described in
+// RFC 2119.
+service Fleet {
+  // CreateSession creates a new session.
+  //
+  // This RPC follows https://google.aip.dev/133.
+  //
+  // Per AIP, the name of the Session in the request is ignored.
+  rpc CreateSession(CreateSessionRequest) returns (Session);
+
+  // GetSession gets a session resource.
+  // This RPC follows https://google.aip.dev/131.
+  rpc GetSession(GetSessionRequest) returns (Session);
+
+  // UpdateSession updates a session resource.
+  // This RPC follows https://google.aip.dev/134.
+  rpc UpdateSession(UpdateSessionRequest) returns (Session);
+
+  // UpdateSession updates a session resource.
+  // This RPC follows https://google.aip.dev/135.
+  rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty);
+}
+
+// A Session tracks resources used by a Swarming task running on Fleet drones.
+// Unless otherwise noted, fields default to the zero value.
+message Session {
+  // The resource name of the session.
+  // Format: sessions/{session}
+  string name = 1;
+
+  // The network address of the TLW service for the session.
+  // This is in the standard IP address formats:
+  //
+  //   127.0.0.1:1234
+  //   [::1]:1234
+  //
+  // This field is set automatically when a session is created.
+  // This field cannot be set or updated by clients and will be ignored.
+  string tlw_address = 2;
+
+  // When the session will expire.
+  // Note that if this is not explicitly set during creation, it will
+  // default to the zero value and expire immediately.
+  google.protobuf.Timestamp expire_time = 3;
+}
+
+message CreateSessionRequest {
+  Session session = 1;
+}
+
+message GetSessionRequest {
+  // The resource name of the session.
+  // Format: sessions/{session}
+  string name = 1;
+}
+
+message UpdateSessionRequest {
+  // The session to update.
+  //
+  // The session's `name` field is used to identify the session to be updated.
+  Session session = 1;
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteSessionRequest {
+  // The resource name of the session.
+  // Format: sessions/{session}
+  string name = 1;
+}

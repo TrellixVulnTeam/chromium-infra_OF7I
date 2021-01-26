@@ -32,8 +32,15 @@ func innerMain() error {
 		log.Fatalf("fleet-tlw: %s", err)
 	}
 	s := grpc.NewServer()
+
 	tlw := newTLWServer()
 	tlw.registerWith(s)
+	defer tlw.Close()
+
+	ss := newSessionServer()
+	ss.registerWith(s)
+	defer ss.Close()
+
 	c := setupSignalHandler()
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -43,7 +50,6 @@ func innerMain() error {
 		sig := <-c
 		log.Printf("Captured %v, stopping fleet-tlw service and cleaning up...", sig)
 		s.GracefulStop()
-		tlw.Close()
 	}()
 	return s.Serve(l)
 }
