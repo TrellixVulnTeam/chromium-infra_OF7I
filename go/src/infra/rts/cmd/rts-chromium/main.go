@@ -41,7 +41,7 @@ func main() {
 			return logCfg.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
-			cmdPresubmitHistory(&authOpt),
+			cmdFetchRejections(&authOpt),
 			cmdFetchDurations(&authOpt),
 			cmdCreateModel(&authOpt),
 			cmdSelect(),

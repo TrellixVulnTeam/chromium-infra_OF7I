@@ -1,2 +1,4 @@
-# .hist extension is often used for history files used for RTS evaluation.
-*.hist
+# .rej and .dur extensions are often used for data directories with rejections
+# and durations respectively, used for RTS evaluation.
+*.rej
+*.dur

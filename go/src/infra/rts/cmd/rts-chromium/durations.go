@@ -21,7 +21,7 @@ func cmdFetchDurations(authOpt *auth.Options) *subcommands.Command {
 		UsageLine: `fetch-durations`,
 		ShortDesc: "fetch test duration data",
 		LongDesc: text.Doc(`
-			Fetch test duration data, suitable for selection strategy evaluation.
+			Fetch test duration data, suitable for model creation.
 			For format details, see comments of TestDurationRecord protobuf message.
 		`),
 		CommandRun: func() subcommands.CommandRun {
@@ -66,7 +66,30 @@ func (r *fetchDurationsRun) Run(a subcommands.Application, args []string, env su
 	))
 }
 
-const testDurationsSQL = `
+const commonSubqueries = `
+# Returns an array of structs compatible with GerritPatch protojson message.
+CREATE TEMP FUNCTION patchsetArray(change INT64, patchset INT64, files ARRAY<STRING>) AS (
+  [STRUCT(
+		STRUCT(
+			"chromium-review.googlesource.com" AS host,
+			"chromium/src" AS project,
+			change AS number
+		) AS change,
+		patchset,
+		ARRAY(
+			SELECT AS STRUCT
+				"https://chromium.googlesource.com/chromium/src" AS repo,
+				f as path
+			FROM UNNEST(files) f
+		) AS changedFiles
+	)]
+);
+
+CREATE TEMP FUNCTION RFC3339(ts TIMESTAMP)
+RETURNS STRING
+LANGUAGE js
+AS "return ts.toISOString()";
+
 WITH
 	affected_files_raw AS (
 		SELECT
@@ -106,31 +129,33 @@ WITH
 	tryjobs AS (
 		SELECT
 			b.id,
-			ps,
+			ps.change,
+			ps.earliest_equivalent_patchset as patchset,
+			partition_time as ps_approx_timestamp,
 		FROM commit-queue.chromium.attempts a, a.gerrit_changes ps, a.builds b
-		WHERE partition_time BETWEEN @startTime AND TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
+		WHERE partition_time BETWEEN @startTime AND @endTime
 	),
-	test_results AS (
+
+	test_results_base AS (
 		SELECT
 			CAST(REGEXP_EXTRACT(exported.id, r'build-(\d+)') as INT64) as build_id,
-			IFNULL(test_metadata.location.file_name, '') as file_name,
-			test_id,
-			variant,
+			# This struct corresponds to TestVariant protojson message.
+			STRUCT(
+				test_id AS id,
+				ARRAY(SELECT FORMAT("%s:%s", key, value) kv FROM UNNEST(variant) ORDER BY kv) as variant,
+				test_metadata.location.file_name as fileName
+			) as testVariant,
+			variant_hash,
+			expected,
+			exonerated,
+			status,
 			duration,
 		FROM luci-resultdb.chromium.try_test_results tr
-		WHERE partition_time BETWEEN @startTime and @endTime
-			AND RAND() <= @frac
+		-- Read prev-day and next-day results too to ensure that we have ALL
+		-- results of a given CQ attempt.
+		WHERE partition_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) and TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
 			AND (@test_id_regexp = '' OR REGEXP_CONTAINS(test_id, @test_id_regexp))
 			AND (@builder_regexp = '' OR EXISTS (SELECT 0 FROM tr.variant WHERE key='builder' AND REGEXP_CONTAINS(value, @builder_regexp)))
-			AND duration > @minDuration
-
-			# Exclude tests which don't have a file name.
-			# This means the prediction is less representative of the build-level
-			# savings, but on the other hand it excludes the noise created by
-			# test frameworks that don't report file names yet (i.e. things that the
-			# candidate strategy doesn't have control over), thus providing a stronger
-			# signal for the strategy.
-			AND test_metadata.location.file_name != ''
 
 			# Exclude third-party tests (except Web Tests) because they test code
 			# which isn't in src.git.
@@ -139,34 +164,31 @@ WITH
 				test_metadata.location.file_name NOT LIKE '%/third_party/%'
 				OR test_metadata.location.file_name LIKE '//third_party/blink/%'
 			)
+	),
+`
+
+const testDurationsSQL = commonSubqueries + `
+	test_results AS (
+		SELECT *
+		FROM test_results_base
+		WHERE RAND() <= @frac
+			AND duration > @minDuration
+
+			# Exclude tests which don't have a file name.
+			# This means the prediction is less representative of the build-level
+			# savings, but on the other hand it excludes the noise created by
+			# test frameworks that don't report file names yet (i.e. things that the
+			# candidate strategy doesn't have control over), thus providing a stronger
+			# signal for the strategy.
+			AND testVariant.fileName != ''
 	)
 
 -- Join all tables and produce rows in the TestDurationRecord protojson format.
 SELECT
-	[STRUCT(
-		STRUCT(
-			"chromium-review.googlesource.com" AS host,
-			"chromium/src" AS project,
-			ps.change AS number
-		) AS change,
-		ps.patchset,
-		ANY_VALUE(ARRAY(
-			SELECT AS STRUCT
-				"https://chromium.googlesource.com/chromium/src" AS repo,
-				f as path
-			FROM UNNEST(af.files) f
-		)) AS changedFiles
-	)] AS patchsets,
-	ARRAY_AGG(STRUCT(
-		STRUCT(
-			test_id AS id,
-			ARRAY(SELECT FORMAT("%s:%s", key, value) kv FROM UNNEST(variant) ORDER BY kv) as variant,
-			file_name as fileName
-		) as testVariant,
-		FORMAT("%fs", duration) as duration
-	)) AS testDurations,
+	patchsetArray(change, patchset, ANY_VALUE(af.files)) AS patchsets,
+	ARRAY_AGG(STRUCT(testVariant, FORMAT("%fs", duration) as duration)) AS testDurations,
 FROM tryjobs t
 JOIN test_results tr ON t.id = tr.build_id
-JOIN affected_files af ON ps.change = af.change AND ps.patchset = af.patchset
-GROUP BY ps.change, ps.patchset
+JOIN affected_files af USING (change, patchset)
+GROUP BY change, patchset
 `
