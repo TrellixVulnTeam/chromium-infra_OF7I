@@ -22,7 +22,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/rts"
-	"infra/rts/presubmit/eval/history"
 	evalpb "infra/rts/presubmit/eval/proto"
 )
 
@@ -37,8 +36,9 @@ type Eval struct {
 	// If <=0, defaults to 100.
 	Concurrency int
 
-	// Rejections are used to evaluate safety of the strategy.
-	Rejections *history.Player
+	// Rejections is a path to a directory with rejection records.
+	// For format details, see comments of Rejection protobuf message.
+	Rejections string
 
 	// Durations is a path to a directory with test duration records.
 	// For format details, see comments of TestDurationRecord protobuf message.
@@ -57,8 +57,10 @@ type Eval struct {
 // RegisterFlags registers flags for the Eval fields.
 func (e *Eval) RegisterFlags(fs *flag.FlagSet) error {
 	fs.IntVar(&e.Concurrency, "j", defaultConcurrency, "Number of job to run parallel")
-	fs.Var(&historyFileInputFlag{ptr: &e.Rejections}, "rejections", text.Doc(`
-		Path to the history file with change rejections. Used for safety evaluation.
+	fs.StringVar(&e.Rejections, "rejections", "", text.Doc(`
+		Path to a directory with test rejection records.
+		For format details, see comments of Rejection protobuf message.
+		Used for safety evaluation.
 	`))
 	fs.StringVar(&e.Durations, "durations", "", text.Doc(`
 		Path to a directory with test duration records.
@@ -77,7 +79,7 @@ func (e *Eval) RegisterFlags(fs *flag.FlagSet) error {
 
 // ValidateFlags validates values of flags registered using RegisterFlags.
 func (e *Eval) ValidateFlags() error {
-	if e.Rejections == nil {
+	if e.Rejections == "" {
 		return errors.New("-rejections is required")
 	}
 	if e.Durations == "" {
@@ -117,13 +119,15 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid,
 	defer eg.Wait()
 
 	// Play back the history.
+	rejC := make(chan *evalpb.Rejection)
 	eg.Go(func() error {
-		err := e.Rejections.PlaybackRejections(ctx)
-		return errors.Annotate(err, "failed to playback history").Err()
+		defer close(rejC)
+		err := readRejections(ctx, e.Rejections, rejC)
+		return errors.Annotate(err, "failed to read rejection records").Err()
 	})
 
 	e.goMany(eg, func() error {
-		for rej := range e.Rejections.RejectionC {
+		for rej := range rejC {
 			// TODO(crbug.com/1112125): skip the patchset if it has a ton of failed tests.
 			// Most selection strategies would reject such a patchset, so it represents noise.
 

@@ -19,6 +19,21 @@ import (
 	evalpb "infra/rts/presubmit/eval/proto"
 )
 
+// readRejections reads rejections from a directory.
+func readRejections(ctx context.Context, dir string, dest chan<- *evalpb.Rejection) error {
+	return readHistoryRecords(dir, func(entry []byte) error {
+		rej := &evalpb.Rejection{}
+		if err := protojson.Unmarshal(entry, rej); err != nil {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+		case dest <- rej:
+		}
+		return ctx.Err()
+	})
+}
+
 // readTestDurations reads test duration records from a directory.
 func readTestDurations(ctx context.Context, dir string, dest chan<- *evalpb.TestDurationRecord) error {
 	return readHistoryRecords(dir, func(entry []byte) error {

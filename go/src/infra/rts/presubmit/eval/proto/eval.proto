@@ -12,6 +12,10 @@ import "google/protobuf/timestamp.proto";
 option go_package = "infra/rts/presubmit/eval/proto;evalpb";
 
 // A rejection of a code change due to test failures.
+//
+// Normally these messages are in a directory where .jsonl.gz files are
+// GZIP-compressed JSON Lines files, where each entry is a protojson-encoded
+// Rejection message.
 message Rejection {
   // The rejected patchsets.
   repeated GerritPatchset patchsets = 1;
@@ -21,29 +25,6 @@ message Rejection {
 
   // List of test variants that caused the rejection.
   repeated TestVariant failed_test_variants = 3;
-}
-
-// One part of a split Rejection message.
-//
-// Multiple fragments are combined with proto.Merge() called on their
-// "rejection" fields. Note that repeated fields are concatenated.
-//
-// TODO(nodir): remove this message.
-message RejectionFragment {
-  // Rejection data in this fragment.
-  // May be unset, e.g. if this is a terminal fragment.
-  Rejection rejection = 1;
-
-  // True if this is the last fragment of the Rejection in a sequence of
-  // fragments. All fragments of the same rejection must be contiguous.
-  //
-  // Note that the following sequence of Records is valid:
-  //  fragment for rejection R1
-  //  test duration
-  //  fragment for rejection R1, terminal
-  //  fragment for rejection R2
-  // Here there is a test duration record between rejection fragments.
-  bool terminal = 2;
 }
 
 // Code changes and a sample of test runs with their durations.
@@ -122,17 +103,4 @@ message TestVariant {
 
   // Path of the file where the test is defined.
   string file_name = 3;
-}
-
-// One historical record.
-// Used for streaming messages above.
-// TODO(nodir): remove this message.
-message Record {
-  oneof data {
-    // A code change rejection due to test failures.
-    RejectionFragment rejection_fragment = 1;
-
-    // A record of test duration.
-    TestDuration test_duration = 2;
-  }
 }

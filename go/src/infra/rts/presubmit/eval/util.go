@@ -10,7 +10,6 @@ import (
 
 	"go.chromium.org/luci/common/data/text/indented"
 
-	"infra/rts/presubmit/eval/history"
 	evalpb "infra/rts/presubmit/eval/proto"
 )
 
@@ -38,24 +37,4 @@ func (p *printer) printf(format string, args ...interface{}) {
 // psURL returns the patchset URL.
 func psURL(p *evalpb.GerritPatchset) string {
 	return fmt.Sprintf("https://%s/c/%d/%d", p.Change.Host, p.Change.Number, p.Patchset)
-}
-
-type historyFileInputFlag struct {
-	path string
-	ptr  **history.Player
-}
-
-func (f *historyFileInputFlag) Set(val string) error {
-	r, err := history.OpenFile(val)
-	if err != nil {
-		return err
-	}
-
-	f.path = val
-	*f.ptr = history.NewPlayer(r)
-	return nil
-}
-
-func (f *historyFileInputFlag) String() string {
-	return f.path
 }
