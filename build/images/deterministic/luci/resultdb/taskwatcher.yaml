@@ -1,9 +1,0 @@
-name: luci/resultdb/taskwatcher
-extends: ../../../base.yaml
-
-contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/taskwatcher/docker
-deterministic: true
-
-build:
-  - go_binary: go.chromium.org/luci/resultdb/cmd/taskwatcher
-    dest: ${contextdir}/bin/taskwatcher
