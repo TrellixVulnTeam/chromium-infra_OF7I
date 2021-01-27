@@ -47,8 +47,9 @@ function _filterPatchSetContents(body) {
   });
 }
 
-// Remove DOM elements not archived in static Rietveld. This includes headers,
-// user pages, expanded diffs, etc. that no longer function.
+// Edit DOM elements for static Rietveld. This includes removing headers,
+// user pages, expanded diffs, etc. that no longer function and adding an
+// explanatory footer.
 function _modifyStaticPage() {
   // Replace header (containing username and links to settings and help pages)
   // with project logo.
@@ -56,6 +57,14 @@ function _modifyStaticPage() {
   const projectLogo = header.firstElementChild;
   _replace(header, projectLogo);
   projectLogo.style.float = null;
+
+  // Create explanatory 'archived' footer.
+  const gerritLink = "https://chromium-review.googlesource.com/";
+  let footer = document.createElement("footer");
+  footer.innerHTML = "<p>Chromium Code Reviews has been turned down in " +
+    "favor of <a href=" + gerritLink + ">Chromium Gerrit</a>. This page " +
+    "was archived in December 2020.</p>";
+  document.body.appendChild(footer);
 
   // Remove links to patch download pages, and replace links to user pages, and
   // search pages with their contents.
