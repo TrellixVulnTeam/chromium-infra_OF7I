@@ -2367,5 +2367,5 @@ function M_jumpToPatch(select, issue, patchset, unified, opt_part) {
  * Generic callback when page is unloaded.
  */
 function M_unloadPage() {
-  if (draftMessage) { draftMessage.save(); }
+  // Do nothing. This function is needed by the onunload event.
 }
