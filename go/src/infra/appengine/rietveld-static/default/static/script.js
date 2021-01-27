@@ -47,7 +47,9 @@ function _filterPatchSetContents(body) {
   });
 }
 
-window.onload = function() {
+// Remove DOM elements not archived in static Rietveld. This includes headers,
+// user pages, expanded diffs, etc. that no longer function.
+function _modifyStaticPage() {
   // Replace header (containing username and links to settings and help pages)
   // with project logo.
   const header = document.body.children[2];
@@ -113,6 +115,12 @@ window.onload = function() {
 
   _filterPatchSetContents(document.body);
 }
+
+document.addEventListener('readystatechange', event => {
+  if (event.target.readyState === 'interactive') {
+    _modifyStaticPage();
+  }
+});
 
 // Generic helpers
 
