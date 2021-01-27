@@ -57,7 +57,9 @@ func (c *epClient) call(ctx context.Context, method, urlSuffix string, request, 
 	if client.Timeout > 0 {
 		clientDeadline := clock.Now(ctx).Add(client.Timeout)
 		if deadline, ok := ctx.Deadline(); !ok || deadline.After(clientDeadline) {
-			ctx, _ = context.WithDeadline(ctx, clientDeadline)
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithDeadline(ctx, clientDeadline)
+			defer cancel()
 		}
 	}
 
