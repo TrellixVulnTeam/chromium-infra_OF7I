@@ -218,12 +218,14 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 
 	}
 
-	tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
+	//TODO(anushruth): Change to e.SwarmingService once UFS migration is complete.
+	tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, "https://chromium-swarm-dev.appspot.com/")
 	if err != nil {
 		return err
 	}
 	tc.LogdogService = e.LogdogService
-	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
+	//TODO(anushruth): Change to e.SwarmingServiceAccount once UFS migration is complete.
+	tc.SwarmingServiceAccount = "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com"
 	for _, req := range requests {
 		// Check if the deployment is needed.
 		actions, ok := deployTasks[req.MachineLSE.GetName()]
