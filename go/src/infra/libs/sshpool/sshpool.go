@@ -8,7 +8,6 @@ package sshpool
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -113,12 +112,14 @@ func (p *Pool) Close() error {
 }
 
 // closeClient closes the supplied ssh.Client.
+// Safe to pass in an already closed ssh.Client.
 func (p *Pool) closeClient(c *ssh.Client) {
 	p.wg.Add(1)
 	go func() {
 		defer p.wg.Done()
-		if err := c.Close(); err != nil {
-			log.Printf("sshpool: Error occurred while closing ssh.Client: %s", err)
-		}
+		// Ignore the error returned in case the client is already closed.
+		// Which could happen if the DUT was rebooted, but the ssh.Client
+		// is being put back into the pool.
+		_ = c.Close()
 	}()
 }
