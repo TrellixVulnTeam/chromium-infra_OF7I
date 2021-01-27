@@ -142,7 +142,8 @@ func (sc *swarmingClientImpl) ListAliveIdleBotsInPool(c context.Context, pool st
 	dims.Set(PoolDimensionKey, pool)
 	call := sc.Bots.List().Dimensions(dims.Format()...).IsDead("FALSE").IsBusy("FALSE")
 	for {
-		ic, _ := context.WithTimeout(c, 60*time.Second)
+		ic, cancel := context.WithTimeout(c, 60*time.Second)
+		defer cancel()
 		response, err := call.Context(ic).Do()
 		if err != nil {
 			return nil, errors.Reason("failed to list alive and idle bots in pool %s", pool).InternalReason(err.Error()).Err()
@@ -166,7 +167,8 @@ func (sc *swarmingClientImpl) ListAliveBotsInPool(c context.Context, pool string
 	for {
 		var response *swarming.SwarmingRpcsBotList
 		f := func() (err error) {
-			ic, _ := context.WithTimeout(c, 60*time.Second)
+			ic, cancel := context.WithTimeout(c, 60*time.Second)
+			defer cancel()
 			response, err = call.Context(ic).Do()
 			return err
 		}
@@ -216,7 +218,8 @@ func (sc *swarmingClientImpl) CreateTask(c context.Context, name string, args *S
 		User:           args.User,
 		ServiceAccount: args.ServiceAccount,
 	}
-	ic, _ := context.WithTimeout(c, 60*time.Second)
+	ic, cancel := context.WithTimeout(c, 60*time.Second)
+	defer cancel()
 	resp, err := sc.Tasks.New(ntr).Context(ic).Do()
 	if err != nil {
 		return "", errors.Reason("Failed to create task").InternalReason(err.Error()).Err()
@@ -265,7 +268,8 @@ func convertToDimensions(args *SwarmingCreateTaskArgs) ([]*swarming.SwarmingRpcs
 // GetTaskResult gets the task result for a given task ID.
 func (sc *swarmingClientImpl) GetTaskResult(ctx context.Context, tid string) (*swarming.SwarmingRpcsTaskResult, error) {
 	call := sc.Task.Result(tid)
-	ctx, _ = context.WithTimeout(ctx, 60*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
 	resp, err := call.Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Reason("failed to get result for task %s", tid).InternalReason(err.Error()).Err()
@@ -296,7 +300,8 @@ func (sc *swarmingClientImpl) ListRecentTasks(c context.Context, tags []string, 
 		if chunk == 0 {
 			break
 		}
-		ic, _ := context.WithTimeout(c, 60*time.Second)
+		ic, cancel := context.WithTimeout(c, 60*time.Second)
+		defer cancel()
 		resp, err := call.Limit(int64(chunk)).Context(ic).Do()
 		if err != nil {
 			return nil, errors.Reason("failed to list tasks with tags %s", strings.Join(tags, " ")).InternalReason(err.Error()).Err()
