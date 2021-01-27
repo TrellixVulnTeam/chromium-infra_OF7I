@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package fleet;
 
+option go_package = "infra/libs/fleet/protos;fleet";
+
 import "infra/libs/fleet/protos/src/location.proto";
 
 // Next Tag: 3
