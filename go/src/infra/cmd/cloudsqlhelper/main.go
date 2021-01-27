@@ -217,7 +217,7 @@ func (c *cmdNewMigration) Run(a subcommands.Application, args []string, env subc
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func GetApplication() *cli.Application {
+func getApplication() *cli.Application {
 	return &cli.Application{
 		Name:  "cloudsqlhelper",
 		Title: "MySQL Schema Migration Utility",
@@ -332,5 +332,5 @@ func GetApplication() *cli.Application {
 }
 
 func main() {
-	os.Exit(subcommands.Run(GetApplication(), nil))
+	os.Exit(subcommands.Run(getApplication(), nil))
 }
