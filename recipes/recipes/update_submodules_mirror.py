@@ -170,6 +170,14 @@ def GetSubmodules(api, deps, source_checkout_name):
     if rev is None:
       rev = 'HEAD'
 
+    # Filter out any DEPS that point outside of the repo, as there's no way to
+    # represent this with submodules.
+    #
+    # Note that source_checkout_name has a slash on the end, so this will
+    # correctly filter out any path which has the checkout name as a prefix.
+    # For example, src-internal in the src DEPS file.
+    if not path.startswith(source_checkout_name):
+      continue
     # Filter out the root repo itself, which shows up for some reason.
     if path == source_checkout_name:
       continue
@@ -179,18 +187,8 @@ def GetSubmodules(api, deps, source_checkout_name):
            for other_path in deps.iterkeys()):
       continue
 
-    # Store any DEPS that point outside of the repo to `parent` directory, as
-    # there's no other way to represent this with submodules than to store in
-    # different directory.
-    #
-    # Note that source_checkout_name has a slash on the end, so this will
-    # correctly filter out any path which has the checkout name as a prefix.
-    # For example, src-internal in the src DEPS file.
-    if not path.startswith(source_checkout_name):
-      path = str('parent/' + path)
-    else:
-      # json.loads returns unicode but the recipe framework can only handle str.
-      path = str(path[len(source_checkout_name):])
+    # json.loads returns unicode but the recipe framework can only handle str.
+    path = str(path[len(source_checkout_name):])
 
     path = path.rstrip('/')
 
