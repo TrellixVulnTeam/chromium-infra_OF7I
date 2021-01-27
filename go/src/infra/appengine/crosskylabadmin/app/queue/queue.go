@@ -89,7 +89,8 @@ func runAuditQueueHandler(c *router.Context) (err error) {
 	}()
 
 	botID := c.Request.FormValue("botID")
-	taskURL, err := frontend.CreateAuditTask(c.Context, botID)
+	actions := c.Request.FormValue("actions")
+	taskURL, err := frontend.CreateAuditTask(c.Context, botID, actions)
 	if err != nil {
 		return err
 	}
