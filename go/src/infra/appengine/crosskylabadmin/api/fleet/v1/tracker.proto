@@ -44,6 +44,7 @@ message ReportBotsResponse {
 }
 
 message PushBotsForAdminAuditTasksRequest {
+  AuditTask task = 1;
 }
 
 message PushBotsForAdminAuditTasksResponse {
@@ -58,6 +59,14 @@ enum DutState {
   RepairFailed = 5;
   NeedsReplacement = 6;
   NeedsManualRepair = 7;
+  NeedsDeploy = 8;
+}
+
+enum AuditTask {
+  TaskInvalid = 0;
+  ServoUSBKey = 1;
+  DUTStorage = 2;
+  RPMConfig = 3;
 }
 
 enum Health {

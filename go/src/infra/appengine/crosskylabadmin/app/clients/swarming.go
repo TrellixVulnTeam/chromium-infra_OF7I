@@ -499,6 +499,7 @@ var dutStateMap = map[string]fleet.DutState{
 	"repair_failed":       fleet.DutState_RepairFailed,
 	"needs_manual_repair": fleet.DutState_NeedsManualRepair,
 	"needs_replacement":   fleet.DutState_NeedsReplacement,
+	"needs_deploy":        fleet.DutState_NeedsDeploy,
 }
 
 // DutStateRevMap mapping DutState to swarming value representation
@@ -510,4 +511,5 @@ var DutStateRevMap = map[fleet.DutState]string{
 	fleet.DutState_RepairFailed:      "repair_failed",
 	fleet.DutState_NeedsManualRepair: "needs_manual_repair",
 	fleet.DutState_NeedsReplacement:  "needs_replacement",
+	fleet.DutState_NeedsDeploy:       "needs_deploy",
 }
