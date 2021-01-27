@@ -905,6 +905,7 @@ SPECS.update({
             SourceOrPrebuilt(
                 'multiprocess',
                 '0.70.11.1',
+                packaged=[],
                 pyversions=['py2', 'py3'],
             ),
             Universal('pathos', '0.2.7'),
