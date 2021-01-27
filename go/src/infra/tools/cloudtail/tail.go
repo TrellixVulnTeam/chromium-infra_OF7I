@@ -6,13 +6,13 @@ package cloudtail
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
 
-	"golang.org/x/net/context"
 	"gopkg.in/fsnotify.v1"
 
 	"go.chromium.org/luci/common/clock"

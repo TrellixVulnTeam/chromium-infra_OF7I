@@ -17,6 +17,7 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -28,7 +29,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

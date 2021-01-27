@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"infra/cros/cmd/prototype-rts/internal/rtd"
 	"infra/cros/cmd/prototype-rts/internal/service"
 
@@ -8,7 +10,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 // InvokeRTD starts an RTD container and executes Invocations against it.

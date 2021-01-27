@@ -5,11 +5,11 @@
 package tricium
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
 	"go.chromium.org/luci/common/errors"
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/server/auth"
 )

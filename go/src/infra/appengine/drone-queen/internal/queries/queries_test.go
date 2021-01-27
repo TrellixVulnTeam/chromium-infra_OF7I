@@ -5,6 +5,7 @@
 package queries
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -14,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	"infra/appengine/drone-queen/api"
 	"infra/appengine/drone-queen/internal/config"

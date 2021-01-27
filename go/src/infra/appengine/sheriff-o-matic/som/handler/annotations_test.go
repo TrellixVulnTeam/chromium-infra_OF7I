@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -22,7 +23,6 @@ import (
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	. "github.com/smartystreets/goconvey/convey"

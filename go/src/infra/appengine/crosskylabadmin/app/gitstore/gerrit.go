@@ -15,6 +15,7 @@
 package gitstore
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -24,7 +25,6 @@ import (
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 )
 
 // commitFileContents commits given files via gerrit.

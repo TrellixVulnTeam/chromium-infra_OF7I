@@ -5,6 +5,7 @@
 package cloudtail
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
 	cloudlog "google.golang.org/api/logging/v2"
 

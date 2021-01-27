@@ -6,6 +6,7 @@ package docker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"strings"
 	"sync"
@@ -20,8 +21,6 @@ import (
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	tsmonTypes "go.chromium.org/luci/common/tsmon/types"
-
-	"golang.org/x/net/context"
 )
 
 var (

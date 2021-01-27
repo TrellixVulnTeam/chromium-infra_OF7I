@@ -15,6 +15,7 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -32,7 +33,6 @@ import (
 	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

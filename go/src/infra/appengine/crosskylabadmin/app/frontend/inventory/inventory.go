@@ -17,6 +17,7 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -36,7 +37,6 @@ import (
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"

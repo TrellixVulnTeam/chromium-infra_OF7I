@@ -5,13 +5,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	"go.chromium.org/luci/vpython/api/vpython"

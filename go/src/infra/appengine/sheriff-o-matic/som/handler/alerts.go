@@ -6,12 +6,11 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"

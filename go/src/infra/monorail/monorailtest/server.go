@@ -1,9 +1,9 @@
 package monorailtest
 
 import (
-	"infra/monorail"
+	"context"
 
-	"golang.org/x/net/context"
+	"infra/monorail"
 )
 
 // ServerMock delegates method implementations to function pointers.

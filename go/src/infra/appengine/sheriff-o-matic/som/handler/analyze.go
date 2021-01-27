@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"

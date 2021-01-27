@@ -5,6 +5,7 @@
 package model
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"errors"
@@ -27,7 +28,6 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 )
 
 const (

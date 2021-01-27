@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/maruel/subcommands"
 	"github.com/mattes/migrate"
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging"

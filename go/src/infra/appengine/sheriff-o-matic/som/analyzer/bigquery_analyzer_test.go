@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
@@ -8,7 +9,6 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigquery"
-	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"

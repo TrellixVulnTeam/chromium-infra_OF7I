@@ -19,6 +19,7 @@ package main
 import "C"
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -35,7 +36,6 @@ import (
 	"github.com/VividCortex/godaemon"
 	"go.chromium.org/luci/common/runtime/paniccatcher"
 	"go.chromium.org/luci/common/sync/parallel"
-	"golang.org/x/net/context"
 )
 
 var (

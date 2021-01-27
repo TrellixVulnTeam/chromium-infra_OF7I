@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -10,8 +11,6 @@ import (
 	"strings"
 
 	"infra/appengine/test-results/model"
-
-	"golang.org/x/net/context"
 
 	"cloud.google.com/go/storage"
 	"go.chromium.org/luci/common/gcloud/gs"

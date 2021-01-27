@@ -15,6 +15,7 @@
 package gitstore
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -26,7 +27,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

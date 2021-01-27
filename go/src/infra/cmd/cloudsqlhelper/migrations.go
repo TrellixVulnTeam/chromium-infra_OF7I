@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,8 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"golang.org/x/net/context"
 
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database/mysql"

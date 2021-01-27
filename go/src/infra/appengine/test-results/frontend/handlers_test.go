@@ -2,13 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"infra/appengine/test-results/model"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"golang.org/x/net/context"
+	"infra/appengine/test-results/model"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/gae/impl/memory"

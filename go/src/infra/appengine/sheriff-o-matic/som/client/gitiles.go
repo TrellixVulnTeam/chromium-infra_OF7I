@@ -1,13 +1,12 @@
 package client
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/appengine/gaeauth/client"
 	"go.chromium.org/luci/auth"

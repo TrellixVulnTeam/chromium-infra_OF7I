@@ -15,13 +15,15 @@
 package inventory
 
 import (
+	"context"
+	"sync"
+
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/dutpool"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 	"infra/libs/skylab/inventory"
-	"sync"
 
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
@@ -29,7 +31,6 @@ import (
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

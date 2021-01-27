@@ -15,6 +15,7 @@
 package clients
 
 import (
+	"context"
 	"net/http"
 
 	authclient "go.chromium.org/luci/auth"
@@ -23,7 +24,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 )
 
 // NewGerritClient returns a new gerrit client.

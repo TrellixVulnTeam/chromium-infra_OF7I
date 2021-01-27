@@ -6,11 +6,10 @@ package cloudtail
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"

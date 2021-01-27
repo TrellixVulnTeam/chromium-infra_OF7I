@@ -5,12 +5,11 @@
 package cloudtail
 
 import (
+	"context"
 	"io"
 	"strings"
 	"sync"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

@@ -15,6 +15,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -25,7 +26,6 @@ import (
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"

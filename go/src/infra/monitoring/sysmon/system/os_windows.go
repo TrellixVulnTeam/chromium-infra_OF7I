@@ -5,11 +5,11 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/StackExchange/wmi"
-	"golang.org/x/net/context"
 )
 
 // Win32_OperatingSystem contains fields from the WMI class with the same name:

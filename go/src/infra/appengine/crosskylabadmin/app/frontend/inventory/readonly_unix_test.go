@@ -20,14 +20,13 @@
 package inventory
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/appengine/crosskylabadmin/app/gitstore/fakes"
-
-	"golang.org/x/net/context"
 )
 
 func TestGetDutInfoAfterUpdating(t *testing.T) {

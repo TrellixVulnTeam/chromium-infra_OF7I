@@ -5,6 +5,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -17,8 +18,6 @@ import (
 
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
-
-	"golang.org/x/net/context"
 
 	"github.com/julienschmidt/httprouter"
 

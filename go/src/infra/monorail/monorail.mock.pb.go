@@ -7,8 +7,9 @@ package monorail
 import (
 	reflect "reflect"
 
+	context "context"
+
 	gomock "github.com/golang/mock/gomock"
-	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
 

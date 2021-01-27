@@ -5,7 +5,7 @@
 package main
 
 import (
-	"golang.org/x/net/context"
+	"context"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"

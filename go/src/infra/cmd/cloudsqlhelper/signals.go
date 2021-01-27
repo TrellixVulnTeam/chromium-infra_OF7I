@@ -5,10 +5,9 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
-
-	"golang.org/x/net/context"
 )
 
 // catchInterrupt handles SIGINT signal.

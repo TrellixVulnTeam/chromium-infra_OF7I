@@ -5,11 +5,10 @@
 package frontend
 
 import (
+	"context"
 	"sort"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"sort"
 	"strings"
 
-	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
 
 	cipd "go.chromium.org/luci/cipd/client/cipd/builder"

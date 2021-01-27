@@ -5,11 +5,10 @@
 package cloudtail
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	logging "google.golang.org/api/logging/v2"
 

@@ -6,13 +6,13 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/logging"
 )

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -29,7 +30,6 @@ import (
 	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/portal"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 )
 
 const (

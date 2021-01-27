@@ -1,9 +1,8 @@
 package handler
 
 import (
+	"context"
 	"net/http"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"

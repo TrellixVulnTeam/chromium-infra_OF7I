@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +13,6 @@ import (
 
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

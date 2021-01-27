@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -8,7 +9,6 @@ import (
 
 	"go.chromium.org/chromiumos/config/go/api/test/rtd/v1"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

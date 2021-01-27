@@ -16,6 +16,7 @@ package inventory
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/gitstore"

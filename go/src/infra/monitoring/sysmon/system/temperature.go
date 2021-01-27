@@ -5,6 +5,7 @@
 package system
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/host"
-	"golang.org/x/net/context"
 )
 
 type temps struct {

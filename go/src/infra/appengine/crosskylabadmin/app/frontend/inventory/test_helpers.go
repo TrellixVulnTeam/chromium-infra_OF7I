@@ -16,6 +16,7 @@ package inventory
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 
@@ -26,7 +27,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"

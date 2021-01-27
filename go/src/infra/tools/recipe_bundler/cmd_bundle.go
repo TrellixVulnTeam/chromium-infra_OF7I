@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"sync"
 
 	"github.com/maruel/subcommands"
-	"golang.org/x/net/context"
 
 	cipd_common "go.chromium.org/luci/cipd/common"
 	"go.chromium.org/luci/common/cli"

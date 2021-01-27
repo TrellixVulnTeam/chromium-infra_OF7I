@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"infra/appengine/rotang"
+	"context"
 	"net/http"
+
+	"infra/appengine/rotang"
 
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-	"golang.org/x/net/context"
 )
 
 // HandleRotaSwitch handles the rotation switch page.

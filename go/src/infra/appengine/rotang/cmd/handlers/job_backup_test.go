@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 )
 
 func TestJobBackup(t *testing.T) {

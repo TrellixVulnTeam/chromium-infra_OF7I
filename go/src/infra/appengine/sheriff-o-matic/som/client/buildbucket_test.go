@@ -5,9 +5,8 @@
 package client
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 

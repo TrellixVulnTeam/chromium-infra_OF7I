@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +22,6 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 
 	"infra/appengine/test-results/model"
 )

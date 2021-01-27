@@ -5,6 +5,7 @@
 package puppet
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,7 +18,6 @@ import (
 	"go.chromium.org/luci/common/tsmon"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
-	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
 )
 

@@ -5,6 +5,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,8 +13,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"infra/appengine/sheriff-o-matic/som/model"
 

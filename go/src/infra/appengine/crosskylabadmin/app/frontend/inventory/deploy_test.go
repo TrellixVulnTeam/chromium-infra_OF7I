@@ -15,6 +15,7 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -33,7 +34,6 @@ import (
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
-	"golang.org/x/net/context"
 )
 
 func mockValidateDeviceconfig(ctx context.Context, ic inventoryClient, nds []*inventory.CommonDeviceSpecs) error {

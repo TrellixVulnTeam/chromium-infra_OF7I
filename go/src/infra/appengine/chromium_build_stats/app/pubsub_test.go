@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -12,7 +13,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/google-cloud-go-testing/storage/stiface"
-	"golang.org/x/net/context"
 
 	"infra/appengine/chromium_build_stats/ninjalog"
 )

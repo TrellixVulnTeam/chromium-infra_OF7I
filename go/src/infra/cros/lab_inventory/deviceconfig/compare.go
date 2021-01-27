@@ -5,6 +5,7 @@
 package deviceconfig
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 

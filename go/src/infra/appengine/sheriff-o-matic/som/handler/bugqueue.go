@@ -5,6 +5,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,8 +15,6 @@ import (
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
 	monorailv3 "infra/monorailv2/api/v3/api_proto"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"

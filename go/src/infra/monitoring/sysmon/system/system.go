@@ -5,6 +5,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

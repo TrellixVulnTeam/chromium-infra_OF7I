@@ -15,13 +15,13 @@
 package frontend
 
 import (
+	"context"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 
 	"infra/appengine/drone-queen/api"
 	"infra/appengine/drone-queen/internal/config"

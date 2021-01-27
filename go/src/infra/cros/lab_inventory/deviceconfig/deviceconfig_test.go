@@ -5,6 +5,7 @@
 package deviceconfig
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -16,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 )
 
 var deviceConfigJSON = `

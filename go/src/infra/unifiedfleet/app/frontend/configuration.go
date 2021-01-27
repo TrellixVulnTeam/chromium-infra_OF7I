@@ -5,6 +5,8 @@
 package frontend
 
 import (
+	"context"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	luciproto "go.chromium.org/luci/common/proto"
@@ -12,7 +14,6 @@ import (
 	"go.chromium.org/luci/grpc/grpcutil"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
-	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"

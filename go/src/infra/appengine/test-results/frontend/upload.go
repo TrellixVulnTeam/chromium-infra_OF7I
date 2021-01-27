@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,7 +15,6 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
 	"go.chromium.org/luci/common/errors"

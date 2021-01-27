@@ -5,11 +5,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"strings"
-
-	"golang.org/x/net/context"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"

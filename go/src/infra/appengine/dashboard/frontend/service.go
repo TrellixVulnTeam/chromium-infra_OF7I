@@ -5,14 +5,14 @@
 package main
 
 import (
+	"context"
+	"time"
+
 	dashpb "infra/appengine/dashboard/api/dashboard"
 	"infra/appengine/dashboard/backend"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"golang.org/x/net/context"
 )
 
 type dashboardService struct{}

@@ -5,11 +5,10 @@
 package backend
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"

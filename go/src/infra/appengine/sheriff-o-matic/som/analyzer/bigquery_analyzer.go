@@ -3,17 +3,19 @@ package analyzer
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/json"
 	"fmt"
-	"infra/appengine/sheriff-o-matic/som/analyzer/step"
-	"infra/appengine/sheriff-o-matic/som/client"
-	"infra/appengine/sheriff-o-matic/som/model"
-	"infra/monitoring/messages"
 	"io/ioutil"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	"infra/appengine/sheriff-o-matic/som/analyzer/step"
+	"infra/appengine/sheriff-o-matic/som/client"
+	"infra/appengine/sheriff-o-matic/som/model"
+	"infra/monitoring/messages"
 
 	"cloud.google.com/go/bigquery"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -23,7 +25,6 @@ import (
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 )

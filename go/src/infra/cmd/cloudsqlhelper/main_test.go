@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"io/ioutil"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"golang.org/x/net/context"
 )
 
 var okResult = sqlmock.NewResult(1, 1)

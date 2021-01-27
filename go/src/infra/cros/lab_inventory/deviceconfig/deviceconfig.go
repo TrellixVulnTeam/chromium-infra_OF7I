@@ -5,6 +5,7 @@
 package deviceconfig
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	"infra/cros/lab_inventory/cfg2datastore"
 	"infra/libs/git"

@@ -7,12 +7,14 @@
 package main
 
 import (
+	"context"
+
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/tsmon/distribution"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
-	"golang.org/x/net/context"
+
 	"infra/appengine/depot_tools_metrics/schema"
 )
 

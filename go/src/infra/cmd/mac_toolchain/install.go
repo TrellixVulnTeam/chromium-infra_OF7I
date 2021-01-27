@@ -5,11 +5,10 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/errors"
 )

@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
@@ -22,8 +23,6 @@ import (
 	"go.chromium.org/luci/common/system/environ"
 	"go.chromium.org/luci/common/system/exitcode"
 	"go.chromium.org/luci/common/system/filesystem"
-
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/errors"

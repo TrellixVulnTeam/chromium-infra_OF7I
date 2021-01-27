@@ -5,12 +5,11 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"infra/appengine/sheriff-o-matic/som/model"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/portal"

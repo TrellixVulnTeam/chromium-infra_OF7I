@@ -18,6 +18,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 
@@ -25,7 +26,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
-	"golang.org/x/net/context"
 )
 
 // FilesSpec includes required gitiles information to fetch files.

@@ -5,13 +5,13 @@
 package main
 
 import (
+	"context"
 	"os/exec"
 	"path"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 type gitRepo struct {

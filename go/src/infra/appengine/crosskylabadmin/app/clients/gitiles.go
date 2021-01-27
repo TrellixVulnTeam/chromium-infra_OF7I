@@ -15,6 +15,7 @@
 package clients
 
 import (
+	"context"
 	"net/http"
 
 	authclient "go.chromium.org/luci/auth"
@@ -22,7 +23,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 )
 
 // NewGitilesClient returns a new gitiles client.

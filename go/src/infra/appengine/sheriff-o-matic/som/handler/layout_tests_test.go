@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
 	te "infra/appengine/sheriff-o-matic/som/testexpectations"

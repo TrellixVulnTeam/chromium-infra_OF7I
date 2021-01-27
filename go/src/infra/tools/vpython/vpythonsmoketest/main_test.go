@@ -5,9 +5,8 @@
 package main
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 // Running go test runs the smoke test.

@@ -5,13 +5,13 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 
 	authclient "go.chromium.org/luci/auth"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 
 	gitlib "infra/libs/git"
 )

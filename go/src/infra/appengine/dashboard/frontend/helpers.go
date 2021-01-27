@@ -5,15 +5,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	dashpb "infra/appengine/dashboard/api/dashboard"
-	"infra/appengine/dashboard/backend"
 	"strconv"
 	"strings"
 	"time"
 
+	dashpb "infra/appengine/dashboard/api/dashboard"
+	"infra/appengine/dashboard/backend"
+
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 // TemplateService bundles a backend.Service with its backend.ServiceIncident children.

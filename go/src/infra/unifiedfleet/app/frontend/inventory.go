@@ -5,12 +5,13 @@
 package frontend
 
 import (
+	"context"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
-	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"

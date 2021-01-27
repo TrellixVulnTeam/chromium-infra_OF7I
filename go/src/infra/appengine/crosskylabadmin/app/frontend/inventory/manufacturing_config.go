@@ -16,11 +16,11 @@ package inventory
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/gitstore"

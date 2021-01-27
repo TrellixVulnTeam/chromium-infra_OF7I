@@ -17,6 +17,7 @@
 package inventory
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

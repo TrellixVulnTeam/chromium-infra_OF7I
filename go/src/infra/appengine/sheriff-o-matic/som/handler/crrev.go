@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"infra/appengine/sheriff-o-matic/som/client"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/auth"

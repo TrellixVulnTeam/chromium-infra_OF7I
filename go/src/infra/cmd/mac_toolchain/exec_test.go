@@ -5,12 +5,11 @@
 package main
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/errors"
 

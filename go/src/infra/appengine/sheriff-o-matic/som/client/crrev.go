@@ -1,11 +1,10 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/gae/service/memcache"
 )

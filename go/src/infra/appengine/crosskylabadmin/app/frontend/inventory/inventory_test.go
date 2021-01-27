@@ -15,12 +15,12 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
-	"golang.org/x/net/context"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"

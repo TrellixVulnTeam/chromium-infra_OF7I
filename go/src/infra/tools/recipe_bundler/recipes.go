@@ -5,12 +5,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 
 	"go.chromium.org/luci/common/errors"
-	"golang.org/x/net/context"
 )
 
 type recipes string

@@ -6,6 +6,7 @@ package monorail
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,7 +15,6 @@ import (
 	"net/url"
 	"strings"
 
-	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 	"google.golang.org/grpc"
 

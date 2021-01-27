@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"infra/appengine/rotang"
 	"net/http"
 	"time"
 
+	"infra/appengine/rotang"
+
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

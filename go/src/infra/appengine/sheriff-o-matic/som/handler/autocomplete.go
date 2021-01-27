@@ -1,13 +1,13 @@
 package handler
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"index/suffixarray"
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
 	"go.chromium.org/luci/common/logging"

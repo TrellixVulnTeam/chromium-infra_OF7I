@@ -5,12 +5,12 @@
 package main
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
 
 	cipd "go.chromium.org/luci/cipd/client/cipd/builder"

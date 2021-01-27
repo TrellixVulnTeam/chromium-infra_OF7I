@@ -5,14 +5,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"regexp"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"infra/tools/git/state"
 

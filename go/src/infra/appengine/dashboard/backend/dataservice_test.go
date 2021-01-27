@@ -5,11 +5,10 @@
 package backend
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock/testclock"

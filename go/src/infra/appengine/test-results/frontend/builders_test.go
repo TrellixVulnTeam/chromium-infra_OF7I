@@ -5,18 +5,19 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"infra/appengine/test-results/model"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"infra/appengine/test-results/model"
+
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 
 	"time"
 

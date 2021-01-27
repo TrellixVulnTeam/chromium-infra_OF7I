@@ -5,9 +5,8 @@
 package analyzer
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 func TestExcludeFailure(t *testing.T) {

@@ -7,12 +7,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"html/template"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/appengine/gaeauth/server"
 	"go.chromium.org/luci/appengine/gaemiddleware"

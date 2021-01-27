@@ -5,12 +5,11 @@
 package cipd
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"golang.org/x/net/context"
 
 	cipdpkg "go.chromium.org/luci/cipd/client/cipd/pkg"
 	"go.chromium.org/luci/common/logging"

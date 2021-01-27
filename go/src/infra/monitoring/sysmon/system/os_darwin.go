@@ -5,12 +5,12 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"strings"
 
-	"golang.org/x/net/context"
 	"howett.net/plist"
 )
 

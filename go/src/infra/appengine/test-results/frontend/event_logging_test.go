@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"golang.org/x/net/context"
 
 	"infra/appengine/test-results/model"
 	"infra/appengine/test-results/model/gen"

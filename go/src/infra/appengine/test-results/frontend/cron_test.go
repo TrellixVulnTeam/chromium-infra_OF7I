@@ -5,13 +5,13 @@
 package main
 
 import (
-	"infra/appengine/test-results/model"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
+	"infra/appengine/test-results/model"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/gae/filter/featureBreaker"

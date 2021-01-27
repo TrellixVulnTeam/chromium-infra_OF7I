@@ -1,12 +1,11 @@
 package testexpectations
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
-
-	"golang.org/x/net/context"
 
 	"infra/appengine/sheriff-o-matic/som/client"
 )

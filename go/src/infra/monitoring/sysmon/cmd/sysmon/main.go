@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/common/tsmon"
-	"golang.org/x/net/context"
 
 	"infra/monitoring/sysmon/android"
 	"infra/monitoring/sysmon/cipd"

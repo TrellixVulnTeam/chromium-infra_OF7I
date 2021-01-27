@@ -1,13 +1,13 @@
 package cros
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
-	"golang.org/x/net/context"
 )
 
 const (

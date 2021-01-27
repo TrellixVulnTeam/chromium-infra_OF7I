@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
 	"time"
-
-	"golang.org/x/net/context"
 
 	te "infra/appengine/sheriff-o-matic/som/testexpectations"
 

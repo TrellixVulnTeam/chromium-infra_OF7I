@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -20,7 +21,6 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
 	dashpb "infra/appengine/dashboard/api/dashboard"

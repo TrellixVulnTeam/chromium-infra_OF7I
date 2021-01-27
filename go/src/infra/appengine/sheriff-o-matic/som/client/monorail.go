@@ -5,11 +5,11 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
 	"go.chromium.org/luci/gae/service/info"
-	"golang.org/x/net/context"
 )
 
 // monorailPriorityFieldMap records the resource name of priority field

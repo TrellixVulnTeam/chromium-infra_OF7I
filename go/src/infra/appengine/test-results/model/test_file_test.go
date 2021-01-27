@@ -5,6 +5,7 @@
 package model
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

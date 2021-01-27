@@ -5,10 +5,10 @@
 package system
 
 import (
+	"context"
 	"io/ioutil"
 
 	"github.com/shirou/gopsutil/host"
-	"golang.org/x/net/context"
 )
 
 func osInformation() (string, string, error) {

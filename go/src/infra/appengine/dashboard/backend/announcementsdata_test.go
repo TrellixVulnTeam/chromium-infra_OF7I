@@ -5,16 +5,17 @@
 package backend
 
 import (
-	dashpb "infra/appengine/dashboard/api/dashboard"
+	"context"
 	"reflect"
 	"testing"
 	"time"
+
+	dashpb "infra/appengine/dashboard/api/dashboard"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

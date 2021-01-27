@@ -5,12 +5,12 @@
 package android
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
-	"golang.org/x/net/context"
 )
 
 type status string

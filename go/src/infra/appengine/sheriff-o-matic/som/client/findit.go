@@ -2,11 +2,12 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+
 	"infra/monitoring/messages"
 
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 type findit struct {

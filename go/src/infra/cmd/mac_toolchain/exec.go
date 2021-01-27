@@ -5,12 +5,11 @@
 package main
 
 import (
+	"context"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
 // Cmd abstracts exec.Cmd into a mockable interface for testing.

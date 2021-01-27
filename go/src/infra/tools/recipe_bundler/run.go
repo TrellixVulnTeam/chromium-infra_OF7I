@@ -5,10 +5,10 @@
 package main
 
 import (
+	"context"
 	"os/exec"
 
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 type runner struct {

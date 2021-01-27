@@ -1,13 +1,13 @@
 package analyzer
 
 import (
+	"context"
 	"encoding/json"
 	"path/filepath"
 
 	"infra/appengine/sheriff-o-matic/som/client"
 
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 const configURL = "https://chromium.googlesource.com/infra/infra/+/HEAD/go/src/infra/appengine/sheriff-o-matic/config/config.json?format=text"

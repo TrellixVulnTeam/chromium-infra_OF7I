@@ -1,16 +1,17 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
 	monorailv3 "infra/monorailv2/api/v3/api_proto"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock"
@@ -20,7 +21,6 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	. "github.com/smartystreets/goconvey/convey"

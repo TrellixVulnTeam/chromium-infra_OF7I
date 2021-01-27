@@ -13,6 +13,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -23,7 +24,6 @@ import (
 	"text/template"
 	"time"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"gopkg.in/yaml.v2"
 

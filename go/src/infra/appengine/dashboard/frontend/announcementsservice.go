@@ -5,14 +5,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+
 	dashpb "infra/appengine/dashboard/api/dashboard"
 	"infra/appengine/dashboard/backend"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

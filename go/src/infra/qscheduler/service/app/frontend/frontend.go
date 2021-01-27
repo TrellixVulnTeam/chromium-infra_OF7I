@@ -16,7 +16,8 @@
 package frontend
 
 import (
-	"golang.org/x/net/context"
+	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

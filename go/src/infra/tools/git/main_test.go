@@ -6,11 +6,10 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"infra/tools/git/state"
 

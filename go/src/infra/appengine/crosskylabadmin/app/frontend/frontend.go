@@ -17,6 +17,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -34,7 +35,6 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

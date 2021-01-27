@@ -15,6 +15,7 @@
 package frontend
 
 import (
+	"context"
 	"sort"
 	"testing"
 	"time"
@@ -27,7 +28,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 )
 
 func TestDroneQueenImpl_DeclareDuts(t *testing.T) {

@@ -5,14 +5,13 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/logdog/client/cli"
 
 	"infra/libs/infraenv"
-
-	"golang.org/x/net/context"
 )
 
 func main() {

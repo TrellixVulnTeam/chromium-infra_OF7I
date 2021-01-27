@@ -1,6 +1,7 @@
 package cros
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/tsmon"
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

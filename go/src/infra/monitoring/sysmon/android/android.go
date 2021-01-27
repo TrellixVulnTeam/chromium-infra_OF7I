@@ -5,6 +5,7 @@
 package android
 
 import (
+	"context"
 	"os/user"
 	"path/filepath"
 	"regexp"
@@ -14,7 +15,6 @@ import (
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
-	"golang.org/x/net/context"
 )
 
 var (

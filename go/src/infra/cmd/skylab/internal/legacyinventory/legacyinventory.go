@@ -8,6 +8,7 @@
 package legacyinventory
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,8 +20,6 @@ import (
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/retry/transient"
-
-	"golang.org/x/net/context"
 )
 
 const gerritHost = "chrome-internal-review.googlesource.com"

@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "infra/appengine/cros/lab_inventory/api/v1"

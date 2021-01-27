@@ -6,20 +6,21 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"infra/appengine/test-results/masters"
-	"infra/appengine/test-results/model"
 	"io"
 	"net/http"
 	"regexp"
 	"time"
 
+	"infra/appengine/test-results/masters"
+	"infra/appengine/test-results/model"
+
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-	"golang.org/x/net/context"
 )
 
 const (

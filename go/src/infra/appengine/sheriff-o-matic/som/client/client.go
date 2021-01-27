@@ -6,6 +6,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"expvar"
 	"fmt"
@@ -14,8 +15,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"infra/monitoring/messages"
 	"infra/monorail"

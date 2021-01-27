@@ -1,10 +1,9 @@
 package handler
 
 import (
+	"context"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/monitoring/messages"

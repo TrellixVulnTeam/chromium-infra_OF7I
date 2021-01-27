@@ -14,6 +14,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"go/build"
@@ -22,8 +23,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging/gologger"
-
-	"golang.org/x/net/context"
 )
 
 var (

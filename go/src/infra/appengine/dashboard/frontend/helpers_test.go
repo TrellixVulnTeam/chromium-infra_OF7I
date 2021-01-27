@@ -5,13 +5,13 @@
 package main
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
 
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 
 	dashpb "infra/appengine/dashboard/api/dashboard"
 	"infra/appengine/dashboard/backend"

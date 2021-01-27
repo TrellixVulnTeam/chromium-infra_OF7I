@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -18,7 +19,6 @@ import (
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 )
 

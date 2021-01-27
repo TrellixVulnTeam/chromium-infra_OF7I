@@ -1,11 +1,10 @@
 package testexpectations
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
 

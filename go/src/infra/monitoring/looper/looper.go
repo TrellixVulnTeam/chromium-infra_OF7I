@@ -1,12 +1,12 @@
 package looper
 
 import (
+	"context"
 	"expvar"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 var (

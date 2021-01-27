@@ -6,9 +6,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
-	"infra/appengine/test-results/model"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"golang.org/x/net/context"
+	"infra/appengine/test-results/model"
 
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/gae/service/datastore"

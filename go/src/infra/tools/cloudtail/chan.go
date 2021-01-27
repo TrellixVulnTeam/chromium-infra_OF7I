@@ -5,13 +5,12 @@
 package cloudtail
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/common/logging"
 )

@@ -5,15 +5,16 @@
 package backend
 
 import (
+	"context"
 	"fmt"
-	dashpb "infra/appengine/dashboard/api/dashboard"
 	"time"
+
+	dashpb "infra/appengine/dashboard/api/dashboard"
 
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/gae/service/datastore"
-	"golang.org/x/net/context"
 )
 
 // Announcement contains details of an announcement

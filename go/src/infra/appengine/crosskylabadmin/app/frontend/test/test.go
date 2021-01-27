@@ -15,13 +15,13 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 
 	"go.chromium.org/luci/common/data/strpair"
-	"golang.org/x/net/context"
 )
 
 // FakeListAliveBotsInPool returns a function that implements

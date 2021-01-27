@@ -15,13 +15,13 @@
 package clients
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/taskqueue"
-	"golang.org/x/net/context"
 )
 
 const repairBotsQueue = "repair-bots"

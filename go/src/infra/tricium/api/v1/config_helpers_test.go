@@ -5,9 +5,8 @@
 package tricium
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/auth/identity"

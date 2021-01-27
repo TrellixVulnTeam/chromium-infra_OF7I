@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"io"
 	"io/ioutil"
@@ -15,8 +16,6 @@ import (
 	"testing"
 
 	bq "infra/cmd/bqexport/testing"
-
-	"golang.org/x/net/context"
 )
 
 var genFlag = flag.Bool("test.generate", false, "Instead of testing, regenerate the golden file.")

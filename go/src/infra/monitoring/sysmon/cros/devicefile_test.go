@@ -1,6 +1,7 @@
 package cros
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,7 +10,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/clock/testclock"
-	"golang.org/x/net/context"
 )
 
 func TestLoadfile(t *testing.T) {

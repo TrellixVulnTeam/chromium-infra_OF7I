@@ -1,13 +1,13 @@
 package looper
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
-	"golang.org/x/net/context"
 )
 
 // Run f once, then cancel.

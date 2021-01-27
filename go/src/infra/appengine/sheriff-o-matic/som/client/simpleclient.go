@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
 )
 
 type simpleClient struct {

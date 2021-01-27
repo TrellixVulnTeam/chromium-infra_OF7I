@@ -6,11 +6,10 @@ package docker
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	dockerTypes "github.com/docker/docker/api/types"
 	dockerContainerTypes "github.com/docker/docker/api/types/container"
