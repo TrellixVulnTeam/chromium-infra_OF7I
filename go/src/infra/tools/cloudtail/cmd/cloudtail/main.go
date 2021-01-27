@@ -462,6 +462,7 @@ func (c *tailRun) Run(a subcommands.Application, args []string, env subcommands.
 	}
 
 	ctx, abort := context.WithCancel(ctx)
+	defer abort()
 	state.buffer.Start(ctx)
 
 	tailer, err := cloudtail.NewTailer(cloudtail.TailerOptions{
