@@ -392,7 +392,8 @@ func QueryBQForProject(ctx context.Context, project string) error {
 func getFailureRowsForQuery(ctx context.Context, queryStr string) ([]failureRow, error) {
 	failureRows := []failureRow{}
 	appID := getAppID(ctx)
-	ctx, _ = context.WithTimeout(ctx, 10*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
 	client, err := bigquery.NewClient(ctx, appID)
 	if err != nil {
 		return nil, err
