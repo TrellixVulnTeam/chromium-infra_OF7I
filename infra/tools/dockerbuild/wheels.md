@@ -2845,13 +2845,28 @@ wheel: <
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pathos-py2_py3"
+  name: "infra/python/wheels/pathos/${vpython_platform}"
   version: "version:0.2.7"
 >
 ```
 
 
-* *universal*
+* *linux-arm64*
+* *linux-arm64-py3*
+* *linux-armv6*
+* *linux-mips*
+* *linux-mips64*
+* *linux-mipsel*
+* *mac-x64*
+* *mac-x64-cp38*
+* *manylinux-x64*
+* *manylinux-x64-py3*
+* *manylinux-x64-ucs2*
+* *manylinux-x86*
+* *manylinux-x86-ucs2*
+* *windows-x64*
+* *windows-x64-py3*
+* *windows-x86*
 
 ## **pbr**
 
@@ -3971,6 +3986,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/requests-oauthlib-py2_py3"
   version: "version:1.2.0"
+>
+```
+
+
+* *universal*
+
+### 1.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/requests-oauthlib-py2_py3"
+  version: "version:1.3.0"
 >
 ```
 

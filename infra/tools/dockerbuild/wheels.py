@@ -791,6 +791,7 @@ SPECS.update({
         Universal('requests', '2.13.0'),
         Universal('requests', '2.21.0'),
         Universal('requests-oauthlib', '1.2.0'),
+        Universal('requests-oauthlib', '1.3.0'),
         Universal('rsa', '3.4.2'),
         Universal('rsa', '4.0'),
         Universal('selenium', '3.4.1'),
