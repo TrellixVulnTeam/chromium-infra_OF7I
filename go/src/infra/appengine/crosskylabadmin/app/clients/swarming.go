@@ -112,6 +112,7 @@ type SwarmingCreateTaskArgs struct {
 	Priority             int64
 	Tags                 []string
 	User                 string
+	Realm                string
 	ServiceAccount       string
 }
 
@@ -216,6 +217,7 @@ func (sc *swarmingClientImpl) CreateTask(c context.Context, name string, args *S
 			},
 		},
 		User:           args.User,
+		Realm:          args.Realm,
 		ServiceAccount: args.ServiceAccount,
 	}
 	ic, cancel := context.WithTimeout(c, 60*time.Second)

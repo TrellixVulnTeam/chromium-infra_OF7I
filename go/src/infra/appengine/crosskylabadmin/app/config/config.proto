@@ -78,6 +78,9 @@ message Tasker {
   // AdminTaskServiceAccount is the name of the service account to use for admin
   // tasks.
   string admin_task_service_account = 4;
+
+  // AdminTaskRealm is a LUCI realm name with ACLs for admin tasks.
+  string admin_task_realm = 5;
 }
 
 // Cron contains the configuration data specific to cron jobs on this app.

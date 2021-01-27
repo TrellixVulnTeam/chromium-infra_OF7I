@@ -76,6 +76,7 @@ func AddCommonTags(ctx context.Context, ts ...string) []string {
 func SetCommonTaskArgs(ctx context.Context, args *clients.SwarmingCreateTaskArgs) *clients.SwarmingCreateTaskArgs {
 	cfg := config.Get(ctx)
 	args.User = taskUser
+	args.Realm = cfg.Tasker.AdminTaskRealm
 	args.ServiceAccount = cfg.Tasker.AdminTaskServiceAccount
 	args.Pool = cfg.Swarming.BotPool
 	return args
