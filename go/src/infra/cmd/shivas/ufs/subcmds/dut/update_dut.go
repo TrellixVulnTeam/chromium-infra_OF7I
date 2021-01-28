@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -30,10 +31,12 @@ import (
 
 const (
 	// Servo related UpdateMask paths.
-	servoHostPath   = "dut.servo.hostname"
-	servoPortPath   = "dut.servo.port"
-	servoSerialPath = "dut.servo.serial"
-	servoSetupPath  = "dut.servo.setup"
+	servoHostPath     = "dut.servo.hostname"
+	servoPortPath     = "dut.servo.port"
+	servoSerialPath   = "dut.servo.serial"
+	servoSetupPath    = "dut.servo.setup"
+	servoTypePath     = "dut.servo.type"
+	servoTopologyPath = "dut.servo.topology"
 
 	// LSE related UpdateMask paths.
 	machinesPath    = "machines"
@@ -247,17 +250,19 @@ func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subco
 				// Print err and continue to trigger next one
 				fmt.Printf("[%s] Failed to deploy task. %s", req.GetMachineLSE().GetName(), err.Error())
 			}
-			resTable.RecordResult(swarmOp, req.MachineLSE.GetHostname(), err)
+			resTable.RecordResult(swarmOp, req.MachineLSE.GetName(), err)
 
 			// Remove the task entry to avoid triggering multiple tasks.
 			delete(deployTasks, req.MachineLSE.GetName())
 		}
 	}
 
-	// Display URL for all tasks if there are more than one.
-	fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n\n", tc.SessionTasksURL())
+	if resTable.IsSuccessForAny(swarmOp) {
+		// Display URL for all tasks if there are more than one.
+		fmt.Printf("\nTriggered deployment task(s). Follow at: %s\n", tc.SessionTasksURL())
+	}
 
-	fmt.Printf("Summary of results:\n\n")
+	fmt.Printf("\nSummary of results:\n\n")
 	resTable.PrintResultsTable(os.Stdout, true)
 
 	return nil
@@ -341,8 +346,8 @@ func (c *updateDUT) parseArgs() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 		if err := utils.ParseJSONFile(c.newSpecsFile, machineLse); err != nil {
 			return nil, err
 		}
-		if len(machineLse.GetMachines()) == 0 || machineLse.GetMachines()[0] == "" {
-			return nil, cmdlib.NewQuietUsageError(c.Flags, "Missing asset. Use 'machines' to assign asset in json file. Check --help")
+		if err := c.validateDUTFromJSON(machineLse); err != nil {
+			return nil, err
 		}
 		// json input updates without a mask.
 		return []*ufsAPI.UpdateMachineLSERequest{{
@@ -358,6 +363,34 @@ func (c *updateDUT) parseArgs() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 		MachineLSE: lse,
 		UpdateMask: mask,
 	}}, nil
+}
+
+// validateDUTFromJSON checks if the input lse represents DUT and ensures servo/rpm isn't incomplete.
+func (c *updateDUT) validateDUTFromJSON(dutLse *ufspb.MachineLSE) error {
+	if err := utils.IsDUT(dutLse); err != nil {
+		return errors.Annotate(err, "The LSE in %s is not a DUT", c.newSpecsFile).Err()
+	}
+	if servo := dutLse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo(); servo != nil {
+		// Avoid incomplete servo updates.
+		if !(servo.GetServoHostname() != "" && servo.GetServoSerial() != "") {
+			// Note: ServoPort == int32(0) auto-assigns the port.
+			return cmdlib.NewQuietUsageError(c.Flags, "Incomplete/Invalid servo update in %s", c.newSpecsFile)
+		}
+		// Don't allow updates to ServoType or ServoTopology from here, unless its to clear them both by setting servoType to ClearFieldValue.
+		if servo.GetServoType() != "" && servo.GetServoType() != utils.ClearFieldValue {
+			return cmdlib.NewQuietUsageError(c.Flags, "Cannot set servo_type to %s in %s. Setting it to '%s' will update both servoType and servoTopology with correct values", servo.GetServoType(), c.newSpecsFile, utils.ClearFieldValue)
+		}
+		// Don't allow updates to servoTopology
+		if servo.GetServoTopology() != nil {
+			return cmdlib.NewQuietUsageError(c.Flags, "Cannot update ServoTopology using %s. Invalid usage", c.newSpecsFile)
+		}
+	}
+	if rpm := dutLse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm(); rpm != nil {
+		if (rpm.GetPowerunitName() != "" && rpm.GetPowerunitOutlet() == "") || (rpm.GetPowerunitName() == "" && rpm.GetPowerunitOutlet() != "") {
+			return cmdlib.NewQuietUsageError(c.Flags, "Cannot update incomplete RPM. Need both host and outlet")
+		}
+	}
+	return nil
 }
 
 // parseMCSV generates update request from mcsv file.
@@ -521,7 +554,8 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*lab.Servo, [
 	}
 
 	newServo := &lab.Servo{}
-	paths := []string{}
+	// Clear servo_type and servo_topology before deploying. Specifying path only assigns default empty values.
+	paths := []string{servoTypePath, servoTopologyPath}
 	// Check and update servo port.
 	if servoPort != int32(0) {
 		paths = append(paths, servoPortPath)
@@ -634,14 +668,22 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 	if c.newSpecsFile != "" && !utils.IsCSVFile(c.newSpecsFile) {
 		// Full update requires verifying what's being changed on the existing DUT.
 		newDut := req.MachineLSE
+
 		// Get the existing DUT configuration.
 		oldDut, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, newDut.GetName()),
 		})
+
 		// If DUT doesn't exist return error as update will fail.
 		if err != nil {
-			return nil, errors.Annotate(err, "getDeployActions - Failed to get DUT %s", newDut.GetName()).Err()
+			return nil, errors.Annotate(err, "getDeployActions - Please check if DUT exists before updating. Failed to get DUT %s", newDut.GetName()).Err()
 		}
+
+		// Fail if the target is not a DUT.
+		if err := utils.IsDUT(oldDut); err != nil {
+			return nil, errors.Annotate(err, "getDeployActions - %s is not a DUT", oldDut.GetName()).Err()
+		}
+
 		// Check if asset was updated.
 		if oldDut.GetMachines()[0] != newDut.GetMachines()[0] {
 			// Asset update. Set state to manual_repair.
@@ -649,24 +691,60 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 			return assetUpdateDeployActions, nil
 		}
 
-		// Check if servo was updated.
+		// Check for any servo changes. Need to run a deploy task for the following cases
+		// 1. Reset/Delete servo. [newServo == nil || newServo.ServoHostname = ""]
+		// 2. Adding a new servo. [oldServo == nil || oldServo.ServoHostname = ""]
+		// 3. Clear servo type. [newServo.ServoType == ClearFieldValue]
+		// 4. Update servo. [newServo != nil && oldServo != nil]
+
 		var oldServo, newServo *lab.Servo
-		// Get existing servo from the DUT and reset ServoType and ServoTopology as they are internally handled
-		if p := oldDut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals(); p != nil {
-			oldServo = p.GetServo()
-			if oldServo != nil {
-				oldServo.ServoType = ""
-				oldServo.ServoTopology = nil
-			}
-		}
+
+		// Check if we are deleting servo.
 		newServo = req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-		// Check if anything in servo was updated.
-		if !ufsUtil.ProtoEqual(oldServo, newServo) {
+		if newServo == nil || newServo.GetServoHostname() == "" {
+			// Ensure delete.
+			req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = nil
 			// Servo update set state to manual_repair.
 			req.MachineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
-			// Append any options that were set to force and return.
 			return partialUpdateDeployActions, nil
 		}
+
+		// Check if the user intends to clear servo type and topology
+		if newServo.GetServoType() == utils.ClearFieldValue {
+			// Clear servo_type and servo_topology as it will be updated by deploy task
+			newServo.ServoType = ""
+			newServo.ServoTopology = nil
+			// Servo update set state to manual_repair.
+			req.MachineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
+			// Need to run deploy task.
+			return partialUpdateDeployActions, nil
+		}
+
+		// Check if we are adding a new servo.
+		oldServo = oldDut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+		if oldServo == nil || oldServo.GetServoHostname() == "" {
+			// Servo update set state to manual_repair.
+			req.MachineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
+			return partialUpdateDeployActions, nil
+		}
+
+		// Check if servo was updated by the user.
+		// Make a copy of oldServo for comparison.
+		oldServoCopy := proto.Clone(oldServo).(*lab.Servo)
+		// Don't compare servo type or topology as it's not input by the user.
+		oldServoCopy.ServoType = ""
+		oldServoCopy.ServoTopology = nil
+		// Check if the servo host/port/serial is updated.
+		if !ufsUtil.ProtoEqual(oldServoCopy, newServo) {
+			// Servo update set state to manual_repair.
+			req.MachineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
+			return partialUpdateDeployActions, nil
+		}
+		// User doesn't intend to update servo. Avoid calling the deploy task and copy servo_type and topology from oldServo.
+		newServo.ServoType = oldServo.GetServoType()
+		newServo.ServoTopology = oldServo.GetServoTopology()
+		req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = newServo
+
 		// Check if rpm was updated.
 		var oldRpm, newRpm *lab.RPM
 		// Get existing rpm from the DUT.

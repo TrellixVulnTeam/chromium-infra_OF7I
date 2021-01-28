@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
+
+	ufspb "infra/unifiedfleet/api/v1/models"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 	UfleetUtil "infra/unifiedfleet/app/util"
 )
@@ -210,4 +213,21 @@ func VlanExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool
 		return false
 	}
 	return true
+}
+
+// IsDUT returns nil if lse represents DUT or returns error with a reason
+func IsDUT(lse *ufspb.MachineLSE) error {
+	if croslse := lse.GetChromeosMachineLse(); croslse == nil {
+		return errors.Reason("Not a ChromeOSMachine").Err()
+	} else if dlse := croslse.GetDeviceLse(); dlse == nil {
+		return errors.Reason("Missing DeviceLse").Err()
+	} else if dut := dlse.GetDut(); dut == nil {
+		return errors.Reason("Not a DUT").Err()
+	} else if p := dut.GetPeripherals(); p == nil {
+		return errors.Reason("Missing Peripherals").Err()
+	}
+	if len(lse.GetMachines()) == 0 {
+		return errors.Reason("Missing Asset").Err()
+	}
+	return nil
 }

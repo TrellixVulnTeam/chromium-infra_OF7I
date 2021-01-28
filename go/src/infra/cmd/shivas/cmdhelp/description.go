@@ -266,6 +266,7 @@ Example DUT with peripherals:
 					"servo": {
 						"servoHostname": "chromeos1-row1-rack11-labstation",
 						"servoPort": 9904,
+						"servoSerial": "C126246346"
 					},
 					"rpm": {
 						"powerunitName": "chromeos1-row2-rack3-rpm",
@@ -315,6 +316,15 @@ Example DUT with peripherals:
 	"deploymentTicket": "crbug.com/123456",
 	"description": "Fixed and replaced",
 }
+
+Note: Changing any servo parameters triggers a deploy task. If you don't wish to update anything but trigger a deploy task on it,
+clear servoType by setting it to '-'. For example:
+		"servo": {
+			"servoHostname": "chromeos1-row1-rack11-labstation",
+			"servoPort": 9904,
+			"servoSerial": "C126246346",
+			"servoType": "-"
+		}
 
 The protobuf definition of machine lse is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
