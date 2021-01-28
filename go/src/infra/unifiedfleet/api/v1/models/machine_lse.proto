@@ -19,6 +19,10 @@ import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/device/config.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/manufacturing/config.proto";
+import "infra/unifiedfleet/api/v1/models/machine.proto";
 
 // MachineLSE is the Machine Lab Setup Environment.
 // It refers to the entity in the lab which has Machine(s) associated
@@ -223,6 +227,20 @@ message LabMeta {
     string servo_type = 3;
     bool smart_usbhub = 4;
     chromeos.lab.ServoTopology servo_topology = 5;
+}
+
+message ChromeOSDeviceData {
+  models.MachineLSE lab_config = 1;
+  models.Machine machine = 2;
+  models.chromeos.device.Config device_config = 3;
+  models.chromeos.manufacturing.Config manufacturing_config = 4;
+  HwidData hwid_data = 5;
+  models.chromeos.lab.DutState dut_state = 6;
+}
+
+message HwidData {
+  string sku = 1;
+  string variant = 2;
 }
 
 // ChromeOSServerLSE refers to the entity in Chrome OS lab

@@ -590,3 +590,8 @@ func processUpdateMachineLSERPMMask(oldRPM, newRPM *ufslab.RPM, path string) {
 		oldRPM.PowerunitOutlet = newRPM.GetPowerunitOutlet()
 	}
 }
+
+// GetChromeOSDeviceData returns ChromeOSDeviceData for the given id/hostname from InvV2 and UFS.
+func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.ChromeOSDeviceData, error) {
+	return nil, nil
+}

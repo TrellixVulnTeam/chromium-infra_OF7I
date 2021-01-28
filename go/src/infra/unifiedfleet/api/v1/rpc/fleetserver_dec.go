@@ -1846,3 +1846,20 @@ func (s *DecoratedFleet) BatchGetRackLSEPrototypes(ctx context.Context, req *Bat
 	}
 	return
 }
+
+func (s *DecoratedFleet) GetChromeOSDeviceData(ctx context.Context, req *GetChromeOSDeviceDataRequest) (rsp *models.ChromeOSDeviceData, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetChromeOSDeviceData", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetChromeOSDeviceData(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetChromeOSDeviceData", rsp, err)
+	}
+	return
+}

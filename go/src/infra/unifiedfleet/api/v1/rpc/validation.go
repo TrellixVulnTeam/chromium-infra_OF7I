@@ -1107,6 +1107,17 @@ func (r *DeleteAssetRequest) Validate() error {
 	return validateResourceName(assetRegex, AssetNameFormat, r.Name)
 }
 
+// Validate validates input requests of GetChromeOSDeviceDataRequest.
+func (r *GetChromeOSDeviceDataRequest) Validate() error {
+	if r == nil {
+		return status.Errorf(codes.InvalidArgument, "Empty Request")
+	}
+	if r.ChromeosDeviceId == "" && r.Hostname == "" {
+		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
+	}
+	return nil
+}
+
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {
 	name = strings.TrimSpace(name)
 	if name == "" {

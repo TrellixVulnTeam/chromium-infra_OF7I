@@ -351,6 +351,9 @@ service Fleet {
 
   // BatchGetRackLSEPrototypes retrieves a batch of rack lse prototypes
   rpc BatchGetRackLSEPrototypes(BatchGetRackLSEPrototypesRequest) returns (BatchGetRackLSEPrototypesResponse);
+
+  // GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
+  rpc GetChromeOSDeviceData(GetChromeOSDeviceDataRequest) returns (models.ChromeOSDeviceData);
 }
 
 message CreateVMRequest {
@@ -1846,3 +1849,10 @@ message BatchGetRackLSEPrototypesResponse {
   // The rack lse prototypes from datastore.
   repeated models.RackLSEPrototype rack_lse_prototypes = 1;
 }
+
+message GetChromeOSDeviceDataRequest {
+  string chromeos_device_id = 1;
+  string hostname = 2;
+}
+
+
