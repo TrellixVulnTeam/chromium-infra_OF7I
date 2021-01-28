@@ -1,8 +1,8 @@
-hash: 8b4b1382a6cb58db5ac55a4db5a25a16ff2acf2efedcbe9a7067ae7717570736
-updated: 2021-01-28T10:29:59.648901006+09:00
+hash: ea8ac36b684aac4aa3b594680db707798726770567a398e14cd8ee913da52e79
+updated: 2021-01-28T11:28:05.211123949-05:00
 imports:
 - name: cloud.google.com/go
-  version: 98637e089776292232bb7c039844680627ddade1
+  version: d5e5549213290dce6fd78251f7efd1362061ba19
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -29,7 +29,7 @@ imports:
   version: 1edb62f3185db2bf621d84de5fcfbd12fdc8796f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/bazelbuild/buildtools
-  version: ea23b22a5994820220102fcb8ddd0b7f0cb1fc0f
+  version: 574fa3330a3dffd8c4d45fc1e75f0b085faf8921
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
   version: 9e72daff42c941baaf43a4c370e2607a984c58a7
@@ -428,7 +428,7 @@ imports:
   version: 13369a4547045c729dd938a203157a208afc244a
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
 - name: go.skia.org/infra
-  version: 04e3ae0e16f42ae4afce20e71148312f0d23e564
+  version: 9b1e74be9faf5dd34a655b003509b8be28609785
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -494,7 +494,7 @@ imports:
   version: 7e3f01d253248a0a5694eb5b7376dfea18b6397e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: c2bea79de95bcea1bae400b32a80de2dfe68a9b4
+  version: db4c57db23ae595a757c609d3640fa4ee9718272
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
