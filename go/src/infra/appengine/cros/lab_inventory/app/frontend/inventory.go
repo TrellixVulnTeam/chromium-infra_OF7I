@@ -925,7 +925,16 @@ func (is *InventoryServerImpl) GetManufacturingConfig(ctx context.Context, req *
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	mfgCfgID := &manufacturing.ConfigID{Value: req.GetName()}
+	cfgIds := []*manufacturing.ConfigID{mfgCfgID}
+	mCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
+	if err != nil {
+		return nil, err.(errors.MultiError)[0]
+	}
+	if len(mCfgs) == 0 {
+		return nil, errors.New(fmt.Sprintf("no manufacturing config found for %s", req.GetName()))
+	}
+	return mCfgs[0].(*manufacturing.Config), nil
 }
 
 // GetDeviceConfig retrieves requested Chrome OS device device config from the inventory.
@@ -936,7 +945,34 @@ func (is *InventoryServerImpl) GetDeviceConfig(ctx context.Context, req *api.Get
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	convertedID := deviceconfig.ConvertValidDeviceConfigID(req.GetConfigId())
+	fallbackID := getFallbackDeviceConfigID(convertedID)
+
+	devCfgIds := make([]*device.ConfigId, 0, 1)
+	idToDevCfg := map[string]*device.Config{}
+	for _, cID := range []*device.ConfigId{convertedID, fallbackID} {
+		if _, found := idToDevCfg[cID.String()]; found {
+			continue
+		}
+		devCfgIds = append(devCfgIds, cID)
+		idToDevCfg[cID.String()] = nil
+	}
+
+	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
+	for i := range devCfgs {
+		if err == nil || err.(errors.MultiError)[i] == nil {
+			idToDevCfg[devCfgIds[i].String()] = devCfgs[i].(*device.Config)
+		} else {
+			return nil, errors.New(fmt.Sprintf("cannot get device config for %v: %v", devCfgIds[i], err.(errors.MultiError)[i]))
+		}
+	}
+
+	res := idToDevCfg[convertedID.String()]
+	if res == nil || res.GetId() == nil {
+		res = idToDevCfg[fallbackID.String()]
+	}
+
+	return res, nil
 }
 
 // GetHwidData retrieves requested Chrome OS device Hwid Data from the inventory.
@@ -947,5 +983,13 @@ func (is *InventoryServerImpl) GetHwidData(ctx context.Context, req *api.GetHwid
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	secret := config.Get(ctx).HwidSecret
+	hwidData, err := getHwidDataFunc(ctx, req.GetName(), secret)
+	if err != nil {
+		return nil, err
+	}
+	return &api.HwidData{
+		Sku:     hwidData.Sku,
+		Variant: hwidData.Variant,
+	}, nil
 }
