@@ -80,8 +80,7 @@ def OnSwarmingTaskTimeout(parameters, task_id):
     return OnSwarmingTaskError(None, timeout_error)
 
   task_data, test_results, error = (
-      swarmed_test_util.GetSwarmingTaskDataAndResult(
-          task_id, use_resultdb=constants.USE_RESULTDB))
+      swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not task_data or not task_data.get('state'):
     return OnSwarmingTaskError(task_id, error or timeout_error)
@@ -106,8 +105,7 @@ def OnSwarmingTaskError(task_id, error):
 def OnSwarmingTaskStateChanged(parameters, task_id):
   """To be called when a swarming task's status changes."""
   task_data, test_results, error = (
-      swarmed_test_util.GetSwarmingTaskDataAndResult(
-          task_id, use_resultdb=constants.USE_RESULTDB))
+      swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not task_data or not task_data.get('state'):
     # Something went wrong trying to get task data or state.

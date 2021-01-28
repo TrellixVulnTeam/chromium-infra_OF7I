@@ -216,11 +216,7 @@ def HeuristicAnalysisForTest(heuristic_params):
 
   # Checks first failed builds for each failed test.
   ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
-      master_name,
-      builder_name,
-      build_number,
-      failure_info,
-      use_resultdb=use_resultdb)
+      master_name, builder_name, build_number, failure_info)
 
   analysis = WfAnalysis.Get(master_name, builder_name, build_number)
   analysis.failure_info = failure_info.ToSerializable()

@@ -58,23 +58,6 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
         TestLocation.FromSerializable(expected_test_location),
         swarmed_test_util.GetTestLocation('task', test_name))
 
-  @mock.patch.object(
-      isolate,
-      'DownloadFileFromIsolatedServer',
-      return_value=(json.dumps({'all_tests': ['test1']}), None))
-  def testGetOutputJsonByOutputsRef(self, _):
-    outputs_ref = {
-        'isolatedserver': 'isolated_server',
-        'namespace': 'default-gzip',
-        'isolated': 'shard1_isolated'
-    }
-
-    result, error = swarmed_test_util.GetOutputJsonByOutputsRef(
-        outputs_ref, None)
-
-    self.assertEqual({'all_tests': ['test1']}, result)
-    self.assertIsNone(error)
-
   def testRetrieveShardedTestResultsFromIsolatedServerNoLog(self):
     self.assertEqual(
         [],
@@ -260,59 +243,6 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
         swarmed_test_util.GetSwarmingTaskDataAndResult('task_id', None))
 
   @mock.patch.object(
-      swarmed_test_util,
-      'GetOutputJsonByOutputsRef',
-      return_value=(None, 'error'))
-  @mock.patch.object(swarming_util, 'GetSwarmingTaskResultById')
-  def testGetSwarmingTaskDataAndResultIsolatedError(self, mock_fn, _):
-    data = {'outputs_ref': 'ref', 'state': constants.STATE_COMPLETED}
-    mock_fn.return_value = (data, None)
-
-    self.assertEqual((data, None, 'error'),
-                     swarmed_test_util.GetSwarmingTaskDataAndResult(None, None))
-
-  @mock.patch.object(
-      swarming_util,
-      'GetSwarmingTaskResultById',
-      return_value=({
-          'state': constants.STATE_COMPLETED
-      }, None))
-  def testGetSwarmingTaskDataAndResultNoOutputRef(self, mock_fn):
-    data = {'state': constants.STATE_COMPLETED}
-    mock_fn.return_value = (data, None)
-
-    error = SwarmingTaskError.FromSerializable({
-        'code': swarming_task_error.NO_TASK_OUTPUTS,
-        'message': 'outputs_ref is None'
-    })
-    self.assertEqual((data, None, error),
-                     swarmed_test_util.GetSwarmingTaskDataAndResult(None, None))
-
-  @mock.patch.object(test_results_util, 'IsTestResultsValid', return_value=True)
-  @mock.patch.object(swarmed_test_util, 'GetOutputJsonByOutputsRef')
-  @mock.patch.object(
-      swarming_util,
-      'GetSwarmingTaskResultById',
-      return_value=({
-          'outputs_ref': 'ref',
-          'state': constants.STATE_COMPLETED
-      }, None))
-  def testGetSwarmingTaskDataAndResult(self, mock_fn, mock_get_output, *_):
-    output = {'all_tests': [], 'per_iteration_data': []}
-    mock_get_output.return_value = (output, None)
-    task_id = '2944afa502297110'
-    data, result, error = swarmed_test_util.GetSwarmingTaskDataAndResult(
-        task_id, None)
-
-    self.assertEqual({
-        'outputs_ref': 'ref',
-        'state': constants.STATE_COMPLETED
-    }, data)
-    self.assertIsInstance(result, GtestTestResults)
-    self.assertIsNone(error)
-    mock_fn.assert_called_once_with('chromium-swarm.appspot.com', task_id, None)
-
-  @mock.patch.object(
       swarming_util,
       'GetSwarmingTaskResultById',
       return_value=({
@@ -330,7 +260,7 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
             test_id="ninja://gpu:gl_tests/SharedImageTest.Basic")
     ]
     data, result, error = swarmed_test_util.GetSwarmingTaskDataAndResult(
-        'task_id', use_resultdb=True)
+        'task_id')
     self.assertEqual({'state': constants.STATE_COMPLETED}, data)
     self.assertIsInstance(result, ResultDBTestResults)
     self.assertIsNone(error)
@@ -343,5 +273,4 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         'content',
         swarmed_test_util.GetTestResultForSwarmingTask('task_id', None))
-    mock_fn.assert_called_once_with(
-        'task_id', None, use_resultdb=constants.USE_RESULTDB)
+    mock_fn.assert_called_once_with('task_id', None)

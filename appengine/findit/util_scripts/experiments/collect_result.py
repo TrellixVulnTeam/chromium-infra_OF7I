@@ -74,8 +74,7 @@ def ResultsForBatch(experiment_id, batch):
       batch['task_results'][task_id] = {}
     elif 'complete' in batch['task_results'][task_id]:
       continue
-    task_data, test_results, error = GetSwarmingTaskDataAndResult(
-        task_id, use_resultdb=constants.USE_RESULTDB)
+    task_data, test_results, error = GetSwarmingTaskDataAndResult(task_id)
     if task_data.get('state') == constants.STATE_COMPLETED:
       batch['task_results'][task_id]['complete'] = True
       batch['task_results'][task_id]['bot'] = task_data.get('bot_id')

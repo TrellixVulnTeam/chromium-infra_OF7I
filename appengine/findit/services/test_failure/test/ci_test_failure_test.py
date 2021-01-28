@@ -123,9 +123,9 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       step_util, 'LegacyGetCanonicalStepName', return_value='abc_test')
   @mock.patch.object(ci_test_failure, 'UpdateSwarmingSteps', return_value=True)
-  @mock.patch.object(ci_test_failure, 'swarmed_test_util')
+  @mock.patch.object(resultdb_util, 'get_failed_tests_in_step')
   def testCheckFirstKnownFailureForSwarmingTestsFoundFlaky(
-      self, mock_module, *_):
+      self, mock_resultdb, *_):
     master_name = 'm'
     builder_name = 'b'
     build_number = 221
@@ -135,12 +135,8 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
             'current_failure': 221,
             'first_failure': 221,
             'supported': True,
-            'list_isolated_data': [{
-                'isolatedserver': 'https://isolateserver.appspot.com',
-                'namespace': 'default-gzip',
-                'digest': 'isolatedhashabctest-223'
-            }],
-            'swarming_ids': None,
+            'list_isolated_data': None,
+            'swarming_ids': ["123"],
         }
     }
     builds = {
@@ -174,52 +170,16 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     step.isolated = True
     step.put()
 
-    mock_module.RetrieveShardedTestResultsFromIsolatedServer.return_value = {
-        'disabled_tests': [],
-        'all_tests': [
-            'Unittest1.Subtest1',
-            'Unittest1.Subtest2',
-            'Unittest2.Subtest1',
-        ],
-        'per_iteration_data': [{
-            'Unittest1.Subtest1': [{
-                'elapsed_time_ms': 1,
-                'losless_snippet': True,
-                'output_snippet': '[       OK ]\\n',
-                'status': 'SUCCESS',
-                'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
-            }],
-            'Unittest1.Subtest2': [{
-                'elapsed_time_ms': 66,
-                'losless_snippet': True,
-                'output_snippet': 'a/b/u1s2.cc:1234: Failure\\n',
-                'status': 'FAILURE',
-                'output_snippet_base64': 'YS9iL3UxczIuY2M6MTIzNDogRmF'
-            }, {
-                'elapsed_time_ms': 50,
-                'losless_snippet': True,
-                'output_snippet': '[       OK ]\\n',
-                'status': 'SUCCESS',
-                'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
-            }],
-            'Unittest2.Subtest1': [{
-                'elapsed_time_ms': 56,
-                'losless_snippet': True,
-                'output_snippet': 'ERROR',
-                'status': 'FAILURE',
-                'output_snippet_base64': 'RVJST1I6eF90ZXN0LmN'
-            }, {
-                'elapsed_time_ms': 1,
-                'losless_snippet': True,
-                'output_snippet': '[       OK ]\\n',
-                'status': 'SUCCESS',
-                'output_snippet_base64': 'WyAgICAgICBPSyBdCg=='
-            }],
-        }]
-    }
-
-    mock_module.GetFailedTestsInformation.return_value = ({}, {})
-
+    mock_resultdb.return_value = ResultDBTestResults([
+        test_result_pb2.TestResult(
+            test_id="ninja://gpu:gl_tests/SharedImageDawnTest.Basic",
+            tags=[
+                common_pb2.StringPair(
+                    key="test_name", value="SharedImageTest.Basic"),
+                common_pb2.StringPair(key="gtest_status", value="PASS"),
+            ],
+        )
+    ])
     ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
         master_name, builder_name, build_number, failure_info)
 
@@ -284,11 +244,11 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     step.put()
 
     ci_test_failure.CheckFirstKnownFailureForSwarmingTests(
-        master_name, builder_name, build_number, failure_info, False)
+        master_name, builder_name, build_number, failure_info)
     mock_fun.assert_called_once_with(
         master_name, builder_name, build_number, step_name,
         TestFailedStep.FromSerializable(failed_steps[step_name]),
-        ['223', '222', '221'], None, False)
+        ['223', '222', '221'], None)
 
   @mock.patch.object(ci_test_failure, 'UpdateSwarmingSteps', return_value=False)
   def testCheckFirstKnownFailureForSwarmingTestsNoResult(self, _):
@@ -539,28 +499,6 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(expected_builds, builds.ToSerializable())
 
   @mock.patch.object(
-      swarmed_test_util,
-      'RetrieveShardedTestResultsFromIsolatedServer',
-      return_value=None)
-  def testStartTestLevelCheckForFirstFailure(self, _):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 121
-    step_name = 'atest'
-    failed_step = {
-        'list_isolated_data': [{
-            'isolatedserver': 'https://isolateserver.appspot.com',
-            'namespace': 'default-gzip',
-            'digest': 'isolatedhashabctest-223'
-        }]
-    }
-    failed_step = TestFailedStep.FromSerializable(failed_step)
-    self.assertFalse(
-        ci_test_failure._StartTestLevelCheckForFirstFailure(
-            master_name, builder_name, build_number, step_name, failed_step,
-            None))
-
-  @mock.patch.object(
       swarming_util, 'GetSwarmingTaskResultById', return_value=({}, None))
   @mock.patch.object(resultdb, 'query_resultdb', return_value=[])
   def testStartTestLevelCheckForFirstFailureWithResultDBEnabled(
@@ -573,13 +511,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     failed_step = TestFailedStep.FromSerializable(failed_step)
     self.assertFalse(
         ci_test_failure._StartTestLevelCheckForFirstFailure(
-            master_name,
-            builder_name,
-            build_number,
-            step_name,
-            failed_step,
-            None,
-            use_resultdb=True))
+            master_name, builder_name, build_number, step_name, failed_step))
 
   def testSaveLogToStepLogTooBig(self):
     master_name = 'm'
@@ -626,39 +558,6 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(constants.TOO_LARGE_LOG, step.log_data)
     self.assertTrue(step.isolated)
 
-  @mock.patch.object(swarming, 'GetIsolatedDataForStep', return_value=None)
-  def testGetLogForTheSameStepFromBuildNotIsolated(self, _):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 121
-    step_name = 'atest'
-    self.assertIsNone(
-        ci_test_failure._GetTestLevelLogForAStep(master_name, builder_name,
-                                                 build_number, step_name, None))
-
-  @mock.patch.object(
-      swarmed_test_util,
-      'RetrieveShardedTestResultsFromIsolatedServer',
-      return_value={'per_iteration_data': 'invalid'})
-  @mock.patch.object(swarming, 'GetIsolatedDataForStep')
-  def testGetLogForTheSameStepFromBuildReslutLogInvalid(self,
-                                                        mock_isolated_data, _):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 121
-    step_name = 'atest'
-
-    mock_isolated_data.return_value = [{
-        'isolatedserver': 'https://isolateserver.appspot.com',
-        'namespace': {
-            'namespace': 'default-gzip'
-        },
-        'digest': 'isolatedhashabctest'
-    }]
-    self.assertIsNone(
-        ci_test_failure._GetTestLevelLogForAStep(master_name, builder_name,
-                                                 build_number, step_name, None))
-
   def testGetLogForTheSameStepFromBuildNotNotJsonLoadable(self):
     master_name = 'm'
     builder_name = 'b'
@@ -674,68 +573,6 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         ci_test_failure._GetTestLevelLogForAStep(master_name, builder_name,
                                                  build_number, step_name, None))
 
-  @mock.patch.object(swarming, 'GetIsolatedDataForStep')
-  @mock.patch.object(swarmed_test_util,
-                     'RetrieveShardedTestResultsFromIsolatedServer')
-  def testGetLogForTheSameStepFromBuild(self, mock_step_log,
-                                        mock_isolated_data):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 222
-    step_name = 'abc_test'
-
-    mock_isolated_data.return_value = [{
-        'isolatedserver': 'https://isolateserver.appspot.com',
-        'namespace': {
-            'namespace': 'default-gzip'
-        },
-        'digest': 'isolatedhashabctest'
-    }]
-
-    mock_step_log.return_value = {
-        'disabled_tests': [],
-        'global_tags': [],
-        'all_tests': [
-            'Unittest1.Subtest1', 'Unittest1.Subtest2', 'Unittest2.Subtest1',
-            'Unittest2.Subtest2', 'Unittest3.Subtest1', 'Unittest3.Subtest2',
-            'Unittest3.Subtest3'
-        ],
-        'per_iteration_data': [{
-            'Unittest2.Subtest1': [{
-                'elapsed_time_ms':
-                    56,
-                'losless_snippet':
-                    True,
-                'output_snippet': ('ERROR:x_test.cc:1234\\na/b/u2s1.cc'
-                                   ':567: Failure\\n'),
-                'status':
-                    'FAILURE',
-                'output_snippet_base64':
-                    ('RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNj'
-                     'OjU2NzogRmFpbHVyZVxu')
-            }],
-            'Unittest3.Subtest2': [{
-                'elapsed_time_ms': 80,
-                'losless_snippet': True,
-                'output_snippet': 'a/b/u3s2.cc:110: Failure\\n',
-                'status': 'FAILURE',
-                'output_snippet_base64': 'YS9iL3UzczIuY2M6MTEwOiBGYWlsdXJlXG4='
-            }]
-        }]
-    }
-
-    expected_failure_log = {
-        'Unittest2.Subtest1':
-            ('RVJST1I6eF90ZXN0LmNjOjEyMzRcbmEvYi91MnMxLmNjOjU2NzogRmFpbHVyZVxu'
-            ),
-        'Unittest3.Subtest2': 'YS9iL3UzczIuY2M6MTEwOiBGYWlsdXJlXG4='
-    }
-
-    failure_log = ci_test_failure._GetTestLevelLogForAStep(
-        master_name, builder_name, build_number, step_name, None)
-
-    self.assertEqual(failure_log, expected_failure_log)
-
   def testStepNotHaveFirstTimeFailure(self):
     build_number = 1
     tests = {'test1': {'first_failure': 0}}
@@ -747,100 +584,6 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
     tests = {'test1': {'first_failure': 1}}
     self.assertTrue(
         ci_test_failure.AnyTestHasFirstTimeFailure(tests, build_number))
-
-  @mock.patch.object(swarming, 'GetIsolatedDataForFailedStepsInABuild')
-  def testUpdateSwarmingSteps(self, mock_data):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 223
-    failed_steps = {
-        'a_tests': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'supported': True
-        },
-        'unit_tests': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'supported': True
-        },
-        'compile': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'supported': True
-        }
-    }
-    failed_steps = TestFailedSteps.FromSerializable(failed_steps)
-
-    mock_data.return_value = {
-        'a_tests': [{
-            'isolatedserver': 'https://isolateserver.appspot.com',
-            'namespace': 'default-gzip',
-            'digest': 'isolatedhashatests'
-        }],
-        'unit_tests': [{
-            'isolatedserver': 'https://isolateserver.appspot.com',
-            'namespace': 'default-gzip',
-            'digest': 'isolatedhashunittests1'
-        }]
-    }
-    result = ci_test_failure.UpdateSwarmingSteps(master_name, builder_name,
-                                                 build_number, failed_steps,
-                                                 None)
-
-    expected_failed_steps = {
-        'a_tests': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'supported': True,
-            'last_pass': None,
-            'tests': None,
-            'list_isolated_data': [{
-                'digest':
-                    'isolatedhashatests',
-                'namespace':
-                    'default-gzip',
-                'isolatedserver': (waterfall_config.GetSwarmingSettings().get(
-                    'isolated_server'))
-            }],
-            'swarming_ids': None,
-        },
-        'unit_tests': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'supported': True,
-            'last_pass': None,
-            'tests': None,
-            'list_isolated_data': [{
-                'digest':
-                    'isolatedhashunittests1',
-                'namespace':
-                    'default-gzip',
-                'isolatedserver': (waterfall_config.GetSwarmingSettings().get(
-                    'isolated_server'))
-            }],
-            'swarming_ids': None,
-        },
-        'compile': {
-            'current_failure': 2,
-            'first_failure': 0,
-            'last_pass': None,
-            'supported': True,
-            'tests': None,
-            'list_isolated_data': None,
-            'swarming_ids': None,
-        }
-    }
-
-    for step_name in failed_steps:
-      step = WfStep.Get(master_name, builder_name, build_number, step_name)
-      if step_name == 'compile':
-        self.assertIsNone(step)
-      else:
-        self.assertIsNotNone(step)
-
-    self.assertTrue(result)
-    self.assertEqual(expected_failed_steps, failed_steps.ToSerializable())
 
   @mock.patch.object(swarming, 'GetSwarmingTaskIdsForFailedSteps')
   def testUpdateSwarmingStepsWithResultDBEnabled(self, mock_data):
@@ -870,13 +613,9 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         'a_tests': ["50625b66a2ac8210"],
         'unit_tests': ["5ac3f78938340"]
     }
-    result = ci_test_failure.UpdateSwarmingSteps(
-        master_name,
-        builder_name,
-        build_number,
-        failed_steps,
-        None,
-        use_resultdb=True)
+    result = ci_test_failure.UpdateSwarmingSteps(master_name, builder_name,
+                                                 build_number, failed_steps,
+                                                 None)
 
     expected_failed_steps = {
         'a_tests': {
@@ -1189,11 +928,7 @@ class CITestFailureTest(wf_testcase.WaterfallTestCase):
         "SharedImageTest.Basic2": base64.b64encode("summary2")
     }
     self.assertEqual(
-        ci_test_failure._GetTestLevelLogForAStep(
-            master_name,
-            builder_name,
-            build_number,
-            step_name,
-            None,
-            use_resultdb=True), expected)
+        ci_test_failure._GetTestLevelLogForAStep(master_name, builder_name,
+                                                 build_number, step_name, None),
+        expected)
     mock_resultdb.assert_called_once_with(["task_1", "task_2"])

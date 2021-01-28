@@ -25,17 +25,7 @@ from waterfall import waterfall_config
 _FINDIT_HTTP_CLIENT = FinditHttpClient()
 
 
-def GetOutputJsonByOutputsRef(outputs_ref, http_client):
-  """Downloads failure log from isolated server."""
-  isolated_data = swarming_util.GenerateIsolatedData(outputs_ref)
-  file_content, error = isolate.DownloadFileFromIsolatedServer(
-      isolated_data, http_client, 'output.json')
-  return json.loads(file_content) if file_content else None, error
-
-
-def GetSwarmingTaskDataAndResult(task_id,
-                                 http_client=_FINDIT_HTTP_CLIENT,
-                                 use_resultdb=False):
+def GetSwarmingTaskDataAndResult(task_id, http_client=_FINDIT_HTTP_CLIENT):
   """Gets information about a swarming task.
 
   Returns: A tuple of 3 elements
@@ -52,31 +42,14 @@ def GetSwarmingTaskDataAndResult(task_id,
 
   task_state = data['state']
   test_results = None
-  output_json = None
   if task_state not in constants.STATE_NOT_STOP:
     if task_state == constants.STATE_COMPLETED:
-      if use_resultdb:
-        inv_name = swarming_util.GetInvocationNameForSwarmingTask(
-            swarming.SwarmingHost(), task_id)
-        res = resultdb.query_resultdb(
-            inv_name, only_variants_with_unexpected_results=False)
-        if res:
-          test_results = ResultDBTestResults(res)
-      else:
-        outputs_ref = data.get('outputs_ref')
-
-        # If swarming task aborted because of errors in request arguments,
-        # it's possible that there is no outputs_ref.
-        if not outputs_ref:
-          error = error or SwarmingTaskError.GenerateError(
-              swarming_task_error.NO_TASK_OUTPUTS)
-        else:
-          output_json, error = GetOutputJsonByOutputsRef(
-              outputs_ref, http_client)
-          if not output_json:
-            error = error or SwarmingTaskError.GenerateError(
-                swarming_task_error.NO_OUTPUT_JSON)
-          test_results = test_results_util.GetTestResultObject(output_json)
+      inv_name = swarming_util.GetInvocationNameForSwarmingTask(
+          swarming.SwarmingHost(), task_id)
+      res = resultdb.query_resultdb(
+          inv_name, only_variants_with_unexpected_results=False)
+      if res:
+        test_results = ResultDBTestResults(res)
     else:
       # The swarming task did not complete successfully.
       logging.error('Swarming task %s stopped with status: %s', task_id,
@@ -89,7 +62,7 @@ def GetSwarmingTaskDataAndResult(task_id,
 def GetTestResultForSwarmingTask(task_id, http_client=_FINDIT_HTTP_CLIENT):
   """Get test results object for a swarming task based on it's id."""
   _data, test_results, _error = GetSwarmingTaskDataAndResult(
-      task_id, http_client, use_resultdb=constants.USE_RESULTDB)
+      task_id, http_client)
   return test_results
 
 

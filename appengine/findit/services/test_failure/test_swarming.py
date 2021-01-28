@@ -182,7 +182,7 @@ def OnSwarmingTaskTimeout(run_swarming_task_params, task_id):
   error = SwarmingTaskError.GenerateError(swarming_task_error.RUNNER_TIMEOUT)
 
   data, test_results, _ = swarmed_test_util.GetSwarmingTaskDataAndResult(
-      task_id, use_resultdb=constants.USE_RESULTDB)
+      task_id)
   if test_results:
     classified_test_results = test_results.GetClassifiedTestResults()
     _UpdateSwarmingTaskEntity(
@@ -266,8 +266,7 @@ def OnSwarmingTaskStateChanged(run_swarming_task_parameters, task_id):
   step_name = run_swarming_task_parameters.step_name
 
   data, test_results, error = (
-      swarmed_test_util.GetSwarmingTaskDataAndResult(
-          task_id, use_resultdb=constants.USE_RESULTDB))
+      swarmed_test_util.GetSwarmingTaskDataAndResult(task_id))
 
   if not data or not data.get('state'):
     # Error when get task state.
