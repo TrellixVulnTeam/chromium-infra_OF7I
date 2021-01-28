@@ -466,7 +466,6 @@ imports:
   version: 6772e930b67bb09bf22262c7378e7d2f67cf59d1
   repo: https://go.googlesource.com/net.git
   subpackages:
-  - context
   - context/ctxhttp
 - name: golang.org/x/oauth2
   version: 08078c50e5b5244ec123a6b69facdbc13b21a548

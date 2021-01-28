@@ -87,7 +87,6 @@ import:
   version: master
   repo: https://go.googlesource.com/net.git
   subpackages:
-  - context
   - context/ctxhttp
 - package: golang.org/x/text
   version: master
