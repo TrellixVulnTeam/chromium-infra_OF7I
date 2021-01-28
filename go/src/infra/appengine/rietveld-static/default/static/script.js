@@ -102,14 +102,12 @@ function _modifyStaticPage() {
   // Remove links to close and star issues, draft comment warnings, and links to
   // expand common lines.
   Array.from(document.getElementsByTagName('span')).forEach((span) => {
-    if (span.id.startsWith('issue-')) {
-      // Remove links to star and close issues.
+    if (span.id.startsWith('issue-') || span.id.startsWith('skiplinks-')) {
+      // Remove links to star and close issues, and links to expand common lines
+      // on side-by-side diff view.
       _remove(span);
     } else if (span.style.color == 'red') {
       // Remove 'Draft comments are only viewable by you.' warnings.
-      _remove(span);
-    } else if (span.id == 'skiplinks-10') {
-      // Remove links to expand common lines on side-by-side diff view.
       _remove(span);
     }
   });
