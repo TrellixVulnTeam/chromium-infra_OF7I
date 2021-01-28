@@ -55,3 +55,21 @@ func convertDUTStateToEvent(state string) event.Event {
 	log.Printf("unexpected DUT state: %q", state)
 	return ""
 }
+
+// successfulEvents represents list of Events considered successful result of process.
+var successfulEvents = map[event.Event]bool{
+	event.HostNeedsReplacement: true,
+	event.HostNeedsDeploy:      true,
+}
+
+// IsSuccessState checks if the state is successful state.
+//
+// Only for state read from dut_state.repair file.
+func IsSuccessState(e event.Event) bool {
+	if e != "" {
+		if _, ok := successfulEvents[e]; ok {
+			return true
+		}
+	}
+	return false
+}

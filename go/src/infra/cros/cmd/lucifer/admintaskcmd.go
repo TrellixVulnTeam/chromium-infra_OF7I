@@ -133,20 +133,20 @@ var taskEvents = map[atutil.AdminTaskType]struct {
 func runTask(ctx context.Context, ac *api.Client, m *atutil.MainJob, t *atutil.AdminTask) (err error) {
 	event.Send(event.Starting)
 	defer event.Send(event.Completed)
-	te := taskEvents[t.Type]
-	defer func() {
-		e := dutstate.ReadFile(t.ResultsDir)
-		if e == "" {
-			if err == nil {
-				e = te.pass
-			} else {
-				e = te.fail
-			}
-		}
-		sendHostStatus(ctx, ac, []string{t.Host}, e)
-	}()
 	_, err = atutil.RunAutoserv(ctx, m, t, ac.Logger().RawWriter())
-	if err != nil {
+	e := dutstate.ReadFile(t.ResultsDir)
+	// If we didn't read a state, pick a default state based on the task.
+	if e == "" {
+		if err == nil {
+			e = taskEvents[t.Type].pass
+		} else {
+			e = taskEvents[t.Type].fail
+		}
+	}
+	sendHostStatus(ctx, ac, []string{t.Host}, e)
+	// Ignore autoserv failures for certain states so they don't
+	// count as Swarming task failures.
+	if err != nil && !dutstate.IsSuccessState(e) {
 		return fmt.Errorf("task %s failed: %s", t.Type, err)
 	}
 	return nil
