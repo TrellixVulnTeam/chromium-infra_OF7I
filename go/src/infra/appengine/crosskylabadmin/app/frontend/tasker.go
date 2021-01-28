@@ -29,14 +29,14 @@ import (
 )
 
 // CreateRepairTask kicks off a repair job.
-func CreateRepairTask(ctx context.Context, botID string) (string, error) {
+func CreateRepairTask(ctx context.Context, botID, expectedState string) (string, error) {
 	at := worker.AdminTaskForType(ctx, fleet.TaskType_Repair)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
 	cfg := config.Get(ctx)
-	taskURL, err := runTaskByBotID(ctx, at, sc, botID, cfg.Tasker.BackgroundTaskExpirationSecs, cfg.Tasker.BackgroundTaskExecutionTimeoutSecs)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID, expectedState, cfg.Tasker.BackgroundTaskExpirationSecs, cfg.Tasker.BackgroundTaskExecutionTimeoutSecs)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create repair task for %s", botID).Err()
 	}
@@ -44,14 +44,14 @@ func CreateRepairTask(ctx context.Context, botID string) (string, error) {
 }
 
 // CreateResetTask kicks off a reset job.
-func CreateResetTask(ctx context.Context, botID string) (string, error) {
+func CreateResetTask(ctx context.Context, botID, expectedState string) (string, error) {
 	at := worker.AdminTaskForType(ctx, fleet.TaskType_Reset)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
 	cfg := config.Get(ctx)
-	taskURL, err := runTaskByBotID(ctx, at, sc, botID, cfg.Tasker.BackgroundTaskExpirationSecs, cfg.Tasker.BackgroundTaskExecutionTimeoutSecs)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID, expectedState, cfg.Tasker.BackgroundTaskExpirationSecs, cfg.Tasker.BackgroundTaskExecutionTimeoutSecs)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create reset task for %s", botID).Err()
 	}
@@ -67,14 +67,14 @@ func CreateAuditTask(ctx context.Context, botID, taskname, actions string) (stri
 	}
 	expSec := int64(24 * 60 * 60)
 	execTimeoutSecs := int64(8 * 60 * 60)
-	taskURL, err := runTaskByBotID(ctx, at, sc, botID, expSec, execTimeoutSecs)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID, "", expSec, execTimeoutSecs)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create audit task for %s", botID).Err()
 	}
 	return taskURL, nil
 }
 
-func runTaskByBotID(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID string, expirationSecs, executionTimeoutSecs int64) (string, error) {
+func runTaskByBotID(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID, expectedState string, expirationSecs, executionTimeoutSecs int64) (string, error) {
 	cfg := config.Get(ctx)
 	tags := swarming.AddCommonTags(
 		ctx,
@@ -91,6 +91,9 @@ func runTaskByBotID(ctx context.Context, at worker.Task, sc clients.SwarmingClie
 		Priority:             cfg.Cron.FleetAdminTaskPriority,
 		Tags:                 tags,
 	})
+	if expectedState != "" {
+		a.DutState = expectedState
+	}
 	tid, err := sc.CreateTask(ctx, at.Name, a)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to create task for bot %s", botID).Err()

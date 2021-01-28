@@ -59,7 +59,8 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	}()
 
 	botID := c.Request.FormValue("botID")
-	taskURL, err := frontend.CreateRepairTask(c.Context, botID)
+	expectedState := c.Request.FormValue("expectedState")
+	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState)
 	if err != nil {
 		logging.Infof(c.Context, "fail to run repair job in queue for %s: %s", botID, err.Error())
 		return err
@@ -75,7 +76,8 @@ func runResetQueueHandler(c *router.Context) (err error) {
 	}()
 
 	botID := c.Request.FormValue("botID")
-	taskURL, err := frontend.CreateResetTask(c.Context, botID)
+	expectedState := c.Request.FormValue("expectedState")
+	taskURL, err := frontend.CreateResetTask(c.Context, botID, expectedState)
 	if err != nil {
 		return err
 	}

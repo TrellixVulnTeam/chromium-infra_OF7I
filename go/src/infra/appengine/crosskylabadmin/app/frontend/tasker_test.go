@@ -29,16 +29,16 @@ func TestRunTaskByBotID(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		expectTaskCreationForDUT(tf, "task1", "bot_id", 5, 15)
+		expectTaskCreationForDUT(tf, "task1", "bot_id", "state1", 5, 15)
 		at := worker.AdminTaskForType(tf.C, fleet.TaskType_Repair)
-		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", 5, 15)
+		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", "state1", 5, 15)
 		So(err, ShouldBeNil)
 		So(taskURL, ShouldContainSubstring, "task1")
 	})
 	Convey("with run audit job with BOT id and custom experation and execution times", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
-		expectTaskCreationForDUT(tf, "task1", "bot_id", 7200, 7200)
+		expectTaskCreationForDUT(tf, "task1", "bot_id", "", 7200, 7200)
 		at := worker.AuditTaskWithActions(tf.C, "MyTask", "action1,action2")
 		So(len(at.Cmd), ShouldEqual, 7)
 		So(at.Cmd[0], ShouldEqual, "/opt/infra-tools/skylab_swarming_worker")
@@ -47,18 +47,21 @@ func TestRunTaskByBotID(t *testing.T) {
 		So(at.Cmd[3], ShouldEqual, "-logdog-annotation-url")
 		So(at.Cmd[5], ShouldEqual, "-task-name")
 		So(at.Cmd[6], ShouldEqual, "admin_audit")
-		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", 7200, 7200)
+		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", "", 7200, 7200)
 		So(err, ShouldBeNil)
 		So(taskURL, ShouldContainSubstring, "task1")
 	})
 }
 
 // expectTaskCreationByDUTName sets up the expectations for a single task creation based on DUT name.
-func expectTaskCreationForDUT(tf testFixture, taskID, botID string, expSec, execTimeoutSecs int) *gomock.Call {
+func expectTaskCreationForDUT(tf testFixture, taskID, botID, expectedState string, expSec, execTimeoutSecs int) *gomock.Call {
 	m := &createTaskArgsMatcher{
 		BotID:                botID,
 		ExpirationSecs:       int64(expSec),
 		ExecutionTimeoutSecs: int64(execTimeoutSecs),
+	}
+	if expectedState != "" {
+		m.DutState = expectedState
 	}
 	return tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), m).Return(taskID, nil)
 }
