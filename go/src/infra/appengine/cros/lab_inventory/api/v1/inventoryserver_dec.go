@@ -6,6 +6,9 @@ import (
 	"context"
 
 	proto "github.com/golang/protobuf/proto"
+
+	device "go.chromium.org/chromiumos/infra/proto/go/device"
+	manufacturing "go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 )
 
 type DecoratedInventory struct {
@@ -308,6 +311,57 @@ func (s *DecoratedInventory) ListManualRepairRecords(ctx context.Context, req *L
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "ListManualRepairRecords", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) GetManufacturingConfig(ctx context.Context, req *GetManufacturingConfigRequest) (rsp *manufacturing.Config, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetManufacturingConfig", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetManufacturingConfig(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetManufacturingConfig", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) GetDeviceConfig(ctx context.Context, req *GetDeviceConfigRequest) (rsp *device.Config, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDeviceConfig", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDeviceConfig(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDeviceConfig", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) GetHwidData(ctx context.Context, req *GetHwidDataRequest) (rsp *HwidData, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetHwidData", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetHwidData(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetHwidData", rsp, err)
 	}
 	return
 }

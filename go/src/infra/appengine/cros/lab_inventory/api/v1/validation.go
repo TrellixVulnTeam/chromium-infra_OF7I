@@ -208,3 +208,27 @@ func (r *AssetList) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates input requests of GetManufacturingConfig.
+func (r *GetManufacturingConfigRequest) Validate() error {
+	if r == nil || r.Name == "" {
+		return status.Errorf(codes.InvalidArgument, "Request is empty")
+	}
+	return nil
+}
+
+// Validate validates input requests of GetDeviceConfig.
+func (r *GetDeviceConfigRequest) Validate() error {
+	if r == nil || r.GetConfigId() == nil {
+		return status.Errorf(codes.InvalidArgument, "Request is empty")
+	}
+	return nil
+}
+
+// Validate validates input requests of GetHwidData.
+func (r *GetHwidDataRequest) Validate() error {
+	if r == nil || r.Name == "" {
+		return status.Errorf(codes.InvalidArgument, "Request is empty")
+	}
+	return nil
+}

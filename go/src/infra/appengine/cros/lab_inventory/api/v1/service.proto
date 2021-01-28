@@ -75,6 +75,15 @@ service Inventory {
   // ListManualRepairRecords lists repair records based on filters passed in the
   // request.
   rpc ListManualRepairRecords(ListManualRepairRecordsRequest) returns (ListManualRepairRecordsResponse);
+
+  // Get manufacturing config for the device from datastore
+  rpc GetManufacturingConfig(GetManufacturingConfigRequest) returns (manufacturing.Config);
+
+  // Get a device config for the device from datastore
+  rpc GetDeviceConfig(GetDeviceConfigRequest) returns (device.Config);
+
+  // Get a Hwid data for the device from datastore
+  rpc GetHwidData(GetHwidDataRequest) returns (HwidData);
 }
 
 message ListCrosDevicesLabConfigRequest {
@@ -298,4 +307,18 @@ message ListManualRepairRecordsRequest {
 
 message ListManualRepairRecordsResponse {
   repeated inventory.libs.protos.DeviceManualRepairRecord repair_records = 1;
+}
+
+message GetManufacturingConfigRequest {
+  // Hwid of the Asset/DUT
+  string name = 1;
+}
+
+message GetDeviceConfigRequest {
+  device.ConfigId configId = 1;
+}
+
+message GetHwidDataRequest {
+  // Hwid of the Asset/DUT
+  string name = 1;
 }

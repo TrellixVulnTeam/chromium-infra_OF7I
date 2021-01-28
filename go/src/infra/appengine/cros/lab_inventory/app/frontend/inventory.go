@@ -916,3 +916,36 @@ func (is *InventoryServerImpl) ListManualRepairRecords(ctx context.Context, req 
 		RepairRecords: repairRecords,
 	}, err
 }
+
+// GetManufacturingConfig retrieves requested Chrome OS device manufacturing config from the inventory.
+func (is *InventoryServerImpl) GetManufacturingConfig(ctx context.Context, req *api.GetManufacturingConfigRequest) (resp *manufacturing.Config, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+// GetDeviceConfig retrieves requested Chrome OS device device config from the inventory.
+func (is *InventoryServerImpl) GetDeviceConfig(ctx context.Context, req *api.GetDeviceConfigRequest) (resp *device.Config, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+// GetHwidData retrieves requested Chrome OS device Hwid Data from the inventory.
+func (is *InventoryServerImpl) GetHwidData(ctx context.Context, req *api.GetHwidDataRequest) (resp *api.HwidData, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
