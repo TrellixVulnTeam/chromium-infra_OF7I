@@ -214,15 +214,8 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 	}
 	p := l.GetPeripherals()
 	if p != nil {
-		if p.GetServoState() == inventory.PeripheralState_UNKNOWN {
-			if p.GetServo() {
-				state.Servo = lab.PeripheralState_WORKING
-			} else {
-				state.Servo = lab.PeripheralState_NOT_CONNECTED
-			}
-		} else {
-			state.Servo = lab.PeripheralState(p.GetServoState())
-		}
+		state.Servo = lab.PeripheralState(p.GetServoState())
+		state.RpmState = lab.PeripheralState(p.GetRpmState())
 		if p.GetChameleon() {
 			state.Chameleon = lab.PeripheralState_WORKING
 		}
