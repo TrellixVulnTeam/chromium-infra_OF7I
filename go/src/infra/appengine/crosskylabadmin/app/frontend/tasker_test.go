@@ -39,7 +39,7 @@ func TestRunTaskByBotID(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 		expectTaskCreationForDUT(tf, "task1", "bot_id", 7200, 7200)
-		at := worker.AuditTaskWithActions(tf.C, "action1,action2")
+		at := worker.AuditTaskWithActions(tf.C, "MyTask", "action1,action2")
 		So(len(at.Cmd), ShouldEqual, 7)
 		So(at.Cmd[0], ShouldEqual, "/opt/infra-tools/skylab_swarming_worker")
 		So(at.Cmd[1], ShouldEqual, "-actions")

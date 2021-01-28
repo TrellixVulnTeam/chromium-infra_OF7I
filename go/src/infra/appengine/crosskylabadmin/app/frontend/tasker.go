@@ -59,8 +59,8 @@ func CreateResetTask(ctx context.Context, botID string) (string, error) {
 }
 
 // CreateAuditTask kicks off an audit job.
-func CreateAuditTask(ctx context.Context, botID, actions string) (string, error) {
-	at := worker.AuditTaskWithActions(ctx, actions)
+func CreateAuditTask(ctx context.Context, botID, taskname, actions string) (string, error) {
+	at := worker.AuditTaskWithActions(ctx, taskname, actions)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()

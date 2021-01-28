@@ -77,14 +77,19 @@ func DeployTaskWithActions(ctx context.Context, actions string) Task {
 // task for `skylab_swarming_worker -> lucifer audittask`.
 //
 // actions may be empty to run the default audit task with no actions.
-func AuditTaskWithActions(ctx context.Context, actions string) Task {
+func AuditTaskWithActions(ctx context.Context, taskname, actions string) Task {
 	cmd := worker.Command{
 		TaskName: "admin_audit",
 		Actions:  actions,
 	}
+	name := "AdminAudit"
+	if taskname != "" {
+		name = "AdminAudit " + taskname
+	}
+
 	cmd.Config(wrapped(config.Get(ctx)))
 	t := Task{
-		Name: "AdminAudit",
+		Name: name,
 		Cmd:  cmd.Args(),
 	}
 	if cmd.LogDogAnnotationURL != "" {
