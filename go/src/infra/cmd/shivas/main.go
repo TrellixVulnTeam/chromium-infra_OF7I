@@ -21,6 +21,7 @@ import (
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
+	bot_cmds "infra/cmd/shivas/ufs/cmds/bot"
 	"infra/cmd/shivas/ufs/cmds/operations"
 	"infra/cmd/shivas/ufs/cmds/state"
 )
@@ -63,6 +64,8 @@ Full documentation http://go/shivas-cli`,
 			queen_cmds.InspectDuts,
 			queen_cmds.InspectDrones,
 			queen_cmds.PushDuts,
+			subcommands.Section("Internal use"),
+			bot_cmds.PrintBotInfo,
 		},
 	}
 }
