@@ -67,9 +67,6 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 const (
-	// TODO(pprabhu): Find a configurable way for drone to provide us the port
-	// numbers.
-	droneTLSPort = 7152
 	droneTLWPort = 7151
 )
 
