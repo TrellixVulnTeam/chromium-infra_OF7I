@@ -7,11 +7,13 @@ package tasks
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/proto"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/tq/tqtesting"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -48,11 +50,13 @@ func TestQueue(t *testing.T) {
 
 		Convey("Test deduplication", func() {
 			host := "host"
+			createdTime := timestamppb.New(time.Now().Add(-5 * time.Minute))
 			cls := []*gerritpb.ChangeInfo{
 				{
 					Number:          12345,
 					CurrentRevision: "123abc",
 					Project:         "dummy",
+					Created:         createdTime,
 					Labels: map[string]*gerritpb.LabelInfo{
 						"Auto-Submit": {Approved: &gerritpb.AccountInfo{}},
 					},
@@ -64,6 +68,7 @@ func TestQueue(t *testing.T) {
 					Number:          12345,
 					CurrentRevision: "456789",
 					Project:         "dummy",
+					Created:         createdTime,
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"123abc": {},
 					},
@@ -72,6 +77,7 @@ func TestQueue(t *testing.T) {
 					Number:          12315,
 					CurrentRevision: "112233",
 					Project:         "dummy",
+					Created:         createdTime,
 					RevertOf:        129380,
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"112233": {},
@@ -82,6 +88,7 @@ func TestQueue(t *testing.T) {
 					Number:             12387,
 					CurrentRevision:    "111aaa",
 					Project:            "dummy",
+					Created:            createdTime,
 					CherryPickOfChange: 129380,
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"111aaa": {},
@@ -133,7 +140,7 @@ func TestQueue(t *testing.T) {
 				CurrentRevision: "aa1def",
 				Revisions: map[string]*gerritpb.RevisionInfo{
 					"aa1def": {
-						Created: timestamppb.Now(),
+						Created: timestamppb.New(time.Now().Add(-7 * time.Minute)),
 					},
 				},
 			}, nil)
@@ -148,10 +155,11 @@ func TestQueue(t *testing.T) {
 				Number:  cls[3].CherryPickOfChange,
 				Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 			})).Return(&gerritpb.ChangeInfo{
+				Status:          gerritpb.ChangeStatus_MERGED,
 				CurrentRevision: "456def",
 				Revisions: map[string]*gerritpb.RevisionInfo{
 					"456def": {
-						Created: timestamppb.Now(),
+						Created: timestamppb.New(time.Now().Add(-10 * time.Minute)),
 					},
 				},
 			}, nil)
@@ -168,47 +176,62 @@ func TestQueue(t *testing.T) {
 				Labels:     map[string]int32{"Bot-Commit": 1},
 			})).Return(&gerritpb.ReviewResult{}, nil)
 
+			// After enqueuing, run the tasks immediately to make sure they end
+			// executing by order, otherwise the test could be flaky.
 			So(EnqueueChangeReviewTask(ctx, host, cls[0]), ShouldBeNil)
 			So(EnqueueChangeReviewTask(ctx, host, cls[0]), ShouldBeNil)
+			sched.Run(ctx, tqtesting.StopWhenDrained())
+
 			So(EnqueueChangeReviewTask(ctx, host, cls[1]), ShouldBeNil)
 			So(EnqueueChangeReviewTask(ctx, host, cls[1]), ShouldBeNil)
+			sched.Run(ctx, tqtesting.StopWhenDrained())
+
 			So(EnqueueChangeReviewTask(ctx, host, cls[2]), ShouldBeNil)
+			sched.Run(ctx, tqtesting.StopWhenDrained())
+
 			So(EnqueueChangeReviewTask(ctx, host, cls[3]), ShouldBeNil)
 			sched.Run(ctx, tqtesting.StopWhenDrained())
+
 			So(len(succeeded.Payloads()), ShouldEqual, 4)
-			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:           "host",
-				Number:         12345,
-				Revision:       "123abc",
-				Repo:           "dummy",
-				AutoSubmit:     true,
-				RevisionsCount: 1,
-			})
-			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:           "host",
-				Number:         12345,
-				Revision:       "456789",
-				Repo:           "dummy",
-				AutoSubmit:     false,
-				RevisionsCount: 1,
-			})
-			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:           "host",
-				Number:         12315,
-				Revision:       "112233",
-				Repo:           "dummy",
-				AutoSubmit:     false,
-				RevertOf:       129380,
-				RevisionsCount: 2,
-			})
-			So(succeeded.Payloads(), ShouldContain, &taskspb.ChangeReviewTask{
-				Host:               "host",
-				Number:             12387,
-				Revision:           "111aaa",
-				Repo:               "dummy",
-				AutoSubmit:         false,
-				CherryPickOfChange: 129380,
-				RevisionsCount:     1,
+			So(succeeded.Payloads(), ShouldResembleProto, []*taskspb.ChangeReviewTask{
+				{
+					Host:           "host",
+					Number:         12345,
+					Revision:       "123abc",
+					Repo:           "dummy",
+					AutoSubmit:     true,
+					RevisionsCount: 1,
+					Created:        createdTime,
+				},
+				{
+					Host:           "host",
+					Number:         12345,
+					Revision:       "456789",
+					Repo:           "dummy",
+					AutoSubmit:     false,
+					RevisionsCount: 1,
+					Created:        createdTime,
+				},
+				{
+					Host:           "host",
+					Number:         12315,
+					Revision:       "112233",
+					Repo:           "dummy",
+					AutoSubmit:     false,
+					RevertOf:       129380,
+					RevisionsCount: 2,
+					Created:        createdTime,
+				},
+				{
+					Host:               "host",
+					Number:             12387,
+					Revision:           "111aaa",
+					Repo:               "dummy",
+					AutoSubmit:         false,
+					CherryPickOfChange: 129380,
+					RevisionsCount:     1,
+					Created:            createdTime,
+				},
 			})
 		})
 	})

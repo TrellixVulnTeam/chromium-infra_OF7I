@@ -58,6 +58,16 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 		return fmt.Sprintf("The change is not in the configured time window. Rubber Stamper is only allowed to review cherry-picks within %s %s.", tw[:len(tw)-1], timeWindowToStr[tw[len(tw)-1:]]), nil
 	}
 
+	// Check whether the change was cherry-picked after the original CL has
+	// been merged.
+	mergeMsg := "The change is not cherry-picked after the original CL has been merged."
+	if originalClInfo.Status != gerritpb.ChangeStatus_MERGED {
+		return mergeMsg, nil
+	}
+	if originalClInfo.Revisions[originalClInfo.CurrentRevision].Created.AsTime().After(t.Created.AsTime()) {
+		return mergeMsg, nil
+	}
+
 	// Check whether the change alters any excluded files.
 	if ccpp != nil && len(ccpp.ExcludedPaths) > 0 {
 		excludedFiles, err := checkExcludedFiles(ctx, ccpp.ExcludedPaths, gc, t)

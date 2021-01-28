@@ -7,6 +7,7 @@ package reviewer
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -46,6 +47,7 @@ func TestReviewChange(t *testing.T) {
 				Revision:   "123abc",
 				Repo:       "dummy",
 				AutoSubmit: false,
+				Created:    timestamppb.New(time.Now().Add(-time.Minute)),
 			}
 			Convey("valid BenignFileChange", func() {
 				gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
@@ -119,6 +121,7 @@ func TestReviewChange(t *testing.T) {
 				Repo:       "dummy",
 				AutoSubmit: false,
 				RevertOf:   45678,
+				Created:    timestamppb.New(time.Now().Add(-time.Minute)),
 			}
 			Convey("valid CleanRevert", func() {
 				gerritMock.EXPECT().GetPureRevert(gomock.Any(), proto.MatcherEqual(&gerritpb.GetPureRevertRequest{
@@ -134,7 +137,7 @@ func TestReviewChange(t *testing.T) {
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)
@@ -161,7 +164,7 @@ func TestReviewChange(t *testing.T) {
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)
@@ -196,7 +199,7 @@ func TestReviewChange(t *testing.T) {
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)
@@ -235,16 +238,18 @@ func TestReviewChange(t *testing.T) {
 				AutoSubmit:         false,
 				RevisionsCount:     1,
 				CherryPickOfChange: 45678,
+				Created:            timestamppb.New(time.Now().Add(-time.Minute)),
 			}
 			Convey("valid CherryPick", func() {
 				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)
@@ -269,10 +274,11 @@ func TestReviewChange(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)
@@ -305,10 +311,11 @@ func TestReviewChange(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
-							Created: timestamppb.Now(),
+							Created: timestamppb.New(time.Now().Add(-5 * time.Minute)),
 						},
 					},
 				}, nil)

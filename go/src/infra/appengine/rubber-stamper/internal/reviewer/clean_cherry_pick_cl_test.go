@@ -48,6 +48,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 			AutoSubmit:         false,
 			RevisionsCount:     1,
 			CherryPickOfChange: 12121,
+			Created:            timestamppb.New(time.Now().Add(-time.Minute)),
 		}
 
 		Convey("decline when cherry pick has more than 1 revisions", func() {
@@ -62,6 +63,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
@@ -82,6 +84,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
@@ -107,6 +110,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
@@ -122,6 +126,43 @@ func TestReviewCleanCherryPick(t *testing.T) {
 				So(msg, ShouldEqual, "The change is not in the configured time window. Rubber Stamper is only allowed to review cherry-picks within 58 minute(s).")
 			})
 		})
+		Convey("decline when the change wasn't cherry-picked after the original CL has been merged.", func() {
+			Convey("decline when the original CL hasn't been merged", func() {
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_NEW,
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.New(time.Now().Add(-24 * time.Hour)),
+						},
+					},
+				}, nil)
+				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
+				So(err, ShouldBeNil)
+				So(msg, ShouldEqual, "The change is not cherry-picked after the original CL has been merged.")
+			})
+			Convey("decline when cherry-picked before the original CL has been merged", func() {
+				gerritMock.EXPECT().GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
+					Number:  t.CherryPickOfChange,
+					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
+					CurrentRevision: "456def",
+					Revisions: map[string]*gerritpb.RevisionInfo{
+						"456def": {
+							Created: timestamppb.New(time.Now().Add(-24 * time.Hour)),
+						},
+					},
+				}, nil)
+				t.Created = timestamppb.New(time.Now().Add(-24*time.Hour - time.Minute))
+				msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
+				So(err, ShouldBeNil)
+				So(msg, ShouldEqual, "The change is not cherry-picked after the original CL has been merged.")
+			})
+		})
 		Convey("decline when alters any excluded file", func() {
 			cfg.HostConfigs["test-host"].RepoConfigs["dummy"] = &config.RepoConfig{
 				CleanCherryPickPattern: &config.CleanCherryPickPattern{
@@ -132,6 +173,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 				Number:  t.CherryPickOfChange,
 				Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 			})).Return(&gerritpb.ChangeInfo{
+				Status:          gerritpb.ChangeStatus_MERGED,
 				CurrentRevision: "456def",
 				Revisions: map[string]*gerritpb.RevisionInfo{
 					"456def": {
@@ -161,6 +203,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 				Number:  t.CherryPickOfChange,
 				Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 			})).Return(&gerritpb.ChangeInfo{
+				Status:          gerritpb.ChangeStatus_MERGED,
 				CurrentRevision: "456def",
 				Revisions: map[string]*gerritpb.RevisionInfo{
 					"456def": {
@@ -202,6 +245,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
@@ -225,6 +269,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {
@@ -250,6 +295,7 @@ func TestReviewCleanCherryPick(t *testing.T) {
 					Number:  t.CherryPickOfChange,
 					Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
 				})).Return(&gerritpb.ChangeInfo{
+					Status:          gerritpb.ChangeStatus_MERGED,
 					CurrentRevision: "456def",
 					Revisions: map[string]*gerritpb.RevisionInfo{
 						"456def": {

@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package rubber_stamper.taskspb;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "infra/appengine/rubber-stamper/tasks/taskspb";
 
 // ChangeReviewTask describes a task to start reviewing a CL's metadata.
@@ -27,4 +29,6 @@ message ChangeReviewTask {
   int64 cherry_pick_of_change = 7;
   // The number of revisions.
   int64 revisions_count = 8;
+  // Timestamp of when the change was created.
+  google.protobuf.Timestamp created = 11;
 }
