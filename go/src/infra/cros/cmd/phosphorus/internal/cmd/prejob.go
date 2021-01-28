@@ -135,26 +135,63 @@ func shouldRunTLSProvision(r *phosphorus.PrejobRequest) bool {
 
 // This function will be obsoleted once runTLSProvision is globally enabled.
 func runPrejobLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	var ar *atutil.Result
-	var err error
-	if contains(r.ExistingProvisionableLabels, r.DesiredProvisionableLabels) {
-		ar, err = runResetLegacy(ctx, r)
-	} else {
-		ar, err = runProvisionLegacy(ctx, r)
+	resp, err := provisionChromeOSBuildLegacy(ctx, r)
+	if err != nil || resp.GetState() != phosphorus.PrejobResponse_SUCCEEDED {
+		return resp, err
+	}
+	return provisionFirmwareLegacy(ctx, r)
+}
+
+func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	desired := r.DesiredProvisionableLabels[chromeOSBuildKey]
+	_, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]
+	if desired != "" && !exists {
+		ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
+		return toPrejobResponse(ar), err
+	}
+	ar, err := resetViaAutoserv(ctx, r)
+	return toPrejobResponse(ar), err
+}
+
+func provisionFirmwareLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	labels := []string{}
+	desired := r.DesiredProvisionableLabels[roFirmwareBuildKey]
+	_, exists := r.ExistingProvisionableLabels[roFirmwareBuildKey]
+	if desired != "" && !exists {
+		labels = append(labels, fmt.Sprintf("%s:%s", roFirmwareBuildKey, desired))
+	}
+	desired = r.DesiredProvisionableLabels[rwFirmwareBuildKey]
+	_, exists = r.ExistingProvisionableLabels[rwFirmwareBuildKey]
+	if desired != "" && !exists {
+		labels = append(labels, fmt.Sprintf("%s:%s", rwFirmwareBuildKey, desired))
 	}
 
-	if err != nil {
-		return nil, err
+	if len(labels) > 0 {
+		ar, err := provisionViaAutoserv(ctx, "firmware", r, labels)
+		return toPrejobResponse(ar), err
 	}
+	// Nothing to be done, so succeed trivially.
+	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+}
+
+func toPrejobResponse(r *atutil.Result) *phosphorus.PrejobResponse {
 	switch {
-	case ar.Success():
-		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
-	case ar.RunResult.Aborted:
-		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, nil
+	case r == nil:
+		return nil
+	case r.Success():
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}
+	case r.RunResult.Aborted:
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}
 	default:
-		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}
 	}
 }
+
+const (
+	chromeOSBuildKey   = "cros-version"
+	roFirmwareBuildKey = "fwro-version"
+	rwFirmwareBuildKey = "fwrw-version"
+)
 
 func validatePrejobRequest(r phosphorus.PrejobRequest) error {
 	missingArgs := getCommonMissingArgs(r.Config)
@@ -170,27 +207,16 @@ func validatePrejobRequest(r phosphorus.PrejobRequest) error {
 	return nil
 }
 
-// contains tests whether map y is contained within map x.
-func contains(x, y map[string]string) bool {
-	for k, v := range y {
-		if x[k] != v {
-			return false
-		}
-	}
-	return true
-}
-
-// runProvisionLegacy provisions a single host. It is a wrapper around
+// provisionViaAutoserv provisions a single host. It is a wrapper around
 // `autoserv --provision`. It cannot modify its point arguments.
 //
+// tag is a human-readable name for the provision operation being attempted.
+// labels are the list of Tauto labels to be provisioned.
+//
 // This function will be obsoleted once runTLSProvision is globally enabled.
-func runProvisionLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+func provisionViaAutoserv(ctx context.Context, tag string, r phosphorus.PrejobRequest, labels []string) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
-	var labels []string
-	for k, v := range r.DesiredProvisionableLabels {
-		labels = append(labels, k+":"+v)
-	}
-	subDir := fmt.Sprintf("provision_%s", r.DutHostname)
+	subDir := fmt.Sprintf("provision_%s_%s", r.DutHostname, tag)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
 	p := &atutil.Provision{
 		Host:       r.DutHostname,
@@ -204,13 +230,13 @@ func runProvisionLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atuti
 	return ar, nil
 }
 
-// runResetLegacy resets a single host. It is a wrapper around
+// resetViaAutoserv resets a single host. It is a wrapper around
 // `autoserv --reset`.
 //
 // This function will be obsoleted once runTLSProvision is globally enabled.
-func runResetLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
-	subDir := fmt.Sprintf("prejob_%s", r.DutHostname)
+	subDir := fmt.Sprintf("reset_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
 	a := &atutil.AdminTask{
 		Host:       r.DutHostname,
