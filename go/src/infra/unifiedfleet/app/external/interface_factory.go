@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	authclient "go.chromium.org/luci/auth"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
@@ -60,6 +62,9 @@ type InterfaceFactory struct {
 type CrosInventoryClient interface {
 	ListCrosDevicesLabConfig(ctx context.Context, in *invV2Api.ListCrosDevicesLabConfigRequest, opts ...grpc.CallOption) (*invV2Api.ListCrosDevicesLabConfigResponse, error)
 	DeviceConfigsExists(ctx context.Context, in *invV2Api.DeviceConfigsExistsRequest, opts ...grpc.CallOption) (*invV2Api.DeviceConfigsExistsResponse, error)
+	GetManufacturingConfig(ctx context.Context, in *invV2Api.GetManufacturingConfigRequest, opts ...grpc.CallOption) (*manufacturing.Config, error)
+	GetDeviceConfig(ctx context.Context, in *invV2Api.GetDeviceConfigRequest, opts ...grpc.CallOption) (*device.Config, error)
+	GetHwidData(ctx context.Context, in *invV2Api.GetHwidDataRequest, opts ...grpc.CallOption) (*invV2Api.HwidData, error)
 }
 
 // GetServerInterface retrieves the ExternalServerInterface from context.

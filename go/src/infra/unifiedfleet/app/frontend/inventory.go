@@ -519,7 +519,7 @@ func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *ufsAPI.
 	return successStatus.Proto(), nil
 }
 
-// GetChromeOSDeviceData gets the ChromeOSDevicedata information
+// GetChromeOSDeviceData gets the ChromeOSDeviceData(MachineLSE, Machine, Device config, Manufacturing config, Dutstate and Hwid data)
 func (fs *FleetServerImpl) GetChromeOSDeviceData(ctx context.Context, req *ufsAPI.GetChromeOSDeviceDataRequest) (rsp *ufspb.ChromeOSDeviceData, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
@@ -527,5 +527,6 @@ func (fs *FleetServerImpl) GetChromeOSDeviceData(ctx context.Context, req *ufsAP
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return controller.GetChromeOSDeviceData(ctx, req.GetChromeosDeviceId(), req.GetHostname())
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	return controller.GetChromeOSDeviceData(osCtx, req.GetChromeosDeviceId(), req.GetHostname())
 }

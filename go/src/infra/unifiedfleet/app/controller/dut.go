@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -19,11 +20,14 @@ import (
 
 	iv2api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsdevice "infra/unifiedfleet/api/v1/models/chromeos/device"
 	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -341,17 +345,12 @@ func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
 		return err
 	}
 
-	es, err := external.GetServerInterface(ctx)
+	invV2Client, err := getInventoryV2Client(ctx)
 	if err != nil {
 		return err
 	}
 
-	inv2Client, err := es.NewCrosInventoryInterfaceFactory(ctx, config.Get(ctx).GetCrosInventoryHost())
-	if err != nil {
-		return err
-	}
-
-	resp, err := inv2Client.DeviceConfigsExists(ctx, &iv2api.DeviceConfigsExistsRequest{
+	resp, err := invV2Client.DeviceConfigsExists(ctx, &iv2api.DeviceConfigsExistsRequest{
 		ConfigIds: []*device.ConfigId{devConfigID},
 	})
 
@@ -593,5 +592,120 @@ func processUpdateMachineLSERPMMask(oldRPM, newRPM *ufslab.RPM, path string) {
 
 // GetChromeOSDeviceData returns ChromeOSDeviceData for the given id/hostname from InvV2 and UFS.
 func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.ChromeOSDeviceData, error) {
-	return nil, nil
+	var lse *ufspb.MachineLSE
+	var err error
+	if hostname != "" {
+		lse, err = GetMachineLSE(ctx, hostname)
+		if err != nil {
+			return nil, err
+		}
+		if len(lse.GetMachines()) != 0 {
+			id = lse.GetMachines()[0]
+		}
+	} else {
+		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", id, false)
+		if err != nil {
+			return nil, err
+		}
+		if len(machinelses) == 0 {
+			return nil, status.Error(codes.NotFound, fmt.Sprintf("DUT not found for asset id %s", id))
+		}
+		lse = machinelses[0]
+	}
+	dutState, err := state.GetDutState(ctx, id)
+	if err != nil {
+		logging.Warningf(ctx, "DutState for %s not found. Error: %s", id, err)
+	}
+	machine, err := GetMachine(ctx, id)
+	if err != nil {
+		logging.Errorf(ctx, "Machine for %s not found. Error: %s", id, err)
+		return &ufspb.ChromeOSDeviceData{
+			LabConfig: lse,
+		}, nil
+	}
+	invV2Client, err := getInventoryV2Client(ctx)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to InvV2Client. Error: %s", err)
+		return &ufspb.ChromeOSDeviceData{
+			LabConfig: lse,
+		}, nil
+	}
+	devConfig, err := getDeviceConfig(ctx, invV2Client, machine)
+	if err != nil {
+		logging.Warningf(ctx, "DeviceConfig for %s not found. Error: %s", id, err)
+	}
+	hwid := machine.GetChromeosMachine().GetHwid()
+	mfgConfig, err := getManufacturingConfig(ctx, invV2Client, hwid)
+	if err != nil {
+		logging.Warningf(ctx, "ManufacturingConfig for %s not found. Error: %s", hwid, err)
+	}
+	hwidData, err := getHwidData(ctx, invV2Client, hwid)
+	if err != nil {
+		logging.Warningf(ctx, "Hwid data for %s not found. Error: %s", hwid, err)
+	}
+	return &ufspb.ChromeOSDeviceData{
+		LabConfig:           lse,
+		Machine:             machine,
+		DeviceConfig:        devConfig,
+		ManufacturingConfig: mfgConfig,
+		HwidData:            hwidData,
+		DutState:            dutState,
+	}, nil
+}
+
+// getDeviceConfig get device config form InvV2
+func getDeviceConfig(ctx context.Context, inv2Client external.CrosInventoryClient, machine *ufspb.Machine) (*ufsdevice.Config, error) {
+	devConfigID, err := extractDeviceConfigID(machine)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := inv2Client.GetDeviceConfig(ctx, &iv2api.GetDeviceConfigRequest{
+		ConfigId: devConfigID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := proto.MarshalTextString(resp)
+	var devConfig ufsdevice.Config
+	proto.UnmarshalText(s, &devConfig)
+	logging.Debugf(ctx, "InvV2 device config:\n %+v\nUFS device config:\n %+v ", resp, &devConfig)
+	return &devConfig, err
+}
+
+// getManufacturingConfig get manufacturing config form InvV2
+func getManufacturingConfig(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufsmanufacturing.Config, error) {
+	resp, err := inv2Client.GetManufacturingConfig(ctx, &iv2api.GetManufacturingConfigRequest{
+		Name: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := proto.MarshalTextString(resp)
+	var mfgConfig ufsmanufacturing.Config
+	proto.UnmarshalText(s, &mfgConfig)
+	logging.Debugf(ctx, "InvV2 manufacturing config:\n %+v\nUFS manufacturing config:\n %+v ", resp, &mfgConfig)
+	return &mfgConfig, err
+}
+
+// getHwidData get hwid data form InvV2
+func getHwidData(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufspb.HwidData, error) {
+	resp, err := inv2Client.GetHwidData(ctx, &iv2api.GetHwidDataRequest{
+		Name: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := proto.MarshalTextString(resp)
+	var hwidData ufspb.HwidData
+	proto.UnmarshalText(s, &hwidData)
+	logging.Debugf(ctx, "InvV2 hwid data:\n %+v\nUFS hwid data:\n %+v ", resp, &hwidData)
+	return &hwidData, err
+}
+
+func getInventoryV2Client(ctx context.Context) (external.CrosInventoryClient, error) {
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return es.NewCrosInventoryInterfaceFactory(ctx, config.Get(ctx).GetCrosInventoryHost())
 }

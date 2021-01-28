@@ -11,6 +11,7 @@ import (
 	device "go.chromium.org/chromiumos/infra/proto/go/device"
 	lab "go.chromium.org/chromiumos/infra/proto/go/lab"
 	manufacturing "go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
@@ -183,6 +184,37 @@ func (ic *InventoryClient) DeviceConfigsExists(ctx context.Context, in *invV2Api
 	return &invV2Api.DeviceConfigsExistsResponse{
 		Exists: resp,
 	}, nil
+}
+
+// GetManufacturingConfig mocks the GetManufaturingConfig api from InvV2.
+func (ic *InventoryClient) GetManufacturingConfig(ctx context.Context, in *invV2Api.GetManufacturingConfigRequest, opts ...grpc.CallOption) (*manufacturing.Config, error) {
+	if in.GetName() == "test" {
+		return &manufacturing.Config{
+			ManufacturingId: &manufacturing.ConfigID{Value: "test"},
+		}, nil
+	}
+	return nil, errors.New("No manufacturing config found")
+}
+
+// GetDeviceConfig mocks the GetDeviceConfig api from InvV2.
+func (ic *InventoryClient) GetDeviceConfig(ctx context.Context, in *invV2Api.GetDeviceConfigRequest, opts ...grpc.CallOption) (*device.Config, error) {
+	if in.GetConfigId().GetPlatformId().GetValue() == "test" && in.GetConfigId().GetModelId().GetValue() == "test" {
+		return &device.Config{
+			Id: &device.ConfigId{
+				PlatformId: &device.PlatformId{Value: "test"},
+				ModelId:    &device.ModelId{Value: "test"},
+			},
+		}, nil
+	}
+	return nil, errors.New("No device config found")
+}
+
+// GetHwidData mocks the GetHwidData api from InvV2.
+func (ic *InventoryClient) GetHwidData(ctx context.Context, in *invV2Api.GetHwidDataRequest, opts ...grpc.CallOption) (*invV2Api.HwidData, error) {
+	if in.GetName() == "test" {
+		return &invV2Api.HwidData{Sku: "test", Variant: "test"}, nil
+	}
+	return nil, errors.New("No Hwid data found")
 }
 
 // GetMockDUT returns a mock lab config with ChromeOS DUT

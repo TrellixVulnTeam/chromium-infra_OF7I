@@ -6,12 +6,15 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
-
 	"google.golang.org/genproto/protobuf/field_mask"
+
 	ufspb "infra/unifiedfleet/api/v1/models"
+	device "infra/unifiedfleet/api/v1/models/chromeos/device"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	manufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 )
@@ -1257,6 +1260,167 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// State should be set to registered.
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
+		})
+	})
+}
+
+func TestGetChromeOSDevicedata(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
+	machine := &ufspb.Machine{
+		Name: "machine-1",
+		Device: &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: &ufspb.ChromeOSMachine{
+				BuildTarget: "test",
+				Model:       "test",
+				Hwid:        "test",
+			},
+		},
+	}
+	registration.CreateMachine(ctx, machine)
+
+	dutMachinelse := mockDutMachineLSE("lse-1")
+	dutMachinelse.Machines = []string{"machine-1"}
+	inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+	dutState := mockDutState("machine-1", "lse-1")
+	UpdateDutState(ctx, dutState)
+
+	devCfg := &device.Config{
+		Id: &device.ConfigId{
+			PlatformId: &device.PlatformId{Value: "test"},
+			ModelId:    &device.ModelId{Value: "test"},
+		},
+	}
+
+	mfgCfg := &manufacturing.Config{
+		ManufacturingId: &manufacturing.ConfigID{Value: "test"},
+	}
+
+	hwidData := &ufspb.HwidData{Sku: "test", Variant: "test"}
+
+	Convey("TestGetChromeOSDevicedata", t, func() {
+		Convey("GetChromeOSDevicedata - id happy path", func() {
+			resp, err := GetChromeOSDeviceData(ctx, "machine-1", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldResembleProto, dutState)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+		})
+
+		Convey("GetChromeOSDevicedata - hostname happy path", func() {
+			resp, err := GetChromeOSDeviceData(ctx, "", "lse-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldResembleProto, dutState)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+		})
+
+		Convey("GetChromeOSDevicedata - InvV2 errors", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-2",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test-err",
+						Model:       "test-err",
+						Hwid:        "test-err",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machine)
+
+			dutMachinelse := mockDutMachineLSE("lse-2")
+			dutMachinelse.Machines = []string{"machine-2"}
+			inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+			dutState := mockDutState("machine-2", "lse-2")
+			UpdateDutState(ctx, dutState)
+
+			resp, err := GetChromeOSDeviceData(ctx, "", "lse-2")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldResembleProto, dutState)
+			So(resp.GetDeviceConfig(), ShouldBeNil)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldBeNil)
+		})
+
+		Convey("GetChromeOSDevicedata - dutState not found", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test-err",
+						Model:       "test-err",
+						Hwid:        "test-err",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machine)
+
+			dutMachinelse := mockDutMachineLSE("lse-3")
+			dutMachinelse.Machines = []string{"machine-3"}
+			inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+			resp, err := GetChromeOSDeviceData(ctx, "", "lse-3")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldBeNil)
+			So(resp.GetDeviceConfig(), ShouldBeNil)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldBeNil)
+		})
+
+		Convey("GetChromeOSDevicedata - machine not found by hostname", func() {
+			dutMachinelse := mockDutMachineLSE("lse-4")
+			dutMachinelse.Machines = []string{"machine-4"}
+			inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+			resp, err := GetChromeOSDeviceData(ctx, "", "lse-4")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldBeNil)
+			So(resp.GetDutState(), ShouldBeNil)
+			So(resp.GetDeviceConfig(), ShouldBeNil)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldBeNil)
+		})
+
+		Convey("GetChromeOSDevicedata - machine not found by id", func() {
+			dutMachinelse := mockDutMachineLSE("lse-5")
+			dutMachinelse.Machines = []string{"machine-5"}
+			inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+			resp, err := GetChromeOSDeviceData(ctx, "machine-5", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldBeNil)
+			So(resp.GetDutState(), ShouldBeNil)
+			So(resp.GetDeviceConfig(), ShouldBeNil)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldBeNil)
+		})
+
+		Convey("GetChromeOSDevicedata - machinelse not found Error", func() {
+			resp, err := GetChromeOSDeviceData(ctx, "machine-6", "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "NotFound")
 		})
 	})
 }
