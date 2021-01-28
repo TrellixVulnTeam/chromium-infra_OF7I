@@ -43,7 +43,7 @@ var defaultSwarmingPool = "ChromeOSSkylab"
 // AddDUTCmd adds a MachineLSE to the database. And starts a swarming job to deploy.
 var AddDUTCmd = &subcommands.Command{
 	UsageLine: "dut [options ...]",
-	ShortDesc: "Deploy a dut.",
+	ShortDesc: "Deploy a DUT",
 	LongDesc:  cmdhelp.AddDUTLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addDUT{

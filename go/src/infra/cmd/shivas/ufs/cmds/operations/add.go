@@ -37,6 +37,7 @@ var AddCmd = &subcommands.Command{
 	LongDesc: `Add details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
+	asset/dut/labstation
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
@@ -59,6 +60,7 @@ func (c addApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
 		asset.AddAssetCmd,
+		dut.AddDUTCmd,
 		labstation.AddLabstationCmd,
 		machine.AddMachineCmd,
 		host.AddHostCmd,
@@ -73,7 +75,6 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		rackprototype.AddRackLSEPrototypeCmd,
 		chromeplatform.AddChromePlatformCmd,
 		vlan.AddVlanCmd,
-		dut.AddDUTCmd,
 	}
 }
 

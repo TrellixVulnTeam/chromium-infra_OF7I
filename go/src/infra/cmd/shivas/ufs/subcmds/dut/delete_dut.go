@@ -25,8 +25,8 @@ import (
 // DeleteDUTCmd delete a dut on a machine.
 var DeleteDUTCmd = &subcommands.Command{
 	UsageLine: "dut {Hostname}...",
-	ShortDesc: "Delete a DUT",
-	LongDesc: `Delete a DUT.
+	ShortDesc: "Delete a DUT/labstation",
+	LongDesc: `Delete a DUT/labstation.
 
 Example:
 shivas delete dut {Hostname}

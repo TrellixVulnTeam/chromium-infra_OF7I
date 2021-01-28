@@ -33,8 +33,8 @@ import (
 // GetDutCmd get host by given name.
 var GetDutCmd = &subcommands.Command{
 	UsageLine: "dut ...",
-	ShortDesc: "Get dut details by filters",
-	LongDesc: `Get dut details by filters.
+	ShortDesc: "Get DUT/labstation details by filters",
+	LongDesc: `Get DUT/labstation details by filters.
 
 Example:
 

@@ -26,7 +26,7 @@ import (
 // GetRackCmd get rack by given name.
 var GetRackCmd = &subcommands.Command{
 	UsageLine: "rack ...",
-	ShortDesc: "Get rack details by filters.",
+	ShortDesc: "Get rack details by filters",
 	LongDesc: `Get rack details by filters
 
 Example:

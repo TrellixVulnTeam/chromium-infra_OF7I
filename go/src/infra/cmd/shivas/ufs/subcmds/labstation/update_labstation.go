@@ -45,7 +45,7 @@ const (
 // UpdateLabstationCmd update dut by given hostname and start a swarming job to deploy.
 var UpdateLabstationCmd = &subcommands.Command{
 	UsageLine: "labstation [options]",
-	ShortDesc: "Update a Labstation.",
+	ShortDesc: "Update a labstation",
 	LongDesc:  cmdhelp.UpdateLabstationLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateLabstation{

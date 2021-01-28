@@ -20,7 +20,7 @@ import (
 // AddAssetCmd add an asset to database
 var AddAssetCmd = &subcommands.Command{
 	UsageLine: "asset [options...]",
-	ShortDesc: "Add an asset(Chromebook, servo, labstation)",
+	ShortDesc: "Add an asset(Chromebook, Servo, Labstation)",
 	LongDesc:  cmdhelp.AddAssetLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addAsset{}

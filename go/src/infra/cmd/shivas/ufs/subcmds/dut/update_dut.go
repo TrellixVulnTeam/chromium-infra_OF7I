@@ -78,7 +78,7 @@ var assetUpdateDeployActions = []string{
 // UpdateDUTCmd update dut by given hostname and start a swarming job to delpoy.
 var UpdateDUTCmd = &subcommands.Command{
 	UsageLine: "dut [options]",
-	ShortDesc: "Update a DUT.",
+	ShortDesc: "Update a DUT",
 	LongDesc:  cmdhelp.UpdateDUTLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateDUT{

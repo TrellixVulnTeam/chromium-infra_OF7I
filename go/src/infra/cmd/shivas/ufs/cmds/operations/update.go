@@ -37,6 +37,7 @@ var UpdateCmd = &subcommands.Command{
 	LongDesc: `Update details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
+	asset/dut/labstation
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &update{}

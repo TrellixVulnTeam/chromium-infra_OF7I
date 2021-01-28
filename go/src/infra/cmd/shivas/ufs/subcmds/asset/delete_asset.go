@@ -25,7 +25,7 @@ import (
 // DeleteAssetCmd delete a asset on a machine.
 var DeleteAssetCmd = &subcommands.Command{
 	UsageLine: "asset {assetname}...",
-	ShortDesc: "Delete an asset",
+	ShortDesc: "Delete an asset(Chromebook, Servo, Labstation)",
 	LongDesc: `Delete an asset.
 
 Example:

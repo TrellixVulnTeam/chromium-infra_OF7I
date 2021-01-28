@@ -43,7 +43,7 @@ var swarmingOp = "Deploy task"   // Summary table column for deploy operation.
 // AddLabstationCmd adds a MachineLSE to the database. And starts a swarming job to deploy.
 var AddLabstationCmd = &subcommands.Command{
 	UsageLine: "labstation [options ...]",
-	ShortDesc: "Deploy a labstation.",
+	ShortDesc: "Deploy a labstation",
 	LongDesc:  cmdhelp.AddLabstationLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addLabstation{

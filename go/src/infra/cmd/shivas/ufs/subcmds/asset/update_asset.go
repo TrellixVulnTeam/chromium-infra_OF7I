@@ -24,7 +24,7 @@ import (
 // UpdateAssetCmd Update asset by given name.
 var UpdateAssetCmd = &subcommands.Command{
 	UsageLine: "asset [Options...]",
-	ShortDesc: "Update a asset on a machine",
+	ShortDesc: "Update a asset(Chromebook, Servo, Labstation)",
 	LongDesc:  cmdhelp.UpdateAssetLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateAsset{}

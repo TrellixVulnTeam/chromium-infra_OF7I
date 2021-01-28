@@ -36,6 +36,7 @@ var DeleteCmd = &subcommands.Command{
 	LongDesc: `Delete a
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
+	asset/dut
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &delete{}
@@ -58,8 +59,8 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
 		asset.DeleteAssetCmd,
-		machine.DeleteMachineCmd,
 		dut.DeleteDUTCmd,
+		machine.DeleteMachineCmd,
 		host.DeleteHostCmd,
 		kvm.DeleteKVMCmd,
 		rpm.DeleteRPMCmd,
