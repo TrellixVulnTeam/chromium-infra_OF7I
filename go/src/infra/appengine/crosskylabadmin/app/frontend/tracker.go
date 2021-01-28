@@ -116,10 +116,43 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
 	}
 	logging.Infof(ctx, "successfully get %d alive cros bots", len(bots))
-	actions := []string{"verify-dut-storage", "verify-servo-usb-drive", "verify-servo-fw", "flash-servo-keyboard-map", "verify-dut-macaddr"}
-	// Parse BOT id to schedule tasks for readability.
-	botIDs := identifyBotsForAudit(ctx, bots)
-	err = clients.PushAuditDUTs(ctx, botIDs, actions)
+	dutStates := map[fleet.DutState]bool{
+		fleet.DutState_Ready:             true,
+		fleet.DutState_NeedsRepair:       true,
+		fleet.DutState_NeedsReset:        true,
+		fleet.DutState_RepairFailed:      true,
+		fleet.DutState_NeedsManualRepair: true,
+		fleet.DutState_NeedsReplacement:  false,
+		fleet.DutState_NeedsDeploy:       false,
+	}
+
+	var actions []string
+	var taskname string
+	switch req.Task {
+	case fleet.AuditTask_TaskInvalid:
+		actions = []string{
+			"verify-servo-fw",
+			"flash-servo-keyboard-map",
+			"verify-dut-macaddr",
+		}
+		taskname = "Maintenance"
+	case fleet.AuditTask_ServoUSBKey:
+		actions = []string{"verify-servo-usb-drive"}
+		taskname = "USB-drive"
+	case fleet.AuditTask_DUTStorage:
+		actions = []string{"verify-dut-storage"}
+		taskname = "Storage"
+		dutStates[fleet.DutState_RepairFailed] = false
+		dutStates[fleet.DutState_NeedsManualRepair] = false
+	case fleet.AuditTask_RPMConfig:
+		actions = []string{"verify-rpm-config"}
+		taskname = "RPM Config"
+		dutStates[fleet.DutState_RepairFailed] = false
+		dutStates[fleet.DutState_NeedsManualRepair] = false
+	}
+	botIDs := identifyBotsForAudit(ctx, bots, dutStates, req.Task)
+
+	err = clients.PushAuditDUTs(ctx, botIDs, actions, taskname)
 	if err != nil {
 		logging.Infof(ctx, "failed push audit bots: %v", err)
 		return nil, errors.New("failed to push audit bots")
@@ -289,7 +322,8 @@ func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (re
 }
 
 // identifyBotsForAudit identifies duts to run admin audit.
-func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) []string {
+func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo, dutStateMap map[fleet.DutState]bool, auditTask fleet.AuditTask) []string {
+	logging.Infof(ctx, "Filtering bots for task: %s", auditTask)
 	botIDs := make([]string, 0, len(bots))
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
@@ -303,13 +337,25 @@ func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotI
 			logging.Warningf(ctx, "failed to obtain BOT id for bot %q", b.BotId)
 			continue
 		}
+		switch auditTask {
+		case fleet.AuditTask_ServoUSBKey:
+			state := swarming_utils.ExtractBotState(b).ServoUSBState
+			if len(state) > 0 && state[0] == "NEED_REPLACEMENT" {
+				logging.Infof(ctx, "Skipping BOT with id: %q as USB-key marked for replacement", b.BotId)
+				continue
+			}
+		case fleet.AuditTask_DUTStorage:
+			state := swarming_utils.ExtractBotState(b).StorageState
+			if len(state) > 0 && state[0] == "NEED_REPLACEMENT" {
+				logging.Infof(ctx, "Skipping BOT with id: %q as storage marked for replacement", b.BotId)
+				continue
+			}
+		}
 
 		s := clients.GetStateDimension(b.Dimensions)
-		// Allow only ready|needs_repair|needs_reset|repair_failed states
-		switch s {
-		case fleet.DutState_Ready, fleet.DutState_NeedsRepair, fleet.DutState_NeedsReset, fleet.DutState_RepairFailed:
+		if v, ok := dutStateMap[s]; ok && v {
 			botIDs = append(botIDs, id)
-		default:
+		} else {
 			logging.Infof(ctx, "Skipping BOT with id: %q", b.BotId)
 		}
 	}

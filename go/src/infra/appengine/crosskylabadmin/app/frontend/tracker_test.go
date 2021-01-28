@@ -17,6 +17,7 @@ package frontend
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -217,8 +218,12 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 func TestPushBotsForAdminAuditTasks(t *testing.T) {
 	Convey("Handling types of cros bots", t, func() {
-		bot3 := test.BotForDUT("dut_3", "need_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id4")
+		bot3 := test.BotForDUT("dut_3", "needs_repair", "label-os_type:OS_TYPE_MOBLAB;id:id3")
 		bot4 := test.BotForDUT("dut_4", "ready", "label-os_type:OS_TYPE_MOBLAB;id:id4")
+		bot5 := test.BotForDUT("dut_5", "needs_deploy", "label-os_type:OS_TYPE_MOBLAB;id:id5")
+		bot6 := test.BotForDUT("dut_6", "needs_reset", "label-os_type:OS_TYPE_MOBLAB;id:id6")
+		bot6.State = "{\"storage_state\":[\"NEED_REPLACEMENT\"],\"servo_usb_state\":[\"NEED_REPLACEMENT\"]}"
+		bot7 := test.BotForDUT("dut_7", "needs_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id7")
 		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
 			for _, v := range paths {
@@ -226,16 +231,18 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			}
 			return arr
 		}
-		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey, qPath string, botIDs []string) {
+		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey, qPath string, botIDs, actions []string) {
 			fmt.Println(tasks)
 			repairTasks, ok := tasks[qKey]
 			So(ok, ShouldBeTrue)
 			repairPaths := appendPaths(repairTasks)
 			var expectedPaths []string
-			actions := "verify-dut-storage-verify-servo-usb-drive-verify-servo-fw-flash-servo-keyboard-map-verify-dut-macaddr"
+			actionStr := strings.Join(actions, "-")
 			for _, botID := range botIDs {
-				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s/%s", qPath, botID, actions))
+				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s/%s", qPath, botID, actionStr))
 			}
+			sort.Strings(repairPaths)
+			sort.Strings(expectedPaths)
 			So(repairPaths, ShouldResemble, expectedPaths)
 		}
 		tf, validate := newTestFixture(t)
@@ -248,16 +255,40 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot2LabStation}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot5, bot6, bot7, bot2LabStation}, nil)
 			expectDefaultPerBotRefresh(tf)
 
+			actions := []string{
+				"verify-servo-fw",
+				"flash-servo-keyboard-map",
+				"verify-dut-macaddr",
+			}
 			request := fleet.PushBotsForAdminAuditTasksRequest{}
 			res, err := tf.Tracker.PushBotsForAdminAuditTasks(tf.C, &request)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeNil)
 
 			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, auditQ, "audit", []string{"id4"})
+			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4", "id6"}, actions)
+		})
+		Convey("run only Servo USB-key check for all DUTs", func() {
+			tqt.ResetTasks()
+			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
+				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
+				gomock.Eq(strpair.Map{}),
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot5, bot6, bot7, bot2LabStation}, nil)
+			expectDefaultPerBotRefresh(tf)
+
+			actions := []string{"verify-servo-usb-drive"}
+			request := fleet.PushBotsForAdminAuditTasksRequest{
+				Task: fleet.AuditTask_ServoUSBKey,
+			}
+			res, err := tf.Tracker.PushBotsForAdminAuditTasks(tf.C, &request)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+
+			tasks := tqt.GetScheduledTasks()
+			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4"}, actions)
 		})
 	})
 }

@@ -48,12 +48,12 @@ func PushResetDUTs(ctx context.Context, botIDs []string) error {
 }
 
 // PushAuditDUTs pushes BOT ids to taskqueue auditBotsQueue for upcoming audit jobs.
-func PushAuditDUTs(ctx context.Context, botIDs, actions []string) error {
+func PushAuditDUTs(ctx context.Context, botIDs, actions []string, taskname string) error {
 	actionsCSV := strings.Join(actions, ",")
 	actionsStr := strings.Join(actions, "-")
 	tasks := make([]*taskqueue.Task, 0, len(botIDs))
 	for _, id := range botIDs {
-		tasks = append(tasks, crosAuditTask(id, actionsCSV, actionsStr))
+		tasks = append(tasks, crosAuditTask(id, taskname, actionsCSV, actionsStr))
 	}
 	return pushDUTs(ctx, auditBotsQueue, tasks)
 }
@@ -76,9 +76,10 @@ func resetTask(botID string) *taskqueue.Task {
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/reset/%s", botID), values)
 }
 
-func crosAuditTask(botID, actionsCSV, actionsStr string) *taskqueue.Task {
+func crosAuditTask(botID, taskname, actionsCSV, actionsStr string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
+	values.Set("taskname", taskname)
 	values.Set("actions", actionsCSV)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s/%s", botID, actionsStr), values)
 }

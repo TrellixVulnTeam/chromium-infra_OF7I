@@ -17,6 +17,7 @@ package swarming
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
@@ -105,4 +106,19 @@ func DimensionsMap(sdims []*swarming.SwarmingRpcsStringListPair) strpair.Map {
 		dims[sdim.Key] = sdim.Value
 	}
 	return dims
+}
+
+// BotState represents State of the BOT in the swarming
+type BotState struct {
+	StorageState  []string `json:"storage_state"`
+	ServoUSBState []string `json:"servo_usb_state"`
+}
+
+// ExtractBotState extracts BOTState from BOT info.
+func ExtractBotState(botInfo *swarming.SwarmingRpcsBotInfo) BotState {
+	state := BotState{}
+	if err := json.Unmarshal([]byte(botInfo.State), &state); err != nil {
+		fmt.Println(err)
+	}
+	return state
 }

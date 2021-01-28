@@ -66,7 +66,16 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/push-repair-jobs-for-labstations", mwCron, logAndSetHTTPErr(pushRepairJobsForLabstationsCronHandler))
 
 	// Generate audit jobs for CrOS DUTs.
-	r.GET("/internal/cron/push-admin-audit-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditJobsCronHandler))
+	r.GET("/internal/cron/push-admin-audit-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_TaskInvalid)))
+
+	// Generate audit-usbkey jobs for CrOS DUTs.
+	r.GET("/internal/cron/push-admin-audit-usbkey-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_ServoUSBKey)))
+
+	// Generate audit-storage jobs for CrOS DUTs.
+	r.GET("/internal/cron/push-admin-audit-storage-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_DUTStorage)))
+
+	// Generate audit-rpm jobs for CrOS DUTs.
+	r.GET("/internal/cron/push-admin-audit-rpm-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_RPMConfig)))
 
 	// Update device config asynchronously.
 	r.GET("/internal/cron/update-device-configs", mwCron, logAndSetHTTPErr(updateDeviceConfigCronHandler))
@@ -169,8 +178,15 @@ func pushRepairJobsForLabstationsCronHandler(c *router.Context) (err error) {
 	return nil
 }
 
+// pushAdminAuditActionHandler high-order for pushAdminAuditJobsCronHandler.
+func pushAdminAuditActionHandler(auditTask fleet.AuditTask) (err func(c *router.Context) error) {
+	return func(c *router.Context) error {
+		return pushAdminAuditJobsCronHandler(c, auditTask)
+	}
+}
+
 // pushAdminAuditJobsCronHandler pushes bots that will run audit tasks to bot queue.
-func pushAdminAuditJobsCronHandler(c *router.Context) (err error) {
+func pushAdminAuditJobsCronHandler(c *router.Context, auditTask fleet.AuditTask) (err error) {
 	defer func() {
 		pushAdminAuditTasksCronHandlerTick.Add(c.Context, 1, err == nil)
 	}()
@@ -182,7 +198,10 @@ func pushAdminAuditJobsCronHandler(c *router.Context) (err error) {
 	}
 
 	tsi := frontend.TrackerServerImpl{}
-	if _, err := tsi.PushBotsForAdminAuditTasks(c.Context, &fleet.PushBotsForAdminAuditTasksRequest{}); err != nil {
+	req := &fleet.PushBotsForAdminAuditTasksRequest{
+		Task: auditTask,
+	}
+	if _, err := tsi.PushBotsForAdminAuditTasks(c.Context, req); err != nil {
 		return err
 	}
 	logging.Infof(c.Context, "Successfully finished")
