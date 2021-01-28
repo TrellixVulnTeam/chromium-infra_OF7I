@@ -198,6 +198,12 @@ class BuildRequest(_BuildRequestBase):
     elif bp.input.experimental:
       sw.priority = min(255, sw.priority * 2)
 
+    # Override timeouts set by builder.
+    if sbr.HasField('scheduling_timeout'):
+      bp.scheduling_timeout.CopyFrom(sbr.scheduling_timeout)
+    if sbr.HasField('execution_timeout'):
+      bp.execution_timeout.CopyFrom(sbr.execution_timeout)
+
     self._ensure_builder_cache(bp)
     raise ndb.Return(bp)
 

@@ -8,6 +8,7 @@ import datetime
 from components import auth
 from components import utils
 from google.appengine.ext import ndb
+from google.protobuf import duration_pb2
 from google.protobuf import struct_pb2
 from testing_utils import testing
 import mock
@@ -502,6 +503,21 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add()
     self.assertEqual(build.proto.scheduling_timeout.seconds, 60)
     self.assertEqual(build.proto.execution_timeout.seconds, 120)
+
+  def test_requested_timeouts(self):
+    """Ensures that timeouts set in request override defaults."""
+    with self.mutate_builder_cfg() as cfg:
+      cfg.expiration_secs = 60
+      cfg.execution_timeout_secs = 120
+
+    build = self.add(
+        dict(
+            scheduling_timeout=duration_pb2.Duration(seconds=300),
+            execution_timeout=duration_pb2.Duration(seconds=360)
+        )
+    )
+    self.assertEqual(build.proto.scheduling_timeout.seconds, 300)
+    self.assertEqual(build.proto.execution_timeout.seconds, 360)
 
   def test_builder_critical_yes(self):
     with self.mutate_builder_cfg() as cfg:
