@@ -30,7 +30,7 @@ func TestSuccessfulPushDuts(t *testing.T) {
 		qn := "repair-bots"
 		tqt.CreateQueue(qn)
 		hosts := []string{"host1", "host2"}
-		err := PushRepairDUTs(ctx, hosts)
+		err := PushRepairDUTs(ctx, hosts, "needs_repair")
 		So(err, ShouldBeNil)
 		tasks := tqt.GetScheduledTasks()
 		t, ok := tasks[qn]
@@ -43,7 +43,7 @@ func TestSuccessfulPushDuts(t *testing.T) {
 		sort.Strings(taskPaths)
 		sort.Strings(taskParams)
 		expectedPaths := []string{"/internal/task/cros_repair/host1", "/internal/task/cros_repair/host2"}
-		expectedParams := []string{"botID=host1", "botID=host2"}
+		expectedParams := []string{"botID=host1&expectedState=needs_repair", "botID=host2&expectedState=needs_repair"}
 		So(taskPaths, ShouldResemble, expectedPaths)
 		So(taskParams, ShouldResemble, expectedParams)
 	})
@@ -107,7 +107,7 @@ func TestUnknownQueuePush(t *testing.T) {
 		ctx := gaetesting.TestingContext()
 		tqt := taskqueue.GetTestable(ctx)
 		tqt.CreateQueue("no-repair-bots")
-		err := PushRepairDUTs(ctx, []string{"host1", "host2"})
+		err := PushRepairDUTs(ctx, []string{"host1", "host2"}, "some_state")
 		So(err, ShouldNotBeNil)
 	})
 }

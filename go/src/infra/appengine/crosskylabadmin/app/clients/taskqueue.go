@@ -32,19 +32,19 @@ const auditBotsQueue = "audit-bots"
 // PushRepairLabstations pushes BOT ids to taskqueue repairLabstationQueue for
 // upcoming repair jobs.
 func PushRepairLabstations(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, repairLabstationQueue, createTasks(botIDs, labstationRepairTask))
+	return pushDUTs(ctx, repairLabstationQueue, createTasks(botIDs, "", labstationRepairTask))
 }
 
 // PushRepairDUTs pushes BOT ids to taskqueue repairBotsQueue for upcoming repair
 // jobs.
-func PushRepairDUTs(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, repairBotsQueue, createTasks(botIDs, crosRepairTask))
+func PushRepairDUTs(ctx context.Context, botIDs []string, expectedState string) error {
+	return pushDUTs(ctx, repairBotsQueue, createTasks(botIDs, expectedState, crosRepairTask))
 }
 
 // PushResetDUTs pushes BOT ids to taskqueue resetBotsQueue for upcoming reset
 // jobs.
-func PushResetDUTs(ctx context.Context, botIDs []string) error {
-	return pushDUTs(ctx, resetBotsQueue, createTasks(botIDs, resetTask))
+func PushResetDUTs(ctx context.Context, botIDs []string, expectedState string) error {
+	return pushDUTs(ctx, resetBotsQueue, createTasks(botIDs, expectedState, resetTask))
 }
 
 // PushAuditDUTs pushes BOT ids to taskqueue auditBotsQueue for upcoming audit jobs.
@@ -58,21 +58,23 @@ func PushAuditDUTs(ctx context.Context, botIDs, actions []string, taskname strin
 	return pushDUTs(ctx, auditBotsQueue, tasks)
 }
 
-func crosRepairTask(botID string) *taskqueue.Task {
+func crosRepairTask(botID, expectedState string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
+	values.Set("expectedState", expectedState)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/cros_repair/%s", botID), values)
 }
 
-func labstationRepairTask(botID string) *taskqueue.Task {
+func labstationRepairTask(botID, expectedState string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/labstation_repair/%s", botID), values)
 }
 
-func resetTask(botID string) *taskqueue.Task {
+func resetTask(botID, expectedState string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
+	values.Set("expectedState", expectedState)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/reset/%s", botID), values)
 }
 
@@ -84,13 +86,14 @@ func crosAuditTask(botID, taskname, actionsCSV, actionsStr string) *taskqueue.Ta
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s/%s", botID, actionsStr), values)
 }
 
-func createTasks(botIDs []string, taskGenerator func(string) *taskqueue.Task) []*taskqueue.Task {
+func createTasks(botIDs []string, expectedState string, taskGenerator func(string, string) *taskqueue.Task) []*taskqueue.Task {
 	tasks := make([]*taskqueue.Task, 0, len(botIDs))
 	for _, id := range botIDs {
-		tasks = append(tasks, taskGenerator(id))
+		tasks = append(tasks, taskGenerator(id, expectedState))
 	}
 	return tasks
 }
+
 func pushDUTs(ctx context.Context, queueName string, tasks []*taskqueue.Task) error {
 	if err := taskqueue.Add(ctx, queueName, tasks...); err != nil {
 		return err

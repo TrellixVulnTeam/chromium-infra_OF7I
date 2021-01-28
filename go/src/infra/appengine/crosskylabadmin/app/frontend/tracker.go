@@ -82,8 +82,8 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 
 	// Parse BOT id to schedule tasks for readability.
 	repairBOTs, resetBOTs := identifyBots(ctx, bots)
-	err1 := clients.PushRepairDUTs(ctx, repairBOTs)
-	err2 := clients.PushResetDUTs(ctx, resetBOTs)
+	err1 := clients.PushRepairDUTs(ctx, repairBOTs, dutState)
+	err2 := clients.PushResetDUTs(ctx, resetBOTs, dutState)
 	if err1 != nil || err2 != nil {
 		logging.Infof(ctx, "push repair bots: %v", err1)
 		logging.Infof(ctx, "push reset bots: %v", err2)
