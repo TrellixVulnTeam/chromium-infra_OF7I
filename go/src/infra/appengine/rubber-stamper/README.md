@@ -13,8 +13,7 @@ See go/chops-rubber-stamp-bot-design for design plans.
 Currently, our expected CL patterns can be generally divided into two types:
 - Changes to benign files (translation, whitespace, test expectation files,
 directories that contain no code)
-- Clean reverts/relands/cherry-picks (will be implemented in Q1 2021;
-[crbug/1092608](crbug/1092608))
+- Clean reverts/cherry-picks
 
 If you need to add/change pattern configs, go to the first section "Configure
 your patterns"; if a pattern is already configured, and you need to use
