@@ -32,8 +32,7 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 		return "The change cannot be reviewed. There are more than one revision uploaded.", nil
 	}
 
-	// Check whether the change that this change was cherry-picked from is
-	// properly reviewed.
+	// Check whether the change is in a configured time window.
 	originalClInfo, err := gc.GetChange(ctx, &gerritpb.GetChangeRequest{
 		Number:  t.CherryPickOfChange,
 		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
@@ -41,8 +40,6 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 	if err != nil {
 		return "", fmt.Errorf("gerrit GetChange rpc call failed with error: %v", err)
 	}
-
-	// Check whether the change is in a configured time window.
 	tw := cfg.DefaultTimeWindow
 	if hostCfg.CleanCherryPickTimeWindow != "" {
 		tw = hostCfg.CleanCherryPickTimeWindow

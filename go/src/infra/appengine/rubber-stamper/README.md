@@ -66,9 +66,10 @@ outcome. We also follow this rule here. For example, with the following
       }
     }
 
-Note: when a revert cannot pass the `clean_revert_pattern` check, but
-can pass the `benign_file_pattern` check, we will still approve the CL because
-`benign_file_pattern` is used as a fallback in our design.
+Note: when a revert/cherry-pick cannot pass the `clean_revert_pattern`/
+`clean_cherry_pick_pattern` check, but can pass the `benign_file_pattern`
+check, we will still approve the CL because `benign_file_pattern` is used
+as a fallback in our design.
 
 #### Examples of clean revert patterns
 
@@ -115,6 +116,34 @@ in `.go` will not be approved.
     clean_revert_pattern {
       excluded_paths: "a/b.md"
       excluded_paths: "*.go"
+    }
+
+#### Examples of clean cherry-pick patterns
+A cherry-pick will be approved if:
+1. Only one revision uploaded;
+2. It is within the configured `time_window` in the config;
+3. It is cherry-picked after the original CL has been merged;
+4. None of the modified files is in the `excluded_paths`;
+5. It is marked as mergeable by the Gerrit API
+[GetMergeable](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-mergeable).
+
+The format of `time_window` is the same as that for clean revert patterns,
+which you can find in the section above. Similarly, a host-level value
+(`clean_cherry_pick_time_window` in `host_configs`) can override the global
+value (`default_time_window`), while a repo-level value (`time_window` in
+`clean_cherry_pick_pattern` of `repo_configs`) can override the host-level
+value.
+
+The format of `excluded_paths` is also the same as that for clean revert
+patterns.
+
+Here is an example of a clean cherry-pick pattern. Any cherry-pick that is 
+cherry-picked more than 3 hours ago or modifies any files ending in `.md`
+will not be approved.
+
+    clean_cherry_pick_pattern {
+      time_window: "3h"
+      excluded_paths: "*.md"
     }
 
 ### Have Rubber-Stamper review your CLs
