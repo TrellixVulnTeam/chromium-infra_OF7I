@@ -8,21 +8,6 @@ How to:
 
 See [infra/go/README.md](../../../../README.md) for preparation.
 
- to re-generate trace-viewer contents in app dir.
-```shell
-  $ (cd app; \
-      <CHROMIUM_SRC>/third_party/catapult/tracing/bin/trace2html /dev/null \
-         --output=tmpl/trace-viewer.html)
-```
-Note: to update trial origin tokens,
-re-generate trial origin tokens on
-https://developers.chrome.com/origintrials/#/trials/active
-for WebComponents V0 for https://chromium-build-stats.appspot.com
-and https://chromium-build-stats-staging.appspot.com,
-and update
-[catapult/common/py_vulcanize/py_vulcanize/generate.py](https://chromium.googlesource.com/catapult.git/+/c757d41a83a706565d4a17118e15a70475d77358/common/py_vulcanize/py_vulcanize/generate.py#55).
-
-
  to compile
 
 ```shell
