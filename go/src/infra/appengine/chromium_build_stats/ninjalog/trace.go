@@ -50,7 +50,9 @@ func ToTraces(steps [][]Step, pid int) []Trace {
 	traces := make([]Trace, 0, traceNum)
 	for tid, thread := range steps {
 		for _, step := range thread {
-			traces = append(traces, toTrace(step, pid, tid))
+			// thread id should start from 1
+			// https://buganizer.corp.google.com/issues/178753925#comment5
+			traces = append(traces, toTrace(step, pid, tid+1))
 		}
 	}
 	sort.Sort(traceByStart(traces))

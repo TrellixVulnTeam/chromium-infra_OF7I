@@ -83,7 +83,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 76 * 1000,
 			Duration:  (187 - 76) * 1000,
 			ProcessID: 1,
-			ThreadID:  0,
+			ThreadID:  1,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -93,7 +93,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 78 * 1000,
 			Duration:  (286 - 78) * 1000,
 			ProcessID: 1,
-			ThreadID:  1,
+			ThreadID:  2,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -103,7 +103,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 79 * 1000,
 			Duration:  (287 - 79) * 1000,
 			ProcessID: 1,
-			ThreadID:  2,
+			ThreadID:  3,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -113,7 +113,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 80 * 1000,
 			Duration:  (284 - 80) * 1000,
 			ProcessID: 1,
-			ThreadID:  3,
+			ThreadID:  4,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -123,7 +123,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 141 * 1000,
 			Duration:  (287 - 141) * 1000,
 			ProcessID: 1,
-			ThreadID:  4,
+			ThreadID:  5,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -133,7 +133,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 142 * 1000,
 			Duration:  (288 - 142) * 1000,
 			ProcessID: 1,
-			ThreadID:  5,
+			ThreadID:  6,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -143,7 +143,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 187 * 1000,
 			Duration:  (21304 - 187) * 1000,
 			ProcessID: 1,
-			ThreadID:  0,
+			ThreadID:  1,
 			Args:      map[string]interface{}{},
 		},
 		{
@@ -153,7 +153,7 @@ func TestTrace(t *testing.T) {
 			Timestamp: 287 * 1000,
 			Duration:  (290 - 287) * 1000,
 			ProcessID: 1,
-			ThreadID:  1,
+			ThreadID:  2,
 			Args:      map[string]interface{}{},
 		},
 	}
