@@ -18,7 +18,6 @@ from libs.test_results.resultdb_test_results import ResultDBTestResults
 from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2
 from model.wf_swarming_task import WfSwarmingTask
 from services import constants
-from services import isolate
 from services import resultdb
 from services import swarmed_test_util
 from waterfall import waterfall_config
@@ -57,104 +56,6 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         TestLocation.FromSerializable(expected_test_location),
         swarmed_test_util.GetTestLocation('task', test_name))
-
-  def testRetrieveShardedTestResultsFromIsolatedServerNoLog(self):
-    self.assertEqual(
-        [],
-        swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer([],
-                                                                       None))
-
-  @mock.patch.object(
-      GtestTestResults, 'IsTestResultsInExpectedFormat', return_value=True)
-  @mock.patch.object(isolate, 'DownloadFileFromIsolatedServer')
-  def testRetrieveShardedTestResultsFromIsolatedServer(self, mock_data, _):
-    isolated_data = [{
-        'digest': 'shard1_isolated',
-        'namespace': 'default-gzip',
-        'isolatedserver': 'isolated_server'
-    }, {
-        'digest': 'shard2_isolated',
-        'namespace': 'default-gzip',
-        'isolatedserver': 'isolated_server'
-    }]
-
-    mock_data.side_effect = [
-        (json.dumps({
-            'all_tests': ['test1', 'test2'],
-            'per_iteration_data': [{
-                'test1': [{
-                    'output_snippet': '[ RUN ] test1.\\r\\n',
-                    'output_snippet_base64': 'WyBSVU4gICAgICBdIEFjY291bnRUcm',
-                    'status': 'SUCCESS'
-                }]
-            }]
-        }), 200),
-        (json.dumps({
-            'all_tests': ['test1', 'test2'],
-            'per_iteration_data': [{
-                'test2': [{
-                    'output_snippet': '[ RUN ] test2.\\r\\n',
-                    'output_snippet_base64': 'WyBSVU4gICAgICBdIEFjY291bnRUcm',
-                    'status': 'SUCCESS'
-                }]
-            }]
-        }), 200)
-    ]
-    result = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-        isolated_data, None)
-    expected_result = {
-        'all_tests': ['test1', 'test2'],
-        'per_iteration_data': [{
-            'test1': [{
-                'output_snippet': '[ RUN ] test1.\\r\\n',
-                'output_snippet_base64': 'WyBSVU4gICAgICBdIEFjY291bnRUcm',
-                'status': 'SUCCESS'
-            }],
-            'test2': [{
-                'output_snippet': '[ RUN ] test2.\\r\\n',
-                'output_snippet_base64': 'WyBSVU4gICAgICBdIEFjY291bnRUcm',
-                'status': 'SUCCESS'
-            }]
-        }]
-    }
-
-    self.assertEqual(expected_result, result)
-
-  @mock.patch.object(
-      GtestTestResults, 'IsTestResultsInExpectedFormat', return_value=True)
-  @mock.patch.object(isolate, 'DownloadFileFromIsolatedServer')
-  def testRetrieveShardedTestResultsFromIsolatedServerOneShard(
-      self, mock_data, _):
-    isolated_data = [{
-        'digest': 'shard1_isolated',
-        'namespace': 'default-gzip',
-        'isolatedserver': 'isolated_server'
-    }]
-    data_json = {'all_tests': ['test'], 'per_iteration_data': []}
-    data_str = json.dumps(data_json)
-    mock_data.return_value = (data_str, 200)
-
-    result = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-        isolated_data, None)
-
-    self.assertEqual(data_json, result)
-
-  @mock.patch.object(
-      GtestTestResults, 'IsTestResultsInExpectedFormat', return_value=True)
-  @mock.patch.object(isolate, 'DownloadFileFromIsolatedServer')
-  def testRetrieveShardedTestResultsFromIsolatedServerFailed(
-      self, mock_data, _):
-    isolated_data = [{
-        'digest': 'shard1_isolated',
-        'namespace': 'default-gzip',
-        'isolatedserver': 'isolated_server'
-    }]
-    mock_data.return_value = (None, 404)
-
-    result = swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-        isolated_data, None)
-
-    self.assertIsNone(result)
 
   def testGetTaskIdFromSwarmingTaskEntity(self):
     swarming_task = WfSwarmingTask.Create('m', 'b', 123, 's')

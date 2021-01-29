@@ -66,9 +66,7 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
       return json.loads(f.read())
 
   @mock.patch.object(
-      swarmed_test_util,
-      'RetrieveShardedTestResultsFromIsolatedServer',
-      return_value=None)
+      resultdb_util, 'get_failed_tests_in_step', return_value=None)
   @mock.patch.object(
       step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)
   def testBailOutForUnsupportedStep(self, *_):
@@ -147,36 +145,8 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(
       step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)
-  @mock.patch.object(swarmed_test_util,
-                     'RetrieveShardedTestResultsFromIsolatedServer')
-  # crbug.com/827693
-  def disabled_testGetSignalFromStepLog(self, mock_gtest, _):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 123
-    step_name = 'abc_test'
-
-    # Mock both stdiolog and gtest json results to test whether Findit will
-    # go to step log first when both logs exist.
-    mock_gtest.return_value = self._GetGtestResultLog('m_b_123_abc_test.json')
-    self._CreateAndSaveWfAnanlysis(master_name, builder_name, build_number)
-
-    signals = extract_test_signal.ExtractSignalsForTestFailure(
-        TestFailureInfo.FromSerializable(_FAILURE_INFO), None)
-
-    step = WfStep.Get(master_name, builder_name, build_number, step_name)
-
-    expected_files = {'a/b/u2s1.cc': [567], 'a/b/u3s2.cc': [110]}
-
-    self.assertIsNotNone(step)
-    self.assertIsNotNone(step.log_data)
-    self.assertEqual(expected_files, signals['abc_test']['files'])
-
-  @mock.patch.object(
-      step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)
-  @mock.patch.object(swarmed_test_util,
-                     'RetrieveShardedTestResultsFromIsolatedServer')
-  def testGetSignalFromStepLogFlaky(self, mock_gtest, _):
+  @mock.patch.object(resultdb_util, 'get_failed_tests_in_step')
+  def testGetSignalFromStepLogFlaky(self, mock_resultdb, _):
     master_name = 'm'
     builder_name = 'b'
     build_number = 124
@@ -198,7 +168,7 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
         }
     }
 
-    mock_gtest.return_value = self._GetGtestResultLog('m_b_124_abc_test.json')
+    mock_resultdb.return_value = ResultDBTestResults([])
     self._CreateAndSaveWfAnanlysis(master_name, builder_name, build_number)
 
     signals = extract_test_signal.ExtractSignalsForTestFailure(
@@ -403,96 +373,6 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
         TestFailureInfo.FromSerializable(failure_info), None)
     self.assertEqual(expected_signals, signals)
 
-  @mock.patch.object(
-      swarmed_test_util,
-      'RetrieveShardedTestResultsFromIsolatedServer',
-      return_value=None)
-  @mock.patch.object(extract_signal, 'GetStdoutLog', return_value=None)
-  # crbug.com/1056607
-  def disabled_testExtractSignalsForTestFailureNoFailureLog(self, *_):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 223
-
-    failure_info = {
-        'master_name': master_name,
-        'builder_name': builder_name,
-        'build_number': build_number,
-        'failed': True,
-        'chromium_revision': 'a_git_hash',
-        'failed_steps': {
-            'abc_test': {
-                'last_pass': 221,
-                'current_failure': 223,
-                'first_failure': 222,
-                'supported': True,
-                'tests': {
-                    'Unittest2.Subtest1': {
-                        'current_failure': 223,
-                        'first_failure': 222,
-                        'last_pass': 221
-                    },
-                    'Unittest3.Subtest2': {
-                        'current_failure': 223,
-                        'first_failure': 222,
-                        'last_pass': 221
-                    }
-                }
-            }
-        }
-    }
-
-    self.assertEqual({},
-                     extract_test_signal.ExtractSignalsForTestFailure(
-                         TestFailureInfo.FromSerializable(failure_info), None))
-
-  @mock.patch.object(
-      swarmed_test_util,
-      'RetrieveShardedTestResultsFromIsolatedServer',
-      return_value='merged_test_results')
-  @mock.patch.object(
-      test_results_util, 'GetTestResultObject', return_value=None)
-  @mock.patch.object(extract_signal, 'GetStdoutLog', return_value='log')
-  # crbug.com/827693
-  def disabled_testExtractSignalsForTestFailureNoTestResult(self, *_):
-    master_name = 'm'
-    builder_name = 'b'
-    build_number = 223
-
-    failure_info = {
-        'master_name': master_name,
-        'builder_name': builder_name,
-        'build_number': build_number,
-        'failed': True,
-        'chromium_revision': 'a_git_hash',
-        'failed_steps': {
-            'abc_test': {
-                'last_pass': 221,
-                'current_failure': 223,
-                'first_failure': 222,
-                'supported': True,
-                'tests': {
-                    'Unittest2.Subtest1': {
-                        'current_failure': 223,
-                        'first_failure': 222,
-                        'last_pass': 221
-                    },
-                    'Unittest3.Subtest2': {
-                        'current_failure': 223,
-                        'first_failure': 222,
-                        'last_pass': 221
-                    }
-                }
-            }
-        }
-    }
-
-    expected_signals = {'abc_test': {'files': {}, 'keywords': {}}}
-    self.assertEqual(
-        expected_signals,
-        extract_test_signal.ExtractSignalsForTestFailure(
-            TestFailureInfo.FromSerializable(failure_info), None))
-
   @mock.patch.object(resultdb_util, 'get_failed_tests_in_step')
   def testExtractSignalsForTestFailureWithResultDBEnabled(self, mock_resultdb):
     master_name = 'm'
@@ -575,6 +455,4 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         expected_signals,
         extract_test_signal.ExtractSignalsForTestFailure(
-            TestFailureInfo.FromSerializable(failure_info),
-            None,
-            use_resultdb=True))
+            TestFailureInfo.FromSerializable(failure_info), None))

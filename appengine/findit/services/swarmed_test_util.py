@@ -16,7 +16,6 @@ from dto.test_location import TestLocation
 from infra_api_clients.swarming import swarming_util
 from libs.test_results import test_results_util
 from libs.test_results.resultdb_test_results import ResultDBTestResults
-from services import isolate
 from services import constants
 from services import resultdb
 from services import swarming
@@ -84,25 +83,6 @@ def GetTestLocation(task_id, test_name):
   if error:
     return None
   return TestLocation.FromSerializable(test_location or {})
-
-
-def RetrieveShardedTestResultsFromIsolatedServer(list_isolated_data,
-                                                 http_client):
-  """Gets test results from isolated server and merge the results."""
-  shard_results = []
-  for isolated_data in list_isolated_data:
-    test_result_log, _ = isolate.DownloadFileFromIsolatedServer(
-        isolated_data, http_client, 'output.json')
-    if not test_result_log:
-      return None
-    shard_results.append(json.loads(test_result_log))
-
-  if not shard_results:
-    return []
-
-  test_results = test_results_util.GetTestResultObject(shard_results[0])
-  return test_results.GetMergedTestResults(
-      shard_results) if test_results else None
 
 
 def GetTaskIdFromSwarmingTaskEntity(urlsafe_task_key):

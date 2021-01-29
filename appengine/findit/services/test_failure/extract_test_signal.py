@@ -22,7 +22,7 @@ from waterfall import extractors
 from waterfall.failure_signal import FailureSignal
 
 
-def ExtractSignalsForTestFailure(failure_info, http_client, use_resultdb=False):
+def ExtractSignalsForTestFailure(failure_info, http_client):
   signals = {}
 
   master_name = failure_info.master_name
@@ -44,21 +44,8 @@ def ExtractSignalsForTestFailure(failure_info, http_client, use_resultdb=False):
       failure_log = step.log_data
     else:
       json_formatted_log = True
-      test_results = None
-      # 2. Gets test results.
-      if not use_resultdb:
-        list_isolated_data = failed_steps[step_name].list_isolated_data
-        list_isolated_data = (
-            list_isolated_data.ToSerializable() if list_isolated_data else [])
-        merged_test_results = (
-            swarmed_test_util.RetrieveShardedTestResultsFromIsolatedServer(
-                list_isolated_data, http_client))
-        if merged_test_results:
-          test_results = test_results_util.GetTestResultObject(
-              merged_test_results)
-      else:  # Use resultdb
-        test_results = resultdb_util.get_failed_tests_in_step(
-            failed_steps[step_name])
+      test_results = resultdb_util.get_failed_tests_in_step(
+          failed_steps[step_name])
 
       if test_results:
         failure_log, _ = (

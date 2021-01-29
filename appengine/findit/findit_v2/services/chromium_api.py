@@ -38,7 +38,7 @@ class ChromiumProjectAPI(ProjectAPI):
 
   def ExtractSignalsForTestFailure(self, failure_info):
     return extract_test_signal.ExtractSignalsForTestFailure(
-        failure_info, FinditHttpClient(), use_resultdb=constants.USE_RESULTDB)
+        failure_info, FinditHttpClient())
 
   def ClassifyStepType(self, _build, step):
     if step.name == 'compile':

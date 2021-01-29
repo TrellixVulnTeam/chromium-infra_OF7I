@@ -207,7 +207,6 @@ def HeuristicAnalysisForTest(heuristic_params):
   master_name = failure_info.master_name
   builder_name = failure_info.builder_name
   build_number = failure_info.build_number
-  use_resultdb = constants.USE_RESULTDB
 
   # 1. Detects first failed builds for failed test step, updates failure_info.
   failure_info = ci_failure.CheckForFirstKnownFailure(master_name, builder_name,
@@ -228,7 +227,7 @@ def HeuristicAnalysisForTest(heuristic_params):
 
   # 2. Extracts failure signal.
   signals = extract_test_signal.ExtractSignalsForTestFailure(
-      failure_info, FinditHttpClient(), use_resultdb=use_resultdb)
+      failure_info, FinditHttpClient())
 
   # 3. Gets change_logs.
   change_logs = git.PullChangeLogs(
