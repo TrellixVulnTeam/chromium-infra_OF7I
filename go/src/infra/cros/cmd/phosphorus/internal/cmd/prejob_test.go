@@ -102,7 +102,7 @@ func TestShouldRunTLSProvision(t *testing.T) {
 					},
 				},
 			}
-			if b := shouldRunTLSProvision(r); b != c.Want {
+			if b := shouldProvisionChromeOSViaTLS(r); b != c.Want {
 				t.Errorf("Incorrect response from shouldRunTLSProvision(%v): %t, want %t", r, b, c.Want)
 			}
 		})

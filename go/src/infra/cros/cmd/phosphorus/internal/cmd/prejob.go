@@ -86,22 +86,29 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		defer c()
 	}
 
-	if shouldRunTLSProvision(&r) {
-		resp, err := runTLSProvision(ctx, r)
-		if err != nil {
-			return err
-		}
-		return WriteJSONPB(c.OutputPath, resp)
-	}
-
-	resp, err := runPrejobLegacy(ctx, r)
+	resp, err := runProvisionSteps(ctx, r)
 	if err != nil {
 		return err
 	}
 	return WriteJSONPB(c.OutputPath, resp)
 }
 
-func shouldRunTLSProvision(r *phosphorus.PrejobRequest) bool {
+func runProvisionSteps(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	resp, err := provisionChromeOSBuild(ctx, r)
+	if err != nil || resp.GetState() != phosphorus.PrejobResponse_SUCCEEDED {
+		return resp, err
+	}
+	return provisionFirmwareLegacy(ctx, r)
+}
+
+func provisionChromeOSBuild(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	if shouldProvisionChromeOSViaTLS(&r) {
+		return provisionChromeOSBuildViaTLS(ctx, r)
+	}
+	return provisionChromeOSBuildLegacy(ctx, r)
+}
+
+func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 	e := r.GetConfig().GetPrejobStep().GetProvisionDutExperiment()
 	if e == nil {
 		return false
@@ -131,15 +138,6 @@ func shouldRunTLSProvision(r *phosphorus.PrejobRequest) bool {
 		// this oneof unset.
 		return false
 	}
-}
-
-// This function will be obsoleted once runTLSProvision is globally enabled.
-func runPrejobLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	resp, err := provisionChromeOSBuildLegacy(ctx, r)
-	if err != nil || resp.GetState() != phosphorus.PrejobResponse_SUCCEEDED {
-		return resp, err
-	}
-	return provisionFirmwareLegacy(ctx, r)
 }
 
 func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
@@ -250,13 +248,13 @@ func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.
 	return ar, nil
 }
 
-// runTLSProvision provisions a DUT via the TLS API.
+// provisionChromeOSBuildViaTLS provisions a DUT via the TLS API.
 // See go/cros-tls go/cros-prover
 //
 // Errors returned from the actual provision operation are interpreted into
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
-func runTLSProvision(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuildViaTLS(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	p, err := gsPathToImage(r.DesiredProvisionableLabels)
 	if err != nil {
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
