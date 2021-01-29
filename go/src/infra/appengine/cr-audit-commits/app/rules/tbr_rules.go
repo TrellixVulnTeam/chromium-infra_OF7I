@@ -26,7 +26,9 @@ const (
 
 Beginning in Q1 2021, Chrome is disallowing TBRs. Learn more at go/chrome-cr-owners-site. Getting code review on all CLs will avoid having these bugs filed.
 
-This bug is a warning; you can close it to signal that you've gotten review for the CL that this bug was filed against.`
+CHERRY-PICKS and REVERTS: Rubber Stamper is now available to approve clean cherry-picks and reverts if they were created via the Gerrit UI. Adding the bot (rubber-stamper@appspot.gserviceaccount.com) as a reviewer to your CL will cause it to scan and approve it. Just typing "Rubber St" will autocomplete the full address for you.
+
+This bug is a warning that what you have done will stop working when Gerrit blocks such submissions; you can close it to signal that you've gotten review for the CL that this bug was filed against.`
 )
 
 // getMaxLabelValue determines the highest possible value of a vote for a given
