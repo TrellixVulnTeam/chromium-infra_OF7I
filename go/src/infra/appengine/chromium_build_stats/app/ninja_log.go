@@ -30,21 +30,28 @@ import (
 	"infra/appengine/chromium_build_stats/ninjalog/traceviewer"
 )
 
-type outputFunc func(http.ResponseWriter, string, *ninjalog.NinjaLog) error
+type outputFunc func(context.Context, http.ResponseWriter, string, *ninjalog.NinjaLog) error
 
 var (
 	outputs = map[string]outputFunc{
 		"lastbuild":     outputFunc(lastBuild),
 		"table":         outputFunc(table),
 		"metadata.json": outputFunc(metadataJSON),
-		"trace.json":    outputFunc(traceJSON),
+		"trace.json": outputFunc(
+			func(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+				return traceJSON(ctx, w, logPath, njl, false)
+			}),
 		"trace.html": outputFunc(
-			func(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
-				return traceHTML(w, logPath, njl, false)
+			func(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+				return traceHTML(ctx, w, logPath, njl, false)
+			}),
+		"trace_sort_by_end.json": outputFunc(
+			func(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+				return traceJSON(ctx, w, logPath, njl, true)
 			}),
 		"trace_sort_by_end.html": outputFunc(
-			func(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
-				return traceHTML(w, logPath, njl, true)
+			func(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+				return traceHTML(ctx, w, logPath, njl, true)
 			}),
 	}
 
@@ -72,6 +79,54 @@ You need to <a href="{{.Login}}">login</a> to upload .ninja_log file.
 <html>
 <head>
  <title>{{.Path}}</title>
+
+<script>
+
+// TODO(ukai): put this in trace.html page?
+// https://bugs.chromium.org/p/chromium/issues/detail?id=1053869
+function loadTrace() {
+  const traceUrl = window.location + "/trace_sort_by_end.json";
+  return fetch(traceUrl);
+}
+
+function openPerfetto(trace) {
+  const uiLink = 'https://ui.perfetto.dev';
+  const perfettoWindow = window.open(uiLink);
+  if (perfettoWindow != null) {
+    const pingInterval = setInterval(() => {
+       perfettoWindow.postMessage('PING', uiLink);
+    }, 100);
+    window.addEventListener('message', (e) => {
+       if (e.origin !== uiLink) return;
+       if (e.data !== 'PONG') return;
+       clearInterval(pingInterval);
+       perfettoWindow.postMessage({'perfetto': {title: '{{.Filename}}', url: window.location.href, buffer: trace}}, uiLink);
+       window.close();
+    });
+  } else {
+    console.warn('Unable to open Perfetto UI window');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const openButton = document.getElementById('open-button');
+  loadTrace().then((response) => {
+    if (!response.ok) {
+      openButton.innerText = "Failed to fetch trace. Please reload the page";
+      throw new Error('Failed to fetch trace ' + response.status)
+    }
+    return response.arrayBuffer();
+  }).then((trace) => {
+    window.trace = trace;
+    openButton.innerText = "open trace on ui.perefetto.dev";
+    openButton.disabled = false;
+  });
+  openButton.addEventListener('click', (e) => {
+    if (!window.trace) return;
+    openPerfetto(trace);
+  });
+});
+</script>
 </head>
 <body>
 <h1><a href="/file/{{.Path}}">{{.Path}}</a></h1>
@@ -80,7 +135,7 @@ You need to <a href="{{.Login}}">login</a> to upload .ninja_log file.
  <li><a href="{{.Filename}}/table?dedup=true">.ninja_log in table format</a> (<a href="{{.Filename}}/table">full</a>)
  <li><a href="{{.Filename}}/metadata.json">metadata.json</a>
  <li><a href="{{.Filename}}/trace.html">trace viewer</a> [<a href="{{.Filename}}/trace.json">trace.json</a>]
- <li><a href="{{.Filename}}/trace_sort_by_end.html">trace viewer (sort_by_end)</a>
+ <li><a href="{{.Filename}}/trace_sort_by_end.html">trace viewer (sort_by_end)</a> [<a href="{{.Filename}}/trace_sort_by_end.json">trace_sort_by_end.json</a>]<button id="open-button" disabled>preparing trace on ui.perfetto.dev</button>
 </ul>
 </body>
 </html>
@@ -212,6 +267,7 @@ func ninjaLogHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := appengine.NewContext(req)
+	log.Infof(ctx, "/ninja_log: %s", req.URL.Path)
 
 	err := req.ParseForm()
 	if err != nil {
@@ -228,6 +284,7 @@ func ninjaLogHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	log.Infof(ctx, "fetch ninja_log: %s", logPath)
 	njl, err := ninjalogFetch(ctx, logPath)
 	if err != nil {
 		log.Errorf(ctx, "failed to fetch %s: %v", logPath, err)
@@ -238,7 +295,7 @@ func ninjaLogHandler(w http.ResponseWriter, req *http.Request) {
 		njl.Steps = ninjalog.Dedup(njl.Steps)
 	}
 
-	err = outFunc(w, logPath, njl)
+	err = outFunc(ctx, w, logPath, njl)
 	if err != nil {
 		log.Errorf(ctx, "failed to output %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -335,7 +392,7 @@ func ninjalogFetch(ctx context.Context, logPath string) (*ninjalog.NinjaLog, err
 	return nl, err
 }
 
-func indexPage(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+func indexPage(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	data := struct {
@@ -348,7 +405,7 @@ func indexPage(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) er
 	return indexTmpl.Execute(w, data)
 }
 
-func lastBuild(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+func lastBuild(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	return ninjalog.Dump(w, njl.Steps)
@@ -393,8 +450,9 @@ func typeFromExt(s ninjalog.Step) string {
 	return target[pos:]
 }
 
-func table(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+func table(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	w.Header().Set("Cache-Control", "public, max-age=600")
 	w.WriteHeader(http.StatusOK)
 	data := tableData{
 		NinjaLog: njl,
@@ -410,32 +468,38 @@ func table(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error 
 	return tableTmpl.Execute(w, data)
 }
 
-func metadataJSON(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+func metadataJSON(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
 	js, err := json.Marshal(njl.Metadata)
 	if err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=600")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(js)
 	return err
 }
 
-func traceJSON(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
+func traceJSON(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog, sortByEnd bool) error {
+	log.Infof(ctx, "traceJSON for %s sort_by_end=%t", logPath, sortByEnd)
 	steps := ninjalog.Dedup(njl.Steps)
-	flow := ninjalog.Flow(steps, false)
+	flow := ninjalog.Flow(steps, sortByEnd)
 	traces := ninjalog.ToTraces(flow, 1)
 	js, err := json.Marshal(traces)
 	if err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	// it doesn't work as ui.perfetto.dev doesn't allow *.appspot.com.
+	// https://bugs.chromium.org/p/chromium/issues/detail?id=1053869#c6
+	w.Header().Set("Access-Control-Allow-Origin", "https://ui.perfetto.dev")
+	w.Header().Set("Cache-Control", "public, max-age=600")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(js)
 	return err
 }
 
-func traceHTML(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog, sortByEnd bool) error {
+func traceHTML(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog, sortByEnd bool) error {
 	steps := ninjalog.Dedup(njl.Steps)
 	flow := ninjalog.Flow(steps, sortByEnd)
 	traces := ninjalog.ToTraces(flow, 1)
@@ -444,6 +508,7 @@ func traceHTML(w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog, so
 		return err
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=600")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	return err
