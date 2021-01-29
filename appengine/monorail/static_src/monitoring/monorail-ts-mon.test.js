@@ -84,20 +84,6 @@ describe('MonorailTSMon', () => {
       MonorailTSMon.isPageVisible.restore();
     });
 
-    it('records page load on issue list page', () => {
-      mts.recordIssueListTiming();
-      sinon.assert.calledOnce(mts.pageLoadMetric.add);
-      assert.isNumber(mts.pageLoadMetric.add.getCall(0).args[0]);
-      assert.isString(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'client_id'));
-      assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'host_name'), 'rutabaga-version');
-      assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'template_name'), 'issue_list');
-      assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'document_visible'), true);
-    });
-
     it('records page load on issue detail page', () => {
       mts.recordIssueDetailTiming();
       sinon.assert.calledOnce(mts.pageLoadMetric.add);

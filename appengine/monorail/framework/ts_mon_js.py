@@ -68,6 +68,17 @@ DOM_CONTENT_LOADED_METRIC = ts_mon.CumulativeDistributionMetric(
   units=ts_mon.MetricsDataUnits.MILLISECONDS)
 
 
+ISSUE_LIST_LOAD_EXTRA_FIELDS = [
+  ts_mon.StringField('template_name'),
+  ts_mon.BooleanField('full_app_load'),
+]
+ISSUE_LIST_LOAD_LATENCY_METRIC = ts_mon.CumulativeDistributionMetric(
+  'monorail/frontend/issue_list_load_latency', (
+    'Time from navigation or click to search issues list loaded.'
+  ), field_spec=STANDARD_FIELDS + ISSUE_LIST_LOAD_EXTRA_FIELDS,
+  units=ts_mon.MetricsDataUnits.MILLISECONDS)
+
+
 class MonorailTSMonJSHandler(TSMonJSHandler):
 
   def __init__(self, request=None, response=None):
@@ -78,7 +89,8 @@ class MonorailTSMonJSHandler(TSMonJSHandler):
         AUTOCOMPLETE_POPULATE_LATENCY_METRIC,
         CHARTS_SWITCH_DATE_RANGE_METRIC,
         ISSUE_COMMENTS_LOAD_LATENCY_METRIC,
-        DOM_CONTENT_LOADED_METRIC])
+        DOM_CONTENT_LOADED_METRIC,
+        ISSUE_LIST_LOAD_LATENCY_METRIC])
 
   def xsrf_is_valid(self, body):
     """This method expects the body dictionary to include two fields:

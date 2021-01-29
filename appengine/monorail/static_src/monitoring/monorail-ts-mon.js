@@ -16,6 +16,7 @@ export const PAGE_TYPES = Object.freeze({
   ISSUE_DETAIL: 'issue_detail',
   ISSUE_DETAIL_SPA: 'issue_detail_spa',
   ISSUE_LIST: 'issue_list',
+  ISSUE_LIST_SPA: 'issue_list_spa',
 });
 
 export default class MonorailTSMon extends TSMonClient {
@@ -89,6 +90,19 @@ export default class MonorailTSMon extends TSMonClient {
           ['full_app_load', TSMonClient.boolField('full_app_load')],
         ])),
     );
+
+    this.issueListLoadMetric = this.cumulativeDistribution(
+        'monorail/frontend/issue_list_load_latency',
+        'Time from navigation or click to search issues list loaded.',
+        null, (new Map([
+          ['client_id', TSMonClient.stringField('client_id')],
+          ['host_name', TSMonClient.stringField('host_name')],
+          ['template_name', TSMonClient.stringField('template_name')],
+          ['document_visible', TSMonClient.boolField('document_visible')],
+          ['full_app_load', TSMonClient.boolField('full_app_load')],
+        ])),
+    );
+
 
     this.pageLoadMetric = this.cumulativeDistribution(
         'frontend/dom_content_loaded',
@@ -187,8 +201,23 @@ export default class MonorailTSMon extends TSMonClient {
     this.recordPageLoadTiming(PAGE_TYPES.ISSUE_DETAIL_SPA, maxThresholdMs);
   }
 
-  recordIssueListTiming(maxThresholdMs=PAGE_LOAD_MAX_THRESHOLD) {
-    this.recordPageLoadTiming(PAGE_TYPES.ISSUE_LIST, maxThresholdMs);
+
+  /**
+   * Adds a value to the 'issue_list_load_latency' metric.
+   * @param {timestamp} value duration of the load time.
+   * @param {Boolean} fullAppLoad true if this metric was collected from
+   *     a full app load (cold) rather than from navigation within the
+   *     app (hot).
+   */
+  recordIssueListLoadTiming(value, fullAppLoad) {
+    const metricFields = new Map([
+      ['client_id', this.clientId],
+      ['host_name', window.CS_env.app_version],
+      ['template_name', PAGE_TYPES.ISSUE_LIST_SPA],
+      ['document_visible', MonorailTSMon.isPageVisible()],
+      ['full_app_load', fullAppLoad],
+    ]);
+    this.issueListLoadMetric.add(value, metricFields);
   }
 
   // Uses the window object to ensure that only one ts_mon JS client

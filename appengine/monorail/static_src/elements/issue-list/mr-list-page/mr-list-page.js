@@ -331,6 +331,8 @@ export class MrListPage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
+    this._measureIssueListLoadTime(changedProperties);
+
     if (changedProperties.has('_fetchingIssueList')) {
       const wasFetching = changedProperties.get('_fetchingIssueList');
       const isFetching = this._fetchingIssueList;
@@ -356,6 +358,44 @@ export class MrListPage extends connectStore(LitElement) {
 
     const shouldRefresh = this._shouldRefresh(changedProperties);
     if (shouldRefresh) this.refresh();
+  }
+
+  /**
+   * Tracks the start and end times of an issues list render and
+   * records an issue list load time.
+   * @param {Map} changedProperties
+  */
+  async _measureIssueListLoadTime(changedProperties) {
+    if (!changedProperties.has('issues')) {
+      return;
+    }
+
+    if (!changedProperties.get('issues')) {
+      // Ignore initial initialization from the constructer where
+      // 'issues' is set from undefined to an empty array.
+      return;
+    }
+
+    const fullAppLoad = ui.navigationCount(store.getState()) == 1;
+    const startMark = fullAppLoad ? undefined : 'start load issue list page';
+
+    await Promise.all(_subtreeUpdateComplete(this));
+
+    const endMark = 'finish load list of issues';
+    performance.mark(endMark);
+
+    const measurementType = fullAppLoad ? 'from outside app' : 'within app';
+    const measurementName = `load list of issues (${measurementType})`;
+    performance.measure(measurementName, startMark, endMark);
+
+    const measurement = performance.getEntriesByName(
+        measurementName)[0].duration;
+    window.getTSMonClient().recordIssueListLoadTiming(measurement, fullAppLoad);
+
+    // Be sure to clear this mark even on full page navigation.
+    performance.clearMarks('start load issue list page');
+    performance.clearMarks(endMark);
+    performance.clearMeasures(measurementName);
   }
 
   /**
@@ -601,4 +641,22 @@ export class MrListPage extends connectStore(LitElement) {
     this.selectedIssues = issueListRef.selectedIssues;
   }
 };
+
+
+/**
+ * Recursively traverses all shadow DOMs in an element subtree and returns an
+ * Array containing the updateComplete Promises for all lit-element nodes.
+ * @param {!LitElement} element
+ * @return {!Array<Promise<Boolean>>}
+ */
+function _subtreeUpdateComplete(element) {
+  if (!(element.shadowRoot && element.updateComplete)) {
+    return [];
+  }
+
+  const children = element.shadowRoot.querySelectorAll('*');
+  const childPromises = Array.from(children, (e) => _subtreeUpdateComplete(e));
+  return [element.updateComplete].concat(...childPromises);
+}
+
 customElements.define('mr-list-page', MrListPage);

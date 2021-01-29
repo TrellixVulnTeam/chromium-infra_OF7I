@@ -455,6 +455,8 @@ export class MrApp extends connectStore(LitElement) {
    * @param {function} next Passes execution on to the next registered callback.
    */
   async _loadListPage(ctx, next) {
+    performance.clearMarks('start load issue list page');
+    performance.mark('start load issue list page');
     switch (ctx.queryParams && ctx.queryParams.mode &&
         ctx.queryParams.mode.toLowerCase()) {
       case 'grid':
