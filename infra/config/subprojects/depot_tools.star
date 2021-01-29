@@ -26,7 +26,7 @@ luci.cq_group(
     name = "depot_tools",
     watch = cq.refset(
         repo = REPO_URL,
-        refs = ["refs/heads/master", "refs/heads/main", "refs/heads/test-main"],
+        refs = ["refs/heads/master", "refs/heads/main"],
     ),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
