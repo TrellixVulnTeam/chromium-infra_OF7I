@@ -908,6 +908,7 @@ SPECS.update({
         'MultiWheel',
         MultiWheel('pathos', '0.2.7', ([
             Universal('dill', '0.3.3'),
+            Universal('klepto', '0.2.0'),
             SourceOrPrebuilt(
                 'multiprocess',
                 '0.70.11.1',
@@ -916,6 +917,8 @@ SPECS.update({
             ),
             Universal('pathos', '0.2.7'),
             Universal('pox', '0.2.9'),
+            Universal('ppft', '1.6.6.3', pyversions=['py2', 'py3']),
+            Universal('pyina', '0.2.4'),
         ])),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of
         # available packages.
