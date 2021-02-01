@@ -66,10 +66,6 @@ cron:
   url: /internal/cron/refresh-inventory
   schedule: every 1 minutes
 
-- description: push inventory to drone queen
-  url: /internal/cron/push-inventory-to-queen
-  schedule: every 10 minutes
-
 - description: Import config.cfg from LUCI Config
   url: /internal/cron/import-service-config
   schedule: every 10 minutes
