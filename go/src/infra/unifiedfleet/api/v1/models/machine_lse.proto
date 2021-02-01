@@ -233,7 +233,7 @@ message ChromeOSDeviceData {
   models.MachineLSE lab_config = 1;
   models.Machine machine = 2;
   models.chromeos.device.Config device_config = 3;
-  models.chromeos.manufacturing.Config manufacturing_config = 4;
+  models.chromeos.manufacturing.ManufacturingConfig manufacturing_config = 4;
   HwidData hwid_data = 5;
   models.chromeos.lab.DutState dut_state = 6;
 }

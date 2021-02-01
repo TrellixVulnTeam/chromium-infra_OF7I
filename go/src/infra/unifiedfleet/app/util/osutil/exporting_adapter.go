@@ -18,7 +18,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	device "infra/unifiedfleet/api/v1/models/chromeos/device"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
-	manufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
+	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 )
 
 var (
@@ -206,7 +206,7 @@ func setDutPools(labels *inventory.SchedulableLabels, inputPools []string) {
 	}
 }
 
-func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Config) {
+func setManufacturingConfig(l *inventory.SchedulableLabels, m *ufsmanufacturing.ManufacturingConfig) {
 	if m == nil {
 		return
 	}

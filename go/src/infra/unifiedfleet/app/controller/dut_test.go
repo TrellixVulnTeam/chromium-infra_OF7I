@@ -11,7 +11,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	device "infra/unifiedfleet/api/v1/models/chromeos/device"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
-	manufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
+	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
@@ -1294,8 +1294,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 		},
 	}
 
-	mfgCfg := &manufacturing.Config{
-		ManufacturingId: &manufacturing.ConfigID{Value: "test"},
+	mfgCfg := &ufsmanufacturing.ManufacturingConfig{
+		ManufacturingId: &ufsmanufacturing.ConfigID{Value: "test"},
 	}
 
 	hwidData := &ufspb.HwidData{Sku: "test", Variant: "test"}

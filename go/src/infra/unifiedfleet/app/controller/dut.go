@@ -673,7 +673,7 @@ func getDeviceConfig(ctx context.Context, inv2Client external.CrosInventoryClien
 }
 
 // getManufacturingConfig get manufacturing config form InvV2
-func getManufacturingConfig(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufsmanufacturing.Config, error) {
+func getManufacturingConfig(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufsmanufacturing.ManufacturingConfig, error) {
 	resp, err := inv2Client.GetManufacturingConfig(ctx, &iv2api.GetManufacturingConfigRequest{
 		Name: id,
 	})
@@ -681,7 +681,7 @@ func getManufacturingConfig(ctx context.Context, inv2Client external.CrosInvento
 		return nil, err
 	}
 	s := proto.MarshalTextString(resp)
-	var mfgConfig ufsmanufacturing.Config
+	var mfgConfig ufsmanufacturing.ManufacturingConfig
 	proto.UnmarshalText(s, &mfgConfig)
 	logging.Debugf(ctx, "InvV2 manufacturing config:\n %+v\nUFS manufacturing config:\n %+v ", resp, &mfgConfig)
 	return &mfgConfig, err
