@@ -548,7 +548,7 @@ SPECS.update({
         Prebuilt(
             'scipy',
             '1.6.0',
-            ['manylinux-x64'],
+            ['manylinux-x64-py3'],
             pyversions=['py3'],
         ),
     )
