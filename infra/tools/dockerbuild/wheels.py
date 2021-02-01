@@ -545,6 +545,12 @@ SPECS.update({
             ['mac-x64', 'manylinux-x86', 'manylinux-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
+        Prebuilt(
+            'scipy',
+            '1.6.0',
+            ['manylinux-x64'],
+            pyversions=['py3'],
+        ),
     )
 })
 
