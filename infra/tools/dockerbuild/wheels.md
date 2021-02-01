@@ -2258,6 +2258,22 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 4.6.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/lxml/${vpython_platform}"
+  version: "version:4.6.2"
+>
+```
+
+
+* *mac-x64*
+* *manylinux-x64*
+* *manylinux-x86*
+* *windows-x64*
+* *windows-x86*
+
 ## **macholib**
 
 ### 1.11

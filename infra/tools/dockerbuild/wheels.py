@@ -483,6 +483,14 @@ SPECS.update({
             ],
         ),
         Prebuilt(
+            'lxml',
+            '4.6.2',
+            [
+                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
+                'windows-x64'
+            ],
+        ),
+        Prebuilt(
             'pandas',
             '0.23.4',
             [
