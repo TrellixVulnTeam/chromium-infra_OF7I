@@ -689,6 +689,7 @@ SPECS.update({
         Universal('google-auth-httplib2', '0.0.3'),
         Universal('google-auth-oauthlib', '0.3.0'),
         Universal('google-cloud-bigquery', '0.28.0'),
+        Universal('google-cloud-bigquery', '2.7.0'),
         Universal('google-cloud-bigtable', '0.28.1'),
         Universal('google-cloud-core', '0.28.0'),
         Universal('google-cloud-datastore', '1.6.0'),
