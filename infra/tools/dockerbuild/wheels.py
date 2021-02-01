@@ -424,13 +424,6 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
-            'scipy',
-            '1.6.0',
-            skip_plat=['mac-x64-cp38', 'windows-x64-py3'],
-            packaged=[],
-            pyversions=['py3'],
-        ),
-        SourceOrPrebuilt(
             'simplejson',
             '3.13.2',
             packaged=[
