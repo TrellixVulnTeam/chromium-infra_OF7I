@@ -37,7 +37,7 @@ func mockDUT(hostname, machine, servoHost, servoSerial, rpm, rpmOutlet string, s
 										ServoPort:     servoPort,
 										ServoSerial:   servoSerial,
 									},
-									Rpm: &chromeosLab.RPM{
+									Rpm: &chromeosLab.OSRPM{
 										PowerunitName:   rpm,
 										PowerunitOutlet: rpmOutlet,
 									},

@@ -656,16 +656,16 @@ func logServo(resourceName, labelPrefix string, oldServo, newServo *chromeosLab.
 	return changes
 }
 
-func logRPM(resourceName, labelPrefix string, oldRpm, newRpm *chromeosLab.RPM) []*ufspb.ChangeEvent {
+func logRPM(resourceName, labelPrefix string, oldRpm, newRpm *chromeosLab.OSRPM) []*ufspb.ChangeEvent {
 	if oldRpm == nil && newRpm == nil {
 		return nil
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
 	if oldRpm == nil {
-		oldRpm = &chromeosLab.RPM{}
+		oldRpm = &chromeosLab.OSRPM{}
 	}
 	if newRpm == nil {
-		newRpm = &chromeosLab.RPM{}
+		newRpm = &chromeosLab.OSRPM{}
 	}
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.name", labelPrefix), oldRpm.GetPowerunitName(), newRpm.GetPowerunitName())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.outlet", labelPrefix), oldRpm.GetPowerunitOutlet(), newRpm.GetPowerunitOutlet())...)

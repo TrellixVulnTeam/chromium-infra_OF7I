@@ -62,6 +62,6 @@ message DeviceUnderTest{
 message Labstation {
   string hostname = 1;
   repeated Servo servos = 2;
-  RPM rpm = 3;
+  OSRPM rpm = 3;
   repeated string pools = 4;
 }

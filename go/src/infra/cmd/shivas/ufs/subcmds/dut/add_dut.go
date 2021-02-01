@@ -387,7 +387,7 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 								Peripherals: &chromeosLab.Peripherals{
 									Chameleon:     &chromeosLab.Chameleon{},
 									Servo:         &chromeosLab.Servo{},
-									Rpm:           &chromeosLab.RPM{},
+									Rpm:           &chromeosLab.OSRPM{},
 									Audio:         &chromeosLab.Audio{},
 									Wifi:          &chromeosLab.Wifi{},
 									Touch:         &chromeosLab.Touch{},

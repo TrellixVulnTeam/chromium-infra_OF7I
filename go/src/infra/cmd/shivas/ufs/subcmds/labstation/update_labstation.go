@@ -365,7 +365,7 @@ func (c *updateLabstation) initializeLSEAndMask(recMap map[string]string) (*ufsp
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Labstation{
 							Labstation: &chromeosLab.Labstation{
-								Rpm: &chromeosLab.RPM{},
+								Rpm: &chromeosLab.OSRPM{},
 							},
 						},
 					},
@@ -433,14 +433,14 @@ func (c *updateLabstation) initializeLSEAndMask(recMap map[string]string) (*ufsp
 }
 
 // generateRPMWithMask generates a rpm object from the given inputs and corresponding mask.
-func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.RPM, []string) {
+func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.OSRPM, []string) {
 	// Check if rpm is being deleted.
 	if rpmHost == utils.ClearFieldValue {
 		// Generate mask and empty rpm.
 		return nil, []string{rpmHostPath}
 	}
 
-	rpm := &chromeosLab.RPM{}
+	rpm := &chromeosLab.OSRPM{}
 	paths := []string{}
 	// Check and update rpm.
 	if rpmHost != "" {

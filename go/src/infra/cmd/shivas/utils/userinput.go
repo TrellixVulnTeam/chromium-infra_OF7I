@@ -733,7 +733,7 @@ func getDut(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 		Hostname: machinelse.Hostname,
 		Peripherals: &chromeosLab.Peripherals{
 			Servo: &chromeosLab.Servo{},
-			Rpm:   &chromeosLab.RPM{},
+			Rpm:   &chromeosLab.OSRPM{},
 		},
 	}
 	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Dut{
@@ -1044,7 +1044,7 @@ func getLabstation(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio
 		// we use Labstation Hostname(ServoHostname) from a DUT to update the
 		// Labstation with Servo info
 		Hostname: machinelse.GetHostname(),
-		Rpm:      &chromeosLab.RPM{},
+		Rpm:      &chromeosLab.OSRPM{},
 	}
 	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Labstation{
 		Labstation: labstation,

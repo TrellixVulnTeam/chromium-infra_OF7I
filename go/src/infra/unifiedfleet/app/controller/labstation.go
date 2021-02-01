@@ -155,7 +155,7 @@ func validateUpdateLabstationMask(mask *field_mask.FieldMask, machinelse *ufspb.
 	rpm := labstation.GetRpm()
 	if rpm == nil {
 		// Assign an empty rpm to avoid segfaults.
-		rpm = &chromeosLab.RPM{}
+		rpm = &chromeosLab.OSRPM{}
 	}
 
 	maskSet := make(map[string]struct{}) // Set of all the masks
@@ -247,7 +247,7 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 				oldLabstation.Rpm = nil
 			} else {
 				if oldLabstation.Rpm == nil {
-					oldLabstation.Rpm = &chromeosLab.RPM{}
+					oldLabstation.Rpm = &chromeosLab.OSRPM{}
 				}
 				oldLabstation.GetRpm().PowerunitName = newLabstation.GetRpm().GetPowerunitName()
 			}
@@ -261,7 +261,7 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 				oldLabstation.Rpm = nil
 			} else {
 				if oldLabstation.Rpm == nil {
-					oldLabstation.Rpm = &chromeosLab.RPM{}
+					oldLabstation.Rpm = &chromeosLab.OSRPM{}
 				}
 				// Copy the outlet for update
 				oldLabstation.GetRpm().PowerunitOutlet = newLabstation.GetRpm().GetPowerunitOutlet()

@@ -395,7 +395,7 @@ func cleanPreDeployFields(servo *chromeosLab.Servo) {
 // Assumes that dut and mask aren't empty. This is because this function is not called otherwise.
 func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufspb.MachineLSE) error {
 	var servo *chromeosLab.Servo
-	var rpm *chromeosLab.RPM
+	var rpm *chromeosLab.OSRPM
 
 	// GetDut should return an object. Otherwise UpdateDUT isn't called
 	dut := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut()
@@ -463,7 +463,7 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMachineLse *ufspb.MachineLSE, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
 	// Extract all the peripherals to avoid doing it for every update in loop.
 	var oldServo, newServo *chromeosLab.Servo
-	var oldRPM, newRPM *chromeosLab.RPM
+	var oldRPM, newRPM *chromeosLab.OSRPM
 	oldDut := oldMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 	newDut := newMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 	if oldDut != nil {
@@ -475,7 +475,7 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 			}
 			oldRPM = oldPeripherals.GetRpm()
 			if oldRPM == nil {
-				oldRPM = &chromeosLab.RPM{}
+				oldRPM = &chromeosLab.OSRPM{}
 			}
 		}
 	}
@@ -488,7 +488,7 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 			}
 			newRPM = newPeripherals.GetRpm()
 			if newRPM == nil {
-				newRPM = &chromeosLab.RPM{}
+				newRPM = &chromeosLab.OSRPM{}
 			}
 		}
 	}
@@ -581,7 +581,7 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *chromeosLab.Servo, pat
 }
 
 // processUpdateMacineLSERPMMask returns rpm with new updated params from the mask
-func processUpdateMachineLSERPMMask(oldRPM, newRPM *chromeosLab.RPM, path string) {
+func processUpdateMachineLSERPMMask(oldRPM, newRPM *chromeosLab.OSRPM, path string) {
 	switch path {
 	case "dut.rpm.host":
 		oldRPM.PowerunitName = newRPM.GetPowerunitName()

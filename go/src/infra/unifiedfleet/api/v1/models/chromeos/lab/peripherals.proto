@@ -13,11 +13,11 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
 
 // This proto defines setup labels in lab config of a DUT.
 
-// Peripherals of device. Next Tag: 14
+// Peripherals of device. Next Tag: 15
 message Peripherals {
   Servo servo = 1;
   Chameleon chameleon = 2;
-  RPM rpm = 3;
+  OSRPM rpm = 3;
   // refer to cameras that connected to the device.
   repeated Camera connected_camera = 4;
   Audio audio = 5;
@@ -38,9 +38,20 @@ message Peripherals {
   bool smart_usbhub = 13;
 }
 
+// NOTE: RPM cannot be used as there's a same message in api/v1/models/peripherals.proto
+//
+// Rename this to OSRPM
+//
 // Remote power management info.
 // Next Tag: 3
-message RPM {
+// message RPM {
+//   string powerunit_name = 1;
+//   string powerunit_outlet = 2;
+// }
+
+// Remote power management info.
+// Next Tag: 3
+message OSRPM {
   string powerunit_name = 1;
   string powerunit_outlet = 2;
 }

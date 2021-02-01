@@ -581,14 +581,14 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*chromeosLab.
 }
 
 // generateRPMWithMask generates a rpm object from the given inputs and corresponding mask.
-func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.RPM, []string) {
+func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.OSRPM, []string) {
 	// Check if rpm is being deleted.
 	if rpmHost == utils.ClearFieldValue {
 		// Generate mask and empty rpm.
 		return nil, []string{rpmHostPath}
 	}
 
-	rpm := &chromeosLab.RPM{}
+	rpm := &chromeosLab.OSRPM{}
 	paths := []string{}
 	// Check and update rpm.
 	if rpmHost != "" {
@@ -746,7 +746,7 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 		req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = newServo
 
 		// Check if rpm was updated.
-		var oldRpm, newRpm *chromeosLab.RPM
+		var oldRpm, newRpm *chromeosLab.OSRPM
 		// Get existing rpm from the DUT.
 		if p := oldDut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals(); p != nil {
 			oldRpm = p.GetRpm()

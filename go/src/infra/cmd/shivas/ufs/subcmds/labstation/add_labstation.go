@@ -302,7 +302,7 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Labstation{
 							Labstation: &chromeosLab.Labstation{
-								Rpm: &chromeosLab.RPM{},
+								Rpm: &chromeosLab.OSRPM{},
 							},
 						},
 					},
