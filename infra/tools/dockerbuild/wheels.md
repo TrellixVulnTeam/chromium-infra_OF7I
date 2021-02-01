@@ -4144,6 +4144,19 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x86*
 
+### 1.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/scipy/${vpython_platform}"
+  version: "version:1.6.0"
+>
+```
+
+
+* *linux-arm64-py3*
+* *manylinux-x64-py3*
+
 ## **selenium**
 
 ### 2.29.0
