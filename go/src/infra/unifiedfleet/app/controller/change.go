@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
-	ufslabpb "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/util"
 )
@@ -496,7 +496,7 @@ func (hc *HistoryClient) LogVLANChanges(oldData, newData *ufspb.Vlan) {
 }
 
 // LogDutStateChanges logs the change of a dut state record.
-func (hc *HistoryClient) LogDutStateChanges(oldData, newData *ufslabpb.DutState) {
+func (hc *HistoryClient) LogDutStateChanges(oldData, newData *chromeosLab.DutState) {
 	if oldData == nil && newData == nil {
 		return
 	}
@@ -613,23 +613,23 @@ func logChromeOSMachineLse(resourceName string, oldData, newData *ufspb.ChromeOS
 	return changes
 }
 
-func logDut(resourceName string, oldData, newData *ufslabpb.DeviceUnderTest) []*ufspb.ChangeEvent {
+func logDut(resourceName string, oldData, newData *chromeosLab.DeviceUnderTest) []*ufspb.ChangeEvent {
 	if oldData == nil && newData == nil {
 		return nil
 	}
 	if oldData == nil {
-		oldData = &ufslabpb.DeviceUnderTest{}
+		oldData = &chromeosLab.DeviceUnderTest{}
 	}
 	if newData == nil {
-		newData = &ufslabpb.DeviceUnderTest{}
+		newData = &chromeosLab.DeviceUnderTest{}
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.pools", oldData.GetPools(), newData.GetPools())...)
 	if oldData.GetPeripherals() == nil {
-		oldData.Peripherals = &ufslabpb.Peripherals{}
+		oldData.Peripherals = &chromeosLab.Peripherals{}
 	}
 	if newData.GetPeripherals() == nil {
-		oldData.Peripherals = &ufslabpb.Peripherals{}
+		oldData.Peripherals = &chromeosLab.Peripherals{}
 	}
 	changes = append(changes, logServo(resourceName, "machine_lse.chromeos_machine_lse.dut.servo", oldData.GetPeripherals().GetServo(), newData.GetPeripherals().GetServo())...)
 	changes = append(changes, logRPM(resourceName, "machine_lse.chromeos_machine_lse.dut.rpm", oldData.GetPeripherals().GetRpm(), newData.GetPeripherals().GetRpm())...)
@@ -637,16 +637,16 @@ func logDut(resourceName string, oldData, newData *ufslabpb.DeviceUnderTest) []*
 	return changes
 }
 
-func logServo(resourceName, labelPrefix string, oldServo, newServo *ufslabpb.Servo) []*ufspb.ChangeEvent {
+func logServo(resourceName, labelPrefix string, oldServo, newServo *chromeosLab.Servo) []*ufspb.ChangeEvent {
 	if oldServo == nil && newServo == nil {
 		return nil
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
 	if oldServo == nil {
-		oldServo = &ufslabpb.Servo{}
+		oldServo = &chromeosLab.Servo{}
 	}
 	if newServo == nil {
-		newServo = &ufslabpb.Servo{}
+		newServo = &chromeosLab.Servo{}
 	}
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.hostname", labelPrefix), oldServo.GetServoHostname(), newServo.GetServoHostname())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.port", labelPrefix), oldServo.GetServoPort(), newServo.GetServoPort())...)
@@ -656,23 +656,23 @@ func logServo(resourceName, labelPrefix string, oldServo, newServo *ufslabpb.Ser
 	return changes
 }
 
-func logRPM(resourceName, labelPrefix string, oldRpm, newRpm *ufslabpb.RPM) []*ufspb.ChangeEvent {
+func logRPM(resourceName, labelPrefix string, oldRpm, newRpm *chromeosLab.RPM) []*ufspb.ChangeEvent {
 	if oldRpm == nil && newRpm == nil {
 		return nil
 	}
 	changes := make([]*ufspb.ChangeEvent, 0)
 	if oldRpm == nil {
-		oldRpm = &ufslabpb.RPM{}
+		oldRpm = &chromeosLab.RPM{}
 	}
 	if newRpm == nil {
-		newRpm = &ufslabpb.RPM{}
+		newRpm = &chromeosLab.RPM{}
 	}
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.name", labelPrefix), oldRpm.GetPowerunitName(), newRpm.GetPowerunitName())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.outlet", labelPrefix), oldRpm.GetPowerunitOutlet(), newRpm.GetPowerunitOutlet())...)
 	return changes
 }
 
-func logLabstation(resourceName string, oldData, newData *ufslabpb.Labstation) []*ufspb.ChangeEvent {
+func logLabstation(resourceName string, oldData, newData *chromeosLab.Labstation) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.labstation.pools", oldData.GetPools(), newData.GetPools())...)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.labstation.servos", oldData.GetServos(), newData.GetServos())...)

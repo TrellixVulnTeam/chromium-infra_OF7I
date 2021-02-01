@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
-	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
@@ -155,7 +155,7 @@ func validateUpdateLabstationMask(mask *field_mask.FieldMask, machinelse *ufspb.
 	rpm := labstation.GetRpm()
 	if rpm == nil {
 		// Assign an empty rpm to avoid segfaults.
-		rpm = &ufslab.RPM{}
+		rpm = &chromeosLab.RPM{}
 	}
 
 	maskSet := make(map[string]struct{}) // Set of all the masks
@@ -247,7 +247,7 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 				oldLabstation.Rpm = nil
 			} else {
 				if oldLabstation.Rpm == nil {
-					oldLabstation.Rpm = &ufslab.RPM{}
+					oldLabstation.Rpm = &chromeosLab.RPM{}
 				}
 				oldLabstation.GetRpm().PowerunitName = newLabstation.GetRpm().GetPowerunitName()
 			}
@@ -261,7 +261,7 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 				oldLabstation.Rpm = nil
 			} else {
 				if oldLabstation.Rpm == nil {
-					oldLabstation.Rpm = &ufslab.RPM{}
+					oldLabstation.Rpm = &chromeosLab.RPM{}
 				}
 				// Copy the outlet for update
 				oldLabstation.GetRpm().PowerunitOutlet = newLabstation.GetRpm().GetPowerunitOutlet()

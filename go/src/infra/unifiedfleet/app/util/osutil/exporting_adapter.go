@@ -17,7 +17,7 @@ import (
 	"infra/libs/skylab/inventory"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	device "infra/unifiedfleet/api/v1/models/chromeos/device"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	manufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 )
 
@@ -86,7 +86,7 @@ func (a *attributes) append(key string, value string) *attributes {
 	return a
 }
 
-func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) {
+func setDutPeripherals(labels *inventory.SchedulableLabels, d *chromeosLab.Peripherals) {
 	if d == nil {
 		return
 	}
@@ -111,9 +111,9 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 	if cameras := d.GetConnectedCamera(); cameras != nil {
 		for _, c := range cameras {
 			switch c.GetCameraType() {
-			case lab.CameraType_CAMERA_HUDDLY:
+			case chromeosLab.CameraType_CAMERA_HUDDLY:
 				p.Huddly = &trueValue
-			case lab.CameraType_CAMERA_PTZPRO2:
+			case chromeosLab.CameraType_CAMERA_PTZPRO2:
 				p.Ptzpro2 = &trueValue
 			}
 		}
@@ -127,12 +127,12 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 
 	if wifi := d.GetWifi(); wifi != nil {
 		p.Wificell = &(wifi.Wificell)
-		if wifi.GetAntennaConn() == lab.Wifi_CONN_CONDUCTIVE {
+		if wifi.GetAntennaConn() == chromeosLab.Wifi_CONN_CONDUCTIVE {
 			p.Conductive = &trueValue
 		} else {
 			p.Conductive = &falseValue
 		}
-		if wifi.GetRouter() == lab.Wifi_ROUTER_802_11AX {
+		if wifi.GetRouter() == chromeosLab.Wifi_ROUTER_802_11AX {
 			p.Router_802_11Ax = &trueValue
 		} else {
 			p.Router_802_11Ax = &falseValue
@@ -151,13 +151,13 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 	hint.ChaosDut = &(d.Chaos)
 	for _, c := range d.GetCable() {
 		switch c.GetType() {
-		case lab.CableType_CABLE_AUDIOJACK:
+		case chromeosLab.CableType_CABLE_AUDIOJACK:
 			hint.TestAudiojack = &trueValue
-		case lab.CableType_CABLE_USBAUDIO:
+		case chromeosLab.CableType_CABLE_USBAUDIO:
 			hint.TestUsbaudio = &trueValue
-		case lab.CableType_CABLE_USBPRINTING:
+		case chromeosLab.CableType_CABLE_USBPRINTING:
 			hint.TestUsbprinting = &trueValue
-		case lab.CableType_CABLE_HDMIAUDIO:
+		case chromeosLab.CableType_CABLE_HDMIAUDIO:
 			hint.TestHdmiaudio = &trueValue
 		}
 	}
@@ -168,11 +168,11 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 		setServoTopology(p, servo.GetServoTopology())
 	}
 
-	if facing := d.GetCameraboxInfo().GetFacing(); facing != lab.Camerabox_FACING_UNKNOWN {
+	if facing := d.GetCameraboxInfo().GetFacing(); facing != chromeosLab.Camerabox_FACING_UNKNOWN {
 		v1Facing := inventory.Peripherals_CameraboxFacing(facing)
 		p.CameraboxFacing = &v1Facing
 	}
-	if light := d.GetCameraboxInfo().GetLight(); light != lab.Camerabox_LIGHT_UNKNOWN {
+	if light := d.GetCameraboxInfo().GetLight(); light != chromeosLab.Camerabox_LIGHT_UNKNOWN {
 		v1Light := inventory.Peripherals_CameraboxLight(light)
 		p.CameraboxLight = &v1Light
 	}
@@ -180,7 +180,7 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 	p.SmartUsbhub = &(d.SmartUsbhub)
 }
 
-func setServoTopology(p *inventory.Peripherals, st *lab.ServoTopology) {
+func setServoTopology(p *inventory.Peripherals, st *chromeosLab.ServoTopology) {
 	var t *inventory.ServoTopology
 	if st != nil {
 		stString := proto.MarshalTextString(st)
@@ -309,14 +309,14 @@ func setHwidData(l *inventory.SchedulableLabels, h *ufspb.HwidData) {
 	}
 }
 
-func setLicenses(l *inventory.SchedulableLabels, lic []*lab.License) {
+func setLicenses(l *inventory.SchedulableLabels, lic []*chromeosLab.License) {
 	l.Licenses = make([]*inventory.License, len(lic))
 	for i, v := range lic {
 		var t inventory.LicenseType
 		switch v.Type {
-		case lab.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD:
+		case chromeosLab.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD:
 			t = inventory.LicenseType_LICENSE_TYPE_MS_OFFICE_STANDARD
-		case lab.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO:
+		case chromeosLab.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO:
 			t = inventory.LicenseType_LICENSE_TYPE_WINDOWS_10_PRO
 		default:
 			t = inventory.LicenseType_LICENSE_TYPE_UNSPECIFIED
@@ -328,9 +328,9 @@ func setLicenses(l *inventory.SchedulableLabels, lic []*lab.License) {
 	}
 }
 
-func setDutStateHelper(s lab.PeripheralState) *bool {
+func setDutStateHelper(s chromeosLab.PeripheralState) *bool {
 	var val bool
-	if s == lab.PeripheralState_UNKNOWN || s == lab.PeripheralState_NOT_CONNECTED {
+	if s == chromeosLab.PeripheralState_UNKNOWN || s == chromeosLab.PeripheralState_NOT_CONNECTED {
 		val = false
 	} else {
 		val = true
@@ -338,19 +338,19 @@ func setDutStateHelper(s lab.PeripheralState) *bool {
 	return &val
 }
 
-func setPeripheralState(s lab.PeripheralState) *inventory.PeripheralState {
+func setPeripheralState(s chromeosLab.PeripheralState) *inventory.PeripheralState {
 	target := inventory.PeripheralState_UNKNOWN
-	if s != lab.PeripheralState_UNKNOWN {
+	if s != chromeosLab.PeripheralState_UNKNOWN {
 		target = inventory.PeripheralState(s)
 	}
 	return &target
 }
 
-func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
+func setCr50Configs(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 	switch s.GetCr50Phase() {
-	case lab.DutState_CR50_PHASE_PVT:
+	case chromeosLab.DutState_CR50_PHASE_PVT:
 		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_PVT.Enum()
-	case lab.DutState_CR50_PHASE_PREPVT:
+	case chromeosLab.DutState_CR50_PHASE_PREPVT:
 		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_PREPVT.Enum()
 	default:
 		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_INVALID.Enum()
@@ -358,23 +358,23 @@ func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
 
 	cr50Env := ""
 	switch s.GetCr50KeyEnv() {
-	case lab.DutState_CR50_KEYENV_PROD:
+	case chromeosLab.DutState_CR50_KEYENV_PROD:
 		cr50Env = "prod"
-	case lab.DutState_CR50_KEYENV_DEV:
+	case chromeosLab.DutState_CR50_KEYENV_DEV:
 		cr50Env = "dev"
 	}
 	l.Cr50RoKeyid = &cr50Env
 }
 
-func setHardwareState(s lab.HardwareState) *inventory.HardwareState {
+func setHardwareState(s chromeosLab.HardwareState) *inventory.HardwareState {
 	target := inventory.HardwareState_HARDWARE_UNKNOWN
-	if s != lab.HardwareState_HARDWARE_UNKNOWN {
+	if s != chromeosLab.HardwareState_HARDWARE_UNKNOWN {
 		target = inventory.HardwareState(s)
 	}
 	return &target
 }
 
-func setDutState(l *inventory.SchedulableLabels, s *lab.DutState) {
+func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 	p := l.Peripherals
 	p.ServoState = setPeripheralState(s.GetServo())
 	p.Servo = setDutStateHelper(s.GetServo())

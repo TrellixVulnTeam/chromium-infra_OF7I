@@ -24,7 +24,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -283,7 +283,7 @@ func (c updateDUT) validateArgs() error {
 		}
 		// Check if servo type is valid.
 		// Note: This check is run irrespective of servo input because it is possible to perform an update on only this field.
-		if _, ok := lab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; c.servoSetupType != "" && !ok {
+		if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; c.servoSetupType != "" && !ok {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid value for servo setup type. Valid values are "+cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
 	}
@@ -464,8 +464,8 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 				ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Dut{
-							Dut: &lab.DeviceUnderTest{
-								Peripherals: &lab.Peripherals{},
+							Dut: &chromeosLab.DeviceUnderTest{
+								Peripherals: &chromeosLab.Peripherals{},
 							},
 						},
 					},
@@ -542,7 +542,7 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 }
 
 // generateServoWithMask generates a servo object from the given inputs and corresponding mask.
-func generateServoWithMask(servo, servoSetup, servoSerial string) (*lab.Servo, []string, error) {
+func generateServoWithMask(servo, servoSetup, servoSerial string) (*chromeosLab.Servo, []string, error) {
 	// Attempt to parse servo hostname and port.
 	servoHost, servoPort, err := parseServoHostnamePort(servo)
 	if err != nil {
@@ -553,7 +553,7 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*lab.Servo, [
 		return nil, []string{servoHostPath}, nil
 	}
 
-	newServo := &lab.Servo{}
+	newServo := &chromeosLab.Servo{}
 	// Clear servo_type and servo_topology before deploying. Specifying path only assigns default empty values.
 	paths := []string{servoTypePath, servoTopologyPath}
 	// Check and update servo port.
@@ -564,7 +564,7 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*lab.Servo, [
 
 	if servoSetup != "" {
 		paths = append(paths, servoSetupPath)
-		sst := lab.ServoSetupType(lab.ServoSetupType_value[appendServoSetupPrefix(servoSetup)])
+		sst := chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(servoSetup)])
 		newServo.ServoSetup = sst
 	}
 
@@ -581,14 +581,14 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*lab.Servo, [
 }
 
 // generateRPMWithMask generates a rpm object from the given inputs and corresponding mask.
-func generateRPMWithMask(rpmHost, rpmOutlet string) (*lab.RPM, []string) {
+func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.RPM, []string) {
 	// Check if rpm is being deleted.
 	if rpmHost == utils.ClearFieldValue {
 		// Generate mask and empty rpm.
 		return nil, []string{rpmHostPath}
 	}
 
-	rpm := &lab.RPM{}
+	rpm := &chromeosLab.RPM{}
 	paths := []string{}
 	// Check and update rpm.
 	if rpmHost != "" {
@@ -697,7 +697,7 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 		// 3. Clear servo type. [newServo.ServoType == ClearFieldValue]
 		// 4. Update servo. [newServo != nil && oldServo != nil]
 
-		var oldServo, newServo *lab.Servo
+		var oldServo, newServo *chromeosLab.Servo
 
 		// Check if we are deleting servo.
 		newServo = req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
@@ -730,7 +730,7 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 
 		// Check if servo was updated by the user.
 		// Make a copy of oldServo for comparison.
-		oldServoCopy := proto.Clone(oldServo).(*lab.Servo)
+		oldServoCopy := proto.Clone(oldServo).(*chromeosLab.Servo)
 		// Don't compare servo type or topology as it's not input by the user.
 		oldServoCopy.ServoType = ""
 		oldServoCopy.ServoTopology = nil
@@ -746,7 +746,7 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 		req.MachineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = newServo
 
 		// Check if rpm was updated.
-		var oldRpm, newRpm *lab.RPM
+		var oldRpm, newRpm *chromeosLab.RPM
 		// Get existing rpm from the DUT.
 		if p := oldDut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals(); p != nil {
 			oldRpm = p.GetRpm()

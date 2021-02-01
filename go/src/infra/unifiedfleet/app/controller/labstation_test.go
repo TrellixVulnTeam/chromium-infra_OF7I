@@ -7,7 +7,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
-	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
@@ -85,7 +85,7 @@ func TestUpdateLabstation(t *testing.T) {
 			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-4"})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-4", "machine-4")
-			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufslab.RPM{
+			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.RPM{
 				PowerunitName:   "rpm-4",
 				PowerunitOutlet: ".A4",
 			}
@@ -121,7 +121,7 @@ func TestUpdateLabstation(t *testing.T) {
 			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-5"})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-5", "machine-5")
-			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufslab.RPM{
+			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.RPM{
 				PowerunitName:   "rpm-5",
 				PowerunitOutlet: ".A5",
 			}
@@ -130,7 +130,7 @@ func TestUpdateLabstation(t *testing.T) {
 			So(res, ShouldNotBeNil)
 			So(res, ShouldResembleProto, labstation1)
 			labstation2 := mockLabstation("labstation-5", "machine-5")
-			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufslab.RPM{PowerunitOutlet: ".A6"}
+			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.RPM{PowerunitOutlet: ".A6"}
 			res, err = UpdateLabstation(ctx, labstation2, mockFieldMask("labstation.rpm.host", "labstation.rpm.outlet"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot update outlet")
@@ -142,7 +142,7 @@ func TestUpdateLabstation(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			// Reset the rpm outlet. Should fail, can only reset complete rpm.
-			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufslab.RPM{
+			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.RPM{
 				PowerunitOutlet: "",
 			}
 			res, err = UpdateLabstation(ctx, labstation2, mockFieldMask("labstation.rpm.outlet"))
@@ -156,7 +156,7 @@ func TestUpdateLabstation(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			// Reset the rpm outlet and update rpm host. Should fail.
-			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufslab.RPM{
+			labstation2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.RPM{
 				PowerunitName:   "rpm-6",
 				PowerunitOutlet: "",
 			}
@@ -172,7 +172,7 @@ func TestUpdateLabstation(t *testing.T) {
 			So(msgs, ShouldHaveLength, 1)
 			labstation3, err := GetMachineLSE(ctx, "labstation-5")
 			So(err, ShouldBeNil)
-			So(labstation3.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm(), ShouldResemble, &ufslab.RPM{
+			So(labstation3.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm(), ShouldResemble, &chromeosLab.RPM{
 				PowerunitName:   "rpm-5",
 				PowerunitOutlet: ".A5",
 			})

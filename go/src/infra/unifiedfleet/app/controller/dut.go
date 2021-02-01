@@ -21,7 +21,7 @@ import (
 	iv2api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsdevice "infra/unifiedfleet/api/v1/models/chromeos/device"
-	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
@@ -306,7 +306,7 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 
 // assignServoPortIfMissing assigns a servo port to the given servo
 // if it's missing. Returns error if the port is out of range.
-func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *ufslab.Servo) error {
+func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *chromeosLab.Servo) error {
 	// If servo port is assigned, nothing is modified.
 	if newServo.GetServoPort() != 0 {
 		// If the servo is assigned in an invalid range return error
@@ -385,7 +385,7 @@ func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
 }
 
 // cleanPreDeployFields clears servo type and topology.
-func cleanPreDeployFields(servo *ufslab.Servo) {
+func cleanPreDeployFields(servo *chromeosLab.Servo) {
 	servo.ServoType = ""
 	servo.ServoTopology = nil
 }
@@ -394,8 +394,8 @@ func cleanPreDeployFields(servo *ufslab.Servo) {
 //
 // Assumes that dut and mask aren't empty. This is because this function is not called otherwise.
 func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufspb.MachineLSE) error {
-	var servo *ufslab.Servo
-	var rpm *ufslab.RPM
+	var servo *chromeosLab.Servo
+	var rpm *chromeosLab.RPM
 
 	// GetDut should return an object. Otherwise UpdateDUT isn't called
 	dut := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut()
@@ -462,8 +462,8 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 // processUpdateMachineLSEUpdateMask process the update mask and returns the machine lse with updated parameters.
 func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMachineLse *ufspb.MachineLSE, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
 	// Extract all the peripherals to avoid doing it for every update in loop.
-	var oldServo, newServo *ufslab.Servo
-	var oldRPM, newRPM *ufslab.RPM
+	var oldServo, newServo *chromeosLab.Servo
+	var oldRPM, newRPM *chromeosLab.RPM
 	oldDut := oldMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 	newDut := newMachineLse.GetChromeosMachineLse().GetDeviceLse().GetDut()
 	if oldDut != nil {
@@ -471,11 +471,11 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 			// Assign empty structs to avoid panics
 			oldServo = oldPeripherals.GetServo()
 			if oldServo == nil {
-				oldServo = &ufslab.Servo{}
+				oldServo = &chromeosLab.Servo{}
 			}
 			oldRPM = oldPeripherals.GetRpm()
 			if oldRPM == nil {
-				oldRPM = &ufslab.RPM{}
+				oldRPM = &chromeosLab.RPM{}
 			}
 		}
 	}
@@ -484,11 +484,11 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 			// Assign empty structs to avoid panics
 			newServo = newPeripherals.GetServo()
 			if newServo == nil {
-				newServo = &ufslab.Servo{}
+				newServo = &chromeosLab.Servo{}
 			}
 			newRPM = newPeripherals.GetRpm()
 			if newRPM == nil {
-				newRPM = &ufslab.RPM{}
+				newRPM = &chromeosLab.RPM{}
 			}
 		}
 	}
@@ -552,7 +552,7 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 }
 
 // processUpdateMachineLSEUDTMask returns updated dut with the new parameters from the mask.
-func processUpdateMachineLSEDUTMask(oldDut, newDut *ufslab.DeviceUnderTest, path string) {
+func processUpdateMachineLSEDUTMask(oldDut, newDut *chromeosLab.DeviceUnderTest, path string) {
 	switch path {
 	case "dut.pools":
 		if pools := newDut.GetPools(); pools != nil && len(pools) > 0 {
@@ -565,7 +565,7 @@ func processUpdateMachineLSEDUTMask(oldDut, newDut *ufslab.DeviceUnderTest, path
 }
 
 // processUpdateMachineLSEServoMask returns servo with new updated params from the mask.
-func processUpdateMachineLSEServoMask(oldServo, newServo *ufslab.Servo, path string) {
+func processUpdateMachineLSEServoMask(oldServo, newServo *chromeosLab.Servo, path string) {
 	switch path {
 	case "dut.servo.hostname":
 		oldServo.ServoHostname = newServo.GetServoHostname()
@@ -581,7 +581,7 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *ufslab.Servo, path str
 }
 
 // processUpdateMacineLSERPMMask returns rpm with new updated params from the mask
-func processUpdateMachineLSERPMMask(oldRPM, newRPM *ufslab.RPM, path string) {
+func processUpdateMachineLSERPMMask(oldRPM, newRPM *chromeosLab.RPM, path string) {
 	switch path {
 	case "dut.rpm.host":
 		oldRPM.PowerunitName = newRPM.GetPowerunitName()

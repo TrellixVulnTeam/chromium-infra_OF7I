@@ -21,7 +21,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -301,8 +301,8 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 				ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Labstation{
-							Labstation: &lab.Labstation{
-								Rpm: &lab.RPM{},
+							Labstation: &chromeosLab.Labstation{
+								Rpm: &chromeosLab.RPM{},
 							},
 						},
 					},

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"infra/cmd/shivas/utils"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -1637,7 +1637,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
 func ServoSetupTypeAllowedValuesString() string {
 	servoSetupTypeAllowedValueList := []string{}
-	for name := range lab.ServoSetupType_value {
+	for name := range chromeosLab.ServoSetupType_value {
 		servoSetupTypeAllowedValueList = append(servoSetupTypeAllowedValueList, strings.TrimPrefix(name, "SERVO_SETUP_"))
 	}
 	return fmt.Sprintf("[%s]", strings.Join(servoSetupTypeAllowedValueList, ", "))

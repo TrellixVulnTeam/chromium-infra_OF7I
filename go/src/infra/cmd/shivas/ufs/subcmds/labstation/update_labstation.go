@@ -22,7 +22,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -364,8 +364,8 @@ func (c *updateLabstation) initializeLSEAndMask(recMap map[string]string) (*ufsp
 				ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Labstation{
-							Labstation: &lab.Labstation{
-								Rpm: &lab.RPM{},
+							Labstation: &chromeosLab.Labstation{
+								Rpm: &chromeosLab.RPM{},
 							},
 						},
 					},
@@ -433,14 +433,14 @@ func (c *updateLabstation) initializeLSEAndMask(recMap map[string]string) (*ufsp
 }
 
 // generateRPMWithMask generates a rpm object from the given inputs and corresponding mask.
-func generateRPMWithMask(rpmHost, rpmOutlet string) (*lab.RPM, []string) {
+func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.RPM, []string) {
 	// Check if rpm is being deleted.
 	if rpmHost == utils.ClearFieldValue {
 		// Generate mask and empty rpm.
 		return nil, []string{rpmHostPath}
 	}
 
-	rpm := &lab.RPM{}
+	rpm := &chromeosLab.RPM{}
 	paths := []string{}
 	// Check and update rpm.
 	if rpmHost != "" {

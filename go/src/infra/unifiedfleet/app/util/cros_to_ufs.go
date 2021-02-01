@@ -17,7 +17,7 @@ import (
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/models"
-	ufsCros "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
 const (
@@ -34,8 +34,8 @@ var hostRegexp = regexp.MustCompile(`host[0-9]{1,3}`)
 var labstationRegexp = regexp.MustCompile(`labstation[0-9]{1,3}`)
 
 // ToOSDutStates converts cros inventory data to UFS dut states for ChromeOS machines.
-func ToOSDutStates(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*ufsCros.DutState {
-	dutStates := make([]*ufsCros.DutState, 0, len(labConfigs))
+func ToOSDutStates(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*chromeosLab.DutState {
+	dutStates := make([]*chromeosLab.DutState, 0, len(labConfigs))
 	for _, lc := range labConfigs {
 		if lc.GetState().GetId() == nil {
 			continue
@@ -199,33 +199,33 @@ func LabstationToLSE(l *lab.Labstation, deviceID string, updatedTime *timestamp.
 	}
 }
 
-func copyDUTState(oldS *lab.DutState, hostname string) *ufsCros.DutState {
+func copyDUTState(oldS *lab.DutState, hostname string) *chromeosLab.DutState {
 	if oldS == nil {
 		return nil
 	}
 	s := proto.MarshalTextString(oldS)
-	var newS ufsCros.DutState
+	var newS chromeosLab.DutState
 	proto.UnmarshalText(s, &newS)
 	newS.Hostname = hostname
 	return &newS
 }
 
-func copyDUT(dut *lab.DeviceUnderTest) *ufsCros.DeviceUnderTest {
+func copyDUT(dut *lab.DeviceUnderTest) *chromeosLab.DeviceUnderTest {
 	if dut == nil {
 		return nil
 	}
 	s := proto.MarshalTextString(dut)
-	var newDUT ufsCros.DeviceUnderTest
+	var newDUT chromeosLab.DeviceUnderTest
 	proto.UnmarshalText(s, &newDUT)
 	return &newDUT
 }
 
-func copyLabstation(l *lab.Labstation) *ufsCros.Labstation {
+func copyLabstation(l *lab.Labstation) *chromeosLab.Labstation {
 	if l == nil {
 		return nil
 	}
 	s := proto.MarshalTextString(l)
-	var newL ufsCros.Labstation
+	var newL chromeosLab.Labstation
 	proto.UnmarshalText(s, &newL)
 	return &newL
 }

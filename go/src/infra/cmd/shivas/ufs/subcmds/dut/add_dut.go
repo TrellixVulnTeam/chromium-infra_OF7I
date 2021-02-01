@@ -22,7 +22,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
-	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -259,7 +259,7 @@ func (c addDUT) validateArgs() error {
 			}
 		}
 		if c.servoSetupType != "" {
-			if _, ok := lab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; !ok {
+			if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; !ok {
 				return cmdlib.NewQuietUsageError(c.Flags, "Invalid servo setup %s", c.servoSetupType)
 			}
 		}
@@ -383,15 +383,15 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 				ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Dut{
-							Dut: &lab.DeviceUnderTest{
-								Peripherals: &lab.Peripherals{
-									Chameleon:     &lab.Chameleon{},
-									Servo:         &lab.Servo{},
-									Rpm:           &lab.RPM{},
-									Audio:         &lab.Audio{},
-									Wifi:          &lab.Wifi{},
-									Touch:         &lab.Touch{},
-									CameraboxInfo: &lab.Camerabox{},
+							Dut: &chromeosLab.DeviceUnderTest{
+								Peripherals: &chromeosLab.Peripherals{
+									Chameleon:     &chromeosLab.Chameleon{},
+									Servo:         &chromeosLab.Servo{},
+									Rpm:           &chromeosLab.RPM{},
+									Audio:         &chromeosLab.Audio{},
+									Wifi:          &chromeosLab.Wifi{},
+									Touch:         &chromeosLab.Touch{},
+									CameraboxInfo: &chromeosLab.Camerabox{},
 								},
 							},
 						},
@@ -403,7 +403,7 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	var name, servoHost, servoSerial, rpmHost, rpmOutlet string
 	var pools, machines []string
 	var servoPort int32
-	var servoSetup lab.ServoSetupType
+	var servoSetup chromeosLab.ServoSetupType
 	resourceState := ufsUtil.ToUFSState(c.state)
 	if recMap != nil {
 		// CSV map
@@ -421,11 +421,11 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 		if !ufsUtil.ServoV3HostnameRegex.MatchString(servoHost) && servoSerial == "" {
 			return nil, fmt.Errorf("Not a servo V3 host[%s]. Need servo serial", servoHost)
 		}
-		sst, ok := lab.ServoSetupType_value[appendServoSetupPrefix(recMap["servo_setup"])]
+		sst, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(recMap["servo_setup"])]
 		if !ok && recMap["servo_setup"] != "" {
 			return nil, fmt.Errorf("Invalid servo setup %s. Valid types are %s", recMap["servo_setup"], cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
-		servoSetup = lab.ServoSetupType(sst) // Default value is REGULAR(0).
+		servoSetup = chromeosLab.ServoSetupType(sst) // Default value is REGULAR(0).
 		rpmHost = recMap["rpm_host"]
 		rpmOutlet = recMap["rpm_outlet"]
 		machines = []string{recMap["asset"]}
@@ -439,7 +439,7 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 			return nil, err
 		}
 		servoSerial = c.servoSerial
-		servoSetup = lab.ServoSetupType(lab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)])
+		servoSetup = chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)])
 		rpmHost = c.rpm
 		rpmOutlet = c.rpmOutlet
 		machines = []string{c.asset}
@@ -470,20 +470,20 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	}
 
 	// ACS DUT fields
-	chameleons := make([]lab.ChameleonType, 0, len(c.chameleons))
+	chameleons := make([]chromeosLab.ChameleonType, 0, len(c.chameleons))
 	for _, cp := range c.chameleons {
 		chameleons = append(chameleons, ufsUtil.ToChameleonType(cp))
 	}
-	cameras := make([]*lab.Camera, 0, len(c.cameras))
+	cameras := make([]*chromeosLab.Camera, 0, len(c.cameras))
 	for _, cp := range c.cameras {
-		camera := &lab.Camera{
+		camera := &chromeosLab.Camera{
 			CameraType: ufsUtil.ToCameraType(cp),
 		}
 		cameras = append(cameras, camera)
 	}
-	cables := make([]*lab.Cable, 0, len(c.cables))
+	cables := make([]*chromeosLab.Cable, 0, len(c.cables))
 	for _, cp := range c.cables {
-		cable := &lab.Cable{
+		cable := &chromeosLab.Cable{
 			Type: ufsUtil.ToCableType(cp),
 		}
 		cables = append(cables, cable)
