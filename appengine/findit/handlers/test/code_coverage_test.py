@@ -272,11 +272,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
             'allowed_builders': [
                 'chromium/try/linux-rel',
                 'chrome/coverage/linux-code-coverage',
-            ],
-            'whitelisted_builders': [
-                'chromium/try/linux-rel',
-                'chrome/coverage/linux-code-coverage',
-            ],
+            ]
         })
 
   def tearDown(self):

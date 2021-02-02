@@ -142,17 +142,11 @@ def _GetAllowedBuilders():
     'allowed_builders': [
       'chromium/try/linux-rel',
       'chromium/try/linux-chromeos-rel',
-    ],
-    'whitelisted_builders': [
-      'chromium/try/linux-rel',
-      'chromium/try/linux-chromeos-rel',
-    ],
+    ]
   }
   """
-  config = waterfall_config.GetCodeCoverageSettings()
-  builders = set(config.get('allowed_builders', []))
-  builders.update(config.get('whitelisted_builders', []))
-  return builders
+  return set(waterfall_config.GetCodeCoverageSettings().get(
+      'allowed_builders', []))
 
 
 def _GetSameOrMostRecentReportForEachPlatform(luci_project, host, project, ref,
