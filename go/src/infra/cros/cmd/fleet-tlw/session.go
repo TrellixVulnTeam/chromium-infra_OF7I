@@ -52,6 +52,8 @@ type sessionServer struct {
 	access.UnimplementedFleetServer
 	wg sync.WaitGroup
 	mu sync.Mutex
+	// This field is mainly for testing that we can use a fake TLW server.
+	newTLWServer func() *tlwServer
 	// sessions intentionally doesn't use pointers to make
 	// concurrent ownership easier to reason about.
 	sessions map[string]sessionContext
@@ -62,7 +64,8 @@ type sessionServer struct {
 // The gRPC server should be stopped first to ensure there are no new requests.
 func newSessionServer() *sessionServer {
 	return &sessionServer{
-		sessions: make(map[string]sessionContext),
+		sessions:     make(map[string]sessionContext),
+		newTLWServer: newTLWServer,
 	}
 }
 
@@ -88,7 +91,7 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw := newTLWServer()
+	tlw := s.newTLWServer()
 	tlw.registerWith(gs)
 	// This goroutine is stopped by the session cancellation that
 	// is set up below.

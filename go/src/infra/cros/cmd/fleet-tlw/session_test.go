@@ -36,6 +36,7 @@ func TestSessionServer(t *testing.T) {
 	t.Cleanup(cf)
 
 	s := newSessionServer()
+	s.newTLWServer = func() *tlwServer { return &tlwServer{} }
 	expire := tsAfter(time.Minute)
 
 	got, err := s.CreateSession(ctx, &access.CreateSessionRequest{
