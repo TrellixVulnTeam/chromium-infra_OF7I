@@ -76,7 +76,7 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 	if err := ReadJSONPB(c.InputPath, &r); err != nil {
 		return err
 	}
-	if err := validatePrejobRequest(r); err != nil {
+	if err := validatePrejobRequest(&r); err != nil {
 		return err
 	}
 
@@ -87,14 +87,14 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		defer c()
 	}
 
-	resp, err := runProvisionSteps(ctx, r)
+	resp, err := runProvisionSteps(ctx, &r)
 	if err != nil {
 		return err
 	}
 	return WriteJSONPB(c.OutputPath, resp)
 }
 
-func runProvisionSteps(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func runProvisionSteps(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bt, err := newBackgroundTLS()
 	if err != nil {
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, err
@@ -109,15 +109,15 @@ func runProvisionSteps(ctx context.Context, r phosphorus.PrejobRequest) (*phosph
 	if skipRemainingSteps(resp, err) {
 		return resp, err
 	}
-	return provisionLacros(ctx, bt, &r)
+	return provisionLacros(ctx, bt, r)
 }
 
 func skipRemainingSteps(r *phosphorus.PrejobResponse, err error) bool {
 	return err != nil || r.GetState() != phosphorus.PrejobResponse_SUCCEEDED
 }
 
-func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	if shouldProvisionChromeOSViaTLS(&r) {
+func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	if shouldProvisionChromeOSViaTLS(r) {
 		return provisionChromeOSBuildViaTLS(ctx, bt, r)
 	}
 	return provisionChromeOSBuildLegacy(ctx, r)
@@ -155,7 +155,7 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 	}
 }
 
-func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	_, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]
 	if desired != "" && !exists {
@@ -166,7 +166,7 @@ func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobReques
 	return toPrejobResponse(ar), err
 }
 
-func provisionFirmwareLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionFirmwareLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	labels := []string{}
 	desired := roFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
 	_, exists := r.ExistingProvisionableLabels[roFirmwareBuildKey]
@@ -208,7 +208,7 @@ const (
 	gsImageArchivePrefix = "gs://chromeos-image-archive"
 )
 
-func validatePrejobRequest(r phosphorus.PrejobRequest) error {
+func validatePrejobRequest(r *phosphorus.PrejobRequest) error {
 	missingArgs := getCommonMissingArgs(r.Config)
 
 	if r.DutHostname == "" {
@@ -229,7 +229,7 @@ func validatePrejobRequest(r phosphorus.PrejobRequest) error {
 // labels are the list of Tauto labels to be provisioned.
 //
 // This function will be obsoleted once runTLSProvision is globally enabled.
-func provisionViaAutoserv(ctx context.Context, tag string, r phosphorus.PrejobRequest, labels []string) (*atutil.Result, error) {
+func provisionViaAutoserv(ctx context.Context, tag string, r *phosphorus.PrejobRequest, labels []string) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
 	subDir := fmt.Sprintf("provision_%s_%s", r.DutHostname, tag)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
@@ -249,7 +249,7 @@ func provisionViaAutoserv(ctx context.Context, tag string, r phosphorus.PrejobRe
 // `autoserv --reset`.
 //
 // This function will be obsoleted once runTLSProvision is globally enabled.
-func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
+func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
 	subDir := fmt.Sprintf("reset_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
@@ -271,7 +271,7 @@ func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.
 // Errors returned from the actual provision operation are interpreted into
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
-func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	if desired == "" {
 		logging.Infof(ctx, "Skipped Chrome OS Build provision, because no specific version was requested.")
