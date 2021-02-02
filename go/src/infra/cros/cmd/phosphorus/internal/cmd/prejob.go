@@ -16,6 +16,7 @@ import (
 	"github.com/maruel/subcommands"
 	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
@@ -117,7 +118,7 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 		return false
 	}
 
-	v := crosVersionLabelOrEmpty(r.DesiredProvisionableLabels)
+	v := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	switch fs := e.GetCrosVersionSelector().(type) {
 	case *phosphorus.ProvisionDutExperiment_CrosVersionAllowList:
 		for _, p := range fs.CrosVersionAllowList.Prefixes {
@@ -141,7 +142,7 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 }
 
 func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	desired := r.DesiredProvisionableLabels[chromeOSBuildKey]
+	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	_, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]
 	if desired != "" && !exists {
 		ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
@@ -153,12 +154,12 @@ func provisionChromeOSBuildLegacy(ctx context.Context, r phosphorus.PrejobReques
 
 func provisionFirmwareLegacy(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	labels := []string{}
-	desired := r.DesiredProvisionableLabels[roFirmwareBuildKey]
+	desired := roFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
 	_, exists := r.ExistingProvisionableLabels[roFirmwareBuildKey]
 	if desired != "" && !exists {
 		labels = append(labels, fmt.Sprintf("%s:%s", roFirmwareBuildKey, desired))
 	}
-	desired = r.DesiredProvisionableLabels[rwFirmwareBuildKey]
+	desired = rwFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
 	_, exists = r.ExistingProvisionableLabels[rwFirmwareBuildKey]
 	if desired != "" && !exists {
 		labels = append(labels, fmt.Sprintf("%s:%s", rwFirmwareBuildKey, desired))
@@ -189,6 +190,8 @@ const (
 	chromeOSBuildKey   = "cros-version"
 	roFirmwareBuildKey = "fwro-version"
 	rwFirmwareBuildKey = "fwrw-version"
+
+	gsImageArchivePrefix = "gs://chromeos-image-archive"
 )
 
 func validatePrejobRequest(r phosphorus.PrejobRequest) error {
@@ -255,15 +258,21 @@ func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
 func provisionChromeOSBuildViaTLS(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	p, err := gsPathToImage(r.DesiredProvisionableLabels)
-	if err != nil {
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
+	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
+	if desired == "" {
+		logging.Infof(ctx, "Skipped Chrome OS Build provision, because no specific version was requested.")
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
+	if _, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]; exists {
+		logging.Infof(ctx, "Skipped Chrome OS Build provision, because requested version (%s) is already installed", desired)
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+	}
+
 	req := tlsapi.ProvisionDutRequest{
 		Name: r.DutHostname,
 		Image: &tlsapi.ProvisionDutRequest_ChromeOSImage{
 			PathOneof: &tlsapi.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
-				GsPathPrefix: p,
+				GsPathPrefix: fmt.Sprintf("%s/%s", gsImageArchivePrefix, desired),
 			},
 		},
 	}
@@ -311,27 +320,28 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, r phosphorus.PrejobReques
 	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 }
 
-const (
-	osVersionKey         = "cros-version"
-	gsImageArchivePrefix = "gs://chromeos-image-archive"
-)
-
-// This computation of the GS archive location from OS image version is a hack.
-// Historical note: This computation used to happen inside autoserv before the
-// introduction of a TLS service. The full path to the image location should be
-// hoisted up to the clients of test platform. This hack is a step in the
-// direction of hoisting the computation up through the stack.
-func gsPathToImage(labels map[string]string) (string, error) {
-	if v := crosVersionLabelOrEmpty(labels); v != "" {
-		return fmt.Sprintf("%s/%s", gsImageArchivePrefix, v), nil
+func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
+	for _, d := range deps {
+		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuild); ok {
+			return b.ChromeosBuild
+		}
 	}
-	return "", errors.Reason("failed to determine GS location for image").Err()
+	return ""
 }
 
-func crosVersionLabelOrEmpty(labels map[string]string) string {
-	for k, v := range labels {
-		if k == osVersionKey {
-			return v
+func roFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
+	for _, d := range deps {
+		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild); ok {
+			return b.RoFirmwareBuild
+		}
+	}
+	return ""
+}
+
+func rwFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
+	for _, d := range deps {
+		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild); ok {
+			return b.RwFirmwareBuild
 		}
 	}
 	return ""

@@ -7,6 +7,7 @@ package cmd
 import (
 	"testing"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 )
 
@@ -93,8 +94,12 @@ func TestShouldRunTLSProvision(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Tag, func(t *testing.T) {
 			r := &phosphorus.PrejobRequest{
-				DesiredProvisionableLabels: map[string]string{
-					osVersionKey: c.DesiredProvisionableLabel,
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{
+						Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+							ChromeosBuild: c.DesiredProvisionableLabel,
+						},
+					},
 				},
 				Config: &phosphorus.Config{
 					PrejobStep: &phosphorus.PrejobStep{
