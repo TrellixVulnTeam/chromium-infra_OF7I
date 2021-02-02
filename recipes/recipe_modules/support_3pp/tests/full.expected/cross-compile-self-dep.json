@@ -308,43 +308,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/script/tools/self_dependency/linux-amd64",
-      "-version",
-      "version:2.0.0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/self_dependency",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -366,9 +329,9 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd.build 3pp/sources/script/tools/self_dependency/linux-amd64",
+    "name": "building tools/self_dependency.fetch sources.build 3pp/sources/script/tools/self_dependency/linux-amd64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -400,9 +363,9 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building tools/self_dependency.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -426,9 +389,16 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building tools/self_dependency.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/self_dependency.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -450,7 +420,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-amd64 (2)",
+    "name": "building tools/self_dependency.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -893,43 +863,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/script/tools/self_dependency/linux-arm64",
-      "-version",
-      "version:2.0.0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "arm64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/self_dependency",
-      "_3PP_PLATFORM": "linux-arm64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-arm64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -951,9 +884,9 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.build 3pp/sources/script/tools/self_dependency/linux-arm64",
+    "name": "building tools/self_dependency (2).fetch sources.build 3pp/sources/script/tools/self_dependency/linux-arm64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -985,9 +918,9 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building tools/self_dependency (2).fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -1011,9 +944,16 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building tools/self_dependency (2).fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -1035,7 +975,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-arm64 (2)",
+    "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-arm64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",

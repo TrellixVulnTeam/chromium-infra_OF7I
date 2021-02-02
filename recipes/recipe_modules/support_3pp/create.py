@@ -31,8 +31,8 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       The `build_resolved_spec` function fully manages the content of this
       dictionary.
     * force_build (bool) - If True, don't consult CIPD server to see if the
-      package is already built. This also disables uploading the results, to
-      avoid attempting to upload a duplicately-tagged package.
+      package is already built. This also disables uploading the source and
+      built results, to avoid attempting to upload a duplicately-tagged package.
     * spec (ResolvedSpec) - The resolved spec to build.
     * version (str) - The symver (or 'latest') version of the package to build.
     * ecosystem_hash(str) - If specified, tells 3pp hash used for this build.
@@ -99,7 +99,14 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
 
     with api.step.nest('fetch sources'):
       source.fetch_source(
-        api, workdir, spec, version, git_hash, spec_lookup, recurse_fn)
+          api,
+          workdir,
+          spec,
+          version,
+          git_hash,
+          spec_lookup,
+          recurse_fn,
+          skip_upload=force_build)
 
     if spec.create_pb.HasField("build"):
       with api.step.nest('run installation'):

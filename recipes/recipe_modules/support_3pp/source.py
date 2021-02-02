@@ -170,8 +170,14 @@ def resolve_latest(api, spec):
   return version, source_hash
 
 
-def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
-                 ensure_built):
+def fetch_source(api,
+                 workdir,
+                 spec,
+                 version,
+                 source_hash,
+                 spec_lookup,
+                 ensure_built,
+                 skip_upload=False):
   """Prepares a checkout in `workdir` to build `spec` at `version`.
 
   Args:
@@ -189,6 +195,8 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
     * ensure_built ((ResolvedSpec, version) -> CIPDSpec) - A function to ensure
       that a given ResolvedSpec is actually fully built and return a CIPDSpec to
       retrieve it's output package.
+    * skip_upload (bool) - When True, skip uploading the source to CIPD.
+      Default to False.
   """
   def _ensure_installed(root, cipd_pkgs):
     # TODO(iannucci): once `cipd ensure` supports local package installation,
@@ -240,8 +248,14 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
         step_hash.presentation.step_text = (
           'external source verification successful.')
 
-  _source_checkout(api, workdir, spec, version,
-                   source_cipd_spec, source_hash=source_hash)
+  _source_checkout(
+      api,
+      workdir,
+      spec,
+      version,
+      source_cipd_spec,
+      skip_upload,
+      source_hash=source_hash)
 
   # Iff we are going to do the 'build' operation, copy all the necessary package
   # definition scripts into the checkout. If no build message is provided,
@@ -375,44 +389,26 @@ def _download_source(api, download_manifest):
     assert False, 'Unknown download protocol  %r' % (protocol,)
 
 
-def _source_upload(api, checkout_dir,
-                   method_name,
-                   source_cipd_spec,
-                   external_hash=None):
-  """Builds and uploads the copy of the source package we have on the
-  local machine to the CIPD server.
+def _source_upload(api, source_cipd_spec, external_hash=None):
+  """Uploads the copy of the source package we have on the local machine to the
+  CIPD server.
 
-  This method will upload source files into CIPD with `infra/3pp/sources`
-  prefix for provided version. Essentially, uploading the source only for the
-  first time. In later builds, 3pp recipe will use these uploaded artifacts
-  when building the same version of a package.
+  This method will upload source files into CIPD with
+  `<package_prefix>/<source_cache_prefix>` prefix for provided version.
+  Essentially, uploading the source only for the first time. In later builds,
+  3pp recipe will use these uploaded artifacts when building the same version
+  of a package.
 
   Args:
     * api - The module injection site for support_3pp recipe module
       (i.e. `self.m`)
-    * checkout_dir - The checkout directory we're going to checkout the
-      source in.
-    * method_name - Source method in spec protobuf.
     * source_cipd_spec (spec) - CIPDSpec obj for source.
     * external_hash - Tag the output package with this hash.
   """
-  if method_name == 'cipd':  # pragma: no cover
-    raise ValueError('CIPD sources are already cached.')
-
   with api.step.nest('upload source to cipd') as upload_step:
     try:
-      # Double checking if source is uploaded by a concurrent recipe
-      if not source_cipd_spec.check():
-        # building the source CIPDSpec into a source type package
-        source_cipd_spec.build(
-            root=checkout_dir,
-            install_mode='copy',
-            # Some build systems overwrite files, make sure they're writable.
-            preserve_writable=True,
-            version_file=None,
-            exclusions=['\.git'] if method_name == 'git' else [])
-        extra_tags = {'external_hash': external_hash} if external_hash else {}
-        source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)
+      extra_tags = {'external_hash': external_hash} if external_hash else {}
+      source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)
     except api.step.StepFailure:  # pragma: no cover
       upload_step.status = api.step.FAILURE
       upload_step.step_text = 'Source upload failed.'
@@ -424,6 +420,7 @@ def _source_checkout(api,
                      spec,
                      version,
                      source_cipd_spec,
+                     skip_upload,
                      source_hash=''):
   """Checks out source packages into checkout_dir.
 
@@ -441,6 +438,7 @@ def _source_checkout(api,
     * spec (ResolvedSpec) - The package we want to build.
     * version (str) - The symver of the package we want to build (e.g. '1.2.0').
     * source_cipd_spec (spec) - CIPDSpec obj for source.
+    * skip_upload (bool) - When True, skip uploading the source to CIPD.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the source.
   """
@@ -456,13 +454,25 @@ def _source_checkout(api,
       'mkdir -p [workdir]/checkout/%s' % (str(source_pb.subdir),), checkout_dir)
 
   if source_cipd_spec and not source_cipd_spec.check():
+    if method_name == 'cipd':  # pragma: no cover
+      raise ValueError('CIPD sources are already cached.')
+
     # If source is not cached already, downloads, builds and uploads source.
     download_manifest = _generate_download_manifest(api, spec, checkout_dir,
                                                     source_hash)
     _download_source(api, download_manifest)
 
-    _source_upload(api, checkout_dir, method_name,
-                   source_cipd_spec, source_hash)
+    # building the source CIPDSpec into a source type package locally.
+    source_cipd_spec.build(
+        root=checkout_dir,
+        install_mode='copy',
+        # Some build systems overwrite files, make sure they're writable.
+        preserve_writable=True,
+        version_file=None,
+        exclusions=['\.git'] if method_name == 'git' else [])
+
+    if not skip_upload:
+      _source_upload(api, source_cipd_spec, source_hash)
 
   # Fetches source from cipd for all types.
   else:

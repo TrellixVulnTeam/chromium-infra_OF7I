@@ -1230,44 +1230,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/git/go.repo/dep",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -1290,9 +1252,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/dep",
+    "name": "building deps/bottom_dep_git.fetch sources.build 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -1325,9 +1287,9 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building deps/bottom_dep_git.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -1352,9 +1314,16 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building deps/bottom_dep_git.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -1377,7 +1346,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep (2)",
+    "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -1979,44 +1948,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/url/deps/bottom_dep_url/mac-amd64",
-      "-version",
-      "version:1.2.3",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.2.3"
-    },
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/mac-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:1.2.3' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -2039,9 +1970,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.2.3"
     },
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.build 3pp/sources/url/deps/bottom_dep_url/mac-amd64",
+    "name": "building deps/bottom_dep_url.fetch sources.build 3pp/sources/url/deps/bottom_dep_url/mac-amd64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -2074,9 +2005,9 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building deps/bottom_dep_url.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -2101,9 +2032,16 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building deps/bottom_dep_url.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -2126,7 +2064,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.2.3"
     },
-    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/mac-amd64 (2)",
+    "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -3131,43 +3069,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/script/tools/fetch_and_package/linux-amd64",
-      "-version",
-      "version:2.0.0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/fetch_and_package",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -3189,9 +3090,9 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.build 3pp/sources/script/tools/fetch_and_package/linux-amd64",
+    "name": "building tools/fetch_and_package.fetch sources.build 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -3223,9 +3124,9 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building tools/fetch_and_package.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -3249,9 +3150,16 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building tools/fetch_and_package.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -3273,7 +3181,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64 (2)",
+    "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -4373,44 +4281,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/script/tools/windows_experiment/mac-amd64",
-      "-version",
-      "version:2.0.0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/windows_experiment/mac-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -4433,9 +4303,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.build 3pp/sources/script/tools/windows_experiment/mac-amd64",
+    "name": "building tools/windows_experiment.fetch sources.build 3pp/sources/script/tools/windows_experiment/mac-amd64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -4468,9 +4338,9 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building tools/windows_experiment.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -4495,9 +4365,16 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building tools/windows_experiment.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/windows_experiment.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -4520,7 +4397,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/windows_experiment/mac-amd64 (2)",
+    "name": "building tools/windows_experiment.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/windows_experiment/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -5538,45 +5415,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/git/go.repo/git_tool",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/git_tool",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -5600,9 +5438,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/git_tool",
+    "name": "building build_tools/git_tool.fetch sources.build 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -5636,9 +5474,9 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building build_tools/git_tool.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -5664,9 +5502,16 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building build_tools/git_tool.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building build_tools/git_tool.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -5690,7 +5535,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/git_tool (2)",
+    "name": "building build_tools/git_tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -6892,45 +6737,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building build_tools/tool.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/git/go.repo/tool",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
-      "_3PP_PATCH_VERSION": "chops.1",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -6954,9 +6760,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/tool.fetch sources.upload source to cipd.build 3pp/sources/git/go.repo/tool",
+    "name": "building build_tools/tool.fetch sources.build 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -6990,9 +6796,9 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building build_tools/tool.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building build_tools/tool.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -7018,9 +6824,16 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
-    "name": "building build_tools/tool.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building build_tools/tool.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building build_tools/tool.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -7044,7 +6857,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool (2)",
+    "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -8887,44 +8700,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tools/pkg.fetch sources.upload source to cipd",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/script/tools/pkg/mac-amd64",
-      "-version",
-      "version:2.0.0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "darwin",
-      "MACOSX_DEPLOYMENT_TARGET": "10.10",
-      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
-      "_3PP_PLATFORM": "mac-amd64",
-      "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "2.0.0"
-    },
-    "name": "building tools/pkg.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg/mac-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-build",
@@ -8947,9 +8722,9 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/pkg.fetch sources.upload source to cipd.build 3pp/sources/script/tools/pkg/mac-amd64",
+    "name": "building tools/pkg.fetch sources.build 3pp/sources/script/tools/pkg/mac-amd64",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -8982,9 +8757,9 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/pkg.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
+    "name": "building tools/pkg.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -9009,9 +8784,16 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
-    "name": "building tools/pkg.fetch sources.upload source to cipd.mv built cipd pkg to cache",
+    "name": "building tools/pkg.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -9034,7 +8816,7 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/pkg.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg/mac-amd64 (2)",
+    "name": "building tools/pkg.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",

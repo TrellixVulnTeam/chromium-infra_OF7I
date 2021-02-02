@@ -629,12 +629,14 @@ If the 'install' script is omitted, it is assumed to be 'install.sh'.
 If the ENTIRE build message is omitted, no build takes place. Instead the
 result of the 'source' stage will be packaged.
 
-During the execution of the build phase, the entire 'root folder' is copied into
-the source checkout in the .3pp directory, and the script will be invoked as
-`/path/to/checkout/.3pp/$package_name/$script_name`. Because the entire root
-folder is copied, you can have shared resources (like `.vpython` files or helper
-scripts) which are common to all package definitions and located relative to the
-install script.
+During the execution of the build phase, the package itself and its dependent
+packages (e.g. "dep" and "tool" in PB file) will be copied into the source
+checkout in the .3pp directory, and the script will be invoked as
+`/path/to/checkout/.3pp/<cipd_pkg_name>/$script_name`. If the package has
+shared resources (like `.vpython` files or helper scripts) which are outside of
+the package directory, you would need to create a symbolic link for it. See
+chromium.googlesource.com/infra/infra/+/master/3pp/cpython/ssl_suffix.py as an
+example.
 
 ##### Package
 
@@ -750,9 +752,9 @@ This module uses the following named caches:
   * `osx_sdk` - Cache for `depot_tools/osx_sdk`. Only on Mac.
   * `windows_sdk` - Cache for `depot_tools/windows_sdk`. Only on Windows.
 
-#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#385)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#387)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#672)(self, packages=(), platform='', force_build=False):**
+&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#680)(self, packages=(), platform='', force_build=False):**
 
 Executes entire {fetch,build,package,verify,upload} pipeline for all the
 packages listed, targeting the given platform.
@@ -764,42 +766,51 @@ Args:
   * platform (str) - If specified, the CIPD ${platform} to build for.
     If unspecified, this will be the appropriate CIPD ${platform} for the
     current host machine.
+  * force_build (bool) - If True, all applicable packages and their
+    dependencies will be built, regardless of the presence in CIPD.
+    The source and built packages will not be uploaded to CIPD.
 
 Returns (list[(cipd_pkg, cipd_version)], set[str]) of built CIPD packages
 and their tagged versions, as well as a list of unsupported packages.
 
-&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#415)(self):**
+&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#417)(self):**
 
-&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#553)(self, base_path, glob_pattern='\*\*/3pp.pb', check_dup=True):**
+&mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#555)(self, base_path, glob_pattern='\*\*/3pp.pb', check_dup=True):**
 
-Loads all package definitions from the given path.
+Loads all package definitions from the given base_path and glob pattern.
 
 This will parse and intern all the 3pp.pb package definition files so that
-packages can be identified by their name. For example, if you pass:
+packages can be identified by their cipd package name.
+For example, if you pass:
 
   path/
     pkgname/
       3pp.pb
       install.sh
 
-This would parse path/pkgname/3pp.pb and register the "pkgname" package.
+And the file "path/pkgname/3pp.pb" has the following content:
+
+  upload { pkg_prefix: "my_pkg_prefix" }
+
+Its cipd package name will be "my_pkg_prefix/pkgname".
 
 Args:
   * base_path (Path) - A path of a directory where the glob_pattern will be
     applied to.
   * glob_pattern (str) - A glob pattern to look for package definition files
-    "3pp.pb" whose behavior is defined by 3pp.proto. Default to "*/3pp.pb".
+    "3pp.pb" whose behavior is defined by 3pp.proto. Default to "**/3pp.pb".
   * check_dup (bool): When set, it will raise DuplicatePackage error if
     a package spec is already loaded. Default to True.
 
-Returns a set(str) containing the names of the packages which were loaded.
+Returns a set(str) containing the cipd package names of the packages which
+were loaded.
 
-Raises a DuplicatePackage exception if this function encounters a package
-whose name is already registered. This could occur if you call
+Raises a DuplicatePackage exception if this function encounters a cipd
+package name which is already registered. This could occur if you call
 load_packages_from_path multiple times, and one of the later calls tries to
 load a package which was registered under one of the earlier calls.
 
-&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#420)(self, experimental=False):**
+&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#422)(self, experimental=False):**
 
 Returns the CIPD package name prefix (str), if any is set.
 
@@ -807,18 +818,18 @@ This will prepend 'experimental/' to the currently set prefix if:
   * The recipe is running in experimental mode; OR
   * You pass experimental=True
 
-&mdash; **def [set\_experimental](/recipes/recipe_modules/support_3pp/api.py#448)(self, experimental):**
+&mdash; **def [set\_experimental](/recipes/recipe_modules/support_3pp/api.py#450)(self, experimental):**
 
 Set the experimental mode (bool).
 
-&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#433)(self, prefix):**
+&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#435)(self, prefix):**
 
 Set the CIPD package name prefix (str).
 
 All CIPDSpecs for built packages (not sources) will have this string
 prepended to them.
 
-&mdash; **def [set\_source\_cache\_prefix](/recipes/recipe_modules/support_3pp/api.py#442)(self, prefix):**
+&mdash; **def [set\_source\_cache\_prefix](/recipes/recipe_modules/support_3pp/api.py#444)(self, prefix):**
 
 Set the CIPD namespace (str) to store the source of the packages.
 ### *recipe_modules* / [sync\_submodules](/recipes/recipe_modules/sync_submodules)
