@@ -41,7 +41,7 @@ class GitilesCommit(ndb.Model):
   ref = ndb.StringProperty(indexed=True, required=True)
 
   # The commit hash of the revision.
-  revision = ndb.StringProperty(indexed=False, required=True)
+  revision = ndb.StringProperty(indexed=True, required=True)
 
 
 class PostsubmitReport(ndb.Model):
