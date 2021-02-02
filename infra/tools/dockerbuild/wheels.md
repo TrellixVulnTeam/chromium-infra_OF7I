@@ -1570,6 +1570,20 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-bigquery-py3**
+
+### 2.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-bigquery-py3"
+  version: "version:2.7.0"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-bigtable**
 
 ### 0.28.1
@@ -2841,7 +2855,7 @@ wheel: <
 
 ## **pathos**
 
-### 0.2.7
+### 0.2.7.chromium.2
 
 ```protobuf
 wheel: <
