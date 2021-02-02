@@ -95,16 +95,22 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 }
 
 func runProvisionSteps(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	resp, err := provisionChromeOSBuild(ctx, r)
+	bt, err := newBackgroundTLS()
+	if err != nil {
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, err
+	}
+	defer bt.Close()
+
+	resp, err := provisionChromeOSBuild(ctx, bt, r)
 	if err != nil || resp.GetState() != phosphorus.PrejobResponse_SUCCEEDED {
 		return resp, err
 	}
 	return provisionFirmwareLegacy(ctx, r)
 }
 
-func provisionChromeOSBuild(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	if shouldProvisionChromeOSViaTLS(&r) {
-		return provisionChromeOSBuildViaTLS(ctx, r)
+		return provisionChromeOSBuildViaTLS(ctx, bt, r)
 	}
 	return provisionChromeOSBuildLegacy(ctx, r)
 }
@@ -257,7 +263,7 @@ func resetViaAutoserv(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.
 // Errors returned from the actual provision operation are interpreted into
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
-func provisionChromeOSBuildViaTLS(ctx context.Context, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	if desired == "" {
 		logging.Infof(ctx, "Skipped Chrome OS Build provision, because no specific version was requested.")
@@ -268,37 +274,25 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, r phosphorus.PrejobReques
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
-	req := tlsapi.ProvisionDutRequest{
-		Name: r.DutHostname,
-		Image: &tlsapi.ProvisionDutRequest_ChromeOSImage{
-			PathOneof: &tlsapi.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
-				GsPathPrefix: fmt.Sprintf("%s/%s", gsImageArchivePrefix, desired),
+	c := tlsapi.NewCommonClient(bt.Client)
+	op, err := c.ProvisionDut(
+		ctx,
+		&tlsapi.ProvisionDutRequest{
+			Name: r.DutHostname,
+			Image: &tlsapi.ProvisionDutRequest_ChromeOSImage{
+				PathOneof: &tlsapi.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
+					GsPathPrefix: fmt.Sprintf("%s/%s", gsImageArchivePrefix, desired),
+				},
 			},
 		},
-	}
-
-	tlsServer, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
-	if err != nil {
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
-	}
-	defer tlsServer.Stop()
-
-	conn, err := grpc.Dial(tlsServer.Address(), grpc.WithInsecure())
-	if err != nil {
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
-	}
-	defer conn.Close()
-
-	c := tlsapi.NewCommonClient(conn)
-
-	op, err := c.ProvisionDut(ctx, &req)
+	)
 	if err != nil {
 		// Errors here indicate a failure in starting the operation, not failure
 		// in the provision attempt.
 		return nil, errors.Annotate(err, "run TLS Provision").Err()
 	}
 
-	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(conn), op.GetName())
+	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(bt.Client), op.GetName())
 	if err != nil {
 		// TODO(pprabhu) Cancel operation.
 		// - Create 60 second headroom before deadline for cancellation.
@@ -345,4 +339,39 @@ func rwFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_Softw
 		}
 	}
 	return ""
+}
+
+type backgroundTLS struct {
+	server *tls.Server
+	Client *grpc.ClientConn
+}
+
+func (b *backgroundTLS) Close() error {
+	// Make it safe to Close() more than once.
+	if b.server == nil {
+		return nil
+	}
+	err := b.Client.Close()
+	b.server.Stop()
+	b.server = nil
+	return err
+}
+
+// Run a TLS server in the background and crate a gRPC client to it.
+//
+// On success, the caller must call backgroundTLS.Close() to clean up resources.
+func newBackgroundTLS() (*backgroundTLS, error) {
+	s, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
+	if err != nil {
+		return nil, errors.Annotate(err, "start background TLS").Err()
+	}
+	c, err := grpc.Dial(s.Address(), grpc.WithInsecure())
+	if err != nil {
+		s.Stop()
+		return nil, errors.Annotate(err, "start background TLS").Err()
+	}
+	return &backgroundTLS{
+		server: s,
+		Client: c,
+	}, nil
 }
