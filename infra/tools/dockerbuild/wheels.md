@@ -2860,7 +2860,7 @@ wheel: <
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pathos/${vpython_platform}"
-  version: "version:0.2.7.chromium.2"
+  version: "version:0.2.7.chromium.1"
 >
 ```
 

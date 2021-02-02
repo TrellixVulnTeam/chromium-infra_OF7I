@@ -910,15 +910,9 @@ SPECS.update({
         # This should actually be 0.2.7, but the version needs to change in
         # order to pick up dependencies that weren't included when the
         # MultiWheel was originally added.
-        MultiWheel('pathos', '0.2.7.chromium.2', ([
+        MultiWheel('pathos', '0.2.7.chromium.1', ([
             Universal('dill', '0.3.3'),
             Universal('klepto', '0.2.0'),
-            SourceOrPrebuilt(
-                'mpi4py',
-                '3.0.3',
-                packaged=[],
-                pyversions=['py2', 'py3'],
-            ),
             SourceOrPrebuilt(
                 'multiprocess',
                 '0.70.11.1',
