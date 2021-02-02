@@ -481,6 +481,7 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 
 	id := lc.GetId().GetValue()
 	hostname := lc.GetDut().Hostname
+	hwid := lc.GetManufacturingId().GetValue()
 	dut := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
 			Id:           &id,
@@ -488,6 +489,8 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 			Hostname:     &hostname,
 			Attributes:   attrs,
 			Labels:       labels,
+			// Duplicating hwid here for populating hwid to swarming dimensions in internal-print-bot-info
+			Hwid: &hwid,
 		},
 	}
 	return dut, nil

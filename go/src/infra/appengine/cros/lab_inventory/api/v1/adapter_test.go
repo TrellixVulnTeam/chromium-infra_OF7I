@@ -294,6 +294,7 @@ common {
 	}
 	hostname: "test_host"
 	id: "test_dut"
+	hwid: "test_hwid"
 	serial_number: "test_serial"
 	labels {
 		arc: true

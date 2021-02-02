@@ -484,6 +484,7 @@ func adaptV2DutToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.DeviceUnd
 
 	id := machine.GetName()
 	hostname := lse.GetName()
+	hwid := machine.GetChromeosMachine().GetHwid()
 	deviceUnderTest := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
 			Id:           &id,
@@ -491,6 +492,8 @@ func adaptV2DutToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.DeviceUnd
 			Hostname:     &hostname,
 			Attributes:   attrs,
 			Labels:       labels,
+			// Duplicating hwid here for populating hwid to swarming dimensions in internal-print-bot-info
+			Hwid: &hwid,
 		},
 	}
 	return deviceUnderTest, nil
