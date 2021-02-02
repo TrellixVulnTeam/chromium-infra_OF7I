@@ -45,7 +45,7 @@ func TestEvalStrategy(t *testing.T) {
 			{Path: "unreachable", Status: 'A'},
 		})
 
-		assertAffectedness := func(in eval.Input, expectedDistance float64, expectedRank int) {
+		assertAffectedness := func(in eval.Input, expectedDistance float64) {
 			out := &eval.Output{
 				TestVariantAffectedness: make([]rts.Affectedness, 1),
 			}
@@ -57,7 +57,6 @@ func TestEvalStrategy(t *testing.T) {
 			} else {
 				So(af.Distance, ShouldAlmostEqual, expectedDistance)
 			}
-			So(af.Rank, ShouldEqual, expectedRank)
 		}
 
 		Convey(`a -> b`, func() {
@@ -69,7 +68,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//b"},
 				},
 			}
-			assertAffectedness(in, -math.Log(0.5), 2)
+			assertAffectedness(in, -math.Log(0.5))
 		})
 
 		Convey(`a -> unrechable`, func() {
@@ -81,7 +80,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//unreachable"},
 				},
 			}
-			assertAffectedness(in, math.Inf(1), math.MaxInt32)
+			assertAffectedness(in, math.Inf(1))
 		})
 
 		Convey(`Unknown test`, func() {
@@ -93,7 +92,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//unknown"},
 				},
 			}
-			assertAffectedness(in, 0, 0)
+			assertAffectedness(in, 0)
 		})
 
 		Convey(`New test`, func() {
@@ -105,7 +104,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//new_test"},
 				},
 			}
-			assertAffectedness(in, 0, 0)
+			assertAffectedness(in, 0)
 		})
 
 		Convey(`One of tests is unknown`, func() {
@@ -124,9 +123,7 @@ func TestEvalStrategy(t *testing.T) {
 			err := g.EvalStrategy(ctx, in, out)
 			So(err, ShouldBeNil)
 			So(out.TestVariantAffectedness[0].Distance, ShouldAlmostEqual, -math.Log(0.5))
-			So(out.TestVariantAffectedness[0].Rank, ShouldEqual, 2)
 			So(out.TestVariantAffectedness[1].Distance, ShouldEqual, 0)
-			So(out.TestVariantAffectedness[1].Rank, ShouldEqual, 0)
 		})
 
 		Convey(`Test without a file name`, func() {
@@ -138,7 +135,7 @@ func TestEvalStrategy(t *testing.T) {
 					{},
 				},
 			}
-			assertAffectedness(in, 0, 0)
+			assertAffectedness(in, 0)
 		})
 
 		Convey(`Unknown changed file`, func() {
@@ -150,7 +147,7 @@ func TestEvalStrategy(t *testing.T) {
 					{FileName: "//b"},
 				},
 			}
-			assertAffectedness(in, math.Inf(1), math.MaxInt32)
+			assertAffectedness(in, math.Inf(1))
 		})
 	})
 }

@@ -23,7 +23,7 @@ func (p *rejectionPrinter) rejection(rej *evalpb.Rejection, mostAffected rts.Aff
 	pf("Rejection:\n")
 	p.Level++
 
-	pf("Most affected test: %f distance, %d rank\n", mostAffected.Distance, mostAffected.Rank)
+	pf("Most affected test: %f distance\n", mostAffected.Distance)
 
 	// Print patchsets.
 	if len(rej.Patchsets) == 1 {

@@ -54,6 +54,6 @@ type Output struct {
 	//
 	// When Strategy() is called, TestVariantAffectedness is pre-initialized
 	// with a slice with the same length as Input.TestVariants, and zero elements.
-	// Thus by default all tests are affected (distance=0) and unranked (rank=0).
+	// Thus by default all tests are very affected (distance=0).
 	TestVariantAffectedness []rts.Affectedness
 }

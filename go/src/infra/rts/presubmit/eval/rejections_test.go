@@ -21,7 +21,7 @@ func TestPrintLostRejection(t *testing.T) {
 	assert := func(rej *evalpb.Rejection, expectedText string) {
 		buf := &bytes.Buffer{}
 		p := rejectionPrinter{printer: newPrinter(buf)}
-		So(p.rejection(rej, rts.Affectedness{Distance: 5, Rank: 3}), ShouldBeNil)
+		So(p.rejection(rej, rts.Affectedness{Distance: 5}), ShouldBeNil)
 		expectedText = strings.Replace(expectedText, "\t", "  ", -1)
 		So(buf.String(), ShouldEqual, expectedText)
 	}
@@ -51,7 +51,7 @@ func TestPrintLostRejection(t *testing.T) {
 			}
 
 			assert(rej, `Rejection:
-	Most affected test: 5.000000 distance, 3 rank
+	Most affected test: 5.000000 distance
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- <empty test variant>
@@ -70,7 +70,7 @@ func TestPrintLostRejection(t *testing.T) {
 			}
 
 			assert(rej, `Rejection:
-	Most affected test: 5.000000 distance, 3 rank
+	Most affected test: 5.000000 distance
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- <empty test variant>
@@ -99,7 +99,7 @@ func TestPrintLostRejection(t *testing.T) {
 			}
 
 			assert(rej, `Rejection:
-	Most affected test: 5.000000 distance, 3 rank
+	Most affected test: 5.000000 distance
 	https://chromium-review.googlesource.com/c/123/4
 	Failed and not selected tests:
 		- a:0
@@ -119,7 +119,7 @@ func TestPrintLostRejection(t *testing.T) {
 			}
 
 			assert(rej, `Rejection:
-	Most affected test: 5.000000 distance, 3 rank
+	Most affected test: 5.000000 distance
 	- patchsets:
 		https://chromium-review.googlesource.com/c/123/4
 		https://chromium-review.googlesource.com/c/223/4

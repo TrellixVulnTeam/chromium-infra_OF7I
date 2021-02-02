@@ -93,23 +93,23 @@ func (e *Eval) Run(ctx context.Context) (*Result, error) {
 	res := &Result{}
 
 	logging.Infof(ctx, "evaluating safety...")
-	grid, err := e.evaluateSafety(ctx, res)
+	thresholds, err := e.evaluateSafety(ctx, res)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate safety").Err()
 	}
 
 	logging.Infof(ctx, "evaluating efficiency...")
-	if err := e.evaluateEfficiency(ctx, res, grid); err != nil {
+	if err := e.evaluateEfficiency(ctx, res, thresholds); err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate efficiency").Err()
 	}
 
-	res.Thresholds = grid.Slice()
+	res.Thresholds = thresholds
 	return res, nil
 }
 
 // evaluateSafety computes thresholds and total/preserved
 // rejections/testFailures.
-func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid, error) {
+func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, error) {
 	var changeAffectedness []rts.Affectedness
 	var testAffectedness []rts.Affectedness
 	furthest := make(furthestRejections, 0, e.LogFurthest)
@@ -166,23 +166,26 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid,
 		furthest.LogAndClear(ctx)
 	}
 
-	// Initialize the grid.
-	// Compute distance/rank thresholds by taking distance/rank percentiles in
-	// changeAffectedness. Row/column indexes represent ChangeRecall scores.
-	grid := &thresholdGrid{}
-	distancePercentiles, rankPercentiles := grid.init(changeAffectedness)
+	// Compute distance thresholds by taking their percentiles in
+	// changeAffectedness. Element indexes represent ChangeRecall scores.
+	distancePercentiles := distanceQuantiles(changeAffectedness, 100)
 	logging.Infof(ctx, "Distance percentiles: %v", distancePercentiles)
-	logging.Infof(ctx, "Rank percentiles: %v", rankPercentiles)
+	thresholds := make([]*Threshold, len(distancePercentiles))
+	for i, distance := range distancePercentiles {
+		thresholds[i] = &Threshold{
+			Value: rts.Affectedness{Distance: distance},
+		}
+	}
 
-	// Evaluate safety of *combinations* of thresholds.
+	// Now compute recall scores off of the chosen thresholds.
 
-	losses := func(afs []rts.Affectedness) *bucketGrid {
-		var buckets bucketGrid
+	losses := func(afs []rts.Affectedness) bucketSlice {
+		buckets := make(bucketSlice, len(thresholds)+1)
 		for _, af := range afs {
-			buckets.inc(grid, af, 1)
+			buckets.inc(thresholds, af, 1)
 		}
 		buckets.makeCumulative()
-		return &buckets
+		return buckets
 	}
 
 	res.TotalRejections = len(changeAffectedness)
@@ -191,24 +194,19 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) (*thresholdGrid,
 	res.TotalTestFailures = len(testAffectedness)
 	lostFailures := losses(testAffectedness)
 
-	for row := 0; row < 100; row++ {
-		for col := 0; col < 100; col++ {
-			t := &grid[row][col]
-			t.PreservedRejections = res.TotalRejections - int(lostRejections[row+1][col+1])
-			t.PreservedTestFailures = res.TotalTestFailures - int(lostFailures[row+1][col+1])
-			t.ChangeRecall = float64(t.PreservedRejections) / float64(res.TotalRejections)
-			t.DistanceChangeRecall = float64(row+1) / 100
-			t.RankChangeRecall = float64(col+1) / 100
-			t.TestRecall = float64(t.PreservedTestFailures) / float64(res.TotalTestFailures)
-		}
+	for i, t := range thresholds {
+		t.PreservedRejections = res.TotalRejections - int(lostRejections[i+1])
+		t.PreservedTestFailures = res.TotalTestFailures - int(lostFailures[i+1])
+		t.ChangeRecall = float64(t.PreservedRejections) / float64(res.TotalRejections)
+		t.TestRecall = float64(t.PreservedTestFailures) / float64(res.TotalTestFailures)
 	}
-	return grid, nil
+	return thresholds, nil
 }
 
 // evaluateEfficiency computes total and saved durations.
-func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, grid *thresholdGrid) error {
+func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, thresholds []*Threshold) error {
 	// Process test durations in parallel and increment appropriate counters.
-	var savedDurations bucketGrid
+	savedDurations := make(bucketSlice, len(thresholds)+1)
 	var totalDuration int64
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -247,7 +245,7 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, grid *thresh
 			for i, td := range rec.TestDurations {
 				dur := int64(td.Duration.AsDuration())
 				durSum += dur
-				savedDurations.inc(grid, out.TestVariantAffectedness[i], dur)
+				savedDurations.inc(thresholds, out.TestVariantAffectedness[i], dur)
 			}
 			atomic.AddInt64(&totalDuration, durSum)
 		}
@@ -266,12 +264,9 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, grid *thresh
 
 	res.TotalDuration = time.Duration(totalDuration)
 	savedDurations.makeCumulative()
-	for row := 0; row < 100; row++ {
-		for col := 0; col < 100; col++ {
-			t := &grid[row][col]
-			t.SavedDuration = time.Duration(savedDurations[row+1][col+1])
-			t.Savings = float64(t.SavedDuration) / float64(res.TotalDuration)
-		}
+	for i, t := range thresholds {
+		t.SavedDuration = time.Duration(savedDurations[i+1])
+		t.Savings = float64(t.SavedDuration) / float64(res.TotalDuration)
 	}
 	return nil
 }
@@ -288,177 +283,75 @@ func (e *Eval) goMany(eg *errgroup.Group, f func() error) {
 	}
 }
 
-// thresholdGrid is a 100x100 grid where each cell represents a distance/rank
-// threshold. All cells in the same row have the same distance value, and
-// all cells in the same column have the same rank value.
-//
-// The distance value of the row R is the minimal distance threshold required to
-// achieve ChangeRecall score of (R+1)/100.0 on the training set, while ignoring
-// rank threshold.
-// For example, thresholdGrid[94][0].Value.Distance achieves 95% ChangeRecall
-// on the training set.
-//
-// Similarly, rank value of the column C is the minimal rank threshold required
-// to achieve ChangeRecall score of (C+1)/100.0 on to the training set,
-// while ignoring distance threshold.
-//
-// The distances and ranks are computed independently of each other and then
-// combined into this grid.
-type thresholdGrid [100][100]Threshold
-
-// init clears the grid and initializes the rows/columns with distance/rank
-// percentiles in afs.
-func (g *thresholdGrid) init(afs []rts.Affectedness) (distancePercentiles []float64, rankPercentiles []int) {
-	*g = thresholdGrid{}
-	distancePercentiles, rankPercentiles = affectednessQuantiles(afs, 100)
-	for row, distance := range distancePercentiles {
-		for col, rank := range rankPercentiles {
-			g[row][col].Value = rts.Affectedness{Distance: distance, Rank: rank}
-		}
-	}
-	return
-}
-
-// Slice returns a slice of thresholds, sorted by ChangeRecall.
-// If two thresholds have the same ChangeScore, the one with larger Savings
-// wins. Returned slice elements are pointes to the grid.
-func (g *thresholdGrid) Slice() []*Threshold {
-	// Given that the grid has 100 cells for each distance threshold and
-	// each rank threshold, many cells have the same ChangeRecall.
-	// Deduplicate them while breaking the tie based on Savings.
-	best := map[float64]*Threshold{}
-	for row := 0; row < 100; row++ {
-		for col := 0; col < 100; col++ {
-			t := &g[row][col]
-			if existing := best[t.ChangeRecall]; existing == nil || t.Savings > existing.Savings {
-				best[t.ChangeRecall] = t
-			}
-		}
-	}
-
-	keys := make([]float64, 0, len(best))
-	for score := range best {
-		keys = append(keys, score)
-	}
-	sort.Float64s(keys)
-
-	ret := make([]*Threshold, len(best))
-	for i, key := range keys {
-		ret[i] = best[key]
-	}
-	return ret
-}
-
-// quantiles returns distance and rank quantiles.
-// Panics if s is empty.
-func affectednessQuantiles(afs []rts.Affectedness, count int) (distances []float64, ranks []int) {
+// distanceQuantiles returns distance quantiles. Panics if afs is empty.
+func distanceQuantiles(afs []rts.Affectedness, count int) (distances []float64) {
 	if len(afs) == 0 {
 		panic("s is empty")
 	}
 	allDistances := make([]float64, len(afs))
-	allRanks := make([]int, len(afs))
 	for i, af := range afs {
 		allDistances[i] = af.Distance
-		allRanks[i] = af.Rank
 	}
 	sort.Float64s(allDistances)
-	sort.Ints(allRanks)
 	distances = make([]float64, count)
-	ranks = make([]int, count)
 	for i := 0; i < count; i++ {
 		boundary := int(math.Ceil(float64(len(afs)*(i+1)) / float64(count)))
 		distances[i] = allDistances[boundary-1]
-		ranks[i] = allRanks[boundary-1]
 	}
 	return
 }
 
-// bucketGrid is an auxulary data structure to compute cumulative counters
-// in ThresholdGrid. Each cell contains the number of data points lost by that
-// bucket.
+// bucketSlice is an auxulary data structure to compute cumulative counters.
+// Each element contains the number of data points lost by the bucket that
+// the element represents.
 //
-// bucketGrid is used in two phases:
+// bucketSlice is used in two phases:
 //   1) For each data point, call inc().
-//   2) Call makeCumulative() and incorporate bucketGrid into ThresholdGrid.
+//   2) Call makeCumulative() and incorporate bucketSlice into thresholds.
 //
-// The structure of bucketGrid is similar to ThresholdGrid, except bucketGrid
-// cell (R, C) corresponds to ThresholdGrid cell (R-1, C-1). This is because the
-// bucketGrid is padded with extra row 0 and column 0 for data points that were
-// not lost by any distance or by any rank.
-type bucketGrid [101][101]int64
+// The structure of bucketSlice is similar to []*Threshold used in
+// evaluateSafety and evaluateEfficiency, except bucketSlice element i
+// corresponds to threshold i-1. This is because the bucketSlice is padded with
+// extra element 0 for data points that were not lost by any threshold.
+type bucketSlice []int64
 
-// inc increments the counter in the cell (R, C) where row R has the largest
-// distance less than af.Distance, and C has the largest rank less than af.Rank.
-// In other words, it increments the largest thresholds that missed the data
-// point.
+// inc increments the counter for the largest distance less than af.Distance,
+// i.e. the largest thresholds that missed the data point.
 //
 // Goroutine-safe.
-func (b *bucketGrid) inc(g *thresholdGrid, af rts.Affectedness, delta int64) {
-	row := sort.Search(100, func(i int) bool {
-		return g[i][0].Value.Distance >= af.Distance
-	})
-	col := sort.Search(100, func(i int) bool {
-		return g[0][i].Value.Rank >= af.Rank
+func (b bucketSlice) inc(ts []*Threshold, af rts.Affectedness, delta int64) {
+	if len(b) != len(ts)+1 {
+		panic("wrong bucket slice length")
+	}
+	i := sort.Search(len(ts), func(i int) bool {
+		return ts[i].Value.Distance >= af.Distance
 	})
 
-	// For each of distance and rank, we have found the index of the smallest
-	// threshold satisfied by af.
 	// We need the *largest* threshold *not* satisfied by af, i.e. the preceding
-	// index. Indexes in bucketGrid are already shifted by one, so use row and
-	// col as is.
-	atomic.AddInt64(&b[row][col], delta)
+	// index. Indexes in bucketSlice are already shifted by one, so use i as is.
+	atomic.AddInt64(&b[i], delta)
 }
 
 // makeCumulative makes all counters cumulative.
 // Not idempotent.
-func (b *bucketGrid) makeCumulative() {
-	for row := 99; row >= 0; row-- {
-		for col := 99; col >= 0; col-- {
-			b[row][col] += b[row][col+1]
-		}
-	}
-	for col := 99; col >= 0; col-- {
-		for row := 99; row >= 0; row-- {
-			b[row][col] += b[row+1][col]
-		}
+func (b bucketSlice) makeCumulative() {
+	for i := len(b) - 2; i >= 0; i-- {
+		b[i] += b[i+1]
 	}
 }
 
-// mostAffected returns the most significant Affectedness, in terms of distance
-// and rank.
-// If two tests have the same distance and ranks are available, then ranks are
-// used to break the tie.
-//
-// Returns an error if an inconsistency is found among ranks and distances,
-// see also checkConsistency.
+// mostAffected returns the most significant Affectedness by comparing distance.
 func mostAffected(afs []rts.Affectedness) (rts.Affectedness, error) {
 	if len(afs) == 0 {
 		return rts.Affectedness{}, errors.New("empty")
 	}
 	most := afs[0]
 	for _, af := range afs {
-		if err := checkConsistency(most, af); err != nil {
-			return rts.Affectedness{}, err
-		}
-		haveRanks := af.Rank != 0 && most.Rank != 0
-		if most.Distance > af.Distance || haveRanks && most.Rank > af.Rank {
+		if most.Distance > af.Distance {
 			most = af
 		}
 	}
 	return most, nil
-}
-
-// checkConsistency returns a non-nil error if the order implied by ranks
-// and distances is inconsistent in a and b, e.g. a is closer, but its rank
-// is greater.
-func checkConsistency(a, b rts.Affectedness) error {
-	if a.Rank == 0 || b.Rank == 0 {
-		return nil
-	}
-	if (a.Distance < b.Distance && a.Rank >= b.Rank) || (a.Distance > b.Distance && a.Rank <= b.Rank) {
-		return errors.Reason("ranks and distances are inconsistent: %#v and %#v", a, b).Err()
-	}
-	return nil
 }
 
 type furthestRejections []affectedRejection

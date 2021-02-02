@@ -27,7 +27,7 @@ type Result struct {
 	TotalDuration time.Duration
 }
 
-// Threshold is distance and rank thresholds, as well as their results.
+// Threshold is distance threshold and its scores.
 type Threshold struct {
 	Value rts.Affectedness
 
@@ -45,12 +45,6 @@ type Threshold struct {
 	// May be NaN.
 	ChangeRecall float64
 
-	// DistanceChangeRecall is the ChangeRecall achieved only by Value.Distance.
-	DistanceChangeRecall float64
-
-	// RankChangeRecall is the ChangeRecall achieved only by Value.Rank.
-	RankChangeRecall float64
-
 	// TestRecall is the fraction of test failures that were preserved.
 	// May return NaN.
 	TestRecall float64
@@ -64,21 +58,18 @@ type Threshold struct {
 func (r *Result) Print(w io.Writer, minChangeRecall float64) error {
 	p := newPrinter(w)
 
-	p.printf("ChangeRecall | Savings | TestRecall | Distance, ChangeRecall | Rank, ChangeRecall\n")
-	p.printf("---------------------------------------------------------------------------------\n")
+	p.printf("ChangeRecall | Savings | TestRecall | Distance\n")
+	p.printf("----------------------------------------------\n")
 	for _, t := range r.Thresholds {
 		if t.ChangeRecall < minChangeRecall {
 			continue
 		}
 		p.printf(
-			"%7s      | % 7s | %7s    | %6.3f            %3.0f%% | %-9d     %3.0f%%\n",
+			"%7s      | % 7s | %7s    | %6.3f\n",
 			scoreString(t.ChangeRecall),
 			scoreString(t.Savings),
 			scoreString(t.TestRecall),
 			t.Value.Distance,
-			t.DistanceChangeRecall*100,
-			t.Value.Rank,
-			t.RankChangeRecall*100,
 		)
 	}
 

@@ -21,14 +21,14 @@ type SelectionStrategy struct {
 	Graph *Graph
 
 	// Threshold decides whether a test is to be selected: if it is closer or
-	// equal than distance OR rank, then it is selected. Otherwise, skipped.
+	// equal than distance, then it is selected. Otherwise, skipped.
 	Threshold rts.Affectedness
 }
 
 // Select calls skipTestFile for each test file that should be skipped.
 func (s *SelectionStrategy) Select(changedFiles []string, skipFile func(name string) (keepGoing bool)) {
 	runRTSQuery(s.Graph, changedFiles, func(name string, af rts.Affectedness) bool {
-		if af.Rank <= s.Threshold.Rank || af.Distance <= s.Threshold.Distance {
+		if af.Distance <= s.Threshold.Distance {
 			// This file too close to skip it.
 			return true
 		}
@@ -56,7 +56,7 @@ func (g *Graph) EvalStrategy(ctx context.Context, in eval.Input, out *eval.Outpu
 	for _, tv := range in.TestVariants {
 		// If the test file is in the graph, then by default it is not affected.
 		if g.node(tv.FileName) != nil {
-			affectedness[tv.FileName] = rts.Affectedness{Distance: math.Inf(1), Rank: math.MaxInt32}
+			affectedness[tv.FileName] = rts.Affectedness{Distance: math.Inf(1)}
 		} else if tv.FileName != "" && !changedFileSet.Has(tv.FileName) {
 			// This file is not new and yet the filegraph doesn't have it.
 			// This might mean that the filegraph is incomplete/stale
@@ -107,10 +107,7 @@ func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) {
 		}
 	}
 
-	rank := 0
 	q.Run(func(sp *filegraph.ShortestPath) (keepGoing bool) {
-		// Note: the files are enumerated in the order of distance.
-		rank++
-		return callback(sp.Node.Name(), rts.Affectedness{Distance: sp.Distance, Rank: rank})
+		return callback(sp.Node.Name(), rts.Affectedness{Distance: sp.Distance})
 	})
 }
