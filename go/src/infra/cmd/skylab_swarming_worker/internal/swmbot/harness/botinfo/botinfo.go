@@ -68,7 +68,7 @@ func (s *Store) Close(ctx context.Context) error {
 func Open(ctx context.Context, b *swmbot.Info, dutName string) (*Store, error) {
 	s := Store{bot: b, dutName: dutName}
 	// Read provisioning info from state file.
-	data, err := ioutil.ReadFile(botinfoFilePath(b, b.DUTID))
+	data, err := ioutil.ReadFile(botinfoFilePath(b, dutName))
 	if err != nil {
 		return nil, errors.Annotate(err, "open botinfo").Err()
 	}
