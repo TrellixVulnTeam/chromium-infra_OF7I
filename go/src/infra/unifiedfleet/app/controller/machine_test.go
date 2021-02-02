@@ -260,6 +260,18 @@ func TestMachineRegistration(t *testing.T) {
 					ChromeosMachine: &ufspb.ChromeOSMachine{},
 				},
 			}
+			asset := &ufspb.Asset{
+				Name: "machine-os-3",
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS6,
+					Rack: "chromeos6-test",
+				},
+			}
+			r := mockRack("chromeos6-test", "2", ufspb.Zone_ZONE_CHROMEOS6)
+			_, err := registration.CreateRack(ctx, r)
+			So(err, ShouldBeNil)
+			_, err = AssetRegistration(ctx, asset)
+			So(err, ShouldBeNil)
 			m, err := MachineRegistration(ctx, machine)
 			So(err, ShouldBeNil)
 			So(m, ShouldNotBeNil)

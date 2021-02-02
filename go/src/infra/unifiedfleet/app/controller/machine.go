@@ -794,6 +794,12 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 		nics = machine.GetChromeBrowserMachine().GetNicObjects()
 		drac = machine.GetChromeBrowserMachine().GetDracObject()
 	}
+
+	// Validate that corresponding asset exists for chromeos machine.
+	if machine.GetChromeosMachine() != nil {
+		resourcesNotFound = append(resourcesNotFound, GetAssetResource(machine.GetName()))
+	}
+
 	// Aggregate resources to check if machine already exists
 	resourcesAlreadyExists = append(resourcesAlreadyExists, GetMachineResource(machine.Name))
 	switchToNicMap := make(map[string]string)
