@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -171,6 +172,13 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 	}
 
 	res.Print(os.Stdout, 0.97)
+
+	// JSON does not support infinity. Replace it with a large number.
+	for _, t := range res.Thresholds {
+		if math.IsInf(t.Value.Distance, 1) {
+			t.Value.Distance = 1e10
+		}
+	}
 
 	f, err := os.Create(fileName)
 	if err != nil {
