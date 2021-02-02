@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -53,7 +54,7 @@ type sessionServer struct {
 	wg sync.WaitGroup
 	mu sync.Mutex
 	// This field is mainly for testing that we can use a fake TLW server.
-	newTLWServer func() *tlwServer
+	newTLWServer func() (*tlwServer, error)
 	// sessions intentionally doesn't use pointers to make
 	// concurrent ownership easier to reason about.
 	sessions map[string]sessionContext
@@ -91,7 +92,11 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw := s.newTLWServer()
+	tlw, err := s.newTLWServer()
+	if err != nil {
+		return nil, fmt.Errorf("new TLW server: %s", err)
+	}
+
 	tlw.registerWith(gs)
 	// This goroutine is stopped by the session cancellation that
 	// is set up below.

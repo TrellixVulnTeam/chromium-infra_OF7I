@@ -22,24 +22,34 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
+	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/libs/lro"
 	"infra/libs/sshpool"
 )
 
 type tlwServer struct {
 	tls.UnimplementedWiringServer
-	lroMgr *lro.Manager
-	tMgr   *tunnelManager
-	tPool  *sshpool.Pool
+	lroMgr    *lro.Manager
+	tMgr      *tunnelManager
+	tPool     *sshpool.Pool
+	cFrontend *cache.Frontend
 }
 
-func newTLWServer() *tlwServer {
-	s := &tlwServer{
-		lroMgr: lro.New(),
-		tPool:  sshpool.New(getSSHClientConfig()),
-		tMgr:   newTunnelManager(),
+func newTLWServer() (*tlwServer, error) {
+	// TODO (guocb) Fetch caching backends data from UFS after migration to
+	// caching cluster.
+	ce, err := cache.NewDevserverEnv(cache.AutotestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("new TLW server: %s", err)
 	}
-	return s
+
+	s := &tlwServer{
+		lroMgr:    lro.New(),
+		tPool:     sshpool.New(getSSHClientConfig()),
+		tMgr:      newTunnelManager(),
+		cFrontend: cache.NewFrontend(ce),
+	}
+	return s, nil
 }
 
 func (s *tlwServer) registerWith(g *grpc.Server) {
@@ -109,21 +119,29 @@ func (s *tlwServer) CacheForDut(ctx context.Context, req *tls.CacheForDutRequest
 	if dutName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("CacheForDut: unsupported DutName %s in request", dutName))
 	}
+	addr, err := lookupHost(dutName)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("CacheForDut: lookup IP of %q: %s", dutName, err.Error()))
+	}
+	log.Printf("CacheForDut: the IP of %q is %q", dutName, addr)
 	op := s.lroMgr.NewOperation()
-	go s.cache(ctx, parsedURL, dutName, op.Name)
+	go s.cache(context.TODO(), parsedURL, addr, op.Name)
 	return op, status.Error(codes.OK, "Started: CacheForDut Operation.")
 }
 
 // cache implements the logic for the CacheForDut method and runs as a goroutine.
-func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, dutName, opName string) {
+func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, addr, opName string) {
 	log.Printf("CacheForDut: Started Operation = %v", opName)
-	// Devserver URL to be used. In the "real" CacheForDut implementation,
-	// devservers should be resolved here.
-	const baseURL = "http://chromeos6-devserver2:8888/download/"
-	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{
-		Url: baseURL + parsedURL.Host + parsedURL.Path,
-	}); err != nil {
-		log.Printf("CacheForDut: failed while updating result due to: %s", err)
+
+	path := fmt.Sprintf("%s%s", parsedURL.Host, parsedURL.Path)
+	cs, err := s.cFrontend.AssignBackend(addr, path)
+	if err != nil {
+		log.Printf("CacheForDut: %s", err)
+	}
+
+	u := fmt.Sprintf("%s/%s", cs, path)
+	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{Url: u}); err != nil {
+		log.Printf("CacheForDut: failed while updating result: %s", err)
 	}
 	log.Printf("CacheForDut: Operation Completed = %v", opName)
 }

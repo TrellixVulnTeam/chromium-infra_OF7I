@@ -33,7 +33,10 @@ func innerMain() error {
 	}
 	s := grpc.NewServer()
 
-	tlw := newTLWServer()
+	tlw, err := newTLWServer()
+	if err != nil {
+		return err
+	}
 	tlw.registerWith(s)
 	defer tlw.Close()
 
