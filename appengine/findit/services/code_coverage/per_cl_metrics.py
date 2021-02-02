@@ -20,7 +20,7 @@ _PAGE_SIZE = 100
 _NUM_REPORT_DAYS = 2
 
 
-def ExportPerClCoverageMetrics():
+def ExportPerClCoverage():
   """Exports per CL coverage metrics to Bigquery.
 
   Reads presubmit coverage data from Datastore, add few other dimensions to it

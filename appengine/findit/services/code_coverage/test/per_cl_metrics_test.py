@@ -65,7 +65,7 @@ class PerClMetricsTest(WaterfallTestCase):
         ],
         data={})
     datastore_entity.put()
-    per_cl_metrics.ExportPerClCoverageMetrics()
+    per_cl_metrics.ExportPerClCoverage()
 
     expected_bqrows = [{
         'cl_number': 123,

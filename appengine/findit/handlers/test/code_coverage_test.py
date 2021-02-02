@@ -22,6 +22,7 @@ from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
+from services.code_coverage import files_with_low_coverage
 from services.code_coverage import per_cl_metrics
 from services import bigquery_helper
 from services import test_tag_util
@@ -1128,10 +1129,10 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
     self.assertFalse(regions[1]['is_covered'])
 
 
-class GeneratePerClCoverageMetricsCronTest(WaterfallTestCase):
+class ExportPerClCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/cron/per-cl-coverage',
-       code_coverage.GeneratePerClCoverageMetricsCron),
+       code_coverage.ExportPerClCoverageMetricsCron),
   ],
                                        debug=True)
 
@@ -1148,17 +1149,53 @@ class GeneratePerClCoverageMetricsCronTest(WaterfallTestCase):
     self.assertTrue(mocked_is_request_from_appself.called)
 
 
-class GeneratePerClCoverageMetricsTest(WaterfallTestCase):
+class ExportPerClCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/per-cl-coverage',
-       code_coverage.GeneratePerClCoverageMetrics),
+       code_coverage.ExportPerClCoverageMetrics),
   ],
                                        debug=True)
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  @mock.patch.object(per_cl_metrics, 'ExportPerClCoverageMetrics')
+  @mock.patch.object(per_cl_metrics, 'ExportPerClCoverage')
   def testPerClCoverageMetricsExported(self, mock_detect, _):
     response = self.test_app.get('/coverage/task/per-cl-coverage', status=200)
+    self.assertEqual(1, mock_detect.call_count)
+    self.assertEqual(200, response.status_int)
+
+
+class ExportFilesWithLowCoverageMetricsCronTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/cron/low-coverage-files',
+       code_coverage.ExportFilesWithLowCoverageMetricsCron),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testTaskAddedToQueue(self, mocked_is_request_from_appself):
+    response = self.test_app.get('/coverage/cron/low-coverage-files')
+    self.assertEqual(200, response.status_int)
+    response = self.test_app.get('/coverage/cron/low-coverage-files')
+    self.assertEqual(200, response.status_int)
+
+    tasks = self.taskqueue_stub.get_filtered_tasks(
+        queue_names='files-with-low-coverage-metrics-queue')
+    self.assertEqual(2, len(tasks))
+    self.assertTrue(mocked_is_request_from_appself.called)
+
+
+class ExportFilesWithLowCoverageMetricsTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/task/low-coverage-files',
+       code_coverage.ExportFilesWithLowCoverageMetrics),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  @mock.patch.object(files_with_low_coverage, 'ExportFilesWithLowCoverage')
+  def testLowCoverageFilesExported(self, mock_detect, _):
+    response = self.test_app.get(
+        '/coverage/task/low-coverage-files', status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
 

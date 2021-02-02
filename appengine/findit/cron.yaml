@@ -70,3 +70,9 @@ cron:
   schedule: every 24 hours
   retry_parameters:
     job_retry_limit: 0
+
+- description: Query and export metrics for low coverage files to bigquery.
+  url: /coverage/cron/low-coverage-files
+  schedule: every 24 hours
+  retry_parameters:
+    job_retry_limit: 0
