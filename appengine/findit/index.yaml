@@ -468,6 +468,15 @@ indexes:
   - name: builder
   - name: commit_timestamp
 
+- kind: FileCoverageData
+  properties:
+  - name: gitiles_commit.project
+  - name: gitiles_commit.server_host
+  - name: gitiles_commit.revision
+  - name: gitiles_commit.ref
+  - name: bucket
+  - name: builder
+
 - kind: PresubmitCoverageData
   properties:
   - name: cl_patchset.server_host
