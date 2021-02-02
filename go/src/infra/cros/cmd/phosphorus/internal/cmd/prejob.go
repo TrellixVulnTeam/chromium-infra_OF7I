@@ -102,10 +102,18 @@ func runProvisionSteps(ctx context.Context, r phosphorus.PrejobRequest) (*phosph
 	defer bt.Close()
 
 	resp, err := provisionChromeOSBuild(ctx, bt, r)
-	if err != nil || resp.GetState() != phosphorus.PrejobResponse_SUCCEEDED {
+	if skipRemainingSteps(resp, err) {
 		return resp, err
 	}
-	return provisionFirmwareLegacy(ctx, r)
+	resp, err = provisionFirmwareLegacy(ctx, r)
+	if skipRemainingSteps(resp, err) {
+		return resp, err
+	}
+	return provisionLacros(ctx, bt, &r)
+}
+
+func skipRemainingSteps(r *phosphorus.PrejobResponse, err error) bool {
+	return err != nil || r.GetState() != phosphorus.PrejobResponse_SUCCEEDED
 }
 
 func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
@@ -274,6 +282,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r phos
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
+	logging.Infof(ctx, "Starting to provision Chrome OS via TLS.")
 	c := tlsapi.NewCommonClient(bt.Client)
 	op, err := c.ProvisionDut(
 		ctx,
@@ -289,10 +298,18 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r phos
 	if err != nil {
 		// Errors here indicate a failure in starting the operation, not failure
 		// in the provision attempt.
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
+		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
 
-	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(bt.Client), op.GetName())
+	resp, err := waitForOp(ctx, bt, op)
+	if err != nil {
+		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
+	}
+	return resp, nil
+}
+
+func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation) (*phosphorus.PrejobResponse, error) {
+	op, err := lro.Wait(ctx, longrunning.NewOperationsClient(bt.Client), op.GetName())
 	if err != nil {
 		// TODO(pprabhu) Cancel operation.
 		// - Create 60 second headroom before deadline for cancellation.
@@ -302,16 +319,49 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r phos
 		if err == context.DeadlineExceeded || (isGRPCErr && s.Code() == codes.InvalidArgument) {
 			return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, nil
 		}
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
+		return nil, err
 	}
 	if s := op.GetError(); s != nil {
 		// Error here is a failure in the provision attempt.
 		// TODO(pprabhu) Surface detailed errors up.
 		// See https://docs.google.com/document/d/12w5pPntorUY1cgDHHxT3Nu6wdhVox288g5_BnyKCPOE/edit#heading=h.fj6zbs6kop08
-		logging.Errorf(ctx, "Provision failed: (code: %s, message: %s, details: %s", s.Code, s.Message, s.Details)
+		logging.Errorf(ctx, "Operation failed: (code: %s, message: %s, details: %s", s.Code, s.Message, s.Details)
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
 	}
 	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+}
+
+func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	src := lacrosGCSPathOrEmpty(r.SoftwareDependencies)
+	if src == "" {
+		logging.Infof(ctx, "Skipped LaCrOS provision, because no specific version was requested.")
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+	}
+
+	logging.Infof(ctx, "Starting to provision LaCrOS.")
+	c := tlsapi.NewCommonClient(bt.Client)
+	op, err := c.ProvisionLacros(
+		ctx,
+		&tlsapi.ProvisionLacrosRequest{
+			Name: r.DutHostname,
+			Image: &tlsapi.ProvisionLacrosRequest_LacrosImage{
+				PathOneof: &tlsapi.ProvisionLacrosRequest_LacrosImage_GsPathPrefix{
+					GsPathPrefix: src,
+				},
+			},
+		},
+	)
+	if err != nil {
+		// Errors here indicate a failure in starting the operation, not failure
+		// in the provision attempt.
+		return nil, errors.Annotate(err, "provision lacros").Err()
+	}
+
+	resp, err := waitForOp(ctx, bt, op)
+	if err != nil {
+		return nil, errors.Annotate(err, "provision lacros").Err()
+	}
+	return resp, nil
 }
 
 func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
@@ -336,6 +386,15 @@ func rwFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_Softw
 	for _, d := range deps {
 		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild); ok {
 			return b.RwFirmwareBuild
+		}
+	}
+	return ""
+}
+
+func lacrosGCSPathOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
+	for _, d := range deps {
+		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_LacrosGcsPath); ok {
+			return b.LacrosGcsPath
 		}
 	}
 	return ""
