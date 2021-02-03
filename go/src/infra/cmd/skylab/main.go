@@ -19,7 +19,6 @@ import (
 	"infra/cmd/skylab/internal/cmd/internalcmds"
 	"infra/cmd/skylab/internal/cmd/inventory"
 	"infra/cmd/skylab/internal/cmd/meta"
-	"infra/cmd/skylab/internal/cmd/pool"
 	"infra/cmd/skylab/internal/cmd/queen"
 	"infra/cmd/skylab/internal/cmd/tasks"
 	"infra/cmd/skylab/internal/site"
@@ -54,9 +53,6 @@ Full documentation http://go/skylab-cli`,
 			inventory.UpdateDut,
 			inventory.BatchUpdateDuts,
 			inventory.UpdateLabstation,
-			subcommands.Section("Pool Operations"),
-			pool.EnsurePoolHealthy,
-			pool.ResizePool,
 			subcommands.Section("Tasks"),
 			tasks.BackfillRequest,
 			tasks.CreateTest,
