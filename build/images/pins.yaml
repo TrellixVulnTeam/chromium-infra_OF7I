@@ -20,4 +20,4 @@ pins:
   digest: sha256:e74994b7a9ec8e2129cfc6a871f3236940006ed31091de355578492ed140a39c
 - image: gcr.io/distroless/static
   tag: latest
-  digest: sha256:b579e0c8d9ef85e3d2bb184af02cd0ea9d90b6d3b02adaa8bacea1cb346fab51
+  digest: sha256:3b3507aa7ce16b085215915d6334f140d8f50ef35bbf3251ee52d3102296f60e
