@@ -45,6 +45,7 @@ def ExportFilesWithLowCoverage():
     report = entities[0]
     latest_revision = report.gitiles_commit.revision
     logging.info("Latest Revision: %s", latest_revision)
+    commit_timestamp = report.commit_timestamp
     # Process File Coverage reports for the latest revision
     query = FileCoverageData.query(
         FileCoverageData.gitiles_commit.server_host == server_host,
@@ -57,7 +58,7 @@ def ExportFilesWithLowCoverage():
     while more:
       results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
       for result in results:
-        bq_row = _CreateBigqueryRow(result)
+        bq_row = _CreateBigqueryRow(result, commit_timestamp)
         if bq_row:
           bigquery_helper.ReportRowsToBigquery([bq_row], 'findit-for-me',
                                                'code_coverage_summaries',
@@ -66,7 +67,7 @@ def ExportFilesWithLowCoverage():
   logging.info('Total rows appended = %d', total_rows)
 
 
-def _CreateBigqueryRow(file_coverage_data):
+def _CreateBigqueryRow(file_coverage_data, commit_timestamp):
   """Create a bigquery row for a file with low coverage.
 
   Returns a dict whose keys are column names and values are column values
@@ -76,6 +77,8 @@ def _CreateBigqueryRow(file_coverage_data):
   Args:
     file_coverage_data (FileCoverageData): Coverage report for the
       corresponding file.
+    commit_timestamp (ndb.DateTimeProperty): Commit timestamp of the
+      revision for which coverage report was generated.
   """
   try:
     data = file_coverage_data.data
@@ -92,6 +95,7 @@ def _CreateBigqueryRow(file_coverage_data):
           'path': data['path'][2:],
           'total_lines': total_lines,
           'covered_lines': covered_lines,
+          'commit_timestamp': commit_timestamp.isoformat(),
           'insert_timestamp': time_util.GetUTCNow().isoformat(),
           'builder': file_coverage_data.builder
       }

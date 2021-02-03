@@ -33,7 +33,7 @@ class FilesLowAbsCoverageTest(WaterfallTestCase):
         revision='old_rev',
         bucket='ci',
         builder='linux-code-coverage',
-        commit_timestamp=datetime(2021, 1, 6),
+        commit_timestamp=datetime(2020, 1, 6),
         manifest=[],
         summary_metrics={},
         build_id=1000,
@@ -46,7 +46,7 @@ class FilesLowAbsCoverageTest(WaterfallTestCase):
         revision='new_rev',
         bucket='ci',
         builder='linux-code-coverage',
-        commit_timestamp=datetime(2021, 1, 7),
+        commit_timestamp=datetime(2020, 1, 7),
         manifest=[],
         summary_metrics={},
         build_id=2000,
@@ -79,6 +79,7 @@ class FilesLowAbsCoverageTest(WaterfallTestCase):
         'path': 'path/to/file.cc',
         'total_lines': 100,
         'covered_lines': 50,
+        'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
         'builder': 'linux-code-coverage'
     }]
@@ -99,7 +100,7 @@ class FilesLowAbsCoverageTest(WaterfallTestCase):
         revision='rev',
         bucket='ci',
         builder='linux-code-coverage',
-        commit_timestamp=datetime(2021, 1, 7),
+        commit_timestamp=datetime(2020, 1, 7),
         manifest=[],
         summary_metrics={},
         build_id=2000,
@@ -150,6 +151,7 @@ class FilesLowAbsCoverageTest(WaterfallTestCase):
         'path': 'path/to/file_low.cc',
         'total_lines': 100,
         'covered_lines': 50,
+        'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
         'builder': 'linux-code-coverage'
     }]
