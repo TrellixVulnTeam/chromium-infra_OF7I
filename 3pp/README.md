@@ -9,14 +9,19 @@ definitions.
 
 # Building stuff locally
 
+TODO(crbug.com/1171499): run_locally might not work.
 See [./run_locally.sh]. You can pass `help` as the first argument for the
 lowdown.
+run_locally.sh requires docker to be installed. For googlers, please refer
+to go/docker.
 
 # CIPD Sources
 
+If possible, prefer to use git, url, or script methods. If none of these
+are workable for a package, cipd source may be used.
+
 Some third-party packages distribute their releases via source tarballs or zips.
-Sometimes this is done via http or ftp. For reliability and reproducability
-reasons, we prefer to mirror the tarballs ourselves and fetch them from CIPD.
+Sometimes this is done via http or ftp.
 
 To ingest a new tarball/zip:
   * Download the official tarball release from the software site.

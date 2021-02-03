@@ -40,10 +40,35 @@ Tips:
 
 Notes:
   * You will need to give the
-    `infra-try-builder@chops-service-accounts.iam.gserviceaccount.com`
+    `infra-internal-try-builder@chops-service-accounts.iam.gserviceaccount.com`
     service account CIPD writer access to the experimental prefix that this
     script derives from your email (e.g.
-    `cipd acl-edit -writer user:... experimental/user_at_example.com`)
+    `cipd acl-edit -writer user:... experimental/<email>_at_example.com`)
+  * When debugging, please delete the downloaded sources if you change it,
+    otherwise the recipe will download source from here rather than the updated
+    source.
+    Say your 3pp.pb has:
+      create {
+        source {
+          url {
+            download_url: "https://github.com/plougher/squashfs-tools/archive/4.4.tar.gz"
+            version: "4.4"
+          }
+          unpack_archive: true
+        }
+      }
+      upload { pkg_prefix: "tools" }
+    And you test with:
+    $ ./run_remotely.sh 'platform="linux-amd64"' 'to_build=["tools/squashfs"]'
+    When you change source url, you need to delete cipd package:
+      experimental/<email>_at_google.com/sources/url/tools/squashfs/linux-amd64
+    Also, you need to delete the uploaded package, otherwise the recipe will
+    not upload the updated package to CIPD
+      experimental/<email>_at_google.com/tools/squashfs/linux-amd64
+    For googlers, you can delete package following
+    http://go/luci-cipd#deletepackage
+    For non-googlers or you don't have permission to delete, please file crbug
+    with component Infra>Platform>Admin.
 EOF
 
       exit 0

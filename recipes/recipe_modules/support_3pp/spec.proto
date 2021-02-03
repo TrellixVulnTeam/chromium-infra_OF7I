@@ -41,6 +41,8 @@ message Spec {
   message Create {
     message Source {
       // (required) Source messages must have one of these methods.
+      // In case multiple approaches are possible, prefer using one of the
+      // approaches in the following order: git, url, script, cipd.
       oneof method {
         GitSource git = 1;
         CipdSource cipd = 2;
