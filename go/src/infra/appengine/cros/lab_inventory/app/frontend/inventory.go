@@ -16,7 +16,10 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
@@ -929,10 +932,13 @@ func (is *InventoryServerImpl) GetManufacturingConfig(ctx context.Context, req *
 	cfgIds := []*manufacturing.ConfigID{mfgCfgID}
 	mCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
 	if err != nil {
+		if err.Error() == ds.ErrNoSuchEntity.Error() {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("manufacturing config not found for %s", req.GetName()))
+		}
 		return nil, err.(errors.MultiError)[0]
 	}
 	if len(mCfgs) == 0 {
-		return nil, errors.New(fmt.Sprintf("no manufacturing config found for %s", req.GetName()))
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("manufacturing config not found for %s", req.GetName()))
 	}
 	return mCfgs[0].(*manufacturing.Config), nil
 }
@@ -963,6 +969,9 @@ func (is *InventoryServerImpl) GetDeviceConfig(ctx context.Context, req *api.Get
 		if err == nil || err.(errors.MultiError)[i] == nil {
 			idToDevCfg[devCfgIds[i].String()] = devCfgs[i].(*device.Config)
 		} else {
+			if err.Error() == ds.ErrNoSuchEntity.Error() {
+				return nil, status.Errorf(codes.NotFound, fmt.Sprintf("device config not found for %+v", req.GetConfigId()))
+			}
 			return nil, errors.New(fmt.Sprintf("cannot get device config for %v: %v", devCfgIds[i], err.(errors.MultiError)[i]))
 		}
 	}
@@ -986,6 +995,10 @@ func (is *InventoryServerImpl) GetHwidData(ctx context.Context, req *api.GetHwid
 	secret := config.Get(ctx).HwidSecret
 	hwidData, err := getHwidDataFunc(ctx, req.GetName(), secret)
 	if err != nil {
+		if strings.Contains(err.Error(), "\"code\": 5") {
+			// NotFound status code is 5
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Hwid data not found for %s", req.GetName()))
+		}
 		return nil, err
 	}
 	return &api.HwidData{
