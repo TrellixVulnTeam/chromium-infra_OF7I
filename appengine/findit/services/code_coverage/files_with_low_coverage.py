@@ -44,6 +44,7 @@ def ExportFilesWithLowCoverage():
     entities = query.fetch(limit=1)
     report = entities[0]
     latest_revision = report.gitiles_commit.revision
+    logging.info("Latest Revision: %s", latest_revision)
     # Process File Coverage reports for the latest revision
     query = FileCoverageData.query(
         FileCoverageData.gitiles_commit.server_host == server_host,
@@ -69,26 +70,32 @@ def _CreateBigqueryRow(file_coverage_data):
   """Create a bigquery row for a file with low coverage.
 
   Returns a dict whose keys are column names and values are column values
-  corresponding to the schema of the bigquery table. Returns None if 
+  corresponding to the schema of the bigquery table. Returns None if
   file's coverage is above the bar.
 
   Args:
     file_coverage_data (FileCoverageData): Coverage report for the
       corresponding file.
   """
-  data = file_coverage_data.data
-  for metric in data['summaries']:
-    if metric['name'] == 'line':
-      total_lines = metric['total']
-      covered_lines = metric['covered']
-      break
-  if covered_lines / float(total_lines) < _MIN_ABS_COVERAGE_RATIO:
-    return {
-        'project': file_coverage_data.gitiles_commit.project,
-        'revision': file_coverage_data.gitiles_commit.revision,
-        'path': data['path'][2:],
-        'total_lines': total_lines,
-        'covered_lines': covered_lines,
-        'insert_timestamp': time_util.GetUTCNow().isoformat(),
-        'builder': file_coverage_data.builder
-    }
+  try:
+    data = file_coverage_data.data
+    for metric in data['summaries']:
+      if metric['name'] == 'line':
+        total_lines = metric['total']
+        covered_lines = metric['covered']
+        break
+
+    if covered_lines / float(total_lines) < _MIN_ABS_COVERAGE_RATIO:
+      return {
+          'project': file_coverage_data.gitiles_commit.project,
+          'revision': file_coverage_data.gitiles_commit.revision,
+          'path': data['path'][2:],
+          'total_lines': total_lines,
+          'covered_lines': covered_lines,
+          'insert_timestamp': time_util.GetUTCNow().isoformat(),
+          'builder': file_coverage_data.builder
+      }
+  except Exception as e:
+    logging.warning("Encounted exception for file coverage %s",
+                    file_coverage_data)
+    logging.warning(e.message)
