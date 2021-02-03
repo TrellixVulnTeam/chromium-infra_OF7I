@@ -27,7 +27,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n;go.chromium.org/luci/buildbucket/proto/builds_service.proto\x12\x0e\x62uildbucket.v2\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17google/rpc/status.proto\x1a\x32go.chromium.org/luci/buildbucket/proto/build.proto\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a\x39go.chromium.org/luci/buildbucket/proto/notification.proto\"\x8b\x01\n\x0fGetBuildRequest\x12\n\n\x02id\x18\x01 \x01(\x03\x12*\n\x07\x62uilder\x18\x02 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\x14\n\x0c\x62uild_number\x18\x03 \x01(\x05\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\x9b\x01\n\x13SearchBuildsRequest\x12\x31\n\tpredicate\x18\x01 \x01(\x0b\x32\x1e.buildbucket.v2.BuildPredicate\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12\x11\n\tpage_size\x18\x65 \x01(\x05\x12\x12\n\npage_token\x18\x66 \x01(\t\"V\n\x14SearchBuildsResponse\x12%\n\x06\x62uilds\x18\x01 \x03(\x0b\x32\x15.buildbucket.v2.Build\x12\x17\n\x0fnext_page_token\x18\x64 \x01(\t\"\xcd\x02\n\x0c\x42\x61tchRequest\x12\x36\n\x08requests\x18\x01 \x03(\x0b\x32$.buildbucket.v2.BatchRequest.Request\x1a\x84\x02\n\x07Request\x12\x34\n\tget_build\x18\x01 \x01(\x0b\x32\x1f.buildbucket.v2.GetBuildRequestH\x00\x12<\n\rsearch_builds\x18\x02 \x01(\x0b\x32#.buildbucket.v2.SearchBuildsRequestH\x00\x12>\n\x0eschedule_build\x18\x03 \x01(\x0b\x32$.buildbucket.v2.ScheduleBuildRequestH\x00\x12:\n\x0c\x63\x61ncel_build\x18\x04 \x01(\x0b\x32\".buildbucket.v2.CancelBuildRequestH\x00\x42\t\n\x07request\"\xd3\x02\n\rBatchResponse\x12\x39\n\tresponses\x18\x01 \x03(\x0b\x32&.buildbucket.v2.BatchResponse.Response\x1a\x86\x02\n\x08Response\x12*\n\tget_build\x18\x01 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12=\n\rsearch_builds\x18\x02 \x01(\x0b\x32$.buildbucket.v2.SearchBuildsResponseH\x00\x12/\n\x0eschedule_build\x18\x03 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12-\n\x0c\x63\x61ncel_build\x18\x04 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12#\n\x05\x65rror\x18\x64 \x01(\x0b\x32\x12.google.rpc.StatusH\x00\x42\n\n\x08response\"\x97\x01\n\x12UpdateBuildRequest\x12$\n\x05\x62uild\x18\x01 \x01(\x0b\x32\x15.buildbucket.v2.Build\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\xdc\x07\n\x14ScheduleBuildRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x19\n\x11template_build_id\x18\x02 \x01(\x03\x12*\n\x07\x62uilder\x18\x03 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\'\n\x06\x63\x61nary\x18\x04 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12-\n\x0c\x65xperimental\x18\x05 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12J\n\x0b\x65xperiments\x18\x10 \x03(\x0b\x32\x35.buildbucket.v2.ScheduleBuildRequest.ExperimentsEntry\x12+\n\nproperties\x18\x06 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x07 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x34\n\x0egerrit_changes\x18\x08 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12(\n\x04tags\x18\t \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12\x36\n\ndimensions\x18\n \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x10\n\x08priority\x18\x0b \x01(\x05\x12\x32\n\x06notify\x18\x0c \x01(\x0b\x32\".buildbucket.v2.NotificationConfig\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12)\n\x08\x63ritical\x18\r \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\'\n\x03\x65xe\x18\x0e \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12?\n\x08swarming\x18\x0f \x01(\x0b\x32-.buildbucket.v2.ScheduleBuildRequest.Swarming\x12\x35\n\x12scheduling_timeout\x18\x11 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x34\n\x11\x65xecution_timeout\x18\x12 \x01(\x0b\x32\x19.google.protobuf.Duration\x1a\x32\n\x10\x45xperimentsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\x1a!\n\x08Swarming\x12\x15\n\rparent_run_id\x18\x01 \x01(\t\"f\n\x12\x43\x61ncelBuildRequest\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x18\n\x10summary_markdown\x18\x02 \x01(\t\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\xcd\x03\n\x0e\x42uildPredicate\x12*\n\x07\x62uilder\x18\x01 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12&\n\x06status\x18\x02 \x01(\x0e\x32\x16.buildbucket.v2.Status\x12\x34\n\x0egerrit_changes\x18\x03 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12<\n\x15output_gitiles_commit\x18\x04 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x12\n\ncreated_by\x18\x05 \x01(\t\x12(\n\x04tags\x18\x06 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12.\n\x0b\x63reate_time\x18\x07 \x01(\x0b\x32\x19.buildbucket.v2.TimeRange\x12\x1c\n\x14include_experimental\x18\x08 \x01(\x08\x12)\n\x05\x62uild\x18\t \x01(\x0b\x32\x1a.buildbucket.v2.BuildRange\x12\'\n\x06\x63\x61nary\x18\n \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\x13\n\x0b\x65xperiments\x18\x0b \x03(\t\":\n\nBuildRange\x12\x16\n\x0estart_build_id\x18\x01 \x01(\x03\x12\x14\n\x0c\x65nd_build_id\x18\x02 \x01(\x03\x32\xdb\x03\n\x06\x42uilds\x12\x44\n\x08GetBuild\x12\x1f.buildbucket.v2.GetBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12[\n\x0cSearchBuilds\x12#.buildbucket.v2.SearchBuildsRequest\x1a$.buildbucket.v2.SearchBuildsResponse\"\x00\x12J\n\x0bUpdateBuild\x12\".buildbucket.v2.UpdateBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12N\n\rScheduleBuild\x12$.buildbucket.v2.ScheduleBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12J\n\x0b\x43\x61ncelBuild\x12\".buildbucket.v2.CancelBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12\x46\n\x05\x42\x61tch\x12\x1c.buildbucket.v2.BatchRequest\x1a\x1d.buildbucket.v2.BatchResponse\"\x00\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+  serialized_pb=b'\n;go.chromium.org/luci/buildbucket/proto/builds_service.proto\x12\x0e\x62uildbucket.v2\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17google/rpc/status.proto\x1a\x32go.chromium.org/luci/buildbucket/proto/build.proto\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a\x39go.chromium.org/luci/buildbucket/proto/notification.proto\"\x8b\x01\n\x0fGetBuildRequest\x12\n\n\x02id\x18\x01 \x01(\x03\x12*\n\x07\x62uilder\x18\x02 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\x14\n\x0c\x62uild_number\x18\x03 \x01(\x05\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\x9b\x01\n\x13SearchBuildsRequest\x12\x31\n\tpredicate\x18\x01 \x01(\x0b\x32\x1e.buildbucket.v2.BuildPredicate\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12\x11\n\tpage_size\x18\x65 \x01(\x05\x12\x12\n\npage_token\x18\x66 \x01(\t\"V\n\x14SearchBuildsResponse\x12%\n\x06\x62uilds\x18\x01 \x03(\x0b\x32\x15.buildbucket.v2.Build\x12\x17\n\x0fnext_page_token\x18\x64 \x01(\t\"\xcd\x02\n\x0c\x42\x61tchRequest\x12\x36\n\x08requests\x18\x01 \x03(\x0b\x32$.buildbucket.v2.BatchRequest.Request\x1a\x84\x02\n\x07Request\x12\x34\n\tget_build\x18\x01 \x01(\x0b\x32\x1f.buildbucket.v2.GetBuildRequestH\x00\x12<\n\rsearch_builds\x18\x02 \x01(\x0b\x32#.buildbucket.v2.SearchBuildsRequestH\x00\x12>\n\x0eschedule_build\x18\x03 \x01(\x0b\x32$.buildbucket.v2.ScheduleBuildRequestH\x00\x12:\n\x0c\x63\x61ncel_build\x18\x04 \x01(\x0b\x32\".buildbucket.v2.CancelBuildRequestH\x00\x42\t\n\x07request\"\xd3\x02\n\rBatchResponse\x12\x39\n\tresponses\x18\x01 \x03(\x0b\x32&.buildbucket.v2.BatchResponse.Response\x1a\x86\x02\n\x08Response\x12*\n\tget_build\x18\x01 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12=\n\rsearch_builds\x18\x02 \x01(\x0b\x32$.buildbucket.v2.SearchBuildsResponseH\x00\x12/\n\x0eschedule_build\x18\x03 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12-\n\x0c\x63\x61ncel_build\x18\x04 \x01(\x0b\x32\x15.buildbucket.v2.BuildH\x00\x12#\n\x05\x65rror\x18\x64 \x01(\x0b\x32\x12.google.rpc.StatusH\x00\x42\n\n\x08response\"\x97\x01\n\x12UpdateBuildRequest\x12$\n\x05\x62uild\x18\x01 \x01(\x0b\x32\x15.buildbucket.v2.Build\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\x8d\x08\n\x14ScheduleBuildRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x19\n\x11template_build_id\x18\x02 \x01(\x03\x12*\n\x07\x62uilder\x18\x03 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\'\n\x06\x63\x61nary\x18\x04 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12-\n\x0c\x65xperimental\x18\x05 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12J\n\x0b\x65xperiments\x18\x10 \x03(\x0b\x32\x35.buildbucket.v2.ScheduleBuildRequest.ExperimentsEntry\x12+\n\nproperties\x18\x06 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x07 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x34\n\x0egerrit_changes\x18\x08 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12(\n\x04tags\x18\t \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12\x36\n\ndimensions\x18\n \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x10\n\x08priority\x18\x0b \x01(\x05\x12\x32\n\x06notify\x18\x0c \x01(\x0b\x32\".buildbucket.v2.NotificationConfig\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12)\n\x08\x63ritical\x18\r \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\'\n\x03\x65xe\x18\x0e \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12?\n\x08swarming\x18\x0f \x01(\x0b\x32-.buildbucket.v2.ScheduleBuildRequest.Swarming\x12\x35\n\x12scheduling_timeout\x18\x11 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x34\n\x11\x65xecution_timeout\x18\x12 \x01(\x0b\x32\x19.google.protobuf.Duration\x12/\n\x0cgrace_period\x18\x13 \x01(\x0b\x32\x19.google.protobuf.Duration\x1a\x32\n\x10\x45xperimentsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\x1a!\n\x08Swarming\x12\x15\n\rparent_run_id\x18\x01 \x01(\t\"f\n\x12\x43\x61ncelBuildRequest\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x18\n\x10summary_markdown\x18\x02 \x01(\t\x12*\n\x06\x66ields\x18\x64 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"\xcd\x03\n\x0e\x42uildPredicate\x12*\n\x07\x62uilder\x18\x01 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12&\n\x06status\x18\x02 \x01(\x0e\x32\x16.buildbucket.v2.Status\x12\x34\n\x0egerrit_changes\x18\x03 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12<\n\x15output_gitiles_commit\x18\x04 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x12\n\ncreated_by\x18\x05 \x01(\t\x12(\n\x04tags\x18\x06 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12.\n\x0b\x63reate_time\x18\x07 \x01(\x0b\x32\x19.buildbucket.v2.TimeRange\x12\x1c\n\x14include_experimental\x18\x08 \x01(\x08\x12)\n\x05\x62uild\x18\t \x01(\x0b\x32\x1a.buildbucket.v2.BuildRange\x12\'\n\x06\x63\x61nary\x18\n \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\x13\n\x0b\x65xperiments\x18\x0b \x03(\t\":\n\nBuildRange\x12\x16\n\x0estart_build_id\x18\x01 \x01(\x03\x12\x14\n\x0c\x65nd_build_id\x18\x02 \x01(\x03\x32\xdb\x03\n\x06\x42uilds\x12\x44\n\x08GetBuild\x12\x1f.buildbucket.v2.GetBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12[\n\x0cSearchBuilds\x12#.buildbucket.v2.SearchBuildsRequest\x1a$.buildbucket.v2.SearchBuildsResponse\"\x00\x12J\n\x0bUpdateBuild\x12\".buildbucket.v2.UpdateBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12N\n\rScheduleBuild\x12$.buildbucket.v2.ScheduleBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12J\n\x0b\x43\x61ncelBuild\x12\".buildbucket.v2.CancelBuildRequest\x1a\x15.buildbucket.v2.Build\"\x00\x12\x46\n\x05\x42\x61tch\x12\x1c.buildbucket.v2.BatchRequest\x1a\x1d.buildbucket.v2.BatchResponse\"\x00\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,google_dot_rpc_dot_status__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_build__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_notification__pb2.DESCRIPTOR,])
 
@@ -444,8 +444,8 @@ _SCHEDULEBUILDREQUEST_EXPERIMENTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2542,
-  serialized_end=2592,
+  serialized_start=2591,
+  serialized_end=2641,
 )
 
 _SCHEDULEBUILDREQUEST_SWARMING = _descriptor.Descriptor(
@@ -475,8 +475,8 @@ _SCHEDULEBUILDREQUEST_SWARMING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2594,
-  serialized_end=2627,
+  serialized_start=2643,
+  serialized_end=2676,
 )
 
 _SCHEDULEBUILDREQUEST = _descriptor.Descriptor(
@@ -620,6 +620,13 @@ _SCHEDULEBUILDREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='grace_period', full_name='buildbucket.v2.ScheduleBuildRequest.grace_period', index=19,
+      number=19, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -633,7 +640,7 @@ _SCHEDULEBUILDREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1639,
-  serialized_end=2627,
+  serialized_end=2676,
 )
 
 
@@ -678,8 +685,8 @@ _CANCELBUILDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2629,
-  serialized_end=2731,
+  serialized_start=2678,
+  serialized_end=2780,
 )
 
 
@@ -780,8 +787,8 @@ _BUILDPREDICATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2734,
-  serialized_end=3195,
+  serialized_start=2783,
+  serialized_end=3244,
 )
 
 
@@ -819,8 +826,8 @@ _BUILDRANGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3197,
-  serialized_end=3255,
+  serialized_start=3246,
+  serialized_end=3304,
 )
 
 _GETBUILDREQUEST.fields_by_name['builder'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERID
@@ -889,6 +896,7 @@ _SCHEDULEBUILDREQUEST.fields_by_name['exe'].message_type = go_dot_chromium_dot_o
 _SCHEDULEBUILDREQUEST.fields_by_name['swarming'].message_type = _SCHEDULEBUILDREQUEST_SWARMING
 _SCHEDULEBUILDREQUEST.fields_by_name['scheduling_timeout'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _SCHEDULEBUILDREQUEST.fields_by_name['execution_timeout'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
+_SCHEDULEBUILDREQUEST.fields_by_name['grace_period'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _CANCELBUILDREQUEST.fields_by_name['fields'].message_type = google_dot_protobuf_dot_field__mask__pb2._FIELDMASK
 _BUILDPREDICATE.fields_by_name['builder'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2._BUILDERID
 _BUILDPREDICATE.fields_by_name['status'].enum_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2._STATUS
@@ -1023,8 +1031,8 @@ _BUILDS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=3258,
-  serialized_end=3733,
+  serialized_start=3307,
+  serialized_end=3782,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetBuild',
