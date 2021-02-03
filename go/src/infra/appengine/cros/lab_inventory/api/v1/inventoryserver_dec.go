@@ -365,3 +365,37 @@ func (s *DecoratedInventory) GetHwidData(ctx context.Context, req *GetHwidDataRe
 	}
 	return
 }
+
+func (s *DecoratedInventory) BatchGetManualRepairRecords(ctx context.Context, req *BatchGetManualRepairRecordsRequest) (rsp *BatchGetManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetManualRepairRecords", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) BatchCreateManualRepairRecords(ctx context.Context, req *BatchCreateManualRepairRecordsRequest) (rsp *BatchCreateManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchCreateManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchCreateManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchCreateManualRepairRecords", rsp, err)
+	}
+	return
+}

@@ -1006,3 +1006,24 @@ func (is *InventoryServerImpl) GetHwidData(ctx context.Context, req *api.GetHwid
 		Variant: hwidData.Variant,
 	}, nil
 }
+
+// BatchGetManualRepairRecords gets the open record corresponding to each host
+// in the list of given hostnames. If no open record is found, an empty object
+// will be returned for that hostname.
+func (is *InventoryServerImpl) BatchGetManualRepairRecords(ctx context.Context, req *api.BatchGetManualRepairRecordsRequest) (rsp *api.BatchGetManualRepairRecordsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	return &api.BatchGetManualRepairRecordsResponse{}, nil
+}
+
+// BatchCreateManualRepairRecords creates new submitted manual repair records
+// for a batch of given devices.
+func (is *InventoryServerImpl) BatchCreateManualRepairRecords(ctx context.Context, req *api.BatchCreateManualRepairRecordsRequest) (rsp *api.BatchCreateManualRepairRecordsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	return &api.BatchCreateManualRepairRecordsResponse{}, nil
+}

@@ -84,6 +84,13 @@ service Inventory {
 
   // Get a Hwid data for the device from datastore
   rpc GetHwidData(GetHwidDataRequest) returns (HwidData);
+
+  // Get the open manual repair records for a batch of hostnames from datastore
+  rpc BatchGetManualRepairRecords(BatchGetManualRepairRecordsRequest) returns (BatchGetManualRepairRecordsResponse);
+
+  // BatchCreateManualRepairRecords creates multiple manual repair records in
+  // datastore in batch
+  rpc BatchCreateManualRepairRecords(BatchCreateManualRepairRecordsRequest) returns (BatchCreateManualRepairRecordsResponse);
 }
 
 message ListCrosDevicesLabConfigRequest {
@@ -321,4 +328,29 @@ message GetDeviceConfigRequest {
 message GetHwidDataRequest {
   // Hwid of the Asset/DUT
   string name = 1;
+}
+
+message BatchGetManualRepairRecordsRequest {
+  repeated string hostnames = 1;
+}
+
+message BatchGetManualRepairRecordsResponse {
+  repeated ManualRepairRecordResult repair_records = 1;
+}
+
+message BatchCreateManualRepairRecordsRequest {
+  repeated inventory.libs.protos.DeviceManualRepairRecord repair_records = 1;
+}
+
+message BatchCreateManualRepairRecordsResponse {
+  repeated ManualRepairRecordResult repair_records = 1;
+}
+
+message ManualRepairRecordResult {
+  inventory.libs.protos.DeviceManualRepairRecord repair_record = 1;
+  string id = 2;
+  // The existence of an error_msg is used to determine whether a result was a
+  // success or failure. The message content is mainly used for UI side logic.
+  string error_msg = 3;
+  string hostname = 4;
 }
