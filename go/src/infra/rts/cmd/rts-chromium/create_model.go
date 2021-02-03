@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/maruel/subcommands"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/api/iterator"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/cli"
@@ -114,7 +112,7 @@ func (r *createModelRun) writeModel(ctx context.Context, dir string) error {
 	})
 
 	eg.Go(func() error {
-		err := r.writeTestFileSet(ctx, filepath.Join(dir, "test-file-set.txt"))
+		err := r.writeTestFileSet(ctx, filepath.Join(dir, "test-files.jsonl"))
 		return errors.Annotate(err, "failed to write test file set").Err()
 	})
 
@@ -190,47 +188,22 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 
 // writeTestFileSet writes the test file set in Chromium to the file.
 // It skips tests that match neverSkipTestFileRegexp.
+//
+// The file format is JSON Lines of TestFile protobufs.
 func (r *createModelRun) writeTestFileSet(ctx context.Context, fileName string) error {
-	// Grab all test file names in the past 1 week.
-	// Use ci_test_results table (not CQ) because it is smaller and it does not
-	// include test file names that never made it to the repo.
-	q := r.bqClient.Query(`
-		SELECT DISTINCT tr.test_metadata.location.file_name FileName
-		FROM luci-resultdb.chromium.ci_test_results tr
-		WHERE partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
-			AND tr.test_metadata.location.file_name != ''
-		ORDER BY FileName
-	`)
-	it, err := q.Read(ctx)
-	if err != nil {
-		return err
-	}
-
 	f, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	for {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		// Read the next row.
-		var row struct {
-			FileName string
-		}
-		switch err := it.Next(&row); {
-		case err == iterator.Done:
-			return nil
-		case err != nil:
-			return err
+	bufW := bufio.NewWriter(f)
 
-		case mustAlwaysRunTest(row.FileName):
-			continue
-		}
-
-		if _, err := fmt.Fprintln(f, row.FileName); err != nil {
-			return err
-		}
+	if err := writeTestFiles(ctx, r.bqClient, bufW); err != nil {
+		return err
 	}
+
+	if err := bufW.Flush(); err != nil {
+		return err
+	}
+	return f.Close()
 }

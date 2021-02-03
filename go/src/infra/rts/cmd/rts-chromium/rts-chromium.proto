@@ -1,0 +1,27 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.rts;
+
+option go_package = "infra/rts/cmd/rts-chromium;main";
+
+// A test file used in Chromium.
+//
+// Used in an RTS model, in file "test-files.jsonl" encoded as JSON Lines
+// of TestFile protojson messages.
+message TestFile {
+  // Source-absolute path to the test file, e.g.
+  // "//chrome/renderer/autofill/password_autofill_agent_browsertest.cc".
+  string path = 1;
+
+  // Names of tests known to be defined in the the file.
+  // The names are native to the test framework, e.g.
+  // "PasswordAutofillAgentTest.NoMayUsePlaceholderAndPlaceholderOnForm".
+  repeated string test_names = 2;
+
+  // Test suites where the test file was observed, e.g. "browser_tests".
+  repeated string test_suites = 3;
+}

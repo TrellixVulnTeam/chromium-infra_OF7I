@@ -149,7 +149,7 @@ func init() {
 }
 
 // selectTests calls skipFile for test files that should be skipped.
-func (r *selectRun) selectTests(skipFile func(name string) error) (err error) {
+func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
 	// Check if any of the changed files requires all tests.
 	for f := range r.changedFiles {
 		if requireAllTestsRegexp.MatchString(f) {
@@ -157,10 +157,11 @@ func (r *selectRun) selectTests(skipFile func(name string) error) (err error) {
 		}
 	}
 	r.strategy.Select(r.changedFiles.ToSlice(), func(fileName string) (keepGoing bool) {
-		if !r.testFiles.Has(fileName) {
+		file, ok := r.testFiles[fileName]
+		if !ok {
 			return true
 		}
-		err = skipFile(fileName)
+		err = skipFile(file)
 		return err == nil
 	})
 	return

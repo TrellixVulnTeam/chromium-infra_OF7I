@@ -137,7 +137,7 @@ func (r *baseHistoryRun) fetchResults(ctx context.Context, table *bigquery.Table
 	//    This also takes care of the converting from tabular format to a file format.
 	// 2. Download the prepared files to the destination directory.
 
-	if err := r.prepareOutDir(); err != nil {
+	if err := prepareOutDir(r.out, "*.jsonl.gz"); err != nil {
 		return err
 	}
 
@@ -199,26 +199,6 @@ func (r *baseHistoryRun) fetchResults(ctx context.Context, table *bigquery.Table
 			}
 		}
 	})
-}
-
-// prepareOutDir ensures that r.out dir exists and does not have .jsonl.gz
-// files.
-func (r *baseHistoryRun) prepareOutDir() error {
-	if err := os.MkdirAll(r.out, 0777); err != nil {
-		return err
-	}
-
-	// Remove existing .jsonl.gz files.
-	existing, err := filepath.Glob(filepath.Join(r.out, "*.jsonl.gz"))
-	if err != nil {
-		return err
-	}
-	for _, f := range existing {
-		if err := os.Remove(f); err != nil {
-			return errors.Annotate(err, "failed to remove %q", f).Err()
-		}
-	}
-	return nil
 }
 
 func waitForSuccess(ctx context.Context, job *bigquery.Job) error {

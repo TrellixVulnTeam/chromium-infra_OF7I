@@ -27,7 +27,7 @@ import (
 
 func cmdSelect() *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: `select -changed-files <path> -model-dir <path> -skip-test-files <path>`,
+		UsageLine: `select -changed-files <path> -model-dir <path> -filter-files-dir <path>`,
 		ShortDesc: "compute the set of test files to skip",
 		LongDesc: text.Doc(`
 			Compute the set of test files to skip.
@@ -45,9 +45,11 @@ func cmdSelect() *subcommands.Command {
 				Normally it is coming from CIPD package "chromium/rts/model"
 				and precomputed by "rts-chromium create-model" command.
 			`))
-			r.Flags.StringVar(&r.skipTestFilesPath, "skip-test-files", "", text.Doc(`
-				Path to the file where to write the test file names that should be skipped.
-				Each line of the file will be a filename, with "//" prefix.
+			r.Flags.StringVar(&r.filterFilesDir, "filter-files-dir", "", text.Doc(`
+				Path to a directory where to write test filter files.
+				A file per test suite is written, e.g. browser_tests.filter.
+				The file format is described in https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/filters/README.md.
+				Before writing, all .filter files in the directory are deleted.
 			`))
 			r.Flags.Float64Var(&r.targetChangeRecall, "target-change-recall", 0.99, text.Doc(`
 				The target fraction of bad changes to be caught by the selection strategy.
@@ -65,12 +67,12 @@ type selectRun struct {
 
 	changedFilesPath   string
 	modelDir           string
-	skipTestFilesPath  string
+	filterFilesDir     string
 	targetChangeRecall float64
 
 	// Indirect input.
 
-	testFiles    stringset.Set
+	testFiles    map[string]*TestFile // indexed by source-absolute test file name
 	changedFiles stringset.Set
 	strategy     git.SelectionStrategy
 	evalResult   *eval.Result
@@ -82,8 +84,8 @@ func (r *selectRun) validateFlags() error {
 		return errors.New("-changed-files is required")
 	case r.modelDir == "":
 		return errors.New("-model-dir is required")
-	case r.skipTestFilesPath == "":
-		return errors.New("-skip-test-files is required")
+	case r.filterFilesDir == "":
+		return errors.New("-filter-files-dir is required")
 	case !(r.targetChangeRecall > 0 && r.targetChangeRecall < 1):
 		return errors.New("-target-change-recall must be in (0.0, 1.0) range")
 	default:
@@ -112,15 +114,51 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 	r.strategy.Threshold = threshold.Value
 	logging.Infof(ctx, "chosen threshold: %#v", r.strategy.Threshold)
 
-	f, err := os.Create(r.skipTestFilesPath)
+	return r.done(r.writeFilterFiles())
+}
+
+// writeFilterFiles writes filter files in r.filterFilesDir directory.
+func (r *selectRun) writeFilterFiles() error {
+	if err := prepareOutDir(r.filterFilesDir, "*.filter"); err != nil {
+		return errors.Annotate(err, "failed to prepare filter file dir %q", r.filterFilesDir).Err()
+	}
+
+	// maps a test suite to the list of tests to skip.
+	testsToSkip := map[string][]string{}
+	err := r.selectTests(func(testFileToSkip *TestFile) error {
+		for _, testSuite := range testFileToSkip.TestSuites {
+			testsToSkip[testSuite] = append(testsToSkip[testSuite], testFileToSkip.TestNames...)
+		}
+		return nil
+	})
 	if err != nil {
-		return r.done(errors.Annotate(err, "failed to create the skip file at %q", r.skipTestFilesPath).Err())
+		return err
+	}
+
+	// Write the files.
+	for testSuite, testNames := range testsToSkip {
+		fileName := filepath.Join(r.filterFilesDir, testSuite+".filter")
+		if err := writeFilterFile(fileName, testNames); err != nil {
+			return errors.Annotate(err, "failed to write %q", fileName).Err()
+		}
+		fmt.Printf("wrote %s\n", fileName)
+	}
+	return nil
+}
+
+func writeFilterFile(fileName string, toSkip []string) error {
+	f, err := os.Create(fileName)
+	if err != nil {
+		return err
 	}
 	defer f.Close()
-	return r.done(r.selectTests(func(skippedFile string) error {
-		_, err := fmt.Fprintln(f, skippedFile)
-		return err
-	}))
+
+	for _, name := range toSkip {
+		if _, err := fmt.Fprintf(f, "-%s\n", name); err != nil {
+			return err
+		}
+	}
+	return f.Close()
 }
 
 // chooseThreshold returns the affectedness threshold based on
@@ -154,7 +192,7 @@ func (r *selectRun) loadInput(ctx context.Context) error {
 	})
 
 	eg.Go(func() (err error) {
-		r.testFiles, err = loadStringSet(filepath.Join(r.modelDir, "test-file-set.txt"))
+		err = r.loadTestFileSet(filepath.Join(r.modelDir, "test-files.jsonl"))
 		return errors.Annotate(err, "failed to load test files set").Err()
 	})
 
@@ -193,6 +231,21 @@ func (r *selectRun) loadGraph(fileName string) error {
 	// the model or both are no longer good. Thus, do not sync.
 	r.strategy.Graph = &git.Graph{}
 	return r.strategy.Graph.Read(bufio.NewReader(f))
+}
+
+// loadTestFileSet loads r.testFiles.
+func (r *selectRun) loadTestFileSet(fileName string) error {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	r.testFiles = map[string]*TestFile{}
+	return readTestFiles(bufio.NewReader(f), func(file *TestFile) error {
+		r.testFiles[file.Path] = file
+		return nil
+	})
 }
 
 // loadStringSet loads a set of newline-separated strings from a text file.
