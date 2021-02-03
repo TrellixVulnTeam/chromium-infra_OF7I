@@ -157,8 +157,8 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 
 func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
-	_, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]
-	if desired != "" && !exists {
+	exists := r.ExistingProvisionableLabels[chromeOSBuildKey]
+	if desired != "" && desired != exists {
 		ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
 		return toPrejobResponse(ar), err
 	}
@@ -169,13 +169,13 @@ func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobReque
 func provisionFirmwareLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	labels := []string{}
 	desired := roFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
-	_, exists := r.ExistingProvisionableLabels[roFirmwareBuildKey]
-	if desired != "" && !exists {
+	exists := r.ExistingProvisionableLabels[roFirmwareBuildKey]
+	if desired != "" && desired != exists {
 		labels = append(labels, fmt.Sprintf("%s:%s", roFirmwareBuildKey, desired))
 	}
 	desired = rwFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
-	_, exists = r.ExistingProvisionableLabels[rwFirmwareBuildKey]
-	if desired != "" && !exists {
+	exists = r.ExistingProvisionableLabels[rwFirmwareBuildKey]
+	if desired != "" && desired != exists {
 		labels = append(labels, fmt.Sprintf("%s:%s", rwFirmwareBuildKey, desired))
 	}
 
@@ -277,7 +277,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 		logging.Infof(ctx, "Skipped Chrome OS Build provision, because no specific version was requested.")
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
-	if _, exists := r.ExistingProvisionableLabels[chromeOSBuildKey]; exists {
+	if exists := r.ExistingProvisionableLabels[chromeOSBuildKey]; exists == desired {
 		logging.Infof(ctx, "Skipped Chrome OS Build provision, because requested version (%s) is already installed", desired)
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
