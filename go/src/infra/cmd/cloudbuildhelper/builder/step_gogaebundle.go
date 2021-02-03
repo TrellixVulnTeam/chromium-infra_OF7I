@@ -34,17 +34,21 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	}
 
 	// Read go runtime version from the YAML to know what Go build flags to use.
+	//
+	// It is either e.g. "go113" for GAE Standard or just "go" for GAE Flex.
 	runtime, err := readRuntime(yamlPath)
 	if err != nil {
 		return err
 	}
 	logging.Infof(ctx, "Runtime is %q", runtime)
-	if !strings.HasPrefix(runtime, "go1") {
-		return errors.Annotate(err, "%q is not a supported go runtime", runtime).Err()
+	if runtime != "go" && !strings.HasPrefix(runtime, "go1") {
+		return errors.Reason("%q is not a supported go runtime", runtime).Err()
 	}
-	goMinorVer, err := strconv.ParseInt(runtime[3:], 10, 32)
-	if err != nil {
-		return errors.Annotate(err, "can't parse %q", runtime).Err()
+	var goMinorVer int64
+	if runtime != "go" {
+		if goMinorVer, err = strconv.ParseInt(runtime[3:], 10, 32); err != nil {
+			return errors.Annotate(err, "can't parse %q", runtime).Err()
+		}
 	}
 
 	// The directory with `main` package.
@@ -57,9 +61,11 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	bc.Dir = mainDir
 
 	// Enable all Go versions up to the one in the app.yaml.
-	bc.ReleaseTags = nil
-	for i := 1; i <= int(goMinorVer); i++ {
-		bc.ReleaseTags = append(bc.ReleaseTags, fmt.Sprintf("go1.%d", i))
+	if goMinorVer != 0 {
+		bc.ReleaseTags = nil
+		for i := 1; i <= int(goMinorVer); i++ {
+			bc.ReleaseTags = append(bc.ReleaseTags, fmt.Sprintf("go1.%d", i))
+		}
 	}
 
 	// Find where main package is actually located.
