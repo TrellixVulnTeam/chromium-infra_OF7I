@@ -33,7 +33,8 @@ class HttpClientAppengine(RetryHttpClient):
 
   def _SendRequest(self, url, method, data, timeout, headers=None):
     headers = headers or {}
-
+    if "isolateserver" in url:
+      logging.debug("Sending isolateserver request with url = %s", url)
     result = urlfetch.fetch(
         url,
         payload=data,
