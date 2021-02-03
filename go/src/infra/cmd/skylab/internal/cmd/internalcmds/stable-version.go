@@ -2,19 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(gregorynisbet)
+// This command has been removed. Its only purpose now is to emit an error
+// message suggesting an alternative to the removed functionality. After
+// enough time has passed, please completely remove the file.
+
 package internalcmds
 
 import (
-	"bufio"
 	"fmt"
-	"text/tabwriter"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/grpc/prpc"
 
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
@@ -50,36 +50,8 @@ func (c *dutStableVersionRun) Run(a subcommands.Application, args []string, env 
 }
 
 func (c *dutStableVersionRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if len(args) != 1 {
-		return cmdlib.NewUsageError(c.Flags, "exactly one HOSTNAME must be provided")
-	}
-	hostname := args[0]
-	ctx := cli.GetContext(a, c, env)
-	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return err
-	}
-	siteEnv := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    siteEnv.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-	req := fleet.GetStableVersionRequest{Hostname: hostname}
-	res, err := ic.GetStableVersion(ctx, &req)
-	if err != nil {
-		return err
-	}
-
-	bw := bufio.NewWriter(a.GetOut())
-	tw := tabwriter.NewWriter(bw, 0, 2, 2, ' ', 0)
-	defer tw.Flush()
-	defer bw.Flush()
-	fmt.Fprintf(tw, "Hostname:\t%s\n", hostname)
-	fmt.Fprintf(tw, "Cros:\t%s\n", res.GetCrosVersion())
-	fmt.Fprintf(tw, "Firmware:\t%s\n", res.GetFirmwareVersion())
-	fmt.Fprintf(tw, "Servo-cros:\t%s\n", res.GetServoCrosVersion())
-	fmt.Fprintf(tw, "Faft:\t%s\n", res.GetFaftVersion())
-	fmt.Fprintf(tw, "\n")
-	return nil
+	return cmdlib.NewUsageError(
+		c.Flags,
+		"skylab stable-version has been removed! Use shivas get -dut -host-info-store instead.",
+	)
 }
