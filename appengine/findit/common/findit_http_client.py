@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import logging
+
 from gae_libs.http import auth_util
 from gae_libs.http import http_client_appengine
 
@@ -23,8 +25,11 @@ class HttpClientMetricsInterceptor(auth_util.AuthenticatingInterceptor):
         request, exception, can_retry)
 
   def OnResponse(self, request, response):
+    host = self.GetHost(request.get('url'))
+    if "isolateserver" in host:
+      logging.debug("OnResponse from isolateserver host = %s", host)
     monitoring.outgoing_http_statuses.increment({
-        'host': self.GetHost(request.get('url')),
+        'host': host,
         'status_code': str(response.get('status_code'))
     })
     return super(HttpClientMetricsInterceptor, self).OnResponse(
