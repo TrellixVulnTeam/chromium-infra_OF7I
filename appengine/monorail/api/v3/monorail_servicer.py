@@ -221,7 +221,10 @@ class MonorailServicer(object):
         raise permissions.PermissionException(
             'Client %s is not allowlisted' % audience)
 
-    return audience, authdata.AuthData.FromEmail(cnxn, email, self.services)
+    # We must confirm the client/email is allowlisted before we
+    # potentially auto-create the user account in Monorail.
+    return audience, authdata.AuthData.FromEmail(
+        cnxn, email, self.services, autocreate=True)
 
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
     # type: (MonorailConnection, Mapping[str, str], Services ->

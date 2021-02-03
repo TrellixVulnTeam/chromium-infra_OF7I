@@ -276,6 +276,22 @@ class MonorailServicerTest(unittest.TestCase):
     self.assertEqual(user_auth.email, some_other_site_user.email)
     mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_IDToken_AutoCreateUser(self, mock_verifier):
+    """We can auto-create Monorail users for the requester."""
+    metadata = {'authorization': 'beaReR allowlisted-user-id-token'}
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        'aud': self.allowlisted_client_id,
+        'email': 'new-user@email.com',
+    }
+
+    client_id, user_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertEqual(client_id, self.allowlisted_client_id)
+    self.assertEqual(user_auth.email, 'new-user@email.com')
+    mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
+
   def testGetAndAssertRequesterAuth_IDToken_InvalidAuthToken(self):
     """We raise an exception if 'bearer' is missing from headers."""
     metadata = {'authorization': 'allowlisted-user-id-token'}
@@ -358,6 +374,11 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaisesRegexp(
         permissions.PermissionException, r'Client .+ is not allowlisted'):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+    # Assert some-other-site-user was not auto-created.
+    with self.assertRaises(exceptions.NoSuchUserException):
+      self.services.user.LookupUserID(
+          self.cnxn, 'some-other-site-user@test.com')
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_NoEmail(self, mock_verifier):
