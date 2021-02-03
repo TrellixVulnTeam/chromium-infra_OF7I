@@ -28,16 +28,9 @@ func resultsSubDir(runID string) string {
 const (
 	hostInfoSubDir     = "host_info_store"
 	hostInfoFileSuffix = ".store"
-	dutStateSubDir     = "swarming_state"
-	dutStateFileSuffix = ".json"
 )
 
 // HostInfoFilePath constructs the path to the autotest host info store.
 func HostInfoFilePath(resultsDir string, dutName string) string {
 	return filepath.Join(resultsDir, hostInfoSubDir, dutName+hostInfoFileSuffix)
-}
-
-// CacheFilePath constructs the path to the state cache file.
-func CacheFilePath(autotestDir string, fileID string) string {
-	return filepath.Join(autotestDir, dutStateSubDir, fileID+dutStateFileSuffix)
 }

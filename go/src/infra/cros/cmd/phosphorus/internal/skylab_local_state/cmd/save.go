@@ -21,6 +21,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 
+	"infra/cros/cmd/phosphorus/internal/botcache"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
 )
@@ -93,9 +94,18 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 		return err
 	}
 	s := newDutStateFromHostInfo(i)
+
+	bcs := botcache.Store{
+		CacheDir: request.Config.AutotestDir,
+		Name:     request.DutName,
+	}
+	bcs.Save(s)
 	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
-	writeDutState(request.Config.AutotestDir, request.DutName, s)
-	writeDutState(request.Config.AutotestDir, request.DutId, s)
+	bcs = botcache.Store{
+		CacheDir: request.Config.AutotestDir,
+		Name:     request.DutId,
+	}
+	bcs.Save(s)
 
 	if request.GetSealResultsDir() {
 		if err := sealResultsDir(request.ResultsDir); err != nil {
@@ -193,18 +203,6 @@ func newDutStateFromHostInfo(i *skylab_local_state.AutotestHostInfo) *lab_platfo
 		}
 	}
 	return s
-}
-
-// writeDutState writes a JSON-encoded DutState proto to the cache file inside
-// the autotest directory.
-func writeDutState(autotestDir string, fileID string, s *lab_platform.DutState) error {
-	p := location.CacheFilePath(autotestDir, fileID)
-
-	if err := writeJSONPb(p, s); err != nil {
-		return errors.Annotate(err, "write DUT state").Err()
-	}
-
-	return nil
 }
 
 const gsOffloaderMarker = ".ready_for_offload"

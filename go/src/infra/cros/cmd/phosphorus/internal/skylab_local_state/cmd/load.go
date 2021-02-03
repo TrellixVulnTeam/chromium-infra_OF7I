@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/lucictx"
 
 	fleet "infra/appengine/cros/lab_inventory/api/v1"
+	"infra/cros/cmd/phosphorus/internal/botcache"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
@@ -113,7 +114,11 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
-	dutState, err := GetDutState(request.Config.AutotestDir, request.DutName)
+	bcs := botcache.Store{
+		CacheDir: request.Config.AutotestDir,
+		Name:     request.DutName,
+	}
+	dutState, err := bcs.Load()
 	if err != nil {
 		return err
 	}
@@ -243,18 +248,6 @@ func hostInfoFromDutInfo(dut *inventory.DeviceUnderTest) *skylab_local_state.Aut
 		i.Attributes[attribute.GetKey()] = attribute.GetValue()
 	}
 	return &i
-}
-
-// GetDutState reads the local bot state from the cache file.
-func GetDutState(autotestDir string, fileID string) (*lab_platform.DutState, error) {
-	p := location.CacheFilePath(autotestDir, fileID)
-	s := lab_platform.DutState{}
-
-	if err := readJSONPb(p, &s); err != nil {
-		return nil, errors.Annotate(err, "get bot state").Err()
-	}
-
-	return &s, nil
 }
 
 // addDutStateToHostInfo adds provisionable labels and attributes from
