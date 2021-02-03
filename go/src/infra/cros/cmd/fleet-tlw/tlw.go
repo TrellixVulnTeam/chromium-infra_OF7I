@@ -35,21 +35,14 @@ type tlwServer struct {
 	cFrontend *cache.Frontend
 }
 
-func newTLWServer() (*tlwServer, error) {
-	// TODO (guocb) Fetch caching backends data from UFS after migration to
-	// caching cluster.
-	ce, err := cache.NewDevserverEnv(cache.AutotestConfig)
-	if err != nil {
-		return nil, fmt.Errorf("new TLW server: %s", err)
-	}
-
+func newTLWServer(e cache.Environment) *tlwServer {
 	s := &tlwServer{
 		lroMgr:    lro.New(),
 		tPool:     sshpool.New(getSSHClientConfig()),
 		tMgr:      newTunnelManager(),
-		cFrontend: cache.NewFrontend(ce),
+		cFrontend: cache.NewFrontend(e),
 	}
-	return s, nil
+	return s
 }
 
 func (s *tlwServer) registerWith(g *grpc.Server) {

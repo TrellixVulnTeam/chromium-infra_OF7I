@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/cros/fleet/access"
 )
 
@@ -52,9 +52,11 @@ func (s session) toProto(name string) *access.Session {
 type sessionServer struct {
 	access.UnimplementedFleetServer
 	wg sync.WaitGroup
-	mu sync.Mutex
-	// This field is mainly for testing that we can use a fake TLW server.
-	newTLWServer func() (*tlwServer, error)
+
+	// Unsafe to set concurrently, only set on init
+	env cache.Environment
+
+	muSessions sync.Mutex
 	// sessions intentionally doesn't use pointers to make
 	// concurrent ownership easier to reason about.
 	sessions map[string]sessionContext
@@ -63,10 +65,9 @@ type sessionServer struct {
 // newSessionServer creates a new sessionServer.
 // It should be closed after use.
 // The gRPC server should be stopped first to ensure there are no new requests.
-func newSessionServer() *sessionServer {
+func newSessionServer(e cache.Environment) *sessionServer {
 	return &sessionServer{
-		sessions:     make(map[string]sessionContext),
-		newTLWServer: newTLWServer,
+		sessions: make(map[string]sessionContext),
 	}
 }
 
@@ -75,12 +76,12 @@ func (s *sessionServer) registerWith(g *grpc.Server) {
 }
 
 func (s *sessionServer) Close() {
-	s.mu.Lock()
+	s.muSessions.Lock()
 	for name, sc := range s.sessions {
 		sc.cancelFunc()
 		delete(s.sessions, name)
 	}
-	s.mu.Unlock()
+	s.muSessions.Unlock()
 	s.wg.Wait()
 }
 
@@ -92,11 +93,7 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw, err := s.newTLWServer()
-	if err != nil {
-		return nil, fmt.Errorf("new TLW server: %s", err)
-	}
-
+	tlw := newTLWServer(s.env)
 	tlw.registerWith(gs)
 	// This goroutine is stopped by the session cancellation that
 	// is set up below.
@@ -108,9 +105,9 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		expire:     reqSes.GetExpireTime().AsTime(),
 	})
 	name := "sessions/" + uuid.New().String()
-	s.mu.Lock()
+	s.muSessions.Lock()
 	s.sessions[name] = sc
-	s.mu.Unlock()
+	s.muSessions.Unlock()
 	return sc.toProto(name), nil
 }
 
@@ -140,9 +137,9 @@ func (s *sessionServer) setupSessionContext(ses session) sessionContext {
 // GetSession implements access.FleetServer.
 func (s *sessionServer) GetSession(ctx context.Context, req *access.GetSessionRequest) (*access.Session, error) {
 	name := req.GetName()
-	s.mu.Lock()
+	s.muSessions.Lock()
 	sc, ok := s.sessions[name]
-	s.mu.Unlock()
+	s.muSessions.Unlock()
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "no session named %s", name)
 	}
@@ -153,8 +150,8 @@ func (s *sessionServer) GetSession(ctx context.Context, req *access.GetSessionRe
 func (s *sessionServer) UpdateSession(ctx context.Context, req *access.UpdateSessionRequest) (*access.Session, error) {
 	ses := req.GetSession()
 	name := ses.GetName()
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.muSessions.Lock()
+	defer s.muSessions.Unlock()
 	sc, ok := s.sessions[name]
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "no session named %s", name)
@@ -191,10 +188,10 @@ func (s *sessionServer) UpdateSession(ctx context.Context, req *access.UpdateSes
 // DeleteSession implements access.FleetServer.
 func (s *sessionServer) DeleteSession(ctx context.Context, req *access.DeleteSessionRequest) (*emptypb.Empty, error) {
 	name := req.GetName()
-	s.mu.Lock()
+	s.muSessions.Lock()
 	sc, ok := s.sessions[name]
 	delete(s.sessions, name)
-	s.mu.Unlock()
+	s.muSessions.Unlock()
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "no session named %s", name)
 	}

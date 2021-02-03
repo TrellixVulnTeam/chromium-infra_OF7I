@@ -12,6 +12,8 @@ import (
 	"net"
 	"sync"
 
+	"infra/cros/cmd/fleet-tlw/internal/cache"
+
 	"google.golang.org/grpc"
 )
 
@@ -33,14 +35,18 @@ func innerMain() error {
 	}
 	s := grpc.NewServer()
 
-	tlw, err := newTLWServer()
+	// TODO (guocb) Fetch caching backends data from UFS after migration to
+	// caching cluster.
+	ce, err := cache.NewDevserverEnv(cache.AutotestConfig)
 	if err != nil {
 		return err
 	}
+
+	tlw := newTLWServer(ce)
 	tlw.registerWith(s)
 	defer tlw.Close()
 
-	ss := newSessionServer()
+	ss := newSessionServer(ce)
 	ss.registerWith(s)
 	defer ss.Close()
 

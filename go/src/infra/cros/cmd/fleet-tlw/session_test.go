@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/cros/fleet/access"
 )
 
@@ -35,8 +36,7 @@ func TestSessionServer(t *testing.T) {
 	ctx, cf := context.WithTimeout(context.Background(), limit)
 	t.Cleanup(cf)
 
-	s := newSessionServer()
-	s.newTLWServer = func() (*tlwServer, error) { return &tlwServer{}, nil }
+	s := newSessionServer(fakeEnv{})
 	expire := tsAfter(time.Minute)
 
 	got, err := s.CreateSession(ctx, &access.CreateSessionRequest{
@@ -101,4 +101,17 @@ func TestSessionServer(t *testing.T) {
 // This is a test helper.
 func tsAfter(d time.Duration) *timestamppb.Timestamp {
 	return timestamppb.New(time.Now().Add(time.Minute))
+}
+
+var _ cache.Environment = fakeEnv{}
+
+// fakeEnv is a fake implementation of cache.Environment.
+type fakeEnv struct{}
+
+func (fakeEnv) Subnets() []cache.Subnet {
+	return nil
+}
+
+func (fakeEnv) IsBackendHealthy(string) bool {
+	return false
 }
