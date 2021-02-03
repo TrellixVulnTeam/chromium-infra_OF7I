@@ -123,7 +123,7 @@ class ViewLogHandler(RedirectHandlerBase):  # pragma: no cover
     log = self._find_log(build.proto, step_name, log_name)
     if not log or not log.view_url:
       self.abort(
-          404, 'view url for log %r in step %r in build %d not found' %
+          404, 'view url for log %r in step %r in build %r not found' %
           (log_name, step_name, build_id)
       )
     return self.redirect(str(log.view_url))
