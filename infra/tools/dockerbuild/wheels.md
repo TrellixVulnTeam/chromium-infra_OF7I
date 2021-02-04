@@ -2272,6 +2272,18 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 4.6.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/lxml/${vpython_platform}"
+  version: "version:4.6.2"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **macholib**
 
 ### 1.11
@@ -2855,7 +2867,7 @@ wheel: <
 
 ## **pathos**
 
-### 0.2.7.chromium.2
+### 0.2.7.chromium.1
 
 ```protobuf
 wheel: <
