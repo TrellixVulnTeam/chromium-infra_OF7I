@@ -1,8 +1,8 @@
 hash: ea8ac36b684aac4aa3b594680db707798726770567a398e14cd8ee913da52e79
-updated: 2021-02-03T06:31:54.316442764+09:00
+updated: 2021-02-04T15:35:11.859748842+11:00
 imports:
 - name: cloud.google.com/go
-  version: e88cbc4e50af74bd5f4e0ca7a7c176525a20400f
+  version: 6b2807f1e13dc38eb79833f8d2766f27d4003434
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -12,13 +12,13 @@ imports:
   - spanner
   - storage
 - name: contrib.go.opencensus.io/exporter/stackdriver
-  version: 1996040a78017ba96c8bd972de452a9a7df00a04
+  version: aa87ed666f12a9d2d517d5f9c7ac28d3df7883fc
   repo: https://chromium.googlesource.com/external/github.com/census-ecosystem/opencensus-go-exporter-stackdriver.git
 - name: github.com/andygrunwald/go-gerrit
   version: 46815e48bfe0107e4b791f12e9ea50f5b4a875b0
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
 - name: github.com/antlr/antlr4
-  version: 4b649103f31e0c0bc3bd0bb964efd0dea6b9f5a0
+  version: a60c32d36933758b63662cdade0a2705ca460804
   repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
   subpackages:
   - runtime/Go/antlr
@@ -29,7 +29,7 @@ imports:
   version: 1edb62f3185db2bf621d84de5fcfbd12fdc8796f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/bazelbuild/buildtools
-  version: 85cad6ddeaa0d491fe752e3fed6003068be81c88
+  version: 840218fa3afc7e7145c1eeb3bfeb612c497e67f7
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
   version: 9e72daff42c941baaf43a4c370e2607a984c58a7
@@ -231,7 +231,7 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: b6bab9049819eb34d0b218da12784bbe1ec967af
+  version: 6c96f3e2a592fa00748a400b9d4931c9ef45da72
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
@@ -494,7 +494,7 @@ imports:
   version: 7e3f01d253248a0a5694eb5b7376dfea18b6397e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 51ce8377ebf8276585c091692a62fe5bb4fb4142
+  version: ed9735757058b924d709e5dddcc09d902eec5f2b
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -540,13 +540,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: cf70463f61196bbb970dc74789aeb4d0d6d18426
+  version: 3206188e46ba82307d2d44c4d2810ed39a475237
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 0bc741730b8171fc51cdaf826caea5119c411009
+  version: f005af03c24d49a4ec379884392cc4a557a0d047
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes

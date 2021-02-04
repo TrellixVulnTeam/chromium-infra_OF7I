@@ -15,9 +15,11 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -28,12 +30,6 @@ import (
 
 	"infra/chromeperf/pinpoint"
 )
-
-type pinpointServer struct {
-	pinpoint.UnimplementedPinpointServer
-	// Provide an HTTP Client to be used by the server, to the Pinpoint Legacy API.
-	LegacyClient *http.Client
-}
 
 const (
 	port = ":60800"
@@ -46,6 +42,13 @@ var scopesForLegacy = []string{
 }
 
 func main() {
+	// TODO(crbug/1059667): Wire up a cloud logging implementation (Stackdriver).
+	flag.Parse()
+	if _, err := url.Parse(*legacyPinpointService); err != nil {
+		log.Fatalf(
+			"Invalid URL for -legacy_pinpoint_service: %s",
+			*legacyPinpointService)
+	}
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

@@ -22,12 +22,21 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint_server/conversion"
-	"log"
+	"net/http"
+	"net/url"
+	"regexp"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+type pinpointServer struct {
+	pinpoint.UnimplementedPinpointServer
+	// Provide an HTTP Client to be used by the server, to the Pinpoint Legacy API.
+	LegacyClient *http.Client
+}
 
 const endpointsHeader = "x-endpoint-api-userinfo"
 
@@ -43,7 +52,7 @@ func getRequestingUserEmail(ctx context.Context) (string, error) {
 	// Decode the auto header from base64encoded json, into a map we can inspect.
 	decoded, err := base64.RawURLEncoding.DecodeString(auth[0])
 	if err != nil {
-		log.Printf("Failed decoding auth = '%v'; error = %s", auth, err)
+		grpclog.Errorf("Failed decoding auth = '%v'; error = %s", auth, err)
 		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
 	}
 	userInfo := make(map[string]interface{})
@@ -87,11 +96,11 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 		return nil, status.Errorf(codes.Internal, "failed request to legacy API: %v", err)
 	}
 	switch res.StatusCode {
-	case 403:
+	case http.StatusUnauthorized:
 		return nil, status.Errorf(codes.Internal, "Internal error, service not authorized")
-	case 400:
+	case http.StatusBadRequest:
 		return nil, status.Errorf(codes.Internal, "Internal error, service sent an invalid request")
-	case 200:
+	case http.StatusOK:
 		break
 	default:
 		return nil, status.Errorf(codes.Internal, "Internal error")
@@ -115,15 +124,73 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 	// Return with a minimal Job response.
 	// TODO(dberris): Write this data out to Spanner when we're ready to replace the legacy API.
 	return &pinpoint.Job{
-		Id:        newResponse.JobID,
+		Name:      fmt.Sprintf("legacy-%s", newResponse.JobID),
 		CreatedBy: userEmail,
 		JobSpec:   r.Job,
 	}, nil
 }
 
+var jobNameRe = regexp.MustCompile(`^jobs/legacy-(?P<id>[a-f0-9]+)$`)
+
 func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) (*pinpoint.Job, error) {
-	// TODO(dberris): Implement this!
-	return nil, nil
+	// This API does not require that the user be signed in, so we'll not need to check the credentials.
+	// TODO(dberris): In the future, support ACL-limiting Pinpoint job results.
+	if s.LegacyClient == nil {
+		return nil, status.Error(
+			codes.Internal,
+			"misconfigured service, please try again later")
+	}
+
+	// Make a request to the legacy API.
+	// Ensure that r.Id is a hex number.
+	if !jobNameRe.MatchString(r.Name) {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid id format, must match %s", jobNameRe.String())
+	}
+	matches := jobNameRe.FindStringSubmatch(r.Name)
+	legacyID := string(matches[jobNameRe.SubexpIndex("id")])
+	if len(legacyID) == 0 {
+		return nil, status.Error(codes.Unimplemented, "future ids not supported yet")
+	}
+
+	u := fmt.Sprintf("%s/api/job/%s?o=STATE", *legacyPinpointService, legacyID)
+	if _, err := url.Parse(u); err != nil {
+		grpclog.Errorf("Invalid URL: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to form a valid legacy request")
+	}
+	grpclog.Infof("GET %s", u)
+	res, err := s.LegacyClient.Get(u)
+	if err != nil {
+		grpclog.Errorf("HTTP Request Error: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed retrieving job data from legacy service")
+	}
+	switch res.StatusCode {
+	case http.StatusNotFound:
+		return nil, status.Errorf(codes.NotFound, "job not found")
+	case http.StatusOK:
+		break
+	default:
+		return nil, status.Errorf(codes.Internal, "failed request: %s", res.Status)
+	}
+
+	var l struct {
+		ID string `json:"job_id"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&l); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"received ill-formed response from legacy service",
+		)
+	}
+
+	// Now attempt to parse the retrieved data.
+	j := &pinpoint.Job{
+		Name: l.ID,
+	}
+
+	// FIXME(dberris): Map the JSON response to the proto structure.
+	return j, nil
 }
 
 func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {

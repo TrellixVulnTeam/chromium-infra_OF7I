@@ -18,28 +18,31 @@ import (
 	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"google.golang.org/grpc/codes"
+
 	. "github.com/smartystreets/goconvey/convey"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
 
 const bufSize = 1024 * 1024
 
-func TestMisconfiguredServer(t *testing.T) {
+func TestServerService(t *testing.T) {
 
 	Convey("Given a grpc server without a client", t, func() {
 		ctx := context.Background()
 		l := bufconn.Listen(bufSize)
+		defer l.Close()
 		s := grpc.NewServer()
+		defer s.Stop()
 		dialer := func(context.Context, string) (net.Conn, error) {
 			return l.Dial()
 		}
@@ -68,7 +71,9 @@ func TestMisconfiguredServer(t *testing.T) {
 	Convey("Given a grpc server with a legacy client not behind the ESP", t, func() {
 		ctx := context.Background()
 		l := bufconn.Listen(bufSize)
+		defer l.Close()
 		s := grpc.NewServer()
+		defer s.Stop()
 		dialer := func(context.Context, string) (net.Conn, error) {
 			return l.Dial()
 		}
@@ -76,11 +81,9 @@ func TestMisconfiguredServer(t *testing.T) {
 			fmt.Fprintln(w, "{}")
 		}))
 		defer ts.Close()
-		httpClient, err := google.DefaultClient(oauth2.NoContext, scopesForLegacy...)
 		flag.Set("legacy_pinpoint_service", ts.URL)
-		So(err, ShouldBeNil)
-
-		pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: httpClient})
+		log.Printf("legacy service = %s", ts.URL)
+		pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: &http.Client{}})
 		go func() {
 			if err := s.Serve(l); err != nil {
 				log.Fatalf("Server startup failed.")
@@ -99,5 +102,89 @@ func TestMisconfiguredServer(t *testing.T) {
 			})
 		})
 	})
+}
 
+func TestGetJob(t *testing.T) {
+	Convey("Given a grpc server with a client", t, func() {
+		ctx := context.Background()
+		l := bufconn.Listen(bufSize)
+		defer l.Close()
+		s := grpc.NewServer()
+		defer s.Stop()
+		dialer := func(context.Context, string) (net.Conn, error) {
+			return l.Dial()
+		}
+		// Check the path target before we give a response.
+		httpResponses := make(map[string]string)
+
+		mockResponse := func(path, response string) {
+			httpResponses[path] = response
+		}
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("TEST: %s", r.URL.String())
+			resp, found := httpResponses[r.URL.Path]
+			if !found {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintln(w, "Not found")
+				return
+			}
+			fmt.Fprintln(w, resp)
+		}))
+		defer ts.Close()
+		flag.Set("legacy_pinpoint_service", ts.URL)
+		log.Printf("legacy service = %s", ts.URL)
+		pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: &http.Client{}})
+		go func() {
+			if err := s.Serve(l); err != nil {
+				log.Fatalf("Server startup failed.")
+			}
+		}()
+
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+		So(err, ShouldBeNil)
+		defer conn.Close()
+		client := pinpoint.NewPinpointClient(conn)
+
+		Convey("When we attempt to get a defined job", func() {
+			c, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
+			So(err, ShouldBeNil)
+			mockResponse("/api/job/11423cdd520000", string(c))
+			j, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+				Name: "jobs/legacy-11423cdd520000",
+			})
+
+			Convey("Then we find details in the response proto", func() {
+				So(err, ShouldBeNil)
+				So(j.Name, ShouldEqual, "11423cdd520000")
+			})
+		})
+
+		Convey("When we attempt to get an undefined job", func() {
+			_, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+				Name: "jobs/legacy-02",
+			})
+			Convey("Then we get an error in the gRPC request", func() {
+				So(err, ShouldNotBeNil)
+				So(grpc.Code(err), ShouldEqual, codes.NotFound)
+			})
+
+		})
+
+		Convey("When we attempt to provide an ill-defined legacy id", func() {
+			_, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+				Name: "jobs/legacy-",
+			})
+			Convey("Then we get an error in the gRPC request", func() {
+				So(err, ShouldNotBeNil)
+				So(grpc.Code(err), ShouldEqual, codes.InvalidArgument)
+			})
+		})
+
+		Convey("When we attempt go get a job with results", func() {
+
+			Convey("Then we find the results in the response", nil)
+
+		})
+
+	})
 }

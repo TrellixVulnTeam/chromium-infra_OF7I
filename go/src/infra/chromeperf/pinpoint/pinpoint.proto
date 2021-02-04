@@ -20,6 +20,7 @@ import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 // Service definition for Pinpoint's API.
 service Pinpoint {
@@ -29,17 +30,13 @@ service Pinpoint {
       post: "/v1/jobs"
       body: "job"
     };
-    // TODO(dberris): Determine if we need the client API convenience.
-    // option (google.api.method_signature) = "job";
   }
 
   // Retrieves details about a Pinpoint Job.
   rpc GetJob(GetJobRequest) returns (Job) {
     option (google.api.http) = {
-      get: "/v1/jobs/*"
+      get: "/v1/{name=jobs/*}"
     };
-    // TODO(dberris): Determine if we need the client API convenience.
-    // option (google.api.method_signature) = "id";
   }
 
   // Lists jobs with filters.
@@ -52,7 +49,7 @@ service Pinpoint {
   // Cancels an ongoing job.
   rpc CancelJob(CancelJobRequest) returns (Job) {
     option (google.api.http) = {
-     post: "/v1/job/*:cancel"
+     post: "/v1/{name=jobs/*}:cancel"
      body: "*"
     };
   }
@@ -284,9 +281,62 @@ message ScheduleJobRequest {
   JobSpec job = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
+// ==== LEGACY RESULTS PROTOS
+// Everything within this section is a translation of the schema used by the
+// legacy API to represent results for a given job.
+//
+message Change {
+  GitilesCommit commit = 1;
+  GerritChange patch = 2;
+}
+
+message ExecutionDetails {
+  string key= 1;
+  string value = 2;
+  string url = 3;
+}
+
+message Execution {
+  bool completed = 1;
+  repeated ExecutionDetails details = 2;
+  google.protobuf.Struct exception = 3;
+}
+
+message Attempt {
+  repeated Execution executions = 1;
+}
+
+// Results associated with a Change.
+message ChangeResult {
+  repeated Attempt attempts = 1;
+  Change change = 2 [(google.api.field_behavior) = REQUIRED];
+  repeated double result_values = 3;
+}
+
+message BisectionResults {
+  repeated ChangeResult results = 1;
+}
+
+message ABExperimentResults {
+  ChangeResult a_change_result = 1;
+  ChangeResult b_change_result = 2;
+}
+// === LEGACY RESULTS PROTOS
+
 // A representation of a Pinpoint Job.
 message Job {
-  string id = 1;
+  option (google.api.resource) = {
+    type: "api.pinpoint.cr.dev/Job"
+    pattern: "jobs/{job}"
+  };
+
+  // The resource name of the job.
+  // Format: jobs/{job}
+  //
+  // Name must follow either of the following formats:
+  //   - 'legacy-<hex>' where <hex> is a non-prefixed hexadecimal string
+  //   - a canonical textual representation of a UUID
+  string name = 1;
 
   enum State {
     STATE_UNSPECIFIED = 0;
@@ -311,12 +361,14 @@ message Job {
   // If present, the reason provided for when a job is cancelled.
   string cancellation_reason = 7;
 
-  // TODO(crbug/1059667): Fill this out with more details like results,
-  // culprits, etc.
+  oneof results {
+    BisectionResults bisection_results = 8;
+    ABExperimentResults ab_experiment_results = 9;
+  }
 }
 
 message GetJobRequest {
-  string id = 1 [
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "api.pinpoint.cr.dev/Job" }
   ];
@@ -344,7 +396,7 @@ message ListJobsResponse {
 }
 
 message CancelJobRequest {
-  string id = 1 [
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "api.pinpoint.cr.dev/Job" }
   ];

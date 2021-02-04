@@ -1,0 +1,3392 @@
+{
+    "status": "Completed",
+    "project": null,
+    "updated": "2020-11-30T01:44:13.338785",
+    "comparison_mode": "try",
+    "job_id": "11423cdd520000",
+    "created": "2020-11-29T23:49:13.827353",
+    "started_time": "2020-11-29T23:50:01.842745",
+    "user": "anonymous-user@example.com",
+    "quests": [
+        "Build",
+        "Test",
+        "Get values"
+    ],
+    "exception": null,
+    "bug_id": null,
+    "state": [
+        {
+            "comparisons": {
+                "next": "same"
+            },
+            "attempts": [
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build14-h7--device6",
+                                    "value": "build14-h7--device6",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7aae567ac910",
+                                    "value": "502f7aae567ac910",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "8324f1c1fc91583aeab477311243e64367bad531",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build21-h7--device5",
+                                    "value": "build21-h7--device5",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab14d0a2a10",
+                                    "value": "502f7ab14d0a2a10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "8bf56448329a1e44a0a4325827ecee7a37536315",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": {
+                                "message": "redacted message",
+                                "traceback": "Traceback (most recent call last):\n  File \"/base/data/home/apps/s~chromeperf/pinpoint:cloud-build-8af176b.431229190757570896/dashboard/pinpoint/models/quest/execution.py\", line 121, in Poll\n    self._Poll()\n  File \"/base/data/home/apps/s~chromeperf/pinpoint:cloud-build-8af176b.431229190757570896/dashboard/pinpoint/models/quest/run_test.py\", line 303, in _Poll\n    raise errors.SwarmingTaskFailed('%s' % (isolate_output_url,))\nSwarmingTaskFailed: The test ran but failed. This is likely to a problem with the test itself either being broken or flaky in the range specified.\n\nPlease click through to the task isolate output at: https://some-artifact-service/redacted"
+                            },
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build20-h7--device6",
+                                    "value": "build20-h7--device6",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab24de04b10",
+                                    "value": "502f7ab24de04b10",
+                                    "key": "task"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build14-h7--device2",
+                                    "value": "build14-h7--device2",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab3576b5d10",
+                                    "value": "502f7ab3576b5d10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "d77d2f09311958ff290eaf7d34391711b6cc016c",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build12-h7--device1",
+                                    "value": "build12-h7--device1",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab4863c7210",
+                                    "value": "502f7ab4863c7210",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "7389c3dd7ec003d4eed2067fed7a90c51e97401e",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build12-h7--device5",
+                                    "value": "build12-h7--device5",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab59b125b10",
+                                    "value": "502f7ab59b125b10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "a8cd30100ed2feae93e38129b553d5100c5c6f6a",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build19-h7--device6",
+                                    "value": "build19-h7--device6",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ab712600010",
+                                    "value": "502f7ab712600010",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "d5daa9c011c5d58f89cdf12637973abf26598d4f",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build21-h7--device2",
+                                    "value": "build21-h7--device2",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7abaa3efb510",
+                                    "value": "502f7abaa3efb510",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "193de206e30ed6a1053ba4ee8f3aec9cd31d818f",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build15-h7--device1",
+                                    "value": "build15-h7--device1",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7abbfb0b3d10",
+                                    "value": "502f7abbfb0b3d10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "ca6bf036024dc68015027d85e85b9673c066f16c",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253092263708576",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "aef0be0fcfe78280623fe05c67dcb449333d70e9",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build21-h7--device3",
+                                    "value": "build21-h7--device3",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7abded8f6d10",
+                                    "value": "502f7abded8f6d10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "c1f211057b317527c4cdc6309fb3ec5f33947279",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "result_values": [],
+            "change": {
+                "commits": [
+                    {
+                        "commit_position": 831738,
+                        "author": "anonymous-user@example.com",
+                        "repository": "chromium",
+                        "created": "2020-11-29T21:57:39",
+                        "url": "https://some-git-service/redacted",
+                        "change_id": "I99cb491a8b0c94a79e1b46e5603adc5c3f31998a",
+                        "message": "redacted message",
+                        "git_hash": "0d8952cfc50b039bf50320c9d3db82b164f3e549",
+                        "review_url": "https://chromium-review.googlesource.com/c/chromium/src/+/2564718",
+                        "subject": "redacted"
+                    }
+                ]
+            }
+        },
+        {
+            "comparisons": {
+                "prev": "same"
+            },
+            "attempts": [
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build11-h7--device1",
+                                    "value": "build11-h7--device1",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ea763dea810",
+                                    "value": "502f7ea763dea810",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "1441231198975873c22f4a73bbbe16d3016d0806",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build19-h7--device5",
+                                    "value": "build19-h7--device5",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7ea9096b5d10",
+                                    "value": "502f7ea9096b5d10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "8ae11464c67610bde940952b24dbd5ce915d8b26",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build19-h7--device1",
+                                    "value": "build19-h7--device1",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eaa4d5a7910",
+                                    "value": "502f7eaa4d5a7910",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "1fea517a0e0ce77d8a48089be139822a873ce88f",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build15-h7--device6",
+                                    "value": "build15-h7--device6",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eab71239910",
+                                    "value": "502f7eab71239910",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "f94db0057b2ea2d519e700ff1185a29134ecc455",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build13-h7--device4",
+                                    "value": "build13-h7--device4",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eacb1c27010",
+                                    "value": "502f7eacb1c27010",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "b5d200ec63f1c46091e443f83a93a237038c4c76",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build21-h7--device4",
+                                    "value": "build21-h7--device4",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eadceea3310",
+                                    "value": "502f7eadceea3310",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "e964c34e1211df4cefd2838439990c63df096d1d",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build19-h7--device4",
+                                    "value": "build19-h7--device4",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eaf3f88ec10",
+                                    "value": "502f7eaf3f88ec10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "9a76dab0f3f9ccdf2567d793417f716d39741493",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build11-h7--device6",
+                                    "value": "build11-h7--device6",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eb124f49e10",
+                                    "value": "502f7eb124f49e10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "656aa254c1bfa4a590972188679b8e71f5bf207a",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build14-h7--device7",
+                                    "value": "build14-h7--device7",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eb39be67110",
+                                    "value": "502f7eb39be67110",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "92f78e0cf2857358b31813909a102a853e6f6459",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executions": [
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "value": "some-mobile-platform",
+                                    "key": "builder"
+                                },
+                                {
+                                    "url": "https://some-build-service/redacted",
+                                    "value": "8862253090230814464",
+                                    "key": "build"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "6bcbb77322f045cf2d13d5fe710aa27a6c919bbf",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-task-distributor/bot?id=build15-h7--device3",
+                                    "value": "build15-h7--device3",
+                                    "key": "bot"
+                                },
+                                {
+                                    "url": "https://some-task-distributor/task?id=502f7eb4c5d25d10",
+                                    "value": "502f7eb4c5d25d10",
+                                    "key": "task"
+                                },
+                                {
+                                    "url": "https://some-artifact-service/redacted",
+                                    "value": "237ec03cacbd61de1db5d2d822c66a8799f1f890",
+                                    "key": "isolate"
+                                }
+                            ]
+                        },
+                        {
+                            "completed": true,
+                            "exception": null,
+                            "details": [
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                },
+                                {
+                                    "url": "https://some-service/redacted/trace.html",
+                                    "value": "trace.html",
+                                    "key": "trace"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "result_values": [],
+            "change": {
+                "commits": [
+                    {
+                        "commit_position": 831738,
+                        "author": "anonymous-user@example.com",
+                        "repository": "chromium",
+                        "created": "2020-11-29T21:57:39",
+                        "url": "https://some-git-service/redacted",
+                        "change_id": "I99cb491a8b0c94a79e1b46e5603adc5c3f31998a",
+                        "message": "redacted message",
+                        "git_hash": "0d8952cfc50b039bf50320c9d3db82b164f3e549",
+                        "review_url": "https://chromium-review.googlesource.com/c/chromium/src/+/2564718",
+                        "subject": "redacted"
+                    }
+                ],
+                "patch": {
+                    "created": "2020-11-27T20:24:54",
+                    "url": "https://chromium-review.googlesource.com/c/v8/v8/+/2560197/12",
+                    "author": "anonymous-user@example.com",
+                    "server": "https://chromium-review.googlesource.com",
+                    "message": "redacted message",
+                    "subject": "redacted",
+                    "change": "v8%2Fv8~master~Ica4927b9acc963b9b73dc62d9379a7815335650f",
+                    "revision": "cbc10153671bed585c3e164043dab7b8fd3efcdd"
+                }
+            }
+        }
+    ],
+    "arguments": {
+        "project": "chromium",
+        "story": "",
+        "base_git_hash": "HEAD",
+        "target": "performance_test_suite",
+        "bug_id": "",
+        "comparison_magnitude": "",
+        "statistic": "",
+        "benchmark": "v8.browsing_mobile",
+        "chart": "",
+        "patch": "https://chromium-review.googlesource.com/c/v8/v8/+/2560197",
+        "try": "on",
+        "extra_test_args": "--extra-browser-args=--js-flags=--turboprop",
+        "story_tags": "2018,2019",
+        "comparison_mode": "try",
+        "configuration": "android-pixel2-perf"
+    },
+    "results_url": "https://storage.cloud.google.com/results2-public/11423cdd520000.html",
+    "cancel_reason": null,
+    "difference_count": null,
+    "configuration": "android-pixel2-perf",
+    "metric": "",
+    "name": "Try job on android-pixel2-perf/v8.browsing_mobile"
+}
