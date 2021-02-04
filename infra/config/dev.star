@@ -14,9 +14,6 @@ load("//lib/infra.star", "infra")
 
 lucicfg.check_version("1.18.4", "Please update depot_tools")
 
-# Enable luci.tree_closer.
-lucicfg.enable_experiment("crbug.com/1054172")
-
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
 
@@ -234,4 +231,48 @@ luci.notifier_template(
 {{end}}
 </ol>
 """,
+)
+
+################################################################################
+## Realms used by skylab-staging-bot-fleet for its pools and admin tasks.
+#
+# The corresponding realms in the prod universe live in "chromeos" project.
+# There's no "chromeos" project in the dev universe, so we define the realms
+# here instead.
+
+SKYLAB_ADMIN_SCHEDULERS = [
+    "project-chromeos-skylab-schedulers",
+    "mdb/chromeos-build-deputy",
+]
+
+luci.realm(
+    name = "pools/skylab",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.poolOwner",
+            groups = "administrators",
+        ),
+        luci.binding(
+            roles = "role/swarming.poolUser",
+            groups = SKYLAB_ADMIN_SCHEDULERS,
+        ),
+        luci.binding(
+            roles = "role/swarming.poolViewer",
+            groups = "chromium-swarm-dev-view-all-bots",
+        ),
+    ],
+)
+
+luci.realm(
+    name = "skylab-staging-bot-fleet/admin",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.taskServiceAccount",
+            groups = "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
+        ),
+        luci.binding(
+            roles = "role/swarming.taskTriggerer",
+            groups = SKYLAB_ADMIN_SCHEDULERS,
+        ),
+    ],
 )
