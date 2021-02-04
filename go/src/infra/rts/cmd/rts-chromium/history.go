@@ -77,7 +77,7 @@ func (r *baseHistoryRun) Init(ctx context.Context) error {
 // runAndFetchResults runs the BigQuery query and saves results to r.out directory,
 // as GZIP-compressed JSON Lines files.
 func (r *baseHistoryRun) runAndFetchResults(ctx context.Context, sql string, extraParams ...bigquery.QueryParameter) error {
-	fmt.Printf("starting a BigQuery query...\n")
+	logging.Infof(ctx, "starting a BigQuery query...\n")
 	table, err := r.runQuery(ctx, sql, extraParams...)
 	if err != nil {
 		return err
@@ -118,6 +118,7 @@ func (r *baseHistoryRun) runQuery(ctx context.Context, sql string, extraParams .
 	if err != nil {
 		return nil, err
 	}
+	logging.Infof(ctx, "BigQuery job: https://console.cloud.google.com/bigquery?project=chrome-rts&page=queryresults&j=bq:US:%s", job.ID())
 	if err := waitForSuccess(ctx, job); err != nil {
 		return nil, err
 	}
