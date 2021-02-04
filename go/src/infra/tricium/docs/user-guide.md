@@ -6,8 +6,8 @@ Tricium, or for those who want to configure where and how Tricium is triggered.
 ## Note about future migration to luci-change-verifier
 
 The Tricium service will be merged in the future with CQ in a new service called
-(Change
-Verifier)[https://source.chromium.org/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/cv/README.md].
+[Change
+Verifier](https://source.chromium.org/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/cv/README.md).
 Tricium analysis jobs will be regular tryjobs that happen to output comments;
 Tricium project configs will no longer be used, but most of the configuration
 and behavior of Tricium analyzers will be determined by the recipe that runs the
