@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/errors"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/service/datastore"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -70,6 +71,10 @@ func TestGetDeviceConfig(t *testing.T) {
 				},
 				GpuFamily: gpuFamily,
 			},
+		}
+		So(len(deviceConfigs), ShouldEqual, len(want))
+		for k := range deviceConfigs {
+			So(deviceConfigs[k], ShouldResembleProto, want[k])
 		}
 		So(deviceConfigs, ShouldResemble, want)
 	})

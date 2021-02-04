@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	"infra/libs/skylab/inventory"
 )
@@ -731,7 +732,7 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		})
 		// Verify devices
 		So(len(devices), ShouldEqual, 1)
-		So(devices[0], ShouldResemble, &devInV2)
+		So(devices[0], ShouldResembleProto, &devInV2)
 
 		// Verify labstations
 		So(len(labstations), ShouldEqual, 2)

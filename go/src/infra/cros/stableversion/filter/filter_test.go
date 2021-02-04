@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	"infra/cros/stableversion/validateconfig"
 
@@ -197,7 +198,7 @@ func TestWithModel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out := WithModel(tt.in, tt.model)
-			if diff := cmp.Diff(tt.out, out); diff != "" {
+			if diff := cmp.Diff(tt.out, out, protocmp.Transform()); diff != "" {
 				msg := fmt.Sprintf("name: %s, diff: %s", tt.name, diff)
 				t.Errorf("%s", msg)
 			}

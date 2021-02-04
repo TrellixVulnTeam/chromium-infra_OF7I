@@ -17,9 +17,9 @@ package inventory
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
+	"google.golang.org/protobuf/testing/protocmp"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/deploy"
@@ -909,7 +909,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 		Status:  fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED,
 		Message: "something went wrong",
 	}
-	if !reflect.DeepEqual(got, want) {
+	if cmp.Diff(got, want, protocmp.Transform()) != "" {
 		t.Errorf("GetDeploymentStatus() = %#v; want %#v", got, want)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
@@ -56,7 +57,7 @@ func TestDutInfoToHostInfoConversion(t *testing.T) {
 			SerializerVersion: 1,
 		}
 
-		So(want, ShouldResemble, got)
+		So(want, ShouldResembleProto, got)
 	})
 }
 
@@ -98,7 +99,7 @@ func TestAddBotStateToHostInfo(t *testing.T) {
 			SerializerVersion: 1,
 		}
 
-		So(want, ShouldResemble, hostInfo)
+		So(want, ShouldResembleProto, hostInfo)
 	})
 }
 

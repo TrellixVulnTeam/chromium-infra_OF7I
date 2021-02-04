@@ -818,12 +818,12 @@ func TestUpdateDutsStatus(t *testing.T) {
 			},
 			SmartUsbhub: true,
 		}
-		getUpdatedDevice := func(ctx context.Context) lab.ChromeOSDevice {
+		getUpdatedDevice := func(ctx context.Context) *lab.ChromeOSDevice {
 			r := datastore.GetDevicesByIds(ctx, []string{"UUID:01"})
 			So(r, ShouldHaveLength, 1)
 			var p lab.ChromeOSDevice
 			r[0].Entity.GetCrosDeviceProto(&p)
-			return p
+			return &p
 		}
 
 		Convey("Happy path", func() {
@@ -1548,7 +1548,7 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-ee")
 			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "mockDutAssetTag-222")
 			So(getRes[0].Record.GetCreatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 1, Nanos: 0})
-			So(getRes[0].Record.GetCreatedTime(), ShouldResemble, getRes[0].Record.GetCompletedTime())
+			So(getRes[0].Record.GetCreatedTime(), ShouldResembleProto, getRes[0].Record.GetCompletedTime())
 		})
 	})
 }
@@ -1592,7 +1592,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-aa")
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
-			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, getRes[0].Record.GetCompletedTime())
+			So(getRes[0].Record.GetUpdatedTime(), ShouldResembleProto, getRes[0].Record.GetCompletedTime())
 		})
 		Convey("Update single record with no id", func() {
 			req := &api.UpdateDeviceManualRepairRecordRequest{
@@ -1609,7 +1609,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-bb")
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
-			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+			So(getRes[0].Record.GetUpdatedTime(), ShouldResembleProto, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
 		})
 		Convey("Update single record", func() {
 			propFilter := map[string]string{"hostname": record3.Hostname}
@@ -1630,7 +1630,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 			So(getRes[0].Record.GetTimeTaken(), ShouldEqual, 20)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
-			So(getRes[0].Record.GetCompletedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 444, Nanos: 0})
+			So(getRes[0].Record.GetCompletedTime(), ShouldResembleProto, &timestamp.Timestamp{Seconds: 444, Nanos: 0})
 		})
 		Convey("Update single non-existent record", func() {
 			propFilter := map[string]string{"hostname": record4.Hostname}

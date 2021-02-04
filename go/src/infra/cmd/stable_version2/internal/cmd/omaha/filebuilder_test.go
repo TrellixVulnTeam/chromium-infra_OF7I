@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 
@@ -120,7 +121,7 @@ func TestFileBuilder(t *testing.T) {
 				tt.fv,
 			)
 
-			diff := cmp.Diff(tt.out, sv)
+			diff := cmp.Diff(tt.out, sv, protocmp.Transform())
 			if diff != "" {
 				msg := fmt.Sprintf("name (%s): unexpected diff (%s)", tt.name, diff)
 				t.Errorf(msg)
@@ -210,13 +211,13 @@ func TestGetCrosFirmwareVersion(t *testing.T) {
 				tt.fvFunc,
 			)
 
-			diff := cmp.Diff(tt.outCros, c)
+			diff := cmp.Diff(tt.outCros, c, protocmp.Transform())
 			if diff != "" {
 				msg := fmt.Sprintf("name (%s): unexpected diff (%s)", tt.name, diff)
 				t.Errorf(msg)
 			}
 
-			diff = cmp.Diff(tt.outFw, f)
+			diff = cmp.Diff(tt.outFw, f, protocmp.Transform())
 			if diff != "" {
 				msg := fmt.Sprintf("name (%s): unexpected diff (%s)", tt.name, diff)
 				t.Errorf(msg)

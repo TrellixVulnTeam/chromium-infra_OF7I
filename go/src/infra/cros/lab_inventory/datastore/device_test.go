@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/appengine/gaetesting"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
@@ -468,7 +469,7 @@ func TestUpdateDeviceID(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Compare devProto to dev2Updated to determine that only ID was updated.
 			// Note that dev2Updated is dev1 with ID updated and clean ServoType as it cleaned when add new DUT.
-			So(&devProto, ShouldResemble, dev2Updated)
+			So(&devProto, ShouldResembleProto, dev2Updated)
 			err = UpdateDeviceID(ctx, dev3.Id.Value, dev4.Id.Value)
 			So(err, ShouldBeNil)
 			res = GetDevicesByIds(ctx, []string{dev3.Id.Value, dev4.Id.Value})
@@ -479,7 +480,7 @@ func TestUpdateDeviceID(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Compare devProto to dev4 to determine that only ID
 			// was updated. Note that dev4 is dev3 with ID updated
-			So(&devProto, ShouldResemble, dev4)
+			So(&devProto, ShouldResembleProto, dev4)
 		})
 		Convey("Update Invalid devices", func() {
 			dev1 := mockLabstation("asdf2", "UUID:08")
@@ -697,7 +698,7 @@ func TestUpdateLabMeta(t *testing.T) {
 			var p lab.ChromeOSDevice
 			passed[0].Entity.GetCrosDeviceProto(&p)
 			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
-			So(p.GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldResemble, topology)
+			So(p.GetDut().GetPeripherals().GetServo().GetServoTopology(), ShouldResembleProto, topology)
 			So(p.GetDut().GetPeripherals().SmartUsbhub, ShouldEqual, true)
 
 			//validates only the updated fields were changed
