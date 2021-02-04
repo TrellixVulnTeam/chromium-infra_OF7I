@@ -34,8 +34,7 @@ var defaultExcludePrefixes = []string{
 // macExcludePrefixes excludes parts of Xcode.app not required for building
 // Chrome on Mac OS.
 var macExcludePrefixes = []string{
-	"Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/CoreSimulator",
-	// For Xcode 8.
+	"Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator",
 	"Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs",
 }
 
