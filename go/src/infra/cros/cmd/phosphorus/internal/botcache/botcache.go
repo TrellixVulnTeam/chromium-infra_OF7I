@@ -45,6 +45,24 @@ func (s *Store) Save(ds *lab_platform.DutState) error {
 	return nil
 }
 
+// LoadProvisionableLabel reads the value of the given provisionable label from
+// the bot cache.
+//
+// LoadProvisionableLabel returns an empty string if the provided key does not
+// exist in the provisionable labels in bot cache.
+func (s *Store) LoadProvisionableLabel(name string) (string, error) {
+	ds, err := s.Load()
+	if err != nil {
+		return "", err
+	}
+	for k, v := range ds.ProvisionableLabels {
+		if k == name {
+			return v, nil
+		}
+	}
+	return "", nil
+}
+
 const (
 	botCacheSubDir  = "swarming_state"
 	botCacheFileExt = "json"
