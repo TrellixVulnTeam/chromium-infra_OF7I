@@ -358,12 +358,11 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 		// the correct path. Strip the prefix.
 		file = stripRepeatedPrefixes(file, "../")
 		file = ensureLeadingDoubleSlash(file)
-		tr.TestLocation = &pb.TestLocation{
+		tr.TestMetadata.Location = &pb.TestLocation{
 			Repo:     chromiumSrcRepo,
 			FileName: file,
 			Line:     int32(loc.Line),
 		}
-		tr.TestMetadata.Location = tr.TestLocation
 	}
 
 	return tr, nil

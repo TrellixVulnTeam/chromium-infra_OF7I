@@ -227,11 +227,6 @@ func TestGTestConversions(t *testing.T) {
 				}
 				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
-				So(tr.TestLocation, ShouldResembleProto, &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "//TestFile",
-					Line:     54,
-				})
 				So(tr.TestMetadata, ShouldResembleProto, &pb.TestMetadata{
 					Name: "TestName",
 					Location: &pb.TestLocation{
@@ -253,7 +248,7 @@ func TestGTestConversions(t *testing.T) {
 				}
 				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
-				So(tr.TestLocation, ShouldResembleProto, &pb.TestLocation{
+				So(tr.TestMetadata.Location, ShouldResembleProto, &pb.TestLocation{
 					Repo:     chromiumSrcRepo,
 					FileName: "//TestFile",
 					Line:     54,

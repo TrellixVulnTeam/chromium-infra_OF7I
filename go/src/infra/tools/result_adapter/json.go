@@ -357,11 +357,10 @@ func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, t
 			TestMetadata: &pb.TestMetadata{Name: testName},
 		}
 		if testLocations {
-			tr.TestLocation = &pb.TestLocation{
+			tr.TestMetadata.Location = &pb.TestLocation{
 				Repo:     chromiumSrcRepo,
 				FileName: testName,
 			}
-			tr.TestMetadata.Location = tr.TestLocation
 		}
 
 		if container, ok := arts[i]; ok {

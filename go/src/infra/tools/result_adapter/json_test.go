@@ -241,10 +241,6 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/log.txt"},
 					},
 				},
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t1.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t1.html",
 					Location: &pb.TestLocation{
@@ -270,10 +266,6 @@ func TestJSONConversions(t *testing.T) {
 					"isolate_object_list": {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/retry_1/log.txt"},
 					},
-				},
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t1.html",
 				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t1.html",
@@ -301,10 +293,6 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/retry_2/log.txt"},
 					},
 				},
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t1.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t1.html",
 					Location: &pb.TestLocation{
@@ -328,10 +316,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t2.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t2.html",
 					Location: &pb.TestLocation{
@@ -353,10 +337,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t2.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t2.html",
 					Location: &pb.TestLocation{
@@ -378,10 +358,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t2.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t2.html",
 					Location: &pb.TestLocation{
@@ -403,10 +379,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c1/c2/t2.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c1/c2/t2.html",
 					Location: &pb.TestLocation{
@@ -438,10 +410,6 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/relative/path/to/log.txt"},
 					},
 				},
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t3.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t3.html",
 					Location: &pb.TestLocation{
@@ -464,10 +432,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "ubuntu",
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t4.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t4.html",
 					Location: &pb.TestLocation{
@@ -488,10 +452,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t4.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t4.html",
 					Location: &pb.TestLocation{
@@ -512,10 +472,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t4.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t4.html",
 					Location: &pb.TestLocation{
@@ -538,10 +494,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t5.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t5.html",
 					Location: &pb.TestLocation{
@@ -564,10 +516,6 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
-				TestLocation: &pb.TestLocation{
-					Repo:     chromiumSrcRepo,
-					FileName: "c2/t6.html",
-				},
 				TestMetadata: &pb.TestMetadata{
 					Name: "c2/t6.html",
 					Location: &pb.TestLocation{
