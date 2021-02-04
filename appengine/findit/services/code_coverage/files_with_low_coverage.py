@@ -57,14 +57,17 @@ def ExportFilesWithLowCoverage():
     cursor = None
     while more:
       results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
+      bq_rows = []
       for result in results:
         bq_row = _CreateBigqueryRow(result, commit_timestamp)
         if bq_row:
-          bigquery_helper.ReportRowsToBigquery([bq_row], 'findit-for-me',
-                                               'code_coverage_summaries',
-                                               'files_with_low_coverage')
+          bq_rows.append(bq_row)
           total_rows += 1
-  logging.info('Total rows appended = %d', total_rows)
+      bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
+                                           'code_coverage_summaries',
+                                           'files_with_low_coverage')
+
+      logging.info('Total rows added so far = %d', total_rows)
 
 
 def _CreateBigqueryRow(file_coverage_data, commit_timestamp):
