@@ -498,25 +498,30 @@ class CreationTest(testing.AppengineTestCase):
   def test_configured_timeouts(self):
     with self.mutate_builder_cfg() as cfg:
       cfg.expiration_secs = 60
+      cfg.grace_period.seconds = 45
       cfg.execution_timeout_secs = 120
 
     build = self.add()
     self.assertEqual(build.proto.scheduling_timeout.seconds, 60)
+    self.assertEqual(build.proto.grace_period.seconds, 45)
     self.assertEqual(build.proto.execution_timeout.seconds, 120)
 
   def test_requested_timeouts(self):
     """Ensures that timeouts set in request override defaults."""
     with self.mutate_builder_cfg() as cfg:
       cfg.expiration_secs = 60
+      cfg.grace_period.seconds = 45
       cfg.execution_timeout_secs = 120
 
     build = self.add(
         dict(
             scheduling_timeout=duration_pb2.Duration(seconds=300),
-            execution_timeout=duration_pb2.Duration(seconds=360)
+            execution_timeout=duration_pb2.Duration(seconds=360),
+            grace_period=duration_pb2.Duration(seconds=9001),
         )
     )
     self.assertEqual(build.proto.scheduling_timeout.seconds, 300)
+    self.assertEqual(build.proto.grace_period.seconds, 9001)
     self.assertEqual(build.proto.execution_timeout.seconds, 360)
 
   def test_builder_critical_yes(self):

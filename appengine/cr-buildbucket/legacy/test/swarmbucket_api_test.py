@@ -268,7 +268,9 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
                 actual_task_def['task_slices'][0]['properties']['command']
             ),
         'execution_timeout_secs':
-            '10800',
+            '10909',  # subtracting 1% yields original execution_timeout_secs
+        'grace_period_secs':
+            '31',  # 1s extra for bbagent reservation
         'cipd_input': {
             'packages': [
                 {

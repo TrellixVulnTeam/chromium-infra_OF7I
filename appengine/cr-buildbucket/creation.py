@@ -45,6 +45,8 @@ _DEFAULT_SWARMING_PRIORITY = 30
 _DEFAULT_SCHEDULING_TIMEOUT = datetime.timedelta(hours=6)
 # Default value of Build.execution_timeout.
 _DEFAULT_EXECUTION_TIMEOUT = datetime.timedelta(hours=3)
+# Default value of Build.grace_period.
+_DEFAULT_GRACE_PERIOD = datetime.timedelta(seconds=30)
 _DEFAULT_BUILDER_CACHE_EXPIRATION = datetime.timedelta(minutes=4)
 
 _BuildRequestBase = collections.namedtuple(
@@ -203,6 +205,8 @@ class BuildRequest(_BuildRequestBase):
       bp.scheduling_timeout.CopyFrom(sbr.scheduling_timeout)
     if sbr.HasField('execution_timeout'):
       bp.execution_timeout.CopyFrom(sbr.execution_timeout)
+    if sbr.HasField('grace_period'):
+      bp.grace_period.CopyFrom(sbr.grace_period)
 
     self._ensure_builder_cache(bp)
     raise ndb.Return(bp)
@@ -614,6 +618,10 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
   build_proto.execution_timeout.seconds = builder_cfg.execution_timeout_secs
   if not build_proto.execution_timeout.seconds:
     build_proto.execution_timeout.FromTimedelta(_DEFAULT_EXECUTION_TIMEOUT)
+
+  build_proto.grace_period.CopyFrom(builder_cfg.grace_period)
+  if not build_proto.grace_period.seconds:
+    build_proto.grace_period.FromTimedelta(_DEFAULT_GRACE_PERIOD)
 
   build_proto.wait_for_capacity = (
       builder_cfg.wait_for_capacity == common_pb2.YES

@@ -271,7 +271,8 @@ class TaskDefTest(BaseTest):
     build = self._test_build(execution_timeout=dict(seconds=120))
     slices = self.compute_task_def(build)['task_slices']
 
-    self.assertEqual(slices[0]['properties']['execution_timeout_secs'], '120')
+    # Note that subtracting 1% gets 120.
+    self.assertEqual(slices[0]['properties']['execution_timeout_secs'], '121')
 
   def test_scheduling_timeout(self):
     build = self._test_build(scheduling_timeout=dict(seconds=120))
@@ -409,6 +410,7 @@ class TaskDefTest(BaseTest):
         number=1,
         scheduling_timeout=dict(seconds=3600),
         execution_timeout=dict(seconds=3600),
+        grace_period=dict(seconds=45),
         builder=builder_pb2.BuilderID(
             project='chromium', bucket='try', builder='linux'
         ),
@@ -484,7 +486,10 @@ class TaskDefTest(BaseTest):
                 'value': ['cache/vpython'],
             },
         ],
-        'execution_timeout_secs': '3600',
+        # Note that subtracting 1% from 3636 yields the requested
+        # execution_timeout_secs.
+        'execution_timeout_secs': '3636',
+        'grace_period_secs': '46',
         'command': [
             'bbagent${EXECUTABLE_SUFFIX}',
             swarming._cli_encode_proto(expected_args),
