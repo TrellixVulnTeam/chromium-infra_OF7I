@@ -6,40 +6,39 @@ package execute
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
 
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
-	bbpb "go.chromium.org/luci/buildbucket/proto"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/luciexe/exe"
-	"infra/cros/cmd/cros_test_runner/common"
+	"github.com/golang/protobuf/jsonpb"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner/steps"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/luciexe/build"
 )
 
-// Args contains all the arguments necessary to Run() an execute step.
-type Args struct {
-	InputPath      string
-	OutputPath     string
-	SwarmingTaskID string
-
-	Build *bbpb.Build
-	Send  exe.BuildSender
+func logInputs(ctx context.Context, input *steps.RunTestsRequest) (err error) {
+	step, ctx := build.StartStep(ctx, "inputs")
+	defer func() { step.End(err) }()
+	step.SetSummaryMarkdown(fmt.Sprintf("* [parent CTP](https://cr-buildbucket.appspot.com/build/%d)", input.Request.GetParentBuildId()))
+	req := step.Log("input proto")
+	marsh := jsonpb.Marshaler{Indent: "  "}
+	if err = marsh.Marshal(req, input); err != nil {
+		return errors.Annotate(err, "failed to marshal proto").Err()
+	}
+	return nil
 }
 
-// Run is the entry point for cros_test_runner.
-func Run(ctx context.Context, args Args) error {
-	logging.Infof(ctx, "Starting test_runner::execute.")
-	var request skylab_test_runner.Request
-	if err := common.ReadIntoRequest(args.InputPath, &request); err != nil {
+// Run executes the core logic for cros_test_runner.
+func Run(ctx context.Context, input *steps.RunTestsRequest) (err error) {
+	if err = logInputs(ctx, input); err != nil {
 		return err
 	}
-	if err := validateRequest(request); err != nil {
-		return err
-	}
-	return common.WriteResponse(
-		args.OutputPath,
-		&skylab_test_runner.Result{},
-	)
-}
 
-func validateRequest(r skylab_test_runner.Request) error {
+	botID := os.Getenv("SWARMING_BOT_ID")
+	prefix := "crossk-"
+	if !strings.HasPrefix(botID, "crossk-") {
+		return fmt.Errorf("expected SWARMING_BOT_ID to start with %v, instead %v", prefix, botID)
+	}
+	_ = strings.TrimPrefix(botID, prefix)
 	return nil
 }
