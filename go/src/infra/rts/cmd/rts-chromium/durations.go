@@ -190,5 +190,11 @@ SELECT
 FROM tryjobs t
 JOIN test_results tr ON t.id = tr.build_id
 JOIN affected_files af USING (change, patchset)
-GROUP BY change, patchset
+GROUP BY
+	# Produce separate TestDurationRecords for different builders,
+	# otherwise we hit per-row BigQuery limits.
+	# This doesn't affect computation results. It just means batches are split
+	# by builder.
+	(SELECT v FROM tr.testVariant.variant v WHERE v LIKE 'builder:%'),
+	change, patchset
 `
