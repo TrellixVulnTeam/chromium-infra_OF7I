@@ -90,7 +90,7 @@ func newAuthenticator(ctx context.Context) *auth.Authenticator {
 func newOutput(ctx context.Context, o *Options, a *auth.Authenticator) (output.Output, error) {
 	prefix, _ := o.AnnotationStream.Path.Split()
 	c := logdog.Config{
-		Auth:       a,
+		Auth:       logdog.LegacyAuth(a),
 		Host:       o.AnnotationStream.Host,
 		Project:    o.AnnotationStream.Project,
 		Prefix:     prefix,

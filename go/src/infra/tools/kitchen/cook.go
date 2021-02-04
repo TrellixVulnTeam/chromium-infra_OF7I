@@ -705,7 +705,7 @@ func (c *cookRun) butlerOutput(ctx context.Context) (output.Output, error) {
 
 	prefix, _ := c.AnnotationURL.Path.Split()
 	ocfg := out.Config{
-		Auth:           c.systemAuth.Authenticator(),
+		Auth:           out.LegacyAuth(c.systemAuth.Authenticator()),
 		Host:           c.AnnotationURL.Host,
 		Project:        c.AnnotationURL.Project,
 		Prefix:         prefix,
