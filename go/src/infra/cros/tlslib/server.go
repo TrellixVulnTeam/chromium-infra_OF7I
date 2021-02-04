@@ -164,16 +164,21 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		_ = stream.Send(resp)
 		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
 	}
+	defer session.Close()
 
 	var wg sync.WaitGroup
-	defer wg.Wait()
 
-	// Reading stdout of session and stream to client.
+	// Setup the stdout, stderr readers.
 	stdoutReader, stdoutReaderErr := session.StdoutPipe()
 	if stdoutReaderErr != nil {
 		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), stdoutReaderErr))
 	}
+	stderrReader, stderrReaderErr := session.StderrPipe()
+	if stderrReaderErr != nil {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), stderrReaderErr))
+	}
 
+	// Reading stdout of session and stream to client.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -192,10 +197,6 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 	}()
 
 	// Reading stderr of session and stream to client.
-	stderrReader, stderrReaderErr := session.StderrPipe()
-	if stderrReaderErr != nil {
-		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), stderrReaderErr))
-	}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -213,8 +214,6 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		}
 	}()
 
-	defer session.Close()
-
 	args := req.GetArgs()
 	if len(args) == 0 {
 		err = session.Run(req.GetCommand())
@@ -222,6 +221,7 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		err = session.Run(req.GetCommand() + " " + strings.Join(args, " "))
 	}
 
+	wg.Wait()
 	resp.ExitInfo.Started = true
 
 	switch err := err.(type) {
