@@ -47,7 +47,7 @@ func (s *Store) Save(ds *lab_platform.DutState) error {
 
 const (
 	botCacheSubDir  = "swarming_state"
-	botCacheFileExt = ".json"
+	botCacheFileExt = "json"
 )
 
 func (s *Store) path() string {

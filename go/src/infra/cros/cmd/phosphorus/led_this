@@ -29,9 +29,9 @@ trap "rm -rf '${tmp_dir}'" EXIT
 readonly ref_name=${USER}-test
 
 go install infra/cros/cmd/phosphorus
-cipd create -pkg-def ../../build/packages/phosphorus.yaml -pkg-var exe_suffix: -json-output "${tmp_dir}/cipd-create.out"
+cipd create -pkg-def ../../build/packages/phosphorus.yaml -pkg-var exe_suffix: -json-output "${tmp_dir}/cipd-create.out" >/dev/null
 readonly pkg_version="$(jq -r ".result.instance_id" "${tmp_dir}/cipd-create.out")"
-cipd set-ref chromiumos/infra/phosphorus/linux-amd64 -ref=${ref_name} -version=${pkg_version}
+cipd set-ref chromiumos/infra/phosphorus/linux-amd64 -ref=${ref_name} -version=${pkg_version} >/dev/null
 
 readonly build_json="${tmp_dir}/build.json"
 led get-build ${build_id} > "${build_json}"
@@ -41,4 +41,4 @@ jq --arg ft "${future_time}" '.buildbucket.bbagent_args.build.input.properties.r
 jq ".buildbucket.bbagent_args.build.input.properties.\"\$chromeos/phosphorus\".version.cipd_label = \"${ref_name}\"" "${build_json}" | sponge "${build_json}"
 
 
-cat "${build_json}" | led launch
+cat "${build_json}"
