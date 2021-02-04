@@ -64,18 +64,9 @@ func (g *Getter) GetContentsForHostname(ctx context.Context, hostname string) (s
 
 	hi := ConvertDut(di)
 
-	res, err := g.ac.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
-		Hostname: hostname,
-	})
+	hi.StableVersions, err = g.GetStableVersionForHostname(ctx, hostname)
 	if err != nil {
 		return "", err
-	}
-
-	hi.StableVersions = map[string]string{
-		"cros":       res.GetCrosVersion(),
-		"faft":       res.GetFaftVersion(),
-		"firmware":   res.GetFirmwareVersion(),
-		"servo-cros": res.GetServoCrosVersion(),
 	}
 
 	bytes, err := MarshalIndent(hi)
@@ -84,4 +75,32 @@ func (g *Getter) GetContentsForHostname(ctx context.Context, hostname string) (s
 	}
 
 	return string(bytes), nil
+}
+
+// GetStableVersionForHostname gets the stable version info for a given hostname.
+func (g *Getter) GetStableVersionForHostname(ctx context.Context, hostname string) (map[string]string, error) {
+	if g.ac == nil {
+		return nil, fmt.Errorf("no Inventory client for stable version")
+	}
+	if hostname == "" {
+		return nil, fmt.Errorf("hostname cannot be empty")
+	}
+
+	res, err := g.ac.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
+		Hostname: hostname,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return extractStableVersionFromResponse(res), nil
+}
+
+func extractStableVersionFromResponse(res *fleet.GetStableVersionResponse) map[string]string {
+	return map[string]string{
+		"cros":       res.GetCrosVersion(),
+		"faft":       res.GetFaftVersion(),
+		"firmware":   res.GetFirmwareVersion(),
+		"servo-cros": res.GetServoCrosVersion(),
+	}
 }
