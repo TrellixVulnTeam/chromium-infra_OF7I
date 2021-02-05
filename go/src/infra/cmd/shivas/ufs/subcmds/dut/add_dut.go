@@ -222,6 +222,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 				continue
 			}
 			if err := c.addDutToUFS(ctx, ic, lse); err != nil {
+				fmt.Printf("Failed to add DUT %s to UFS. Skipping deployment. %s", lse.GetName(), err.Error())
 				// skip deployment
 				continue
 			}
