@@ -69,10 +69,6 @@ function openTraceView(button, traceUrl) {
     button.innerText = "open trace on ui.perfetto.dev";
     button.disabled = false;
   });
-  button.addEventListener('click', (e) => {
-    if (!window.trace) return;
-    openPerfetto(trace);
-  });
 }
 
 `
@@ -90,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openTraceView(traceView, traceUrl);
       return;
     }
-    openPerfetto(traceView.trace);
+    openPerfetto(traceView);
   });
   openTraceView(traceView, traceUrl);
 });
@@ -155,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openTraceView(traceView, window.location + '/trace.json');
       return;
     }
-    openPerfetto(traceView.trace);
+    openPerfetto(traceView);
   });
   traceView.disabled = false;
   const traceViewSBE = document.getElementById('trace_view_sort_by_end');
@@ -164,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openTraceView(traceViewSBE, window.location + '/trace_sort_by_end.json');
       return;
     }
-    openPerfetto(traceViewSBE.trace);
+    openPerfetto(traceViewSBE);
   });
   traceViewSBE.disabled = false;
 });
