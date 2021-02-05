@@ -1632,6 +1632,17 @@ rpm-3,chromeos2,22:22:22:22:22:22,13,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition of rpm is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+
+	// GetStableVersionText description for GetStableVersionCmd
+	GetStableVersionText string = `Get stable version details for DUT/labstation/model.
+
+Example:
+
+shivas get stable-version {hostname1}
+shivas get stable-version -board board1 -model model1
+shivas get stable-version -model model1
+
+Gets the stable version and prints the output in user format.`
 )
 
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.

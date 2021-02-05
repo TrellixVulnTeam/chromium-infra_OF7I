@@ -328,6 +328,55 @@ func TestGetStableVersionForHostname(t *testing.T) {
 	}
 }
 
+func TestGetStableVersionForModel(t *testing.T) {
+	bg := context.Background()
+
+	const expectedErr = ""
+	expected := map[string]string{
+		"cros":       "FAKE2-board-mode-CROS-VERSION",
+		"faft":       "FAKE2-board-mode-FAFT-VERSION",
+		"firmware":   "FAKE2-board-mode-FIRMWARE-VERSION",
+		"servo-cros": "FAKE2-board-mode-SERVO-CROS-VERSION",
+	}
+
+	g := NewGetter(
+		nil,
+		&FakeGetStableVersion{
+			version: map[string]FakeStableVersion{
+				"|board:fake-mode|model:fake-model": {
+					cros:      "FAKE1-mode-mode-CROS-VERSION",
+					faft:      "FAKE1-mode-mode-FAFT-VERSION",
+					firmware:  "FAKE1-mode-mode-FIRMWARE-VERSION",
+					servoCros: "FAKE1-mode-mode-SERVO-CROS-VERSION",
+				},
+				"|board:fake-board|model:fake-model": {
+					cros:      "FAKE2-board-mode-CROS-VERSION",
+					faft:      "FAKE2-board-mode-FAFT-VERSION",
+					firmware:  "FAKE2-board-mode-FIRMWARE-VERSION",
+					servoCros: "FAKE2-board-mode-SERVO-CROS-VERSION",
+				},
+				"|hostname:FAKE-HOSTNAME": {
+					cros:      "FAKE3-hostname-CROS-VERSION",
+					faft:      "FAKE3-hostname-FAFT-VERSION",
+					firmware:  "FAKE3-hostname-FIRMWARE-VERSION",
+					servoCros: "FAKE3-hostname-SERVO-CROS-VERSION",
+				},
+			},
+		},
+	)
+
+	out, e := g.GetStableVersionForModel(bg, "fake-board", "fake-model")
+	eMsg := errToString(e)
+
+	if diff := cmp.Diff(expected, out); diff != "" {
+		t.Errorf("wanted: (%s) got: (%s)\n(%s)", expected, out, diff)
+	}
+
+	if diff := cmp.Diff(expectedErr, eMsg); diff != "" {
+		t.Errorf("wanted: (%s) got: (%s)\n(%s)", expectedErr, eMsg, diff)
+	}
+}
+
 func errToString(e error) string {
 	if e == nil {
 		return ""

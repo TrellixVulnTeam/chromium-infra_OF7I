@@ -96,6 +96,29 @@ func (g *Getter) GetStableVersionForHostname(ctx context.Context, hostname strin
 	return extractStableVersionFromResponse(res), nil
 }
 
+// GetStableVersionForModel gets the stable version info for a given board/model.
+func (g *Getter) GetStableVersionForModel(ctx context.Context, board, model string) (map[string]string, error) {
+	if board == "" {
+		return nil, fmt.Errorf("board cannot be empty")
+	}
+	if model == "" {
+		return nil, fmt.Errorf("model cannot be empty")
+	}
+	if g.ac == nil {
+		return nil, fmt.Errorf("no Inventory client for stable version")
+	}
+
+	res, err := g.ac.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
+		Model:       model,
+		BuildTarget: board,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return extractStableVersionFromResponse(res), nil
+}
+
 func extractStableVersionFromResponse(res *fleet.GetStableVersionResponse) map[string]string {
 	return map[string]string{
 		"cros":       res.GetCrosVersion(),

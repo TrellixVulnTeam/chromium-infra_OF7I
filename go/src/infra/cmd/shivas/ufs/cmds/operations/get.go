@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
+	"infra/cmd/shivas/ufs/subcmds/stableversion"
 	"infra/cmd/shivas/ufs/subcmds/static"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
@@ -75,6 +76,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		rackprototype.GetRackLSEPrototypeCmd,
 		chromeplatform.GetChromePlatformCmd,
 		vlan.GetVlanCmd,
+		stableversion.GetStableVersionCmd,
 		static.GetStatesCmd,
 		static.GetZonesCmd,
 	}
