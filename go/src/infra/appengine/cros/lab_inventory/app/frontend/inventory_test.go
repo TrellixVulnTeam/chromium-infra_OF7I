@@ -1748,3 +1748,76 @@ func TestListManualRepairRecords(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetManualRepairRecords(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-xx", "getRecords-111", 1, false)
+	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-yy", "getRecords-222", 1, false)
+	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-zz", "getRecords-333", 1, false)
+	record4 := mockDeviceManualRepairRecord("chromeos-getRecords-zz", "getRecords-444", 1, false)
+	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3, record4}
+
+	// Set up records in datastore
+	datastore.AddDeviceManualRepairRecords(ctx, records)
+
+	Convey("Test batch get manual repair records", t, func() {
+		Convey("Get record using multiple hostnames", func() {
+			req := &api.BatchGetManualRepairRecordsRequest{
+				Hostnames: []string{
+					"chromeos-getRecords-xx",
+					"chromeos-getRecords-yy",
+				},
+			}
+			resp, err := tf.Inventory.BatchGetManualRepairRecords(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 2)
+			So(resp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(resp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(resp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-getRecords-xx")
+			So(resp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-getRecords-xx")
+			So(resp.RepairRecords[1].ErrorMsg, ShouldBeEmpty)
+			So(resp.RepairRecords[1].RepairRecord, ShouldNotBeNil)
+			So(resp.RepairRecords[1].RepairRecord.Hostname, ShouldEqual, "chromeos-getRecords-yy")
+			So(resp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-getRecords-yy")
+		})
+		Convey("Get first record when hostname has multiple active records", func() {
+			req := &api.BatchGetManualRepairRecordsRequest{
+				Hostnames: []string{
+					"chromeos-getRecords-zz",
+				},
+			}
+			resp, err := tf.Inventory.BatchGetManualRepairRecords(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 1)
+			So(resp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-getRecords-zz")
+			So(resp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-getRecords-zz")
+		})
+		Convey("Get record using a non-existent hostname", func() {
+			req := &api.BatchGetManualRepairRecordsRequest{
+				Hostnames: []string{
+					"chromeos-getRecords-xx",
+					"chromeos-getRecords-cc",
+				},
+			}
+			resp, err := tf.Inventory.BatchGetManualRepairRecords(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.RepairRecords, ShouldHaveLength, 2)
+			So(resp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(resp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(resp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-getRecords-xx")
+			So(resp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-getRecords-xx")
+			So(resp.RepairRecords[1].ErrorMsg, ShouldContainSubstring, "No record found")
+			So(resp.RepairRecords[1].RepairRecord, ShouldBeNil)
+			So(resp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-getRecords-cc")
+		})
+	})
+}

@@ -1015,7 +1015,21 @@ func (is *InventoryServerImpl) BatchGetManualRepairRecords(ctx context.Context, 
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	return &api.BatchGetManualRepairRecordsResponse{}, nil
+	hostnames := req.Hostnames
+	repairRecords := make([]*api.ManualRepairRecordResult, 0, len(hostnames))
+
+	for _, h := range hostnames {
+		propFilter := map[string]string{
+			"hostname":     h,
+			"repair_state": "STATE_IN_PROGRESS",
+		}
+		getRes, getErr := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, 0, []string{})
+		repairRecords = append(repairRecords, parseManualRepairRecordResult(ctx, h, getRes, getErr))
+	}
+
+	return &api.BatchGetManualRepairRecordsResponse{
+		RepairRecords: repairRecords,
+	}, nil
 }
 
 // BatchCreateManualRepairRecords creates new submitted manual repair records
@@ -1026,4 +1040,38 @@ func (is *InventoryServerImpl) BatchCreateManualRepairRecords(ctx context.Contex
 	}()
 
 	return &api.BatchCreateManualRepairRecordsResponse{}, nil
+}
+
+// parseManualRepairRecordResult parses the repair records found in the
+// datastore and converts it into a ManualRepairRecordResult. If an error
+// occurs, the error is attached to the result object and returned.
+func parseManualRepairRecordResult(ctx context.Context, hostname string, getRes []*datastore.DeviceManualRepairRecordsOpRes, getErr error) *api.ManualRepairRecordResult {
+	recordRes := &api.ManualRepairRecordResult{
+		Hostname: hostname,
+	}
+
+	if getErr != nil {
+		recordRes.ErrorMsg = "Error encountered for get request " + hostname
+		return recordRes
+	}
+
+	// There should only be one record in progress per hostname at a time. User
+	// should complete the record returned.
+	if len(getRes) == 0 {
+		recordRes.ErrorMsg = "No record found"
+		return recordRes
+	} else if len(getRes) > 1 {
+		logging.Warningf(ctx, "More than one active record found; returning first record")
+	}
+
+	// Return first active record found.
+	r := getRes[0]
+	if e := r.Err; e != nil {
+		recordRes.ErrorMsg = "Error encountered for record " + r.Entity.ID
+		return recordRes
+	}
+
+	recordRes.Id = r.Entity.ID
+	recordRes.RepairRecord = r.Record
+	return recordRes
 }
