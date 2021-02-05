@@ -15,11 +15,7 @@ infra.console_view(
 )
 infra.cq_group(name = "luci-go", repo = REPO_URL)
 
-def ci_builder(
-        name,
-        os,
-        tree_closing = False,
-        properties = None):
+def ci_builder(name, os, tree_closing = False):
     infra.builder(
         name = name,
         bucket = "ci",
@@ -34,7 +30,6 @@ def ci_builder(
             ),
         ],
         notifies = infra.tree_closing_notifiers() if tree_closing else None,
-        properties = properties,
     )
     luci.console_view_entry(
         builder = name,
@@ -66,9 +61,7 @@ def try_builder(
         )
 
 ci_builder(name = "luci-go-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
-ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
-    "run_integration_tests": True,
-})
+ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.14-64", os = "Mac-10.14", tree_closing = True)
