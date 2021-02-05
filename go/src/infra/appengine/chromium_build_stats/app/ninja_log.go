@@ -46,7 +46,6 @@ function openPerfetto(button) {
        if (e.data !== 'PONG') return;
        clearInterval(pingInterval);
        perfettoWindow.postMessage({'perfetto': {title: button.traceTitle, url: button.tracePage, buffer: button.trace}}, uiLink);
-       window.close();
     });
   } else {
     console.warn('Unable to open Perfetto UI window');
