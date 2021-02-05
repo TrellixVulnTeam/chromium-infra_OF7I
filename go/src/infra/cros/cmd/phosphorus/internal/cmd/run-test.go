@@ -62,8 +62,8 @@ func (c *runTestRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *runTestRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
-	var r phosphorus.RunTestRequest
-	if err := ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &phosphorus.RunTestRequest{}
+	if err := ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateRunTestRequest(r); err != nil {
@@ -100,7 +100,7 @@ func runTestState(r *atutil.Result) phosphorus.RunTestResponse_State {
 	return phosphorus.RunTestResponse_FAILED
 }
 
-func validateRunTestRequest(r phosphorus.RunTestRequest) error {
+func validateRunTestRequest(r *phosphorus.RunTestRequest) error {
 	missingArgs := getCommonMissingArgs(r.Config)
 
 	if len(r.DutHostnames) == 0 {
@@ -119,7 +119,7 @@ func validateRunTestRequest(r phosphorus.RunTestRequest) error {
 }
 
 // runTestStep runs an individual test. It is a wrapper around autoserv.
-func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*autoservResult, error) {
+func runTestStep(ctx context.Context, r *phosphorus.RunTestRequest) (*autoservResult, error) {
 	j := getMainJob(r.Config)
 
 	dir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")

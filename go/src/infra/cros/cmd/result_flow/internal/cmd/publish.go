@@ -117,11 +117,9 @@ func (c *publishRun) pipelineRun(ctx context.Context, ch chan state) {
 }
 
 func (c *publishRun) loadPublishRequest() error {
-	var (
-		r   result_flow.PublishRequest
-		err error
-	)
-	if err = readJSONPb(c.inputPath, &r); err != nil {
+	r := &result_flow.PublishRequest{}
+	var err error
+	if err = readJSONPb(c.inputPath, r); err != nil {
 		return err
 	}
 	if c.config, err = getPubSubConf(r); err != nil {
@@ -160,7 +158,7 @@ func getBuildID(bID int64) (int64, error) {
 	return bID, nil
 }
 
-func getPubSubConf(r result_flow.PublishRequest) (*result_flow.PubSubConfig, error) {
+func getPubSubConf(r *result_flow.PublishRequest) (*result_flow.PubSubConfig, error) {
 	var p *result_flow.PubSubConfig
 	if r.GetCtp() != nil {
 		p = r.GetCtp()

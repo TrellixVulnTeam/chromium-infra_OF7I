@@ -65,8 +65,8 @@ func (c *provisionRun) Run(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *provisionRun) innerRun(ctx context.Context, env subcommands.Env) error {
-	var r bpipb.ProvisionRequest
-	if err := cmd.ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &bpipb.ProvisionRequest{}
+	if err := cmd.ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateProvisionRequest(r); err != nil {
@@ -83,7 +83,7 @@ func (c *provisionRun) innerRun(ctx context.Context, env subcommands.Env) error 
 	return runTLSProvision(ctx, r.DutName, r.ImageGsPath)
 }
 
-func validateProvisionRequest(r bpipb.ProvisionRequest) error {
+func validateProvisionRequest(r *bpipb.ProvisionRequest) error {
 	missingArgs := validateConfig(r.GetConfig())
 
 	if r.DutName == "" {

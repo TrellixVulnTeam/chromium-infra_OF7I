@@ -36,7 +36,7 @@ func TestFinalBuildForSingleInvocation(t *testing.T) {
 				CannedURL: exampleTestRunnerURL,
 			},
 			ba,
-			steps.ExecuteRequests{
+			&steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
 					"request-with-single-invocation": {
 						RequestParams: basicParams(),
@@ -75,7 +75,7 @@ func TestFinalBuildForTwoInvocations(t *testing.T) {
 				CannedURL: exampleTestRunnerURL,
 			},
 			ba,
-			steps.ExecuteRequests{
+			&steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
 					"request-with-two-invocations": {
 						RequestParams: basicParams(),
@@ -120,7 +120,7 @@ func TestFinalBuildForTwoRequests(t *testing.T) {
 				CannedURL: exampleTestRunnerURL,
 			},
 			ba,
-			steps.ExecuteRequests{
+			&steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
 					"first-request": {
 						RequestParams: basicParams(),
@@ -172,7 +172,7 @@ func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
 		}
 		inv := clientTestInvocation("failing-invocation", "")
 		inv.Test.AllowRetries = true
-		req := steps.ExecuteRequests{
+		req := &steps.ExecuteRequests{
 			TaggedRequests: map[string]*steps.ExecuteRequest{
 				"request-with-one-retry-allowed": {
 					RequestParams: params,
@@ -214,7 +214,7 @@ func TestBuildUpdatesWithRetries(t *testing.T) {
 		e := &steps.EnumerationResponse{
 			AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{inv},
 		}
-		req := steps.ExecuteRequests{
+		req := &steps.ExecuteRequests{
 			TaggedRequests: map[string]*steps.ExecuteRequest{
 				"no-retry": {
 					RequestParams: basicParams(),
@@ -243,7 +243,7 @@ func TestBuildUpdatesWithRetries(t *testing.T) {
 				Allow: true,
 				Max:   1,
 			}
-			req := steps.ExecuteRequests{
+			req := &steps.ExecuteRequests{
 				TaggedRequests: map[string]*steps.ExecuteRequest{
 					"one-retry": {
 						RequestParams: params,
@@ -305,7 +305,7 @@ func (s *buildAccumulator) GetLatestBuild() *bbpb.Build {
 	return s.Sent[len(s.Sent)-1]
 }
 
-func runWithBuildAccumulator(ctx context.Context, skylab trservice.Client, ba *buildAccumulator, request steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
+func runWithBuildAccumulator(ctx context.Context, skylab trservice.Client, ba *buildAccumulator, request *steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
 	args := execution.Args{
 		Build:   ba.Input,
 		Send:    exe.BuildSender(ba.Send),

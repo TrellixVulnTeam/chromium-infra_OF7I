@@ -78,9 +78,9 @@ func (c *parseRun) innerRun(a subcommands.Application, args []string, env subcom
 		Harness: &skylab_test_runner.Result_AutotestResult{
 			AutotestResult: &autotestResult,
 		},
-		Prejob: &prejobResult,
+		Prejob: prejobResult,
 		StateUpdate: &skylab_test_runner.Result_StateUpdate{
-			DutState: getDutState(prejobResult, autotestResult),
+			DutState: getDutState(prejobResult, &autotestResult),
 		},
 	}
 
@@ -133,14 +133,14 @@ type prejobInfo struct {
 	Dir  string
 }
 
-func getPrejobResults(dir string) skylab_test_runner.Result_Prejob {
+func getPrejobResults(dir string) *skylab_test_runner.Result_Prejob {
 	var steps []*skylab_test_runner.Result_Prejob_Step
 
 	prejobs, err := getPrejobs(dir)
 
 	if err != nil {
 		// TODO(zamorzaev): find a better way to surface this error.
-		return skylab_test_runner.Result_Prejob{
+		return &skylab_test_runner.Result_Prejob{
 			Step: []*skylab_test_runner.Result_Prejob_Step{
 				{
 					Name:    "unknown",
@@ -156,7 +156,7 @@ func getPrejobResults(dir string) skylab_test_runner.Result_Prejob {
 			Verdict: getPrejobVerdict(prejob.Dir),
 		})
 	}
-	return skylab_test_runner.Result_Prejob{
+	return &skylab_test_runner.Result_Prejob{
 		Step: steps,
 	}
 }
@@ -229,7 +229,7 @@ func parseResultsFile(contents string) []*skylab_test_runner.Result_Autotest_Tes
 }
 
 type testCaseStack struct {
-	testCases []skylab_test_runner.Result_Autotest_TestCase
+	testCases []*skylab_test_runner.Result_Autotest_TestCase
 }
 
 // ParseLine parses a line from status.log in the context of the current test
@@ -273,7 +273,7 @@ func (s *testCaseStack) PopFullyParsedTestCase() *skylab_test_runner.Result_Auto
 	}
 
 	s.testCases = s.testCases[:len(s.testCases)-1]
-	return &r
+	return r
 }
 
 // Flush pops all test cases currently in the stack, declares them failed and
@@ -305,7 +305,7 @@ func (s *testCaseStack) push(name string) {
 	tc := skylab_test_runner.Result_Autotest_TestCase{
 		Name: name,
 	}
-	s.testCases = append(s.testCases, tc)
+	s.testCases = append(s.testCases, &tc)
 }
 
 // addSummary appends a string to the human_readable_summary of the top
@@ -384,7 +384,7 @@ func requiresDutReset(v skylab_test_runner.Result_Autotest_TestCase_Verdict) boo
 }
 
 // getDutState returns the state of the DUT after the prejob and test run.
-func getDutState(prejob skylab_test_runner.Result_Prejob, tests skylab_test_runner.Result_Autotest) string {
+func getDutState(prejob *skylab_test_runner.Result_Prejob, tests *skylab_test_runner.Result_Autotest) string {
 	for _, s := range prejob.Step {
 		if s.GetVerdict() != skylab_test_runner.Result_Prejob_Step_VERDICT_PASS {
 			return dutStateNeedsRepair

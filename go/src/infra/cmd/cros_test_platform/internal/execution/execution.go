@@ -27,7 +27,7 @@ type Args struct {
 	Build *bbpb.Build
 	Send  exe.BuildSender
 
-	Request steps.ExecuteRequests
+	Request *steps.ExecuteRequests
 
 	WorkerConfig *config.Config_SkylabWorker
 	ParentTaskID string

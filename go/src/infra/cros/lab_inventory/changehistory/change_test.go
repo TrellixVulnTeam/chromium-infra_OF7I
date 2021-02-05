@@ -124,37 +124,37 @@ func TestUpdateLabstation(t *testing.T) {
 func TestUpdateDut(t *testing.T) {
 	t.Parallel()
 	Convey("Log the change of dut", t, func() {
-		servo1 := lab.Servo{
+		servo1 := &lab.Servo{
 			ServoHostname: "labstation1",
 			ServoPort:     8888,
 			ServoSerial:   "SERVO1",
 			ServoType:     "v3",
 		}
-		servo2 := servo1
+		servo2 := proto.Clone(servo1).(*lab.Servo)
 
-		chameleon1 := lab.Chameleon{
+		chameleon1 := &lab.Chameleon{
 			ChameleonPeripherals: []lab.ChameleonType{lab.ChameleonType_CHAMELEON_TYPE_HDMI},
 			AudioBoard:           true,
 		}
-		chameleon2 := chameleon1
+		chameleon2 := proto.Clone(chameleon1).(*lab.Chameleon)
 
-		rpm1 := lab.RPM{
+		rpm1 := &lab.RPM{
 			PowerunitName:   "powerunit_name",
 			PowerunitOutlet: "powerunit_outlet",
 		}
-		rpm2 := rpm1
+		rpm2 := proto.Clone(rpm1).(*lab.RPM)
 
-		camera1 := lab.Camera{CameraType: lab.CameraType_CAMERA_HUDDLY}
-		camera2 := camera1
+		camera1 := &lab.Camera{CameraType: lab.CameraType_CAMERA_HUDDLY}
+		camera2 := proto.Clone(camera1).(*lab.Camera)
 
-		audio1 := lab.Audio{AudioBox: true, Atrus: true}
-		audio2 := audio1
+		audio1 := &lab.Audio{AudioBox: true, Atrus: true}
+		audio2 := proto.Clone(audio1).(*lab.Audio)
 
-		wifi1 := lab.Wifi{Wificell: true, AntennaConn: lab.Wifi_CONN_OTA}
-		wifi2 := wifi1
+		wifi1 := &lab.Wifi{Wificell: true, AntennaConn: lab.Wifi_CONN_OTA}
+		wifi2 := proto.Clone(wifi1).(*lab.Wifi)
 
-		touch1 := lab.Touch{Mimo: true}
-		touch2 := touch1
+		touch1 := &lab.Touch{Mimo: true}
+		touch2 := proto.Clone(touch1).(*lab.Touch)
 
 		oldDut := lab.ChromeOSDevice{
 			Id: &lab.ChromeOSDeviceID{Value: "UUID:1234"},
@@ -162,13 +162,13 @@ func TestUpdateDut(t *testing.T) {
 				Dut: &lab.DeviceUnderTest{
 					Hostname: "dut1",
 					Peripherals: &lab.Peripherals{
-						Servo:           &servo1,
-						Chameleon:       &chameleon1,
-						Rpm:             &rpm1,
-						ConnectedCamera: []*lab.Camera{&camera1},
-						Audio:           &audio1,
-						Wifi:            &wifi1,
-						Touch:           &touch1,
+						Servo:           servo1,
+						Chameleon:       chameleon1,
+						Rpm:             rpm1,
+						ConnectedCamera: []*lab.Camera{camera1},
+						Audio:           audio1,
+						Wifi:            wifi1,
+						Touch:           touch1,
 						Carrier:         "carrier1",
 						Camerabox:       true,
 					},
@@ -182,13 +182,13 @@ func TestUpdateDut(t *testing.T) {
 				Dut: &lab.DeviceUnderTest{
 					Hostname: "dut1",
 					Peripherals: &lab.Peripherals{
-						Servo:           &servo2,
-						Chameleon:       &chameleon2,
-						Rpm:             &rpm2,
-						ConnectedCamera: []*lab.Camera{&camera2},
-						Audio:           &audio2,
-						Wifi:            &wifi2,
-						Touch:           &touch2,
+						Servo:           servo2,
+						Chameleon:       chameleon2,
+						Rpm:             rpm2,
+						ConnectedCamera: []*lab.Camera{camera2},
+						Audio:           audio2,
+						Wifi:            wifi2,
+						Touch:           touch2,
 						Carrier:         "carrier1",
 						Camerabox:       true,
 					},

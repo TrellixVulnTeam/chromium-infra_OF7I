@@ -55,8 +55,8 @@ func (c *uploadToGSRun) Run(a subcommands.Application, args []string, env subcom
 }
 
 func (c *uploadToGSRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
-	var r phosphorus.UploadToGSRequest
-	if err := ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &phosphorus.UploadToGSRequest{}
+	if err := ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateUploadToGSRequest(r); err != nil {
@@ -80,7 +80,7 @@ func (c *uploadToGSRun) innerRun(ctx context.Context, args []string, env subcomm
 
 }
 
-func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
+func validateUploadToGSRequest(r *phosphorus.UploadToGSRequest) error {
 	missingArgs := make([]string, 0)
 	if r.GetLocalDirectory() == "" {
 		missingArgs = append(missingArgs, "local_directory")
@@ -99,7 +99,7 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 const maxConcurrentUploads = 20
 
 // runGSUploadStep uploads all files in the specified directory to GS.
-func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
+func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r *phosphorus.UploadToGSRequest) (string, error) {
 	localPath := r.GetLocalDirectory()
 	path := gcgs.Path(r.GetGsDirectory())
 

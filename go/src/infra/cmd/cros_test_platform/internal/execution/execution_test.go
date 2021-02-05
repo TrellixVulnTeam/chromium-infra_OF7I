@@ -593,7 +593,7 @@ func runWithParams(ctx context.Context, skylab trservice.Client, params *test_pl
 	args := execution.Args{
 		Build: &bbpb.Build{},
 		Send:  exe.BuildSender(func() {}),
-		Request: steps.ExecuteRequests{
+		Request: &steps.ExecuteRequests{
 			TaggedRequests: map[string]*steps.ExecuteRequest{
 				"12345678/foo": {
 					RequestParams: params,

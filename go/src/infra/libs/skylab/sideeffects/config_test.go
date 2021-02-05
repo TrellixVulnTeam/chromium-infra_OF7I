@@ -16,6 +16,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/side_effects"
 )
@@ -123,7 +124,7 @@ func TestMissingFiles(t *testing.T) {
 
 func TestWriteConfigToDisk(t *testing.T) {
 	Convey("Given side_effects.Config object", t, func() {
-		want := side_effects.Config{
+		want := &side_effects.Config{
 			Tko: &side_effects.TKOConfig{
 				ProxySocket:       "foo-socket",
 				MysqlUser:         "foo-user",
@@ -136,18 +137,18 @@ func TestWriteConfigToDisk(t *testing.T) {
 		}
 		Convey("when WriteConfigToDisk is called", func() {
 			dir, _ := ioutil.TempDir("", "")
-			err := WriteConfigToDisk(dir, &want)
+			err := WriteConfigToDisk(dir, want)
 			So(err, ShouldBeNil)
 
 			Convey("then the side_effects_config.json file contains the original object", func() {
 				f, fileErr := os.Open(filepath.Join(dir, "side_effects_config.json"))
 				So(fileErr, ShouldBeNil)
 
-				var got side_effects.Config
+				got := &side_effects.Config{}
 				um := jsonpb.Unmarshaler{}
-				unmarshalErr := um.Unmarshal(f, &got)
+				unmarshalErr := um.Unmarshal(f, got)
 				So(unmarshalErr, ShouldBeNil)
-				So(got, ShouldResemble, want)
+				So(got, ShouldResembleProto, want)
 			})
 		})
 	})

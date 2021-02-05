@@ -47,8 +47,8 @@ func (c *uploadToTKORun) Run(a subcommands.Application, args []string, env subco
 }
 
 func (c *uploadToTKORun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
-	var r phosphorus.UploadToTkoRequest
-	if err := ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &phosphorus.UploadToTkoRequest{}
+	if err := ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateUploadToTkoRequest(r); err != nil {
@@ -57,7 +57,7 @@ func (c *uploadToTKORun) innerRun(ctx context.Context, args []string, env subcom
 	return runTKOUploadStep(ctx, r)
 }
 
-func validateUploadToTkoRequest(r phosphorus.UploadToTkoRequest) error {
+func validateUploadToTkoRequest(r *phosphorus.UploadToTkoRequest) error {
 	missingArgs := getCommonMissingArgs(r.Config)
 
 	if len(missingArgs) > 0 {
@@ -69,7 +69,7 @@ func validateUploadToTkoRequest(r phosphorus.UploadToTkoRequest) error {
 
 // runTKOUploadStep extracts test results out of the status.log files
 // and uploads them to TKO. It is a wrapper around tko/parse.
-func runTKOUploadStep(ctx context.Context, r phosphorus.UploadToTkoRequest) error {
+func runTKOUploadStep(ctx context.Context, r *phosphorus.UploadToTkoRequest) error {
 	_, err := atutil.TKOParse(
 		autotest.Config{
 			AutotestDir: r.Config.Bot.AutotestDir,

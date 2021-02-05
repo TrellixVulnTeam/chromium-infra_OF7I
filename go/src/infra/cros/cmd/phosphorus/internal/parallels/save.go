@@ -56,8 +56,8 @@ func (c *saveRun) Run(a subcommands.Application, args []string, env subcommands.
 }
 
 func (c *saveRun) innerRun(ctx context.Context, env subcommands.Env) error {
-	var r build_parallels_image.SaveRequest
-	if err := cmd.ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &build_parallels_image.SaveRequest{}
+	if err := cmd.ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateSaveRequest(r); err != nil {
@@ -69,7 +69,7 @@ func (c *saveRun) innerRun(ctx context.Context, env subcommands.Env) error {
 	return nil
 }
 
-func validateSaveRequest(r build_parallels_image.SaveRequest) error {
+func validateSaveRequest(r *build_parallels_image.SaveRequest) error {
 	missingArgs := validateConfig(r.GetConfig())
 
 	if r.DutName == "" {

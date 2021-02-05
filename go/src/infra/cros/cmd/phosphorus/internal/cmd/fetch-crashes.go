@@ -87,8 +87,8 @@ var baseCrashNamePat = regexp.MustCompile(`^[^.]+\.\d+\.\d+\.\d+\.\d+`)
 
 // innerRun reads in the JSON PB input, runs the actual fetch-crashes command, and serializes the output.
 func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
-	var r phosphorus.FetchCrashesRequest
-	if err := ReadJSONPB(c.InputPath, &r); err != nil {
+	r := &phosphorus.FetchCrashesRequest{}
+	if err := ReadJSONPB(c.InputPath, r); err != nil {
 		return err
 	}
 	if err := validateFetchCrashesRequest(r); err != nil {
@@ -111,7 +111,7 @@ func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subco
 }
 
 // validateFetchCrashesRequest ensures that all required parameters are present in |r|.
-func validateFetchCrashesRequest(r phosphorus.FetchCrashesRequest) error {
+func validateFetchCrashesRequest(r *phosphorus.FetchCrashesRequest) error {
 	missingArgs := getCommonMissingArgs(r.Config)
 
 	if r.DutHostname == "" {
@@ -136,7 +136,7 @@ type fullCrash struct {
 
 // runTLSFetchCrashes is the core of the implementation of fetch_crashes: it runs the FetchCrashes TLS API, assembles
 // its output, and (if requested) uploads the crashes.
-func runTLSFetchCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest) (*phosphorus.FetchCrashesResponse, error) {
+func runTLSFetchCrashes(ctx context.Context, r *phosphorus.FetchCrashesRequest) (*phosphorus.FetchCrashesResponse, error) {
 	req := tlsapi.FetchCrashesRequest{
 		Dut:       r.DutHostname,
 		FetchCore: false,
@@ -296,7 +296,7 @@ func findMissingCrashes(rtdCrashes map[string]bool, crashes []*phosphorus.CrashS
 }
 
 // removeCrashes empties out all accessible crash directories on the DUT
-func removeCrashes(ctx context.Context, r phosphorus.FetchCrashesRequest, cl tlsapi.CommonClient) error {
+func removeCrashes(ctx context.Context, r *phosphorus.FetchCrashesRequest, cl tlsapi.CommonClient) error {
 	// Some of these directories may not exist (e.g. if the user isn't logged in), and that's okay.
 	crashDirs := []string{"/var/spool/crash/", "/home/chronos/crash/", "/home/root/*/crash/", "/home/chronos/u-*/crash/"}
 
@@ -422,7 +422,7 @@ func writeProcessedCrashDetails(ctx context.Context, dir string, crashes []*phos
 
 // processCrash evaluates a fully-received crash, writes it to |dir|/crashes, uploads
 // it if requested, and gives back an appropriate CrashSummary.
-func processCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[string]*tlsapi.CrashBlob, r phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
+func processCrash(ctx context.Context, info *tlsapi.CrashInfo, crashBlobs map[string]*tlsapi.CrashBlob, r *phosphorus.FetchCrashesRequest, dir string) (*phosphorus.CrashSummary, error) {
 	logging.Infof(ctx, "Processing full crash for exec %s (upload: %t)", info.ExecName, r.UploadCrashes)
 	var url string
 	if r.UploadCrashes {

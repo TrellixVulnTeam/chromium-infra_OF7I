@@ -43,8 +43,8 @@ type Args struct {
 
 // Run is the entry point for an execute step.
 func Run(ctx context.Context, args Args) error {
-	var request steps.ExecuteRequests
-	if err := common.ReadRequest(args.InputPath, &request); err != nil {
+	request := &steps.ExecuteRequests{}
+	if err := common.ReadRequest(args.InputPath, request); err != nil {
 		return err
 	}
 
@@ -58,7 +58,7 @@ func Run(ctx context.Context, args Args) error {
 		return err
 	}
 
-	deadline, err := inferDeadline(&request)
+	deadline, err := inferDeadline(request)
 	if err != nil {
 		return err
 	}
