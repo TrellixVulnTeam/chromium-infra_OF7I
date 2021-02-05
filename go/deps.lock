@@ -1,8 +1,8 @@
 hash: ea8ac36b684aac4aa3b594680db707798726770567a398e14cd8ee913da52e79
-updated: 2021-02-04T15:35:11.859748842+11:00
+updated: 2021-02-05T10:13:06.022260474-07:00
 imports:
 - name: cloud.google.com/go
-  version: 6b2807f1e13dc38eb79833f8d2766f27d4003434
+  version: d45e49d36275daa28aa645af661f14bd4645ad8c
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -29,7 +29,7 @@ imports:
   version: 1edb62f3185db2bf621d84de5fcfbd12fdc8796f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/bazelbuild/buildtools
-  version: 840218fa3afc7e7145c1eeb3bfeb612c497e67f7
+  version: 055ae6207b74bc3f8caba5915246d75178388cfd
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
   version: 9e72daff42c941baaf43a4c370e2607a984c58a7
@@ -55,7 +55,7 @@ imports:
   version: 54c9a4c53e1fa422b92e3ae1cd6c72e181f744db
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-proto.git
 - name: github.com/chromedp/cdproto
-  version: 7ec7357d146370197a1ed6596a508b6d341a3a77
+  version: 566b5dbfe5c05f4e9a8d1bb9e2a97eb99d762b57
   repo: https://chromium.googlesource.com/external/github.com/chromedp/cdproto.git
   subpackages:
   - '...'
@@ -231,7 +231,7 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: 6c96f3e2a592fa00748a400b9d4931c9ef45da72
+  version: b5cd74455ec97bb16c8a4b3a655eded57ccc4aef
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
@@ -274,7 +274,7 @@ imports:
   subpackages:
   - cmd/pp
 - name: github.com/maruel/subcommands
-  version: 9c2bbaba0d70de28cb39a9edf339dd560410cf04
+  version: e82ce8f3af113ac6d0afb44bab30fcdef71afcc0
   repo: https://chromium.googlesource.com/external/github.com/maruel/subcommands.git
 - name: github.com/maruel/ut
   version: c8fe2194d5253b1470c4531845086fa3bc154761
@@ -436,7 +436,7 @@ imports:
   version: bc864be25151710e5d1c992993e31b5543e779e1
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 6f0aa4e1ac923ee1f8249641d38ecb96db02a1e8
+  version: 96687b60acd619b15b7e4a65edafe074e6a225fc
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -494,7 +494,7 @@ imports:
   version: 7e3f01d253248a0a5694eb5b7376dfea18b6397e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: ed9735757058b924d709e5dddcc09d902eec5f2b
+  version: 842a9283d6c649d9e507c58328438e6f52540eb0
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -540,13 +540,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: 3206188e46ba82307d2d44c4d2810ed39a475237
+  version: deb82836646031fbd5270d6e494a578ac0b028e6
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: f005af03c24d49a4ec379884392cc4a557a0d047
+  version: b753f4903c1b09ced50ae223b439a771aff798f9
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
