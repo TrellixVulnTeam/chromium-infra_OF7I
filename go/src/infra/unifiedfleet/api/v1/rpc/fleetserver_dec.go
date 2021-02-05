@@ -1863,3 +1863,88 @@ func (s *DecoratedFleet) GetChromeOSDeviceData(ctx context.Context, req *GetChro
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateCachingService(ctx context.Context, req *CreateCachingServiceRequest) (rsp *models.CachingService, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateCachingService", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateCachingService(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateCachingService", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateCachingService(ctx context.Context, req *UpdateCachingServiceRequest) (rsp *models.CachingService, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateCachingService", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateCachingService(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateCachingService", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetCachingService(ctx context.Context, req *GetCachingServiceRequest) (rsp *models.CachingService, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetCachingService", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetCachingService(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetCachingService", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListCachingServices(ctx context.Context, req *ListCachingServicesRequest) (rsp *ListCachingServicesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListCachingServices", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListCachingServices(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListCachingServices", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteCachingService(ctx context.Context, req *DeleteCachingServiceRequest) (rsp *emptypb.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteCachingService", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteCachingService(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteCachingService", rsp, err)
+	}
+	return
+}

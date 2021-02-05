@@ -15,6 +15,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
 import "infra/unifiedfleet/api/v1/models/asset.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
+import "infra/unifiedfleet/api/v1/models/caching_service.proto";
 import "infra/unifiedfleet/api/v1/models/rack.proto";
 import "infra/unifiedfleet/api/v1/models/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
@@ -354,6 +355,21 @@ service Fleet {
 
   // GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
   rpc GetChromeOSDeviceData(GetChromeOSDeviceDataRequest) returns (models.ChromeOSDeviceData);
+
+    // CreateCachingService creates a new CachingService.
+  rpc CreateCachingService(CreateCachingServiceRequest) returns (models.CachingService);
+
+  // Update updates the CachingService.
+  rpc UpdateCachingService(UpdateCachingServiceRequest) returns (models.CachingService);
+
+  // Get retrieves the details of the CachingService.
+  rpc GetCachingService(GetCachingServiceRequest) returns (models.CachingService);
+
+  // List gets all the CachingServices.
+  rpc ListCachingServices(ListCachingServicesRequest) returns (ListCachingServicesResponse);
+
+  // Delete delete the CachingService.
+  rpc DeleteCachingService(DeleteCachingServiceRequest) returns (google.protobuf.Empty);
 }
 
 message CreateVMRequest {
@@ -1855,4 +1871,72 @@ message GetChromeOSDeviceDataRequest {
   string hostname = 2;
 }
 
+// Contains the required information for creating a CachingService represented in
+// the database.
+message CreateCachingServiceRequest {
+  // The CachingService to create.
+  models.CachingService cachingService = 1 [(google.api.field_behavior) = REQUIRED];
 
+  // The ID to use for the CachingService, which will become the final component of
+  // the CachingService's resource name.
+  //
+  // Pattern is {ipv4} address.
+   string cachingService_id = 2;
+}
+
+message UpdateCachingServiceRequest {
+  // The CachingService to update.
+  models.CachingService cachingService = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetCachingServiceRequest {
+  // The name of the CachingService to retrieve.
+  // Pattern is 'cachingservices/{ipv4}'
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/CachingService" }
+  ];
+}
+
+message ListCachingServicesRequest {
+  // The maximum number of CachingServices to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 CachingServices will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListCachingServices` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListCachingServices` must match
+  // the call that provided the page token.
+  string page_token = 2;
+
+  // filter takes the filtering condition.
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
+}
+
+message ListCachingServicesResponse {
+  // The CachingServices from datastore.
+  repeated models.CachingService cachingServices = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteCachingServiceRequest {
+  // The name of the CachingService to delete.
+  // Pattern is 'cachingservices/{ipv4}'
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/CachingService" }
+  ];
+}

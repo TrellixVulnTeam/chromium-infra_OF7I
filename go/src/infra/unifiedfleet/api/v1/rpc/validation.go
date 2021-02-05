@@ -34,6 +34,7 @@ var (
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat      string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
+	CachingServiceNameFormat      string = "Invalid input - Entity Name pattern should be cachingservices/{ipv4}."
 	MachineLSENameFormat          string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
 	VMNameFormat                  string = "Invalid input - Entity Name pattern should be vms/{vm}."
 	RackLSENameFormat             string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
@@ -51,6 +52,7 @@ var (
 	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
 	FilterFormat                  string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
 	InvalidFilterFormat           string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
+	IPV4Format                    string = "Invalid input - %s pattern should be an ipv4 address"
 )
 
 var (
@@ -77,6 +79,12 @@ var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 var assetRegex = regexp.MustCompile(`assets\.*`)
+
+// matches "cachingservices/{ipv4}"
+var cachingServiceRegex = regexp.MustCompile(`cachingservices/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`)
+
+// matches an ipv4 address
+var ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)
@@ -1114,6 +1122,80 @@ func (r *GetChromeOSDeviceDataRequest) Validate() error {
 	}
 	if r.ChromeosDeviceId == "" && r.Hostname == "" {
 		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
+	}
+	return nil
+}
+
+// Validate validates input requests of CreateCachingService.
+func (r *CreateCachingServiceRequest) Validate() error {
+	if r.CachingService == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.CachingServiceId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !ipv4Regex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "name"))
+	}
+	if r.GetCachingService().GetPrimaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
+	}
+	if r.GetCachingService().GetSecondaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateCachingService.
+func (r *UpdateCachingServiceRequest) Validate() error {
+	if r.CachingService == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	name := strings.TrimSpace(r.GetCachingService().GetName())
+	if name == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	if !cachingServiceRegex.MatchString(name) {
+		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
+	}
+	if r.GetCachingService().GetPrimaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
+	}
+	if r.GetCachingService().GetSecondaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
+	}
+	return nil
+}
+
+// Validate validates input requests of GetCachingService.
+func (r *GetCachingServiceRequest) Validate() error {
+	name := strings.TrimSpace(r.Name)
+	if name == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	if !cachingServiceRegex.MatchString(name) {
+		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
+	}
+	return nil
+}
+
+// Validate validates input requests of ListCachingServices.
+func (r *ListCachingServicesRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteCachingService.
+func (r *DeleteCachingServiceRequest) Validate() error {
+	name := strings.TrimSpace(r.Name)
+	if name == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	if !cachingServiceRegex.MatchString(name) {
+		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
 	}
 	return nil
 }
