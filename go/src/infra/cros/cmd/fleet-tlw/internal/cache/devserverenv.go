@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 )
@@ -103,11 +103,14 @@ nextDevserver:
 		sort.Strings(s.Backends)
 	}
 	return ss, nil
-
 }
 
 func (e devserverEnv) IsBackendHealthy(s string) bool {
 	// We think the backend is healthy as long as it responds.
-	_, err := http.Get(s)
+	// Due to restricted subnets, TLW may not access caching server via HTTP.
+	// Instead we use SSH and issue a `curl` command remotely.
+	u, _ := url.Parse(s) // `s` is a verified URL string, so no worries about parsing error.
+	host, _, _ := net.SplitHostPort(u.Host)
+	err := exec.Command("ssh", host, "curl", s).Run()
 	return err == nil
 }
