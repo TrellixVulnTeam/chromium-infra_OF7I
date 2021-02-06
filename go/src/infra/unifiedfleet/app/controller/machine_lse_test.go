@@ -1344,6 +1344,56 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 		})
+
+		Convey("Delete machineLSE DUT with non existing Servo Info", func() {
+			// Attempt to delete a misconfigured DUT with servo host that doesn't exist. Controller should log an error
+			// as this means that somewhere DUT/Labstation was misconfigured. But delete should not fail
+			machine := &ufspb.Machine{
+				Name: "machine-2",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			servo := &chromeosLab.Servo{
+				ServoHostname: "RedLabstation-93",
+				ServoPort:     9996,
+				ServoSerial:   "RedSerial-93",
+			}
+
+			peripherals := &chromeosLab.Peripherals{
+				Servo: servo,
+			}
+			dutMachinelse := mockDutMachineLSE("DUTMachineLse-93")
+			dutMachinelse.Machines = []string{"machine-2"}
+			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
+			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
+			So(err, ShouldBeNil)
+			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: "hosts/DUTMachineLse-93",
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteMachineLSE(ctx, "DUTMachineLse-93")
+			So(err, ShouldBeNil)
+
+			_, err = state.GetStateRecord(ctx, "hosts/DUTMachineLse-93")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			// Ensure that the labstation doesn't exist
+			_, err = inventory.GetMachineLSE(ctx, "RedLabstation-93")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			// verify that no changes were recorded for labstation
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-93")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/RedLabstation-93")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
+		})
 	})
 }
 

@@ -453,29 +453,30 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 				// remove the existingServo entry of DUT form existingLabstationMachinelse
 				existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, existingServo.GetServoHostname())
 				if err != nil {
-					return err
+					// Log error as failure to find a labstation means that DUT was misconfigured.
+					logging.Errorf(ctx, "DeleteMachineLSE - Failed to get labstation %s for update. %s", existingServo.GetServoHostname(), err)
+				} else {
+					// Copy for logging
+					oldLabstation := proto.Clone(existingLabstationMachinelse).(*ufspb.MachineLSE)
+
+					// remove the servo entry from labstation
+					if err := removeServoEntryFromLabstation(ctx, existingServo, existingLabstationMachinelse); err != nil {
+						return err
+					}
+
+					// BatchUpdate Labstation - Using Batch update and not UpdateMachineLSE,
+					// because we cant have nested transaction in datastore
+					_, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{existingLabstationMachinelse})
+					if err != nil {
+						logging.Errorf(ctx, "Failed to BatchUpdate Labstation MachineLSE %s", err)
+						return err
+					}
+
+					// log events for labstation
+					hcLabstation := getHostHistoryClient(existingLabstationMachinelse)
+					hcLabstation.LogMachineLSEChanges(oldLabstation, existingLabstationMachinelse)
+					hcLabstation.SaveChangeEvents(ctx)
 				}
-
-				// Copy for logging
-				oldLabstation := proto.Clone(existingLabstationMachinelse).(*ufspb.MachineLSE)
-
-				// remove the servo entry from labstation
-				if err := removeServoEntryFromLabstation(ctx, existingServo, existingLabstationMachinelse); err != nil {
-					return err
-				}
-
-				// BatchUpdate Labstation - Using Batch update and not UpdateMachineLSE,
-				// because we cant have nested transaction in datastore
-				_, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{existingLabstationMachinelse})
-				if err != nil {
-					logging.Errorf(ctx, "Failed to BatchUpdate Labstation MachineLSE %s", err)
-					return err
-				}
-
-				// log events for labstation
-				hcLabstation := getHostHistoryClient(existingLabstationMachinelse)
-				hcLabstation.LogMachineLSEChanges(oldLabstation, existingLabstationMachinelse)
-				hcLabstation.SaveChangeEvents(ctx)
 			}
 		}
 
