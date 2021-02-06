@@ -18,7 +18,7 @@ The steps for getting the code are:
 
 ### Quick Setup
 
-If you are on Linux you can run the [quicksetup script](quicksetup.sh) like so:
+If you are on Linux you can run the [quicksetup script](quicksetup.sh) (instead of the above) like so:
 
 ```shell
 cd /where/you/want/source/code
