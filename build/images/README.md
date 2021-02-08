@@ -1,10 +1,6 @@
 Docker images on Infra CI
 =========================
 
-*** note
-**THIS IS WORK IN PROGRESS**
-***
-
 This directory contains definitions of docker images built and pushed
 automatically by Infra CI systems.
 
