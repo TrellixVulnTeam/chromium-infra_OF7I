@@ -268,7 +268,7 @@ luci.realm(
     bindings = [
         luci.binding(
             roles = "role/swarming.taskServiceAccount",
-            groups = "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
+            users = "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
         ),
         luci.binding(
             roles = "role/swarming.taskTriggerer",
