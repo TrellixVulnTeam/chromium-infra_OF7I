@@ -7,13 +7,14 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/maruel/subcommands"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/stringset"
@@ -22,7 +23,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/rts/filegraph/git"
-	"infra/rts/presubmit/eval"
+	evalpb "infra/rts/presubmit/eval/proto"
 )
 
 func cmdSelect() *subcommands.Command {
@@ -75,7 +76,7 @@ type selectRun struct {
 	testFiles    map[string]*TestFile // indexed by source-absolute test file name
 	changedFiles stringset.Set
 	strategy     git.SelectionStrategy
-	evalResult   *eval.Result
+	evalResult   *evalpb.Results
 }
 
 func (r *selectRun) validateFlags() error {
@@ -111,8 +112,8 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 	if threshold == nil {
 		return r.done(errors.Reason("no threshold for target change recall %.4f", r.targetChangeRecall).Err())
 	}
-	r.strategy.Threshold = threshold.Value
-	logging.Infof(ctx, "chosen threshold: %#v", r.strategy.Threshold)
+	r.strategy.MaxDistance = float64(threshold.MaxDistance)
+	logging.Infof(ctx, "chosen threshold: %f", r.strategy.MaxDistance)
 
 	return r.done(r.writeFilterFiles())
 }
@@ -161,12 +162,12 @@ func writeFilterFile(fileName string, toSkip []string) error {
 	return f.Close()
 }
 
-// chooseThreshold returns the affectedness threshold based on
+// chooseThreshold returns the distance threshold based on
 // r.targetChangeRecall and r.evalResult.
-func (r *selectRun) chooseThreshold() *eval.Threshold {
-	var ret *eval.Threshold
+func (r *selectRun) chooseThreshold() *evalpb.Threshold {
+	var ret *evalpb.Threshold
 	for _, t := range r.evalResult.Thresholds {
-		if t.ChangeRecall < r.targetChangeRecall {
+		if t.ChangeRecall < float32(r.targetChangeRecall) {
 			continue
 		}
 		if ret == nil || ret.ChangeRecall > t.ChangeRecall {
@@ -206,16 +207,12 @@ func (r *selectRun) loadInput(ctx context.Context) error {
 
 // loadEvalResult loads r.evalResult, including thresholds.
 func (r *selectRun) loadEvalResult(fileName string) error {
-	f, err := os.Open(fileName)
+	resBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	// TODO(nodir): consider turning eval.Result into a protobuf message for
-	// encoding stability.
-	r.evalResult = &eval.Result{}
-	return json.NewDecoder(f).Decode(r.evalResult)
+	r.evalResult = &evalpb.Results{}
+	return protojson.Unmarshal(resBytes, r.evalResult)
 }
 
 // loadGraph loads r.strategy.Graph from the model.

@@ -7,14 +7,14 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
-	"math"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/maruel/subcommands"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/cli"
@@ -168,21 +168,12 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 		return err
 	}
 
-	res.Print(os.Stdout, 0.97)
-
-	// JSON does not support infinity. Replace it with a large number.
-	for _, t := range res.Thresholds {
-		if math.IsInf(t.Value.Distance, 1) {
-			t.Value.Distance = 1e10
-		}
-	}
-
-	f, err := os.Create(fileName)
+	eval.PrintResults(res, os.Stdout, 0.97)
+	resBytes, err := protojson.Marshal(res)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	return json.NewEncoder(f).Encode(res)
+	return ioutil.WriteFile(fileName, resBytes, 0777)
 }
 
 // writeTestFileSet writes the test file set in Chromium to the file.

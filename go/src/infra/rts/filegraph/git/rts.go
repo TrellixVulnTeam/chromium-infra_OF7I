@@ -21,15 +21,15 @@ type SelectionStrategy struct {
 	Graph *Graph
 	EdgeReader
 
-	// Threshold decides whether a test is to be selected: if it is closer or
-	// equal than distance, then it is selected. Otherwise, skipped.
-	Threshold rts.Affectedness
+	// MaxDistance decides whether a test is to be selected: if it is closer or
+	// equal than MaxDistance, then it is selected. Otherwise, skipped.
+	MaxDistance float64
 }
 
 // Select calls skipTestFile for each test file that should be skipped.
 func (s *SelectionStrategy) Select(changedFiles []string, skipFile func(name string) (keepGoing bool)) {
 	runRTSQuery(s.Graph, &s.EdgeReader, changedFiles, func(name string, af rts.Affectedness) bool {
-		if af.Distance <= s.Threshold.Distance {
+		if af.Distance <= s.MaxDistance {
 			// This file too close to skip it.
 			return true
 		}

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
@@ -86,7 +87,7 @@ func (e *Eval) ValidateFlags() error {
 }
 
 // Run evaluates the candidate strategy.
-func (e *Eval) Run(ctx context.Context, strategy Strategy) (*Result, error) {
+func (e *Eval) Run(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
 	logging.Infof(ctx, "evaluating safety...")
 	res, err := e.evaluateSafety(ctx, strategy)
 	if err != nil {
@@ -102,7 +103,7 @@ func (e *Eval) Run(ctx context.Context, strategy Strategy) (*Result, error) {
 
 // evaluateSafety evaluates the strategy's safety.
 // The returned Result has all but efficiency-related fields populated.
-func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*Result, error) {
+func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
 	var changeAffectedness []rts.Affectedness
 	var testAffectedness []rts.Affectedness
 	furthest := make(furthestRejections, 0, e.LogFurthest)
@@ -119,7 +120,7 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*Result, 
 		return errors.Annotate(err, "failed to read rejection records").Err()
 	})
 
-	res := &Result{}
+	res := &evalpb.Results{}
 	e.goMany(eg, func() error {
 		for rej := range rejC {
 			// TODO(crbug.com/1112125): skip the patchset if it has a ton of failed tests.
@@ -164,11 +165,9 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*Result, 
 	// changeAffectedness. Element indexes represent ChangeRecall scores.
 	distancePercentiles := distanceQuantiles(changeAffectedness, 100)
 	logging.Infof(ctx, "Distance percentiles: %v", distancePercentiles)
-	res.Thresholds = make([]*Threshold, len(distancePercentiles))
+	res.Thresholds = make([]*evalpb.Threshold, len(distancePercentiles))
 	for i, distance := range distancePercentiles {
-		res.Thresholds[i] = &Threshold{
-			Value: rts.Affectedness{Distance: distance},
-		}
+		res.Thresholds[i] = &evalpb.Threshold{MaxDistance: float32(distance)}
 	}
 
 	// Now compute recall scores off of the chosen thresholds.
@@ -182,23 +181,23 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*Result, 
 		return buckets
 	}
 
-	res.TotalRejections = len(changeAffectedness)
+	res.TotalRejections = int64(len(changeAffectedness))
 	lostRejections := losses(changeAffectedness)
 
-	res.TotalTestFailures = len(testAffectedness)
+	res.TotalTestFailures = int64(len(testAffectedness))
 	lostFailures := losses(testAffectedness)
 
 	for i, t := range res.Thresholds {
-		t.PreservedRejections = res.TotalRejections - int(lostRejections[i+1])
-		t.PreservedTestFailures = res.TotalTestFailures - int(lostFailures[i+1])
-		t.ChangeRecall = float64(t.PreservedRejections) / float64(res.TotalRejections)
-		t.TestRecall = float64(t.PreservedTestFailures) / float64(res.TotalTestFailures)
+		t.PreservedRejections = int64(res.TotalRejections) - int64(lostRejections[i+1])
+		t.PreservedTestFailures = int64(res.TotalTestFailures) - int64(lostFailures[i+1])
+		t.ChangeRecall = float32(t.PreservedRejections) / float32(res.TotalRejections)
+		t.TestRecall = float32(t.PreservedTestFailures) / float32(res.TotalTestFailures)
 	}
 	return res, nil
 }
 
 // evaluateEfficiency computes total and saved durations.
-func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *Result) error {
+func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *evalpb.Results) error {
 	// Process test durations in parallel and increment appropriate counters.
 	savedDurations := make(bucketSlice, len(res.Thresholds)+1)
 	var totalDuration int64
@@ -256,11 +255,11 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *R
 
 	// Incroporate the counters into res.
 
-	res.TotalDuration = time.Duration(totalDuration)
+	res.TotalDuration = durationpb.New(time.Duration(totalDuration))
 	savedDurations.makeCumulative()
 	for i, t := range res.Thresholds {
-		t.SavedDuration = time.Duration(savedDurations[i+1])
-		t.Savings = float64(t.SavedDuration) / float64(res.TotalDuration)
+		t.SavedDuration = durationpb.New(time.Duration(savedDurations[i+1]))
+		t.Savings = float32(float64(savedDurations[i+1]) / float64(totalDuration))
 	}
 	return nil
 }
@@ -313,12 +312,14 @@ type bucketSlice []int64
 // i.e. the largest thresholds that missed the data point.
 //
 // Goroutine-safe.
-func (b bucketSlice) inc(ts []*Threshold, af rts.Affectedness, delta int64) {
+func (b bucketSlice) inc(ts []*evalpb.Threshold, af rts.Affectedness, delta int64) {
 	if len(b) != len(ts)+1 {
 		panic("wrong bucket slice length")
 	}
+
+	dist32 := float32(af.Distance)
 	i := sort.Search(len(ts), func(i int) bool {
-		return ts[i].Value.Distance >= af.Distance
+		return ts[i].MaxDistance >= dist32
 	})
 
 	// We need the *largest* threshold *not* satisfied by af, i.e. the preceding

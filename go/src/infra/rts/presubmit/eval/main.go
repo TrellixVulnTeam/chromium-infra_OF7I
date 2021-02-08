@@ -34,7 +34,7 @@ func Main(ctx context.Context, strategy Strategy) {
 		fatal(err)
 	}
 
-	res.Print(os.Stdout, 0 /* minChangeRecall */)
+	PrintResults(res, os.Stdout, 0 /* minChangeRecall */)
 	os.Exit(0)
 }
 

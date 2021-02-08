@@ -1,0 +1,52 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.rts.presubmit.eval;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "infra/rts/presubmit/eval/proto;evalpb";
+
+// Results of evaluation.
+message Results {
+  // Considered thresholds and their results.
+  // Sorted by ascending ChangeRecall.
+  repeated Threshold thresholds = 1;
+
+  // The number of analyzed rejections.
+  int64 total_rejections = 2;
+
+  // The number of analyzed test failures.
+  int64 total_test_failures = 3;
+
+  // The sum of analyzed test durations.
+  google.protobuf.Duration total_duration = 4;
+}
+
+// Distance threshold and its scores.
+message Threshold {
+  // The maximum distance to select a test.
+  // Tests further than this are skipped.
+  float max_distance = 1;
+
+  // The number of rejections where at least one failed test was selected.
+  int64 preserved_rejections = 2;
+
+  // The number of selected failed tests.
+  int64 preserved_test_failures = 3;
+
+  // The sum of test durations for skipped tests.
+  google.protobuf.Duration saved_duration = 4;
+
+  // The fraction of rejections that were preserved. May be NaN.
+  float change_recall = 5;
+
+  // The fraction of test failures that were preserved.
+  float test_recall = 6;
+
+  // The fraction of test duration that was cut.
+  float savings = 7;
+}

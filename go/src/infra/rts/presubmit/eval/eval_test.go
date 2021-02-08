@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"infra/rts"
+	evalpb "infra/rts/presubmit/eval/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -21,10 +22,10 @@ func TestBucketSlice(t *testing.T) {
 	t.Parallel()
 	Convey(`bucketSlice`, t, func() {
 		Convey(`inc`, func() {
-			thresholds := make([]*Threshold, 10)
+			thresholds := make([]*evalpb.Threshold, 10)
 			for i := 0; i < len(thresholds); i++ {
-				thresholds[i] = &Threshold{
-					Value: rts.Affectedness{Distance: float64(i)},
+				thresholds[i] = &evalpb.Threshold{
+					MaxDistance: float32(i),
 				}
 			}
 			b := make(bucketSlice, len(thresholds)+1)

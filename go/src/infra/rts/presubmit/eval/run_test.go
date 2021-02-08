@@ -16,7 +16,7 @@ func TestScoreString(t *testing.T) {
 
 	Convey(`ScoreString`, t, func() {
 		Convey("NaN", func() {
-			So(scoreString(math.NaN()), ShouldEqual, "?")
+			So(scoreString(float32(math.NaN())), ShouldEqual, "?")
 		})
 		Convey("0%", func() {
 			So(scoreString(0), ShouldEqual, "0.00%")
