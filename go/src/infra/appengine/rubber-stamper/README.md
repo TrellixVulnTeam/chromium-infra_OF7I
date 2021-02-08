@@ -152,6 +152,9 @@ as a reviewer. Rubber-Stamper will respond in ~1 min. It will either add a
 not meet the configured rules and also remove itself as reviewer. The `Bot-Commit +1`
 label is not sticky, which means additional patchsets will need to be reviewed.
 
+If you set the Auto-Submit label, Rubber Stamper will also set `Commit-Queue +2`
+if it approves the CL.
+
 If a CL does not pass, you can upload a new patchset that addresses the
 comments and re-add Rubber-Stamper as a reviewer.
 
