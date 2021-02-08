@@ -215,7 +215,7 @@ def _compute_task_slices(build, settings):
 
   grace_period_secs = build.proto.grace_period.seconds
   if not _using_kitchen(build.proto):
-    # bbagent reserves 2.5 minutes of grace_period, in order to have
+    # bbagent reserves 3 minutes of grace_period, in order to have
     # time to have a couple retry rounds for UpdateBuild RPCs.
     #
     # Once UpdateBuild is in Go, this can very likely be adjusted with
