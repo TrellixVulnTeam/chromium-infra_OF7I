@@ -28,7 +28,7 @@ import (
 
 func cmdSelect() *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: `select -changed-files <path> -model-dir <path> -filter-files-dir <path>`,
+		UsageLine: `select -changed-files <path> -model-dir <path> -out <path>`,
 		ShortDesc: "compute the set of test files to skip",
 		LongDesc: text.Doc(`
 			Compute the set of test files to skip.
@@ -46,7 +46,7 @@ func cmdSelect() *subcommands.Command {
 				Normally it is coming from CIPD package "chromium/rts/model"
 				and precomputed by "rts-chromium create-model" command.
 			`))
-			r.Flags.StringVar(&r.filterFilesDir, "filter-files-dir", "", text.Doc(`
+			r.Flags.StringVar(&r.out, "out", "", text.Doc(`
 				Path to a directory where to write test filter files.
 				A file per test suite is written, e.g. browser_tests.filter.
 				The file format is described in https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/filters/README.md.
@@ -68,7 +68,7 @@ type selectRun struct {
 
 	changedFilesPath   string
 	modelDir           string
-	filterFilesDir     string
+	out                string
 	targetChangeRecall float64
 
 	// Indirect input.
@@ -85,8 +85,8 @@ func (r *selectRun) validateFlags() error {
 		return errors.New("-changed-files is required")
 	case r.modelDir == "":
 		return errors.New("-model-dir is required")
-	case r.filterFilesDir == "":
-		return errors.New("-filter-files-dir is required")
+	case r.out == "":
+		return errors.New("-out is required")
 	case !(r.targetChangeRecall > 0 && r.targetChangeRecall < 1):
 		return errors.New("-target-change-recall must be in (0.0, 1.0) range")
 	default:
@@ -120,8 +120,8 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 
 // writeFilterFiles writes filter files in r.filterFilesDir directory.
 func (r *selectRun) writeFilterFiles() error {
-	if err := prepareOutDir(r.filterFilesDir, "*.filter"); err != nil {
-		return errors.Annotate(err, "failed to prepare filter file dir %q", r.filterFilesDir).Err()
+	if err := prepareOutDir(r.out, "*.filter"); err != nil {
+		return errors.Annotate(err, "failed to prepare filter file dir %q", r.out).Err()
 	}
 
 	// maps a test suite to the list of tests to skip.
@@ -138,7 +138,7 @@ func (r *selectRun) writeFilterFiles() error {
 
 	// Write the files.
 	for testSuite, testNames := range testsToSkip {
-		fileName := filepath.Join(r.filterFilesDir, testSuite+".filter")
+		fileName := filepath.Join(r.out, testSuite+".filter")
 		if err := writeFilterFile(fileName, testNames); err != nil {
 			return errors.Annotate(err, "failed to write %q", fileName).Err()
 		}
