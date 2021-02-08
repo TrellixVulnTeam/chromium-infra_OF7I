@@ -34,10 +34,6 @@ type Graph struct {
 // EdgeReader implements filegraph.EdgeReader.
 // It works only with nodes returned by Graph.Node().
 type EdgeReader struct {
-	// Reversed indicates that incoming edges must be read instead of outgoing.
-	// In other words, read the edges of the tranposed graph.
-	Reversed bool
-
 	// TODO(nodir): add FamilyDistance.
 }
 
@@ -187,25 +183,19 @@ func (n *node) Name() string {
 // ReadEdges implements filegraph.EdgeReader.
 func (r *EdgeReader) ReadEdges(from filegraph.Node, callback func(to filegraph.Node, distance float64) (keepGoing bool)) {
 	n := from.(*node)
-	outgoing := !r.Reversed
 	for _, e := range n.edges {
 		distance := 0.0
 		if e.probSum == 0 {
 			// e.to is alias of n. The distance is 0.
 		} else {
-			var denominator int
-			if outgoing {
-				denominator = n.probSumDenominator
-			} else {
-				denominator = e.to.probSumDenominator
-			}
-			// TODO(nodir): consider using multiplication in filegraph.Query instead of
-			// calling log, because the latter is expensive.
-
 			// Note: probSum is same for incoming and outgoing edges.
 
+			// The distance(x, y) is defined as -log(relevance(y, x)).
+			// Note that x and y are swapped, so use e.to.probSumDenominator
+			// (not from.probSumDenominator) as the denominator.
+
 			// Add logProbOne because probSum is not divided by probOne.
-			distance = -math.Log(float64(e.probSum)/float64(denominator)) + logProbOne
+			distance = -math.Log(float64(e.probSum)/float64(e.to.probSumDenominator)) + logProbOne
 		}
 		if !callback(e.to, distance) {
 			return

@@ -12,6 +12,7 @@ import (
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/flag/fixflagpos"
 	"go.chromium.org/luci/common/logging/gologger"
 )
@@ -24,8 +25,11 @@ var logCfg = gologger.LoggerConfig{
 // Main runs the filegraph program.
 func Main() {
 	app := &cli.Application{
-		Name:  "filegraph",
-		Title: "Derive and analyze a directed file graph where an edge weight represents relevance.",
+		Name: "filegraph",
+		Title: text.Doc(`
+			Derive and analyze a directed file graph where an edge weight (distance)
+			represents how much changes in one file affects another.
+		`),
 		Context: func(ctx context.Context) context.Context {
 			return logCfg.Use(ctx)
 		},

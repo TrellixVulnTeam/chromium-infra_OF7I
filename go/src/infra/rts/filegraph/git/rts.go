@@ -89,12 +89,8 @@ type rtsCallback func(name string, af rts.Affectedness) (keepGoing bool)
 // If a changed file is not in the graph, then it is treated as very affected.
 func runRTSQuery(g *Graph, changedFiles []string, callback rtsCallback) {
 	q := &filegraph.Query{
-		Sources: make([]filegraph.Node, 0, len(changedFiles)),
-		EdgeReader: &EdgeReader{
-			// We run the query from changed files, but we need distance
-			// from test files to changed files, and not the other way around.
-			Reversed: true,
-		},
+		Sources:    make([]filegraph.Node, 0, len(changedFiles)),
+		EdgeReader: &EdgeReader{},
 	}
 
 	for _, f := range changedFiles {

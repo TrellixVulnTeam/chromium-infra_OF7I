@@ -9,9 +9,11 @@ package rts
 type Affectedness struct {
 	// Distance is a non-negative number, where 0.0 means the code change is
 	// extremely likely to affect the test, and +inf means extremely unlikely.
-	// If a test's distance is less or equal than a given MaxDistance threshold,
-	// then the test is selected.
-	// A selection strategy doesn't have to use +inf as the upper boundary if the
-	// threshold uses the same scale.
+	// If a test's distance is less or equal than a given threshold, then the test
+	// is selected.
+	//
+	// A selection strategy doesn't have to use +inf as the upper boundary.
+	// It may use the range [0.0, 1.0] as well, as long as the threshold uses
+	// the same scale.
 	Distance float64
 }

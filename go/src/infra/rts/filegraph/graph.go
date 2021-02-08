@@ -7,9 +7,9 @@ package filegraph
 // Node is a node in a directed weighted graph of files.
 // It is either a file or a directory.
 //
-// The weight of edge (x, y), called distance, represents how much y is relevant
-// to x. It is a value between 0 and +inf, where 0 means extremely relevant
-// and +inf means not relevant at all.
+// The weight of edge (x, y), called distance, represents how much y is affected
+// by changes in x. It is a value between 0 and +inf, where 0 means extremely
+// affected and +inf means not affected at all.
 type Node interface {
 	// Name returns node's name.
 	// It is an forward-slash-separated path with "//" prefix,
