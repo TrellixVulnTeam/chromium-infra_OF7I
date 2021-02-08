@@ -29,9 +29,6 @@ const defaultConcurrency = 100
 
 // Eval estimates safety and efficiency of a given selection strategy.
 type Eval struct {
-	// The selection strategy to evaluate.
-	Strategy Strategy
-
 	// The number of goroutines to spawn for each metric.
 	// If <=0, defaults to 100.
 	Concurrency int
@@ -89,27 +86,23 @@ func (e *Eval) ValidateFlags() error {
 }
 
 // Run evaluates the candidate strategy.
-func (e *Eval) Run(ctx context.Context) (*Result, error) {
-	res := &Result{}
-
+func (e *Eval) Run(ctx context.Context, strategy Strategy) (*Result, error) {
 	logging.Infof(ctx, "evaluating safety...")
-	thresholds, err := e.evaluateSafety(ctx, res)
+	res, err := e.evaluateSafety(ctx, strategy)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate safety").Err()
 	}
 
 	logging.Infof(ctx, "evaluating efficiency...")
-	if err := e.evaluateEfficiency(ctx, res, thresholds); err != nil {
+	if err := e.evaluateEfficiency(ctx, strategy, res); err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate efficiency").Err()
 	}
-
-	res.Thresholds = thresholds
 	return res, nil
 }
 
-// evaluateSafety computes thresholds and total/preserved
-// rejections/testFailures.
-func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, error) {
+// evaluateSafety evaluates the strategy's safety.
+// The returned Result has all but efficiency-related fields populated.
+func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*Result, error) {
 	var changeAffectedness []rts.Affectedness
 	var testAffectedness []rts.Affectedness
 	furthest := make(furthestRejections, 0, e.LogFurthest)
@@ -126,6 +119,7 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, e
 		return errors.Annotate(err, "failed to read rejection records").Err()
 	})
 
+	res := &Result{}
 	e.goMany(eg, func() error {
 		for rej := range rejC {
 			// TODO(crbug.com/1112125): skip the patchset if it has a ton of failed tests.
@@ -135,7 +129,7 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, e
 			in := Input{TestVariants: rej.FailedTestVariants}
 			in.ensureChangedFilesInclude(rej.Patchsets...)
 			out := &Output{TestVariantAffectedness: make([]rts.Affectedness, len(in.TestVariants))}
-			if err := e.Strategy(ctx, in, out); err != nil {
+			if err := strategy(ctx, in, out); err != nil {
 				return errors.Annotate(err, "the selection strategy failed").Err()
 			}
 
@@ -170,9 +164,9 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, e
 	// changeAffectedness. Element indexes represent ChangeRecall scores.
 	distancePercentiles := distanceQuantiles(changeAffectedness, 100)
 	logging.Infof(ctx, "Distance percentiles: %v", distancePercentiles)
-	thresholds := make([]*Threshold, len(distancePercentiles))
+	res.Thresholds = make([]*Threshold, len(distancePercentiles))
 	for i, distance := range distancePercentiles {
-		thresholds[i] = &Threshold{
+		res.Thresholds[i] = &Threshold{
 			Value: rts.Affectedness{Distance: distance},
 		}
 	}
@@ -180,9 +174,9 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, e
 	// Now compute recall scores off of the chosen thresholds.
 
 	losses := func(afs []rts.Affectedness) bucketSlice {
-		buckets := make(bucketSlice, len(thresholds)+1)
+		buckets := make(bucketSlice, len(res.Thresholds)+1)
 		for _, af := range afs {
-			buckets.inc(thresholds, af, 1)
+			buckets.inc(res.Thresholds, af, 1)
 		}
 		buckets.makeCumulative()
 		return buckets
@@ -194,19 +188,19 @@ func (e *Eval) evaluateSafety(ctx context.Context, res *Result) ([]*Threshold, e
 	res.TotalTestFailures = len(testAffectedness)
 	lostFailures := losses(testAffectedness)
 
-	for i, t := range thresholds {
+	for i, t := range res.Thresholds {
 		t.PreservedRejections = res.TotalRejections - int(lostRejections[i+1])
 		t.PreservedTestFailures = res.TotalTestFailures - int(lostFailures[i+1])
 		t.ChangeRecall = float64(t.PreservedRejections) / float64(res.TotalRejections)
 		t.TestRecall = float64(t.PreservedTestFailures) / float64(res.TotalTestFailures)
 	}
-	return thresholds, nil
+	return res, nil
 }
 
 // evaluateEfficiency computes total and saved durations.
-func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, thresholds []*Threshold) error {
+func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *Result) error {
 	// Process test durations in parallel and increment appropriate counters.
-	savedDurations := make(bucketSlice, len(thresholds)+1)
+	savedDurations := make(bucketSlice, len(res.Thresholds)+1)
 	var totalDuration int64
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -236,7 +230,7 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, thresholds [
 			in.ensureChangedFilesInclude(rec.Patchsets...)
 
 			out.TestVariantAffectedness = make([]rts.Affectedness, len(in.TestVariants))
-			if err := e.Strategy(ctx, in, out); err != nil {
+			if err := strategy(ctx, in, out); err != nil {
 				return errors.Annotate(err, "the selection strategy failed").Err()
 			}
 
@@ -245,7 +239,7 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, thresholds [
 			for i, td := range rec.TestDurations {
 				dur := int64(td.Duration.AsDuration())
 				durSum += dur
-				savedDurations.inc(thresholds, out.TestVariantAffectedness[i], dur)
+				savedDurations.inc(res.Thresholds, out.TestVariantAffectedness[i], dur)
 			}
 			atomic.AddInt64(&totalDuration, durSum)
 		}
@@ -264,7 +258,7 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, res *Result, thresholds [
 
 	res.TotalDuration = time.Duration(totalDuration)
 	savedDurations.makeCumulative()
-	for i, t := range thresholds {
+	for i, t := range res.Thresholds {
 		t.SavedDuration = time.Duration(savedDurations[i+1])
 		t.Savings = float64(t.SavedDuration) / float64(res.TotalDuration)
 	}

@@ -49,7 +49,7 @@ func TestEvalStrategy(t *testing.T) {
 			out := &eval.Output{
 				TestVariantAffectedness: make([]rts.Affectedness, 1),
 			}
-			err := g.EvalStrategy(ctx, in, out)
+			err := g.EvalStrategy(&EdgeReader{})(ctx, in, out)
 			So(err, ShouldBeNil)
 			af := out.TestVariantAffectedness[0]
 			if math.IsInf(expectedDistance, 1) {
@@ -120,7 +120,7 @@ func TestEvalStrategy(t *testing.T) {
 			out := &eval.Output{
 				TestVariantAffectedness: make([]rts.Affectedness, 2),
 			}
-			err := g.EvalStrategy(ctx, in, out)
+			err := g.EvalStrategy(&EdgeReader{})(ctx, in, out)
 			So(err, ShouldBeNil)
 			So(out.TestVariantAffectedness[0].Distance, ShouldAlmostEqual, -math.Log(0.5))
 			So(out.TestVariantAffectedness[1].Distance, ShouldEqual, 0)

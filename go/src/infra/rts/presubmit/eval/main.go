@@ -20,7 +20,7 @@ func Main(ctx context.Context, strategy Strategy) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer signals.HandleInterrupt(cancel)
 
-	ev := &Eval{Strategy: strategy}
+	ev := &Eval{}
 	parseFlags(ev)
 
 	var logCfg = gologger.LoggerConfig{
@@ -29,7 +29,7 @@ func Main(ctx context.Context, strategy Strategy) {
 	}
 	ctx = logCfg.Use(ctx)
 
-	res, err := ev.Run(ctx)
+	res, err := ev.Run(ctx, strategy)
 	if err != nil {
 		fatal(err)
 	}

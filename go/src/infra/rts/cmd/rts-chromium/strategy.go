@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/rts"
+	"infra/rts/filegraph/git"
 	"infra/rts/presubmit/eval"
 )
 
@@ -167,25 +168,28 @@ func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
 	return
 }
 
-func (r *createModelRun) selectTests(ctx context.Context, in eval.Input, out *eval.Output) error {
-	for _, f := range in.ChangedFiles {
-		switch {
-		case f.Repo != "https://chromium.googlesource.com/chromium/src":
-			return errors.Reason("unexpected repo %q", f.Repo).Err()
-		case requireAllTestsRegexp.MatchString(f.Path):
-			return nil
+func (r *createModelRun) evalStrategy(er *git.EdgeReader) eval.Strategy {
+	fgStrategy := r.fg.EvalStrategy(er)
+	return func(ctx context.Context, in eval.Input, out *eval.Output) error {
+		for _, f := range in.ChangedFiles {
+			switch {
+			case f.Repo != "https://chromium.googlesource.com/chromium/src":
+				return errors.Reason("unexpected repo %q", f.Repo).Err()
+			case requireAllTestsRegexp.MatchString(f.Path):
+				return nil
+			}
 		}
-	}
 
-	if err := r.fg.EvalStrategy(ctx, in, out); err != nil {
-		return err
-	}
-
-	// No matter what filegraph said, never skip certain tests.
-	for i, tv := range in.TestVariants {
-		if mustAlwaysRunTest(tv.FileName) {
-			out.TestVariantAffectedness[i] = rts.Affectedness{Distance: 0}
+		if err := fgStrategy(ctx, in, out); err != nil {
+			return err
 		}
+
+		// No matter what filegraph said, never skip certain tests.
+		for i, tv := range in.TestVariants {
+			if mustAlwaysRunTest(tv.FileName) {
+				out.TestVariantAffectedness[i] = rts.Affectedness{Distance: 0}
+			}
+		}
+		return nil
 	}
-	return nil
 }

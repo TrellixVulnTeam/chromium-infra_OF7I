@@ -163,8 +163,7 @@ func (r *createModelRun) writeFileGraph(ctx context.Context, fileName string) er
 // writeEvalResults evaluates the selection strategy, prints results and writes
 // them to the file.
 func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) error {
-	r.ev.Strategy = r.selectTests
-	res, err := r.ev.Run(ctx)
+	res, err := r.ev.Run(ctx, r.evalStrategy(&git.EdgeReader{}))
 	if err != nil {
 		return err
 	}
