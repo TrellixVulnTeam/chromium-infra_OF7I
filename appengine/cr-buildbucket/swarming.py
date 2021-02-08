@@ -213,20 +213,23 @@ def _compute_task_slices(build, settings):
   base_dims = dims.pop(0, [])
   base_dims.sort(key=dim_key)
 
-  execution_timeout_secs = build.proto.execution_timeout.seconds
   grace_period_secs = build.proto.grace_period.seconds
   if not _using_kitchen(build.proto):
-    # bbagent reserves 1% of execution_timeout (max of 2m) and 500ms of
-    # grace period, so boost those values here.
-    execution_timeout_secs += int(min(execution_timeout_secs / 99., 120))
-    grace_period_secs += 1
+    # bbagent reserves 2.5 minutes of grace_period, in order to have
+    # time to have a couple retry rounds for UpdateBuild RPCs.
+    #
+    # Once UpdateBuild is in Go, this can very likely be adjusted with
+    # Go's performance characteristics in mind.
+    #
+    # TODO(https://crbug.com/1110990)
+    grace_period_secs += 180
 
   base_slice = {
       'expiration_secs': str(build.proto.scheduling_timeout.seconds),
       'wait_for_capacity': build.proto.wait_for_capacity,
       'properties': {
           'cipd_input': _compute_cipd_input(build, settings),
-          'execution_timeout_secs': str(execution_timeout_secs),
+          'execution_timeout_secs': str(build.proto.execution_timeout.seconds),
           'grace_period_secs': str(grace_period_secs),
           'caches': [{
               'path': posixpath.join(_CACHE_DIR, c.path), 'name': c.name
