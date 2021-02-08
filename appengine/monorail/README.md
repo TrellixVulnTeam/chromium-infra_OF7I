@@ -34,6 +34,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
         1.  `mysql --user=root monorail < schema/framework.sql`
         1.  `mysql --user=root monorail < schema/project.sql`
         1.  `mysql --user=root monorail < schema/tracker.sql`
+        1.  `exit`
 1.  Configure the site defaults in settings.py.  You can leave it as-is for now.
 1.  Set up the front-end development environment:
     1. On Debian
@@ -51,6 +52,13 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  Install MySQL, needed for mysqlclient
         1. For mac: `brew install mysql@5.6`
         1. For Debian derivatives, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar): `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
+    1.  Optional: You may need to install `pip`. You can verify whether you have it installed with `which pip`.
+        1. `curl -O https://bootstrap.pypa.io/2.7/get-pip.py`
+        1. `sudo python get-pip.py`
+    1.  Optional: Use `virtualenv` to keep from modifying system dependencies.
+        1. `sudo pip install virtualenv`
+        1. `virtualenv venv` to set up virtualenv within your monorail directory.
+        1. `source venv/bin/activate` to activate it, needed in each terminal instance of the directory.
     1.  Mac only: install [libssl](https://github.com/PyMySQL/mysqlclient-python/issues/74), needed for mysqlclient.
         1. `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
     1.  `make dev_deps`
