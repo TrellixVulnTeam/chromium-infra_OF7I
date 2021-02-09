@@ -1037,7 +1037,12 @@ func (x *LabelDef) GetState() LabelDef_LabelDefState {
 // Custom fields defined for the project.
 //
 // See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
-// Check crbug.com/p/{project}/adminLabels to see the FieldDef IDs.
+// Check bugs.chromium.org/p/{project}/adminLabels to see the FieldDef IDs.
+// If your code needs to call multiple monorail instances
+// (e.g. monorail-{prod|staging|dev}) FieldDef IDs for FieldDefs
+// with the same display_name will differ between each monorail
+// instance. To see what FieldDef ID to use when calling staging
+// you must check bugs-staging.chromium.org/p/{project}/adminLabels.
 // Next available tag: 15
 type FieldDef struct {
 	state         protoimpl.MessageState
@@ -1349,7 +1354,12 @@ func (x *ComponentDef) GetLabels() []string {
 // Defines approvals that issues within the project may need.
 // See monorail/doc/userguide/concepts.md#issue-approvals-and-gates and
 // monorail/doc/userguide/project-owners.md#How-to-configure-approvals
-// Check crbug.com/p/{project}/adminLabels to see the ApprovalDef IDs.
+// Check bugs.chromium.org/p/{project}/adminLabels to see the ApprovalDef IDs.
+// If your code needs to call multiple monorail instances
+// (e.g. monorail-{prod|staging|dev}) ApprovalDef IDs for ApprovalDefs
+// with the same display_name will differ between each monorail
+// instance. To see what ApprovalDef ID to use when calling staging
+// you must check bugs-staging.chromium.org/p/{project}/adminLabels.
 // Next available tag: 7
 type ApprovalDef struct {
 	state         protoimpl.MessageState
