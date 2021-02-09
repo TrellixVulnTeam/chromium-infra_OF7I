@@ -30,7 +30,7 @@ func TestNewDutStateFromHostInfo(t *testing.T) {
 			SerializerVersion: 1,
 		}
 
-		state := newDutStateFromHostInfo(i)
+		state := updateDutStateFromHostInfo(&lab_platform.DutState{}, i)
 
 		want := &lab_platform.DutState{
 			ProvisionableAttributes: map[string]string{

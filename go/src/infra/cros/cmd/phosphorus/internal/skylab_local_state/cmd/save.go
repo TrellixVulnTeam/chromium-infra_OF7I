@@ -88,17 +88,24 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 		return err
 	}
 
-	i, err := getHostInfo(request.ResultsDir, request.DutName)
-	if err != nil {
-		return err
-	}
-	s := newDutStateFromHostInfo(i)
-
 	bcs := botcache.Store{
 		CacheDir: request.Config.AutotestDir,
 		Name:     request.DutName,
 	}
-	bcs.Save(s)
+	s, err := bcs.Load()
+	if err != nil {
+		return err
+	}
+
+	i, err := getHostInfo(request.ResultsDir, request.DutName)
+	if err != nil {
+		return err
+	}
+	s = updateDutStateFromHostInfo(s, i)
+
+	if err := bcs.Save(s); err != nil {
+		return err
+	}
 
 	if request.GetSealResultsDir() {
 		if err := sealResultsDir(request.ResultsDir); err != nil {
@@ -171,31 +178,40 @@ var provisionableAttributes = map[string]bool{
 	"outlet_changed": true,
 }
 
-// newDutStateFromHostInfo creates new structure with populates provisionable labels and provisionable
-// attributes inside with whitelisted labels and attributes from the host info.
-func newDutStateFromHostInfo(i *skylab_local_state.AutotestHostInfo) *lab_platform.DutState {
-	s := &lab_platform.DutState{}
-
-	s.ProvisionableLabels = map[string]string{}
-
+func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.AutotestHostInfo) *lab_platform.DutState {
+	ls := make(map[string]string)
 	for _, label := range i.GetLabels() {
 		parts := strings.SplitN(label, ":", 2)
 		if len(parts) != 2 {
 			continue
 		}
 		if provisionableLabels[parts[0]] {
-			s.ProvisionableLabels[parts[0]] = parts[1]
+			ls[parts[0]] = parts[1]
 		}
 	}
+	s.ProvisionableLabels = updateMap(s.ProvisionableLabels, ls)
 
-	s.ProvisionableAttributes = map[string]string{}
-
+	as := make(map[string]string)
 	for attribute, value := range i.GetAttributes() {
 		if provisionableAttributes[attribute] {
-			s.ProvisionableAttributes[attribute] = value
+			as[attribute] = value
 		}
 	}
+	s.ProvisionableAttributes = updateMap(s.ProvisionableAttributes, as)
 	return s
+}
+
+func updateMap(to, from map[string]string) map[string]string {
+	if len(from) == 0 {
+		return to
+	}
+	if to == nil {
+		to = make(map[string]string)
+	}
+	for k, v := range from {
+		to[k] = v
+	}
+	return to
 }
 
 const gsOffloaderMarker = ".ready_for_offload"
