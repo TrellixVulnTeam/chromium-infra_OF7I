@@ -1474,6 +1474,18 @@ wheel: <
 
 * *universal*
 
+### 1.25.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-api-core-py2_py3"
+  version: "version:1.25.1"
+>
+```
+
+
+* *universal*
+
 ## **google-api-python-client**
 
 ### 1.6.2
@@ -1606,6 +1618,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-cloud-core-py2_py3"
   version: "version:0.28.0"
+>
+```
+
+
+* *universal*
+
+### 1.5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-core-py2_py3"
+  version: "version:1.5.0"
 >
 ```
 
@@ -1830,6 +1854,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-resumable-media-py2_py3"
   version: "version:0.3.1"
+>
+```
+
+
+* *universal*
+
+### 1.2.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-resumable-media-py2_py3"
+  version: "version:1.2.0"
 >
 ```
 
@@ -3100,6 +3136,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/portpicker-py2_py3"
   version: "version:1.3.1"
+>
+```
+
+
+* *universal*
+
+## **proto-plus-py3**
+
+### 1.13.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/proto-plus-py3"
+  version: "version:1.13.0"
 >
 ```
 
