@@ -85,6 +85,22 @@ class DockerApi(recipe_api.RecipeApi):
         ],
         **kwargs)
 
+  def pull(self, image, step_name=None):
+    """Pull a docker image from a remote repository.
+
+    Args:
+      image: Name of the image to pull.
+      step_name: Override step name. Default is 'docker pull'.
+    """
+    assert self._config_file, 'Did you forget to call docker.login?'
+    self.m.step(
+        step_name or 'docker pull %s' % image,
+        [
+            'docker', '--config-file', self._config_file, 'pull',
+            '%s/%s/%s' % (self._server, self._project, image)
+        ],
+    )
+
   def run(self,
           image,
           step_name=None,

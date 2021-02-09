@@ -51,6 +51,16 @@
   },
   {
     "cmd": [
+      "docker",
+      "--config-file",
+      "[CLEANUP]/.docker",
+      "pull",
+      "gcr.io/chromium-container-registry/testimage"
+    ],
+    "name": "docker pull testimage"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "RECIPE_MODULE[infra::docker]/resources/docker_run.py",

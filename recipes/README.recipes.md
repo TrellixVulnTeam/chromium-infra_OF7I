@@ -249,7 +249,7 @@ Returns:
 
 Provides steps to connect and run Docker images.
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/docker/api.py#140)(self, \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/docker/api.py#156)(self, \*args, \*\*kwargs):**
 
 Executes specified docker command.
 
@@ -286,7 +286,15 @@ Args:
       associated service account.
   step_name: Override step name. Default is 'docker login'.
 
-&mdash; **def [run](/recipes/recipe_modules/docker/api.py#88)(self, image, step_name=None, cmd_args=None, dir_mapping=None, env=None, inherit_luci_context=False, \*\*kwargs):**
+&mdash; **def [pull](/recipes/recipe_modules/docker/api.py#88)(self, image, step_name=None):**
+
+Pull a docker image from a remote repository.
+
+Args:
+  image: Name of the image to pull.
+  step_name: Override step name. Default is 'docker pull'.
+
+&mdash; **def [run](/recipes/recipe_modules/docker/api.py#104)(self, image, step_name=None, cmd_args=None, dir_mapping=None, env=None, inherit_luci_context=False, \*\*kwargs):**
 
 Run a command in a Docker image as the current user:group.
 

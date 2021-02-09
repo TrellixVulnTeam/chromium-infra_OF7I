@@ -17,6 +17,7 @@ def RunSteps(api):
   if version:
     api.step('log version', cmd=None).presentation.step_text = version
   api.docker.login()
+  api.docker.pull('testimage')
   api.docker.run(
       'testimage',
       cmd_args=['test', 'cmd'],
