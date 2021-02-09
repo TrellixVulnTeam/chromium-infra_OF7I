@@ -50,6 +50,11 @@ type Eval struct {
 	//
 	// TODO(nodir): implement this.
 	LogFurthest int
+
+	// LogProgressInterval indicates how often to log the number of processed
+	// historical records. The field value is the number of records between
+	// progress reports. If zero or less, progress is not logged.
+	LogProgressInterval int
 }
 
 // RegisterFlags registers flags for the Eval fields.
@@ -144,6 +149,9 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.R
 			changeAffectedness = append(changeAffectedness, mostAffected)
 			testAffectedness = append(testAffectedness, out.TestVariantAffectedness...)
 			furthest.Consider(affectedRejection{Rejection: rej, MostAffected: mostAffected})
+			if e.LogProgressInterval > 0 && len(changeAffectedness)%e.LogProgressInterval == 0 {
+				logging.Infof(ctx, "processed %d rejections", len(changeAffectedness))
+			}
 			mu.Unlock()
 		}
 		return nil
@@ -213,6 +221,7 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *e
 		return errors.Annotate(err, "failed to read test duration records").Err()
 	})
 
+	records := int64(0)
 	e.goMany(eg, func() error {
 		in := Input{}
 		out := &Output{}
@@ -241,6 +250,10 @@ func (e *Eval) evaluateEfficiency(ctx context.Context, strategy Strategy, res *e
 				savedDurations.inc(res.Thresholds, out.TestVariantAffectedness[i], dur)
 			}
 			atomic.AddInt64(&totalDuration, durSum)
+
+			if count := atomic.AddInt64(&records, 1); e.LogProgressInterval > 0 && int(count)%e.LogProgressInterval == 0 {
+				logging.Infof(ctx, "processed %d test duration records", count)
+			}
 		}
 		return ctx.Err()
 	})

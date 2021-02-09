@@ -45,6 +45,7 @@ func cmdCreateModel(authOpt *auth.Options) *subcommands.Command {
 				relatedness and are expensive to process, O(N^2).
 			`))
 
+			r.ev.LogProgressInterval = 100
 			r.ev.RegisterFlags(&r.Flags)
 			return r
 		},
