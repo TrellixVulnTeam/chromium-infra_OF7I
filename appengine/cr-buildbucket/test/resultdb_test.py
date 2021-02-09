@@ -130,7 +130,16 @@ class ResultDBTest(testing.AppengineTestCase):
                         realm='chromium:try',
                         history_options=dict(use_invocation_timestamp=True),
                     ),
-                )
+                ),
+                dict(
+                    # echo -n 'chromium/try/linux'|openssl sha256
+                    invocation_id='build-ccadafffd20293e0378d1f94d214c63a0f8342d1161454ef0acfa0405178106b-1',  # pylint: disable=line-too-long
+                    invocation=dict(
+                        included_invocations=['invocations/build-4'],
+                        producer_resource='//buildbucket.example.com/builds/4',
+                        realm='chromium:try',
+                    ),
+                ),
             ],
         ),
         credentials=mock.ANY,
@@ -138,6 +147,52 @@ class ResultDBTest(testing.AppengineTestCase):
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-4'
+    )
+
+  def test_invocation_created_without_number(self):
+    builder_cfg = _make_builder_cfg()
+    builder_cfg.resultdb.history_options.use_invocation_timestamp = True
+    self.builds_and_configs = [
+        _make_build_and_config(20, builder_cfg=builder_cfg)
+    ]
+    self.builds_and_configs[0][0].proto.number = 0
+    self.rpc_mock.return_value = future(
+        recorder_pb2.BatchCreateInvocationsResponse(
+            invocations=[
+                invocation_pb2.Invocation(name='invocations/build-20')
+            ],
+            update_tokens=['FakeUpdateToken'],
+        )
+    )
+
+    resultdb.create_invocations_async(self.builds_and_configs).get_result()
+
+    self.rpc_mock.assert_called_with(
+        recorder_pb2.BatchCreateInvocationsRequest(
+            request_id='build-20+0',
+            requests=[
+                dict(
+                    invocation_id='build-20',
+                    invocation=dict(
+                        bigquery_exports=[
+                            dict(
+                                project='luci-resultdb',
+                                dataset='chromium',
+                                table='all_test_results',
+                            )
+                        ],
+                        producer_resource='//buildbucket.example.com/builds/20',
+                        realm='chromium:try',
+                        history_options=dict(use_invocation_timestamp=True),
+                    ),
+                ),
+            ],
+        ),
+        credentials=mock.ANY,
+    )
+    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
+    self.assertEqual(
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-20'
     )
 
   def test_invocations_created_protobuf_update_tokens(self):

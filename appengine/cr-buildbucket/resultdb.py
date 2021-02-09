@@ -4,6 +4,7 @@
 
 """This module integrates buildbucket with resultdb."""
 
+import hashlib
 import json
 import logging
 
@@ -71,7 +72,7 @@ def create_invocations_async(builds_and_configs):
       history_options.use_invocation_timestamp = (
           cfg.resultdb.history_options.use_invocation_timestamp
       )
-      req.requests.add(
+      inv_req = req.requests.add(
           invocation_id='build-%d' % build.proto.id,
           invocation=invocation_pb2.Invocation(
               realm=build.realm,
@@ -80,6 +81,16 @@ def create_invocations_async(builds_and_configs):
               history_options=history_options,
           ),
       )
+      if build.proto.number:
+        req.requests.add(
+            invocation_id='build-%s-%d' %
+            (hashlib.sha256(build.builder_id).hexdigest(), build.proto.number),
+            invocation=invocation_pb2.Invocation(
+                realm=build.realm,
+                included_invocations=['invocations/%s' % inv_req.invocation_id],
+                producer_resource=inv_req.invocation.producer_resource,
+            ),
+        )
 
     # Accumulate one (request, credentials) pair per batch.
     batch_reqs_and_creds.append((
