@@ -88,7 +88,6 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 		return err
 	}
 
-	// Update host info in two DUT state files: one by DUT name, one by DUT ID.
 	i, err := getHostInfo(request.ResultsDir, request.DutName)
 	if err != nil {
 		return err
@@ -98,12 +97,6 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 	bcs := botcache.Store{
 		CacheDir: request.Config.AutotestDir,
 		Name:     request.DutName,
-	}
-	bcs.Save(s)
-	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
-	bcs = botcache.Store{
-		CacheDir: request.Config.AutotestDir,
-		Name:     request.DutId,
 	}
 	bcs.Save(s)
 
