@@ -301,6 +301,14 @@ func TestRedirects(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000")
 		})
+		Convey("without path, max int", func() {
+			// this is max int, before it starts conflicting with
+			// rietveld IDs
+			url, _, err := r.FindRedirectURL(
+				ctx, "/99999999")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/99999999")
+		})
 		Convey("with path", func() {
 			url, _, err := r.FindRedirectURL(
 				ctx, "/000fff/foo/bar")
@@ -316,6 +324,16 @@ func TestRedirects(t *testing.T) {
 				ctx, "/000000..000001")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000...000001")
+		})
+	})
+
+	Convey("rietveld redirect", t, func() {
+		ctx := redirectTestSetup()
+		Convey("without path", func() {
+			url, _, err := r.FindRedirectURL(
+				ctx, "/784093002")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://codereview.chromium.org/784093002")
 		})
 	})
 

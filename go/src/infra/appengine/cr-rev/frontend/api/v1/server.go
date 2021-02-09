@@ -43,10 +43,12 @@ func (s *server) Redirect(ctx context.Context, req *RedirectRequest) (*RedirectR
 	}
 
 	res := &RedirectResponse{
-		GitHash:     commit.CommitHash,
-		Host:        commit.Host,
-		Repository:  commit.Repository,
 		RedirectUrl: url,
+	}
+	if commit != nil {
+		res.GitHash = commit.CommitHash
+		res.Host = commit.Host
+		res.Repository = commit.Repository
 	}
 	return res, nil
 }

@@ -10,6 +10,7 @@ package redirect
 
 import (
 	"context"
+	"fmt"
 	"infra/appengine/cr-rev/common"
 	"infra/appengine/cr-rev/models"
 	"infra/appengine/cr-rev/utils"
@@ -19,6 +20,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
+var rietveldRedirectRegex = regexp.MustCompile(`^/(\d{9,39})(?:/(.*))?$`)
 var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})(?:/(.*))?$`)
 var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(?:/(.*))?$`)
 var shortCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{6,39})(?:/(.*))?$`)
@@ -241,6 +243,19 @@ func (r *diffShortHashRule) getRedirect(ctx context.Context, url string) (string
 	return url, &commit1, nil
 }
 
+type rietveldRule struct {
+}
+
+func (r *rietveldRule) getRedirect(ctx context.Context, url string) (string,
+	*models.Commit, error) {
+	result := rietveldRedirectRegex.FindStringSubmatch(url)
+	if len(result) == 0 {
+		return "", nil, ErrNoMatch
+	}
+	url = fmt.Sprintf("https://codereview.chromium.org/%s", result[1])
+	return url, nil, nil
+}
+
 // Rules holds all available redirect rules. The order of rules
 // matter, so generic / catch-all rules should be last.
 type Rules struct {
@@ -258,6 +273,7 @@ func NewRules(redirect GitRedirect) *Rules {
 			&fullCommitHashRule{
 				gitRedirect: redirect,
 			},
+			&rietveldRule{},
 			&shortCommitHashRule{
 				gitRedirect: redirect,
 			},
