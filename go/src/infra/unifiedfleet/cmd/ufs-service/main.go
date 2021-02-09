@@ -154,6 +154,12 @@ func validateUserAgent(md metadata.MD) (string, bool, error) {
 	version, ok := md["user-agent"]
 	// Only check version for skylab commands which already set user-agent
 	if ok {
+		// TODO(xixuan): remove this check
+		// Traffic from trawler has a default userAgent "Googlebot/2.1" if no special userAgent is approved yet.
+		// So before b/179652204 is approved, temporarily allow all traffic from trawler.
+		if strings.Contains(version[0], "Googlebot") {
+			return version[0], ok, nil
+		}
 		majors := versionRegex.FindAllString(version[0], 1)
 		if len(majors) != 1 {
 			return "", ok, status.Errorf(codes.InvalidArgument, "user-agent %s doesn't contain major version", version[0])
