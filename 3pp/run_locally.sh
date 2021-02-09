@@ -29,7 +29,8 @@ Options:
   * Pass additional arguments to the script to pass directly to the
     recipe_engine. In particular:
       * 'to_build=["json","list","of","package","names"]' - This will allow
-        you to restrict the packages that are built.
+        you to restrict the packages that are built. Package names must be
+        prefixed with the upload.pkg_prefix, such as "tools/cpython".
       * 'platform="linux-amd64"' - Allows you to select which CIPD platform
         you're targeting.
 
