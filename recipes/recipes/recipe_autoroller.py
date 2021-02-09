@@ -160,6 +160,13 @@ def GenTests(api):
           'build', repo_spec(include_autoroll_options=False), trivial=False)
   )
 
+  yield (
+      test('trivial_bot_commit') + api.properties(db_gcs_bucket='somebucket') +
+      api.recipe_autoroller.roll_data(
+          'build', repo_spec(bot_commit=True))
+
+  )
+
   no_cc_authors_spec = RepoSpec()
   no_cc_authors_spec.autoroll_recipe_options.no_cc_authors = True
 
