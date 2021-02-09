@@ -165,32 +165,12 @@ func getHostInfo(resultsDir string, dutName string) (*skylab_local_state.Autotes
 	return &i, nil
 }
 
-// LabelSet provides the whitelist of labels that may change during provision.
-// Only these labels can appear in the DUT state file.
-var provisionableLabels = map[string]bool{
-	"cros-version": true,
-	"fwro-version": true,
-	"fwrw-version": true,
-}
-
 var provisionableAttributes = map[string]bool{
 	"job_repo_url":   true,
 	"outlet_changed": true,
 }
 
 func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.AutotestHostInfo) *lab_platform.DutState {
-	ls := make(map[string]string)
-	for _, label := range i.GetLabels() {
-		parts := strings.SplitN(label, ":", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		if provisionableLabels[parts[0]] {
-			ls[parts[0]] = parts[1]
-		}
-	}
-	s.ProvisionableLabels = updateMap(s.ProvisionableLabels, ls)
-
 	as := make(map[string]string)
 	for attribute, value := range i.GetAttributes() {
 		if provisionableAttributes[attribute] {

@@ -114,7 +114,11 @@ func runProvisionSteps(ctx context.Context, r *phosphorus.PrejobRequest) (*phosp
 }
 
 func skipRemainingSteps(r *phosphorus.PrejobResponse, err error) bool {
-	return err != nil || r.GetState() != phosphorus.PrejobResponse_SUCCEEDED
+	return !prejobSucceeded(r, err)
+}
+
+func prejobSucceeded(r *phosphorus.PrejobResponse, err error) bool {
+	return err == nil && r.GetState() == phosphorus.PrejobResponse_SUCCEEDED
 }
 
 func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
@@ -157,48 +161,84 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 }
 
 func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+	bc := botCache(r)
+
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
-	found, err := botCache(r).LoadProvisionableLabel(chromeOSBuildKey)
+	found, err := bc.LoadProvisionableLabel(chromeOSBuildKey)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos legacy").Err()
 	}
-
-	if desired != "" && desired != found {
-		ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
+	if labelAlreadySatisfied(desired, found) {
+		ar, err := resetViaAutoserv(ctx, r)
 		return toPrejobResponse(ar), err
 	}
-	ar, err := resetViaAutoserv(ctx, r)
-	return toPrejobResponse(ar), err
+
+	if err := bc.ClearProvisionableLabel(chromeOSBuildKey); err != nil {
+		return nil, errors.Annotate(err, "provision chromeos legacy").Err()
+	}
+
+	ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
+	resp := toPrejobResponse(ar)
+
+	if prejobSucceeded(resp, err) {
+		if err := bc.SetProvisionableLabel(chromeOSBuildKey, desired); err != nil {
+			return nil, errors.Annotate(err, "provision chromeos legacy").Err()
+		}
+	}
+	return resp, err
+}
+
+func labelAlreadySatisfied(desired, found string) bool {
+	return desired == "" || desired == found
 }
 
 func provisionFirmwareLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	labels := []string{}
 	bc := botCache(r)
 
-	desired := roFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
-	found, err := bc.LoadProvisionableLabel(roFirmwareBuildKey)
+	roDesired := roFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
+	roFound, err := bc.LoadProvisionableLabel(roFirmwareBuildKey)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision firmware").Err()
 	}
-	if desired != "" && desired != found {
-		labels = append(labels, fmt.Sprintf("%s:%s", roFirmwareBuildKey, desired))
+	if !labelAlreadySatisfied(roDesired, roFound) {
+		labels = append(labels, fmt.Sprintf("%s:%s", roFirmwareBuildKey, roDesired))
 	}
 
-	desired = rwFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
-	found, err = bc.LoadProvisionableLabel(rwFirmwareBuildKey)
+	rwDesired := rwFirmwareBuildDependencyOrEmpty(r.SoftwareDependencies)
+	rwFound, err := bc.LoadProvisionableLabel(rwFirmwareBuildKey)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision firmware").Err()
 	}
-	if desired != "" && desired != found {
-		labels = append(labels, fmt.Sprintf("%s:%s", rwFirmwareBuildKey, desired))
+	if !labelAlreadySatisfied(rwDesired, rwFound) {
+		labels = append(labels, fmt.Sprintf("%s:%s", rwFirmwareBuildKey, rwDesired))
 	}
 
-	if len(labels) > 0 {
-		ar, err := provisionViaAutoserv(ctx, "firmware", r, labels)
-		return toPrejobResponse(ar), err
+	if len(labels) == 0 {
+		// Nothing to be done, so succeed trivially.
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
-	// Nothing to be done, so succeed trivially.
-	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+
+	if err := bc.ClearProvisionableLabel(roFirmwareBuildKey); err != nil {
+		return nil, errors.Annotate(err, "provision firmware").Err()
+	}
+	if err := bc.ClearProvisionableLabel(rwFirmwareBuildKey); err != nil {
+		return nil, errors.Annotate(err, "provision firmware").Err()
+	}
+
+	ar, err := provisionViaAutoserv(ctx, "firmware", r, labels)
+	resp := toPrejobResponse(ar)
+
+	if prejobSucceeded(resp, err) {
+		if err := bc.SetProvisionableLabel(roFirmwareBuildKey, roDesired); err != nil {
+			return nil, errors.Annotate(err, "provision firmware").Err()
+		}
+		if err := bc.SetProvisionableLabel(rwFirmwareBuildKey, rwDesired); err != nil {
+			return nil, errors.Annotate(err, "provision firmware").Err()
+		}
+	}
+	return resp, err
+
 }
 
 func toPrejobResponse(r *atutil.Result) *phosphorus.PrejobResponse {
@@ -286,22 +326,24 @@ func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
 func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
-	if desired == "" {
-		logging.Infof(ctx, "Skipped Chrome OS Build provision, because no specific version was requested.")
-		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
-	}
+	bc := botCache(r)
 
-	found, err := botCache(r).LoadProvisionableLabel(chromeOSBuildKey)
+	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
+	found, err := bc.LoadProvisionableLabel(chromeOSBuildKey)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
-	if found == desired {
-		logging.Infof(ctx, "Skipped Chrome OS Build provision, because requested version (%s) is already installed", desired)
+
+	if labelAlreadySatisfied(desired, found) {
+		logging.Infof(ctx, "Skipped Chrome OS Build provision, because desired label %s is already satisfied by %s", desired, found)
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
 	logging.Infof(ctx, "Starting to provision Chrome OS via TLS.")
+	if err := bc.ClearProvisionableLabel(chromeOSBuildKey); err != nil {
+		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
+	}
+
 	c := tlsapi.NewCommonClient(bt.Client)
 	op, err := c.ProvisionDut(
 		ctx,
@@ -323,6 +365,12 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 	resp, err := waitForOp(ctx, bt, op)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
+	}
+
+	if prejobSucceeded(resp, err) {
+		if err := bc.SetProvisionableLabel(chromeOSBuildKey, desired); err != nil {
+			return nil, errors.Annotate(err, "provision chromeos via tls").Err()
+		}
 	}
 	return resp, nil
 }

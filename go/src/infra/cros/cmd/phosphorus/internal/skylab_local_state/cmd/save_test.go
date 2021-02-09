@@ -24,8 +24,6 @@ func TestNewDutStateFromHostInfo(t *testing.T) {
 			Labels: []string{
 				"dummy-label:dummy-value",
 				"cros-version:dummy-os-version",
-				"fwro-version:dummy-fwro-version",
-				"fwrw-version:dummy-fwrw-version",
 			},
 			SerializerVersion: 1,
 		}
@@ -36,11 +34,6 @@ func TestNewDutStateFromHostInfo(t *testing.T) {
 			ProvisionableAttributes: map[string]string{
 				"job_repo_url":   "dummy-url",
 				"outlet_changed": "true",
-			},
-			ProvisionableLabels: map[string]string{
-				"cros-version": "dummy-os-version",
-				"fwro-version": "dummy-fwro-version",
-				"fwrw-version": "dummy-fwrw-version",
 			},
 		}
 

@@ -63,6 +63,29 @@ func (s *Store) LoadProvisionableLabel(name string) (string, error) {
 	return "", nil
 }
 
+// SetProvisionableLabel sets a particular provisionable label in bot cache.
+//
+// Use ClearProvisionableLabel to delete a label from cache.
+func (s *Store) SetProvisionableLabel(name string, value string) error {
+	ds, err := s.Load()
+	if err != nil {
+		return err
+	}
+	ds.ProvisionableLabels[name] = value
+	return s.Save(ds)
+}
+
+// ClearProvisionableLabel deletes a particular provisionable label from the
+// bot cache.
+func (s *Store) ClearProvisionableLabel(name string) error {
+	ds, err := s.Load()
+	if err != nil {
+		return err
+	}
+	delete(ds.ProvisionableLabels, name)
+	return s.Save(ds)
+}
+
 const (
 	botCacheSubDir  = "swarming_state"
 	botCacheFileExt = "json"
