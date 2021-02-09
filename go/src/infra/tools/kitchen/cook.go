@@ -977,8 +977,11 @@ func (c *cookRun) syncResultDBInfo(ctx context.Context) context.Context {
 				panic("Impossible marshaling error")
 			}
 			buildProto := &buildbucketpb.Build{}
-			if err := jsonpb.Unmarshal(bytes.NewReader(buildJSON), buildProto); err != nil {
-				panic("Impossible unmarshaling error")
+			err = (&jsonpb.Unmarshaler{
+				AllowUnknownFields: true,
+			}).Unmarshal(bytes.NewReader(buildJSON), buildProto)
+			if err != nil {
+				panic(errors.Annotate(err, "while decoding '$recipe_engine/buildbucket' property").Err())
 			}
 
 			if buildProto.GetInfra().GetResultdb().GetInvocation() != "" {
