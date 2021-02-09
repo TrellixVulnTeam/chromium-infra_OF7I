@@ -722,6 +722,7 @@ SPECS.update({
         Universal('google-cloud-videointelligence', '0.28.0'),
         Universal('google-resumable-media', '0.3.1'),
         Universal('google-resumable-media', '1.2.0'),
+        Universal('googleapis-common-protos', '1.52.0'),
         Universal('html5lib', '1.0.1'),
         Universal('idna', '2.5'),
         Universal('idna', '2.8'),

@@ -1900,6 +1900,18 @@ wheel: <
 
 * *universal*
 
+### 1.52.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/googleapis-common-protos-py2_py3"
+  version: "version:1.52.0"
+>
+```
+
+
+* *universal*
+
 ## **greenlet**
 
 ### 0.4.15
