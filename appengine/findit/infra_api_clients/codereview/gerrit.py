@@ -185,8 +185,10 @@ class Gerrit(codereview.CodeReview):
     return reverting_change
 
   def SubmitRevert(self, change_id):
-    parts = ['changes', change_id, 'submit']
-    return bool(self._Post(parts))
+    logging.info("Submitting revert for %s", change_id)
+    # TODO (crbug.com/1176056): Re-enable auto revert
+    # Disable auto revert submission as it poses security risks
+    return False
 
   def AddReviewers(self, change_id, reviewers, message=None):
     new_reviewers = []

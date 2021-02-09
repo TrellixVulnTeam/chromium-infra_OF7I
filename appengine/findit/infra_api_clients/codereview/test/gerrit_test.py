@@ -854,13 +854,6 @@ class GerritTest(testing.AppengineTestCase):
     self.assertEqual('No-Presubmit: true\nNo-Tree-Checks: true\nNo-Try: true\n',
                      self.gerrit._GetCQFlagsOrExplanation(time))
 
-  def testSubmitRevert(self):
-    change_id = 'I40bc1e744806f2c4aadf0ce6609aaa61b4019fa7'
-    response = self.http_client._MakeResponse({'change_id': change_id})
-    self.http_client._SetSubmitRevertResponse(self.server_hostname, change_id,
-                                              response)
-    self.assertTrue(self.gerrit.SubmitRevert(change_id))
-
   @mock.patch.object(logging, 'error')
   def testSubmitRevertSubmitRuleFailed(self, mock_logging):
     change_id = '123456'
