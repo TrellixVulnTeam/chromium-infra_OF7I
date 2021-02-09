@@ -83,7 +83,7 @@ func (r *baseHistoryRun) runAndFetchResults(ctx context.Context, sql string, ext
 		return err
 	}
 
-	logging.Infof(ctx, "extracting results...\n")
+	logging.Infof(ctx, "fetching results...\n")
 	return r.fetchResults(ctx, table)
 }
 
@@ -145,10 +145,12 @@ func (r *baseHistoryRun) fetchResults(ctx context.Context, table *bigquery.Table
 	// Extract the table to GCS.
 	bucketName := "chrome-rts"
 	dirName := fmt.Sprintf("tmp/extract-%s", table.TableID)
+	gcsDir := fmt.Sprintf("gs://%s/%s/", bucketName, dirName)
+	logging.Infof(ctx, "extracting results to %s", gcsDir)
 	gcsRef := &bigquery.GCSReference{
 		// Start the object name with a date, so that the user can merge
 		// data directories if needed.
-		URIs:              []string{fmt.Sprintf("gs://%s/%s/%s-*.jsonl.gz", bucketName, dirName, r.startTime.Format("2006-01-02"))},
+		URIs:              []string{fmt.Sprintf("%s%s-*.jsonl.gz", gcsDir, r.startTime.Format("2006-01-02"))},
 		DestinationFormat: bigquery.JSON,
 		Compression:       bigquery.Gzip,
 	}
