@@ -234,6 +234,14 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'google-crc32c',
+            '1.1.2',
+            packaged=[],
+            # Other platforms not yet tested.
+            only_plat=['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'greenlet',
             '0.4.15',
             packaged=(

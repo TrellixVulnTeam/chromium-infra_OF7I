@@ -1858,6 +1858,20 @@ wheel: <
 
 * *universal*
 
+## **google-crc32c**
+
+### 1.1.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-crc32c/${vpython_platform}"
+  version: "version:1.1.2"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **google-resumable-media**
 
 ### 0.3.1
