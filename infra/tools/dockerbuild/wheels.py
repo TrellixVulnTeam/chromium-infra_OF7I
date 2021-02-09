@@ -699,6 +699,7 @@ SPECS.update({
         Universal('google-apitools', '0.5.27'),
         Universal('google-auth', '1.2.1'),
         Universal('google-auth', '1.20.1'),
+        Universal('google-auth', '1.25.0'),
         Universal('google-auth-httplib2', '0.0.3'),
         Universal('google-auth-oauthlib', '0.3.0'),
         Universal('google-cloud-bigquery', '0.28.0'),
