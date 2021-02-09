@@ -132,8 +132,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 	}
 
 	response := skylab_local_state.LoadResponse{
-		ProvisionableLabels: dutState.ProvisionableLabels,
-		ResultsDir:          resultsDir,
+		ResultsDir: resultsDir,
 	}
 
 	return writeJSONPb(c.outputPath, &response)
