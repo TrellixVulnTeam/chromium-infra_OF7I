@@ -7,6 +7,7 @@ package frontend
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	proto "github.com/golang/protobuf/proto"
@@ -757,44 +758,15 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 	}()
 
 	// Query asset info using hostname and create records
-	var assetTag string
 	record := req.DeviceRepairRecord
 	hostname := record.Hostname
 
-	// Check if an open record already exists for this hostname. Return error if
-	// there is an open record.
-	getRes, err := queryInProgressMRHost(ctx, hostname)
+	_, err = queryToCreateHost(ctx, hostname)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(getRes) >= 1 {
-		return nil, errors.Reason("A record already exists for host %s; Please complete the existing record", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
-	}
-
-	// Try to get asset tag from DeviceEntity id. In most cases (current coverage
-	// is ~71%), DeviceEntity will use asset tag as its ID. UUID is used if not
-	// asset tag. We will set its asset tag to "n/a" in the interim if the current
-	// id is the same as the hostname entered by the user.
-	//
-	// The ID should either be an asset tag or a uuid. Checking if it equals
-	// hostname is to prevent datastore errors.
-	devices := datastore.GetDevicesByHostnames(ctx, []string{hostname})
-	if err := devices[0].Err; err != nil {
-		logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
-		assetTag = "n/a"
-	} else {
-		assetTag = string(devices[0].Entity.ID)
-	}
-
-	// Fill in the asset tag field for the records and write to datastore.
-	record.AssetTag = assetTag
-	record.CreatedTime = timestamppb.Now()
-	record.UpdatedTime = record.CreatedTime
-
-	if record.RepairState == invlibs.DeviceManualRepairRecord_STATE_COMPLETED {
-		record.CompletedTime = record.CreatedTime
-	}
+	record = parseToCreateRequest(ctx, record, timestamppb.Now())
 
 	resp, err := datastore.AddDeviceManualRepairRecords(ctx, []*invlibs.DeviceManualRepairRecord{record})
 	if err != nil {
@@ -1033,13 +1005,63 @@ func (is *InventoryServerImpl) BatchGetManualRepairRecords(ctx context.Context, 
 }
 
 // BatchCreateManualRepairRecords creates new submitted manual repair records
-// for a batch of given devices.
+// for a batch of given devices. All records will have the same CreatedTime.
 func (is *InventoryServerImpl) BatchCreateManualRepairRecords(ctx context.Context, req *api.BatchCreateManualRepairRecordsRequest) (rsp *api.BatchCreateManualRepairRecordsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	return &api.BatchCreateManualRepairRecordsResponse{}, nil
+	requestRecords := req.RepairRecords
+	createdTime := timestamppb.Now()
+	allRecordsMap := make(map[string]*api.ManualRepairRecordResult)
+	toCreateRecords := make([]*invlibs.DeviceManualRepairRecord, 0, len(requestRecords))
+
+	for _, r := range requestRecords {
+		rec := &api.ManualRepairRecordResult{
+			Hostname: r.Hostname,
+		}
+
+		_, err := queryToCreateHost(ctx, r.Hostname)
+		if err != nil {
+			rec.ErrorMsg = err.Error()
+		} else {
+			toCreateRec := parseToCreateRequest(ctx, r, createdTime)
+			rec.RepairRecord = toCreateRec
+			toCreateRecords = append(toCreateRecords, toCreateRec)
+		}
+
+		allRecordsMap[r.Hostname] = rec
+	}
+
+	createRsp, err := datastore.AddDeviceManualRepairRecords(ctx, toCreateRecords)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range createRsp {
+		if r.Err != nil {
+			allRecordsMap[r.Record.Hostname].ErrorMsg = r.Err.Error()
+		} else {
+			allRecordsMap[r.Record.Hostname].Id = r.Entity.ID
+			allRecordsMap[r.Record.Hostname].RepairRecord = r.Record
+		}
+	}
+
+	// Gather keys and sort result by hostname.
+	keys := make([]string, 0)
+	for k := range allRecordsMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	allRecords := make([]*api.ManualRepairRecordResult, 0, len(requestRecords))
+	for _, k := range keys {
+		allRecords = append(allRecords, allRecordsMap[k])
+	}
+
+	return &api.BatchCreateManualRepairRecordsResponse{
+		RepairRecords: allRecords,
+	}, nil
 }
 
 // parseManualRepairRecordResult parses the repair records found in the
@@ -1074,4 +1096,50 @@ func parseManualRepairRecordResult(ctx context.Context, hostname string, getRes 
 	recordRes.Id = r.Entity.ID
 	recordRes.RepairRecord = r.Record
 	return recordRes
+}
+
+// queryToCreateHost queries datastore based on hostname and checks if an
+// open record already exists. Returns query result and error if any.
+func queryToCreateHost(ctx context.Context, hostname string) ([]*datastore.DeviceManualRepairRecordsOpRes, error) {
+	getRes, err := queryInProgressMRHost(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(getRes) >= 1 {
+		return nil, errors.Reason("A record already exists for host %s; Please complete the existing record", hostname).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	return getRes, nil
+}
+
+// parseToCreateRequest takes a repair record to be created and fills in the
+// queried asset tag from datastore and timestamps.
+func parseToCreateRequest(ctx context.Context, r *invlibs.DeviceManualRepairRecord, createdTime *timestamppb.Timestamp) *invlibs.DeviceManualRepairRecord {
+	// Try to get asset tag from DeviceEntity id. In most cases (current coverage
+	// is ~71%), DeviceEntity will use asset tag as its ID. UUID is used if not
+	// asset tag. We will set its asset tag to "n/a" in the interim if the current
+	// id is the same as the hostname entered by the user.
+	//
+	// The ID should either be an asset tag or a uuid. Checking if it equals
+	// hostname is to prevent datastore errors.
+	var assetTag string
+	devices := datastore.GetDevicesByHostnames(ctx, []string{r.Hostname})
+	if err := devices[0].Err; err != nil {
+		logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
+		assetTag = "n/a"
+	} else {
+		assetTag = string(devices[0].Entity.ID)
+	}
+
+	// Fill in the asset tag field for the records and write to datastore.
+	r.AssetTag = assetTag
+	r.CreatedTime = createdTime
+	r.UpdatedTime = r.CreatedTime
+
+	if r.RepairState == invlibs.DeviceManualRepairRecord_STATE_COMPLETED {
+		r.CompletedTime = r.CreatedTime
+	}
+
+	return r
 }

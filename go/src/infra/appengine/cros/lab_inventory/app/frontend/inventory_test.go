@@ -1435,7 +1435,6 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 	record2 := mockDeviceManualRepairRecord("", "", 1, false)
 
 	// Set up records in datastore
-	// datastore.AddDeviceManualRepairRecords(ctx, records)
 	Convey("Test add devices using an empty datastore", t, func() {
 		Convey("Add single record", func() {
 			propFilter := map[string]string{"hostname": record1.Hostname}
@@ -1818,6 +1817,129 @@ func TestBatchGetManualRepairRecords(t *testing.T) {
 			So(resp.RepairRecords[1].ErrorMsg, ShouldContainSubstring, "No record found")
 			So(resp.RepairRecords[1].RepairRecord, ShouldBeNil)
 			So(resp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-getRecords-cc")
+		})
+	})
+}
+
+func TestBatchCreateManualRepairRecords(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	// Empty datastore
+	record1 := mockDeviceManualRepairRecord("chromeos-createRecords-zz", "", 1, false)
+	record2 := mockDeviceManualRepairRecord("chromeos-createRecords-yy", "", 1, false)
+	record3 := mockDeviceManualRepairRecord("chromeos-createRecords-xx", "", 1, false)
+	record4 := mockDeviceManualRepairRecord("chromeos-createRecords-ww", "", 1, false)
+	record5 := mockDeviceManualRepairRecord("", "", 1, false)
+
+	// Set up records in datastore
+	Convey("Test add devices using an empty datastore", t, func() {
+		Convey("Add single record", func() {
+			createReq := &api.BatchCreateManualRepairRecordsRequest{
+				RepairRecords: []*invlibs.DeviceManualRepairRecord{record1},
+			}
+			createRsp, err := tf.Inventory.BatchCreateManualRepairRecords(tf.C, createReq)
+			So(err, ShouldBeNil)
+			So(createRsp, ShouldNotBeNil)
+			So(createRsp.RepairRecords, ShouldHaveLength, 1)
+			So(createRsp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(createRsp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(createRsp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-zz")
+			So(createRsp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-createRecords-zz")
+
+			// Check added record
+			getReq := &api.BatchGetManualRepairRecordsRequest{
+				Hostnames: []string{
+					"chromeos-createRecords-zz",
+				},
+			}
+			getRsp, err := tf.Inventory.BatchGetManualRepairRecords(tf.C, getReq)
+			So(err, ShouldBeNil)
+			So(getRsp, ShouldNotBeNil)
+			So(getRsp.RepairRecords, ShouldHaveLength, 1)
+			So(getRsp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(getRsp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(getRsp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-zz")
+			So(getRsp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-createRecords-zz")
+		})
+		Convey("Add multiple records", func() {
+			createReq := &api.BatchCreateManualRepairRecordsRequest{
+				RepairRecords: []*invlibs.DeviceManualRepairRecord{record2, record3},
+			}
+			createRsp, err := tf.Inventory.BatchCreateManualRepairRecords(tf.C, createReq)
+			So(err, ShouldBeNil)
+			So(createRsp, ShouldNotBeNil)
+			So(createRsp.RepairRecords, ShouldHaveLength, 2)
+			So(createRsp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(createRsp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(createRsp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-xx")
+			So(createRsp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-createRecords-xx")
+			So(createRsp.RepairRecords[1].ErrorMsg, ShouldBeEmpty)
+			So(createRsp.RepairRecords[1].RepairRecord, ShouldNotBeNil)
+			So(createRsp.RepairRecords[1].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-yy")
+			So(createRsp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-createRecords-yy")
+
+			// Check added record
+			getReq := &api.BatchGetManualRepairRecordsRequest{
+				Hostnames: []string{
+					"chromeos-createRecords-yy",
+					"chromeos-createRecords-xx",
+				},
+			}
+			getRsp, err := tf.Inventory.BatchGetManualRepairRecords(tf.C, getReq)
+			So(err, ShouldBeNil)
+			So(getRsp, ShouldNotBeNil)
+			So(getRsp.RepairRecords, ShouldHaveLength, 2)
+			So(getRsp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(getRsp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(getRsp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-yy")
+			So(getRsp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-createRecords-yy")
+			So(getRsp.RepairRecords[1].ErrorMsg, ShouldBeEmpty)
+			So(getRsp.RepairRecords[1].RepairRecord, ShouldNotBeNil)
+			So(getRsp.RepairRecords[1].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-xx")
+			So(getRsp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-createRecords-xx")
+		})
+		Convey("Add multiple records; one with an open record", func() {
+			// Check existing record
+			propFilter := map[string]string{"hostname": record1.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, 0, []string{})
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-zz")
+
+			createReq := &api.BatchCreateManualRepairRecordsRequest{
+				RepairRecords: []*invlibs.DeviceManualRepairRecord{record1, record4},
+			}
+			createRsp, err := tf.Inventory.BatchCreateManualRepairRecords(tf.C, createReq)
+			So(err, ShouldBeNil)
+			So(createRsp, ShouldNotBeNil)
+			So(createRsp.RepairRecords, ShouldHaveLength, 2)
+			So(createRsp.RepairRecords[0].ErrorMsg, ShouldBeEmpty)
+			So(createRsp.RepairRecords[0].RepairRecord, ShouldNotBeNil)
+			So(createRsp.RepairRecords[0].RepairRecord.Hostname, ShouldEqual, "chromeos-createRecords-ww")
+			So(createRsp.RepairRecords[0].Hostname, ShouldEqual, "chromeos-createRecords-ww")
+			So(createRsp.RepairRecords[1].ErrorMsg, ShouldContainSubstring, "A record already exists for host chromeos-createRecords-zz")
+			So(createRsp.RepairRecords[1].RepairRecord, ShouldBeNil)
+			So(createRsp.RepairRecords[1].Hostname, ShouldEqual, "chromeos-createRecords-zz")
+		})
+		Convey("Add single record without hostname", func() {
+			createReq := &api.BatchCreateManualRepairRecordsRequest{
+				RepairRecords: []*invlibs.DeviceManualRepairRecord{record5},
+			}
+			createRsp, err := tf.Inventory.BatchCreateManualRepairRecords(tf.C, createReq)
+			So(err, ShouldBeNil)
+			So(createRsp, ShouldNotBeNil)
+			So(createRsp.RepairRecords, ShouldHaveLength, 1)
+			So(createRsp.RepairRecords[0].ErrorMsg, ShouldContainSubstring, "Hostname cannot be empty")
+			So(createRsp.RepairRecords[0].Hostname, ShouldBeEmpty)
+
+			// No record should be added
+			propFilter := map[string]string{"hostname": record5.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter, -1, 0, []string{})
+			So(getRes, ShouldHaveLength, 0)
 		})
 	})
 }
