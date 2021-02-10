@@ -68,7 +68,7 @@ import:
   subpackages:
   - diffmatchpatch
 - package: github.com/smartystreets/assertions
-  version: proto-go-render
+  version: master
   repo: https://chromium.googlesource.com/external/github.com/smartystreets/assertions.git
 - package: github.com/smartystreets/goconvey
   version: master
