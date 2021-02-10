@@ -328,15 +328,9 @@ func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil
 // to a response.
 func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
-
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
-	found, err := bc.LoadProvisionableLabel(chromeOSBuildKey)
-	if err != nil {
-		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
-	}
-
-	if labelAlreadySatisfied(desired, found) {
-		logging.Infof(ctx, "Skipped Chrome OS Build provision, because desired label %s is already satisfied by %s", desired, found)
+	if desired == "" {
+		logging.Infof(ctx, "Skipping Chrome OS image provision because no specific version was requested.")
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
@@ -401,15 +395,9 @@ func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation
 
 func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
-
 	desired := lacrosGCSPathOrEmpty(r.SoftwareDependencies)
-	found, err := bc.LoadProvisionableLabel(lacrosPathKey)
-	if err != nil {
-		return nil, errors.Annotate(err, "provision lacros").Err()
-	}
-
-	if labelAlreadySatisfied(desired, found) {
-		logging.Infof(ctx, "Skipped LaCrOS provision, because desired version %s is already satisfied by %s.", desired, found)
+	if desired == "" {
+		logging.Infof(ctx, "Skipping LaCrOS provision because no specific version was requested.")
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
