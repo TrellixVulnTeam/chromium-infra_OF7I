@@ -96,7 +96,7 @@ class DockerApi(recipe_api.RecipeApi):
     self.m.step(
         step_name or 'docker pull %s' % image,
         [
-            'docker', '--config-file', self._config_file, 'pull',
+            'docker', '--config', self._config_file, 'pull',
             '%s/%s/%s' % (self._server, self._project, image)
         ],
     )

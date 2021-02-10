@@ -52,7 +52,7 @@
   {
     "cmd": [
       "docker",
-      "--config-file",
+      "--config",
       "[CLEANUP]/.docker",
       "pull",
       "gcr.io/chromium-container-registry/testimage"
