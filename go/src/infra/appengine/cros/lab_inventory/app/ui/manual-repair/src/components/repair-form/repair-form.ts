@@ -16,6 +16,7 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {filterUndefinedKeys, filterZeroFromSet} from '../../shared/helpers/common-helpers';
 import {checkDeviceType, getAssetTag, getHostname, getRepairTargetType} from '../../shared/helpers/repair-record-helpers';
 import {router} from '../../shared/router';
 import {SHARED_STYLES} from '../../shared/shared-styles';
@@ -189,17 +190,6 @@ enum FormAction {
       actionsList.map((action) => enumType[action]);
 
   /**
-   * Remove all undefined fields from an object.
-   */
-  filterUndefined(obj: object) {
-    const ret = {};
-    Object.keys(obj)
-        .filter((key) => obj[key] !== undefined)
-        .forEach((key) => ret[key] = obj[key]);
-    return ret;
-  }
-
-  /**
    * Based on whether there is an existing record or not, construct and return
    * the appropriate record object.
    */
@@ -248,7 +238,7 @@ enum FormAction {
    */
   getExistingRecordObj() {
     const baseObj = this.getBaseRecordObj();
-    const existingObj = this.filterUndefined({
+    const existingObj = filterUndefinedKeys({
       hostname: this.recordInfo.hostname,
       assetTag: this.recordInfo.assetTag,
       repairTargetType: this.recordInfo.repairTargetType,
@@ -372,7 +362,7 @@ enum FormAction {
 
   handleRepairDropdown(e: InputEvent) {
     const el = (<HTMLSelectElement>e.target!);
-    this.recordObj[el.name] = [parseInt(el.value)];
+    this.recordObj[el.name] = new Set([parseInt(el.value)]);
 
     // Subtract old value from timeTaken.
     const prevTimeVal: string =
@@ -671,23 +661,6 @@ enum FormAction {
   }
 
   /**
-   * Takes in a set of repair actions. If set contains 0 (the NA action) and
-   * other actions, remove the 0 action and return the rest. Otherwise, return
-   * just a set with the 0 action.
-   */
-  filterCheckboxes(actionsSet: Set<number>): Set<number> {
-    let resSet = new Set(actionsSet);
-
-    if (resSet.has(0) && resSet.size > 1) {
-      resSet.delete(0);
-    } else if (resSet.size === 0) {
-      resSet = new Set([0]);
-    }
-
-    return resSet;
-  }
-
-  /**
    * Take this.recordObj and create an object acceptable by the creation and
    * updation RPCs.
    *  1. Update repair state when applicable.
@@ -702,9 +675,9 @@ enum FormAction {
 
     // Filter 0 values from checkboxes sets and convert to arrays.
     toSubmit.cableRepairActions =
-        Array.from(this.filterCheckboxes(this.recordObj.cableRepairActions));
+        Array.from(filterZeroFromSet(this.recordObj.cableRepairActions));
     toSubmit.dutRepairActions =
-        Array.from(this.filterCheckboxes(this.recordObj.dutRepairActions));
+        Array.from(filterZeroFromSet(this.recordObj.dutRepairActions));
 
     // Convert dropdown sets to arrays.
     toSubmit.labstationRepairActions =
@@ -717,7 +690,7 @@ enum FormAction {
         Array.from(this.recordObj.usbStickRepairActions);
     toSubmit.rpmRepairActions = Array.from(this.recordObj.rpmRepairActions);
 
-    toSubmit = this.filterUndefined(toSubmit);
+    toSubmit = filterUndefinedKeys(toSubmit);
 
     return toSubmit;
   }
