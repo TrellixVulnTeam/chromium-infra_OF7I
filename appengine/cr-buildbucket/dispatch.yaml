@@ -38,3 +38,7 @@ dispatch:
   # This endpoint only exists in luci-go.
   - url: "*/auth/api/v1/server/client_id"
     service: default-go
+
+  # UpdateBuild is implemented in Go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builds/UpdateBuild"
+    service: default-go
