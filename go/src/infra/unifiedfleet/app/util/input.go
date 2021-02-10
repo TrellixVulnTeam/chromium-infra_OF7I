@@ -108,6 +108,7 @@ var (
 	DeviceTypeFilterName        string = "devicetype"
 	PhaseFilterName             string = "phase"
 	AssetTypeFilterName         string = "assettype"
+	SubnetFilterName            string = "subnet"
 )
 
 const separator string = "/"

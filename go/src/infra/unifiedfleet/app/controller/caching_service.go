@@ -112,6 +112,20 @@ func DeleteCachingService(ctx context.Context, id string) error {
 	return nil
 }
 
+// ListCachingServices lists the CachingServices in datastore.
+func ListCachingServices(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.CachingService, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, caching.GetCachingServiceIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing CachingServices").Err()
+		}
+	}
+	filterMap = resetStateFilter(filterMap)
+	return caching.ListCachingServices(ctx, pageSize, pageToken, filterMap, keysOnly)
+}
+
 // processCachingServiceUpdateMask processes update field mask to get only specific update
 // fields and return a complete CachingService object with updated and existing fields.
 func processCachingServiceUpdateMask(ctx context.Context, oldCs *ufspb.CachingService, cs *ufspb.CachingService, mask *field_mask.FieldMask) (*ufspb.CachingService, error) {

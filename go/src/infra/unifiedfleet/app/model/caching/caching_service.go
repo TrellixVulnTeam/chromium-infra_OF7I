@@ -6,14 +6,19 @@ package caching
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // CachingServiceKind is the datastore entity kind for chrome platforms.
@@ -21,9 +26,10 @@ const CachingServiceKind string = "CachingService"
 
 // CSEntity is a datastore entity that tracks a platform.
 type CSEntity struct {
-	_kind string `gae:"$kind,CachingService"`
-	ID    string `gae:"$id"`
-	State string `gae:"state"`
+	_kind  string `gae:"$kind,CachingService"`
+	ID     string `gae:"$id"`
+	State  string `gae:"state"`
+	Subnet string `gae:"subnet"`
 	// ufspb.CachingService cannot be directly used as it contains pointer.
 	CachingService []byte `gae:",noindex"`
 }
@@ -49,6 +55,7 @@ func newCSEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 	return &CSEntity{
 		ID:             p.GetName(),
 		State:          p.GetState().String(),
+		Subnet:         p.GetServingSubnet(),
 		CachingService: cs,
 	}, nil
 }
@@ -104,6 +111,48 @@ func DeleteCachingService(ctx context.Context, name string) error {
 	return ufsds.Delete(ctx, &ufspb.CachingService{Name: name}, newCSEntity)
 }
 
+// ListCachingServices lists the CachingServices.
+//
+// Does a query over CachingService entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListCachingServices(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.CachingService, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, CachingServiceKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *CSEntity, cb datastore.CursorCB) error {
+		if keysOnly {
+			CachingService := &ufspb.CachingService{
+				Name: ent.ID,
+			}
+			res = append(res, CachingService)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.CachingService))
+		}
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to list CachingServices %s", err)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
 func putCachingService(ctx context.Context, cs *ufspb.CachingService, update bool) (*ufspb.CachingService, error) {
 	cs.UpdateTime = ptypes.TimestampNow()
 	pm, err := ufsds.Put(ctx, cs, newCSEntity, update)
@@ -111,4 +160,19 @@ func putCachingService(ctx context.Context, cs *ufspb.CachingService, update boo
 		return pm.(*ufspb.CachingService), err
 	}
 	return nil, err
+}
+
+// GetCachingServiceIndexedFieldName returns the index name.
+func GetCachingServiceIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.StateFilterName:
+		field = "state"
+	case util.SubnetFilterName:
+		field = "subnet"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for CachingService are state/subnet", input)
+	}
+	return field, nil
 }

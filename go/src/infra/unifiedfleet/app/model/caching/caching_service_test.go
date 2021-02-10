@@ -5,6 +5,7 @@
 package caching
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -112,6 +113,48 @@ func TestDeleteCachingService(t *testing.T) {
 			err := DeleteCachingService(ctx, "")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListCachingServices(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	cachingServices := make([]*ufspb.CachingService, 0, 4)
+	for i := 0; i < 4; i++ {
+		cs := mockCachingService(fmt.Sprintf("cs-%d", i))
+		resp, _ := CreateCachingService(ctx, cs)
+		cachingServices = append(cachingServices, resp)
+	}
+	Convey("ListCachingServices", t, func() {
+		Convey("List CachingServices - page_token invalid", func() {
+			resp, nextPageToken, err := ListCachingServices(ctx, 5, "abc", nil, false)
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List CachingServices - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListCachingServices(ctx, 4, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, cachingServices)
+		})
+
+		Convey("List CachingServices - listing with pagination", func() {
+			resp, nextPageToken, err := ListCachingServices(ctx, 3, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, cachingServices[:3])
+
+			resp, _, err = ListCachingServices(ctx, 2, nextPageToken, nil, false)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, cachingServices[3:])
 		})
 	})
 }

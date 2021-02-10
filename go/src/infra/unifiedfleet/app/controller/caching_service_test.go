@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -204,6 +205,43 @@ func TestDeleteCachingService(t *testing.T) {
 			err := DeleteCachingService(ctx, "128.0.0.1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestListCachingServices(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	cachingServicesWithState := make([]*ufspb.CachingService, 0, 2)
+	cachingServices := make([]*ufspb.CachingService, 0, 4)
+	for i := 0; i < 4; i++ {
+		cs := mockCachingService(fmt.Sprintf("cs-%d", i))
+		if i%2 == 0 {
+			cs.State = ufspb.State_STATE_SERVING
+		}
+		resp, _ := caching.CreateCachingService(ctx, cs)
+		if i%2 == 0 {
+			cachingServicesWithState = append(cachingServicesWithState, resp)
+		}
+		cachingServices = append(cachingServices, resp)
+	}
+	Convey("ListCachingServices", t, func() {
+		Convey("List CachingServices - filter invalid - error", func() {
+			_, _, err := ListCachingServices(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List CachingServices - filter switch - happy path", func() {
+			resp, _, _ := ListCachingServices(ctx, 5, "", "state=serving", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, cachingServicesWithState)
+		})
+
+		Convey("ListCachingServices - Full listing - happy path", func() {
+			resp, _, _ := ListCachingServices(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, cachingServices)
 		})
 	})
 }

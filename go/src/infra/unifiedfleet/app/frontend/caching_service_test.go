@@ -263,3 +263,46 @@ func TestDeleteCachingService(t *testing.T) {
 		})
 	})
 }
+
+func TestListCachingServices(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	cachingServices := make([]*ufspb.CachingService, 0, 4)
+	for i := 0; i < 4; i++ {
+		cs := mockCachingService("")
+		cs.Name = fmt.Sprintf("cs-%d", i)
+		resp, _ := caching.CreateCachingService(tf.C, cs)
+		resp.Name = util.AddPrefix(util.CachingServiceCollection, resp.Name)
+		cachingServices = append(cachingServices, resp)
+	}
+	Convey("ListCachingServices", t, func() {
+		Convey("ListCachingServices - page_size negative - error", func() {
+			req := &ufsAPI.ListCachingServicesRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListCachingServices(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
+		})
+
+		Convey("ListCachingServices - Full listing with no pagination - happy path", func() {
+			req := &ufsAPI.ListCachingServicesRequest{}
+			resp, err := tf.Fleet.ListCachingServices(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.CachingServices, ShouldResembleProto, cachingServices)
+		})
+
+		Convey("ListCachingServices - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListCachingServicesRequest{
+				Filter: "state=x|state=y",
+			}
+			_, err := tf.Fleet.ListCachingServices(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
+		})
+	})
+}

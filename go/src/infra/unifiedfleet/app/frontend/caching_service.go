@@ -78,7 +78,19 @@ func (fs *FleetServerImpl) ListCachingServices(ctx context.Context, req *ufsAPI.
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListCachingServices(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	for _, cs := range result {
+		cs.Name = util.AddPrefix(util.CachingServiceCollection, cs.Name)
+	}
+	return &ufsAPI.ListCachingServicesResponse{
+		CachingServices: result,
+		NextPageToken:   nextPageToken,
+	}, nil
 }
 
 // DeleteCachingService deletes the CachingService from database.
