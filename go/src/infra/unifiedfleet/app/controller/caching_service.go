@@ -7,8 +7,12 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/model/caching"
@@ -37,12 +41,113 @@ func CreateCachingService(ctx context.Context, cs *ufspb.CachingService) (*ufspb
 	return cs, nil
 }
 
+// UpdateCachingService updates existing CachingService in datastore.
+func UpdateCachingService(ctx context.Context, cs *ufspb.CachingService, mask *field_mask.FieldMask) (*ufspb.CachingService, error) {
+	f := func(ctx context.Context) error {
+		// Get old/existing CachingService for logging and partial update.
+		oldCs, err := caching.GetCachingService(ctx, cs.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateCachingService - get CachingService %s failed", cs.GetName()).Err()
+		}
+		// Validate the input.
+		if err := validateUpdateCachingService(ctx, oldCs, cs, mask); err != nil {
+			return errors.Annotate(err, "UpdateCachingService - validation failed").Err()
+		}
+		// Copy for logging.
+		oldCsCopy := oldCs
+		// Partial update by field mask.
+		if mask != nil && len(mask.Paths) > 0 {
+			// Validate partial update field mask.
+			if err := validateCachingServiceUpdateMask(ctx, cs, mask); err != nil {
+				return err
+			}
+			// Clone oldCs for logging as the oldCs will be updated with new values.
+			oldCsCopy = proto.Clone(oldCs).(*ufspb.CachingService)
+			// Process the field mask to get updated values.
+			cs, err = processCachingServiceUpdateMask(ctx, oldCs, cs, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateCachingService - processing update mask failed").Err()
+			}
+		}
+		if _, err := caching.BatchUpdateCachingServices(ctx, []*ufspb.CachingService{cs}); err != nil {
+			return errors.Annotate(err, "UpdateCachingService - unable to batch update CachingService %s", cs.Name).Err()
+		}
+		hc := getCachingServiceHistoryClient(cs)
+		if err := hc.stUdt.updateStateHelper(ctx, cs.GetState()); err != nil {
+			return err
+		}
+		hc.logCachingServiceChanges(oldCsCopy, cs)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "UpdateCachingService - failed to update CachingService %s in datastore", cs.Name).Err()
+	}
+	return cs, nil
+}
+
+// processCachingServiceUpdateMask processes update field mask to get only specific update
+// fields and return a complete CachingService object with updated and existing fields.
+func processCachingServiceUpdateMask(ctx context.Context, oldCs *ufspb.CachingService, cs *ufspb.CachingService, mask *field_mask.FieldMask) (*ufspb.CachingService, error) {
+	// Update the fields in the existing/old CachingService.
+	for _, path := range mask.Paths {
+		switch path {
+		case "port":
+			oldCs.Port = cs.GetPort()
+		case "serving_subnet":
+			oldCs.ServingSubnet = cs.GetServingSubnet()
+		case "primary_node":
+			oldCs.PrimaryNode = cs.GetPrimaryNode()
+		case "secondary_node":
+			oldCs.SecondaryNode = cs.GetSecondaryNode()
+		case "state":
+			oldCs.State = cs.GetState()
+		case "description":
+			oldCs.Description = cs.GetDescription()
+		}
+	}
+	// Return existing/old CachingService with new updated values.
+	return oldCs, nil
+}
+
 // validateCreateCachingService validates if a CachingService can be created.
 //
 // checks if the CachingService already exists.
 func validateCreateCachingService(ctx context.Context, cs *ufspb.CachingService) error {
 	// Check if CachingService already exists.
 	return resourceAlreadyExists(ctx, []*Resource{GetCachingServiceResource(cs.Name)}, nil)
+}
+
+// validateUpdateCachingService validates if an exsting CachingService can be updated.
+//
+// checks if the CachingService does not exist.
+func validateUpdateCachingService(ctx context.Context, oldCs *ufspb.CachingService, cs *ufspb.CachingService, mask *field_mask.FieldMask) error {
+	// Check if resources does not exist.
+	return ResourceExist(ctx, []*Resource{GetCachingServiceResource(cs.Name)}, nil)
+}
+
+// validateCachingServiceUpdateMask validates the update mask for CachingService partial update.
+func validateCachingServiceUpdateMask(ctx context.Context, cs *ufspb.CachingService, mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// Validate the give field mask.
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateCachingServiceUpdateMask - name cannot be updated, delete and create a CachingService instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateCachingServiceUpdateMask - update_time cannot be updated, it is a output only field")
+			case "port":
+			case "serving_subnet":
+			case "primary_node":
+			case "secondary_node":
+			case "state":
+			case "description":
+				// Valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateCachingServiceUpdateMask - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }
 
 func getCachingServiceHistoryClient(m *ufspb.CachingService) *HistoryClient {

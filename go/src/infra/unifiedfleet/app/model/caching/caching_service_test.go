@@ -58,3 +58,31 @@ func TestBatchCreateCachingServices(t *testing.T) {
 		})
 	})
 }
+
+func TestGetCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	cs1 := mockCachingService("cs-1")
+	Convey("GetCachingService", t, func() {
+		Convey("Get CachingService by existing name/ID", func() {
+			resp, err := CreateCachingService(ctx, cs1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, cs1)
+			resp, err = GetCachingService(ctx, "cs-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, cs1)
+		})
+		Convey("Get CachingService by non-existing name/ID", func() {
+			resp, err := GetCachingService(ctx, "cs-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get CachingService - invalid name/ID", func() {
+			resp, err := GetCachingService(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

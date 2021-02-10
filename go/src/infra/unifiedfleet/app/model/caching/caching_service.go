@@ -90,6 +90,15 @@ func BatchUpdateCachingServices(ctx context.Context, cachingServices []*ufspb.Ca
 	return nil, err
 }
 
+// GetCachingService returns CachingService for the given name from datastore.
+func GetCachingService(ctx context.Context, name string) (*ufspb.CachingService, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.CachingService{Name: name}, newCSEntity)
+	if err == nil {
+		return pm.(*ufspb.CachingService), err
+	}
+	return nil, err
+}
+
 func putCachingService(ctx context.Context, cs *ufspb.CachingService, update bool) (*ufspb.CachingService, error) {
 	cs.UpdateTime = ptypes.TimestampNow()
 	pm, err := ufsds.Put(ctx, cs, newCSEntity, update)

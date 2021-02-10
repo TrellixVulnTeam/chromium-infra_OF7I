@@ -42,7 +42,14 @@ func (fs *FleetServerImpl) UpdateCachingService(ctx context.Context, req *ufsAPI
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	req.CachingService.Name = util.RemovePrefix(req.CachingService.Name)
+	cs, err := controller.UpdateCachingService(ctx, req.CachingService, req.UpdateMask)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.CachingServiceCollection, cs.Name)
+	return cs, err
 }
 
 // GetCachingService gets the CachingService information from database.
