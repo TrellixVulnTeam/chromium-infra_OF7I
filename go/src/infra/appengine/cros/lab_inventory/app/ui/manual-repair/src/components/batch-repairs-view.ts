@@ -5,6 +5,7 @@
 import '@material/mwc-fab';
 import '@material/mwc-textarea';
 
+import {Fab} from '@material/mwc-fab';
 import {css, customElement, html, LitElement, property} from 'lit-element';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
@@ -102,6 +103,10 @@ import {store, thunkDispatch} from '../state/store';
         mwc-fab.complete-btn {
           --mdc-theme-secondary: #1E8E3E;
         }
+
+        mwc-fab.warning-btn {
+          --mdc-theme-secondary: #D93025;
+        }
       `,
     ]
   }
@@ -113,6 +118,7 @@ import {store, thunkDispatch} from '../state/store';
   @property({type: Array}) hostnames;
   @property({type: String}) hostnamesInput;
   @property({type: Boolean}) submitting = false;
+  @property({type: Boolean}) disableSubmit = false;
 
   stateChanged(state) {
     this.user = state.user;
@@ -194,6 +200,7 @@ import {store, thunkDispatch} from '../state/store';
         'readyMsg': '',
       };
     });
+    this.disableSubmit = false;
 
     if ('failedDevices' in this.devices) {
       this.devices.failedDevices.forEach((failed) => {
@@ -213,12 +220,17 @@ import {store, thunkDispatch} from '../state/store';
 
     let hostsStatusArray: Array<{[key: string]: string}> = [];
     for (const host in hostsStatus) {
+      let status = hostsStatus[host];
       hostsStatusArray.push({
         'hostname': host,
-        'deviceExists': hostsStatus[host]['deviceExists'],
-        'recordExists': hostsStatus[host]['recordExists'],
-        'readyMsg': hostsStatus[host]['readyMsg'] || 'YES',
+        'deviceExists': status['deviceExists'],
+        'recordExists': status['recordExists'],
+        'readyMsg': status['readyMsg'] || 'YES',
       });
+
+      if (!status['deviceExists'] || status['recordExists']) {
+        this.disableSubmit = true;
+      }
     }
 
     this.hostsStatus = hostsStatusArray;
@@ -244,9 +256,10 @@ import {store, thunkDispatch} from '../state/store';
     this.hostnamesInput = (<HTMLTextAreaElement>e.target!).value;
   };
 
-  handleFormSubmission() {
-    // TODO: disable button when submitting using this.submitting.
-    console.log('Submit form!');
+  handleFormSubmission(e: MouseEvent) {
+    if (!(<Fab>e.target!).disabled) {
+      console.log('Submit form!');
+    }
   }
 
   keyboardListener(e: KeyboardEvent) {
@@ -304,15 +317,21 @@ import {store, thunkDispatch} from '../state/store';
    * in the datastore.
    */
   displayFormBtnGroup() {
+    const className: string =
+        this.disableSubmit ? 'warning-btn' : 'complete-btn';
+    const icon: string = this.disableSubmit ? 'error_outline' : '';
+    const label: string = this.disableSubmit ? 'Not All Hosts are Valid' :
+                                               'Create and Complete Records';
+
     return html`
       <div id="form-btn-group">
         <mwc-fab
-          class="complete-btn"
+          class="${className}"
           extended
-          ?disabled="${this.submitting}"
-          label="Create and Complete Records"
-          @click="${this.handleFormSubmission}"
-          @keydown="${this.keyboardListener}">
+          icon="${icon}"
+          ?disabled="${this.submitting || this.disableSubmit}"
+          label="${label}"
+          @click="${this.handleFormSubmission}">
         </mwc-fab>
       </div>
     `;
