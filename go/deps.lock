@@ -1,8 +1,8 @@
 hash: 4a000bf4b2c27e9e5e06ed65b801d78d91c4c0b943c488bc3ed2f1eafb6d8380
-updated: 2021-02-09T16:03:00.220424267-05:00
+updated: 2021-02-10T09:02:32.554522208+09:00
 imports:
 - name: cloud.google.com/go
-  version: 8f4e13009444d88a5a56144129f055623a2205ac
+  version: 00a78aafed491df5cc20a852c61c42aca1661a4d
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -35,7 +35,7 @@ imports:
   version: 9e72daff42c941baaf43a4c370e2607a984c58a7
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 55dae3d48e398eba22b64b93aedcbe300667d31e
+  version: 81eb06d1ef76f4ff466943dcd0a624f5a91db9e6
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -370,7 +370,7 @@ imports:
   subpackages:
   - convey
 - name: github.com/spf13/cobra
-  version: b73b344b63b6fab171f578f1385ac2506fe93187
+  version: 07445ea179fc2d9679c9a7fbbaaaafbd1221e6b4
   repo: https://chromium.googlesource.com/external/github.com/spf13/cobra.git
 - name: github.com/spf13/pflag
   version: 85dd5c8bc61cfa382fecd072378089d4e856579d
@@ -494,7 +494,7 @@ imports:
   version: 7e3f01d253248a0a5694eb5b7376dfea18b6397e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 94fce4dc287c21236175eeaac30f0d71de3ca589
+  version: 5fbed4937950647d6ebe26ceb40abfaefcab5255
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
