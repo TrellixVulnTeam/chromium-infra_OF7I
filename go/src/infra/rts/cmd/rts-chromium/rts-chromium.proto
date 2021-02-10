@@ -22,6 +22,6 @@ message TestFile {
   // "PasswordAutofillAgentTest.NoMayUsePlaceholderAndPlaceholderOnForm".
   repeated string test_names = 2;
 
-  // Test suites where the test file was observed, e.g. "browser_tests".
-  repeated string test_suites = 3;
+  // Test targets where the test file was observed, e.g. "browser_tests".
+  repeated string test_targets = 3;
 }

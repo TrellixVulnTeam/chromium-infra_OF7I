@@ -48,7 +48,7 @@ func cmdSelect() *subcommands.Command {
 			`))
 			r.Flags.StringVar(&r.out, "out", "", text.Doc(`
 				Path to a directory where to write test filter files.
-				A file per test suite is written, e.g. browser_tests.filter.
+				A file per test target is written, e.g. browser_tests.filter.
 				The file format is described in https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/filters/README.md.
 				Before writing, all .filter files in the directory are deleted.
 			`))
@@ -124,11 +124,11 @@ func (r *selectRun) writeFilterFiles() error {
 		return errors.Annotate(err, "failed to prepare filter file dir %q", r.out).Err()
 	}
 
-	// maps a test suite to the list of tests to skip.
+	// Maps a test target to the list of tests to skip.
 	testsToSkip := map[string][]string{}
 	err := r.selectTests(func(testFileToSkip *TestFile) error {
-		for _, testSuite := range testFileToSkip.TestSuites {
-			testsToSkip[testSuite] = append(testsToSkip[testSuite], testFileToSkip.TestNames...)
+		for _, target := range testFileToSkip.TestTargets {
+			testsToSkip[target] = append(testsToSkip[target], testFileToSkip.TestNames...)
 		}
 		return nil
 	})
@@ -137,8 +137,8 @@ func (r *selectRun) writeFilterFiles() error {
 	}
 
 	// Write the files.
-	for testSuite, testNames := range testsToSkip {
-		fileName := filepath.Join(r.out, testSuite+".filter")
+	for target, testNames := range testsToSkip {
+		fileName := filepath.Join(r.out, target+".filter")
 		if err := writeFilterFile(fileName, testNames); err != nil {
 			return errors.Annotate(err, "failed to write %q", fileName).Err()
 		}
