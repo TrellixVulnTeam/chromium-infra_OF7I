@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"github.com/kylelemons/godebug/pretty"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -26,29 +27,60 @@ func defaultTest(tests map[string]*skylab_test_runner.Request_Test) *skylab_test
 	return tests["original_test"]
 }
 
-func TestProvisionableLabels(t *testing.T) {
-	Convey("Given a test that specifies software dependencies", t, func() {
-		ctx := context.Background()
-		var params test_platform.Request_Params
-		setBuild(&params, "foo-build")
-		setFWRO(&params, "foo-ro-firmware")
-		setFWRW(&params, "foo-rw-firmware")
-		Convey("when generating a test runner request", func() {
+func TestSoftwareDependencies(t *testing.T) {
+	cases := []struct {
+		Tag  string
+		Deps []*test_platform.Request_Params_SoftwareDependency
+	}{
+		{
+			Tag: "Chrome OS build",
+			Deps: []*test_platform.Request_Params_SoftwareDependency{
+				{
+					Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+						ChromeosBuild: "foo",
+					},
+				},
+			},
+		},
+		{
+			Tag: "RO firmware",
+			Deps: []*test_platform.Request_Params_SoftwareDependency{
+				{
+					Dep: &test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild{
+						RoFirmwareBuild: "foo",
+					},
+				},
+			},
+		},
+		{
+			Tag: "RW firmware",
+			Deps: []*test_platform.Request_Params_SoftwareDependency{
+				{
+					Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{
+						RwFirmwareBuild: "foo",
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Tag, func(t *testing.T) {
 			g := Generator{
 				Invocation: basicInvocation(),
-				Params:     &params,
+				Params: &test_platform.Request_Params{
+					SoftwareDependencies: c.Deps,
+				},
 			}
-			got, err := g.testRunnerRequest(ctx)
-			So(err, ShouldBeNil)
-			Convey("the provisionable labels match the software dependencies", func() {
-				So(got.Prejob, ShouldNotBeNil)
-				So(got.Prejob.ProvisionableLabels, ShouldNotBeNil)
-				So(got.Prejob.ProvisionableLabels["cros-version"], ShouldEqual, "foo-build")
-				So(got.Prejob.ProvisionableLabels["fwro-version"], ShouldEqual, "foo-ro-firmware")
-				So(got.Prejob.ProvisionableLabels["fwrw-version"], ShouldEqual, "foo-rw-firmware")
-			})
+			got, err := g.testRunnerRequest(context.Background())
+			if err != nil {
+				t.Fatalf("g.testRunnerRequest() returned error: %s", err)
+			}
+			if diff := pretty.Compare(c.Deps, got.GetPrejob().GetSoftwareDependencies()); diff != "" {
+				t.Errorf("Incorrect software dependencies, -want +got: %s", diff)
+			}
 		})
-	})
+	}
 }
 
 func TestClientTest(t *testing.T) {

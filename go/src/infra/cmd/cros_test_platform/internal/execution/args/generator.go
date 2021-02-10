@@ -235,11 +235,13 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 }
 
 const (
-	// These prefixes are interpreted by autotest's provisioning behavior;
-	// they are defined in the autotest repo, at utils/labellib.py
-	prefixChromeOS   = "cros-version"
-	prefixFirmwareRO = "fwro-version"
-	prefixFirmwareRW = "fwrw-version"
+	// Names of swarming dimensions corresponding to cached provision state of
+	// various Chrome OS components.
+	// These names must stay consistent with the names used in
+	// cros/phosphorus/internal/botcache
+	dimChromeOS   = "provisionable-cros-version"
+	dimFirmwareRO = "provisionable-fwro-version"
+	dimFirmwareRW = "provisionable-fwrw-version"
 )
 
 func (g *Generator) provisionableDimensions() ([]string, error) {
@@ -251,33 +253,13 @@ func (g *Generator) provisionableDimensions() ([]string, error) {
 
 	var dims []string
 	if b := builds.ChromeOS; b != "" {
-		dims = append(dims, "provisionable-"+prefixChromeOS+":"+b)
+		dims = append(dims, dimChromeOS+":"+b)
 	}
 	if b := builds.FirmwareRO; b != "" {
-		dims = append(dims, "provisionable-"+prefixFirmwareRO+":"+b)
+		dims = append(dims, dimFirmwareRO+":"+b)
 	}
 	if b := builds.FirmwareRW; b != "" {
-		dims = append(dims, "provisionable-"+prefixFirmwareRW+":"+b)
-	}
-	return dims, nil
-}
-
-func (g *Generator) provisionableLabels() (map[string]string, error) {
-	deps := g.Params.SoftwareDependencies
-	builds, err := extractBuilds(deps)
-	if err != nil {
-		return nil, errors.Annotate(err, "get provisionable labels").Err()
-	}
-
-	dims := make(map[string]string)
-	if b := builds.ChromeOS; b != "" {
-		dims[prefixChromeOS] = b
-	}
-	if b := builds.FirmwareRO; b != "" {
-		dims[prefixFirmwareRO] = b
-	}
-	if b := builds.FirmwareRW; b != "" {
-		dims[prefixFirmwareRW] = b
+		dims = append(dims, dimFirmwareRW+":"+b)
 	}
 	return dims, nil
 }
@@ -454,15 +436,10 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 	if err != nil {
 		return nil, errors.Annotate(err, "create test runner request").Err()
 	}
-	pl, err := g.provisionableLabels()
-	if err != nil {
-		return nil, errors.Annotate(err, "create test runner request").Err()
-	}
 	kv := g.keyvals(ctx)
 	return &skylab_test_runner.Request{
 		Deadline: google.NewTimestamp(g.Deadline),
 		Prejob: &skylab_test_runner.Request_Prejob{
-			ProvisionableLabels:  pl,
 			SoftwareDependencies: g.Params.SoftwareDependencies,
 		},
 		// The hard coded "original_test" key is ignored in test_runner builds.
