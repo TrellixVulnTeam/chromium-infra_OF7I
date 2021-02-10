@@ -724,6 +724,35 @@ func logSwitchInterface(resourceName string, oldData, newData *ufspb.SwitchInter
 	return append(changes, logCommon(resourceName, "switch_interface.port", oldData.GetPortName(), newData.GetPortName())...)
 }
 
+// logCachingServiceChanges logs the change of the given CachingService.
+func (hc *HistoryClient) logCachingServiceChanges(oldData, newData *ufspb.CachingService) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	resourceName := util.AddPrefix(util.CachingServiceCollection, newData.GetName())
+	if newData == nil {
+		resourceName = util.AddPrefix(util.CachingServiceCollection, oldData.GetName())
+	}
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "cachingservice", LifeCycleRegistration)...)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "cachingservice", LifeCycleRetire)...)
+		oldData.UpdateTime = ptypes.TimestampNow()
+		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.port", oldData.GetPort(), newData.GetPort())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.serving_subnet", oldData.GetServingSubnet(), newData.GetServingSubnet())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.primary_node", oldData.GetPrimaryNode(), newData.GetPrimaryNode())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.secondary_node", oldData.GetSecondaryNode(), newData.GetSecondaryNode())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.state", oldData.GetState().String(), newData.GetState().String())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "cachingservice.description", oldData.GetDescription(), newData.GetDescription())...)
+	hc.logMsgEntity(resourceName, false, newData)
+}
+
 func logCommon(resourceName, label string, oldValue interface{}, newValue interface{}) []*ufspb.ChangeEvent {
 	oldValueStr := fmt.Sprintf("%v", oldValue)
 	newValueStr := fmt.Sprintf("%v", newValue)

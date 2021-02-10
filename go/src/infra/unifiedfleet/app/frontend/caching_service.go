@@ -12,6 +12,8 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/util"
 )
 
 // CreateCachingService creates CachingService entry in database.
@@ -22,7 +24,14 @@ func (fs *FleetServerImpl) CreateCachingService(ctx context.Context, req *ufsAPI
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	req.CachingService.Name = req.CachingServiceId
+	cs, err := controller.CreateCachingService(ctx, req.CachingService)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.CachingServiceCollection, cs.Name)
+	return cs, err
 }
 
 // UpdateCachingService updates the CachingService information in database.

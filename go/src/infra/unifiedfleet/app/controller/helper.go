@@ -17,6 +17,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	"infra/unifiedfleet/app/model/caching"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -189,6 +190,17 @@ func GetAssetResource(assetID string) *Resource {
 		ID:   assetID,
 		Entity: &registration.AssetEntity{
 			Name: assetID,
+		},
+	}
+}
+
+// GetCachingServiceResource returns a Resource with CSEntity.
+func GetCachingServiceResource(cachingServiceID string) *Resource {
+	return &Resource{
+		Kind: caching.CachingServiceKind,
+		ID:   cachingServiceID,
+		Entity: &caching.CSEntity{
+			ID: cachingServiceID,
 		},
 	}
 }
