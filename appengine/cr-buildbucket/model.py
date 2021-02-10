@@ -137,9 +137,8 @@ class Build(ndb.Model):
 
   @classmethod
   def _use_memcache(cls, _):
-    # Fallback in case memcache is still enabled (observed in v1 API handlers).
     # See main.py for reasons why memcache is being disabled.
-    return not app_identity.get_application_id().endswith('-dev')
+    return False
 
   # Stores the build proto. The primary property of this entity.
   # Majority of the other properties are either derivatives of this field or
@@ -436,6 +435,11 @@ class BuildInputProperties(BuildProperties):
 class BuildOutputProperties(BuildProperties):
   """Stores buildbucket.v2.Build.output.properties."""
 
+  @classmethod
+  def _use_memcache(cls, _):
+    # See main.py for reasons why memcache is being disabled.
+    return False
+
 
 class BuildSteps(BuildDetailEntity):
   """Stores buildbucket.v2.Build.steps."""
@@ -514,6 +518,11 @@ class BuildSteps(BuildDetailEntity):
     if changed:  # pragma: no branch
       entity.write_steps(container)
       yield entity.put_async()
+
+  @classmethod
+  def _use_memcache(cls, _):
+    # See main.py for reasons why memcache is being disabled.
+    return False
 
 
 class BuildInfra(BuildDetailEntity):
