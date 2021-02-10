@@ -86,3 +86,32 @@ func TestGetCachingService(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	cs1 := mockCachingService("cs-1")
+	CreateCachingService(ctx, cs1)
+	Convey("DeleteCachingService", t, func() {
+		Convey("Delete CachingService successfully by existing ID", func() {
+			err := DeleteCachingService(ctx, "cs-1")
+			So(err, ShouldBeNil)
+
+			resp, err := GetCachingService(ctx, "cs-1")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete CachingService by non-existing ID", func() {
+			err := DeleteCachingService(ctx, "cs-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete CachingService - invalid ID", func() {
+			err := DeleteCachingService(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

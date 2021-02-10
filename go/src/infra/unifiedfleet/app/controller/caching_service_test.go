@@ -146,3 +146,64 @@ func TestUpdateCachingService(t *testing.T) {
 		})
 	})
 }
+
+func TestGetCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	cs, _ := caching.CreateCachingService(ctx, &ufspb.CachingService{
+		Name: "127.0.0.1",
+	})
+	Convey("GetCachingService", t, func() {
+		Convey("Get CachingService by existing ID - happy path", func() {
+			resp, _ := GetCachingService(ctx, "127.0.0.1")
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, cs)
+		})
+
+		Convey("Get CachingService by non-existing ID", func() {
+			_, err := GetCachingService(ctx, "128.0.0.1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestDeleteCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	caching.CreateCachingService(ctx, &ufspb.CachingService{
+		Name: "127.0.0.1",
+	})
+	Convey("DeleteCachingService", t, func() {
+		Convey("Delete CachingService by existing ID - happy path", func() {
+			err := DeleteCachingService(ctx, "127.0.0.1")
+			So(err, ShouldBeNil)
+
+			res, err := caching.GetCachingService(ctx, "127.0.0.1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = state.GetStateRecord(ctx, "cachingservices/127.0.0.1")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "cachingservices/127.0.0.1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "cachingservice")
+
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "cachingservices/127.0.0.1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+		})
+
+		Convey("Delete CachingService by non-existing ID", func() {
+			err := DeleteCachingService(ctx, "128.0.0.1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}

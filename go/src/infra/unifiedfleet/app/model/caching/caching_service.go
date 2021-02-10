@@ -99,6 +99,11 @@ func GetCachingService(ctx context.Context, name string) (*ufspb.CachingService,
 	return nil, err
 }
 
+// DeleteCachingService deletes the CachingService in datastore.
+func DeleteCachingService(ctx context.Context, name string) error {
+	return ufsds.Delete(ctx, &ufspb.CachingService{Name: name}, newCSEntity)
+}
+
 func putCachingService(ctx context.Context, cs *ufspb.CachingService, update bool) (*ufspb.CachingService, error) {
 	cs.UpdateTime = ptypes.TimestampNow()
 	pm, err := ufsds.Put(ctx, cs, newCSEntity, update)

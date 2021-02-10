@@ -14,6 +14,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/caching"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -175,5 +176,90 @@ func TestUpdateCachingService(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "secondaryNode"))
 		})
 
+	})
+}
+
+func TestGetCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	cs, _ := caching.CreateCachingService(ctx, &ufspb.CachingService{
+		Name: "127.0.0.1",
+	})
+	Convey("GetCachingService", t, func() {
+		Convey("Get CachingService by existing ID - happy path", func() {
+			req := &ufsAPI.GetCachingServiceRequest{
+				Name: util.AddPrefix(util.CachingServiceCollection, "127.0.0.1"),
+			}
+			resp, _ := tf.Fleet.GetCachingService(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			resp.Name = util.RemovePrefix(resp.Name)
+			So(resp, ShouldResembleProto, cs)
+		})
+
+		Convey("Get CachingService - Invalid input empty name", func() {
+			req := &ufsAPI.GetCachingServiceRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetCachingService(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Get CachingService - Invalid input invalid characters", func() {
+			req := &ufsAPI.GetCachingServiceRequest{
+				Name: util.AddPrefix(util.CachingServiceCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetCachingService(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.CachingServiceNameFormat)
+		})
+	})
+}
+
+func TestDeleteCachingService(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	caching.CreateCachingService(ctx, &ufspb.CachingService{
+		Name: "127.0.0.1",
+	})
+	Convey("DeleteCachingService", t, func() {
+		Convey("Delete CachingService by existing ID - happy path", func() {
+			req := &ufsAPI.DeleteCachingServiceRequest{
+				Name: util.AddPrefix(util.CachingServiceCollection, "127.0.0.1"),
+			}
+			_, err := tf.Fleet.DeleteCachingService(tf.C, req)
+			So(err, ShouldBeNil)
+
+			res, err := caching.GetCachingService(tf.C, "127.0.0.1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete CachingService - Invalid input empty name", func() {
+			req := &ufsAPI.DeleteCachingServiceRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteCachingService(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Delete CachingService - Invalid input invalid characters", func() {
+			req := &ufsAPI.DeleteCachingServiceRequest{
+				Name: util.AddPrefix(util.CachingServiceCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteCachingService(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.CachingServiceNameFormat)
+		})
 	})
 }

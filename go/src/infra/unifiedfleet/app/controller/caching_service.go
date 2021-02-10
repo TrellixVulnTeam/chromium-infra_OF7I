@@ -85,6 +85,33 @@ func UpdateCachingService(ctx context.Context, cs *ufspb.CachingService, mask *f
 	return cs, nil
 }
 
+// GetCachingService returns CachingService for the given id from datastore.
+func GetCachingService(ctx context.Context, id string) (*ufspb.CachingService, error) {
+	return caching.GetCachingService(ctx, id)
+}
+
+// DeleteCachingService deletes the given CachingService in datastore.
+func DeleteCachingService(ctx context.Context, id string) error {
+	f := func(ctx context.Context) error {
+		// Get the CachingService for logging.
+		cs, err := caching.GetCachingService(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "DeleteCachingService - get CachingService %s failed", id).Err()
+		}
+		if err := caching.DeleteCachingService(ctx, id); err != nil {
+			return errors.Annotate(err, "DeleteCachingService - unable to delete CachingService %s", id).Err()
+		}
+		hc := getCachingServiceHistoryClient(cs)
+		hc.stUdt.deleteStateHelper(ctx)
+		hc.logCachingServiceChanges(cs, nil)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return errors.Annotate(err, "DeleteCachingService - failed to delete CachingService %s in datastore", id).Err()
+	}
+	return nil
+}
+
 // processCachingServiceUpdateMask processes update field mask to get only specific update
 // fields and return a complete CachingService object with updated and existing fields.
 func processCachingServiceUpdateMask(ctx context.Context, oldCs *ufspb.CachingService, cs *ufspb.CachingService, mask *field_mask.FieldMask) (*ufspb.CachingService, error) {

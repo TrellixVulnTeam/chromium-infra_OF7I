@@ -60,7 +60,14 @@ func (fs *FleetServerImpl) GetCachingService(ctx context.Context, req *ufsAPI.Ge
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	name := util.RemovePrefix(req.Name)
+	cs, err := controller.GetCachingService(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.CachingServiceCollection, cs.Name)
+	return cs, err
 }
 
 // ListCachingServices list the CachingServices information from database.
@@ -82,5 +89,7 @@ func (fs *FleetServerImpl) DeleteCachingService(ctx context.Context, req *ufsAPI
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return &empty.Empty{}, nil
+	name := util.RemovePrefix(req.Name)
+	err = controller.DeleteCachingService(ctx, name)
+	return &empty.Empty{}, err
 }
