@@ -10,6 +10,7 @@ import './top-bar';
 import './message-display';
 import './home-view';
 import './dashboard-view';
+import './batch-repairs-view';
 
 import {Drawer} from '@material/mwc-drawer';
 import {css, customElement, html, LitElement, property} from 'lit-element';
@@ -60,6 +61,9 @@ export default class ManualRepair extends connect
     router
         .on('dashboard',
             () => {this.route = html`<dashboard-view></dashboard-view>`})
+        .on('batch_repairs',
+            () => {
+                this.route = html`<batch-repairs-view></batch-repairs-view>`})
         .on('repairs',
             (_, query) => {
               this.route = html`<repair-form></repair-form>`;
@@ -93,6 +97,13 @@ export default class ManualRepair extends connect
         link: '/#/repairs',
         target: '',
         icon: 'assignment',
+      }
+    ],
+    [
+      'Batch Repairs', {
+        link: '/#/batch_repairs',
+        target: '',
+        icon: 'dynamic_form',
       }
     ],
   ]);
