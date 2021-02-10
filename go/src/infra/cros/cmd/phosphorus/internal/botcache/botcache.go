@@ -71,6 +71,9 @@ func (s *Store) SetProvisionableLabel(name string, value string) error {
 	if err != nil {
 		return err
 	}
+	if ds.ProvisionableLabels == nil {
+		ds.ProvisionableLabels = make(map[string]string)
+	}
 	ds.ProvisionableLabels[name] = value
 	return s.Save(ds)
 }
