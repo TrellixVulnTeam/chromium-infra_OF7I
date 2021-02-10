@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/ufs/subcmds/asset"
+	"infra/cmd/shivas/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/dut"
@@ -37,7 +38,7 @@ var AddCmd = &subcommands.Command{
 	LongDesc: `Add details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
-	asset/dut/labstation
+	asset/dut/labstation/cachingservice
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
@@ -62,6 +63,7 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		asset.AddAssetCmd,
 		dut.AddDUTCmd,
 		labstation.AddLabstationCmd,
+		cachingservice.AddCachingServiceCmd,
 		machine.AddMachineCmd,
 		host.AddHostCmd,
 		kvm.AddKVMCmd,

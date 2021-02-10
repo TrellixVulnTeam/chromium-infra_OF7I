@@ -26,7 +26,7 @@ import (
 // AddHostCmd add a host to the machine.
 var AddHostCmd = &subcommands.Command{
 	UsageLine: "host [Options..]",
-	ShortDesc: "Add a host(Dev Server, Caching Server, VM Server, Host OS...) on a machine",
+	ShortDesc: "Add a host(Dev Server, VM Server, Host OS...) on a machine",
 	LongDesc:  cmdhelp.AddHostLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addHost{}

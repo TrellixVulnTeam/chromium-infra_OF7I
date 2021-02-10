@@ -83,8 +83,8 @@ var assetRegex = regexp.MustCompile(`assets\.*`)
 // matches "cachingservices/{ipv4}"
 var cachingServiceRegex = regexp.MustCompile(`cachingservices/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`)
 
-// matches an ipv4 address
-var ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
+// Ipv4Regex matches an ipv4 address
+var Ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)
@@ -1135,13 +1135,13 @@ func (r *CreateCachingServiceRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !ipv4Regex.MatchString(id) {
+	if !Ipv4Regex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "name"))
 	}
-	if r.GetCachingService().GetPrimaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
+	if r.GetCachingService().GetPrimaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
 	}
-	if r.GetCachingService().GetSecondaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
+	if r.GetCachingService().GetSecondaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
 	}
 	return nil
@@ -1159,10 +1159,10 @@ func (r *UpdateCachingServiceRequest) Validate() error {
 	if !cachingServiceRegex.MatchString(name) {
 		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
 	}
-	if r.GetCachingService().GetPrimaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
+	if r.GetCachingService().GetPrimaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
 	}
-	if r.GetCachingService().GetSecondaryNode() != "" && !ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
+	if r.GetCachingService().GetSecondaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
 	}
 	return nil

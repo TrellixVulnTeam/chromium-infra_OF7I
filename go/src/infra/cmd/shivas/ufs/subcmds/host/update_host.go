@@ -26,7 +26,7 @@ import (
 // UpdateHostCmd update a host on a machine.
 var UpdateHostCmd = &subcommands.Command{
 	UsageLine: "host [Options...]",
-	ShortDesc: "Update a host(Dev Server, Caching Server, VM Server, Host OS...) on a machine",
+	ShortDesc: "Update a host(Dev Server, VM Server, Host OS...) on a machine",
 	LongDesc:  cmdhelp.UpdateHostLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateHost{}

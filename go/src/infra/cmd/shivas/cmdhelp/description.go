@@ -832,7 +832,7 @@ The protobuf definition of machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
 	// AddHostLongDesc long description for AddHostCmd
-	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
+	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, VM Server, Host OS...) on a machine
 
 Examples:
 shivas add host -f host.json
@@ -847,7 +847,7 @@ shivas add host -i
 Adds a host by reading input through interactive mode.`
 
 	// UpdateHostLongDesc long description for UpdateHostCmd
-	UpdateHostLongDesc string = `Update a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
+	UpdateHostLongDesc string = `Update a host(DUT, Labstation, Dev Server, VM Server, Host OS...) on a machine
 
 Examples:
 shivas update host -f host.json
@@ -1010,7 +1010,7 @@ Example host(Labstation) for an OS machine:
     }
 }
 
-Example host(Caching server/Dev server/VM server) for an OS machine:
+Example host(Dev server/VM server) for an OS machine:
 {
     "name": "A-ChromeOS-Server",
     "machineLsePrototype": "acs:qwer",
@@ -1643,6 +1643,45 @@ shivas get stable-version -board board1 -model model1
 shivas get stable-version -model model1
 
 Gets the stable version and prints the output in user format.`
+	//AddCachingServiceLongDesc long description for AddCachingServiceCmd
+	AddCachingServiceLongDesc string = `Create a CachingService in UFS.
+
+Examples:
+shivas add cachingService -f CachingService.json
+Adds a CachingService by reading a JSON file input.
+
+shivas add cachingService -f CachingService.csv
+Adds a CachingService by reading a MCSV file input.
+
+shivas add cachingService -name {name} -port {portnumber} -subnet {subnet} -primary {primary ipv4} -state {state}
+Adds a CachingService by specifying several attributes directly.`
+
+	// CachingServiceFileText description for CachingService file input
+	CachingServiceFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing CachingService specification.
+
+[JSON Mode]
+This file must contain one CachingService JSON message
+Example CachingService:
+{
+	"name": "127.0.0.23",
+	"port": 23456,
+	"serving_subnet": "127.0.0.23/16",
+	"primary_node": "1.1.1.1",
+	"secondary_node": "2.2.2.2",
+	"state": "STATE_SERVING",
+	"description": "CachingService 1"
+}
+
+[MCSV Mode]
+The file may have multiple or one CachingService csv record
+The header format and sequence should be: [name,port,subnet,primary,secondary,state,desc]
+Example mcsv format:
+name,port,subnet,primary,secondary,state,desc
+127.23.45.56,5555,127.23.45.56/56,1.1.1.1,2.2.2.2,serving,cas1
+45.23.21.22,6666,45.23.21.22/56,1.1.1.1,2.2.2.2,serving,cas2
+
+The protobuf definition of CachingService is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
 )
 
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
