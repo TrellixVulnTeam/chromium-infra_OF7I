@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/system/filesystem"
 )
 
 func installPackages(ctx context.Context, xcodeVersion, xcodeAppPath, cipdPackagePrefix string, kind KindType, serviceAccountJSON string) error {
@@ -32,7 +34,22 @@ func installPackages(ctx context.Context, xcodeVersion, xcodeAppPath, cipdPackag
 	// TODO(sergeyberezin): replace this with a better option when
 	// https://crbug.com/788032 is fixed.
 	if err := RunWithStdin(ctx, ensureSpec, "cipd", cipdCheckArgs...); err != nil {
-		return nil
+		// Sometimes Xcode cache in bots loses Contents/Developer/usr and CIPD
+		// doesn't check if the package is intact. Add an additional check and
+		// only return when the directory exists.
+		binDirPath := filepath.Join(xcodeAppPath, "Contents", "Developer", "usr", "bin")
+		if _, statErr := os.Stat(binDirPath); !os.IsNotExist(statErr) {
+			return nil
+		}
+		logging.Warningf(ctx, "Contents/Developer/usr/bin doesn't exist in cached Xcode. Reinstalling Xcode.")
+		// Remove and create an empty Xcode dir so `cipd ensure` will work to
+		// download a new one.
+		if removeErr := filesystem.RemoveAll(xcodeAppPath); removeErr != nil {
+			return errors.Annotate(removeErr, "failed to remove corrupted Xcode package.").Err()
+		}
+		if err := os.MkdirAll(xcodeAppPath, 0700); err != nil {
+			return errors.Annotate(err, "failed to create a folder %s", xcodeAppPath).Err()
+		}
 	}
 
 	if err := RunWithStdin(ctx, ensureSpec, "cipd", cipdEnsureArgs...); err != nil {
