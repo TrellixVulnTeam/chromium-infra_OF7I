@@ -265,3 +265,20 @@ func PrintExistingRackPrototype(ctx context.Context, ic ufsAPI.FleetClient, name
 	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
+
+// PrintExistingCachingService prints the old CachingService in update/delete operations
+func PrintExistingCachingService(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+	res, err := ic.GetCachingService(ctx, &ufsAPI.GetCachingServiceRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.CachingServiceCollection, name),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get CachingService").Err()
+	}
+	if res == nil {
+		return errors.Reason("The returned resp is empty").Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The CachingService before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return nil
+}

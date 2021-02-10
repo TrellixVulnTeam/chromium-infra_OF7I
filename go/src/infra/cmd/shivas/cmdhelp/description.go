@@ -1656,6 +1656,16 @@ Adds a CachingService by reading a MCSV file input.
 shivas add cachingService -name {name} -port {portnumber} -subnet {subnet} -primary {primary ipv4} -state {state}
 Adds a CachingService by specifying several attributes directly.`
 
+	// UpdateCachingServiceLongDesc long description for UpdateCachingServiceCmd
+	UpdateCachingServiceLongDesc string = `Update a CachingService by name.
+
+Examples:
+shivas update cachingservice -f cs.json
+Update a CachingService by reading a JSON file input.
+
+shivas update cachingservice -name {cachingservice name} -port {50} -description {description}
+Partial updates a CachingService by parameters. Only specified parameters will be udpated in the CachingService.`
+
 	// CachingServiceFileText description for CachingService file input
 	CachingServiceFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing CachingService specification.
 
@@ -1679,6 +1689,25 @@ Example mcsv format:
 name,port,subnet,primary,secondary,state,desc
 127.23.45.56,5555,127.23.45.56/56,1.1.1.1,2.2.2.2,serving,cas1
 45.23.21.22,6666,45.23.21.22/56,1.1.1.1,2.2.2.2,serving,cas2
+
+The protobuf definition of CachingService is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
+
+	// CachingServiceUpdateFileText description for CachingService file input
+	CachingServiceUpdateFileText string = `[JSON Mode] Path to a file(.json) containing CachingService specification.
+
+[JSON Mode]
+This file must contain one CachingService JSON message
+Example CachingService:
+{
+	"name": "127.0.0.23",
+	"port": 23456,
+	"serving_subnet": "127.0.0.23/16",
+	"primary_node": "1.1.1.1",
+	"secondary_node": "2.2.2.2",
+	"state": "STATE_SERVING",
+	"description": "CachingService 1"
+}
 
 The protobuf definition of CachingService is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
