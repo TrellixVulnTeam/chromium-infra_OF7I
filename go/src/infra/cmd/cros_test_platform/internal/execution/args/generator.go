@@ -239,9 +239,10 @@ const (
 	// various Chrome OS components.
 	// These names must stay consistent with the names used in
 	// cros/phosphorus/internal/botcache
-	dimChromeOS   = "provisionable-cros-version"
-	dimFirmwareRO = "provisionable-fwro-version"
-	dimFirmwareRW = "provisionable-fwrw-version"
+	dimChromeOS      = "provisionable-cros-version"
+	dimFirmwareRO    = "provisionable-fwro-version"
+	dimFirmwareRW    = "provisionable-fwrw-version"
+	dimLacrosGCSPath = "provisionable-lacros-gcs-path"
 )
 
 func (g *Generator) provisionableDimensions() ([]string, error) {
@@ -260,6 +261,9 @@ func (g *Generator) provisionableDimensions() ([]string, error) {
 	}
 	if b := builds.FirmwareRW; b != "" {
 		dims = append(dims, dimFirmwareRW+":"+b)
+	}
+	if b := builds.LacrosGCSPath; b != "" {
+		dims = append(dims, dimLacrosGCSPath+":"+b)
 	}
 	return dims, nil
 }
@@ -399,9 +403,10 @@ func removeReservedTags(tags []string) []string {
 // builds describes the build names that were requested by a test_platform
 // invocation.
 type builds struct {
-	ChromeOS   string
-	FirmwareRW string
-	FirmwareRO string
+	ChromeOS      string
+	FirmwareRW    string
+	FirmwareRO    string
+	LacrosGCSPath string
 }
 
 // extractBuilds extracts builds that were requested by the test_platform invocation.
@@ -424,6 +429,11 @@ func extractBuilds(deps []*test_platform.Request_Params_SoftwareDependency) (*bu
 				return nil, errors.Reason("duplicate RW Firmware builds (%s, %s)", already, d.RwFirmwareBuild).Err()
 			}
 			b.FirmwareRW = d.RwFirmwareBuild
+		case *test_platform.Request_Params_SoftwareDependency_LacrosGcsPath:
+			if already := b.LacrosGCSPath; already != "" {
+				return nil, errors.Reason("duplicate Lacros paths (%s, %s)", already, d.LacrosGcsPath).Err()
+			}
+			b.LacrosGCSPath = d.LacrosGcsPath
 		default:
 			return nil, errors.Reason("unknown dep %+v", dep).Err()
 		}

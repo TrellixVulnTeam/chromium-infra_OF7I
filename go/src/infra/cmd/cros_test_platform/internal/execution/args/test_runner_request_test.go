@@ -62,6 +62,16 @@ func TestSoftwareDependencies(t *testing.T) {
 				},
 			},
 		},
+		{
+			Tag: "lacros",
+			Deps: []*test_platform.Request_Params_SoftwareDependency{
+				{
+					Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{
+						LacrosGcsPath: "gs://some-bucket/some-build",
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
