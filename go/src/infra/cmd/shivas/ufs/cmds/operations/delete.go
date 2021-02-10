@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/ufs/subcmds/asset"
+	"infra/cmd/shivas/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/dut"
@@ -36,7 +37,7 @@ var DeleteCmd = &subcommands.Command{
 	LongDesc: `Delete a
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
-	asset/dut
+	asset/dut/cachingservice
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &delete{}
@@ -72,6 +73,7 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		machineprototype.DeleteMachineLSEPrototypeCmd,
 		rackprototype.DeleteRackLSEPrototypeCmd,
 		chromeplatform.DeleteChromePlatformCmd,
+		cachingservice.DeleteCachingServiceCmd,
 		vlan.DeleteVlanCmd,
 	}
 }
