@@ -1432,6 +1432,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **gin-py3**
+
+### 0.1.006
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/gin-py3"
+  version: "version:0.1.006"
+>
+```
+
+
+* *universal*
+
 ## **gitdb2**
 
 ### 2.0.3
