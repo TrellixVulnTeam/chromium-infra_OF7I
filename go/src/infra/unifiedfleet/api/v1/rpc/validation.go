@@ -108,7 +108,7 @@ var resourceRegexs = []*regexp.Regexp{
 // machine=mac-1,mac-2
 // machine=mac-1 & nic=nic-1
 // machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2
-var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*)*$`)
+var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.\/]*)(\,[a-zA-Z0-9-)(_:.\/]*)*(\&([a-z]*\=[a-zA-Z0-9-)(_:.\/]*)(\,[a-zA-Z0-9-)(_:.\/]*)*)*$`)
 
 // Validate validates input requests of RackRegistration.
 func (r *RackRegistrationRequest) Validate() error {

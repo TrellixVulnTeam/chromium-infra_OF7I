@@ -136,3 +136,8 @@ func PrintTSVMachineLSEPrototypes(msgs []proto.Message, keysOnly bool) {
 func PrintTSVPlatforms(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, platformOutputStrs)
 }
+
+// PrintTSVCachingServices prints the tsv format of CachingServices
+func PrintTSVCachingServices(msgs []proto.Message, keysOnly bool) {
+	printTSVs(msgs, keysOnly, cachingServiceOutputStrs)
+}

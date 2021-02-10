@@ -70,6 +70,7 @@ var (
 	ZoneTitle                = []string{"Name", "EnumName", "Department"}
 	StateTitle               = []string{"Name", "EnumName", "Description"}
 	AssetTitle               = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
+	CachingServiceTitle      = []string{"CachingService Name", "Port", "Subnet", "Primary", "Secondary", "State", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -1560,6 +1561,66 @@ func PrintRacksJSON(res []proto.Message, emit bool) {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
 		if i < len(racks)-1 {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
+
+// PrintCachingServices prints the all CachingServices in table form.
+func PrintCachingServices(res []proto.Message, keysOnly bool) {
+	cs := make([]*ufspb.CachingService, len(res))
+	for i, r := range res {
+		cs[i] = r.(*ufspb.CachingService)
+	}
+	defer tw.Flush()
+	for _, c := range cs {
+		printCachingService(c, keysOnly)
+	}
+}
+
+func cachingServiceOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.CachingService)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Local().Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.Name),
+		fmt.Sprintf("%d", m.GetPort()),
+		m.GetServingSubnet(),
+		m.GetPrimaryNode(),
+		m.GetSecondaryNode(),
+		m.GetState().String(),
+		m.GetDescription(),
+		ts,
+	}
+}
+
+func printCachingService(cs *ufspb.CachingService, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(cs.Name))
+		return
+	}
+	var out string
+	for _, s := range cachingServiceOutputStrs(cs) {
+		out += fmt.Sprintf("%s\t", s)
+	}
+	fmt.Fprintln(tw, out)
+}
+
+// PrintCachingServicesJSON prints the CachingService details in json format.
+func PrintCachingServicesJSON(res []proto.Message, emit bool) {
+	cs := make([]*ufspb.CachingService, len(res))
+	for i, r := range res {
+		cs[i] = r.(*ufspb.CachingService)
+	}
+	fmt.Print("[")
+	for i, s := range cs {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s, emit)
+		if i < len(cs)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
