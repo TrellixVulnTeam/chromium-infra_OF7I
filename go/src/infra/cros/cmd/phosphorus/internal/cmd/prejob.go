@@ -258,6 +258,7 @@ const (
 	chromeOSBuildKey   = "cros-version"
 	roFirmwareBuildKey = "fwro-version"
 	rwFirmwareBuildKey = "fwrw-version"
+	lacrosPathKey      = "lacros-gcs-path"
 
 	gsImageArchivePrefix = "gs://chromeos-image-archive"
 )
@@ -399,13 +400,24 @@ func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation
 }
 
 func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	src := lacrosGCSPathOrEmpty(r.SoftwareDependencies)
-	if src == "" {
-		logging.Infof(ctx, "Skipped LaCrOS provision, because no specific version was requested.")
+	bc := botCache(r)
+
+	desired := lacrosGCSPathOrEmpty(r.SoftwareDependencies)
+	found, err := bc.LoadProvisionableLabel(lacrosPathKey)
+	if err != nil {
+		return nil, errors.Annotate(err, "provision lacros").Err()
+	}
+
+	if labelAlreadySatisfied(desired, found) {
+		logging.Infof(ctx, "Skipped LaCrOS provision, because desired version %s is already satisfied by %s.", desired, found)
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
 	logging.Infof(ctx, "Starting to provision LaCrOS.")
+	if err := bc.ClearProvisionableLabel(lacrosPathKey); err != nil {
+		return nil, errors.Annotate(err, "provision lacros").Err()
+	}
+
 	c := tlsapi.NewCommonClient(bt.Client)
 	op, err := c.ProvisionLacros(
 		ctx,
@@ -413,7 +425,7 @@ func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.Prejo
 			Name: r.DutHostname,
 			Image: &tlsapi.ProvisionLacrosRequest_LacrosImage{
 				PathOneof: &tlsapi.ProvisionLacrosRequest_LacrosImage_GsPathPrefix{
-					GsPathPrefix: src,
+					GsPathPrefix: desired,
 				},
 			},
 		},
@@ -427,6 +439,12 @@ func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.Prejo
 	resp, err := waitForOp(ctx, bt, op)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision lacros").Err()
+	}
+
+	if prejobSucceeded(resp, err) {
+		if err := bc.SetProvisionableLabel(lacrosPathKey, desired); err != nil {
+			return nil, errors.Annotate(err, "provision lacros").Err()
+		}
 	}
 	return resp, nil
 }
