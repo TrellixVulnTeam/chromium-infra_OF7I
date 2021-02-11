@@ -301,6 +301,7 @@ func (c *addDutRun) triggerDeploy(ctx context.Context, ic fleet.InventoryClient,
 			InstallFirmware:          !c.skipInstallFirmware,
 			InstallTestImage:         !c.skipInstallOS,
 			RunPreDeployVerification: true,
+			ServoVerification:        true,
 		},
 		Options: &fleet.DutDeploymentOptions{
 			AssignServoPortIfMissing: !c.skipServoPortAssignment,
