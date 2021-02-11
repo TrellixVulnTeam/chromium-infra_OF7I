@@ -30,7 +30,7 @@ def enqueue_notifications_async(build):
     )
 
   tasks = [mktask('global')]
-  if build.pubsub_callback:  # pragma: no branch
+  if build.pubsub_callback and build.pubsub_callback.topic:  # pragma: no branch
     tasks.append(mktask('callback'))
   return tq.enqueue_async('backend-default', tasks)
 
@@ -64,6 +64,11 @@ class TaskPublishNotification(webapp2.RequestHandler):
       # them here to allow our notification taskqueue to drain without further
       # errors.
       topic = build.pubsub_callback.topic.strip('"')
+      if not topic:  # pragma: no cover
+        # This is a workaround for some malformed tasks introduced as part
+        # of the Go UpdateBuild migration. If there's no topic, don't bother
+        # doing any work for it.
+        return
       message['user_data'] = build.pubsub_callback.user_data
       attrs['auth_token'] = build.pubsub_callback.auth_token
     else:
