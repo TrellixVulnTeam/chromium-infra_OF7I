@@ -101,7 +101,7 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		c.debugLogger.LogResponse(ctx, t, resp)
 	}
 
-	return writeResponse(c.outputPath, &steps.EnumerationResponses{
+	return writeResponse(ctx, c.outputPath, &steps.EnumerationResponses{
 		TaggedResponses: resps,
 	})
 }

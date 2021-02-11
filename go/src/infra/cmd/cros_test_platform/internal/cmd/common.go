@@ -69,7 +69,7 @@ func exitCode(err error) int {
 //
 // If errorSoFar is non-nil, this function considers the response to be partial
 // and tags the returned error to that effect.
-func writeResponseWithError(outFile string, response proto.Message, errorSoFar error) error {
+func writeResponseWithError(ctx context.Context, outFile string, response proto.Message, errorSoFar error) error {
 	w, err := os.Create(outFile)
 	if err != nil {
 		return errors.MultiError{errorSoFar, errors.Annotate(err, "write response").Err()}
@@ -78,12 +78,24 @@ func writeResponseWithError(outFile string, response proto.Message, errorSoFar e
 	if err := marshaller.Marshal(w, response); err != nil {
 		return errors.MultiError{errorSoFar, errors.Annotate(err, "write response").Err()}
 	}
+	logResponse(ctx, response)
 	return partialErrorTag.Apply(errorSoFar)
 }
 
+func logResponse(ctx context.Context, response proto.Message) {
+	s, err := marshaller.MarshalToString(response)
+	if err != nil {
+		// It's not worth returning an error if this failed, as this is only for
+		// debugging purposes.
+		logging.Infof(ctx, "failed to marshal response for debug logging")
+	} else {
+		logging.Infof(ctx, "Wrote output:\n%s", s)
+	}
+}
+
 // writeResponseWithError writes response as JSON encoded protobuf to outFile.
-func writeResponse(outFile string, response proto.Message) error {
-	return writeResponseWithError(outFile, response, nil)
+func writeResponse(ctx context.Context, outFile string, response proto.Message) error {
+	return writeResponseWithError(ctx, outFile, response, nil)
 }
 
 // Use partialErrorTag to indicate when partial response is written to the

@@ -66,7 +66,7 @@ func (c *computeBackfillRun) innerRun(ctx context.Context, args []string) error 
 			resps[t] = resp
 		}
 	}
-	return c.writeResponses(resps)
+	return c.writeResponses(ctx, resps)
 }
 
 func (c *computeBackfillRun) processCLIArgs(args []string) error {
@@ -90,8 +90,8 @@ func (c *computeBackfillRun) readRequests() (map[string]*steps.ComputeBackfillRe
 	return rs.TaggedRequests, nil
 }
 
-func (c *computeBackfillRun) writeResponses(resps map[string]*steps.ComputeBackfillResponse) error {
-	return writeResponse(c.outputPath, &steps.ComputeBackfillResponses{
+func (c *computeBackfillRun) writeResponses(ctx context.Context, resps map[string]*steps.ComputeBackfillResponse) error {
+	return writeResponse(ctx, c.outputPath, &steps.ComputeBackfillResponses{
 		TaggedResponses: resps,
 	})
 }

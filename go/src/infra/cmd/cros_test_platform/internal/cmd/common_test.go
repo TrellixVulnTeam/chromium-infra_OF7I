@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"infra/cmd/cros_test_platform/internal/testutils"
 	"path/filepath"
 	"testing"
@@ -42,7 +43,7 @@ func TestExitCodeWithWriteResponseErrors(t *testing.T) {
 	response := steps.EnumerationResponse{}
 	for _, c := range cases {
 		t.Run(c.tag, func(t *testing.T) {
-			err := writeResponseWithError(c.outFile, &response, c.errorSoFar)
+			err := writeResponseWithError(context.Background(), c.outFile, &response, c.errorSoFar)
 			got := exitCode(err)
 			if got != c.want {
 				t.Errorf("incorrect exit code %d, want %d. Error was %s", got, c.want, err)
