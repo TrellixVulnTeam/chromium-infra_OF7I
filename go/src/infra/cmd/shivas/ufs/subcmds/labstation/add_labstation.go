@@ -27,7 +27,7 @@ import (
 )
 
 // defaultDeployTaskActions is a collection of actions for SSW to setup labstation.
-var defaultDeployTaskActions = []string{"setup-labstation", "update-label"}
+var defaultDeployTaskActions = []string{"setup-labstation", "update-label", "run-pre-deploy-verification"}
 
 var shivasTags = []string{"shivas:" + site.VersionNumber, "triggered_using:shivas"}
 
