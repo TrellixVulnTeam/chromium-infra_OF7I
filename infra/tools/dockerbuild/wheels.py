@@ -672,6 +672,7 @@ SPECS.update({
         Universal('WebOb', '1.8.6'),
         Universal('WebTest', '2.0.35'),
         Universal('Werkzeug', '0.15.2'),
+        Universal('absl-py', '0.11.0', pyversions=['py3']),
         Universal('aenum', '2.1.2'),
         Universal('altgraph', '0.16.1'),
         Universal('appdirs', '1.4.3'),

@@ -368,6 +368,20 @@ wheel: <
 
 * *universal*
 
+## **absl-py-py3**
+
+### 0.11.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/absl-py-py3"
+  version: "version:0.11.0"
+>
+```
+
+
+* *universal*
+
 ## **aenum**
 
 ### 2.1.2
