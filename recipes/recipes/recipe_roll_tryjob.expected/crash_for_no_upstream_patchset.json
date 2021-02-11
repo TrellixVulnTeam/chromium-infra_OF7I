@@ -7,7 +7,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/recipe_roll_tryjob.py\", line 386, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/recipe_roll_tryjob.py\", line 387, in RunSteps",
       "    assert change is not None, 'no change found from upstream repo'",
       "AssertionError: no change found from upstream repo"
     ]

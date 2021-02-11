@@ -68,7 +68,7 @@
     ],
     "name": "Too many footers for 'depot_tools'",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Found too many footers in CL message:<br/> * Recipe-Manual-Change<br/> * Recipe-Nontrivial-Roll@@@",
+      "@@@STEP_TEXT@Found incompatible footers in CL message:<br/> * Recipe-Manual-Change<br/> * Recipe-Nontrivial-Roll@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },

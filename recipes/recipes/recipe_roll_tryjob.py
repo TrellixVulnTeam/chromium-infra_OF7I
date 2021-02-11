@@ -47,7 +47,9 @@ PROPERTIES = {
 NONTRIVIAL_ROLL_FOOTER = 'Recipe-Nontrivial-Roll'
 MANUAL_CHANGE_FOOTER = 'Recipe-Manual-Change'
 BYPASS_FOOTER = 'Recipe-Tryjob-Bypass-Reason'
-KNOWN_FOOTERS = [NONTRIVIAL_ROLL_FOOTER, MANUAL_CHANGE_FOOTER, BYPASS_FOOTER]
+RELEVANT_CONFLICTING_FOOTERS = [
+    NONTRIVIAL_ROLL_FOOTER, MANUAL_CHANGE_FOOTER, BYPASS_FOOTER
+]
 
 FOOTER_ADD_TEMPLATE = '''
 
@@ -266,17 +268,16 @@ def _find_footer(api, repo_id):
     return None, True
 
   found_set = set()
-  for footer in KNOWN_FOOTERS:
-    values = all_footers.get(footer, ())
+  for name in RELEVANT_CONFLICTING_FOOTERS:
+    values = all_footers.get(name, ())
     if repo_id in values:
-      found_set.add(footer)
+      found_set.add(name)
 
   if len(found_set) > 1:
     api.python.failing_step(
         'Too many footers for %r' % (repo_id,),
-        'Found too many footers in CL message:\n' + (
-          '\n'.join(' * '+f for f in sorted(found_set)))
-    )
+        'Found incompatible footers in CL message:\n' +
+        ('\n'.join(' * ' + f for f in sorted(found_set))))
 
   return found_set.pop() if found_set else None, False
 
