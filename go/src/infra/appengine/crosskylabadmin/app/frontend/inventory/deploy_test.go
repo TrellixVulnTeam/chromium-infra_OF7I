@@ -962,6 +962,13 @@ func TestDeployActionArgs(t *testing.T) {
 			"setup-labstation,update-label",
 		},
 		{
+			"ServoVerification",
+			&fleet.DutDeploymentActions{
+				ServoVerification: true,
+			},
+			"servo-verification",
+		},
+		{
 			"RunPreDeployVerification",
 			&fleet.DutDeploymentActions{
 				RunPreDeployVerification: true,
@@ -977,8 +984,9 @@ func TestDeployActionArgs(t *testing.T) {
 				SkipDeployment:           true,
 				SetupLabstation:          true,
 				RunPreDeployVerification: true,
+				ServoVerification:        true,
 			},
-			"stage-usb,install-test-image,update-label,install-firmware,verify-recovery-mode,setup-labstation,update-label,run-pre-deploy-verification",
+			"servo-verification,stage-usb,install-test-image,update-label,install-firmware,verify-recovery-mode,setup-labstation,update-label,run-pre-deploy-verification",
 		},
 	}
 	for _, tc := range testCases {

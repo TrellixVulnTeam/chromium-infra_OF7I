@@ -584,6 +584,9 @@ func getAttributeByKey(d *inventory.CommonDeviceSpecs, key string) (string, bool
 
 func deployActionArgs(a *fleet.DutDeploymentActions) string {
 	s := make([]string, 0, 5)
+	if a.GetServoVerification() {
+		s = append(s, "servo-verification")
+	}
 	if a.GetStageImageToUsb() {
 		s = append(s, "stage-usb")
 	}
