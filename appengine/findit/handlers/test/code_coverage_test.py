@@ -22,7 +22,7 @@ from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
-from services.code_coverage import files_with_low_coverage
+from services.code_coverage import files_absolute_coverage
 from services.code_coverage import per_cl_metrics
 from services import bigquery_helper
 from services import test_tag_util
@@ -1160,38 +1160,38 @@ class ExportPerClCoverageMetricsTest(WaterfallTestCase):
     self.assertEqual(200, response.status_int)
 
 
-class ExportFilesWithLowCoverageMetricsCronTest(WaterfallTestCase):
+class ExportFilesAbsoluteCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/cron/low-coverage-files',
-       code_coverage.ExportFilesWithLowCoverageMetricsCron),
+      ('/coverage/cron/files-absolute-coverage',
+       code_coverage.ExportFilesAbsoluteCoverageMetricsCron),
   ],
                                        debug=True)
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testTaskAddedToQueue(self, mocked_is_request_from_appself):
-    response = self.test_app.get('/coverage/cron/low-coverage-files')
+    response = self.test_app.get('/coverage/cron/files-absolute-coverage')
     self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/coverage/cron/low-coverage-files')
+    response = self.test_app.get('/coverage/cron/files-absolute-coverage')
     self.assertEqual(200, response.status_int)
 
     tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='files-with-low-coverage-metrics-queue')
+        queue_names='files-absolute-coverage-metrics-queue')
     self.assertEqual(2, len(tasks))
     self.assertTrue(mocked_is_request_from_appself.called)
 
 
-class ExportFilesWithLowCoverageMetricsTest(WaterfallTestCase):
+class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/task/low-coverage-files',
-       code_coverage.ExportFilesWithLowCoverageMetrics),
+      ('/coverage/task/files-absolute-coverage',
+       code_coverage.ExportFilesAbsoluteCoverageMetrics),
   ],
                                        debug=True)
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  @mock.patch.object(files_with_low_coverage, 'ExportFilesWithLowCoverage')
-  def testLowCoverageFilesExported(self, mock_detect, _):
+  @mock.patch.object(files_absolute_coverage, 'ExportFilesAbsoluteCoverage')
+  def testAbsoluteCoverageFilesExported(self, mock_detect, _):
     response = self.test_app.get(
-        '/coverage/task/low-coverage-files', status=200)
+        '/coverage/task/files-absolute-coverage', status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
 

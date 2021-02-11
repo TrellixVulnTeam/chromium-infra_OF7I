@@ -71,8 +71,8 @@ cron:
   retry_parameters:
     job_retry_limit: 0
 
-- description: Query and export metrics for low coverage files to bigquery.
-  url: /coverage/cron/low-coverage-files
+- description: Query and export metrics for files to bigquery.
+  url: /coverage/cron/files-absolute-coverage
   schedule: every day 01:00
   timezone: America/Los_Angeles
   retry_parameters:

@@ -19,12 +19,8 @@ _PAGE_SIZE = 100
 # These should be ci builders.
 _SOURCE_BUILDERS = ['linux-code-coverage']
 
-# Coverage bar.
-# Files below this coverage ratio will be considered 'low' coverage.
-_MIN_ABS_COVERAGE_RATIO = 0.7
 
-
-def ExportFilesWithLowCoverage():
+def ExportFilesAbsoluteCoverage():
   """Exports metrics for files with low coverage to Bigquery.
 
   Reads FileCoverageData for latest revision, keeps only those not meeting the
@@ -71,7 +67,7 @@ def ExportFilesWithLowCoverage():
       if bq_rows:
         bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
                                              'code_coverage_summaries',
-                                             'files_with_low_coverage')
+                                             'files_absolute_coverage')
         total_rows += len(bq_rows)
       logging.info('Total rows added so far = %d', total_rows)
 
@@ -100,17 +96,16 @@ def _CreateBigqueryRows(file_coverage_results, commit_timestamp):
           total_lines = metric['total']
           covered_lines = metric['covered']
           break
-      if covered_lines / float(total_lines) < _MIN_ABS_COVERAGE_RATIO:
-        bq_rows.append({
-            'project': file_coverage_result.gitiles_commit.project,
-            'revision': file_coverage_result.gitiles_commit.revision,
-            'path': data['path'][2:],
-            'total_lines': total_lines,
-            'covered_lines': covered_lines,
-            'commit_timestamp': commit_timestamp.isoformat(),
-            'insert_timestamp': time_util.GetUTCNow().isoformat(),
-            'builder': file_coverage_result.builder
-        })
+      bq_rows.append({
+          'project': file_coverage_result.gitiles_commit.project,
+          'revision': file_coverage_result.gitiles_commit.revision,
+          'path': data['path'][2:],
+          'total_lines': total_lines,
+          'covered_lines': covered_lines,
+          'commit_timestamp': commit_timestamp.isoformat(),
+          'insert_timestamp': time_util.GetUTCNow().isoformat(),
+          'builder': file_coverage_result.builder
+      })
     except ZeroDivisionError:
       logging.warning("Encounted total_lines = 0 for file coverage %s",
                       file_coverage_result)

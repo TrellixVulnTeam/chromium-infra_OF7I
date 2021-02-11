@@ -43,7 +43,7 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
-from services.code_coverage import files_with_low_coverage
+from services.code_coverage import files_absolute_coverage
 from services.code_coverage import per_cl_metrics
 from services import bigquery_helper as bq
 from services import test_tag_util
@@ -1608,7 +1608,7 @@ class ExportPerClCoverageMetrics(BaseHandler):
     return {'return_code': 200}
 
 
-class ExportFilesWithLowCoverageMetricsCron(BaseHandler):
+class ExportFilesAbsoluteCoverageMetricsCron(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
@@ -1620,17 +1620,17 @@ class ExportFilesWithLowCoverageMetricsCron(BaseHandler):
     # can be executed at any time.
     taskqueue.add(
         method='GET',
-        queue_name=constants.FILES_WITH_LOW_COVERAGE_METRICS_QUEUE,
+        queue_name=constants.FILES_ABSOLUTE_COVERAGE_METRICS_QUEUE,
         target=constants.CODE_COVERAGE_BACKEND,
-        url='/coverage/task/low-coverage-files')
+        url='/coverage/task/files-absolute-coverage')
     return {'return_code': 200}
 
 
-class ExportFilesWithLowCoverageMetrics(BaseHandler):
+class ExportFilesAbsoluteCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    files_with_low_coverage.ExportFilesWithLowCoverage()
+    files_absolute_coverage.ExportFilesAbsoluteCoverage()
     return {'return_code': 200}
 
 
