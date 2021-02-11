@@ -259,6 +259,8 @@ SPECS.update({
             packaged=[
                 'windows-x86',
                 'windows-x64',
+                'windows-x86-py3',
+                'windows-x64-py3',
             ],
         ),
         SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
