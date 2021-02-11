@@ -253,6 +253,14 @@ SPECS.update({
             ],
             pyversions=['py2'],
         ),
+        SourceOrPrebuilt(
+            'greenlet',
+            '1.0.0',
+            packaged=[
+                'windows-x86',
+                'windows-x64',
+            ],
+        ),
         SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
         SourceOrPrebuilt(
             'lazy-object-proxy',
