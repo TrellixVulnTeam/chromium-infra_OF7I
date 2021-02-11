@@ -4011,6 +4011,20 @@ wheel: <
 
 * *universal*
 
+## **pytype**
+
+### 2021.2.9
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytype/${vpython_platform}"
+  version: "version:2021.2.9"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **pytz**
 
 ### 2018.4

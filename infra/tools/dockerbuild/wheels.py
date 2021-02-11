@@ -403,6 +403,13 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'pytype',
+            '2021.2.9',
+            packaged=(),
+            only_plat=['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'scan-build',
             '2.0.8',
             packaged=(),
