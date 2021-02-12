@@ -309,7 +309,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       if s.bot_commit:
         upload_args.append('--set-bot-commit')
         if s.tbr_emails:
-          upload_args.append('-r=%s' % self.m.random.choice(s.tbr_emails))
+          upload_args.extend(['-r', self.m.random.choice(s.tbr_emails)])
         upload_args.append('--r-owners')
       else:
         if s.tbr_emails:
