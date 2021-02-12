@@ -178,6 +178,10 @@ class PackageDef(collections.namedtuple(
     if not is_targeting_windows(pkg_vars):
       for sym in pkg_def.get('posix_symlinks', ()):
         dst = os.path.join(self.pkg_root, render_path(sym['dst'], pkg_vars))
+        try:
+          os.remove(dst)
+        except OSError:
+          pass
         os.symlink(
             os.path.join(self.pkg_root, render_path(sym['src'], pkg_vars)),
             dst)
