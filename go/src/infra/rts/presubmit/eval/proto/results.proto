@@ -24,6 +24,17 @@ message Results {
 
   // The sum of analyzed test durations.
   google.protobuf.Duration total_duration = 4;
+
+  // Statistics of the distance to the closest failed test, for each rejection.
+  DistanceStats rejection_closest_distance_stats = 5;
+}
+
+// Collected statistics of distances.
+message DistanceStats {
+  repeated float percentiles = 1;
+
+  // Maximum non-infinity distance.
+  float max_non_inf = 2;
 }
 
 // Distance threshold and its scores.

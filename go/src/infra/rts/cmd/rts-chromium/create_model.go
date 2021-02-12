@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
 	"infra/rts/filegraph/git"
 	"infra/rts/presubmit/eval"
@@ -164,10 +165,37 @@ func (r *createModelRun) writeFileGraph(ctx context.Context, fileName string) er
 // writeEvalResults evaluates the selection strategy, prints results and writes
 // them to the file.
 func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) error {
-	res, err := r.ev.Run(ctx, r.evalStrategy(&git.EdgeReader{}))
+	// Compute max distance for change-log-based strategy.
+	logging.Infof(ctx, "Computing stats for the change-log-based strategy...")
+	changeLogRes, err := r.ev.EvaluateSafety(ctx, r.evalStrategy(&git.EdgeReader{
+		ChangeLogDistanceFactor: 1,
+	}))
 	if err != nil {
 		return err
 	}
+
+	// Compute max distance for file-structured-based strategy.
+	logging.Infof(ctx, "Computing stats for the file-structure-based strategy...")
+	fsRes, err := r.ev.EvaluateSafety(ctx, r.evalStrategy(&git.EdgeReader{
+		FileStructureDistanceFactor: 1,
+	}))
+	if err != nil {
+		return err
+	}
+
+	// Use both strategies with normalized distances.
+	logging.Infof(ctx, "Evaluating the combined strategy...")
+	res, err := r.ev.Run(ctx, r.evalStrategy(&git.EdgeReader{
+		// Normalize distances, but also use the scale [0, 100] for readability.
+		ChangeLogDistanceFactor:     100 / float64(changeLogRes.RejectionClosestDistanceStats.MaxNonInf),
+		FileStructureDistanceFactor: 100 / float64(fsRes.RejectionClosestDistanceStats.MaxNonInf),
+	}))
+	if err != nil {
+		return err
+	}
+
+	// TODO(nodir): persist the factors into output file and read them in
+	// `rts-chromium select`.
 
 	eval.PrintResults(res, os.Stdout, 0.97)
 	resBytes, err := protojson.Marshal(res)

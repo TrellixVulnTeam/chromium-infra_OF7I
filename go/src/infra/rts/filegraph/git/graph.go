@@ -34,7 +34,15 @@ type Graph struct {
 // EdgeReader implements filegraph.EdgeReader.
 // It works only with nodes returned by Graph.Node().
 type EdgeReader struct {
-	// TODO(nodir): add FamilyDistance.
+	// ChangeLogDistanceFactor is the multiplier for distances derived from the
+	// git log. If both ChangeLogDistanceFactor and FileStructureDistanceFactor
+	// are zero, then ChangeLogDistanceFactor defaults to 1. If zero then
+	// change-log-based edges are ignored.
+	ChangeLogDistanceFactor float64
+
+	// FileStructureDistanceFactor is the multiplier for distances derived from
+	// the file structure. If zero, then such edges are not reported.
+	FileStructureDistanceFactor float64
 }
 
 // node is simultaneously a distance graph node (see edges) and a filesystem
@@ -184,23 +192,54 @@ func (n *node) Name() string {
 
 // ReadEdges implements filegraph.EdgeReader.
 func (r *EdgeReader) ReadEdges(from filegraph.Node, callback func(to filegraph.Node, distance float64) (keepGoing bool)) {
+	changeLogFactor := r.ChangeLogDistanceFactor
+	fsFactor := r.FileStructureDistanceFactor
+	if changeLogFactor == 0 && fsFactor == 0 {
+		changeLogFactor = 1
+	}
+
 	n := from.(*node)
-	for _, e := range n.edges {
-		distance := 0.0
-		if e.probSum == 0 {
-			// e.to is alias of n. The distance is 0.
-		} else {
-			// Note: probSum is same for incoming and outgoing edges.
 
-			// The distance(x, y) is defined as -log(relevance(y, x)).
-			// Note that x and y are swapped, so use e.to.probSumDenominator
-			// (not from.probSumDenominator) as the denominator.
+	if changeLogFactor > 0 {
+		// Report edges based on the change log.
+		for _, e := range n.edges {
+			distance := 0.0
+			if e.probSum == 0 {
+				// e.to is alias of n. The distance is 0.
+			} else {
+				// Note: probSum is same for incoming and outgoing edges.
 
-			// Add logProbOne because probSum is not divided by probOne.
-			distance = -math.Log(float64(e.probSum)/float64(e.to.probSumDenominator)) + logProbOne
+				// The distance(x, y) is defined as -log(relevance(y, x)).
+				// Note that x and y are swapped, so use e.to.probSumDenominator
+				// (not from.probSumDenominator) as the denominator.
+
+				// Add logProbOne because probSum is not divided by probOne.
+				distance = -math.Log(float64(e.probSum)/float64(e.to.probSumDenominator)) + logProbOne
+			}
+			if !callback(e.to, distance*changeLogFactor) {
+				return
+			}
 		}
-		if !callback(e.to, distance) {
-			return
+	}
+
+	if fsFactor > 0 {
+		// Report edges based on the file structure.
+		// The distance between any two nodes is at most fsFactor*nHops
+		// where nHops is the number of edges between two nodes of a file tree.
+		// For example, there are 2 edges between //foo/bar.cc and //foo/baz.cc:
+		// 1. //foo/bar.cc -> //foo
+		// 2. //foo        -> //foo/baz.cc
+		// Here we navigate from a child to it parent, or from a parent to a child
+		// so it is one hop. The distance is 1*fsFactor.
+		if n.parent != nil {
+			if !callback(n.parent, fsFactor) {
+				return
+			}
+		}
+		for _, child := range n.children {
+			if !callback(child, fsFactor) {
+				return
+			}
 		}
 	}
 }

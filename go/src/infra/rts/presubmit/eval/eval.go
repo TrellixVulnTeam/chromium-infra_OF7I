@@ -93,25 +93,26 @@ func (e *Eval) ValidateFlags() error {
 
 // Run evaluates the candidate strategy.
 func (e *Eval) Run(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
-	logging.Infof(ctx, "evaluating safety...")
-	res, err := e.evaluateSafety(ctx, strategy)
+	logging.Infof(ctx, "Evaluating safety...")
+	res, err := e.EvaluateSafety(ctx, strategy)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate safety").Err()
 	}
 
-	logging.Infof(ctx, "evaluating efficiency...")
+	logging.Infof(ctx, "Evaluating efficiency...")
 	if err := e.evaluateEfficiency(ctx, strategy, res); err != nil {
 		return nil, errors.Annotate(err, "failed to evaluate efficiency").Err()
 	}
 	return res, nil
 }
 
-// evaluateSafety evaluates the strategy's safety.
+// EvaluateSafety evaluates the strategy's safety.
 // The returned Result has all but efficiency-related fields populated.
-func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
+func (e *Eval) EvaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
 	var changeAffectedness []rts.Affectedness
 	var testAffectedness []rts.Affectedness
 	furthest := make(furthestRejections, 0, e.LogFurthest)
+	maxNonInf := 0.0
 	var mu sync.Mutex
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -149,6 +150,9 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.R
 			changeAffectedness = append(changeAffectedness, mostAffected)
 			testAffectedness = append(testAffectedness, out.TestVariantAffectedness...)
 			furthest.Consider(affectedRejection{Rejection: rej, MostAffected: mostAffected})
+			if !math.IsInf(mostAffected.Distance, 1) && maxNonInf < mostAffected.Distance {
+				maxNonInf = mostAffected.Distance
+			}
 			if e.LogProgressInterval > 0 && len(changeAffectedness)%e.LogProgressInterval == 0 {
 				logging.Infof(ctx, "processed %d rejections", len(changeAffectedness))
 			}
@@ -171,10 +175,14 @@ func (e *Eval) evaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.R
 
 	// Compute distance thresholds by taking their percentiles in
 	// changeAffectedness. Element indexes represent ChangeRecall scores.
-	distancePercentiles := distanceQuantiles(changeAffectedness, 100)
-	logging.Infof(ctx, "Distance percentiles: %v", distancePercentiles)
-	res.Thresholds = make([]*evalpb.Threshold, len(distancePercentiles))
-	for i, distance := range distancePercentiles {
+	res.RejectionClosestDistanceStats = &evalpb.DistanceStats{
+		Percentiles: distanceQuantiles(changeAffectedness, 100),
+		MaxNonInf:   float32(maxNonInf),
+	}
+	logging.Infof(ctx, "Distance percentiles: %v", res.RejectionClosestDistanceStats.Percentiles)
+	logging.Infof(ctx, "Maximum non-inf distance: %f", res.RejectionClosestDistanceStats.MaxNonInf)
+	res.Thresholds = make([]*evalpb.Threshold, len(res.RejectionClosestDistanceStats.Percentiles))
+	for i, distance := range res.RejectionClosestDistanceStats.Percentiles {
 		res.Thresholds[i] = &evalpb.Threshold{MaxDistance: float32(distance)}
 	}
 
@@ -290,7 +298,7 @@ func (e *Eval) goMany(eg *errgroup.Group, f func() error) {
 }
 
 // distanceQuantiles returns distance quantiles. Panics if afs is empty.
-func distanceQuantiles(afs []rts.Affectedness, count int) (distances []float64) {
+func distanceQuantiles(afs []rts.Affectedness, count int) (distances []float32) {
 	if len(afs) == 0 {
 		panic("s is empty")
 	}
@@ -299,10 +307,10 @@ func distanceQuantiles(afs []rts.Affectedness, count int) (distances []float64) 
 		allDistances[i] = af.Distance
 	}
 	sort.Float64s(allDistances)
-	distances = make([]float64, count)
+	distances = make([]float32, count)
 	for i := 0; i < count; i++ {
 		boundary := int(math.Ceil(float64(len(afs)*(i+1)) / float64(count)))
-		distances[i] = allDistances[boundary-1]
+		distances[i] = float32(allDistances[boundary-1])
 	}
 	return
 }

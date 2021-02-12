@@ -6,6 +6,7 @@ package git
 
 import (
 	"math"
+	"sort"
 	"testing"
 
 	"infra/rts/filegraph"
@@ -94,26 +95,69 @@ func TestGraph(t *testing.T) {
 		})
 
 		Convey(`EdgeReader`, func() {
-			bar := &node{probSumDenominator: 4}
-			foo := &node{probSumDenominator: 2}
+			root := &node{name: "//"}
+			bar := &node{parent: root, name: "//foo", probSumDenominator: 4}
+			foo := &node{parent: root, name: "//bar", probSumDenominator: 2}
 			foo.edges = []edge{{to: bar, probSum: probOne}}
 			bar.edges = []edge{{to: foo, probSum: probOne}}
+			root.children = map[string]*node{
+				"foo": foo,
+				"bar": bar,
+			}
 
 			type outgoingEdge struct {
-				other    filegraph.Node
+				to       filegraph.Node
 				distance float64
 			}
 			var actual []outgoingEdge
 			callback := func(other filegraph.Node, distance float64) bool {
-				actual = append(actual, outgoingEdge{other: other, distance: distance})
+				actual = append(actual, outgoingEdge{to: other, distance: distance})
 				return true
 			}
 
 			r := &EdgeReader{}
-			r.ReadEdges(foo, callback)
-			So(actual, ShouldHaveLength, 1)
-			So(actual[0].other, ShouldEqual, bar)
-			So(actual[0].distance, ShouldAlmostEqual, -math.Log(0.25))
+			Convey(`Works`, func() {
+				r.ReadEdges(foo, callback)
+				So(actual, ShouldHaveLength, 1)
+				So(actual[0].to, ShouldEqual, bar)
+				So(actual[0].distance, ShouldAlmostEqual, -math.Log(0.25))
+			})
+			Convey(`Double ChangeLogFactor`, func() {
+				r.ChangeLogDistanceFactor = 2
+				r.ReadEdges(foo, callback)
+				So(actual, ShouldHaveLength, 1)
+				So(actual[0].to, ShouldEqual, bar)
+				So(actual[0].distance, ShouldAlmostEqual, -2*math.Log(0.25))
+			})
+			Convey(`File structure distance only`, func() {
+				r.FileStructureDistanceFactor = 1
+				Convey(`parent`, func() {
+					r.ReadEdges(foo, callback)
+					So(actual, ShouldResemble, []outgoingEdge{
+						{to: root, distance: 1},
+					})
+				})
+				Convey(`children`, func() {
+					r.ReadEdges(root, callback)
+					sort.Slice(actual, func(i, j int) bool {
+						return actual[i].to == foo
+					})
+					So(actual, ShouldResemble, []outgoingEdge{
+						{to: foo, distance: 1},
+						{to: bar, distance: 1},
+					})
+				})
+			})
+			Convey(`Both distances`, func() {
+				r.ChangeLogDistanceFactor = 1
+				r.FileStructureDistanceFactor = 1
+				r.ReadEdges(foo, callback)
+				So(actual, ShouldHaveLength, 2)
+				So(actual[0].to, ShouldEqual, bar)
+				So(actual[0].distance, ShouldAlmostEqual, -math.Log(0.25))
+				So(actual[1].to, ShouldEqual, root)
+				So(actual[1].distance, ShouldEqual, 1)
+			})
 		})
 
 		Convey(`splitName`, func() {

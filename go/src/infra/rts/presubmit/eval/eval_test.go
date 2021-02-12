@@ -126,7 +126,7 @@ func TestQuantiles(t *testing.T) {
 				{Distance: 3},
 				{Distance: 4},
 			}
-			So(distanceQuantiles(afs, 2), ShouldResemble, []float64{2, 4})
+			So(distanceQuantiles(afs, 2), ShouldResemble, []float32{2, 4})
 		})
 		Convey(`4-quantiles of 1, 2, 3, 4`, func() {
 			afs := []rts.Affectedness{
@@ -135,7 +135,7 @@ func TestQuantiles(t *testing.T) {
 				{Distance: 3},
 				{Distance: 4},
 			}
-			So(distanceQuantiles(afs, 4), ShouldResemble, []float64{1, 2, 3, 4})
+			So(distanceQuantiles(afs, 4), ShouldResemble, []float32{1, 2, 3, 4})
 		})
 		Convey(`10-quantiles of 1, 2, 3, 4`, func() {
 			afs := []rts.Affectedness{
@@ -144,7 +144,7 @@ func TestQuantiles(t *testing.T) {
 				{Distance: 3},
 				{Distance: 4},
 			}
-			So(distanceQuantiles(afs, 10), ShouldResemble, []float64{1, 1, 2, 2, 2, 3, 3, 4, 4, 4})
+			So(distanceQuantiles(afs, 10), ShouldResemble, []float32{1, 1, 2, 2, 2, 3, 3, 4, 4, 4})
 		})
 	})
 }

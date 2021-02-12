@@ -22,6 +22,9 @@ type EdgeReader interface {
 	// ReadEdges calls the callback for each edge of the given node.
 	// If callback returns false, then iteration stops.
 	//
+	// May report multiple edges to the same node.
+	// In context of Query, only the shortest one will influence the outcome.
+	//
 	// Idempotent: calling many times with the same `from` reports the same `to`
 	// Node objects.
 	ReadEdges(from Node, callback func(to Node, distance float64) (keepGoing bool))
