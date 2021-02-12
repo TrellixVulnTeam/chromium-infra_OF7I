@@ -2850,7 +2850,7 @@ class WorkEnv(object):
     limit = 10000
     user_ids_by_email = self.services.user.LookupExistingUserIDs(
         self.mc.cnxn, emails)
-    user_ids = list(user_ids_by_email.values())
+    user_ids = list(set(user_ids_by_email.values()))
     if framework_constants.DELETED_USER_ID in user_ids:
       raise exceptions.InputException(
           'Reserved deleted_user_id found in deletion request and'
