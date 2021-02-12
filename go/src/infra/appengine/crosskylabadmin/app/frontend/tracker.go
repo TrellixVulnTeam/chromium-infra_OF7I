@@ -132,8 +132,6 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 	case fleet.AuditTask_TaskInvalid:
 		actions = []string{
 			"verify-servo-fw",
-			"flash-servo-keyboard-map",
-			"verify-dut-macaddr",
 		}
 		taskname = "Maintenance"
 	case fleet.AuditTask_ServoUSBKey:

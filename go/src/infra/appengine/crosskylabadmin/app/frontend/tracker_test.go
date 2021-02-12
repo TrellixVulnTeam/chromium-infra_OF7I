@@ -260,8 +260,6 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 
 			actions := []string{
 				"verify-servo-fw",
-				"flash-servo-keyboard-map",
-				"verify-dut-macaddr",
 			}
 			request := fleet.PushBotsForAdminAuditTasksRequest{}
 			res, err := tf.Tracker.PushBotsForAdminAuditTasks(tf.C, &request)
