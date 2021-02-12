@@ -2070,6 +2070,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **gym-py3**
+
+### 0.18.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/gym-py3"
+  version: "version:0.18.0"
+>
+```
+
+
+* *universal*
+
 ## **html5lib**
 
 ### 1.0.1
