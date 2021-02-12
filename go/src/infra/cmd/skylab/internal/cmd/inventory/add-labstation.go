@@ -230,7 +230,8 @@ func (c *addLabstationRun) triggerDeploy(ctx context.Context, ic fleet.Inventory
 	resp, err := ic.DeployDut(ctx, &fleet.DeployDutRequest{
 		NewSpecs: serialized,
 		Actions: &fleet.DutDeploymentActions{
-			SetupLabstation: true,
+			SetupLabstation:          true,
+			RunPreDeployVerification: true,
 		},
 		Options: &fleet.DutDeploymentOptions{
 			AssignServoPortIfMissing: false,
