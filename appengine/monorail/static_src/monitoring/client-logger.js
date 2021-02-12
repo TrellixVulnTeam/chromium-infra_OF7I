@@ -6,45 +6,50 @@
 
 import MonorailTSMon from './monorail-ts-mon.js';
 
-/*
-ClientLogger is a JavaScript library for tracking events with Google Analytics
-and ts_mon.
-
-Example usage (tracking time to create a new issue, including time spent
-by the user editing stuff):
-
-t0: on page load for /issues/new:
-
-  let l = new Clientlogger('issues');
-  l.logStart('new-issue', 'user-time');
-
-t1: on submit for /issues/new (POST /issues/detail_ezt.do):
-
-  l.logStart('new-issue', 'server-time');
-
-t2: on page load for /issues/detail:
-
-  let l = new Clientlogger('issues');
-  if (l.started('new-issue') {
-    l.logEnd('new-issue');
-  }
-
-This would record the following metrics:
-
-  issues.new-issue {
-    time: t2-t0
-  }
-
-  issues.new-issue["server-time"] {
-    time: t2-t1
-  }
-
-  issues.new-issue["user-time"] {
-    time: t1-t0
-  }
-*/
-
+/**
+ * ClientLogger is a JavaScript library for tracking events with Google
+ * Analytics and ts_mon.
+ *
+ * @example
+ * // Example usage (tracking time to create a new issue, including time spent
+ * // by the user editing stuff):
+ *
+ *
+ * // t0: on page load for /issues/new:
+ * let l = new Clientlogger('issues');
+ * l.logStart('new-issue', 'user-time');
+ *
+ * // t1: on submit for /issues/new:
+ *
+ * l.logStart('new-issue', 'server-time');
+ *
+ * // t2: on page load for /issues/detail:
+ *
+ * let l = new Clientlogger('issues');
+ *
+ * if (l.started('new-issue') {
+ *   l.logEnd('new-issue');
+ * }
+ *
+ * // This would record the following metrics:
+ *
+ * issues.new-issue {
+ *   time: t2-t0
+ * }
+ *
+ * issues.new-issue["server-time"] {
+ *   time: t2-t1
+ * }
+ *
+ * issues.new-issue["user-time"] {
+ *   time: t1-t0
+ * }
+ */
 export default class ClientLogger {
+  /**
+   * @param {string} category Arbitrary string for categorizing metrics in
+   *   this client. Used by Google Analytics for event logging.
+   */
   constructor(category) {
     this.category = category;
     this.tsMon = MonorailTSMon.getGlobalClient();
@@ -58,17 +63,20 @@ export default class ClientLogger {
     }
   }
 
+  /**
+   * @param {string} eventName Arbitrary string for the name of the event.
+   *   ie: "issue-load"
+   * @return {Object} Event object for the string checked.
+   */
   started(eventName) {
     return this.startedEvents[eventName];
   }
 
-  // One-shot events
-  logEvent(eventAction, eventLabel, opt_eventValue) {
-    ga('send', 'event', this.category, eventAction, eventLabel,
-        opt_eventValue);
-  }
-
-  // Events that bookend some activity whose duration we’re interested in.
+  /**
+   * Log events that bookend some activity whose duration we’re interested in.
+   * @param {string} eventName Name of the event to start.
+   * @param {string} eventLabel Arbitrary string label to tie to event.
+   */
   logStart(eventName, eventLabel) {
     // Tricky situation: initial new issue POST gets rejected
     // due to form validation issues.  Start a new timer, or keep
@@ -90,10 +98,14 @@ export default class ClientLogger {
     sessionStorage[`ClientLogger.${this.category}.started`] =
         JSON.stringify(this.startedEvents);
 
-    this.logEvent(`${eventName}-start`, eventLabel);
+    logEvent(this.category, `${eventName}-start`, eventLabel);
   }
 
-  // Pause the stopwatch for this event.
+  /**
+   * Pause the stopwatch for this event.
+   * @param {string} eventName Name of the event to pause.
+   * @param {string} eventLabel Arbitrary string label tied to the event.
+   */
   logPause(eventName, eventLabel) {
     if (!eventLabel) {
       throw `logPause called for event with no label: ${eventName}`;
@@ -125,7 +137,11 @@ export default class ClientLogger {
         JSON.stringify(this.startedEvents);
   }
 
-  // Resume the stopwatch for this event.
+  /**
+   * Resume the stopwatch for this event.
+   * @param {string} eventName Name of the event to resume.
+   * @param {string} eventLabel Arbitrary string label tied to the event.
+   */
   logResume(eventName, eventLabel) {
     if (!eventLabel) {
       throw `logResume called for event with no label: ${eventName}`;
@@ -153,6 +169,13 @@ export default class ClientLogger {
         JSON.stringify(this.startedEvents);
   }
 
+  /**
+   * Stop ecording this event.
+   * @param {string} eventName Name of the event to stop recording.
+   * @param {string} eventLabel Arbitrary string label tied to the event.
+   * @param {number=} maxThresholdMs Avoid sending timing data if it took
+   *   longer than this threshold.
+   */
   logEnd(eventName, eventLabel, maxThresholdMs=null) {
     const startEvent = this.startedEvents[eventName];
 
@@ -190,9 +213,18 @@ export default class ClientLogger {
 
     sessionStorage[`ClientLogger.${this.category}.started`] =
         JSON.stringify(this.startedEvents);
-    this.logEvent(`${eventName}-end`, eventLabel);
+    logEvent(this.category, `${eventName}-end`, eventLabel);
   }
 
+  /**
+   * Helper to send data on the event to TSMon.
+   * @param {Object} event Data for the event being sent.
+   * @param {string} eventName Name of the event being sent.
+   * @param {string} recordOnlyThisLabel Label to record.
+   * @param {number=} maxThresholdMs Optional threshold to drop events
+   *   if they took too long.
+   * @private
+   */
   _sendTiming(event, eventName, recordOnlyThisLabel, maxThresholdMs=null) {
     // Calculate elapsed.
     let elapsed;
@@ -222,6 +254,18 @@ export default class ClientLogger {
     this.tsMon.recordUserTiming(
         this.category, eventName, recordOnlyThisLabel, elapsed);
   }
+}
+
+/**
+ * Log single usr events with Google Analytics.
+ * @param {string} category Category of the event.
+ * @param {string} eventAction Name of the event.
+ * @param {string=} eventLabel Optional custom string value tied to the event.
+ * @param {number=} eventValue Optional custom number value tied to the event.
+ */
+export function logEvent(category, eventAction, eventLabel, eventValue) {
+  ga('send', 'event', category, eventAction, eventLabel,
+      eventValue);
 }
 
 // Until the rest of the app is in modules, this must be exposed on window.

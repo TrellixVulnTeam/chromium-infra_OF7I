@@ -17,7 +17,7 @@ import './mr-search-bar.js';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
-import ClientLogger from 'monitoring/client-logger.js';
+import {logEvent} from 'monitoring/client-logger.js';
 
 /**
  * @type {Object<string, string>} JS coding of enum values from
@@ -255,8 +255,6 @@ export class MrHeader extends connectStore(LitElement) {
     this.userProjects = {};
     this.isSiteAdmin = false;
 
-    this.clientLogger = new ClientLogger('mr-header');
-
     this._headerTitle = '';
   }
 
@@ -422,7 +420,7 @@ export class MrHeader extends connectStore(LitElement) {
    */
   _projectChangedHandler(url) {
     // Just log it to GA and continue.
-    this.clientLogger.logEvent('project-change', url);
+    logEvent('mr-header', 'project-change', url);
   }
 }
 
