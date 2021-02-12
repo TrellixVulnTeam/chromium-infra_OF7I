@@ -109,6 +109,8 @@ func (e *Eval) Run(ctx context.Context, strategy Strategy) (*evalpb.Results, err
 // EvaluateSafety evaluates the strategy's safety.
 // The returned Result has all but efficiency-related fields populated.
 func (e *Eval) EvaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.Results, error) {
+	// TODO(nodir): refactor this function. It is a bit long.
+
 	var changeAffectedness []rts.Affectedness
 	var testAffectedness []rts.Affectedness
 	furthest := make(furthestRejections, 0, e.LogFurthest)
@@ -181,9 +183,22 @@ func (e *Eval) EvaluateSafety(ctx context.Context, strategy Strategy) (*evalpb.R
 	}
 	logging.Infof(ctx, "Distance percentiles: %v", res.RejectionClosestDistanceStats.Percentiles)
 	logging.Infof(ctx, "Maximum non-inf distance: %f", res.RejectionClosestDistanceStats.MaxNonInf)
-	res.Thresholds = make([]*evalpb.Threshold, len(res.RejectionClosestDistanceStats.Percentiles))
+	res.Thresholds = make([]*evalpb.Threshold, 100, 110)
 	for i, distance := range res.RejectionClosestDistanceStats.Percentiles {
 		res.Thresholds[i] = &evalpb.Threshold{MaxDistance: float32(distance)}
+	}
+
+	// Expand the 99%-100% range because the transition 99->100 is sharp.
+	th99 := res.Thresholds[98].MaxDistance
+	th100 := res.Thresholds[99].MaxDistance
+	if !math.IsInf(float64(th100), 0) {
+		// Add 9 thresholds in between.
+		res.Thresholds = res.Thresholds[:99]
+		step := (th100 - th99) / 10
+		for i := 0; i < 9; i++ {
+			res.Thresholds = append(res.Thresholds, &evalpb.Threshold{MaxDistance: th99 + step*float32(i+1)})
+		}
+		res.Thresholds = append(res.Thresholds, &evalpb.Threshold{MaxDistance: th100})
 	}
 
 	// Now compute recall scores off of the chosen thresholds.
