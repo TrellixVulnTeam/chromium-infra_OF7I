@@ -1,14 +1,17 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 ENV DEBIAN_FRONTEND noninteractive
 
 ARG ARCH_PACKAGES
 ENV ARCH_PACKAGES ${ARCH_PACKAGES:-}
+ARG KVM_PACKAGES
+ENV KVM_PACKAGES ${KVM_PACKAGES:-}
 
 RUN /usr/bin/apt-get update
 RUN /usr/bin/apt-get -y dist-upgrade
-RUN /usr/bin/apt-get -y install curl lsof openssh-client python sudo \
-       $ARCH_PACKAGES
+RUN /usr/bin/apt-get -y install curl lsof openssh-client python sudo
+RUN /usr/bin/apt-get -y install $ARCH_PACKAGES
+RUN /usr/bin/apt-get -y install $KVM_PACKAGES
 
 # Cleanup to shrink image sizes.
 RUN /usr/bin/find /var/lib/apt/lists /tmp /var/tmp /usr/share/info \
