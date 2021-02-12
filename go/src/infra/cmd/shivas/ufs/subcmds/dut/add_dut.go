@@ -29,7 +29,7 @@ import (
 
 // Regexp to enforce the input format
 var servoHostPortRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-\.]+:[0-9]+$`)
-var defaultDeployTaskActions = []string{"update-label", "verify-recovery-mode", "run-pre-deploy-verification"}
+var defaultDeployTaskActions = []string{"servo-verification", "update-label", "verify-recovery-mode", "run-pre-deploy-verification"}
 
 // TODO(anushruth): Find a better place to put these tags.
 var shivasTags = []string{"shivas:" + site.VersionNumber, "triggered_using:shivas"}

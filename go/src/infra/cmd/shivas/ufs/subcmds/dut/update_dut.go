@@ -66,13 +66,13 @@ var partialUpdateDeployActions = []string{
 
 // partialUpdateDeployActions is a collection of actions for the deploy task when updating machines.
 var assetUpdateDeployActions = []string{
-	"update-label",
-	"verify-recovery-mode",
-	"run-pre-deploy-verification",
+	"servo-verification",
 	"stage-usb",
 	"install-test-image",
 	"install-firmware",
 	"verify-recovery-mode",
+	"update-label",
+	"run-pre-deploy-verification",
 }
 
 // UpdateDUTCmd update dut by given hostname and start a swarming job to delpoy.
