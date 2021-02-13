@@ -127,7 +127,7 @@ const (
 
 // installKernel updates kernelPartition on disk.
 func (p *provisionState) installKernel(ctx context.Context, pi partitionInfo) error {
-	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "full_dev_part_KERN.bin.gz"), p.dutName)
+	url, err := p.s.cacheForDut(ctx, path.Join(p.imagePath, "full_dev_part_KERN.bin.gz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install kernel: failed to get GS Cache URL, %s", err)
 	}
@@ -136,7 +136,7 @@ func (p *provisionState) installKernel(ctx context.Context, pi partitionInfo) er
 
 // installRoot updates rootPartition on disk.
 func (p *provisionState) installRoot(ctx context.Context, pi partitionInfo) error {
-	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "full_dev_part_ROOT.bin.gz"), p.dutName)
+	url, err := p.s.cacheForDut(ctx, path.Join(p.imagePath, "full_dev_part_ROOT.bin.gz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install root: failed to get GS Cache URL, %s", err)
 	}
@@ -150,7 +150,7 @@ const (
 
 // installStateful updates the stateful partition on disk (finalized after a reboot).
 func (p *provisionState) installStateful(ctx context.Context) error {
-	url, err := p.s.getCacheURL(ctx, path.Join(p.imagePath, "stateful.tgz"), p.dutName)
+	url, err := p.s.cacheForDut(ctx, path.Join(p.imagePath, "stateful.tgz"), p.dutName)
 	if err != nil {
 		return fmt.Errorf("install stateful: failed to get GS Cache URL, %s", err)
 	}
@@ -285,7 +285,7 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 	}
 
 	dlcURL := path.Join(p.imagePath, "dlc", dlcID, dlcPackage, dlcImage)
-	url, err := p.s.getCacheURL(ctx, dlcURL, p.dutName)
+	url, err := p.s.cacheForDut(ctx, dlcURL, p.dutName)
 	if err != nil {
 		return fmt.Errorf("install DLC: failed to get GS Cache server, %s", err)
 	}

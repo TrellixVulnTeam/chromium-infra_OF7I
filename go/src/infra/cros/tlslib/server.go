@@ -88,12 +88,12 @@ func (s *Server) GracefulStop() {
 	s.grpcServ.GracefulStop()
 }
 
-// getCacheURL returns the URL to use for the DUT, through the wiring service.
-func (s *Server) getCacheURL(ctx context.Context, url, name string) (string, error) {
+// cacheForDut caches a file for a DUT and returns the URL to use.
+func (s *Server) cacheForDut(ctx context.Context, url, dutName string) (string, error) {
 	c := tls.NewWiringClient(s.wiringConn)
 	op, err := c.CacheForDut(ctx, &tls.CacheForDutRequest{
 		Url:     url,
-		DutName: name,
+		DutName: dutName,
 	})
 	if err != nil {
 		return "", err
@@ -101,21 +101,21 @@ func (s *Server) getCacheURL(ctx context.Context, url, name string) (string, err
 
 	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(s.wiringConn), op.Name)
 	if err != nil {
-		return "", fmt.Errorf("getCacheURL: failed to wait for CacheForDut, %s", err)
+		return "", fmt.Errorf("cacheForDut: failed to wait for CacheForDut, %s", err)
 	}
 
 	if s := op.GetError(); s != nil {
-		return "", fmt.Errorf("getCacheURL: failed to get CacheForDut, %s", s)
+		return "", fmt.Errorf("cacheForDut: failed to get CacheForDut, %s", s)
 	}
 
 	a := op.GetResponse()
 	if a == nil {
-		return "", fmt.Errorf("getCacheURL: failed to get CacheForDut response for URL=%s and Name=%s", url, name)
+		return "", fmt.Errorf("cacheForDut: failed to get CacheForDut response for URL=%s and Name=%s", url, dutName)
 	}
 
 	resp := &tls.CacheForDutResponse{}
 	if err := ptypes.UnmarshalAny(a, resp); err != nil {
-		return "", fmt.Errorf("getCacheURL: unexpected response from CacheForDut, %v", a)
+		return "", fmt.Errorf("cacheForDut: unexpected response from CacheForDut, %v", a)
 	}
 
 	return resp.GetUrl(), nil
