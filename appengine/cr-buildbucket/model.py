@@ -275,7 +275,7 @@ class Build(ndb.Model):
   # is the leaseholder.
   lease_key = ndb.IntegerProperty(indexed=False)
   # True if the build is currently leased. Otherwise False
-  is_leased = ndb.ComputedProperty(lambda self: self.lease_key is not None)
+  is_leased = ndb.ComputedProperty(lambda self: bool(self.lease_key))
   leasee = auth.IdentityProperty()
   never_leased = ndb.BooleanProperty()
 
