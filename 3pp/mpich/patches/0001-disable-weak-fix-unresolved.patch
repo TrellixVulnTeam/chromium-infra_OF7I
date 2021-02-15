@@ -1,0 +1,36 @@
+From dc1970d6bcf4a5856a80721f523441bb4af22809 Mon Sep 17 00:00:00 2001
+From: Ken Raffenetti <raffenet@mcs.anl.gov>
+Date: Mon, 15 Oct 2018 12:53:48 -0500
+Subject: [PATCH] src/env: Avoid unresolved symbols issue
+
+Building with --disable-weak-symbols on some compiler/platform
+combinations causes an unresolved symbol issue when linking the
+mpichversion binary. Call an MPI function to ensure both libmpi and
+libpmpi are linked and all needed symbols are available. In the
+future, it would be preferable to use the information from
+MPI_Get_library_version for all output in mpichversion.
+
+No reviewer.
+---
+ src/env/mpichversion.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/env/mpichversion.c b/src/env/mpichversion.c
+index a8b6676a4db..70ef07e52b1 100644
+--- a/src/env/mpichversion.c
++++ b/src/env/mpichversion.c
+@@ -49,6 +49,14 @@ typedef enum { Version_number = 0, Date = 1,
+ int main(int argc, char *argv[])
+ {
+     int i, flags[10];
++    char version[MPI_MAX_LIBRARY_VERSION_STRING];
++    int versionlen;
++
++    /* FIXME: this is needed to avoid unresolved symbols issues when building with
++     * --disable-weak-symbols on some platforms. Ideally, we could use the output
++     * from this call instead of accessing internal library variables.
++     */
++    MPI_Get_library_version(version, &versionlen);
+ 
+     if (argc <= 1) {
+         /* Show all values */
