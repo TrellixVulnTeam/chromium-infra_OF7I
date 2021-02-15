@@ -68,6 +68,7 @@ github.com/smartystreets/
 github.com/waigani/diffparser
 github.com/xtgo/set
 github.com/yosuke-furukawa/json5/encoding/json5
+github.com/coreos/go-oidc/oidc
 
 # Other stuff
 contrib.go.opencensus.io/exporter
