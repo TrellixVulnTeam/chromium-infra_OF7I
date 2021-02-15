@@ -10,7 +10,7 @@ set -o pipefail
 PREFIX="$1"
 
 ./configure --enable-static=yes --enable-shared=no \
-  --with-device=ch3 --disable-fortran --disable-weak-symbols \
+  --with-device=ch3 --disable-fortran \
   --prefix="$PREFIX" \
   --host="$CROSS_TRIPLE"
 make install -j $(nproc)
