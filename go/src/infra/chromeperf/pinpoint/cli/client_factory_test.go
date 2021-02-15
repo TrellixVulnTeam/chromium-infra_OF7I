@@ -61,7 +61,6 @@ func (mockFailingTokenProvider) GetToken(ctx context.Context, c *oauth2.Config) 
 const invalidIDToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNjEzMTI3NDUwLCJleHAiOjE2MTMyMjc0NTAsImF1ZCI6IjYyMTIxMDE4Mzg2LWtidmEyM3FoZHJhaWtsajNrc2RjOGxhbXM5M3E0Z2s2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIn0.S94K88ue4HKSPRl_BdRbh76-0IWQEytbppmjtCjN9tA`
 
 func TestTokenVerifierAndConfigFactory_EmptyCache(t *testing.T) {
-
 	Convey("Given an empty token cache and create a verifier and config", t, func() {
 		ctx := context.Background()
 		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
@@ -72,7 +71,6 @@ func TestTokenVerifierAndConfigFactory_EmptyCache(t *testing.T) {
 		tc, err := newTokenCache(ctx, td)
 		So(err, ShouldBeNil)
 		So(tc, ShouldNotBeNil)
-
 		Convey("When we get an valid OAuth token", func() {
 			tp := &mockTokenProvider{token: func() *oauth2.Token {
 				t := &oauth2.Token{
@@ -84,29 +82,22 @@ func TestTokenVerifierAndConfigFactory_EmptyCache(t *testing.T) {
 				return t.WithExtra(map[string]interface{}{"id_token": invalidIDToken})
 			}()}
 			v, c, err := newTokenVerifierAndConfig(ctx, tc, tp)
-
 			Convey("Then we get no verifier", func() {
 				So(v, ShouldBeNil)
 			})
-
 			Convey("Nor an OAuth2 Config", func() {
 				So(c, ShouldBeNil)
 			})
-
 			Convey("And an error", func() {
 				So(err, ShouldNotBeNil)
 			})
-
 		})
-
 	})
-
 }
 
 func TestTokenVerifierAndConfigFactory_NilTokenCache(t *testing.T) {
-
+	t.Parallel()
 	Convey("Given no token cache and create a verifier and config", t, func() {
-
 		Convey("When we obtain an invalid token from the provider", func() {
 			ctx := context.Background()
 			tp := &mockTokenProvider{token: func() *oauth2.Token {
@@ -122,17 +113,13 @@ func TestTokenVerifierAndConfigFactory_NilTokenCache(t *testing.T) {
 			Convey("Then we get no verifier", func() {
 				So(v, ShouldBeNil)
 			})
-
 			Convey("Nor an OAuth2 Config", func() {
 				So(c, ShouldBeNil)
 			})
-
 			Convey("But an error", func() {
 				So(err, ShouldNotBeNil)
 			})
-
 		})
-
 		Convey("When we fail to get a valid OAuth token", func() {
 			ctx := context.Background()
 			tp := mockFailingTokenProvider{}
@@ -140,17 +127,12 @@ func TestTokenVerifierAndConfigFactory_NilTokenCache(t *testing.T) {
 			Convey("Then we get no verifier", func() {
 				So(v, ShouldBeNil)
 			})
-
 			Convey("Nor an OAuth2 Config", func() {
 				So(c, ShouldBeNil)
 			})
-
 			Convey("But get an error", func() {
 				So(err, ShouldNotBeNil)
 			})
-
 		})
-
 	})
-
 }

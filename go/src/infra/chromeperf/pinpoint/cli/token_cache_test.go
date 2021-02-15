@@ -29,7 +29,7 @@ import (
 )
 
 func TestTokenCacheCreation(t *testing.T) {
-
+	t.Parallel()
 	Convey("Creates a missing cache directory", t, func() {
 		ctx := context.Background()
 		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
@@ -42,7 +42,6 @@ func TestTokenCacheCreation(t *testing.T) {
 		So(tc, ShouldNotBeNil)
 		So(tc.cacheFile, ShouldEqual, filepath.Join(td, "cached-token"))
 	})
-
 	Convey("Stale lock file fails token cache creation", t, func() {
 		ctx := context.Background()
 		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
@@ -60,7 +59,6 @@ func TestTokenCacheCreation(t *testing.T) {
 		So(err, ShouldNotBeNil)
 		So(tc, ShouldBeNil)
 	})
-
 }
 
 type mockVerifier struct {
@@ -109,7 +107,6 @@ func (m *mockOAuth2ConfigTokenRandomizer) TokenSource(ctx context.Context, t *oa
 func TestTokenCacheFunctionality(t *testing.T) {
 	// We need to set up an httpserver which will intercept the oidc provider requests, so that
 	// we can respond appropriately.
-
 	Convey("Given a valid token cache", t, func() {
 		ctx := context.Background()
 		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
@@ -120,7 +117,6 @@ func TestTokenCacheFunctionality(t *testing.T) {
 		tc, err := newTokenCache(ctx, td)
 		So(err, ShouldBeNil)
 		So(tc, ShouldNotBeNil)
-
 		Convey("When the cached token is expired", func() {
 			tc.cachedToken.ParsedIDToken.Expiry.Add(-time.Hour)
 			Convey("Then we attempt to get a new token", func() {
@@ -138,9 +134,7 @@ func TestTokenCacheFunctionality(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(t, ShouldNotBeNil)
 			})
-
 		})
-
 		Convey("When the cached token is invalid", func() {
 			tc.cachedToken = tokenBundle{
 				AuthToken: oauth2.Token{},
@@ -162,9 +156,6 @@ func TestTokenCacheFunctionality(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(t, ShouldBeNil)
 			})
-
 		})
-
 	})
-
 }
