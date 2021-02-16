@@ -33,7 +33,7 @@ func cmdSelect() *subcommands.Command {
 		LongDesc: text.Doc(`
 			Compute the set of test files to skip.
 
-			Flags -changed-files, -model-dir and -skip-test-files are required.
+			Flags -changed-files, -model-dir and -out are required.
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &selectRun{}
