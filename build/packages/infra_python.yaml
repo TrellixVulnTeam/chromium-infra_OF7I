@@ -3,6 +3,7 @@ description: Virtual environment + 'infra' package with infra.git python code.
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
   - windows-386
   - windows-amd64
 

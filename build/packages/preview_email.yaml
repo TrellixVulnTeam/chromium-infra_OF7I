@@ -3,6 +3,7 @@ description: Preview LUCI Notify email templates
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
   - windows-amd64
 go_packages:
   - go.chromium.org/luci/luci_notify/cmd/preview_email

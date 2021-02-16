@@ -4,6 +4,7 @@ description:
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
 go_packages:
   - infra/tools/recipe_bundler
 root: ../../go/bin

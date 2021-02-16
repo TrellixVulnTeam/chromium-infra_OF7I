@@ -13,6 +13,7 @@ platforms:
   - linux-s390x
   - aix-ppc64
   - mac-amd64
+  - mac-arm64
   - windows-386
   - windows-amd64
 go_build_environ:

@@ -2,6 +2,7 @@ package: infra/tools/mac_toolchain/${platform}
 description: CLI tools to package and install Xcode toolchains on Mac OS.
 platforms:
   - mac-amd64
+  - mac-arm64
 go_packages:
   - infra/cmd/mac_toolchain
 root: ../../go/bin

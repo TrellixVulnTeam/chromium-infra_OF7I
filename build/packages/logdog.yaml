@@ -3,6 +3,7 @@ description: logdog is a LogDog CLI client.
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
   - windows-amd64
 go_packages:
   - infra/tools/logdog

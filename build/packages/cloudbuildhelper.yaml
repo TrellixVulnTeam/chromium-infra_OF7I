@@ -3,6 +3,7 @@ description: Helper for building docker images via Cloud Build
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
 go_packages:
   - infra/cmd/cloudbuildhelper
 root: ../../go/bin

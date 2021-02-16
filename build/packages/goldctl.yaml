@@ -9,6 +9,7 @@ platforms:
   - linux-ppc64le
   - linux-s390x
   - mac-amd64
+  - mac-arm64
   - windows-386
   - windows-amd64
 # Some Skia tasks isolate golctl binary after it is installed. It is simpler in

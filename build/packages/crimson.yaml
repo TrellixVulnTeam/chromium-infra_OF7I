@@ -3,6 +3,7 @@ description: Machine Database Crimson client.
 platforms:
   - linux-amd64
   - mac-amd64
+  - mac-arm64
   - windows-amd64
 go_packages:
   - go.chromium.org/luci/machine-db/client/cmd/crimson
