@@ -28,7 +28,6 @@ const (
 
 	dutStateReady       = "ready"
 	dutStateNeedsRepair = "needs_repair"
-	dutStateNeedsReset  = "needs_reset"
 )
 
 var prejobPrefixes = []string{"provision", "prejob"}
@@ -372,7 +371,7 @@ func parseVerdict(verdict string) skylab_test_runner.Result_Autotest_TestCase_Ve
 	return skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
 }
 
-func requiresDutReset(v skylab_test_runner.Result_Autotest_TestCase_Verdict) bool {
+func requiresDutRepair(v skylab_test_runner.Result_Autotest_TestCase_Verdict) bool {
 	switch v {
 	case skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS:
 		return false
@@ -391,11 +390,11 @@ func getDutState(prejob *skylab_test_runner.Result_Prejob, tests *skylab_test_ru
 		}
 	}
 	if tests.Incomplete {
-		return dutStateNeedsReset
+		return dutStateNeedsRepair
 	}
 	for _, tc := range tests.TestCases {
-		if requiresDutReset(tc.GetVerdict()) {
-			return dutStateNeedsReset
+		if requiresDutRepair(tc.GetVerdict()) {
+			return dutStateNeedsRepair
 		}
 	}
 	return dutStateReady
