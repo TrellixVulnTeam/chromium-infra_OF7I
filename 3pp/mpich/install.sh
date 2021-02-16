@@ -8,6 +8,7 @@ set -x
 set -o pipefail
 
 PREFIX="$1"
+export CFLAGS="-fPIC"
 
 ./configure --enable-static=yes --enable-shared=no \
   --with-device=ch3 --disable-fortran \
