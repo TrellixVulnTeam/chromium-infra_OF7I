@@ -26,9 +26,6 @@ Includes CI configs for the following subprojects:
 
 lucicfg.check_version("1.20.0", "Please update depot_tools")
 
-# Enable luci.tree_closer.
-lucicfg.enable_experiment("crbug.com/1054172")
-
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
 

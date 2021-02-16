@@ -70,7 +70,6 @@ ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "a
 ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04")
 
 # CI OSX.
-ci_builder(name = "infra-continuous-mac-10.12-64", os = "Mac-10.12")
 ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
 ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14")
 ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15")
