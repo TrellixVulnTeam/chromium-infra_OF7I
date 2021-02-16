@@ -69,7 +69,7 @@ db_replica_names = [
 db_region = 'us-central1'
 
 # The default connection pool size for mysql connections.
-db_cnxn_pool_size = 5
+db_cnxn_pool_size = 20
 
 # The number of logical database shards used.  Each replica is complete copy
 # of the primary, so any replica DB can answer queries about any logical shard.
