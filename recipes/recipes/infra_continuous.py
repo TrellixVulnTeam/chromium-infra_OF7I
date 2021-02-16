@@ -59,10 +59,9 @@ CIPD_PACKAGE_BUILDERS = {
   'infra-continuous-zesty-64':   ['linux-ppc64', 'linux-ppc64le'],
 
   # 10.13 is the primary builder for darwin-amd64.
-  'infra-continuous-mac-10.10-64': [],
-  'infra-continuous-mac-10.11-64': [],
-  'infra-continuous-mac-10.12-64': [],
   'infra-continuous-mac-10.13-64': ['native:test'],
+  'infra-continuous-mac-10.14-64': ['darwin-arm64'],
+  'infra-continuous-mac-10.15-64': [],
 
   # Windows 64 bit builder runs and tests for both 64 && 32 bit.
   'infra-continuous-win10-64': ['native:test', 'windows-386:test'],
@@ -74,10 +73,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-arm64',
   ],
   'infra-internal-continuous-win-64': ['native:test', 'windows-386:test'],
-  'infra-internal-continuous-mac-10.10-64': [],
-  'infra-internal-continuous-mac-10.11-64': [],
-  'infra-internal-continuous-mac-10.13-64': ['native:test'],
-
+  'infra-internal-continuous-mac-10.15-64': ['native:test', 'darwin-arm64'],
 
   # Builders that upload CIPD packages.
   #
@@ -100,7 +96,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-s390x',       # ~40 sec
     'aix-ppc64',         # ~40 sec
   ],
-  'infra-packager-mac-64': ['native:test'],
+  'infra-packager-mac-64': ['native:test', 'darwin-arm64'],
   'infra-packager-win-64': ['native:test', 'windows-386:test'],
 
   'infra-internal-packager-linux-64': [
@@ -108,7 +104,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-arm',
     'linux-arm64',
   ],
-  'infra-internal-packager-mac-64': ['native:test'],
+  'infra-internal-packager-mac-64': ['native:test', 'darwin-arm64'],
   'infra-internal-packager-win-64': ['native:test', 'windows-386:test'],
 }
 

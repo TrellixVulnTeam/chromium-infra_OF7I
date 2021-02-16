@@ -218,6 +218,25 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--no-freshen-python-env",
+      "--builder",
+      "infra-packager-mac-64"
+    ],
+    "env": {
+      "GOARCH": "arm64",
+      "GOOS": "darwin"
+    },
+    "name": "[GOOS:darwin GOARCH:arm64]cipd - build packages"
+  },
+  {
+    "cmd": [],
+    "name": "no CIPD package upload in experimental mode (2)"
+  },
+  {
+    "cmd": [
       "sudo",
       "xcode-select",
       "--reset"
