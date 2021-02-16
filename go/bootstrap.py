@@ -49,7 +49,7 @@ EXE_SFX = '.exe' if sys.platform == 'win32' else ''
 GIT_EXE = 'git.bat' if sys.platform == 'win32' else 'git'
 
 # Version of Go CIPD package (infra/3pp/tools/go/${platform}) to install.
-TOOLSET_VERSION = '1.15.8'
+TOOLSET_VERSION = '1.16'
 
 # Describes how to fetch 'glide'.
 GLIDE_SOURCE = {
@@ -372,7 +372,7 @@ def install_deps_tools(layout, force):
   return True
 
 
-def update_vendor_packages(workspace, toolset_root, force=False):
+def update_vendor_packages(layout, workspace, force=False):
   """Runs deps.py to fetch and install pinned packages.
 
   Returns (bool): True if the dependencies were actually updated, False if they
@@ -389,17 +389,13 @@ def update_vendor_packages(workspace, toolset_root, force=False):
     cmd = [
       sys.executable, '-u', os.path.join(ROOT, 'go', 'deps.py'),
       '--workspace', workspace,
-      '--goroot', os.path.join(toolset_root, 'go'),
+      '--goroot', os.path.join(layout.toolset_root, 'go'),
       'install',
       '--update-out', update_out_path,
     ]
     if force:
       cmd.append('--force')
-    env = os.environ.copy()
-    env['PATH'] = os.pathsep.join([
-        os.path.join(ROOT, 'cipd'), env.get('PATH', '')
-    ])
-    subprocess.check_call(cmd, stdout=sys.stderr, env=env)
+    subprocess.check_call(cmd, stdout=sys.stderr, env=get_go_environ(layout))
     return os.path.isfile(update_out_path)
 
 
@@ -544,7 +540,7 @@ def bootstrap(layout, logging_level, args=None):
   # make sure cross-compilation mode is disabled during bootstrap. Restore it
   # back once bootstrap is finished.
   prev_environ = {}
-  for k in ('GOOS', 'GOARCH', 'GOARM', 'GO111MODULE'):
+  for k in ('GOOS', 'GOARCH', 'GOARM'):
     prev_environ[k] = os.environ.pop(k, None)
 
   try:
@@ -553,8 +549,7 @@ def bootstrap(layout, logging_level, args=None):
     ensure_glide_installed(layout.toolset_root)
     vendor_updated = toolset_updated
     for p in layout.vendor_paths:
-      vendor_updated |= update_vendor_packages(
-          p, layout.toolset_root, force=toolset_updated)
+      vendor_updated |= update_vendor_packages(layout, p, force=toolset_updated)
     if toolset_updated:
       # GOPATH/pkg may have binaries generated with previous version of toolset,
       # they may not be compatible and "go build" isn't smart enough to rebuild
