@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"infra/rts/filegraph"
-	"infra/rts/filegraph/internal/gitutil"
+	"infra/rts/internal/gitutil"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

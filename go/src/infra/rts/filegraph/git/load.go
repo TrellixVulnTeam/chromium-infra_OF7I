@@ -16,7 +16,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/rts/filegraph/internal/gitutil"
+	"infra/rts/internal/gitutil"
 )
 
 // LoadOptions are options for Load() function.

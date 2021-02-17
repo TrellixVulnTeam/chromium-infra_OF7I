@@ -15,7 +15,7 @@ import (
 
 	"infra/rts/filegraph"
 	"infra/rts/filegraph/git"
-	"infra/rts/filegraph/internal/gitutil"
+	"infra/rts/internal/gitutil"
 )
 
 // gitGraph loads a file graph from a git log.
