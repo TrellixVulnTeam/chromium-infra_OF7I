@@ -207,12 +207,12 @@ def StageWheelForPackage(system, wheel_dir, wheel):
   shutil.copy(source_path, dst)
 
 
-def _InterpreterForWheel(wheel):
+def InterpreterForWheel(wheel):
   """Returns the Python interpreter to use for building a wheel."""
   return 'python3' if wheel.spec.is_py3_only else 'python'
 
 
-def _EnvForWheel(wheel):
+def EnvForWheel(wheel):
   """Returns any extra environment variables for building a wheel."""
   # If the wheel is python3, clear PYTHONPATH to avoid picking up
   # the default Python (2) modules.
@@ -229,7 +229,7 @@ def BuildPackageFromPyPiWheel(system, wheel):
         system,
         None,
         tdir, [
-            _InterpreterForWheel(wheel),
+            InterpreterForWheel(wheel),
             '-m',
             'pip',
             'download',
@@ -265,7 +265,7 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       subprocess.check_call(cmd, cwd=build_dir)
 
     cmd = [
-        _InterpreterForWheel(wheel),
+        InterpreterForWheel(wheel),
         '-m',
         'pip',
         'wheel',
@@ -276,7 +276,7 @@ def BuildPackageFromSource(system, wheel, src, env=None):
         '.',
     ]
 
-    extra_env = _EnvForWheel(wheel)
+    extra_env = EnvForWheel(wheel)
     if dx.platform:
       extra_env.update({
           'host_alias': dx.platform.cross_triple,

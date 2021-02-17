@@ -1287,6 +1287,24 @@ SPECS.update({
     )
 })
 
+from .wheel_mpi4py import Mpi4py
+SPECS.update({
+    s.spec.tag: s for s in assert_sorted(
+        'Mpi4py',
+        Mpi4py(
+            'mpi4py',
+            '3.0.3',
+            'version:3.4.1.chromium.4',
+            packaged=[
+                'windows-x86',
+                'windows-x86-py3',
+                'windows-x64',
+                'windows-x64-py3',
+            ],
+        ),
+    )
+})
+
 SPEC_NAMES = sorted(SPECS.keys())
 DEFAULT_SPEC_NAMES = sorted(
     [s.spec.tag for s in SPECS.itervalues() if s.spec.default])
