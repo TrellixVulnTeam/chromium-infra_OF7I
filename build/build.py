@@ -109,7 +109,10 @@ class PackageDef(collections.namedtuple(
     return self.pkg_def.get('go_packages') or []
 
   def cgo_enabled(self, target_goos):
-    """Either True, False or None (meaning "let go decide itself")."""
+    """Either True, False or None (meaning "let go decide itself").
+
+    Ignored when cross-compiling.
+    """
     val = self.pkg_def.get('go_build_environ', {}).get('CGO_ENABLED')
     if isinstance(val, dict):
       val = val.get(target_goos)
@@ -604,9 +607,10 @@ def build_go_code(go_workspace, pkg_defs):
   go_packages = {}  # go package name => GoEnviron
   for pkg_def in pkg_defs:
     pkg_env = default_environ
-    cgo_enabled = pkg_def.cgo_enabled(target_goos)
-    if cgo_enabled is not None:
-      pkg_env = default_environ._replace(CGO_ENABLED=cgo_enabled)
+    if not is_cross_compiling():
+      cgo_enabled = pkg_def.cgo_enabled(target_goos)
+      if cgo_enabled is not None:
+        pkg_env = default_environ._replace(CGO_ENABLED=cgo_enabled)
     for name in pkg_def.go_packages:
       if name in go_packages and go_packages[name] != pkg_env:
         raise BuildException(
