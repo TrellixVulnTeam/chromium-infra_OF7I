@@ -76,7 +76,6 @@ type selectRun struct {
 	testFiles    map[string]*TestFile // indexed by source-absolute test file name
 	changedFiles stringset.Set
 	strategy     git.SelectionStrategy
-	evalResult   *evalpb.Results
 }
 
 func (r *selectRun) validateFlags() error {
@@ -107,14 +106,7 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 	if err := r.loadInput(ctx); err != nil {
 		return r.done(err)
 	}
-
-	threshold := r.chooseThreshold()
-	if threshold == nil {
-		return r.done(errors.Reason("no threshold for target change recall %.4f", r.targetChangeRecall).Err())
-	}
-	r.strategy.MaxDistance = float64(threshold.MaxDistance)
 	logging.Infof(ctx, "chosen threshold: %f", r.strategy.MaxDistance)
-
 	return r.done(r.writeFilterFiles())
 }
 
@@ -162,21 +154,6 @@ func writeFilterFile(fileName string, toSkip []string) error {
 	return f.Close()
 }
 
-// chooseThreshold returns the distance threshold based on
-// r.targetChangeRecall and r.evalResult.
-func (r *selectRun) chooseThreshold() *evalpb.Threshold {
-	var ret *evalpb.Threshold
-	for _, t := range r.evalResult.Thresholds {
-		if t.ChangeRecall < float32(r.targetChangeRecall) {
-			continue
-		}
-		if ret == nil || ret.ChangeRecall > t.ChangeRecall {
-			ret = t
-		}
-	}
-	return ret
-}
-
 // loadInput loads all the input of the subcommand.
 func (r *selectRun) loadInput(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
@@ -188,7 +165,7 @@ func (r *selectRun) loadInput(ctx context.Context) error {
 		return errors.Annotate(err, "failed to load file graph").Err()
 	})
 	eg.Go(func() error {
-		err := r.loadEvalResult(filepath.Join(gitGraphDir, "eval-results.json"))
+		err := r.loadStrategy(filepath.Join(gitGraphDir, "config.json"))
 		return errors.Annotate(err, "failed to load eval results").Err()
 	})
 
@@ -205,14 +182,25 @@ func (r *selectRun) loadInput(ctx context.Context) error {
 	return eg.Wait()
 }
 
-// loadEvalResult loads r.evalResult, including thresholds.
-func (r *selectRun) loadEvalResult(fileName string) error {
-	resBytes, err := ioutil.ReadFile(fileName)
+// loadStrategy initializes r.strategy fields, except r.strategy.Graph.
+func (r *selectRun) loadStrategy(cfgFileName string) error {
+	cfgBytes, err := ioutil.ReadFile(cfgFileName)
 	if err != nil {
 		return err
 	}
-	r.evalResult = &evalpb.Results{}
-	return protojson.Unmarshal(resBytes, r.evalResult)
+	cfg := &GitBasedStrategyConfig{}
+	if err := protojson.Unmarshal(cfgBytes, cfg); err != nil {
+		return err
+	}
+
+	threshold := chooseThreshold(cfg.Thresholds, r.targetChangeRecall)
+	if threshold == nil {
+		return errors.Reason("no threshold for target change recall %.4f", r.targetChangeRecall).Err()
+	}
+	r.strategy.EdgeReader.ChangeLogDistanceFactor = float64(cfg.ChangeLogDistanceFactor)
+	r.strategy.EdgeReader.FileStructureDistanceFactor = float64(cfg.FileStructureDistanceFactor)
+	r.strategy.MaxDistance = float64(threshold.MaxDistance)
+	return nil
 }
 
 // loadGraph loads r.strategy.Graph from the model.
@@ -259,4 +247,19 @@ func loadStringSet(fileName string) (stringset.Set, error) {
 		set.Add(scan.Text())
 	}
 	return set, scan.Err()
+}
+
+// chooseThreshold returns the distance threshold based on
+// r.targetChangeRecall and r.evalResult.
+func chooseThreshold(thresholds []*evalpb.Threshold, targetChangeRecall float64) *evalpb.Threshold {
+	var ret *evalpb.Threshold
+	for _, t := range thresholds {
+		if t.ChangeRecall < float32(targetChangeRecall) {
+			continue
+		}
+		if ret == nil || ret.ChangeRecall > t.ChangeRecall {
+			ret = t
+		}
+	}
+	return ret
 }

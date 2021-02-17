@@ -141,8 +141,8 @@ func (r *createModelRun) writeFileGraphModel(ctx context.Context, dir string) er
 	})
 
 	eg.Go(func() error {
-		err := r.writeEvalResults(ctx, filepath.Join(dir, "eval-results.json"))
-		return errors.Annotate(err, "failed to write thresholds").Err()
+		err := r.writeStrategyConfig(ctx, filepath.Join(dir, "config.json"))
+		return errors.Annotate(err, "failed to write strategy config").Err()
 	})
 
 	return eg.Wait()
@@ -162,9 +162,8 @@ func (r *createModelRun) writeFileGraph(ctx context.Context, fileName string) er
 	return bufW.Flush()
 }
 
-// writeEvalResults evaluates the selection strategy, prints results and writes
-// them to the file.
-func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) error {
+// writeStrategyConfig computes and writes the GitBasedStrategyConfig.
+func (r *createModelRun) writeStrategyConfig(ctx context.Context, fileName string) error {
 	// Compute max distance for change-log-based strategy.
 	logging.Infof(ctx, "Computing stats for the change-log-based strategy...")
 	changeLogRes, err := r.ev.EvaluateSafety(ctx, r.evalStrategy(&git.EdgeReader{
@@ -185,24 +184,26 @@ func (r *createModelRun) writeEvalResults(ctx context.Context, fileName string) 
 
 	// Use both strategies with normalized distances.
 	logging.Infof(ctx, "Evaluating the combined strategy...")
-	res, err := r.ev.Run(ctx, r.evalStrategy(&git.EdgeReader{
+	er := &git.EdgeReader{
 		// Normalize distances, but also use the scale [0, 100] for readability.
 		ChangeLogDistanceFactor:     100 / float64(changeLogRes.RejectionClosestDistanceStats.MaxNonInf),
 		FileStructureDistanceFactor: 100 / float64(fsRes.RejectionClosestDistanceStats.MaxNonInf),
-	}))
+	}
+	res, err := r.ev.Run(ctx, r.evalStrategy(er))
 	if err != nil {
 		return err
 	}
-
-	// TODO(nodir): persist the factors into output file and read them in
-	// `rts-chromium select`.
 
 	eval.PrintResults(res, os.Stdout, 0.97)
-	resBytes, err := protojson.Marshal(res)
+	cfgBytes, err := protojson.Marshal(&GitBasedStrategyConfig{
+		ChangeLogDistanceFactor:     float32(er.ChangeLogDistanceFactor),
+		FileStructureDistanceFactor: float32(er.FileStructureDistanceFactor),
+		Thresholds:                  res.Thresholds,
+	})
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(fileName, resBytes, 0777)
+	return ioutil.WriteFile(fileName, cfgBytes, 0777)
 }
 
 // writeTestFileSet writes the test file set in Chromium to the file.
