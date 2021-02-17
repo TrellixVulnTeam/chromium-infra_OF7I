@@ -294,14 +294,7 @@ class Build(ndb.Model):
     is_started = self.proto.status == common_pb2.STARTED
     is_ended = self.is_ended
 
-    # NOTE: When Go writes Build, it assigns these fields 0-values, i.e. 0 and
-    # empty-string, rather than the ndb None value. Since these fields are
-    # legacy related to BBv1 we just have a bit of a hack here so that if we
-    # have to write these from python, we write them with the expected values.
-    #
-    # We expect that any Go code which processes these will assume zero-value
-    # equals unset, meaning that the None values here are just to placate
-    # Python assumptions.
+    # See note in _post_get_hook
     if self.lease_key == 0:  # pragma: no cover
       self.lease_key = None
       self.lease_expiration_date = None
@@ -343,6 +336,19 @@ class Build(ndb.Model):
     build = future.get_result()
     if build:
       build.update_v1_status_fields()
+
+      # NOTE: When Go writes Build, it assigns these fields 0-values, i.e. 0 and
+      # empty-string, rather than the ndb None value. Since these fields are
+      # legacy related to BBv1 we just have a bit of a hack here so that if we
+      # have to write these from python, we write them with the expected values.
+      #
+      # We expect that any Go code which processes these will assume zero-value
+      # equals unset, meaning that the None values here are just to placate
+      # Python assumptions.
+      if build.lease_key == 0:  # pragma: no cover
+        build.lease_key = None
+        build.lease_expiration_date = None
+        build.leasee = None
     else:  # pragma: no cover
       pass
 

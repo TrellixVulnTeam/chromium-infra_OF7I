@@ -39,7 +39,11 @@ def expire_build_leases():
   def txn_async(build_key):
     now = utils.utcnow()
     build = yield build_key.get_async()
-    if not build or not build.is_leased:  # pragma: no cover
+    if not build:  # pragma: no cover
+      raise ndb.Return(False, build)
+
+    if not build.is_leased:  # pragma: no cover
+      yield build.put_async()  # ensure computed `is_leased` is committed
       raise ndb.Return(False, build)
 
     is_expired = build.lease_expiration_date <= now
