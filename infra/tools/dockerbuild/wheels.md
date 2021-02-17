@@ -2525,6 +2525,18 @@ wheel: <
 
 * *universal*
 
+### 0.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mozdebug-py2_py3"
+  version: "version:0.2"
+>
+```
+
+
+* *universal*
+
 ## **mozfile**
 
 ### 2.0.0
@@ -2559,6 +2571,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/mozinfo-py2_py3"
   version: "version:1.1.0"
+>
+```
+
+
+* *universal*
+
+### 1.2.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mozinfo-py2_py3"
+  version: "version:1.2.2"
 >
 ```
 
@@ -2635,6 +2659,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/mozprocess-py2_py3"
   version: "version:0.26"
+>
+```
+
+
+* *universal*
+
+### 1.2.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mozprocess-py2_py3"
+  version: "version:1.2.1"
 >
 ```
 
