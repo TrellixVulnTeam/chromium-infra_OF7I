@@ -12,9 +12,6 @@ import (
 
 	"go.chromium.org/luci/luciexe/exe"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 
@@ -223,46 +220,8 @@ func runWithDeadline(ctx context.Context, f func(context.Context) error, deadlin
 	defer cancel()
 
 	err := f(ctx)
-	if isGlobalTimeoutError(ctx, err) {
+	if execution.IsGlobalTimeoutError(ctx, err) {
 		return errors.Annotate(err, "hit cros_test_platform request deadline (%s)", deadline).Err(), nil
 	}
 	return nil, err
-}
-
-// isGlobalTimeoutError returns true iff the error is consistent with being due
-// to hitting the high level deadline.
-//
-// If the error contains no DeadlineExceeded then the cause is not a timeout.
-// If the error contains DeadlineExceeded and the deadline has not been
-// reached then it is due to a timeout lower in the stack.
-func isGlobalTimeoutError(ctx context.Context, err error) bool {
-	d, ok := ctx.Deadline()
-	if !ok {
-		logging.Infof(ctx, "Not a global timeout: no deadline set")
-		return false
-	}
-	if !isDeadlineExceededError(err) {
-		logging.Infof(ctx, "Not a global timeout: error is not a deadline exceeded error")
-		return false
-	}
-	now := time.Now()
-	if now.Before(d) {
-		logging.Infof(ctx, "Not a global timeout: Current time (%s) is before deadline (%s)", now.String(), d.String())
-		return false
-	}
-	return true
-}
-
-func isDeadlineExceededError(err error) bool {
-	// The original error raised is context.DeadlineExceeded but the prpc client
-	// library may transmute that into its own error type.
-	return errors.Any(err, func(err error) bool {
-		if err == context.DeadlineExceeded {
-			return true
-		}
-		if s, ok := status.FromError(err); ok {
-			return s.Code() == codes.DeadlineExceeded
-		}
-		return false
-	})
 }

@@ -15,7 +15,10 @@ import (
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/luciexe/exe"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 )
@@ -75,10 +78,49 @@ func Run(ctx context.Context, c trservice.Client, args Args) (map[string]*steps.
 		requestTaskSets: ts,
 		send:            args.Send,
 	}
-	if err := r.LaunchAndWait(ctx, c); err != nil {
+	err := r.LaunchAndWait(ctx, c)
+	if isFatalError(ctx, err) {
 		return nil, err
 	}
-	return r.Responses(), nil
+	return r.Responses(), err
+}
+
+func isFatalError(ctx context.Context, err error) bool {
+	return err != nil && !IsGlobalTimeoutError(ctx, err)
+}
+
+// IsGlobalTimeoutError checks whether an error returned from an execution is
+// a result fo hitting the overall timeout.
+func IsGlobalTimeoutError(ctx context.Context, err error) bool {
+	d, ok := ctx.Deadline()
+	if !ok {
+		logging.Infof(ctx, "Not a global timeout: no deadline set")
+		return false
+	}
+	if !isDeadlineExceededError(err) {
+		logging.Infof(ctx, "Not a global timeout: error is not a deadline exceeded error")
+		return false
+	}
+	now := time.Now()
+	if now.Before(d) {
+		logging.Infof(ctx, "Not a global timeout: Current time (%s) is before deadline (%s)", now.String(), d.String())
+		return false
+	}
+	return true
+}
+
+func isDeadlineExceededError(err error) bool {
+	// The original error raised is context.DeadlineExceeded but the prpc client
+	// library may transmute that into its own error type.
+	return errors.Any(err, func(err error) bool {
+		if err == context.DeadlineExceeded {
+			return true
+		}
+		if s, ok := status.FromError(err); ok {
+			return s.Code() == codes.DeadlineExceeded
+		}
+		return false
+	})
 }
 
 // ctpRequestUIDTemplate is the template to generate the UID of
