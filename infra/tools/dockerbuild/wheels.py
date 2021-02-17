@@ -1304,6 +1304,13 @@ SPECS.update({
                 'windows-x64',
                 'windows-x64-py3',
             ],
+            # No 3pp builders for these platforms.
+            skip_plat=[
+                'linux-armv6',
+                'linux-mipsel',
+                'linux-mips',
+                'linux-mips64',
+            ],
         ),
     )
 })
