@@ -33,7 +33,7 @@ Example:
 
 shivas get asset {name1} {name2}
 
-shivas get asset -platform platform1 -state serving -state needs_repair -zone atl97
+shivas get asset -zone atl97
 
 Gets the asset and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {

@@ -40,7 +40,7 @@ Adds an asset by reading a JSON file input.
 shivas add asset -name {asset name} -location {asset location} -type DUT
 Adds an asset by specifying several attributes directly
 
-shivas add asset -name {asset name} -lab {lab name} -aisle {aisle} -row {row number}-rack {rack name} -type {asset type} -position {asset position}
+shivas add asset -name {asset name} -zone {zone name} -aisle {aisle} -row {row number}-rack {rack name} -type {asset type} -position {asset position}
 Alternate location specification for finer details.`
 
 	// UpdateAssetLongDesc long description for UpdateAssetCmd
