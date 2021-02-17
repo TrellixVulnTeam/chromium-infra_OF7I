@@ -220,8 +220,12 @@ func runWithDeadline(ctx context.Context, f func(context.Context) error, deadlin
 	defer cancel()
 
 	err := f(ctx)
-	if execution.IsGlobalTimeoutError(ctx, err) {
+	switch {
+	case err == nil:
+		return nil, nil
+	case execution.IsGlobalTimeoutError(ctx, err):
 		return errors.Annotate(err, "hit cros_test_platform request deadline (%s)", deadline).Err(), nil
+	default:
+		return nil, err
 	}
-	return nil, err
 }
