@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import base64
+import itertools
 import os
 
 from .build_types import Spec
@@ -74,22 +75,28 @@ class Mpi4py(SourceOrPrebuilt):
       else:
         raise NotImplementedError('Implement mpi_libs for %s' % wheel.plat.name)
 
-      cross_args = [
-          '--include-dirs',
-          '/usr/cross/include',
-          '--library-dirs',
-          '/usr/cross/lib',
-      ] if wheel.plat.dockcross_base else []
+      build_ext_options = ['--libraries=%s' % ' '.join(mpi_libs)]
+      if wheel.plat.dockcross_base:
+        build_ext_options.extend([
+            '--include-dirs',
+            '/usr/cross/include',
+            '--library-dirs',
+            '/usr/cross/lib',
+        ])
 
       cmd = [
-          InterpreterForWheel(wheel), 'setup.py', 'build_ext',
-          '--libraries=%s' % ' '.join(mpi_libs)
-      ] + cross_args + [
-          '--force',
-          'bdist_wheel',
-          '--plat-name',
-          wheel.primary_platform,
+          InterpreterForWheel(wheel),
+          '-m',
+          'pip',
+          'wheel',
+          '--no-deps',
+          '--only-binary=:all:',
+          '--wheel-dir',
+          tdir,
       ]
+      for opt in itertools.chain(['build_ext'], build_ext_options):
+        cmd.extend(['--global-option', opt])
+      cmd.append('.')
 
       extra_env = EnvForWheel(wheel)
       if dx.platform:
@@ -101,4 +108,4 @@ class Mpi4py(SourceOrPrebuilt):
 
       util.check_run(system, dx, tdir, cmd, cwd=build_dir, env=extra_env)
 
-      StageWheelForPackage(system, os.path.join(build_dir, 'dist'), wheel)
+      StageWheelForPackage(system, tdir, wheel)
