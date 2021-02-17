@@ -7,6 +7,7 @@
 package tls
 
 import (
+	"context"
 	"infra/cros/tlslib"
 	"log"
 	"net"
@@ -60,7 +61,7 @@ func (s *Server) start(tlwAddress string) error {
 
 	s.addr = el.Addr()
 
-	ts, err := tlslib.NewServer(s.tlwConn)
+	ts, err := tlslib.NewServer(context.TODO(), s.tlwConn)
 	if err != nil {
 		return errors.Annotate(err, "start background tls").Err()
 	}

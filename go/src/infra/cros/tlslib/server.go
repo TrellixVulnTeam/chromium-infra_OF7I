@@ -24,6 +24,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
+	"go.chromium.org/luci/common/tsmon"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -34,6 +35,7 @@ import (
 
 // A Server is an implementation of a common TLS server.
 type Server struct {
+	ctx context.Context
 	tls.UnimplementedCommonServer
 	grpcServ *grpc.Server
 	// wiringConn is a connection to the wiring service.
@@ -47,8 +49,9 @@ type Server struct {
 type Option func(*Server) error
 
 // NewServer creates a new instance of common TLS server.
-func NewServer(c *grpc.ClientConn, options ...Option) (*Server, error) {
+func NewServer(ctx context.Context, c *grpc.ClientConn, options ...Option) (*Server, error) {
 	s := Server{
+		ctx:        ctx,
 		grpcServ:   grpc.NewServer(),
 		wiringConn: c,
 		sshConfig: &ssh.ClientConfig{
@@ -73,6 +76,10 @@ func NewServer(c *grpc.ClientConn, options ...Option) (*Server, error) {
 
 // Serve starts the TLS server and serves client requests.
 func (s *Server) Serve(l net.Listener) error {
+	if err := tsmon.InitializeFromFlags(s.ctx, newTsmonFlags()); err != nil {
+		log.Printf("Failed to initialize tsmon: %s", err)
+	}
+
 	s.clientPool = sshpool.New(s.sshConfig)
 	defer s.clientPool.Close()
 	s.lroMgr = lro.New()
@@ -86,6 +93,7 @@ func (s *Server) Serve(l net.Listener) error {
 // GracefulStop stops TLS server gracefully.
 func (s *Server) GracefulStop() {
 	s.grpcServ.GracefulStop()
+	tsmon.Shutdown(s.ctx)
 }
 
 // cacheForDut caches a file for a DUT and returns the URL to use.

@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -58,7 +59,7 @@ func innerMain() error {
 		return err
 	}
 	log.Printf("CommonServer listening at address %v", l.Addr())
-	s, err := tlslib.NewServer(conn)
+	s, err := tlslib.NewServer(context.Background(), conn)
 	if err != nil {
 		return err
 	}

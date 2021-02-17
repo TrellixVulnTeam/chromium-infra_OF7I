@@ -22,7 +22,14 @@ import (
 
 func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	log.Printf("provision: started %v", opName)
+
+	// Set a timeout for provisioning.
+	// TODO(kimjae): Tie the context with timeout to op by passing to lroMgr.
+	ctx, cancel := context.WithTimeout(s.ctx, time.Hour)
+	defer cancel()
+
 	defer func() {
+		provisionDutCounter.Add(ctx, 1)
 		log.Printf("provision: finished %v", opName)
 	}()
 
@@ -31,11 +38,6 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			log.Printf("provision: failed to set Operation error, %s", err)
 		}
 	}
-
-	// Set a timeout for provisioning.
-	// TODO(kimjae): Tie the context with timeout to op.
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Hour)
-	defer cancel()
 
 	p, err := newProvisionState(s, req)
 	if err != nil {
