@@ -39,6 +39,7 @@ class Mpi4py(SourceOrPrebuilt):
 
       mpich_pkg = ('infra/3pp/static_libs/mpich/%s' % wheel.plat.cipd_platform)
       pkg_dir = os.path.join(build_dir, mpich_pkg + '_cipd')
+      system.cipd.init(pkg_dir)
       system.cipd.install(mpich_pkg, self._mpich_version, pkg_dir)
 
       # Add MPICH CFLAGS and LDFLAGS to the environment. We can't easily

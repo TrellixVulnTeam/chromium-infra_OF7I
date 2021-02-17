@@ -75,6 +75,10 @@ class Cipd(object):
       cmd += ['-tag', tag]
     self.check_run(*cmd)
 
+  def init(self, root):
+    """Initializes a CIPD site root at the given location."""
+    self.check_run('init', '-force', root)
+
   def install(self, name, version, root):
     self.check_run('install', '-root', root, name, version)
 
