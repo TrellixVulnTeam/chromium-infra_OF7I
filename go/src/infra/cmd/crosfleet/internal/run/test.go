@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 var test = &subcommands.Command{
@@ -25,16 +27,33 @@ Do not build automation around this subcommand.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &testRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
+		c.envFlags.Register(&c.Flags)
+		c.testCommonFlags.Register(&c.Flags)
+		c.Flags.StringVar(&c.testArgs, "test-args", "", "Test arguments string (meaning depends on test).")
 		return c
 	},
 }
 
 type testRun struct {
 	subcommands.CommandRunBase
+	testCommonFlags
 	authFlags authcli.Flags
+	envFlags  common.EnvFlags
+	testArgs  string
 }
 
 func (c *testRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	fmt.Fprintf(a.GetOut(), "In real life this would test an individual test.\n")
+	if err := c.innerRun(a, args, env); err != nil {
+		cmdlib.PrintError(a, err)
+		return 1
+	}
 	return 0
+}
+
+func (c *testRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	if err := c.validateArgs(&c.Flags, "test name"); err != nil {
+		return err
+	}
+	fmt.Fprintf(a.GetOut(), "In real life this would run an individual test.\nFlags registered: %v\nArgs ergistered: %v\n", c.Flags, args)
+	return nil
 }
