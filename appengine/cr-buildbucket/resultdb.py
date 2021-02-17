@@ -81,6 +81,9 @@ def create_invocations_async(builds_and_configs):
               history_options=history_options,
           ),
       )
+      build.proto.infra.resultdb.invocation = (
+          'invocations/%s' % inv_req.invocation_id
+      )
       if build.proto.number:
         req.requests.add(
             invocation_id='build-%s-%d' %
@@ -88,6 +91,7 @@ def create_invocations_async(builds_and_configs):
             invocation=invocation_pb2.Invocation(
                 realm=build.realm,
                 included_invocations=['invocations/%s' % inv_req.invocation_id],
+                state=invocation_pb2.Invocation.State.FINALIZING,
                 producer_resource=inv_req.invocation.producer_resource,
             ),
         )
@@ -106,11 +110,21 @@ def create_invocations_async(builds_and_configs):
   ]
 
   for batch, res in zip(batches, resps):
-    assert len(res.invocations) == len(res.update_tokens) == len(batch)
-    # Populate the builds' name and token from the rpc response.
-    for inv, tok, (build, _) in zip(res.invocations, res.update_tokens, batch):
-      build.proto.infra.resultdb.invocation = inv.name
-      build.resultdb_update_token = tok
+    assert len(res.invocations) == len(res.update_tokens)
+    # There may be more invocations in the response than there are builds in
+    # the batch, because for some builds we create two invocations.
+    # However, there are exactly as many update_tokens as there are invocations,
+    # and their indices are expected to match.
+    # We create a mapping between invocation name and update token, and later
+    # save the appropriate update token to the build based on the name of its
+    # corresponding invocation.
+    tokens = {
+        inv.name: tok for inv, tok in zip(res.invocations, res.update_tokens)
+    }
+    for build, _ in batch:
+      assert build.proto.infra.resultdb.invocation in tokens
+      build.resultdb_update_token = tokens[build.proto.infra.resultdb.invocation
+                                          ]
 
 
 def enqueue_invocation_finalization_async(build):

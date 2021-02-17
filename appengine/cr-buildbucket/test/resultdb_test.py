@@ -105,8 +105,11 @@ class ResultDBTest(testing.AppengineTestCase):
 
     self.rpc_mock.return_value = future(
         recorder_pb2.BatchCreateInvocationsResponse(
-            invocations=[invocation_pb2.Invocation(name='invocations/build-4')],
-            update_tokens=['FakeUpdateToken'],
+            invocations=[
+                invocation_pb2.Invocation(name='invocations/build-4'),
+                invocation_pb2.Invocation(name='invocations/build-ccadafffd20293e0378d1f94d214c63a0f8342d1161454ef0acfa0405178106b-1'),  # pylint: disable=line-too-long
+            ],
+            update_tokens=['FakeUpdateToken1', 'FakeUpdateToken2'],
         )
     )
 
@@ -138,13 +141,14 @@ class ResultDBTest(testing.AppengineTestCase):
                         included_invocations=['invocations/build-4'],
                         producer_resource='//buildbucket.example.com/builds/4',
                         realm='chromium:try',
+                        state=invocation_pb2.Invocation.State.FINALIZING,
                     ),
                 ),
             ],
         ),
         credentials=mock.ANY,
     )
-    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
+    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken1')
     self.assertEqual(
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-4'
     )
