@@ -471,7 +471,7 @@ component_model_name = 'component_top_words'
 # The name of the gcs bucket containing component predicition trainer code.
 component_ml_bucket = classifier_project_id + '-mlengine'
 
-ratelimiting_enabled = False
+ratelimiting_enabled = True
 
 # Requests that hit ratelimiting_cost_thresh_sec get one extra count
 # added to their bucket at the end of the request for each additional
