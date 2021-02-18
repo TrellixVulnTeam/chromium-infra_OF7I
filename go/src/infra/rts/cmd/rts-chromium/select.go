@@ -50,6 +50,9 @@ func cmdSelect() *subcommands.Command {
 				A file per test target is written, e.g. browser_tests.filter.
 				The file format is described in https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/filters/README.md.
 				Before writing, all .filter files in the directory are deleted.
+
+				The out directory may be empty. It may happen if the selection strategy
+				decides to run all tests, e.g. if //DEPS is changed.
 			`))
 			r.Flags.Float64Var(&r.targetChangeRecall, "target-change-recall", 0.99, text.Doc(`
 				The target fraction of bad changes to be caught by the selection strategy.
@@ -118,7 +121,14 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 	r.logChangedFiles(ctx)
 
 	logging.Infof(ctx, "chosen threshold: %f", r.strategy.MaxDistance)
-	return r.done(r.writeFilterFiles())
+
+	// Select the tests and write .filter files.
+	err := r.writeFilterFiles()
+	if disableRTS.In(err) {
+		logging.Warningf(ctx, "disabling RTS: %s", err)
+		err = nil
+	}
+	return r.done(err)
 }
 
 // writeFilterFiles writes filter files in r.filterFilesDir directory.

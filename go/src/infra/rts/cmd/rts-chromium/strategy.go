@@ -50,19 +50,32 @@ var (
 		"//DEPS",
 	}
 	requireAllTestsRegexp = regexp.MustCompile(fmt.Sprintf("^(%s)$", strings.Join(requireAllTests, "|")))
+
+	disableRTS = errors.BoolTag{Key: errors.NewTagKey("skip RTS")}
 )
 
 // selectTests calls skipFile for test files that should be skipped.
+// May return an error annotated with disableRTS tag and the message explaining
+// why RTS was disabled.
 func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
 	// Disable RTS if the number of files is unusual.
 	if len(r.changedFiles) < minChangedFiles || len(r.changedFiles) > maxChangedFiles {
-		return nil
+		return errors.Reason(
+			"%d files were changed, which is outside of [%d, %d] range",
+			len(r.changedFiles),
+			minChangedFiles,
+			maxChangedFiles,
+		).Tag(disableRTS).Err()
 	}
 
 	// Check if any of the changed files requires all tests.
 	for f := range r.changedFiles {
 		if requireAllTestsRegexp.MatchString(f) {
-			return nil
+			return errors.Reason(
+				"%q was changed, which matches regexp %s",
+				f,
+				requireAllTests,
+			).Tag(disableRTS).Err()
 		}
 	}
 	r.strategy.Select(r.changedFiles.ToSlice(), func(fileName string) (keepGoing bool) {
