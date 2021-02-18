@@ -13,18 +13,17 @@ import (
 	"os/exec"
 
 	"github.com/maruel/subcommands"
-
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/libs/skylab/autotest/hostinfo"
-	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
-
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/autotest/hostinfo"
+	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 const defaultAutoservPath = "./server/autoserv"
@@ -78,11 +77,7 @@ func hostInfoStorePath(controlDir string, hostname string) (string, error) {
 
 func (c *repair) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ns, err := c.envFlags.Namespace()
-	if err != nil {
-		return err
-	}
-	ctx = utils.SetupContext(ctx, ns)
+	ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

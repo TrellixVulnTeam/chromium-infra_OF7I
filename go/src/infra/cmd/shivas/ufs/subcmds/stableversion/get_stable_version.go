@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/autotest/hostinfo"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetStableVersionCmd get stable version for given host and board/model.
@@ -65,12 +66,7 @@ func (c *getStableVersion) innerRun(a subcommands.Application, args []string, en
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	ns, err := c.envFlags.Namespace()
-	if err != nil {
-		return err
-	}
-
-	ctx = utils.SetupContext(ctx, ns)
+	ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

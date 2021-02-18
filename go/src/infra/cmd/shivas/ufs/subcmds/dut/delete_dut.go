@@ -61,11 +61,7 @@ func (c *deleteDUT) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ns, err := c.envFlags.Namespace()
-	if err != nil {
-		return err
-	}
-	ctx = utils.SetupContext(ctx, ns)
+	ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
