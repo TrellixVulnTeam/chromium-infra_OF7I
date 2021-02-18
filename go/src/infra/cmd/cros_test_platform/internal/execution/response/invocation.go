@@ -6,6 +6,7 @@ package response
 
 import (
 	"infra/cmd/cros_test_platform/internal/execution/testrunner"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -15,7 +16,7 @@ import (
 type Invocation struct {
 	Name             string
 	runnable         bool
-	rejectedTaskDims map[string]string
+	rejectedTaskDims []types.TaskDimKeyVal
 	tasks            []*testrunner.Build
 }
 
@@ -33,7 +34,7 @@ func (t *Invocation) NotifyTask(task *testrunner.Build) {
 //
 // When the invocation is not runnable because of unsatisfiable dependencies,
 // the rejected dimensions should be supplied as the rejectedTaskDims argument.
-func (t *Invocation) MarkNotRunnable(rejectedTaskDims map[string]string) {
+func (t *Invocation) MarkNotRunnable(rejectedTaskDims []types.TaskDimKeyVal) {
 	t.runnable = false
 	t.rejectedTaskDims = rejectedTaskDims
 }
@@ -81,6 +82,18 @@ func (t *Invocation) LifeCycle() test_platform.TaskState_LifeCycle {
 
 func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
 	if !t.runnable {
+		// This version of rejectedTaskDims is the legacy one, and it's not good
+		// because multiple values are possible for the same key.
+		// TODO(https://crbug.com/1179868): delete this representation
+		rejectedTaskDimsMap := make(map[string]string)
+		var rejectedDims []*steps.ExecuteResponse_TaskResult_RejectedTaskDimension
+		for _, d := range t.rejectedTaskDims {
+			rejectedTaskDimsMap[d.Key] = d.Val
+			rejectedDims = append(rejectedDims, &steps.ExecuteResponse_TaskResult_RejectedTaskDimension{
+				Key:   d.Key,
+				Value: d.Val,
+			})
+		}
 		return []*steps.ExecuteResponse_TaskResult{
 			{
 				Name: t.Name,
@@ -88,7 +101,8 @@ func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
 					LifeCycle: test_platform.TaskState_LIFE_CYCLE_REJECTED,
 					Verdict:   test_platform.TaskState_VERDICT_UNSPECIFIED,
 				},
-				RejectedTaskDimensions: t.rejectedTaskDims,
+				RejectedTaskDimensions: rejectedTaskDimsMap,
+				RejectedDimensions:     rejectedDims,
 			},
 		}
 	}

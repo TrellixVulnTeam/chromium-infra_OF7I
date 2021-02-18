@@ -72,7 +72,14 @@ func TestBotsAwareFakeClient(t *testing.T) {
 				t.Errorf("ValidateArgs returned %t, want %t", b, c.WantValid)
 			}
 			for _, k := range c.WantRejected {
-				if _, ok := r[k]; !ok {
+				found := false
+				for _, actualReject := range r {
+					if k == actualReject.Key {
+						found = true
+						break
+					}
+				}
+				if !found {
 					t.Errorf("Rejected arguments missing key %s", k)
 				}
 			}

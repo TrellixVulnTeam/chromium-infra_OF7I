@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/libs/skylab/request"
@@ -41,7 +42,7 @@ var InvalidDependencies = errors.BoolTag{Key: errors.NewTagKey("invalid test dep
 // Optionally returns a map of the unsatisfiable dependencies.
 //
 // Errors encountered in dependency validation are returned as generic errors.
-func ValidateDependencies(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerator) (map[string]string, error) {
+func ValidateDependencies(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerator) ([]types.TaskDimKeyVal, error) {
 	if err := argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed: %s.", err)
 		return nil, InvalidDependencies.Apply(err)

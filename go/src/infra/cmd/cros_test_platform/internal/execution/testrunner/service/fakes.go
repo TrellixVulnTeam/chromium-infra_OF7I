@@ -7,6 +7,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 	"infra/libs/skylab/request"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -24,7 +25,7 @@ type StubClient struct{}
 var _ Client = StubClient{}
 
 // ValidateArgs implements Client interface.
-func (c StubClient) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
+func (c StubClient) ValidateArgs(context.Context, *request.Args) (bool, []types.TaskDimKeyVal, error) {
 	return true, nil, nil
 }
 
@@ -84,16 +85,16 @@ func NewBotsAwareFakeClient(bots ...stringset.Set) BotsAwareFakeClient {
 }
 
 // ValidateArgs implements Client interface.
-func (c BotsAwareFakeClient) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+func (c BotsAwareFakeClient) ValidateArgs(ctx context.Context, args *request.Args) (bool, []types.TaskDimKeyVal, error) {
 	s, err := args.StaticDimensions()
 	if err != nil {
 		panic(fmt.Sprintf("Failed to obtain static dimensions from %v: %s", args, err))
 	}
 
-	rejected := make(map[string]string)
+	var rejected []types.TaskDimKeyVal
 	ds := make(stringset.Set)
 	for _, kv := range s {
-		rejected[kv.Key] = kv.Value
+		rejected = append(rejected, types.TaskDimKeyVal{Key: kv.Key, Val: kv.Value})
 		ds.Add(fmt.Sprintf("%s:%s", kv.Key, kv.Value))
 	}
 
@@ -235,7 +236,7 @@ type CallCountingClientWrapper struct {
 var _ Client = &CallCountingClientWrapper{Client: StubClient{}}
 
 // ValidateArgs implements Client interface.
-func (c *CallCountingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+func (c *CallCountingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, []types.TaskDimKeyVal, error) {
 	c.CallCounts.ValidateArgs++
 	return c.Client.ValidateArgs(ctx, args)
 }
@@ -296,7 +297,7 @@ type ArgsCollectingClientWrapper struct {
 var _ Client = &ArgsCollectingClientWrapper{Client: StubClient{}}
 
 // ValidateArgs implements Client interface.
-func (c *ArgsCollectingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, map[string]string, error) {
+func (c *ArgsCollectingClientWrapper) ValidateArgs(ctx context.Context, args *request.Args) (bool, []types.TaskDimKeyVal, error) {
 	c.Calls.ValidateArgs = append(c.Calls.ValidateArgs, struct {
 		Args *request.Args
 	}{

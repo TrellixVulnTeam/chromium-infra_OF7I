@@ -10,8 +10,9 @@ package execution_test
 import (
 	"context"
 	"fmt"
-	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"testing"
+
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
@@ -58,6 +59,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 			So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
 			So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
 			So(tr.RejectedTaskDimensions, ShouldContainKey, "freeform-key")
+			So(tr.RejectedDimensions[1].Key, ShouldEqual, "freeform-key")
 		})
 		Convey("and overall result is complete with failed verdict.", func() {
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)

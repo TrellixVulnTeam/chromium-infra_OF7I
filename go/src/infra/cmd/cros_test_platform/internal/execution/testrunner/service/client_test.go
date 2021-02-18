@@ -23,6 +23,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
@@ -65,9 +66,9 @@ func TestNonExistentBot(t *testing.T) {
 		var args request.Args
 		args.SchedulableLabels = &inventory.SchedulableLabels{}
 		addBoard(&args, "nonexistent-board")
-		expectedRejectedTaskDims := map[string]string{
-			"label-board": "nonexistent-board",
-			"pool":        "ChromeOSSkylab",
+		expectedRejectedTaskDims := []types.TaskDimKeyVal{
+			{Key: "label-board", Val: "nonexistent-board"},
+			{Key: "pool", Val: "ChromeOSSkylab"},
 		}
 		Convey("the validation fails.", func() {
 			botExists, rejectedTaskDims, err := skylab.ValidateArgs(ctx, &args)

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/swarming"
@@ -50,7 +52,7 @@ type FetchResultsResponse struct {
 type Client interface {
 	// ValidateArgs validates that a test_runner build can be created with
 	// the give arguments.
-	ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error)
+	ValidateArgs(context.Context, *request.Args) (bool, []types.TaskDimKeyVal, error)
 
 	// LaunchTask creates a new test_runner task with the given arguments.
 	LaunchTask(context.Context, *request.Args) (TaskReference, error)
@@ -167,7 +169,7 @@ func swarmingHTTPClient(ctx context.Context, authJSONPath string) (*http.Client,
 // Any changes to this implementation should be also reflected in
 // rawSwarmingSkylabClient.ValidateArgs
 // TODO(crbug.com/1033287): Remove the rawSwarmingSkylabClient implementation.
-func (c *clientImpl) ValidateArgs(ctx context.Context, args *request.Args) (botExists bool, rejectedTaskDims map[string]string, err error) {
+func (c *clientImpl) ValidateArgs(ctx context.Context, args *request.Args) (botExists bool, rejectedTaskDims []types.TaskDimKeyVal, err error) {
 	dims, err := args.StaticDimensions()
 	if err != nil {
 		err = errors.Annotate(err, "validate dependencies").Err()
@@ -179,10 +181,17 @@ func (c *clientImpl) ValidateArgs(ctx context.Context, args *request.Args) (botE
 		return
 	}
 	if !botExists {
-		rejectedTaskDims = map[string]string{}
+		rejectedTaskDims = []types.TaskDimKeyVal{}
 		for _, dim := range dims {
-			rejectedTaskDims[dim.Key] = dim.Value
+			rejectedTaskDims = append(rejectedTaskDims, types.TaskDimKeyVal{Key: dim.Key, Val: dim.Value})
 		}
+		// sort by key, then by val
+		sort.Slice(rejectedTaskDims, func(i, j int) bool {
+			if rejectedTaskDims[i].Key != rejectedTaskDims[j].Key {
+				return rejectedTaskDims[i].Key < rejectedTaskDims[j].Key
+			}
+			return rejectedTaskDims[i].Val < rejectedTaskDims[j].Val
+		})
 		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions: %v", args.TestRunnerRequest.GetTest().GetAutotest().GetName(), rejectedTaskDims)
 	}
 	return

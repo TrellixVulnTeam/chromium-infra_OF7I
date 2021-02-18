@@ -24,3 +24,8 @@ type InvocationID string
 func NewInvocationID(i int, test *steps.EnumerationResponse_AutotestInvocation) InvocationID {
 	return InvocationID(fmt.Sprintf("%d_%s", i, test.GetTest().GetName()))
 }
+
+// TaskDimKeyVal is a key-value Swarming task dimension.
+type TaskDimKeyVal struct {
+	Key, Val string
+}
