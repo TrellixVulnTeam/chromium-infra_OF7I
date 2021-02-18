@@ -5,12 +5,12 @@
 """Jobs that publish tarballs with Chromium source code."""
 
 load("//lib/build.star", "build")
+load("//lib/infra.star", "infra")
 
-def builder(name, recipe, builder_dimension = None, cores = 8, **kwargs):
+def builder(name, builder_dimension = None, cores = 8, **kwargs):
     luci.builder(
         name = name,
         bucket = "cron",
-        executable = build.recipe(recipe),
         service_account = "chromium-tarball-builder@chops-service-accounts.iam.gserviceaccount.com",
         dimensions = {
             "pool": "luci.infra.cron",
@@ -28,8 +28,8 @@ def builder(name, recipe, builder_dimension = None, cores = 8, **kwargs):
 
 builder(
     name = "publish_tarball_dispatcher",
-    recipe = "publish_tarball",
     builder_dimension = "publish_tarball",  # runs on same bots as 'publish_tarball'
+    executable = build.recipe("publish_tarball"),
     execution_timeout = 10 * time.minute,
     schedule = "37 */3 * * *",  # every 3 hours
     triggers = ["publish_tarball"],
@@ -37,7 +37,7 @@ builder(
 
 builder(
     name = "publish_tarball",
-    recipe = "publish_tarball",
+    executable = build.recipe("publish_tarball"),
     execution_timeout = 8 * time.hour,
     # Each trigger from 'publish_tarball_dispatcher' should result in a build.
     triggering_policy = scheduler.greedy_batching(max_batch_size = 1),
@@ -46,7 +46,7 @@ builder(
 
 builder(
     name = "Build From Tarball",
-    recipe = "build_from_tarball",
+    executable = infra.recipe("build_from_tarball"),
     execution_timeout = 5 * time.hour,
     # Each trigger from 'publish_tarball' should result in a build.
     triggering_policy = scheduler.greedy_batching(max_batch_size = 1),
