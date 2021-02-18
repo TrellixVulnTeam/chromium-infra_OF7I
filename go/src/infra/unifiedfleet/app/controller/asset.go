@@ -211,7 +211,9 @@ func updateMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
 	oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
 	hc := getMachineHistoryClient(machine)
 	//update the machine from the asset
-	updateMachineFromAsset(machine, asset)
+	if err := updateMachineFromAsset(ctx, machine, asset, hc); err != nil {
+		return err
+	}
 	if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 		return errors.Annotate(err, "unable to create machine").Err()
 	}
@@ -532,15 +534,30 @@ func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
 // updateMachineFromAsset updates a machine from asset
 //
 // This must be used only for DUT or a Labstation.
-func updateMachineFromAsset(machine *ufspb.Machine, asset *ufspb.Asset) {
+func updateMachineFromAsset(ctx context.Context, machine *ufspb.Machine, asset *ufspb.Asset, hc *HistoryClient) error {
 	if asset == nil {
-		return
+		return nil
 	}
 	if machine.GetChromeosMachine() == nil {
 		machine.Device = &ufspb.Machine_ChromeosMachine{
 			ChromeosMachine: &ufspb.ChromeOSMachine{},
 		}
 	}
+
+	// Update MachineLSE zone/rack info
+	if machine.GetLocation().GetRack() != asset.GetLocation().GetRack() ||
+		machine.GetLocation().GetZone() != asset.GetLocation().GetZone() {
+		// Check if asset zone/rack information is updated.
+		// If zone/rack info is updated, update the MachineLSE table with new zone/rack info.
+		indexMap := map[string]string{
+			"zone": asset.GetLocation().GetZone().String(), "rack": asset.GetLocation().GetRack()}
+		oldIndexMap := map[string]string{
+			"zone": machine.GetLocation().GetZone().String(), "rack": machine.GetLocation().GetRack()}
+		if err := updateIndexingForMachineResources(ctx, machine, indexMap, oldIndexMap, hc); err != nil {
+			return errors.Annotate(err, "UpdateAsset - update zone and rack indexing failed").Err()
+		}
+	}
+
 	// Serial number of UFS machine is updated by SSW in
 	// UpdateDutMeta https://source.corp.google.com/chromium_infra/go/src/infra/unifiedfleet/app/controller/machine.go;l=182
 	// Dont rely on Asset(user provided) for Serial number, Hwid, Sku.
@@ -562,4 +579,5 @@ func updateMachineFromAsset(machine *ufspb.Machine, asset *ufspb.Asset) {
 	default:
 		// Only DUTs and Labstations are stored as machines
 	}
+	return nil
 }
