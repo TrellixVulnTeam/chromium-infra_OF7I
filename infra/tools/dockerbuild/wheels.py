@@ -1310,6 +1310,8 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
+                'manylinux-x86',
+                'manylinux-x86-ucs2',
             ],
         ),
     )
