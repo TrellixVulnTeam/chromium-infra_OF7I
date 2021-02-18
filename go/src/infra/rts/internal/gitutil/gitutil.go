@@ -24,14 +24,22 @@ func ChangedFiles(repo, sinceRev string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	return changedFiles(out), nil
+}
 
-	out = strings.TrimSpace(out)
+// changedFiles is a testable part of ChangedFiles.
+func changedFiles(gitOutput string) []string {
+	out := strings.TrimSpace(gitOutput)
+	if out == "" {
+		// Note: strings.Split("", "\n") returns non-empty slice.
+		return nil
+	}
 	files := strings.Split(out, "\n")
 	for i := range files {
 		files[i] = strings.TrimSpace(files[i])
 		files[i] = strings.Trim(files[i], "\r")
 	}
-	return files, nil
+	return files
 }
 
 // RefExists returns true if the git ref exists.

@@ -58,3 +58,15 @@ func TestGit(t *testing.T) {
 		So(repoDir, ShouldEqual, tmpd)
 	})
 }
+
+func TestChangedFiles(t *testing.T) {
+	t.Parallel()
+	Convey(`ChangedFiles`, t, func() {
+		Convey(`Works`, func() {
+			So(changedFiles("foo\nbar\n"), ShouldResemble, []string{"foo", "bar"})
+		})
+		Convey(`No files changed`, func() {
+			So(changedFiles("\n"), ShouldResemble, []string(nil))
+		})
+	})
+}
