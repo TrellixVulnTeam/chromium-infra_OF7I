@@ -103,10 +103,11 @@ WITH
 			) AS files,
 		FROM cr-buildbucket.chromium.builds b, b.input.gerrit_changes ps
 		WHERE create_time BETWEEN @startTime and TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
-			-- Skip patchsets that modified >100 files, because we don't have the full
-			-- list. This also skips builds that don't have affected flies, e.g. CI builds,
-			-- because the value is NULL.
-			AND CAST(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") as FLOAT64) <= 100
+			-- Note that this indirectly makes this query resilient to a bug in
+			-- recipe that for large patchsets it sometimes does not report any
+			-- changed files.
+			-- https://ci.chromium.org/ui/p/chromium/builders/try/linux-rel/598767/overview.
+			AND CAST(JSON_EXTRACT(b.output.properties, "$.affected_files.total_count") as FLOAT64) BETWEEN @minChangedFiles AND @maxChangedFiles
 
 			-- Ignore any builds that modified non-src.git files.
 			AND NOT EXISTS (
@@ -154,8 +155,8 @@ WITH
 		-- Read prev-day and next-day results too to ensure that we have ALL
 		-- results of a given CQ attempt.
 		WHERE partition_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) and TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
-			AND (@test_id_regexp = '' OR REGEXP_CONTAINS(test_id, @test_id_regexp))
-			AND (@builder_regexp = '' OR EXISTS (SELECT 0 FROM tr.variant WHERE key='builder' AND REGEXP_CONTAINS(value, @builder_regexp)))
+			AND (@testIdRegexp = '' OR REGEXP_CONTAINS(test_id, @testIdRegexp))
+			AND (@builderRegexp = '' OR EXISTS (SELECT 0 FROM tr.variant WHERE key='builder' AND REGEXP_CONTAINS(value, @builderRegexp)))
 
 			# Exclude third-party tests (except Web Tests) because they test code
 			# which isn't in src.git.

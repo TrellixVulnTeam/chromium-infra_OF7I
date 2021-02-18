@@ -107,8 +107,10 @@ func (r *baseHistoryRun) runQuery(ctx context.Context, sql string, extraParams .
 	q.Parameters = []bigquery.QueryParameter{
 		{Name: "startTime", Value: r.startTime},
 		{Name: "endTime", Value: r.endTime},
-		{Name: "builder_regexp", Value: prepRe(r.builderRegex)},
-		{Name: "test_id_regexp", Value: prepRe(r.testIDRegex)},
+		{Name: "builderRegexp", Value: prepRe(r.builderRegex)},
+		{Name: "testIdRegexp", Value: prepRe(r.testIDRegex)},
+		{Name: "minChangedFiles", Value: minChangedFiles},
+		{Name: "maxChangedFiles", Value: maxChangedFiles},
 	}
 	q.Parameters = append(q.Parameters, extraParams...)
 

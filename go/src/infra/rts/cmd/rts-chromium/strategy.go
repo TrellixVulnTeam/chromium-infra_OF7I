@@ -17,6 +17,14 @@ import (
 	"infra/rts/presubmit/eval"
 )
 
+// The range of the number of changed files to enable RTS.
+// If the number of changed files is not in this range, then RTS is disabled.
+// Note that 99.3% of developer-authored git commits change <= 100 files, see bit.ly/chromium-rts
+const (
+	minChangedFiles = 1
+	maxChangedFiles = 100
+)
+
 // mustAlwaysRunTest returns true if the test file must never be skipped.
 func mustAlwaysRunTest(testFile string) bool {
 	switch {
@@ -46,6 +54,11 @@ var (
 
 // selectTests calls skipFile for test files that should be skipped.
 func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
+	// Disable RTS if the number of files is unusual.
+	if len(r.changedFiles) < minChangedFiles || len(r.changedFiles) > maxChangedFiles {
+		return nil
+	}
+
 	// Check if any of the changed files requires all tests.
 	for f := range r.changedFiles {
 		if requireAllTestsRegexp.MatchString(f) {
