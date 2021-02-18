@@ -956,26 +956,51 @@ SPECS.update({
 })
 
 from .wheel_wheel import MultiWheel
+from .wheel_mpi4py import Mpi4py
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'MultiWheel',
         # This should actually be 0.2.7, but the version needs to change in
         # order to pick up dependencies that weren't included when the
         # MultiWheel was originally added.
-        MultiWheel('pathos', '0.2.7.chromium.1', ([
-            Universal('dill', '0.3.3'),
-            Universal('klepto', '0.2.0'),
-            SourceOrPrebuilt(
-                'multiprocess',
-                '0.70.11.1',
-                packaged=[],
-                pyversions=['py2', 'py3'],
-            ),
-            Universal('pathos', '0.2.7'),
-            Universal('pox', '0.2.9'),
-            Universal('ppft', '1.6.6.3', pyversions=['py2', 'py3']),
-            Universal('pyina', '0.2.4'),
-        ])),
+        MultiWheel(
+            'pathos',
+            '0.2.7.chromium.3',
+            ([
+                Universal('dill', '0.3.3'),
+                Universal('klepto', '0.2.0'),
+                Mpi4py(
+                    'mpi4py',
+                    '3.0.3',
+                    'version:3.4.1.chromium.4',
+                    packaged=[
+                        'windows-x86',
+                        'windows-x86-py3',
+                        'windows-x64',
+                        'windows-x64-py3',
+                    ],
+                ),
+                SourceOrPrebuilt(
+                    'multiprocess',
+                    '0.70.11.1',
+                    packaged=[],
+                    pyversions=['py2', 'py3'],
+                ),
+                Universal('pathos', '0.2.7'),
+                Universal('pox', '0.2.9'),
+                Universal('ppft', '1.6.6.3', pyversions=['py2', 'py3']),
+                Universal('pyina', '0.2.4'),
+            ]),
+            # No 3pp builders for these platforms, so cannot build mpi4py.
+            skip_plat=[
+                'linux-armv6',
+                'linux-mipsel',
+                'linux-mips',
+                'linux-mips64',
+                'manylinux-x86',
+                'manylinux-x86-ucs2',
+            ],
+        ),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of
         # available packages.
         #
@@ -1297,33 +1322,6 @@ SPECS.update({
         'InfraPackage',
         InfraPackage('expect_tests'),
         InfraPackage('infra_libs'),
-    )
-})
-
-from .wheel_mpi4py import Mpi4py
-SPECS.update({
-    s.spec.tag: s for s in assert_sorted(
-        'Mpi4py',
-        Mpi4py(
-            'mpi4py',
-            '3.0.3',
-            'version:3.4.1.chromium.4',
-            packaged=[
-                'windows-x86',
-                'windows-x86-py3',
-                'windows-x64',
-                'windows-x64-py3',
-            ],
-            # No 3pp builders for these platforms.
-            skip_plat=[
-                'linux-armv6',
-                'linux-mipsel',
-                'linux-mips',
-                'linux-mips64',
-                'manylinux-x86',
-                'manylinux-x86-ucs2',
-            ],
-        ),
     )
 })
 

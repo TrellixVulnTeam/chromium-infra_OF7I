@@ -61,6 +61,7 @@ class MultiWheel(Builder):
                wheels,
                pyversions=None,
                only_plat=None,
+               skip_plat=None,
                default=True):
     """Builds a wheel consisting of multiple other wheels.
 
@@ -74,6 +75,7 @@ class MultiWheel(Builder):
           "Wheel.pyversion_str"). If None, a default Python version will be
           used.
       only_plat: (See Builder's "only_plat" argument.)
+      skip_plat: (See Builder's "skip_plat" argument.)
     """
     self._wheels = wheels
     super(MultiWheel, self).__init__(
@@ -83,7 +85,8 @@ class MultiWheel(Builder):
             universal=False,
             pyversions=pyversions,
             default=default),
-        only_plat=only_plat)
+        only_plat=only_plat,
+        skip_plat=skip_plat)
 
   def build_fn(self, system, wheel):
     sub_wheels = []

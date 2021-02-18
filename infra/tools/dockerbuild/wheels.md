@@ -2718,29 +2718,6 @@ wheel: <
 
 * *universal*
 
-## **mpi4py**
-
-### 3.0.3
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/mpi4py/${vpython_platform}"
-  version: "version:3.0.3"
->
-```
-
-
-* *linux-arm64*
-* *linux-arm64-py3*
-* *mac-x64*
-* *mac-x64-cp38*
-* *manylinux-x64*
-* *manylinux-x64-py3*
-* *manylinux-x64-ucs2*
-* *windows-x64*
-* *windows-x64-py3*
-* *windows-x86*
-
 ## **netifaces**
 
 ### 0.10.9
@@ -3096,29 +3073,23 @@ wheel: <
 
 ## **pathos**
 
-### 0.2.7.chromium.1
+### 0.2.7.chromium.3
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pathos/${vpython_platform}"
-  version: "version:0.2.7.chromium.1"
+  version: "version:0.2.7.chromium.3"
 >
 ```
 
 
 * *linux-arm64*
 * *linux-arm64-py3*
-* *linux-armv6*
-* *linux-mips*
-* *linux-mips64*
-* *linux-mipsel*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
