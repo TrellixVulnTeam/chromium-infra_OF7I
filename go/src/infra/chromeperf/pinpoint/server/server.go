@@ -454,12 +454,12 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 
 func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {
 	// TODO(dberris): Implement this!
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "TODO")
 }
 
 func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobRequest) (*pinpoint.Job, error) {
 	// TODO(dberris): Implement this!
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "TODO")
 }
 
 // Email address for the service account to use.
@@ -513,6 +513,7 @@ func Main() {
 	h.SetServingStatus("pinpoint", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)
+	log.Println("Listening on ", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
