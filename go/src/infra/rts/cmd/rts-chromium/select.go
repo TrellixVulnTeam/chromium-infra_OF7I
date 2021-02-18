@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"golang.org/x/sync/errgroup"
@@ -23,6 +24,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/rts/filegraph/git"
+	"infra/rts/internal/gitutil"
 	evalpb "infra/rts/presubmit/eval/proto"
 )
 
@@ -37,10 +39,7 @@ func cmdSelect() *subcommands.Command {
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &selectRun{}
-			r.Flags.StringVar(&r.changedFilesPath, "changed-files", "", text.Doc(`
-				Path to the file with changed files.
-				Each line of the file must be a filename, with "//" prefix.
-			`))
+			r.Flags.StringVar(&r.checkout, "checkout", "", "Path to a src.git checkout")
 			r.Flags.StringVar(&r.modelDir, "model-dir", "", text.Doc(`
 				Path to the directory with the model files.
 				Normally it is coming from CIPD package "chromium/rts/model"
@@ -66,7 +65,7 @@ type selectRun struct {
 
 	// Direct input.
 
-	changedFilesPath   string
+	checkout           string
 	modelDir           string
 	out                string
 	targetChangeRecall float64
@@ -74,14 +73,14 @@ type selectRun struct {
 	// Indirect input.
 
 	testFiles    map[string]*TestFile // indexed by source-absolute test file name
-	changedFiles stringset.Set
+	changedFiles stringset.Set        // files different between origin/master and the working tree
 	strategy     git.SelectionStrategy
 }
 
 func (r *selectRun) validateFlags() error {
 	switch {
-	case r.changedFilesPath == "":
-		return errors.New("-changed-files is required")
+	case r.checkout == "":
+		return errors.New("-checkout is required")
 	case r.modelDir == "":
 		return errors.New("-model-dir is required")
 	case r.out == "":
@@ -106,16 +105,24 @@ func (r *selectRun) Run(a subcommands.Application, args []string, env subcommand
 	if err := r.loadInput(ctx); err != nil {
 		return r.done(err)
 	}
+
+	if err := prepareOutDir(r.out, "*.filter"); err != nil {
+		return r.done(errors.Annotate(err, "failed to prepare filter file dir %q", r.out).Err())
+	}
+
+	// Do this check only after existing .filter files are deleted.
+	if len(r.changedFiles) == 0 {
+		logging.Warningf(ctx, "no changed files detected")
+		return 0
+	}
+	r.logChangedFiles(ctx)
+
 	logging.Infof(ctx, "chosen threshold: %f", r.strategy.MaxDistance)
 	return r.done(r.writeFilterFiles())
 }
 
 // writeFilterFiles writes filter files in r.filterFilesDir directory.
 func (r *selectRun) writeFilterFiles() error {
-	if err := prepareOutDir(r.out, "*.filter"); err != nil {
-		return errors.Annotate(err, "failed to prepare filter file dir %q", r.out).Err()
-	}
-
 	// Maps a test target to the list of tests to skip.
 	testsToSkip := map[string][]string{}
 	err := r.selectTests(func(testFileToSkip *TestFile) error {
@@ -137,6 +144,15 @@ func (r *selectRun) writeFilterFiles() error {
 		fmt.Printf("wrote %s\n", fileName)
 	}
 	return nil
+}
+
+func (r *selectRun) logChangedFiles(ctx context.Context) {
+	msg := &strings.Builder{}
+	msg.WriteString("detected changed files:\n")
+	for f := range r.changedFiles {
+		fmt.Fprintf(msg, "  %s\n", f)
+	}
+	logging.Infof(ctx, "%s", msg)
 }
 
 func writeFilterFile(fileName string, toSkip []string) error {
@@ -175,8 +191,8 @@ func (r *selectRun) loadInput(ctx context.Context) error {
 	})
 
 	eg.Go(func() (err error) {
-		r.changedFiles, err = loadStringSet(r.changedFilesPath)
-		return errors.Annotate(err, "failed to load changed files set").Err()
+		err = r.loadChangedFiles()
+		return errors.Annotate(err, "failed to load changed files").Err()
 	})
 
 	return eg.Wait()
@@ -233,20 +249,15 @@ func (r *selectRun) loadTestFileSet(fileName string) error {
 	})
 }
 
-// loadStringSet loads a set of newline-separated strings from a text file.
-func loadStringSet(fileName string) (stringset.Set, error) {
-	f, err := os.Open(fileName)
+// loadChangedFiles initializes r.changedFiles.
+func (r *selectRun) loadChangedFiles() error {
+	// TODO(nodir): switch to "main" branch when it exists.
+	changedFiles, err := gitutil.ChangedFiles(r.checkout, "origin/master")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer f.Close()
-
-	set := stringset.New(0)
-	scan := bufio.NewScanner(f)
-	for scan.Scan() {
-		set.Add(scan.Text())
-	}
-	return set, scan.Err()
+	r.changedFiles = stringset.NewFromSlice(changedFiles...)
+	return nil
 }
 
 // chooseThreshold returns the distance threshold based on

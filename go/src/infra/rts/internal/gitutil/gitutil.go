@@ -17,6 +17,23 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 )
 
+// ChangedFiles returns the list of files differing in sinceRef and the working
+// directory. Example of sinceRev: "origin/main".
+func ChangedFiles(repo, sinceRev string) ([]string, error) {
+	out, err := Exec(repo)("diff", "--name-only", sinceRev)
+	if err != nil {
+		return nil, err
+	}
+
+	out = strings.TrimSpace(out)
+	files := strings.Split(out, "\n")
+	for i := range files {
+		files[i] = strings.TrimSpace(files[i])
+		files[i] = strings.Trim(files[i], "\r")
+	}
+	return files, nil
+}
+
 // RefExists returns true if the git ref exists.
 func RefExists(repoDir, ref string) (bool, error) {
 	// Pass -- so that git knows that the argument after rev-parse is a ref
