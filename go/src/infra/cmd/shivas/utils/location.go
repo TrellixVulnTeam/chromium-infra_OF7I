@@ -113,9 +113,6 @@ func GetLocation(input string) (*ufspb.Location, error) {
 			break
 		}
 	}
-	if loc.Rack == "" {
-		return nil, errors.Reason("Invalid input, No rack found").Err()
-	}
 	loc.BarcodeName = input
 	return loc, nil
 }

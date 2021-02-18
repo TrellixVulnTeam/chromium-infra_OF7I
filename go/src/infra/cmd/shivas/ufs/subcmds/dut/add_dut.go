@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
@@ -60,6 +61,11 @@ var AddDUTCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DUTRegistrationFileText)
 
+		// Asset location fields
+		c.Flags.StringVar(&c.zone, "zone", "", "Zone that the asset is in. "+cmdhelp.ZoneFilterHelpText)
+		c.Flags.StringVar(&c.rack, "rack", "", "Rack that the asset is in.")
+
+		// DUT/MachineLSE common fields
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the DUT.")
 		c.Flags.StringVar(&c.asset, "asset", "", "asset tag of the machine.")
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
@@ -128,6 +134,10 @@ type addDUT struct {
 	tags                      []string
 	state                     string
 	description               string
+
+	// Asset location fields
+	zone string
+	rack string
 
 	// ACS DUT fields
 	chameleons        []string
@@ -263,6 +273,9 @@ func (c addDUT) validateArgs() error {
 		if (c.rpm != "" && c.rpmOutlet == "") || (c.rpm == "" && c.rpmOutlet != "") {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need both rpm and its outlet. %s:%s is invalid", c.rpm, c.rpmOutlet)
 		}
+		if c.zone != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Invalid zone %s", c.zone)
+		}
 		for _, cp := range c.chameleons {
 			if !ufsUtil.IsChameleonType(cp) {
 				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid chameleon type name, please check help info for '-chameleons'.", cp)
@@ -346,6 +359,10 @@ func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
 }
 
 func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
+	// Update the asset location by using the lse name or user provided zone/rack info.
+	if err := c.updateAssetLocation(ctx, ic, lse); err != nil {
+		return err
+	}
 	if !ufsUtil.ValidateTags(lse.Tags) {
 		return fmt.Errorf(ufsAPI.InvalidTags)
 	}
@@ -537,4 +554,62 @@ func (c *addDUT) updateDeployActions() {
 
 func appendServoSetupPrefix(servoSetup string) string {
 	return fmt.Sprintf("SERVO_SETUP_%s", servoSetup)
+}
+
+// updateAssetLocation updates the asset location by MachineLSE name or by user provided zone/rack info.
+//
+// If DUT(MachineLSE) creation fails in UFS, its ok not to revert the asset location back to original.
+// The user will again try to deploy/add this DUT and during that time the asset location
+// will be set back to the correct value if there is any inconsistency.
+func (c *addDUT) updateAssetLocation(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
+	// Get the location info from DUT name.
+	loc, err := utils.GetLocation(lse.GetName())
+	if err != nil {
+		fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", lse.GetName())
+		return err
+	}
+	asset := &ufspb.Asset{
+		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, c.asset),
+		Location: loc,
+	}
+	// Override zone info with user provided option.
+	if c.zone != "" {
+		asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
+	}
+	// Override rack info with user provided option.
+	if c.rack != "" {
+		asset.GetLocation().Rack = c.rack
+	}
+	// Create the update field mask.
+	mask := &field_mask.FieldMask{}
+	if asset.GetLocation().GetZone() != ufspb.Zone_ZONE_UNSPECIFIED {
+		mask.Paths = append(mask.Paths, "location.zone")
+		asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
+	}
+	if asset.GetLocation().GetRack() != "" {
+		mask.Paths = append(mask.Paths, "location.rack")
+	}
+	if asset.GetLocation().GetRackNumber() != "" {
+		mask.Paths = append(mask.Paths, "location.rack_number")
+	}
+	if asset.GetLocation().GetRow() != "" {
+		mask.Paths = append(mask.Paths, "location.row")
+	}
+	if asset.GetLocation().GetPosition() != "" {
+		mask.Paths = append(mask.Paths, "location.position")
+	}
+	if asset.GetLocation().GetBarcodeName() != "" {
+		mask.Paths = append(mask.Paths, "location.barcode_name")
+	}
+	if len(mask.Paths) > 0 {
+		_, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{
+			Asset:      asset,
+			UpdateMask: mask,
+		})
+		if err != nil {
+			fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", lse.GetName())
+			return err
+		}
+	}
+	return nil
 }

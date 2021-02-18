@@ -168,6 +168,9 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		if err != nil {
 			return nil, err
 		}
+		if asset.Location.Rack == "" {
+			return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid input, rack required but not found in location %s", c.location)
+		}
 		if asset.Location.Zone == ufspb.Zone_ZONE_UNSPECIFIED {
 			return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid zone in location %s", c.location)
 		}
