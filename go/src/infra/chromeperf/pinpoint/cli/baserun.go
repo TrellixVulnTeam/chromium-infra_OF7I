@@ -17,8 +17,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"infra/chromeperf/pinpoint"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -28,8 +31,12 @@ import (
 
 type baseCommandRun struct {
 	subcommands.CommandRunBase
-	endpoint              string
+	endpoint string
+
+	// Used in method pinpointClient to lazy-init the factory.
+	initClientFactory     sync.Once
 	pinpointClientFactory *pinpointClientFactory
+	initClientFactoryErr  error
 }
 
 func (r *baseCommandRun) RegisterDefaultFlags(p Param) {
@@ -40,6 +47,14 @@ func (r *baseCommandRun) RegisterDefaultFlags(p Param) {
 
 func getFactorySettings(ctx context.Context, serviceDomain string) (
 	*tokenCache, credentials.TransportCredentials, error) {
+
+	// If we are connecting to a local server, heuristically guess that we want
+	// an insecure connection and return nil for all return values (which the
+	// client factory takes that as an indication to use insecure).
+	if strings.HasPrefix(serviceDomain, "localhost:") {
+		return nil, nil, nil
+	}
+
 	cacheDir, found := os.LookupEnv("PINPOINT_CACHE_DIR")
 	if !found {
 		homeEnv, err := os.UserHomeDir()
@@ -56,15 +71,26 @@ func getFactorySettings(ctx context.Context, serviceDomain string) (
 	return tCache, tlsCreds, nil
 }
 
-func (r *baseCommandRun) initFactory(ctx context.Context) error {
-	// We're setting up the client factory here, so that the end commands
-	// do the connection on-demand. If we ever need to support a scripting
-	// interface where we allow multiple requests to be made by the runner
-	// concurrently, then we're good with that scenario too.
-	tCache, tlsCreds, err := getFactorySettings(ctx, r.endpoint)
-	if err != nil {
-		return errors.Annotate(err, "failed to initialize connection factory").Err()
+func (r *baseCommandRun) pinpointClient(ctx context.Context) (pinpoint.PinpointClient, error) {
+	r.initClientFactory.Do(func() {
+		// We're setting up the client factory here, so that the end commands
+		// do the connection on-demand. If we ever need to support a scripting
+		// interface where we allow multiple requests to be made by the runner
+		// concurrently, then we're good with that scenario too.
+		tCache, tlsCreds, err := getFactorySettings(ctx, r.endpoint)
+		if err != nil {
+			r.initClientFactoryErr = errors.Annotate(err, "failed to initialize connection factory").Err()
+			return
+		}
+		endpoint := r.endpoint
+		if !strings.Contains(endpoint, ":") {
+			// If there is no port specified, assume we want gRPC's default.
+			endpoint = fmt.Sprintf("%s:%d", endpoint, 443)
+		}
+		r.pinpointClientFactory = newPinpointClientFactory(endpoint, tCache, tlsCreds)
+	})
+	if r.initClientFactoryErr != nil {
+		return nil, r.initClientFactoryErr
 	}
-	r.pinpointClientFactory = newPinpointClientFactory(fmt.Sprintf("%s:%d", r.endpoint, 443), tCache, tlsCreds)
-	return nil
+	return r.pinpointClientFactory.Client(ctx)
 }

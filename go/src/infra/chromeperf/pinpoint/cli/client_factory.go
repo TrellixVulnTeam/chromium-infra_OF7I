@@ -29,6 +29,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// pinpointClientFactory encapsulates the dialing and caching of a Pinpoint
+// backend. Use newPinpointClientFactory to instantiate this type.
 type pinpointClientFactory struct {
 	mu             sync.Mutex
 	Endpoint       string
@@ -38,28 +40,34 @@ type pinpointClientFactory struct {
 	connection     *grpc.ClientConn
 }
 
-func (p *pinpointClientFactory) NewClient(ctx context.Context) (pinpoint.PinpointClient, error) {
+// Client returns a cached PinpointClient or newly dials a Pinpoint backend.
+func (p *pinpointClientFactory) Client(ctx context.Context) (pinpoint.PinpointClient, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.cachedClient != nil {
 		return p.cachedClient, nil
 	}
 
-	v, o, err := newTokenVerifierAndConfig(ctx, p.TCache, interactiveFlowProvider{})
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to get user token").Err()
-	}
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	logSuffix := " (in insecure mode)"
+	if p.TCache != nil || p.TLSCredentials != nil {
+		logSuffix = ""
+		v, o, err := newTokenVerifierAndConfig(ctx, p.TCache, interactiveFlowProvider{})
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to get user token").Err()
+		}
 
-	logging.Infof(ctx, "Connecting to %s", p.Endpoint)
-	jc, err := newJWTCredentials(p.TCache, v, o)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed acquiring credentials").Err()
+		jc, err := newJWTCredentials(p.TCache, v, o)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed acquiring credentials").Err()
+		}
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(p.TLSCredentials),
+			grpc.WithPerRPCCredentials(jc),
+		}
 	}
-	conn, err := grpc.Dial(
-		p.Endpoint,
-		grpc.WithTransportCredentials(p.TLSCredentials),
-		grpc.WithPerRPCCredentials(jc),
-	)
+	logging.Infof(ctx, "Connecting to %s%s", p.Endpoint, logSuffix)
+	conn, err := grpc.Dial(p.Endpoint, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +89,13 @@ func (p *pinpointClientFactory) Close() error {
 	return nil
 }
 
+// If tCache and tlsCreds are both nil, an "insecure" gRPC channel is created;
+// this is useful for local testing.
 func newPinpointClientFactory(endpoint string, tCache *tokenCache, tlsCreds credentials.TransportCredentials) *pinpointClientFactory {
 	return &pinpointClientFactory{
 		Endpoint:       endpoint,
 		TCache:         tCache,
 		TLSCredentials: tlsCreds,
-		connection:     nil,
 	}
 }
 

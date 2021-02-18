@@ -104,12 +104,9 @@ func (e *experimentTelemetryRun) Run(a subcommands.Application, args []string, e
 		return 1
 	}
 	ctx := cli.GetContext(a, e, env)
-	if err := e.initFactory(ctx); err != nil {
-
-	}
-	c, err := e.pinpointClientFactory.NewClient(ctx)
+	c, err := e.pinpointClient(ctx)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "ERROR: Failed to create a Pinpoint client: %s", err)
+		fmt.Fprintf(a.GetErr(), "ERROR: Failed to create a Pinpoint client: %s\n", err)
 		return 1
 	}
 	js := &pinpoint.JobSpec{
