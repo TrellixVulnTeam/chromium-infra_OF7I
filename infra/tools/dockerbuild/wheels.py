@@ -936,6 +936,16 @@ SPECS.update({
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
             'cryptography',
+            '2.9.2',
+            openssl='1.1.1g',
+            pyversions=['py2', 'py3'],
+            packaged=[
+                'windows-x86', 'windows-x86-py3', 'windows-x64',
+                'windows-x64-py3'
+            ],
+        ),
+        CryptographyPyPI(
+            'cryptography',
             '3.3.1',
             openssl='1.1.1i',
             pyversions=['py2', 'py3'],
