@@ -1,0 +1,14 @@
+package: infra/chromeperf/pinpoint/${platform}
+description: Pinpoint CLI utility
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+  - windows-amd64
+go_packages:
+  - infra/chromeperf/cmd/pinpoint
+install_mode: copy
+root: ../../go/bin
+data:
+  - file: pinpoint${exe_suffix}
+  - version_file: .versions/pinpoint${exe_suffix}.cipd_version
