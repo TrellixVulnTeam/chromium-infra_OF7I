@@ -51,6 +51,7 @@ func (c *repairRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *repairRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	fmt.Fprint(a.GetErr(), "\nThis command is deprecated and will be removed on 03/01/2021. Please use 'shivas repair-duts ...'\n\n")
 	if c.expirationMins >= dayInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
 	}

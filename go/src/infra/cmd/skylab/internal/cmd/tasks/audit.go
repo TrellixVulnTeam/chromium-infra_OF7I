@@ -63,6 +63,7 @@ func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	fmt.Fprint(a.GetErr(), "\nThis command is deprecated and will be removed on 03/01/2021. Please use 'shivas audit-duts ...'\n\n")
 	if err := c.validateArgs(args); err != nil {
 		return err
 	}
