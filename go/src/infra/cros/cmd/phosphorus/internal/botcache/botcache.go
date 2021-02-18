@@ -63,10 +63,15 @@ func (s *Store) LoadProvisionableLabel(name string) (string, error) {
 	return "", nil
 }
 
-// SetProvisionableLabel sets a particular provisionable label in bot cache.
+// SetNonEmptyProvisionableLabel sets the given provisionable label in the bot
+// cache, provided the given value is not an empty string. Empty provisionable
+// labels should never be set in the bot cache, and will result in an error.
 //
 // Use ClearProvisionableLabel to delete a label from cache.
-func (s *Store) SetProvisionableLabel(name string, value string) error {
+func (s *Store) SetNonEmptyProvisionableLabel(name string, value string) error {
+	if value == "" {
+		return fmt.Errorf("attempted to set empty string for bot cache provisionable label %s", name)
+	}
 	ds, err := s.Load()
 	if err != nil {
 		return err

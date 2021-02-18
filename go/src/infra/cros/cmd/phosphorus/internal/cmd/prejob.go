@@ -180,8 +180,8 @@ func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobReque
 	ar, err := provisionViaAutoserv(ctx, "os", r, []string{fmt.Sprintf("%s:%s", chromeOSBuildKey, desired)})
 	resp := toPrejobResponse(ar)
 
-	if prejobSucceeded(resp, err) {
-		if err := bc.SetProvisionableLabel(chromeOSBuildKey, desired); err != nil {
+	if desired != "" && prejobSucceeded(resp, err) {
+		if err := bc.SetNonEmptyProvisionableLabel(chromeOSBuildKey, desired); err != nil {
 			return nil, errors.Annotate(err, "provision chromeos legacy").Err()
 		}
 	}
@@ -230,11 +230,15 @@ func provisionFirmwareLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (
 	resp := toPrejobResponse(ar)
 
 	if prejobSucceeded(resp, err) {
-		if err := bc.SetProvisionableLabel(roFirmwareBuildKey, roDesired); err != nil {
-			return nil, errors.Annotate(err, "provision firmware").Err()
+		if roDesired != "" {
+			if err := bc.SetNonEmptyProvisionableLabel(roFirmwareBuildKey, roDesired); err != nil {
+				return nil, errors.Annotate(err, "provision firmware").Err()
+			}
 		}
-		if err := bc.SetProvisionableLabel(rwFirmwareBuildKey, rwDesired); err != nil {
-			return nil, errors.Annotate(err, "provision firmware").Err()
+		if rwDesired != "" {
+			if err := bc.SetNonEmptyProvisionableLabel(rwFirmwareBuildKey, rwDesired); err != nil {
+				return nil, errors.Annotate(err, "provision firmware").Err()
+			}
 		}
 	}
 	return resp, err
@@ -362,8 +366,8 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
 
-	if prejobSucceeded(resp, err) {
-		if err := bc.SetProvisionableLabel(chromeOSBuildKey, desired); err != nil {
+	if desired != "" && prejobSucceeded(resp, err) {
+		if err := bc.SetNonEmptyProvisionableLabel(chromeOSBuildKey, desired); err != nil {
 			return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 		}
 	}
@@ -429,8 +433,8 @@ func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.Prejo
 		return nil, errors.Annotate(err, "provision lacros").Err()
 	}
 
-	if prejobSucceeded(resp, err) {
-		if err := bc.SetProvisionableLabel(lacrosPathKey, desired); err != nil {
+	if desired != "" && prejobSucceeded(resp, err) {
+		if err := bc.SetNonEmptyProvisionableLabel(lacrosPathKey, desired); err != nil {
 			return nil, errors.Annotate(err, "provision lacros").Err()
 		}
 	}
