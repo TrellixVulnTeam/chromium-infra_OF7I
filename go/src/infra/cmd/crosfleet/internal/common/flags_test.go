@@ -10,10 +10,9 @@ import (
 )
 
 func TestToKeyvalSlice(t *testing.T) {
-	wantSlice := []string{"foo:bar", "baz:lol"}
+	wantSlice := []string{"foo:bar"}
 	gotSlice := ToKeyvalSlice(map[string]string{
 		"foo": "bar",
-		"baz": "lol",
 	})
 	if diff := cmp.Diff(wantSlice, gotSlice); diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
