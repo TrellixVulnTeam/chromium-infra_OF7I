@@ -285,9 +285,9 @@
       "--config",
       "[CLEANUP]/.docker",
       "pull",
-      "gcr.io/chromium-container-registry/labs_docker:dhcp_test_version"
+      "gcr.io/chromium-container-registry/fleet_systems:dhcp_test_version"
     ],
-    "name": "docker pull labs_docker:dhcp_test_version"
+    "name": "docker pull fleet_systems:dhcp_test_version"
   },
   {
     "cmd": [
@@ -297,7 +297,7 @@
       "--config-file",
       "[CLEANUP]/.docker",
       "--image",
-      "gcr.io/chromium-container-registry/labs_docker:dhcp_test_version",
+      "gcr.io/chromium-container-registry/fleet_systems:dhcp_test_version",
       "--dir-map",
       "[START_DIR]/chrome_golo",
       "/src",

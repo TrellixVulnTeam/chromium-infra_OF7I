@@ -104,7 +104,7 @@ def RunSteps(api):
 
   # Pull docker images before testing with them.
   for os_version in sorted(images_needed):
-    image = 'labs_docker:dhcp_%s' % os_version
+    image = 'fleet_systems:dhcp_%s' % os_version
     try:
       api.docker.pull(image)
     except api.step.StepFailure:
@@ -114,9 +114,9 @@ def RunSteps(api):
   # Test each zone/os combination as necessary.
   for zone in sorted(zones_to_test):
     for os_version in sorted(dhcp_map[zone]):
-      image = 'labs_docker:dhcp_%s' % os_version
+      image = 'fleet_systems:dhcp_%s' % os_version
       api.docker.run(
-          image='labs_docker:dhcp_%s' % os_version,
+          image='fleet_systems:dhcp_%s' % os_version,
           step_name='DHCP config test for %s on %s hosts: %s' %
           (zone, os_version, ', '.join(dhcp_map[zone][os_version])),
           cmd_args=[zone],
@@ -150,7 +150,7 @@ def GenTests(api):
       api.override_step_data('get ufs host data', stdout=stdout),
       api.override_step_data('get ufs vm data', stdout=stdout),
       api.override_step_data(
-          'docker pull labs_docker:dhcp_%s' % _TEST_OS_VERSION, retcode=1),
+          'docker pull fleet_systems:dhcp_%s' % _TEST_OS_VERSION, retcode=1),
       api.post_process(post_process.StatusException),
       api.post_process(post_process.DropExpectation),
   )
