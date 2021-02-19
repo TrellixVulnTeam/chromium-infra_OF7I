@@ -1328,6 +1328,48 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-16")
 		})
+
+		Convey("UpdateDUT - RPM powerunit_name and powerunit_outlet conflict with multiple DUTs", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-201",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			machine2 := &ufspb.Machine{
+				Name: "machine-202",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine2)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", 0, nil)
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
+			dut2 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", 0, nil)
+			_, err = inventory.CreateMachineLSE(ctx, dut2)
+			So(err, ShouldBeNil)
+			// Both dut-216 and dut-217 have same RPM info.
+			// Update to dut-216 or dut-217 without change in rpm info will fail.
+			dut3 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			_, err = UpdateDUT(ctx, dut3, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-217")
+
+			dut4 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			_, err = UpdateDUT(ctx, dut4, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-216")
+		})
 	})
 }
 

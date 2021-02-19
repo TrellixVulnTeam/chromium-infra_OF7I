@@ -1274,8 +1274,10 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		if err != nil {
 			return errors.Annotate(err, "Failed to query machinelses for rpm name and port %s:%s", rpmName, rpmPort).Err()
 		}
-		if len(lses) > 0 && lses[0].GetName() != machinelse.Name {
-			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("The rpm powerunit_name and powerunit_outlet is already in use by %s.", lses[0].GetName()))
+		for _, lse := range lses {
+			if lse.GetName() != machinelse.Name {
+				return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("The rpm powerunit_name and powerunit_outlet is already in use by %s.", lse.GetName()))
+			}
 		}
 	}
 
