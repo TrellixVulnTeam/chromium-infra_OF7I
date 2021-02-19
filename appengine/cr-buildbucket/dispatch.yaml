@@ -34,5 +34,6 @@ dispatch:
     service: default-go
 
   # UpdateBuild is implemented in Go, so serve it from there.
+  # Temporarially rolling this back to backend
   - url: "*/prpc/buildbucket.v2.Builds/UpdateBuild"
-    service: default-go
+    service: backend
