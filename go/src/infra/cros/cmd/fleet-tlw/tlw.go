@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
@@ -127,12 +128,14 @@ func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, addr, opName 
 	log.Printf("CacheForDut: Started Operation = %v", opName)
 
 	path := fmt.Sprintf("%s%s", parsedURL.Host, parsedURL.Path)
+	// TODO (guocb): return a url.URL instead of string.
 	cs, err := s.cFrontend.AssignBackend(addr, path)
 	if err != nil {
 		log.Printf("CacheForDut: %s", err)
 	}
 
-	u := fmt.Sprintf("%s/%s", cs, path)
+	u := fmt.Sprintf("%s/download/%s", strings.TrimSuffix(cs, "/"), path)
+	log.Printf("CacheForDut: result URL: %s", u)
 	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{Url: u}); err != nil {
 		log.Printf("CacheForDut: failed while updating result: %s", err)
 	}
