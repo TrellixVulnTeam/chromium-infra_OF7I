@@ -1,0 +1,8 @@
+google-cloud-bigquery[pandas]
+scikit-learn
+google-cloud-bigquery-storage
+matplotlib
+kneed
+tensorflow==2.4.1
+keras
+seaborn
