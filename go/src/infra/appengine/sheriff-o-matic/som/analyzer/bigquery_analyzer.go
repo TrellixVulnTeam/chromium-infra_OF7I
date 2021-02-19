@@ -95,6 +95,7 @@ var androidFilterFunc = func(r failureRow) bool {
 		return true
 	}
 	validBuilders := []string{
+		"android-androidx-packager",
 		"android-arm-official-tests",
 		"android-arm64-official-tests",
 		"android-arm-beta-tests",
