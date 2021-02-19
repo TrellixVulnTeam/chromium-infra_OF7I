@@ -11,6 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
@@ -20,9 +21,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/artifact.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x01\n\x08\x41rtifact\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x61rtifact_id\x18\x02 \x01(\t\x12\x11\n\tfetch_url\x18\x03 \x01(\t\x12\x38\n\x14\x66\x65tch_url_expiration\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0c\x63ontent_type\x18\x05 \x01(\t\x12\x12\n\nsize_bytes\x18\x06 \x01(\x03\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/artifact.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbb\x01\n\x08\x41rtifact\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x61rtifact_id\x18\x02 \x01(\t\x12\x11\n\tfetch_url\x18\x03 \x01(\t\x12\x38\n\x14\x66\x65tch_url_expiration\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0c\x63ontent_type\x18\x05 \x01(\t\x12\x12\n\nsize_bytes\x18\x06 \x01(\x03\x12\x15\n\x08\x63ontents\x18\x07 \x01(\x0c\x42\x03\xe0\x41\x04\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
-  dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
 
 
@@ -77,6 +78,13 @@ _ARTIFACT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='contents', full_name='luci.resultdb.v1.Artifact.contents', index=6,
+      number=7, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\340A\004', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -89,8 +97,8 @@ _ARTIFACT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=109,
-  serialized_end=273,
+  serialized_start=142,
+  serialized_end=329,
 )
 
 _ARTIFACT.fields_by_name['fetch_url_expiration'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
@@ -106,4 +114,5 @@ _sym_db.RegisterMessage(Artifact)
 
 
 DESCRIPTOR._options = None
+_ARTIFACT.fields_by_name['contents']._options = None
 # @@protoc_insertion_point(module_scope)

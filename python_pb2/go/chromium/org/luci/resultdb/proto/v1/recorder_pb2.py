@@ -14,6 +14,7 @@ _sym_db = _symbol_database.Default()
 from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from google.protobuf import field_mask_pb2 as google_dot_protobuf_dot_field__mask__pb2
+from go.chromium.org.luci.resultdb.proto.v1 import artifact_pb2 as go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_artifact__pb2
 from go.chromium.org.luci.resultdb.proto.v1 import invocation_pb2 as go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2
 from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2 as go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2
 
@@ -24,9 +25,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/recorder.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\x1a\x38go.chromium.org/luci/resultdb/proto/v1/test_result.proto\"{\n\x17\x43reateInvocationRequest\x12\x1a\n\rinvocation_id\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x30\n\ninvocation\x18\x02 \x01(\x0b\x32\x1c.luci.resultdb.v1.Invocation\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"p\n\x1d\x42\x61tchCreateInvocationsRequest\x12;\n\x08requests\x18\x01 \x03(\x0b\x32).luci.resultdb.v1.CreateInvocationRequest\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"j\n\x1e\x42\x61tchCreateInvocationsResponse\x12\x31\n\x0binvocations\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.Invocation\x12\x15\n\rupdate_tokens\x18\x02 \x03(\t\"\x81\x01\n\x17UpdateInvocationRequest\x12\x35\n\ninvocation\x18\x01 \x01(\x0b\x32\x1c.luci.resultdb.v1.InvocationB\x03\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\".\n\x19\x46inalizeInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"z\n UpdateIncludedInvocationsRequest\x12!\n\x14including_invocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x17\n\x0f\x61\x64\x64_invocations\x18\x02 \x03(\t\x12\x1a\n\x12remove_invocations\x18\x03 \x03(\t\"~\n\x17\x43reateTestResultRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x36\n\x0btest_result\x18\x02 \x01(\x0b\x32\x1c.luci.resultdb.v1.TestResultB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x89\x01\n\x1d\x42\x61tchCreateTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12;\n\x08requests\x18\x02 \x03(\x0b\x32).luci.resultdb.v1.CreateTestResultRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"T\n\x1e\x42\x61tchCreateTestResultsResponse\x12\x32\n\x0ctest_results\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.TestResult\"\x8d\x01\n\x1c\x43reateTestExonerationRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12@\n\x10test_exoneration\x18\x02 \x01(\x0b\x32!.luci.resultdb.v1.TestExonerationB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x93\x01\n\"BatchCreateTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12@\n\x08requests\x18\x02 \x03(\x0b\x32..luci.resultdb.v1.CreateTestExonerationRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"c\n#BatchCreateTestExonerationsResponse\x12<\n\x11test_exonerations\x18\x01 \x03(\x0b\x32!.luci.resultdb.v1.TestExoneration2\xf0\x07\n\x08Recorder\x12]\n\x10\x43reateInvocation\x12).luci.resultdb.v1.CreateInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12}\n\x16\x42\x61tchCreateInvocations\x12/.luci.resultdb.v1.BatchCreateInvocationsRequest\x1a\x30.luci.resultdb.v1.BatchCreateInvocationsResponse\"\x00\x12]\n\x10UpdateInvocation\x12).luci.resultdb.v1.UpdateInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12\x61\n\x12\x46inalizeInvocation\x12+.luci.resultdb.v1.FinalizeInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12i\n\x19UpdateIncludedInvocations\x12\x32.luci.resultdb.v1.UpdateIncludedInvocationsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12]\n\x10\x43reateTestResult\x12).luci.resultdb.v1.CreateTestResultRequest\x1a\x1c.luci.resultdb.v1.TestResult\"\x00\x12}\n\x16\x42\x61tchCreateTestResults\x12/.luci.resultdb.v1.BatchCreateTestResultsRequest\x1a\x30.luci.resultdb.v1.BatchCreateTestResultsResponse\"\x00\x12l\n\x15\x43reateTestExoneration\x12..luci.resultdb.v1.CreateTestExonerationRequest\x1a!.luci.resultdb.v1.TestExoneration\"\x00\x12\x8c\x01\n\x1b\x42\x61tchCreateTestExonerations\x12\x34.luci.resultdb.v1.BatchCreateTestExonerationsRequest\x1a\x35.luci.resultdb.v1.BatchCreateTestExonerationsResponse\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/recorder.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x35go.chromium.org/luci/resultdb/proto/v1/artifact.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\x1a\x38go.chromium.org/luci/resultdb/proto/v1/test_result.proto\"{\n\x17\x43reateInvocationRequest\x12\x1a\n\rinvocation_id\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x30\n\ninvocation\x18\x02 \x01(\x0b\x32\x1c.luci.resultdb.v1.Invocation\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"p\n\x1d\x42\x61tchCreateInvocationsRequest\x12;\n\x08requests\x18\x01 \x03(\x0b\x32).luci.resultdb.v1.CreateInvocationRequest\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"j\n\x1e\x42\x61tchCreateInvocationsResponse\x12\x31\n\x0binvocations\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.Invocation\x12\x15\n\rupdate_tokens\x18\x02 \x03(\t\"\x81\x01\n\x17UpdateInvocationRequest\x12\x35\n\ninvocation\x18\x01 \x01(\x0b\x32\x1c.luci.resultdb.v1.InvocationB\x03\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\".\n\x19\x46inalizeInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"z\n UpdateIncludedInvocationsRequest\x12!\n\x14including_invocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x17\n\x0f\x61\x64\x64_invocations\x18\x02 \x03(\t\x12\x1a\n\x12remove_invocations\x18\x03 \x03(\t\"~\n\x17\x43reateTestResultRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x36\n\x0btest_result\x18\x02 \x01(\x0b\x32\x1c.luci.resultdb.v1.TestResultB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x89\x01\n\x1d\x42\x61tchCreateTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12;\n\x08requests\x18\x02 \x03(\x0b\x32).luci.resultdb.v1.CreateTestResultRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"T\n\x1e\x42\x61tchCreateTestResultsResponse\x12\x32\n\x0ctest_results\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.TestResult\"\x8d\x01\n\x1c\x43reateTestExonerationRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12@\n\x10test_exoneration\x18\x02 \x01(\x0b\x32!.luci.resultdb.v1.TestExonerationB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x93\x01\n\"BatchCreateTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12@\n\x08requests\x18\x02 \x03(\x0b\x32..luci.resultdb.v1.CreateTestExonerationRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"c\n#BatchCreateTestExonerationsResponse\x12<\n\x11test_exonerations\x18\x01 \x03(\x0b\x32!.luci.resultdb.v1.TestExoneration\"_\n\x15\x43reateArtifactRequest\x12\x13\n\x06parent\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x31\n\x08\x61rtifact\x18\x02 \x01(\x0b\x32\x1a.luci.resultdb.v1.ArtifactB\x03\xe0\x41\x02\"X\n\x1b\x42\x61tchCreateArtifactsRequest\x12\x39\n\x08requests\x18\x02 \x03(\x0b\x32\'.luci.resultdb.v1.CreateArtifactRequest\"M\n\x1c\x42\x61tchCreateArtifactsResponse\x12-\n\tartifacts\x18\x01 \x03(\x0b\x32\x1a.luci.resultdb.v1.Artifact2\xe9\x08\n\x08Recorder\x12]\n\x10\x43reateInvocation\x12).luci.resultdb.v1.CreateInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12}\n\x16\x42\x61tchCreateInvocations\x12/.luci.resultdb.v1.BatchCreateInvocationsRequest\x1a\x30.luci.resultdb.v1.BatchCreateInvocationsResponse\"\x00\x12]\n\x10UpdateInvocation\x12).luci.resultdb.v1.UpdateInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12\x61\n\x12\x46inalizeInvocation\x12+.luci.resultdb.v1.FinalizeInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12i\n\x19UpdateIncludedInvocations\x12\x32.luci.resultdb.v1.UpdateIncludedInvocationsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12]\n\x10\x43reateTestResult\x12).luci.resultdb.v1.CreateTestResultRequest\x1a\x1c.luci.resultdb.v1.TestResult\"\x00\x12}\n\x16\x42\x61tchCreateTestResults\x12/.luci.resultdb.v1.BatchCreateTestResultsRequest\x1a\x30.luci.resultdb.v1.BatchCreateTestResultsResponse\"\x00\x12l\n\x15\x43reateTestExoneration\x12..luci.resultdb.v1.CreateTestExonerationRequest\x1a!.luci.resultdb.v1.TestExoneration\"\x00\x12\x8c\x01\n\x1b\x42\x61tchCreateTestExonerations\x12\x34.luci.resultdb.v1.BatchCreateTestExonerationsRequest\x1a\x35.luci.resultdb.v1.BatchCreateTestExonerationsResponse\"\x00\x12w\n\x14\x42\x61tchCreateArtifacts\x12-.luci.resultdb.v1.BatchCreateArtifactsRequest\x1a..luci.resultdb.v1.BatchCreateArtifactsResponse\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
-  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_artifact__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2.DESCRIPTOR,])
 
 
 
@@ -72,8 +73,8 @@ _CREATEINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=286,
-  serialized_end=409,
+  serialized_start=341,
+  serialized_end=464,
 )
 
 
@@ -111,8 +112,8 @@ _BATCHCREATEINVOCATIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=411,
-  serialized_end=523,
+  serialized_start=466,
+  serialized_end=578,
 )
 
 
@@ -150,8 +151,8 @@ _BATCHCREATEINVOCATIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=525,
-  serialized_end=631,
+  serialized_start=580,
+  serialized_end=686,
 )
 
 
@@ -189,8 +190,8 @@ _UPDATEINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=634,
-  serialized_end=763,
+  serialized_start=689,
+  serialized_end=818,
 )
 
 
@@ -221,8 +222,8 @@ _FINALIZEINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=765,
-  serialized_end=811,
+  serialized_start=820,
+  serialized_end=866,
 )
 
 
@@ -267,8 +268,8 @@ _UPDATEINCLUDEDINVOCATIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=813,
-  serialized_end=935,
+  serialized_start=868,
+  serialized_end=990,
 )
 
 
@@ -313,8 +314,8 @@ _CREATETESTRESULTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=937,
-  serialized_end=1063,
+  serialized_start=992,
+  serialized_end=1118,
 )
 
 
@@ -359,8 +360,8 @@ _BATCHCREATETESTRESULTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1066,
-  serialized_end=1203,
+  serialized_start=1121,
+  serialized_end=1258,
 )
 
 
@@ -391,8 +392,8 @@ _BATCHCREATETESTRESULTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1205,
-  serialized_end=1289,
+  serialized_start=1260,
+  serialized_end=1344,
 )
 
 
@@ -437,8 +438,8 @@ _CREATETESTEXONERATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1292,
-  serialized_end=1433,
+  serialized_start=1347,
+  serialized_end=1488,
 )
 
 
@@ -483,8 +484,8 @@ _BATCHCREATETESTEXONERATIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1436,
-  serialized_end=1583,
+  serialized_start=1491,
+  serialized_end=1638,
 )
 
 
@@ -515,8 +516,111 @@ _BATCHCREATETESTEXONERATIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1585,
-  serialized_end=1684,
+  serialized_start=1640,
+  serialized_end=1739,
+)
+
+
+_CREATEARTIFACTREQUEST = _descriptor.Descriptor(
+  name='CreateArtifactRequest',
+  full_name='luci.resultdb.v1.CreateArtifactRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='parent', full_name='luci.resultdb.v1.CreateArtifactRequest.parent', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='artifact', full_name='luci.resultdb.v1.CreateArtifactRequest.artifact', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1741,
+  serialized_end=1836,
+)
+
+
+_BATCHCREATEARTIFACTSREQUEST = _descriptor.Descriptor(
+  name='BatchCreateArtifactsRequest',
+  full_name='luci.resultdb.v1.BatchCreateArtifactsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='requests', full_name='luci.resultdb.v1.BatchCreateArtifactsRequest.requests', index=0,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1838,
+  serialized_end=1926,
+)
+
+
+_BATCHCREATEARTIFACTSRESPONSE = _descriptor.Descriptor(
+  name='BatchCreateArtifactsResponse',
+  full_name='luci.resultdb.v1.BatchCreateArtifactsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='artifacts', full_name='luci.resultdb.v1.BatchCreateArtifactsResponse.artifacts', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1928,
+  serialized_end=2005,
 )
 
 _CREATEINVOCATIONREQUEST.fields_by_name['invocation'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2._INVOCATION
@@ -530,6 +634,9 @@ _BATCHCREATETESTRESULTSRESPONSE.fields_by_name['test_results'].message_type = go
 _CREATETESTEXONERATIONREQUEST.fields_by_name['test_exoneration'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2._TESTEXONERATION
 _BATCHCREATETESTEXONERATIONSREQUEST.fields_by_name['requests'].message_type = _CREATETESTEXONERATIONREQUEST
 _BATCHCREATETESTEXONERATIONSRESPONSE.fields_by_name['test_exonerations'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2._TESTEXONERATION
+_CREATEARTIFACTREQUEST.fields_by_name['artifact'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_artifact__pb2._ARTIFACT
+_BATCHCREATEARTIFACTSREQUEST.fields_by_name['requests'].message_type = _CREATEARTIFACTREQUEST
+_BATCHCREATEARTIFACTSRESPONSE.fields_by_name['artifacts'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_artifact__pb2._ARTIFACT
 DESCRIPTOR.message_types_by_name['CreateInvocationRequest'] = _CREATEINVOCATIONREQUEST
 DESCRIPTOR.message_types_by_name['BatchCreateInvocationsRequest'] = _BATCHCREATEINVOCATIONSREQUEST
 DESCRIPTOR.message_types_by_name['BatchCreateInvocationsResponse'] = _BATCHCREATEINVOCATIONSRESPONSE
@@ -542,6 +649,9 @@ DESCRIPTOR.message_types_by_name['BatchCreateTestResultsResponse'] = _BATCHCREAT
 DESCRIPTOR.message_types_by_name['CreateTestExonerationRequest'] = _CREATETESTEXONERATIONREQUEST
 DESCRIPTOR.message_types_by_name['BatchCreateTestExonerationsRequest'] = _BATCHCREATETESTEXONERATIONSREQUEST
 DESCRIPTOR.message_types_by_name['BatchCreateTestExonerationsResponse'] = _BATCHCREATETESTEXONERATIONSRESPONSE
+DESCRIPTOR.message_types_by_name['CreateArtifactRequest'] = _CREATEARTIFACTREQUEST
+DESCRIPTOR.message_types_by_name['BatchCreateArtifactsRequest'] = _BATCHCREATEARTIFACTSREQUEST
+DESCRIPTOR.message_types_by_name['BatchCreateArtifactsResponse'] = _BATCHCREATEARTIFACTSRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 CreateInvocationRequest = _reflection.GeneratedProtocolMessageType('CreateInvocationRequest', (_message.Message,), {
@@ -628,6 +738,27 @@ BatchCreateTestExonerationsResponse = _reflection.GeneratedProtocolMessageType('
   })
 _sym_db.RegisterMessage(BatchCreateTestExonerationsResponse)
 
+CreateArtifactRequest = _reflection.GeneratedProtocolMessageType('CreateArtifactRequest', (_message.Message,), {
+  'DESCRIPTOR' : _CREATEARTIFACTREQUEST,
+  '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.recorder_pb2'
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.CreateArtifactRequest)
+  })
+_sym_db.RegisterMessage(CreateArtifactRequest)
+
+BatchCreateArtifactsRequest = _reflection.GeneratedProtocolMessageType('BatchCreateArtifactsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _BATCHCREATEARTIFACTSREQUEST,
+  '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.recorder_pb2'
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.BatchCreateArtifactsRequest)
+  })
+_sym_db.RegisterMessage(BatchCreateArtifactsRequest)
+
+BatchCreateArtifactsResponse = _reflection.GeneratedProtocolMessageType('BatchCreateArtifactsResponse', (_message.Message,), {
+  'DESCRIPTOR' : _BATCHCREATEARTIFACTSRESPONSE,
+  '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.recorder_pb2'
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.BatchCreateArtifactsResponse)
+  })
+_sym_db.RegisterMessage(BatchCreateArtifactsResponse)
+
 
 DESCRIPTOR._options = None
 _CREATEINVOCATIONREQUEST.fields_by_name['invocation_id']._options = None
@@ -640,6 +771,8 @@ _BATCHCREATETESTRESULTSREQUEST.fields_by_name['invocation']._options = None
 _CREATETESTEXONERATIONREQUEST.fields_by_name['invocation']._options = None
 _CREATETESTEXONERATIONREQUEST.fields_by_name['test_exoneration']._options = None
 _BATCHCREATETESTEXONERATIONSREQUEST.fields_by_name['invocation']._options = None
+_CREATEARTIFACTREQUEST.fields_by_name['parent']._options = None
+_CREATEARTIFACTREQUEST.fields_by_name['artifact']._options = None
 
 _RECORDER = _descriptor.ServiceDescriptor(
   name='Recorder',
@@ -648,8 +781,8 @@ _RECORDER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1687,
-  serialized_end=2695,
+  serialized_start=2008,
+  serialized_end=3137,
   methods=[
   _descriptor.MethodDescriptor(
     name='CreateInvocation',
@@ -738,6 +871,16 @@ _RECORDER = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_BATCHCREATETESTEXONERATIONSREQUEST,
     output_type=_BATCHCREATETESTEXONERATIONSRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='BatchCreateArtifacts',
+    full_name='luci.resultdb.v1.Recorder.BatchCreateArtifacts',
+    index=9,
+    containing_service=None,
+    input_type=_BATCHCREATEARTIFACTSREQUEST,
+    output_type=_BATCHCREATEARTIFACTSRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
