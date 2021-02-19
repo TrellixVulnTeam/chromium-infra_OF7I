@@ -1046,6 +1046,18 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 			return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 		}
 	}
+
+	// 5. Check if the OS MachineLSE DUT/Labstation is trying to use an already used rpm name and rpm port
+	rpmName, rpmPort := getRPMNamePortForOSMachineLSE(machinelse)
+	if rpmName != "" && rpmPort != "" {
+		lses, err := inventory.QueryMachineLSEByPropertyNames(ctx, map[string]string{"rpm_id": rpmName, "rpm_port": rpmPort}, true)
+		if err != nil {
+			return errors.Annotate(err, "Failed to query machinelses for rpm name and port %s:%s", rpmName, rpmPort).Err()
+		}
+		if len(lses) > 0 {
+			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("The rpm powerunit_name and powerunit_outlet is already in use by %s.", lses[0].GetName()))
+		}
+	}
 	return nil
 }
 
@@ -1252,6 +1264,18 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 				"add this host %s.\n", machinelse.Name))
 			logging.Errorf(ctx, errorMsg.String())
 			return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+		}
+	}
+
+	// 4. Check if the OS MachineLSE DUT/Labstation is trying to use an already used rpm name and rpm port
+	rpmName, rpmPort := getRPMNamePortForOSMachineLSE(machinelse)
+	if rpmName != "" && rpmPort != "" {
+		lses, err := inventory.QueryMachineLSEByPropertyNames(ctx, map[string]string{"rpm_id": rpmName, "rpm_port": rpmPort}, true)
+		if err != nil {
+			return errors.Annotate(err, "Failed to query machinelses for rpm name and port %s:%s", rpmName, rpmPort).Err()
+		}
+		if len(lses) > 0 && lses[0].GetName() != machinelse.Name {
+			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("The rpm powerunit_name and powerunit_outlet is already in use by %s.", lses[0].GetName()))
 		}
 	}
 

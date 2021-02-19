@@ -709,3 +709,16 @@ func getInventoryV2Client(ctx context.Context) (external.CrosInventoryClient, er
 	}
 	return es.NewCrosInventoryInterfaceFactory(ctx, config.Get(ctx).GetCrosInventoryHost())
 }
+
+func getRPMNamePortForOSMachineLSE(lse *ufspb.MachineLSE) (string, string) {
+	if lse.GetChromeosMachineLse() != nil {
+		if lse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			return lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitName(),
+				lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitOutlet()
+		} else if lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+			return lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitName(),
+				lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitOutlet()
+		}
+	}
+	return "", ""
+}

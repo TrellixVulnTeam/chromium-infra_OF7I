@@ -32,6 +32,7 @@ type MachineLSEEntity struct {
 	MachineLSEProtoTypeID string   `gae:"machinelse_prototype_id"`
 	SwitchID              string   `gae:"switch_id"`
 	RPMID                 string   `gae:"rpm_id"`
+	RPMPort               string   `gae:"rpm_port"`
 	VlanID                string   `gae:"vlan_id"`
 	ServoID               string   `gae:"servo_id"`
 	ServoType             string   `gae:"servo_type"`
@@ -68,12 +69,22 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 	}
 	servo := p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 	servoID := ufsds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
+	var rpmID string
+	var rpmPort string
+	if p.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+		rpmID = p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitName()
+		rpmPort = p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitOutlet()
+	} else if p.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		rpmID = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitOutlet()
+		rpmPort = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitOutlet()
+	}
 	return &MachineLSEEntity{
 		ID:                    p.GetName(),
 		MachineIDs:            p.GetMachines(),
 		MachineLSEProtoTypeID: p.GetMachineLsePrototype(),
 		SwitchID:              p.GetChromeosMachineLse().GetDeviceLse().GetNetworkDeviceInterface().GetSwitch(),
-		RPMID:                 p.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
+		RPMID:                 rpmID,
+		RPMPort:               rpmPort,
 		VlanID:                p.GetVlan(),
 		ServoID:               servoID,
 		ServoType:             servo.GetServoType(),
@@ -92,14 +103,23 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 // QueryMachineLSEByPropertyName queries MachineLSE Entity in the datastore
 // If keysOnly is true, then only key field is populated in returned machinelses
 func QueryMachineLSEByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.MachineLSE, error) {
+	return QueryMachineLSEByPropertyNames(ctx, map[string]string{propertyName: id}, keysOnly)
+}
+
+// QueryMachineLSEByPropertyNames queries MachineLSE Entity in the datastore
+// If keysOnly is true, then only key field is populated in returned machinelses
+func QueryMachineLSEByPropertyNames(ctx context.Context, propertyMap map[string]string, keysOnly bool) ([]*ufspb.MachineLSE, error) {
 	q := datastore.NewQuery(MachineLSEKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*MachineLSEEntity
-	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+	for propertyName, id := range propertyMap {
+		q = q.Eq(propertyName, id)
+	}
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No machineLSEs found for the query: %s=%s", propertyName, id)
+		logging.Infof(ctx, "No machineLSEs found for the query: %s", q.String())
 		return nil, nil
 	}
 	machineLSEs := make([]*ufspb.MachineLSE, 0, len(entities))
@@ -350,6 +370,8 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "switch_id"
 	case util.RPMFilterName:
 		field = "rpm_id"
+	case util.RPMPortFilterName:
+		field = "rpm_port"
 	case util.VlanFilterName:
 		field = "vlan_id"
 	case util.ServoFilterName:
@@ -379,7 +401,7 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 	case util.NicFilterName:
 		field = "nic"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/vlan/servo/servotype/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/rpmport/vlan/servo/servotype/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
 	}
 	return field, nil
 }

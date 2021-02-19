@@ -84,6 +84,7 @@ var (
 	KVMPortFilterName           string = "kvmport"
 	MacAddressFilterName        string = "mac"
 	RPMFilterName               string = "rpm"
+	RPMPortFilterName           string = "rpmport"
 	SwitchFilterName            string = "switch"
 	SwitchPortFilterName        string = "switchport"
 	ServoFilterName             string = "servo"
