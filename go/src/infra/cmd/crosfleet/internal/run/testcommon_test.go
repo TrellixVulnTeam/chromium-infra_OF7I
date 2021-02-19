@@ -212,7 +212,7 @@ func TestSoftwareDependencies(t *testing.T) {
 		t.Run(fmt.Sprintf("(%s)", tt.wantDeps), func(t *testing.T) {
 			t.Parallel()
 			gotDeps, gotErr := tt.testCommonFlags.softwareDependencies()
-			if diff := cmp.Diff(tt.wantDeps, gotDeps, diffOpts); diff != "" {
+			if diff := cmp.Diff(tt.wantDeps, gotDeps, common.CmpOpts); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
 			gotErrString := common.ErrToString(gotErr)
@@ -267,7 +267,7 @@ func TestSchedulingParams(t *testing.T) {
 		t.Run(fmt.Sprintf("(%s)", tt.wantParams), func(t *testing.T) {
 			t.Parallel()
 			gotParams := tt.testCommonFlags.schedulingParams()
-			if diff := cmp.Diff(tt.wantParams, gotParams, diffOpts); diff != "" {
+			if diff := cmp.Diff(tt.wantParams, gotParams, common.CmpOpts); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
 		})
@@ -296,7 +296,7 @@ func TestRetryParams(t *testing.T) {
 			t.Parallel()
 			fs := testCommonFlags{maxRetries: tt.maxRetries}
 			gotParams := fs.retryParams()
-			if diff := cmp.Diff(tt.wantParams, gotParams, diffOpts); diff != "" {
+			if diff := cmp.Diff(tt.wantParams, gotParams, common.CmpOpts); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
 		})
@@ -361,7 +361,7 @@ func TestTestPlatformRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error constructing Test Platform request: %v", err)
 	}
-	if diff := cmp.Diff(wantRequest, gotRequest, diffOpts); diff != "" {
+	if diff := cmp.Diff(wantRequest, gotRequest, common.CmpOpts); diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
 	}
 }

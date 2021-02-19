@@ -8,18 +8,16 @@ package buildbucket
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"infra/cmd/crosfleet/internal/common"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
-	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
@@ -31,19 +29,10 @@ var maxServiceVersion = &test_platform.ServiceVersion{CrosfleetTool: 1}
 // string, adds it to the given Buildbucket property map, and returns the
 // property map.
 func addServiceVersion(props map[string]interface{}) map[string]interface{} {
-	pbMarshaler := jsonpb.Marshaler{}
-	versionJSON, err := pbMarshaler.MarshalToString(maxServiceVersion)
-	if err != nil {
-		panic(err)
+	props["$chromeos/service_version"] = map[string]interface{}{
+		// Convert to protoreflect.ProtoMessage for easier type comparison.
+		"version": maxServiceVersion.ProtoReflect().Interface(),
 	}
-	versionPropertyJSON, err := json.Marshal(
-		map[string]string{
-			"version": versionJSON,
-		})
-	if err != nil {
-		panic(err)
-	}
-	props["$chromeos/service_version"] = string(versionPropertyJSON)
 	return props
 }
 
@@ -80,12 +69,14 @@ func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, aut
 // Buildbucket requests take properties of type *structpb.Struct. To simplify
 // the conversion from other data structures to Structs, ScheduleBuild accepts
 // properties of type map[string]interface{}, where interface{} can be any of
-// Go's basic types: bool, string, number type, byte, or rune.
+// Go's basic types (bool, string, number type, byte, or rune), a proto message
+// (in the form protoreflect.ProtoMessage), or a nested map[string]interface{}
+// that fulfils the same requirements recursively.
 //
 // NOTE: Buildbucket priority is separate from internal swarming priority.
 func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}, dims map[string]string, tags map[string]string, priority int32) (int64, error) {
 	props = addServiceVersion(props)
-	propStruct, err := structbuilder.NewStruct(props)
+	propStruct, err := common.MapToStruct(props)
 	if err != nil {
 		return 0, err
 	}

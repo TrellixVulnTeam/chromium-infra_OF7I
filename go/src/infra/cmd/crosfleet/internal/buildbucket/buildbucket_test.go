@@ -5,8 +5,9 @@
 package buildbucket
 
 import (
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
+	"infra/cmd/crosfleet/internal/common"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,11 +17,14 @@ func TestAddServiceVersion(t *testing.T) {
 	t.Parallel()
 	startingProps := map[string]interface{}{"foo": "bar"}
 	wantProps := map[string]interface{}{
-		"foo":                       "bar",
-		"$chromeos/service_version": `{"version":"{\"crosfleetTool\":\"1\"}"}`,
+		"foo": "bar",
+		"$chromeos/service_version": map[string]interface{}{
+			// Convert to protoreflect.ProtoMessage for easier type comparison.
+			"version": (&test_platform.ServiceVersion{CrosfleetTool: 1}).ProtoReflect().Interface(),
+		},
 	}
 	gotProps := addServiceVersion(startingProps)
-	if diff := cmp.Diff(wantProps, gotProps); diff != "" {
+	if diff := cmp.Diff(wantProps, gotProps, common.CmpOpts); diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
 	}
 }
@@ -48,7 +52,7 @@ func TestBBDims(t *testing.T) {
 		{Key: "foo", Value: "bar"},
 	}
 	gotBBDims := bbDims(dims)
-	diff := cmp.Diff(wantBBDims, gotBBDims, cmpopts.IgnoreUnexported(buildbucketpb.RequestedDimension{}))
+	diff := cmp.Diff(wantBBDims, gotBBDims, common.CmpOpts)
 	if diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
 	}
@@ -62,7 +66,7 @@ func TestBBTags(t *testing.T) {
 		{Key: "foo", Value: "bar"},
 	}
 	gotBBTags := bbTags(tags)
-	diff := cmp.Diff(wantBBTags, gotBBTags, cmpopts.IgnoreUnexported(buildbucketpb.StringPair{}))
+	diff := cmp.Diff(wantBBTags, gotBBTags, common.CmpOpts)
 	if diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
 	}
