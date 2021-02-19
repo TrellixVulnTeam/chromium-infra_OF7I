@@ -7,19 +7,30 @@ package run
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/luci/common/errors"
+	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 	"infra/cmdsupport/cmdlib"
 	"strings"
+	"time"
 )
 
 var (
 	// DefaultSwarmingPriority is the default priority for a Swarming task.
-	DefaultSwarmingPriority = 140
+	DefaultSwarmingPriority = int64(140)
 	// MinSwarmingPriority is the lowest-allowed priority for a Swarming task.
-	MinSwarmingPriority = 50
+	MinSwarmingPriority = int64(50)
 	// MaxSwarmingPriority is the highest-allowed priority for a Swarming task.
-	MaxSwarmingPriority = 255
+	MaxSwarmingPriority = int64(255)
+	// imageArchiveBaseURL is the base url for the ChromeOS image archive.
+	imageArchiveBaseURL = "gs://chromeos-image-archive/"
 )
+
+type testRunCommon struct {
+}
 
 // testCommonFlags contains parameters common to the "run
 // test", "run suite", and "run testplan" subcommands.
@@ -30,11 +41,11 @@ type testCommonFlags struct {
 	image           string
 	qsAccount       string
 	maxRetries      int
-	priority        int
+	priority        int64
 	timeoutMins     int
-	dimensions      map[string]string
+	addedDims       map[string]string
 	provisionLabels map[string]string
-	tags            map[string]string
+	addedTags       map[string]string
 	keyvals         map[string]string
 	json            bool
 }
@@ -48,15 +59,15 @@ func (c *testCommonFlags) Register(f *flag.FlagSet) {
 	f.StringVar(&c.qsAccount, "qs-account", "", `Optional Quota Scheduler account to use for this task. Overrides -priority flag.
 If no account is set, tests are scheduled using -priority flag.`)
 	f.IntVar(&c.maxRetries, "max-retries", 0, "Maximum retries allowed. No retry if set to 0.")
-	f.IntVar(&c.priority, "priority", DefaultSwarmingPriority, `Swarming scheduling priority for tests, between 50 and 255 (lower values indicate higher priorities).
+	f.Int64Var(&c.priority, "priority", DefaultSwarmingPriority, `Swarming scheduling priority for tests, between 50 and 255 (lower values indicate higher priorities).
 If a Quota Scheduler account is specified via -qs-account, this value is not used.`)
 	f.IntVar(&c.timeoutMins, "timeout-mins", 30, "Test run timeout.")
-	f.Var(flagx.KeyVals(&c.dimensions), "dim", "Additional scheduling dimension in format key=val or key:val; may be specified multiple times.")
-	f.Var(flagx.KeyVals(&c.dimensions), "dims", "Comma-separated additional scheduling dimensions in same format as -dim.")
+	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional scheduling dimension in format key=val or key:val; may be specified multiple times.")
+	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional scheduling addedDims in same format as -dim.")
 	f.Var(flagx.KeyVals(&c.provisionLabels), "provision-label", "Additional provisionable label in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.provisionLabels), "provision-labels", "Comma-separated additional provisionable labels in same format as -provision-label.")
-	f.Var(flagx.KeyVals(&c.tags), "tag", "Swarming tag in format key=val or key:val; may be specified multiple times.")
-	f.Var(flagx.KeyVals(&c.tags), "tags", "Comma-separated Swarming tags in same format as -tag.")
+	f.Var(flagx.KeyVals(&c.addedTags), "tag", "Additional Swarming tag in format key=val or key:val; may be specified multiple times.")
+	f.Var(flagx.KeyVals(&c.addedTags), "tags", "Comma-separated Swarming tags in same format as -tag.")
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyval", "Autotest keyval in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyvals", "Comma-separated Autotest keyvals in same format as -keyval.")
 	f.BoolVar(&c.json, "json", false, "Format output as JSON.")
@@ -84,4 +95,173 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 		return cmdlib.NewUsageError(*f, strings.Join(errors, "\n"))
 	}
 	return nil
+}
+
+// buildTags combines test metadata tags with user-added tags.
+func (c *testCommonFlags) buildTags(crosfleetTool string) map[string]string {
+	// Add user-added tags.
+	tags := c.addedTags
+	if tags == nil {
+		tags = map[string]string{}
+	}
+
+	// Add crosfleet-tool tag.
+	if crosfleetTool == "" {
+		panic(errors.Reason("must provide crosfleet-tool tag").Err())
+	}
+	tags["crosfleet-tool"] = crosfleetTool
+
+	// Add metadata tags.
+	if c.board != "" {
+		tags["label-board"] = c.board
+	}
+	if c.model != "" {
+		tags["label-model"] = c.model
+	}
+	if c.pool != "" {
+		tags["label-pool"] = c.pool
+	}
+	if c.image != "" {
+		tags["label-image"] = c.image
+	}
+	// Only surface the priority if Quota Account was unset.
+	// NOTE: these addedTags themselves will NOT be processed by Buildbucket or
+	// Swarming--they are for metadata purposes only.
+	// addedTags attached here will NOT be processed by CTP.
+	if c.qsAccount != "" {
+		tags["label-quota-account"] = c.qsAccount
+	} else if c.priority != 0 {
+		tags["label-priority"] = fmt.Sprint(c.priority)
+	}
+
+	return tags
+}
+
+// testPlatformRequest constructs a cros_test_platform.Request from the given
+// test plan, build tags, and command line flags.
+func testPlatformRequest(testPlan *test_platform.Request_TestPlan, buildTags map[string]string, cliFlags *testCommonFlags) (*test_platform.Request, error) {
+	softwareDependencies, err := cliFlags.softwareDependencies()
+	if err != nil {
+		return nil, err
+	}
+
+	return &test_platform.Request{
+		TestPlan: testPlan,
+		Params: &test_platform.Request_Params{
+			FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
+				SwarmingDimensions: common.ToKeyvalSlice(cliFlags.addedDims),
+			},
+			HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
+				Model: cliFlags.model,
+			},
+			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+				BuildTarget: &chromiumos.BuildTarget{Name: cliFlags.board},
+			},
+			SoftwareDependencies: softwareDependencies,
+			Scheduling:           cliFlags.schedulingParams(),
+			Decorations: &test_platform.Request_Params_Decorations{
+				AutotestKeyvals: cliFlags.keyvals,
+				Tags:            common.ToKeyvalSlice(buildTags),
+			},
+			Retry: cliFlags.retryParams(),
+			Metadata: &test_platform.Request_Params_Metadata{
+				TestMetadataUrl:        imageArchiveBaseURL + cliFlags.image,
+				DebugSymbolsArchiveUrl: imageArchiveBaseURL + cliFlags.image,
+			},
+			Time: &test_platform.Request_Params_Time{
+				MaximumDuration: ptypes.DurationProto(
+					time.Duration(cliFlags.timeoutMins) * time.Minute),
+			},
+		},
+	}, nil
+}
+
+// softwareDependencies constructs test platform software dependencies from
+// test run flags.
+func (c *testCommonFlags) softwareDependencies() ([]*test_platform.Request_Params_SoftwareDependency, error) {
+	// Add dependencies from provision labels.
+	deps, err := softwareDepsFromProvisionLabels(c.provisionLabels)
+	if err != nil {
+		return nil, err
+	}
+	// Add build image dependency.
+	if c.image != "" {
+		deps = append(deps, &test_platform.Request_Params_SoftwareDependency{
+			Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: c.image},
+		})
+	}
+	return deps, nil
+}
+
+// softwareDepsFromProvisionLabels parses the given provision labels into a
+// []*test_platform.Request_Params_SoftwareDependency.
+func softwareDepsFromProvisionLabels(labels map[string]string) ([]*test_platform.Request_Params_SoftwareDependency, error) {
+	var deps []*test_platform.Request_Params_SoftwareDependency
+	for label, value := range labels {
+		dep := &test_platform.Request_Params_SoftwareDependency{}
+		switch label {
+		// These prefixes are interpreted by autotest's provisioning behavior;
+		// they are defined in the autotest repo, at utils/labellib.py
+		case "cros-version":
+			dep.Dep = &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+				ChromeosBuild: value,
+			}
+		case "fwro-version":
+			dep.Dep = &test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild{
+				RoFirmwareBuild: value,
+			}
+		case "fwrw-version":
+			dep.Dep = &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{
+				RwFirmwareBuild: value,
+			}
+		default:
+			return nil, errors.Reason("invalid provisionable label %s", label).Err()
+		}
+		deps = append(deps, dep)
+	}
+	return deps, nil
+}
+
+// schedulingParams constructs Swarming scheduling params from test run flags.
+func (c *testCommonFlags) schedulingParams() *test_platform.Request_Params_Scheduling {
+	s := &test_platform.Request_Params_Scheduling{}
+
+	if managedPool, isManaged := managedPool(c.pool); isManaged {
+		s.Pool = &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: managedPool}
+	} else {
+		s.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{UnmanagedPool: c.pool}
+	}
+
+	// Priority and Quota Scheduler account cannot coexist in a CTP request.
+	// Only attach priority if no quota account is specified.
+	if c.qsAccount != "" {
+		s.QsAccount = c.qsAccount
+	} else {
+		s.Priority = c.priority
+	}
+
+	return s
+}
+
+// managedPool returns the test_platform.Request_Params_Scheduling_ManagedPool
+// matching the given pool string, and returns false if no match was found.
+func managedPool(pool string) (test_platform.Request_Params_Scheduling_ManagedPool, bool) {
+	// Attempt to handle common pool name format discrepancies.
+	pool = strings.ToUpper(pool)
+	pool = strings.Replace(pool, "-", "_", -1)
+	pool = strings.Replace(pool, "DUT_POOL_", "MANAGED_POOL_", 1)
+
+	enum, ok := test_platform.Request_Params_Scheduling_ManagedPool_value[pool]
+	if !ok {
+		return 0, false
+	}
+	return test_platform.Request_Params_Scheduling_ManagedPool(enum), true
+}
+
+// schedulingParams constructs test retry params from test run flags.
+func (c *testCommonFlags) retryParams() *test_platform.Request_Params_Retry {
+	return &test_platform.Request_Params_Retry{
+		Max:   int32(c.maxRetries),
+		Allow: c.maxRetries != 0,
+	}
 }

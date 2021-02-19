@@ -6,6 +6,7 @@ package common
 
 import (
 	"flag"
+	"fmt"
 	"github.com/maruel/subcommands"
 	"infra/cmd/crosfleet/internal/site"
 )
@@ -40,4 +41,13 @@ func (f EnvFlags) Env() site.Environment {
 		return site.Dev
 	}
 	return site.Prod
+}
+
+// ToKeyvalSlice converts a key-val map to a slice of "key:val" strings.
+func ToKeyvalSlice(keyvals map[string]string) []string {
+	var s []string
+	for key, val := range keyvals {
+		s = append(s, fmt.Sprintf("%s:%s", key, val))
+	}
+	return s
 }

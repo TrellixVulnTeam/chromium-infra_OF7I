@@ -20,8 +20,7 @@ func TestAddServiceVersion(t *testing.T) {
 		"$chromeos/service_version": `{"version":"{\"crosfleetTool\":\"1\"}"}`,
 	}
 	gotProps := addServiceVersion(startingProps)
-	diff := cmp.Diff(wantProps, gotProps)
-	if diff != "" {
+	if diff := cmp.Diff(wantProps, gotProps); diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
 	}
 }
@@ -36,7 +35,7 @@ func TestBuildURL(t *testing.T) {
 	}
 	wantURL := "https://ci.chromium.org/ui/p/chromeos/builders/test_runner/dut_leaser/b8855075479708816960"
 	gotURL := client.BuildURL(8855075479708816960)
-	if gotURL != wantURL {
+	if wantURL != gotURL {
 		t.Errorf("unexpected build URL: wanted %s, got %s", wantURL, gotURL)
 	}
 }

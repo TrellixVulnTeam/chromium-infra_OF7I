@@ -35,8 +35,7 @@ func TestSplitKeyVal(t *testing.T) {
 			want := []string{tt.key, tt.val, tt.err}
 			key, val, e := splitKeyVal(tt.in)
 			got := []string{key, val, common.ErrToString(e)}
-			diff := cmp.Diff(want, got)
-			if diff != "" {
+			if diff := cmp.Diff(want, got); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
 		})
@@ -103,12 +102,11 @@ func TestDimsVar(t *testing.T) {
 			t.Parallel()
 			m := tt.startingDims
 			gotErr := KeyVals(&m).Set(tt.keyvals)
-			diff := cmp.Diff(m, tt.wantDims)
-			if diff != "" {
+			if diff := cmp.Diff(m, tt.wantDims); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
 			gotErrString := common.ErrToString(gotErr)
-			if gotErrString != tt.wantErrString {
+			if tt.wantErrString != gotErrString {
 				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantErrString, gotErrString)
 			}
 		})

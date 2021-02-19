@@ -7,9 +7,33 @@ package run
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"infra/cmd/crosfleet/internal/common"
 	"testing"
+	"time"
 )
+
+// Enables comparisons of protos with unexported fields.
+var diffOpts = cmpopts.IgnoreUnexported(
+	chromiumos.BuildTarget{},
+	duration.Duration{},
+	test_platform.Request{},
+	test_platform.Request_TestPlan{},
+	test_platform.Request_Params{},
+	test_platform.Request_Params_HardwareAttributes{},
+	test_platform.Request_Params_SoftwareAttributes{},
+	test_platform.Request_Params_SoftwareDependency{},
+	test_platform.Request_Params_FreeformAttributes{},
+	test_platform.Request_Params_Scheduling{},
+	test_platform.Request_Params_Decorations{},
+	test_platform.Request_Params_Retry{},
+	test_platform.Request_Params_Metadata{},
+	test_platform.Request_Params_Time{})
 
 var testValidateArgsData = []struct {
 	testCommonFlags
@@ -59,15 +83,285 @@ func TestValidateArgs(t *testing.T) {
 		t.Run(fmt.Sprintf("(%s)", tt.wantValidationErrString), func(t *testing.T) {
 			t.Parallel()
 			var flagSet flag.FlagSet
-			err := flagSet.Parse(tt.args)
-			if err != nil {
+			if err := flagSet.Parse(tt.args); err != nil {
 				t.Fatalf("unexpected error parsing command line args %v for test: %v", tt.args, err)
 			}
 			gotValidationErr := tt.testCommonFlags.validateArgs(&flagSet, "suite-name")
 			gotValidationErrString := common.ErrToString(gotValidationErr)
-			if gotValidationErrString != tt.wantValidationErrString {
+			if tt.wantValidationErrString != gotValidationErrString {
 				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantValidationErrString, gotValidationErrString)
 			}
 		})
+	}
+}
+
+var testBuildTagsData = []struct {
+	testCommonFlags
+	wantTags map[string]string
+}{
+	{ // Missing all values
+		testCommonFlags{
+			board:     "",
+			model:     "",
+			pool:      "",
+			image:     "",
+			qsAccount: "",
+			priority:  0,
+			addedTags: nil,
+		},
+		map[string]string{
+			"crosfleet-tool": "suite",
+		},
+	},
+	{ // Missing some values
+		testCommonFlags{
+			board:     "sample-board",
+			model:     "",
+			pool:      "sample-pool",
+			image:     "sample-image",
+			qsAccount: "",
+			priority:  99,
+			addedTags: map[string]string{},
+		},
+		map[string]string{
+			"crosfleet-tool": "suite",
+			"label-board":    "sample-board",
+			"label-pool":     "sample-pool",
+			"label-image":    "sample-image",
+			"label-priority": "99",
+		},
+	},
+	{ // Includes all values
+		testCommonFlags{
+			board:     "sample-board",
+			model:     "sample-model",
+			pool:      "sample-pool",
+			image:     "sample-image",
+			qsAccount: "sample-qs-account",
+			priority:  99,
+			addedTags: map[string]string{
+				"foo": "bar",
+			},
+		},
+		map[string]string{
+			"foo":                 "bar",
+			"crosfleet-tool":      "suite",
+			"label-board":         "sample-board",
+			"label-model":         "sample-model",
+			"label-pool":          "sample-pool",
+			"label-image":         "sample-image",
+			"label-quota-account": "sample-qs-account",
+		},
+	},
+}
+
+func TestBuildTags(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testBuildTagsData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantTags), func(t *testing.T) {
+			t.Parallel()
+			gotTags := tt.testCommonFlags.buildTags("suite")
+			if diff := cmp.Diff(tt.wantTags, gotTags); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
+	}
+}
+
+var testSoftwareDependenciesData = []struct {
+	testCommonFlags
+	wantDeps      []*test_platform.Request_Params_SoftwareDependency
+	wantErrString string
+}{
+	{ // Invalid label
+		testCommonFlags{
+			image:           "",
+			provisionLabels: map[string]string{"foo-invalid": "bar"},
+		},
+		nil,
+		"invalid provisionable label foo-invalid",
+	},
+	{ // No labels or image
+		testCommonFlags{
+			image:           "",
+			provisionLabels: nil,
+		},
+		nil,
+		"",
+	},
+	{ // One label and one image
+		testCommonFlags{
+			image: "sample-image",
+			provisionLabels: map[string]string{
+				"fwrw-version": "foo-rw",
+			},
+		},
+		[]*test_platform.Request_Params_SoftwareDependency{
+			{Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{RwFirmwareBuild: "foo-rw"}},
+			{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "sample-image"}},
+		},
+		"",
+	},
+}
+
+func TestSoftwareDependencies(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testSoftwareDependenciesData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantDeps), func(t *testing.T) {
+			t.Parallel()
+			gotDeps, gotErr := tt.testCommonFlags.softwareDependencies()
+			if diff := cmp.Diff(tt.wantDeps, gotDeps, diffOpts); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+			gotErrString := common.ErrToString(gotErr)
+			if tt.wantErrString != gotErrString {
+				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantErrString, gotErrString)
+			}
+		})
+	}
+}
+
+var testSchedulingParamsData = []struct {
+	testCommonFlags
+	wantParams *test_platform.Request_Params_Scheduling
+}{
+	{ // Unmanaged pool, no quota account
+		testCommonFlags{
+			pool:     "sample-unmanaged-pool",
+			priority: 100,
+		},
+		&test_platform.Request_Params_Scheduling{
+			Pool:     &test_platform.Request_Params_Scheduling_UnmanagedPool{UnmanagedPool: "sample-unmanaged-pool"},
+			Priority: 100,
+		},
+	},
+	{ // Quota account and managed pool
+		testCommonFlags{
+			pool:      "MANAGED_POOL_SUITES",
+			qsAccount: "sample-qs-account",
+			priority:  100,
+		},
+		&test_platform.Request_Params_Scheduling{
+			Pool:      &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: 3},
+			QsAccount: "sample-qs-account",
+		},
+	},
+	{ // No quota account and managed pool name entered in nonstandard format
+		testCommonFlags{
+			pool:     "dut-pool-suites",
+			priority: 100,
+		},
+		&test_platform.Request_Params_Scheduling{
+			Pool:     &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: 3},
+			Priority: 100,
+		},
+	},
+}
+
+func TestSchedulingParams(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testSchedulingParamsData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantParams), func(t *testing.T) {
+			t.Parallel()
+			gotParams := tt.testCommonFlags.schedulingParams()
+			if diff := cmp.Diff(tt.wantParams, gotParams, diffOpts); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
+	}
+}
+
+var testRetryParamsData = []struct {
+	maxRetries int
+	wantParams *test_platform.Request_Params_Retry
+}{
+	{ // With retries
+		2,
+		&test_platform.Request_Params_Retry{Max: 2, Allow: true},
+	},
+	{ // No retries
+		0,
+		&test_platform.Request_Params_Retry{Max: 0, Allow: false},
+	},
+}
+
+func TestRetryParams(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testRetryParamsData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantParams), func(t *testing.T) {
+			t.Parallel()
+			fs := testCommonFlags{maxRetries: tt.maxRetries}
+			gotParams := fs.retryParams()
+			if diff := cmp.Diff(tt.wantParams, gotParams, diffOpts); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
+	}
+}
+
+func TestTestPlatformRequest(t *testing.T) {
+	t.Parallel()
+	cliFlags := &testCommonFlags{
+		board:           "sample-board",
+		model:           "sample-model",
+		image:           "sample-image",
+		pool:            "MANAGED_POOL_SUITES",
+		qsAccount:       "sample-qs-account",
+		priority:        100,
+		maxRetries:      0,
+		timeoutMins:     30,
+		provisionLabels: map[string]string{"cros-version": "foo-cros"},
+		addedDims:       map[string]string{"foo-dim": "bar-dim"},
+		keyvals:         map[string]string{"foo-key": "foo-val"},
+	}
+	buildTags := map[string]string{"foo-tag": "bar-tag"}
+	wantRequest := &test_platform.Request{
+		TestPlan: &test_platform.Request_TestPlan{},
+		Params: &test_platform.Request_Params{
+			Scheduling: &test_platform.Request_Params_Scheduling{
+				Pool:      &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: 3},
+				QsAccount: "sample-qs-account",
+			},
+			FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
+				SwarmingDimensions: []string{"foo-dim:bar-dim"},
+			},
+			HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
+				Model: "sample-model",
+			},
+			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+				BuildTarget: &chromiumos.BuildTarget{Name: "sample-board"},
+			},
+			SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+				{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "foo-cros"}},
+				{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "sample-image"}},
+			},
+			Decorations: &test_platform.Request_Params_Decorations{
+				AutotestKeyvals: map[string]string{"foo-key": "foo-val"},
+				Tags:            []string{"foo-tag:bar-tag"},
+			},
+			Retry: &test_platform.Request_Params_Retry{
+				Max:   0,
+				Allow: false,
+			},
+			Metadata: &test_platform.Request_Params_Metadata{
+				TestMetadataUrl:        "gs://chromeos-image-archive/sample-image",
+				DebugSymbolsArchiveUrl: "gs://chromeos-image-archive/sample-image",
+			},
+			Time: &test_platform.Request_Params_Time{
+				MaximumDuration: ptypes.DurationProto(
+					time.Duration(1800000000000)),
+			},
+		},
+	}
+	gotRequest, err := testPlatformRequest(&test_platform.Request_TestPlan{}, buildTags, cliFlags)
+	if err != nil {
+		t.Fatalf("unexpected error constructing Test Platform request: %v", err)
+	}
+	if diff := cmp.Diff(wantRequest, gotRequest, diffOpts); diff != "" {
+		t.Errorf("unexpected diff (%s)", diff)
 	}
 }
