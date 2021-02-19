@@ -22,11 +22,11 @@ func TestEvalStrategy(t *testing.T) {
 	Convey(`apply`, t, func() {
 		ctx := context.Background()
 
-		g := &Graph{}
-		g.ensureInitialized()
+		s := &SelectionStrategy{Graph: &Graph{}}
+		s.Graph.ensureInitialized()
 
 		applyChanges := func(changes []fileChange) {
-			err := g.apply(changes, 100)
+			err := s.Graph.apply(changes, 100)
 			So(err, ShouldBeNil)
 		}
 
@@ -49,7 +49,7 @@ func TestEvalStrategy(t *testing.T) {
 			out := &eval.Output{
 				TestVariantAffectedness: make([]rts.Affectedness, 1),
 			}
-			err := g.EvalStrategy(&EdgeReader{})(ctx, in, out)
+			err := s.SelectEval(ctx, in, out)
 			So(err, ShouldBeNil)
 			af := out.TestVariantAffectedness[0]
 			if math.IsInf(expectedDistance, 1) {
@@ -120,7 +120,7 @@ func TestEvalStrategy(t *testing.T) {
 			out := &eval.Output{
 				TestVariantAffectedness: make([]rts.Affectedness, 2),
 			}
-			err := g.EvalStrategy(&EdgeReader{})(ctx, in, out)
+			err := s.SelectEval(ctx, in, out)
 			So(err, ShouldBeNil)
 			So(out.TestVariantAffectedness[0].Distance, ShouldAlmostEqual, -math.Log(0.5))
 			So(out.TestVariantAffectedness[1].Distance, ShouldEqual, 0)
