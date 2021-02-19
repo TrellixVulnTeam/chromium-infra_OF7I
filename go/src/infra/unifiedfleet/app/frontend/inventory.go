@@ -530,3 +530,23 @@ func (fs *FleetServerImpl) GetChromeOSDeviceData(ctx context.Context, req *ufsAP
 	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	return controller.GetChromeOSDeviceData(osCtx, req.GetChromeosDeviceId(), req.GetHostname())
 }
+
+// UpdateMachineLSEDeployment updates the deployment record for a host
+func (fs *FleetServerImpl) UpdateMachineLSEDeployment(ctx context.Context, req *ufsAPI.UpdateMachineLSEDeploymentRequest) (resp *ufspb.MachineLSEDeployment, err error) {
+	return nil, nil
+}
+
+// BatchUpdateMachineLSEDeployment updates the deployment record for a batch of hosts
+func (fs *FleetServerImpl) BatchUpdateMachineLSEDeployment(ctx context.Context, req *ufsAPI.BatchUpdateMachineLSEDeploymentRequest) (resp *ufsAPI.BatchUpdateMachineLSEDeploymentResponse, err error) {
+	return nil, nil
+}
+
+// GetMachineLSEDeployment retrieves the deployment record for a host
+func (fs *FleetServerImpl) GetMachineLSEDeployment(ctx context.Context, req *ufsAPI.GetMachineLSEDeploymentRequest) (resp *ufspb.MachineLSEDeployment, err error) {
+	return nil, nil
+}
+
+// ListMachineLSEDeployments retrieves a list of deployment records
+func (fs *FleetServerImpl) ListMachineLSEDeployments(ctx context.Context, req *ufsAPI.ListMachineLSEDeploymentsRequest) (resp *ufsAPI.ListMachineLSEDeploymentsResponse, err error) {
+	return nil, nil
+}

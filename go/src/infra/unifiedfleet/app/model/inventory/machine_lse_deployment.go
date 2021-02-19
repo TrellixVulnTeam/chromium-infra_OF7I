@@ -13,7 +13,6 @@ type MachineLSEDeploymentEntity struct {
 	ID                   string `gae:"$id"`
 	SerialNumber         string `gae:"serial_number"`
 	DeploymentIdentifier string `gae:"deployment_identifier"`
-	SwarmingHost         string `gae:"swarming_host"`
 	// Follow others entities, store ufspb.MachineLSEDeployment bytes.
 	DeploymentInfo []byte `gae:",noindex"`
 }

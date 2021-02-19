@@ -12,6 +12,7 @@ option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
 
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
+import "infra/unifiedfleet/api/v1/models/deployment.proto";
 
 // MachineLSEDeployment includes all info related to deployment of a machine LSE (host).
 //
@@ -50,27 +51,4 @@ message MachineLSEDeployment {
      // Record the last update timestamp of this host deployment (In UTC timezone)
     google.protobuf.Timestamp update_time = 5 [
         (google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Payload describes the payload needed in deployment.
-//
-// Next tag: 3
-message Payload {
-    // It refers to the unique payload name,
-    // e.g. energy_saver, disable_gatekeeper, puppet3_package, ..., etc.
-    string name = 1;
-    // e.g. PUSH_CONFIG_TYPE_MOBILECONFIG
-    PushConfigType config = 2;
-    // It refers to a g3 path for a profile, e.g.
-    //      //depot/google3/ops/macops/mdm/mega/chrome/profiles/energy_saver.mobileconfig
-    // or refers to a server link for a package, e.g.
-    //      https://macos-server-1.golo.chromium.org/manifests/clpuppet3.plist
-    string path = 3;
-}
-
-// Next tag: 3
-enum PushConfigType {
-    PUSH_CONFIG_TYPE_UNSPECIFIED = 0;
-    PUSH_CONFIG_TYPE_MOBILECONFIG = 1;
-    PUSH_CONFIG_TYPE_PACKAGE = 2;
 }

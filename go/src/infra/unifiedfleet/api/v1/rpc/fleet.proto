@@ -25,6 +25,7 @@ import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
+import "infra/unifiedfleet/api/v1/models/machine_lse_deployment.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
@@ -370,6 +371,78 @@ service Fleet {
 
   // Delete delete the CachingService.
   rpc DeleteCachingService(DeleteCachingServiceRequest) returns (google.protobuf.Empty);
+
+  // UpdateMachineLSEDeployment updates a deployment record for a host.
+  rpc UpdateMachineLSEDeployment(UpdateMachineLSEDeploymentRequest) returns (models.MachineLSEDeployment);
+
+  // BatchUpdateMachineLSEDeployment updates the deployment records for a batch of hosts.
+  rpc BatchUpdateMachineLSEDeployment(BatchUpdateMachineLSEDeploymentRequest) returns (BatchUpdateMachineLSEDeploymentResponse);
+
+  // GetMachineLSEDeployment retrieves a deployment record for a host.
+  rpc GetMachineLSEDeployment(GetMachineLSEDeploymentRequest) returns (models.MachineLSEDeployment);
+
+  // ListMachineLSEDeployments lists all deployment records which fulfill the requirements
+  rpc ListMachineLSEDeployments(ListMachineLSEDeploymentsRequest) returns (ListMachineLSEDeploymentsResponse);
+}
+
+message UpdateMachineLSEDeploymentRequest {
+  // The MachineLSEDeployment to update.
+  models.MachineLSEDeployment machine_lse_deployment = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message BatchUpdateMachineLSEDeploymentRequest {
+  // The parent resource shared by all deployment records being updated.
+  string parent = 1;
+
+  // A maximum of 1000 requests can be handled in one call.
+  repeated UpdateMachineLSEDeploymentRequest requests = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message BatchUpdateMachineLSEDeploymentResponse {
+  // deployment records updated.
+  repeated models.MachineLSEDeployment machine_lse_deployments = 1;
+}
+
+message GetMachineLSEDeploymentRequest {
+  // The hostname of the deployment record to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSEDeployment" }
+  ];
+}
+
+message ListMachineLSEDeploymentsRequest {
+  // The maximum number of deployment records to return.
+  // The service may return fewer than this value.
+  // If not specified, 100 deployment records will be returned by default.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListMachineLSEDeployments` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListMachineLSEDeployments` must match
+  // the call that provided the page token.
+  string page_token = 2;
+
+  // filter takes the filtering condition.
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
+}
+
+message ListMachineLSEDeploymentsResponse {
+  // The deployment records from datastore.
+  repeated models.MachineLSEDeployment machine_lse_deployments = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
 }
 
 message CreateVMRequest {

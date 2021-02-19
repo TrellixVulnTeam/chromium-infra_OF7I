@@ -1,0 +1,52 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// This proto definition describes the structure of the requirements for deployment
+// of a host.
+//
+// Put this proto in chrome infra repo for 3 reasons:
+//     * It's possible that we migrate automation services back to chrome infra, and we
+//       don't need to move around protos at that time.
+//     * There're some commonly used deployment units in UFS and automation services.
+//     * All proto here is copied to google3 via copybara, so current Chrome MDM service
+//       in google3 could also use it.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models;
+
+option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
+
+import "infra/unifiedfleet/api/v1/models/deployment.proto";
+
+message HostsToProfileItems {
+    // A list of matching between hosts to its specified profiles
+    repeated HostsToProfileItem matching_item = 1;
+}
+
+message HostsToProfileItem {
+    // For each matching, the key is one host criterial, the value is
+    // a list of profiles to be pushed
+    HostCriterial host_criterial = 1;
+    repeated Payload profiles = 2;
+}
+
+message HostCriterial {
+    // Users can specify multiple requirements in each host criterial
+    //   * Search the bots based on the swarming instances and dimensions
+    //   * List the hostnames to push
+    //   * All enrolled hosts need to be pushed
+    // The priority comparison:
+    //   all > hostnames > swarming_criterials
+    repeated SwarmingCriterial swarming_criterials= 1;
+    repeated string hostnames = 2;
+    bool all = 3;
+}
+
+message SwarmingCriterial {
+    // e.g. chromium-swarm.appspot.com
+    string instance = 1;
+    // e.g. pool:luci.dart.ci
+    repeated string dimensions = 2;
+}

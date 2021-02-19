@@ -1948,3 +1948,71 @@ func (s *DecoratedFleet) DeleteCachingService(ctx context.Context, req *DeleteCa
 	}
 	return
 }
+
+func (s *DecoratedFleet) UpdateMachineLSEDeployment(ctx context.Context, req *UpdateMachineLSEDeploymentRequest) (rsp *models.MachineLSEDeployment, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateMachineLSEDeployment", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateMachineLSEDeployment(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateMachineLSEDeployment", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchUpdateMachineLSEDeployment(ctx context.Context, req *BatchUpdateMachineLSEDeploymentRequest) (rsp *BatchUpdateMachineLSEDeploymentResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchUpdateMachineLSEDeployment", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchUpdateMachineLSEDeployment(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchUpdateMachineLSEDeployment", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetMachineLSEDeployment(ctx context.Context, req *GetMachineLSEDeploymentRequest) (rsp *models.MachineLSEDeployment, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetMachineLSEDeployment", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetMachineLSEDeployment(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetMachineLSEDeployment", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListMachineLSEDeployments(ctx context.Context, req *ListMachineLSEDeploymentsRequest) (rsp *ListMachineLSEDeploymentsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListMachineLSEDeployments", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListMachineLSEDeployments(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListMachineLSEDeployments", rsp, err)
+	}
+	return
+}
