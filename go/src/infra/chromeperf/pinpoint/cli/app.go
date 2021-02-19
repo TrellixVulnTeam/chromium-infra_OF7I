@@ -31,6 +31,7 @@ func application(p Param) *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			cmdTelemetryExperiment(p),
+			cmdListJobs(p),
 			subcommands.CmdHelp,
 		},
 		EnvVars: map[string]subcommands.EnvVarDefinition{
