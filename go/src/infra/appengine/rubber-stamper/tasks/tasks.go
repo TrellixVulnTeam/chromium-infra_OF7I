@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/rubber-stamper/internal/reviewer"
+	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
 
@@ -23,7 +24,13 @@ func init() {
 		Queue:     "change-review-queue",
 		Handler: func(ctx context.Context, payload proto.Message) error {
 			t := payload.(*taskspb.ChangeReviewTask)
+
 			if err := reviewer.ReviewChange(ctx, t); err != nil {
+				info := tq.TaskExecutionInfo(ctx)
+				if info != nil && info.ExecutionCount >= 2 {
+					util.SendErrorReport(ctx, fmt.Errorf("task (host %s, cl %d, revision %s) failed for at least 3 times", t.Host, t.Number, t.Revision))
+				}
+
 				return fmt.Errorf("failed to review change for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
 			}
 			return nil
