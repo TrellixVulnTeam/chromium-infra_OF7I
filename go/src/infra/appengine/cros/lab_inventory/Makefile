@@ -73,8 +73,16 @@ dev:
 
 # Uploading
 
+.PHONY: check-sync
+check-sync:
+	@printf "Please update the following luci path to ToT:\n"
+	@printf "	infra/go/src/go.chromium.org/chromiumos/infra/proto\n"
+	@printf "	infra/go/src/go.chromium.org/chromiumos/config\n"
+	@printf "\n"
+	@printf "Have you finished syncing? [y/N]" && read ans && [ $${ans:-N} = y ]
+
 .PHONY: up-dev
-up-dev:
+up-dev: check-sync
 	gae.py upload -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH) -f
 	gae.py switch -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH) -f
 
@@ -83,7 +91,7 @@ cleanup-dev:
 	gae.py cleanup -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH)
 
 .PHONY: up-prod
-up-prod:
+up-prod: check-sync
 	gae.py upload -A $(GCP_PROJECT) --app-dir $(APP_PATH)
 
 .PHONY: switch-prod
