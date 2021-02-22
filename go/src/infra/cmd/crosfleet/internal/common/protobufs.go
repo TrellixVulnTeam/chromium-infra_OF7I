@@ -12,6 +12,9 @@ import (
 	structbuilder "google.golang.org/protobuf/types/known/structpb"
 )
 
+// JSONPBUnmarshaler unmarshals JSON into proto messages.
+var JSONPBUnmarshaler = jsonpb.Unmarshaler{AllowUnknownFields: true}
+
 // MapToStruct constructs a Struct from the given map[string]interface{}. The
 // map keys must be valid UTF-8. The map values can be any of Go's basic types
 // (bool, string, number type, byte, or rune), a proto message (in the form
@@ -67,8 +70,8 @@ func protoToStructVal(msg protoreflect.ProtoMessage) (*structpb.Value, error) {
 		return nil, err
 	}
 	msgStruct := &structpb.Struct{}
-	um := jsonpb.Unmarshaler{AllowUnknownFields: true}
-	if err := um.Unmarshal(strings.NewReader(msgJSON), msgStruct); err != nil {
+	err = JSONPBUnmarshaler.Unmarshal(strings.NewReader(msgJSON), msgStruct)
+	if err != nil {
 		return nil, err
 	}
 	return &structpb.Value{

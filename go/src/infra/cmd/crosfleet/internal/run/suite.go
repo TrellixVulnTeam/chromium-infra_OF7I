@@ -6,15 +6,22 @@ package run
 
 import (
 	"fmt"
+
 	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
+	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
 )
 
+// suiteCmdName is the name of the `crosfleet run suite` command.
+var suiteCmdName = "suite"
+
 var suite = &subcommands.Command{
-	UsageLine: "suite [FLAGS...] SUITE_NAME",
+	UsageLine: fmt.Sprintf("%s [FLAGS...] SUITE_NAME", suiteCmdName),
 	ShortDesc: "runs a test suite",
 	LongDesc: `Launches a suite task with the given suite name.
 
@@ -49,9 +56,32 @@ func (c *suiteRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 func (c *suiteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(&c.Flags, "suite name"); err != nil {
+	if err := c.validateArgs(&c.Flags, suiteCmdName); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetOut(), "In real life this would run a test suite.\nFlags registered: %v\nArgs ergistered: %v\n", c.Flags, args)
+	testPlan := testPlanForSuites(args)
+	suiteNamesLabel := testOrSuiteNamesLabel(args)
+	buildTags := c.buildTags(testCmdName, suiteNamesLabel)
+
+	ctx := cli.GetContext(a, c, env)
+	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
+	if err != nil {
+		return err
+	}
+	buildID, err := launchCTPBuild(ctx, bbClient, testPlan, buildTags, &c.testCommonFlags)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", suiteCmdName, bbClient.BuildURL(buildID))
 	return nil
+}
+
+// testPlanForSuites constructs a Test Platform test plan for the given tests.
+func testPlanForSuites(suiteNames []string) *test_platform.Request_TestPlan {
+	testPlan := test_platform.Request_TestPlan{}
+	for _, suiteName := range suiteNames {
+		suiteRequest := &test_platform.Request_Suite{Name: suiteName}
+		testPlan.Suite = append(testPlan.Suite, suiteRequest)
+	}
+	return &testPlan
 }

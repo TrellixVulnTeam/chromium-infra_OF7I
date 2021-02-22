@@ -39,6 +39,10 @@ type runCmd struct {
 	common.Flags
 }
 
-func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	return subcommands.Run(testApplication, args)
+func (c *runCmd) Run(a subcommands.Application, args []string, _ subcommands.Env) int {
+	status := subcommands.Run(testApplication, args)
+	if status == 0 {
+		common.PrintCrosfleetUIPrompt(a)
+	}
+	return status
 }

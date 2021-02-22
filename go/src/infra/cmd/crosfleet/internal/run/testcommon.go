@@ -5,17 +5,20 @@
 package run
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/common/errors"
+	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 	"infra/cmdsupport/cmdlib"
-	"strings"
-	"time"
 )
 
 var (
@@ -98,7 +101,7 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 }
 
 // buildTags combines test metadata tags with user-added tags.
-func (c *testCommonFlags) buildTags(crosfleetTool string) map[string]string {
+func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[string]string {
 	// Add user-added tags.
 	tags := c.addedTags
 	if tags == nil {
@@ -110,6 +113,11 @@ func (c *testCommonFlags) buildTags(crosfleetTool string) map[string]string {
 		panic(errors.Reason("must provide crosfleet-tool tag").Err())
 	}
 	tags["crosfleet-tool"] = crosfleetTool
+	if mainArg != "" {
+		// Intended for `run test` and `run suite` commands. This label takes
+		// the form "label-suite:SUITE_NAME" for a `run suite` command.
+		tags[fmt.Sprintf("label-%s", crosfleetTool)] = mainArg
+	}
 
 	// Add metadata tags.
 	if c.board != "" {
@@ -135,6 +143,29 @@ func (c *testCommonFlags) buildTags(crosfleetTool string) map[string]string {
 	}
 
 	return tags
+}
+
+// launchCTPBuild uses the given Buildbucket client to launch a
+// cros_test_platform Buildbucket build for the given test plan, build tags,
+// and command line flags, and returns the ID of the launched build.
+func launchCTPBuild(ctx context.Context, bbClient *buildbucket.Client, testPlan *test_platform.Request_TestPlan, buildTags map[string]string, cliFlags *testCommonFlags) (int64, error) {
+	ctpRequest, err := testPlatformRequest(testPlan, buildTags, cliFlags)
+	if err != nil {
+		return 0, err
+	}
+	buildProps := map[string]interface{}{
+		"requests": map[string]interface{}{
+			// Convert to protoreflect.ProtoMessage for easier type comparison.
+			"default": ctpRequest.ProtoReflect().Interface(),
+		},
+	}
+	// Parent cros_test_platform builds run on generic GCE bots at the default
+	// priority, so we pass zero values for the dimensions and priority of the
+	// parent build.
+	//
+	// buildProps contains separate dimensions and priority values to apply to
+	// the child test_runner builds that will be launched by the parent build.
+	return bbClient.ScheduleBuild(ctx, buildProps, nil, buildTags, 0)
 }
 
 // testPlatformRequest constructs a cros_test_platform.Request from the given
@@ -264,4 +295,20 @@ func (c *testCommonFlags) retryParams() *test_platform.Request_Params_Retry {
 		Max:   int32(c.maxRetries),
 		Allow: c.maxRetries != 0,
 	}
+}
+
+// testOrSuiteNamesLabel formats a label for the given test/suite names, to be
+// added to the build tags of a cros_test_platform build launched for the given
+// tests/suites.
+func testOrSuiteNamesLabel(names []string) string {
+	if len(names) == 0 {
+		panic("no test/suite names given")
+	}
+	var label string
+	if len(names) > 1 {
+		label = fmt.Sprintf("%v", names)
+	} else {
+		label = names[0]
+	}
+	return label
 }

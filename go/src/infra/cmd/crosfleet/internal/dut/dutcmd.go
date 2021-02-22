@@ -38,6 +38,10 @@ type dutCmdRun struct {
 	common.Flags
 }
 
-func (c *dutCmdRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	return subcommands.Run(dutApplication, args)
+func (c *dutCmdRun) Run(a subcommands.Application, args []string, _ subcommands.Env) int {
+	status := subcommands.Run(dutApplication, args)
+	if status == 0 {
+		common.PrintCrosfleetUIPrompt(a)
+	}
+	return status
 }

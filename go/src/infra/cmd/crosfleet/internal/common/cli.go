@@ -7,9 +7,16 @@ package common
 import (
 	"flag"
 	"fmt"
+
 	"github.com/maruel/subcommands"
 	"infra/cmd/crosfleet/internal/site"
 )
+
+// PrintCrosfleetUIPrompt prints a prompt for users to visit the go/my-crosfleet PLX
+// to track their crosfleet-launched tasks.
+func PrintCrosfleetUIPrompt(a subcommands.Application) {
+	fmt.Fprintf(a.GetOut(), "Visit http://go/my-crosfleet to track all of your crosfleet-launched tasks.\n")
+}
 
 // Flags contains flags common to all crosfleet commands.
 type Flags struct {

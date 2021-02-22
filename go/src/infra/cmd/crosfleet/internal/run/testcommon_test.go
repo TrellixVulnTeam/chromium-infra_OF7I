@@ -111,6 +111,7 @@ var testBuildTagsData = []struct {
 		},
 		map[string]string{
 			"crosfleet-tool": "suite",
+			"label-suite":    "sample-suite",
 		},
 	},
 	{ // Missing some values
@@ -125,6 +126,7 @@ var testBuildTagsData = []struct {
 		},
 		map[string]string{
 			"crosfleet-tool": "suite",
+			"label-suite":    "sample-suite",
 			"label-board":    "sample-board",
 			"label-pool":     "sample-pool",
 			"label-image":    "sample-image",
@@ -146,6 +148,7 @@ var testBuildTagsData = []struct {
 		map[string]string{
 			"foo":                 "bar",
 			"crosfleet-tool":      "suite",
+			"label-suite":         "sample-suite",
 			"label-board":         "sample-board",
 			"label-model":         "sample-model",
 			"label-pool":          "sample-pool",
@@ -161,7 +164,7 @@ func TestBuildTags(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s)", tt.wantTags), func(t *testing.T) {
 			t.Parallel()
-			gotTags := tt.testCommonFlags.buildTags("suite")
+			gotTags := tt.testCommonFlags.buildTags("suite", "sample-suite")
 			if diff := cmp.Diff(tt.wantTags, gotTags); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
@@ -298,6 +301,34 @@ func TestRetryParams(t *testing.T) {
 			gotParams := fs.retryParams()
 			if diff := cmp.Diff(tt.wantParams, gotParams, common.CmpOpts); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
+	}
+}
+
+var testTestOrSuiteNamesLabelData = []struct {
+	names     []string
+	wantLabel string
+}{
+	{
+		[]string{"foo", "bar"},
+		"[foo bar]",
+	},
+	{
+		[]string{"foo"},
+		"foo",
+	},
+}
+
+func TestTestOrSuiteNamesLabel(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testTestOrSuiteNamesLabelData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantLabel), func(t *testing.T) {
+			t.Parallel()
+			gotLabel := testOrSuiteNamesLabel(tt.names)
+			if tt.wantLabel != gotLabel {
+				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantLabel, gotLabel)
 			}
 		})
 	}
