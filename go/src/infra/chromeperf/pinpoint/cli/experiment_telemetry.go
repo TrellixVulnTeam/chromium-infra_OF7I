@@ -24,6 +24,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/flag"
+	"go.chromium.org/luci/common/logging"
 	"google.golang.org/protobuf/encoding/prototext"
 )
 
@@ -163,6 +164,14 @@ func (e *experimentTelemetryRun) Run(a subcommands.Application, args []string, e
 		log.Printf("ERROR: Failed: %s", err)
 		return 1
 	}
-	fmt.Fprintf(a.GetOut(), "Job: %s", prototext.Format(j))
+	jobURL, err := legacyJobURL(j)
+	var out string
+	if err != nil {
+		logging.Errorf(cli.GetContext(a, e, env), "ERROR: %s", err)
+		out = prototext.Format(j)
+	} else {
+		out = jobURL
+	}
+	fmt.Fprintf(a.GetOut(), "Pinpoint job scheduled: %s\n", out)
 	return 0
 }

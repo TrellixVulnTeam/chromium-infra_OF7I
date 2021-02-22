@@ -66,7 +66,7 @@ func (p *pinpointClientFactory) Client(ctx context.Context) (pinpoint.PinpointCl
 			grpc.WithPerRPCCredentials(jc),
 		}
 	}
-	logging.Infof(ctx, "Connecting to %s%s", p.Endpoint, logSuffix)
+	logging.Debugf(ctx, "Connecting to %s%s", p.Endpoint, logSuffix)
 	conn, err := grpc.Dial(p.Endpoint, opts...)
 	if err != nil {
 		return nil, err
