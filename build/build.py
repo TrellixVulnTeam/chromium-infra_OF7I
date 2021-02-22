@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import socket
 import subprocess
@@ -475,7 +476,7 @@ def hacked_workspace(go_workspace, go_environ):
 
 
 def bootstrap_go_toolset(go_workspace):
-  """Makes sure go toolset is installed and returns its 'go env' environment.
+  """Makes sure go is installed and returns its 'go env' and version.
 
   Used to verify that our platform detection in get_host_package_vars() matches
   the Go toolset being used.
@@ -499,7 +500,21 @@ def bootstrap_go_toolset(go_workspace):
       if v.startswith('"') and v.endswith('"'):
         v = v.strip('"')
       env[k] = v
-    return env
+
+    # This would be something like "go version go1.15.8 darwin/amd64".
+    print_go_step_title('Go version')
+    output = subprocess.check_output(
+        args=[
+          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
+          'go', 'version',
+        ],
+        executable=sys.executable)
+    print output.strip()
+
+    # We want only "go1.15.8" part.
+    version = re.match(r'go version (go[\d\.]+)', output).group(1)
+
+    return env, version
 
 
 def run_go_clean(go_workspace, go_environ, packages):
@@ -987,14 +1002,6 @@ def run(
       print >> sys.stderr, 'Only GOARM=6 is supported for now.'
       return 1
 
-  # Append tags related to the build host. They are especially important when
-  # cross-compiling: cross-compiled packages can be identified by comparing the
-  # platform in the package name with value of 'build_host_platform' tag.
-  tags = list(tags)
-  host_vars = get_host_package_vars()
-  tags.append('build_host_hostname:' + socket.gethostname().split('.')[0])
-  tags.append('build_host_platform:' + host_vars['platform'])
-
   # Load all package definitions and pick ones we want to build (based on
   # whether we are cross-compiling or not).
   try:
@@ -1003,6 +1010,28 @@ def run(
     print >> sys.stderr, exc
     return 1
   packages_to_visit = [p for p in defs if p.should_visit()]
+
+  # Make sure we have a Go toolset and it matches the host platform we detected
+  # in get_host_package_vars(). Otherwise we may end up uploading wrong binaries
+  # under host platform CIPD package suffix. It's important on Linux with 64-bit
+  # kernel and 32-bit userland (we must use 32-bit Go in that case, even if
+  # 64-bit Go works too).
+  go_env, go_ver = bootstrap_go_toolset(go_workspace)
+  host_vars = get_host_package_vars()
+  expected_arch = host_vars['platform'].split('-')[1]
+  if go_env['GOHOSTARCH'] != expected_arch:
+    print >> sys.stderr, (
+        'Go toolset GOHOSTARCH (%s) doesn\'t match expected architecture (%s)' %
+        (go_env['GOHOSTARCH'], expected_arch))
+    return 1
+
+  # Append tags related to the build host. They are especially important when
+  # cross-compiling: cross-compiled packages can be identified by comparing the
+  # platform in the package name with value of 'build_host_platform' tag.
+  tags = list(tags)
+  tags.append('build_host_hostname:' + socket.gethostname().split('.')[0])
+  tags.append('build_host_platform:' + host_vars['platform'])
+  tags.append('go_version:' + go_ver)
 
   print_title('Overview')
   if upload:
@@ -1052,19 +1081,6 @@ def run(
         cleaned = True
     if not cleaned:
       print 'Nothing to clean'
-
-  # Make sure we have a Go toolset and it matches the host platform we detected
-  # in get_host_package_vars(). Otherwise we may end up uploading wrong binaries
-  # under host platform CIPD package suffix. It's important on Linux with 64-bit
-  # kernel and 32-bit userland (we must use 32-bit Go in that case, even if
-  # 64-bit Go works too).
-  go_env = bootstrap_go_toolset(go_workspace)
-  expected_arch = host_vars['platform'].split('-')[1]
-  if go_env['GOHOSTARCH'] != expected_arch:
-    print >> sys.stderr, (
-        'Go toolset GOHOSTARCH (%s) doesn\'t match expected architecture (%s)' %
-        (go_env['GOHOSTARCH'], expected_arch))
-    return 1
 
   # Build the world.
   if build:
