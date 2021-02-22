@@ -51,11 +51,22 @@ func TestReviewCleanCherryPick(t *testing.T) {
 			Created:            timestamppb.New(time.Now().Add(-time.Minute)),
 		}
 
-		Convey("decline when cherry pick has more than 1 revisions", func() {
+		Convey("decline when the current revision made any file changes compared with the initial version", func() {
 			t.RevisionsCount = 2
+			gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Number:     t.Number,
+				RevisionId: t.Revision,
+				Base:       "1",
+			})).Return(&gerritpb.ListFilesResponse{
+				Files: map[string]*gerritpb.FileInfo{
+					"/COMMIT_MSG": nil,
+					"no.txt":      nil,
+				},
+			}, nil)
+
 			msg, err := reviewCleanCherryPick(ctx, cfg, gerritMock, t)
 			So(err, ShouldBeNil)
-			So(msg, ShouldEqual, "The change cannot be reviewed. There are more than one revision uploaded.")
+			So(msg, ShouldEqual, "The current revision changed the following files compared with the initial revision: no.txt.")
 		})
 		Convey("decline when out of configured time window", func() {
 			Convey("global time window works", func() {

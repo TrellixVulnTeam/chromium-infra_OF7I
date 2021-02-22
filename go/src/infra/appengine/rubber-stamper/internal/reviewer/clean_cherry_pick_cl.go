@@ -7,6 +7,7 @@ package reviewer
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
@@ -27,9 +28,32 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 		ccpp = hostCfg.RepoConfigs[t.Repo].CleanCherryPickPattern
 	}
 
-	// Check there's only one revision uploaded.
+	// Check whether the current revision made any file changes compared with
+	// the initial revision.
 	if t.RevisionsCount > 1 {
-		return "The change cannot be reviewed. There are more than one revision uploaded.", nil
+		resp, err := gc.ListFiles(ctx, &gerritpb.ListFilesRequest{
+			Number:     t.Number,
+			RevisionId: t.Revision,
+			Base:       "1",
+		})
+		if err != nil {
+			return "", fmt.Errorf("gerrit ListFiles rpc call failed with error: %v", err)
+		}
+
+		var invalidFiles []string
+		for file := range resp.Files {
+			if file == "/COMMIT_MSG" {
+				continue
+			} else {
+				invalidFiles = append(invalidFiles, file)
+			}
+		}
+
+		if len(invalidFiles) > 0 {
+			sort.Strings(invalidFiles)
+			msg := "The current revision changed the following files compared with the initial revision: " + strings.Join(invalidFiles[:], ", ") + "."
+			return msg, nil
+		}
 	}
 
 	// Check whether the change is in a configured time window.

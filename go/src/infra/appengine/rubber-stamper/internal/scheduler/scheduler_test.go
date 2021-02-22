@@ -73,8 +73,12 @@ func TestScheduleReviews(t *testing.T) {
 					Project:            "dummy",
 					CherryPickOfChange: 11234,
 					Revisions: map[string]*gerritpb.RevisionInfo{
-						"112233": {},
-						"456123": {},
+						"112233": {
+							Number: 1,
+						},
+						"789012": {
+							Number: 2,
+						},
 					},
 				},
 			},
@@ -99,6 +103,17 @@ func TestScheduleReviews(t *testing.T) {
 		gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
 			Number:     00002,
 			RevisionId: "789012",
+			Base:       "1",
+		})).Return(&gerritpb.ListFilesResponse{
+			Files: map[string]*gerritpb.FileInfo{
+				"/COMMIT_MSG": nil,
+				"no.md":       nil,
+				"invalid.go":  nil,
+			},
+		}, nil)
+		gerritMock.EXPECT().ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
+			Number:     00002,
+			RevisionId: "789012",
 		})).Return(&gerritpb.ListFilesResponse{
 			Files: map[string]*gerritpb.FileInfo{
 				"a/q/zz": nil,
@@ -117,7 +132,7 @@ func TestScheduleReviews(t *testing.T) {
 		gerritMock.EXPECT().SetReview(gomock.Any(), proto.MatcherEqual(&gerritpb.SetReviewRequest{
 			Number:     00002,
 			RevisionId: "789012",
-			Message:    "The change cannot be reviewed. There are more than one revision uploaded. Learn more: go/rubber-stamper-user-guide.",
+			Message:    "The current revision changed the following files compared with the initial revision: invalid.go, no.md. Learn more: go/rubber-stamper-user-guide.",
 		})).Return(&gerritpb.ReviewResult{}, nil)
 		gerritMock.EXPECT().DeleteReviewer(gomock.Any(), proto.MatcherEqual(&gerritpb.DeleteReviewerRequest{
 			Number:    00002,

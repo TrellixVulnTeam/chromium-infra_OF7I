@@ -119,7 +119,8 @@ in `.go` will not be approved.
 
 #### Examples of clean cherry-pick patterns
 A cherry-pick will be approved if:
-1. Only one revision uploaded;
+1. The current revision doesn't make any file changes compared with the initial
+revision;
 2. It is within the configured `time_window` in the config;
 3. It is cherry-picked after the original CL has been merged;
 4. None of the modified files is in the `excluded_paths`;
