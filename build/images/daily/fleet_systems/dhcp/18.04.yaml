@@ -1,0 +1,6 @@
+name: fleet_systems/dhcp/18.04
+extends: ../../../base.yaml
+
+dockerfile: ../../../../../docker/fleet_systems/dhcp/18.04.Dockerfile
+imagepins: ../../../pins.yaml
+deterministic: false
