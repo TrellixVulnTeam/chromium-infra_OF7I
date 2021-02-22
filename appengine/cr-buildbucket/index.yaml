@@ -35,7 +35,7 @@ indexes:
   - name: is_leased
   - name: lease_expiration_date
 
-# Build lease/start latency monitoring.
+# Build lease/start latency monitoring w/ legacy.
 - kind: Build
   properties:
   - name: bucket_id
@@ -44,12 +44,31 @@ indexes:
   - name: never_leased
   - name: create_time
 
-# metrics.set_build_latency needs this index
+# Build lease/start latency monitoring.
+- kind: Build
+  properties:
+  - name: bucket_id
+  - name: experimental
+  - name: status_v2
+  - name: never_leased
+  - name: create_time
+
+# metrics.set_build_latency needs this index (legacy)
 - kind: Build
   properties:
   - name: bucket_id
   - name: experimental
   - name: never_leased
   - name: status
+  - name: tags
+  - name: create_time
+
+# metrics.set_build_latency needs this index
+- kind: Build
+  properties:
+  - name: bucket_id
+  - name: experimental
+  - name: never_leased
+  - name: status_v2
   - name: tags
   - name: create_time
