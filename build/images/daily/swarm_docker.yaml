@@ -2,4 +2,5 @@ name: swarm_docker
 extends: ../base.yaml
 
 dockerfile: ../../../docker/swarm_docker/Dockerfile
+imagepins: ../pins.yaml
 deterministic: false
