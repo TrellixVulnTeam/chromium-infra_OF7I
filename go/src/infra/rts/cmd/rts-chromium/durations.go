@@ -137,6 +137,19 @@ WITH
 		WHERE partition_time BETWEEN @startTime AND @endTime
 	),
 
+	bb_tryjobs AS (
+		SELECT id, status
+		FROM cr-buildbucket.chromium.builds
+		WHERE create_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) AND TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
+		  AND builder.bucket = 'try'
+	),
+
+	tryjobs_with_status AS (
+		SELECT t.*, bb.status
+		FROM tryjobs t
+		JOIN bb_tryjobs bb USING (id)
+	),
+
 	test_results_base AS (
 		SELECT
 			CAST(REGEXP_EXTRACT(exported.id, r'build-(\d+)') as INT64) as build_id,

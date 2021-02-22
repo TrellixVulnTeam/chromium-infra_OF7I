@@ -75,11 +75,21 @@ const rejectedPatchSetsSQL = commonSubqueries + `
 			variant_hash,
 			ANY_VALUE(testVariant) as testVariant,
 			LOGICAL_OR(expected) AND LOGICAL_OR(NOT expected) AS flake,
-			LOGICAL_AND(NOT expected) all_unexpected,
+
+			# Sometimes ResultDB table misses data. For example, if a test
+			# flaked, the table might miss the pass, and it might look like the test
+			# has failed. Also sometimes builds are incomplete because they
+			# infra-failed or were canceled midway, and the test results do not
+			# represent the whole picture. In particular, CANCELED might mean that the
+			# "without patch" part didn't finish and test results were not properly
+			# exonerated.
+			# Thus ensure that the build has failed too.
+			LOGICAL_AND(NOT expected) AND LOGICAL_AND(t.status = 'FAILURE') all_unexpected,
+
 			ANY_VALUE(ps_approx_timestamp) AS ps_approx_timestamp,
-		FROM tryjobs t
+		FROM tryjobs_with_status t
 		JOIN test_results_base tr ON t.id = tr.build_id
-		WHERE not exonerated  AND status != 'SKIP'  -- not needed for RTS purposes
+		WHERE not exonerated  AND tr.status != 'SKIP'  -- not needed for RTS purposes
 		GROUP BY change, patchset, test_id, variant_hash
 
 		# Exclude all-expected results early on.
