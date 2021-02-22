@@ -39,14 +39,21 @@ message HostCriterial {
     //   * All enrolled hosts need to be pushed
     // The priority comparison:
     //   all > hostnames > swarming_criterials
-    repeated SwarmingCriterial swarming_criterials= 1;
+    bool all = 1;
     repeated string hostnames = 2;
-    bool all = 3;
+    // When swarming is replaced by RBE, this criterial will be deprecated and
+    // replaced by rbe_criterials.
+    repeated SwarmingCriterial swarming_criterials = 3;
 }
 
 message SwarmingCriterial {
-    // e.g. chromium-swarm.appspot.com
+    // E.g. chromium-swarm.appspot.com
     string instance = 1;
-    // e.g. pool:luci.dart.ci
-    repeated string dimensions = 2;
+    repeated Dimension dimensions = 2;
+}
+
+// Representing a matching <string, []string> 
+message Dimension {
+    string key = 1;
+    repeated string values = 2;
 }
