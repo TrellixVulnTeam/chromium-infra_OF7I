@@ -5,10 +5,10 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # The existing replicas all have this prefix:
-REPLICA_PREFIX="replica-7"
+REPLICA_PREFIX="replica"
 
 # The new replicas made from the restored primary will have this prefix:
-NEW_REPLICA_PREFIX="replica-8"
+NEW_REPLICA_PREFIX="replica-1"
 
 CLOUD_PROJECT="monorail-staging"
 
@@ -85,8 +85,8 @@ gcloud sql operations wait ${RESTORE_OP_IDS[0]} --instance=primary --project=$CL
 
 echo Restore is finished on primary. Now create the new set of read replicas with the new name prefix $NEW_REPLICA_PREFIX:
 
-for i in `seq 0 9`; do
-  cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-0$i --master-instance-name primary --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"
+for i in {00..09}; do
+  cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-$i --master-instance-name primary --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"
   echo $cmd
   if [ $DRY_RUN == false ]; then
     $cmd

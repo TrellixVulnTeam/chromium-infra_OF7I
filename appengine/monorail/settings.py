@@ -62,10 +62,7 @@ send_noreply_email_as_format = 'monorail+noreply@%(domain)s'
 # In such cases the db_replica_names list can be overwritten in Part 5.
 db_database_name = 'monorail'
 db_primary_name = 'primary'
-db_replica_names = [
-    'replica-00', 'replica-01', 'replica-02', 'replica-03', 'replica-04',
-    'replica-05', 'replica-06', 'replica-07', 'replica-08', 'replica-09'
-]
+db_replica_prefix = 'replica'
 db_region = 'us-central1'
 
 # The default connection pool size for mysql connections.
@@ -340,6 +337,8 @@ else:
     domain_to_default_project = domain_to_default_project_dev
     # See comment above on how to find this address.
     redis_host = '10.150.170.251'
+    # Use replicas created when testing the restore procedures on 2021-02-22
+    db_replica_prefix = 'replica-1'
 
   elif app_id == 'monorail-prod':
     send_all_email_to = None  # Deliver it to the intended users.
@@ -360,6 +359,10 @@ if local_mode:
 
 # Combine the customized info above to make the name of the primary DB instance.
 db_instance = db_cloud_project + ':' + db_region + ':' + db_primary_name
+
+# Combine the customized info above to make the names of the replica DB
+# instances.
+db_replica_names = ['{}-{:02d}'.format(db_replica_prefix, i) for i in range(10)]
 
 # Format string for the name of the physical database replicas.
 physical_db_name_format = (db_cloud_project + ':' + db_region + ':%s')
