@@ -98,6 +98,39 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
+	dutStates := map[fleet.DutState]bool{
+		fleet.DutState_Ready:             true,
+		fleet.DutState_NeedsRepair:       true,
+		fleet.DutState_NeedsReset:        true,
+		fleet.DutState_RepairFailed:      true,
+		fleet.DutState_NeedsManualRepair: true,
+		fleet.DutState_NeedsReplacement:  false,
+		fleet.DutState_NeedsDeploy:       false,
+	}
+
+	var actions []string
+	var taskname string
+	switch req.Task {
+	case fleet.AuditTask_ServoUSBKey:
+		actions = []string{"verify-servo-usb-drive"}
+		taskname = "USB-drive"
+	case fleet.AuditTask_DUTStorage:
+		actions = []string{"verify-dut-storage"}
+		taskname = "Storage"
+		dutStates[fleet.DutState_RepairFailed] = false
+		dutStates[fleet.DutState_NeedsManualRepair] = false
+	case fleet.AuditTask_RPMConfig:
+		actions = []string{"verify-rpm-config"}
+		taskname = "RPM Config"
+		dutStates[fleet.DutState_RepairFailed] = false
+		dutStates[fleet.DutState_NeedsManualRepair] = false
+	}
+
+	if len(actions) == 0 {
+		logging.Infof(ctx, "No action specified", err)
+		return nil, errors.New("failed to push audit bots")
+	}
+
 	cfg := config.Get(ctx)
 	sc, err := tsi.newSwarmingClient(ctx, cfg.Swarming.Host)
 	if err != nil {
@@ -116,38 +149,6 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
 	}
 	logging.Infof(ctx, "successfully get %d alive cros bots", len(bots))
-	dutStates := map[fleet.DutState]bool{
-		fleet.DutState_Ready:             true,
-		fleet.DutState_NeedsRepair:       true,
-		fleet.DutState_NeedsReset:        true,
-		fleet.DutState_RepairFailed:      true,
-		fleet.DutState_NeedsManualRepair: true,
-		fleet.DutState_NeedsReplacement:  false,
-		fleet.DutState_NeedsDeploy:       false,
-	}
-
-	var actions []string
-	var taskname string
-	switch req.Task {
-	case fleet.AuditTask_TaskInvalid:
-		actions = []string{
-			"verify-servo-fw",
-		}
-		taskname = "Maintenance"
-	case fleet.AuditTask_ServoUSBKey:
-		actions = []string{"verify-servo-usb-drive"}
-		taskname = "USB-drive"
-	case fleet.AuditTask_DUTStorage:
-		actions = []string{"verify-dut-storage"}
-		taskname = "Storage"
-		dutStates[fleet.DutState_RepairFailed] = false
-		dutStates[fleet.DutState_NeedsManualRepair] = false
-	case fleet.AuditTask_RPMConfig:
-		actions = []string{"verify-rpm-config"}
-		taskname = "RPM Config"
-		dutStates[fleet.DutState_RepairFailed] = false
-		dutStates[fleet.DutState_NeedsManualRepair] = false
-	}
 	botIDs := identifyBotsForAudit(ctx, bots, dutStates, req.Task)
 
 	err = clients.PushAuditDUTs(ctx, botIDs, actions, taskname)

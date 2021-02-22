@@ -65,9 +65,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	// for repair jobs of labstation.
 	r.GET("/internal/cron/push-repair-jobs-for-labstations", mwCron, logAndSetHTTPErr(pushRepairJobsForLabstationsCronHandler))
 
-	// Generate audit jobs for CrOS DUTs.
-	r.GET("/internal/cron/push-admin-audit-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_TaskInvalid)))
-
 	// Generate audit-usbkey jobs for CrOS DUTs.
 	r.GET("/internal/cron/push-admin-audit-usbkey-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditActionHandler(fleet.AuditTask_ServoUSBKey)))
 

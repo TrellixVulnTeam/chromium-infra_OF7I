@@ -250,24 +250,11 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		tqt := taskqueue.GetTestable(tf.C)
 		tqt.CreateQueue(auditQ)
 
-		Convey("run only for ready|needs_repair|needs_reset|repair_failed DUTs", func() {
-			tqt.ResetTasks()
-			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
-				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
-				gomock.Eq(strpair.Map{}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot5, bot6, bot7, bot2LabStation}, nil)
-			expectDefaultPerBotRefresh(tf)
-
-			actions := []string{
-				"verify-servo-fw",
-			}
+		Convey("fail to run when actions is not specified", func() {
 			request := fleet.PushBotsForAdminAuditTasksRequest{}
 			res, err := tf.Tracker.PushBotsForAdminAuditTasks(tf.C, &request)
-			So(err, ShouldBeNil)
-			So(res, ShouldNotBeNil)
-
-			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4", "id6"}, actions)
+			So(err, ShouldNotBeNil)
+			So(res, ShouldBeNil)
 		})
 		Convey("run only Servo USB-key check for all DUTs", func() {
 			tqt.ResetTasks()

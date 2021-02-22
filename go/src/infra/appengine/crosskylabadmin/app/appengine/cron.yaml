@@ -29,11 +29,6 @@ cron:
   retry_parameters:
     job_retry_limit: 4
 
-- description: push bots for admin audit (maintenance) tasks
-  url: /internal/cron/push-admin-audit-tasks-for-duts
-  schedule: every sunday 0:30
-  timezone: America/Los_Angeles
-
 - description: push bots for admin audit tasks for DUT storage
   url: /internal/cron/push-admin-audit-storage-tasks-for-duts
   schedule: every sunday 1:00
