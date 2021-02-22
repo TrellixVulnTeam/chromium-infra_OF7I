@@ -44,8 +44,8 @@ class MetricsTest(testing.AppengineTestCase):
     mkbuild(experimental=True)
 
     metrics.set_build_count_metric_async(
-        'chromium/try', 'luci.chromium.try', 'release',
-        model.BuildStatus.SCHEDULED, False
+        'chromium/try', 'luci.chromium.try', 'release', common_pb2.SCHEDULED,
+        False
     ).get_result()
     self.assertEqual(
         2,
@@ -179,20 +179,19 @@ class MetricsTest(testing.AppengineTestCase):
     )
 
     set_build_count_metric_async.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'release',
-        model.BuildStatus.SCHEDULED, False
+        'chromium/try', 'luci.chromium.try', 'release', common_pb2.SCHEDULED,
+        False
     )
     set_build_count_metric_async.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'release',
-        model.BuildStatus.SCHEDULED, True
+        'chromium/try', 'luci.chromium.try', 'release', common_pb2.SCHEDULED,
+        True
     )
     set_build_count_metric_async.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'debug',
-        model.BuildStatus.SCHEDULED, False
+        'chromium/try', 'luci.chromium.try', 'debug', common_pb2.SCHEDULED,
+        False
     )
     set_build_count_metric_async.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'debug',
-        model.BuildStatus.SCHEDULED, True
+        'chromium/try', 'luci.chromium.try', 'debug', common_pb2.SCHEDULED, True
     )
 
   def test_fields_for(self):

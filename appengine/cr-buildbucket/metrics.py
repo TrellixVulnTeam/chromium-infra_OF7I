@@ -10,6 +10,8 @@ from google.appengine.ext import ndb
 from components import utils
 import gae_ts_mon
 
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+
 from legacy import api_common
 import buildtags
 import config
@@ -262,7 +264,7 @@ def set_build_count_metric_async(
   q = model.Build.query(
       model.Build.bucket_id == bucket_id,
       model.Build.tags == 'builder:%s' % builder,
-      model.Build.status_legacy == status,
+      model.Build.status == status,
       model.Build.experimental == experimental,
   )
   try:
@@ -270,11 +272,10 @@ def set_build_count_metric_async(
   except Exception:  # pragma: no cover
     logging.exception('failed to count builds with query %s', q)
     return
-
   fields = {
       'bucket': bucket_field,
       'builder': builder,
-      'status': str(status),
+      'status': common_pb2.Status.Name(status),
   }
   metric = BUILD_COUNT_EXPERIMENTAL if experimental else BUILD_COUNT_PROD
   metric.set(value, fields=fields, target_fields=GLOBAL_TARGET_FIELDS)
@@ -285,7 +286,7 @@ def set_build_latency(bucket_id, bucket_field, builder, must_be_never_leased):
   q = model.Build.query(
       model.Build.bucket_id == bucket_id,
       model.Build.tags == 'builder:%s' % builder,
-      model.Build.status_legacy == model.BuildStatus.SCHEDULED,
+      model.Build.status == common_pb2.SCHEDULED,
       model.Build.experimental == False,
   )
   if must_be_never_leased:
@@ -349,7 +350,7 @@ def update_global_metrics():
         (bucket_id, legacy_bucket_name, builder, True),
         (bucket_id, legacy_bucket_name, builder, False),
     ])
-    for status in (model.BuildStatus.SCHEDULED, model.BuildStatus.STARTED):
+    for status in (common_pb2.SCHEDULED, common_pb2.STARTED):
       for experimental in (False, True):
         count_query_queue.append(
             (bucket_id, legacy_bucket_name, builder, status, experimental)
