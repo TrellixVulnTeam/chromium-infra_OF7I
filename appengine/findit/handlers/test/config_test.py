@@ -33,12 +33,12 @@ _MOCK_STEPS_FOR_MASTERS_RULES = {
             'check_global': False
         },
         'master3': {
-            # Supports everything not blacklisted in global.
+            # Supports everything not disallowed in global.
             'check_global': True
         },
     },
     'global': {
-        # Blacklists all listed steps for all masters unless overridden.
+        # Disallowes all listed steps for all masters unless overridden.
         'unsupported_steps': ['step6', 'step7'],
     }
 }

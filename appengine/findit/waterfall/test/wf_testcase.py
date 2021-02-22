@@ -28,8 +28,7 @@ _DEFAULT_STEPS_FOR_MASTERS_RULES = {
             'unsupported_steps': [
                 'unsupported_step1', 'unsupported_step2', 'unsupported_step3'
             ],
-            'check_global':
-                True,
+            'check_global': True,
         },
         'master2': {
             # Only supports step4 and step5 regardless of global.
@@ -37,12 +36,12 @@ _DEFAULT_STEPS_FOR_MASTERS_RULES = {
             'check_global': False,
         },
         'master3': {
-            # Supports everything not blacklisted in global.
+            # Supports everything not disallowed in global.
             'check_global': True,
         },
     },
     'global': {
-        # Blacklists all listed steps for all masters unless overridden.
+        # Disallows all listed steps for all masters unless overridden.
         'unsupported_steps': ['unsupported_step6', 'unsupported_step7'],
     },
 }

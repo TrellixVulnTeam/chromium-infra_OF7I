@@ -82,8 +82,8 @@ def _GetAllowedGitilesConfigs():
       'allowed_gitiles_configs', {})
 
 
-def _GetBlacklistedDeps():
-  """Returns a map of blacklisted dependencies to skip adding to manifest.
+def _GetDisallowedDeps():
+  """Returns a map of disallowed dependencies to skip adding to manifest.
 
   Main use case is to skip dependency repos that have malformed structures, and
   the mapping is from root repo url to list of dependency paths (relative to
@@ -329,7 +329,7 @@ def _RetrieveChromeManifest(repo_url, revision,
   deps = dep_fetcher.GetDependency(revision, os_platform)
   for path, dep in deps.iteritems():
     # Remove clause when crbug.com/929315 gets fixed.
-    if path in _GetBlacklistedDeps().get(repo_url, []):
+    if path in _GetDisallowedDeps().get(repo_url, []):
       continue
 
     # Public DEPS paths have the src/ prefix, and they need to be striped to be
