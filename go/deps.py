@@ -379,11 +379,12 @@ def call(workspace, tool, args, capture_output=False):
   sfx = '.exe' if sys.platform == 'win32' else ''
   cmd = [os.path.join(workspace.goroot, 'bin', tool + sfx)] + args
 
-  # Completely replace any existing Go env vars.
+  # Make sure we work only with `vendor_root` as GOPATH.
   env = os.environ.copy()
   env['GOROOT'] = workspace.goroot
   env['GOPATH'] = workspace.vendor_root
   env['GOBIN'] = os.path.join(workspace.vendor_root, 'bin')
+  env['GO111MODULE'] = 'off'
 
   # Glide searches for 'go' in PATH. Make it available.
   env['PATH'] = os.path.join(env['GOROOT'], 'bin') + os.pathsep + env['PATH']
