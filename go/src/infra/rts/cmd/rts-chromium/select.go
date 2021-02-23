@@ -219,12 +219,14 @@ func (r *selectRun) loadStrategy(cfgFileName string) error {
 		return err
 	}
 
+	r.strategy.EdgeReader = &git.EdgeReader{
+		ChangeLogDistanceFactor:     float64(cfg.ChangeLogDistanceFactor),
+		FileStructureDistanceFactor: float64(cfg.FileStructureDistanceFactor),
+	}
 	threshold := chooseThreshold(cfg.Thresholds, r.targetChangeRecall)
 	if threshold == nil {
 		return errors.Reason("no threshold for target change recall %.4f", r.targetChangeRecall).Err()
 	}
-	r.strategy.EdgeReader.ChangeLogDistanceFactor = float64(cfg.ChangeLogDistanceFactor)
-	r.strategy.EdgeReader.FileStructureDistanceFactor = float64(cfg.FileStructureDistanceFactor)
 	r.strategy.MaxDistance = float64(threshold.MaxDistance)
 	return nil
 }
