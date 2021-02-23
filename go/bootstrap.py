@@ -49,7 +49,7 @@ EXE_SFX = '.exe' if sys.platform == 'win32' else ''
 GIT_EXE = 'git.bat' if sys.platform == 'win32' else 'git'
 
 # Version of Go CIPD package (infra/3pp/tools/go/${platform}) to install.
-TOOLSET_VERSION = '1.15.8'
+TOOLSET_VERSION = os.environ.get('INFRA_GO_VERSION') or '1.15.8'
 
 # Describes how to fetch 'glide'.
 GLIDE_SOURCE = {
