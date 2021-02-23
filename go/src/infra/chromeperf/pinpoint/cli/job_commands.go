@@ -1,12 +1,12 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"time"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/encoding/prototext"
@@ -25,34 +25,35 @@ func cmdListJobs(p Param) *subcommands.Command {
 			Prints out a list of jobs tracked by Pinpoint to stdout, possibly
 			constrained by the filter.
 		`),
-		CommandRun: func() subcommands.CommandRun {
-			lj := &listJobs{}
-			lj.RegisterDefaultFlags(p)
-			// TODO(dberris): Link to documentation about supported fields in the filter.
-			lj.Flags.StringVar(&lj.filter, "filter", "", text.Doc(`
-				Optional filter to apply to restrict the set of jobs listed. See
-				https://aip.dev/160 for details on the filter syntax.
-			`))
-			return lj
-		},
+		CommandRun: wrapCommand(p, func() pinpointCommand {
+			return &listJobs{}
+		}),
 	}
 }
 
-func (lj *listJobs) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	ctx := cli.GetContext(a, lj, env)
+func (lj *listJobs) RegisterFlags(p Param) {
+	lj.baseCommandRun.RegisterFlags(p)
+	// TODO(dberris): Link to documentation about supported fields in the filter.
+	lj.Flags.StringVar(&lj.filter, "filter", "", text.Doc(`
+		Optional filter to apply to restrict the set of jobs listed. See
+		https://aip.dev/160 for details on the filter syntax.
+	`))
+}
+
+func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	c, err := lj.pinpointClient(ctx)
 	if err != nil {
-		return lj.done(a, err)
+		return err
 	}
 
 	req := &pinpoint.ListJobsRequest{Filter: lj.filter}
 	resp, err := c.ListJobs(ctx, req)
 	if err != nil {
-		return lj.done(a, errors.Annotate(err, "failed during ListJobs").Err())
+		return errors.Annotate(err, "failed during ListJobs").Err()
 	}
 	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
-	return lj.done(a, nil)
+	return nil
 }
 
 type getJob struct {
@@ -67,36 +68,37 @@ func cmdGetJob(p Param) *subcommands.Command {
 		LongDesc: text.Doc(`
 			Prints out information about a Job.
 		`),
-		CommandRun: func() subcommands.CommandRun {
-			gj := &getJob{}
-			gj.RegisterDefaultFlags(p)
-			gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
-				Required; the name of the job to get information about.
-				Example: "-name=XXXXXXXXXXXXXX"
-			`))
-			return gj
-		},
+		CommandRun: wrapCommand(p, func() pinpointCommand {
+			return &getJob{}
+		}),
 	}
 }
 
-func (gj *getJob) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (gj *getJob) RegisterFlags(p Param) {
+	gj.baseCommandRun.RegisterFlags(p)
+	gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
+		Required; the name of the job to get information about.
+		Example: "-name=XXXXXXXXXXXXXX"
+	`))
+}
+
+func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	if gj.name == "" {
-		return gj.done(a, errors.Reason("must set -name").Err())
+		return errors.Reason("must set -name").Err()
 	}
-	ctx := cli.GetContext(a, gj, env)
 	c, err := gj.pinpointClient(ctx)
 	if err != nil {
-		return gj.done(a, err)
+		return err
 	}
 
 	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(gj.name)}
 	resp, err := c.GetJob(ctx, req)
 	if err != nil {
-		return gj.done(a, errors.Annotate(err, "failed during GetJob").Err())
+		return errors.Annotate(err, "failed during GetJob").Err()
 	}
 	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
-	return gj.done(a, nil)
+	return nil
 }
 
 type waitJob struct {
@@ -114,29 +116,30 @@ func cmdWaitJob(p Param) *subcommands.Command {
 			until the job is no longer RUNNING nor PENDING. -quiet disables
 			informational text output.
 		`),
-		CommandRun: func() subcommands.CommandRun {
-			wj := &waitJob{}
-			wj.RegisterDefaultFlags(p)
-			wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
-				Required; the name of the job to poll.
-				Example: "-name=XXXXXXXXXXXXXX"
-			`))
-			wj.Flags.BoolVar(&wj.quiet, "quiet", false, text.Doc(`
-				Disable informational text output; errors are still printed.
-			`))
-			return wj
-		},
+		CommandRun: wrapCommand(p, func() pinpointCommand {
+			return &waitJob{}
+		}),
 	}
 }
 
-func (wj *waitJob) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (wj *waitJob) RegisterFlags(p Param) {
+	wj.baseCommandRun.RegisterFlags(p)
+	wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
+		Required; the name of the job to poll.
+		Example: "-name=XXXXXXXXXXXXXX"
+	`))
+	wj.Flags.BoolVar(&wj.quiet, "quiet", false, text.Doc(`
+		Disable informational text output; errors are still printed.
+	`))
+}
+
+func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	if wj.name == "" {
-		return wj.done(a, errors.Reason("must set -name").Err())
+		return errors.Reason("must set -name").Err()
 	}
-	ctx := cli.GetContext(a, wj, env)
 	c, err := wj.pinpointClient(ctx)
 	if err != nil {
-		return wj.done(a, err)
+		return err
 	}
 
 	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(wj.name)}
@@ -149,7 +152,7 @@ func (wj *waitJob) Run(a subcommands.Application, args []string, env subcommands
 	for {
 		resp, err := c.GetJob(ctx, req)
 		if err != nil {
-			return wj.done(a, errors.Annotate(err, "failed during GetJob").Err())
+			return errors.Annotate(err, "failed during GetJob").Err()
 		}
 		if updateTime := resp.LastUpdateTime.AsTime(); lastUpdateTime != updateTime && !wj.quiet {
 			lastUpdateTime = updateTime
@@ -162,12 +165,12 @@ func (wj *waitJob) Run(a subcommands.Application, args []string, env subcommands
 			if !wj.quiet {
 				fmt.Printf("Final state for job %q: %v\n", resp.Name, s)
 			}
-			return wj.done(a, nil)
+			return nil
 		}
 
 		select {
 		case <-ctx.Done():
-			return wj.done(a, errors.Annotate(ctx.Err(), "polling for wait-job cancelled").Err())
+			return errors.Annotate(ctx.Err(), "polling for wait-job cancelled").Err()
 		case <-poll.C:
 			// loop back around and retry.
 		}

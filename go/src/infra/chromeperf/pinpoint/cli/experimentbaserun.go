@@ -92,8 +92,8 @@ func (c *clValue) Set(i string) error {
 	return nil
 }
 
-func (e *experimentBaseRun) RegisterDefaultFlags(p Param) {
-	e.baseCommandRun.RegisterDefaultFlags(p)
+func (e *experimentBaseRun) RegisterFlags(p Param) {
+	e.baseCommandRun.RegisterFlags(p)
 	e.Flags.Var(&e.issue, "bug", text.Doc(`
 		Monorail issue id in the form <project>:<issue id>.
 	`))

@@ -15,14 +15,14 @@
 package cli
 
 import (
+	"context"
 	"fmt"
-	"log"
 
 	"infra/chromeperf/pinpoint"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/protobuf/encoding/prototext"
@@ -47,27 +47,29 @@ func cmdTelemetryExperiment(p Param) *subcommands.Command {
 
 			The extra telemetry args will be treated as a space-separated list.
 		`),
-		CommandRun: func() subcommands.CommandRun {
-			e := &experimentTelemetryRun{}
-			e.RegisterDefaultFlags(p)
-			e.Flags.StringVar(&e.benchmark, "benchmark", "", text.Doc(`
-				A telemetry benchmark.
-			`))
-			e.Flags.StringVar(&e.story, "story", "", text.Doc(`
-				A story to run.
-				Mutually exclusive with -story-tags.
-			`))
-			e.Flags.Var(flag.CommaList(&e.storyTags), "story-tags", text.Doc(`
-				A comma-separated list of telemetry story tags.
-				Mutually exclusive with -story.
-			`))
-			e.Flags.StringVar(&e.measurement, "measurement", "", text.Doc(`
-				The measurement to pick out.
-				When empty defaults to all measurements produced by the benchmark (optional).
-			`))
-			return e
-		},
+		CommandRun: wrapCommand(p, func() pinpointCommand {
+			return &experimentTelemetryRun{}
+		}),
 	}
+}
+
+func (e *experimentTelemetryRun) RegisterFlags(p Param) {
+	e.experimentBaseRun.RegisterFlags(p)
+	e.Flags.StringVar(&e.benchmark, "benchmark", "", text.Doc(`
+		A telemetry benchmark.
+	`))
+	e.Flags.StringVar(&e.story, "story", "", text.Doc(`
+		A story to run.
+		Mutually exclusive with -story-tags.
+	`))
+	e.Flags.Var(flag.CommaList(&e.storyTags), "story-tags", text.Doc(`
+		A comma-separated list of telemetry story tags.
+		Mutually exclusive with -story.
+	`))
+	e.Flags.StringVar(&e.measurement, "measurement", "", text.Doc(`
+		The measurement to pick out.
+		When empty defaults to all measurements produced by the benchmark (optional).
+	`))
 }
 
 const (
@@ -98,17 +100,14 @@ func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extr
 	return tb
 }
 
-func (e *experimentTelemetryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	if (len(e.story) == 0 && len(e.storyTags) == 0) || (len(e.story) > 0 && len(e.storyTags) > 0) {
-		fmt.Fprintln(a.GetErr(), "ERROR: pick one of -story or -story-tags")
 		e.GetFlags().Usage()
-		return 1
+		return errors.Reason("pick one of -story or -story-tags").Err()
 	}
-	ctx := cli.GetContext(a, e, env)
 	c, err := e.pinpointClient(ctx)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "ERROR: Failed to create a Pinpoint client: %s\n", err)
-		return 1
+		return errors.Annotate(err, "failed to create a Pinpoint client").Err()
 	}
 	js := &pinpoint.JobSpec{
 		ComparisonMode: pinpoint.JobSpec_PERFORMANCE,
@@ -161,17 +160,16 @@ func (e *experimentTelemetryRun) Run(a subcommands.Application, args []string, e
 	}
 	j, err := c.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{Job: js})
 	if err != nil {
-		log.Printf("ERROR: Failed: %s", err)
-		return 1
+		return errors.Annotate(err, "failed to ScheduleJob").Err()
 	}
 	jobURL, err := legacyJobURL(j)
 	var out string
 	if err != nil {
-		logging.Errorf(cli.GetContext(a, e, env), "ERROR: %s", err)
+		logging.Errorf(ctx, "ERROR: %s", err)
 		out = prototext.Format(j)
 	} else {
 		out = jobURL
 	}
 	fmt.Fprintf(a.GetOut(), "Pinpoint job scheduled: %s\n", out)
-	return 0
+	return nil
 }

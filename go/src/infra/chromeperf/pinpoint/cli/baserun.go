@@ -16,6 +16,7 @@ package cli
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"sync"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc/credentials"
@@ -39,7 +41,7 @@ type baseCommandRun struct {
 	initClientFactoryErr  error
 }
 
-func (r *baseCommandRun) RegisterDefaultFlags(p Param) {
+func (r *baseCommandRun) RegisterFlags(p Param) {
 	r.Flags.StringVar(&r.endpoint, "endpoint", p.DefaultServiceDomain, text.Doc(`
 		Pinpoint API service endpoint.
 	`))
@@ -99,13 +101,37 @@ func (r *baseCommandRun) pinpointClient(ctx context.Context) (pinpoint.PinpointC
 	return c, nil
 }
 
-// done is a convenience method for dealing with errors on subcommand exit.
-// TODO(chowski): introduce a wrapper type for subcommands rather than
-// requiring people to remember to call this helper.
-func (r *baseCommandRun) done(a subcommands.Application, err error) int {
+type pinpointCommand interface {
+	Run(ctx context.Context, a subcommands.Application, args []string) error
+	RegisterFlags(p Param)
+	GetFlags() *flag.FlagSet
+}
+
+type wrappedPinpointCommand struct {
+	delegate pinpointCommand
+}
+
+func (wpc wrappedPinpointCommand) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	// The subcommands.CommandRun parameter to GetContext is only used to check
+	// to see if it implements ContextModificator. Since we aren't using that,
+	// no need to jump through hoops to support it.
+	ctx := cli.GetContext(a, nil, env)
+	err := wpc.delegate.Run(ctx, a, args)
 	if err == nil {
 		return 0
 	}
 	fmt.Fprintf(a.GetErr(), "ERROR: %s\n", err)
 	return 1
+}
+
+func (wpc wrappedPinpointCommand) GetFlags() *flag.FlagSet {
+	return wpc.delegate.GetFlags()
+}
+
+func wrapCommand(p Param, newCmd func() pinpointCommand) func() subcommands.CommandRun {
+	return func() subcommands.CommandRun {
+		cmd := newCmd()
+		cmd.RegisterFlags(p)
+		return wrappedPinpointCommand{cmd}
+	}
 }
