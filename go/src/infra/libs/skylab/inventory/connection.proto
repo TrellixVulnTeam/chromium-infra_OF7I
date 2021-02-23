@@ -4,7 +4,7 @@
 syntax = "proto2";
 
 package chrome.chromeos_infra.skylab.proto.inventory;
-option go_package = ".;inventory";
+option go_package = "infra/libs/skylab/inventory;inventory";
 
 // This proto definition describes the on-disk configuration data describing the
 // ChromeOS skylab inventory. This is _not_ intended to be used as an API
@@ -12,7 +12,7 @@ option go_package = ".;inventory";
 // whenever strict checking is desired, and the proto definition can change
 // relatively freely in the future.
 
-import "device.proto";
+import "infra/libs/skylab/inventory/device.proto";
 
 // NEXT TAG: 6
 message ServoHostConnection {

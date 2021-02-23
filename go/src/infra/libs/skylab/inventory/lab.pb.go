@@ -6,7 +6,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0-devel
 // 	protoc        v3.12.1
-// source: lab.proto
+// source: infra/libs/skylab/inventory/lab.proto
 
 package inventory
 
@@ -40,7 +40,7 @@ type Lab struct {
 func (x *Lab) Reset() {
 	*x = Lab{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_lab_proto_msgTypes[0]
+		mi := &file_infra_libs_skylab_inventory_lab_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -53,7 +53,7 @@ func (x *Lab) String() string {
 func (*Lab) ProtoMessage() {}
 
 func (x *Lab) ProtoReflect() protoreflect.Message {
-	mi := &file_lab_proto_msgTypes[0]
+	mi := &file_infra_libs_skylab_inventory_lab_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -66,7 +66,7 @@ func (x *Lab) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Lab.ProtoReflect.Descriptor instead.
 func (*Lab) Descriptor() ([]byte, []int) {
-	return file_lab_proto_rawDescGZIP(), []int{0}
+	return file_infra_libs_skylab_inventory_lab_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Lab) GetDuts() []*DeviceUnderTest {
@@ -115,7 +115,7 @@ type Infrastructure struct {
 func (x *Infrastructure) Reset() {
 	*x = Infrastructure{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_lab_proto_msgTypes[1]
+		mi := &file_infra_libs_skylab_inventory_lab_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -128,7 +128,7 @@ func (x *Infrastructure) String() string {
 func (*Infrastructure) ProtoMessage() {}
 
 func (x *Infrastructure) ProtoReflect() protoreflect.Message {
-	mi := &file_lab_proto_msgTypes[1]
+	mi := &file_infra_libs_skylab_inventory_lab_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +141,7 @@ func (x *Infrastructure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Infrastructure.ProtoReflect.Descriptor instead.
 func (*Infrastructure) Descriptor() ([]byte, []int) {
-	return file_lab_proto_rawDescGZIP(), []int{1}
+	return file_infra_libs_skylab_inventory_lab_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Infrastructure) GetServers() []*Server {
@@ -151,15 +151,22 @@ func (x *Infrastructure) GetServers() []*Server {
 	return nil
 }
 
-var File_lab_proto protoreflect.FileDescriptor
+var File_infra_libs_skylab_inventory_lab_proto protoreflect.FileDescriptor
 
-var file_lab_proto_rawDesc = []byte{
-	0x0a, 0x09, 0x6c, 0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x2c, 0x63, 0x68, 0x72,
-	0x6f, 0x6d, 0x65, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66,
-	0x72, 0x61, 0x2e, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
-	0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x1a, 0x10, 0x63, 0x6f, 0x6e, 0x6e, 0x65,
-	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0c, 0x64, 0x65, 0x76,
-	0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x65,
+var file_infra_libs_skylab_inventory_lab_proto_rawDesc = []byte{
+	0x0a, 0x25, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x73, 0x6b, 0x79,
+	0x6c, 0x61, 0x62, 0x2f, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2f, 0x6c, 0x61,
+	0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x2c, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x2e,
+	0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e, 0x73,
+	0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x76, 0x65,
+	0x6e, 0x74, 0x6f, 0x72, 0x79, 0x1a, 0x2c, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x6c, 0x69, 0x62,
+	0x73, 0x2f, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2f, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f,
+	0x72, 0x79, 0x2f, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x1a, 0x28, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f,
+	0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2f, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79,
+	0x2f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x28, 0x69,
+	0x6e, 0x66, 0x72, 0x61, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62,
+	0x2f, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65,
 	0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x86, 0x04, 0x0a, 0x03, 0x4c, 0x61, 0x62, 0x12,
 	0x51, 0x0a, 0x04, 0x64, 0x75, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3d, 0x2e,
 	0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f,
@@ -199,24 +206,25 @@ var file_lab_proto_rawDesc = []byte{
 	0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e, 0x73, 0x6b, 0x79, 0x6c,
 	0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f,
 	0x72, 0x79, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x72, 0x73, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x3b, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72,
-	0x79,
+	0x72, 0x73, 0x42, 0x27, 0x5a, 0x25, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x6c, 0x69, 0x62, 0x73,
+	0x2f, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2f, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72,
+	0x79, 0x3b, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79,
 }
 
 var (
-	file_lab_proto_rawDescOnce sync.Once
-	file_lab_proto_rawDescData = file_lab_proto_rawDesc
+	file_infra_libs_skylab_inventory_lab_proto_rawDescOnce sync.Once
+	file_infra_libs_skylab_inventory_lab_proto_rawDescData = file_infra_libs_skylab_inventory_lab_proto_rawDesc
 )
 
-func file_lab_proto_rawDescGZIP() []byte {
-	file_lab_proto_rawDescOnce.Do(func() {
-		file_lab_proto_rawDescData = protoimpl.X.CompressGZIP(file_lab_proto_rawDescData)
+func file_infra_libs_skylab_inventory_lab_proto_rawDescGZIP() []byte {
+	file_infra_libs_skylab_inventory_lab_proto_rawDescOnce.Do(func() {
+		file_infra_libs_skylab_inventory_lab_proto_rawDescData = protoimpl.X.CompressGZIP(file_infra_libs_skylab_inventory_lab_proto_rawDescData)
 	})
-	return file_lab_proto_rawDescData
+	return file_infra_libs_skylab_inventory_lab_proto_rawDescData
 }
 
-var file_lab_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_lab_proto_goTypes = []interface{}{
+var file_infra_libs_skylab_inventory_lab_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_infra_libs_skylab_inventory_lab_proto_goTypes = []interface{}{
 	(*Lab)(nil),                 // 0: chrome.chromeos_infra.skylab.proto.inventory.Lab
 	(*Infrastructure)(nil),      // 1: chrome.chromeos_infra.skylab.proto.inventory.Infrastructure
 	(*DeviceUnderTest)(nil),     // 2: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
@@ -226,7 +234,7 @@ var file_lab_proto_goTypes = []interface{}{
 	(*ChameleonConnection)(nil), // 6: chrome.chromeos_infra.skylab.proto.inventory.ChameleonConnection
 	(*Server)(nil),              // 7: chrome.chromeos_infra.skylab.proto.inventory.Server
 }
-var file_lab_proto_depIdxs = []int32{
+var file_infra_libs_skylab_inventory_lab_proto_depIdxs = []int32{
 	2, // 0: chrome.chromeos_infra.skylab.proto.inventory.Lab.duts:type_name -> chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
 	3, // 1: chrome.chromeos_infra.skylab.proto.inventory.Lab.servo_hosts:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice
 	4, // 2: chrome.chromeos_infra.skylab.proto.inventory.Lab.chamelons:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice
@@ -240,16 +248,16 @@ var file_lab_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_lab_proto_init() }
-func file_lab_proto_init() {
-	if File_lab_proto != nil {
+func init() { file_infra_libs_skylab_inventory_lab_proto_init() }
+func file_infra_libs_skylab_inventory_lab_proto_init() {
+	if File_infra_libs_skylab_inventory_lab_proto != nil {
 		return
 	}
-	file_connection_proto_init()
-	file_device_proto_init()
-	file_server_proto_init()
+	file_infra_libs_skylab_inventory_connection_proto_init()
+	file_infra_libs_skylab_inventory_device_proto_init()
+	file_infra_libs_skylab_inventory_server_proto_init()
 	if !protoimpl.UnsafeEnabled {
-		file_lab_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_infra_libs_skylab_inventory_lab_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Lab); i {
 			case 0:
 				return &v.state
@@ -261,7 +269,7 @@ func file_lab_proto_init() {
 				return nil
 			}
 		}
-		file_lab_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_infra_libs_skylab_inventory_lab_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Infrastructure); i {
 			case 0:
 				return &v.state
@@ -278,18 +286,18 @@ func file_lab_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_lab_proto_rawDesc,
+			RawDescriptor: file_infra_libs_skylab_inventory_lab_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_lab_proto_goTypes,
-		DependencyIndexes: file_lab_proto_depIdxs,
-		MessageInfos:      file_lab_proto_msgTypes,
+		GoTypes:           file_infra_libs_skylab_inventory_lab_proto_goTypes,
+		DependencyIndexes: file_infra_libs_skylab_inventory_lab_proto_depIdxs,
+		MessageInfos:      file_infra_libs_skylab_inventory_lab_proto_msgTypes,
 	}.Build()
-	File_lab_proto = out.File
-	file_lab_proto_rawDesc = nil
-	file_lab_proto_goTypes = nil
-	file_lab_proto_depIdxs = nil
+	File_infra_libs_skylab_inventory_lab_proto = out.File
+	file_infra_libs_skylab_inventory_lab_proto_rawDesc = nil
+	file_infra_libs_skylab_inventory_lab_proto_goTypes = nil
+	file_infra_libs_skylab_inventory_lab_proto_depIdxs = nil
 }

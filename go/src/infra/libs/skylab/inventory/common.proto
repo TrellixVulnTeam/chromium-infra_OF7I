@@ -4,7 +4,7 @@
 syntax = "proto2";
 
 package chrome.chromeos_infra.skylab.proto.inventory;
-option go_package = ".;inventory";
+option go_package = "infra/libs/skylab/inventory;inventory";
 
 // NEXT TAG: 4
 enum Environment {
