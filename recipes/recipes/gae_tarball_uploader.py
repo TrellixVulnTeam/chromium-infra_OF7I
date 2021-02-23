@@ -121,7 +121,10 @@ def _checkout(api, project):
     ),
   }[project]
 
-  co = api.infra_checkout.checkout(gclient_config_name=conf, internal=internal)
+  co = api.infra_checkout.checkout(
+      gclient_config_name=conf,
+      internal=internal,
+      go_version_variant='bleeding_edge')
   rev = co.bot_update_step.presentation.properties['got_revision']
   cp = co.bot_update_step.presentation.properties['got_revision_cp']
 

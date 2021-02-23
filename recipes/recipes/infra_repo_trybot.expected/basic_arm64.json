@@ -183,15 +183,6 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
-      "--no-freshen-python-env"
-    ],
-    "name": "cipd - build packages"
-  },
-  {
-    "cmd": [
       "python",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",

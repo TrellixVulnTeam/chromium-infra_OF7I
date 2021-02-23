@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from recipe_engine.recipe_api import Property
+
 DEPS = [
     'depot_tools/osx_sdk',
     'infra_checkout',
@@ -11,6 +13,7 @@ DEPS = [
     'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/platform',
+    'recipe_engine/properties',
     'recipe_engine/python',
     'recipe_engine/raw_io',
     'recipe_engine/runtime',
@@ -18,7 +21,15 @@ DEPS = [
 ]
 
 
-def RunSteps(api):
+PROPERTIES = {
+  'go_version_variant': Property(
+    default=None,
+    kind=str,
+    help='A go version variant to bootstrap, see bootstrap.py'),
+}
+
+
+def RunSteps(api, go_version_variant):
   cl = api.buildbucket.build.input.gerrit_changes[0]
   project = cl.project
   assert project in ('infra/infra', 'infra/infra_internal'), (
@@ -29,7 +40,8 @@ def RunSteps(api):
   co = api.infra_checkout.checkout(
       gclient_config_name=patch_root, patch_root=patch_root,
       internal=internal,
-      generate_env_with_system_python=True)
+      generate_env_with_system_python=True,
+      go_version_variant=go_version_variant)
   co.commit_change()
   co.gclient_runhooks()
 
@@ -53,23 +65,17 @@ def RunSteps(api):
           api.python('python cq tests', 'test.py',
                      ['test', 'infra_internal/services/cq'])
 
-    if not internal:
+    if not internal and api.platform.is_linux and api.platform.bits == 64:
       # TODO(phajdan.jr): should we make recipe tests run on other platforms?
       # TODO(tandrii): yes, they should run on Mac as well.
-      if api.platform.is_linux and api.platform.bits == 64:
-        api.python(
-            'cipd - build packages',
-            co.path.join( patch_root, 'build', 'build.py'),
-            ['--no-freshen-python-env'],
-            venv=True)
-        api.python(
-            'recipe test',
-            co.path.join('infra', 'recipes', 'recipes.py'),
-            ['test', 'run'])
-        api.python(
-            'recipe lint',
-            co.path.join('infra', 'recipes', 'recipes.py'),
-            ['lint'])
+      api.python(
+          'recipe test',
+          co.path.join('infra', 'recipes', 'recipes.py'),
+          ['test', 'run'])
+      api.python(
+          'recipe lint',
+          co.path.join('infra', 'recipes', 'recipes.py'),
+          ['lint'])
 
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
@@ -133,6 +139,12 @@ def GenTests(api):
 
   yield (
     test('only_go') +
+    diff('go/src/infra/stuff.go')
+  )
+
+  yield (
+    test('only_go_override_version') +
+    api.properties(go_version_variant='bleeding_edge') +
     diff('go/src/infra/stuff.go')
   )
 

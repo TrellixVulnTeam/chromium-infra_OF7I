@@ -95,6 +95,9 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "legacy"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -163,6 +166,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "legacy"
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [

@@ -20,6 +20,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                internal=False,
                named_cache=None,
                generate_env_with_system_python=False,
+               go_version_variant=None,
                **kwargs):
     """Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -47,10 +48,12 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         the checkout's VirtualEnv inside the package. This, in turn, results in
         the CIPD package containing absolute paths to the Python that was used
         to create it. In order to enable this madness to work, we ensure that
-        the Python is a system Python, which resides at a fixed path.
-
-        No effect on arm64 because the arm64 bots have no such python
-        available.
+        the Python is a system Python, which resides at a fixed path. No effect
+        on arm64 because the arm64 bots have no such python available.
+      * go_version_variant can be set go "legacy" or "bleeding_edge" to force
+        the builder to use a non-default Go version. What exact Go versions
+        correspond to "legacy" and "bleeding_edge" and default is defined in
+        bootstrap.py in infra.git.
       * kwargs - passed as is to bot_update.ensure_checkout.
 
     Returns:
@@ -78,6 +81,10 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
       bot_update_step = self.m.bot_update.ensure_checkout(
           patch_root=patch_root, **kwargs)
+
+    env_with_override = {}
+    if go_version_variant:
+      env_with_override['INFRA_GO_VERSION_VARIANT'] = go_version_variant
 
     class Checkout(object):
       def __init__(self, m):
@@ -136,7 +143,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
       @staticmethod
       def gclient_runhooks():
-        with self.m.context(cwd=path):
+        with self.m.context(cwd=path, env=env_with_override):
           self.m.gclient.runhooks()
 
       @contextlib.contextmanager
@@ -152,7 +159,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         if self._go_env is not None:
           return  # already did this
 
-        with self.m.context(cwd=self.path):
+        with self.m.context(cwd=self.path, env=env_with_override):
           where = 'infra_internal' if internal else 'infra'
           step = self.m.python(
               'init infra go env',
@@ -177,7 +184,8 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         out = step.json.output
         step.presentation.step_text += 'Using go %s' % (out.get('go_version'),)
 
-        self._go_env = out['env']
+        self._go_env = env_with_override.copy()
+        self._go_env.update(out['env'])
         self._go_env_prefixes = out['env_prefixes']
 
       # TODO(vadimsh): Get rid of this in favor of using `with go_env()`.
@@ -185,7 +193,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       def go_env_step(*args, **kwargs):
         # name lazily defaults to first two args, like "go test".
         name = kwargs.pop('name', None) or ' '.join(map(str, args[:2]))
-        with self.m.context(cwd=path):
+        with self.m.context(cwd=path, env=env_with_override):
           where = 'infra_internal' if internal else 'infra'
           return self.m.python(name, path.join(where, 'go', 'env.py'),
                                args, venv=True, **kwargs)

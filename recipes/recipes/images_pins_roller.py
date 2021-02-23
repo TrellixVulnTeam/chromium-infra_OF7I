@@ -24,7 +24,10 @@ PROPERTIES = images_pins_roller_pb.Inputs
 def RunSteps(api, properties):
   # Use 'cloudbuildhelper' that comes with the infra checkout (it's in PATH),
   # to make sure builders use same version as developers.
-  co = api.infra_checkout.checkout(gclient_config_name='infra', internal=False)
+  co = api.infra_checkout.checkout(
+      gclient_config_name='infra',
+      internal=False,
+      go_version_variant='bleeding_edge')
   co.gclient_runhooks()
 
   # Checkout the repo with the file to be updated.

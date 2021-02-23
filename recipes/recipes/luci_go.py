@@ -18,24 +18,29 @@ PROPERTIES = {
   'GOARCH': Property(
     default=None,
     kind=str,
-    help="set GOARCH environment variable for go build+test"),
+    help='Set GOARCH environment variable for go build+test'),
+  'go_version_variant': Property(
+    default=None,
+    kind=str,
+    help='A go version variant to bootstrap, see bootstrap.py'),
   'run_integration_tests': Property(
     default=False,
     kind=bool,
-    help='Whether to run integration tests',
-  ),
+    help='Whether to run integration tests'),
 }
 
 LUCI_GO_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/luci'
 
 
-def RunSteps(api, GOARCH, run_integration_tests):
-  co = api.infra_checkout.checkout('luci_go', patch_root=LUCI_GO_PATH_IN_INFRA)
+def RunSteps(api, GOARCH, go_version_variant, run_integration_tests):
+  co = api.infra_checkout.checkout(
+      'luci_go',
+      patch_root=LUCI_GO_PATH_IN_INFRA,
+      go_version_variant=go_version_variant)
   is_presubmit = 'presubmit' in api.buildbucket.builder_name.lower()
   if is_presubmit:
     co.commit_change()
   co.gclient_runhooks()
-
 
   env = {}
   if GOARCH is not None:
@@ -94,4 +99,15 @@ def GenTests(api):
         'infra', 'try', 'integration_tests', change_number=607472, patch_set=2,
     ) +
     api.properties(run_integration_tests=True)
+  )
+
+  yield (
+    api.test('override_go_version') +
+    api.platform('linux', 64) +
+    api.buildbucket.try_build(
+        'infra', 'try', 'luci-go-trusty-64',
+        git_repo='https://chromium.googlesource.com/infra/luci/luci-go',
+        change_number=607472,
+        patch_set=2,
+    ) + api.properties(go_version_variant='bleeding_edge')
   )

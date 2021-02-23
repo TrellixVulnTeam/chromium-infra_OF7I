@@ -36,6 +36,13 @@ DEPS = [
 # separated by colons. e.g. 'VARIANT:option:option'. Currently the supported
 # options are:
 #   * 'test' - Run the tests. By default no tests are run.
+#   * 'legacy' - Switch the builder that builds this variant to use go "legacy"
+#     Go version 1.15.* instead of the "bleeding_edge" version. This is
+#     primarily needed by builders targeting OSX amd64 that need to produce
+#     binaries that can run on OSX 10.10 and OSX 10.11. What exact versions
+#     correspond to "legacy" and "bleeding_edge" is defined in bootstrap.py in
+#     infra.git. Note that this option applies to the entire builder (not only
+#     the individual build variant).
 #
 # If the builder is not in this set, or the list of GOOS-GOARCH for it is empty,
 # it won't be used for building CIPD packages.
@@ -59,7 +66,7 @@ CIPD_PACKAGE_BUILDERS = {
   'infra-continuous-zesty-64':   ['linux-ppc64', 'linux-ppc64le'],
 
   # 10.13 is the primary builder for darwin-amd64.
-  'infra-continuous-mac-10.13-64': ['native:test'],
+  'infra-continuous-mac-10.13-64': ['native:test:legacy'],
   'infra-continuous-mac-10.14-64': [],
   'infra-continuous-mac-10.15-64': [],
 
@@ -73,7 +80,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-arm64',
   ],
   'infra-internal-continuous-win-64': ['native:test', 'windows-386:test'],
-  'infra-internal-continuous-mac-10.15-64': ['native:test'],
+  'infra-internal-continuous-mac-10.15-64': ['native:test:legacy'],
 
   # Builders that upload CIPD packages.
   #
@@ -96,7 +103,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-s390x',       # ~40 sec
     'aix-ppc64',         # ~40 sec
   ],
-  'infra-packager-mac-64': ['native:test'],
+  'infra-packager-mac-64': ['native:test:legacy'],
   'infra-packager-win-64': ['native:test', 'windows-386:test'],
 
   'infra-internal-packager-linux-64': [
@@ -104,7 +111,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-arm',
     'linux-arm64',
   ],
-  'infra-internal-packager-mac-64': ['native:test'],
+  'infra-internal-packager-mac-64': ['native:test:legacy'],
   'infra-internal-packager-win-64': ['native:test', 'windows-386:test'],
 }
 
@@ -133,10 +140,18 @@ def RunSteps(api):
     raise ValueError(
         'This recipe is not intended for builder %s. ' % buildername)
 
+  # Use the latest bleeding edge version of Go unless asked for the legacy one.
+  go_version_variant = 'bleeding_edge'
+  for variant in CIPD_PACKAGE_BUILDERS.get(buildername, []):
+    if 'legacy' in variant.split(':'):
+      go_version_variant = 'legacy'
+      break
+
   co = api.infra_checkout.checkout(
       gclient_config_name=project_name,
       internal=(project_name == 'infra_internal'),
-      generate_env_with_system_python=True)
+      generate_env_with_system_python=True,
+      go_version_variant=go_version_variant)
   co.gclient_runhooks()
 
   # Whatever is checked out by bot_update. It is usually equal to
@@ -238,13 +253,13 @@ def GenTests(api):
 
   yield test('internal-ci-linux', 'infra-internal-continuous-trusty-64',
              INTERNAL_REPO, 'infra-internal', 'ci', 'linux')
-  yield test('internal-ci-mac', 'infra-internal-continuous-mac-64',
+  yield test('internal-ci-mac', 'infra-internal-continuous-mac-10.15-64',
              INTERNAL_REPO, 'infra-internal', 'ci', 'mac')
 
   yield test('public-packager-mac', 'infra-packager-mac-64',
-             PUBLIC_REPO, 'infra-internal', 'prod', 'mac')
+             PUBLIC_REPO, 'infra', 'prod', 'mac')
   yield test('public-packager-mac_experimental', 'infra-packager-mac-64',
-             PUBLIC_REPO, 'infra-internal', 'prod', 'mac',
+             PUBLIC_REPO, 'infra', 'prod', 'mac',
              is_experimental=True)
 
   yield test('internal-packager-linux', 'infra-internal-packager-linux-64',

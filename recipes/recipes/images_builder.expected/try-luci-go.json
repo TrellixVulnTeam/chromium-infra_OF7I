@@ -216,6 +216,9 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -249,6 +252,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -277,7 +283,8 @@
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
+      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_prefixes": {
       "PATH": [
@@ -313,7 +320,8 @@
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
+      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_prefixes": {
       "PATH": [

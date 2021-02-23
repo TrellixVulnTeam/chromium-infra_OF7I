@@ -95,6 +95,9 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "legacy"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -163,6 +166,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env": {
+      "INFRA_GO_VERSION_VARIANT": "legacy"
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -192,6 +198,25 @@
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"
     ],
     "name": "infra go tests"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/build.py",
+      "--no-freshen-python-env",
+      "--builder",
+      "infra-internal-continuous-mac-10.15-64"
+    ],
+    "name": "cipd - build packages"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/test_packages.py"
+    ],
+    "name": "cipd - test packages integrity"
   },
   {
     "cmd": [

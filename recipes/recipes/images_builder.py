@@ -35,6 +35,10 @@ Metadata = namedtuple('Metadata', [
 ])
 
 
+# Prefer to use latest greatest Go version for binaries inside Docker images.
+GO_VERSION_VARIANT = 'bleeding_edge'
+
+
 def RunSteps(api, properties):
   try:
     _validate_props(properties)
@@ -145,7 +149,10 @@ def _checkout_committed(api, mode, project):
     ),
   }[project]
 
-  co = api.infra_checkout.checkout(gclient_config_name=conf, internal=internal)
+  co = api.infra_checkout.checkout(
+      gclient_config_name=conf,
+      internal=internal,
+      go_version_variant=GO_VERSION_VARIANT)
   rev = co.bot_update_step.presentation.properties['got_revision']
   cp = co.bot_update_step.presentation.properties['got_revision_cp']
 
@@ -202,7 +209,8 @@ def _checkout_pending(api, project):
   co = api.infra_checkout.checkout(
       gclient_config_name=conf,
       patch_root=patch_root,
-      internal=internal)
+      internal=internal,
+      go_version_variant=GO_VERSION_VARIANT)
   co.commit_change()
 
   # Grab information about this CL (in particular who wrote it).
