@@ -209,8 +209,6 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/go/env.py",
-      "vpython",
       "RECIPE_REPO[depot_tools]/presubmit_support.py",
       "--root",
       "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
@@ -233,7 +231,15 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
       "PRESUBMIT_BUILDER": "1"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go",
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
     },
     "name": "presubmit"
   },

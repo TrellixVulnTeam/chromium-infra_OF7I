@@ -12,6 +12,7 @@ DEPS = [
   'recipe_engine/json',
   'recipe_engine/platform',
   'recipe_engine/properties',
+  'recipe_engine/step',
 ]
 
 PROPERTIES = {
@@ -48,17 +49,17 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests):
   if run_integration_tests:
     env['INTEGRATION_TESTS'] = '1'
 
-  with api.context(env=env), api.osx_sdk('mac'):
-    co.ensure_go_env()
+  with api.context(env=env), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
-      co.run_presubmit_in_go_env()
+      co.run_presubmit()
     else:
-      co.go_env_step('go', 'build', 'go.chromium.org/luci/...')
-      co.go_env_step('go', 'test', 'go.chromium.org/luci/...')
+      api.step('go build', ['go', 'build', 'go.chromium.org/luci/...'])
+      api.step('go test', ['go', 'test', 'go.chromium.org/luci/...'])
       if not api.platform.is_win:
         # Windows bots do not have gcc installed at the moment.
-        co.go_env_step('go', 'test', '-race', 'go.chromium.org/luci/...',
-                       name='go test -race')
+        api.step('go test -race', [
+            'go', 'test', '-race', 'go.chromium.org/luci/...',
+        ])
 
 
 def GenTests(api):

@@ -134,14 +134,22 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/go/env.py",
-      "echo",
-      "$GOPATH"
+      "go",
+      "test",
+      "infra/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "name": "echo"
+    "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go",
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
+    },
+    "name": "go test"
   },
   {
     "cmd": [
@@ -160,7 +168,7 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
-    "name": "go test"
+    "name": "go test (2)"
   },
   {
     "cmd": [

@@ -21,11 +21,10 @@ def RunSteps(api):
       generate_env_with_system_python=api.properties.get('sys_env', False),
       go_version_variant=api.properties.get('go_version_variant'))
   co.gclient_runhooks()
-  co.ensure_go_env()
   _ = co.bot_update_step  # coverage...
-  if not api.platform.is_win:
-    co.go_env_step('echo', '$GOPATH', name='echo')
   with co.go_env():
+    api.step('go test', ['go', 'test', 'infra/...'])
+  with co.go_env():  # for coverage
     api.step('go test', ['go', 'test', 'infra/...'])
   with api.context(cwd=co.patch_root_path):
     api.python('python tests', 'test.py', ['test', 'infra'])

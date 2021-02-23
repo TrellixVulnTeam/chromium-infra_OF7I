@@ -147,26 +147,40 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\go\\env.py",
       "go",
       "build",
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]\\infra_gclient_with_go\\infra\\go",
+      "GOROOT": "[CACHE]\\infra_gclient_with_go\\golang\\go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\infra_gclient_with_go\\golang\\go",
+        "[CACHE]\\infra_gclient_with_go\\infra\\go\\bin"
+      ]
+    },
     "name": "go build"
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\go\\env.py",
       "go",
       "test",
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]\\infra_gclient_with_go\\infra\\go",
+      "GOROOT": "[CACHE]\\infra_gclient_with_go\\golang\\go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\infra_gclient_with_go\\golang\\go",
+        "[CACHE]\\infra_gclient_with_go\\infra\\go\\bin"
+      ]
+    },
     "name": "go test"
   },
   {

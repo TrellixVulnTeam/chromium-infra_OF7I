@@ -148,14 +148,14 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
       @contextlib.contextmanager
       def go_env(self):
-        self.ensure_go_env()
+        self._ensure_go_env()
         with self.m.context(
             cwd=self.path,
             env=self._go_env,
             env_prefixes=self._go_env_prefixes):
           yield
 
-      def ensure_go_env(self):
+      def _ensure_go_env(self):
         if self._go_env is not None:
           return  # already did this
 
@@ -188,40 +188,26 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         self._go_env.update(out['env'])
         self._go_env_prefixes = out['env_prefixes']
 
-      # TODO(vadimsh): Get rid of this in favor of using `with go_env()`.
       @staticmethod
-      def go_env_step(*args, **kwargs):
-        # name lazily defaults to first two args, like "go test".
-        name = kwargs.pop('name', None) or ' '.join(map(str, args[:2]))
-        with self.m.context(cwd=path, env=env_with_override):
-          where = 'infra_internal' if internal else 'infra'
-          return self.m.python(name, path.join(where, 'go', 'env.py'),
-                               args, venv=True, **kwargs)
-
-      # TODO(vadimsh): Get rid of this in favor of using `with go_env()`.
-      @staticmethod
-      def run_presubmit_in_go_env():
+      def run_presubmit():
         assert patch_root
         revs = self.m.bot_update.get_project_revision_properties(patch_root)
         upstream = bot_update_step.json.output['properties'].get(revs[0])
         gerrit_change = self.m.buildbucket.build.input.gerrit_changes[0]
-        # The presubmit must be run with proper Go environment.
-        presubmit_cmd = [
-          'vpython',
-          self.m.presubmit.presubmit_support_path,
-          '--root', path.join(patch_root),
-          '--commit',
-          '--verbose', '--verbose',
-          '--issue', gerrit_change.change,
-          '--patchset', gerrit_change.patchset,
-          '--gerrit_url', 'https://' + gerrit_change.host,
-          '--gerrit_fetch',
-          '--upstream', upstream,
-
-          '--skip_canned', 'CheckTreeIsOpen',
-          '--skip_canned', 'CheckBuildbotPendingBuilds',
-        ]
         with self.m.context(env={'PRESUBMIT_BUILDER': '1'}):
-          Checkout.go_env_step(*presubmit_cmd, name='presubmit')
+          return self.m.python(
+              'presubmit',
+              self.m.presubmit.presubmit_support_path, [
+                  '--root', path.join(patch_root),
+                  '--commit',
+                  '--verbose', '--verbose',
+                  '--issue', gerrit_change.change,
+                  '--patchset', gerrit_change.patchset,
+                  '--gerrit_url', 'https://' + gerrit_change.host,
+                  '--gerrit_fetch',
+                  '--upstream', upstream,
+                  '--skip_canned', 'CheckTreeIsOpen',
+                  '--skip_canned', 'CheckBuildbotPendingBuilds',
+              ], venv=True)
 
     return Checkout(self.m)

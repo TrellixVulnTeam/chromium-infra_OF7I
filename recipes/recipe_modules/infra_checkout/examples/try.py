@@ -15,7 +15,8 @@ def RunSteps(api):
   co.commit_change()
   co.get_changed_files()
   if api.platform.is_linux:
-    co.run_presubmit_in_go_env()
+    with co.go_env():
+      co.run_presubmit()
 
 
 def GenTests(api):

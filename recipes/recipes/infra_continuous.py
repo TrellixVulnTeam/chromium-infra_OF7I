@@ -173,32 +173,25 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
 
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
-  with api.osx_sdk('mac'):
-    checkout.ensure_go_env()
-
+  with api.osx_sdk('mac'), checkout.go_env():
     # Call 'deps.py bundle' to package dependencies specified in deps.lock into
     # a CIPD package. This is not strictly necessary, but it significantly
     # reduces time it takes to run 'env.py'. Note that 'deps.py' requires
     # environment produced by 'env.py' (for things like glide and go itself).
-    # When the recipe runs with outdated deps bundle, 'env.py' call above falls
+    # When the recipe runs with outdated deps bundle, go_env() call above falls
     # back to fetching dependencies from git directly. When the bundle is
     # up-to-date, 'deps.py bundle' finishes right away not doing anything.
     if (buildername == GO_DEPS_BUNDLING_BUILDER and
         not api.runtime.is_experimental):
       api.python(
           'bundle go deps',
-          api.path['checkout'].join('go', 'env.py'),
-          [
-            'python',  # env.py knows how to expand 'python' into sys.executable
-            api.path['checkout'].join('go', 'deps.py'),
-            'bundle',
-          ],
+          api.path['checkout'].join('go', 'deps.py'),
+          ['bundle'],
           venv=True)
 
     api.python(
         'infra go tests',
-        api.path['checkout'].join('go', 'env.py'),
-        ['python', api.path['checkout'].join('go', 'test.py')],
+        api.path['checkout'].join('go', 'test.py'),
         venv=True)
 
     for plat in CIPD_PACKAGE_BUILDERS.get(buildername, []):

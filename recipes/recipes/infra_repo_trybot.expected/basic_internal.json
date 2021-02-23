@@ -224,11 +224,19 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/env.py",
-      "python",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
+      "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_internal_gclient_with_go/golang/go",
+        "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
+      ]
+    },
     "name": "go tests"
   },
   {

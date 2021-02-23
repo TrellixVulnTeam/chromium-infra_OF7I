@@ -79,15 +79,8 @@ def RunSteps(api, go_version_variant):
 
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
-  with api.osx_sdk('mac'):
-    # Ensure go is bootstrapped as a separate step.
-    co.ensure_go_env()
-
-    # Note: go/env.py knows how to expand 'python' into sys.executable
-    # (perhaps 'vpython').
-    co.go_env_step(
-        'python', str(co.path.join(patch_root, 'go', 'test.py')),
-        name='go tests')
+  with api.osx_sdk('mac'), co.go_env():
+    api.python('go tests', co.path.join(patch_root, 'go', 'test.py'), venv=True)
 
     # Do slow *.cipd packaging tests only when touching build/* or DEPS. This
     # will build all registered packages (without uploading them), and run
