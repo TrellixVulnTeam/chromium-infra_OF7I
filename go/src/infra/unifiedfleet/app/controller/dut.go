@@ -29,6 +29,7 @@ import (
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
+	"infra/unifiedfleet/app/util/osutil"
 )
 
 const (
@@ -643,14 +644,20 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		logging.Warningf(ctx, "Hwid data for %s not found. Error: %s", hwid, err)
 	}
-	return &ufspb.ChromeOSDeviceData{
+	data := &ufspb.ChromeOSDeviceData{
 		LabConfig:           lse,
 		Machine:             machine,
 		DeviceConfig:        devConfig,
 		ManufacturingConfig: mfgConfig,
 		HwidData:            hwidData,
 		DutState:            dutState,
-	}, nil
+	}
+	dutV1, err := osutil.AdaptToV1DutSpec(data)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot AdaptToV1DutSpec %s", err)
+	}
+	data.DutV1 = dutV1
+	return data, nil
 }
 
 // getDeviceConfig get device config form InvV2

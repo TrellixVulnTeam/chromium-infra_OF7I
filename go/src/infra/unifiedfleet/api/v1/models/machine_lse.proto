@@ -23,6 +23,7 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/device/config.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/manufacturing/config.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
+import "infra/libs/skylab/inventory/device.proto";
 
 // MachineLSE is the Machine Lab Setup Environment.
 // It refers to the entity in the lab which has Machine(s) associated
@@ -236,6 +237,7 @@ message ChromeOSDeviceData {
   models.chromeos.manufacturing.ManufacturingConfig manufacturing_config = 4;
   HwidData hwid_data = 5;
   models.chromeos.lab.DutState dut_state = 6;
+  chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest dutV1 = 7;
 }
 
 message HwidData {
