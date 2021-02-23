@@ -3,8 +3,8 @@ create {
   platform_re: "linux-.*"
   source {
     url {
-      download_url: "https://github.com/thkukuk/libnsl/archive/libnsl-1.0.4.tar.gz"
-      version: "1.0.4"
+      download_url: "https://github.com/thkukuk/libnsl/releases/download/v1.3.0/libnsl-1.3.0.tar.xz"
+      version: "1.3.0"
     }
     unpack_archive: true
   }
