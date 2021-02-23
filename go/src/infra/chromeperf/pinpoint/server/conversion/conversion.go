@@ -11,8 +11,21 @@ import (
 )
 
 func convertGerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
-	if c.Host == "" || c.Project == "" || c.Change == 0 || c.Patchset == 0 {
-		return "", errors.Reason("all of host, project, change, and patchset must be provided").Err()
+	var notFound []string
+	if c.Host == "" {
+		notFound = append(notFound, "host")
+	}
+	if c.Project == "" {
+		notFound = append(notFound, "project")
+	}
+	if c.Change == 0 {
+		notFound = append(notFound, "change")
+	}
+	if c.Patchset == 0 {
+		notFound = append(notFound, "patchset")
+	}
+	if len(notFound) > 0 {
+		return "", errors.Reason("the following fields are required but are not set: %v", notFound).Err()
 	}
 	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
 }
