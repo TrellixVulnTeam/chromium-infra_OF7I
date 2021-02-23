@@ -63,16 +63,32 @@ def try_builder(
             experiment_percentage = experiment_percentage,
         )
 
+# Linux Xenial as the main platform to test for go1.16 (aka "bleeding_edge").
+# It was picked arbitrarily.
+#
+# All OSX builders are testing specifically for go1.15 (aka "legacy") to reflect
+# the fact that we have only go1.15 OSX amd64 binaries.
+
 # CI Linux.
 ci_builder(name = "infra-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
-ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
-ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM")
+ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
+    "go_version_variant": "bleeding_edge",
+})
+ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM", properties = {
+    "go_version_variant": "bleeding_edge",
+})
 ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04")
 
 # CI OSX.
-ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
-ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14")
-ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15")
+ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True, properties = {
+    "go_version_variant": "legacy",
+})
+ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14", properties = {
+    "go_version_variant": "legacy",
+})
+ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15", properties = {
+    "go_version_variant": "legacy",
+})
 
 # CI Win.
 ci_builder(name = "infra-continuous-win10-64", os = "Windows-10")
@@ -109,16 +125,21 @@ ci_builder(
 )
 
 # All trybots.
-try_builder(name = "infra-try-xenial-64", os = "Ubuntu-16.04")
+try_builder(name = "infra-try-xenial-64", os = "Ubuntu-16.04", properties = {
+    "go_version_variant": "bleeding_edge",
+})
 try_builder(
     name = "infra-try-xenial-arm64",
     os = "Ubuntu-16.04",
     cpu = "arm64",
     experiment_percentage = 100,
+    properties = {"go_version_variant": "bleeding_edge"},
 )
 try_builder(name = "infra-try-trusty-64", os = "Ubuntu-14.04")
 
-try_builder(name = "infra-try-mac", os = "Mac-10.15")
+try_builder(name = "infra-try-mac", os = "Mac-10.15", properties = {
+    "go_version_variant": "legacy",
+})
 try_builder(name = "infra-try-win", os = "Windows-10")
 try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04", recipe = "infra_frontend_tester")
 
