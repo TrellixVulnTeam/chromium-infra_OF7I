@@ -1,0 +1,63 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.windows_image_builder;
+
+// Image properties recognized by 'infra/windows_image_builder' recipe.
+message Image {
+  // The name of this windows image.
+  //
+  // E.g. basic_win10_image
+  string name = 1;
+
+  // The offline winpe customization user requirements.
+  OfflineCustomization offline_winpe_customization = 2;
+
+  // The offline windows OS customization user requirements.
+  OfflineCustomization offline_os_customization = 3;
+}
+
+message OfflineCustomization {
+  // The name of an OfflineCustomization.
+  //
+  // E.g. basic_offline_winpe, basic_offline_windowsOS
+  string name = 1;
+
+  // The architecture to build. If it's empty, the builder will pull the arch from the source iso.
+  Arch winpe_arch = 2;
+
+  // The name of OfflineCustomizations you want to take precident. The last
+  // entry specified takes precident when multiple actions of the same name are
+  // listed.
+  repeated OfflineAction offline_customization = 3;
+}
+
+// Refer to a specific offline customization action
+message OfflineAction {
+  // The name for a given offline customization, e.g. basic_network_setup.
+  string name = 1;
+
+  // A lisf ot files to be added/updated to generate a customized image offline.
+  repeated AddFile files = 2;
+}
+
+message AddFile {
+  // The AddFile action's name, e.g. add_startnet
+  string name = 1;
+
+  // Full path on host to File or folder of files, e.g. C:\\win10\Startnet.cmd
+  string src = 2;
+
+  // relative to root of mounted image, e.g. Windows\System32\startnet.cmd
+  string dst = 3;
+}
+
+enum Arch {
+  ARCH_UNSPECIFIED = 0;
+  ARCH_AMD64 = 1;
+  ARCH_X86 = 2;
+  ARCH_ARM64 = 3;
+}
