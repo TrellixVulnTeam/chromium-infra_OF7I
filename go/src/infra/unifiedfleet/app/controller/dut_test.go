@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -1530,6 +1531,67 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "NotFound")
+		})
+	})
+}
+
+func TestValidateDeviceconfig(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
+	Convey("ValidateDeviceconfig", t, func() {
+		Convey("TestValidateDeviceconfig - With sku", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+						Sku:         "test",
+					},
+				},
+			}
+			err := validateDeviceConfig(ctx, machine1)
+			So(err, ShouldBeNil)
+		})
+		Convey("TestValidateDeviceconfig - Without sku", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			err := validateDeviceConfig(ctx, machine1)
+			So(err, ShouldBeNil)
+		})
+		Convey("TestValidateDeviceconfig - non exisitent", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-11",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test11",
+						Model:       "test11",
+						Sku:         "test11",
+					},
+				},
+			}
+			err := validateDeviceConfig(ctx, machine1)
+			So(err, ShouldNotBeNil)
+			devConfigID := &device.ConfigId{
+				PlatformId: &device.PlatformId{
+					Value: "test11",
+				},
+				ModelId: &device.ModelId{
+					Value: "test11",
+				},
+				VariantId: &device.VariantId{
+					Value: "test11",
+				},
+			}
+			So(err.Error(), ShouldContainSubstring, fmt.Sprintf("Device config doesn't exist for %s", devConfigID.String()))
 		})
 	})
 }

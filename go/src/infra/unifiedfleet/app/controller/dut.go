@@ -341,9 +341,14 @@ func assignServoPortIfMissing(labstation *ufspb.MachineLSE, newServo *chromeosLa
 //
 // Checks if the device configuration is known by querying IV2. Returns error if the device config doesn't exist.
 func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
+	devCfgIds := make([]*device.ConfigId, 0, 0)
 	devConfigID, err := extractDeviceConfigID(dut)
 	if err != nil {
 		return err
+	}
+	devCfgIds = append(devCfgIds, devConfigID)
+	if fallBackDevConfigID := getFallbackDeviceConfigID(devConfigID); fallBackDevConfigID != nil {
+		devCfgIds = append(devCfgIds, fallBackDevConfigID)
 	}
 
 	invV2Client, err := getInventoryV2Client(ctx)
@@ -352,16 +357,18 @@ func validateDeviceConfig(ctx context.Context, dut *ufspb.Machine) error {
 	}
 
 	resp, err := invV2Client.DeviceConfigsExists(ctx, &iv2api.DeviceConfigsExistsRequest{
-		ConfigIds: []*device.ConfigId{devConfigID},
+		ConfigIds: devCfgIds,
 	})
 
 	if err != nil {
 		return errors.Annotate(err, "Device config validation failed").Err()
 	}
-	if !resp.GetExists()[0] {
-		return errors.Reason("Device config doesn't exist").Err()
+	for i := range resp.GetExists() {
+		if resp.GetExists()[i] {
+			return nil
+		}
 	}
-	return nil
+	return status.Error(codes.InvalidArgument, fmt.Sprintf("Device config doesn't exist for %s", devConfigID.String()))
 }
 
 // extractDeviceConfigID returns a corresponding ConfigID object from machine.
@@ -370,19 +377,33 @@ func extractDeviceConfigID(dut *ufspb.Machine) (*device.ConfigId, error) {
 	if crosMachine == nil {
 		return nil, errors.Reason("Invalid machine type. Not a chrome OS machine").Err()
 	}
-
 	// Convert the build target and model to lower case to avoid mismatch due to case.
 	buildTarget := strings.ToLower(crosMachine.GetBuildTarget())
 	model := strings.ToLower(crosMachine.GetModel())
-	return &device.ConfigId{
+	devConfigID := &device.ConfigId{
 		PlatformId: &device.PlatformId{
 			Value: buildTarget,
 		},
 		ModelId: &device.ModelId{
 			Value: model,
 		},
-	}, nil
+	}
+	sku := strings.ToLower(crosMachine.GetSku())
+	if sku != "" {
+		devConfigID.VariantId = &device.VariantId{
+			Value: sku,
+		}
+	}
+	return devConfigID, nil
+}
 
+func getFallbackDeviceConfigID(oldConfigID *device.ConfigId) *device.ConfigId {
+	if oldConfigID.GetVariantId().GetValue() != "" {
+		fallbackID := proto.Clone(oldConfigID).(*device.ConfigId)
+		fallbackID.VariantId = nil
+		return fallbackID
+	}
+	return nil
 }
 
 // cleanPreDeployFields clears servo type and topology.
