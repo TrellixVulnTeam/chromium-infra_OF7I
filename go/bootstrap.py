@@ -48,8 +48,15 @@ EXE_SFX = '.exe' if sys.platform == 'win32' else ''
 # On Windows we use git from depot_tools.
 GIT_EXE = 'git.bat' if sys.platform == 'win32' else 'git'
 
-# Version of Go CIPD package (infra/3pp/tools/go/${platform}) to install.
-TOOLSET_VERSION = os.environ.get('INFRA_GO_VERSION') or '1.15.8'
+# Version of Go CIPD package (infra/3pp/tools/go/${platform}) to install per
+# value of INFRA_GO_VERSION_VARIANT env var.
+#
+# Some builders use "legacy" and "bleeding_edge" variants.
+TOOLSET_VERSIONS = {
+  'default': '1.15.8',      # used on dev workstations and most try builders
+  'legacy': '1.15.8',       # used on OSX amd64 CI and prod builders
+  'bleeding_edge': '1.16',  # used on most CI and prod and some try builders
+}
 
 # Describes how to fetch 'glide'.
 GLIDE_SOURCE = {
@@ -536,6 +543,12 @@ def bootstrap(layout, logging_level, args=None):
         help='Where to write JSON with necessary environ adjustments')
     json_output = parser.parse_args(args=args).json_output
 
+  # Figure out what Go version to install based on INFRA_GO_VERSION_VARIANT.
+  variant = os.environ.get('INFRA_GO_VERSION_VARIANT') or 'default'
+  toolset_version = TOOLSET_VERSIONS.get(variant)
+  if not toolset_version:
+    raise Failure('Unrecognized INFRA_GO_VERSION_VARIANT %r' % variant)
+
   # We need to build and run some Go binaries during bootstrap (e.g. glide), so
   # make sure cross-compilation mode is disabled during bootstrap. Restore it
   # back once bootstrap is finished.
@@ -545,7 +558,7 @@ def bootstrap(layout, logging_level, args=None):
 
   try:
     toolset_updated = ensure_toolset_installed(
-        layout.toolset_root, TOOLSET_VERSION)
+        layout.toolset_root, toolset_version)
     ensure_glide_installed(layout.toolset_root)
     vendor_updated = toolset_updated
     for p in layout.vendor_paths:
@@ -565,7 +578,7 @@ def bootstrap(layout, logging_level, args=None):
         os.environ[k] = v
 
   output = get_go_environ_diff(layout)._asdict()
-  output['go_version'] = TOOLSET_VERSION
+  output['go_version'] = toolset_version
 
   json_blob = json.dumps(
       output,
