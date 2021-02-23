@@ -21,7 +21,6 @@ import (
 	"infra/libs/skylab/inventory/swarming"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
-	ufsOSUtil "infra/unifiedfleet/app/util/osutil"
 )
 
 // PrintBotInfo subcommand: Print Swarming dimensions for a DUT.
@@ -88,14 +87,10 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 	if err != nil {
 		return err
 	}
-	d, err := ufsOSUtil.AdaptToV1DutSpec(data)
-	if err != nil {
-		return err
-	}
 	dutStateInfo := dutstate.Read(ctx, ufsClient, data.GetLabConfig().GetName())
 	stderr := a.GetErr()
 	r := func(e error) { fmt.Fprintf(stderr, "sanitize dimensions: %s\n", err) }
-	bi := botInfoForDUT(d, dutStateInfo, r)
+	bi := botInfoForDUT(data.GetDutV1(), dutStateInfo, r)
 	enc, err := json.Marshal(bi)
 	if err != nil {
 		return err
