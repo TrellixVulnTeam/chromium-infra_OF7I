@@ -138,6 +138,7 @@ LAYOUT = Layout(
 # Describes a modification of os.environ, see get_go_environ_diff(...).
 EnvironDiff = collections.namedtuple('EnvironDiff', [
     'env',          # {k:v} with vars to set or delete (if v == None)
+    'env_prefixes', # {k: [path]} with entries to prepend
     'env_suffixes', # {k: [path]} with entries to append
 ])
 
@@ -426,15 +427,18 @@ def get_go_environ_diff(layout):
     all_go_paths.extend(layout.go_paths)
   all_go_paths.append(layout.workspace)
 
-  # New PATH entries. Order is important.
-  paths_to_add = [
+  # Need to make sure we pick up our `go` and .vendor/bin tools before the
+  # system ones.
+  path_prefixes = [
       os.path.join(layout.toolset_root, 'go', 'bin'),
       os.path.join(ROOT, 'cipd'),
       os.path.join(ROOT, 'cipd', 'bin'),
       os.path.join(ROOT, 'luci', 'appengine', 'components', 'tools'),
   ]
-  paths_to_add.extend(os.path.join(p, '.vendor', 'bin') for p in vendor_paths)
-  paths_to_add.append(os.path.join(layout.workspace, 'bin'))
+  path_prefixes.extend(os.path.join(p, '.vendor', 'bin') for p in vendor_paths)
+
+  # GOBIN often contain "WIP" variant of system binaries, pick them up last.
+  path_suffixes = [os.path.join(layout.workspace, 'bin')]
 
   return EnvironDiff(
       env={
@@ -455,7 +459,8 @@ def get_go_environ_diff(layout):
           'GOPROXY': 'off',
           'GO111MODULE': 'off',
       },
-      env_suffixes={'PATH': paths_to_add},
+      env_prefixes={'PATH': path_prefixes},
+      env_suffixes={'PATH': path_suffixes},
   )
 
 
@@ -479,15 +484,16 @@ def get_go_environ(layout):
       env.pop(k, None)
 
   path = env['PATH'].split(os.pathsep)
-  paths_to_add = diff.env_suffixes['PATH']
+  path_prefixes = diff.env_prefixes['PATH']
+  path_suffixes = diff.env_suffixes['PATH']
 
   # Remove preexisting bin/ paths (including .vendor/bin) pointing to infra
   # or infra_internal Go workspaces. It's important when switching from
   # infra_internal to infra environments: infra_internal bin paths should
   # be removed.
   def should_keep(p):
-    if p in paths_to_add:
-      return False  # we'll move this entry to the back below
+    if p in path_prefixes or p in path_suffixes:
+      return False  # we'll insert this entry in the correct position below
     # TODO(vadimsh): This code knows about gclient checkout layout.
     for d in ['infra', 'infra_internal']:
       if p.startswith(os.path.join(GCLIENT_ROOT, d, 'go')):
@@ -495,8 +501,8 @@ def get_go_environ(layout):
     return True
   path = filter(should_keep, path)
 
-  # Append paths_to_add to PATH.
-  env['PATH'] = os.pathsep.join(path + paths_to_add)
+  # Insert new entries to PATH.
+  env['PATH'] = os.pathsep.join(path_prefixes + path + path_suffixes)
 
   # Add a tag to the prompt
   infra_prompt_tag = env.get('INFRA_PROMPT_TAG')
@@ -579,9 +585,6 @@ def bootstrap(layout, logging_level, args=None):
 
   output = get_go_environ_diff(layout)._asdict()
   output['go_version'] = toolset_version
-
-  # TODO(vadimsh): Remove this once recipes no longer read env_prefixes.
-  output['env_prefixes'] = output['env_suffixes']
 
   json_blob = json.dumps(
       output,

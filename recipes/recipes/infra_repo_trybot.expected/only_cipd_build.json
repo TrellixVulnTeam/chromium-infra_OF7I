@@ -227,9 +227,13 @@
       "@@@STEP_LOG_LINE@json.output@    \"GOPATH\": \"[CACHE]/infra_gclient_with_go/infra/go\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"env_prefixes\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"env_suffixes\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/golang/go\", @@@",
       "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/infra/go/bin\"@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
@@ -249,9 +253,13 @@
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
     },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go",
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
@@ -268,9 +276,13 @@
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
     },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go",
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
@@ -287,9 +299,13 @@
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
     },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go",
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
