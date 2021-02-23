@@ -925,6 +925,9 @@ func (is *InventoryServerImpl) GetDeviceConfig(ctx context.Context, req *api.Get
 	}
 	convertedID := deviceconfig.ConvertValidDeviceConfigID(req.GetConfigId())
 	fallbackID := getFallbackDeviceConfigID(convertedID)
+	logging.Debugf(ctx, "before convert: %s", req.GetConfigId().String())
+	logging.Debugf(ctx, "real device config ID: %s", convertedID.String())
+	logging.Debugf(ctx, "fallback device config ID: %s", fallbackID.String())
 
 	devCfgIds := make([]*device.ConfigId, 0, 1)
 	idToDevCfg := map[string]*device.Config{}
@@ -941,18 +944,17 @@ func (is *InventoryServerImpl) GetDeviceConfig(ctx context.Context, req *api.Get
 		if err == nil || err.(errors.MultiError)[i] == nil {
 			idToDevCfg[devCfgIds[i].String()] = devCfgs[i].(*device.Config)
 		} else {
-			if err.Error() == ds.ErrNoSuchEntity.Error() {
-				return nil, status.Errorf(codes.NotFound, fmt.Sprintf("device config not found for %+v", req.GetConfigId()))
-			}
-			return nil, errors.New(fmt.Sprintf("cannot get device config for %v: %v", devCfgIds[i], err.(errors.MultiError)[i]))
+			logging.Warningf(ctx, "Ignored error: cannot get device config for %v: %v", devCfgIds[i], err.(errors.MultiError)[i])
 		}
 	}
 
 	res := idToDevCfg[convertedID.String()]
 	if res == nil || res.GetId() == nil {
 		res = idToDevCfg[fallbackID.String()]
+		if res == nil || res.GetId() == nil {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("device config not found for %+v", req.GetConfigId()))
+		}
 	}
-
 	return res, nil
 }
 
