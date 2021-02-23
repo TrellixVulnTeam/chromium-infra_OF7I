@@ -19,7 +19,7 @@ import (
 )
 
 // testPlanCmdName is the name of the `crosfleet run testplan` command.
-var testPlanCmdName = "testplan"
+const testPlanCmdName = "testplan"
 
 var testplan = &subcommands.Command{
 	UsageLine: fmt.Sprintf("%s [FLAGS...] PLAN_FILE", testPlanCmdName),
@@ -39,7 +39,7 @@ Do not build automation around this subcommand.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &planRun{}
 		c.envFlags.Register(&c.Flags)
-		c.testCommonFlags.Register(&c.Flags)
+		c.testCommonFlags.register(&c.Flags)
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		return c
 	},

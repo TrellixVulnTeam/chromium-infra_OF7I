@@ -18,7 +18,7 @@ import (
 )
 
 // suiteCmdName is the name of the `crosfleet run suite` command.
-var suiteCmdName = "suite"
+const suiteCmdName = "suite"
 
 var suite = &subcommands.Command{
 	UsageLine: fmt.Sprintf("%s [FLAGS...] SUITE_NAME", suiteCmdName),
@@ -35,7 +35,7 @@ Do not build automation around this subcommand.`,
 		c := &suiteRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.testCommonFlags.Register(&c.Flags)
+		c.testCommonFlags.register(&c.Flags)
 		return c
 	},
 }

@@ -18,7 +18,7 @@ import (
 )
 
 // testCmdName is the name of the `crosfleet run test` command.
-var testCmdName = "test"
+const testCmdName = "test"
 
 var test = &subcommands.Command{
 	UsageLine: fmt.Sprintf("%s [FLAGS...] TEST_NAME [TEST_NAME...]", testCmdName),
@@ -35,7 +35,7 @@ Do not build automation around this subcommand.`,
 		c := &testRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.testCommonFlags.Register(&c.Flags)
+		c.testCommonFlags.register(&c.Flags)
 		c.Flags.StringVar(&c.testArgs, "test-args", "", "Test arguments string (meaning depends on test).")
 		return c
 	},

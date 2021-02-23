@@ -21,7 +21,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 )
 
-var (
+const (
 	// DefaultSwarmingPriority is the default priority for a Swarming task.
 	DefaultSwarmingPriority = int64(140)
 	// MinSwarmingPriority is the lowest-allowed priority for a Swarming task.
@@ -31,9 +31,6 @@ var (
 	// imageArchiveBaseURL is the base url for the ChromeOS image archive.
 	imageArchiveBaseURL = "gs://chromeos-image-archive/"
 )
-
-type testRunCommon struct {
-}
 
 // testCommonFlags contains parameters common to the "run
 // test", "run suite", and "run testplan" subcommands.
@@ -54,7 +51,7 @@ type testCommonFlags struct {
 }
 
 // Registers run command-specific flags
-func (c *testCommonFlags) Register(f *flag.FlagSet) {
+func (c *testCommonFlags) register(f *flag.FlagSet) {
 	f.StringVar(&c.image, "image", "", "Fully specified image name to run test against, e.g. octopus-release/R89-13609.0.0.")
 	f.StringVar(&c.board, "board", "", "Board to run tests on.")
 	f.StringVar(&c.model, "model", "", "Model to run tests on.")
@@ -102,10 +99,11 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 
 // buildTags combines test metadata tags with user-added tags.
 func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[string]string {
+	tags := map[string]string{}
+
 	// Add user-added tags.
-	tags := c.addedTags
-	if tags == nil {
-		tags = map[string]string{}
+	for key, val := range c.addedTags {
+		tags[key] = val
 	}
 
 	// Add crosfleet-tool tag.

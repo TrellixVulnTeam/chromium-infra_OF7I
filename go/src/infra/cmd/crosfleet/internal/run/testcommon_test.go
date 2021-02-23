@@ -7,33 +7,15 @@ package run
 import (
 	"flag"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"infra/cmd/crosfleet/internal/common"
-	"testing"
-	"time"
 )
-
-// Enables comparisons of protos with unexported fields.
-var diffOpts = cmpopts.IgnoreUnexported(
-	chromiumos.BuildTarget{},
-	duration.Duration{},
-	test_platform.Request{},
-	test_platform.Request_TestPlan{},
-	test_platform.Request_Params{},
-	test_platform.Request_Params_HardwareAttributes{},
-	test_platform.Request_Params_SoftwareAttributes{},
-	test_platform.Request_Params_SoftwareDependency{},
-	test_platform.Request_Params_FreeformAttributes{},
-	test_platform.Request_Params_Scheduling{},
-	test_platform.Request_Params_Decorations{},
-	test_platform.Request_Params_Retry{},
-	test_platform.Request_Params_Metadata{},
-	test_platform.Request_Params_Time{})
 
 var testValidateArgsData = []struct {
 	testCommonFlags
