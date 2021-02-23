@@ -47,7 +47,6 @@
   * [infra_frontend_tester](#recipes-infra_frontend_tester)
   * [infra_repo_trybot](#recipes-infra_repo_trybot)
   * [infra_system:examples/full](#recipes-infra_system_examples_full)
-  * [luci_gae](#recipes-luci_gae)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
   * [provenance:examples/usage](#recipes-provenance_examples_usage)
@@ -1130,11 +1129,6 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipe_modules/infra_system/examples/full.py#5): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/infra_system/examples/full.py#13)(api):**
-### *recipes* / [luci\_gae](/recipes/recipes/luci_gae.py)
-
-[DEPS](/recipes/recipes/luci_gae.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
-
-&mdash; **def [RunSteps](/recipes/recipes/luci_gae.py#17)(api):**
 ### *recipes* / [luci\_go](/recipes/recipes/luci_go.py)
 
 [DEPS](/recipes/recipes/luci_go.py#7): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
