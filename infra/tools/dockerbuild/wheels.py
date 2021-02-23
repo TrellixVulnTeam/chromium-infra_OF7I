@@ -384,7 +384,6 @@ SPECS.update({
             'psutil',
             '5.7.2',
             packaged=[],
-            skip_plat=['mac-x64-cp38'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
