@@ -153,11 +153,14 @@ func runCmd(c *ssh.Client, cmd string) error {
 		return err
 	}
 	defer s.Close()
-	err = s.Run(cmd)
+	b, err := s.CombinedOutput(cmd)
+	if err != nil {
+		err = fmt.Errorf("runCmd: %v, output: %q", err, b)
+	}
 	return err
 }
 
-// runCmdOutput interprets the given string command in a shell and returns stdout and error if any.
+// runCmdOutput interprets the given string command in a shell and returns stdout.
 func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 	s, err := c.NewSession()
 	if err != nil {
@@ -165,10 +168,7 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 	}
 	defer s.Close()
 	b, err := s.Output(cmd)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
+	return string(b), err
 }
 
 // newOperationError is a helper in creating Operation_Error and marshals ErrorInfo.
