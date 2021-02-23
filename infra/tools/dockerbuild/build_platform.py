@@ -42,6 +42,10 @@ class Platform(
 
             # The name of the CIPD platform to use.
             'cipd_platform',
+
+            # Extra environment variables to set when building wheels on this
+            # platform.
+            'env',
         ))):
 
   @property
@@ -72,6 +76,7 @@ ALL = {
             openssl_target='linux-armv4',
             packaged=False,
             cipd_platform='linux-armv6l',
+            env={},
         ),
         Platform(
             name='linux-arm64',
@@ -83,6 +88,7 @@ ALL = {
             openssl_target='linux-aarch64',
             packaged=False,
             cipd_platform='linux-arm64',
+            env={},
         ),
         Platform(
             name='linux-arm64-py3',
@@ -94,6 +100,7 @@ ALL = {
             openssl_target='linux-aarch64',
             packaged=False,
             cipd_platform='linux-arm64',
+            env={},
         ),
         Platform(
             name='linux-mipsel',
@@ -105,6 +112,7 @@ ALL = {
             openssl_target='linux-mips32',
             packaged=False,
             cipd_platform='linux-mips32',
+            env={},
         ),
 
         # NOTE: "mips" and "mips64" both use 32-bit MIPS, which is consistent
@@ -119,6 +127,7 @@ ALL = {
             openssl_target='linux-mips32',
             packaged=False,
             cipd_platform='linux-mips',
+            env={},
         ),
         Platform(
             name='linux-mips64',
@@ -130,6 +139,7 @@ ALL = {
             openssl_target='linux-mips32',
             packaged=False,
             cipd_platform='linux-mips64',
+            env={},
         ),
         Platform(
             name='manylinux-x64',
@@ -141,6 +151,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
+            env={},
         ),
         Platform(
             name='manylinux-x64-py3',
@@ -152,6 +163,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
+            env={},
         ),
 
         # Atypical but possible Python configuration using "2-byte UCS", with
@@ -166,6 +178,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
+            env={},
         ),
         Platform(
             name='manylinux-x86',
@@ -177,6 +190,7 @@ ALL = {
             openssl_target='linux-x86',
             packaged=True,
             cipd_platform='linux-386',
+            env={},
         ),
 
         # Atypical but possible Python configuration using "2-byte UCS", with
@@ -191,6 +205,7 @@ ALL = {
             openssl_target='linux-x86',
             packaged=True,
             cipd_platform='linux-386',
+            env={},
         ),
         Platform(
             name='mac-x64',
@@ -202,6 +217,9 @@ ALL = {
             openssl_target='darwin64-x86_64-cc',
             packaged=True,
             cipd_platform='mac-amd64',
+            # This ensures compatibibility regardless of the OS version this
+            # runs on.
+            env={'MACOSX_DEPLOYMENT_TARGET': '10.13'},
         ),
         Platform(
             # TODO: Rename to -py3 to conform to other Python 3 platform names.
@@ -214,6 +232,12 @@ ALL = {
             openssl_target='darwin64-x86_64-cc',
             packaged=True,
             cipd_platform='mac-amd64',
+            # Necessary for some wheels to build. See for instance:
+            # https://github.com/giampaolo/psutil/issues/1832
+            env={
+                'ARCHFLAGS': '-arch x86_64',
+                'MACOSX_DEPLOYMENT_TARGET': '10.13'
+            },
         ),
         Platform(
             name='windows-x86',
@@ -225,6 +249,7 @@ ALL = {
             openssl_target='Cygwin-x86',
             packaged=True,
             cipd_platform='windows-386',
+            env={},
         ),
         Platform(
             name='windows-x64',
@@ -236,6 +261,7 @@ ALL = {
             openssl_target='Cygwin-x86_64',
             packaged=True,
             cipd_platform='windows-amd64',
+            env={},
         ),
         Platform(
             name='windows-x64-py3',
@@ -247,6 +273,7 @@ ALL = {
             openssl_target='Cygwin-x86_64',
             packaged=True,
             cipd_platform='windows-amd64',
+            env={},
         ),
     )
 }
@@ -280,4 +307,5 @@ UNIVERSAL = Platform(
     openssl_target=None,
     packaged=True,
     cipd_platform=None,
+    env={},
 )

@@ -79,7 +79,7 @@ contact Chrome Operations:
     key = (whl.spec.name, whl.spec.version, pyversions)
     _, v = self._packages.setdefault(key, (whl, set()))
     if plat:
-      v.add(plat)
+      v.add(plat.name)
 
   def write(self, fd):
     fd.write(self._HEADER)
@@ -103,10 +103,10 @@ contact Chrome Operations:
         package = whl.cipd_package(templated=True)
 
         # Build an italic list of supported platforms.
-        plat_names = sorted([plat.name for plat in plats] or ('universal',))
         supported = '\n'.join([''] + [
-          '* *%s*' % (plat_name,)
-          for plat_name in plat_names])
+            '* *%s*' % (plat_name,)
+            for plat_name in sorted(plats) or ('universal',)
+        ])
 
         fd.write(self._WHEEL_TEMPLATE % dict(
             version=version,

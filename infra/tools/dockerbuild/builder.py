@@ -214,9 +214,10 @@ def InterpreterForWheel(wheel):
 
 def EnvForWheel(wheel):
   """Returns any extra environment variables for building a wheel."""
+  wheel_env = wheel.plat.env.copy()
+
   # If the wheel is python3, clear PYTHONPATH to avoid picking up
   # the default Python (2) modules.
-  wheel_env = dict()
   if wheel.spec.is_py3_only:
     wheel_env['PYTHONPATH'] = ''
   return wheel_env
