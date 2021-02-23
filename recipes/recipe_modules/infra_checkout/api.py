@@ -90,7 +90,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       def __init__(self, m):
         self.m = m
         self._go_env = None
-        self._go_env_prefixes = None
+        self._go_env_suffixes = None
         self._committed = False
 
       @property
@@ -152,7 +152,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         with self.m.context(
             cwd=self.path,
             env=self._go_env,
-            env_prefixes=self._go_env_prefixes):
+            env_suffixes=self._go_env_suffixes):
           yield
 
       def _ensure_go_env(self):
@@ -173,7 +173,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                       'GOROOT': str(path.join('golang', 'go')),
                       'GOPATH': str(path.join(where, 'go')),
                   },
-                  'env_prefixes': {
+                  'env_suffixes': {
                       'PATH': [
                           str(path.join('golang', 'go')),
                           str(path.join(where, 'go', 'bin')),
@@ -186,7 +186,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
         self._go_env = env_with_override.copy()
         self._go_env.update(out['env'])
-        self._go_env_prefixes = out['env_prefixes']
+        self._go_env_suffixes = out['env_suffixes']
 
       @staticmethod
       def run_presubmit():
