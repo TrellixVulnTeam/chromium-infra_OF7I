@@ -90,7 +90,7 @@ func (c *auditTaskCmd) innerExecute(ctx context.Context, f *flag.FlagSet, _ ...i
 		}
 	}
 	if len(errors) > 0 && dutState == "" {
-		dutState = event.HostNeedsReset
+		dutState = event.HostNeedsRepair
 	}
 	if dutState != "" {
 		sendHostStatus(ctx, ac, []string{c.host}, dutState)
