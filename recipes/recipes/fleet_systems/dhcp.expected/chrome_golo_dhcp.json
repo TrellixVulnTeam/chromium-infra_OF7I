@@ -231,7 +231,7 @@
       "@@@STEP_LOG_LINE@json.output@  {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"name\": \"test-host\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"osVersion\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"value\": \"Linux Ubuntu test_version\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"value\": \"Linux Ubuntu 14.04\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
@@ -255,7 +255,7 @@
       "@@@STEP_LOG_LINE@json.output@  {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"name\": \"test-host\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"osVersion\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"value\": \"Linux Ubuntu test_version\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"value\": \"Linux Ubuntu 14.04\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
@@ -285,9 +285,9 @@
       "--config",
       "[CLEANUP]/.docker",
       "pull",
-      "gcr.io/chromium-container-registry/fleet_systems:dhcp_test_version"
+      "gcr.io/chops-public-images-prod/fleet_systems/dhcp/14.04:latest"
     ],
-    "name": "docker pull fleet_systems:dhcp_test_version"
+    "name": "docker pull fleet_systems/dhcp/14.04:latest"
   },
   {
     "cmd": [
@@ -297,14 +297,14 @@
       "--config-file",
       "[CLEANUP]/.docker",
       "--image",
-      "gcr.io/chromium-container-registry/fleet_systems:dhcp_test_version",
+      "gcr.io/chops-public-images-prod/fleet_systems/dhcp/14.04:latest",
       "--dir-map",
       "[START_DIR]/chrome_golo",
       "/src",
       "--",
       "test_zone"
     ],
-    "name": "DHCP config test for test_zone on test_version hosts: test-host"
+    "name": "DHCP config test for test_zone on 14.04 hosts: test-host"
   },
   {
     "name": "$result"
