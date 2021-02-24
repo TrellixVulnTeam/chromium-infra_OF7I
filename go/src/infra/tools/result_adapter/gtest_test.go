@@ -207,7 +207,7 @@ func TestGTestConversions(t *testing.T) {
 					LosslessSnippet:     true,
 					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
 				})
-				So(tr.SummaryHtml, ShouldEqual, "Please check stack_trace artifact for details.")
+				So(tr.SummaryHtml, ShouldEqual, `<p><text-artifact artifact-id="stack_trace" /></p>`)
 				So(tr.Artifacts, ShouldHaveLength, 1)
 				So(tr.Artifacts["stack_trace"].ContentType, ShouldEqual, "text/plain")
 				So(tr.Artifacts["stack_trace"].GetContents(), ShouldResemble, []byte("<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>"))

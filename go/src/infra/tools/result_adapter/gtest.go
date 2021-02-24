@@ -347,7 +347,7 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 		}
 
 		// TODO(crbug.com/1099606): Remove this summaryHtml when artifact embedding is done.
-		tr.SummaryHtml = "Please check stack_trace artifact for details."
+		tr.SummaryHtml = `<p><text-artifact artifact-id="stack_trace" /></p>`
 		tr.Artifacts = map[string]*sinkpb.Artifact{"stack_trace": a}
 	}
 
