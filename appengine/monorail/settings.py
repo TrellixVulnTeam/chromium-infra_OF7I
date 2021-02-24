@@ -337,8 +337,8 @@ else:
     domain_to_default_project = domain_to_default_project_dev
     # See comment above on how to find this address.
     redis_host = '10.150.170.251'
-    # Use replicas created when testing the restore procedures on 2021-02-22
-    db_replica_prefix = 'replica-1'
+    # Use replicas created when testing the restore procedures on 2021-02-24
+    db_replica_prefix = 'replica-2'
 
   elif app_id == 'monorail-prod':
     send_all_email_to = None  # Deliver it to the intended users.
