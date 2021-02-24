@@ -218,7 +218,7 @@ func parseResultsFile(contents string) []*skylab_test_runner.Result_Autotest_Tes
 		}
 	}
 
-	testCases = append(testCases, stack.Flush()...)
+	testCases = append(testCases, stack.FlushLegalTestCaseName()...)
 
 	// Stay consistent with the default value which is nil.
 	if len(testCases) == 0 {
@@ -275,9 +275,9 @@ func (s *testCaseStack) PopFullyParsedTestCase() *skylab_test_runner.Result_Auto
 	return r
 }
 
-// Flush pops all test cases currently in the stack, declares them failed and
-// returns them.
-func (s *testCaseStack) Flush() []*skylab_test_runner.Result_Autotest_TestCase {
+// Flush pops all the legal test cases currently in the stack, declares them
+// failed and returns them.
+func (s *testCaseStack) FlushLegalTestCaseName() []*skylab_test_runner.Result_Autotest_TestCase {
 	r := []*skylab_test_runner.Result_Autotest_TestCase{}
 
 	for {
@@ -289,7 +289,9 @@ func (s *testCaseStack) Flush() []*skylab_test_runner.Result_Autotest_TestCase {
 			break
 		}
 
-		r = append(r, tc)
+		if isLegalTestCaseName(tc.Name) {
+			r = append(r, tc)
+		}
 	}
 
 	return r

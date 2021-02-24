@@ -87,6 +87,26 @@ END FAIL	----	----
 	})
 }
 
+func TestFailWithStackTrace(t *testing.T) {
+	Convey("When status.log contains a FAIL status with a stack trace, a test failure with a comment is returned.", t, func() {
+		input := `
+START	Fail.suspend	Fail.suspend
+	FAIL	Fail.suspend	Fail.suspend	ValueError: max() arg is an empty sequence
+  Traceback (most recent call last):
+    File "/usr/local/autotest/client/common_lib/test.py", line 816, in _call_test_function
+      return func(*args, **dargs)
+  ValueError: max() arg is an empty sequence
+END FAIL	Fail.suspend	Fail.suspend
+`
+		got := parseResultsFile(input)
+
+		want := []*skylab_test_runner.Result_Autotest_TestCase{
+			testCase("Fail.suspend", verdictFail, "ValueError: max() arg is an empty sequence\n"),
+		}
+		So(got, ShouldResemble, want)
+	})
+}
+
 func TestError(t *testing.T) {
 	Convey("When status.log contains an ERROR status, a test failure with a comment is returned.", t, func() {
 		input := `
@@ -286,6 +306,21 @@ END ERROR	----	----
 			}
 			So(got, ShouldResemble, want)
 		})
+}
+
+func TestInterruptedTestCase(t *testing.T) {
+	Convey("When status.log contains an interrupted test case without an END event line, the test is still returned.", t, func() {
+		input := `
+START	----	----
+	START	----	Fail
+`
+		got := parseResultsFile(input)
+
+		want := []*skylab_test_runner.Result_Autotest_TestCase{
+			testCase("Fail", verdictFail, ""),
+		}
+		So(got, ShouldResemble, want)
+	})
 }
 
 // Exit code file tests
