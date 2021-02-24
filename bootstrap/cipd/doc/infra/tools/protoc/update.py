@@ -37,11 +37,12 @@ def confirm(prompt, decline, exit_code=0):
 
 # list of (cipd_platform, github_version)
 SUPPORTED_PLATFORMS = [
-  ('linux-amd64', 'linux-x86_64'),
-  ('mac-amd64', 'osx-x86_64'),
-  # no 64-bit version, but 32-bit works on amd64 just fine.
-  ('windows-386', 'win32'),
-  ('windows-amd64', 'win32'),
+    ('linux-amd64', 'linux-x86_64'),
+    ('linux-arm64', 'linux-aarch_64'),
+    ('mac-amd64', 'osx-x86_64'),
+    # no 64-bit version, but 32-bit works on amd64 just fine.
+    ('windows-386', 'win32'),
+    ('windows-amd64', 'win32'),
 ]
 
 
