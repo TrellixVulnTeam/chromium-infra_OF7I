@@ -56,17 +56,12 @@ if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
 
   # We need a couple of modules explicitly, so edit Modules/Setup
 
-  # Insert "*static*" after the first line, make zlib a builtin module.
-  ed Modules/Setup <<EOF
-H
-1a
-*static*
-
-.
-/^#zlib/s/^#zlib/zlib/g
-/^#binascii/s/^#binascii/binascii/g
-wq
-EOF
+  # Insert "*static*" at the top of the file, make zlib and binascii
+  # builtin modules.
+  echo -en "*static*\n\n" > Modules/Setup.new
+  sed -e "s/^#zlib/zlib/g" -e "s/^#binascii/binascii/g" Modules/Setup \
+      >> Modules/Setup.new
+  mv -f Modules/Setup.new Modules/Setup
 
   # Now regenerate the Makefile/config.c to pick up changes to Modules/Setup.
   rm Modules/config.c

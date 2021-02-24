@@ -18,7 +18,6 @@ create {
   build {
     tool: "build_support/pip_bootstrap"
     tool: "tools/autoconf"
-    tool: "tools/ed"
     tool: "tools/sed"            # Used by python's makefiles
   }
 }
