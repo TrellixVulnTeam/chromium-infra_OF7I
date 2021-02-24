@@ -71,7 +71,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 			p := jk.Bisection.Patch
 			patchURL, err := convertGerritChangeToURL(p)
 			if err != nil {
-				return nil, errors.Annotate(err, "invalid patch provided: %v", err).Err()
+				return nil, errors.Annotate(err, "invalid patch provided").Err()
 			}
 			v.Set("patch", patchURL)
 		}
@@ -96,7 +96,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 		v.Set("base_git_hash", jk.Experiment.BaseCommit.GitHash)
 		experimentPatchURL, err := convertGerritChangeToURL(jk.Experiment.ExperimentPatch)
 		if err != nil {
-			return nil, errors.Annotate(err, "invalid experiment patch: %v", err).Err()
+			return nil, errors.Annotate(err, "invalid experiment patch").Err()
 		}
 		v.Set("patch", experimentPatchURL)
 
@@ -107,7 +107,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 		if jk.Experiment.BasePatch != nil {
 			basePatchURL, err := convertGerritChangeToURL(jk.Experiment.BasePatch)
 			if err != nil {
-				return nil, errors.Annotate(err, "invalid base patch: %v", err).Err()
+				return nil, errors.Annotate(err, "invalid base patch").Err()
 			}
 			v.Set("base_patch", basePatchURL)
 		}
