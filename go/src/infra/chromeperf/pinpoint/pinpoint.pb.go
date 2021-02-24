@@ -1490,7 +1490,7 @@ type Job struct {
 	//
 	// Name must follow either of the following formats:
 	//   - 'legacy-<hex>' where <hex> is a non-prefixed hexadecimal string
-	//   - a urlsafe base64-encoded UUID
+	//   - a canonical textual representation of a UUID
 	Name  string    `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	State Job_State `protobuf:"varint,2,opt,name=state,proto3,enum=pinpoint.Job_State" json:"state,omitempty"`
 	// The user that created this Job, referred to by email address.
