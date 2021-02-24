@@ -25,6 +25,8 @@ const (
 
 	verdictStringPrefix = "END "
 	undefinedName       = "----"
+	rebootTestName      = "reboot"
+	suspendTestName     = "suspend"
 
 	dutStateReady       = "ready"
 	dutStateNeedsRepair = "needs_repair"
@@ -354,7 +356,7 @@ func isStatusUpdateEvent(event string) bool {
 // isLegalTestCaseName filters out uninformative execution steps.
 func isLegalTestCaseName(name string) bool {
 	switch name {
-	case "reboot", undefinedName, "":
+	case rebootTestName, suspendTestName, undefinedName, "":
 		return false
 	}
 	return true

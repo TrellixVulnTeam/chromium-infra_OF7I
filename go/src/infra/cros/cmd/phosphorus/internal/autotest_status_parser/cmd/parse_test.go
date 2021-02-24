@@ -218,7 +218,7 @@ END FAIL	Ignored	Ignored
 }
 
 func TestIgnoredTestNames(t *testing.T) {
-	Convey("When a test name is 'reboot' or both test name and directory name are missing, ignore the test.", t, func() {
+	Convey("When a test name is 'reboot', 'suspend' or both test name and directory name are missing, ignore the test.", t, func() {
 		input := `
 START	----	----
 	FAIL	Ignored	Ignored	Something failed.
@@ -226,6 +226,11 @@ END FAIL	Ignored	Ignored
 
 Ignore tests named reboot.
 START	----	reboot
+	FAIL	Ignored	Ignored	Something failed.
+END FAIL	Ignored	Ignored
+
+Ignore tests named suspend.
+START	----	suspend
 	FAIL	Ignored	Ignored	Something failed.
 END FAIL	Ignored	Ignored
 `
