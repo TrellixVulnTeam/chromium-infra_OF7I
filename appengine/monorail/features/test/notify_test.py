@@ -13,8 +13,11 @@ import mock
 import unittest
 import webapp2
 
+from google.appengine.ext import testbed
+
 from features import notify
 from features import notify_reasons
+from framework import emailfmt
 from framework import urls
 from proto import tracker_pb2
 from services import service_manager
@@ -64,6 +67,10 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     self.orig_sign_attachment_id = attachment_helpers.SignAttachmentID
     attachment_helpers.SignAttachmentID = (
         lambda aid: 'signed_%d' % aid)
+
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_datastore_v3_stub()
 
   def tearDown(self):
     cloudstorage.open = self._old_gcs_open
@@ -567,6 +574,9 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         method='POST',
         services=self.services)
     result = task.HandleRequest(mr)
+
+    self.assertIsNotNone(result['tasks'][0].get('references'))
+    self.assertEqual(result['tasks'][0]['reply_to'], emailfmt.NoReplyAddress())
     self.assertTrue('Status: need_info' in result['tasks'][0]['body'])
     self.assertItemsEqual(
         ['user@example.com', 'TL@example.com', 'approvalTL@example.com'],

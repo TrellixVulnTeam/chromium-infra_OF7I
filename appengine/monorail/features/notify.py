@@ -837,19 +837,28 @@ class NotifyApprovalChangeTask(notify_helpers.NotifyTaskBase):
       users_by_id.update(framework_views.MakeAllUserViews(
           mr.cnxn, self.services.user, indirect))  # already contains direct
 
-    # TODO(jojwang): monorail:3588, refine email contents based on direct
-    # and indirect user_ids returned.
+    # TODO(crbug.com/monorail/9104): Compute notify_reasons.AddrPerms based on
+    # project settings and recipient permissions so `reply_to` can be accurately
+    # set.
 
     email_tasks = []
     for rid in recipient_ids:
-      # TODO(jojwang): monorail:3588, add reveal_addr based on
-      # recipient member status
       from_addr = emailfmt.FormatFromAddr(
           project, commenter_view=commenter_view, can_reply_to=False)
       dest_email = users_by_id[rid].email
+
+      refs = emailfmt.GetReferences(
+          dest_email, subject, comment.sequence,
+          '%s@%s' % (project.project_name, emailfmt.MailDomain()))
+      reply_to = emailfmt.NoReplyAddress()
       email_tasks.append(
-          dict(from_addr=from_addr, to=dest_email, subject=subject, body=body)
-      )
+          dict(
+              from_addr=from_addr,
+              to=dest_email,
+              subject=subject,
+              body=body,
+              reply_to=reply_to,
+              references=refs))
 
     return email_tasks
 
