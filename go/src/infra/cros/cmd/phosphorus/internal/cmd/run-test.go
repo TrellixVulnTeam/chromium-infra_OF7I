@@ -131,7 +131,7 @@ func runTestStep(ctx context.Context, r *phosphorus.RunTestRequest) (*autoservRe
 		Hosts:            r.DutHostnames,
 		Keyvals:          r.GetAutotest().GetKeyvals(),
 		Name:             r.GetAutotest().GetDisplayName(),
-		RequireSSP:       true,
+		RequireSSP:       !r.GetAutotest().GetIsClientTest(),
 		ResultsDir:       dir,
 		SSPBaseImageName: r.Config.GetTask().GetSspBaseImageName(),
 	}
