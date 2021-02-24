@@ -268,7 +268,11 @@ func (r *selectRun) loadChangedFiles() error {
 	if err != nil {
 		return err
 	}
-	r.changedFiles = stringset.NewFromSlice(changedFiles...)
+
+	r.changedFiles = stringset.New(len(changedFiles))
+	for _, f := range changedFiles {
+		r.changedFiles.Add("//" + f)
+	}
 	return nil
 }
 
