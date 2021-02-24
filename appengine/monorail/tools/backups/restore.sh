@@ -14,38 +14,38 @@ CLOUD_PROJECT="monorail-staging"
 
 DRY_RUN=true
 
-echo Restoring backups to primary for $CLOUD_PROJECT. Dry run: $DRY_RUN
-echo This will delete all read replicas with the prefix "$REPLICA_PREFIX"
-echo and create a new set of replicas with the prefix "$NEW_REPLICA_PREFIX"
+echo Restoring backups to primary for ${CLOUD_PROJECT}. Dry run: ${DRY_RUN}
+echo This will delete all read replicas with the prefix "${REPLICA_PREFIX}"
+echo and create a new set of replicas with the prefix "${NEW_REPLICA_PREFIX}"
 echo
 echo Checking for existing read replicas to delete:
 
-EXISTING_REPLICAS=($(gcloud sql instances list --project=$CLOUD_PROJECT | grep $REPLICA_PREFIX- | awk '{print $1}'))
+EXISTING_REPLICAS=($(gcloud sql instances list --project=${CLOUD_PROJECT} | grep ${REPLICA_PREFIX}- | awk '{print $1}'))
 
 if [ ${#EXISTING_REPLICAS[@]} -eq 0 ]; then
-  echo No replicas found with prefix $REPLICA_PREFIX
+  echo No replicas found with prefix ${REPLICA_PREFIX}
   echo List instances to find the replica prefix by running:
-  echo gcloud sql instances list --project=$CLOUD_PROJECT
+  echo gcloud sql instances list --project=${CLOUD_PROJECT}
   exit 1
 fi
 
-echo Deleting ${#EXISTING_REPLICAS[@]} existing replicas found with the prefix $REPLICA_PREFIX
+echo Deleting ${#EXISTING_REPLICAS[@]} existing replicas found with the prefix ${REPLICA_PREFIX}
 
 for r in "${EXISTING_REPLICAS[@]}"; do
-  echo Deleting $r
-  cmd="gcloud sql instances delete $r --project=$CLOUD_PROJECT"
-  echo $cmd
-  if [ $DRY_RUN == false ]; then
-    $cmd
+  echo Deleting ${r}
+  cmd="gcloud sql instances delete ${r} --project=${CLOUD_PROJECT}"
+  echo ${cmd}
+  if [ ${DRY_RUN} == false ]; then
+    ${cmd}
   fi
 done
 
 echo Checking for available backups:
 
-DUE_TIMES=($(gcloud sql backups list --instance primary --project=$CLOUD_PROJECT | grep SUCCESSFUL | awk '{print $1}'))
+DUE_TIMES=($(gcloud sql backups list --instance primary --project=${CLOUD_PROJECT} | grep SUCCESSFUL | awk '{print $1}'))
 
 for index in ${!DUE_TIMES[*]}; do
-  echo "[$index] ${DUE_TIMES[$index]}"
+  echo "[${index}] ${DUE_TIMES[${index}]}"
 done
 
 echo "Choose one of the above due_time values."
@@ -54,15 +54,15 @@ echo "complete the rest of the restore process."
 echo "Recover from date [0: ${DUE_TIMES[0]}]:"
 read DUE_TIME_INDEX
 
-DUE_TIME=${DUE_TIMES[$DUE_TIME_INDEX]}
+DUE_TIME=${DUE_TIMES[${DUE_TIME_INDEX}]}
 
-cmd="gcloud sql instances restore-backup primary --due-time=$DUE_TIME --project=$CLOUD_PROJECT --async"
-echo $cmd
-if [ $DRY_RUN == false ]; then
-  $cmd
+cmd="gcloud sql backups restore ${DUE_TIME} --project=${CLOUD_PROJECT} --restore-instance=primary"
+echo ${cmd}
+if [ ${DRY_RUN} == false ]; then
+  ${cmd}
 fi
 
-if [ "$DUE_TIME_INDEX" -ne "0" ]; then
+if [ "${DUE_TIME_INDEX}" -ne "0" ]; then
   echo "You've restored an older-than-latest backup. Please contact speckle-oncall@"
   echo "to request an on-demand backup of the primary before attempting to restart replicas,"
   echo "which this script does not do automatically in this case."
@@ -74,22 +74,24 @@ fi
 
 echo "Finding restore operation ID..."
 
-RESTORE_OP_IDS=($(gcloud sql operations list --instance=primary --project=$CLOUD_PROJECT | grep RESTORE_VOLUME | awk '{print $1}'))
+RESTORE_OP_IDS=($(gcloud sql operations list --instance=primary --project=${CLOUD_PROJECT} | grep RESTORE_VOLUME | awk '{print $1}'))
 
 # Assume the fist RESTORE_VOLUME is the operation we want; they're listed in reverse chronological order.
 echo Waiting on restore operation ID: ${RESTORE_OP_IDS[0]}
 
-# This isn't waiting long enough. Or it says it's done before it really is.  Either way, the replica create steps fail
-# with e.g. "Failed in: CATCHING_UP Operation token: 03dd57a9-37a9-4f6f-9aa6-9c3b8ece01bd Message: Saw error in IO and/or SQL thread"
-gcloud sql operations wait ${RESTORE_OP_IDS[0]} --instance=primary --project=$CLOUD_PROJECT
+if [ ${DRY_RUN} == false ]; then
+  gcloud sql operations wait ${RESTORE_OP_IDS[0]} --project=${CLOUD_PROJECT}
+fi
 
-echo Restore is finished on primary. Now create the new set of read replicas with the new name prefix $NEW_REPLICA_PREFIX:
+echo Restore is finished on primary. Now create the new set of read replicas with the new name prefix ${NEW_REPLICA_PREFIX}:
+
+TIER=($(gcloud sql instances describe primary --project=${CLOUD_PROJECT} | grep tier | awk '{print $2}'))
 
 for i in {00..09}; do
-  cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-$i --master-instance-name primary --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"
-  echo $cmd
-  if [ $DRY_RUN == false ]; then
-    $cmd
+  cmd="gcloud sql instances create ${NEW_REPLICA_PREFIX}-${i} --master-instance-name=primary --project=${CLOUD_PROJECT} --tier=${TIER} --region=us-central1"
+  echo ${cmd}
+  if [ ${DRY_RUN} == false ]; then
+    ${cmd}
   fi
 done
 
@@ -100,7 +102,7 @@ echo
 echo Backup restore is nearly complete.  Check the instances page on developer console to see when
 echo all of the replicas are "Runnable" status. Until then, you may encounter errors in issue search.
 echo In the mean time:
-echo - edit settings.py to change the db_replica_prefix variable to be "$NEW_REPLICA_PREFIX-"
+echo - edit settings.py to change the db_replica_prefix variable to be "${NEW_REPLICA_PREFIX}-"
 echo   Then either "make deploy_prod" or "make deploy_staging" for search to pick up the new prefix.
 echo   Then set the newly deploy version for besearch and besearch2 on the dev console Versons page.
 echo Follow-up:
