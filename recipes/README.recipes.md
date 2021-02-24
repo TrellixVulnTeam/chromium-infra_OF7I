@@ -1103,11 +1103,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 [DEPS](/recipes/recipes/infra_continuous.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#128)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#164)(api):**
 
-&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#164)(api, checkout, buildername, project_name, repo_url, rev):**
+&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#200)(api, checkout, buildername, project_name, repo_url, rev):**
 
-&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#217)(api, project_name):**
+&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#253)(api, project_name):**
 ### *recipes* / [infra\_frontend\_tester](/recipes/recipes/infra_frontend_tester.py)
 
 [DEPS](/recipes/recipes/infra_frontend_tester.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

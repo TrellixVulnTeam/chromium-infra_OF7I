@@ -58,61 +58,97 @@ CIPD_PACKAGE_BUILDERS = {
   # trusty-64 is the primary builder for linux-amd64, and the rest just
   # cross-compile to different platforms (to speed up the overall cycle time by
   # doing stuff in parallel).
-  'infra-continuous-precise-64': ['linux-arm', 'linux-arm64'],
-  'infra-continuous-trusty-64':  ['native:test', 'linux-386'],
-  'infra-continuous-xenial-64':  ['linux-mipsle', 'linux-mips64',
-                                  'linux-mips64le'],
-  'infra-continuous-yakkety-64': ['linux-s390x'],
-  'infra-continuous-zesty-64':   ['linux-ppc64', 'linux-ppc64le'],
+  'infra-continuous-trusty-64': [
+    'native:test',
+    'linux-386',
+  ],
+  'infra-continuous-xenial-64': [
+    'linux-arm64',
+    'linux-mips64',
+    'linux-mips64le',
+  ],
+  'infra-continuous-bionic-64': [
+    'linux-mipsle',
+    'linux-ppc64',
+    'linux-s390x',
+  ],
 
   # 10.13 is the primary builder for darwin-amd64.
-  'infra-continuous-mac-10.13-64': ['native:test:legacy'],
-  'infra-continuous-mac-10.14-64': [],
-  'infra-continuous-mac-10.15-64': [],
+  'infra-continuous-mac-10.13-64': [
+    'native:test:legacy',
+  ],
+  'infra-continuous-mac-10.14-64': [
+  ],
+  'infra-continuous-mac-10.15-64': [
+    'darwin-arm64',
+  ],
 
   # Windows 64 bit builder runs and tests for both 64 && 32 bit.
-  'infra-continuous-win10-64': ['native:test', 'windows-386:test'],
+  'infra-continuous-win10-64': [
+    'native:test',
+    'windows-386:test',
+  ],
 
   # Internal builders, they use exact same recipe.
   'infra-internal-continuous-trusty-64': [
     'native:test',
     'linux-arm',
-    'linux-arm64',
   ],
-  'infra-internal-continuous-win-64': ['native:test', 'windows-386:test'],
-  'infra-internal-continuous-mac-10.15-64': ['native:test:legacy'],
+  'infra-internal-continuous-xenial-64': [
+    'linux-arm64',
+    'darwin-arm64', # note: can't do it on mac-10.15 since we need >=go1.16
+  ],
+  'infra-internal-continuous-win-64': [
+    'native:test',
+    'windows-386:test',
+  ],
+  'infra-internal-continuous-mac-10.15-64': [
+    'native:test:legacy',
+  ],
 
   # Builders that upload CIPD packages.
   #
   # In comments is approximate runtime for building and testing packages, per
-  # platform (as of Mar 28 2019). We try to balance xc1 and xc2.
+  # platform (as of Feb 23 2021). We try to balance xc1 and xc2.
   'infra-packager-linux-64': [
-    'native:test',       # ~ 140 sec
+    'native:test',       # ~120 sec
+    'darwin-arm64',      # ~60 sec
   ],
   'infra-packager-linux-xc1': [
-    'linux-386',         # ~90 sec
-    'linux-arm',         # ~90 sec
-    'linux-arm64',       # ~90 sec
+    'linux-386',         # ~60 sec
+    'linux-arm',         # ~60 sec
+    'linux-arm64',       # ~60 sec
   ],
   'infra-packager-linux-xc2': [
-    'linux-mips64',      # ~50 sec
-    'linux-mips64le',    # ~50 sec
-    'linux-mipsle',      # ~50 sec
+    'linux-mips64',      # ~40 sec
+    'linux-mips64le',    # ~40 sec
+    'linux-mipsle',      # ~40 sec
     'linux-ppc64',       # ~40 sec
     'linux-ppc64le',     # ~40 sec
     'linux-s390x',       # ~40 sec
-    'aix-ppc64',         # ~40 sec
+    'aix-ppc64',         # ~5 sec
   ],
-  'infra-packager-mac-64': ['native:test:legacy'],
-  'infra-packager-win-64': ['native:test', 'windows-386:test'],
+  'infra-packager-mac-64': [
+    'native:test:legacy',  # ~150 sec
+  ],
+  'infra-packager-win-64': [
+    'native:test',         # ~60 sec
+    'windows-386:test',    # ~100 sec
+  ],
 
   'infra-internal-packager-linux-64': [
-    'native:test',
-    'linux-arm',
-    'linux-arm64',
+    'native:test',   # ~60 sec
+    'linux-arm',     # ~30 sec
+    'linux-arm64',   # ~30 sec
+    'darwin-arm64',  # ~30 sec (note: need go 1.16)
   ],
-  'infra-internal-packager-mac-64': ['native:test:legacy'],
-  'infra-internal-packager-win-64': ['native:test', 'windows-386:test'],
+  'infra-internal-packager-mac-64': [
+    'native:test:legacy',  # ~40 sec
+  ],
+  'infra-internal-packager-win-64': [
+    'native:test',        # ~60 sec
+    'windows-386:test',   # ~40 sec
+  ],
 }
 
 
