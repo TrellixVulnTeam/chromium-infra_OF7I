@@ -17,11 +17,11 @@ _UNSUPPORTED_MASTERS = [
 ]
 
 
-def _ConvertOldMastersFormatToNew(masters_to_blacklisted_steps):
+def _ConvertOldMastersFormatToNew(masters_to_disallowed_steps):
   """Converts the old masters format to the new rules dict.
 
   Args:
-    masters_to_blacklisted_steps: A dict in the format:
+    masters_to_disallowed_steps: A dict in the format:
     {
         'master1': ['step1', 'step2', ...],
         'master2': ['step3', 'step4', ...]
@@ -44,7 +44,7 @@ def _ConvertOldMastersFormatToNew(masters_to_blacklisted_steps):
       'global': {}
   }
 
-  for master, unsupported_steps in masters_to_blacklisted_steps.iteritems():
+  for master, unsupported_steps in masters_to_disallowed_steps.iteritems():
     supported_masters[master] = {}
     if unsupported_steps:
       supported_masters[master]['unsupported_steps'] = unsupported_steps
@@ -56,7 +56,7 @@ def GetStepsForMastersRules(settings=None, version=None):
   if settings is None:
     settings = FinditConfig.Get(version)
   return (settings.steps_for_masters_rules or
-          _ConvertOldMastersFormatToNew(settings.masters_to_blacklisted_steps))
+          _ConvertOldMastersFormatToNew(settings.masters_to_disallowed_steps))
 
 
 def MasterIsSupported(master_name):
