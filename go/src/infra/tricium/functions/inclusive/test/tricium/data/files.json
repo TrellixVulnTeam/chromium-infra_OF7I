@@ -1,0 +1,7 @@
+{
+	"files": [
+		{ "path": "src/ok.md" },
+		{ "path": "src/list.txt" },
+		{ "path": "src/blacklist.txt" }
+  ]
+}
