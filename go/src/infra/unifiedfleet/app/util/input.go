@@ -667,6 +667,38 @@ func ToLight(light string) chromeosLab.Camerabox_Light {
 	return chromeosLab.Camerabox_Light(chromeosLab.Camerabox_Light_value[v])
 }
 
+// StrToLicenseType refers a map between a string to a LicenseType map.
+var StrToLicenseType = map[string]string{
+	"invalid":      "LICENSE_TYPE_UNSPECIFIED",
+	"windows10pro": "LICENSE_TYPE_WINDOWS_10_PRO",
+	"msofficestd":  "LICENSE_TYPE_MS_OFFICE_STANDARD",
+}
+
+// IsLicenseType checks if a string refers to a valid LicenseType.
+func IsLicenseType(licenseType string) bool {
+	_, ok := StrToLicenseType[licenseType]
+	return ok
+}
+
+// ValidLicenseTypeStr returns a valid str list for LicenseType strings.
+func ValidLicenseTypeStr() []string {
+	ks := make([]string, 0, len(StrToLicenseType))
+	for k := range StrToLicenseType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToLicenseType converts licenseType string to a License type enum.
+func ToLicenseType(licenseType string) chromeosLab.LicenseType {
+	licenseType = RemoveGivenPrefix(licenseType, "license_")
+	v, ok := StrToLicenseType[licenseType]
+	if !ok {
+		return chromeosLab.LicenseType_LICENSE_TYPE_UNSPECIFIED
+	}
+	return chromeosLab.LicenseType(chromeosLab.LicenseType_value[v])
+}
+
 // List of regexps for recognizing assets stored with googlers or out of lab.
 var googlers = []*regexp.Regexp{
 	regexp.MustCompile(`container`),

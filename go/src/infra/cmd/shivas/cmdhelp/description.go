@@ -1551,6 +1551,10 @@ Operation will be faster as only name/id will be retrieved from the service.`
 		"You can either use the below strings or prefix \"ZONE_\" to the below strings(for JSON input) to specify the exact enum name. "+
 		"Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", "))
 
+	//LicenseTypeHelpText help text for chameleontype command line options
+	LicenseTypeHelpText string = fmt.Sprintf("the name of the license type. Can specify multiple comma separated values. "+
+		"Valid LicenseType strings: [%s]", strings.Join(ufsUtil.ValidLicenseTypeStr(), ", "))
+
 	//ChameleonTypeHelpText help text for chameleontype command line options
 	ChameleonTypeHelpText string = fmt.Sprintf("the name of the chameleontype. Can specify multiple comma separated values. "+
 		"Valid ChameleonType strings: [%s]", strings.Join(ufsUtil.ValidChameleonTypeStr(), ", "))

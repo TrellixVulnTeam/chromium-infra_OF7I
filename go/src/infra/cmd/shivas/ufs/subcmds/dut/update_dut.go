@@ -49,7 +49,8 @@ const (
 	rpmOutletPath = "dut.rpm.outlet"
 
 	// DUT related UpdateMask paths.
-	poolsPath = "dut.pools"
+	poolsPath   = "dut.pools"
+	licensePath = "dut.licenses"
 
 	// Operations string for Summary table.
 	ufsOp   = "Update to Database"
@@ -98,6 +99,8 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+".")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the DUT.")
+		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
+		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values.")
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT. Clearing this field will delete rpm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
@@ -129,6 +132,8 @@ type updateDUT struct {
 	servoSerial      string
 	servoSetupType   string
 	pools            []string
+	licenseTypes     []string
+	licenseIds       []string
 	rpm              string
 	rpmOutlet        string
 	deploymentTicket string
@@ -282,6 +287,14 @@ func (c updateDUT) validateArgs() error {
 		if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; c.servoSetupType != "" && !ok {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid value for servo setup type. Valid values are "+cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
+		if len(c.licenseTypes) != len(c.licenseIds) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNumber of -licensetype(%s) and -licenseid(%s) must be same.", c.licenseTypes, c.licenseIds)
+		}
+		for _, cp := range c.licenseTypes {
+			if !ufsUtil.IsLicenseType(cp) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid license type name, please check help info for '-licensetype'.", cp)
+			}
+		}
 	}
 	if c.newSpecsFile != "" {
 		// Helper function to return the formatted error.
@@ -312,6 +325,12 @@ func (c updateDUT) validateArgs() error {
 		}
 		if len(c.pools) != 0 {
 			return f("pools")
+		}
+		if len(c.licenseTypes) != 0 {
+			return f("licensetype")
+		}
+		if len(c.licenseIds) != 0 {
+			return f("licenseid")
 		}
 	}
 	return nil
@@ -484,6 +503,19 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	if len(pools) > 0 && pools[0] != "" {
 		mask.Paths = append(mask.Paths, poolsPath)
 		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = pools
+	}
+
+	// Check and update licenses if required.
+	if len(c.licenseTypes) > 0 {
+		mask.Paths = append(mask.Paths, licensePath)
+		licenses := make([]*chromeosLab.License, 0, len(c.licenseTypes))
+		for i := range c.licenseTypes {
+			licenses = append(licenses, &chromeosLab.License{
+				Type:       ufsUtil.ToLicenseType(c.licenseTypes[i]),
+				Identifier: c.licenseIds[i],
+			})
+		}
+		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = licenses
 	}
 
 	// Create and assign servo and corresponding masks.

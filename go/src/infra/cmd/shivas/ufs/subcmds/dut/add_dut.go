@@ -72,6 +72,8 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo. Can skip for Servo V3.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns REGULAR if unassigned.")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma separated pools assigned to the DUT. 'DUT_POOL_QUOTA' is used if nothing is specified")
+		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
+		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values.")
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT.")
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
@@ -119,6 +121,8 @@ type addDUT struct {
 	servo          string
 	servoSerial    string
 	servoSetupType string
+	licenseTypes   []string
+	licenseIds     []string
 	pools          []string
 	rpm            string
 	rpmOutlet      string
@@ -275,6 +279,14 @@ func (c addDUT) validateArgs() error {
 		}
 		if c.zone != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid zone %s", c.zone)
+		}
+		if len(c.licenseTypes) != len(c.licenseIds) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNumber of -licensetype(%s) and -licenseid(%s) must be same.", c.licenseTypes, c.licenseIds)
+		}
+		for _, cp := range c.licenseTypes {
+			if !ufsUtil.IsLicenseType(cp) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid license type name, please check help info for '-licensetype'.", cp)
+			}
 		}
 		for _, cp := range c.chameleons {
 			if !ufsUtil.IsChameleonType(cp) {
@@ -470,6 +482,14 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	lse.Tags = c.tags
 	lse.ResourceState = resourceState
 
+	licenses := make([]*chromeosLab.License, 0, len(c.licenseTypes))
+	for i := range c.licenseTypes {
+		licenses = append(licenses, &chromeosLab.License{
+			Type:       ufsUtil.ToLicenseType(c.licenseTypes[i]),
+			Identifier: c.licenseIds[i],
+		})
+	}
+	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = licenses
 	peripherals := lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
 	peripherals.GetServo().ServoHostname = servoHost
 	peripherals.GetServo().ServoPort = servoPort
