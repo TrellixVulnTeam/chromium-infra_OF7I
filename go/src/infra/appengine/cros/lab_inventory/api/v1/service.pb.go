@@ -2543,8 +2543,10 @@ type ManualRepairRecordResult struct {
 
 	RepairRecord *protos1.DeviceManualRepairRecord `protobuf:"bytes,1,opt,name=repair_record,json=repairRecord,proto3" json:"repair_record,omitempty"`
 	Id           string                            `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	ErrorMsg     string                            `protobuf:"bytes,3,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Hostname     string                            `protobuf:"bytes,4,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	// The existence of an error_msg is used to determine whether a result was a
+	// success or failure. The message content is mainly used for UI side logic.
+	ErrorMsg string `protobuf:"bytes,3,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	Hostname string `protobuf:"bytes,4,opt,name=hostname,proto3" json:"hostname,omitempty"`
 }
 
 func (x *ManualRepairRecordResult) Reset() {

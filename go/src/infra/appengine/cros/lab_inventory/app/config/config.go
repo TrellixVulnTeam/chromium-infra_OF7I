@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/secrets"
+	"infra/appengine/cros/lab_inventory/app/external"
 )
 
 const configFile = "config.cfg"
@@ -82,6 +83,7 @@ func Middleware(c *router.Context, next router.Handler) {
 	}
 
 	c.Context = Use(c.Context, &cfg)
+	c.Context = external.WithServerInterface(c.Context)
 	next(c)
 }
 

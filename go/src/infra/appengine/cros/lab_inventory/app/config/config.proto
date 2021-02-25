@@ -55,6 +55,9 @@ message Config {
 
   // Asset tag backfilling configuration
   AssetTagBackfill backfilling_config = 17;
+
+  // UFS service endpoint
+  string ufs_service = 18;
 }
 
 // Next tag: 6
