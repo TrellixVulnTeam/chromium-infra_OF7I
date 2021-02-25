@@ -468,6 +468,7 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 		case "description":
 		case "resourceState":
 		case "dut.pools":
+		case "dut.licenses":
 		case "dut.servo.port":
 		case "dut.servo.serial":
 		case "dut.servo.setup":
@@ -582,6 +583,13 @@ func processUpdateMachineLSEDUTMask(oldDut, newDut *chromeosLab.DeviceUnderTest,
 		} else {
 			// Assign default pools if nothing is given.
 			oldDut.Pools = defaultPools
+		}
+	case "dut.licenses":
+		// Clean up all licenses if new input licenses are empty
+		if newDut.GetLicenses() == nil || len(newDut.GetLicenses()) == 0 {
+			oldDut.Licenses = nil
+		} else {
+			oldDut.Licenses = append(oldDut.GetLicenses(), newDut.GetLicenses()...)
 		}
 	}
 }
