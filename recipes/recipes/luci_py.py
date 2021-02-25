@@ -99,7 +99,7 @@ def _has_changed_files(api, path, exclude_dir=None):
   return len(files) > 0
 
 
-def _step_run_py_tests(api, cwd, python3=False, timeout=None):
+def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
   luci_dir = api.context.cwd
   with api.context(cwd=cwd):
     cfg = api.context.cwd.join('unittest.cfg')
@@ -112,12 +112,8 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None):
       venv = luci_dir.join('.vpython')
       py = 'python2'
 
-    api.python(
-        'run tests %s' % py,
-        'test.py',
-        args=testpy_args,
-        venv=venv,
-        timeout=timeout)
+    api.python('run tests %s' % py, 'test.py', args=testpy_args, venv=venv,
+               timeout=timeout, ok_ret=ok_ret)
 
 
 def _step_auth_tests(api, changes):
@@ -187,8 +183,10 @@ def _step_client_tests(api, changes):
   with api.step.nest('client'):
     _step_run_py_tests(api, luci_dir.join('client'))
     # TODO(crbug.com/1017545): enable on Windows.
-    if not api.platform.is_win:
-      _step_run_py_tests(api, luci_dir.join('client'), python3=True)
+    # clients tests run in python3, but it ignores failures on Windows.
+    ok_ret = 'any' if api.platform.is_win else (0,)
+    _step_run_py_tests(
+        api, luci_dir.join('client'), ok_ret=ok_ret, python3=True)
 
 
 def _step_swarming_tests(api, changes):
@@ -216,8 +214,9 @@ def _step_swarming_bot_tests(api, changes):
   with api.step.nest('swarming bot'):
     _step_run_py_tests(api, bot_dir)
     # TODO(crbug.com/1017545): enable python3 on Windows.
-    if not api.platform.is_win:
-      _step_run_py_tests(api, bot_dir, python3=True)
+    # swarming bot tests run in python3, but it ignores failures on Windows.
+    ok_ret = 'any' if api.platform.is_win else (0,)
+    _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
 
 
 def _step_swarming_ui_tests(api, changes):
