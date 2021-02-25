@@ -275,6 +275,12 @@ service Fleet {
   // GetState retrieves the state of a resource.
   rpc GetState(GetStateRequest) returns (models.StateRecord);
 
+  // GetDutState retrieves requested Chrome OS device DutState from UFS.
+  rpc GetDutState(GetDutStateRequest) returns (models.chromeos.lab.DutState);
+
+  // ListDutStates gets all the DutStates
+  rpc ListDutStates(ListDutStatesRequest) returns (ListDutStatesResponse);
+
   // UpdateDutState updates the state config for a DUT
   // If the dut state doesn't exist before, it will create the dut state record.
   rpc UpdateDutState(UpdateDutStateRequest) returns (models.chromeos.lab.DutState);
@@ -294,7 +300,7 @@ service Fleet {
   // GetVM retrieves the details of the VM
   rpc GetVM(GetVMRequest) returns (models.VM);
 
-  // List gets all the machineLSEs
+  // ListVMs gets all the Vms
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
 
   // CreateAsset creates a new asset
@@ -1649,6 +1655,44 @@ message GetStateRequest {
   ];
 }
 
+message GetDutStateRequest {
+  // Machine/Asset id.
+  string chromeos_device_id = 1;
+  // Hostname of the DUT/MachineLSE.
+  string hostname = 2;
+}
+
+message ListDutStatesRequest {
+  // The maximum number of DutStates to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 DutStates will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListDutStates` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListDutStates` must match
+  // the call that provided the page token.
+  string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
+}
+
+message ListDutStatesResponse {
+  // The DutStates from datastore.
+  repeated models.chromeos.lab.DutState dut_states = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
 message UpdateStateRequest {
   // The state record to update.
   models.StateRecord state = 1 [(google.api.field_behavior) = REQUIRED];
@@ -1940,7 +1984,9 @@ message BatchGetRackLSEPrototypesResponse {
 }
 
 message GetChromeOSDeviceDataRequest {
+  // Machine/Asset id.
   string chromeos_device_id = 1;
+  // Hostname of the DUT/MachineLSE.
   string hostname = 2;
 }
 

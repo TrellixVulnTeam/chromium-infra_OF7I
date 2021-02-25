@@ -16,6 +16,16 @@ import (
 	"infra/unifiedfleet/app/model/state"
 )
 
+// GetDutState returns the DutState for the ChromeOS device.
+func GetDutState(ctx context.Context, id, hostname string) (*chromeosLab.DutState, error) {
+	return nil, nil
+}
+
+// ListDutStates lists the DutStates in datastore.
+func ListDutStates(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*chromeosLab.DutState, string, error) {
+	return nil, "", nil
+}
+
 // UpdateDutState updates the dut state for a ChromeOS DUT
 func UpdateDutState(ctx context.Context, ds *chromeosLab.DutState) (*chromeosLab.DutState, error) {
 	f := func(ctx context.Context) error {

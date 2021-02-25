@@ -735,6 +735,25 @@ func (r *UpdateDutStateRequest) Validate() error {
 	return nil
 }
 
+// Validate validates input requests of GetDutStateRequest.
+func (r *GetDutStateRequest) Validate() error {
+	if r == nil {
+		return status.Errorf(codes.InvalidArgument, "Empty Request")
+	}
+	if r.ChromeosDeviceId == "" && r.Hostname == "" {
+		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
+	}
+	return nil
+}
+
+// Validate validates input requests of ListDutStates.
+func (r *ListDutStatesRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
 // Validate validates input requests of UpdateNic.
 func (r *UpdateNicRequest) Validate() error {
 	if r.Nic == nil {

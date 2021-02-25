@@ -1405,6 +1405,40 @@ func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rs
 	return
 }
 
+func (s *DecoratedFleet) GetDutState(ctx context.Context, req *GetDutStateRequest) (rsp *lab.DutState, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDutState", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDutState(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDutState", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListDutStates(ctx context.Context, req *ListDutStatesRequest) (rsp *ListDutStatesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListDutStates", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListDutStates(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListDutStates", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) UpdateDutState(ctx context.Context, req *UpdateDutStateRequest) (rsp *lab.DutState, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

@@ -18,6 +18,7 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/external"
+	"infra/unifiedfleet/app/util"
 )
 
 // ImportStates imports states of crimson objects.
@@ -147,4 +148,35 @@ func (fs *FleetServerImpl) UpdateDutState(ctx context.Context, req *api.UpdateDu
 		return nil, err
 	}
 	return res, nil
+}
+
+// GetDutState gets the ChromeOS device DutState.
+func (fs *FleetServerImpl) GetDutState(ctx context.Context, req *api.GetDutStateRequest) (rsp *chromeosLab.DutState, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	return controller.GetDutState(osCtx, req.GetChromeosDeviceId(), req.GetHostname())
+}
+
+// ListDutStates list the DutStates information from database.
+func (fs *FleetServerImpl) ListDutStates(ctx context.Context, req *api.ListDutStatesRequest) (rsp *api.ListDutStatesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListDutStates(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ListDutStatesResponse{
+		DutStates:     result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
