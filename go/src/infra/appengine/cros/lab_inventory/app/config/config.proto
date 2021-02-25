@@ -117,3 +117,30 @@ message AssetTagBackfill {
   // Dataset for the said BQ table (inventory)
   string dataset = 4;
 }
+
+// Flags to control API routing to UFS.
+message UfsRouting {
+  // Deivce API flags.
+  bool add_cros_devices = 1;
+  bool get_cros_devices = 2;
+  bool update_duts_status = 3;
+  bool update_cros_devices_setup = 4;
+  bool update_labstations = 5;
+  bool delete_cros_devices = 6;
+  bool batch_update_devices = 7;
+
+  // Asset API flags.
+  bool add_assets = 8;
+  bool get_assets = 9;
+  bool delete_assets = 10;
+  bool update_assets = 11;
+
+  // cron job for dronequeen push.
+  bool disable_dronequeen_push = 12;
+
+  // cron job for BQ Device/Dutstate dump.
+  bool dump_devices_bq = 13;
+
+  // crons job for BQ Asset and AssetInfo dump.
+  bool dump_assets_bq = 14;
+}
