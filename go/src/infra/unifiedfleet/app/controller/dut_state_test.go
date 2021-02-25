@@ -5,9 +5,11 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -83,6 +85,75 @@ func TestUpdateDutState(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
+		})
+	})
+}
+
+func TestGetDutState(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+	Convey("GetDutState", t, func() {
+		Convey("Get dut state by id with non-existing host in dut state storage", func() {
+			_, err := GetDutState(ctx, "id1", "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Entity not found")
+		})
+
+		Convey("Get dut state by hostname with non-existing host in dut state storage", func() {
+			_, err := GetDutState(ctx, "", "hostname1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Dut State not found for hostname1.")
+		})
+
+		Convey("Get dut state by id - happy path with existing dut state", func() {
+			ds1 := mockDutState("update-dutstate-id2", "update-dutstate-hostname2")
+			ds1.Servo = chromeosLab.PeripheralState_WORKING
+			ds1.Chameleon = chromeosLab.PeripheralState_WORKING
+			ds1.StorageState = chromeosLab.HardwareState_HARDWARE_ACCEPTABLE
+
+			_, err := state.UpdateDutStates(osCtx, []*chromeosLab.DutState{ds1})
+			So(err, ShouldBeNil)
+
+			oldDS, err := GetDutState(osCtx, "update-dutstate-id2", "")
+			So(err, ShouldBeNil)
+			So(oldDS.GetServo(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+			So(oldDS.GetChameleon(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+			So(oldDS.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_ACCEPTABLE)
+		})
+
+		Convey("Get dut state by hostname - happy path with existing dut state", func() {
+			ds1 := mockDutState("update-dutstate-id3", "update-dutstate-hostname3")
+			ds1.Servo = chromeosLab.PeripheralState_WORKING
+			ds1.Chameleon = chromeosLab.PeripheralState_WORKING
+			ds1.StorageState = chromeosLab.HardwareState_HARDWARE_ACCEPTABLE
+
+			_, err := state.UpdateDutStates(osCtx, []*chromeosLab.DutState{ds1})
+			So(err, ShouldBeNil)
+
+			oldDS, err := GetDutState(osCtx, "", "update-dutstate-hostname3")
+			So(err, ShouldBeNil)
+			So(oldDS.GetServo(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+			So(oldDS.GetChameleon(), ShouldEqual, chromeosLab.PeripheralState_WORKING)
+			So(oldDS.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_ACCEPTABLE)
+		})
+	})
+}
+
+func TestListDutStates(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	dutStates := make([]*chromeosLab.DutState, 0, 4)
+	for i := 0; i < 4; i++ {
+		cs := mockDutState(fmt.Sprintf("cs-machine-%d", i), fmt.Sprintf("cs-dut-%d", i))
+		dutStates = append(dutStates, cs)
+	}
+	dutStates, _ = state.UpdateDutStates(ctx, dutStates)
+	Convey("ListDutStates", t, func() {
+		Convey("ListDutStates - Full listing - happy path", func() {
+			resp, _, _ := ListDutStates(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, dutStates)
 		})
 	})
 }

@@ -6,10 +6,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/inventory"
@@ -18,12 +21,22 @@ import (
 
 // GetDutState returns the DutState for the ChromeOS device.
 func GetDutState(ctx context.Context, id, hostname string) (*chromeosLab.DutState, error) {
-	return nil, nil
+	if id != "" {
+		return state.GetDutState(ctx, id)
+	}
+	dutStates, err := state.QueryDutStateByPropertyNames(ctx, map[string]string{"hostname": hostname}, false)
+	if err != nil {
+		return nil, err
+	}
+	if len(dutStates) == 0 {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Dut State not found for %s.", hostname))
+	}
+	return dutStates[0], nil
 }
 
 // ListDutStates lists the DutStates in datastore.
 func ListDutStates(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*chromeosLab.DutState, string, error) {
-	return nil, "", nil
+	return state.ListDutStates(ctx, pageSize, pageToken, nil, keysOnly)
 }
 
 // UpdateDutState updates the dut state for a ChromeOS DUT

@@ -10,7 +10,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -91,6 +94,83 @@ func queryAllDutStates(ctx context.Context) ([]ufsds.FleetEntity, error) {
 		fe[i] = e
 	}
 	return fe, nil
+}
+
+// QueryDutStateByPropertyNames queries DutState Entity in the datastore.
+// If keysOnly is true, then only key field is populated in returned DutStates.
+func QueryDutStateByPropertyNames(ctx context.Context, propertyMap map[string]string, keysOnly bool) ([]*chromeosLab.DutState, error) {
+	q := datastore.NewQuery(DutStateKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*DutStateEntity
+	for propertyName, id := range propertyMap {
+		q = q.Eq(propertyName, id)
+	}
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No DutStates found for the query: %s", q.String())
+		return nil, nil
+	}
+	dutStates := make([]*chromeosLab.DutState, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			dutState := &chromeosLab.DutState{
+				Id: &chromeosLab.ChromeOSDeviceID{Value: entity.ID},
+			}
+			dutStates = append(dutStates, dutState)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			dutStates = append(dutStates, pm.(*chromeosLab.DutState))
+		}
+	}
+	return dutStates, nil
+}
+
+// ListDutStates lists the DutStates.
+//
+// Does a query over DutState entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListDutStates(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*chromeosLab.DutState, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, DutStateKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *DutStateEntity, cb datastore.CursorCB) error {
+		if keysOnly {
+			DutState := &chromeosLab.DutState{
+				Id: &chromeosLab.ChromeOSDeviceID{Value: ent.ID},
+			}
+			res = append(res, DutState)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*chromeosLab.DutState))
+		}
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to list DutStates %s", err)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
 }
 
 // GetAllDutStates returns all dut states in datastore.
