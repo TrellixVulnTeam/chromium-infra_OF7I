@@ -1,4 +1,6 @@
-package conversion
+// Package convert contains code to convert from the Legacy JSON API to the new
+// Proto API, and vice-versa.
+package convert
 
 import (
 	"fmt"
@@ -10,7 +12,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-func convertGerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
+func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 	var notFound []string
 	if c.Host == "" {
 		notFound = append(notFound, "host")
@@ -30,9 +32,9 @@ func convertGerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
 }
 
-// ConvertToValues turns a pinpoint.JobSpec into a url.Values which can then be HTTP form-encoded for the legacy
+// ToValues turns a pinpoint.JobSpec into a url.Values which can then be HTTP form-encoded for the legacy
 // Pinpoint API.
-func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
+func ToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 	v := url.Values{}
 	v.Set("user", userEmail)
 
@@ -69,7 +71,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 
 		if jk.Bisection.Patch != nil {
 			p := jk.Bisection.Patch
-			patchURL, err := convertGerritChangeToURL(p)
+			patchURL, err := gerritChangeToURL(p)
 			if err != nil {
 				return nil, errors.Annotate(err, "invalid patch provided").Err()
 			}
@@ -94,7 +96,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 		// The legacy Pinpoint API doesn't support specifying the Gitiles host/project as it assumes the only
 		// the Chromium codebase is being worked on.
 		v.Set("base_git_hash", jk.Experiment.BaseCommit.GitHash)
-		experimentPatchURL, err := convertGerritChangeToURL(jk.Experiment.ExperimentPatch)
+		experimentPatchURL, err := gerritChangeToURL(jk.Experiment.ExperimentPatch)
 		if err != nil {
 			return nil, errors.Annotate(err, "invalid experiment patch").Err()
 		}
@@ -105,7 +107,7 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 			v.Set("experiment_git_hash", jk.Experiment.ExperimentCommit.GitHash)
 		}
 		if jk.Experiment.BasePatch != nil {
-			basePatchURL, err := convertGerritChangeToURL(jk.Experiment.BasePatch)
+			basePatchURL, err := gerritChangeToURL(jk.Experiment.BasePatch)
 			if err != nil {
 				return nil, errors.Annotate(err, "invalid base patch").Err()
 			}

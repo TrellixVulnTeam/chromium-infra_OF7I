@@ -21,7 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
-	"infra/chromeperf/pinpoint/server/conversion"
+	"infra/chromeperf/pinpoint/server/convert"
 	"log"
 	"net"
 	"net/http"
@@ -133,7 +133,7 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 
 	// Before we make this service the source of truth for the Pinpoint service, we first proxy requests to the
 	// actual Pinpoint legacy API from the provided request.
-	values, err := conversion.ConvertToValues(r.Job, userEmail)
+	values, err := convert.ToValues(r.Job, userEmail)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
