@@ -259,6 +259,15 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 		},
 	}
 
+	// Only set ResultFiles if the job is finished, as documented in the API.
+	if j.State == pinpoint.Job_SUCCEEDED {
+		if resultFile, err := urlToResultFile(l.ResultsURL); err != nil {
+			grpclog.Errorf("invalid results_url from legacy service: %v", err)
+		} else {
+			j.ResultFiles = []*pinpoint.ResultFile{resultFile}
+		}
+	}
+
 	// We set the oneof field after initialising the proto because the
 	// comparison_mode field in the JSON response is overloaded. The
 	// proto doesn't have that problem because we're differentiating
@@ -400,5 +409,18 @@ func parseGerritURL(s string) (*gerritParts, error) {
 	}
 	return &gerritParts{
 		project: project, repo: repo, cl: cl, patchSet: patchSet,
+	}, nil
+}
+
+var resultsURLRe = regexp.MustCompile(`https://storage.cloud.google.com/([^/]+)/(.*)$`)
+
+func urlToResultFile(url string) (*pinpoint.ResultFile, error) {
+	m := resultsURLRe.FindStringSubmatch(url)
+	if m == nil {
+		return nil, errors.Reason("unknown ResultFile format %q: must match %q", url, resultsURLRe).Err()
+	}
+	return &pinpoint.ResultFile{
+		GcsBucket: m[1],
+		Path:      m[2],
 	}, nil
 }

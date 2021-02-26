@@ -365,6 +365,17 @@ message Job {
     BisectionResults bisection_results = 8;
     ABExperimentResults ab_experiment_results = 9;
   }
+
+  // A list of files representing results for the associated Job, for example
+  // an HTML summary page. This field will only be set if state==SUCCEEDED.
+  repeated ResultFile result_files = 10;
+}
+
+// ResultFile represents a result for a Pinpoint Job; the file is stored in
+// Google Cloud Storage (GCS).
+message ResultFile {
+ string gcs_bucket = 1;
+ string path = 2;
 }
 
 message GetJobRequest {
