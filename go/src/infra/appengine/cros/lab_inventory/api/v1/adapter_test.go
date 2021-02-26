@@ -175,6 +175,7 @@ var devInV2State = lab.DutState{
 	Cr50KeyEnv:             lab.DutState_CR50_KEYENV_PROD,
 	StorageState:           lab.HardwareState_HARDWARE_NORMAL,
 	ServoUsbState:          lab.HardwareState_HARDWARE_NEED_REPLACEMENT,
+	BatteryState:           lab.HardwareState_HARDWARE_NORMAL,
 	RpmState:               lab.PeripheralState_WORKING,
 }
 
@@ -375,6 +376,7 @@ common {
 			smart_usbhub: true
 			storage_state: HARDWARE_NORMAL,
 			servo_usb_state: HARDWARE_NEED_REPLACEMENT,
+			battery_state: HARDWARE_NORMAL,
 			wificell: true
 			router_802_11ax: true
 			working_bluetooth_btpeer: 3
