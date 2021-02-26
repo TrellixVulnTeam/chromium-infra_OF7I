@@ -176,7 +176,7 @@ See: [Monorail Frontend Code Practices](doc/code-practices/frontend.md)
 
 ## Triage process
 
-See: [Monorail Triage Guide](doc/triage.md)
+See: [Monorail Triage Guide](doc/triage.md).
 
 ## Release process
 
