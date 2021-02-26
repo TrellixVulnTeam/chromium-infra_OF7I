@@ -67,6 +67,7 @@ peripherals: {
   smart_usbhub: true
   storage_state: 1
   servo_usb_state: 3
+  battery_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -141,6 +142,7 @@ var fullLabels = []string{
 	"audio_box",
 	"audio_cable",
 	"audio_loopback_dongle",
+	"battery_state:NEED_REPLACEMENT",
 	"bluetooth",
 	"board:boardval",
 	"brand-code:HOMH",
@@ -500,6 +502,7 @@ peripherals: {
   smart_usbhub: true
   storage_state: 2
   servo_usb_state: 3
+  battery_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -574,6 +577,7 @@ var fullLabelsSpecial = []string{
 	"audio_box",
 	"audio_cable",
 	"audio_loopback_dongle",
+	"battery_state:NEED_REPLACEMENT",
 	"bluetooth",
 	"board:boardval",
 	"brand-code:HOMH",

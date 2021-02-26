@@ -122,6 +122,13 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
+	if batteryState := p.GetBatteryState(); batteryState != inventory.HardwareState_HARDWARE_UNKNOWN {
+		if labState, ok := lab.HardwareState_name[int32(batteryState)]; ok {
+			name := labState[len("HARDWARE_"):]
+			labels = append(labels, "battery_state:"+name)
+		}
+	}
+
 	if n := p.GetWorkingBluetoothBtpeer(); n > 0 {
 		labels = append(labels, fmt.Sprintf("working_bluetooth_btpeer:%d", n))
 	}
@@ -224,6 +231,11 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
 				state := inventory.HardwareState(labSStateVal)
 				p.ServoUsbState = &state
+			}
+		case "battery_state":
+			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
+				state := inventory.HardwareState(labSStateVal)
+				p.BatteryState = &state
 			}
 		case "servo_type":
 			p.ServoType = &v
