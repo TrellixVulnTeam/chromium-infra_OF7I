@@ -47,6 +47,11 @@ var assetCmpIgnoreFields = []protoreflect.Name{
 
 // SyncAssetsFromIV2 updates assets table in UFS using data from IV2
 func SyncAssetsFromIV2(ctx context.Context) error {
+	// UFS migration done, skip this job.
+	if config.Get(ctx).GetDisableInv2Sync() {
+		logging.Infof(ctx, "UFS migration done, skipping the InvV2 to UFS Assets sync")
+		return nil
+	}
 	logging.Infof(ctx, "SyncAssetsFromIV2")
 	ut := ptypes.TimestampNow()
 	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")

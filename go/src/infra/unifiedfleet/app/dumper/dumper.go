@@ -147,6 +147,11 @@ func dumpCrosInventory(ctx context.Context) (err error) {
 	}
 	logging.Infof(ctx, "Finish exporting diff from Inventory V2 to UFS to Google Storage")
 
+	// UFS migration done, skip the import.
+	if config.Get(ctx).GetDisableInv2Sync() {
+		logging.Infof(ctx, "UFS migration done, skipping the InvV2 to UFS MachineLSE/DutState sync")
+		return nil
+	}
 	return importCrosInventory(ctx, crosInventoryHost)
 }
 
