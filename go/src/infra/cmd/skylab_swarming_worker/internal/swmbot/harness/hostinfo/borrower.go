@@ -47,8 +47,10 @@ func (b *Borrower) Close(ctx context.Context) error {
 		return nil
 	}
 	hi, bi := b.hostInfo, b.botInfo
-	for k := range provisionableLabelKeys {
-		delete(bi.ProvisionableLabels, k)
+
+	// copy provisioning labels
+	for labelKey := range provisionableLabelKeys {
+		delete(bi.ProvisionableLabels, labelKey)
 	}
 	for _, label := range hi.Labels {
 		parts := strings.SplitN(label, ":", 2)
@@ -58,6 +60,11 @@ func (b *Borrower) Close(ctx context.Context) error {
 		if _, ok := provisionableLabelKeys[parts[0]]; ok {
 			bi.ProvisionableLabels[parts[0]] = parts[1]
 		}
+	}
+
+	// copy provisioning attributes
+	for attrKey := range provisionableAttributeKeys {
+		delete(bi.ProvisionableAttributes, attrKey)
 	}
 	for attribute, value := range hi.Attributes {
 		if _, ok := provisionableAttributeKeys[attribute]; ok {
