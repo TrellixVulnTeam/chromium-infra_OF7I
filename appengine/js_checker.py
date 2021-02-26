@@ -20,14 +20,13 @@ def RunNode(infra_root, cmd_parts, stdout=None):
     raise RuntimeError('%s failed: %s' % (
         ' '.join([cipd_node] + cmd_parts), stderr))
 
-  return stdout
+  return process.returncode, stdout
 
 
-def NPMInstall(infra_root):
-  """Runs node and install packages."""
+def RunNpm(infra_root, cmd_parts):
   cipd_npm = os.path.join(
       infra_root, 'cipd', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')
-  return RunNode(infra_root, [cipd_npm, 'install'])
+  return RunNode(infra_root, [cipd_npm] + cmd_parts)
 
 
 class JSChecker(object):
@@ -43,13 +42,27 @@ class JSChecker(object):
         self.input_api.PresubmitLocalPath(), 'node_modules')
     return self.input_api.os_path.join(node_module, *args)
 
-  def RunESLint(self, args=None):
-    infra_root = self.input_api.os_path.dirname(
-        self.input_api.PresubmitLocalPath())
-    eslint_path = self._PathInNodeModules('eslint', 'bin', 'eslint')
+  def RunAudit(self):
+    infra_root = self.input_api.change.RepositoryRoot()
+    return RunNpm(infra_root, ['audit', '--audit-level', 'low'])
 
-    NPMInstall(infra_root)
+  def RunAuditCheck(self):
+    exit_code, o = self.RunAudit()
+    self.input_api.logging.info(o)
+    if exit_code:
+      return [
+          self.output_api.PresubmitPromptWarning(
+              '`npm audit` found vulnerabilities. Use `npm audit fix` to fix.')
+      ]
+    return []
+
+  def RunESLint(self, args=None):
+    self.input_api.logging.info('Running `npm ci --silent`')
+    infra_root = self.input_api.change.RepositoryRoot()
+    RunNpm(infra_root, ['ci', '--silent'])
+
     # Runs ESLint on modified files.
+    eslint_path = self._PathInNodeModules('eslint', 'bin', 'eslint')
     return RunNode(infra_root, [eslint_path] + args)
 
   def RunESLintChecks(
@@ -70,7 +83,7 @@ class JSChecker(object):
     args = ['--no-color', '--format', style,
             '--ignore-pattern', '\'!.eslintrc.json\'']
     args += affected_js_files_paths
-    output = self.RunESLint(args=args)
+    _, output = self.RunESLint(args=args)
     if only_changed_lines:
       # Filter ESList errors for only modified lines.
       output = self.FilterESLintForChangedLines(output, changed_lines)
@@ -112,6 +125,8 @@ class JSChecker(object):
           'Running appengine eslint on %d JS file(s)', len(affected_js_files))
       results += self.RunESLintChecks(affected_js_files)
 
+      self.input_api.logging.info('Running `npm audit`')
+      results += self.RunAuditCheck()
 
     if results:
       results.append(self.output_api.PresubmitNotifyResult(

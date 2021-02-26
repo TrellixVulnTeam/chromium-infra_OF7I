@@ -239,7 +239,7 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
   return tests
 
 
-def ESLintChecks(input_api, output_api):  # pragma: no cover
+def JsChecks(input_api, output_api):  # pragma: no cover
   try:
     infra_root = input_api.os_path.dirname(input_api.PresubmitLocalPath())
     import sys
@@ -267,8 +267,7 @@ def CheckChangeOnUpload(input_api, output_api):  # pragma: no cover
   output = CommonChecks(input_api, output_api)
   output.extend(input_api.RunTests(PylintChecks(
       input_api, output_api, only_changed=True)))
-  output.extend(input_api.RunTests(ESLintChecks(
-      input_api, output_api)))
+  output.extend(input_api.RunTests(JsChecks(input_api, output_api)))
 
   return output
 
