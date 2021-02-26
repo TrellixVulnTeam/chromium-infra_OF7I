@@ -3,13 +3,20 @@
 package convert
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"infra/chromeperf/pinpoint"
 
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/grpc/grpclog"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
@@ -32,9 +39,9 @@ func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
 }
 
-// ToValues turns a pinpoint.JobSpec into a url.Values which can then be HTTP form-encoded for the legacy
-// Pinpoint API.
-func ToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
+// JobToValues turns a pinpoint.JobSpec into a url.Values which can then be
+// HTTP form-encoded for the legacy Pinpoint API.
+func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 	v := url.Values{}
 	v.Set("user", userEmail)
 
@@ -143,4 +150,255 @@ func ToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 			InternalReason("args type is %v", args).Err()
 	}
 	return v, nil
+}
+
+// microTime is an alias to time.Time which allows us to parse microsecond-precision time.
+type microTime time.Time
+
+// UnmarshalJSON supports parsing nanosecond timestamps.
+func (t *microTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `\"`)
+	p, err := time.Parse("2006-01-02T15:04:05.999999", s)
+	if err != nil {
+		return err
+	}
+	*t = microTime(p)
+	return nil
+}
+
+// JobToProto converts a stream of JSON representing a Legacy Job into the new
+// proto Job format.
+func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
+	var l struct {
+		Arguments           map[string]string       `json:"arguments"`
+		BugID               int64                   `json:"bug_id"`
+		ComparisonMode      string                  `json:"comparison_mode,omitempty"`
+		ComparisonMagnitude float64                 `json:"comparison_magnitude,omitempty"`
+		Cfg                 string                  `json:"configuration,omitempty"`
+		Created             microTime               `json:"created,omitempty"`
+		Exception           *map[string]interface{} `json:"exception,omitempty"`
+		JobID               string                  `json:"job_id,omitempty"`
+		Metric              string                  `json:"metric,omitempty"`
+		Name                string                  `json:"name,omitempty"`
+		Project             *string                 `json:"project,omitempty"`
+		StepLabels          []string                `json:"quests,omitempty"`
+		ResultsURL          string                  `json:"results_url,omitempty"`
+		StartedTime         microTime               `json:"started_time,omitempty"`
+		State               []struct {
+			Attempts []struct {
+				Executions []struct {
+					Completed bool `json:"completed"`
+					Details   []struct {
+						Value string `json:"value,omitempty"`
+						Key   string `json:"key,omitempty"`
+						URL   string `json:"url,omitempty"`
+					} `json:"details"`
+				} `json:"executions"`
+			} `json:"attempts"`
+			Change struct {
+				Commits []struct {
+					Author         string    `json:"author,omitempty"`
+					ChangeID       string    `json:"change_id,omitempty"`
+					CommitPosition int64     `json:"commit_position,omitempty"`
+					Created        microTime `json:"created,omitempty"`
+					GitHash        string    `json:"git_hash,omitempty"`
+					Message        string    `json:"message,omitempty"`
+					Repo           string    `json:"repository,omitempty"`
+					ReviewURL      string    `json:"review_url,omitempty"`
+					Subject        string    `json:"subject,omitempty"`
+					URL            string    `json:"url,omitempty"`
+				} `json:"commits"`
+				Patch struct {
+					Created  microTime `json:"created,omitempty"`
+					URL      string    `json:"url,omitempty"`
+					Author   string    `json:"author,omitempty"`
+					Server   string    `json:"server,omitempty"`
+					Message  string    `json:"message,omitempty"`
+					Subject  string    `json:"subject,omitempty"`
+					ChangeID string    `json:"change,omitempty"`
+					Revision string    `json:"revision,omitempty"`
+				}
+			} `json:"change"`
+			Comparisons struct {
+				Prev string `json:"prev,omitempty"`
+				Next string `json:"next,omitempty"`
+			} `json:"comparisons"`
+		} `json:"state,omitempty"`
+		Status  string    `json:"status,omitempty"`
+		Updated microTime `json:"updated,omitempty"`
+		User    string    `json:"user,omitempty"`
+	}
+	if err := json.NewDecoder(jsonSrc).Decode(&l); err != nil {
+		grpclog.Errorf("failed parsing json: %s", err)
+		return nil, errors.Reason("received ill-formed response from legacy service").Err()
+	}
+
+	// Now attempt to translate the parsed JSON structure into a protobuf.
+	// FIXME(dberris): Interpret the results better, differentiating experiments from bisections, etc.
+	cMode := jsonModeToProto(l.ComparisonMode)
+	j := &pinpoint.Job{
+		Name:           fmt.Sprintf("jobs/legacy-%s", l.JobID),
+		State:          jsonStatusToProto(l.Status),
+		CreatedBy:      l.User,
+		CreateTime:     timestamppb.New(time.Time(l.Created)),
+		LastUpdateTime: timestamppb.New(time.Time(l.Updated)),
+		JobSpec: &pinpoint.JobSpec{
+			ComparisonMode:      cMode,
+			ComparisonMagnitude: l.ComparisonMagnitude,
+			Config:              l.Cfg,
+			Target:              l.Arguments["target"],
+			MonorailIssue: func() *pinpoint.MonorailIssue {
+				if l.Project == nil || l.BugID == 0 {
+					return nil
+				}
+				return &pinpoint.MonorailIssue{
+					Project: *l.Project,
+					IssueId: l.BugID,
+				}
+			}(),
+		},
+	}
+
+	// We set the oneof field after initialising the proto because the
+	// comparison_mode field in the JSON response is overloaded. The
+	// proto doesn't have that problem because we're differentiating
+	// between a bisection job and an experiment. This code performs
+	// the disambiguation when we mean "try" to be a performance experiment
+	// and "performance" to be a performance bisection.
+	//
+	// In the proto schema, we support functional bisection and experiments
+	// although that functionality is yet to be supported by Pinpoint.
+	switch cMode {
+	case pinpoint.JobSpec_PERFORMANCE:
+		switch l.ComparisonMode {
+		case "try":
+			// Then we've got an experiment.
+			if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
+				return nil, errors.Reason("invalid state count in legacy response, want %d got %d", expectedStates, foundStates).Err()
+			}
+
+			// By convention we use the first state's change to be the
+			// "base" while the second state is the "experiment".
+			c0 := &l.State[0].Change
+			c1 := &l.State[1].Change
+
+			// FIXME: Find a better way to expose this data from the legacy
+			p, err := parseGerritURL(c1.Patch.URL)
+			if err != nil {
+				return nil, err
+			}
+			// service's JSON response instead of parsing URLs.
+			j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
+				Experiment: &pinpoint.Experiment{
+					BaseCommit: &pinpoint.GitilesCommit{
+						Host:    c0.Commits[0].URL,
+						Project: c0.Commits[0].Repo,
+						GitHash: c0.Commits[0].GitHash,
+					},
+					// FIXME: Fill out these details.
+					BasePatch: &pinpoint.GerritChange{
+						Host:     "",
+						Project:  "",
+						Change:   0,
+						Patchset: 0,
+					},
+					ExperimentCommit: &pinpoint.GitilesCommit{
+						Host:    c1.Commits[0].URL,
+						Project: c1.Commits[0].Repo,
+						GitHash: c1.Commits[0].GitHash,
+					},
+					ExperimentPatch: &pinpoint.GerritChange{
+						// FIXME: We have two URLs in the result JSON, we
+						// need to extract the relevant details for the
+						// proto response.
+						Host:     c1.Patch.Server,
+						Project:  p.project,
+						Change:   p.cl,
+						Patchset: p.patchSet,
+					},
+				},
+			}
+		case "performance":
+			// FIXME: When we're ready to support bisection results, fill this out.
+			j.JobSpec.JobKind = &pinpoint.JobSpec_Bisection{
+				Bisection: &pinpoint.Bisection{
+					CommitRange: &pinpoint.GitilesCommitRange{
+						Host:         "",
+						Project:      "",
+						StartGitHash: "",
+						EndGitHash:   "",
+					},
+					Patch: &pinpoint.GerritChange{},
+				},
+			}
+		}
+	}
+	return j, nil
+}
+
+func jsonStatusToProto(status string) pinpoint.Job_State {
+	switch status {
+	case "Running":
+		return pinpoint.Job_RUNNING
+	case "Queued":
+		return pinpoint.Job_PENDING
+	case "Cancelled":
+		return pinpoint.Job_CANCELLED
+	case "Failed":
+		return pinpoint.Job_FAILED
+	case "Completed":
+		return pinpoint.Job_SUCCEEDED
+	}
+	return pinpoint.Job_STATE_UNSPECIFIED
+}
+
+func jsonModeToProto(comparisonMode string) pinpoint.JobSpec_ComparisonMode {
+	switch comparisonMode {
+	case "functional":
+		return pinpoint.JobSpec_FUNCTIONAL
+	case "try", "performance":
+		return pinpoint.JobSpec_PERFORMANCE
+	}
+	return pinpoint.JobSpec_COMPARISON_MODE_UNSPECIFIED
+}
+
+var (
+	gerritRe = regexp.MustCompile(
+		`^/c/(?P<project>[^/]+)/(?P<repo>[^+]+)/\+/(?P<cl>[1-9]\d*)(/(?P<patchset>[1-9]\d*))?$`)
+	gerritProjectIdx  = gerritRe.SubexpIndex("project")
+	gerritRepoIdx     = gerritRe.SubexpIndex("repo")
+	gerritClIdx       = gerritRe.SubexpIndex("cl")
+	gerritPatchSetIdx = gerritRe.SubexpIndex("patchset")
+)
+
+type gerritParts struct {
+	project, repo string
+	cl, patchSet  int64
+}
+
+func parseGerritURL(s string) (*gerritParts, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, errors.Reason("invalid patch url gotten from legacy service").Err()
+	}
+	m := gerritRe.FindStringSubmatch(u.Path)
+	if m == nil {
+		return nil, errors.Reason("invalid CL path in URL gotten from legacy service: %s", u.Path).Err()
+	}
+	project := m[gerritProjectIdx]
+	clStr := m[gerritClIdx]
+	patchSetStr := m[gerritPatchSetIdx]
+	repo := m[gerritRepoIdx]
+
+	cl, err := strconv.ParseInt(clStr, 10, 64)
+	if err != nil {
+		return nil, errors.Reason("invalid CL number in URL gotten from legacy service").Err()
+	}
+	patchSet, err := strconv.ParseInt(patchSetStr, 10, 32)
+	if err != nil {
+		return nil, errors.Reason("invalid patchset number in URL gotten from legacy service").Err()
+	}
+	return &gerritParts{
+		project: project, repo: repo, cl: cl, patchSet: patchSet,
+	}, nil
 }

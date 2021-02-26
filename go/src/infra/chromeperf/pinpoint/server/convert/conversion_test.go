@@ -73,7 +73,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -117,7 +117,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -156,7 +156,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				v, err := ToValues(gtestJob, "user@example.com")
+				v, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -202,7 +202,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -247,7 +247,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -286,7 +286,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				v, err := ToValues(gtestJob, "user@example.com")
+				v, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -349,7 +349,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -396,7 +396,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -437,7 +437,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				v, err := ToValues(gtestJob, "user@example.com")
+				v, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -486,7 +486,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -534,7 +534,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -577,7 +577,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				v, err := ToValues(gtestJob, "user@example.com")
+				v, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -639,7 +639,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -682,7 +682,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				v, err := ToValues(telemetryJob, "user@example.com")
+				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -719,7 +719,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				v, err := ToValues(gtestJob, "user@example.com")
+				v, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldBeNil)
 
 				// Check that we support the required fields for all Pinpoint jobs.
@@ -762,7 +762,7 @@ func TestSimpleConversions(t *testing.T) {
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
-				_, err := ToValues(telemetryJob, "user@example.com")
+				_, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldNotBeNil)
 				So(fmt.Sprintf("%v", err), ShouldContainSubstring, "functional experiments not supported")
 			})
@@ -775,7 +775,7 @@ func TestSimpleConversions(t *testing.T) {
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
 				proto.Merge(gtestJob, job)
-				_, err := ToValues(gtestJob, "user@example.com")
+				_, err := JobToValues(gtestJob, "user@example.com")
 				So(err, ShouldNotBeNil)
 				So(fmt.Sprintf("%v", err), ShouldContainSubstring, "functional experiments not supported")
 			})

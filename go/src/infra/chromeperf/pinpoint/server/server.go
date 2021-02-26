@@ -27,9 +27,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
-	"strings"
-	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -41,7 +38,6 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type pinpointServer struct {
@@ -52,20 +48,6 @@ type pinpointServer struct {
 
 	// Provide an HTTP Client to be used by the server, to the Pinpoint Legacy API.
 	LegacyClient *http.Client
-}
-
-// MicroTime is an alias to time.Time which allows us to parse microsecond-precision time.
-type MicroTime time.Time
-
-// UnmarshalJSON supports parsing nanosecond timestamps.
-func (t *MicroTime) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), `\"`)
-	p, err := time.Parse("2006-01-02T15:04:05.999999", s)
-	if err != nil {
-		return err
-	}
-	*t = MicroTime(p)
-	return nil
 }
 
 const (
@@ -80,12 +62,6 @@ var (
 		"https://www.googleapis.com/auth/userinfo.email",
 	}
 	jobNameRe = regexp.MustCompile(`^jobs/legacy-(?P<id>[a-f0-9]+)$`)
-	gerritRe  = regexp.MustCompile(
-		`^/c/(?P<project>[^/]+)/(?P<repo>[^+]+)/\+/(?P<cl>[1-9]\d*)(/(?P<patchset>[1-9]\d*))?$`)
-	gerritProjectIdx  = gerritRe.SubexpIndex("project")
-	gerritRepoIdx     = gerritRe.SubexpIndex("repo")
-	gerritClIdx       = gerritRe.SubexpIndex("cl")
-	gerritPatchSetIdx = gerritRe.SubexpIndex("patchset")
 )
 
 func getRequestingUserEmail(ctx context.Context) (string, error) {
@@ -133,7 +109,7 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 
 	// Before we make this service the source of truth for the Pinpoint service, we first proxy requests to the
 	// actual Pinpoint legacy API from the provided request.
-	values, err := convert.ToValues(r.Job, userEmail)
+	values, err := convert.JobToValues(r.Job, userEmail)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
@@ -175,38 +151,6 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 		Name:      fmt.Sprintf("jobs/legacy-%s", newResponse.JobID),
 		CreatedBy: userEmail,
 		JobSpec:   r.Job,
-	}, nil
-}
-
-type gerritParts struct {
-	project, repo string
-	cl, patchSet  int64
-}
-
-func parseGerritURL(s string) (*gerritParts, error) {
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "invalid patch url gotten from legacy service")
-	}
-	m := gerritRe.FindStringSubmatch(u.Path)
-	if m == nil {
-		return nil, status.Errorf(codes.Internal, "invalid CL path in URL gotten from legacy service: %s", u.Path)
-	}
-	project := m[gerritProjectIdx]
-	clStr := m[gerritClIdx]
-	patchSetStr := m[gerritPatchSetIdx]
-	repo := m[gerritRepoIdx]
-
-	cl, err := strconv.ParseInt(clStr, 10, 64)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "invalid CL number in URL gotten from legacy service")
-	}
-	patchSet, err := strconv.ParseInt(patchSetStr, 10, 32)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "invalid patchset number in URL gotten from legacy service")
-	}
-	return &gerritParts{
-		project: project, repo: repo, cl: cl, patchSet: patchSet,
 	}, nil
 }
 
@@ -252,204 +196,12 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 		return nil, status.Errorf(codes.Internal, "failed request: %s", res.Status)
 	}
 
-	var l struct {
-		Arguments           map[string]string       `json:"arguments"`
-		BugID               int64                   `json:"bug_id"`
-		ComparisonMode      string                  `json:"comparison_mode,omitempty"`
-		ComparisonMagnitude float64                 `json:"comparison_magnitude,omitempty"`
-		Cfg                 string                  `json:"configuration,omitempty"`
-		Created             MicroTime               `json:"created,omitempty"`
-		Exception           *map[string]interface{} `json:"exception,omitempty"`
-		JobID               string                  `json:"job_id,omitempty"`
-		Metric              string                  `json:"metric,omitempty"`
-		Name                string                  `json:"name,omitempty"`
-		Project             *string                 `json:"project,omitempty"`
-		StepLabels          []string                `json:"quests,omitempty"`
-		ResultsURL          string                  `json:"results_url,omitempty"`
-		StartedTime         MicroTime               `json:"started_time,omitempty"`
-		State               []struct {
-			Attempts []struct {
-				Executions []struct {
-					Completed bool `json:"completed"`
-					Details   []struct {
-						Value string `json:"value,omitempty"`
-						Key   string `json:"key,omitempty"`
-						URL   string `json:"url,omitempty"`
-					} `json:"details"`
-				} `json:"executions"`
-			} `json:"attempts"`
-			Change struct {
-				Commits []struct {
-					Author         string    `json:"author,omitempty"`
-					ChangeID       string    `json:"change_id,omitempty"`
-					CommitPosition int64     `json:"commit_position,omitempty"`
-					Created        MicroTime `json:"created,omitempty"`
-					GitHash        string    `json:"git_hash,omitempty"`
-					Message        string    `json:"message,omitempty"`
-					Repo           string    `json:"repository,omitempty"`
-					ReviewURL      string    `json:"review_url,omitempty"`
-					Subject        string    `json:"subject,omitempty"`
-					URL            string    `json:"url,omitempty"`
-				} `json:"commits"`
-				Patch struct {
-					Created  MicroTime `json:"created,omitempty"`
-					URL      string    `json:"url,omitempty"`
-					Author   string    `json:"author,omitempty"`
-					Server   string    `json:"server,omitempty"`
-					Message  string    `json:"message,omitempty"`
-					Subject  string    `json:"subject,omitempty"`
-					ChangeID string    `json:"change,omitempty"`
-					Revision string    `json:"revision,omitempty"`
-				}
-			} `json:"change"`
-			Comparisons struct {
-				Prev string `json:"prev,omitempty"`
-				Next string `json:"next,omitempty"`
-			} `json:"comparisons"`
-		} `json:"state,omitempty"`
-		Status  string    `json:"status,omitempty"`
-		Updated MicroTime `json:"updated,omitempty"`
-		User    string    `json:"user,omitempty"`
+	defer res.Body.Close()
+	job, err := convert.JobToProto(res.Body)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if err := json.NewDecoder(res.Body).Decode(&l); err != nil {
-		grpclog.Errorf("failed parsing json: %q", err)
-		return nil, status.Errorf(
-			codes.Internal,
-			"received ill-formed response from legacy service",
-		)
-	}
-
-	transformState := func() pinpoint.Job_State {
-		switch l.Status {
-		case "Running":
-			return pinpoint.Job_RUNNING
-		case "Queued":
-			return pinpoint.Job_PENDING
-		case "Cancelled":
-			return pinpoint.Job_CANCELLED
-		case "Failed":
-			return pinpoint.Job_FAILED
-		case "Completed":
-			return pinpoint.Job_SUCCEEDED
-		}
-		return pinpoint.Job_STATE_UNSPECIFIED
-	}
-
-	transformMode := func() pinpoint.JobSpec_ComparisonMode {
-		switch l.ComparisonMode {
-		case "functional":
-			return pinpoint.JobSpec_FUNCTIONAL
-		case "try", "performance":
-			return pinpoint.JobSpec_PERFORMANCE
-		}
-		return pinpoint.JobSpec_COMPARISON_MODE_UNSPECIFIED
-	}
-
-	// Now attempt to translate the parsed JSON structure into a protobuf.
-	// FIXME(dberris): Interpret the results better, differentiating experiments from bisections, etc.
-	cMode := transformMode()
-	j := &pinpoint.Job{
-		Name:           fmt.Sprintf("jobs/legacy-%s", l.JobID),
-		State:          transformState(),
-		CreatedBy:      l.User,
-		CreateTime:     timestamppb.New(time.Time(l.Created)),
-		LastUpdateTime: timestamppb.New(time.Time(l.Updated)),
-		JobSpec: &pinpoint.JobSpec{
-			ComparisonMode:      cMode,
-			ComparisonMagnitude: l.ComparisonMagnitude,
-			Config:              l.Cfg,
-			Target:              l.Arguments["target"],
-			MonorailIssue: func() *pinpoint.MonorailIssue {
-				if l.Project == nil || l.BugID == 0 {
-					return nil
-				}
-				return &pinpoint.MonorailIssue{
-					Project: *l.Project,
-					IssueId: l.BugID,
-				}
-			}(),
-		},
-	}
-
-	// We set the oneof field after initialising the proto because the
-	// comparison_mode field in the JSON response is overloaded. The
-	// proto doesn't have that problem because we're differentiating
-	// between a bisection job and an experiment. This code performs
-	// the disambiguation when we mean "try" to be a performance experiment
-	// and "performance" to be a performance bisection.
-	//
-	// In the proto schema, we support functional bisection and experiments
-	// although that functionality is yet to be supported by Pinpoint.
-	switch cMode {
-	case pinpoint.JobSpec_PERFORMANCE:
-		switch l.ComparisonMode {
-		case "try":
-			{
-				// Then we've got an experiment.
-				if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
-					return nil, status.Errorf(codes.Internal, "invalid state count in legacy response, want %d got %d", expectedStates, foundStates)
-				}
-
-				// By convention we use the first state's change to be the
-				// "base" while the second state is the "experiment".
-				c0 := &l.State[0].Change
-				c1 := &l.State[1].Change
-
-				// FIXME: Find a better way to expose this data from the legacy
-				p, err := parseGerritURL(c1.Patch.URL)
-				if err != nil {
-					return nil, err
-				}
-				// service's JSON response instead of parsing URLs.
-				j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
-					Experiment: &pinpoint.Experiment{
-						BaseCommit: &pinpoint.GitilesCommit{
-							Host:    c0.Commits[0].URL,
-							Project: c0.Commits[0].Repo,
-							GitHash: c0.Commits[0].GitHash,
-						},
-						// FIXME: Fill out these details.
-						BasePatch: &pinpoint.GerritChange{
-							Host:     "",
-							Project:  "",
-							Change:   0,
-							Patchset: 0,
-						},
-						ExperimentCommit: &pinpoint.GitilesCommit{
-							Host:    c1.Commits[0].URL,
-							Project: c1.Commits[0].Repo,
-							GitHash: c1.Commits[0].GitHash,
-						},
-						ExperimentPatch: &pinpoint.GerritChange{
-							// FIXME: We have two URLs in the result JSON, we
-							// need to extract the relevant details for the
-							// proto response.
-							Host:     c1.Patch.Server,
-							Project:  p.project,
-							Change:   p.cl,
-							Patchset: p.patchSet,
-						},
-					},
-				}
-			}
-		case "performance":
-			{
-				// FIXME: When we're ready to support bisection results, fill this out.
-				j.JobSpec.JobKind = &pinpoint.JobSpec_Bisection{
-					Bisection: &pinpoint.Bisection{
-						CommitRange: &pinpoint.GitilesCommitRange{
-							Host:         "",
-							Project:      "",
-							StartGitHash: "",
-							EndGitHash:   "",
-						},
-						Patch: &pinpoint.GerritChange{},
-					},
-				}
-			}
-		}
-	}
-	return j, nil
+	return job, nil
 }
 
 func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {
