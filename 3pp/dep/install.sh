@@ -9,5 +9,5 @@ set -o pipefail
 
 PREFIX="$1"
 
-GOBIN= GOROOT= GOCACHE= GOPATH=`pwd` go build github.com/golang/dep/cmd/dep
+GO111MODULE=off GOBIN= GOROOT= GOCACHE= GOPATH=`pwd` go build github.com/golang/dep/cmd/dep
 cp ./dep $PREFIX
