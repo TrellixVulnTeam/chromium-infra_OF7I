@@ -127,7 +127,8 @@ func TestMachineRegistration(t *testing.T) {
 			req := &ufsAPI.MachineRegistrationRequest{
 				Machine: machine,
 			}
-			resp, _ := tf.Fleet.MachineRegistration(tf.C, req)
+			resp, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machine)
 		})

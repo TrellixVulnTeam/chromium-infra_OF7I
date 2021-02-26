@@ -212,7 +212,8 @@ func TestMachineRegistration(t *testing.T) {
 				Name: "drac-browser-3",
 			}
 			machine := &ufspb.Machine{
-				Name: "machine-browser-3",
+				Name:         "machine-browser-3",
+				SerialNumber: "machine-browser-3-serial-number",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						NicObjects: nics,
@@ -232,6 +233,11 @@ func TestMachineRegistration(t *testing.T) {
 			s, err := state.GetStateRecord(ctx, "machines/machine-browser-3")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
+			dr, err := inventory.GetMachineLSEDeployment(ctx, m.GetSerialNumber())
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix(m.GetSerialNumber()))
+			So(dr.GetDeploymentIdentifier(), ShouldBeEmpty)
+			So(dr.GetConfigsToPush(), ShouldBeNil)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-browser-3")
 			So(err, ShouldBeNil)
@@ -458,6 +464,37 @@ func TestUpdateMachine(t *testing.T) {
 			So(resp, ShouldResembleProto, machine)
 		})
 
+		Convey("Update machine serial number", func() {
+			machine := &ufspb.Machine{
+				Name:         "machine-full-update-serial",
+				SerialNumber: "old-serial-full-update",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())})
+			So(err, ShouldBeNil)
+
+			machine1 := &ufspb.Machine{
+				Name:         "machine-full-update-serial",
+				SerialNumber: "serial-full-update",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine1, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetSerialNumber(), ShouldResemble, "serial-full-update")
+			dr, err := inventory.GetMachineLSEDeployment(ctx, "serial-full-update")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix("serial-full-update"))
+			_, err = inventory.GetMachineLSEDeployment(ctx, "old-serial-full-update")
+			So(err, ShouldNotBeNil)
+		})
+
 		Convey("Partial Update machine", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-3",
@@ -502,6 +539,31 @@ func TestUpdateMachine(t *testing.T) {
 			So(resp.GetChromeBrowserMachine().GetChromePlatform(), ShouldResemble, "chromePlatform-4")
 			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetKvm(), ShouldResemble, "kvm-4")
 			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetPortName(), ShouldResemble, "A1")
+		})
+
+		Convey("Partial Update machine - update serial number", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-update-serial",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name:         "machine-update-serial",
+				SerialNumber: "serial-update",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"serialNumber"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetSerialNumber(), ShouldResemble, "serial-update")
+			dr, err := inventory.GetMachineLSEDeployment(ctx, "serial-update")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix("serial-update"))
 		})
 
 		Convey("Partial Update machine - duplicated kvm", func() {

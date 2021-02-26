@@ -73,6 +73,13 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		}
 
 		if machine.GetChromeBrowserMachine() != nil {
+			// Update deployment record
+			if machine.GetSerialNumber() != "" {
+				dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
+					return errors.Annotate(err, "unable to update deployment record").Err()
+				}
+			}
 			// We fill the machine object with newly created nics/drac from nic/drac table
 			// This will have all the extra information for nics/drac(machine name, updated time.. etc)
 			machine.GetChromeBrowserMachine().NicObjects = nics
@@ -163,6 +170,19 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		// Update state
 		if err := hc.stUdt.updateStateHelper(ctx, machine.GetResourceState()); err != nil {
 			return errors.Annotate(err, "Fail to update state of machine %s", machine.GetName()).Err()
+		}
+
+		// Update deployment record if serial number is updated
+		if machine.GetChromeBrowserMachine() != nil && oldMachineCopy.GetSerialNumber() != machine.GetSerialNumber() {
+			dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+			if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
+				return errors.Annotate(err, "unable to update deployment record").Err()
+			}
+			if oldMachineCopy.GetSerialNumber() != "" {
+				if err := inventory.DeleteDeployment(ctx, oldMachineCopy.GetSerialNumber()); err != nil {
+					return errors.Annotate(err, "unable to update deployment record").Err()
+				}
+			}
 		}
 
 		// update the machine

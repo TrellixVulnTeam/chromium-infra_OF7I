@@ -68,6 +68,9 @@ const (
 	defaultPageSize int32 = 100
 	// MaxPageSize maximum page size for list operations
 	MaxPageSize int32 = 1000
+
+	// NoHostPrefix is the prefix string for generating a fake non-existing hostname
+	NoHostPrefix string = "no-host-yet-"
 )
 
 var collectionsRe = regexp.MustCompile(`\/{[a-zA-Z0-9]*}$`)
@@ -204,6 +207,21 @@ func FormatDHCPHostnames(names []string) []string {
 		names[i] = FormatDHCPHostname(n)
 	}
 	return names
+}
+
+// GetEmtpyDeploymentRecord initialize an empty MachineLSE deployment record object by given serial number.
+func GetEmtpyDeploymentRecord(serialNumber string) *ufspb.MachineLSEDeployment {
+	return &ufspb.MachineLSEDeployment{
+		Hostname:             GetHostnameWithNoHostPrefix(serialNumber),
+		SerialNumber:         serialNumber,
+		DeploymentIdentifier: "",
+		ConfigsToPush:        nil,
+	}
+}
+
+// GetHostnameWithNoHostPrefix generates a hostname with NoHostPrefix.
+func GetHostnameWithNoHostPrefix(suffix string) string {
+	return fmt.Sprintf("%s%s", NoHostPrefix, suffix)
 }
 
 // RemovePrefix extracts string appearing after a "/"
