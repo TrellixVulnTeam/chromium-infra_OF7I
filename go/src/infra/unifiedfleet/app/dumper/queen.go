@@ -21,37 +21,42 @@ import (
 
 // pushToDroneQueen push the ufs duts to drone queen
 func pushToDroneQueen(ctx context.Context) (err error) {
-	defer func() {
-		dumpPushToDroneQueenTick.Add(ctx, 1, err == nil)
-	}()
-	logging.Infof(ctx, "start to push ufs duts to drone queen")
-	client, err := getDroneQueenClient(ctx)
-	if err != nil {
-		return err
-	}
-	// Set namespace to OS to get only MachineLSEs for chromeOS.
-	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-	if err != nil {
-		return err
-	}
-	// Get all the MachineLSEs
-	// Set keysOnly to true to get only keys. This is faster and consumes less data.
-	lses, err := inventory.ListAllMachineLSEs(ctx, true)
-	if err != nil {
-		err = errors.Annotate(err, "failed to list all MachineLSEs for chrome OS namespace").Err()
-		logging.Errorf(ctx, err.Error())
-		return err
-	}
-	availableDuts := make([]*dronequeenapi.DeclareDutsRequest_Dut, len(lses))
-	for i, lse := range lses {
-		availableDuts[i] = &dronequeenapi.DeclareDutsRequest_Dut{
-			Name: lse.GetName(),
-			Hive: util.GetHiveForDut(lse.GetName()),
+	// UFS migration done, run this job.
+	if config.Get(ctx).GetEnableDronequeenPush() {
+		defer func() {
+			dumpPushToDroneQueenTick.Add(ctx, 1, err == nil)
+		}()
+		logging.Infof(ctx, "start to push ufs duts to drone queen")
+		client, err := getDroneQueenClient(ctx)
+		if err != nil {
+			return err
 		}
+		// Set namespace to OS to get only MachineLSEs for chromeOS.
+		ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+		if err != nil {
+			return err
+		}
+		// Get all the MachineLSEs
+		// Set keysOnly to true to get only keys. This is faster and consumes less data.
+		lses, err := inventory.ListAllMachineLSEs(ctx, true)
+		if err != nil {
+			err = errors.Annotate(err, "failed to list all MachineLSEs for chrome OS namespace").Err()
+			logging.Errorf(ctx, err.Error())
+			return err
+		}
+		availableDuts := make([]*dronequeenapi.DeclareDutsRequest_Dut, len(lses))
+		for i, lse := range lses {
+			availableDuts[i] = &dronequeenapi.DeclareDutsRequest_Dut{
+				Name: lse.GetName(),
+				Hive: util.GetHiveForDut(lse.GetName()),
+			}
+		}
+		logging.Debugf(ctx, "DUTs to declare(%d): %+v", len(availableDuts), availableDuts)
+		_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{AvailableDuts: availableDuts})
+		return err
 	}
-	logging.Debugf(ctx, "DUTs to declare(%d): %+v", len(availableDuts), availableDuts)
-	_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{AvailableDuts: availableDuts})
-	return err
+	logging.Infof(ctx, "UFS migration NOT done, skipping the push")
+	return nil
 }
 
 // getDroneQueenClient returns the drone queen client

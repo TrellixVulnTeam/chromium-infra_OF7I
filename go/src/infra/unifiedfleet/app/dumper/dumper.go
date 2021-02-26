@@ -56,13 +56,9 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.sync_assets.sync", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, SyncAssetsFromIV2)
 	})
-	/*
-		TODO(eshwarn): (UFS Migration) Enable when InvV2 is fully migrated to UFS
-		srv.RunInBackground("ufs.push_to_drone_queen", func(ctx context.Context) {
-			cron.Run(ctx, 10*time.Minute, pushToDroneQueen)
-		})
-	*/
-
+	srv.RunInBackground("ufs.push_to_drone_queen", func(ctx context.Context) {
+		cron.Run(ctx, 10*time.Minute, pushToDroneQueen)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
