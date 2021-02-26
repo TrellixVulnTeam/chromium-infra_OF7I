@@ -238,6 +238,7 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 
 		state.StorageState = lab.HardwareState(int32(p.GetStorageState()))
 		state.ServoUsbState = lab.HardwareState(int32(p.GetServoUsbState()))
+		state.BatteryState = lab.HardwareState(int32(p.GetBatteryState()))
 	}
 	return &state
 }
@@ -339,6 +340,7 @@ func getUFSDutComponentStateFromSpecs(dutID string, specs *inventory.CommonDevic
 
 		state.StorageState = chromeosLab.HardwareState(int32(p.GetStorageState()))
 		state.ServoUsbState = chromeosLab.HardwareState(int32(p.GetServoUsbState()))
+		state.BatteryState = chromeosLab.HardwareState(int32(p.GetBatteryState()))
 	}
 	return state
 }
