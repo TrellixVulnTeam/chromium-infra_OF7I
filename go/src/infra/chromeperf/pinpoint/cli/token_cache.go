@@ -133,8 +133,8 @@ func (t *tokenCache) GetVerifiedOrRefreshedToken(
 	c oauth2Config) ([]byte, *oidc.IDToken, error) {
 	cachedToken := &t.cachedToken
 	cachedIDToken := []byte(t.cachedToken.IDToken)
-	if cachedToken.ParsedIDToken.Expiry.Before(time.Now().Add(time.Minute * -5)) {
-		// Attempt to refresh the token now.
+	// Attempt to refresh the token 5 minutes ahead of the expiry.
+	if time.Now().Add(5 * time.Minute).After(cachedToken.ParsedIDToken.Expiry) {
 		src := c.TokenSource(ctx, &cachedToken.AuthToken)
 		newToken, err := src.Token()
 		if err != nil {

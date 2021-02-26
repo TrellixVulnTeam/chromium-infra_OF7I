@@ -146,8 +146,6 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	poll := time.NewTicker(10 * time.Second)
 	defer poll.Stop()
 
-	// TODO(chowski): if we wait too long, our JWT could expire.
-	// We should auto-renew that somehow.
 	var lastUpdateTime time.Time
 	for {
 		resp, err := c.GetJob(ctx, req)
