@@ -222,6 +222,9 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		}
 	}()
 
+	if len(req.GetStdin()) != 0 {
+		session.Stdin = bytes.NewReader(req.GetStdin())
+	}
 	args := req.GetArgs()
 	if len(args) == 0 {
 		err = session.Run(req.GetCommand())
