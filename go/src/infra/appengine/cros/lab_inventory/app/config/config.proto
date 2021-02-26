@@ -15,7 +15,7 @@ message LuciAuthGroup {
 }
 
 // Config is the configuration data served by luci-config for this app.
-// Next tag: 18
+// Next tag: 20
 message Config {
   reserved 1;
 
@@ -58,6 +58,9 @@ message Config {
 
   // UFS service endpoint
   string ufs_service = 18;
+
+  // UFS routing control
+  UfsRouting routing = 19;
 }
 
 // Next tag: 6
