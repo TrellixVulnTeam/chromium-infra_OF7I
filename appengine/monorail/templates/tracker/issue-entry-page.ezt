@@ -290,6 +290,7 @@
 
 <script type="text/javascript" nonce="[nonce]">
 runOnLoad(function() {
+  window.getTSMonClient().recordIssueEntryTiming();
 
   if ($('launch-gates-table')) {
     $('launch-gates-table').classList.remove('hidden');

@@ -13,9 +13,8 @@ const TS_MON_JS_PATH = '/_/jstsmon.do';
 const TS_MON_CLIENT_GLOBAL_NAME = '__tsMonClient';
 const PAGE_LOAD_MAX_THRESHOLD = 60000;
 export const PAGE_TYPES = Object.freeze({
-  ISSUE_DETAIL: 'issue_detail',
   ISSUE_DETAIL_SPA: 'issue_detail_spa',
-  ISSUE_LIST: 'issue_list',
+  ISSUE_ENTRY: 'issue_entry',
   ISSUE_LIST_SPA: 'issue_list_spa',
 });
 
@@ -163,9 +162,8 @@ export default class MonorailTSMon extends TSMonClient {
     const domContentLoadedMs = t.domContentLoadedEventEnd - t.navigationStart;
 
     const measurePageTypes = new Set([
-      PAGE_TYPES.ISSUE_LIST,
-      PAGE_TYPES.ISSUE_DETAIL,
       PAGE_TYPES.ISSUE_DETAIL_SPA,
+      PAGE_TYPES.ISSUE_ENTRY,
     ]);
 
     if (measurePageTypes.has(pageType)) {
@@ -193,8 +191,8 @@ export default class MonorailTSMon extends TSMonClient {
     this.issueCommentsLoadMetric.add(value, metricFields);
   }
 
-  recordIssueDetailTiming(maxThresholdMs=PAGE_LOAD_MAX_THRESHOLD) {
-    this.recordPageLoadTiming(PAGE_TYPES.ISSUE_DETAIL, maxThresholdMs);
+  recordIssueEntryTiming(maxThresholdMs=PAGE_LOAD_MAX_THRESHOLD) {
+    this.recordPageLoadTiming(PAGE_TYPES.ISSUE_ENTRY, maxThresholdMs);
   }
 
   recordIssueDetailSpaTiming(maxThresholdMs=PAGE_LOAD_MAX_THRESHOLD) {

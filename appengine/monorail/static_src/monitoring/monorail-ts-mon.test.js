@@ -84,8 +84,8 @@ describe('MonorailTSMon', () => {
       MonorailTSMon.isPageVisible.restore();
     });
 
-    it('records page load on issue detail page', () => {
-      mts.recordIssueDetailTiming();
+    it('records page load on issue entry page', () => {
+      mts.recordIssueEntryTiming();
       sinon.assert.calledOnce(mts.pageLoadMetric.add);
       assert.isNumber(mts.pageLoadMetric.add.getCall(0).args[0]);
       assert.isString(mts.pageLoadMetric.add.getCall(0).args[1].get(
@@ -93,7 +93,7 @@ describe('MonorailTSMon', () => {
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
           'host_name'), 'rutabaga-version');
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'template_name'), 'issue_detail');
+          'template_name'), 'issue_entry');
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
           'document_visible'), true);
     });
@@ -110,11 +110,11 @@ describe('MonorailTSMon', () => {
           domContentLoadedEventEnd: 2001,
         },
       };
-      mts.recordIssueDetailTiming(1000);
+      mts.recordIssueEntryTiming(1000);
       sinon.assert.notCalled(mts.pageLoadMetric.add);
     });
 
-    it('records page load on issue detail page if under threshold', () => {
+    it('records page load on issue entry page if under threshold', () => {
       MonorailTSMon.isPageVisible.restore();
       sinon.stub(MonorailTSMon, 'isPageVisible').callsFake(() => (false));
       window.performance = {
@@ -123,7 +123,7 @@ describe('MonorailTSMon', () => {
           domContentLoadedEventEnd: 1999,
         },
       };
-      mts.recordIssueDetailTiming(1000);
+      mts.recordIssueEntryTiming(1000);
       sinon.assert.calledOnce(mts.pageLoadMetric.add);
       assert.isNumber(mts.pageLoadMetric.add.getCall(0).args[0]);
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[0], 999);
@@ -132,7 +132,7 @@ describe('MonorailTSMon', () => {
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
           'host_name'), 'rutabaga-version');
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
-          'template_name'), 'issue_detail');
+          'template_name'), 'issue_entry');
       assert.equal(mts.pageLoadMetric.add.getCall(0).args[1].get(
           'document_visible'), false);
     });
