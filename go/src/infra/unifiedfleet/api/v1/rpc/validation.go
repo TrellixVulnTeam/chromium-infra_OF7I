@@ -1145,6 +1145,17 @@ func (r *GetChromeOSDeviceDataRequest) Validate() error {
 	return nil
 }
 
+// Validate validates input requests of UpdateMachineLSEDeploymentRequest.
+func (r *UpdateMachineLSEDeploymentRequest) Validate() error {
+	if r == nil {
+		return status.Errorf(codes.InvalidArgument, "Empty Request")
+	}
+	if r.GetMachineLseDeployment().GetSerialNumber() == "" {
+		return status.Errorf(codes.InvalidArgument, "cannot update a deployment record with empty serial number")
+	}
+	return nil
+}
+
 // Validate validates input requests of CreateCachingService.
 func (r *CreateCachingServiceRequest) Validate() error {
 	if r.CachingService == nil {

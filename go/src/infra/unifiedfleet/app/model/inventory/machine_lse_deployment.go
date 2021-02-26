@@ -69,7 +69,7 @@ func UpdateMachineLSEDeployments(ctx context.Context, dis []*ufspb.MachineLSEDep
 	return nil, err
 }
 
-// GetMachineLSEDeployment returns the deployment record for a given hostname
+// GetMachineLSEDeployment returns the deployment record for a given serial number
 func GetMachineLSEDeployment(ctx context.Context, id string) (*ufspb.MachineLSEDeployment, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.MachineLSEDeployment{SerialNumber: id}, newMachineLSEDeploymentEntity)
 	if err == nil {

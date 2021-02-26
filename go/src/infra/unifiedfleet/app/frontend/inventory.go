@@ -533,7 +533,13 @@ func (fs *FleetServerImpl) GetChromeOSDeviceData(ctx context.Context, req *ufsAP
 
 // UpdateMachineLSEDeployment updates the deployment record for a host
 func (fs *FleetServerImpl) UpdateMachineLSEDeployment(ctx context.Context, req *ufsAPI.UpdateMachineLSEDeploymentRequest) (resp *ufspb.MachineLSEDeployment, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return controller.UpdateMachineLSEDeployment(ctx, req.GetMachineLseDeployment(), req.GetUpdateMask())
 }
 
 // BatchUpdateMachineLSEDeployment updates the deployment record for a batch of hosts
