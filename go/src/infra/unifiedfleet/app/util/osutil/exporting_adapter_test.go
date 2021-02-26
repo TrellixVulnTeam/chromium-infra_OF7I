@@ -156,6 +156,7 @@ var devUFSState = chromeosLab.DutState{
 	Cr50KeyEnv:             chromeosLab.DutState_CR50_KEYENV_PROD,
 	StorageState:           chromeosLab.HardwareState_HARDWARE_NORMAL,
 	ServoUsbState:          chromeosLab.HardwareState_HARDWARE_NEED_REPLACEMENT,
+	BatteryState:           chromeosLab.HardwareState_HARDWARE_UNKNOWN,
 	RpmState:               chromeosLab.PeripheralState_WORKING,
 }
 
@@ -380,6 +381,7 @@ common {
 			smart_usbhub: true
 			storage_state: HARDWARE_NORMAL,
 			servo_usb_state: HARDWARE_NEED_REPLACEMENT,
+			battery_state: HARDWARE_UNKNOWN,
 			wificell: true
 			router_802_11ax: true
 			working_bluetooth_btpeer: 3

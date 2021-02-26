@@ -523,6 +523,8 @@ func (hc *HistoryClient) LogDutStateChanges(oldData, newData *chromeosLab.DutSta
 	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.working_bluetooth_btpeer", oldData.GetWorkingBluetoothBtpeer(), newData.GetWorkingBluetoothBtpeer())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.storage_state", oldData.GetStorageState(), newData.GetStorageState())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.servo_usb_state", oldData.GetServoUsbState(), newData.GetServoUsbState())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.battery_state", oldData.GetBatteryState(), newData.GetBatteryState())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "dut_state.rpm_state", oldData.GetRpmState(), newData.GetRpmState())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
