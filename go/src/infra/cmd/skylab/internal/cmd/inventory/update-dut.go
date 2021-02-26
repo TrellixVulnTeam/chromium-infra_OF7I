@@ -37,6 +37,17 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+const updateDutWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab update-dut' is deprecated and will be removed                         *
+*             in April 2021. Consider using 'shivas update dut' instead.                    *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // UpdateDut subcommand: update and redeploy an existing DUT.
 var UpdateDut = &subcommands.Command{
 	UsageLine: "update-dut [FLAGS...] HOSTNAME",
@@ -47,7 +58,7 @@ A repair task to validate DUT deployment is triggered after DUT update. See
 flags to run costlier DUT preparation steps.
 
 By default, this subcommand opens up your favourite text editor to enter the
-new specs for the DUT requested. Use -new-specs-file to run non-interactively.`,
+new specs for the DUT requested. Use -new-specs-file to run non-interactively.` + updateDutWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateDutRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

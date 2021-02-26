@@ -26,6 +26,17 @@ import (
 	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
+const dutInfoWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab dut-info' is deprecated and will be removed                           *
+*             in April 2021. Consider using 'shivas get dut' instead.                       *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // DutInfo subcommand: Get DUT inventory information
 var DutInfo = &subcommands.Command{
 	UsageLine: "dut-info [-json] [-full] HOSTNAME",
@@ -43,7 +54,7 @@ https://developers.google.com/protocol-buffers/docs/proto3#json
 
 The protobuf definition of inventory.DeviceUnderTest is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/
-    libs/skylab/inventory/device.proto`,
+    libs/skylab/inventory/device.proto` + dutInfoWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &dutInfoRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

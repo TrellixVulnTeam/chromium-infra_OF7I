@@ -17,11 +17,22 @@ import (
 	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
+const updatelabstationWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab update-labstation' is deprecated and will be removed                  *
+*             in April 2021. Consider using 'shivas update labstation' instead.             *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // UpdateLabstation subcommand: update a labstation to inventory.
 var UpdateLabstation = &subcommands.Command{
 	UsageLine: "update-labstation [FLAGS...]",
 	ShortDesc: "update a labstation",
-	LongDesc:  `Update a labstation to the inventory.`,
+	LongDesc:  `Update a labstation to the inventory.` + updatelabstationWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateLabstationRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

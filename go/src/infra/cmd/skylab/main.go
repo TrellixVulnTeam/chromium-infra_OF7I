@@ -19,7 +19,6 @@ import (
 	"infra/cmd/skylab/internal/cmd/internalcmds"
 	"infra/cmd/skylab/internal/cmd/inventory"
 	"infra/cmd/skylab/internal/cmd/meta"
-	"infra/cmd/skylab/internal/cmd/queen"
 	"infra/cmd/skylab/internal/cmd/tasks"
 	"infra/cmd/skylab/internal/site"
 )
@@ -64,12 +63,7 @@ Full documentation http://go/skylab-cli`,
 			tasks.Verify,
 			tasks.Audit,
 			tasks.RerunTasks,
-			subcommands.Section("Drone Queen Inspection"),
-			queen.InspectDuts,
-			queen.InspectDrones,
-			queen.PushDuts,
 			subcommands.Section("Internal use"),
-			internalcmds.ListDroneDuts,
 			internalcmds.PrintBotInfo,
 			internalcmds.WaitTask,
 			internalcmds.DutStableVersion,

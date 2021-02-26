@@ -34,6 +34,17 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+const removeDutsWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab remove-duts' is deprecated and will be removed                        *
+*             in April 2021. Consider using 'shivas delete dut' instead.                    *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // RemoveDuts subcommand: RemoveDuts a DUT from inventory system.
 var RemoveDuts = &subcommands.Command{
 	UsageLine: "remove-duts -bug BUG [-delete] [FLAGS] DUT...",
@@ -45,7 +56,7 @@ tasks. Please note that we don't support "removing only" feature any more. When
 you run this command, the duts to be removed will be completedly deleted from inventory.
 
 After deleting a DUT, it needs to be deployed from scratch via "add-duts" to run tasks
-again.`,
+again.` + removeDutsWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &removeDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

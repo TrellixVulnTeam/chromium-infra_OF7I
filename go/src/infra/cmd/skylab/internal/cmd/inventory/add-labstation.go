@@ -26,6 +26,17 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+const addlabstationWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab add-labstation' is deprecated and will be removed                     *
+*             in April 2021. Consider using 'shivas add labstation' instead.                *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // AddLabstation subcommand: add a new labstation to inventory and prepare it for tasks.
 var AddLabstation = &subcommands.Command{
 	UsageLine: "add-labstation [FLAGS...]",
@@ -37,7 +48,7 @@ A repair task to validate labstation deployment is always triggered after labsta
 addition.
 
 By default, this subcommand opens up your favourite text editor to enter the
-specs for the new labstation. Use -new-specs-file to run non-interactively.`,
+specs for the new labstation. Use -new-specs-file to run non-interactively.` + addlabstationWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addLabstationRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

@@ -22,6 +22,17 @@ import (
 	"infra/libs/skylab/swarming"
 )
 
+const dutListWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab dut-list' is deprecated and will be removed                           *
+*             in April 2021. Consider using 'shivas get dut' instead.                       *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // DutList subcommand: Get DUT information
 var DutList = &subcommands.Command{
 	UsageLine: "dut-list [-pool POOL] [-model MODEL] [-board BOARD]",
@@ -30,7 +41,7 @@ var DutList = &subcommands.Command{
 
 	If no criteria are provided, dut-list will list all the DUT hostnames in Skylab.
 
-	Search criteria include pool, model, board`,
+	Search criteria include pool, model, board` + dutListWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &dutListRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

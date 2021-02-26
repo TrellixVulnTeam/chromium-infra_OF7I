@@ -16,11 +16,22 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
+const validateNewDutJSONWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab validate-new-dut-json' is deprecated and will be removed              *
+*             in April 2021. Consider using 'shivas add dut -f file.json' instead.          *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // ValidateNewDutJSON -- take a path and validate the json file associated with it.
 var ValidateNewDutJSON = &subcommands.Command{
 	UsageLine: "validate-new-dut-json <path>...",
 	ShortDesc: "validate json for a new DUT",
-	LongDesc:  `validate json for a new DUT.`,
+	LongDesc:  `validate json for a new DUT.` + validateNewDutJSONWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &validateNewDutJSONRun{}
 		return c

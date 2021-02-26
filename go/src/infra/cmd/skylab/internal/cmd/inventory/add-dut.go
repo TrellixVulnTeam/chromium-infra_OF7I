@@ -30,6 +30,17 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+const addDutWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab add-dut' is deprecated and will be removed                            *
+*             in April 2021. Consider using 'shivas add dut' instead.                       *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // AddDut subcommand: add a new DUT to inventory and prepare it for tasks.
 var AddDut = &subcommands.Command{
 	UsageLine: "add-dut [FLAGS...]",
@@ -42,7 +53,7 @@ A repair task to validate DUT deployment is aleways triggered after DUT
 addition.
 
 By default, this subcommand opens up your favourite text editor to enter the
-specs for the new DUT. Use -new-specs-file to run non-interactively.`,
+specs for the new DUT. Use -new-specs-file to run non-interactively.` + addDutWarning,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addDutRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

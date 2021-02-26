@@ -23,6 +23,18 @@ import (
 	inv "infra/libs/skylab/inventory/inventoryclient"
 )
 
+// batchUpdsateDutWarning is a string banner for deprecation of the skylab tool.
+const batchUpdsateDutWarning = `
+
+*********************************************************************************************
+*                                                                                           *
+*    WARNING: 'skylab batch-update-duts' is deprecated and will be removed                  *
+*             in April 2021. Consider using 'shivas update dut' instead.                    *
+*                                                                                           *
+*********************************************************************************************
+
+`
+
 // BatchUpdateDuts subcommand: batch update duts with some common labels.
 var BatchUpdateDuts = &subcommands.Command{
 	UsageLine: "batch-update-duts -pool POOL -input_file FILE [FLAGS...] HOSTNAMES...",
@@ -48,8 +60,8 @@ Some example usages of this tool:
 the content of the input file could be:
 hostname1,pool=fake_pool1
 hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
-...
-	`, userinput.SupportedLabels),
+...%s
+`, userinput.SupportedLabels, batchUpdsateDutWarning),
 	CommandRun: func() subcommands.CommandRun {
 		c := &batchUpdateDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
