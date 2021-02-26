@@ -12,12 +12,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/external"
 	"infra/appengine/cros/lab_inventory/app/frontend/fake"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufschromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
 type testFixture struct {
@@ -42,6 +45,95 @@ func testingContext() context.Context {
 		},
 	})
 	return c
+}
+
+func TestUpdateUFSDutState(t *testing.T) {
+	t.Parallel()
+	Convey("UpdateUFSDutState", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Happy path", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States:   []*lab.DutState{mockInvV2DutState("test-machine-dut-2")},
+				DutMetas: []*api.DutMeta{mockInvV2DutMeta("test-machine-dut-2")},
+				LabMetas: []*api.LabMeta{mockInvV2LabMeta("test-machine-dut-2")},
+			}
+			passed, failed, err := UpdateUFSDutState(tf.C, req)
+			So(err, ShouldBeNil)
+			So(failed, ShouldBeEmpty)
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].GetId(), ShouldEqual, "test-machine-dut-2")
+			So(passed[0].GetHostname(), ShouldEqual, "test-dut-2")
+
+			ufsDutState := &ufschromeoslab.DutState{
+				Id: &ufschromeoslab.ChromeOSDeviceID{
+					Value: "test-machine-dut-2",
+				},
+				Servo:                  ufschromeoslab.PeripheralState_WORKING,
+				StorageState:           ufschromeoslab.HardwareState_HARDWARE_NORMAL,
+				WorkingBluetoothBtpeer: 1,
+				Cr50Phase:              ufschromeoslab.DutState_CR50_PHASE_PVT,
+				Hostname:               "test-dut-2",
+			}
+			ufsDut := &ufspb.MachineLSE{
+				Name:     "test-dut-2",
+				Hostname: "test-dut-2",
+				Machines: []string{"test-machine-dut-2"},
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &ufschromeoslab.DeviceUnderTest{
+										Hostname: "test-dut-2",
+										Peripherals: &ufschromeoslab.Peripherals{
+											Servo: &ufschromeoslab.Servo{
+												ServoType: "v3",
+												ServoTopology: &ufschromeoslab.ServoTopology{
+													Main: &ufschromeoslab.ServoTopologyItem{
+														Type: "v3",
+													},
+												},
+											},
+											SmartUsbhub: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			ufsMachine := &ufspb.Machine{
+				Name:         "test-machine-dut-2",
+				SerialNumber: "test-machine-dut-2-serial",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						Sku:  "testdut2variant",
+						Hwid: "testdut2hwid",
+					},
+				},
+			}
+			So(fake.MockDutStateForDUT2, ShouldResembleProto, ufsDutState)
+			So(fake.MockDUT2, ShouldResembleProto, ufsDut)
+			So(fake.MockMachineForDUT2, ShouldResembleProto, ufsMachine)
+		})
+
+		Convey("non-existing Machine", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States:   []*lab.DutState{mockInvV2DutState("ghost")},
+				DutMetas: []*api.DutMeta{mockInvV2DutMeta("ghost")},
+				LabMetas: []*api.LabMeta{mockInvV2LabMeta("ghost")},
+			}
+			passed, failed, err := UpdateUFSDutState(tf.C, req)
+			So(err, ShouldBeNil)
+			So(passed, ShouldBeEmpty)
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].ErrorMsg, ShouldContainSubstring, "No MachineLSE found for for ghost")
+		})
+	})
 }
 
 func TestGetUFSDevicesByIds(t *testing.T) {
@@ -276,4 +368,81 @@ func TestCopyUFSDutStateToInvV2DutState(t *testing.T) {
 			So(nb, ShouldResemble, ob)
 		})
 	})
+}
+
+func TestCopyInvV2DutStateToUFSDutState(t *testing.T) {
+	Convey("Verify CopyInvV2DutStateToUFSDutState", t, func() {
+		Convey("happy path", func() {
+			invV2dutState := mockInvV2DutState("test-machine")
+			ufsDutState := CopyInvV2DutStateToUFSDutState(invV2dutState, "test-hostname")
+			ufsDutState.Hostname = ""
+			ufsb, err := proto.Marshal(ufsDutState)
+			So(err, ShouldBeNil)
+			invV2b, err := proto.Marshal(invV2dutState)
+			So(err, ShouldBeNil)
+			So(ufsb, ShouldResemble, invV2b)
+		})
+	})
+}
+
+func TestCopyInvV2DutMetaToUFSDutMeta(t *testing.T) {
+	Convey("Verify CopyInvV2DutMetaToUFSDutMeta", t, func() {
+		Convey("happy path", func() {
+			invV2dutMeta := mockInvV2DutMeta("test-machine")
+			ufsDutMeta := CopyInvV2DutMetaToUFSDutMeta(invV2dutMeta, "test-hostname")
+			So(ufsDutMeta.Hostname, ShouldEqual, "test-hostname")
+			So(ufsDutMeta.GetChromeosDeviceId(), ShouldEqual, invV2dutMeta.GetChromeosDeviceId())
+			So(ufsDutMeta.GetSerialNumber(), ShouldEqual, invV2dutMeta.GetSerialNumber())
+			So(ufsDutMeta.GetHwID(), ShouldEqual, invV2dutMeta.GetHwID())
+			So(ufsDutMeta.GetDeviceSku(), ShouldEqual, invV2dutMeta.GetDeviceSku())
+		})
+	})
+}
+
+func TestCopyInvV2LabMetaToUFSLabMeta(t *testing.T) {
+	Convey("Verify CopyInvV2LabMetaToUFSLabMeta", t, func() {
+		Convey("happy path", func() {
+			invV2LabMeta := mockInvV2LabMeta("test-machine")
+			ufsLabMeta := CopyInvV2LabMetaToUFSLabMeta(invV2LabMeta, "test-hostname")
+			So(ufsLabMeta.Hostname, ShouldEqual, "test-hostname")
+			So(ufsLabMeta.GetChromeosDeviceId(), ShouldEqual, invV2LabMeta.GetChromeosDeviceId())
+			So(ufsLabMeta.GetServoType(), ShouldEqual, invV2LabMeta.GetServoType())
+			So(ufsLabMeta.GetSmartUsbhub(), ShouldEqual, invV2LabMeta.GetSmartUsbhub())
+			So(ufsLabMeta.GetServoTopology().GetMain().GetType(), ShouldEqual, invV2LabMeta.GetServoTopology().GetMain().GetType())
+		})
+	})
+}
+
+func mockInvV2DutState(id string) *lab.DutState {
+	return &lab.DutState{
+		Id: &lab.ChromeOSDeviceID{
+			Value: id,
+		},
+		Servo:                  lab.PeripheralState_WORKING,
+		StorageState:           lab.HardwareState_HARDWARE_NORMAL,
+		WorkingBluetoothBtpeer: 1,
+		Cr50Phase:              lab.DutState_CR50_PHASE_PVT,
+	}
+}
+
+func mockInvV2DutMeta(id string) *api.DutMeta {
+	return &api.DutMeta{
+		ChromeosDeviceId: id,
+		SerialNumber:     "test-machine-dut-2-serial",
+		HwID:             "testdut2hwid",
+		DeviceSku:        "testdut2variant",
+	}
+}
+
+func mockInvV2LabMeta(id string) *api.LabMeta {
+	return &api.LabMeta{
+		ChromeosDeviceId: id,
+		SmartUsbhub:      true,
+		ServoType:        "v3",
+		ServoTopology: &lab.ServoTopology{
+			Main: &lab.ServoTopologyItem{
+				Type: "v3",
+			},
+		},
+	}
 }

@@ -24,6 +24,63 @@ import (
 	ufsutil "infra/unifiedfleet/app/util"
 )
 
+// UpdateUFSDutState updates dutmeta, labmeta and dutstate in UFS
+func UpdateUFSDutState(ctx context.Context, req *api.UpdateDutsStatusRequest) ([]*api.DeviceOpResult, []*api.DeviceOpResult, error) {
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	dutMetas := req.GetDutMetas()
+	labMetas := req.GetLabMetas()
+	dutStates := req.GetStates()
+	failed := make([]*api.DeviceOpResult, 0, len(dutMetas))
+	passed := make([]*api.DeviceOpResult, 0, len(dutMetas))
+	for i := range dutMetas {
+		req := &ufsapi.ListMachineLSEsRequest{
+			PageSize: 1,
+			Filter:   fmt.Sprintf("machine=%s", dutMetas[i].GetChromeosDeviceId()),
+		}
+		res, err := ufsClient.ListMachineLSEs(ctx, req)
+		if err != nil {
+			logging.Errorf(ctx, "ListMachineLSEs failed for %s", dutMetas[i].GetChromeosDeviceId())
+			return nil, nil, err
+		}
+		if len(res.GetMachineLSEs()) == 0 {
+			logging.Errorf(ctx, "No MachineLSE found for %s", dutMetas[i].GetChromeosDeviceId())
+			failed = append(failed, &api.DeviceOpResult{
+				Id:       dutMetas[i].GetChromeosDeviceId(),
+				ErrorMsg: fmt.Sprintf("No MachineLSE found for for %s", dutMetas[i].GetChromeosDeviceId()),
+			})
+			return nil, failed, nil
+		}
+		lse := res.GetMachineLSEs()[0]
+		lse.Name = ufsutil.RemovePrefix(lse.Name)
+
+		_, err = ufsClient.UpdateDutState(osctx, &ufsapi.UpdateDutStateRequest{
+			DutState: CopyInvV2DutStateToUFSDutState(dutStates[i], lse.Name),
+			DutMeta:  CopyInvV2DutMetaToUFSDutMeta(dutMetas[i], lse.Name),
+			LabMeta:  CopyInvV2LabMetaToUFSLabMeta(labMetas[i], lse.Name),
+		})
+		if err != nil {
+			failed = append(failed, &api.DeviceOpResult{
+				Id:       dutMetas[i].GetChromeosDeviceId(),
+				Hostname: lse.Name,
+				ErrorMsg: err.Error(),
+			})
+			continue
+		}
+		passed = append(passed, &api.DeviceOpResult{
+			Id:       dutMetas[i].GetChromeosDeviceId(),
+			Hostname: lse.Name,
+		})
+	}
+	return passed, failed, nil
+}
+
 // GetUFSDevicesByIds Gets MachineLSEs from UFS by Asset id/Machine id.
 func GetUFSDevicesByIds(ctx context.Context, ufsClient external.UFSClient, ids []string) ([]*lab.ChromeOSDevice, []*api.DeviceOpResult) {
 	failedDevices := make([]*api.DeviceOpResult, 0, len(ids))
@@ -46,11 +103,19 @@ func GetUFSDevicesByIds(ctx context.Context, ufsClient external.UFSClient, ids [
 			Filter:   fmt.Sprintf("machine=%s", id),
 		}
 		res, err := ufsClient.ListMachineLSEs(ctx, req)
-		if err != nil || len(res.GetMachineLSEs()) == 0 {
-			logging.Errorf(ctx, "MachineLSE not found for machine ID %s", id)
+		if err != nil {
+			logging.Errorf(ctx, "ListMachineLSEs failed for %s", id)
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Id:       id,
 				ErrorMsg: err.Error(),
+			})
+			continue
+		}
+		if len(res.GetMachineLSEs()) == 0 {
+			logging.Errorf(ctx, "MachineLSE not found for machine ID %s", id)
+			failedDevices = append(failedDevices, &api.DeviceOpResult{
+				Id:       id,
+				ErrorMsg: fmt.Sprintf("No MachineLSE found for for %s", id),
 			})
 			continue
 		}
@@ -83,7 +148,7 @@ func GetUFSDevicesByHostnames(ctx context.Context, ufsClient external.UFSClient,
 			logging.Errorf(ctx, "Machine not found for hostname %s", name)
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Hostname: lse.GetName(),
-				ErrorMsg: err.Error(),
+				ErrorMsg: fmt.Sprintf("Machine not found for hostname %s", name),
 			})
 			continue
 		}
@@ -192,6 +257,42 @@ func CopyUFSLabstationToInvV2Labstation(labstation *ufschromeoslab.Labstation) *
 	var newL lab.Labstation
 	proto.UnmarshalText(s, &newL)
 	return &newL
+}
+
+// CopyInvV2DutStateToUFSDutState converts InvV2 DutState to UFS DutState
+func CopyInvV2DutStateToUFSDutState(oldS *lab.DutState, hostname string) *ufschromeoslab.DutState {
+	if oldS == nil {
+		return nil
+	}
+	s := proto.MarshalTextString(oldS)
+	var newS ufschromeoslab.DutState
+	proto.UnmarshalText(s, &newS)
+	newS.Hostname = hostname
+	return &newS
+}
+
+// CopyInvV2DutMetaToUFSDutMeta converts InvV2 DutMeta to UFS DutMeta
+func CopyInvV2DutMetaToUFSDutMeta(oldDm *api.DutMeta, hostname string) *ufspb.DutMeta {
+	if oldDm == nil {
+		return nil
+	}
+	s := proto.MarshalTextString(oldDm)
+	var newDm ufspb.DutMeta
+	proto.UnmarshalText(s, &newDm)
+	newDm.Hostname = hostname
+	return &newDm
+}
+
+// CopyInvV2LabMetaToUFSLabMeta converts InvV2 LabMeta to UFS LabMeta
+func CopyInvV2LabMetaToUFSLabMeta(oldLm *api.LabMeta, hostname string) *ufspb.LabMeta {
+	if oldLm == nil {
+		return nil
+	}
+	s := proto.MarshalTextString(oldLm)
+	var newLm ufspb.LabMeta
+	proto.UnmarshalText(s, &newLm)
+	newLm.Hostname = hostname
+	return &newLm
 }
 
 func getDeviceConfigIDFromMachine(machine *ufspb.Machine) *device.ConfigId {

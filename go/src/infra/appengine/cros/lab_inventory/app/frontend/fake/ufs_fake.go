@@ -140,6 +140,61 @@ var mockDutStateForDUT = &lab.DutState{
 	Hostname:               "test-dut",
 }
 
+// MockDUT2 for testing UpdateDutState
+var MockDUT2 = &ufspb.MachineLSE{
+	Name:     "test-dut-2",
+	Hostname: "test-dut-2",
+	Machines: []string{"test-machine-dut-2"},
+	Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+		ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+			ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+				DeviceLse: &ufspb.ChromeOSDeviceLSE{
+					Device: &ufspb.ChromeOSDeviceLSE_Dut{
+						Dut: &lab.DeviceUnderTest{
+							Hostname: "test-dut-2",
+							Peripherals: &lab.Peripherals{
+								Servo: &lab.Servo{
+									ServoType: "invalid",
+									ServoTopology: &lab.ServoTopology{
+										Main: &lab.ServoTopologyItem{
+											Type: "invalid",
+										},
+									},
+								},
+								SmartUsbhub: false,
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
+// MockMachineForDUT2 for testing UpdateDutState
+var MockMachineForDUT2 = &ufspb.Machine{
+	Name:         "test-machine-dut-2",
+	SerialNumber: "invalid",
+	Device: &ufspb.Machine_ChromeosMachine{
+		ChromeosMachine: &ufspb.ChromeOSMachine{
+			Sku:  "invalid",
+			Hwid: "invalid",
+		},
+	},
+}
+
+// MockDutStateForDUT2 for testing UpdateDutState
+var MockDutStateForDUT2 = &lab.DutState{
+	Id: &lab.ChromeOSDeviceID{
+		Value: "test-machine-dut-2",
+	},
+	Servo:                  lab.PeripheralState_UNKNOWN,
+	StorageState:           lab.HardwareState_HARDWARE_UNKNOWN,
+	WorkingBluetoothBtpeer: 0,
+	Cr50Phase:              lab.DutState_CR50_PHASE_INVALID,
+	Hostname:               "test-dut-2",
+}
+
 var mockDutStateForLabstation = &lab.DutState{
 	Id: &lab.ChromeOSDeviceID{
 		Value: "test-machine-labstation",
@@ -175,12 +230,35 @@ var mockMachineForLabStation = &ufspb.Machine{
 	},
 }
 
+// UpdateDutState mocks the UpdateDutState api from UFS
+func (ic *FleetClient) UpdateDutState(ctx context.Context, in *ufsapi.UpdateDutStateRequest, opts ...grpc.CallOption) (*lab.DutState, error) {
+	if in.GetDutMeta().GetChromeosDeviceId() == "test-machine-dut-2" || in.GetDutMeta().GetHostname() == "test-dut-2" {
+		MockDutStateForDUT2 = in.GetDutState()
+
+		MockMachineForDUT2.SerialNumber = in.GetDutMeta().GetSerialNumber()
+		MockMachineForDUT2.GetChromeosMachine().Hwid = in.GetDutMeta().GetHwID()
+		MockMachineForDUT2.GetChromeosMachine().Sku = in.GetDutMeta().GetDeviceSku()
+
+		MockDUT2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().SmartUsbhub = in.GetLabMeta().GetSmartUsbhub()
+		MockDUT2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoType = in.GetLabMeta().GetServoType()
+		MockDUT2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoTopology = in.GetLabMeta().GetServoTopology()
+
+		return MockDutStateForDUT2, nil
+	}
+	return nil, errors.New("No Machine/MachineLSE found")
+}
+
 // GetMachineLSE mocks the GetMachineLSE api from UFS.
 func (ic *FleetClient) GetMachineLSE(ctx context.Context, in *ufsapi.GetMachineLSERequest, opts ...grpc.CallOption) (*ufspb.MachineLSE, error) {
 	if in.GetName() == ufsutil.AddPrefix(ufsutil.MachineLSECollection, "test-dut") {
 		mockDUTCopy := proto.Clone(mockDUT).(*ufspb.MachineLSE)
 		mockDUTCopy.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mockDUTCopy.Name)
 		return mockDUTCopy, nil
+	}
+	if in.GetName() == ufsutil.AddPrefix(ufsutil.MachineLSECollection, "test-dut-2") {
+		mockDUT2Copy := proto.Clone(MockDUT2).(*ufspb.MachineLSE)
+		mockDUT2Copy.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mockDUT2Copy.Name)
+		return mockDUT2Copy, nil
 	}
 	if in.GetName() == ufsutil.AddPrefix(ufsutil.MachineLSECollection, "test-labstation") {
 		mockLabstationCopy := proto.Clone(mockLabstation).(*ufspb.MachineLSE)
@@ -197,6 +275,11 @@ func (ic *FleetClient) GetMachine(ctx context.Context, in *ufsapi.GetMachineRequ
 		mockMachineForDUTCopy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForDUTCopy.Name)
 		return mockMachineForDUTCopy, nil
 	}
+	if in.GetName() == ufsutil.AddPrefix(ufsutil.MachineCollection, "test-machine-dut-2") {
+		mockMachineForDUT2Copy := proto.Clone(MockMachineForDUT2).(*ufspb.Machine)
+		mockMachineForDUT2Copy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForDUT2Copy.Name)
+		return mockMachineForDUT2Copy, nil
+	}
 	if in.GetName() == ufsutil.AddPrefix(ufsutil.MachineCollection, "test-machine-labstation") {
 		mockMachineForLabStationCopy := proto.Clone(mockMachineForLabStation).(*ufspb.Machine)
 		mockMachineForLabStationCopy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForLabStationCopy.Name)
@@ -209,6 +292,9 @@ func (ic *FleetClient) GetMachine(ctx context.Context, in *ufsapi.GetMachineRequ
 func (ic *FleetClient) GetDutState(ctx context.Context, in *ufsapi.GetDutStateRequest, opts ...grpc.CallOption) (*lab.DutState, error) {
 	if in.GetChromeosDeviceId() == "test-machine-dut" || in.GetHostname() == "test-dut" {
 		return mockDutStateForDUT, nil
+	}
+	if in.GetChromeosDeviceId() == "test-machine-dut-2" || in.GetHostname() == "test-dut-2" {
+		return MockDutStateForDUT2, nil
 	}
 	if in.GetChromeosDeviceId() == "test-machine-labstation" || in.GetHostname() == "test-labstation" {
 		return mockDutStateForLabstation, nil
@@ -250,6 +336,8 @@ func (ic *FleetClient) ListMachines(ctx context.Context, in *ufsapi.ListMachines
 func (ic *FleetClient) ListMachineLSEs(ctx context.Context, in *ufsapi.ListMachineLSEsRequest, opts ...grpc.CallOption) (*ufsapi.ListMachineLSEsResponse, error) {
 	mockDUTCopy := proto.Clone(mockDUT).(*ufspb.MachineLSE)
 	mockDUTCopy.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mockDUTCopy.Name)
+	mockDUT2Copy := proto.Clone(MockDUT2).(*ufspb.MachineLSE)
+	mockDUT2Copy.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mockDUT2Copy.Name)
 	mockLabstationCopy := proto.Clone(mockLabstation).(*ufspb.MachineLSE)
 	mockLabstationCopy.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mockLabstationCopy.Name)
 	if in.GetFilter() == "" {
@@ -261,6 +349,12 @@ func (ic *FleetClient) ListMachineLSEs(ctx context.Context, in *ufsapi.ListMachi
 	if in.GetFilter() == "machine=test-machine-dut" {
 		return &ufsapi.ListMachineLSEsResponse{
 			MachineLSEs:   []*ufspb.MachineLSE{mockDUTCopy},
+			NextPageToken: "",
+		}, nil
+	}
+	if in.GetFilter() == "machine=test-machine-dut-2" {
+		return &ufsapi.ListMachineLSEsResponse{
+			MachineLSEs:   []*ufspb.MachineLSE{mockDUT2Copy},
 			NextPageToken: "",
 		}, nil
 	}
