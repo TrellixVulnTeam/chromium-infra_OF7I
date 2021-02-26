@@ -21,6 +21,10 @@ message Config {
   string sheet_service_account = 9;
   // The hostname of drone-queen service to push inventory to.
   string queen_service = 10;
+  // cron job for dronequeen push.
+  bool enable_dronequeen_push = 11;
+  // cron job for Inv2 to UFS sync(MachineLSE/Asset).
+  bool disable_inv2_sync = 12;
 }
 
 message OSNetworkConfig {
