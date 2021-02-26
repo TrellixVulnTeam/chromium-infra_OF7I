@@ -13,7 +13,9 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
@@ -23,6 +25,18 @@ import (
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
 )
+
+// DeviceData holds the invV2 Device and updatetime(of MachineLSE)
+type DeviceData struct {
+	Device     *lab.ChromeOSDevice
+	UpdateTime *timestamppb.Timestamp
+}
+
+// DutStateData holds the invV2 DutState and updatetime
+type DutStateData struct {
+	DutState   *lab.DutState
+	UpdateTime *timestamppb.Timestamp
+}
 
 // UpdateUFSDutState updates dutmeta, labmeta and dutstate in UFS
 func UpdateUFSDutState(ctx context.Context, req *api.UpdateDutsStatusRequest) ([]*api.DeviceOpResult, []*api.DeviceOpResult, error) {
@@ -224,6 +238,88 @@ func GetUFSDutStateForDevices(ctx context.Context, ufsClient external.UFSClient,
 		extendedData = append(extendedData, data)
 	}
 	return extendedData, failedDevices
+}
+
+// GetAllUFSDevicesData Gets all the MachineLSEs and Machines from UFS and returns invV2 Devices and updatedtime.
+func GetAllUFSDevicesData(ctx context.Context, ufsClient external.UFSClient) ([]*DeviceData, error) {
+	var devicesData []*DeviceData
+	idToMachine := make(map[string]*ufspb.Machine, 0)
+	for curPageToken := ""; ; {
+		req := &ufsapi.ListMachinesRequest{
+			PageSize:  1000,
+			PageToken: curPageToken,
+		}
+		res, err := ufsClient.ListMachines(ctx, req)
+		if err != nil {
+			return nil, errors.Annotate(err, "Failed to get Machines from UFS").Err()
+		}
+		for _, machine := range res.GetMachines() {
+			machine.Name = ufsutil.RemovePrefix(machine.Name)
+			idToMachine[machine.GetName()] = machine
+		}
+		if res.GetNextPageToken() == "" {
+			break
+		}
+		curPageToken = res.GetNextPageToken()
+	}
+	for curPageToken := ""; ; {
+		req := &ufsapi.ListMachineLSEsRequest{
+			PageSize:  1000,
+			PageToken: curPageToken,
+		}
+		res, err := ufsClient.ListMachineLSEs(ctx, req)
+		if err != nil {
+			return nil, errors.Annotate(err, "Failed to get MachineLSEs from UFS").Err()
+		}
+		for _, lse := range res.GetMachineLSEs() {
+			lse.Name = ufsutil.RemovePrefix(lse.Name)
+			if len(lse.GetMachines()) == 0 {
+				logging.Errorf(ctx, "no Machine in LSE %s", lse.GetName())
+				continue
+			}
+			if machine, found := idToMachine[lse.GetMachines()[0]]; found {
+				deviceData := &DeviceData{
+					Device:     ConstructInvV2Device(machine, lse),
+					UpdateTime: lse.GetUpdateTime(),
+				}
+				devicesData = append(devicesData, deviceData)
+				continue
+			}
+			logging.Errorf(ctx, "no Machine found %s", lse.GetMachines()[0])
+		}
+		if res.GetNextPageToken() == "" {
+			break
+		}
+		curPageToken = res.GetNextPageToken()
+	}
+	return devicesData, nil
+}
+
+// GetAllUFSDutStatesData Gets all the DutStateLSEs and DutStates from UFS and returns invV2 DutStates and updatedtime.
+func GetAllUFSDutStatesData(ctx context.Context, ufsClient external.UFSClient) ([]*DutStateData, error) {
+	var dutStatesData []*DutStateData
+	for curPageToken := ""; ; {
+		req := &ufsapi.ListDutStatesRequest{
+			PageSize:  1000,
+			PageToken: curPageToken,
+		}
+		res, err := ufsClient.ListDutStates(ctx, req)
+		if err != nil {
+			return nil, errors.Annotate(err, "Failed to get DutStates from UFS").Err()
+		}
+		for _, dutState := range res.GetDutStates() {
+			dutStateData := &DutStateData{
+				DutState:   CopyUFSDutStateToInvV2DutState(dutState),
+				UpdateTime: dutState.GetUpdateTime(),
+			}
+			dutStatesData = append(dutStatesData, dutStateData)
+		}
+		if res.GetNextPageToken() == "" {
+			break
+		}
+		curPageToken = res.GetNextPageToken()
+	}
+	return dutStatesData, nil
 }
 
 // CopyUFSDutStateToInvV2DutState converts UFS DutState to InvV2 DutState proto format.

@@ -370,6 +370,14 @@ func (ic *FleetClient) ListMachineLSEs(ctx context.Context, in *ufsapi.ListMachi
 	}, nil
 }
 
+// ListDutStates mocks the ListDutStates api from UFS.
+func (ic *FleetClient) ListDutStates(ctx context.Context, in *ufsapi.ListDutStatesRequest, opts ...grpc.CallOption) (*ufsapi.ListDutStatesResponse, error) {
+	return &ufsapi.ListDutStatesResponse{
+		DutStates:     []*lab.DutState{mockDutStateForDUT, mockDutStateForLabstation},
+		NextPageToken: "",
+	}, nil
+}
+
 // GetMockDUT mocks dut machinelse
 func GetMockDUT() *ufspb.MachineLSE {
 	return mockDUT

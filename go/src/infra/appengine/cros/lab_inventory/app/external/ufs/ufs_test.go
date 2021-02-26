@@ -327,6 +327,83 @@ func TestGetUFSDutStateForDevices(t *testing.T) {
 	})
 }
 
+func TestGetAllUFSDevicesData(t *testing.T) {
+	t.Parallel()
+	Convey("GetAllUFSDevicesData", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		ufsClient, _ := GetUFSClient(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Happy path - 2 passed", func() {
+			devicesData, err := GetAllUFSDevicesData(tf.C, ufsClient)
+			So(err, ShouldBeNil)
+			So(devicesData, ShouldHaveLength, 2)
+			for _, deviceData := range devicesData {
+				d := deviceData.Device
+				var machine *ufspb.Machine
+				if d.GetDut() != nil {
+					nb, err := proto.Marshal(d.GetDut())
+					So(err, ShouldBeNil)
+					ob, err := proto.Marshal(fake.GetMockDUT().GetChromeosMachineLse().GetDeviceLse().GetDut())
+					So(err, ShouldBeNil)
+					So(nb, ShouldResemble, ob)
+					machine = fake.GetMockMachineForDUT()
+				} else {
+					nb, err := proto.Marshal(d.GetLabstation())
+					So(err, ShouldBeNil)
+					ob, err := proto.Marshal(fake.GetMockLabstation().GetChromeosMachineLse().GetDeviceLse().GetLabstation())
+					So(err, ShouldBeNil)
+					So(nb, ShouldResemble, ob)
+					machine = fake.GetMockMachineForLabstation()
+				}
+				So(d.GetSerialNumber(), ShouldEqual, machine.GetSerialNumber())
+				So(d.GetId().GetValue(), ShouldEqual, machine.GetName())
+				So(d.GetDeviceConfigId().GetPlatformId().GetValue(), ShouldEqual, machine.GetChromeosMachine().GetBuildTarget())
+				So(d.GetDeviceConfigId().GetModelId().GetValue(), ShouldEqual, machine.GetChromeosMachine().GetModel())
+				So(d.GetDeviceConfigId().GetVariantId().GetValue(), ShouldEqual, machine.GetChromeosMachine().GetSku())
+				So(d.GetManufacturingId().GetValue(), ShouldEqual, machine.GetChromeosMachine().GetHwid())
+			}
+		})
+	})
+}
+
+func TestGetAllUFSDutStatesData(t *testing.T) {
+	t.Parallel()
+	Convey("GetAllUFSDutStatesData", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		ufsClient, _ := GetUFSClient(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Happy path", func() {
+			dutStatesData, err := GetAllUFSDutStatesData(tf.C, ufsClient)
+			So(err, ShouldBeNil)
+			So(dutStatesData, ShouldHaveLength, 2)
+			for _, dutStatedata := range dutStatesData {
+				d := dutStatedata.DutState
+				if d.GetId().GetValue() == "test-machine-dut" {
+					nb, err := proto.Marshal(d)
+					So(err, ShouldBeNil)
+					fakeDutState := fake.GetMockDutStateForDUT()
+					fakeDutState.Hostname = ""
+					ob, err := proto.Marshal(fakeDutState)
+					So(err, ShouldBeNil)
+					So(nb, ShouldResemble, ob)
+				} else {
+					nb, err := proto.Marshal(d)
+					So(err, ShouldBeNil)
+					fakeDutState := fake.GetMockDutStateForLabstation()
+					fakeDutState.Hostname = ""
+					ob, err := proto.Marshal(fakeDutState)
+					So(err, ShouldBeNil)
+					So(nb, ShouldResemble, ob)
+				}
+			}
+		})
+	})
+}
+
 func TestCopyUFSDutToInvV2Dut(t *testing.T) {
 	Convey("Verify CopyUFSDutToInvV2Dut", t, func() {
 		Convey("happy path", func() {

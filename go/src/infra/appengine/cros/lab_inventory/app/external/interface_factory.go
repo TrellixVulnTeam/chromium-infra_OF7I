@@ -42,6 +42,7 @@ type UFSClient interface {
 	ListMachines(ctx context.Context, in *ufsapi.ListMachinesRequest, opts ...grpc.CallOption) (*ufsapi.ListMachinesResponse, error)
 	ListMachineLSEs(ctx context.Context, in *ufsapi.ListMachineLSEsRequest, opts ...grpc.CallOption) (*ufsapi.ListMachineLSEsResponse, error)
 	UpdateDutState(ctx context.Context, in *ufsapi.UpdateDutStateRequest, opts ...grpc.CallOption) (*lab.DutState, error)
+	ListDutStates(ctx context.Context, in *ufsapi.ListDutStatesRequest, opts ...grpc.CallOption) (*ufsapi.ListDutStatesResponse, error)
 }
 
 // GetServerInterface retrieves the ExternalServerInterface from context.
