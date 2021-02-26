@@ -140,6 +140,45 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/chrome_golo/services/dhcpd/zone_host_map.json",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read services/dhcpd/zone_host_map.json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@zone_host_map.json@{@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@  \"test_zone\": [@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@    \"test-host\"@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@  ]@@@",
+      "@@@STEP_LOG_LINE@zone_host_map.json@}@@@",
+      "@@@STEP_LOG_END@zone_host_map.json@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "-c",
+      "core.quotePath=false",
+      "diff",
+      "--cached",
+      "--name-only"
+    ],
+    "cwd": "[START_DIR]/chrome_golo",
+    "infra_step": true,
+    "name": "git diff to analyze patch",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@files@chrome_golo/services/dhcpd/test_zone/foo@@@",
+      "@@@STEP_LOG_END@files@@@"
+    ]
+  },
+  {
+    "cmd": [
       "luci-auth",
       "token",
       "-scopes",
@@ -163,28 +202,6 @@
       "[CLEANUP]/.docker"
     ],
     "name": "docker login"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "[START_DIR]/chrome_golo/services/dhcpd/zone_host_map.json",
-      "/path/to/tmp/"
-    ],
-    "infra_step": true,
-    "name": "read services/dhcpd/zone_host_map.json",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@zone_host_map.json@{@@@",
-      "@@@STEP_LOG_LINE@zone_host_map.json@  \"test_zone\": [@@@",
-      "@@@STEP_LOG_LINE@zone_host_map.json@    \"test-host\"@@@",
-      "@@@STEP_LOG_LINE@zone_host_map.json@  ]@@@",
-      "@@@STEP_LOG_LINE@zone_host_map.json@}@@@",
-      "@@@STEP_LOG_END@zone_host_map.json@@@"
-    ]
   },
   {
     "cmd": [
@@ -260,23 +277,6 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "-c",
-      "core.quotePath=false",
-      "diff",
-      "--cached",
-      "--name-only"
-    ],
-    "cwd": "[START_DIR]/chrome_golo",
-    "infra_step": true,
-    "name": "git diff to analyze patch",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@files@chrome_golo/services/dhcpd/test_zone/foo@@@",
-      "@@@STEP_LOG_END@files@@@"
     ]
   },
   {

@@ -91,8 +91,6 @@ def RunSteps(api):
   api.bot_update.ensure_checkout()
   api.gclient.runhooks()
 
-  api.docker.login(server='gcr.io', project='chops-public-images-prod')
-
   patch_root = api.gclient.get_gerrit_patch_root()
   assert patch_root, ('local path is not configured for %s' %
                       api.m.tryserver.gerrit_change_repo_url)
@@ -103,23 +101,29 @@ def RunSteps(api):
       api.path['checkout'].join(_ZONE_HOST_MAP_FILE),
       test_data=_ZONE_HOST_MAP_TESTDATA)
 
-  # Get up to date server OS versions from UFS.
-  host_os_map = _GetDhcpOsVersions(api, zone_host_map)
-
-  # Build a zone: os: hosts map for determining test that need to run.
-  for zone, hosts in zone_host_map.iteritems():
-    dhcp_map[zone] = {}
-    for host in hosts:
-      os_version = host_os_map[host]
-      dhcp_map[zone].setdefault(os_version, []).append(host)
-
   # Iterate over files in the CL to determine which tests need to run.
   dhcp_dirs = ['%s/dhcpd' % d for d in ['configs', 'services']]
   for f in api.m.tryserver.get_files_affected_by_patch(patch_root):
     for zone in zone_host_map:
       if any(['%s/%s/' % (d, zone) in f for d in dhcp_dirs]):
         zones_to_test.add(zone)
-        images_needed.update(dhcp_map[zone])
+  if not zones_to_test:
+    api.python.succeeding_step('CL does not contain DHCP changes', '')
+    return
+
+  api.docker.login(server='gcr.io', project='chops-public-images-prod')
+
+  # Get up to date server OS versions from UFS.
+  host_os_map = _GetDhcpOsVersions(api, zone_host_map)
+
+  # Build a zone: os: hosts map for determining test that need to run and
+  # build the list of images that will be needed to run tests.
+  for zone, hosts in zone_host_map.iteritems():
+    dhcp_map[zone] = {}
+    for host in hosts:
+      os_version = host_os_map[host]
+      dhcp_map[zone].setdefault(os_version, []).append(host)
+      images_needed.add(os_version)
 
   # Pull docker images before testing with them.
   for os_version in sorted(images_needed):
@@ -151,8 +155,7 @@ def GenTests(api):
         }
     }])
 
-  def changed_files():
-    test_file = 'services/dhcpd/%s/foo' % _TEST_ZONE
+  def changed_files(test_file='services/dhcpd/%s/foo' % _TEST_ZONE):
     t = api.override_step_data(
         'git diff to analyze patch', stdout=api.raw_io.output(test_file))
     t += api.path.exists(api.path['checkout'].join('chrome_golo', test_file))
@@ -167,6 +170,15 @@ def GenTests(api):
           'get ufs host data', stdout=test_ufs_output(_IMAGE_VERSIONS[0])),
       api.override_step_data(
           'get ufs vm data', stdout=test_ufs_output(_IMAGE_VERSIONS[0])),
+  )
+
+  yield api.test(
+      'chrome_golo_dhcp_no_dhcp_files_changed',
+      api.properties(),
+      api.buildbucket.try_build(),
+      changed_files('not_a_dhcp_change'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
