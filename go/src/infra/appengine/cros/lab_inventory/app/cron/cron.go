@@ -31,6 +31,7 @@ import (
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/converter"
+	"infra/appengine/cros/lab_inventory/app/external/ufs"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	bqlib "infra/cros/lab_inventory/bq"
 	"infra/cros/lab_inventory/cfg2datastore"
@@ -42,6 +43,7 @@ import (
 	"infra/cros/lab_inventory/manufacturingconfig"
 	invprotos "infra/cros/lab_inventory/protos"
 	"infra/libs/git"
+	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -259,6 +261,12 @@ func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
 // uploads it to bigquery.
 func dumpInventorySnapshot(c *router.Context) (err error) {
 	ctx := c.Context
+	// UFS migration, skip this job
+	if config.Get(ctx).GetRouting().GetDumpDevicesBq() {
+		logging.Infof(c.Context, "UFS migration - skipping InvV2 dumping inventory snapshot")
+		return nil
+	}
+
 	defer func() {
 		dumpInventorySnapshotTick.Add(ctx, 1, err == nil)
 	}()
@@ -631,5 +639,96 @@ func backfillMRIndexesCronHandler(c *router.Context) error {
 		}
 	}
 
+	return nil
+}
+
+// dumpInventoryDeviceSnapshot takes a snapshot of the UFS MachineLSE at the current time and
+// uploads it to bigquery in InvV2 Device format.
+func dumpInventoryDeviceSnapshot(c *router.Context) (err error) {
+	ctx := c.Context
+	// UFS migration, run this job
+	if config.Get(ctx).GetRouting().GetDumpDevicesBq() {
+		defer func() {
+			dumpInventoryDeviceSnapshotTick.Add(ctx, 1, err == nil)
+		}()
+
+		logging.Infof(c.Context, "Start dumping UFS/inventory device snapshot")
+		project := info.AppID(ctx)
+		dataset := "inventory"
+		curTimeStr := bqlib.GetPSTTimeStamp(time.Now())
+		client, err := bigquery.NewClient(ctx, project)
+		if err != nil {
+			return fmt.Errorf("bq client: %s", err)
+		}
+		labconfigUploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
+		ufsClient, err := ufs.GetUFSClient(ctx)
+		if err != nil {
+			return fmt.Errorf("UFS client: %s", err)
+		}
+		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
+		if err != nil {
+			return fmt.Errorf("UFS namespace: %s", err)
+		}
+		logging.Debugf(ctx, "getting all Devices from UFS")
+		devicesData, err := ufs.GetAllUFSDevicesData(osctx, ufsClient)
+		if err != nil {
+			return fmt.Errorf("UFS ListMachine and ListMachineLSE failed: %s", err)
+		}
+		labconfigs := converter.DeviceDataToBQDeviceMsgs(ctx, devicesData)
+		if len(labconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d lab configs(UFS) to bigquery dataset (%s) table (lab)", len(labconfigs), dataset)
+			if err := labconfigUploader.Put(ctx, labconfigs...); err != nil {
+				return fmt.Errorf("labconfig put(UFS): %s", err)
+			}
+		}
+		logging.Debugf(ctx, "successfully uploaded Devices(UFS) to bigquery")
+		return nil
+	}
+	logging.Infof(c.Context, "UFS migration NOT done, skipping Devices(UFS) dump to BQ")
+	return nil
+}
+
+// dumpInventoryDutStateSnapshot takes a snapshot of the UFS DutState at the current time and
+// uploads it to bigquery in InvV2 DutState format.
+func dumpInventoryDutStateSnapshot(c *router.Context) (err error) {
+	ctx := c.Context
+	// UFS migration, run this job
+	if config.Get(ctx).GetRouting().GetDumpDevicesBq() {
+		defer func() {
+			dumpInventoryDutStateSnapshotTick.Add(ctx, 1, err == nil)
+		}()
+
+		logging.Infof(c.Context, "Start dumping UFS/inventory DutState snapshot")
+		project := info.AppID(ctx)
+		dataset := "inventory"
+		curTimeStr := bqlib.GetPSTTimeStamp(time.Now())
+		client, err := bigquery.NewClient(ctx, project)
+		if err != nil {
+			return fmt.Errorf("bq client: %s", err)
+		}
+		stateUploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig$%s", curTimeStr))
+		ufsClient, err := ufs.GetUFSClient(ctx)
+		if err != nil {
+			return fmt.Errorf("UFS client: %s", err)
+		}
+		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
+		if err != nil {
+			return fmt.Errorf("UFS namespace: %s", err)
+		}
+		logging.Debugf(ctx, "getting all DutStates from UFS")
+		dutStatesData, err := ufs.GetAllUFSDutStatesData(osctx, ufsClient)
+		if err != nil {
+			return fmt.Errorf("UFS ListDutState failed: %s", err)
+		}
+		stateconfigs := converter.DutStateDataToBQDutStateMsgs(ctx, dutStatesData)
+		if len(stateconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d state configs to bigquery dataset (%s) table (stateconfig)", len(stateconfigs), dataset)
+			if err := stateUploader.Put(ctx, stateconfigs...); err != nil {
+				return fmt.Errorf("stateconfig put(UFS): %s", err)
+			}
+		}
+		logging.Debugf(ctx, "successfully uploaded DutStates(UFS) to bigquery")
+	}
+	logging.Infof(c.Context, "UFS migration NOT done, skipping DutStates(UFS) dump to BQ")
 	return nil
 }

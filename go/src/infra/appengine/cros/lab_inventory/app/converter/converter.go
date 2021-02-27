@@ -5,15 +5,17 @@
 package converter
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
+	"infra/appengine/cros/lab_inventory/app/external/ufs"
 	ds "infra/cros/lab_inventory/datastore"
 )
 
@@ -75,4 +77,47 @@ func DeviceToBQMsgsSeq(rs ds.DeviceOpResults) ([]proto.Message, []proto.Message,
 	}
 	// Return outs & err together, don't stop uploading for failures.
 	return labconfigs, stateconfigs, merr
+}
+
+// DeviceDataToBQDeviceMsgs converts a sequence of devices data into messages that can be committed to bigquery.
+func DeviceDataToBQDeviceMsgs(ctx context.Context, devicesData []*ufs.DeviceData) []proto.Message {
+	labconfigs := make([]proto.Message, len(devicesData))
+	for i, data := range devicesData {
+		if data.Device == nil || data.UpdateTime == nil {
+			logging.Errorf(ctx, "deviceData Device or UpdateTime is nil")
+			continue
+		}
+		var hostname string
+		if data.Device.GetDut() != nil {
+			hostname = data.Device.GetDut().GetHostname()
+		} else {
+			hostname = data.Device.GetLabstation().GetHostname()
+		}
+		labconfigs[i] = &apibq.LabInventory{
+			Id:          data.Device.GetId().GetValue(),
+			Hostname:    hostname,
+			Device:      data.Device,
+			UpdatedTime: data.UpdateTime,
+		}
+		fmt.Println(labconfigs[i])
+	}
+	return labconfigs
+}
+
+// DutStateDataToBQDutStateMsgs converts a sequence of dutStates data into messages that can be committed to bigquery.
+func DutStateDataToBQDutStateMsgs(ctx context.Context, dutStatesData []*ufs.DutStateData) []proto.Message {
+	stateconfigs := make([]proto.Message, len(dutStatesData))
+	for i, data := range dutStatesData {
+		if data.DutState == nil || data.UpdateTime == nil {
+			logging.Errorf(ctx, "dutStateData DutState or UpdateTime is nil")
+			continue
+		}
+		stateconfigs[i] = &apibq.StateConfigInventory{
+			Id:          data.DutState.GetId().GetValue(),
+			State:       data.DutState,
+			UpdatedTime: data.UpdateTime,
+		}
+		fmt.Println(stateconfigs[i])
+	}
+	return stateconfigs
 }

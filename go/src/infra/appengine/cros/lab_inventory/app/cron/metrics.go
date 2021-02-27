@@ -16,4 +16,18 @@ var (
 		nil,
 		field.Bool("success"), // If the attempt succeed
 	)
+
+	dumpInventoryDeviceSnapshotTick = metric.NewCounter(
+		"chromeos/inventory/dump_ufs_lab_config_snapshot",
+		"dumpInventoryDeviceSnapshot attempt",
+		nil,
+		field.Bool("success"), // If the attempt succeed
+	)
+
+	dumpInventoryDutStateSnapshotTick = metric.NewCounter(
+		"chromeos/inventory/dump_ufs_state_config_snapshot",
+		"dumpInventoryDutStateSnapshot attempt",
+		nil,
+		field.Bool("success"), // If the attempt succeed
+	)
 )
