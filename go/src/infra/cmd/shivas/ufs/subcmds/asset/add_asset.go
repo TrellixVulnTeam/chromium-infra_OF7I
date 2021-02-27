@@ -2,6 +2,7 @@ package asset
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -39,6 +40,7 @@ var AddAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.rack, "rack", "", "Rack that the asset is in")
 		c.Flags.StringVar(&c.position, "position", "", "Position that the asset is in")
 		c.Flags.StringVar(&c.assetType, "type", "", "Type of asset. "+cmdhelp.AssetTypesHelpText)
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -63,6 +65,15 @@ type addAsset struct {
 	position  string
 	assetType string
 	model     string
+	tags      string
+}
+
+var mcsvFields = []string{
+	"name",
+	"zone",
+	"rack",
+	"assettype",
+	"tags",
 }
 
 func (c *addAsset) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -94,19 +105,28 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 	})
 
 	var createAssetRequest ufsAPI.CreateAssetRequest
-
+	var reqs []*ufsAPI.CreateAssetRequest
 	if !c.interactive && c.newSpecsFile == "" && !c.scan {
 		rawAsset, err := c.parseArgs()
 		if err != nil {
 			return err
 		}
 		createAssetRequest.Asset = rawAsset
+		createAssetRequest.Asset.Name = ufsUtil.AddPrefix(ufsUtil.AssetCollection, createAssetRequest.Asset.Name)
 	} else if c.newSpecsFile != "" {
-		if err := utils.ParseJSONFile(c.newSpecsFile, &createAssetRequest); err != nil {
-			return err
+		if utils.IsCSVFile(c.newSpecsFile) {
+			reqs, err = c.parseMCSV()
+			if err != nil {
+				return err
+			}
+		} else {
+			if err := utils.ParseJSONFile(c.newSpecsFile, &createAssetRequest); err != nil {
+				return err
+			}
+			ufsZone := createAssetRequest.GetAsset().GetLocation().GetZone()
+			createAssetRequest.GetAsset().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
+			createAssetRequest.Asset.Name = ufsUtil.AddPrefix(ufsUtil.AssetCollection, createAssetRequest.Asset.Name)
 		}
-		ufsZone := createAssetRequest.GetAsset().GetLocation().GetZone()
-		createAssetRequest.GetAsset().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else if c.interactive {
 		fmt.Printf("Not implemented")
 		return nil
@@ -115,18 +135,23 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 		return nil
 	}
 
-	prefix, err := ufsUtil.GetResourcePrefix(createAssetRequest.Asset)
-	if err != nil {
-		return err
+	if len(reqs) == 0 {
+		reqs = append(reqs, &createAssetRequest)
 	}
-	createAssetRequest.Asset.Name = ufsUtil.AddPrefix(prefix, createAssetRequest.Asset.Name)
-
-	res, err := ic.CreateAsset(ctx, &createAssetRequest)
-	if err != nil {
-		return err
+	for _, r := range reqs {
+		if !ufsUtil.ValidateTags(r.Asset.Tags) {
+			fmt.Printf("Failed to add asset %s. Tags field contains invalidate characters.\n", r.Asset.GetName())
+			continue
+		}
+		res, err := ic.CreateAsset(ctx, r)
+		if err != nil {
+			fmt.Printf("Failed to add asset %s. %s\n", r.Asset.GetName(), err)
+			continue
+		}
+		res.Name = ufsUtil.RemovePrefix(res.Name)
+		utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
+		fmt.Println("Successfully added the asset: ", res.GetName())
 	}
-	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Println("Successfully added the asset: ", res.GetName())
 	return nil
 }
 
@@ -184,5 +209,60 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		asset.Location.Zone = ufsUtil.ToUFSZone(c.zone)
 	}
 	asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
+	asset.Tags = utils.GetStringSlice(c.tags)
 	return asset, nil
+}
+
+// parseMCSV parses the MCSV file and returns rack requests
+func (c *addAsset) parseMCSV() ([]*ufsAPI.CreateAssetRequest, error) {
+	records, err := utils.ParseMCSVFile(c.newSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+	var reqs []*ufsAPI.CreateAssetRequest
+	for i, rec := range records {
+		// if i is 1, determine whether this is a header
+		if i == 0 && utils.LooksLikeHeader(rec) {
+			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		req := &ufsAPI.CreateAssetRequest{
+			Asset: &ufspb.Asset{
+				Location: &ufspb.Location{},
+			},
+		}
+		for i := range mcsvFields {
+			name := mcsvFields[i]
+			value := rec[i]
+			switch name {
+			case "name":
+				req.Asset.Name = ufsUtil.AddPrefix(ufsUtil.AssetCollection, value)
+			case "zone":
+				if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(value)) {
+					return nil, fmt.Errorf("Error in line %d.\n%s is not a valid zone name. %s", i, value, cmdhelp.ZoneFilterHelpText)
+				}
+				ufsZone := ufsUtil.ToUFSZone(value)
+				req.Asset.Location.Zone = ufsZone
+				req.Asset.Realm = ufsUtil.ToUFSRealm(ufsZone.String())
+			case "rack":
+				if value == "" {
+					return nil, fmt.Errorf("Error in line %d.\nNeed rack to create as asset. %s", i, name)
+				}
+				req.Asset.Location.Rack = value
+			case "assettype":
+				if !ufsUtil.IsAssetType(value) {
+					return nil, fmt.Errorf("Error in line %d.\n%s is not a valid asset type. %s", i, value, cmdhelp.AssetTypesHelpText)
+				}
+				req.Asset.Type = ufsUtil.ToAssetType(value)
+			case "tags":
+				req.Asset.Tags = strings.Fields(value)
+			default:
+				return nil, fmt.Errorf("Error in line %d.\nUnknown field: %s", i, name)
+			}
+		}
+		reqs = append(reqs, req)
+	}
+	return reqs, nil
 }

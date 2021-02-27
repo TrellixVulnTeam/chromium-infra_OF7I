@@ -52,6 +52,7 @@ Gets the asset and prints the output in the user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.models), "model", "Name(s) of a model to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.buildTargets), "target", "Name(s) of a build target to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.phases), "phase", "Name(s) of a phase to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		return c
 	},
 }
@@ -70,6 +71,7 @@ type getAsset struct {
 	models       []string
 	buildTargets []string
 	phases       []string
+	tags         []string
 
 	pageSize int
 	keysOnly bool
@@ -128,6 +130,7 @@ func (c *getAsset) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ModelFilterName, c.models)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BuildTargetFilterName, c.buildTargets)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.phases)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.tags)...)
 	return filters
 }
 

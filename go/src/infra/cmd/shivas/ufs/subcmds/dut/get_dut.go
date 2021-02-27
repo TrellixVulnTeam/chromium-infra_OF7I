@@ -63,6 +63,7 @@ Gets the ChromeOS DUT and prints the output in user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.servotypes), "servotype", "Name(s) of a servo type to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.switches), "switch", "Name(s) of a switch to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.rpms), "rpm", "Name(s) of a rpm to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.pools), "pools", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.BoolVar(&c.wantHostInfoStore, "host-info-store", false, "write host info store to stdout")
 
 		return c
@@ -87,6 +88,7 @@ type getDut struct {
 	servotypes []string
 	switches   []string
 	rpms       []string
+	pools      []string
 
 	pageSize          int
 	keysOnly          bool
@@ -182,6 +184,7 @@ func (c *getDut) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RPMFilterName, c.rpms)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.pools)...)
 	return filters
 }
 
