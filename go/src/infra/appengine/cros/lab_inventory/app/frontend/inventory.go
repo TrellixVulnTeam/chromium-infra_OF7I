@@ -25,6 +25,7 @@ import (
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/appengine/cros/lab_inventory/app/external/ufs"
 	"infra/cros/lab_inventory/changehistory"
 	"infra/cros/lab_inventory/datastore"
 	"infra/cros/lab_inventory/deviceconfig"
@@ -395,6 +396,19 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 
 	if err = req.Validate(); err != nil {
 		return nil, err
+	}
+
+	// Route the call to UFS
+	if config.Get(ctx).GetRouting().GetUpdateDutsStatus() {
+		passed, failed, err := ufs.UpdateUFSDutState(ctx, req)
+		if err != nil {
+			logging.Errorf(ctx, "fail to update dutmeta, labmeta and dutstate in UFS: %s", err.Error())
+			return nil, err
+		}
+		return &api.UpdateDutsStatusResponse{
+			UpdatedDevices: passed,
+			FailedDevices:  failed,
+		}, nil
 	}
 
 	meta := make(map[string]datastore.DutMeta, len(req.GetDutMetas()))
