@@ -6,7 +6,8 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
@@ -14,9 +15,11 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 const config = {
   entry: {
     'mr-app': './static_src/elements/mr-app/mr-app.js',
-    'mr-profile-page': './static_src/elements/chdir/mr-profile-page/mr-profile-page.js',
+    'mr-profile-page':
+      './static_src/elements/chdir/mr-profile-page/mr-profile-page.js',
     'ezt-element-package': './static_src/elements/ezt/ezt-element-package.js',
-    'ezt-footer-scripts-package': './static_src/elements/ezt/ezt-footer-scripts-package.js',
+    'ezt-footer-scripts-package':
+      './static_src/elements/ezt/ezt-footer-scripts-package.js',
   },
   devtool: 'eval-source-map',
   plugins: [
@@ -63,8 +66,31 @@ const config = {
       ],
     }),
   ],
+  module: {
+    rules: [
+      {
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        use: ['babel-loader'],
+      },
+      {
+        test: /\.css$/i,
+        use: [
+          {loader: 'style-loader', options: {injectType: 'styleTag'}},
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              importLoaders: 1,
+            },
+          },
+          'postcss-loader',
+        ],
+      },
+    ],
+  },
   resolve: {
-    extensions: ['.js'],
+    extensions: ['.js', '.ts'],
     modules: ['node_modules', 'static_src'],
   },
   output: {
@@ -86,7 +112,7 @@ module.exports = (env, argv) => {
 
     config.plugins = config.plugins.concat([
       new webpack.DefinePlugin(
-        {'process.env.NODE_ENV': '"production"'}
+          {'process.env.NODE_ENV': '"production"'},
       ),
     ]);
   }

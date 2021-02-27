@@ -1,5 +1,9 @@
 {
-    "extends": "google",
+    "extends": [
+        "google",
+        "plugin:css-modules/recommended"
+    ],
+    "plugins": ["css-modules", "jsx-a11y"],
     "env": {
         "es6": true
     },

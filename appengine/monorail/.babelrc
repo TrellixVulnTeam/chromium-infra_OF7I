@@ -1,0 +1,18 @@
+{
+  "presets": [
+    // Includes plugins to use the latest versions of JavaScript.
+    ["@babel/preset-env", { "modules": false }],
+    // Includes multiple plugins used for TypeScript.
+    "@babel/preset-typescript",
+    // Includes multiple plugins used for React.
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    // Support Webpack's import() feature, which uses Promises.
+    "@babel/plugin-syntax-dynamic-import",
+    // Supports transforming JSX syntax into JavaScript.
+    "@babel/plugin-transform-react-jsx",
+    // Allows the use of ES6 spread operators.
+    "@babel/plugin-proposal-object-rest-spread"
+  ]
+}
