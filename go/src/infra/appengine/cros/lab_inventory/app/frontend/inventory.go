@@ -34,6 +34,7 @@ import (
 	"infra/cros/lab_inventory/manufacturingconfig"
 	invlibs "infra/cros/lab_inventory/protos"
 	"infra/cros/lab_inventory/utils"
+	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // InventoryServerImpl implements service interfaces.
@@ -323,6 +324,24 @@ func GetExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 	return extendedData, failedDevices
 }
 
+// GetExtendedDeviceDataForUFSRouting gets the lab data joined with device config,
+// manufacturing config, etc.
+func GetExtendedDeviceDataForUFSRouting(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
+	// Get HWID data in a batch.
+	extendedData, moreFailedDevices := getHwidDataInBatch(ctx, extendedData)
+	failedDevices = append(failedDevices, moreFailedDevices...)
+
+	// Get device config in a batch.
+	extendedData, moreFailedDevices = getDeviceConfigData(ctx, extendedData)
+	failedDevices = append(failedDevices, moreFailedDevices...)
+
+	extendedData, moreFailedDevices = getManufacturingConfigData(ctx, extendedData)
+	failedDevices = append(failedDevices, moreFailedDevices...)
+	logging.Debugf(ctx, "Got extended data for %d device(s)", len(extendedData))
+	return extendedData, failedDevices
+}
+
 type requestWithIds interface {
 	GetIds() []*api.DeviceID
 }
@@ -356,6 +375,47 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	}
 
 	hostnames, devIds := extractHostnamesAndDeviceIDs(ctx, req)
+
+	// Route the call to UFS
+	if config.Get(ctx).GetRouting().GetGetCrosDevices() {
+		ufsClient, err := ufs.GetUFSClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
+		if err != nil {
+			return nil, err
+		}
+		var failedDevices []*api.DeviceOpResult
+		var devices []*lab.ChromeOSDevice
+		crosDevices, failed := ufs.GetUFSDevicesByIds(osctx, ufsClient, devIds)
+		logging.Debugf(ctx, "Get %d devices by ID(UFS)", len(devices))
+		devices = append(devices, crosDevices...)
+		failedDevices = append(failedDevices, failed...)
+
+		crosDevices, failed = ufs.GetUFSDevicesByHostnames(osctx, ufsClient, hostnames)
+		logging.Debugf(ctx, "Get %d more devices by hostname(UFS)", len(devices))
+		devices = append(devices, crosDevices...)
+		failedDevices = append(failedDevices, failed...)
+
+		crosDevices, failed = ufs.GetUFSDevicesByModels(osctx, ufsClient, req.GetModels())
+		logging.Debugf(ctx, "Get %d more devices by model(UFS)", len(devices))
+		devices = append(devices, crosDevices...)
+		failedDevices = append(failedDevices, failed...)
+
+		extendedData, moreFailedDevices := ufs.GetUFSDutStateForDevices(osctx, ufsClient, devices)
+		failedDevices = append(failedDevices, moreFailedDevices...)
+
+		extendedData, moreFailedDevices = GetExtendedDeviceDataForUFSRouting(ctx, extendedData)
+
+		failedDevices = append(failedDevices, moreFailedDevices...)
+		resp = &api.GetCrosDevicesResponse{
+			Data:          extendedData,
+			FailedDevices: failedDevices,
+		}
+		return resp, nil
+	}
+
 	result := ([]datastore.DeviceOpResult)(datastore.GetDevicesByIds(ctx, devIds))
 	logging.Debugf(ctx, "Get %d devices by ID", len(result))
 	result = append(result, datastore.GetDevicesByHostnames(ctx, hostnames)...)
