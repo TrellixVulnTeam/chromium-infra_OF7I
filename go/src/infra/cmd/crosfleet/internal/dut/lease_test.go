@@ -5,6 +5,7 @@
 package dut
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
@@ -22,8 +23,9 @@ var testValidateData = []struct {
 			reason:       "this desc is barely too long!!!",
 			host:         "",
 			model:        "",
+			board:        "",
 		},
-		`missing either model or host
+		`exactly one of board, model, or host should be specified
 duration should be greater than 0
 reason cannot exceed 30 characters`,
 	},
@@ -33,8 +35,9 @@ reason cannot exceed 30 characters`,
 			reason:       "this desc is just short enough",
 			host:         "sample-host",
 			model:        "sample-model",
+			board:        "sample-board",
 		},
-		`model and host cannot both be specified
+		`exactly one of board, model, or host should be specified
 duration cannot exceed 24 hours (1440 minutes)`,
 	},
 	{ // No flags raise errors
@@ -63,6 +66,8 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+// We avoid testing this function for a host-based lease since we'd have to
+// fake a Swarming API call.
 var testBotDimsAndBuildTagsData = []struct {
 	leaseFlags
 	wantDims, wantTags map[string]string
@@ -70,7 +75,6 @@ var testBotDimsAndBuildTagsData = []struct {
 	{ // Model-based lease with added dims
 		leaseFlags{
 			model:     "sample-model",
-			host:      "sample-host",
 			reason:    "sample reason",
 			addedDims: map[string]string{"added-key": "added-val"},
 		},
@@ -85,23 +89,26 @@ var testBotDimsAndBuildTagsData = []struct {
 			"crosfleet-tool": "lease",
 			"lease-by":       "model",
 			"lease-reason":   "sample reason",
-			"model":          "sample-model",
+			"label-model":    "sample-model",
 			"qs-account":     "leases",
 		},
 	},
-	{ // Host-based lease without added dims
+	{ // Board-based lease without added dims
 		leaseFlags{
-			model:     "",
-			host:      "sample-host",
+			board:     "sample-board",
 			reason:    "sample reason",
 			addedDims: nil,
 		},
-		map[string]string{"id": "sample-host"},
+		map[string]string{
+			"dut_state":   "ready",
+			"label-board": "sample-board",
+			"label-pool":  "DUT_POOL_QUOTA",
+		},
 		map[string]string{
 			"crosfleet-tool": "lease",
-			"id":             "sample-host",
-			"lease-by":       "host",
+			"lease-by":       "board",
 			"lease-reason":   "sample reason",
+			"label-board":    "sample-board",
 			"qs-account":     "leases",
 		},
 	},
@@ -112,7 +119,11 @@ func TestBotDimsAndBuildTagsData(t *testing.T) {
 	for _, tt := range testBotDimsAndBuildTagsData {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s, %s)", tt.wantDims, tt.wantTags), func(t *testing.T) {
-			gotDims, gotTags := tt.leaseFlags.botDimsAndBuildTags()
+			ctx := context.Background()
+			gotDims, gotTags, err := botDimsAndBuildTags(ctx, nil, tt.leaseFlags)
+			if err != nil {
+				t.Fatalf("unexpected error calling botDimsAndBuildTags: %v", err)
+			}
 			if dimDiff := cmp.Diff(tt.wantDims, gotDims); dimDiff != "" {
 				t.Errorf("unexpected bot dimension diff (%s)", dimDiff)
 			}

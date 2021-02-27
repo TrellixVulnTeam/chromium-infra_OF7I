@@ -5,18 +5,19 @@
 package dut
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"strings"
-
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/cli"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
+	"strings"
 )
 
 const (
@@ -28,18 +29,15 @@ const (
 	// DUT pool available for leasing from.
 	leasesPool               = "DUT_POOL_QUOTA"
 	maxLeaseReasonCharacters = 30
-	// maxLeasesPerModel is the max number of leases allowed at a time for a
-	// given model.
-	maxLeasesPerModel = 1
 )
 
 var lease = &subcommands.Command{
-	UsageLine: fmt.Sprintf("%s {-model MODEL/-host HOST}", leaseCmdName),
+	UsageLine: fmt.Sprintf("%s {-board BOARD/-model MODEL/-host HOST}", leaseCmdName),
 	ShortDesc: "lease DUT for debugging",
 	LongDesc: `Lease DUT for debugging.
 
-DUTs can be leased by model or by individual DUT hostname.
-Leasing by model is faster, since it reserves the first available DUT of the given model. 
+DUTs can be leased by board, model, or individual DUT hostname.
+Leasing by board or model is fastest, since the first available DUT of the given board or model is reserved. 
 
 This command's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,
@@ -64,7 +62,6 @@ func (c *leaseRun) Run(a subcommands.Application, _ []string, env subcommands.En
 		cmdlib.PrintError(a, err)
 		return 1
 	}
-	fmt.Fprintf(a.GetOut(), "In real life this would start a lease.\n")
 	return 0
 }
 
@@ -72,12 +69,19 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	if err := c.leaseFlags.validate(&c.Flags); err != nil {
 		return err
 	}
+	ctx := cli.GetContext(a, c, env)
+	swarmingService, err := newSwarmingService(ctx, c.envFlags.Env().SwarmingService, &c.authFlags)
+	if err != nil {
+		return err
+	}
+	botDims, buildTags, err := botDimsAndBuildTags(ctx, swarmingService, c.leaseFlags)
+	if err != nil {
+		return err
+	}
 	buildProps := map[string]interface{}{
 		"lease_length_minutes": c.durationMins,
 	}
-	botDims, buildTags := c.botDimsAndBuildTags()
 
-	ctx := cli.GetContext(a, c, env)
 	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilderInfo, c.authFlags)
 	if err != nil {
 		return err
@@ -88,36 +92,41 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 }
 
 // botDimsAndBuildTags constructs bot dimensions and Buildbucket build tags for
-// a dut_leaser build.
-func (c *leaseFlags) botDimsAndBuildTags() (dims, tags map[string]string) {
+// a dut_leaser build from the given lease flags and optional bot ID.
+func botDimsAndBuildTags(ctx context.Context, swarmingService *swarmingapi.Service, leaseFlags leaseFlags) (dims, tags map[string]string, err error) {
 	dims = map[string]string{}
 	tags = map[string]string{}
-
 	// Add user-added dimensions to both bot dimensions and build tags.
-	for key, val := range c.addedDims {
+	for key, val := range leaseFlags.addedDims {
 		dims[key] = val
 		tags[key] = val
 	}
-
-	if c.model != "" {
-		dims["label-model"] = c.model
-		dims["label-pool"] = leasesPool
-		// Only look for DUTs that are ready for a new task, i.e. not broken.
-		dims["dut_state"] = "ready"
-
-		tags["model"] = c.model
-		tags["lease-by"] = "model"
-	} else if c.host != "" {
-		dims["id"] = c.host
-
-		tags["id"] = c.host
-		tags["lease-by"] = "host"
-	}
-
 	tags["crosfleet-tool"] = leaseCmdName
-	tags["lease-reason"] = c.reason
+	tags["lease-reason"] = leaseFlags.reason
 	tags["qs-account"] = "leases"
 
+	if leaseFlags.host != "" {
+		correctedHostname := correctedHostname(leaseFlags.host)
+		id, err := hostnameToBotID(ctx, swarmingService, correctedHostname)
+		if err != nil {
+			return nil, nil, err
+		}
+		tags["lease-by"] = "host"
+		tags["id"] = id
+		dims["id"] = id
+	} else if model := leaseFlags.model; model != "" {
+		tags["lease-by"] = "model"
+		tags["label-model"] = model
+		dims["label-model"] = model
+		dims["label-pool"] = leasesPool
+		dims["dut_state"] = "ready"
+	} else if board := leaseFlags.board; board != "" {
+		tags["lease-by"] = "board"
+		tags["label-board"] = board
+		dims["label-board"] = board
+		dims["label-pool"] = leasesPool
+		dims["dut_state"] = "ready"
+	}
 	return
 }
 
@@ -127,6 +136,7 @@ type leaseFlags struct {
 	reason       string
 	host         string
 	model        string
+	board        string
 	addedDims    map[string]string
 }
 
@@ -134,6 +144,7 @@ type leaseFlags struct {
 func (c *leaseFlags) register(f *flag.FlagSet) {
 	f.Int64Var(&c.durationMins, "minutes", 60, "Duration of lease in minutes.")
 	f.StringVar(&c.reason, "reason", "", fmt.Sprintf("Optional reason for leasing (limit %d characters).", maxLeaseReasonCharacters))
+	f.StringVar(&c.board, "board", "", "Board of DUT to lease. If leasing by board, the first available DUT of the given board will be leased.")
 	f.StringVar(&c.model, "model", "", "Model of DUT to lease. If leasing by model, the first available DUT of the given model will be leased.")
 	f.StringVar(&c.host, "host", "", `Hostname of an individual DUT to lease. If leasing by hostname and the host DUT is running another task,
 the lease won't start until that task completes.`)
@@ -143,11 +154,8 @@ the lease won't start until that task completes.`)
 
 func (c *leaseFlags) validate(f *flag.FlagSet) error {
 	var errors []string
-	if c.model != "" && c.host != "" {
-		errors = append(errors, "model and host cannot both be specified")
-	}
-	if c.model == "" && c.host == "" {
-		errors = append(errors, "missing either model or host")
+	if !c.hasOnePrimaryDim() {
+		errors = append(errors, "exactly one of board, model, or host should be specified")
 	}
 	if c.durationMins <= 0 {
 		errors = append(errors, "duration should be greater than 0")
@@ -163,4 +171,17 @@ func (c *leaseFlags) validate(f *flag.FlagSet) error {
 		return cmdlib.NewUsageError(*f, strings.Join(errors, "\n"))
 	}
 	return nil
+}
+
+// hasOnePrimaryDim verifies that exactly one of -board, -model, and -host were
+// passed in through the command line.
+func (c *leaseFlags) hasOnePrimaryDim() bool {
+	count := 0
+	primaryDimFields := []string{c.board, c.model, c.host}
+	for _, field := range primaryDimFields {
+		if field != "" {
+			count++
+		}
+	}
+	return count == 1
 }

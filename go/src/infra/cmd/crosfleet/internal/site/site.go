@@ -18,8 +18,7 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
-	SwarmingService  string
-	InventoryService string
+	SwarmingService string
 
 	// Buildbucket-specific values.
 	CTPBuilderInfo       BuildbucketBuilderInfo
@@ -35,8 +34,7 @@ type BuildbucketBuilderInfo struct {
 
 // Prod is the environment for prod.
 var Prod = Environment{
-	SwarmingService:  "https://chromeos-swarming.appspot.com/",
-	InventoryService: "cros-lab-inventory.appspot.com",
+	SwarmingService: "https://chromeos-swarming.appspot.com/",
 
 	CTPBuilderInfo: BuildbucketBuilderInfo{
 		Host: "cr-buildbucket.appspot.com",
@@ -58,8 +56,7 @@ var Prod = Environment{
 
 // Dev is the environment for dev.
 var Dev = Environment{
-	SwarmingService:  "https://chromium-swarm-dev.appspot.com/",
-	InventoryService: "cros-lab-inventory-dev.appspot.com",
+	SwarmingService: "https://chromium-swarm-dev.appspot.com/",
 
 	CTPBuilderInfo: BuildbucketBuilderInfo{
 		Host: "cr-buildbucket.appspot.com",

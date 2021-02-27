@@ -23,7 +23,10 @@ import (
 	"infra/cmdsupport/cmdlib"
 )
 
-var maxServiceVersion = &test_platform.ServiceVersion{CrosfleetTool: site.VersionNumber}
+var maxServiceVersion = &test_platform.ServiceVersion{
+	CrosfleetTool: site.VersionNumber,
+	SkylabTool:    site.VersionNumber,
+}
 
 // addServiceVersion marshals the max service version proto to a JSON-encoded
 // string, adds it to the given Buildbucket property map, and returns the
