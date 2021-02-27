@@ -1200,12 +1200,33 @@ func parseToCreateRequest(ctx context.Context, r *invlibs.DeviceManualRepairReco
 	// The ID should either be an asset tag or a uuid. Checking if it equals
 	// hostname is to prevent datastore errors.
 	var assetTag string
-	devices := datastore.GetDevicesByHostnames(ctx, []string{r.Hostname})
-	if err := devices[0].Err; err != nil {
-		logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
+	// Route the call to UFS
+	if config.Get(ctx).GetRouting().GetGetCrosDevices() {
 		assetTag = "n/a"
+		ufsClient, err := ufs.GetUFSClient(ctx)
+		if err == nil {
+			osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
+			if err == nil {
+				devices, _ := ufs.GetUFSDevicesByHostnames(osctx, ufsClient, []string{r.Hostname})
+				if len(devices) > 0 {
+					assetTag = devices[0].GetId().GetValue()
+				} else {
+					logging.Warningf(ctx, "Device not found; setting asset tag to n/a")
+				}
+			} else {
+				logging.Warningf(ctx, "Failed to set namespace in context; setting asset tag to n/a")
+			}
+		} else {
+			logging.Warningf(ctx, "Failed to get UFSClient; setting asset tag to n/a")
+		}
 	} else {
-		assetTag = string(devices[0].Entity.ID)
+		devices := datastore.GetDevicesByHostnames(ctx, []string{r.Hostname})
+		if err := devices[0].Err; err != nil {
+			logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
+			assetTag = "n/a"
+		} else {
+			assetTag = string(devices[0].Entity.ID)
+		}
 	}
 
 	// Fill in the asset tag field for the records and write to datastore.
