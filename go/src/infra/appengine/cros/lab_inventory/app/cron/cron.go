@@ -311,6 +311,11 @@ func dumpInventorySnapshot(c *router.Context) (err error) {
 
 func pushToDroneQueenCronHandler(c *router.Context) error {
 	ctx := c.Context
+	// UFS Migration, skip running this job
+	if config.Get(ctx).GetRouting().GetDisableDronequeenPush() {
+		logging.Infof(c.Context, "UFS Migration done. Skipping push inventory to drone queen")
+		return nil
+	}
 	logging.Infof(c.Context, "Start to push inventory to drone queen")
 	queenHostname := config.Get(ctx).QueenService
 	if queenHostname == "" {
