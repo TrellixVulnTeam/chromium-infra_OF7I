@@ -29,6 +29,8 @@ message asset {
   google.protobuf.Timestamp update_time = 6 [
       (google.api.field_behavior) = OUTPUT_ONLY];
   string realm = 7; // ACL info of the asset
+  // tags user can attach for easy querying/searching
+  repeated string tags = 8;
 }
 
 // AssetType determines the type of asset

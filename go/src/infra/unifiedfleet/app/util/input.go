@@ -113,6 +113,7 @@ var (
 	PhaseFilterName             string = "phase"
 	AssetTypeFilterName         string = "assettype"
 	SubnetFilterName            string = "subnet"
+	PoolsFilterName             string = "pools"
 )
 
 const separator string = "/"

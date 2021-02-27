@@ -45,6 +45,7 @@ type MachineLSEEntity struct {
 	OS                    []string `gae:"os"`
 	VirtualDatacenter     string   `gae:"virtualdatacenter"`
 	Nic                   string   `gae:"nic"`
+	Pools                 []string `gae:"pools"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -71,13 +72,17 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 	servoID := ufsds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
 	var rpmID string
 	var rpmPort string
+	var pools []string
 	if p.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		rpmID = p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitName()
 		rpmPort = p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().GetPowerunitOutlet()
+		pools = p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools()
 	} else if p.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		rpmID = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitOutlet()
 		rpmPort = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitOutlet()
+		pools = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetPools()
 	}
+
 	return &MachineLSEEntity{
 		ID:                    p.GetName(),
 		MachineIDs:            p.GetMachines(),
@@ -96,6 +101,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		VirtualDatacenter:     p.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		Nic:                   p.GetNic(),
 		Tags:                  p.GetTags(),
+		Pools:                 pools,
 		MachineLSE:            machineLSE,
 	}, nil
 }
@@ -400,8 +406,10 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "virtualdatacenter"
 	case util.NicFilterName:
 		field = "nic"
+	case util.PoolsFilterName:
+		field = "pools"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/rpmport/vlan/servo/servotype/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/rpmport/vlan/servo/servotype/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)/pools", input)
 	}
 	return field, nil
 }

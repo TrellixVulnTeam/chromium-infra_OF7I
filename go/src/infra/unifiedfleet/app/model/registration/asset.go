@@ -26,15 +26,16 @@ const AssetKind string = "Asset"
 
 // AssetEntity is a datastore entity that tracks Assets
 type AssetEntity struct {
-	_kind       string `gae:"$kind,Asset"`
-	Name        string `gae:"$id"`
-	Zone        string `gae:"zone"`
-	Type        string `gae:"type"`
-	Model       string `gae:"model"`
-	Rack        string `gae:"rack"`
-	BuildTarget string `gae:"build_target"`
-	Phase       string `gae:"phase"`
-	Asset       []byte `gae:",noindex"` // Marshalled Asset proto
+	_kind       string   `gae:"$kind,Asset"`
+	Name        string   `gae:"$id"`
+	Zone        string   `gae:"zone"`
+	Type        string   `gae:"type"`
+	Model       string   `gae:"model"`
+	Rack        string   `gae:"rack"`
+	BuildTarget string   `gae:"build_target"`
+	Phase       string   `gae:"phase"`
+	Tags        []string `gae:"tags"`
+	Asset       []byte   `gae:",noindex"` // Marshalled Asset proto
 }
 
 // GetProto returns unmarshalled Asset.
@@ -67,6 +68,7 @@ func newAssetEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, e
 		Rack:        a.GetLocation().GetRack(),
 		BuildTarget: a.GetInfo().GetBuildTarget(),
 		Phase:       a.GetInfo().GetPhase(),
+		Tags:        a.GetTags(),
 		Asset:       asset,
 	}, nil
 }
@@ -210,8 +212,10 @@ func GetAssetIndexedFieldName(input string) (string, error) {
 		field = "type"
 	case util.PhaseFilterName:
 		field = "phase"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for asset are zone/rack/model/buildtarget(target)/assettype/phase", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for asset are zone/rack/model/buildtarget(target)/assettype/phase/tags", input)
 	}
 	return field, nil
 }
