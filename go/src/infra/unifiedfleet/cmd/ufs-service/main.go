@@ -140,6 +140,10 @@ func versionInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 		}
 		ufsGRPCServerCount.Add(ctx, 1, info.FullMethod, int(code), user)
 	}()
+	if blockSkylabWritesToMachineLSE(info, user) {
+		logging.Infof(ctx, "Blocking useragent: %s RPC: %s", user, info.FullMethod)
+		return nil, status.Errorf(codes.PermissionDenied, "blocking skylab writes to UFS MachineLSE")
+	}
 	logging.Debugf(ctx, "Successfully pass user-agent version check for user %s, major version %d", user, SupportedClientMajorVersionNumber)
 	resp, err = handler(ctx, req)
 	return
@@ -174,4 +178,15 @@ func validateUserAgent(md metadata.MD) (string, bool, error) {
 		}
 	}
 	return version[0], ok, nil
+}
+
+// This is to block older version of skylab tools from updating MachineLSE in UFS.
+func blockSkylabWritesToMachineLSE(info *grpc.UnaryServerInfo, userAgent string) bool {
+	if strings.Contains(userAgent, "skylab") &&
+		(strings.Contains(info.FullMethod, "CreateMachineLSE") ||
+			strings.Contains(info.FullMethod, "UpdateMachineLSE") ||
+			strings.Contains(info.FullMethod, "DeleteMachineLSE")) {
+		return true
+	}
+	return false
 }
