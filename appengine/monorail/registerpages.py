@@ -87,6 +87,7 @@ from tracker import issuebulkedit
 from tracker import webcomponentspage
 from tracker import issuedetailezt
 from tracker import issueentry
+from tracker import issueentryafterlogin
 from tracker import issueexport
 from tracker import issueimport
 from tracker import issueoriginal
@@ -256,6 +257,8 @@ class ServletRegistry(object):
                 issueentry.IssueEntry,
             urls.ISSUE_ENTRY_NEW:
                 webcomponentspage.WebComponentsPage,
+            urls.ISSUE_ENTRY_AFTER_LOGIN:
+                issueentryafterlogin.IssueEntryAfterLogin,
             urls.ISSUE_TIPS:
                 issuetips.IssueSearchTips,
             urls.ISSUE_ATTACHMENT:
