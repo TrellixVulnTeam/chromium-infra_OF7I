@@ -23,7 +23,7 @@ class FilesAbsCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  def testExportFilesAbsCoverage_shouldSelectLatestReport(
+  def testExportAbsoluteCoverageForBuilder_shouldSelectLatestReport(
       self, mocked_report_rows, *_):
 
     old_postsubmit_report = PostsubmitReport.Create(
@@ -71,7 +71,8 @@ class FilesAbsCoverageTest(WaterfallTestCase):
         })
     file_coverage_data.put()
 
-    files_absolute_coverage.ExportFilesAbsoluteCoverage()
+    files_absolute_coverage._ExportAbsoluteCoverageForBuilder(
+        'linux-code-coverage')
 
     expected_bq_rows = [{
         'project': 'chromium/src',
