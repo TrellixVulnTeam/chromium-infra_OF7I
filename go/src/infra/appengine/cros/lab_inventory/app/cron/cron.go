@@ -263,7 +263,7 @@ func dumpInventorySnapshot(c *router.Context) (err error) {
 	ctx := c.Context
 	// UFS migration, skip this job
 	if config.Get(ctx).GetRouting().GetDumpDevicesBq() {
-		logging.Infof(c.Context, "UFS migration - skipping InvV2 dumping inventory snapshot")
+		logging.Infof(c.Context, "UFS migration done: skipping InvV2 dumping inventory snapshot")
 		return nil
 	}
 
@@ -321,7 +321,7 @@ func pushToDroneQueenCronHandler(c *router.Context) error {
 	ctx := c.Context
 	// UFS Migration, skip running this job
 	if config.Get(ctx).GetRouting().GetDisableDronequeenPush() {
-		logging.Infof(c.Context, "UFS Migration done. Skipping push inventory to drone queen")
+		logging.Infof(c.Context, "UFS migration done: Skipping push inventory to drone queen")
 		return nil
 	}
 	logging.Infof(c.Context, "Start to push inventory to drone queen")
@@ -652,7 +652,7 @@ func dumpInventoryDeviceSnapshot(c *router.Context) (err error) {
 			dumpInventoryDeviceSnapshotTick.Add(ctx, 1, err == nil)
 		}()
 
-		logging.Infof(c.Context, "Start dumping UFS/inventory device snapshot")
+		logging.Infof(c.Context, "UFS migration done: Start dumping UFS/inventory device snapshot")
 		project := info.AppID(ctx)
 		dataset := "inventory"
 		curTimeStr := bqlib.GetPSTTimeStamp(time.Now())
@@ -698,7 +698,7 @@ func dumpInventoryDutStateSnapshot(c *router.Context) (err error) {
 			dumpInventoryDutStateSnapshotTick.Add(ctx, 1, err == nil)
 		}()
 
-		logging.Infof(c.Context, "Start dumping UFS/inventory DutState snapshot")
+		logging.Infof(c.Context, "UFS migration done: Start dumping UFS/inventory DutState snapshot")
 		project := info.AppID(ctx)
 		dataset := "inventory"
 		curTimeStr := bqlib.GetPSTTimeStamp(time.Now())

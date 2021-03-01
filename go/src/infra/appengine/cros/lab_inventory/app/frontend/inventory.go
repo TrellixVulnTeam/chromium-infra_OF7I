@@ -378,6 +378,7 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 
 	// Route the call to UFS
 	if config.Get(ctx).GetRouting().GetGetCrosDevices() {
+		logging.Infof(ctx, "Routing GetCrosDevices to UFS: %+v", req)
 		ufsClient, err := ufs.GetUFSClient(ctx)
 		if err != nil {
 			return nil, err
@@ -460,6 +461,7 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 
 	// Route the call to UFS
 	if config.Get(ctx).GetRouting().GetUpdateDutsStatus() {
+		logging.Infof(ctx, "Routing UpdateDutsStatus to UFS: %+v", req)
 		passed, failed, err := ufs.UpdateUFSDutState(ctx, req)
 		if err != nil {
 			logging.Errorf(ctx, "fail to update dutmeta, labmeta and dutstate in UFS: %s", err.Error())
@@ -1202,6 +1204,7 @@ func parseToCreateRequest(ctx context.Context, r *invlibs.DeviceManualRepairReco
 	var assetTag string
 	// Route the call to UFS
 	if config.Get(ctx).GetRouting().GetGetCrosDevices() {
+		logging.Infof(ctx, "Routing GetCrosDevices/ManualRepair to UFS: %s", r.Hostname)
 		assetTag = "n/a"
 		ufsClient, err := ufs.GetUFSClient(ctx)
 		if err == nil {
