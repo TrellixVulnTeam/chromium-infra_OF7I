@@ -6,10 +6,13 @@ package fake
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -285,6 +288,26 @@ func (ic *FleetClient) GetMachine(ctx context.Context, in *ufsapi.GetMachineRequ
 		mockMachineForLabStationCopy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForLabStationCopy.Name)
 		return mockMachineForLabStationCopy, nil
 	}
+	if strings.Contains(in.GetName(), "GMNF") {
+		// GMNF - GetMachine Not Found
+		return nil, status.Errorf(codes.NotFound, "Machine not found")
+	}
+	if strings.Contains(in.GetName(), "GMIE") {
+		// GMIE - GetMachine Internal Error
+		return nil, status.Errorf(codes.Internal, "Had an internal error")
+	}
+	if strings.Contains(in.GetName(), "GMFD") {
+		// GMFD - GetMachine Found Dut
+		mockMachineForDUTCopy := proto.Clone(mockMachineForDUT).(*ufspb.Machine)
+		mockMachineForDUTCopy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForDUTCopy.Name)
+		return mockMachineForDUTCopy, nil
+	}
+	if strings.Contains(in.GetName(), "GMFL") {
+		// GetMachine Found Labstation
+		mockMachineForLabStationCopy := proto.Clone(mockMachineForLabStation).(*ufspb.Machine)
+		mockMachineForLabStationCopy.Name = ufsutil.AddPrefix(ufsutil.MachineCollection, mockMachineForLabStationCopy.Name)
+		return mockMachineForLabStationCopy, nil
+	}
 	return nil, errors.New("No Machine found")
 }
 
@@ -376,6 +399,92 @@ func (ic *FleetClient) ListDutStates(ctx context.Context, in *ufsapi.ListDutStat
 		DutStates:     []*lab.DutState{mockDutStateForDUT, mockDutStateForLabstation},
 		NextPageToken: "",
 	}, nil
+}
+
+// CreateAsset mocks the create asset API. Fails if "CAIE" or "CANF" is found in the asset tag.
+func (ic *FleetClient) CreateAsset(ctx context.Context, req *ufsapi.CreateAssetRequest, opts ...grpc.CallOption) (*ufspb.Asset, error) {
+	if strings.Contains(req.GetAsset().Name, "CAIE") {
+		// CAIE - CreateAsset Internal Error
+		return nil, status.Errorf(codes.Internal, "Some internal failure")
+	} else if strings.Contains(req.GetAsset().Name, "CANF") {
+		// CANF - CreateAsset Not Found
+		return nil, status.Errorf(codes.NotFound, "Rack not found. I looked everywhere")
+	}
+	return req.Asset, nil
+}
+
+// CreateMachineLSE mocks the create machine lse API. Fails if "CMLSEIE" or "CMLSENF" is in the asset tag.
+func (ic *FleetClient) CreateMachineLSE(ctx context.Context, req *ufsapi.CreateMachineLSERequest, opts ...grpc.CallOption) (*ufspb.MachineLSE, error) {
+	if strings.Contains(req.GetMachineLSE().GetMachines()[0], "CMLSEIE") {
+		// CMLSEIE - CreateMachineLSE Internal Error
+		return nil, status.Errorf(codes.Internal, "Some internal failure")
+	} else if strings.Contains(req.GetMachineLSE().GetMachines()[0], "CMLSENF") {
+		// CMLSENF - CreateMachineLSE Not Found
+		return nil, status.Errorf(codes.NotFound, "Something not found")
+	}
+	return req.GetMachineLSE(), nil
+}
+
+// GetAsset mocks the get asset API, Fails if "GAIE" or "GANF" is a substring in asset tag.
+func (ic *FleetClient) GetAsset(ctx context.Context, req *ufsapi.GetAssetRequest, opts ...grpc.CallOption) (*ufspb.Asset, error) {
+	if strings.Contains(req.Name, "GAIE") {
+		// GAIE - GetAsset Internal Error
+		return nil, status.Errorf(codes.Internal, "Some internal failure")
+	} else if strings.Contains(req.Name, "GANF") {
+		// GANF - GetAsset Not Found
+		return nil, status.Errorf(codes.NotFound, "Asset not found. I looked everywhere")
+	}
+	var t ufspb.AssetType
+	if strings.Contains(req.Name, "dut") {
+		t = ufspb.AssetType_DUT
+	} else {
+		t = ufspb.AssetType_LABSTATION
+	}
+	return &ufspb.Asset{
+		Name:  req.Name,
+		Model: "test",
+		Location: &ufspb.Location{
+			Zone: ufspb.Zone_ZONE_CHROMEOS6,
+			Rack: "TheTestRack-1",
+		},
+		Info: &ufspb.AssetInfo{
+			AssetTag:    req.Name,
+			Model:       "test",
+			BuildTarget: "test",
+			Sku:         "test",
+		},
+		Type: t,
+	}, nil
+}
+
+// GetRack mocks the get rack API, Fails if rack is in chromeos4 or chromeos1.
+func (ic *FleetClient) GetRack(ctx context.Context, req *ufsapi.GetRackRequest, opts ...grpc.CallOption) (*ufspb.Rack, error) {
+	if strings.Contains(req.Name, "chromeos4") {
+		// Accessing chromeos4 rack results in internal error
+		return nil, status.Errorf(codes.Internal, "Some internal failure")
+	} else if strings.Contains(req.Name, "chromeos1") {
+		// Accessing chromeos1 rack results in internal error
+		return nil, status.Errorf(codes.NotFound, "Rack not found. I looked everywhere")
+	}
+	return &ufspb.Rack{
+		Name: req.Name,
+		Location: &ufspb.Location{
+			Zone: ufspb.Zone_ZONE_CHROMEOS6,
+			Rack: req.Name,
+		},
+	}, nil
+}
+
+// RackRegistration mocks the rack registration API. Fails if the rack is in row1 or row2.
+func (ic *FleetClient) RackRegistration(ctx context.Context, req *ufsapi.RackRegistrationRequest, opts ...grpc.CallOption) (*ufspb.Rack, error) {
+	if strings.Contains(req.GetRack().Name, "row1") {
+		// Creating chromeos3 rack results in internal error
+		return nil, status.Errorf(codes.Internal, "Some internal failure")
+	} else if strings.Contains(req.GetRack().Name, "row2") {
+		// Creating chromeos5 rack results in not found error
+		return nil, status.Errorf(codes.NotFound, "Something not found??")
+	}
+	return req.GetRack(), nil
 }
 
 // GetMockDUT mocks dut machinelse

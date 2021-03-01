@@ -113,6 +113,10 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
+	// Check if the UFS routing is enabled.
+	if config.Get(ctx).GetRouting().GetAddCrosDevices() {
+		return ufs.CreateMachineLSEs(ctx, req.Devices, req.PickServoPort), nil
+	}
 	addingResults, err := datastore.AddDevices(ctx, req.Devices, req.PickServoPort)
 	if err != nil {
 		// Return specific error code if the labstation is not deployed yet, so

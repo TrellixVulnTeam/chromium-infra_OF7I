@@ -21,6 +21,7 @@ import (
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/external"
+	shivasUtil "infra/cmd/shivas/utils"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufschromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
@@ -324,6 +325,157 @@ func GetAllUFSDutStatesData(ctx context.Context, ufsClient external.UFSClient) (
 		curPageToken = res.GetNextPageToken()
 	}
 	return dutStatesData, nil
+}
+
+// CreateMachineLSEs creates machine LSEs in UFS from given cros devices and returns AddCrosDevicesResponse.
+// Intended to be used in piping IV2 API to UFS.
+func CreateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, pickServoPort bool) *api.AddCrosDevicesResponse {
+	// Response to be returned for AddCrosDevices API
+	resp := &api.AddCrosDevicesResponse{
+		PassedDevices: []*api.DeviceOpResult{},
+		FailedDevices: []*api.DeviceOpResult{},
+	}
+	// Helper function to record errors on failure to AddCrosDevicesResponse
+	recErr := func(id, hostname string, err error) {
+		resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+			Id:       id,
+			Hostname: hostname,
+			ErrorMsg: err.Error(),
+		})
+	}
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		for _, device := range devices {
+			recErr(device.GetId().GetValue(), "", errors.Annotate(err, "CreateMachineLSEs - [UFS] Failed to create machine lse.").Err())
+		}
+		return resp
+	}
+	// Iterate through all the devices and update UFS with the required data
+	for _, device := range devices {
+		// Determine the hostname for the LSE.
+		var hostname string
+		if device.GetDut() != nil {
+			hostname = device.GetDut().GetHostname()
+		} else {
+			hostname = device.GetLabstation().GetHostname()
+		}
+		// Check if the machine exists
+		_, err := ufsClient.GetMachine(ctx, &ufsapi.GetMachineRequest{
+			Name: ufsutil.AddPrefix(ufsutil.MachineCollection, device.GetId().GetValue()),
+		})
+		if err != nil {
+			// Check if it was a not found error and create an asset &| rack.
+			if ufsutil.IsNotFoundError(err) {
+				// Create an asset after verifying that the rack exists.
+				var loc *ufspb.Location
+				if shivasUtil.IsLocation(hostname) {
+					loc, err = shivasUtil.GetLocation(hostname)
+					if err != nil {
+						recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Failed to determine location").Err())
+						continue
+					}
+				} else {
+					recErr(device.GetId().GetValue(), hostname, errors.Reason("CreateMachineLSEs - Cannot determine location for %s", hostname).Err())
+					continue
+				}
+				// Check if rack exists
+				_, err = ufsClient.GetRack(ctx, &ufsapi.GetRackRequest{
+					Name: ufsutil.AddPrefix(ufsutil.RackCollection, loc.GetRack()),
+				})
+				if err != nil && ufsutil.IsNotFoundError(err) {
+					_, err = ufsClient.RackRegistration(ctx, &ufsapi.RackRegistrationRequest{
+						Rack: &ufspb.Rack{
+							Name:        loc.GetRack(),
+							Location:    loc,
+							Description: "Added from IV2 as a part of UFS migration",
+							Tags:        []string{"UFS-migration", "source=IV2"},
+						},
+					})
+					if err != nil {
+						recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Unable to create rack in UFS").Err())
+						continue
+					}
+				} else if err != nil {
+					recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Unable to check if the rack exists").Err())
+					continue
+				}
+				// Construct and add an asset based on the cros device.
+				var model, board, variant string
+				if dconfigID := device.GetDeviceConfigId(); dconfigID != nil {
+					if dconfigID.GetPlatformId() != nil {
+						board = dconfigID.GetPlatformId().GetValue()
+					} else {
+						recErr(device.GetId().GetValue(), hostname, errors.Reason("CreateMachineLSEs - Cannot create host without board").Err())
+						continue
+					}
+					if dconfigID.GetModelId() != nil {
+						model = dconfigID.GetModelId().GetValue()
+					} else {
+						recErr(device.GetId().GetValue(), hostname, errors.Reason("CreateMachineLSEs - Cannot create host without model").Err())
+						continue
+					}
+					if dconfigID.GetVariantId() != nil {
+						variant = dconfigID.GetVariantId().GetValue()
+					}
+				}
+				asset := &ufspb.Asset{
+					Name:     ufsutil.AddPrefix(ufsutil.AssetCollection, device.GetId().GetValue()),
+					Location: loc,
+					Info: &ufspb.AssetInfo{
+						AssetTag:    device.GetId().GetValue(),
+						Model:       model,
+						BuildTarget: board,
+						Sku:         variant,
+					},
+					Model: model,
+				}
+				if device.GetDut() != nil {
+					asset.Type = ufspb.AssetType_DUT
+				} else {
+					asset.Type = ufspb.AssetType_LABSTATION
+				}
+				// Create the asset and update to UFS
+				_, err = ufsClient.CreateAsset(ctx, &ufsapi.CreateAssetRequest{
+					Asset: asset,
+				})
+				if err != nil {
+					recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Failed to create asset in UFS").Err())
+					continue
+				}
+			} else {
+				// Error was due to some other issue. Log and continue
+				recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Failed to determine if the asset exists").Err())
+				continue
+			}
+		}
+		// Create and update machine lse to UFS.
+		var mlse *ufspb.MachineLSE
+		if device.GetDut() != nil {
+			// Copy the dut to UFS dut.
+			mlse = ufsutil.DUTToLSE(device.GetDut(), device.GetId().GetValue(), nil)
+			if pickServoPort {
+				// UFS assigns a servo port if its set to 0
+				mlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoPort = int32(0)
+			}
+		} else {
+			mlse = ufsutil.LabstationToLSE(device.GetLabstation(), device.GetId().GetValue(), nil)
+		}
+		_, err = ufsClient.CreateMachineLSE(ctx, &ufsapi.CreateMachineLSERequest{
+			MachineLSE:   mlse,
+			MachineLSEId: mlse.GetName(),
+		})
+		if err != nil {
+			recErr(device.GetId().GetValue(), hostname, errors.Annotate(err, "CreateMachineLSEs - Unable to create host %s", hostname).Err())
+			continue
+		}
+		resp.PassedDevices = append(resp.PassedDevices, &api.DeviceOpResult{
+			Id:       device.GetId().GetValue(),
+			Hostname: hostname,
+		})
+	}
+	return resp
 }
 
 // CopyUFSDutStateToInvV2DutState converts UFS DutState to InvV2 DutState proto format.

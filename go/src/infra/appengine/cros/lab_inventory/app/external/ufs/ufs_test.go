@@ -11,10 +11,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 
-	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/external"
@@ -522,4 +523,195 @@ func mockInvV2LabMeta(id string) *api.LabMeta {
 			},
 		},
 	}
+}
+
+func mockIV2ChromeOSDeviceDUT(assetTag, hostname, model, board, variant, servohost, servoserial string, servoport int32) *lab.ChromeOSDevice {
+	return &lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{
+			Value: assetTag,
+		},
+		DeviceConfigId: &device.ConfigId{
+			ModelId: &device.ModelId{
+				Value: model,
+			},
+			PlatformId: &device.PlatformId{
+				Value: board,
+			},
+			VariantId: &device.VariantId{
+				Value: variant,
+			},
+		},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname: hostname,
+				Peripherals: &lab.Peripherals{
+					Servo: &lab.Servo{
+						ServoHostname: servohost,
+						ServoPort:     servoport,
+						ServoSerial:   servoserial,
+					},
+				},
+			},
+		},
+	}
+}
+
+func mockIV2ChromeOSDeviceLabstation(assetTag, hostname, model, board, variant string) *lab.ChromeOSDevice {
+	return &lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{
+			Value: assetTag,
+		},
+		DeviceConfigId: &device.ConfigId{
+			ModelId: &device.ModelId{
+				Value: model,
+			},
+			PlatformId: &device.PlatformId{
+				Value: board,
+			},
+			VariantId: &device.VariantId{
+				Value: variant,
+			},
+		},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{
+				Hostname: hostname,
+			},
+		},
+	}
+}
+
+func TestCreateMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("CreateMachineLSEs", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("[DUT] Asset/Machine doesn't exist, gets created successfully", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-GMNF", "chromeos6-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "chromeos6-row1-rack1-host1")
+		})
+		Convey("[DUT] Asset/Machine doesn't exist, fails to create asset", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-GMNF-CAIE", "chromeos6-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos6-row1-rack1-host1")
+		})
+		Convey("[DUT] InternalError on GetMachine, fails to create MLSE", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-GMIE", "chromeos1-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[DUT] Rack doesn't exist, gets created successfully", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-GMNF", "chromeos1-row3-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "chromeos1-row3-rack1-host1")
+		})
+		Convey("[DUT] Rack doesn't exist, fails to create rack", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-GMNF", "chromeos1-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[DUT] CreateMachineLSE API fails to create mlse", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset-CMLSEIE", "chromeos1-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[DUT] Happy path", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceDUT("GoodAsset", "chromeos1-row1-rack1-host1", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[Labstation] Asset/Machine doesn't exist, gets created successfully", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-GMNF", "chromeos6-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "chromeos6-row1-rack1-host1")
+		})
+		Convey("[Labstation] Asset/Machine doesn't exist, fails to create asset", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-GMNF-CAIE", "chromeos6-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos6-row1-rack1-host1")
+		})
+		Convey("[Labstation] InternalError on GetMachine, fails to create MLSE", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-GMIE", "chromeos1-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[Labstation] Rack doesn't exist, gets created successfully", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-GMNF", "chromeos1-row3-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "chromeos1-row3-rack1-host1")
+		})
+		Convey("[Labstation] Rack doesn't exist, fails to create rack", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-GMNF", "chromeos1-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[Labstation] CreateMachineLSE API fails to create mlse", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-CMLSEIE", "chromeos1-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+		Convey("[Labstation] Happy path", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset", "chromeos1-row1-rack1-host1", "test", "test", "test"),
+			}
+			resp := CreateMachineLSEs(tf.C, devices, true)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 0)
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-host1")
+		})
+	})
 }
