@@ -25,7 +25,6 @@ import (
 )
 
 const repairBotsQueue = "repair-bots"
-const resetBotsQueue = "reset-bots"
 const repairLabstationQueue = "repair-labstations"
 const auditBotsQueue = "audit-bots"
 
@@ -39,12 +38,6 @@ func PushRepairLabstations(ctx context.Context, botIDs []string) error {
 // jobs.
 func PushRepairDUTs(ctx context.Context, botIDs []string, expectedState string) error {
 	return pushDUTs(ctx, repairBotsQueue, createTasks(botIDs, expectedState, crosRepairTask))
-}
-
-// PushResetDUTs pushes BOT ids to taskqueue resetBotsQueue for upcoming reset
-// jobs.
-func PushResetDUTs(ctx context.Context, botIDs []string, expectedState string) error {
-	return pushDUTs(ctx, resetBotsQueue, createTasks(botIDs, expectedState, resetTask))
 }
 
 // PushAuditDUTs pushes BOT ids to taskqueue auditBotsQueue for upcoming audit jobs.
@@ -69,13 +62,6 @@ func labstationRepairTask(botID, expectedState string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/labstation_repair/%s", botID), values)
-}
-
-func resetTask(botID, expectedState string) *taskqueue.Task {
-	values := url.Values{}
-	values.Set("botID", botID)
-	values.Set("expectedState", expectedState)
-	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/reset/%s", botID), values)
 }
 
 func crosAuditTask(botID, taskname, actionsCSV, actionsStr string) *taskqueue.Task {
