@@ -47,9 +47,9 @@ func NewDirWriter(client gsClient, maxConcurrentUploads int) *DirWriter {
 			i: &retry.ExponentialBackoff{
 				Limited: retry.Limited{
 					Delay:   100 * time.Millisecond,
-					Retries: 10,
+					Retries: 100,
 				},
-				MaxDelay:   2 * time.Minute,
+				MaxDelay:   30 * time.Second,
 				Multiplier: 2,
 			},
 		},
