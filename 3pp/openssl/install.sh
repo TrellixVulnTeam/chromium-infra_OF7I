@@ -43,7 +43,8 @@ case $_3PP_PLATFORM in
     ;;
 esac
 
-perl Configure -lpthread --prefix="$PREFIX" no-shared $ARGS "$TARGET"
+perl Configure -lpthread --prefix="$PREFIX" --cross-compile-prefix= \
+  no-shared $ARGS "$TARGET"
 
 make -j "$(nproc)"
 make install_sw
