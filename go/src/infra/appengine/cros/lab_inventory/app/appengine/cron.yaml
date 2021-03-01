@@ -36,12 +36,12 @@ cron:
   schedule: every day 00:00
   timezone: America/Los_Angeles
 
-  - description: Dump UFS Devices snapshot
+- description: Dump UFS Devices snapshot
   url: /internal/cron/dump-device-snapshot
   schedule: every day 00:00
   timezone: America/Los_Angeles
 
-  - description: Dump UFS DutState snapshot
+- description: Dump UFS DutState snapshot
   url: /internal/cron/dump-dutstate-snapshot
   schedule: every day 00:00
   timezone: America/Los_Angeles
