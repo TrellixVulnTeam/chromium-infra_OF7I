@@ -43,7 +43,6 @@ import (
 	"infra/cros/lab_inventory/manufacturingconfig"
 	invprotos "infra/cros/lab_inventory/protos"
 	"infra/libs/git"
-	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -665,12 +664,8 @@ func dumpInventoryDeviceSnapshot(c *router.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("UFS client: %s", err)
 		}
-		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
-		if err != nil {
-			return fmt.Errorf("UFS namespace: %s", err)
-		}
 		logging.Debugf(ctx, "getting all Devices from UFS")
-		devicesData, err := ufs.GetAllUFSDevicesData(osctx, ufsClient)
+		devicesData, err := ufs.GetAllUFSDevicesData(ctx, ufsClient)
 		if err != nil {
 			return fmt.Errorf("UFS ListMachine and ListMachineLSE failed: %s", err)
 		}
@@ -711,12 +706,8 @@ func dumpInventoryDutStateSnapshot(c *router.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("UFS client: %s", err)
 		}
-		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
-		if err != nil {
-			return fmt.Errorf("UFS namespace: %s", err)
-		}
 		logging.Debugf(ctx, "getting all DutStates from UFS")
-		dutStatesData, err := ufs.GetAllUFSDutStatesData(osctx, ufsClient)
+		dutStatesData, err := ufs.GetAllUFSDutStatesData(ctx, ufsClient)
 		if err != nil {
 			return fmt.Errorf("UFS ListDutState failed: %s", err)
 		}

@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
@@ -44,10 +45,7 @@ func UpdateUFSDutState(ctx context.Context, req *api.UpdateDutsStatusRequest) ([
 	if err != nil {
 		return nil, nil, err
 	}
-	osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
-	if err != nil {
-		return nil, nil, err
-	}
+	ctx = SetupOSNameSpaceContext(ctx)
 	dutMetas := req.GetDutMetas()
 	labMetas := req.GetLabMetas()
 	dutStates := req.GetStates()
@@ -74,7 +72,7 @@ func UpdateUFSDutState(ctx context.Context, req *api.UpdateDutsStatusRequest) ([
 		lse := res.GetMachineLSEs()[0]
 		lse.Name = ufsutil.RemovePrefix(lse.Name)
 
-		_, err = ufsClient.UpdateDutState(osctx, &ufsapi.UpdateDutStateRequest{
+		_, err = ufsClient.UpdateDutState(ctx, &ufsapi.UpdateDutStateRequest{
 			DutState: CopyInvV2DutStateToUFSDutState(dutStates[i], lse.Name),
 			DutMeta:  CopyInvV2DutMetaToUFSDutMeta(dutMetas[i], lse.Name),
 			LabMeta:  CopyInvV2LabMetaToUFSLabMeta(labMetas[i], lse.Name),
@@ -97,6 +95,7 @@ func UpdateUFSDutState(ctx context.Context, req *api.UpdateDutsStatusRequest) ([
 
 // GetUFSDevicesByIds Gets MachineLSEs from UFS by Asset id/Machine id.
 func GetUFSDevicesByIds(ctx context.Context, ufsClient external.UFSClient, ids []string) ([]*lab.ChromeOSDevice, []*api.DeviceOpResult) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	failedDevices := make([]*api.DeviceOpResult, 0, len(ids))
 	var devices []*lab.ChromeOSDevice
 	for _, id := range ids {
@@ -142,6 +141,7 @@ func GetUFSDevicesByIds(ctx context.Context, ufsClient external.UFSClient, ids [
 
 // GetUFSDevicesByHostnames Gets MachineLSEs from UFS by MachineLSE name/hostname.
 func GetUFSDevicesByHostnames(ctx context.Context, ufsClient external.UFSClient, names []string) ([]*lab.ChromeOSDevice, []*api.DeviceOpResult) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	failedDevices := make([]*api.DeviceOpResult, 0, len(names))
 	var devices []*lab.ChromeOSDevice
 	for _, name := range names {
@@ -186,6 +186,7 @@ func GetUFSDevicesByHostnames(ctx context.Context, ufsClient external.UFSClient,
 
 // GetUFSDevicesByModels Gets MachineLSEs from UFS by Asset/Machine model.
 func GetUFSDevicesByModels(ctx context.Context, ufsClient external.UFSClient, models []string) ([]*lab.ChromeOSDevice, []*api.DeviceOpResult) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	var ids []string
 	for _, model := range models {
 		var pageToken string
@@ -218,6 +219,7 @@ func GetUFSDevicesByModels(ctx context.Context, ufsClient external.UFSClient, mo
 
 // GetUFSDutStateForDevices Gets DutStates from UFS by Asset id/Machine id.
 func GetUFSDutStateForDevices(ctx context.Context, ufsClient external.UFSClient, devices []*lab.ChromeOSDevice) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	extendedData := make([]*api.ExtendedDeviceData, 0, len(devices))
 	failedDevices := make([]*api.DeviceOpResult, 0, len(devices))
 	for _, d := range devices {
@@ -242,6 +244,7 @@ func GetUFSDutStateForDevices(ctx context.Context, ufsClient external.UFSClient,
 
 // GetAllUFSDevicesData Gets all the MachineLSEs and Machines from UFS and returns invV2 Devices and updatedtime.
 func GetAllUFSDevicesData(ctx context.Context, ufsClient external.UFSClient) ([]*DeviceData, error) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	var devicesData []*DeviceData
 	idToMachine := make(map[string]*ufspb.Machine, 0)
 	for curPageToken := ""; ; {
@@ -297,6 +300,7 @@ func GetAllUFSDevicesData(ctx context.Context, ufsClient external.UFSClient) ([]
 
 // GetAllUFSDutStatesData Gets all the DutStateLSEs and DutStates from UFS and returns invV2 DutStates and updatedtime.
 func GetAllUFSDutStatesData(ctx context.Context, ufsClient external.UFSClient) ([]*DutStateData, error) {
+	ctx = SetupOSNameSpaceContext(ctx)
 	var dutStatesData []*DutStateData
 	for curPageToken := ""; ; {
 		req := &ufsapi.ListDutStatesRequest{
@@ -438,4 +442,10 @@ func GetUFSClient(ctx context.Context) (external.UFSClient, error) {
 		return nil, err
 	}
 	return es.NewUFSInterfaceFactory(ctx, config.Get(ctx).GetUfsService())
+}
+
+// SetupOSNameSpaceContext sets up context with namespace
+func SetupOSNameSpaceContext(ctx context.Context) context.Context {
+	md := metadata.Pairs(ufsutil.Namespace, ufsutil.OSNamespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }

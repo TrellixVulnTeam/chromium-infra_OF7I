@@ -34,7 +34,6 @@ import (
 	"infra/cros/lab_inventory/manufacturingconfig"
 	invlibs "infra/cros/lab_inventory/protos"
 	"infra/cros/lab_inventory/utils"
-	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // InventoryServerImpl implements service interfaces.
@@ -383,28 +382,24 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 		if err != nil {
 			return nil, err
 		}
-		osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
-		if err != nil {
-			return nil, err
-		}
 		var failedDevices []*api.DeviceOpResult
 		var devices []*lab.ChromeOSDevice
-		crosDevices, failed := ufs.GetUFSDevicesByIds(osctx, ufsClient, devIds)
+		crosDevices, failed := ufs.GetUFSDevicesByIds(ctx, ufsClient, devIds)
 		logging.Debugf(ctx, "Get %d devices by ID(UFS)", len(devices))
 		devices = append(devices, crosDevices...)
 		failedDevices = append(failedDevices, failed...)
 
-		crosDevices, failed = ufs.GetUFSDevicesByHostnames(osctx, ufsClient, hostnames)
+		crosDevices, failed = ufs.GetUFSDevicesByHostnames(ctx, ufsClient, hostnames)
 		logging.Debugf(ctx, "Get %d more devices by hostname(UFS)", len(devices))
 		devices = append(devices, crosDevices...)
 		failedDevices = append(failedDevices, failed...)
 
-		crosDevices, failed = ufs.GetUFSDevicesByModels(osctx, ufsClient, req.GetModels())
+		crosDevices, failed = ufs.GetUFSDevicesByModels(ctx, ufsClient, req.GetModels())
 		logging.Debugf(ctx, "Get %d more devices by model(UFS)", len(devices))
 		devices = append(devices, crosDevices...)
 		failedDevices = append(failedDevices, failed...)
 
-		extendedData, moreFailedDevices := ufs.GetUFSDutStateForDevices(osctx, ufsClient, devices)
+		extendedData, moreFailedDevices := ufs.GetUFSDutStateForDevices(ctx, ufsClient, devices)
 		failedDevices = append(failedDevices, moreFailedDevices...)
 
 		extendedData, moreFailedDevices = GetExtendedDeviceDataForUFSRouting(ctx, extendedData)
@@ -1208,16 +1203,11 @@ func parseToCreateRequest(ctx context.Context, r *invlibs.DeviceManualRepairReco
 		assetTag = "n/a"
 		ufsClient, err := ufs.GetUFSClient(ctx)
 		if err == nil {
-			osctx, err := ufsutil.SetupDatastoreNamespace(ctx, ufsutil.OSNamespace)
-			if err == nil {
-				devices, _ := ufs.GetUFSDevicesByHostnames(osctx, ufsClient, []string{r.Hostname})
-				if len(devices) > 0 {
-					assetTag = devices[0].GetId().GetValue()
-				} else {
-					logging.Warningf(ctx, "Device not found; setting asset tag to n/a")
-				}
+			devices, _ := ufs.GetUFSDevicesByHostnames(ctx, ufsClient, []string{r.Hostname})
+			if len(devices) > 0 {
+				assetTag = devices[0].GetId().GetValue()
 			} else {
-				logging.Warningf(ctx, "Failed to set namespace in context; setting asset tag to n/a")
+				logging.Warningf(ctx, "Device not found; setting asset tag to n/a")
 			}
 		} else {
 			logging.Warningf(ctx, "Failed to get UFSClient; setting asset tag to n/a")
