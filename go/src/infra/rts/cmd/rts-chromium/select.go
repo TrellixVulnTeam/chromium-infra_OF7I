@@ -173,6 +173,8 @@ func writeFilterFile(fileName string, toSkip []string) error {
 	defer f.Close()
 
 	for _, name := range toSkip {
+		// Escape stars, since filter file lines are actually globs.
+		name = strings.Replace(name, "*", "\\*", -1)
 		if _, err := fmt.Fprintf(f, "-%s\n", name); err != nil {
 			return err
 		}
