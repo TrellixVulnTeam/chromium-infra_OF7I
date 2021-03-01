@@ -132,6 +132,8 @@ func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, addr, opName 
 	cs, err := s.cFrontend.AssignBackend(addr, path)
 	if err != nil {
 		log.Printf("CacheForDut: %s", err)
+		s.lroMgr.SetError(opName, status.New(codes.FailedPrecondition, err.Error()))
+		return
 	}
 
 	u := fmt.Sprintf("%s/download/%s", strings.TrimSuffix(cs, "/"), path)
