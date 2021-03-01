@@ -715,3 +715,45 @@ func TestCreateMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("UpdateMachineLSEs", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("UpdateMachineLSEs - Failed to update few devices", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-1", "chromeos1-row1-rack1-labstation1", "test", "test", "test"),
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-4-UMLSEE", "chromeos1-row1-rack1-labstation4", "test", "test", "test"),
+				mockIV2ChromeOSDeviceDUT("GoodAsset-2-UMLSEE", "chromeos1-row1-rack1-host2", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+				mockIV2ChromeOSDeviceDUT("GoodAsset-3", "chromeos1-row1-rack1-host3", "test", "test", "test", "lab-2", "sserial-2", int32(9999)),
+			}
+			resp := UpdateMachineLSEs(tf.C, devices, "For non-fun testing purposes", true)
+			So(resp.UpdatedDevices, ShouldHaveLength, 2)
+			So(resp.FailedDevices, ShouldHaveLength, 2)
+			So(resp.UpdatedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-labstation1")
+			So(resp.UpdatedDevices[1].Hostname, ShouldEqual, "chromeos1-row1-rack1-host3")
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack1-labstation4")
+			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "Failed to update Host chromeos1-row1-rack1-labstation4")
+			So(resp.FailedDevices[1].Hostname, ShouldEqual, "chromeos1-row1-rack1-host2")
+			So(resp.FailedDevices[1].ErrorMsg, ShouldContainSubstring, "Failed to update Host chromeos1-row1-rack1-host2")
+		})
+		Convey("UpdateMachineLSEs - Happy path", func() {
+			devices := []*lab.ChromeOSDevice{
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-1", "chromeos1-row1-rack2-labstation1", "test", "test", "test"),
+				mockIV2ChromeOSDeviceLabstation("GoodAsset-4", "chromeos1-row1-rack2-labstation4", "test", "test", "test"),
+				mockIV2ChromeOSDeviceDUT("GoodAsset-2", "chromeos1-row1-rack2-host2", "test", "test", "test", "lab-1", "sserial-1", int32(9999)),
+				mockIV2ChromeOSDeviceDUT("GoodAsset-3", "chromeos1-row1-rack2-host3", "test", "test", "test", "lab-2", "sserial-2", int32(9999)),
+			}
+			resp := UpdateMachineLSEs(tf.C, devices, "For non-fun testing purposes", false)
+			So(resp.UpdatedDevices, ShouldHaveLength, 4)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.UpdatedDevices[0].Hostname, ShouldEqual, "chromeos1-row1-rack2-labstation1")
+			So(resp.UpdatedDevices[1].Hostname, ShouldEqual, "chromeos1-row1-rack2-labstation4")
+			So(resp.UpdatedDevices[2].Hostname, ShouldEqual, "chromeos1-row1-rack2-host2")
+			So(resp.UpdatedDevices[3].Hostname, ShouldEqual, "chromeos1-row1-rack2-host3")
+		})
+	})
+}

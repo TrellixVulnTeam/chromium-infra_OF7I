@@ -487,6 +487,15 @@ func (ic *FleetClient) RackRegistration(ctx context.Context, req *ufsapi.RackReg
 	return req.GetRack(), nil
 }
 
+// UpdateMachineLSE mocks the MachineLSE update API. Fails if the string `UMLSEE` is contained in machine name.
+func (ic *FleetClient) UpdateMachineLSE(ctx context.Context, req *ufsapi.UpdateMachineLSERequest, opts ...grpc.CallOption) (*ufspb.MachineLSE, error) {
+	if strings.Contains(req.GetMachineLSE().GetMachines()[0], "UMLSEE") {
+		// UMLSEE - UpdateMachineLSE Error
+		return nil, status.Errorf(codes.Internal, "Some failure happened")
+	}
+	return req.GetMachineLSE(), nil
+}
+
 // GetMockDUT mocks dut machinelse
 func GetMockDUT() *ufspb.MachineLSE {
 	return mockDUT

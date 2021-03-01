@@ -549,27 +549,36 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices, req.PickServoPort)
-	if err != nil {
-		switch e := err.(type) {
-		case *datastore.LabstationNotDeployedError:
-			return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.InvalidArgumentTag).Err()
-		default:
-			return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.FailedPreconditionTag).Err()
+
+	// Check if UFS is the source of truth.
+	if config.Get(ctx).GetRouting().GetUpdateCrosDevicesSetup() {
+		resp = ufs.UpdateMachineLSEs(ctx, req.Devices, req.Reason, req.PickServoPort)
+	} else {
+		// Routing not enabled. IV2 is the source of truth.
+		updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices, req.PickServoPort)
+		if err != nil {
+			switch e := err.(type) {
+			case *datastore.LabstationNotDeployedError:
+				return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.InvalidArgumentTag).Err()
+			default:
+				return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.FailedPreconditionTag).Err()
+			}
+		}
+		updatedDevices := getPassedResults(ctx, updatingResults)
+		failedDevices := getFailedResults(ctx, updatingResults, false)
+		resp = &api.UpdateCrosDevicesSetupResponse{
+			UpdatedDevices: updatedDevices,
+			FailedDevices:  failedDevices,
 		}
 	}
 
-	updatedDevices := getPassedResults(ctx, updatingResults)
+	// Note: Update the dronecfg here anyways. If the drone config is being updated from UFS this should cause no harm
+	// as this table will not be used.
 	// Update dronecfg datastore in case there are any DUTs get renamed.
-	if err := updateDroneCfg(ctx, updatedDevices, true); err != nil {
+	if err := updateDroneCfg(ctx, resp.UpdatedDevices, true); err != nil {
 		return nil, errors.Annotate(err, "update cros device setup").Err()
 	}
 
-	failedDevices := getFailedResults(ctx, updatingResults, false)
-	resp = &api.UpdateCrosDevicesSetupResponse{
-		UpdatedDevices: updatedDevices,
-		FailedDevices:  failedDevices,
-	}
 	return resp, nil
 }
 

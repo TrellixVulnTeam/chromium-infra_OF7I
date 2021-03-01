@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	proto "github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -473,6 +474,63 @@ func CreateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, pi
 		resp.PassedDevices = append(resp.PassedDevices, &api.DeviceOpResult{
 			Id:       device.GetId().GetValue(),
 			Hostname: hostname,
+		})
+	}
+	return resp
+}
+
+// UpdateMachineLSEs updates the ChromeOSDevices to UFS and returns the CrosUpdateDevicesSetupResponse.
+// This is intended to be used to route the UpdateCrosDevicesSetup API to UFS.
+func UpdateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, reason string, pickServoPort bool) *api.UpdateCrosDevicesSetupResponse {
+	resp := &api.UpdateCrosDevicesSetupResponse{
+		UpdatedDevices: []*api.DeviceOpResult{},
+		FailedDevices:  []*api.DeviceOpResult{},
+	}
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		for _, device := range devices {
+			resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+				Id:       device.GetId().GetValue(),
+				ErrorMsg: fmt.Sprintf("UpdateMachineLSEs - [UFS] Failed to update host. %s", err.Error()),
+			})
+		}
+		return resp
+	}
+	for _, device := range devices {
+		var mlse *ufspb.MachineLSE
+		if device.GetDut() != nil {
+			// Copy the dut to UFS dut.
+			mlse = ufsutil.DUTToLSE(device.GetDut(), device.GetId().GetValue(), nil)
+			if pickServoPort {
+				// UFS assigns a servo port if its set to 0
+				mlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoPort = int32(0)
+			}
+		} else {
+			mlse = ufsutil.LabstationToLSE(device.GetLabstation(), device.GetId().GetValue(), nil)
+		}
+		mlse.Name = ufsutil.AddPrefix(ufsutil.MachineLSECollection, mlse.Name)
+		// Append reason to the existing description. This can help us debug.
+		if reason != "" {
+			mlse.Description = fmt.Sprintf("[IV2](%s): %s", time.Now().Format("2006-01-02 15:04:05"), reason)
+		}
+		// Add tags for easier indexing.
+		mlse.Tags = []string{"UFS-migration", "source=IV2"}
+		_, err := ufsClient.UpdateMachineLSE(ctx, &ufsapi.UpdateMachineLSERequest{
+			MachineLSE: mlse,
+		})
+		if err != nil {
+			resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+				Id:       device.GetId().GetValue(),
+				Hostname: mlse.GetHostname(),
+				ErrorMsg: errors.Annotate(err, "UpdateMachineLSEs - [UFS] Failed to update Host %s", mlse.GetHostname()).Err().Error(),
+			})
+			continue
+		}
+		resp.UpdatedDevices = append(resp.UpdatedDevices, &api.DeviceOpResult{
+			Id:       device.GetId().GetValue(),
+			Hostname: mlse.GetHostname(),
 		})
 	}
 	return resp
