@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	dayInMinutes = 24 * 60
+	// maxLeaseLengthMinutes is 24 hours in minutes.
+	maxLeaseLengthMinutes = 24 * 60
 	// Buildbucket priority for dut_leaser builds.
 	dutLeaserBuildPriority = 15
 	// leaseCmdName is the name of the `crosfleet dut lease` command.
@@ -160,8 +161,8 @@ func (c *leaseFlags) validate(f *flag.FlagSet) error {
 	if c.durationMins <= 0 {
 		errors = append(errors, "duration should be greater than 0")
 	}
-	if c.durationMins > dayInMinutes {
-		errors = append(errors, fmt.Sprintf("duration cannot exceed 24 hours (%d minutes)", dayInMinutes))
+	if c.durationMins > maxLeaseLengthMinutes {
+		errors = append(errors, fmt.Sprintf("duration cannot exceed %d minutes (%d hours)", maxLeaseLengthMinutes, maxLeaseLengthMinutes/60))
 	}
 	if len(c.reason) > maxLeaseReasonCharacters {
 		errors = append(errors, fmt.Sprintf("reason cannot exceed %d characters", maxLeaseReasonCharacters))

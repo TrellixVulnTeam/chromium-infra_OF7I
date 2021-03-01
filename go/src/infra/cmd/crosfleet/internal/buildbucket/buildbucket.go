@@ -9,18 +9,18 @@ package buildbucket
 import (
 	"context"
 	"fmt"
-	"google.golang.org/genproto/protobuf/field_mask"
-	"infra/cmd/crosfleet/internal/common"
-	"strings"
-
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
-
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
+	"io"
+	"strings"
 )
 
 var maxServiceVersion = &test_platform.ServiceVersion{
@@ -97,6 +97,56 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 	return build.GetId(), nil
 }
 
+// CancelBuildWithBotID cancels any pending or active builds created after the
+// given timestamp with the given Swarming bot ID.
+func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCreateTime *timestamppb.Timestamp, writer io.Writer) error {
+	searchBuildsRequest := &buildbucketpb.SearchBuildsRequest{
+		Predicate: &buildbucketpb.BuildPredicate{
+			Builder: c.builderID,
+			CreateTime: &buildbucketpb.TimeRange{
+				StartTime: earliestCreateTime,
+			},
+		},
+		Fields: &field_mask.FieldMask{Paths: []string{
+			"builds.*.id",
+			"builds.*.status",
+			"builds.*.infra",
+		}},
+		PageToken: "",
+	}
+
+	cancelled := 0
+	for {
+		response, err := c.client.SearchBuilds(ctx, searchBuildsRequest)
+		if err != nil {
+			return err
+		}
+		for _, build := range response.Builds {
+			if !isUnfinishedBuildWithBotID(build, id) {
+				continue
+			}
+			fmt.Fprintf(writer, "Canceling build at %s for bot ID %s\n", c.BuildURL(build.Id), id)
+			_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
+				Id:              build.Id,
+				SummaryMarkdown: "cancelled from crosfleet CLI",
+			})
+			if err != nil {
+				return err
+			}
+			cancelled++
+		}
+		if response.NextPageToken == "" {
+			break
+		}
+		searchBuildsRequest.PageToken = response.NextPageToken
+	}
+
+	if cancelled == 0 {
+		fmt.Fprintf(writer, "No pending or active builds found with bot ID %s\n", id)
+	}
+	return nil
+}
+
 // GetBuild gets a Buildbucket build by ID, with the given build fields
 // populated. If no fields are given, all fields will be populated.
 func (c *Client) GetBuild(ctx context.Context, ID int64, fields ...string) (*buildbucketpb.Build, error) {
@@ -146,4 +196,27 @@ func bbTags(tags map[string]string) []*buildbucketpb.StringPair {
 		})
 	}
 	return bbTagList
+}
+
+// isUnfinishedBuildWithBotID returns true if the build is either scheduled with
+// the given bot ID as a requested dimension, or already started and
+// provisioned with the given bot ID.
+func isUnfinishedBuildWithBotID(build *buildbucketpb.Build, id string) bool {
+	switch build.Status {
+	case buildbucketpb.Status_SCHEDULED:
+		requestedDims := build.GetInfra().GetBuildbucket().GetRequestedDimensions()
+		for _, dim := range requestedDims {
+			if dim.GetKey() == "id" && dim.GetValue() == id {
+				return true
+			}
+		}
+	case buildbucketpb.Status_STARTED:
+		provisionedDims := build.GetInfra().GetSwarming().GetBotDimensions()
+		for _, dim := range provisionedDims {
+			if dim.GetKey() == "id" && dim.GetValue() == id {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -38,7 +38,7 @@ reason cannot exceed 30 characters`,
 			board:        "sample-board",
 		},
 		`exactly one of board, model, or host should be specified
-duration cannot exceed 24 hours (1440 minutes)`,
+duration cannot exceed 1440 minutes (24 hours)`,
 	},
 	{ // No flags raise errors
 		leaseFlags{
