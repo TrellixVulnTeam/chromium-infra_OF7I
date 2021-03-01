@@ -306,15 +306,10 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     upload_args = ['--send-mail']
     if roll_result['trivial']:
       s = spec.autoroll_recipe_options.trivial
-      if s.bot_commit:
-        upload_args.append('--set-bot-commit')
-        if s.tbr_emails:
-          upload_args.extend(['-r', self.m.random.choice(s.tbr_emails)])
-        upload_args.append('--r-owners')
-      else:
-        if s.tbr_emails:
-          upload_args.append('--tbrs=%s' % self.m.random.choice(s.tbr_emails))
-        upload_args.append('--tbr-owners')
+      upload_args.append('--set-bot-commit')
+      if s.tbr_emails:
+        upload_args.extend(['-r', self.m.random.choice(s.tbr_emails)])
+      upload_args.append('--r-owners')
 
       if s.automatic_commit:
         upload_args.append('--use-commit-queue')
