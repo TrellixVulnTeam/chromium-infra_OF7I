@@ -370,7 +370,7 @@ func IsAssetType(assetType string) bool {
 
 // ToAssetType returns an AssetType object corresponding to string
 func ToAssetType(assetType string) ufspb.AssetType {
-	aType := strings.ReplaceAll(assetType, "AssetType_", "")
+	aType := RemoveGivenPrefix(assetType, "assettype_")
 	for k, v := range ufspb.AssetType_value {
 		if strings.EqualFold(k, aType) {
 			return ufspb.AssetType(v)
