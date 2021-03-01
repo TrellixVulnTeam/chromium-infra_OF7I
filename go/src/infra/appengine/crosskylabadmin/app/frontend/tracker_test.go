@@ -138,7 +138,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id1"})
 			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
-		Convey("run only needs_reset statuses", func() {
+		Convey("do not run tasks for needs_reset statuses", func() {
 			tqt.ResetTasks()
 			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
@@ -154,7 +154,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{"id3"})
+			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 		Convey("run only for repair_failed status", func() {
 			tqt.ResetTasks()

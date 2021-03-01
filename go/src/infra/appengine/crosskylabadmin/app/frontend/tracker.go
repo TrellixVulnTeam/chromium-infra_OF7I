@@ -81,13 +81,11 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 	logging.Infof(ctx, "successfully get %d alive idle cros bots with dut_state %q.", len(bots), dutState)
 
 	// Parse BOT id to schedule tasks for readability.
-	repairBOTs, resetBOTs := identifyBots(ctx, bots)
-	err1 := clients.PushRepairDUTs(ctx, repairBOTs, dutState)
-	err2 := clients.PushResetDUTs(ctx, resetBOTs, dutState)
-	if err1 != nil || err2 != nil {
-		logging.Infof(ctx, "push repair bots: %v", err1)
-		logging.Infof(ctx, "push reset bots: %v", err2)
-		return nil, errors.New("failed to push repair or reset duts")
+	repairBOTs := identifyBotsForRepair(ctx, bots)
+	err = clients.PushRepairDUTs(ctx, repairBOTs, dutState)
+	if err != nil {
+		logging.Infof(ctx, "push repair bots: %v", err)
+		return nil, errors.New("failed to push repair duts")
 	}
 	return &fleet.PushBotsForAdminTasksResponse{}, nil
 }
@@ -284,17 +282,15 @@ func flattenAndDedpulicateBots(nb [][]*swarming.SwarmingRpcsBotInfo) []*swarming
 	return bots
 }
 
-var healthyDutStates = map[fleet.DutState]bool{
-	fleet.DutState_Ready:        true,
-	fleet.DutState_NeedsCleanup: true,
-	fleet.DutState_NeedsRepair:  true,
-	fleet.DutState_NeedsReset:   true,
+var dutStatesForRepairTask = map[fleet.DutState]bool{
+	fleet.DutState_NeedsRepair:       true,
+	fleet.DutState_RepairFailed:      true,
+	fleet.DutState_NeedsManualRepair: true,
 }
 
-// identifyBots identifies duts that need reset and need repair.
-func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (repairBOTs []string, resetBOTs []string) {
+// identifyBotsForRepair identifies duts that need run admin repair.
+func identifyBotsForRepair(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (repairBOTs []string) {
 	repairBOTs = make([]string, 0, len(bots))
-	resetBOTs = make([]string, 0, len(bots))
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
@@ -308,16 +304,12 @@ func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (re
 		}
 
 		s := clients.GetStateDimension(b.Dimensions)
-		switch s {
-		case fleet.DutState_NeedsRepair, fleet.DutState_RepairFailed, fleet.DutState_NeedsManualRepair:
+		if dutStatesForRepairTask[s] {
 			logging.Infof(ctx, "BOT: %s - Needs repair", id)
 			repairBOTs = append(repairBOTs, id)
-		case fleet.DutState_NeedsReset:
-			logging.Infof(ctx, "BOT: %s - Needs reset", id)
-			resetBOTs = append(resetBOTs, id)
 		}
 	}
-	return repairBOTs, resetBOTs
+	return repairBOTs
 }
 
 // identifyBotsForAudit identifies duts to run admin audit.

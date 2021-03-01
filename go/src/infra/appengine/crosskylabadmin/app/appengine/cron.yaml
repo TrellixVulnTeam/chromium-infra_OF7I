@@ -3,7 +3,7 @@ cron:
   url: /internal/cron/push-repair-jobs-for-labstations
   schedule: every 60 minutes
 
-- description: push bots for admin tasks for need_repair|needs_reset
+- description: push bots for admin tasks for need_repair
   url: /internal/cron/push-bots-for-admin-tasks
   schedule: every 5 minutes
   retry_parameters:
