@@ -52,7 +52,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 		logging.Infof(ctx, "UFS migration done, skipping the InvV2 to UFS Assets sync")
 		return nil
 	}
-	logging.Infof(ctx, "SyncAssetsFromIV2")
+	logging.Infof(ctx, "SyncAssetsFromIV2: InvV2 to UFS Assets sync")
 	ut := ptypes.TimestampNow()
 	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
 	client, err := datastore.NewClient(ctx, host)
