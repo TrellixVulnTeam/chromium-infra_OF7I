@@ -60,6 +60,10 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/dump-inventory-snapshot", mwCron, logAndSetHTTPErr(dumpInventorySnapshot))
 
+	r.GET("/internal/cron/dump-device-snapshot", mwCron, logAndSetHTTPErr(dumpInventoryDeviceSnapshot))
+
+	r.GET("/internal/cron/dump-dutstate-snapshot", mwCron, logAndSetHTTPErr(dumpInventoryDutStateSnapshot))
+
 	r.GET("/internal/cron/dump-other-configs-snapshot", mwCron, logAndSetHTTPErr(dumpOtherConfigsCronHandler))
 
 	r.GET("/internal/cron/dump-asset-info-to-bq", mwCron, logAndSetHTTPErr(dumpAssetInfoToBQHandler))
