@@ -252,7 +252,6 @@ def fetch_source(api,
       api,
       workdir,
       spec,
-      version,
       source_cipd_spec,
       skip_upload,
       source_hash=source_hash)
@@ -418,7 +417,6 @@ def _source_upload(api, source_cipd_spec, external_hash=None):
 def _source_checkout(api,
                      workdir,
                      spec,
-                     version,
                      source_cipd_spec,
                      skip_upload,
                      source_hash=''):
@@ -436,13 +434,12 @@ def _source_checkout(api,
     * workdir (Workdir) - The working directory object we're going to build the
       spec in. This function will create the checkout in `workdir.checkout`.
     * spec (ResolvedSpec) - The package we want to build.
-    * version (str) - The symver of the package we want to build (e.g. '1.2.0').
     * source_cipd_spec (spec) - CIPDSpec obj for source.
     * skip_upload (bool) - When True, skip uploading the source to CIPD.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the source.
   """
-  method_name, source_method_pb = spec.source_method
+  method_name = spec.source_method[0]
   source_pb = spec.create_pb.source
 
   checkout_dir = workdir.checkout
@@ -453,10 +450,8 @@ def _source_checkout(api,
   api.file.ensure_directory(
       'mkdir -p [workdir]/checkout/%s' % (str(source_pb.subdir),), checkout_dir)
 
-  if source_cipd_spec and not source_cipd_spec.check():
-    if method_name == 'cipd':  # pragma: no cover
-      raise ValueError('CIPD sources are already cached.')
-
+  if (method_name != 'cipd' and source_cipd_spec and
+      not source_cipd_spec.check()):
     # If source is not cached already, downloads, builds and uploads source.
     download_manifest = _generate_download_manifest(api, spec, checkout_dir,
                                                     source_hash)
@@ -474,15 +469,9 @@ def _source_checkout(api,
     if not skip_upload:
       _source_upload(api, source_cipd_spec, source_hash)
 
-  # Fetches source from cipd for all types.
+  # Fetches source from cipd (or existing local package) for all types.
   else:
-    source_package = str(
-        source_method_pb.pkg) if method_name == 'cipd' else str(
-            source_cipd_spec.pkg_name)
-    api.cipd.ensure(
-        checkout_dir,
-        api.cipd.EnsureFile().add_package(source_package,
-                                          'version:' + str(version)))
+    source_cipd_spec.deploy(checkout_dir)
 
   if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):

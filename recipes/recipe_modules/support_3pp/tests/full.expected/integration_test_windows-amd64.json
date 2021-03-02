@@ -2535,13 +2535,12 @@
   {
     "cmd": [
       "cipd.bat",
-      "ensure",
-      "-root",
-      "[START_DIR]\\3pp\\wd\\deps\\deep_dep\\windows-amd64\\1.0.0\\checkout",
-      "-ensure-file",
-      "source/deep_dep version:1.0.0",
-      "-max-threads",
-      "0",
+      "pkg-fetch",
+      "source/deep_dep",
+      "-version",
+      "version:1.0.0",
+      "-out",
+      "[CLEANUP]\\tmp_tmp_6",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2554,17 +2553,98 @@
       "_3PP_TOOL_PLATFORM": "windows-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/deep_dep.fetch sources.ensure_installed",
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-fetch source/deep_dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\3pp_cipd\\source\\deep_dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/deep_dep.fetch sources.ensure cipd package cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]\\tmp_tmp_6",
+      "[CACHE]\\3pp_cipd\\source\\deep_dep\\resolved-instance_id-of-version:1.0.0---"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/deep_dep.fetch sources.move fetched cipd package to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-deploy",
+      "[CACHE]\\3pp_cipd\\source\\deep_dep\\resolved-instance_id-of-version:1.0.0---",
+      "-root",
+      "[START_DIR]\\3pp\\wd\\deps\\deep_dep\\windows-amd64\\1.0.0\\checkout",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]\\3pp_cipd\\source\\deep_dep\\resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"source/deep_dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -2577,7 +2657,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\deep_dep\\\\windows-amd64\\\\1.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_6",
+      "[CLEANUP]\\tmp_tmp_7",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -2639,7 +2719,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_6",
+      "[CLEANUP]\\tmp_tmp_7",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\deep_dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -2995,7 +3075,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/fetch_and_package/linux-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\fetch_and_package\\\\linux-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_7",
+      "[CLEANUP]\\tmp_tmp_8",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3057,7 +3137,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_7",
+      "[CLEANUP]\\tmp_tmp_8",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\fetch_and_package\\linux-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3152,7 +3232,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/fetch_and_package\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\fetch_and_package\\\\linux-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_8",
+      "[CLEANUP]\\tmp_tmp_9",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3214,7 +3294,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_8",
+      "[CLEANUP]\\tmp_tmp_9",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\fetch_and_package\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3516,7 +3596,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/sources/script/tools/windows_experiment/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_9",
+      "[CLEANUP]\\tmp_tmp_10",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3578,7 +3658,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_9",
+      "[CLEANUP]\\tmp_tmp_10",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\sources\\script\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3888,7 +3968,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_10",
+      "[CLEANUP]\\tmp_tmp_11",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3950,7 +4030,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_10",
+      "[CLEANUP]\\tmp_tmp_11",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4153,7 +4233,7 @@
       "-version",
       "version:0.9.0.chops.1",
       "-out",
-      "[CLEANUP]\\tmp_tmp_11",
+      "[CLEANUP]\\tmp_tmp_12",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4216,7 +4296,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_11",
+      "[CLEANUP]\\tmp_tmp_12",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\resolved-instance_id-of-version:0.9.0.ch"
     ],
     "env": {
@@ -4606,7 +4686,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/git_tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_12",
+      "[CLEANUP]\\tmp_tmp_13",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4670,7 +4750,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_12",
+      "[CLEANUP]\\tmp_tmp_13",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\git_tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5098,7 +5178,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/git_tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_13",
+      "[CLEANUP]\\tmp_tmp_14",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5162,7 +5242,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_13",
+      "[CLEANUP]\\tmp_tmp_14",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\git_tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5876,7 +5956,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_15",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5940,7 +6020,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_15",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -6366,7 +6446,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_16",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6430,7 +6510,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_16",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -6926,13 +7006,12 @@
   {
     "cmd": [
       "cipd.bat",
-      "ensure",
-      "-root",
-      "[START_DIR]\\3pp\\wd\\deps\\dep\\windows-amd64\\1.0.0\\checkout",
-      "-ensure-file",
-      "source/dep version:1.0.0",
-      "-max-threads",
-      "0",
+      "pkg-fetch",
+      "source/dep",
+      "-version",
+      "version:1.0.0",
+      "-out",
+      "[CLEANUP]\\tmp_tmp_17",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6945,17 +7024,98 @@
       "_3PP_TOOL_PLATFORM": "windows-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/dep.fetch sources.ensure_installed",
+    "name": "building deps/dep.fetch sources.cipd pkg-fetch source/dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\3pp_cipd\\source\\dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/dep.fetch sources.ensure cipd package cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]\\tmp_tmp_17",
+      "[CACHE]\\3pp_cipd\\source\\dep\\resolved-instance_id-of-version:1.0.0---"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/dep.fetch sources.move fetched cipd package to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-deploy",
+      "[CACHE]\\3pp_cipd\\source\\dep\\resolved-instance_id-of-version:1.0.0---",
+      "-root",
+      "[START_DIR]\\3pp\\wd\\deps\\dep\\windows-amd64\\1.0.0\\checkout",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]\\3pp_cipd\\source\\dep\\resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"source/dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -7288,7 +7448,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/dep/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\dep\\\\windows-amd64\\\\1.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_16",
+      "[CLEANUP]\\tmp_tmp_18",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -7350,7 +7510,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_16",
+      "[CLEANUP]\\tmp_tmp_18",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7759,7 +7919,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_19",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -7821,7 +7981,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_19",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -8262,7 +8422,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_20",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8324,7 +8484,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_20",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {

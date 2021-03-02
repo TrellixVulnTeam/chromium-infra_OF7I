@@ -1791,13 +1791,10 @@
   {
     "cmd": [
       "cipd",
-      "ensure",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/dep/40-chars-fake-of-the-package-instance_id",
       "-root",
       "[START_DIR]/3pp/wd/deps/bottom_dep_git/linux-armv6l/1.5.0-rc1/checkout",
-      "-ensure-file",
-      "3pp/sources/git/go.repo/dep version:1.5.0-rc1",
-      "-max-threads",
-      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1810,17 +1807,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building deps/bottom_dep_git (2).fetch sources.ensure_installed",
+    "name": "building deps/bottom_dep_git (2).fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/sources/git/go.repo/dep/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"3pp/sources/git/go.repo/dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -3401,13 +3394,12 @@
   {
     "cmd": [
       "cipd",
-      "ensure",
-      "-root",
-      "[START_DIR]/3pp/wd/deps/deep_dep/linux-armv6l/1.0.0/checkout",
-      "-ensure-file",
-      "source/deep_dep version:1.0.0",
-      "-max-threads",
-      "0",
+      "pkg-fetch",
+      "source/deep_dep",
+      "-version",
+      "version:1.0.0",
+      "-out",
+      "[CLEANUP]/tmp_tmp_9",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3420,17 +3412,98 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/deep_dep.fetch sources.ensure_installed",
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-fetch source/deep_dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/source/deep_dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/deep_dep.fetch sources.ensure cipd package cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_9",
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/deep_dep.fetch sources.move fetched cipd package to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---",
+      "-root",
+      "[START_DIR]/3pp/wd/deps/deep_dep/linux-armv6l/1.0.0/checkout",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"source/deep_dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -3443,7 +3516,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/deps/deep_dep/linux-armv6l/1.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_9",
+      "[CLEANUP]/tmp_tmp_10",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3505,7 +3578,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_9",
+      "[CLEANUP]/tmp_tmp_10",
       "[CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -3861,7 +3934,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/fetch_and_package/linux-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/tools/fetch_and_package/linux-amd64/2.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_10",
+      "[CLEANUP]/tmp_tmp_11",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -3923,7 +3996,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_10",
+      "[CLEANUP]/tmp_tmp_11",
       "[CACHE]/3pp_cipd/3pp/sources/script/tools/fetch_and_package/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4018,7 +4091,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/fetch_and_package\", \"root\": \"[START_DIR]/3pp/wd/tools/fetch_and_package/linux-amd64/2.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_11",
+      "[CLEANUP]/tmp_tmp_12",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4080,7 +4153,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_11",
+      "[CLEANUP]/tmp_tmp_12",
       "[CACHE]/3pp_cipd/3pp/tools/fetch_and_package/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4270,13 +4343,12 @@
   {
     "cmd": [
       "cipd",
-      "ensure",
-      "-root",
-      "[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/checkout",
-      "-ensure-file",
-      "source/posix_tool version:1.2.0",
-      "-max-threads",
-      "0",
+      "pkg-fetch",
+      "source/posix_tool",
+      "-version",
+      "version:1.2.0",
+      "-out",
+      "[CLEANUP]/tmp_tmp_13",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4289,17 +4361,98 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
     },
-    "name": "building tools/posix_tool.fetch sources.ensure_installed",
+    "name": "building tools/posix_tool.fetch sources.cipd pkg-fetch source/posix_tool",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@source/posix_tool resolved-instance_id-of-version:1.2.0---@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.2.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/posix_tool\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/source/posix_tool"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/posix_tool",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.0"
+    },
+    "infra_step": true,
+    "name": "building tools/posix_tool.fetch sources.ensure cipd package cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_13",
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/posix_tool",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.0"
+    },
+    "infra_step": true,
+    "name": "building tools/posix_tool.fetch sources.move fetched cipd package to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
+      "-root",
+      "[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/checkout",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/posix_tool",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.2.0"
+    },
+    "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.2.0---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"source/posix_tool\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.2.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -4350,7 +4503,7 @@
       "/path/to/tmp/json",
       "copy",
       "[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/checkout/archive.tgz",
-      "[CLEANUP]/tmp_tmp_12/archive.tgz"
+      "[CLEANUP]/tmp_tmp_14/archive.tgz"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -4398,7 +4551,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[CLEANUP]/tmp_tmp_12/archive.tgz\", \"include_files\": [], \"output\": \"[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/checkout\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[CLEANUP]/tmp_tmp_14/archive.tgz\", \"include_files\": [], \"output\": \"[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/checkout\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -4582,7 +4735,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/posix_tool/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/tools/posix_tool/linux-armv6l/1.2.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_13",
+      "[CLEANUP]/tmp_tmp_15",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4644,7 +4797,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_13",
+      "[CLEANUP]/tmp_tmp_15",
       "[CACHE]/3pp_cipd/3pp/tools/posix_tool/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4946,7 +5099,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/windows_experiment/linux-armv6l\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/tools/windows_experiment/linux-armv6l/2.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_14",
+      "[CLEANUP]/tmp_tmp_16",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5008,7 +5161,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_14",
+      "[CLEANUP]/tmp_tmp_16",
       "[CACHE]/3pp_cipd/3pp/sources/script/tools/windows_experiment/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5229,7 +5382,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/windows_experiment/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/tools/windows_experiment/linux-armv6l/2.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_15",
+      "[CLEANUP]/tmp_tmp_17",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5291,7 +5444,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_15",
+      "[CLEANUP]/tmp_tmp_17",
       "[CACHE]/3pp_cipd/3pp/tools/windows_experiment/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5492,7 +5645,7 @@
       "-version",
       "version:0.9.0.chops.1",
       "-out",
-      "[CLEANUP]/tmp_tmp_16",
+      "[CLEANUP]/tmp_tmp_18",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -5555,7 +5708,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_16",
+      "[CLEANUP]/tmp_tmp_18",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/resolved-instance_id-of-version:0.9.0.ch"
     ],
     "env": {
@@ -5945,7 +6098,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/git_tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/build_tools/git_tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_17",
+      "[CLEANUP]/tmp_tmp_19",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6009,7 +6162,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_17",
+      "[CLEANUP]/tmp_tmp_19",
       "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/git_tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -6347,7 +6500,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/git_tool/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/build_tools/git_tool/linux-armv6l/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_18",
+      "[CLEANUP]/tmp_tmp_20",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6411,7 +6564,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_18",
+      "[CLEANUP]/tmp_tmp_20",
       "[CACHE]/3pp_cipd/3pp/build_tools/git_tool/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7138,7 +7291,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_19",
+      "[CLEANUP]/tmp_tmp_21",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -7202,7 +7355,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_19",
+      "[CLEANUP]/tmp_tmp_21",
       "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7539,7 +7692,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_20",
+      "[CLEANUP]/tmp_tmp_22",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -7603,7 +7756,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_20",
+      "[CLEANUP]/tmp_tmp_22",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -8108,13 +8261,10 @@
   {
     "cmd": [
       "cipd",
-      "ensure",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id",
       "-root",
       "[START_DIR]/3pp/wd/build_tools/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
-      "-ensure-file",
-      "3pp/sources/git/go.repo/tool version:1.5.0-rc1",
-      "-max-threads",
-      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8128,17 +8278,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/tool (2).fetch sources.ensure_installed",
+    "name": "building build_tools/tool (2).fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"3pp/sources/git/go.repo/tool\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -8389,7 +8535,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/build_tools/tool/linux-armv6l/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_21",
+      "[CLEANUP]/tmp_tmp_23",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8453,7 +8599,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_21",
+      "[CLEANUP]/tmp_tmp_23",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -8947,13 +9093,12 @@
   {
     "cmd": [
       "cipd",
-      "ensure",
-      "-root",
-      "[START_DIR]/3pp/wd/deps/dep/linux-armv6l/1.0.0/checkout",
-      "-ensure-file",
-      "source/dep version:1.0.0",
-      "-max-threads",
-      "0",
+      "pkg-fetch",
+      "source/dep",
+      "-version",
+      "version:1.0.0",
+      "-out",
+      "[CLEANUP]/tmp_tmp_24",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8966,17 +9111,98 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/dep.fetch sources.ensure_installed",
+    "name": "building deps/dep.fetch sources.cipd pkg-fetch source/dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/source/dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/dep.fetch sources.ensure cipd package cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_24",
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "name": "building deps/dep.fetch sources.move fetched cipd package to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
+      "-root",
+      "[START_DIR]/3pp/wd/deps/dep/linux-armv6l/1.0.0/checkout",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "linux-armv6l",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"source/dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -9219,7 +9445,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/dep/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/deps/dep/linux-armv6l/1.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_22",
+      "[CLEANUP]/tmp_tmp_25",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -9281,7 +9507,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_22",
+      "[CLEANUP]/tmp_tmp_25",
       "[CACHE]/3pp_cipd/3pp/deps/dep/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -9690,7 +9916,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg/linux-armv6l\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/tools/pkg/linux-armv6l/2.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_23",
+      "[CLEANUP]/tmp_tmp_26",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -9752,7 +9978,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_23",
+      "[CLEANUP]/tmp_tmp_26",
       "[CACHE]/3pp_cipd/3pp/sources/script/tools/pkg/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -10103,7 +10329,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/tools/pkg/linux-armv6l/2.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_24",
+      "[CLEANUP]/tmp_tmp_27",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -10165,7 +10391,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_24",
+      "[CLEANUP]/tmp_tmp_27",
       "[CACHE]/3pp_cipd/3pp/tools/pkg/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {

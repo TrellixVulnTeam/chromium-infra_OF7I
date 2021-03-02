@@ -124,7 +124,7 @@ class ResolvedSpec(object):
           self._package_prefix, self._source_cache_prefix, method,
           self._cipd_pkg_name, self._platform])
     else:
-      _source_cache = None
+      _source_cache = None  # pragma: no cover
     return _source_cache
 
   @property
@@ -247,7 +247,8 @@ class ResolvedSpec(object):
     Args:
       * version (str) - The symver of this package to get the CIPDSpec for.
     """
-    pkg_name = self.source_cache
+    method, source_method_pb = self.source_method
+    pkg_name = source_method_pb.pkg if method == 'cipd' else self.source_cache
 
     return self._cipd_spec_pool.get(pkg_name, version) if pkg_name else None
 
