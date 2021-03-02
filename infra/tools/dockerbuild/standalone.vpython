@@ -4,7 +4,7 @@
 
 # NOTE: This should be kept in sync with "//doc/users/vpython.md".
 
-### requests 2.21.0 / PyOpenSSL 19.0.0 / cryptography 2.6.1
+### requests 2.21.0 / PyOpenSSL 19.0.0 / cryptography 3.3.1
 
 wheel: <
   name: "infra/python/wheels/requests-py2_py3"
@@ -38,11 +38,7 @@ wheel: <
 >
 wheel: <
   name: "infra/python/wheels/cryptography/${vpython_platform}"
-  version: "version:2.6.1"
->
-wheel: <
-  name: "infra/python/wheels/asn1crypto-py2_py3"
-  version: "version:0.22.0"
+  version: "version:3.3.1"
 >
 wheel: <
   name: "infra/python/wheels/enum34-py2"

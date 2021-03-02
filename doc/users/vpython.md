@@ -535,7 +535,7 @@ If a wheel is needed, but is not in this list, please
 
 Below are some templates for commonly used `vpython` wheel bundles.
 
-### requests 2.21.0 / PyOpenSSL 19.0.0 / cryptography 2.6.1
+### requests 2.21.0 / PyOpenSSL 19.0.0 / cryptography 3.3.1
 
 This template can be used to include `requests`. The largest transitive set
 of dependencies that `requests` has is derived from the `PyOpenSSL` package.
@@ -574,11 +574,7 @@ wheel: <
 >
 wheel: <
   name: "infra/python/wheels/cryptography/${vpython_platform}"
-  version: "version:2.6.1"
->
-wheel: <
-  name: "infra/python/wheels/asn1crypto-py2_py3"
-  version: "version:0.22.0"
+  version: "version:3.3.1"
 >
 wheel: <
   name: "infra/python/wheels/enum34-py2"
