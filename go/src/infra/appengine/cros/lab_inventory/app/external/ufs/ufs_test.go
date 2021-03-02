@@ -820,3 +820,31 @@ func TestDeleteMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestGetAssets(t *testing.T) {
+	t.Parallel()
+	Convey("GetAssets", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("GetAssets - some failures", func() {
+			resp := GetAssets(tf.C, []string{"asset1-GAIE", "asset-1", "asset2-GANF", "asset-2"})
+			So(resp.Passed, ShouldHaveLength, 2)
+			So(resp.Failed, ShouldHaveLength, 2)
+			So(resp.Passed[0].Asset.Id, ShouldEqual, "asset-1")
+			So(resp.Passed[1].Asset.Id, ShouldEqual, "asset-2")
+			So(resp.Failed[0].Asset.Id, ShouldEqual, "asset1-GAIE")
+			So(resp.Failed[1].Asset.Id, ShouldEqual, "asset2-GANF")
+		})
+		Convey("GetAssets - Happy path", func() {
+			resp := GetAssets(tf.C, []string{"asset-4", "asset-1", "asset-3", "asset-2"})
+			So(resp.Passed, ShouldHaveLength, 4)
+			So(resp.Failed, ShouldHaveLength, 0)
+			So(resp.Passed[0].Asset.Id, ShouldEqual, "asset-4")
+			So(resp.Passed[1].Asset.Id, ShouldEqual, "asset-1")
+			So(resp.Passed[2].Asset.Id, ShouldEqual, "asset-3")
+			So(resp.Passed[3].Asset.Id, ShouldEqual, "asset-2")
+		})
+	})
+}

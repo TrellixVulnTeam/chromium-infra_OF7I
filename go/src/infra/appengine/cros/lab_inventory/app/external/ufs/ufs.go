@@ -23,6 +23,8 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/external"
 	shivasUtil "infra/cmd/shivas/utils"
+	chopsasset "infra/libs/fleet/protos"
+	chopsfleet "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufschromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
@@ -615,6 +617,57 @@ func DeleteMachineLSEs(iv2ctx context.Context, hosts []*api.DeviceID) *api.Delet
 				})
 			}
 		}
+	}
+	return resp
+}
+
+// GetAssets retrieves asset data from UFS. To be used to pipe GetAssets API to UFS.
+func GetAssets(iv2ctx context.Context, identifiers []string) *api.AssetResponse {
+	resp := &api.AssetResponse{
+		Passed: []*api.AssetResult{},
+		Failed: []*api.AssetResult{},
+	}
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		for _, id := range identifiers {
+			resp.Failed = append(resp.Failed, &api.AssetResult{
+				Asset: &chopsasset.ChopsAsset{
+					Id: id,
+				},
+				ErrorMsg: fmt.Sprintf("GetAssets - [UFS] Failed to get asset. %s", err.Error()),
+			})
+		}
+		return resp
+	}
+	for _, id := range identifiers {
+		asset, err := ufsClient.GetAsset(ctx, &ufsapi.GetAssetRequest{
+			Name: ufsutil.AddPrefix(ufsutil.AssetCollection, id),
+		})
+		if err != nil {
+			resp.Failed = append(resp.Failed, &api.AssetResult{
+				Asset: &chopsasset.ChopsAsset{
+					Id: id,
+				},
+				ErrorMsg: fmt.Sprintf("GetAssets - [UFS] Failed to get asset %s. %s", id, err.Error()),
+			})
+			continue
+		}
+		// Copy the ufs asset to ChopsAsset
+		resp.Passed = append(resp.Passed, &api.AssetResult{
+			Asset: &chopsasset.ChopsAsset{
+				Id: ufsutil.RemovePrefix(asset.GetName()),
+				Location: &chopsfleet.Location{
+					Aisle:    asset.GetLocation().GetAisle(),
+					Row:      asset.GetLocation().GetRow(),
+					Rack:     asset.GetLocation().GetRack(),
+					Position: asset.GetLocation().GetPosition(),
+					Shelf:    asset.GetLocation().GetShelf(),
+					Lab:      asset.GetLocation().GetZone().String(),
+				},
+			},
+		})
 	}
 	return resp
 }

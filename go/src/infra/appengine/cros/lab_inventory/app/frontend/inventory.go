@@ -688,6 +688,9 @@ func (is *InventoryServerImpl) GetAssets(ctx context.Context, req *api.AssetIDLi
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	if config.Get(ctx).GetRouting().GetGetAssets() {
+		return ufs.GetAssets(ctx, req.GetId()), nil
+	}
 	res := datastore.GetAssetsByID(ctx, req.Id)
 	passed, failed := seperateAssetResults(res)
 	response = &api.AssetResponse{
