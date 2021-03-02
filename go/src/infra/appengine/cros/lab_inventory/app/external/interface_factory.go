@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -49,6 +50,7 @@ type UFSClient interface {
 	GetAsset(context.Context, *ufsapi.GetAssetRequest, ...grpc.CallOption) (*ufspb.Asset, error)
 	GetRack(context.Context, *ufsapi.GetRackRequest, ...grpc.CallOption) (*ufspb.Rack, error)
 	UpdateMachineLSE(context.Context, *ufsapi.UpdateMachineLSERequest, ...grpc.CallOption) (*ufspb.MachineLSE, error)
+	DeleteMachineLSE(context.Context, *ufsapi.DeleteMachineLSERequest, ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 // GetServerInterface retrieves the ExternalServerInterface from context.

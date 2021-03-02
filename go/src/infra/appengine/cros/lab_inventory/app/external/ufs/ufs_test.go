@@ -757,3 +757,66 @@ func TestUpdateMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteMachineLSEs", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("DeleteMachineLSEs - some failures", func() {
+			deviceIDs := []*api.DeviceID{{
+				Id: &api.DeviceID_Hostname{
+					Hostname: "test-dut-DMLSEE",
+				},
+			}, {
+				Id: &api.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: "test-machine-dut",
+				},
+			}, {
+				Id: &api.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: "test-machine-labstation",
+				},
+			}, {
+				Id: &api.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: "non-existing-test-device",
+				},
+			},
+			}
+			resp := DeleteMachineLSEs(tf.C, deviceIDs)
+			So(resp.RemovedDevices, ShouldHaveLength, 2)
+			So(resp.FailedDevices, ShouldHaveLength, 2)
+			So(resp.RemovedDevices[0].Hostname, ShouldEqual, "test-dut")
+			So(resp.RemovedDevices[0].Id, ShouldEqual, "test-machine-dut")
+			So(resp.RemovedDevices[1].Hostname, ShouldEqual, "test-labstation")
+			So(resp.RemovedDevices[1].Id, ShouldEqual, "test-machine-labstation")
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "test-dut-DMLSEE")
+			So(resp.FailedDevices[1].Id, ShouldEqual, "non-existing-test-device")
+		})
+		Convey("DeleteMachineLSEs - Happy Path", func() {
+			deviceIDs := []*api.DeviceID{{
+				Id: &api.DeviceID_Hostname{
+					Hostname: "test-dut-good-dut",
+				},
+			}, {
+				Id: &api.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: "test-machine-dut",
+				},
+			}, {
+				Id: &api.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: "test-machine-labstation",
+				},
+			},
+			}
+			resp := DeleteMachineLSEs(tf.C, deviceIDs)
+			So(resp.RemovedDevices, ShouldHaveLength, 3)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.RemovedDevices[0].Hostname, ShouldEqual, "test-dut-good-dut")
+			So(resp.RemovedDevices[1].Hostname, ShouldEqual, "test-dut")
+			So(resp.RemovedDevices[1].Id, ShouldEqual, "test-machine-dut")
+			So(resp.RemovedDevices[2].Hostname, ShouldEqual, "test-labstation")
+			So(resp.RemovedDevices[2].Id, ShouldEqual, "test-machine-labstation")
+		})
+	})
+}

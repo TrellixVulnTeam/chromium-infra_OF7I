@@ -598,6 +598,11 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
+
+	if config.Get(ctx).GetRouting().GetDeleteCrosDevices() {
+		return ufs.DeleteMachineLSEs(ctx, req.GetIds()), nil
+	}
+
 	ctxWithRemovalReason := changehistory.Use(ctx, getRemovalReason(req))
 	hostnames, ids := extractHostnamesAndDeviceIDs(ctxWithRemovalReason, req)
 	deletingResults := datastore.DeleteDevicesByIds(ctxWithRemovalReason, ids)

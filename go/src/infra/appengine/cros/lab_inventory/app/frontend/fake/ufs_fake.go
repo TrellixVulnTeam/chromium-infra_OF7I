@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -494,6 +495,14 @@ func (ic *FleetClient) UpdateMachineLSE(ctx context.Context, req *ufsapi.UpdateM
 		return nil, status.Errorf(codes.Internal, "Some failure happened")
 	}
 	return req.GetMachineLSE(), nil
+}
+
+// DeleteMachineLSE mocks the MachineLSE delete API. Fails if the string "DMLSEE" is contained in the hostname.
+func (ic *FleetClient) DeleteMachineLSE(ctx context.Context, req *ufsapi.DeleteMachineLSERequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	if strings.Contains(req.Name, "DMLSEE") {
+		return nil, status.Errorf(codes.Internal, "Some failure happened. I think!!")
+	}
+	return nil, nil
 }
 
 // GetMockDUT mocks dut machinelse

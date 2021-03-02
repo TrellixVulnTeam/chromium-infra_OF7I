@@ -536,6 +536,89 @@ func UpdateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, re
 	return resp
 }
 
+// DeleteMachineLSEs removes multiple machine lses from UFS and returns DeleteCrosDevicesResponse. Used to pipe DeleteCrosDevices
+// API to UFS.
+func DeleteMachineLSEs(iv2ctx context.Context, hosts []*api.DeviceID) *api.DeleteCrosDevicesResponse {
+	resp := &api.DeleteCrosDevicesResponse{
+		RemovedDevices: []*api.DeviceOpResult{},
+		FailedDevices:  []*api.DeviceOpResult{},
+	}
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		for _, host := range hosts {
+			resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+				Hostname: host.GetHostname(),
+				Id:       host.GetChromeosDeviceId(),
+				ErrorMsg: fmt.Sprintf("DeleteMachineLSEs - [UFS] Failed to delete host. %s", err.Error()),
+			})
+		}
+		return resp
+	}
+	for _, host := range hosts {
+		if host.GetHostname() != "" {
+			// Hostname is given. Delete the machine LSE by name.
+			_, err := ufsClient.DeleteMachineLSE(ctx, &ufsapi.DeleteMachineLSERequest{
+				Name: ufsutil.AddPrefix(ufsutil.MachineLSECollection, host.GetHostname()),
+			})
+			if err != nil {
+				resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+					Hostname: host.GetHostname(),
+					ErrorMsg: fmt.Sprintf("DeleteMachineLSEs - [UFS] Failed to delete %s: %s", host.GetHostname(), err.Error()),
+				})
+			} else {
+				resp.RemovedDevices = append(resp.RemovedDevices, &api.DeviceOpResult{
+					Hostname: host.GetHostname(),
+				})
+			}
+			continue
+		}
+		if host.GetChromeosDeviceId() != "" {
+			// Determine the host name of the device to delete. UFS doesn't delete asset entries for host retirement.
+			lmlseResp, err := ufsClient.ListMachineLSEs(ctx, &ufsapi.ListMachineLSEsRequest{
+				PageSize: 1,
+				Filter:   fmt.Sprintf("machine=%s", host.GetChromeosDeviceId()),
+				KeysOnly: true,
+			})
+			if err != nil {
+				resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+					Id:       host.GetChromeosDeviceId(),
+					ErrorMsg: fmt.Sprintf("DeleteMachineLSEs - [UFS] Failed to determine host through machine ID. %s", err.Error()),
+				})
+				continue
+			}
+			// We should only get one machine lse. Log error if we dont.
+			if len(lmlseResp.MachineLSEs) != 1 {
+				resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+					Id:       host.GetChromeosDeviceId(),
+					ErrorMsg: fmt.Sprintf("DeleteMachineLSEs - [UFS] Unable to determine host through machine ID. One too many hosts %v", lmlseResp),
+				})
+				continue
+			} else {
+				// Delete the host from UFS.
+				name := ufsutil.RemovePrefix(lmlseResp.MachineLSEs[0].GetName())
+				_, err := ufsClient.DeleteMachineLSE(ctx, &ufsapi.DeleteMachineLSERequest{
+					Name: lmlseResp.MachineLSEs[0].GetName(),
+				})
+				if err != nil {
+					resp.FailedDevices = append(resp.FailedDevices, &api.DeviceOpResult{
+						Hostname: name,
+						Id:       host.GetChromeosDeviceId(),
+						ErrorMsg: fmt.Sprintf("DeleteMachineLSEs - [UFS] Failed to delete host %s. %s", name, err.Error()),
+					})
+					continue
+				}
+				resp.RemovedDevices = append(resp.RemovedDevices, &api.DeviceOpResult{
+					Hostname: name,
+					Id:       host.GetChromeosDeviceId(),
+				})
+			}
+		}
+	}
+	return resp
+}
+
 // CopyUFSDutStateToInvV2DutState converts UFS DutState to InvV2 DutState proto format.
 func CopyUFSDutStateToInvV2DutState(oldS *ufschromeoslab.DutState) *lab.DutState {
 	if oldS == nil {
