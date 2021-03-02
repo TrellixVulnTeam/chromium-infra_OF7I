@@ -9,12 +9,12 @@
     "url": "https://chromium.googlesource.com/infra/infra/crdx/chopsui-npm.git"
   },
   "scripts": {
-    "bootstrap": "npm install && lerna bootstrap --hoist",
+    "bootstrap": "npm install && npx lerna bootstrap --hoist",
     "start": "webpack-dev-server --progress --hot",
     "test": "karma start --coverage --no-color",
     "check": "gts check",
     "clean": "gts clean",
-    "compile": "lerna run tsc",
+    "compile": "npx lerna run tsc",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
