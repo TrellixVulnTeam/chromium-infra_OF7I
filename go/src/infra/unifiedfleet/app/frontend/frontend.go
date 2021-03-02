@@ -21,6 +21,7 @@ import (
 
 // InstallServices installs ...
 func InstallServices(apiServer *prpc.Server) {
+	apiServer.AccessControl = prpc.AllowOriginAll
 	api.RegisterFleetServer(apiServer, &api.DecoratedFleet{
 		Service: &FleetServerImpl{},
 		Prelude: checkAccess,
