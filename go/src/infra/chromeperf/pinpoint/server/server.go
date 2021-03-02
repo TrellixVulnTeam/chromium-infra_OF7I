@@ -187,26 +187,72 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 		grpclog.Errorf("HTTP Request Error: %s", err)
 		return nil, status.Errorf(codes.Internal, "failed retrieving job data from legacy service")
 	}
+	defer res.Body.Close()
+
 	switch res.StatusCode {
 	case http.StatusNotFound:
 		return nil, status.Errorf(codes.NotFound, "job not found")
 	case http.StatusOK:
 		break
 	default:
-		return nil, status.Errorf(codes.Internal, "failed request: %s", res.Status)
+		return nil, status.Errorf(codes.Internal, "failed request to legacy service: %s", res.Status)
 	}
 
-	defer res.Body.Close()
 	job, err := convert.JobToProto(res.Body)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		grpclog.Errorf("failed to convert results for GetJob: %s", err)
+
+		// Only return an error to the user if no info is available at all.
+		if job == nil {
+			return nil, status.Error(codes.Internal, "failed to retrieve job from legacy service")
+		}
 	}
 	return job, nil
 }
 
 func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {
-	// TODO(dberris): Implement this!
-	return nil, status.Error(codes.Unimplemented, "TODO")
+	if r.Filter != "" {
+		// TODO(chowski): Implement this!
+		return nil, status.Error(codes.Unimplemented, "TODO: implement filtering")
+	}
+
+	if r.PageSize != 0 || r.PageToken != "" {
+		// TODO(chowski): Implement this!
+		return nil, status.Error(codes.Unimplemented, "TODO: implement pagination/page size")
+	}
+
+	if s.LegacyClient == nil {
+		return nil, status.Error(
+			codes.Internal,
+			"misconfigured service, please try again later")
+	}
+
+	u := fmt.Sprintf("%s/api/jobs?o=STATE", s.legacyPinpointService)
+	grpclog.Infof("GET %s", u)
+	res, err := s.LegacyClient.Get(u)
+	if err != nil {
+		grpclog.Errorf("HTTP Request Error: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed retrieving job data from legacy service")
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, "failed request to legacy service: %s", res.Status)
+	}
+
+	jobs, err := convert.JobListToProto(res.Body)
+	if err != nil {
+		grpclog.Errorf("failed to convert results for ListJobs: %s", err)
+
+		// Only return an error back to the user if there were no successfully
+		// parsed jobs.
+		if len(jobs) == 0 {
+			return nil, status.Errorf(codes.Internal, "failed to list results from legacy service")
+		}
+	}
+	return &pinpoint.ListJobsResponse{
+		Jobs: jobs,
+	}, nil
 }
 
 func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobRequest) (*pinpoint.Job, error) {

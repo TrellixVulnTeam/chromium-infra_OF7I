@@ -15,7 +15,6 @@ import (
 	"infra/chromeperf/pinpoint"
 
 	"go.chromium.org/luci/common/errors"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -158,6 +157,10 @@ type microTime time.Time
 // UnmarshalJSON supports parsing nanosecond timestamps.
 func (t *microTime) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `\"`)
+	if s == "null" {
+		*t = microTime{}
+		return nil
+	}
 	p, err := time.Parse("2006-01-02T15:04:05.999999", s)
 	if err != nil {
 		return err
@@ -166,74 +169,82 @@ func (t *microTime) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type jsonJob struct {
+	Arguments           map[string]string       `json:"arguments"`
+	BugID               int64                   `json:"bug_id"`
+	ComparisonMode      string                  `json:"comparison_mode,omitempty"`
+	ComparisonMagnitude float64                 `json:"comparison_magnitude,omitempty"`
+	Cfg                 string                  `json:"configuration,omitempty"`
+	Created             microTime               `json:"created,omitempty"`
+	Exception           *map[string]interface{} `json:"exception,omitempty"`
+	JobID               string                  `json:"job_id,omitempty"`
+	Metric              string                  `json:"metric,omitempty"`
+	Name                string                  `json:"name,omitempty"`
+	Project             *string                 `json:"project,omitempty"`
+	StepLabels          []string                `json:"quests,omitempty"`
+	ResultsURL          string                  `json:"results_url,omitempty"`
+	StartedTime         microTime               `json:"started_time,omitempty"`
+	State               []struct {
+		Attempts []struct {
+			Executions []struct {
+				Completed bool `json:"completed"`
+				Details   []struct {
+					Value string `json:"value,omitempty"`
+					Key   string `json:"key,omitempty"`
+					URL   string `json:"url,omitempty"`
+				} `json:"details"`
+			} `json:"executions"`
+		} `json:"attempts"`
+		Change struct {
+			Commits []struct {
+				Author         string    `json:"author,omitempty"`
+				ChangeID       string    `json:"change_id,omitempty"`
+				CommitPosition int64     `json:"commit_position,omitempty"`
+				Created        microTime `json:"created,omitempty"`
+				GitHash        string    `json:"git_hash,omitempty"`
+				Message        string    `json:"message,omitempty"`
+				Repo           string    `json:"repository,omitempty"`
+				ReviewURL      string    `json:"review_url,omitempty"`
+				Subject        string    `json:"subject,omitempty"`
+				URL            string    `json:"url,omitempty"`
+			} `json:"commits"`
+			Patch struct {
+				Created  microTime `json:"created,omitempty"`
+				URL      string    `json:"url,omitempty"`
+				Author   string    `json:"author,omitempty"`
+				Server   string    `json:"server,omitempty"`
+				Message  string    `json:"message,omitempty"`
+				Subject  string    `json:"subject,omitempty"`
+				ChangeID string    `json:"change,omitempty"`
+				Revision string    `json:"revision,omitempty"`
+			}
+		} `json:"change"`
+		Comparisons struct {
+			Prev string `json:"prev,omitempty"`
+			Next string `json:"next,omitempty"`
+		} `json:"comparisons"`
+	} `json:"state,omitempty"`
+	Status  string    `json:"status,omitempty"`
+	Updated microTime `json:"updated,omitempty"`
+	User    string    `json:"user,omitempty"`
+}
+
 // JobToProto converts a stream of JSON representing a Legacy Job into the new
 // proto Job format.
 func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
-	var l struct {
-		Arguments           map[string]string       `json:"arguments"`
-		BugID               int64                   `json:"bug_id"`
-		ComparisonMode      string                  `json:"comparison_mode,omitempty"`
-		ComparisonMagnitude float64                 `json:"comparison_magnitude,omitempty"`
-		Cfg                 string                  `json:"configuration,omitempty"`
-		Created             microTime               `json:"created,omitempty"`
-		Exception           *map[string]interface{} `json:"exception,omitempty"`
-		JobID               string                  `json:"job_id,omitempty"`
-		Metric              string                  `json:"metric,omitempty"`
-		Name                string                  `json:"name,omitempty"`
-		Project             *string                 `json:"project,omitempty"`
-		StepLabels          []string                `json:"quests,omitempty"`
-		ResultsURL          string                  `json:"results_url,omitempty"`
-		StartedTime         microTime               `json:"started_time,omitempty"`
-		State               []struct {
-			Attempts []struct {
-				Executions []struct {
-					Completed bool `json:"completed"`
-					Details   []struct {
-						Value string `json:"value,omitempty"`
-						Key   string `json:"key,omitempty"`
-						URL   string `json:"url,omitempty"`
-					} `json:"details"`
-				} `json:"executions"`
-			} `json:"attempts"`
-			Change struct {
-				Commits []struct {
-					Author         string    `json:"author,omitempty"`
-					ChangeID       string    `json:"change_id,omitempty"`
-					CommitPosition int64     `json:"commit_position,omitempty"`
-					Created        microTime `json:"created,omitempty"`
-					GitHash        string    `json:"git_hash,omitempty"`
-					Message        string    `json:"message,omitempty"`
-					Repo           string    `json:"repository,omitempty"`
-					ReviewURL      string    `json:"review_url,omitempty"`
-					Subject        string    `json:"subject,omitempty"`
-					URL            string    `json:"url,omitempty"`
-				} `json:"commits"`
-				Patch struct {
-					Created  microTime `json:"created,omitempty"`
-					URL      string    `json:"url,omitempty"`
-					Author   string    `json:"author,omitempty"`
-					Server   string    `json:"server,omitempty"`
-					Message  string    `json:"message,omitempty"`
-					Subject  string    `json:"subject,omitempty"`
-					ChangeID string    `json:"change,omitempty"`
-					Revision string    `json:"revision,omitempty"`
-				}
-			} `json:"change"`
-			Comparisons struct {
-				Prev string `json:"prev,omitempty"`
-				Next string `json:"next,omitempty"`
-			} `json:"comparisons"`
-		} `json:"state,omitempty"`
-		Status  string    `json:"status,omitempty"`
-		Updated microTime `json:"updated,omitempty"`
-		User    string    `json:"user,omitempty"`
-	}
-	if err := json.NewDecoder(jsonSrc).Decode(&l); err != nil {
-		grpclog.Errorf("failed parsing json: %s", err)
-		return nil, errors.Reason("received ill-formed response from legacy service").Err()
+	l := new(jsonJob)
+	if err := json.NewDecoder(jsonSrc).Decode(l); err != nil {
+		return nil, errors.Annotate(err, "received ill-formed response from legacy service").Err()
 	}
 
-	// Now attempt to translate the parsed JSON structure into a protobuf.
+	return jsonJobToProto(l)
+}
+
+// jsonJobToProto translates a parsed JSON structure into a protobuf.
+// It may return a partially-translated proto along with an error.
+func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
+	var errs errors.MultiError
+
 	// FIXME(dberris): Interpret the results better, differentiating experiments from bisections, etc.
 	cMode := jsonModeToProto(l.ComparisonMode)
 	j := &pinpoint.Job{
@@ -262,7 +273,7 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 	// Only set ResultFiles if the job is finished, as documented in the API.
 	if j.State == pinpoint.Job_SUCCEEDED {
 		if resultFile, err := urlToResultFile(l.ResultsURL); err != nil {
-			grpclog.Errorf("invalid results_url from legacy service: %v", err)
+			errs = append(errs, errors.Annotate(err, "invalid results_url from legacy service").Err())
 		} else {
 			j.ResultFiles = []*pinpoint.ResultFile{resultFile}
 		}
@@ -283,7 +294,8 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 		case "try":
 			// Then we've got an experiment.
 			if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
-				return nil, errors.Reason("invalid state count in legacy response, want %d got %d", expectedStates, foundStates).Err()
+				errs = append(errs, errors.Reason("invalid state count in legacy response: want %d got %d", expectedStates, foundStates).Err())
+				break
 			}
 
 			// By convention we use the first state's change to be the
@@ -291,41 +303,44 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 			c0 := &l.State[0].Change
 			c1 := &l.State[1].Change
 
-			// FIXME: Find a better way to expose this data from the legacy
-			p, err := parseGerritURL(c1.Patch.URL)
-			if err != nil {
-				return nil, err
-			}
-			// service's JSON response instead of parsing URLs.
-			j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
-				Experiment: &pinpoint.Experiment{
-					BaseCommit: &pinpoint.GitilesCommit{
-						Host:    c0.Commits[0].URL,
-						Project: c0.Commits[0].Repo,
-						GitHash: c0.Commits[0].GitHash,
-					},
-					// FIXME: Fill out these details.
-					BasePatch: &pinpoint.GerritChange{
-						Host:     "",
-						Project:  "",
-						Change:   0,
-						Patchset: 0,
-					},
-					ExperimentCommit: &pinpoint.GitilesCommit{
-						Host:    c1.Commits[0].URL,
-						Project: c1.Commits[0].Repo,
-						GitHash: c1.Commits[0].GitHash,
-					},
-					ExperimentPatch: &pinpoint.GerritChange{
-						// FIXME: We have two URLs in the result JSON, we
-						// need to extract the relevant details for the
-						// proto response.
-						Host:     c1.Patch.Server,
-						Project:  p.project,
-						Change:   p.cl,
-						Patchset: p.patchSet,
-					},
+			experiment := &pinpoint.Experiment{
+				BaseCommit: &pinpoint.GitilesCommit{
+					Host:    c0.Commits[0].URL,
+					Project: c0.Commits[0].Repo,
+					GitHash: c0.Commits[0].GitHash,
 				},
+				// FIXME: Fill out these details.
+				BasePatch: &pinpoint.GerritChange{
+					Host:     "",
+					Project:  "",
+					Change:   0,
+					Patchset: 0,
+				},
+				ExperimentCommit: &pinpoint.GitilesCommit{
+					Host:    c1.Commits[0].URL,
+					Project: c1.Commits[0].Repo,
+					GitHash: c1.Commits[0].GitHash,
+				},
+			}
+
+			j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
+				Experiment: experiment,
+			}
+
+			// FIXME: Find a better way to expose this data from the legacy
+			// service's JSON response instead of parsing URLs.
+			if p, err := parseGerritURL(c1.Patch.URL); err != nil {
+				errs = append(errs, err)
+			} else {
+				experiment.ExperimentPatch = &pinpoint.GerritChange{
+					// FIXME: We have two URLs in the result JSON, we
+					// need to extract the relevant details for the
+					// proto response.
+					Host:     c1.Patch.Server,
+					Project:  p.project,
+					Change:   p.cl,
+					Patchset: p.patchSet,
+				}
 			}
 		case "performance":
 			// FIXME: When we're ready to support bisection results, fill this out.
@@ -341,6 +356,10 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 				},
 			}
 		}
+	}
+
+	if len(errs) > 0 {
+		return j, errors.Annotate(errs, "%d error(s) parsing %q", len(errs), j.Name).Err()
 	}
 	return j, nil
 }
@@ -423,4 +442,30 @@ func urlToResultFile(url string) (*pinpoint.ResultFile, error) {
 		GcsBucket: m[1],
 		Path:      m[2],
 	}, nil
+}
+
+// JobListToProto converts a stream of JSON representing the Legacy jobs list
+// response into a list of proto Jobs. Partial results may be returned along with
+// an error representing failure to parse some jobs.
+func JobListToProto(jsonSrc io.Reader) ([]*pinpoint.Job, error) {
+	var l struct {
+		Jobs []*jsonJob `json:"jobs"`
+	}
+	if err := json.NewDecoder(jsonSrc).Decode(&l); err != nil {
+		return nil, errors.Annotate(err, "received ill-formed response from legacy service").Err()
+	}
+
+	ret := make([]*pinpoint.Job, 0, len(l.Jobs))
+	var errs errors.MultiError
+	for _, jj := range l.Jobs {
+		if job, err := jsonJobToProto(jj); err != nil {
+			errs = append(errs, err)
+		} else {
+			ret = append(ret, job)
+		}
+	}
+	if len(errs) > 0 {
+		return ret, errs
+	}
+	return ret, nil
 }
