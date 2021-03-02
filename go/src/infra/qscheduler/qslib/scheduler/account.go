@@ -54,6 +54,10 @@ type AccountConfig struct {
 	// will run in the FreeBucket priority level (except if DisableFreeTasks
 	// is true, in which case they will not run).
 	MaxFanout int32
+	// PerLabelTaskLimits allows for extra limits to be enforced for any given
+	// label, e.g. setting label-model:2 ensures that a maximum of two
+	// concurrent jobs per model can run under this account.
+	PerLabelTaskLimits map[string]int32
 	// If DisableFreeTasks is true, then jobs for this account will not start
 	// running if they would be run at FreeBucket priority.
 	DisableFreeTasks bool

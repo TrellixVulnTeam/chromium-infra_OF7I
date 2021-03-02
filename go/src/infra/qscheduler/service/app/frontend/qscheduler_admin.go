@@ -116,6 +116,9 @@ func (s *QSchedulerAdminServerImpl) ModAccount(ctx context.Context, r *qschedule
 		if r.MaxFanout != nil {
 			accountConfig.MaxFanout = r.MaxFanout.Value
 		}
+		if len(r.PerLabelTaskLimits) > 0 {
+			accountConfig.PerLabelTaskLimits = r.PerLabelTaskLimits
+		}
 		if r.DisableFreeTasks != nil {
 			accountConfig.DisableFreeTasks = r.DisableFreeTasks.Value
 		}
