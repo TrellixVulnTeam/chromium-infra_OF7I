@@ -17,6 +17,7 @@ class TestSmoke(unittest.TestCase):
   Assumes 'vpython' is in PATH.
   """
 
+  @unittest.skip("seems to be flaky")
   def test_check_requests(self):
     code, out = run_vpython(os.path.join(TESTDATA, 'check_requests.py'))
     if code:
