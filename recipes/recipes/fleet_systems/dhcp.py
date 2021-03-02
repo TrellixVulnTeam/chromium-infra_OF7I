@@ -123,7 +123,8 @@ def RunSteps(api):
     for host in hosts:
       os_version = host_os_map[host]
       dhcp_map[zone].setdefault(os_version, []).append(host)
-      images_needed.add(os_version)
+      if zone in zones_to_test:
+        images_needed.add(os_version)
 
   # Pull docker images before testing with them.
   for os_version in sorted(images_needed):
