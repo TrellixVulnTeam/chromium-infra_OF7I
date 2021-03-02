@@ -2,14 +2,19 @@ package dumper
 
 import (
 	"context"
+	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/datastore"
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
+	invlab "go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
@@ -18,14 +23,19 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	invapibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
+	invufs "infra/appengine/cros/lab_inventory/app/external/ufs"
+	invbqlib "infra/cros/lab_inventory/bq"
 	iv2ds "infra/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
 	iv2pr2 "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -418,4 +428,165 @@ func createAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 		a.Type = ufspb.AssetType_DUT
 	}
 	return a, nil
+}
+
+// DumpToInventoryDutStateSnapshot dumpe UFS DutState to InvV2 stateconfig BQ
+func DumpToInventoryDutStateSnapshot(ctx context.Context) error {
+	// UFS migration done, run this job.
+	if config.Get(ctx).GetEnableLabStateconfigPush() {
+		logging.Infof(ctx, "UFS migration done: start DumpToInventoryDutStateSnapshot")
+		var err error
+		ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+		if err != nil {
+			return err
+		}
+		dutStates, err := state.ListAllDutStates(ctx, false)
+		if err != nil {
+			return err
+		}
+		var dutStatesData []*DutStateData
+		for _, dutState := range dutStates {
+			dutStateData := &DutStateData{
+				DutState:   invufs.CopyUFSDutStateToInvV2DutState(dutState),
+				UpdateTime: dutState.GetUpdateTime(),
+			}
+			dutStatesData = append(dutStatesData, dutStateData)
+		}
+		stateconfigs := DutStateDataToBQDutStateMsgs(ctx, dutStatesData)
+
+		project := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
+		dataset := "inventory"
+		curTimeStr := invbqlib.GetPSTTimeStamp(time.Now())
+		client, err := bigquery.NewClient(ctx, project)
+		if err != nil {
+			return fmt.Errorf("bq client: %s", err)
+		}
+		stateUploader := invbqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig$%s", curTimeStr))
+		if len(stateconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d state configs to bigquery dataset(InvV2) (%s) table (stateconfig)", len(stateconfigs), dataset)
+			if err := stateUploader.Put(ctx, stateconfigs...); err != nil {
+				return fmt.Errorf("stateconfig put(UFS to InvV2): %s", err)
+			}
+		}
+		logging.Debugf(ctx, "successfully uploaded DutStates(UFS) to bigquery(InvV2)")
+		return nil
+	}
+	logging.Infof(ctx, "UFS migration NOT done: skipping DumpToInventoryDutStateSnapshot")
+	return nil
+}
+
+// DumpToInventoryDeviceSnapshot dump UFs MachineLSE to InvV2 labconfig BQ
+func DumpToInventoryDeviceSnapshot(ctx context.Context) error {
+	// UFS migration done, run this job.
+	if config.Get(ctx).GetEnableLabStateconfigPush() {
+		logging.Infof(ctx, "UFS migration done: start DumpToInventoryDeviceSnapshot")
+		var err error
+		ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
+		if err != nil {
+			return err
+		}
+		machines, err := registration.ListAllMachines(ctx, false)
+		if err != nil {
+			return err
+		}
+		idToMachine := make(map[string]*ufspb.Machine, 0)
+		for _, machine := range machines {
+			idToMachine[machine.GetName()] = machine
+		}
+		lses, err := inventory.ListAllMachineLSEs(ctx, false)
+		if err != nil {
+			return err
+		}
+		var devicesData []*DeviceData
+		for _, lse := range lses {
+			if len(lse.GetMachines()) == 0 {
+				logging.Errorf(ctx, "no Machine in LSE %s", lse.GetName())
+				continue
+			}
+			if machine, found := idToMachine[lse.GetMachines()[0]]; found {
+				deviceData := &DeviceData{
+					Device:     invufs.ConstructInvV2Device(machine, lse),
+					UpdateTime: lse.GetUpdateTime(),
+				}
+				devicesData = append(devicesData, deviceData)
+				continue
+			}
+			logging.Errorf(ctx, "no Machine found %s", lse.GetMachines()[0])
+		}
+		labconfigs := DeviceDataToBQDeviceMsgs(ctx, devicesData)
+
+		project := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
+		dataset := "inventory"
+		curTimeStr := invbqlib.GetPSTTimeStamp(time.Now())
+		client, err := bigquery.NewClient(ctx, project)
+		if err != nil {
+			return fmt.Errorf("bq client: %s", err)
+		}
+		labconfigUploader := invbqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
+		if len(labconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d lab configs(UFS) to bigquery dataset(InvV2) (%s) table (lab)", len(labconfigs), dataset)
+			if err := labconfigUploader.Put(ctx, labconfigs...); err != nil {
+				return fmt.Errorf("labconfig put(UFS to InvV2): %s", err)
+			}
+		}
+		logging.Debugf(ctx, "successfully uploaded Devices(UFS) to bigquery(InvV2)")
+		return nil
+	}
+	logging.Infof(ctx, "UFS migration NOT done: skipping DumpToInventoryDeviceSnapshot")
+	return nil
+}
+
+// DeviceDataToBQDeviceMsgs converts a sequence of devices data into messages that can be committed to bigquery.
+func DeviceDataToBQDeviceMsgs(ctx context.Context, devicesData []*DeviceData) []proto.Message {
+	labconfigs := make([]proto.Message, len(devicesData))
+	for i, data := range devicesData {
+		if data.Device == nil || data.UpdateTime == nil {
+			logging.Errorf(ctx, "deviceData Device or UpdateTime is nil")
+			continue
+		}
+		var hostname string
+		if data.Device.GetDut() != nil {
+			hostname = data.Device.GetDut().GetHostname()
+		} else {
+			hostname = data.Device.GetLabstation().GetHostname()
+		}
+		labconfigs[i] = &invapibq.LabInventory{
+			Id:          data.Device.GetId().GetValue(),
+			Hostname:    hostname,
+			Device:      data.Device,
+			UpdatedTime: data.UpdateTime,
+		}
+		fmt.Println(labconfigs[i])
+	}
+	return labconfigs
+}
+
+// DutStateDataToBQDutStateMsgs converts a sequence of dutStates data into messages that can be committed to bigquery.
+func DutStateDataToBQDutStateMsgs(ctx context.Context, dutStatesData []*DutStateData) []proto.Message {
+	stateconfigs := make([]proto.Message, len(dutStatesData))
+	for i, data := range dutStatesData {
+		if data.DutState == nil || data.UpdateTime == nil {
+			logging.Errorf(ctx, "dutStateData DutState or UpdateTime is nil")
+			continue
+		}
+		stateconfigs[i] = &invapibq.StateConfigInventory{
+			Id:          data.DutState.GetId().GetValue(),
+			State:       data.DutState,
+			UpdatedTime: data.UpdateTime,
+		}
+		fmt.Println(stateconfigs[i])
+	}
+	return stateconfigs
+}
+
+// DeviceData holds the invV2 Device and updatetime(of MachineLSE)
+type DeviceData struct {
+	Device     *invlab.ChromeOSDevice
+	UpdateTime *timestamppb.Timestamp
+}
+
+// DutStateData holds the invV2 DutState and updatetime
+type DutStateData struct {
+	DutState   *invlab.DutState
+	UpdateTime *timestamppb.Timestamp
 }

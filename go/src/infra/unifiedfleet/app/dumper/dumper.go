@@ -59,6 +59,12 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.push_to_drone_queen", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, pushToDroneQueen)
 	})
+	srv.RunInBackground("ufs.dump_to_invV2_devices", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, DumpToInventoryDeviceSnapshot)
+	})
+	srv.RunInBackground("ufs.dump_to_invV2_dutstates", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, DumpToInventoryDutStateSnapshot)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {

@@ -26,7 +26,7 @@ func pushToDroneQueen(ctx context.Context) (err error) {
 		defer func() {
 			dumpPushToDroneQueenTick.Add(ctx, 1, err == nil)
 		}()
-		logging.Infof(ctx, "start to push ufs duts to drone queen")
+		logging.Infof(ctx, "UFS migration done: pushToDroneQueen")
 		client, err := getDroneQueenClient(ctx)
 		if err != nil {
 			return err
@@ -55,7 +55,7 @@ func pushToDroneQueen(ctx context.Context) (err error) {
 		_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{AvailableDuts: availableDuts})
 		return err
 	}
-	logging.Infof(ctx, "UFS migration NOT done, skipping the push")
+	logging.Infof(ctx, "UFS migration NOT done: skipping pushToDroneQueen")
 	return nil
 }
 

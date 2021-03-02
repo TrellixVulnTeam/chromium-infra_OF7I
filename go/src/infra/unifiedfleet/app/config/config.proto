@@ -25,6 +25,8 @@ message Config {
   bool enable_dronequeen_push = 11;
   // cron job for Inv2 to UFS sync(MachineLSE/Asset).
   bool disable_inv2_sync = 12;
+  // cron job for UFS to IV2(lab and stateconfig) BQ push.
+  bool enable_lab_stateconfig_push = 13;
 }
 
 message OSNetworkConfig {

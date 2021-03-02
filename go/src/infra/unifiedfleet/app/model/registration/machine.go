@@ -216,6 +216,31 @@ func GetAllMachines(ctx context.Context) (*ufsds.OpResults, error) {
 	return ufsds.GetAll(ctx, queryAllMachine)
 }
 
+// ListAllMachines returns all machine in datastore.
+func ListAllMachines(ctx context.Context, keysOnly bool) (res []*ufspb.Machine, err error) {
+	var entities []*MachineEntity
+	q := datastore.NewQuery(MachineKind).KeysOnly(keysOnly).FirestoreMode(true)
+	if err = datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	for _, ent := range entities {
+		if keysOnly {
+			res = append(res, &ufspb.Machine{
+				Name: ent.ID,
+			})
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil, err
+			}
+			machine := pm.(*ufspb.Machine)
+			res = append(res, machine)
+		}
+	}
+	return
+}
+
 // DeleteMachines deletes a batch of machines
 func DeleteMachines(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))

@@ -96,6 +96,31 @@ func queryAllDutStates(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	return fe, nil
 }
 
+// ListAllDutStates returns all DutState in datastore.
+func ListAllDutStates(ctx context.Context, keysOnly bool) (res []*chromeosLab.DutState, err error) {
+	var entities []*DutStateEntity
+	q := datastore.NewQuery(DutStateKind).KeysOnly(keysOnly).FirestoreMode(true)
+	if err = datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	for _, ent := range entities {
+		if keysOnly {
+			res = append(res, &chromeosLab.DutState{
+				Id: &chromeosLab.ChromeOSDeviceID{Value: ent.ID},
+			})
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil, err
+			}
+			dutState := pm.(*chromeosLab.DutState)
+			res = append(res, dutState)
+		}
+	}
+	return
+}
+
 // QueryDutStateByPropertyNames queries DutState Entity in the datastore.
 // If keysOnly is true, then only key field is populated in returned DutStates.
 func QueryDutStateByPropertyNames(ctx context.Context, propertyMap map[string]string, keysOnly bool) ([]*chromeosLab.DutState, error) {
