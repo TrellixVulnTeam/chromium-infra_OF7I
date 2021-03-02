@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import mock
 import unittest
 
 import mox
@@ -46,8 +47,7 @@ class SpamServiceTest(unittest.TestCase):
     self.spam_service.issue_tbl = self.mock_issue_tbl
 
     self.spam_service.report_tbl.Delete = Mock()
-    self.spam_service.report_tbl.Update = Mock()
-    self.spam_service.verdict_tbl.Update = Mock()
+    self.spam_service.verdict_tbl.Delete = Mock()
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -409,13 +409,13 @@ class SpamServiceTest(unittest.TestCase):
     user_ids = [3, 4, 5]
     self.spam_service.ExpungeUsersInSpam(self.cnxn, user_ids=user_ids)
 
-    self.spam_service.report_tbl.Delete.assert_called_once_with(
-        self.cnxn, reported_user_id=user_ids, commit=False)
-    delta = {'user_id': framework_constants.DELETED_USER_ID}
-    self.spam_service.report_tbl.Update.assert_called_once_with(
-        self.cnxn, delta, user_id=user_ids, commit=False)
-    self.spam_service.verdict_tbl.Update.assert_called_once_with(
-        self.cnxn, delta, user_id=user_ids, commit=False)
+    self.spam_service.report_tbl.Delete.assert_has_calls(
+        [
+            mock.call(self.cnxn, reported_user_id=user_ids, commit=False),
+            mock.call(self.cnxn, user_id=user_ids, commit=False)
+        ])
+    self.spam_service.verdict_tbl.Delete.assert_called_once_with(
+        self.cnxn, user_id=user_ids, commit=False)
 
   def testLookupIssueVerdicts(self):
     self.spam_service.verdict_tbl.Select = Mock(return_value=[

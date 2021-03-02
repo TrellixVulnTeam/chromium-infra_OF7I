@@ -688,10 +688,8 @@ class SpamService(object):
     """
     commit = False
     self.report_tbl.Delete(cnxn, reported_user_id=user_ids, commit=commit)
-
-    delta = {'user_id': framework_constants.DELETED_USER_ID}
-    self.report_tbl.Update(cnxn, delta, user_id=user_ids, commit=commit)
-    self.verdict_tbl.Update(cnxn, delta, user_id=user_ids, commit=commit)
+    self.report_tbl.Delete(cnxn, user_id=user_ids, commit=commit)
+    self.verdict_tbl.Delete(cnxn, user_id=user_ids, commit=commit)
 
 
 class ModerationItem:
