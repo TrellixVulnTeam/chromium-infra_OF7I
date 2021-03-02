@@ -17,11 +17,11 @@ class TestSmoke(unittest.TestCase):
   Assumes 'vpython' is in PATH.
   """
 
-  @unittest.skip("seems to be flaky")
   def test_check_requests(self):
     code, out = run_vpython(os.path.join(TESTDATA, 'check_requests.py'))
     if code:
-      self.fail(out)
+      print out
+      self.fail('Exit code %d' % code)
 
 
 def run_vpython(script):
@@ -33,7 +33,12 @@ def run_vpython(script):
   env = escape_virtual_env(os.environ)
   env['PYTHONDONTWRITEBYTECODE'] = '1'
   proc = subprocess.Popen(
-      ['vpython', '-vpython-spec', SPEC, script],
+      [
+          'vpython',
+          '-vpython-log-level', 'debug',
+          '-vpython-spec', SPEC,
+          script,
+      ],
       stdout=subprocess.PIPE,
       stderr=subprocess.STDOUT)
   out, _ = proc.communicate()
