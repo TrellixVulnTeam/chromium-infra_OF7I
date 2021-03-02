@@ -475,7 +475,7 @@ func DumpToInventoryDutStateSnapshot(ctx context.Context) error {
 	return nil
 }
 
-// DumpToInventoryDeviceSnapshot dump UFs MachineLSE to InvV2 labconfig BQ
+// DumpToInventoryDeviceSnapshot dump UFS MachineLSE to InvV2 labconfig BQ
 func DumpToInventoryDeviceSnapshot(ctx context.Context) error {
 	// UFS migration done, run this job.
 	if config.Get(ctx).GetEnableLabStateconfigPush() {
