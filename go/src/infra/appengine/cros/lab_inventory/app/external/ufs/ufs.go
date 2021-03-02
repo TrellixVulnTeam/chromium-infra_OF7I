@@ -391,7 +391,7 @@ func CreateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, pi
 							Name:        loc.GetRack(),
 							Location:    loc,
 							Description: "Added from IV2 as a part of UFS migration",
-							Tags:        []string{"UFS-migration", "source=IV2"},
+							Tags:        []string{"UFS-migration", "IV2"},
 						},
 					})
 					if err != nil {
@@ -516,7 +516,7 @@ func UpdateMachineLSEs(iv2ctx context.Context, devices []*lab.ChromeOSDevice, re
 			mlse.Description = fmt.Sprintf("[IV2](%s): %s", time.Now().Format("2006-01-02 15:04:05"), reason)
 		}
 		// Add tags for easier indexing.
-		mlse.Tags = []string{"UFS-migration", "source=IV2"}
+		mlse.Tags = []string{"UFS-migration", "IV2"}
 		_, err := ufsClient.UpdateMachineLSE(ctx, &ufsapi.UpdateMachineLSERequest{
 			MachineLSE: mlse,
 		})
