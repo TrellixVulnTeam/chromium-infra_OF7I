@@ -67,4 +67,9 @@ message AccountConfig {
 
   // Human readable description of account's intended purpose.
   string description = 5;
+
+  // PerLabelTaskLimits allows for extra limits to be enforced for any given
+  // label, e.g. setting label-model:2 ensures that a maximum of two concurrent
+  // jobs per model can run under this account.
+  map<string, int32> per_label_task_limits = 6;
 }
