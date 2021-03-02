@@ -674,6 +674,10 @@ func (is *InventoryServerImpl) UpdateAssets(ctx context.Context, req *api.AssetL
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
+	if config.Get(ctx).GetRouting().GetUpdateAssets() {
+		return ufs.UpdateAssets(ctx, req.GetAsset()), nil
+	}
 	res, err := datastore.UpdateAssets(ctx, req.Asset)
 	passed, failed := seperateAssetResults(res)
 	response = &api.AssetResponse{

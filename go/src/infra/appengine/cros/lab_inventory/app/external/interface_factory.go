@@ -51,6 +51,7 @@ type UFSClient interface {
 	GetRack(context.Context, *ufsapi.GetRackRequest, ...grpc.CallOption) (*ufspb.Rack, error)
 	UpdateMachineLSE(context.Context, *ufsapi.UpdateMachineLSERequest, ...grpc.CallOption) (*ufspb.MachineLSE, error)
 	DeleteMachineLSE(context.Context, *ufsapi.DeleteMachineLSERequest, ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateAsset(context.Context, *ufsapi.UpdateAssetRequest, ...grpc.CallOption) (*ufspb.Asset, error)
 }
 
 // GetServerInterface retrieves the ExternalServerInterface from context.

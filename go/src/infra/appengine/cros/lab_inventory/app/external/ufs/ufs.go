@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -667,6 +668,89 @@ func GetAssets(iv2ctx context.Context, identifiers []string) *api.AssetResponse 
 					Lab:      asset.GetLocation().GetZone().String(),
 				},
 			},
+		})
+	}
+	return resp
+}
+
+// UpdateAssets updates the asset location to UFS. To be used to pipe UpdateAssets API to UFS.
+func UpdateAssets(iv2ctx context.Context, assets []*chopsasset.ChopsAsset) *api.AssetResponse {
+	resp := &api.AssetResponse{
+		Passed: []*api.AssetResult{},
+		Failed: []*api.AssetResult{},
+	}
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		for _, asset := range assets {
+			resp.Failed = append(resp.Failed, &api.AssetResult{
+				Asset:    asset,
+				ErrorMsg: fmt.Sprintf("UpdateAssets - [UFS] Failed to update asset. %s", err.Error()),
+			})
+		}
+		return resp
+	}
+	for _, asset := range assets {
+		ufsAsset := &ufspb.Asset{
+			Name: ufsutil.AddPrefix(ufsutil.AssetCollection, asset.GetId()),
+			Location: &ufspb.Location{
+				Aisle:    asset.GetLocation().GetAisle(),
+				Row:      asset.GetLocation().GetRow(),
+				Position: asset.GetLocation().GetPosition(),
+				Shelf:    asset.GetLocation().GetShelf(),
+			},
+		}
+		ufsAsset.Location.Zone = ufsutil.LabToZone(asset.GetLocation().GetLab())
+		// Construct rack name as `chromeos[$zone]`-row`$row`-rack`$rack`
+		loc := asset.GetLocation()
+		var r strings.Builder
+		if loc.GetLab() == "" {
+			resp.Failed = append(resp.Failed, &api.AssetResult{
+				Asset:    asset,
+				ErrorMsg: fmt.Sprintf("UpdateAssets - [UFS] Failed to update asset %s. Missing Lab name in Location", asset.GetId()),
+			})
+			continue
+		}
+		r.WriteString(loc.GetLab())
+		if row := loc.GetRow(); row != "" {
+			r.WriteString("-row")
+			r.WriteString(row)
+		}
+		if rack := loc.GetRack(); rack != "" {
+			r.WriteString("-rack")
+			r.WriteString(rack)
+			ufsAsset.Location.RackNumber = rack
+		} else {
+			// Avoid setting Rack to zone name, e.g. chromeos2
+			r.WriteString("-norack")
+		}
+		ufsAsset.Location.Rack = r.String()
+
+		// UpdateAsset location to UFS.
+		_, err := ufsClient.UpdateAsset(ctx, &ufsapi.UpdateAssetRequest{
+			Asset: ufsAsset,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{
+					"location.aisle",
+					"location.row",
+					"location.rack",
+					"location.shelf",
+					"location.position",
+					"location.zone",
+					"location.rack_number",
+				},
+			},
+		})
+		if err != nil {
+			resp.Failed = append(resp.Failed, &api.AssetResult{
+				Asset:    asset,
+				ErrorMsg: fmt.Sprintf("UpdateAssets - [UFS] Failed to update asset %s. %s", asset.GetId(), err.Error()),
+			})
+			continue
+		}
+		resp.Passed = append(resp.Passed, &api.AssetResult{
+			Asset: asset,
 		})
 	}
 	return resp

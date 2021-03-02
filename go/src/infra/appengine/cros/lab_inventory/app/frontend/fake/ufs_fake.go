@@ -505,6 +505,14 @@ func (ic *FleetClient) DeleteMachineLSE(ctx context.Context, req *ufsapi.DeleteM
 	return nil, nil
 }
 
+// UpdateAsset mocks the Asset update API, Fails if the asset name contains the string "UAE".
+func (ic *FleetClient) UpdateAsset(ctx context.Context, req *ufsapi.UpdateAssetRequest, opts ...grpc.CallOption) (*ufspb.Asset, error) {
+	if strings.Contains(req.Asset.GetName(), "UAE") {
+		return nil, status.Errorf(codes.Internal, "Some failure happened")
+	}
+	return req.GetAsset(), nil
+}
+
 // GetMockDUT mocks dut machinelse
 func GetMockDUT() *ufspb.MachineLSE {
 	return mockDUT

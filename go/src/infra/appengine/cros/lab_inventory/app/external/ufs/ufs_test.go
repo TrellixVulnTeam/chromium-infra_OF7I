@@ -20,6 +20,8 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/external"
 	"infra/appengine/cros/lab_inventory/app/frontend/fake"
+	chopsasset "infra/libs/fleet/protos"
+	chopsfleet "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufschromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
@@ -846,5 +848,72 @@ func TestGetAssets(t *testing.T) {
 			So(resp.Passed[2].Asset.Id, ShouldEqual, "asset-3")
 			So(resp.Passed[3].Asset.Id, ShouldEqual, "asset-2")
 		})
+	})
+}
+
+func TestUpdateAssets(t *testing.T) {
+	t.Parallel()
+	Convey("UpdateAssets", t, func() {
+		ctx := testingContext()
+		ctx = external.WithTestingContext(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("UpdateAssets - some failures", func() {
+			resp := UpdateAssets(tf.C, []*chopsasset.ChopsAsset{{
+				Id: "Asset1-UAE",
+				Location: &chopsfleet.Location{
+					Lab:      "chromeos6",
+					Row:      "1",
+					Rack:     "2",
+					Position: "10",
+				},
+			}, {
+				Id: "Asset1",
+				Location: &chopsfleet.Location{
+					Row:      "2",
+					Rack:     "3",
+					Position: "1",
+				},
+			}, {
+				Id: "Asset2",
+				Location: &chopsfleet.Location{
+					Lab:      "chromeos6",
+					Row:      "2",
+					Rack:     "3",
+					Position: "1",
+				},
+			},
+			})
+			So(resp.Failed, ShouldHaveLength, 2)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Failed[0].Asset.Id, ShouldEqual, "Asset1-UAE")
+			So(resp.Failed[1].Asset.Id, ShouldEqual, "Asset1")
+			So(resp.Passed[0].Asset.Id, ShouldEqual, "Asset2")
+		})
+		Convey("UpdateAssets - Happy path", func() {
+			resp := UpdateAssets(tf.C, []*chopsasset.ChopsAsset{{
+				Id: "Asset-1",
+				Location: &chopsfleet.Location{
+					Lab:      "chromeos6",
+					Row:      "1",
+					Rack:     "2",
+					Position: "10",
+				},
+			}, {
+				Id: "Asset-2",
+				Location: &chopsfleet.Location{
+					Lab:      "chromeos6",
+					Row:      "2",
+					Rack:     "3",
+					Position: "1",
+				},
+			},
+			})
+			So(resp.Failed, ShouldHaveLength, 0)
+			So(resp.Passed, ShouldHaveLength, 2)
+			So(resp.Passed[0].Asset.Id, ShouldEqual, "Asset-1")
+			So(resp.Passed[1].Asset.Id, ShouldEqual, "Asset-2")
+		})
+
 	})
 }
