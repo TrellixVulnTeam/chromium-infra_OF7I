@@ -14,6 +14,7 @@ import (
 
 	"infra/appengine/rubber-stamper/config"
 	"infra/appengine/rubber-stamper/internal/gerrit"
+	"infra/appengine/rubber-stamper/internal/metrics"
 	"infra/appengine/rubber-stamper/internal/util"
 	"infra/appengine/rubber-stamper/tasks/taskspb"
 )
@@ -30,6 +31,8 @@ import (
 // nonconformant files with a note that this CL is not a clean
 // revert/reland/cherrypick, and provide a shortlink to more documentation.
 func ReviewChange(ctx context.Context, t *taskspb.ChangeReviewTask) error {
+	metrics.ReviewerAttemptCount.Add(ctx, 1, t.Host, t.Repo, getReviewType(t))
+
 	var msg string
 	cfg, err := config.Get(ctx)
 	if err != nil {
@@ -97,6 +100,7 @@ func approveChange(ctx context.Context, gc gerrit.Client, t *taskspb.ChangeRevie
 	if err != nil {
 		return fmt.Errorf("failed to add label for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
 	}
+	metrics.ReviewerApprovedCount.Add(ctx, 1, t.Host, t.Repo, getReviewType(t))
 	return nil
 }
 
@@ -126,5 +130,17 @@ func declineChange(ctx context.Context, gc gerrit.Client, t *taskspb.ChangeRevie
 	if err != nil {
 		return fmt.Errorf("failed to delete reviewer for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
 	}
+	metrics.ReviewerDeclinedCount.Add(ctx, 1, t.Host, t.Repo, getReviewType(t))
 	return nil
+}
+
+// Get the potential review type of CL t.Number.
+func getReviewType(t *taskspb.ChangeReviewTask) string {
+	if t.RevertOf != 0 {
+		return "revert"
+	} else if t.CherryPickOfChange != 0 {
+		return "cherry_pick"
+	} else {
+		return "benign_file"
+	}
 }
