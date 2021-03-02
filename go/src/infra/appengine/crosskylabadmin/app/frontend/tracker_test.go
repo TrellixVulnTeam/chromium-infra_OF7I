@@ -33,7 +33,6 @@ import (
 )
 
 const repairQ = "repair-bots"
-const resetQ = "reset-bots"
 const repairLabstationQ = "repair-labstations"
 const auditQ = "audit-bots"
 
@@ -117,14 +116,13 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 		defer validate()
 		tqt := taskqueue.GetTestable(tf.C)
 		tqt.CreateQueue(repairQ)
-		tqt.CreateQueue(resetQ)
 
 		Convey("run needs_repair status", func() {
 			tqt.ResetTasks()
 			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_repair"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot1, bot1LabStation}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot1, bot3, bot1LabStation}, nil)
 			expectDefaultPerBotRefresh(tf)
 
 			request := fleet.PushBotsForAdminTasksRequest{
@@ -136,25 +134,6 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id1"})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{})
-		})
-		Convey("do not run tasks for needs_reset statuses", func() {
-			tqt.ResetTasks()
-			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
-				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
-				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_reset"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3}, nil)
-			expectDefaultPerBotRefresh(tf)
-			request := fleet.PushBotsForAdminTasksRequest{
-				TargetDutState: fleet.DutState_NeedsReset,
-			}
-			res, err := tf.Tracker.PushBotsForAdminTasks(tf.C, &request)
-			So(err, ShouldBeNil)
-			So(res, ShouldNotBeNil)
-
-			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 		Convey("run only for repair_failed status", func() {
 			tqt.ResetTasks()
@@ -173,7 +152,6 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id2"})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 		Convey("run only for needs_manual_repair status", func() {
 			tqt.ResetTasks()
@@ -181,7 +159,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 				gomock.Any(),
 				gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_manual_repair"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot4}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4}, nil)
 			expectDefaultPerBotRefresh(tf)
 			request := fleet.PushBotsForAdminTasksRequest{
 				TargetDutState: fleet.DutState_NeedsManualRepair,
@@ -192,7 +170,6 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id4"})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 		Convey("don't run for needs_replacement status", func() {
 			tqt.ResetTasks()
@@ -200,7 +177,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 				gomock.Any(),
 				gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_replacement"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot5}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot5}, nil)
 			expectDefaultPerBotRefresh(tf)
 			request := fleet.PushBotsForAdminTasksRequest{
 				TargetDutState: fleet.DutState_NeedsReplacement,
@@ -211,7 +188,6 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{})
-			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 	})
 }

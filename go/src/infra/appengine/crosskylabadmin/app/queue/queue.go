@@ -42,11 +42,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 		logAndSetHTTPErr(runRepairQueueHandler),
 	)
 	r.POST(
-		"/internal/task/reset/*ignored",
-		mwBase.Extend(gaemiddleware.RequireTaskQueue("reset-bots")),
-		logAndSetHTTPErr(runResetQueueHandler),
-	)
-	r.POST(
 		"/internal/task/audit/*ignored",
 		mwBase.Extend(gaemiddleware.RequireTaskQueue("audit-bots")),
 		logAndSetHTTPErr(runAuditQueueHandler),
@@ -67,21 +62,6 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	}
 
 	logging.Infof(c.Context, "Successfully run repair job for %s: %s", botID, taskURL)
-	return nil
-}
-
-func runResetQueueHandler(c *router.Context) (err error) {
-	defer func() {
-		runResetTick.Add(c.Context, 1, err == nil)
-	}()
-
-	botID := c.Request.FormValue("botID")
-	expectedState := c.Request.FormValue("expectedState")
-	taskURL, err := frontend.CreateResetTask(c.Context, botID, expectedState)
-	if err != nil {
-		return err
-	}
-	logging.Infof(c.Context, "Successfully run reset job for %s: %s", botID, taskURL)
 	return nil
 }
 

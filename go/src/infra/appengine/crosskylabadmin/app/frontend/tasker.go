@@ -43,21 +43,6 @@ func CreateRepairTask(ctx context.Context, botID, expectedState string) (string,
 	return taskURL, nil
 }
 
-// CreateResetTask kicks off a reset job.
-func CreateResetTask(ctx context.Context, botID, expectedState string) (string, error) {
-	at := worker.AdminTaskForType(ctx, fleet.TaskType_Reset)
-	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
-	}
-	cfg := config.Get(ctx)
-	taskURL, err := runTaskByBotID(ctx, at, sc, botID, expectedState, cfg.Tasker.BackgroundTaskExpirationSecs, cfg.Tasker.BackgroundTaskExecutionTimeoutSecs)
-	if err != nil {
-		return "", errors.Annotate(err, "fail to create reset task for %s", botID).Err()
-	}
-	return taskURL, nil
-}
-
 // CreateAuditTask kicks off an audit job.
 func CreateAuditTask(ctx context.Context, botID, taskname, actions string) (string, error) {
 	at := worker.AuditTaskWithActions(ctx, taskname, actions)

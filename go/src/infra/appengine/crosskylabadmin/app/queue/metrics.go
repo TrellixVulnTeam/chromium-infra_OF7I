@@ -26,12 +26,6 @@ var (
 		nil,
 		field.Bool("success"),
 	)
-	runResetTick = metric.NewCounter(
-		"chromeos/crosskylabadmin/queue/run_set",
-		"runReset attempt",
-		nil,
-		field.Bool("success"),
-	)
 	runAuditTick = metric.NewCounter(
 		"chromeos/crosskylabadmin/queue/run_audit",
 		"runAudit attempt",
