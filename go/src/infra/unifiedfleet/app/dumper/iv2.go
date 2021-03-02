@@ -479,7 +479,7 @@ func DumpToInventoryDutStateSnapshot(ctx context.Context) error {
 func DumpToInventoryDeviceSnapshot(ctx context.Context) error {
 	// UFS migration done, run this job.
 	if config.Get(ctx).GetEnableLabStateconfigPush() {
-		logging.Infof(ctx, "UFS migration done: Start DumpToInventoryDeviceSnapshot")
+		logging.Infof(ctx, "UFS migration done: start DumpToInventoryDeviceSnapshot")
 		var err error
 		ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 		if err != nil {
