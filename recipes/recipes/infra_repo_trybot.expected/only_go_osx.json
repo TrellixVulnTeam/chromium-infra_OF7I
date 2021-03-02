@@ -181,15 +181,8 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "test.py",
-      "test",
-      "--verbose"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "name": "python tests"
+    "cmd": [],
+    "name": "skipping Python tests for pure Go change"
   },
   {
     "cmd": [
@@ -301,7 +294,7 @@
   },
   {
     "cmd": [],
-    "name": "skipping slow cipd packaging tests"
+    "name": "skipping slow CIPD packaging tests"
   },
   {
     "cmd": [

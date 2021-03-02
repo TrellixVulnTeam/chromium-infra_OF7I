@@ -181,34 +181,8 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "test.py",
-      "test",
-      "--verbose"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "name": "python tests"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
-      "test",
-      "run"
-    ],
-    "name": "recipe test"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
-      "lint"
-    ],
-    "name": "recipe lint"
+    "cmd": [],
+    "name": "skipping Python tests for pure Go change"
   },
   {
     "cmd": [
@@ -267,7 +241,7 @@
   },
   {
     "cmd": [],
-    "name": "skipping slow cipd packaging tests"
+    "name": "skipping slow CIPD packaging tests"
   },
   {
     "name": "$result"

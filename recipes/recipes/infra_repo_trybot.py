@@ -45,37 +45,49 @@ def RunSteps(api, go_version_variant):
   co.commit_change()
   co.gclient_runhooks()
 
-
+  # Analyze the CL to skip unnecessary tests.
   files = co.get_changed_files()
   is_deps_roll = bool(files.intersection([
       'DEPS',
       api.path.join('bootstrap', 'deps.pyl'),
       api.path.join('go', 'deps.lock')
   ]))
+  is_build_change = any(f.startswith('build/') for f in files)
+  is_go_change = any(f.startswith('go/') for f in files)
+  is_pure_go_change = all(f.startswith('go/') for f in files)
 
-  with api.step.defer_results():
-    if api.platform.arch != 'arm':
-      with api.context(cwd=co.path.join(patch_root)):
-        api.python('python tests', 'test.py', ['test', '--verbose'])
-        # To preserve high CQ coverage vs very low coverage in infra_internal,
-        # test CQ separately. But only if CQ code is modified.
-        # Note that this will run CQ tests once again.
-        if internal and any(f.startswith('infra_internal/services/cq')
-                            for f in files):
-          api.python('python cq tests', 'test.py',
-                     ['test', 'infra_internal/services/cq'])
+  # Don't run Python or recipes tests if only "go/..." was touched.
+  if not is_pure_go_change:
+    with api.step.defer_results():
+      if api.platform.arch != 'arm':
+        with api.context(cwd=co.path.join(patch_root)):
+          api.python('python tests', 'test.py', ['test', '--verbose'])
+          # To preserve high CQ coverage vs very low coverage in infra_internal,
+          # test CQ separately. But only if CQ code is modified.
+          # Note that this will run CQ tests once again.
+          if internal and any(f.startswith('infra_internal/services/cq')
+                              for f in files):
+            api.python('python cq tests', 'test.py',
+                       ['test', 'infra_internal/services/cq'])
 
-    if not internal and api.platform.is_linux and api.platform.bits == 64:
-      # TODO(phajdan.jr): should we make recipe tests run on other platforms?
-      # TODO(tandrii): yes, they should run on Mac as well.
-      api.python(
-          'recipe test',
-          co.path.join('infra', 'recipes', 'recipes.py'),
-          ['test', 'run'])
-      api.python(
-          'recipe lint',
-          co.path.join('infra', 'recipes', 'recipes.py'),
-          ['lint'])
+      if not internal and api.platform.is_linux and api.platform.bits == 64:
+        # TODO(phajdan.jr): should we make recipe tests run on other platforms?
+        # TODO(tandrii): yes, they should run on Mac as well.
+        api.python(
+            'recipe test',
+            co.path.join('infra', 'recipes', 'recipes.py'),
+            ['test', 'run'])
+        api.python(
+            'recipe lint',
+            co.path.join('infra', 'recipes', 'recipes.py'),
+            ['lint'])
+  else:
+    api.step('skipping Python tests for pure Go change', cmd=None)
+
+  # Don't run Go tests unless go/... or DEPS or build/ were touched.
+  if not (is_deps_roll or is_build_change or is_go_change):
+    api.step('skipping Go and CIPD packaging tests', cmd=None)
+    return
 
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
@@ -85,7 +97,7 @@ def RunSteps(api, go_version_variant):
     # Do slow *.cipd packaging tests only when touching build/* or DEPS. This
     # will build all registered packages (without uploading them), and run
     # package tests from build/tests/.
-    if any(f.startswith('build/') for f in files) or is_deps_roll:
+    if is_build_change or is_deps_roll:
       api.python(
           'cipd - build packages',
           co.path.join(patch_root, 'build', 'build.py'),
@@ -95,7 +107,7 @@ def RunSteps(api, go_version_variant):
           co.path.join(patch_root, 'build', 'test_packages.py'),
           venv=True)
     else:
-      api.step('skipping slow cipd packaging tests', cmd=None)
+      api.step('skipping slow CIPD packaging tests', cmd=None)
 
 
 def GenTests(api):

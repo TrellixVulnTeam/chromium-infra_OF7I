@@ -249,7 +249,7 @@
   },
   {
     "cmd": [],
-    "name": "skipping slow cipd packaging tests"
+    "name": "skipping slow CIPD packaging tests"
   },
   {
     "name": "$result"
