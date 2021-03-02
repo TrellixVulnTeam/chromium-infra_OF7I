@@ -1,6 +1,6 @@
 # chopsui
 
-This directory contains Web Components shared across Chrome Operations' application frontends.
+This directory contains Web Components and JavaScript libraries shared across Chrome Operations' application frontends.
 
 ## Using chopsui components
 
