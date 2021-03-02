@@ -474,6 +474,23 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 		case "dut.servo.setup":
 		case "dut.servo.type":
 		case "dut.servo.topology":
+		case "dut.chameleon.type":
+		case "dut.chameleon.audioboard":
+		case "dut.camera.type":
+		case "dut.audio.box":
+		case "dut.audio.atrus":
+		case "dut.audio.cable":
+		case "dut.cable.type":
+		case "dut.wifi.antennaconn":
+		case "dut.wifi.wificell":
+		case "dut.wifi.router":
+		case "dut.touch.mimo":
+		case "dut.carrier":
+		case "dut.chaos":
+		case "dut.camerabox":
+		case "dut.camerabox.facing":
+		case "dut.camerabox.light":
+		case "dut.usb.smarthub":
 			// valid fields, nothing to validate.
 		default:
 			return status.Errorf(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - unsupported update mask path %q", path)
@@ -552,9 +569,11 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 			if strings.HasPrefix(path, "dut") {
 				if strings.HasPrefix(path, "dut.servo") {
 					processUpdateMachineLSEServoMask(oldServo, newServo, path)
+					continue
 				}
 				if strings.HasPrefix(path, "dut.rpm") {
 					processUpdateMachineLSERPMMask(oldRPM, newRPM, path)
+					continue
 				}
 				processUpdateMachineLSEDUTMask(oldDut, newDut, path)
 			}
@@ -591,7 +610,126 @@ func processUpdateMachineLSEDUTMask(oldDut, newDut *chromeosLab.DeviceUnderTest,
 		} else {
 			oldDut.Licenses = append(oldDut.GetLicenses(), newDut.GetLicenses()...)
 		}
+	case "dut.carrier":
+		oldDut.GetPeripherals().Carrier = newDut.GetPeripherals().GetCarrier()
+	case "dut.chaos":
+		oldDut.GetPeripherals().Chaos = newDut.GetPeripherals().GetChaos()
+	case "dut.usb.smarthub":
+		oldDut.GetPeripherals().SmartUsbhub = newDut.GetPeripherals().GetSmartUsbhub()
+	case "dut.camera.type":
+		// Copy the cameras list to oldDut.
+		oldDut.GetPeripherals().ConnectedCamera = newDut.GetPeripherals().GetConnectedCamera()
+	case "dut.cable.type":
+		// Copy the cable list to oldDut.
+		oldDut.GetPeripherals().Cable = newDut.GetPeripherals().GetCable()
+	case "dut.touch.mimo":
+		oldDut.GetPeripherals().Touch = newDut.GetPeripherals().GetTouch()
+	case "dut.camerabox":
+		oldDut.GetPeripherals().Camerabox = newDut.GetPeripherals().GetCamerabox()
+	case "dut.chameleon.type":
+		if oldDut.GetPeripherals().GetChameleon() == nil {
+			oldDut.GetPeripherals().Chameleon = &chromeosLab.Chameleon{}
+		}
+		if newDut.GetPeripherals().GetChameleon() != nil {
+			// Copy the chameleon peripherals if it isn't empty
+			oldDut.GetPeripherals().GetChameleon().ChameleonPeripherals = newDut.GetPeripherals().GetChameleon().GetChameleonPeripherals()
+		} else {
+			// Deleting chameleon
+			oldDut.GetPeripherals().Chameleon = nil
+		}
+	case "dut.chameleon.audioboard":
+		if oldDut.GetPeripherals().GetChameleon() == nil {
+			oldDut.GetPeripherals().Chameleon = &chromeosLab.Chameleon{}
+		}
+		if newDut.GetPeripherals().GetChameleon() != nil {
+			oldDut.GetPeripherals().GetChameleon().AudioBoard = newDut.GetPeripherals().GetChameleon().GetAudioBoard()
+		} else {
+			// Deleting chameleon
+			oldDut.GetPeripherals().Chameleon = nil
+		}
+	case "dut.wifi.antennaconn":
+		if oldDut.GetPeripherals().GetWifi() == nil {
+			oldDut.GetPeripherals().Wifi = &chromeosLab.Wifi{}
+		}
+		// If newDut doesn't have wifi. Ignore the assignment
+		if newDut.GetPeripherals().GetWifi() != nil {
+			oldDut.GetPeripherals().GetWifi().AntennaConn = newDut.GetPeripherals().GetWifi().GetAntennaConn()
+		} else {
+			// Deleting wifi
+			oldDut.GetPeripherals().Wifi = nil
+		}
+	case "dut.wifi.wificell":
+		if oldDut.GetPeripherals().GetWifi() == nil {
+			oldDut.GetPeripherals().Wifi = &chromeosLab.Wifi{}
+		}
+		// If newDut doesn't have wifi. Ignore the assignment
+		if newDut.GetPeripherals().GetWifi() != nil {
+			oldDut.GetPeripherals().GetWifi().Wificell = newDut.GetPeripherals().GetWifi().GetWificell()
+		} else {
+			// Deleting wifi
+			oldDut.GetPeripherals().Wifi = nil
+		}
+	case "dut.wifi.router":
+		if oldDut.GetPeripherals().GetWifi() == nil {
+			oldDut.GetPeripherals().Wifi = &chromeosLab.Wifi{}
+		}
+		// If newDut doesn't have wifi. Ignore the assignment
+		if newDut.GetPeripherals().GetWifi() != nil {
+			oldDut.GetPeripherals().GetWifi().Router = newDut.GetPeripherals().GetWifi().GetRouter()
+		} else {
+			// Deleting wifi
+			oldDut.GetPeripherals().Wifi = nil
+		}
+	case "dut.audio.box":
+		if oldDut.GetPeripherals().GetAudio() == nil {
+			oldDut.GetPeripherals().Audio = &chromeosLab.Audio{}
+		}
+		if newDut.GetPeripherals().GetAudio() != nil {
+			oldDut.GetPeripherals().GetAudio().AudioBox = newDut.GetPeripherals().GetAudio().GetAudioBox()
+		} else {
+			// Delete audio
+			oldDut.GetPeripherals().Audio = nil
+		}
+	case "dut.audio.atrus":
+		if oldDut.GetPeripherals().GetAudio() == nil {
+			oldDut.GetPeripherals().Audio = &chromeosLab.Audio{}
+		}
+		if newDut.GetPeripherals().GetAudio() != nil {
+			oldDut.GetPeripherals().GetAudio().Atrus = newDut.GetPeripherals().GetAudio().GetAtrus()
+		} else {
+			// Delete audio
+			oldDut.GetPeripherals().Audio = nil
+		}
+	case "dut.audio.cable":
+		if oldDut.GetPeripherals().GetAudio() == nil {
+			oldDut.GetPeripherals().Audio = &chromeosLab.Audio{}
+		}
+		if newDut.GetPeripherals().GetAudio() != nil {
+			oldDut.GetPeripherals().GetAudio().AudioCable = newDut.GetPeripherals().GetAudio().GetAudioCable()
+		} else {
+			// Delete audio
+			oldDut.GetPeripherals().Audio = nil
+		}
+	case "dut.camerabox.facing":
+		if oldDut.GetPeripherals().GetCameraboxInfo() == nil {
+			oldDut.GetPeripherals().CameraboxInfo = &chromeosLab.Camerabox{}
+		}
+		if newDut.GetPeripherals().GetCameraboxInfo() != nil {
+			oldDut.GetPeripherals().CameraboxInfo.Facing = newDut.GetPeripherals().GetCameraboxInfo().GetFacing()
+		} else {
+			oldDut.GetPeripherals().CameraboxInfo = nil
+		}
+	case "dut.camerabox.light":
+		if oldDut.GetPeripherals().GetCameraboxInfo() == nil {
+			oldDut.GetPeripherals().CameraboxInfo = &chromeosLab.Camerabox{}
+		}
+		if newDut.GetPeripherals().GetCameraboxInfo() != nil {
+			oldDut.GetPeripherals().CameraboxInfo.Light = newDut.GetPeripherals().GetCameraboxInfo().GetLight()
+		} else {
+			oldDut.GetPeripherals().CameraboxInfo = nil
+		}
 	}
+	return
 }
 
 // processUpdateMachineLSEServoMask returns servo with new updated params from the mask.

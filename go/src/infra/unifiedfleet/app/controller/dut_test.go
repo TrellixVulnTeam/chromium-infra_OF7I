@@ -1371,6 +1371,955 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-216")
 		})
+		Convey("UpdateDUT - Add chameleon to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-13", "machine-13", "labstation-10", "machine-14")
+			dut2, err := GetMachineLSE(ctx, "dut-13")
+			So(err, ShouldBeNil)
+			// Add chameleon to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				AudioBoard:           true,
+			}
+			dut2.UpdateTime = nil
+			// Update chameleon with correct paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.chameleon.type", "dut.chameleon.audioboard"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Validate the proto after update.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-13")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Chameleon type recorded.
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			// Chameleon audioboard recorded.
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-13")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-13")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Remove chameleon from DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-14", "machine-15", "labstation-11", "machine-16")
+			dut2, err := GetMachineLSE(ctx, "dut-14")
+			So(err, ShouldBeNil)
+			// Add chameleon to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				AudioBoard:           true,
+			}
+			dut2.UpdateTime = nil
+			// Update the DUT with proper mask.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.chameleon.type", "dut.chameleon.audioboard"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Validate proto after update.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-14")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Delete chameleon
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = nil
+			// UpdateDUT with at least one of the chameleon paths
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.chameleon.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Validate proto after update.
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 5)
+			// Verify Chameleon types deleted
+			So(changes[3].NewValue, ShouldEqual, "[]")
+			So(changes[3].OldValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			// Verify audiobox reset
+			So(changes[4].NewValue, ShouldEqual, "false")
+			So(changes[4].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-14")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add wifi to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-15", "machine-17", "labstation-12", "machine-18")
+			dut2, err := GetMachineLSE(ctx, "dut-15")
+			So(err, ShouldBeNil)
+			// Add wifi setup to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Wifi = &chromeosLab.Wifi{
+				AntennaConn: chromeosLab.Wifi_CONN_CONDUCTIVE,
+				Router:      chromeosLab.Wifi_ROUTER_802_11AX,
+				Wificell:    true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.wifi.antennaconn", "dut.wifi.router", "dut.wifi.wificell"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-15")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "CONN_UNKNOWN")
+			So(changes[1].NewValue, ShouldEqual, "CONN_CONDUCTIVE")
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			So(changes[3].OldValue, ShouldEqual, "ROUTER_UNSPECIFIED")
+			So(changes[3].NewValue, ShouldEqual, "ROUTER_802_11AX")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-15")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-15")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Remove wifi from DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-160", "machine-19", "labstation-13", "machine-21")
+			dut2, err := GetMachineLSE(ctx, "dut-160")
+			So(err, ShouldBeNil)
+			// Add wifi to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Wifi = &chromeosLab.Wifi{
+				AntennaConn: chromeosLab.Wifi_CONN_CONDUCTIVE,
+				Router:      chromeosLab.Wifi_ROUTER_802_11AX,
+				Wificell:    true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.wifi.antennaconn", "dut.wifi.router", "dut.wifi.wificell"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify the proto returned.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-160")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify that the changes were recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "CONN_UNKNOWN")
+			So(changes[1].NewValue, ShouldEqual, "CONN_CONDUCTIVE")
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			So(changes[3].OldValue, ShouldEqual, "ROUTER_UNSPECIFIED")
+			So(changes[3].NewValue, ShouldEqual, "ROUTER_802_11AX")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-160")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-160")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Delete/reset wifi in DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Wifi = nil
+			// Update DUT with at least one of the wifi masks.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.wifi.antennaconn"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-160")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 7)
+			// Verify that the changes were recorded by the history.
+			So(changes[4].NewValue, ShouldEqual, "CONN_UNKNOWN")
+			So(changes[4].OldValue, ShouldEqual, "CONN_CONDUCTIVE")
+			So(changes[5].NewValue, ShouldEqual, "false")
+			So(changes[5].OldValue, ShouldEqual, "true")
+			So(changes[6].NewValue, ShouldEqual, "ROUTER_UNSPECIFIED")
+			So(changes[6].OldValue, ShouldEqual, "ROUTER_802_11AX")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-160")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-160")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add carrier to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-170", "machine-22", "labstation-14", "machine-23")
+			dut2, err := GetMachineLSE(ctx, "dut-170")
+			So(err, ShouldBeNil)
+			// Add carrier to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Carrier = "GenericCarrier"
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.carrier"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-170")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "")
+			So(changes[1].NewValue, ShouldEqual, "GenericCarrier")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-170")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-170")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Remove carrier from DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-18", "machine-24", "labstation-15", "machine-25")
+			dut2, err := GetMachineLSE(ctx, "dut-18")
+			So(err, ShouldBeNil)
+			// Add carrier to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Carrier = "GenericCarrier"
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.carrier"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-18")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "")
+			So(changes[1].NewValue, ShouldEqual, "GenericCarrier")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-18")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-18")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Delete/reset carrier in DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Carrier = ""
+			// Update DUT with carrier mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.carrier"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-18")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "")
+			So(changes[2].OldValue, ShouldEqual, "GenericCarrier")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-18")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-18")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Set chaos on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-19", "machine-26", "labstation-16", "machine-27")
+			dut2, err := GetMachineLSE(ctx, "dut-19")
+			So(err, ShouldBeNil)
+			// Add chaos to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chaos = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.chaos"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-19")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-19")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-19")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Reset chaos on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-20", "machine-28", "labstation-17", "machine-29")
+			dut2, err := GetMachineLSE(ctx, "dut-20")
+			So(err, ShouldBeNil)
+			// Set chaos on the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chaos = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.chaos"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-20")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// reset chaos in DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chaos = false
+			// Update DUT with chaos mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.chaos"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "false")
+			So(changes[2].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-20")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Set usb smarthub on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-21", "machine-31", "labstation-18", "machine-32")
+			dut2, err := GetMachineLSE(ctx, "dut-21")
+			So(err, ShouldBeNil)
+			// Set usb smarthub on DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().SmartUsbhub = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.usb.smarthub"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-21")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-21")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-21")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Reset usb smarthub on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-22", "machine-33", "labstation-19", "machine-34")
+			dut2, err := GetMachineLSE(ctx, "dut-22")
+			So(err, ShouldBeNil)
+			// Set smart usb hub on the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().SmartUsbhub = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.usb.smarthub"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-22")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-22")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-22")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// reset usb smart hub on DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().SmartUsbhub = false
+			// Update DUT with usb smart hub mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.usb.smarthub"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-22")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "false")
+			So(changes[2].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-22")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-22")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add camera to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-23", "machine-35", "labstation-20", "machine-36")
+			dut2, err := GetMachineLSE(ctx, "dut-23")
+			So(err, ShouldBeNil)
+			// Add camera to DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().ConnectedCamera = []*chromeosLab.Camera{
+				{
+					CameraType: chromeosLab.CameraType_CAMERA_HUDDLY,
+				},
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camera.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-23")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[camera_type:CAMERA_HUDDLY]")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-23")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-23")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Remove camera from DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-24", "machine-37", "labstation-21", "machine-38")
+			dut2, err := GetMachineLSE(ctx, "dut-24")
+			So(err, ShouldBeNil)
+			// Add camera to DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().ConnectedCamera = []*chromeosLab.Camera{
+				{
+					CameraType: chromeosLab.CameraType_CAMERA_HUDDLY,
+				},
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camera.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-24")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[camera_type:CAMERA_HUDDLY]")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-24")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-24")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove camera from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().ConnectedCamera = nil
+			// Update DUT with camera type mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.camera.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-24")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "[]")
+			So(changes[2].OldValue, ShouldEqual, "[camera_type:CAMERA_HUDDLY]")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-24")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-24")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add cable to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-25", "machine-39", "labstation-22", "machine-41")
+			dut2, err := GetMachineLSE(ctx, "dut-25")
+			So(err, ShouldBeNil)
+			// Add cable to DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Cable = []*chromeosLab.Cable{
+				{
+					Type: chromeosLab.CableType_CABLE_USBAUDIO,
+				},
+				{
+					Type: chromeosLab.CableType_CABLE_USBPRINTING,
+				},
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.cable.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-25")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[type:CABLE_USBAUDIO type:CABLE_USBPRINTING]")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-25")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-25")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Remove cables from DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-26", "machine-42", "labstation-23", "machine-43")
+			dut2, err := GetMachineLSE(ctx, "dut-26")
+			So(err, ShouldBeNil)
+			// Add cable to DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Cable = []*chromeosLab.Cable{
+				{
+					Type: chromeosLab.CableType_CABLE_USBAUDIO,
+				},
+				{
+					Type: chromeosLab.CableType_CABLE_USBPRINTING,
+				},
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.cable.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-26")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "[]")
+			So(changes[1].NewValue, ShouldEqual, "[type:CABLE_USBAUDIO type:CABLE_USBPRINTING]")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-26")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-26")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove cables from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Cable = nil
+			// Update DUT with camera type mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.cable.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-26")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "[]")
+			So(changes[2].OldValue, ShouldEqual, "[type:CABLE_USBAUDIO type:CABLE_USBPRINTING]")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-26")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-26")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Set touch mimo on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-27", "machine-44", "labstation-24", "machine-45")
+			dut2, err := GetMachineLSE(ctx, "dut-27")
+			So(err, ShouldBeNil)
+			// Set touch mimo on DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Touch = &chromeosLab.Touch{
+				Mimo: true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.touch.mimo"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-27")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "<nil>")
+			So(changes[1].NewValue, ShouldEqual, "mimo:true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-27")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-27")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Reset touch mimo on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-28", "machine-46", "labstation-25", "machine-47")
+			dut2, err := GetMachineLSE(ctx, "dut-28")
+			So(err, ShouldBeNil)
+			// Set touch mimo on DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Touch = &chromeosLab.Touch{
+				Mimo: true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.touch.mimo"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-28")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "<nil>")
+			So(changes[1].NewValue, ShouldEqual, "mimo:true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-28")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-28")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove cables from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Touch = nil
+			// Update DUT with camera type mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.touch.mimo"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-28")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "<nil>")
+			So(changes[2].OldValue, ShouldEqual, "mimo:true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-28")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-28")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Set camera box on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-29", "machine-48", "labstation-26", "machine-49")
+			dut2, err := GetMachineLSE(ctx, "dut-29")
+			So(err, ShouldBeNil)
+			// Set camera box on DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Camerabox = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-29")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-29")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-29")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Reset camera box on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-31", "machine-51", "labstation-27", "machine-52")
+			dut2, err := GetMachineLSE(ctx, "dut-31")
+			So(err, ShouldBeNil)
+			// Set camera box on DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Camerabox = true
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-31")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-31")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-31")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove cables from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Camerabox = false
+			// Update DUT with camera type mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-31")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[2].NewValue, ShouldEqual, "false")
+			So(changes[2].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-31")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-31")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add audio to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-32", "machine-53", "labstation-28", "machine-54")
+			dut2, err := GetMachineLSE(ctx, "dut-32")
+			So(err, ShouldBeNil)
+			// Add audio config to DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Audio = &chromeosLab.Audio{
+				AudioBox:   true,
+				Atrus:      true,
+				AudioCable: true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.audio.box", "dut.audio.atrus", "dut.audio.cable"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-32")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			So(changes[3].OldValue, ShouldEqual, "false")
+			So(changes[3].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-32")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-32")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Delete audio on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-33", "machine-57", "labstation-29", "machine-56")
+			dut2, err := GetMachineLSE(ctx, "dut-33")
+			So(err, ShouldBeNil)
+			// Add audio config to DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Audio = &chromeosLab.Audio{
+				AudioBox:   true,
+				Atrus:      true,
+				AudioCable: true,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.audio.box", "dut.audio.atrus", "dut.audio.cable"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-33")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "false")
+			So(changes[1].NewValue, ShouldEqual, "true")
+			So(changes[2].OldValue, ShouldEqual, "false")
+			So(changes[2].NewValue, ShouldEqual, "true")
+			So(changes[3].OldValue, ShouldEqual, "false")
+			So(changes[3].NewValue, ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-33")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-33")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove audio from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Audio = nil
+			// Update DUT with correct mask. Note just one mask is enough to delete audio if Audio = nil
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.audio.box"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-33")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 7)
+			// Verify that the changes were recorded by the history.
+			So(changes[4].NewValue, ShouldEqual, "false")
+			So(changes[4].OldValue, ShouldEqual, "true")
+			So(changes[5].NewValue, ShouldEqual, "false")
+			So(changes[5].OldValue, ShouldEqual, "true")
+			So(changes[6].NewValue, ShouldEqual, "false")
+			So(changes[6].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-33")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-33")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Add camerabox to DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-34", "machine-58", "labstation-30", "machine-59")
+			dut2, err := GetMachineLSE(ctx, "dut-34")
+			So(err, ShouldBeNil)
+			// Add camerabox config to DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().CameraboxInfo = &chromeosLab.Camerabox{
+				Light:  chromeosLab.Camerabox_LIGHT_LED,
+				Facing: chromeosLab.Camerabox_FACING_BACK,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox.facing", "dut.camerabox.light"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-34")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "FACING_UNKNOWN")
+			So(changes[1].NewValue, ShouldEqual, "FACING_BACK")
+			So(changes[2].OldValue, ShouldEqual, "LIGHT_UNKNOWN")
+			So(changes[2].NewValue, ShouldEqual, "LIGHT_LED")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-34")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-34")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+
+		Convey("UpdateDUT - Delete camerabox on DUT", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-35", "machine-61", "labstation-31", "machine-62")
+			dut2, err := GetMachineLSE(ctx, "dut-35")
+			So(err, ShouldBeNil)
+			// Add camerabox config to DUT
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().CameraboxInfo = &chromeosLab.Camerabox{
+				Light:  chromeosLab.Camerabox_LIGHT_NOLED,
+				Facing: chromeosLab.Camerabox_FACING_FRONT,
+			}
+			dut2.UpdateTime = nil
+			// Update DUT with proper paths.
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox.facing", "dut.camerabox.light"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Verify that the returned proto is updated.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-35")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "FACING_UNKNOWN")
+			So(changes[1].NewValue, ShouldEqual, "FACING_FRONT")
+			So(changes[2].OldValue, ShouldEqual, "LIGHT_UNKNOWN")
+			So(changes[2].NewValue, ShouldEqual, "LIGHT_NOLED")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-35")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-35")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Remove audio from DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().CameraboxInfo = nil
+			// Update DUT with correct mask. Note just one mask is enough to delete camerabox.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.camerabox.facing"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-35")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 5)
+			// Verify that the changes were recorded by the history.
+			So(changes[3].NewValue, ShouldEqual, "FACING_UNKNOWN")
+			So(changes[3].OldValue, ShouldEqual, "FACING_FRONT")
+			So(changes[4].NewValue, ShouldEqual, "LIGHT_UNKNOWN")
+			So(changes[4].OldValue, ShouldEqual, "LIGHT_NOLED")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-35")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 3)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-35")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
 	})
 }
 

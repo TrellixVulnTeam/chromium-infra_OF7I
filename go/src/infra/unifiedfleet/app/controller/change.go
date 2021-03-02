@@ -635,7 +635,67 @@ func logDut(resourceName string, oldData, newData *chromeosLab.DeviceUnderTest) 
 	}
 	changes = append(changes, logServo(resourceName, "machine_lse.chromeos_machine_lse.dut.servo", oldData.GetPeripherals().GetServo(), newData.GetPeripherals().GetServo())...)
 	changes = append(changes, logRPM(resourceName, "machine_lse.chromeos_machine_lse.dut.rpm", oldData.GetPeripherals().GetRpm(), newData.GetPeripherals().GetRpm())...)
-	// TODO(anushruth): Add support for rest of the peripherals
+	// Log chameleon if either of them contains one.
+	if oldData.GetPeripherals().GetChameleon() != nil || newData.GetPeripherals().GetChameleon() != nil {
+		oldChameleon := oldData.GetPeripherals().GetChameleon()
+		newChameleon := newData.GetPeripherals().GetChameleon()
+		if oldChameleon == nil {
+			oldChameleon = &chromeosLab.Chameleon{}
+		}
+		if newChameleon == nil {
+			newChameleon = &chromeosLab.Chameleon{}
+		}
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.chameleon.type", oldChameleon.GetChameleonPeripherals(), newChameleon.GetChameleonPeripherals())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.chameleon.audioboard", oldChameleon.GetAudioBoard(), newChameleon.GetAudioBoard())...)
+	}
+	// Log wifi if either of them contains one.
+	if oldData.GetPeripherals().GetWifi() != nil || newData.GetPeripherals().GetWifi() != nil {
+		oldWifi := oldData.GetPeripherals().GetWifi()
+		newWifi := newData.GetPeripherals().GetWifi()
+		if oldWifi == nil {
+			oldWifi = &chromeosLab.Wifi{}
+		}
+		if newWifi == nil {
+			newWifi = &chromeosLab.Wifi{}
+		}
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.wifi.antennaconn", oldWifi.GetAntennaConn(), newWifi.GetAntennaConn())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.wifi.wificell", oldWifi.GetWificell(), newWifi.GetWificell())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.wifi.router", oldWifi.GetRouter(), newWifi.GetRouter())...)
+	}
+	// Log audio if either of them contains one.
+	if oldData.GetPeripherals().GetAudio() != nil || newData.GetPeripherals().GetAudio() != nil {
+		oldAudio := oldData.GetPeripherals().GetAudio()
+		newAudio := newData.GetPeripherals().GetAudio()
+		if oldAudio == nil {
+			oldAudio = &chromeosLab.Audio{}
+		}
+		if newAudio == nil {
+			newAudio = &chromeosLab.Audio{}
+		}
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.audio.box", oldAudio.GetAudioBox(), newAudio.GetAudioBox())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.audio.atrus", oldAudio.GetAtrus(), newAudio.GetAtrus())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.audio.cable", oldAudio.GetAudioCable(), newAudio.GetAudioCable())...)
+	}
+	// Log camera box if either of them contains one.
+	if oldData.GetPeripherals().GetCameraboxInfo() != nil || newData.GetPeripherals().GetCameraboxInfo() != nil {
+		oldCameraboxInfo := oldData.GetPeripherals().GetCameraboxInfo()
+		newCameraboxInfo := newData.GetPeripherals().GetCameraboxInfo()
+		if oldCameraboxInfo == nil {
+			oldCameraboxInfo = &chromeosLab.Camerabox{}
+		}
+		if newCameraboxInfo == nil {
+			newCameraboxInfo = &chromeosLab.Camerabox{}
+		}
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.camerabox.facing", oldCameraboxInfo.GetFacing(), newCameraboxInfo.GetFacing())...)
+		changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.camerabox.light", oldCameraboxInfo.GetLight(), newCameraboxInfo.GetLight())...)
+	}
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.camerabox", oldData.GetPeripherals().GetCamerabox(), newData.GetPeripherals().GetCamerabox())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.carrier", oldData.GetPeripherals().GetCarrier(), newData.GetPeripherals().GetCarrier())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.chaos", oldData.GetPeripherals().GetChaos(), newData.GetPeripherals().GetChaos())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.usb.smarthub", oldData.GetPeripherals().GetSmartUsbhub(), newData.GetPeripherals().GetSmartUsbhub())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.camera.type", oldData.GetPeripherals().GetConnectedCamera(), newData.GetPeripherals().GetConnectedCamera())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.cable.type", oldData.GetPeripherals().GetCable(), newData.GetPeripherals().GetCable())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chromeos_machine_lse.dut.touch.mimo", oldData.GetPeripherals().GetTouch(), newData.GetPeripherals().GetTouch())...)
 	return changes
 }
 
