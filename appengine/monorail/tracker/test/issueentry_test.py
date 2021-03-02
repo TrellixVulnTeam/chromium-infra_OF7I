@@ -939,6 +939,48 @@ class IssueEntryTest(unittest.TestCase):
     self.assertEqual('Not in your hotlist(s): U1:H2', mr.errors.hotlists)
     self.assertIsNone(url)
 
+  def testProcessFormData_RejectDeprecatedComponent(self):
+    mr = testing_helpers.MakeMonorailRequest(
+        path='/p/proj/issues/entry',
+        user_info={'user_id': 111},
+        project=self.project)
+    config = self.services.config.GetProjectConfig(mr.cnxn, mr.project_id)
+    config.component_defs = [
+        tracker_bizobj.MakeComponentDef(
+            1, mr.project_id, 'active', '', False, [], [], 0, 0),
+        tracker_bizobj.MakeComponentDef(
+            2, mr.project_id, 'notactive', '', True, [], [], 0, 0),
+    ]
+    self.services.config.StoreConfig(mr.cnxn, config)
+    print(config)
+    post_data = fake.PostData(
+        template_name=['rutabaga'],
+        summary=['fake summary'],
+        comment=['fake comment'],
+        components=['notactive'])
+
+    self.mox.StubOutWithMock(self.servlet, 'PleaseCorrect')
+    self.servlet.PleaseCorrect(
+        mr,
+        component_required=None,
+        fields=[],
+        initial_blocked_on='',
+        initial_blocking='',
+        initial_cc='',
+        initial_comment='fake comment',
+        initial_components='notactive',
+        initial_owner='',
+        initial_status='',
+        initial_summary='fake summary',
+        initial_hotlists='',
+        labels=[],
+        template_name='rutabaga')
+    self.mox.ReplayAll()
+    url = self.servlet.ProcessFormData(mr, post_data)
+    self.mox.VerifyAll()
+    self.assertEqual(mr.errors.components, 'Undefined or deprecated component')
+    self.assertIsNone(url)
+
   @patch('framework.cloud_tasks_helpers.create_task')
   def testProcessFormData_TemplateNameMissing(self, _create_task_mock):
     """POST doesn't fail if no template_name is passed."""

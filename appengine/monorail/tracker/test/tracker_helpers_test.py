@@ -1601,7 +1601,9 @@ class CreateIssueHelpersTest(unittest.TestCase):
     self.config.well_known_statuses = [self.status_1]
     self.component_def_1 = tracker_pb2.ComponentDef(
         component_id=1, path='compFOO')
-    self.config.component_defs = [self.component_def_1]
+    self.component_def_2 = tracker_pb2.ComponentDef(
+        component_id=2, path='deprecated', deprecated=True)
+    self.config.component_defs = [self.component_def_1, self.component_def_2]
     self.services.config.StoreConfig('cnxn', self.config)
     self.services.usergroup.TestAddGroupSettings(999, 'group@example.com')
 
@@ -1682,14 +1684,29 @@ class CreateIssueHelpersTest(unittest.TestCase):
           self.cnxn, self.services, input_issue, 'nonempty description')
 
   def testAssertValidIssueForCreate_ValidatesComponents(self):
+    # Tests an undefined component.
     input_issue = tracker_pb2.Issue(
         summary='',
         status='New',
         owner_id=111,
         project_id=789,
-        component_ids=[2])
-    with self.assertRaisesRegexp(exceptions.InputException,
-                                 'Undefined component with id: 2'):
+        component_ids=[3])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Undefined or deprecated component with id: 3'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+    # Tests a deprecated component.
+    input_issue = tracker_pb2.Issue(
+        summary='',
+        status='New',
+        owner_id=111,
+        project_id=789,
+        component_ids=[self.component_def_2.component_id])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Undefined or deprecated component with id: 2'):
       tracker_helpers.AssertValidIssueForCreate(
           self.cnxn, self.services, input_issue, 'nonempty description')
 

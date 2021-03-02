@@ -1653,10 +1653,13 @@ def AssertValidIssueForCreate(cnxn, services, issue, description):
     if not services.config.LookupStatusID(cnxn, issue.project_id, issue.status,
                                           autocreate=False):
       err_agg.AddErrorMessage('Undefined status: %s' % issue.status)
-    all_comp_ids = {cd.component_id for cd in config.component_defs}
+    all_comp_ids = {
+        cd.component_id for cd in config.component_defs if not cd.deprecated
+    }
     for comp_id in issue.component_ids:
       if comp_id not in all_comp_ids:
-        err_agg.AddErrorMessage('Undefined component with id: %d' % comp_id)
+        err_agg.AddErrorMessage(
+            'Undefined or deprecated component with id: %d' % comp_id)
 
 
 def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):

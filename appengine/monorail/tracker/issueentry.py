@@ -464,9 +464,9 @@ class IssueEntry(servlet.Servlet):
 
         except exceptions.OverAttachmentQuota:
           mr.errors.attachments = 'Project attachment quota exceeded.'
-        except exceptions.InputException:
-          # Don't make the EZT page 400 on an InputException.
-          pass
+        except exceptions.InputException as e:
+          if 'Undefined or deprecated component with id' in e.message:
+            mr.errors.components = 'Undefined or deprecated component'
 
     mr.template_name = parsed.template_name
     if mr.errors.AnyErrors():
