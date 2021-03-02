@@ -652,6 +652,9 @@ func (is *InventoryServerImpl) AddAssets(ctx context.Context, req *api.AssetList
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	if config.Get(ctx).GetRouting().GetAddAssets() {
+		return nil, errors.Reason("[UFS] Add Asset API is deprecated in IV2. Consider using shivas add asset").Err()
+	}
 	logging.Debugf(ctx, "Input request: %#v", req)
 	if err := req.Validate(); err != nil {
 		return nil, err
