@@ -138,46 +138,52 @@ func syncManufacturingConfigHandler(c *router.Context) error {
 
 func dumpRegisteredAssetsCronHandler(c *router.Context) error {
 	ctx := c.Context
-	logging.Infof(ctx, "Start to dump registered assets to bigquery")
+	if !config.Get(ctx).GetRouting().GetDumpAssetsBq() {
+		logging.Infof(ctx, "Start to dump registered assets to bigquery")
 
-	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("registered_assets$%s", bqlib.GetPSTTimeStamp(time.Now())))
-	if err != nil {
-		return err
+		uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("registered_assets$%s", bqlib.GetPSTTimeStamp(time.Now())))
+		if err != nil {
+			return err
+		}
+		msgs := bqlib.GetRegisteredAssetsProtos(ctx)
+		logging.Debugf(ctx, "Dumping %d records to bigquery", len(msgs))
+		if err := uploader.Put(ctx, msgs...); err != nil {
+			return err
+		}
+		logging.Debugf(ctx, "Dump is successfully finished")
+		return nil
 	}
-	msgs := bqlib.GetRegisteredAssetsProtos(ctx)
-	logging.Debugf(ctx, "Dumping %d records to bigquery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Dump is successfully finished")
 	return nil
 }
 
 func dumpAssetInfoToBQHandler(c *router.Context) error {
 	ctx := c.Context
-	logging.Infof(ctx, "Starting to dump asset info to BQ")
+	if !config.Get(ctx).GetRouting().GetDumpAssetsBq() {
+		logging.Infof(ctx, "Starting to dump asset info to BQ")
 
-	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("asset_info$%s", bqlib.GetPSTTimeStamp(time.Now())))
-	if err != nil {
-		return err
-	}
-	msgs, err := datastore.GetAllAssetInfo(ctx, false)
+		uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("asset_info$%s", bqlib.GetPSTTimeStamp(time.Now())))
+		if err != nil {
+			return err
+		}
+		msgs, err := datastore.GetAllAssetInfo(ctx, false)
 
-	// uploader only accepts proto.Message interface. Casting AssetInfo
-	// to proto.Message interface
-	data := make([]proto.Message, len(msgs))
-	for idx, msg := range msgs {
-		data[idx] = msg
-	}
-	if err != nil {
-		return err
-	}
+		// uploader only accepts proto.Message interface. Casting AssetInfo
+		// to proto.Message interface
+		data := make([]proto.Message, len(msgs))
+		for idx, msg := range msgs {
+			data[idx] = msg
+		}
+		if err != nil {
+			return err
+		}
 
-	logging.Debugf(ctx, "Dumping %d asset info records to BQ", len(data))
-	if err := uploader.Put(ctx, data...); err != nil {
-		return err
+		logging.Debugf(ctx, "Dumping %d asset info records to BQ", len(data))
+		if err := uploader.Put(ctx, data...); err != nil {
+			return err
+		}
+		logging.Debugf(ctx, "Dumped all asset info records to BQ")
+		return nil
 	}
-	logging.Debugf(ctx, "Dumped all asset info records to BQ")
 	return nil
 }
 
