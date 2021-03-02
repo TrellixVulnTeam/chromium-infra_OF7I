@@ -58,6 +58,7 @@ func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []s
 
 type getJob struct {
 	baseCommandRun
+	downloadResultsMixin
 	name string
 }
 
@@ -67,6 +68,7 @@ func cmdGetJob(p Param) *subcommands.Command {
 		ShortDesc: "Prints information about a Pinpoint job",
 		LongDesc: text.Doc(`
 			Prints out information about a Job.
+			Results can also optionally be downloaded.
 		`),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &getJob{}
@@ -76,6 +78,8 @@ func cmdGetJob(p Param) *subcommands.Command {
 
 func (gj *getJob) RegisterFlags(p Param) {
 	gj.baseCommandRun.RegisterFlags(p)
+	gj.downloadResultsMixin.RegisterFlags(&gj.Flags)
+
 	gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
 		Required; the name of the job to get information about.
 		Example: "-name=XXXXXXXXXXXXXX"
@@ -98,11 +102,13 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	}
 	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
-	return nil
+
+	return gj.downloadResultsMixin.doDownloadResults(ctx, resp)
 }
 
 type waitJob struct {
 	baseCommandRun
+	downloadResultsMixin
 	name  string
 	quiet bool
 }
@@ -115,6 +121,8 @@ func cmdWaitJob(p Param) *subcommands.Command {
 			wait-job blocks until the provided Pinpoint job is finished, i.e.
 			until the job is no longer RUNNING nor PENDING. -quiet disables
 			informational text output.
+
+			Results can also optionally be downloaded on completion.
 		`),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &waitJob{}
@@ -124,6 +132,7 @@ func cmdWaitJob(p Param) *subcommands.Command {
 
 func (wj *waitJob) RegisterFlags(p Param) {
 	wj.baseCommandRun.RegisterFlags(p)
+	wj.downloadResultsMixin.RegisterFlags(&wj.Flags)
 	wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
 		Required; the name of the job to poll.
 		Example: "-name=XXXXXXXXXXXXXX"
@@ -146,24 +155,24 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	poll := time.NewTicker(10 * time.Second)
 	defer poll.Stop()
 
-	var lastUpdateTime time.Time
+	var lastJob *pinpoint.Job
 	for {
 		resp, err := c.GetJob(ctx, req)
 		if err != nil {
 			return errors.Annotate(err, "failed during GetJob").Err()
 		}
-		if updateTime := resp.LastUpdateTime.AsTime(); lastUpdateTime != updateTime && !wj.quiet {
-			lastUpdateTime = updateTime
+		if !wj.quiet && resp.GetLastUpdateTime().AsTime() != lastJob.GetLastUpdateTime().AsTime() {
 			out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 			fmt.Println(out)
 			fmt.Println("--------------------------------")
 		}
+		lastJob = resp
 
 		if s := resp.State; s != pinpoint.Job_RUNNING && s != pinpoint.Job_PENDING {
 			if !wj.quiet {
 				fmt.Printf("Final state for job %q: %v\n", resp.Name, s)
 			}
-			return nil
+			break
 		}
 
 		select {
@@ -173,4 +182,6 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 			// loop back around and retry.
 		}
 	}
+
+	return wj.downloadResultsMixin.doDownloadResults(ctx, lastJob)
 }
