@@ -80,6 +80,12 @@ func (c *testRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 // testPlanForTests constructs a Test Platform test plan for the given tests.
 func testPlanForTests(testArgs string, testNames []string) *test_platform.Request_TestPlan {
+	// Due to crbug/984103, the first autotest arg gets dropped somewhere between here and
+	// when autotest reads the args. Add a dummy arg to prevent this bug for now.
+	// TODO(crbug/984103): Remove the dummy arg once the underlying bug is fixed.
+	if testArgs != "" {
+		testArgs = "dummy=crbug/984103 " + testArgs
+	}
 	testPlan := &test_platform.Request_TestPlan{}
 	for _, testName := range testNames {
 		testRequest := &test_platform.Request_Test{
