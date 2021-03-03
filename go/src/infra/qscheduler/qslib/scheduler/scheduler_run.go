@@ -70,6 +70,11 @@ type schedulerRun struct {
 	// throttled (at which point its other requests are demoted to FreeBucket).
 	fanoutCounter *fanoutCounter
 
+	// perLabelTaskCounter counts how many tasks per unique label keyval are
+	// currently running for each account that has per-label task limits set
+	// for any labels.
+	perLabelTaskCounter *perLabelTaskCounter
+
 	scheduler *Scheduler
 }
 
@@ -109,11 +114,12 @@ func (run *schedulerRun) Run(e EventSink) []*Assignment {
 	return output
 }
 
-// assignRequestToWorker updates the information in scheduler pass to reflect the fact that the given request
-// (from the given priority) was assigned to a worker.
-func (run *schedulerRun) assignRequestToWorker(w WorkerID, item *matchableRequest, priority Priority) {
-	delete(run.idleWorkers, w)
+// assignRequestToWorker updates the information in scheduler pass to show that
+// the given request was assigned to a worker.
+func (run *schedulerRun) assignRequestToWorker(w *Worker, item *matchableRequest) {
+	delete(run.idleWorkers, w.ID)
 	run.fanoutCounter.count(item.req)
+	run.perLabelTaskCounter.count(w.Labels, item.req.AccountID)
 	item.alreadyMatched = true
 }
 
@@ -145,12 +151,15 @@ func (s *Scheduler) newRun() *schedulerRun {
 	// scheduler passes will have only a few idle workers.
 	idleWorkers := make(map[WorkerID]*Worker, len(s.state.workers))
 	fanoutCounter := newFanoutCounter(s.config)
+	perLabelTaskCounter := newPerLabelTaskCounter(s.config)
 
 	for wid, w := range s.state.workers {
 		if w.IsIdle() {
 			idleWorkers[wid] = w
 		} else {
-			fanoutCounter.count(w.runningTask.request)
+			r := w.runningTask.request
+			fanoutCounter.count(r)
+			perLabelTaskCounter.count(w.Labels, r.AccountID)
 		}
 	}
 
@@ -158,6 +167,7 @@ func (s *Scheduler) newRun() *schedulerRun {
 		idleWorkers:                  idleWorkers,
 		matchableRequestsPerPriority: s.prioritizeRequests(fanoutCounter),
 		fanoutCounter:                fanoutCounter,
+		perLabelTaskCounter:          perLabelTaskCounter,
 		scheduler:                    s,
 	}
 }
@@ -268,7 +278,10 @@ func (run *schedulerRun) assignToIdleWorkers(priority Priority, matchesPerWorker
 		// - non-throttled match
 		// - not already matched
 		// - matches provision labels, if necessary
+		// - not at any per-label task limits for the worker's label keyvals
 		for _, match := range matches {
+			r := match.matchableRequest.req
+
 			if match.matchableRequest.alreadyMatched {
 				continue
 			}
@@ -278,23 +291,26 @@ func (run *schedulerRun) assignToIdleWorkers(priority Priority, matchesPerWorker
 			if requireProvisionMatch && !match.provisionMatch {
 				continue
 			}
+			if run.perLabelTaskCounter.isAtAnyLimit(w.Labels, r.AccountID) {
+				continue
+			}
 
 			m := &Assignment{
 				Type:      AssignmentIdleWorker,
 				WorkerID:  wid,
-				RequestID: match.matchableRequest.req.ID,
+				RequestID: r.ID,
 				Priority:  priority,
 				Time:      run.scheduler.state.lastUpdateTime,
 			}
-			run.assignRequestToWorker(wid, match.matchableRequest, priority)
+			run.assignRequestToWorker(w, match.matchableRequest)
 			run.scheduler.state.applyAssignment(m)
 			output = append(output, m)
 			events.AddEvent(
-				eventAssigned(match.matchableRequest.req, w, run.scheduler.state, run.scheduler.state.lastUpdateTime,
+				eventAssigned(r, w, run.scheduler.state, run.scheduler.state.lastUpdateTime,
 					&metrics.TaskEvent_AssignedDetails{
 						Preempting:        false,
 						Priority:          int32(priority),
-						ProvisionRequired: !w.Labels.HasAll(match.matchableRequest.req.ProvisionableLabels...),
+						ProvisionRequired: !w.Labels.HasAll(r.ProvisionableLabels...),
 					}))
 			break
 		}
@@ -458,12 +474,13 @@ func (run *schedulerRun) preemptRunningTasks(priority Priority, events EventSink
 		// - non-banned
 		// - not already matched
 		// - has sufficient balance to refund cost of preempted job
+		// - not at any per-label task limits for the worker's label keyvals
 		for _, m := range matches {
+			r := m.matchableRequest.req
+
 			if m.matchableRequest.alreadyMatched {
 				continue
 			}
-
-			r := m.matchableRequest.req
 			if bannedAccounts[r.AccountID] {
 				continue
 			}
@@ -473,17 +490,21 @@ func (run *schedulerRun) preemptRunningTasks(priority Priority, events EventSink
 			if !worker.runningTask.cost.Less(state.balances[r.AccountID]) {
 				continue
 			}
+			if run.perLabelTaskCounter.isAtAnyLimit(worker.Labels, r.AccountID) {
+				continue
+			}
+
 			mut := &Assignment{
 				Type:        AssignmentPreemptWorker,
 				Priority:    priority,
-				RequestID:   m.matchableRequest.req.ID,
+				RequestID:   r.ID,
 				TaskToAbort: worker.runningTask.request.ID,
 				WorkerID:    worker.ID,
 				Time:        state.lastUpdateTime,
 			}
-			run.assignRequestToWorker(worker.ID, m.matchableRequest, priority)
+			run.assignRequestToWorker(worker, m.matchableRequest)
 			events.AddEvent(
-				eventAssigned(m.matchableRequest.req, worker, state, state.lastUpdateTime,
+				eventAssigned(r, worker, state, state.lastUpdateTime,
 					&metrics.TaskEvent_AssignedDetails{
 						Preempting:        true,
 						PreemptionCost:    worker.runningTask.cost[:],
@@ -494,9 +515,9 @@ func (run *schedulerRun) preemptRunningTasks(priority Priority, events EventSink
 			events.AddEvent(
 				eventPreempted(worker.runningTask.request, worker, state, state.lastUpdateTime,
 					&metrics.TaskEvent_PreemptedDetails{
-						PreemptingAccountId: string(m.matchableRequest.req.AccountID),
+						PreemptingAccountId: string(r.AccountID),
 						PreemptingPriority:  int32(priority),
-						PreemptingTaskId:    string(m.matchableRequest.req.ID),
+						PreemptingTaskId:    string(r.ID),
 						Priority:            int32(worker.runningTask.priority),
 					}))
 			state.applyAssignment(mut)
