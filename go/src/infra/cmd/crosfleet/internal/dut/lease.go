@@ -18,6 +18,7 @@ import (
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"strings"
+	"time"
 )
 
 const (
@@ -89,6 +90,16 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	}
 	buildID, err := bbClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
 	fmt.Fprintf(a.GetOut(), "Leasing DUT at %s\n", bbClient.BuildURL(buildID))
+	if c.exitEarly {
+		return nil
+	}
+	build, err := bbClient.WaitForBuildStart(ctx, buildID)
+	if err != nil {
+		return err
+	}
+	host := buildbucket.FindDimValInFinalDims("dut_name", build)
+	endTime := time.Now().Add(time.Duration(c.durationMins) * time.Minute).Format(time.RFC822)
+	fmt.Fprintf(a.GetOut(), "Leased %s until %s\n", host, endTime)
 	return nil
 }
 
@@ -139,6 +150,7 @@ type leaseFlags struct {
 	model        string
 	board        string
 	addedDims    map[string]string
+	exitEarly    bool
 }
 
 // Registers lease-specific flags.
@@ -151,6 +163,8 @@ func (c *leaseFlags) register(f *flag.FlagSet) {
 the lease won't start until that task completes.`)
 	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional DUT dimension in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional DUT dimensions in same format as -dim.")
+	f.BoolVar(&c.exitEarly, "exit-early", false, `Exit command as soon as lease is scheduled. crosfleet will not notify on lease failure,
+or print the hostname of the leased DUT.`)
 }
 
 func (c *leaseFlags) validate(f *flag.FlagSet) error {

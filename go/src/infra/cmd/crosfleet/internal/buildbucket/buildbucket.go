@@ -21,6 +21,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	"io"
 	"strings"
+	"time"
 )
 
 var maxServiceVersion = &test_platform.ServiceVersion{
@@ -95,6 +96,34 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 		return 0, errors.Annotate(err, "schedule build").Err()
 	}
 	return build.GetId(), nil
+}
+
+// WaitForBuildStart polls Buildbucket to check the status of the build with
+// the given ID, and returns the build once it has started. Specific fields can
+// be specified to populate on the the returned build; if none are specified,
+// all build fields will be populated.
+func (c *Client) WaitForBuildStart(ctx context.Context, id int64) (*buildbucketpb.Build, error) {
+	for {
+		build, err := c.GetBuild(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		switch s := build.Status; s {
+		case buildbucketpb.Status_SCHEDULED:
+			time.Sleep(10 * time.Second)
+		case buildbucketpb.Status_STARTED:
+			return build, nil
+		default:
+			statusString := buildbucketpb.Status_name[int32(s)]
+			buildSummary := ""
+			if build.SummaryMarkdown != "" {
+				buildSummary = fmt.Sprintf("Build summary: %s", build.SummaryMarkdown)
+			}
+			return nil, fmt.Errorf(`build finished in unexpected state %s
+%s
+For more details, please visit the build page at %s`, statusString, buildSummary, c.BuildURL(build.Id))
+		}
+	}
 }
 
 // CancelBuildWithBotID cancels any pending or active builds created after the
@@ -213,19 +242,40 @@ func bbTags(tags map[string]string) []*buildbucketpb.StringPair {
 func isUnfinishedBuildWithBotID(build *buildbucketpb.Build, id string) bool {
 	switch build.Status {
 	case buildbucketpb.Status_SCHEDULED:
-		requestedDims := build.GetInfra().GetBuildbucket().GetRequestedDimensions()
-		for _, dim := range requestedDims {
-			if dim.GetKey() == "id" && dim.GetValue() == id {
-				return true
-			}
+		if FindDimValInRequestedDims("id", build) == id {
+			return true
 		}
 	case buildbucketpb.Status_STARTED:
-		provisionedDims := build.GetInfra().GetSwarming().GetBotDimensions()
-		for _, dim := range provisionedDims {
-			if dim.GetKey() == "id" && dim.GetValue() == id {
-				return true
-			}
+		if FindDimValInFinalDims("id", build) == id {
+			return true
 		}
 	}
 	return false
+}
+
+// FindDimValInRequestedDims finds the given dimension value in the build's
+// requested dimensions, which are of type []*buildbucketpb.RequestedDimension.
+func FindDimValInRequestedDims(dim string, build *buildbucketpb.Build) string {
+	requestedDims := build.GetInfra().GetBuildbucket().GetRequestedDimensions()
+	for _, d := range requestedDims {
+		if d.GetKey() == dim {
+			return d.GetValue()
+		}
+	}
+	return ""
+}
+
+// FindDimValInFinalDims finds the given dimension value in the build's
+// requested dimensions, which are of type []*buildbucketpb.StringPair.
+//
+// Since the dimensions looped through are of different type here than in
+// FindDimValInRequestedDims, some duplicate code is unfortunately required.
+func FindDimValInFinalDims(dim string, build *buildbucketpb.Build) string {
+	provisionedDims := build.GetInfra().GetSwarming().GetBotDimensions()
+	for _, d := range provisionedDims {
+		if d.GetKey() == dim {
+			return d.GetValue()
+		}
+	}
+	return ""
 }
