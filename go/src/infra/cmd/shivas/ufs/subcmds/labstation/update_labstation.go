@@ -167,14 +167,12 @@ func (c *updateLabstation) innerRun(a subcommands.Application, args []string, en
 
 	// Check and start deploy tasks for required Labstations.
 	if len(deployTasks) > 0 {
-		//TODO(anushruth): Change to e.SwarmingService once UFS migration is complete.
-		tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, "https://chromium-swarm-dev.appspot.com/")
+		tc, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
 		if err != nil {
 			return err
 		}
 		tc.LogdogService = e.LogdogService
-		//TODO(anushruth): Change to e.SwarmingServiceAccount once UFS migration is complete.
-		tc.SwarmingServiceAccount = "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com"
+		tc.SwarmingServiceAccount = e.SwarmingServiceAccount
 
 		for _, req := range deployTasks {
 			// Check if deploy task is required or force deploy is set.
