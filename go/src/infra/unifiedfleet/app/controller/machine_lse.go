@@ -577,7 +577,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 		if err != nil {
 			return &allRes, err
 		}
-		if i+pageSize >= len(lses) {
+		if i+pageSize >= len(dutStates) {
 			break
 		}
 	}
