@@ -6,6 +6,7 @@ package dut
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -51,6 +52,25 @@ const (
 	// DUT related UpdateMask paths.
 	poolsPath   = "dut.pools"
 	licensePath = "dut.licenses"
+
+	// ACS related UpdateMask paths.
+	chameleonsPath           = "dut.chameleon.type"
+	chameleonsAudioBoardPath = "dut.chameleon.audioboard"
+	cameraTypePath           = "dut.camera.type"
+	audioBoxPath             = "dut.audio.box"
+	atrusPath                = "dut.audio.atrus"
+	audioCablePath           = "dut.audio.cable"
+	cablePath                = "dut.cable.type"
+	wifiAntennaPath          = "dut.wifi.antennaconn"
+	wifiCellPath             = "dut.wifi.wificell"
+	wifiRouterPath           = "dut.wifi.router"
+	touchMimoPath            = "dut.touch.mimo"
+	carrierPath              = "dut.carrier"
+	chaosPath                = "dut.chaos"
+	cameraboxPath            = "dut.camerabox"
+	cameraFacingPath         = "dut.camerabox.facing"
+	cameraLightPath          = "dut.camerabox.light"
+	usbHubPath               = "dut.usb.smarthub"
 
 	// Operations string for Summary table.
 	ufsOp   = "Update to Database"
@@ -100,7 +120,7 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+".")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the DUT.")
 		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
-		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values.")
+		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the DUT. Clearing this field will delete rpm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the DUT.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
@@ -114,6 +134,25 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.forceInstallFirmware, "force-install-fw", false, "force install firmware if deploy task is run.")
 		c.Flags.BoolVar(&c.forceInstallOS, "force-install-os", false, "force install os image if deploy task is run.")
 		c.Flags.BoolVar(&c.forceUpdateLabels, "force-update-labels", false, "force update labels if deploy task is run.")
+
+		// ACS DUT fields
+		c.Flags.Var(utils.CSVString(&c.chameleons), "chameleons", cmdhelp.ChameleonTypeHelpText+". "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(utils.CSVString(&c.cameras), "cameras", cmdhelp.CameraTypeHelpText+". "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(utils.CSVString(&c.cables), "cables", cmdhelp.CableTypeHelpText+". "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.antennaConnection, "antennaconnection", "", cmdhelp.AntennaConnectionHelpText)
+		c.Flags.StringVar(&c.router, "router", "", cmdhelp.RouterHelpText)
+		c.Flags.StringVar(&c.facing, "facing", "", cmdhelp.FacingHelpText)
+		c.Flags.StringVar(&c.light, "light", "", cmdhelp.LightHelpText)
+		c.Flags.StringVar(&c.carrier, "carrier", "", "name of the carrier."+". "+cmdhelp.ClearFieldHelpText)
+		c.Flags.BoolVar(&c.audioBoard, "audioboard", false, "adding this flag will specify if audioboard is present")
+		c.Flags.BoolVar(&c.audioBox, "audiobox", false, "adding this flag will specify if audiobox is present")
+		c.Flags.BoolVar(&c.atrus, "atrus", false, "adding this flag will specify if atrus is present")
+		c.Flags.BoolVar(&c.wifiCell, "wificell", false, "adding this flag will specify if wificell is present")
+		c.Flags.BoolVar(&c.touchMimo, "touchmimo", false, "adding this flag will specify if touchmimo is present")
+		c.Flags.BoolVar(&c.cameraBox, "camerabox", false, "adding this flag will specify if camerabox is present")
+		c.Flags.BoolVar(&c.chaos, "chaos", false, "adding this flag will specify if chaos is present")
+		c.Flags.BoolVar(&c.audioCable, "audiocable", false, "adding this flag will specify if audiocable is present")
+		c.Flags.BoolVar(&c.smartUSBHub, "smartusbhub", false, "adding this flag will specify if smartusbhub is present")
 		return c
 	},
 }
@@ -148,6 +187,28 @@ type updateDUT struct {
 	forceInstallOS       bool
 	forceInstallFirmware bool
 	forceUpdateLabels    bool
+
+	// ACS DUT fields
+	chameleons        []string
+	cameras           []string
+	antennaConnection string
+	router            string
+	cables            []string
+	facing            string
+	light             string
+	carrier           string
+	audioBoard        bool
+	audioBox          bool
+	atrus             bool
+	wifiCell          bool
+	touchMimo         bool
+	cameraBox         bool
+	chaos             bool
+	audioCable        bool
+	smartUSBHub       bool
+
+	// For use in determining if a flag is set
+	flagInputs map[string]bool
 }
 
 func (c *updateDUT) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -159,6 +220,12 @@ func (c *updateDUT) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	// Determine all the input flags and store them in the map.
+	c.flagInputs = make(map[string]bool)
+	c.Flags.Visit(func(f *flag.Flag) {
+		c.flagInputs[f.Name] = true
+	})
+
 	// Using a map to collect deploy actions. This ensures single deploy task per DUT.
 	var deployTasks map[string][]string
 
@@ -287,13 +354,43 @@ func (c updateDUT) validateArgs() error {
 		if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; c.servoSetupType != "" && !ok {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid value for servo setup type. Valid values are "+cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
-		if len(c.licenseTypes) != len(c.licenseIds) {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNumber of -licensetype(%s) and -licenseid(%s) must be same.", c.licenseTypes, c.licenseIds)
-		}
-		for _, cp := range c.licenseTypes {
-			if !ufsUtil.IsLicenseType(cp) {
-				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid license type name, please check help info for '-licensetype'.", cp)
+		// Check if the license input is valid if it's not being cleared.
+		if !ufsUtil.ContainsAnyStrings(c.licenseIds, utils.ClearFieldValue) {
+			if len(c.licenseTypes) != len(c.licenseIds) {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNumber of -licensetype(%s) and -licenseid(%s) must be same.", c.licenseTypes, c.licenseIds)
 			}
+			for _, cp := range c.licenseTypes {
+				if !ufsUtil.IsLicenseType(cp) {
+					return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid license type name, please check help info for '-licensetype'.", cp)
+				}
+			}
+		}
+		for _, cp := range c.chameleons {
+			if !ufsUtil.IsChameleonType(cp) && cp != utils.ClearFieldValue {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid chameleon type name, please check help info for '-chameleons'.", cp)
+			}
+		}
+		for _, cp := range c.cameras {
+			if !ufsUtil.IsCameraType(cp) && cp != utils.ClearFieldValue {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid camera type name, please check help info for '-cameras'.", cp)
+			}
+		}
+		for _, cp := range c.cables {
+			if !ufsUtil.IsCableType(cp) && cp != utils.ClearFieldValue {
+				return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid cable type name, please check help info for '-cables'.", cp)
+			}
+		}
+		if c.antennaConnection != "" && !ufsUtil.IsAntennaConnection(c.antennaConnection) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid antenna connection name, please check help info for '-antennaconnection'.", c.antennaConnection)
+		}
+		if c.router != "" && !ufsUtil.IsRouter(c.router) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid router name, please check help info for '-router'.", c.router)
+		}
+		if c.facing != "" && !ufsUtil.IsFacing(c.facing) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid facing name, please check help info for '-facing'.", c.facing)
+		}
+		if c.light != "" && !ufsUtil.IsLight(c.light) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid light name, please check help info for '-light'.", c.light)
 		}
 	}
 	if c.newSpecsFile != "" {
@@ -301,36 +398,28 @@ func (c updateDUT) validateArgs() error {
 		f := func(input string) error {
 			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf("Wrong usage!!\nThe MCSV/JSON mode is specified. '-%s' cannot be specified at the same time.", input))
 		}
-		// Cannot accept cmdline inputs for DUT when csv/json mode is specified.
-		if c.hostname != "" {
-			return f("name")
+		// Cannot accept cmdline inputs for DUT when csv/json mode is specified
+		// The following flags can be set with JSON/MCSV mode.
+		allowList := map[string]interface{}{
+			"f":                    nil,
+			"ticket":               nil,
+			"tags":                 nil,
+			"desc":                 nil,
+			"deploy_timeout":       nil,
+			"force-deploy":         nil,
+			"deploy-tags":          nil,
+			"force-download-image": nil,
+			"force-install-fw":     nil,
+			"force-install-os":     nil,
+			"force-update-labels":  nil,
 		}
-		if c.machine != "" {
-			return f("asset")
-		}
-		if c.servo != "" {
-			return f("servo")
-		}
-		if c.servoSerial != "" {
-			return f("servo-serial")
-		}
-		if c.servoSetupType != "" {
-			return f("servo-setup")
-		}
-		if c.rpm != "" {
-			return f("rpm")
-		}
-		if c.rpmOutlet != "" {
-			return f("rpm-outlet")
-		}
-		if len(c.pools) != 0 {
-			return f("pools")
-		}
-		if len(c.licenseTypes) != 0 {
-			return f("licensetype")
-		}
-		if len(c.licenseIds) != 0 {
-			return f("licenseid")
+		// If a flag not in allow list is set. Throw an error
+		for name, set := range c.flagInputs {
+			if set {
+				if _, ok := allowList[name]; !ok {
+					return f(name)
+				}
+			}
 		}
 	}
 	return nil
@@ -480,7 +569,15 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 					DeviceLse: &ufspb.ChromeOSDeviceLSE{
 						Device: &ufspb.ChromeOSDeviceLSE_Dut{
 							Dut: &chromeosLab.DeviceUnderTest{
-								Peripherals: &chromeosLab.Peripherals{},
+								Peripherals: &chromeosLab.Peripherals{
+									Chameleon:     &chromeosLab.Chameleon{},
+									Servo:         &chromeosLab.Servo{},
+									Rpm:           &chromeosLab.OSRPM{},
+									Audio:         &chromeosLab.Audio{},
+									Wifi:          &chromeosLab.Wifi{},
+									Touch:         &chromeosLab.Touch{},
+									CameraboxInfo: &chromeosLab.Camerabox{},
+								},
 							},
 						},
 					},
@@ -492,6 +589,7 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	lse.Name = name
 	lse.Hostname = name
 	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = name
+	peripherals := lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
 
 	// Check if machines are being updated.
 	if len(machines) > 0 && machines[0] != "" {
@@ -506,16 +604,21 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	}
 
 	// Check and update licenses if required.
-	if len(c.licenseTypes) > 0 {
+	if c.flagInputs["licenseid"] {
 		mask.Paths = append(mask.Paths, licensePath)
-		licenses := make([]*chromeosLab.License, 0, len(c.licenseTypes))
-		for i := range c.licenseTypes {
-			licenses = append(licenses, &chromeosLab.License{
-				Type:       ufsUtil.ToLicenseType(c.licenseTypes[i]),
-				Identifier: c.licenseIds[i],
-			})
+		if ufsUtil.ContainsAnyStrings(c.licenseIds, utils.ClearFieldValue) {
+			// Clear all the licenses.
+			lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = nil
+		} else {
+			licenses := make([]*chromeosLab.License, 0, len(c.licenseTypes))
+			for i := range c.licenseTypes {
+				licenses = append(licenses, &chromeosLab.License{
+					Type:       ufsUtil.ToLicenseType(c.licenseTypes[i]),
+					Identifier: c.licenseIds[i],
+				})
+			}
+			lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = licenses
 		}
-		lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = licenses
 	}
 
 	// Create and assign servo and corresponding masks.
@@ -523,12 +626,12 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	if err != nil {
 		return nil, nil, err
 	}
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = newServo
+	peripherals.Servo = newServo
 	mask.Paths = append(mask.Paths, paths...)
 
 	// Create and assign rpm and corresponding masks.
 	rpm, paths := generateRPMWithMask(rpmHost, rpmOutlet)
-	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Rpm = rpm
+	peripherals.Rpm = rpm
 	mask.Paths = append(mask.Paths, paths...)
 
 	// Check if description field is being updated/cleared.
@@ -559,6 +662,152 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 		if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 			lse.Tags = nil
 		}
+	}
+
+	// ACS DUT fields
+	// Chameleon Type
+	if c.flagInputs["chameleons"] && len(c.chameleons) > 0 {
+		mask.Paths = append(mask.Paths, chameleonsPath)
+
+		// Check if utils.ClearFieldValue is included in any of the chameleon inputs.
+		if ufsUtil.ContainsAnyStrings(c.chameleons, utils.ClearFieldValue) {
+			// Clearing all the chameleons.
+			peripherals.GetChameleon().ChameleonPeripherals = nil
+		} else {
+			chameleons := make([]chromeosLab.ChameleonType, 0, len(c.chameleons))
+			for _, cp := range c.chameleons {
+				chameleons = append(chameleons, ufsUtil.ToChameleonType(cp))
+			}
+			peripherals.GetChameleon().ChameleonPeripherals = chameleons
+		}
+	}
+
+	// Cameras
+	if c.flagInputs["cameras"] && len(c.cameras) > 0 {
+		mask.Paths = append(mask.Paths, cameraTypePath)
+
+		// Check if utils.ClearFieldValue is included in any of the camera inputs.
+		if ufsUtil.ContainsAnyStrings(c.cameras, utils.ClearFieldValue) {
+			// Clearing all the cameras.
+			peripherals.ConnectedCamera = nil
+		} else {
+			cameras := make([]*chromeosLab.Camera, 0, len(c.cameras))
+			for _, cp := range c.cameras {
+				camera := &chromeosLab.Camera{
+					CameraType: ufsUtil.ToCameraType(cp),
+				}
+				cameras = append(cameras, camera)
+			}
+			peripherals.ConnectedCamera = cameras
+		}
+	}
+
+	// Cables
+	if c.flagInputs["cables"] && len(c.cables) > 0 {
+		mask.Paths = append(mask.Paths, cablePath)
+
+		// Check if utils.ClearFieldValue is included in any of the cable inputs.
+		if ufsUtil.ContainsAnyStrings(c.cables, utils.ClearFieldValue) {
+			// Clearing all the cables.
+			peripherals.Cable = nil
+		} else {
+			cables := make([]*chromeosLab.Cable, 0, len(c.cables))
+			for _, cp := range c.cables {
+				cable := &chromeosLab.Cable{
+					Type: ufsUtil.ToCableType(cp),
+				}
+				cables = append(cables, cable)
+			}
+			peripherals.Cable = cables
+		}
+	}
+
+	// AntennaConn
+	if c.flagInputs["antennaconnection"] {
+		mask.Paths = append(mask.Paths, wifiAntennaPath)
+		peripherals.GetWifi().AntennaConn = ufsUtil.ToAntennaConnection(c.antennaConnection)
+	}
+
+	// Router
+	if c.flagInputs["router"] && c.router != "" {
+		mask.Paths = append(mask.Paths, wifiRouterPath)
+		peripherals.GetWifi().Router = ufsUtil.ToRouter(c.router)
+	}
+
+	// Camerabox Facing
+	if c.flagInputs["facing"] && c.router != "" {
+		mask.Paths = append(mask.Paths, cameraFacingPath)
+		peripherals.GetCameraboxInfo().Facing = ufsUtil.ToFacing(c.facing)
+	}
+
+	//Camerabox Light
+	if c.flagInputs["light"] && c.light != "" {
+		mask.Paths = append(mask.Paths, cameraLightPath)
+		peripherals.GetCameraboxInfo().Light = ufsUtil.ToLight(c.light)
+	}
+
+	// AudioBoard
+	if c.flagInputs["audioboard"] {
+		mask.Paths = append(mask.Paths, chameleonsAudioBoardPath)
+		peripherals.GetChameleon().AudioBoard = c.audioBoard
+	}
+
+	// AudioBox
+	if c.flagInputs["audiobox"] {
+		mask.Paths = append(mask.Paths, audioBoxPath)
+		peripherals.GetAudio().AudioBox = c.audioBox
+	}
+
+	// Atrus
+	if c.flagInputs["atrus"] {
+		mask.Paths = append(mask.Paths, atrusPath)
+		peripherals.GetAudio().Atrus = c.atrus
+	}
+
+	// AudioCable
+	if c.flagInputs["audiocable"] {
+		mask.Paths = append(mask.Paths, audioCablePath)
+		peripherals.GetAudio().AudioCable = c.audioCable
+	}
+
+	// WifiCell
+	if c.flagInputs["wificell"] {
+		mask.Paths = append(mask.Paths, wifiCellPath)
+		peripherals.GetWifi().Wificell = c.wifiCell
+	}
+
+	// TouchMimo
+	if c.flagInputs["touchmimo"] {
+		mask.Paths = append(mask.Paths, touchMimoPath)
+		peripherals.GetTouch().Mimo = c.touchMimo
+	}
+
+	// Carrier
+	if c.flagInputs["carrier"] {
+		if c.carrier == utils.ClearFieldValue {
+			// Clear the carrier if required
+			c.carrier = ""
+		}
+		mask.Paths = append(mask.Paths, carrierPath)
+		peripherals.Carrier = c.carrier
+	}
+
+	// CameraBox
+	if c.flagInputs["camerabox"] {
+		mask.Paths = append(mask.Paths, cameraboxPath)
+		peripherals.Camerabox = c.cameraBox
+	}
+
+	// Chaos
+	if c.flagInputs["chaos"] {
+		mask.Paths = append(mask.Paths, chaosPath)
+		peripherals.Chaos = c.chaos
+	}
+
+	// SmartUSBHub
+	if c.flagInputs["smartusbhub"] {
+		mask.Paths = append(mask.Paths, usbHubPath)
+		peripherals.SmartUsbhub = c.smartUSBHub
 	}
 
 	// Check if nothing is being updated. Updating with an empty mask overwrites everything.
