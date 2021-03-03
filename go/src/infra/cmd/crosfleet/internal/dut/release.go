@@ -27,12 +27,14 @@ Do not build automation around this subcommand.`,
 		c := &releaseRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.Flags.StringVar(&c.reason, "reason", "", "Optional reason for releasing.")
 		return c
 	},
 }
 
 type releaseRun struct {
 	subcommands.CommandRunBase
+	reason    string
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
 }
@@ -51,6 +53,10 @@ func (c *releaseRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 
 	ctx := cli.GetContext(a, c, env)
+	userEmail, err := common.GetUserEmail(ctx, &c.authFlags)
+	if err != nil {
+		return err
+	}
 	swarmingService, err := newSwarmingService(ctx, c.envFlags.Env().SwarmingService, &c.authFlags)
 	if err != nil {
 		return err
@@ -66,7 +72,7 @@ func (c *releaseRun) innerRun(a subcommands.Application, args []string, env subc
 		if err != nil {
 			return err
 		}
-		err = bbClient.CancelBuildWithBotID(ctx, id, earliestCreateTime, a.GetOut())
+		err = bbClient.CancelBuildWithBotID(ctx, id, earliestCreateTime, userEmail, c.reason, a.GetOut())
 		if err != nil {
 			return err
 		}

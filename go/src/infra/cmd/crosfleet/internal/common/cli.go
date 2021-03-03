@@ -5,11 +5,15 @@
 package common
 
 import (
+	"context"
 	"flag"
 	"fmt"
-
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/gcloud/googleoauth"
 	"infra/cmd/crosfleet/internal/site"
+	"time"
 )
 
 // PrintCrosfleetUIPrompt prints a prompt for users to visit the go/my-crosfleet PLX
@@ -57,4 +61,28 @@ func ToKeyvalSlice(keyvals map[string]string) []string {
 		s = append(s, fmt.Sprintf("%s:%s", key, val))
 	}
 	return s
+}
+
+// GetUserEmail parses the given auth flags and returns the email of the
+// authenticated crosfleet user.
+func GetUserEmail(ctx context.Context, flags *authcli.Flags) (string, error) {
+	opts, err := flags.Options()
+	if err != nil {
+		return "", nil
+	}
+	authenticator := auth.NewAuthenticator(ctx, auth.SilentLogin, opts)
+	tempToken, err := authenticator.GetAccessToken(time.Minute)
+	if err != nil {
+		return "", err
+	}
+	authInfo, err := googleoauth.GetTokenInfo(ctx, googleoauth.TokenInfoParams{
+		AccessToken: tempToken.AccessToken,
+	})
+	if err != nil {
+		return "", err
+	}
+	if authInfo.Email == "" {
+		return "", fmt.Errorf("no email found for the current user")
+	}
+	return authInfo.Email, nil
 }

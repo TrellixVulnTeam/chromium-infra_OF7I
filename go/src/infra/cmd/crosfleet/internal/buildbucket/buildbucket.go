@@ -98,8 +98,13 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 }
 
 // CancelBuildWithBotID cancels any pending or active builds created after the
-// given timestamp with the given Swarming bot ID.
-func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCreateTime *timestamppb.Timestamp, writer io.Writer) error {
+// given timestamp, with the given Swarming bot ID, if they were launched by
+// the given user. The optional cancellation reason is used if not blank.
+func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCreateTime *timestamppb.Timestamp, user, reason string, writer io.Writer) error {
+	if reason == "" {
+		reason = "cancelled from crosfleet CLI"
+	}
+
 	searchBuildsRequest := &buildbucketpb.SearchBuildsRequest{
 		Predicate: &buildbucketpb.BuildPredicate{
 			Builder: c.builderID,
@@ -108,6 +113,7 @@ func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCr
 			},
 		},
 		Fields: &field_mask.FieldMask{Paths: []string{
+			"builds.*.created_by",
 			"builds.*.id",
 			"builds.*.status",
 			"builds.*.infra",
@@ -125,10 +131,13 @@ func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCr
 			if !isUnfinishedBuildWithBotID(build, id) {
 				continue
 			}
+			if build.CreatedBy != fmt.Sprintf("user:%s", user) {
+				continue
+			}
 			fmt.Fprintf(writer, "Canceling build at %s for bot ID %s\n", c.BuildURL(build.Id), id)
 			_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
 				Id:              build.Id,
-				SummaryMarkdown: "cancelled from crosfleet CLI",
+				SummaryMarkdown: reason,
 			})
 			if err != nil {
 				return err
@@ -142,7 +151,7 @@ func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCr
 	}
 
 	if cancelled == 0 {
-		fmt.Fprintf(writer, "No pending or active builds found with bot ID %s\n", id)
+		fmt.Fprintf(writer, "No pending or active builds found with bot ID %s that were launched by the current user (%s)\n", id, user)
 	}
 	return nil
 }
