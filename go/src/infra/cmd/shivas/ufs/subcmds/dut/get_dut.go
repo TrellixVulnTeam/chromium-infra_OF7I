@@ -184,7 +184,7 @@ func (c *getDut) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RPMFilterName, c.rpms)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.pools)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PoolsFilterName, c.pools)...)
 	return filters
 }
 

@@ -130,7 +130,7 @@ func (c *getAsset) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ModelFilterName, c.models)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BuildTargetFilterName, c.buildTargets)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.phases)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
 }
 
