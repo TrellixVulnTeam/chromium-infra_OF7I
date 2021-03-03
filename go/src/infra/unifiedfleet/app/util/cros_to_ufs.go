@@ -53,18 +53,23 @@ func ToOSDutStates(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabCo
 }
 
 // ToOSMachineLSEs converts cros inventory data to UFS LSEs for ChromeOS machines.
-func ToOSMachineLSEs(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) []*ufspb.MachineLSE {
+func ToOSMachineLSEs(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) ([]*ufspb.MachineLSE, map[*ufspb.MachineLSE]*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) {
+	lseToLabconfigMap := make(map[*ufspb.MachineLSE]*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, len(labConfigs))
 	lses := make([]*ufspb.MachineLSE, 0, len(labConfigs))
 	for _, lc := range labConfigs {
 		dut := lc.GetConfig().GetDut()
 		deviceID := lc.GetConfig().GetId().GetValue()
+		var lse *ufspb.MachineLSE
 		if dut != nil {
-			lses = append(lses, DUTToLSE(dut, deviceID, lc.GetUpdatedTime()))
+			lse = DUTToLSE(dut, deviceID, lc.GetUpdatedTime())
+			lses = append(lses, lse)
 		} else {
-			lses = append(lses, LabstationToLSE(lc.GetConfig().GetLabstation(), deviceID, lc.GetUpdatedTime()))
+			lse = LabstationToLSE(lc.GetConfig().GetLabstation(), deviceID, lc.GetUpdatedTime())
+			lses = append(lses, lse)
 		}
+		lseToLabconfigMap[lse] = lc
 	}
-	return lses
+	return lses, lseToLabconfigMap
 }
 
 // ToOSAssets converts cros inventory data to UFS ChromeOS assets.
@@ -72,7 +77,7 @@ func ToOSAssets(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfi
 	newAssets := make([]*ufspb.Asset, 0, len(labConfigs))
 	for _, lc := range labConfigs {
 		assetTag := lc.GetConfig().GetId().GetValue()
-		assetInfo, hostname, assetType := deviceToAssetMeta(lc.GetConfig())
+		assetInfo, hostname, assetType := DeviceToAssetMeta(lc.GetConfig())
 		old, ok := existingAssetMap[assetTag]
 		if ok {
 			old.Model = assetInfo.Model
@@ -81,7 +86,7 @@ func ToOSAssets(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfi
 			old.Realm = ToUFSRealm(old.GetLocation().GetZone().String())
 			newAssets = append(newAssets, old)
 		} else {
-			location := hostnameToLocation(hostname)
+			location := HostnameToLocation(hostname)
 			newAssets = append(newAssets, &ufspb.Asset{
 				Name:     assetTag,
 				Type:     assetType,
@@ -95,7 +100,8 @@ func ToOSAssets(labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfi
 	return newAssets
 }
 
-func deviceToAssetMeta(d *lab.ChromeOSDevice) (*ufspb.AssetInfo, string, ufspb.AssetType) {
+// DeviceToAssetMeta creates an asset for the device
+func DeviceToAssetMeta(d *lab.ChromeOSDevice) (*ufspb.AssetInfo, string, ufspb.AssetType) {
 	assetTag := d.GetId().GetValue()
 	devConfigID := d.GetDeviceConfigId()
 	dut := d.GetDut()
@@ -115,7 +121,8 @@ func deviceToAssetMeta(d *lab.ChromeOSDevice) (*ufspb.AssetInfo, string, ufspb.A
 	}, hostname, newAssetType
 }
 
-func hostnameToLocation(hostname string) *ufspb.Location {
+// HostnameToLocation convert hostname to location
+func HostnameToLocation(hostname string) *ufspb.Location {
 	location := &ufspb.Location{
 		BarcodeName: hostname,
 	}

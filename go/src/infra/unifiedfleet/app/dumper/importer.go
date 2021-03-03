@@ -203,6 +203,7 @@ func importCrosInventory(ctx context.Context, crosInventoryHost string) error {
 			},
 		},
 	})
+	logging.Infof(ctx, "Finshed Importing ChromeOS inventory(labconfig+dutstates)")
 	return err
 }
 

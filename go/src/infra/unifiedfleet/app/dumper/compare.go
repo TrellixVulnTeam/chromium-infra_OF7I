@@ -78,7 +78,7 @@ func compareInventoryV2(ctx context.Context, crosInventoryHost string) error {
 func compareDuts(ctx context.Context, writer *storage.Writer, oldHosts []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, newHosts *fleetds.OpResults, newDutStates *fleetds.OpResults) error {
 	onlyShowNum := 10
 	logs := []string{fmt.Sprintf("\n\n######## OS DUTs diff (Only show the first %d) ############", onlyShowNum)}
-	inv2LSEs := util.ToOSMachineLSEs(oldHosts)
+	inv2LSEs, _ := util.ToOSMachineLSEs(oldHosts)
 	inv2States := util.ToOSDutStates(oldHosts)
 	inv2Hosts := make(map[string]*ufspb.MachineLSE)
 	inv2DutStates := make(map[string]*chromeosLab.DutState)

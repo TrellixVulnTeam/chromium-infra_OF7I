@@ -551,8 +551,9 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 	}
 	allRes = append(allRes, *res...)
 
-	lses := util.ToOSMachineLSEs(labConfigs)
+	lses, lseToLabConfigMap := util.ToOSMachineLSEs(labConfigs)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os")
+	createNonExistingAssetAndMachineForLSE(ctx, lseToLabConfigMap)
 	populateRackForMachineLSEs(ctx, lses)
 	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
@@ -692,6 +693,51 @@ func populateRackForMachineLSEs(ctx context.Context, lses []*ufspb.MachineLSE) {
 				continue
 			}
 			lse.Rack = machine.GetLocation().GetRack()
+		}
+	}
+}
+
+func createNonExistingAssetAndMachineForLSE(ctx context.Context, mp map[*ufspb.MachineLSE]*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig) {
+	for lse, lc := range mp {
+		if len(lse.GetMachines()) != 0 {
+			_, err := registration.GetMachine(ctx, lse.GetMachines()[0])
+			if err != nil && util.IsNotFoundError(err) {
+				logging.Infof(ctx, "Failed to get machine %s", lse.GetMachines()[0])
+				// check and create asset
+				asset, err := registration.GetAsset(ctx, lse.GetMachines()[0])
+				if err != nil && util.IsNotFoundError(err) {
+					logging.Infof(ctx, "Failed to get asset %s", lse.GetMachines()[0])
+					assetTag := lc.GetConfig().GetId().GetValue()
+					assetInfo, hostname, assetType := util.DeviceToAssetMeta(lc.GetConfig())
+					location := util.HostnameToLocation(hostname)
+					asset = &ufspb.Asset{
+						Name:     assetTag,
+						Type:     assetType,
+						Model:    assetInfo.Model,
+						Location: location,
+						Info:     assetInfo,
+						Realm:    util.ToUFSRealm(location.GetZone().String()),
+					}
+					logging.Infof(ctx, "Creating asset %+v", asset)
+					_, err := registration.BatchUpdateAssets(ctx, []*ufspb.Asset{asset})
+					if err != nil {
+						logging.Errorf(ctx, "Failed to create asset %s", err)
+						continue
+					}
+				}
+
+				// create machine
+				machine := CreateMachineFromAsset(asset)
+				if machine == nil {
+					logging.Errorf(ctx, "Failed to create machine from asset %s", asset)
+					continue
+				}
+				logging.Infof(ctx, "Creating machine %+v", machine)
+				if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+					logging.Errorf(ctx, "Failed to create machine %s", err)
+					continue
+				}
+			}
 		}
 	}
 }
