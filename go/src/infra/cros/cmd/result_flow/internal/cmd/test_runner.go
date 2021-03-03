@@ -7,12 +7,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/bq"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 	"infra/cros/cmd/result_flow/internal/transform"
-	"time"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/maruel/subcommands"

@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"infra/cros/cmd/phosphorus/internal/tls"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -19,6 +18,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"infra/cros/cmd/phosphorus/internal/tls"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"

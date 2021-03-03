@@ -7,9 +7,10 @@ package bq_test
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/result_flow/internal/bq"
 	"sync"
 	"testing"
+
+	"infra/cros/cmd/result_flow/internal/bq"
 
 	"cloud.google.com/go/bigquery"
 	. "github.com/smartystreets/goconvey/convey"

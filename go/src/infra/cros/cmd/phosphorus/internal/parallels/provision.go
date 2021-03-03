@@ -27,8 +27,7 @@ import (
 const (
 	// parallelsDLCID is the ID of the DLC containing Parallels.
 	parallelsDLCID = "pita"
-	// overallTimeout is the overall timeout to apply to the provision operation.
-	overallTimeout = 20 * time.Minute
+
 	// tlsPort is the port to use for connecting to TLS.
 	tlsPort = 7152
 )

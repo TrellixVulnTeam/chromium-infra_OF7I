@@ -8,14 +8,13 @@ package botcache
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/luci/common/errors"
-
-	"os"
 )
 
 // Store exposes methods to read / write the contents of the bot cache.

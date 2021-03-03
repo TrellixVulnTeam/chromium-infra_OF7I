@@ -6,9 +6,9 @@ package message_test
 
 import (
 	"context"
-	"infra/cros/cmd/result_flow/internal/message"
-	"strconv"
 	"testing"
+
+	"infra/cros/cmd/result_flow/internal/message"
 
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/pubsub/pstest"
@@ -124,11 +124,6 @@ func TestMessage(t *testing.T) {
 			So(message.ShouldPollForCompletion(got[c.expected.buildID]), ShouldEqual, c.expected.shouldPollForCompletion)
 		})
 	}
-}
-
-func stringToInt64(s string) int64 {
-	i, _ := strconv.ParseInt(s, 10, 64)
-	return i
 }
 
 // Create a new connection to the server without using TLS.

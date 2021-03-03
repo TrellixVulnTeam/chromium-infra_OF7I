@@ -78,11 +78,12 @@ func sigkill(cmd *exec.Cmd) {
 		log.Panicf("Failed to get pgid for child process: %s", err)
 	}
 
-	if selfPgid, err := syscall.Getpgid(syscall.Getpid()); err != nil {
+	var selfPgid int
+	if selfPgid, err = syscall.Getpgid(syscall.Getpid()); err != nil {
 		log.Panicf("Failed to get self pgid: %s", err)
-		if selfPgid == pgid {
-			log.Panicf("Child process for %s has the same pgid as current process.", name)
-		}
+	}
+	if selfPgid == pgid {
+		log.Panicf("Child process for %s has the same pgid as current process.", name)
 	}
 
 	log.Printf("SIGKILLing pgid %d for %s", pgid, name)

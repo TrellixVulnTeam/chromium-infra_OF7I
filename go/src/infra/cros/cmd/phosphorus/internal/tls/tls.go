@@ -8,10 +8,11 @@ package tls
 
 import (
 	"context"
-	"infra/cros/tlslib"
 	"log"
 	"net"
 	"sync"
+
+	"infra/cros/tlslib"
 
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"

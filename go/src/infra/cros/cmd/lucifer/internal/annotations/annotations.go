@@ -16,11 +16,6 @@ import (
 	"io"
 )
 
-// BuildStep prints a BUILD_STEP annotation.
-func BuildStep(w io.Writer, name string) (int, error) {
-	return fmt.Fprintf(w, "@@@BUILD_STEP %s@@@\n", name)
-}
-
 // SeedStep prints a SEED_STEP annotation.
 func SeedStep(w io.Writer, name string) (int, error) {
 	return fmt.Fprintf(w, "@@@SEED_STEP %s@@@\n", name)
@@ -59,11 +54,6 @@ func StepClosed(w io.Writer) (int, error) {
 // StepLogLine writes a line to a labeled log.
 func StepLogLine(w io.Writer, label, line string) (int, error) {
 	return fmt.Fprintf(w, "@@@STEP_LOG_LINE@%s@%s@@@\n", label, line)
-}
-
-// StepLogEnd finalizes a labeled log.
-func StepLogEnd(w io.Writer, label string) (int, error) {
-	return fmt.Fprintf(w, "@@@STEP_LOG_END@%s@@@\n", label)
 }
 
 // StepNestLevel prints a STEP_NEST_LEVEL annotation.

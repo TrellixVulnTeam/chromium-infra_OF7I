@@ -10,9 +10,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"infra/cros/cmd/result_flow/internal/transform"
 	"sort"
 	"testing"
+
+	"infra/cros/cmd/result_flow/internal/transform"
 
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"

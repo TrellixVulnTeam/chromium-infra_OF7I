@@ -14,11 +14,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 )
 
-var verdict = map[bool]skylab_test_runner.Result_Autotest_TestCase_Verdict{
-	true:  skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
-	false: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
-}
-
 const verdictPass = skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS
 const verdictFail = skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
 const verdictNoVerdict = skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT

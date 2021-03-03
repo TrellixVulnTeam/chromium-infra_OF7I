@@ -7,10 +7,11 @@ package transform_test
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/result_flow/internal/transform"
 	"sort"
 	"strings"
 	"testing"
+
+	"infra/cros/cmd/result_flow/internal/transform"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
@@ -218,16 +219,6 @@ func genFakeTestRun(out *out) *analytics.TestRun {
 			Value: out.verdict,
 		},
 	}
-}
-
-func genFakeTestRunnerURL() string {
-	return fmt.Sprintf(
-		"https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
-		fakeBuildbucketConfig.Project,
-		fakeBuildbucketConfig.Bucket,
-		fakeBuildbucketConfig.Builder,
-		fakeTestRunnerBuildID,
-	)
 }
 
 func genFakeTestCaseResult(label, verdict string) *analytics.TestCaseResult {

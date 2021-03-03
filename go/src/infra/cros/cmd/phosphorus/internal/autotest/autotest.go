@@ -187,33 +187,6 @@ func ParseCommand(c Config, resultsDir string) *exec.Cmd {
 	return command(c, tkoRelpath, args...)
 }
 
-const dutPreparationRelPath = "site_utils/deployment/prepare/main.py"
-
-// DutPreparationArgs contains arguments for DutPreparationCommand.
-type DutPreparationArgs struct {
-	Hostname     string
-	ResultsDir   string
-	HostInfoFile string
-	Actions      []string
-}
-
-// DutPreparationCommand returns the Cmd struct to execute DUT preparation
-// script with the given arguments.
-func DutPreparationCommand(c Config, cmd *DutPreparationArgs) *exec.Cmd {
-	args := make([]string, 0, 10)
-	if cmd.Hostname != "" {
-		args = append(args, "--hostname", cmd.Hostname)
-	}
-	if cmd.ResultsDir != "" {
-		args = append(args, "--results-dir", cmd.ResultsDir)
-	}
-	if cmd.HostInfoFile != "" {
-		args = append(args, "--host-info-file", cmd.HostInfoFile)
-	}
-	args = append(args, cmd.Actions...)
-	return command(c, dutPreparationRelPath, args...)
-}
-
 // Config describes where the Autotest directory is.
 type Config struct {
 	AutotestDir string
