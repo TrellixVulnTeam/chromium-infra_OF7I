@@ -15,10 +15,8 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
-	"infra/cmd/shivas/audit"
 	"infra/cmd/shivas/meta"
 	queen_cmds "infra/cmd/shivas/queen/cmds"
-	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/runlocal/cmds/run"
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
@@ -46,9 +44,6 @@ Full documentation http://go/shivas-cli`,
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
-			subcommands.Section("ChromeOS Lab (only) audit"),
-			audit.AuditCmd,
-			query.GetAssetsCmd,
 			subcommands.Section("Resource Management"),
 			operations.AddCmd,
 			operations.UpdateCmd,
