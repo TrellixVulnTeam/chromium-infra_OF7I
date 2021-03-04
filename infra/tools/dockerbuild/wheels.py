@@ -251,7 +251,7 @@ SPECS.update({
             skip_plat=[
                 'windows-x86',
             ],
-            pyversions=['py2'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'greenlet',
