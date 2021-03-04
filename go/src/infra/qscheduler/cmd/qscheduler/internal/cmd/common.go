@@ -7,8 +7,11 @@ package cmd
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -91,4 +94,69 @@ func toFloats(s []string) ([]float32, error) {
 		floats[i] = float32(f)
 	}
 	return floats, nil
+}
+
+// int32DimsVar implements the flag.Value interface. It provides a keyval flag
+// handler for `add-account` and `mod-account` to parse comma-separated keyval
+// flags into a map[string]int32.
+type int32DimsVar struct {
+	handle *map[string]int32
+}
+
+// String returns the default value for dimensions represented as a string. The
+// default value is an empty map, which stringifies to an empty string.
+func (int32DimsVar) String() string {
+	return ""
+}
+
+// Set populates the dims map with comma-separated keyval pairs.
+func (d int32DimsVar) Set(keyvals string) error {
+	if d.handle == nil {
+		panic("int32DimsVar handle must be pointing to a map[string]string!")
+	}
+	if *d.handle == nil {
+		*d.handle = map[string]int32{}
+	}
+	// strings.Split, if given an empty string, will produce a
+	// slice containing a single string.
+	if keyvals == "" {
+		return nil
+	}
+	m := *d.handle
+	for _, entry := range strings.Split(keyvals, ",") {
+		key, val, err := splitKeyVal(entry)
+		if err != nil {
+			return err
+		}
+		if _, exists := m[key]; exists {
+			return fmt.Errorf("key %q is already specified", key)
+		}
+		m[key] = val
+	}
+	return nil
+}
+
+// int32KeyVals takes an initial map and produces a flag variable that can be
+// set from command line arguments
+func int32KeyVals(m *map[string]int32) flag.Value {
+	if m == nil {
+		panic("Argument to int32KeyVals must be pointing to a map[string]int32!")
+	}
+	return int32DimsVar{handle: m}
+}
+
+// splitKeyVal splits a string with "=" or ":" into a string-int32 key-value
+// pair, and returns an error if this is impossible. Strings with multiple "="
+// or ":" values are considered malformed.
+func splitKeyVal(s string) (string, int32, error) {
+	re := regexp.MustCompile("[=:]")
+	res := re.Split(s, -1)
+	if len(res) != 2 {
+		return "", 0, fmt.Errorf(`string %q is a malformed key-value pair`, s)
+	}
+	intVal, err := strconv.ParseInt(res[1], 10, 32)
+	if err != nil {
+		return "", 0, err
+	}
+	return res[0], int32(intVal), nil
 }

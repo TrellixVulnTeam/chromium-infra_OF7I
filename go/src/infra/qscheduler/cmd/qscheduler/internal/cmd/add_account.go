@@ -26,11 +26,13 @@ var AddAccount = &subcommands.Command{
 		c := &addAccountRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.Var(flag.StringSlice(&c.chargeRates), "rate", "Quota recharge rate for a given priority level. "+
-			"May be specified multiple times, to specify charge rate at P0, P1, P2, ...")
+		c.Flags.Var(flag.StringSlice(&c.chargeRates), "rate", `Quota recharge rate for a given priority level. May be specified multiple times,
+to specify charge rate at P0, P1, P2, etc. If specified, overwrites the full charge-rate vector.`)
 		c.Flags.Float64Var(&c.chargeTime, "charge-time", 0,
 			"Maximum amount of time (seconds) for which the account can accumulate quota.")
 		c.Flags.IntVar(&c.fanout, "fanout", 0, "Maximum number of concurrent tasks that account will pay for.")
+		c.Flags.Var(int32KeyVals(&c.labelLimits), "per-label-task-limits", `Optional limits on the number of tasks with matching label values
+for any given label, in format label1:limit1,label2:limit2,...`)
 		c.Flags.BoolVar(&c.disableFreeTasks, "disable-free-tasks", false, "Disallow the account from running free tasks.")
 		return c
 	},
@@ -44,6 +46,7 @@ type addAccountRun struct {
 	chargeRates      []string
 	chargeTime       float64
 	fanout           int
+	labelLimits      map[string]int32
 	disableFreeTasks bool
 }
 
@@ -81,10 +84,11 @@ func (c *addAccountRun) Run(a subcommands.Application, args []string, env subcom
 		AccountId: accountID,
 		PoolId:    poolID,
 		Config: &protos.AccountConfig{
-			ChargeRate:       chargeRateFloats,
-			MaxChargeSeconds: float32(c.chargeTime),
-			MaxFanout:        int32(c.fanout),
-			DisableFreeTasks: c.disableFreeTasks,
+			ChargeRate:         chargeRateFloats,
+			MaxChargeSeconds:   float32(c.chargeTime),
+			MaxFanout:          int32(c.fanout),
+			PerLabelTaskLimits: c.labelLimits,
+			DisableFreeTasks:   c.disableFreeTasks,
 		},
 	}
 
