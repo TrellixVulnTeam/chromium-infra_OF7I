@@ -15,6 +15,7 @@ from third_party import ezt
 
 from framework import framework_constants
 from framework import table_view_helpers
+from framework import template_helpers
 from framework import urls
 from tracker import tracker_bizobj
 from tracker import tracker_helpers
@@ -199,18 +200,17 @@ class TableCellOwnerLastVisit(table_view_helpers.TableCellDate):
 
 def _make_issue_view(default_pn, config, viewable_iids_set, ref_issue):
   viewable = ref_issue.issue_id in viewable_iids_set
-  return {
-      "id": tracker_bizobj.FormatIssueRef(
+  return template_helpers.EZTItem(
+      id=tracker_bizobj.FormatIssueRef(
           (ref_issue.project_name, ref_issue.local_id),
           default_project_name=default_pn),
-      "href": tracker_helpers.FormatRelativeIssueURL(
-          ref_issue.project_name,
-          urls.ISSUE_DETAIL,
-          id=ref_issue.local_id),
-      "closed": ezt.boolean(viewable and
-                 not tracker_helpers.MeansOpenInProject(
-                     ref_issue.status, config)),
-      "title": ref_issue.summary if viewable else ""}
+      href=tracker_helpers.FormatRelativeIssueURL(
+          ref_issue.project_name, urls.ISSUE_DETAIL, id=ref_issue.local_id),
+      closed=ezt.boolean(
+          viewable and
+          not tracker_helpers.MeansOpenInProject(ref_issue.status, config)),
+      title=ref_issue.summary if viewable else "")
+
 
 class TableCellBlockedOn(table_view_helpers.TableCell):
   """TableCell subclass for listing issues the current issue is blocked on."""
@@ -221,7 +221,7 @@ class TableCellBlockedOn(table_view_helpers.TableCell):
     values = [_make_issue_view(issue.project_name, _kw["config"],
                                 _kw["viewable_iids_set"], ref_issue)
               for ref_issue in ref_issues]
-    values.sort(key=lambda x: (x["closed"], x["id"]))
+    values.sort(key=lambda x: (x.closed, x.id))
     table_view_helpers.TableCell.__init__(
         self, table_view_helpers.CELL_TYPE_ISSUES, values, sort_values=False)
 
@@ -235,7 +235,7 @@ class TableCellBlocking(table_view_helpers.TableCell):
     values = [_make_issue_view(issue.project_name, _kw["config"],
                                 _kw["viewable_iids_set"], ref_issue)
               for ref_issue in ref_issues]
-    values.sort(key=lambda x: (x.get("closed", False), x["id"]))
+    values.sort(key=lambda x: (x.closed, x.id))
     table_view_helpers.TableCell.__init__(
         self, table_view_helpers.CELL_TYPE_ISSUES, values, sort_values=False)
 

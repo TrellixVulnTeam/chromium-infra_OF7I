@@ -13,6 +13,7 @@ import unittest
 
 from framework import framework_constants
 from framework import table_view_helpers
+from framework import template_helpers
 from proto import tracker_pb2
 from testing import fake
 from testing import testing_helpers
@@ -249,23 +250,28 @@ class TableCellUnitTest(unittest.TestCase):
         test_issue, **table_cell_kws)
     self.assertEqual(cell.type, table_view_helpers.CELL_TYPE_ISSUES)
     self.assertEqual(
-        [x.item for x in cell.values],
-        [{'href': '/p/None/issues/detail?id=1',
-          'id': '1',
-          'closed': None,
-          'title': 'One'},
-         {'href': '/p/None/issues/detail?id=3',
-          'id': '3',
-          'closed': None,
-          'title': 'Three'},
-         {'href': '/p/None/issues/detail?id=5',
-          'id': '5',
-          'closed': None,
-          'title': ''},
-         {'href': '/p/None/issues/detail?id=2',
-          'id': '2',
-          'closed': 'yes',
-          'title': 'Two'}])
+        [x.item for x in cell.values], [
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=1',
+                id='1',
+                closed=None,
+                title='One'),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=3',
+                id='3',
+                closed=None,
+                title='Three'),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=5',
+                id='5',
+                closed=None,
+                title=''),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=2',
+                id='2',
+                closed='yes',
+                title='Two')
+        ])
 
   def testTableCellBlockedOnNone(self):
     cell = tablecell.TableCellBlockedOn(
@@ -287,23 +293,28 @@ class TableCellUnitTest(unittest.TestCase):
         test_issue, **table_cell_kws)
     self.assertEqual(cell.type, table_view_helpers.CELL_TYPE_ISSUES)
     self.assertEqual(
-        [x.item for x in cell.values],
-        [{'href': '/p/None/issues/detail?id=1',
-          'id': '1',
-          'closed': None,
-          'title': 'One'},
-         {'href': '/p/None/issues/detail?id=3',
-          'id': '3',
-          'closed': None,
-          'title': 'Three'},
-         {'href': '/p/None/issues/detail?id=5',
-          'id': '5',
-          'closed': None,
-          'title': ''},
-         {'href': '/p/None/issues/detail?id=2',
-          'id': '2',
-          'closed': 'yes',
-          'title': 'Two'}])
+        [x.item for x in cell.values], [
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=1',
+                id='1',
+                closed=None,
+                title='One'),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=3',
+                id='3',
+                closed=None,
+                title='Three'),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=5',
+                id='5',
+                closed=None,
+                title=''),
+            template_helpers.EZTItem(
+                href='/p/None/issues/detail?id=2',
+                id='2',
+                closed='yes',
+                title='Two')
+        ])
 
   def testTableCellBlockingNone(self):
     cell = tablecell.TableCellBlocking(
@@ -336,11 +347,13 @@ class TableCellUnitTest(unittest.TestCase):
     cell = tablecell.TableCellMergedInto(
         test_issue, **table_cell_kws)
     self.assertEqual(cell.type, table_view_helpers.CELL_TYPE_ISSUES)
-    self.assertEqual(cell.values[0].item,
-                     {'href': '/p/None/issues/detail?id=2',
-                      'id': '2',
-                      'closed': 'yes',
-                      'title': 'Two'})
+    self.assertEqual(
+        cell.values[0].item,
+        template_helpers.EZTItem(
+            href='/p/None/issues/detail?id=2',
+            id='2',
+            closed='yes',
+            title='Two'))
 
   def testTableCellMergedIntoUnviewable(self):
     test_issue = MakeTestIssue(4, 4, 'Four')
@@ -351,11 +364,10 @@ class TableCellUnitTest(unittest.TestCase):
     cell = tablecell.TableCellMergedInto(
         test_issue, **table_cell_kws)
     self.assertEqual(cell.type, table_view_helpers.CELL_TYPE_ISSUES)
-    self.assertEqual(cell.values[0].item,
-                     {'href': '/p/None/issues/detail?id=5',
-                      'id': '5',
-                      'closed': None,
-                      'title': ''})
+    self.assertEqual(
+        cell.values[0].item,
+        template_helpers.EZTItem(
+            href='/p/None/issues/detail?id=5', id='5', closed=None, title=''))
 
   def testTableCellMergedIntoNotMerged(self):
     cell = tablecell.TableCellMergedInto(

@@ -286,6 +286,9 @@ class EZTItem(object):
                        sorted(vars(self).items()))
     return '%s({%s})' % (self.__class__.__name__, fields)
 
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
 
 def ExpandLabels(page_data):
   """If page_data has a 'labels' list, expand it into 'label1', etc.
