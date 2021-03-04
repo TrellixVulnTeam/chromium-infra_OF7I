@@ -98,7 +98,7 @@ func (s *Server) GracefulStop() {
 
 // cacheForDut caches a file for a DUT and returns the URL to use.
 func (s *Server) cacheForDut(ctx context.Context, url, dutName string) (string, error) {
-	c := tls.NewWiringClient(s.wiringConn)
+	c := s.wiringClient()
 	op, err := c.CacheForDut(ctx, &tls.CacheForDutRequest{
 		Url:     url,
 		DutName: dutName,
@@ -257,7 +257,7 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 
 // getSSHAddr returns the SSH address to use for the DUT, through the wiring service.
 func (s *Server) getSSHAddr(ctx context.Context, name string) (string, error) {
-	c := tls.NewWiringClient(s.wiringConn)
+	c := s.wiringClient()
 	resp, err := c.OpenDutPort(ctx, &tls.OpenDutPortRequest{
 		Name: name,
 		Port: 22,
@@ -376,4 +376,9 @@ func (s *Server) FetchCrashes(req *tls.FetchCrashesRequest, stream tls.Common_Fe
 	}
 
 	return nil
+}
+
+// wiringClient helps to create a TLW client with configurations/settings.
+func (s *Server) wiringClient() tls.WiringClient {
+	return tls.NewWiringClient(s.wiringConn)
 }
