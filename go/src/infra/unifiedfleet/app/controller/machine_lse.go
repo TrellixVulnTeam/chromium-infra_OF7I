@@ -449,7 +449,8 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		// Update corresponding Labstation MachineLSE.
 		if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 			existingServo := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-			if existingServo != nil && existingServo.GetServoHostname() != "" {
+			// If its a ServoV3 device ignore labstation as it doesn't get created
+			if existingServo != nil && existingServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(existingServo.GetServoHostname()) {
 				// remove the existingServo entry of DUT form existingLabstationMachinelse
 				existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, existingServo.GetServoHostname())
 				if err != nil {

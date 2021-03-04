@@ -644,56 +644,6 @@ func TestUpdateDUT(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 		})
 
-		Convey("UpdateDUT - Change servo V3 port and serial", func() {
-			// Servo V3 enforces port 9999 and  doesn't store a serial. Therefore, this use case is essentially no-op.
-			// Servo V3 labstations have hostnames with suffix '-servo'.
-
-			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
-			createValidDUTWithLabstation(ctx, "dut-3-servo", "machine-60-servo", "labstation-3-servo", "machine-50-servo")
-			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-servo", "machine-60-servo", "labstation-3-servo", "serial-2", "dut-3-servo-power-1", ".A1", int32(9988), []string{"DUT_POOL_QUOTA"})
-			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.port", "dut.servo.serial"))
-			So(err, ShouldBeNil)
-			// Clear update time to compare the protos.
-			resp.UpdateTime = nil
-			// ServoPort = 9999; ServoSerial = "" enforced for servo V3.
-			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoPort = int32(9999)
-			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSerial = ""
-			So(resp, ShouldResembleProto, dut1)
-			dut2, err := GetMachineLSE(ctx, "dut-3-servo")
-			So(err, ShouldBeNil)
-			// Clear update time to compare the protos.
-			dut2.UpdateTime = nil
-			So(dut2, ShouldResembleProto, dut1)
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-3-servo")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/labstation-3-servo")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			// No change recorded in the labstation record.
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-3-servo")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 2)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/labstation-3-servo")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 2)
-			// Verify that labstation-3-servo hasn't changed.
-			ls9, err := GetMachineLSE(ctx, "labstation-3-servo")
-			So(err, ShouldBeNil)
-			So(ls9.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldHaveLength, 1)
-			// Verify that the servo was included in the new labstation.
-			So(ls9.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldResembleProto, []*chromeosLab.Servo{
-				{
-					ServoHostname: "labstation-3-servo",
-					ServoPort:     int32(9999),
-				},
-			})
-			s, err := state.GetStateRecord(ctx, "hosts/dut-3-servo")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
-		})
-
 		Convey("UpdateDUT - With valid servo serial mask", func() {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-serial", "machine-60-serial", "labstation-3-serial", "machine-50-serial")
@@ -716,13 +666,13 @@ func TestUpdateDUT(t *testing.T) {
 			So(changes[1].NewValue, ShouldEqual, "serial-2")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/labstation-3-serial")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 2)
+			So(changes, ShouldHaveLength, 3)
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-3-serial")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 2)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/labstation-3-serial")
 			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 2)
+			So(msgs, ShouldHaveLength, 3)
 			// Verify that labstation-3-serial has updated servo.
 			ls9, err := GetMachineLSE(ctx, "labstation-3-serial")
 			So(err, ShouldBeNil)
@@ -758,13 +708,13 @@ func TestUpdateDUT(t *testing.T) {
 			So(changes[1].NewValue, ShouldEqual, "9988")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/labstation-3-port")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 2)
+			So(changes, ShouldHaveLength, 3)
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-3-port")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 2)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/labstation-3-port")
 			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 2)
+			So(msgs, ShouldHaveLength, 3)
 			// Verify that labstation-3-port has updated servo.
 			ls9, err := GetMachineLSE(ctx, "labstation-3-port")
 			So(err, ShouldBeNil)
@@ -919,7 +869,7 @@ func TestUpdateDUT(t *testing.T) {
 
 		Convey("UpdateDUT - With valid servo mask (delete servo) [Servo V3]", func() {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
-			createValidDUTWithLabstation(ctx, "dut-3-del-servo", "machine-60-del-servo", "labstation-3-del-servo", "machine-50-del-servo")
+			createValidDUTWithLabstation(ctx, "dut-3-del-servo", "machine-60-del-servo", "labstation-3-del-serv", "machine-50-del-servo")
 			// Update with servo host mask and no servo host.
 			dut1 := mockDUT("dut-3-del-servo", "machine-60-del-servo", "", "", "dut-3-del-servo-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
 			// Remove servo from DUT.
@@ -937,8 +887,8 @@ func TestUpdateDUT(t *testing.T) {
 			So(dut2, ShouldResembleProto, dut1)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-3-del-servo")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 3)
-			So(changes[1].OldValue, ShouldEqual, "labstation-3-del-servo")
+			So(changes, ShouldHaveLength, 4)
+			So(changes[1].OldValue, ShouldEqual, "labstation-3-del-serv")
 			So(changes[1].NewValue, ShouldEqual, "")
 			So(changes[2].OldValue, ShouldEqual, "9999")
 			So(changes[2].NewValue, ShouldEqual, "0")

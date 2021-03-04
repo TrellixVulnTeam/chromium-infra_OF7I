@@ -72,9 +72,9 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		setOutputField(ctx, machine, machinelse)
 
 		// Check if the DUT has Servo information.
-		// Update Labstation MachineLSE with new Servo info.
+		// Update Labstation MachineLSE with new Servo info unless it's ServoV3. ServoV3 devices don't have labstation info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-		if newServo != nil && newServo.GetServoHostname() != "" {
+		if newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
 			// Check if the Labstation MachineLSE exists in the system.
 			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
@@ -203,13 +203,50 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		var newLabstationMachinelse *ufspb.MachineLSE
 		var hcNewLabstation *HistoryClient
 
-		// Process newServo and getNewLabstationMachinelse if available. This is done initially to avoid having to repeat it twice
-		// in same labstation logic and different labstation logic.
-		if newServo != nil && newServo.GetServoHostname() != "" {
-			// Check if the Labstation MachineLSE exists in the system first. No use doing anything if it doesn't exist.
-			newLabstationMachinelse, err = getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+		// Remove the old Servo info from labstation record. Unless it's servo V3 device
+		if oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) {
+			// Remove the servo from the labstation
+			oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
 			if err != nil {
 				return err
+			}
+
+			// Copy for logging history
+			oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
+			hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
+
+			// Remove servo from labstation
+			if err := removeServoEntryFromLabstation(ctx, oldServo, oldLabstationMachineLseCopy); err != nil {
+				return err
+			}
+
+			// Log servo removal
+			hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelse, oldLabstationMachineLseCopy)
+
+			// Updating on the same labstation. Don't save the lse yet
+			if newServo != nil && newServo.GetServoHostname() == oldServo.GetServoHostname() {
+				// If we are updating on the same labstation, avoid updating yet
+				newLabstationMachinelse = oldLabstationMachineLseCopy
+				hcNewLabstation = hcOldLabstation
+			} else {
+				// Record labstation changes
+				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+					return err
+				}
+				machinelses = append(machinelses, oldLabstationMachineLseCopy)
+			}
+		}
+
+		// Process newServo and getNewLabstationMachinelse if available. Don't care about labstation if it's a ServoV3 device
+		if newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+			if newLabstationMachinelse == nil {
+				// Check if the Labstation MachineLSE exists in the system first. No use doing anything if it doesn't exist.
+				newLabstationMachinelse, err = getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+				if err != nil {
+					return err
+				}
+				// For logging new Labstation changes.
+				hcNewLabstation = getHostHistoryClient(newLabstationMachinelse)
 			}
 
 			// Check if a servo port is assigned. Assign one if its not.
@@ -222,65 +259,20 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 			if err != nil {
 				return err
 			}
-			// For logging new Labstation changes.
-			hcNewLabstation = getHostHistoryClient(newLabstationMachinelse)
-		}
 
-		// Need to replace oldServo with newServo. If the servos are connected to same labstation then we already have the labstation lse.
-		// Replace the oldServo entry with newServo entry.
-		if oldServo != nil && oldServo.GetServoHostname() != "" && newServo != nil && newServo.GetServoHostname() != "" && oldServo.GetServoHostname() == newServo.GetServoHostname() {
+			// Make a copy to log changes for the labstation.
 			newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
-			if err := replaceServoEntryInLabstation(ctx, oldServo, newServo, newLabstationMachinelse); err != nil {
+
+			// Append the newServo entry of DUT to the newLabstationMachinelse.
+			if err := appendServoEntryToLabstation(ctx, newServo, newLabstationMachinelse); err != nil {
 				return err
 			}
-			machinelses = append(machinelses, newLabstationMachinelse)
+
 			hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
 			if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
 				return err
 			}
-		} else {
-			// Servos might be connected to different labstations or either/both of them are nil. Remove oldServo entry if available
-			if oldServo != nil && oldServo.GetServoHostname() != "" {
-				// Remove the servo from the labstation
-				oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
-				if err != nil {
-					return err
-				}
-
-				// Copy for logging history
-				oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
-				hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
-
-				// Remove servo from labstation
-				if err := removeServoEntryFromLabstation(ctx, oldServo, oldLabstationMachineLseCopy); err != nil {
-					return err
-				}
-
-				// Record labstation change
-				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelse, oldLabstationMachineLseCopy)
-				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
-					return err
-				}
-				machinelses = append(machinelses, oldLabstationMachineLseCopy)
-			}
-
-			// Add new servo information if available
-			if newServo != nil && newServo.GetServoHostname() != "" {
-
-				// Make a copy to log changes for the labstation.
-				newLabstationMachinelseCopy := proto.Clone(newLabstationMachinelse).(*ufspb.MachineLSE)
-
-				// Append the newServo entry of DUT to the newLabstationMachinelse.
-				if err := appendServoEntryToLabstation(ctx, newServo, newLabstationMachinelse); err != nil {
-					return err
-				}
-
-				hcNewLabstation.LogMachineLSEChanges(newLabstationMachinelseCopy, newLabstationMachinelse)
-				if err := hcNewLabstation.SaveChangeEvents(ctx); err != nil {
-					return err
-				}
-				machinelses = append(machinelses, newLabstationMachinelse)
-			}
+			machinelses = append(machinelses, newLabstationMachinelse)
 		}
 
 		// BatchUpdate both DUT and Labstation(s)
