@@ -756,6 +756,80 @@ func UpdateAssets(iv2ctx context.Context, assets []*chopsasset.ChopsAsset) *api.
 	return resp
 }
 
+// UpdateMachineLSEsBatch impersonates a batch update function. For use in piping BatchUpdateDevices API to UFS.
+func UpdateMachineLSEsBatch(iv2ctx context.Context, req *api.BatchUpdateDevicesRequest) (err error) {
+	ctx := SetupOSNameSpaceContext(iv2ctx)
+	// Create a UFS client
+	ufsClient, err := GetUFSClient(ctx)
+	if err != nil {
+		return errors.Annotate(err, "UpdateMachineLSEsBatch - [UFS] failed to get ufs instance").Err()
+	}
+	for _, p := range req.GetDeviceProperties() {
+		oldlse, err := ufsClient.GetMachineLSE(ctx, &ufsapi.GetMachineLSERequest{
+			Name: ufsutil.AddPrefix(ufsutil.MachineLSECollection, p.GetHostname()),
+		})
+		if err != nil {
+			return errors.Annotate(err, "UpdateMachineLSEsBatch - [UFS] failed to get device %s", p.GetHostname()).Err()
+		}
+		oldlseCopy := proto.Clone(oldlse).(*ufspb.MachineLSE)
+		req := &ufsapi.UpdateMachineLSERequest{
+			MachineLSE: oldlse,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{},
+			},
+		}
+		if oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			if p.GetPool() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = []string{p.GetPool()}
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "dut.pools")
+			}
+			if oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm() == nil {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Rpm = &ufschromeoslab.OSRPM{}
+			}
+			if p.GetRpm().GetPowerunitName() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitName = p.GetRpm().GetPowerunitName()
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "dut.rpm.host")
+			}
+			if p.GetRpm().GetPowerunitOutlet() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm().PowerunitOutlet = p.GetRpm().GetPowerunitOutlet()
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "dut.rpm.outlet")
+			}
+		}
+		if oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+			if p.GetPool() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{p.GetPool()}
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "labstation.pools")
+			}
+			if oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm() == nil {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &ufschromeoslab.OSRPM{}
+			}
+			if p.GetRpm().GetPowerunitName() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().PowerunitName = p.GetRpm().GetPowerunitName()
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "labstation.rpm.host")
+			}
+			if p.GetRpm().GetPowerunitOutlet() != "" {
+				oldlse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().PowerunitOutlet = p.GetRpm().GetPowerunitOutlet()
+				req.UpdateMask.Paths = append(req.UpdateMask.Paths, "labstation.rpm.outlet")
+			}
+		}
+		_, err = ufsClient.UpdateMachineLSE(ctx, req)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err != nil {
+				_, rerr := ufsClient.UpdateMachineLSE(ctx, &ufsapi.UpdateMachineLSERequest{
+					MachineLSE: oldlseCopy,
+				})
+				if rerr != nil {
+					logging.Errorf(ctx, "UpdateMachineLSEsBatch - failed to revert %s. %s", oldlseCopy.GetName(), rerr.Error())
+				}
+			}
+		}()
+	}
+	return err
+}
+
 // CopyUFSDutStateToInvV2DutState converts UFS DutState to InvV2 DutState proto format.
 func CopyUFSDutStateToInvV2DutState(oldS *ufschromeoslab.DutState) *lab.DutState {
 	if oldS == nil {

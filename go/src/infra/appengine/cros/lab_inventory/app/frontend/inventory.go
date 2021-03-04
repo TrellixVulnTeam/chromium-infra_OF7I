@@ -631,19 +631,25 @@ func (is *InventoryServerImpl) BatchUpdateDevices(ctx context.Context, req *api.
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	properties := make([]*datastore.DeviceProperty, len(req.GetDeviceProperties()))
-	for i, p := range req.GetDeviceProperties() {
-		properties[i] = &datastore.DeviceProperty{
-			Hostname:        p.GetHostname(),
-			Pool:            p.GetPool(),
-			PowerunitName:   p.GetRpm().GetPowerunitName(),
-			PowerunitOutlet: p.GetRpm().GetPowerunitOutlet(),
+	if config.Get(ctx).GetRouting().GetBatchUpdateDevices() {
+		err := ufs.UpdateMachineLSEsBatch(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		properties := make([]*datastore.DeviceProperty, len(req.GetDeviceProperties()))
+		for i, p := range req.GetDeviceProperties() {
+			properties[i] = &datastore.DeviceProperty{
+				Hostname:        p.GetHostname(),
+				Pool:            p.GetPool(),
+				PowerunitName:   p.GetRpm().GetPowerunitName(),
+				PowerunitOutlet: p.GetRpm().GetPowerunitOutlet(),
+			}
+		}
+		if err := datastore.BatchUpdateDevices(ctx, properties); err != nil {
+			return nil, err
 		}
 	}
-	if err := datastore.BatchUpdateDevices(ctx, properties); err != nil {
-		return nil, err
-	}
-
 	return &api.BatchUpdateDevicesResponse{}, nil
 }
 
