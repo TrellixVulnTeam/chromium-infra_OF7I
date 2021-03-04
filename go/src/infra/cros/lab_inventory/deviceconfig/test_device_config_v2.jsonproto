@@ -226,6 +226,18 @@
                   },
                   "id": "STYLUS",
                   "type": 4
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -334,6 +346,18 @@
                   },
                   "id": "STYLUS",
                   "type": 4
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -481,6 +505,18 @@
                   },
                   "id": "STYLUS",
                   "type": 4
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -626,6 +662,18 @@
                   },
                   "id": "STYLUS",
                   "type": 4
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -777,6 +825,18 @@
                   },
                   "id": "STYLUS",
                   "type": 4
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -880,6 +940,18 @@
                   },
                   "id": "SCREEN",
                   "type": 1
+                },
+                "nonVolatileStorage": {
+                  "description": {
+                    "EN": "eMMC"
+                  },
+                  "hardwareFeature": {
+                    "storage": {
+                      "storageType": "EMMC"
+                    }
+                  },
+                  "id": "EMMC",
+                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {

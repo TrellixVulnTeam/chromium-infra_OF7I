@@ -110,7 +110,7 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 				HardwareFeatures: parseHardwareFeatures(configBundle.GetComponents(), c.GetHardwareFeatures()),
 				// Note: no STORAGE_SSD, STORAGE_HDD, STORAGE_UFS storage
 				// label-storage is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/B8spRMj22aUWkbb
-				Storage: parseStorage(c.GetHardwareFeatures()),
+				Storage: parseStorage(c.GetHardwareTopology()),
 				Soc:     parseSoc(configBundle.GetComponents()),
 				Cpu:     parseArchitecture(configBundle.GetComponents()),
 				Ec:      parseEcType(c.GetHardwareFeatures()),
@@ -239,8 +239,8 @@ func parseHardwareFeatures(components []*api.Component, hf *api.HardwareFeatures
 	return res
 }
 
-func parseStorage(hf *api.HardwareFeatures) device.Config_Storage {
-	switch hf.GetStorage().GetStorageType() {
+func parseStorage(hf *api.HardwareTopology) device.Config_Storage {
+	switch hf.GetNonVolatileStorage().GetHardwareFeature().GetStorage().GetStorageType() {
 	case api.Component_Storage_NVME:
 		return device.Config_STORAGE_NVME
 	case api.Component_Storage_EMMC:
