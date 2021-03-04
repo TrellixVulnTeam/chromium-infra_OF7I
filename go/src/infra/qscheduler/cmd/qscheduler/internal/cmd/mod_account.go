@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -27,12 +28,13 @@ var ModAccount = &subcommands.Command{
 		c := &modAccountRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.Var(flag.StringSlice(&c.chargeRates), "rate", "Quota recharge rate for a given priority level. "+
-			"May be specified multiple times, to specify charge rate at P0, P1, P2, etc. If specified, overwrites "+
-			"the full charge-rate vector.")
+		c.Flags.Var(flag.StringSlice(&c.chargeRates), "rate", `Quota recharge rate for a given priority level. May be specified multiple times,
+to specify charge rate at P0, P1, P2, etc. If specified, overwrites the full charge-rate vector.`)
 		c.Flags.Var(nullableFloat32Value(&c.chargeTime), "charge-time",
 			"Maximum amount of time (seconds) for which the account can accumulate quota.")
 		c.Flags.Var(nullableInt32Value(&c.fanout), "fanout", "Maximum number of concurrent tasks that account will pay for.")
+		c.Flags.StringVar(&c.labelLimitsJSON, "per-label-task-limits", "", `Optional limits on the number of tasks with matching label values
+for any given label. Parsed as a JSON map of labels to task limits.`)
 		c.Flags.Var(nullableBoolValue(&c.disableFreeTasks), "disable-free-tasks", "Disallow the account from running free tasks.")
 		c.Flags.BoolVar(&c.resetBalance, "reset-balance", false, "Reset the account's balance to 0.")
 		c.Flags.StringVar(&c.description, "description", "", "Attach a description for an account.")
@@ -48,6 +50,7 @@ type modAccountRun struct {
 	chargeRates      []string
 	chargeTime       *float32
 	fanout           *int32
+	labelLimitsJSON  string
 	disableFreeTasks *bool
 	resetBalance     bool
 	description      string
@@ -98,6 +101,15 @@ func (c *modAccountRun) Run(a subcommands.Application, args []string, env subcom
 
 	if c.fanout != nil {
 		req.MaxFanout = &wrappers.Int32Value{Value: *c.fanout}
+	}
+	if c.labelLimitsJSON != "" {
+		var limitsMap map[string]int32
+		err := json.Unmarshal([]byte(c.labelLimitsJSON), &limitsMap)
+		if err != nil {
+			fmt.Fprintf(a.GetErr(), "qscheduler: Error unmarshalling per-label-task-limits JSON map %s: %s", c.labelLimitsJSON, err)
+			return 1
+		}
+		req.PerLabelTaskLimits = limitsMap
 	}
 	if c.chargeTime != nil {
 		req.MaxChargeSeconds = &wrappers.FloatValue{Value: *c.chargeTime}

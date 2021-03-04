@@ -193,7 +193,7 @@ func printAccountRatesTable(tw *tabwriter.Writer, report *qscheduler.InspectPool
 func printAccountPoliciesTable(tw *tabwriter.Writer, report *qscheduler.InspectPoolResponse) {
 	fmt.Fprintln(tw, "Account Policy")
 	fmt.Fprintln(tw, "================================================================")
-	header := row{"Account", "MaxChargeSec", "MaxFanout", "DisableFreeTasks"}
+	header := row{"Account", "MaxChargeSec", "MaxFanout", "PerLabelTaskLimits", "DisableFreeTasks"}
 	header.print(tw)
 	fmt.Fprintln(tw)
 	t := make(table, 0, len(report.GetAccountConfigs()))
@@ -203,6 +203,7 @@ func printAccountPoliciesTable(tw *tabwriter.Writer, report *qscheduler.InspectP
 			account,
 			fmt.Sprintf("%.1f", config.GetMaxChargeSeconds()),
 			fmt.Sprintf("%d", config.GetMaxFanout()),
+			fmt.Sprintf("%v", config.GetPerLabelTaskLimits()),
 			fmt.Sprintf("%t", config.GetDisableFreeTasks()),
 		}...)
 		t = append(t, r)
