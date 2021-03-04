@@ -200,7 +200,6 @@
     "cwd": "[CACHE]/builder/build_wheels/infra",
     "env": {
       "DISTUTILS_USE_SDK": "1",
-      "MACOSX_DEPLOYMENT_TARGET": "10.13",
       "MSSdk": "1"
     },
     "name": "dockerbuild"
