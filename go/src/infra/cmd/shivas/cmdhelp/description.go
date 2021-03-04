@@ -744,6 +744,55 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 Nic:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
 
+	// AddAssetFileText description for asset file input for add asset cmd
+	AddAssetFileText string = `[JSON/MCSV Mode] Path to a file containing asset specification..
+This file must contain one asset JSON message
+
+[JSON Mode]
+This file must contain required name,rack and zone field.
+Example OS asset:
+{
+	"name":  "test-1",
+	"type":  "DUT",
+	"model":  "atlas",
+	"location":  {
+		"aisle":  "1",
+		"row":  "2",
+		"rack":  "rack-23",
+		"rackNumber":  "23",
+		"shelf":  "3",
+		"position":  "5",
+		"barcodeName":  "bar",
+		"zone":  "ZONE_CHROMEOS6"
+	},
+	"info":  {
+		"assetTag":  "",
+		"serialNumber":  "fer3-rtgd",
+		"costCenter":  "cros",
+		"googleCodeName":  "kohaku",
+		"model":  "atlas",
+		"buildTarget":  "zuko",
+		"referenceBoard":  "atlas",
+		"ethernetMacAddress":  "11:22:33:44:55:66",
+		"sku":  "are",
+		"phase":  "EVT",
+		"hwid":  ""
+	},
+	"updateTime":  "2020-12-29T23:54:45.437251068Z",
+	"realm":  "@internal:ufs/os-atl"
+}
+
+[MCSV Mode]
+The file may have multiple or one asset csv record.
+The header format and sequence should be: [name,rack,zone,model,board,assettype,tags]
+Example mcsv format:
+name,zone,rack,model,board,assettype,tags
+asset-1,chromeos2,rack23,garg,octopus,dut,testasset
+asset-2,chromeos4,rack23,lazor,trogdor,labstation,testlab
+
+The protobuf definition of asset is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
+
 	// AssetFileText description for asset file input
 	AssetFileText string = `Path to a file containing asset specification in JSON format.
 This file must contain one asset JSON message

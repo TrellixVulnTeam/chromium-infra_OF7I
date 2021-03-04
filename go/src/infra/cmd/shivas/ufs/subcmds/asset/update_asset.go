@@ -48,8 +48,8 @@ var UpdateAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.model, "model", "", "model of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.costcenter, "costcenter", "", "Cost center of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.gcn, "gcn", "", "Google code name of the asset. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.target, "target", "", "Build target of the asset. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.board, "board", "", "Reference board of the asset. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.board, "board", "", "board/build target of the asset. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.reference, "reference", "", "Reference board of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.mac, "mac", "", "Mac address of the asset. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.phase, "phase", "", "Phase of the asset. "+cmdhelp.ClearFieldHelpText)
 		return c
@@ -78,8 +78,8 @@ type updateAsset struct {
 	model      string
 	costcenter string
 	gcn        string
-	target     string
 	board      string
+	reference  string
 	mac        string
 	phase      string
 }
@@ -142,8 +142,8 @@ func (c *updateAsset) innerRun(a subcommands.Application, args []string, env sub
 			"model":      "model",
 			"costcenter": "info.cost_center",
 			"gcn":        "info.google_code_name",
-			"target":     "info.build_target",
-			"board":      "info.reference_board",
+			"board":      "info.build_target",
+			"reference":  "info.reference_board",
 			"mac":        "info.ethernet_mac_address",
 			"phase":      "info.phase",
 		}),
@@ -236,15 +236,15 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 	} else {
 		asset.Info.GoogleCodeName = c.gcn
 	}
-	if c.target == utils.ClearFieldValue {
+	if c.board == utils.ClearFieldValue {
 		asset.Info.BuildTarget = ""
 	} else {
-		asset.Info.BuildTarget = c.target
+		asset.Info.BuildTarget = c.board
 	}
-	if c.board == utils.ClearFieldValue {
+	if c.reference == utils.ClearFieldValue {
 		asset.Info.ReferenceBoard = ""
 	} else {
-		asset.Info.ReferenceBoard = c.board
+		asset.Info.ReferenceBoard = c.reference
 	}
 	if c.mac == utils.ClearFieldValue {
 		asset.Info.EthernetMacAddress = ""
@@ -304,11 +304,11 @@ func (c *updateAsset) validateArgs() error {
 		if c.gcn != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-gcn' cannot be specified at the same time.")
 		}
-		if c.target != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-target' cannot be specified at the same time.")
-		}
 		if c.board != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-board' cannot be specified at the same time.")
+		}
+		if c.reference != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-reference' cannot be specified at the same time.")
 		}
 		if c.mac != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-mac' cannot be specified at the same time.")
@@ -323,8 +323,8 @@ func (c *updateAsset) validateArgs() error {
 		}
 		if c.location == "" && c.zone == "" && c.aisle == "" && c.row == "" && c.shelf == "" &&
 			c.rack == "" && c.racknumber == "" && c.position == "" && c.barcode == "" && c.assetType == "" &&
-			c.model == "" && c.costcenter == "" && c.gcn == "" && c.target == "" &&
-			c.board == "" && c.mac == "" && c.phase == "" {
+			c.model == "" && c.costcenter == "" && c.gcn == "" && c.board == "" &&
+			c.reference == "" && c.mac == "" && c.phase == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zone != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {

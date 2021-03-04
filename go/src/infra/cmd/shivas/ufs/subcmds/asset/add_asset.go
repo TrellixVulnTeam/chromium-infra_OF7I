@@ -31,7 +31,7 @@ var AddAssetCmd = &subcommands.Command{
 
 		c.Flags.BoolVar(&c.interactive, "i", false, "Interactive mode")
 		c.Flags.BoolVar(&c.scan, "scan", false, "scan location followed by asset using a barcode scanner")
-		c.Flags.StringVar(&c.newSpecsFile, "f", "", "JSON file containing input")
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.AddAssetFileText)
 		c.Flags.StringVar(&c.name, "name", "", "Asset tag of the asset")
 		c.Flags.StringVar(&c.location, "location", "", "location of the asset in barcode format")
 		c.Flags.StringVar(&c.zone, "zone", "", "Zone that the asset is in. "+cmdhelp.ZoneFilterHelpText)
@@ -39,6 +39,8 @@ var AddAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.row, "row", "", "Row that the asset is in")
 		c.Flags.StringVar(&c.rack, "rack", "", "Rack that the asset is in")
 		c.Flags.StringVar(&c.position, "position", "", "Position that the asset is in")
+		c.Flags.StringVar(&c.model, "model", "", "model of the asset")
+		c.Flags.StringVar(&c.board, "board", "", "board/build target of the device")
 		c.Flags.StringVar(&c.assetType, "type", "", "Type of asset. "+cmdhelp.AssetTypesHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
@@ -65,6 +67,7 @@ type addAsset struct {
 	position  string
 	assetType string
 	model     string
+	board     string
 	tags      string
 }
 
@@ -72,6 +75,8 @@ var mcsvFields = []string{
 	"name",
 	"zone",
 	"rack",
+	"model",
+	"board",
 	"assettype",
 	"tags",
 }
@@ -184,6 +189,10 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		Name:  c.name,
 		Type:  ufsUtil.ToAssetType(c.assetType),
 		Model: c.model,
+		Info: &ufspb.AssetInfo{
+			Model:       c.model,
+			BuildTarget: c.board,
+		},
 	}
 
 	var err error
@@ -231,6 +240,7 @@ func (c *addAsset) parseMCSV() ([]*ufsAPI.CreateAssetRequest, error) {
 		req := &ufsAPI.CreateAssetRequest{
 			Asset: &ufspb.Asset{
 				Location: &ufspb.Location{},
+				Info:     &ufspb.AssetInfo{},
 			},
 		}
 		for i := range mcsvFields {
@@ -251,6 +261,11 @@ func (c *addAsset) parseMCSV() ([]*ufsAPI.CreateAssetRequest, error) {
 					return nil, fmt.Errorf("Error in line %d.\nNeed rack to create as asset. %s", i, name)
 				}
 				req.Asset.Location.Rack = value
+			case "model":
+				req.Asset.Model = value
+				req.Asset.Info.Model = value
+			case "board":
+				req.Asset.Info.BuildTarget = value
 			case "assettype":
 				if !ufsUtil.IsAssetType(value) {
 					return nil, fmt.Errorf("Error in line %d.\n%s is not a valid asset type. %s", i, value, cmdhelp.AssetTypesHelpText)
