@@ -182,11 +182,7 @@ def _step_client_tests(api, changes):
   luci_dir = api.path['checkout'].join('luci')
   with api.step.nest('client'):
     _step_run_py_tests(api, luci_dir.join('client'))
-    # TODO(crbug.com/1017545): enable on Windows.
-    # clients tests run in python3, but it ignores failures on Windows.
-    ok_ret = 'any' if api.platform.is_win else (0,)
-    _step_run_py_tests(
-        api, luci_dir.join('client'), ok_ret=ok_ret, python3=True)
+    _step_run_py_tests(api, luci_dir.join('client'), python3=True)
 
 
 def _step_swarming_tests(api, changes):
