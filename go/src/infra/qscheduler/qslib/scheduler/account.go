@@ -109,15 +109,16 @@ func nextBalance(balance Balance, c *AccountConfig, elapsedSecs float32, running
 }
 
 // NewAccountConfig creates a new Config instance.
-func NewAccountConfig(fanout int, chargeSeconds float32, chargeRate []float32, disableFreeTasks bool, desc string) *AccountConfig {
+func NewAccountConfig(fanout int, labelLimits map[string]int32, chargeSeconds float32, chargeRate []float32, disableFreeTasks bool, desc string) *AccountConfig {
 	b := Balance{}
 	copy(b[:], chargeRate)
 	return &AccountConfig{
-		ChargeRate:       b,
-		MaxChargeSeconds: chargeSeconds,
-		MaxFanout:        int32(fanout),
-		DisableFreeTasks: disableFreeTasks,
-		Description:      desc,
+		ChargeRate:         b,
+		MaxChargeSeconds:   chargeSeconds,
+		MaxFanout:          int32(fanout),
+		PerLabelTaskLimits: labelLimits,
+		DisableFreeTasks:   disableFreeTasks,
+		Description:        desc,
 	}
 }
 
@@ -125,6 +126,7 @@ func NewAccountConfig(fanout int, chargeSeconds float32, chargeRate []float32, d
 func NewAccountConfigFromProto(c *protos.AccountConfig) *AccountConfig {
 	return NewAccountConfig(
 		int(c.MaxFanout),
+		c.PerLabelTaskLimits,
 		c.MaxChargeSeconds,
 		c.ChargeRate,
 		c.DisableFreeTasks,

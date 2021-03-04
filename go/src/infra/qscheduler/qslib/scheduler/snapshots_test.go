@@ -37,8 +37,8 @@ func TestToMetricsSchedulerState(t *testing.T) {
 		ctx := context.Background()
 		tm := time.Unix(100, 0).UTC()
 		s := New(tm)
-		s.AddAccount(ctx, "aid2", NewAccountConfig(1, 1, []float32{2, 3, 4}, false, ""), []float32{1, 2, 3, 4, 5})
-		s.AddAccount(ctx, "aid1", NewAccountConfig(1, 1, []float32{2, 3, 4}, false, ""), []float32{5, 4, 3, 2, 1})
+		s.AddAccount(ctx, "aid2", NewAccountConfig(1, nil, 1, []float32{2, 3, 4}, false, ""), []float32{1, 2, 3, 4, 5})
+		s.AddAccount(ctx, "aid1", NewAccountConfig(1, nil, 1, []float32{2, 3, 4}, false, ""), []float32{5, 4, 3, 2, 1})
 		// req1 and req2 should go to the running tasks.
 		s.AddRequest(ctx, NewTaskRequest("req1", "a1", stringset.NewFromSlice("provision 1", "provision 2"), stringset.NewFromSlice("base 2", "base 1"), tm), tm, nil, NullEventSink)
 		s.AddRequest(ctx, NewTaskRequest("req2", "a1", stringset.NewFromSlice("provision 3", "provision 4"), stringset.NewFromSlice("base 4", "base 3"), tm), tm, nil, NullEventSink)

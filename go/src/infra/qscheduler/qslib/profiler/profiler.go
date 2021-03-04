@@ -44,11 +44,12 @@ type StateParams struct {
 	Workers         int
 	Tasks           int
 
-	Accounts         int
-	ChargeRateMax    float32
-	ChargeTime       float32
-	Fanout           int
-	DisableFreeTasks bool
+	Accounts           int
+	ChargeRateMax      float32
+	ChargeTime         float32
+	Fanout             int
+	PerLabelTaskLimits map[string]int32
+	DisableFreeTasks   bool
 }
 
 // NewSchedulerState returns a proto-representation of a qscheduler state, with
@@ -73,7 +74,7 @@ func newStateWithAccount(ctx context.Context, params StateParams, t time.Time) *
 		for j := range chargeRate {
 			chargeRate[j] = rand.Float32() * params.ChargeRateMax
 		}
-		accountConfig := scheduler.NewAccountConfig(params.Fanout, params.ChargeTime, chargeRate, false, "")
+		accountConfig := scheduler.NewAccountConfig(params.Fanout, params.PerLabelTaskLimits, params.ChargeTime, chargeRate, false, "")
 		accountConfig.DisableFreeTasks = params.DisableFreeTasks
 
 		state.AddAccount(ctx, accountName(i), accountConfig, nil)

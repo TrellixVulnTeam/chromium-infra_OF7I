@@ -43,7 +43,7 @@ var _ nodestore.Operator = &createUniqueAccounts{}
 
 func (n *createUniqueAccounts) Modify(ctx context.Context, s *types.QScheduler) error {
 	for i := 0; i < n.nAccounts; i++ {
-		s.Scheduler.AddAccount(ctx, scheduler.AccountID(uuid.New().String()), scheduler.NewAccountConfig(0, 0, nil, false, ""), nil)
+		s.Scheduler.AddAccount(ctx, scheduler.AccountID(uuid.New().String()), scheduler.NewAccountConfig(0, map[string]int32{"label-model": 3}, 0, nil, false, ""), nil)
 	}
 	return nil
 }
@@ -192,7 +192,7 @@ func TestLargeState(t *testing.T) {
 
 		Convey("a very large state spanning 10 child nodes can be stored.", func() {
 			// Given uuid size, 140k accounts causes state to be large enough to
-			// be spread over 20 nodes.
+			// be spread over 24 nodes.
 			nAccounts := 140 * 1000
 			err := store.Run(ctx, &createUniqueAccounts{nAccounts: nAccounts})
 			So(err, ShouldBeNil)
@@ -203,7 +203,7 @@ func TestLargeState(t *testing.T) {
 
 			count, err := datastore.Count(ctx, datastore.NewQuery("stateNode"))
 			// 1 node for generation 0; 20 for generation 1.
-			So(count, ShouldEqual, 21)
+			So(count, ShouldEqual, 24)
 		})
 	})
 }

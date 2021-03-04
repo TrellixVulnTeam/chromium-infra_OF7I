@@ -90,14 +90,16 @@ func TestAccountAdvanceWithOverflow(t *testing.T) {
 func TestNewAccountConfigFromProto(t *testing.T) {
 	t.Parallel()
 	proto := &protos.AccountConfig{
-		ChargeRate:       []float32{1.0, 2.0, 3.0},
-		MaxChargeSeconds: 10,
-		Description:      "foo",
+		PerLabelTaskLimits: map[string]int32{"label-model": 2},
+		ChargeRate:         []float32{1.0, 2.0, 3.0},
+		MaxChargeSeconds:   10,
+		Description:        "foo",
 	}
 	want := &AccountConfig{
-		ChargeRate:       Balance{1, 2, 3},
-		MaxChargeSeconds: 10,
-		Description:      "foo",
+		PerLabelTaskLimits: map[string]int32{"label-model": 2},
+		ChargeRate:         Balance{1, 2, 3},
+		MaxChargeSeconds:   10,
+		Description:        "foo",
 	}
 	got := NewAccountConfigFromProto(proto)
 	if diff := pretty.Compare(got, want); diff != "" {

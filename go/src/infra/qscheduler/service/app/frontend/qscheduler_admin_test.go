@@ -140,6 +140,9 @@ func TestCreateListDeleteAccount(t *testing.T) {
 				req := qscheduler.CreateAccountRequest{
 					AccountId: accountID,
 					PoolId:    poolID,
+					Config: &protos.AccountConfig{
+						PerLabelTaskLimits: map[string]int32{"label-model": 4},
+					},
 				}
 				resp, err := admin.CreateAccount(ctx, &req)
 				Convey("then it succeeds.", func() {
@@ -155,14 +158,17 @@ func TestCreateListDeleteAccount(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(resp.Accounts, ShouldContainKey, accountID)
 						So(resp.Accounts, ShouldHaveLength, 1)
+						newLabelLimits := resp.Accounts[accountID].PerLabelTaskLimits
+						So(newLabelLimits, ShouldResemble, map[string]int32{"label-model": 4})
 					})
 				})
 				Convey("when ModAccount is called to update the account", func() {
 					expect := "foo"
 					reqMod := qscheduler.ModAccountRequest{
-						AccountId:   accountID,
-						PoolId:      poolID,
-						Description: &wrappers.StringValue{Value: expect},
+						AccountId:          accountID,
+						PoolId:             poolID,
+						Description:        &wrappers.StringValue{Value: expect},
+						PerLabelTaskLimits: map[string]int32{"label-model": 2},
 					}
 					respMod, err := admin.ModAccount(ctx, &reqMod)
 					So(respMod, ShouldResemble, &qscheduler.ModAccountResponse{})
@@ -178,6 +184,7 @@ func TestCreateListDeleteAccount(t *testing.T) {
 						So(respList.Accounts, ShouldHaveLength, 1)
 						actual := respList.Accounts[accountID]
 						So(actual.Description, ShouldEqual, expect)
+						So(actual.PerLabelTaskLimits, ShouldResemble, map[string]int32{"label-model": 2})
 					})
 				})
 				Convey("when ModAccount is called to delete the account", func() {

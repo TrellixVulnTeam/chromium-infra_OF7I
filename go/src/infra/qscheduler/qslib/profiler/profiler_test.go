@@ -94,11 +94,12 @@ func BenchmarkSchedulerSimulation(b *testing.B) {
 			Tasks:   1000,
 			Workers: 50,
 
-			Accounts:         20,
-			ChargeRateMax:    10,
-			ChargeTime:       10,
-			DisableFreeTasks: true,
-			Fanout:           2,
+			Accounts:           20,
+			ChargeRateMax:      10,
+			ChargeTime:         10,
+			DisableFreeTasks:   true,
+			Fanout:             2,
+			PerLabelTaskLimits: map[string]int32{"label-model": 2},
 		},
 	}
 	for i := 0; i < b.N; i++ {
