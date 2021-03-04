@@ -36,5 +36,9 @@ func legacyJobURL(j *pinpoint.Job) (string, error) {
 	if m == nil {
 		return "", errors.Reason("unsupported job id format: %s", j.Name).Err()
 	}
-	return fmt.Sprintf("https://pinpoint-dot-chromeperf.appspot.com/job/%s", m[legacyJobIDIdx]), nil
+	return legacyURL(m[legacyJobIDIdx]), nil
+}
+
+func legacyURL(jobName string) string {
+	return fmt.Sprintf("https://pinpoint-dot-chromeperf.appspot.com/job/%s", jobName)
 }

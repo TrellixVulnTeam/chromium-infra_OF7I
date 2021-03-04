@@ -34,6 +34,7 @@ func application(p Param) *cli.Application {
 			cmdListJobs(p),
 			cmdGetJob(p),
 			cmdWaitJob(p),
+			cmdCancelJob(p),
 			subcommands.CmdHelp,
 		},
 		EnvVars: map[string]subcommands.EnvVarDefinition{

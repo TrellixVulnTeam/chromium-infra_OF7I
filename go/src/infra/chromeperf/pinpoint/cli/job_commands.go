@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"infra/chromeperf/pinpoint"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/maruel/subcommands"
@@ -184,4 +187,86 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	}
 
 	return wj.downloadResultsMixin.doDownloadResults(ctx, lastJob)
+}
+
+type cancelJob struct {
+	baseCommandRun
+	name  string
+	force bool
+}
+
+func cmdCancelJob(p Param) *subcommands.Command {
+	return &subcommands.Command{
+		UsageLine: "cancel-job -name='...' 'required reason'",
+		ShortDesc: "Cancels an ongoing job",
+		LongDesc: text.Doc(`
+			Cancels an ongoing job. You must specify a reason as a positional
+			argument. Note that you can only cancel jobs you started unless you
+			have administrator rights.
+		`),
+		CommandRun: wrapCommand(p, func() pinpointCommand {
+			return &cancelJob{}
+		}),
+	}
+}
+
+func (cj *cancelJob) RegisterFlags(p Param) {
+	cj.baseCommandRun.RegisterFlags(p)
+	cj.Flags.StringVar(&cj.name, "name", "", text.Doc(`
+		Required; the name of the job to Cancel.
+		Example: "-name=XXXXXXXXXXXXXX"
+	`))
+	cj.Flags.BoolVar(&cj.force, "force", false, text.Doc(`
+		If unset, the CLI will ask for verification before cancelling the job.
+		If set, jobs will be cancelled without additional prompting.
+	`))
+}
+
+func (cj *cancelJob) Run(ctx context.Context, a subcommands.Application, args []string) error {
+	if len(args) != 1 {
+		return errors.Reason("Must specify reason as the only positional argument").Err()
+	}
+	reason := args[0]
+	if cj.name == "" {
+		return errors.Reason("must set -name").Err()
+	}
+
+	c, err := cj.pinpointClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	legacyName := pinpoint.LegacyJobName(cj.name)
+
+	{
+		job, err := c.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName})
+		if err != nil {
+			return errors.Annotate(err, "failed during GetJob").Err()
+		}
+		out := prototext.MarshalOptions{Multiline: true}.Format(job)
+		fmt.Println(out)
+		fmt.Println("-----------------------------------------")
+	}
+
+	if !cj.force {
+		fmt.Print("Are you sure you want to cancel the above job? (y/N) ")
+
+		sc := bufio.NewScanner(os.Stdin)
+		if !sc.Scan() || !strings.EqualFold(sc.Text(), "y") {
+			return errors.Reason("cancelled").Err()
+		}
+	}
+
+	req := &pinpoint.CancelJobRequest{
+		Name:   pinpoint.LegacyJobName(cj.name),
+		Reason: reason,
+	}
+	resp, err := c.CancelJob(ctx, req)
+	if err != nil {
+		return errors.Annotate(err, "failed during CancelJob").Err()
+	}
+	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
+	fmt.Println(out)
+	fmt.Printf("\nJob cancelled, see %s\n", legacyURL(cj.name))
+	return nil
 }
