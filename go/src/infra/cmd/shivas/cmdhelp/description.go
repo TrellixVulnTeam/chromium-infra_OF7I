@@ -56,11 +56,11 @@ Partial updates a asset by parameters. Only specified parameters will be udpated
 	// AddDUTLongDesc long description for AddDUTCmd
 	AddDUTLongDesc string = `Add and deploy a DUT.
 Examples:
-shivas add dut -name {hostname} -asset {asset tag} -servo {servo host}:{servo port} -servo-serial {servo serial} -pool {dut pool}
+shivas add dut -name {hostname} -asset {asset tag} -servo {servo host}:{servo port} -servo-serial {servo serial} -pools {dut pool}
 Adds a DUT to UFS and triggers a swarming job to deploy the DUT.
 
 
-shivas add dut -name {hostname} -pool {dut pool} -ignore-ufs=true
+shivas add dut -name {hostname} -pools {dut pool} -ignore-ufs=true
 Triggers a swarming job to deploy the DUT. Avoids updating to UFS.
 
 shivas add dut -f dut.json
@@ -68,17 +68,16 @@ Adds a DUT to UFS using a json description file and triggers a swarming job to d
 
 Note:
 1. UFS assigns a servo port if it's not given.
-2. Peripherals like camera, audio, wifi, etc,. are only supported through json input.
-3. By default, every deploy task runs update-label, verify-recovery-mode and run-pre-deploy-verification actions on the DUT.
+2. By default, every deploy task runs update-label, verify-recovery-mode and run-pre-deploy-verification actions on the DUT.
 `
 
 	// AddLabstationLongDesc long description for AddLabstationCmd
 	AddLabstationLongDesc string = `Add and deploy a Labstation.
 Examples:
-shivas add labstation -name {hostname} -asset {asset tag} -pool {labstation pool}
+shivas add labstation -name {hostname} -asset {asset tag} -pools {labstation pool}
 Adds a Labstation to UFS.
 
-shivas add labstation -name {hostname} -pool {labstation pool} -rpm {rpm host} -rpm-outlet {rpm outlet}
+shivas add labstation -name {hostname} -pools {labstation pool} -rpm {rpm host} -rpm-outlet {rpm outlet}
 Adds a labstation to UFS with rpm.
 
 shivas add labstation -f labstation.json
@@ -96,7 +95,7 @@ Update RPM connected to the Labstation.
 shivas update labstation -name {hostname} -rpm -
 Delete RPM connected to the Labstation.
 
-shivas update labstation -name {hostname} -pool {labstation pool}
+shivas update labstation -name {hostname} -pools {labstation pool}
 Update pool assigned to the Labstation.
 
 shivas update labstation -f {json/csv file}
@@ -784,7 +783,7 @@ Example OS asset:
 
 [MCSV Mode]
 The file may have multiple or one asset csv record.
-The header format and sequence should be: [name,rack,zone,model,board,assettype,tags]
+The header format and sequence should be: [name,zone,rack,model,board,assettype,tags]
 Example mcsv format:
 name,zone,rack,model,board,assettype,tags
 asset-1,chromeos2,rack23,garg,octopus,dut,testasset
