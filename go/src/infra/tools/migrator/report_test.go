@@ -57,7 +57,13 @@ func TestReport(t *testing.T) {
 
 		Convey(`ToCSVRow`, func() {
 			So(r.ToCSVRow(), ShouldResemble, []string{
-				"proj-foo", "config.file", "SOME_TAG", "This is a problem.",
+				"proj-foo", "config.file", "SOME_TAG", "This is a problem.", "false",
+				"meta:value",
+			})
+
+			r.Actionable = true
+			So(r.ToCSVRow(), ShouldResemble, []string{
+				"proj-foo", "config.file", "SOME_TAG", "This is a problem.", "true",
 				"meta:value",
 			})
 		})

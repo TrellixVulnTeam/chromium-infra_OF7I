@@ -42,6 +42,9 @@ type Report struct {
 	Tag     string
 	Problem string
 
+	// If true, indicates that this report can be fixed by ApplyFix.
+	Actionable bool
+
 	Metadata map[string]stringset.Set
 }
 
@@ -59,11 +62,11 @@ func (r *Report) Clone() *Report {
 }
 
 // ToCSVRow returns a CSV row:
-//    Project, ConfigFile, Tag, Problem, Metadata*
+//    Project, ConfigFile, Tag, Problem, Actionable, Metadata*
 //
 // Where Metadata* is one key:value entry per value in Metadata.
 func (r *Report) ToCSVRow() []string {
-	ret := []string{r.Project, r.ConfigFile, r.Tag, r.Problem}
+	ret := []string{r.Project, r.ConfigFile, r.Tag, r.Problem, fmt.Sprintf("%t", r.Actionable)}
 	if len(r.Metadata) > 0 {
 		keys := make([]string, len(r.Metadata))
 		for key := range r.Metadata {
@@ -138,4 +141,11 @@ func MetadataOption(key string, values ...string) ReportOption {
 		}
 		set.AddAll(values)
 	}
+}
+
+// NonActionable is-a ReportOption which indicates that this Report cannot be
+// fixed by ApplyFix. If there are no Actionable Reports for a given project in
+// FindProblems, the checkout and ApplyFix phase will be skipped.
+func NonActionable(r *Report) {
+	r.Actionable = false
 }

@@ -108,11 +108,11 @@ func TestReportCSV(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(lines, ShouldResemble, [][]string{
 				csvHeader,
-				{"a-third-prog", "", "TAG", "problem"},
-				{"other-proj", "", "TAG", "problem"},
-				{"proj-foo", "", "TAG", "problem", "a:value", "meta:data"},
-				{"proj-foo", "", "TAG_OTHER", "problem"},
-				{"proj-foo", "some.file", "TAG_THIRD", "another problem"},
+				{"a-third-prog", "", "TAG", "problem", "false"},
+				{"other-proj", "", "TAG", "problem", "false"},
+				{"proj-foo", "", "TAG", "problem", "false", "a:value", "meta:data"},
+				{"proj-foo", "", "TAG_OTHER", "problem", "false"},
+				{"proj-foo", "some.file", "TAG_THIRD", "another problem", "false"},
 			})
 		})
 
@@ -161,12 +161,12 @@ func TestReportCSV(t *testing.T) {
 				buf := &bytes.Buffer{}
 				csvWrite := csv.NewWriter(buf)
 				header := append([]string(nil), csvHeader[:len(csvHeader)-1]...)
-				header = append(header, "{schema=v2}")
+				header = append(header, "{schema=v3}")
 				csvWrite.Write(header)
 				csvWrite.Flush()
 
 				_, err := NewReportDumpFromCSV(buf)
-				So(err, ShouldErrLike, "unexpected version: \"v2\", expected \"v1\"")
+				So(err, ShouldErrLike, "unexpected version: \"v3\", expected \"v2\"")
 			})
 
 			Convey(`Bad Header length`, func() {

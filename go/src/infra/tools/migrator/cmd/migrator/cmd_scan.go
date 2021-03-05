@@ -206,8 +206,7 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 						proj := plugsupport.RemoteProject(ctx, projPB.Id)
 						r.scanProject(ctx, inst, proj)
 
-						// No reports from scan? Clean up the repo if it exists.
-						if !plugsupport.HasReports(ctx) {
+						if !plugsupport.HasActionableReports(ctx) {
 							r.doRepoCleanup(ctx, projPB.Id)
 							return true
 						}

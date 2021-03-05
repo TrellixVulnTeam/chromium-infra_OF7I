@@ -115,7 +115,7 @@ func (r *ReportDump) Empty() bool {
 const (
 	schemaPrefix  = "{schema="
 	schemaSuffix  = "}"
-	schemaVersion = "v1"
+	schemaVersion = "v2"
 )
 
 // parseSchemaVersion returns the "v1" from e.g. "{schema=v1}" or "" if `token`
@@ -128,7 +128,7 @@ func parseSchemaVersion(token string) string {
 }
 
 var csvHeader = []string{
-	"Project", "ConfigFile", "Tag", "Problem", "Metadata",
+	"Project", "ConfigFile", "Tag", "Problem", "Actionable", "Metadata",
 	schemaPrefix + schemaVersion + schemaSuffix,
 }
 

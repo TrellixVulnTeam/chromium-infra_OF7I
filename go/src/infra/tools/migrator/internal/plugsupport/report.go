@@ -16,9 +16,10 @@ type reportSink struct {
 
 func (s *reportSink) add(id migrator.ReportID, tag, problem string, opts ...migrator.ReportOption) {
 	report := &migrator.Report{
-		ReportID: id,
-		Tag:      tag,
-		Problem:  problem,
+		ReportID:   id,
+		Tag:        tag,
+		Problem:    problem,
+		Actionable: true,
 	}
 	for _, o := range opts {
 		o(report)
@@ -48,7 +49,17 @@ func DumpReports(ctx context.Context) *migrator.ReportDump {
 	return getReportSink(ctx).dat.Clone()
 }
 
-// HasReports returns `true` if `ctx` contains any Reports.
-func HasReports(ctx context.Context) bool {
-	return !getReportSink(ctx).dat.Empty()
+// HasActionableReports returns `true` if `ctx` contains any Reports where
+// Actionable is true.
+func HasActionableReports(ctx context.Context) (actionable bool) {
+	getReportSink(ctx).dat.Iterate(func(id migrator.ReportID, reports []*migrator.Report) bool {
+		for _, report := range reports {
+			if report.Actionable {
+				actionable = true
+				return false
+			}
+		}
+		return true
+	})
+	return
 }
