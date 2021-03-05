@@ -18,11 +18,12 @@ import (
 )
 
 var servoInV2 = lab.Servo{
-	ServoHostname: "test_servo",
-	ServoPort:     int32(9999),
-	ServoSerial:   "test_servo_serial",
-	ServoType:     "v3",
-	ServoSetup:    lab.ServoSetupType_SERVO_SETUP_DUAL_V4,
+	ServoHostname:  "test_servo",
+	ServoPort:      int32(9999),
+	ServoSerial:    "test_servo_serial",
+	ServoType:      "v3",
+	ServoSetup:     lab.ServoSetupType_SERVO_SETUP_DUAL_V4,
+	ServoFwChannel: lab.ServoFwChannel_SERVO_FW_ALPHA,
 	ServoTopology: &lab.ServoTopology{
 		Main: &lab.ServoTopologyItem{
 			Type:         "servo_v4",
@@ -293,6 +294,10 @@ common {
 	attributes {
 		key: "servo_setup",
 		value: "DUAL_V4",
+	}
+	attributes {
+		key: "servo_fw_channel",
+		value: "ALPHA",
 	}
 	hostname: "test_host"
 	id: "test_dut"

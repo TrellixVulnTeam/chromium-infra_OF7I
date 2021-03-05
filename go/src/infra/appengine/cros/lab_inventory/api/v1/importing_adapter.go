@@ -119,6 +119,12 @@ func importServo(servo *lab.Servo, key string, value string) error {
 			}
 		}
 		servo.ServoTopology = topology
+	case "servo_fw_channel":
+		servoFwChannel := lab.ServoFwChannel_SERVO_FW_STABLE
+		if ss, ok := lab.ServoFwChannel_value["SERVO_FW_"+value]; ok {
+			servoFwChannel = lab.ServoFwChannel(ss)
+		}
+		servo.ServoFwChannel = servoFwChannel
 	}
 	return nil
 }
@@ -145,7 +151,7 @@ func importAttributes(attrs []*inventory.KeyValue) (string, *lab.Servo, *lab.RPM
 		switch key := attr.GetKey(); key {
 		case "HWID":
 			hwid = value
-		case "servo_host", "servo_port", "servo_serial", "servo_type", "servo_setup":
+		case "servo_host", "servo_port", "servo_serial", "servo_type", "servo_setup", "servo_fw_channel":
 			if servo == nil {
 				servo = new(lab.Servo)
 			}
