@@ -2,7 +2,7 @@
 # Copyright 2021 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-# This specific file exists soley for testing purposes.
+# This is not a real version file; it exists only for testing purposes.
 #############################################################################
 # SET VERSION NUMBERS
 #############################################################################

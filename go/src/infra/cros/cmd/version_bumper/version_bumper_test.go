@@ -1,51 +1,58 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-package execute
+package main
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
 	"infra/cros/internal/chromeosversion"
 
-	vpb "go.chromium.org/chromiumos/infra/proto/go/chromiumos/version_bumper"
+	"github.com/maruel/subcommands"
 )
 
 func TestBumpVersionBadArgs(t *testing.T) {
-	ctx := context.Background()
-	err := Run(ctx, &vpb.BumpVersionRequest{})
+	s := GetApplication()
+	ret := subcommands.Run(s, []string{
+		"bump_version",
+	})
 	// missing --chromiumos_overlay_repo
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if ret != 1 {
+		t.Fatalf("expected ret code 1, got %d", ret)
 	}
 
-	err = Run(ctx, &vpb.BumpVersionRequest{
-		ChromiumosOverlayRepo: "foo",
+	ret = subcommands.Run(s, []string{
+		"bump_version",
+		"--chromiumos_overlay_repo",
+		"foo",
 	})
 
 	// bad --chromiumos_overlay_repo
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if ret != 1 {
+		t.Fatalf("expected ret code 1, got %d", ret)
 	}
 
 	testDir, err := filepath.Abs("test/")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	err = Run(ctx, &vpb.BumpVersionRequest{
-		ChromiumosOverlayRepo: testDir,
+	ret = subcommands.Run(s, []string{
+		"bump_version",
+		"--chromiumos_overlay_repo",
+		testDir,
+		"--bump_milestone_component",
+		"--bump_build_component",
 	})
-	// no component specified
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+
+	// multiple components specified
+	if ret != 1 {
+		t.Fatalf("expected ret code 1, got %d", ret)
 	}
 }
 
 type bumpVersionTest struct {
-	component       vpb.BumpVersionRequest_VersionComponent
+	flag            string
 	expectedVersion chromeosversion.VersionInfo
 }
 
@@ -66,7 +73,8 @@ func resetTestFile() error {
 }
 
 func TestBumpVersion(t *testing.T) {
-	ctx := context.Background()
+	s := GetApplication()
+
 	testDir, err := filepath.Abs("test/")
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +82,7 @@ func TestBumpVersion(t *testing.T) {
 
 	tests := []bumpVersionTest{
 		{
-			component: vpb.BumpVersionRequest_COMPONENT_TYPE_MILESTONE,
+			flag: "--bump_milestone_component",
 			expectedVersion: chromeosversion.VersionInfo{
 				ChromeBranch:      91,
 				BuildNumber:       13781,
@@ -83,7 +91,7 @@ func TestBumpVersion(t *testing.T) {
 			},
 		},
 		{
-			component: vpb.BumpVersionRequest_COMPONENT_TYPE_BUILD,
+			flag: "--bump_build_component",
 			expectedVersion: chromeosversion.VersionInfo{
 				ChromeBranch:      90,
 				BuildNumber:       13782,
@@ -92,7 +100,7 @@ func TestBumpVersion(t *testing.T) {
 			},
 		},
 		{
-			component: vpb.BumpVersionRequest_COMPONENT_TYPE_BRANCH,
+			flag: "--bump_branch_component",
 			expectedVersion: chromeosversion.VersionInfo{
 				ChromeBranch:      90,
 				BuildNumber:       13781,
@@ -101,7 +109,7 @@ func TestBumpVersion(t *testing.T) {
 			},
 		},
 		{
-			component: vpb.BumpVersionRequest_COMPONENT_TYPE_PATCH,
+			flag: "--bump_patch_component",
 			expectedVersion: chromeosversion.VersionInfo{
 				ChromeBranch:      90,
 				BuildNumber:       13781,
@@ -116,12 +124,14 @@ func TestBumpVersion(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := Run(ctx, &vpb.BumpVersionRequest{
-			ChromiumosOverlayRepo: testDir,
-			ComponentToBump:       test.component,
+		ret := subcommands.Run(s, []string{
+			"bump_version",
+			"--chromiumos_overlay_repo",
+			testDir,
+			test.flag,
 		})
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+		if ret != 0 {
+			t.Fatalf("unexpected non-zero return code: %d", ret)
 		}
 		vinfo, err := chromeosversion.GetVersionInfoFromRepo(testDir)
 		if err != nil {
