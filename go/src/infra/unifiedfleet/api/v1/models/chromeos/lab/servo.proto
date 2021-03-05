@@ -8,7 +8,7 @@ package unifiedfleet.api.v1.models.chromeos.lab;
 
 option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 
-// NEXT TAG: 9
+// NEXT TAG: 10
 message Servo {
   reserved 6;
   // Servo-specific configs
@@ -21,6 +21,7 @@ message Servo {
   ServoSetupType servo_setup = 7;
   // Based on http://go/fleet-servo-topology
   ServoTopology servo_topology = 8;
+  ServoFwChannel servo_fw_channel = 9;
 }
 
 // Servo Setup Type describes the capabilities of servos.
@@ -30,6 +31,19 @@ enum ServoSetupType {
     SERVO_SETUP_DUAL_V4 = 1;
     // SERVO_SETUP_INVALID explicitly marks errors in servo setup.
     SERVO_SETUP_INVALID = 2;
+}
+
+// Servo Firmware Channel describes the firmware expected to have on servos.
+// Next Tag : 4
+enum ServoFwChannel {
+    // Servo firmware from Stable channel.
+    SERVO_FW_STABLE = 0;
+    // The previous Servo firmware from Stable channel.
+    SERVO_FW_PREVIOUS = 1;
+    // Servo firmware from Dev channel.
+    SERVO_FW_DEV = 2;
+    // Servo firmware from Alpha channel.
+    SERVO_FW_ALPHA = 3;
 }
 
 // Servo Topology describe connected servo devices on DUT set-up to provide Servo functionality.
