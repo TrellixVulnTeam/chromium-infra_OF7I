@@ -15,7 +15,7 @@ var dutApplication = &cli.Application{
 	Title: "Interact with DUTs.",
 	Commands: []*subcommands.Command{
 		lease,
-		release,
+		abandon,
 		subcommands.CmdHelp,
 	},
 }

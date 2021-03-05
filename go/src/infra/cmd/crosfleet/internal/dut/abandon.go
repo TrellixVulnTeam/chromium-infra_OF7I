@@ -16,30 +16,30 @@ import (
 	"time"
 )
 
-var release = &subcommands.Command{
-	UsageLine: "release HOST [HOST...]",
-	ShortDesc: "release DUTs which were previously leased via 'dut lease'",
-	LongDesc: `Release DUTs which were previously leased via 'dut lease'.
+var abandon = &subcommands.Command{
+	UsageLine: "abandon HOST [HOST...]",
+	ShortDesc: "abandon DUTs which were previously leased via 'dut lease'",
+	LongDesc: `Abandon DUTs which were previously leased via 'dut lease'.
 
 This command's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &releaseRun{}
+		c := &abandonRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.reason, "reason", "", "Optional reason for releasing.")
+		c.Flags.StringVar(&c.reason, "reason", "", "Optional reason for abandoning.")
 		return c
 	},
 }
 
-type releaseRun struct {
+type abandonRun struct {
 	subcommands.CommandRunBase
 	reason    string
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
 }
 
-func (c *releaseRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *abandonRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -47,7 +47,7 @@ func (c *releaseRun) Run(a subcommands.Application, args []string, env subcomman
 	return 0
 }
 
-func (c *releaseRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) == 0 {
 		return cmdlib.NewUsageError(c.Flags, "must specify at least one DUT hostname")
 	}
