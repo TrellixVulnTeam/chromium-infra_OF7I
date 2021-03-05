@@ -115,7 +115,7 @@ func botDimsAndBuildTags(ctx context.Context, swarmingService *swarmingapi.Servi
 	}
 	tags["crosfleet-tool"] = leaseCmdName
 	tags["lease-reason"] = leaseFlags.reason
-	tags["qs-account"] = "leases"
+	tags["qs_account"] = "leases"
 
 	if leaseFlags.host != "" {
 		correctedHostname := correctedHostname(leaseFlags.host)

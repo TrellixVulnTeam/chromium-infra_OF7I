@@ -90,7 +90,7 @@ var testBotDimsAndBuildTagsData = []struct {
 			"lease-by":       "model",
 			"lease-reason":   "sample reason",
 			"label-model":    "sample-model",
-			"qs-account":     "leases",
+			"qs_account":     "leases",
 		},
 	},
 	{ // Board-based lease without added dims
@@ -109,7 +109,7 @@ var testBotDimsAndBuildTagsData = []struct {
 			"lease-by":       "board",
 			"lease-reason":   "sample reason",
 			"label-board":    "sample-board",
-			"qs-account":     "leases",
+			"qs_account":     "leases",
 		},
 	},
 }
