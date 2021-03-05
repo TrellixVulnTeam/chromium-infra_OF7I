@@ -586,3 +586,8 @@ import:
 - package: gopkg.in/square/go-jose.v2
   version: ~2.5.1
   repo: https://chromium.googlesource.com/external/github.com/square/go-jose.git
+- package: github.com/dgraph-io/badger
+  repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
+  version: master
+  subpackages:
+  - v3
