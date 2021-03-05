@@ -161,24 +161,6 @@ func TestGetPrefix(t *testing.T) {
 				StartChar: 0,
 				EndChar:   46,
 			},
-			{
-				Category:  "ObjectiveCStyle/ExplicitOwnership",
-				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
-				Path:      "test/src/bad_delegate.mm",
-				StartLine: 12,
-				EndLine:   12,
-				StartChar: 0,
-				EndChar:   45,
-			},
-			{
-				Category:  "ObjectiveCStyle/ExplicitOwnership",
-				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
-				Path:      "test/src/bad_delegate.mm",
-				StartLine: 13,
-				EndLine:   13,
-				StartChar: 0,
-				EndChar:   50,
-			},
 		})
 	})
 
@@ -229,15 +211,6 @@ func TestGetPrefix(t *testing.T) {
 				Path:      "test/src/bad_property.mm",
 				StartLine: 8,
 				EndLine:   8,
-				StartChar: 0,
-				EndChar:   29,
-			},
-			{
-				Category:  "ObjectiveCStyle/ExplicitOwnership",
-				Message:   "Consider using an explicit ownership specifier. The default is strong, which can cause retain cycles.",
-				Path:      "test/src/bad_property.mm",
-				StartLine: 9,
-				EndLine:   9,
 				StartChar: 0,
 				EndChar:   44,
 			},

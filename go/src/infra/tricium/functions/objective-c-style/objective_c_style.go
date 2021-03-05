@@ -148,6 +148,7 @@ func checkSourceFile(base string, path string) []*tricium.Data_Comment {
 		specifiers := contentString[match[2]:match[3]]
 		if !strings.Contains(specifiers, "weak") &&
 			!strings.Contains(specifiers, "strong") &&
+			!strings.Contains(specifiers, "readonly") &&
 			!strings.Contains(specifiers, "copy") &&
 			!strings.Contains(specifiers, "assign") {
 			propertyStartLine := converter.getStartLine(propertyStartIndex)

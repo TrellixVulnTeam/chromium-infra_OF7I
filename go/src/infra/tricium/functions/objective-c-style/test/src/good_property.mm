@@ -1,9 +1,11 @@
 @implementation Good
 
 @property(weak) Foo* foo;
+@property(readonly) Foo* foo;
 @property(weak, readonly) id<A> foo;
 @property(atomic, weak) Foo* foo;
 @property(strong) id<Foo> foo;
+@property(readonly) id<Foo> foo;
 @property(readwrite, strong) Foo* foo;
 @property(strong, atomic) Foo* foo;
 @property(copy) id<Foo> foo;
