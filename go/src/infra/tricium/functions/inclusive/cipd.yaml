@@ -1,0 +1,4 @@
+package: infra/tricium/function/inclusive
+install_mode: symlink
+data:
+- file: inclusive
