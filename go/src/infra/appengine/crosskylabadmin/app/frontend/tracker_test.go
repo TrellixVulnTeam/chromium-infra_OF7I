@@ -198,7 +198,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		bot4 := test.BotForDUT("dut_4", "ready", "label-os_type:OS_TYPE_MOBLAB;id:id4")
 		bot5 := test.BotForDUT("dut_5", "needs_deploy", "label-os_type:OS_TYPE_MOBLAB;id:id5")
 		bot6 := test.BotForDUT("dut_6", "needs_reset", "label-os_type:OS_TYPE_MOBLAB;id:id6")
-		bot6.State = "{\"storage_state\":[\"NEED_REPLACEMENT\"],\"servo_usb_state\":[\"NEED_REPLACEMENT\"]}"
+		bot6.State = "{\"storage_state\":[\"NEED_REPLACEMENT\"],\"servo_usb_state\":[\"NEED_REPLACEMENT\"], \"rpm_state\": [\"UNKNOWN\"]}"
 		bot7 := test.BotForDUT("dut_7", "needs_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id7")
 		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {

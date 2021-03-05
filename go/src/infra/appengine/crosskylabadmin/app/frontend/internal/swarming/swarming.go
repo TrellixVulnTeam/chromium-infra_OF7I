@@ -112,6 +112,7 @@ func DimensionsMap(sdims []*swarming.SwarmingRpcsStringListPair) strpair.Map {
 type BotState struct {
 	StorageState  []string `json:"storage_state"`
 	ServoUSBState []string `json:"servo_usb_state"`
+	RpmState      []string `json:"rpm_state"`
 }
 
 // ExtractBotState extracts BOTState from BOT info.

@@ -341,6 +341,13 @@ func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotI
 				logging.Infof(ctx, "Skipping BOT with id: %q as storage marked for replacement", b.BotId)
 				continue
 			}
+		case fleet.AuditTask_RPMConfig:
+			state := swarming_utils.ExtractBotState(b).RpmState
+			if len(state) > 0 && state[0] != "UNKNOWN" {
+				// expecting that RPM is going through check everytime when we do any update on setup.
+				logging.Infof(ctx, "Skipping BOT with id: %q as RPM was already audited", b.BotId)
+				continue
+			}
 		}
 
 		s := clients.GetStateDimension(b.Dimensions)
