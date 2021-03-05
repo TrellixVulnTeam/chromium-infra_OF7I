@@ -180,7 +180,11 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			}
 			if oldMachineCopy.GetSerialNumber() != "" {
 				if err := inventory.DeleteDeployment(ctx, oldMachineCopy.GetSerialNumber()); err != nil {
-					return errors.Annotate(err, "unable to update deployment record").Err()
+					if util.IsNotFoundError(err) {
+						logging.Infof(ctx, "no deployment record for %s", oldMachineCopy.GetSerialNumber())
+					} else {
+						return errors.Annotate(err, "unable to delete deployment record").Err()
+					}
 				}
 			}
 		}
