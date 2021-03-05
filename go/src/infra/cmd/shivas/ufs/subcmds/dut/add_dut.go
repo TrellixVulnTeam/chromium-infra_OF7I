@@ -587,7 +587,7 @@ func (c *addDUT) updateAssetLocation(ctx context.Context, ic ufsAPI.FleetClient,
 		return err
 	}
 	asset := &ufspb.Asset{
-		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, c.asset),
+		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, lse.GetMachines()[0]),
 		Location: loc,
 	}
 	// Override zone info with user provided option.
