@@ -35,20 +35,20 @@ func findMatchMap(r *regexp.Regexp, s string) (map[string]string, error) {
 	return out, nil
 }
 
-func parseInt32(s string) (int32, error) {
+func parseInt(s string) (int, error) {
 	i64, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
 		return 0, err
 	}
-	return int32(i64), nil
+	return int(i64), nil
 }
 
-func extractInt32(m map[string]string, k string) (int32, error) {
+func extractInt(m map[string]string, k string) (int, error) {
 	if value, ok := m[k]; ok {
 		if value == "" {
 			return 0, fmt.Errorf("%s cannot be empty", k)
 		}
-		return parseInt32(value)
+		return parseInt(value)
 	}
 	return 0, fmt.Errorf("key %s must be present", k)
 }

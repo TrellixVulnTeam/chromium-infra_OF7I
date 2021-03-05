@@ -14,7 +14,7 @@ import (
 var faftVersionPattern *regexp.Regexp = regexp.MustCompile(`\A(?P<platform>[A-Za-z0-9_]+)-firmware/R(?P<release>[0-9]+)-(?P<tip>[0-9]+)\.(?P<branch>[0-9]+)\.(?P<branchbranch>[0-9]+)\z`)
 
 // ParseFaftVersion takes a version string and extracts version info
-func ParseFaftVersion(fv string) (string, int32, int32, int32, int32, error) {
+func ParseFaftVersion(fv string) (string, int, int, int, int, error) {
 	if fv == "" {
 		return "", 0, 0, 0, 0, fmt.Errorf("empty faft version string is invalid")
 	}
@@ -29,19 +29,19 @@ func ParseFaftVersion(fv string) (string, int32, int32, int32, int32, error) {
 	if err != nil {
 		return "", 0, 0, 0, 0, err
 	}
-	release, err := extractInt32(m, "release")
+	release, err := extractInt(m, "release")
 	if err != nil {
 		return "", 0, 0, 0, 0, err
 	}
-	tip, err := extractInt32(m, "tip")
+	tip, err := extractInt(m, "tip")
 	if err != nil {
 		return "", 0, 0, 0, 0, err
 	}
-	branch, err := extractInt32(m, "branch")
+	branch, err := extractInt(m, "branch")
 	if err != nil {
 		return "", 0, 0, 0, 0, err
 	}
-	branchBranch, err := extractInt32(m, "branchbranch")
+	branchBranch, err := extractInt(m, "branchbranch")
 	if err != nil {
 		return "", 0, 0, 0, 0, err
 	}
@@ -57,6 +57,6 @@ func ValidateFaftVersion(v string) error {
 
 // SerializeFaftVersion takes arguments describing a faft version
 // and produces a string in the canonical format.
-func SerializeFaftVersion(platform string, release, tip, branch, branchBranch int32) string {
+func SerializeFaftVersion(platform string, release, tip, branch, branchBranch int) string {
 	return fmt.Sprintf("%s-firmware/R%d-%d.%d.%d", platform, release, tip, branch, branchBranch)
 }

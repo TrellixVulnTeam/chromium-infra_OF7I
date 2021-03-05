@@ -15,7 +15,7 @@ var firmwareVersionPattern *regexp.Regexp = regexp.MustCompile(`\A(?P<company>[A
 
 // ParseFirmwareVersion takes a read-write firmware version and extracts
 // semantically meaningful elements.
-func ParseFirmwareVersion(s string) (string, string, int32, int32, int32, error) {
+func ParseFirmwareVersion(s string) (string, string, int, int, int, error) {
 	if s == "" {
 		return "", "", 0, 0, 0, fmt.Errorf("rw firmware version cannot be empty")
 	}
@@ -34,15 +34,15 @@ func ParseFirmwareVersion(s string) (string, string, int32, int32, int32, error)
 	if err != nil {
 		return "", "", 0, 0, 0, err
 	}
-	tip, err := extractInt32(m, "tip")
+	tip, err := extractInt(m, "tip")
 	if err != nil {
 		return "", "", 0, 0, 0, err
 	}
-	branch, err := extractInt32(m, "branch")
+	branch, err := extractInt(m, "branch")
 	if err != nil {
 		return "", "", 0, 0, 0, err
 	}
-	branchBranch, err := extractInt32(m, "branchbranch")
+	branchBranch, err := extractInt(m, "branchbranch")
 	if err != nil {
 		return "", "", 0, 0, 0, err
 	}
@@ -57,6 +57,6 @@ func ValidateFirmwareVersion(r string) error {
 }
 
 // SerializeFirmwareVersion takes a list of components of a RWFirmwareVersion
-func SerializeFirmwareVersion(company string, platform string, tip int32, branch int32, branchBranch int32) string {
+func SerializeFirmwareVersion(company string, platform string, tip int, branch int, branchBranch int) string {
 	return fmt.Sprintf("%s_%s.%d.%d.%d", company, platform, tip, branch, branchBranch)
 }

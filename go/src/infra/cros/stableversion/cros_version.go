@@ -28,8 +28,8 @@ func CompareCrOSVersions(v1, v2 string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	v1Info := []int32{r1, t1, b1, bb1}
-	v2Info := []int32{r2, t2, b2, bb2}
+	v1Info := []int{r1, t1, b1, bb1}
+	v2Info := []int{r2, t2, b2, bb2}
 	for i, v := range v1Info {
 		if v > v2Info[i] {
 			return 1, nil
@@ -42,7 +42,7 @@ func CompareCrOSVersions(v1, v2 string) (int, error) {
 }
 
 // ParseCrOSVersion takes a version string and extracts version info
-func ParseCrOSVersion(v string) (int32, int32, int32, int32, error) {
+func ParseCrOSVersion(v string) (int, int, int, int, error) {
 	if v == "" {
 		return 0, 0, 0, 0, fmt.Errorf("empty version string is invalid")
 	}
@@ -53,19 +53,19 @@ func ParseCrOSVersion(v string) (int32, int32, int32, int32, error) {
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	release, err := extractInt32(m, "release")
+	release, err := extractInt(m, "release")
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	tip, err := extractInt32(m, "tip")
+	tip, err := extractInt(m, "tip")
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	branch, err := extractInt32(m, "branch")
+	branch, err := extractInt(m, "branch")
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	branchBranch, err := extractInt32(m, "branchbranch")
+	branchBranch, err := extractInt(m, "branchbranch")
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
@@ -81,6 +81,6 @@ func ValidateCrOSVersion(v string) error {
 
 // SerializeCrOSVersion takes a CrOSVersion specification
 // and produces a string in the canonical format.
-func SerializeCrOSVersion(release, tip, branch, branchBranch int32) string {
+func SerializeCrOSVersion(release, tip, branch, branchBranch int) string {
 	return fmt.Sprintf("R%d-%d.%d.%d", release, tip, branch, branchBranch)
 }
