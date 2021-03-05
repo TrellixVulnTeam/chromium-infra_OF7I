@@ -120,6 +120,7 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 				// Graphics: removed from boxster for now
 				// TODO(xixuan): VideoAccelerationSupports, a new video acceleration topology hasn't been set
 				// label-video_acceleration is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/86h2scqNsStwoiW
+				VideoAccelerationSupports: parseVideoAccelerations(d.GetPlatform().GetVideoAcceleration()),
 			}
 		}
 	}
@@ -134,6 +135,45 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 		res[i] = v
 		i++
 	}
+	return res
+}
+
+func parseVideoAccelerations(vas []api.Design_Platform_VideoAcceleration) []device.Config_VideoAcceleration {
+	resMap := make(map[device.Config_VideoAcceleration]bool)
+	for _, va := range vas {
+		switch va {
+		case api.Design_Platform_H264_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_H264] = true
+		case api.Design_Platform_H264_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_H264] = true
+		case api.Design_Platform_VP8_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_VP8] = true
+		case api.Design_Platform_VP8_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_VP8] = true
+		case api.Design_Platform_VP9_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_VP9] = true
+		case api.Design_Platform_VP9_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_VP9] = true
+		case api.Design_Platform_VP9_2_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_VP9_2] = true
+		case api.Design_Platform_VP9_2_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_VP9_2] = true
+		case api.Design_Platform_H265_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_H265] = true
+		case api.Design_Platform_H265_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_H265] = true
+		case api.Design_Platform_MJPG_DECODE:
+			resMap[device.Config_VIDEO_ACCELERATION_MJPG] = true
+		case api.Design_Platform_MJPG_ENCODE:
+			resMap[device.Config_VIDEO_ACCELERATION_ENC_MJPG] = true
+		}
+	}
+
+	var res []device.Config_VideoAcceleration
+	for k := range resMap {
+		res = append(res, k)
+	}
+	sort.Slice(res, func(i, j int) bool { return int32(res[i]) < int32(res[j]) })
 	return res
 }
 

@@ -51,6 +51,16 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
+					So(dc.GetVideoAccelerationSupports(), ShouldResemble, []device.Config_VideoAcceleration{
+						device.Config_VIDEO_ACCELERATION_H264,
+						device.Config_VIDEO_ACCELERATION_ENC_H264,
+						device.Config_VIDEO_ACCELERATION_VP8,
+						device.Config_VIDEO_ACCELERATION_ENC_VP8,
+						device.Config_VIDEO_ACCELERATION_VP9,
+						device.Config_VIDEO_ACCELERATION_VP9_2,
+						device.Config_VIDEO_ACCELERATION_MJPG,
+						device.Config_VIDEO_ACCELERATION_ENC_MJPG,
+					})
 				case "FAKE-REF-DESIGN:0":
 					fallthrough
 				case "FAKE-REF-DESIGN:2":
@@ -69,6 +79,16 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 					So(dc.GetEc(), ShouldEqual, device.Config_EC_CHROME)
+					So(dc.GetVideoAccelerationSupports(), ShouldResemble, []device.Config_VideoAcceleration{
+						device.Config_VIDEO_ACCELERATION_H264,
+						device.Config_VIDEO_ACCELERATION_ENC_H264,
+						device.Config_VIDEO_ACCELERATION_VP8,
+						device.Config_VIDEO_ACCELERATION_ENC_VP8,
+						device.Config_VIDEO_ACCELERATION_VP9,
+						device.Config_VIDEO_ACCELERATION_VP9_2,
+						device.Config_VIDEO_ACCELERATION_MJPG,
+						device.Config_VIDEO_ACCELERATION_ENC_MJPG,
+					})
 				case "PROJECT-A:32":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CONVERTIBLE)
 					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
