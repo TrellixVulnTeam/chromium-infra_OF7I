@@ -226,17 +226,13 @@ func GetUFSDevicesByModels(ctx context.Context, ufsClient external.UFSClient, mo
 func GetUFSDutStateForDevices(ctx context.Context, ufsClient external.UFSClient, devices []*lab.ChromeOSDevice) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	ctx = SetupOSNameSpaceContext(ctx)
 	extendedData := make([]*api.ExtendedDeviceData, 0, len(devices))
-	failedDevices := make([]*api.DeviceOpResult, 0, len(devices))
 	for _, d := range devices {
 		dutState, err := ufsClient.GetDutState(ctx, &ufsapi.GetDutStateRequest{
 			ChromeosDeviceId: d.GetId().GetValue(),
 		})
 		if err != nil {
-			failedDevices = append(failedDevices, &api.DeviceOpResult{
-				Id:       d.GetId().GetValue(),
-				ErrorMsg: err.Error(),
-			})
-			continue
+			// Add empty dutstate as the device maybe deployed just now.
+			dutState = &ufschromeoslab.DutState{}
 		}
 		data := &api.ExtendedDeviceData{
 			LabConfig: d,
@@ -244,7 +240,7 @@ func GetUFSDutStateForDevices(ctx context.Context, ufsClient external.UFSClient,
 		}
 		extendedData = append(extendedData, data)
 	}
-	return extendedData, failedDevices
+	return extendedData, nil
 }
 
 // GetAllUFSDevicesData Gets all the MachineLSEs and Machines from UFS and returns invV2 Devices and updatedtime.

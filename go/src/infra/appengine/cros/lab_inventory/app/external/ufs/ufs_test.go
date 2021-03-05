@@ -323,9 +323,8 @@ func TestGetUFSDutStateForDevices(t *testing.T) {
 
 		Convey("Get non existing device", func() {
 			data, failedDevices := GetUFSDutStateForDevices(tf.C, ufsClient, []*lab.ChromeOSDevice{dut1, labstation1, devIDNonExisting})
-			So(failedDevices, ShouldHaveLength, 1)
-			So(failedDevices[0].ErrorMsg, ShouldContainSubstring, "No DutState found")
-			So(data, ShouldHaveLength, 2)
+			So(failedDevices, ShouldHaveLength, 0)
+			So(data, ShouldHaveLength, 3)
 		})
 	})
 }
