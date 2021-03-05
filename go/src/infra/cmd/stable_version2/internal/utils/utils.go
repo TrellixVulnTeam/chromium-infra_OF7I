@@ -18,7 +18,7 @@ var (
 )
 
 // MakeCrOSSV makes a stable cros version object following format:
-// https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src/lab_platform/stable_cros_version.proto
+// https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/main/src/lab_platform/stable_cros_version.proto
 func MakeCrOSSV(b, v string) *sv.StableCrosVersion {
 	return &sv.StableCrosVersion{
 		Key:     MakeStableVersionKey(b, ""),
@@ -27,7 +27,7 @@ func MakeCrOSSV(b, v string) *sv.StableCrosVersion {
 }
 
 // MakeStableVersionKey makes a key whose format follows:
-// https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src/lab_platform/stable_version.proto
+// https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/main/src/lab_platform/stable_version.proto
 func MakeStableVersionKey(buildTarget, model string) *sv.StableVersionKey {
 	return &sv.StableVersionKey{
 		ModelId: &device.ModelId{

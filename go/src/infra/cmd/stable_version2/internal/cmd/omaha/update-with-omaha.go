@@ -43,7 +43,7 @@ and commit them to stable version config file.
 Do not use this command as part of scripts or pipelines as it's unstable.
 
 Output is JSON encoded protobuf defined at
-https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src/lab_platform/stable_version.proto`,
+https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/main/src/lab_platform/stable_version.proto`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateWithOmahaRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
