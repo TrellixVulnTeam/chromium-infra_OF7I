@@ -53,7 +53,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers", "mdb/chromeos-labs", "mdb/chromeos-labs-tvcs", "mdb/acs-labs", "chromeos-inventory-readonly-access"}
 	}
 	switch rpcName {
-	case "CreateMachineLSE", "UpdateMachineLSE", "CreateVM", "UpdateVM", "UpdateMachineLSEDeployment", "BatchUpdateMachineLSEDeployment":
+	case "CreateMachineLSE", "UpdateMachineLSE", "CreateVM", "UpdateVM", "UpdateMachineLSEDeployment", "BatchUpdateMachineLSEDeployment", "CreateAsset", "UpdateAsset", "RackRegistration", "UpdateRack":
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-setup-label-write-access", "machine-db-writers"}
 	case "DeleteMachineLSE", "CreateVlan", "UpdateVlan", "DeleteVlan", "DeleteVM":
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-privileged-access"}
