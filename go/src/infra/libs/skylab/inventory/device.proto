@@ -351,7 +351,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 27
+// NEXT TAG: 28
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -387,6 +387,8 @@ message Peripherals {
   optional PeripheralState servo_state = 15;
   optional string servo_type = 17;
   optional ServoTopology servo_topology = 24;
+  optional ServoFwChannel servo_fw_channel = 27;
+
   optional bool smart_usbhub = 21;
   optional bool stylus = 3;
   optional bool camerabox = 13;
@@ -423,6 +425,19 @@ message Peripherals {
   optional HardwareState servo_usb_state = 20;
   optional HardwareState battery_state = 26;
   optional PeripheralState rpm_state = 25;
+}
+
+// Servo Firmware Channel describes the firmware expected to have on servos.
+// Next Tag : 4
+enum ServoFwChannel {
+  // Servo firmware from Stable channel.
+  SERVO_FW_STABLE = 0;
+  // The previous Servo firmware from Stable channel.
+  SERVO_FW_PREVIOUS = 1;
+  // Servo firmware from Dev channel.
+  SERVO_FW_DEV = 2;
+  // Servo firmware from Alpha channel.
+  SERVO_FW_ALPHA = 3;
 }
 
 // copy of enum from dut_state.proto
