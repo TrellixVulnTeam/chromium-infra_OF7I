@@ -445,6 +445,9 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 			if _, ok := maskSet["dut.servo.setup"]; servo.GetServoHostname() == "" && ok {
 				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot update servo setup. Servo host is being reset.")
 			}
+			if _, ok := maskSet["dut.servo.fwchannel"]; servo.GetServoHostname() == "" && ok {
+				return status.Error(codes.InvalidArgument, "validateUpdateMachineLSEDUTUpdateMask - Cannot update servo firmware channel. Servo host is being reset.")
+			}
 		case "dut.rpm.host":
 			// Check for deletion of the host. Outlet cannot be updated if host is deleted.
 			if _, ok := maskSet["dut.rpm.outlet"]; ok && rpm.GetPowerunitName() == "" && rpm.GetPowerunitOutlet() != "" {
@@ -464,6 +467,7 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 		case "dut.servo.port":
 		case "dut.servo.serial":
 		case "dut.servo.setup":
+		case "dut.servo.fwchannel":
 		case "dut.servo.type":
 		case "dut.servo.topology":
 		case "dut.chameleon.type":
@@ -737,6 +741,8 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *chromeosLab.Servo, pat
 		oldServo.ServoType = newServo.GetServoType()
 	case "dut.servo.topology":
 		oldServo.ServoTopology = newServo.GetServoTopology()
+	case "dut.servo.fwchannel":
+		oldServo.ServoFwChannel = newServo.GetServoFwChannel()
 	}
 }
 
