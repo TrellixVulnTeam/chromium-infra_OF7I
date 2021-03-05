@@ -562,61 +562,6 @@ func testCombinedKey(t *testing.T) {
 	}
 }
 
-func TestLookupBestVersion(t *testing.T) {
-	cases := []struct {
-		cfgCrosVersions map[string]string
-		board           string
-		model           string
-		out             string
-		errPat          string
-	}{
-		{
-			nil,
-			"",
-			"",
-			"",
-			"^no matching CrOS versions.*$",
-		},
-		{
-			map[string]string{
-				"fake-board;fake-model": "107",
-			},
-			"fake-board",
-			"fake-model",
-			"107",
-			"",
-		},
-		{
-			map[string]string{
-				"fake-board":            "107",
-				"fake-board;fake-model": "208",
-			},
-			"fake-board",
-			"fake-model",
-			"208",
-			"",
-		},
-	}
-
-	for _, tt := range cases {
-		tt := tt
-		t.Run(tt.out, func(t *testing.T) {
-			t.Parallel()
-			want := tt.out
-			got, e := lookupBestVersion(tt.cfgCrosVersions, tt.board, tt.model)
-			if diff := cmp.Diff(want, got); diff != "" {
-				t.Errorf("diff (-want +got):\n%s", diff)
-			}
-			if err := validateMatches(tt.errPat, errorToString(e)); err != nil {
-				t.Errorf("error message does not match: %s", err)
-				if e != nil {
-					t.Errorf("error message: %s", e)
-				}
-			}
-		})
-	}
-}
-
 func TestMultipleModelsSameBoard(t *testing.T) {
 	const namiVayne1metadataJSON = `
 	{

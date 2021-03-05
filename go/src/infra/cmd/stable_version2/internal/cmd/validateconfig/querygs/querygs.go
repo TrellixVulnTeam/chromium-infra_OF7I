@@ -133,22 +133,6 @@ func combinedKey(board string, model string) string {
 	return fmt.Sprintf("%s;%s", board, model)
 }
 
-// TODO(gregorynisbet): remove this function! It is basically a no-op at this point
-// DEPRECATED
-// lookupBestVersion takes a list of cros versions that are either (a) or (b)
-// and a model and a board and returns the most specific version present or
-// an error.
-//
-// a)         board only (e.g. nami)
-// b) model + board      (e.g. nami;vayne)
-func lookupBestVersion(cfgCrosVersions map[string]string, board string, model string) (string, error) {
-	combined := fmt.Sprintf("%s;%s", board, model)
-	if value, ok := cfgCrosVersions[combined]; ok {
-		return value, nil
-	}
-	return "", fmt.Errorf("no matching CrOS versions for board %q and model %q", board, model)
-}
-
 // ValidateConfig takes a stable version protobuf and attempts to validate every entry.
 func (r *Reader) ValidateConfig(ctx context.Context, sv *labPlatform.StableVersions) (*ValidationResult, error) {
 	var cfgCrosVersions = make(map[string]string, len(sv.GetCros()))
