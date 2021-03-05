@@ -94,17 +94,19 @@ with the arguments `-input` and `-output`.
 
 ### "End-to-End" testing
 
-Before deploying and enabling widely for a project, you can test an Analyzer by
-enabling it in
-[the playground repository](https://chromium.googlesource.com/playground/gerrit-tricium/),
-by editing
-[the config](https://chromium.googlesource.com/playground/gerrit-tricium/+/refs/heads/infra/config/tricium-dev.cfg).
-You can then create example changes in that repository to see the Tricium dev
-instance run your Analyzer on your example change.
+Analyzers are run in recipes, and changes to recipes can be tested before committing
+using `led`. In order to test, you'll need (1) an example build of the analyzer builder
+that you'll be changing and (2) an example change to run on.
 
-First, however, you must deploy your Analyzer as a CIPD package and decide what
-config parameters to use in the config. See the sections below, include the
-section about testing and release.
+You should be able to test by making a uncommitted change to an analyzer recipe, and
+then running something like:
+
+    led get-build <build-number> | \
+        led edit-recipe-bundle | \
+        led edit-cr-cl <example change patchset>` |
+        led launch
+
+See go/luci-how-to-led or `led help` for more information.
 
 ### Packaging with CIPD
 
