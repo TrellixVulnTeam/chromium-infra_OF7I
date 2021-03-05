@@ -36,3 +36,7 @@ dispatch:
   # UpdateBuild is implemented in Go, so serve it from there.
   - url: "*/prpc/buildbucket.v2.Builds/UpdateBuild"
     service: default-go
+
+  # CancelBuild is implemented in Go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builds/CancelBuild"
+    service: default-go
