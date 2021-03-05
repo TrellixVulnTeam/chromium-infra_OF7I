@@ -156,6 +156,7 @@ func TestValidateFirmwareVersion(t *testing.T) {
 	bad("a-firmware/R1-2.3.4")
 	bad("octopus-firmware/R72-11297.75.0")
 	good("Google_Rammus.11275.41.0")
+	good("Google_Something.19999.0.2018_01_06_3333")
 }
 
 // TODO(gregorynisbet): replace with table-driven test
@@ -177,7 +178,7 @@ func TestParseFirmwareVersion(t *testing.T) {
 			So(platform, ShouldEqual, "Rammus")
 			So(tip, ShouldEqual, 11275)
 			So(branch, ShouldEqual, 41)
-			So(branchBranch, ShouldEqual, 0)
+			So(branchBranch, ShouldEqual, "0")
 		}
 	})
 }

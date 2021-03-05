@@ -11,40 +11,40 @@ import (
 
 // capture groups:
 // company, platform, tip, branch, branchbranch
-var firmwareVersionPattern *regexp.Regexp = regexp.MustCompile(`\A(?P<company>[A-Za-z0-9\-]+)_(?P<platform>[A-Za-z0-9_\-]+)\.(?P<tip>[0-9]+)\.(?P<branch>[0-9]+)\.(?P<branchbranch>[0-9]+)\z`)
+var firmwareVersionPattern *regexp.Regexp = regexp.MustCompile(`\A(?P<company>[A-Za-z0-9\-]+)_(?P<platform>[A-Za-z0-9_\-]+)\.(?P<tip>[0-9]+)\.(?P<branch>[0-9]+)\.(?P<branchbranch>[0-9_]+)\z`)
 
 // ParseFirmwareVersion takes a read-write firmware version and extracts
 // semantically meaningful elements.
-func ParseFirmwareVersion(s string) (string, string, int, int, int, error) {
+func ParseFirmwareVersion(s string) (string, string, int, int, string, error) {
 	if s == "" {
-		return "", "", 0, 0, 0, fmt.Errorf("rw firmware version cannot be empty")
+		return "", "", 0, 0, "", fmt.Errorf("rw firmware version cannot be empty")
 	}
 	if firmwareVersionPattern.FindString(s) == "" {
-		return "", "", 0, 0, 0, fmt.Errorf("rw firmware version is not valid")
+		return "", "", 0, 0, "", fmt.Errorf("rw firmware version is not valid")
 	}
 	m, err := findMatchMap(firmwareVersionPattern, s)
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
 	company, err := extractString(m, "company")
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
 	platform, err := extractString(m, "platform")
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
 	tip, err := extractInt(m, "tip")
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
 	branch, err := extractInt(m, "branch")
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
-	branchBranch, err := extractInt(m, "branchbranch")
+	branchBranch, err := extractString(m, "branchbranch")
 	if err != nil {
-		return "", "", 0, 0, 0, err
+		return "", "", 0, 0, "", err
 	}
 	return company, platform, tip, branch, branchBranch, nil
 }
