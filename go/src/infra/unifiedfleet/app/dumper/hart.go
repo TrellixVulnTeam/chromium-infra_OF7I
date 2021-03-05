@@ -2,10 +2,12 @@ package dumper
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 	"go.chromium.org/luci/common/logging"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -44,8 +46,9 @@ func SyncAssetInfoFromHaRT(ctx context.Context) error {
 	ids := make([]string, 0, len(res))
 	for _, r := range res {
 		// Request an update, if we don't have asset info or the last update
-		// was more than 2 days ago.
-		if !macRegex.MatchString(r.Name) && (r.Info == nil || time.Since(r.UpdateTime.AsTime()).Hours() > 48.00) {
+		// was more than 2 days ago. Filter out uuids, any name with " character in them and macs
+		// Filtering out " because of how HaRT does their queries.
+		if _, err := uuid.Parse(r.Name); err != nil && !strings.Contains(r.Name, `"`) && !macRegex.MatchString(r.Name) && (r.Info == nil || time.Since(r.UpdateTime.AsTime()).Hours() > 48.00) {
 			ids = append(ids, r.Name)
 		}
 	}
