@@ -34,6 +34,8 @@ def PrepareAndSendIssueChangeNotification(
 
   Returns nothing.
   """
+  if old_owner_id is None:
+    old_owner_id = framework_constants.NO_USER_SPECIFIED
   params = dict(
       issue_id=issue_id, commenter_id=commenter_id, comment_id=comment_id,
       hostport=hostport, old_owner_id=old_owner_id, send_email=int(send_email))

@@ -33,6 +33,7 @@ from framework import authdata
 from framework import emailfmt
 from framework import exceptions
 from framework import framework_bizobj
+from framework import framework_constants
 from framework import framework_helpers
 from framework import framework_views
 from framework import jsonfeed
@@ -74,7 +75,10 @@ class NotifyIssueChangeTask(notify_helpers.NotifyTaskBase):
     seq_num = mr.seq
     omit_ids = [commenter_id]
     hostport = mr.GetParam('hostport')
-    old_owner_id = mr.GetPositiveIntParam('old_owner_id')
+    try:
+      old_owner_id = mr.GetPositiveIntParam('old_owner_id')
+    except Exception:
+      old_owner_id = framework_constants.NO_USER_SPECIFIED
     send_email = bool(mr.GetIntParam('send_email'))
     comment_id = mr.GetPositiveIntParam('comment_id')
     params = dict(
