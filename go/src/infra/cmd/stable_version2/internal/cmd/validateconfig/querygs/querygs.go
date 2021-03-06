@@ -91,9 +91,12 @@ func (r *ValidationResult) AnomalyCount() int {
 
 type downloader func(gsPath gs.Path) ([]byte, error)
 
+type existenceChecker func(gsPath gs.Path) error
+
 // Reader reads metadata.json files from google storage and caches the result.
 type Reader struct {
-	dld downloader
+	dld  downloader
+	exst existenceChecker
 	// buildTarget > version > model > version
 	cache *map[string]map[string]map[string]string
 }
@@ -121,7 +124,17 @@ func (r *Reader) Init(ctx context.Context, t http.RoundTripper, unmarshaler json
 		}
 		return contents, nil
 	}
+	r.exst = func(remotePath gs.Path) error {
+		// Thoroughly check for existence by downloading a few bytes and discarding
+		// the result.
+		return gsc.DownloadByteRange(remotePath, os.DevNull, 0, 10)
+	}
 	return nil
+}
+
+// RemoteFileExists checks for the existence and nonzero size of a given path in Google Storage.
+func (r *Reader) RemoteFileExists(remotePath gs.Path) error {
+	return r.exst(remotePath)
 }
 
 // combinedKey combines a board and a model into a single key
