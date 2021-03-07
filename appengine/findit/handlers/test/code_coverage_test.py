@@ -435,15 +435,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
             }],
         }])
     existing_entity.put()
-    rebased_entity = PresubmitCoverageData.Create(
-        server_host='chromium-review.googlesource.com',
-        change=138000,
-        patchset=5,
-        data=[])
-    rebased_entity.based_on = 4
-    rebased_entity.put()
 
-    self.assertEqual(2, len(PresubmitCoverageData.query().fetch()))
     request_url = '/coverage/task/process-data/build/123456789'
     response = self.test_app.post(request_url)
     self.assertEqual(200, response.status_int)

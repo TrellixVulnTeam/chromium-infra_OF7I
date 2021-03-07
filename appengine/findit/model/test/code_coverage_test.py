@@ -126,8 +126,23 @@ class CodeCoverageTest(WaterfallTestCase):
         },
     ]
 
+    data_unit = [
+        {
+            'path': '//base1/test1.cc',
+            'lines': [{
+                'count': 100,
+                'first': 2,
+                'last': 3,
+            }],
+        },
+    ]
+
     coverage_data = PresubmitCoverageData.Create(
-        server_host=server_host, change=change, patchset=patchset, data=data)
+        server_host=server_host,
+        change=change,
+        patchset=patchset,
+        data=data,
+        data_unit=data_unit)
     coverage_data.put()
 
     # Test key.

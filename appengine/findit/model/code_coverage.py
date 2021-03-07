@@ -180,14 +180,28 @@ class PresubmitCoverageData(ndb.Model):
 
   # A list of file level coverage data for all the source files modified by the
   # this CL.
-  data = ndb.JsonProperty(indexed=False, compressed=True, required=True)
+  data = ndb.JsonProperty(indexed=False, compressed=True, required=False)
 
-  # Coverage percentages of all executable lines of the files.
+  # A list of file level coverage data (unit tests only) for all the source
+  # files modified by this CL.
+  data_unit = ndb.JsonProperty(indexed=False, compressed=True, required=False)
+
+  # Coverage percentages(overall) of all executable lines of the files.
   absolute_percentages = ndb.LocalStructuredProperty(
       CoveragePercentage, indexed=False, repeated=True)
 
-  # Coverage percentages of *newly added* and executable lines of the files.
+  # Coverage percentages(overall) of *newly added* and executable lines
+  # of the files.
   incremental_percentages = ndb.LocalStructuredProperty(
+      CoveragePercentage, indexed=False, repeated=True)
+
+  # Coverage percentages(unit) of all executable lines of the files.
+  absolute_percentages_unit = ndb.LocalStructuredProperty(
+      CoveragePercentage, indexed=False, repeated=True)
+
+  # Coverage percentages(unit) of *newly added* and executable lines
+  # of the files.
+  incremental_percentages_unit = ndb.LocalStructuredProperty(
       CoveragePercentage, indexed=False, repeated=True)
 
   # If assigned, represents the patchset number from which this coverage data is
@@ -206,7 +220,14 @@ class PresubmitCoverageData(ndb.Model):
     return ndb.Key(cls, '%s$%s$%s' % (server_host, change, patchset))
 
   @classmethod
-  def Create(cls, server_host, change, patchset, data, project=None):
+  def Create(cls,
+             server_host,
+             change,
+             patchset,
+             data=None,
+             data_unit=None,
+             project=None):
+    assert data or data_unit, "Atleast one of data/data_unit must be specified."
     key = cls._CreateKey(server_host, change, patchset)
     cl_patchset = CLPatchset(
         server_host=server_host,
