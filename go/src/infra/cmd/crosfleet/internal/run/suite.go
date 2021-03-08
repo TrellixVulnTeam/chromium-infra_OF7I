@@ -7,14 +7,15 @@ package run
 import (
 	"fmt"
 
-	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/cli"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
+
+	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
 )
 
 // suiteCmdName is the name of the `crosfleet run suite` command.

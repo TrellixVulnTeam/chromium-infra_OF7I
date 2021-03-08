@@ -5,9 +5,10 @@
 package dut
 
 import (
+	"infra/cmd/crosfleet/internal/common"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
-	"infra/cmd/crosfleet/internal/common"
 )
 
 var dutApplication = &cli.Application{

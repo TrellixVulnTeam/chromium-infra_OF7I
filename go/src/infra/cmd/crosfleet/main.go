@@ -7,14 +7,15 @@ package main
 
 import (
 	"context"
-	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/logging/gologger"
 	"infra/cmd/crosfleet/internal/dut"
 	"infra/cmd/crosfleet/internal/meta"
 	"infra/cmd/crosfleet/internal/run"
 	"infra/cmd/crosfleet/internal/site"
 	"os"
+
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/logging/gologger"
 
 	"github.com/maruel/subcommands"
 )

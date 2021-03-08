@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"strings"
 	"unicode/utf8"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"

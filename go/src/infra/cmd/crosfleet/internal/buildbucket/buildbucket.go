@@ -9,6 +9,13 @@ package buildbucket
 import (
 	"context"
 	"fmt"
+	"infra/cmd/crosfleet/internal/common"
+	"infra/cmd/crosfleet/internal/site"
+	"infra/cmdsupport/cmdlib"
+	"io"
+	"strings"
+	"time"
+
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -16,12 +23,6 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"infra/cmd/crosfleet/internal/common"
-	"infra/cmd/crosfleet/internal/site"
-	"infra/cmdsupport/cmdlib"
-	"io"
-	"strings"
-	"time"
 )
 
 var maxServiceVersion = &test_platform.ServiceVersion{

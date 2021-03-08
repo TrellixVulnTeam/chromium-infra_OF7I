@@ -5,15 +5,16 @@
 package dut
 
 import (
-	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/cli"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"time"
+
+	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var abandon = &subcommands.Command{

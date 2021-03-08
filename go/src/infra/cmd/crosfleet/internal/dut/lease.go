@@ -8,10 +8,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth/client/authcli"
-	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/cli"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
@@ -19,6 +15,11 @@ import (
 	"infra/cmdsupport/cmdlib"
 	"strings"
 	"time"
+
+	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth/client/authcli"
+	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
+	"go.chromium.org/luci/common/cli"
 )
 
 const (
@@ -89,7 +90,7 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 		return err
 	}
 	buildID, err := bbClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
-	fmt.Fprintf(a.GetOut(), "Leasing DUT at %s\n", bbClient.BuildURL(buildID))
+	fmt.Fprintf(a.GetErr(), "Requesting %d minute lease at %s\n", c.durationMins, bbClient.BuildURL(buildID))
 	if c.exitEarly {
 		return nil
 	}

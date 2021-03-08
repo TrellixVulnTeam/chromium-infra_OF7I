@@ -7,12 +7,13 @@ package dut
 import (
 	"context"
 	"fmt"
+	"infra/cmdsupport/cmdlib"
+	"strings"
+
 	"go.chromium.org/luci/auth/client/authcli"
 	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/api/option"
-	"infra/cmdsupport/cmdlib"
-	"strings"
 )
 
 const swarmingAPISuffix = "_ah/api/swarming/v1/"

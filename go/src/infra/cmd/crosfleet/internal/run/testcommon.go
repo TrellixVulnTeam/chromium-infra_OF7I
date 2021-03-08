@@ -11,14 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"go.chromium.org/luci/common/errors"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 	"infra/cmdsupport/cmdlib"
+
+	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/luci/common/errors"
 )
 
 const (

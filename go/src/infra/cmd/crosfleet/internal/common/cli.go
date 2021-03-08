@@ -8,18 +8,19 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"infra/cmd/crosfleet/internal/site"
+	"time"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/gcloud/googleoauth"
-	"infra/cmd/crosfleet/internal/site"
-	"time"
 )
 
 // PrintCrosfleetUIPrompt prints a prompt for users to visit the go/my-crosfleet PLX
 // to track their crosfleet-launched tasks.
 func PrintCrosfleetUIPrompt(a subcommands.Application) {
-	fmt.Fprintf(a.GetOut(), "Visit http://go/my-crosfleet to track all of your crosfleet-launched tasks.\n")
+	fmt.Fprintf(a.GetErr(), "Visit http://go/my-crosfleet to track all of your crosfleet-launched tasks.\n")
 }
 
 // Flags contains flags common to all crosfleet commands.

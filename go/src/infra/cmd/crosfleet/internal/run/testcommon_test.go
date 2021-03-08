@@ -10,11 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"infra/cmd/crosfleet/internal/common"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"infra/cmd/crosfleet/internal/common"
 )
 
 var testValidateArgsData = []struct {
