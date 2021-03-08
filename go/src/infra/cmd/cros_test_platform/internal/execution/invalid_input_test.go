@@ -16,7 +16,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
-	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
+	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -181,13 +181,13 @@ func TestIncompatibleDependencies(t *testing.T) {
 
 func testInvocationWithDependency(name string, deps ...string) *steps.EnumerationResponse_AutotestInvocation {
 	inv := steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
+		Test: &buildapi.AutotestTest{
 			Name:                 name,
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
+			ExecutionEnvironment: buildapi.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
 		},
 	}
 	for _, d := range deps {
-		inv.Test.Dependencies = append(inv.Test.Dependencies, &build_api.AutotestTaskDependency{Label: d})
+		inv.Test.Dependencies = append(inv.Test.Dependencies, &buildapi.AutotestTaskDependency{Label: d})
 	}
 	return &inv
 }

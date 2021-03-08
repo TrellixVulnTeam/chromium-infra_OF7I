@@ -101,12 +101,6 @@ func (b *Build) autotestResult() *skylab_test_runner.Result_Autotest {
 	return b.result.GetAutotestResult()
 }
 
-// LifeCyclesWithResults lists all task states which have a chance of producing
-// test cases results. E.g. this excludes killed tasks.
-var LifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
-	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
-}
-
 // The life cycles that are not final.
 var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
 	test_platform.TaskState_LIFE_CYCLE_PENDING: true,

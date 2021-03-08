@@ -265,22 +265,6 @@ func (d *fakeLoader) Suites() map[string]io.Reader {
 	return d.suites
 }
 
-func extractTestNames(tests []*api.AutotestTest) []string {
-	m := make([]string, 0, len(tests))
-	for _, t := range tests {
-		m = append(m, t.Name)
-	}
-	return m
-}
-
-func extractSuiteNames(suites []*api.AutotestSuite) []string {
-	m := make([]string, 0, len(suites))
-	for _, s := range suites {
-		m = append(m, s.Name)
-	}
-	return m
-}
-
 func extractSuiteTests(suites []*api.AutotestSuite) map[string][]string {
 	m := make(map[string][]string)
 	for _, s := range suites {

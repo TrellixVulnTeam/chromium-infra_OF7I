@@ -9,18 +9,19 @@ package args
 import (
 	"context"
 	"fmt"
-	"infra/libs/skylab/inventory"
-	"infra/libs/skylab/inventory/autotest/labels"
-	"infra/libs/skylab/request"
-	"infra/libs/skylab/worker"
 	"strconv"
 	"strings"
 	"time"
 
+	"infra/libs/skylab/inventory"
+	"infra/libs/skylab/inventory/autotest/labels"
+	"infra/libs/skylab/request"
+	"infra/libs/skylab/worker"
+
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 
 	"github.com/golang/protobuf/ptypes"
-	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
+	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -180,9 +181,9 @@ func pubSubTopicFullName(c *config.Config_PubSub) string {
 
 func (g *Generator) isClientTest() (bool, error) {
 	switch g.Invocation.Test.ExecutionEnvironment {
-	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT:
+	case buildapi.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT:
 		return true, nil
-	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER:
+	case buildapi.AutotestTest_EXECUTION_ENVIRONMENT_SERVER:
 		return false, nil
 	default:
 		return false, errors.Reason("unknown exec environment %s", g.Invocation.Test.ExecutionEnvironment).Err()

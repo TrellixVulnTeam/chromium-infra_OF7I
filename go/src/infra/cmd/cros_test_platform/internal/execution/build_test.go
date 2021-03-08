@@ -10,12 +10,13 @@ package execution_test
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution"
-	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
+
+	"infra/cmd/cros_test_platform/internal/execution"
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"

@@ -10,12 +10,13 @@ package execution_test
 import (
 	"context"
 	"fmt"
-	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
-	"infra/libs/skylab/inventory"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
+
+	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
+	"infra/libs/skylab/inventory"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/chromite/api"

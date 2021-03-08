@@ -8,9 +8,10 @@ package build
 
 import (
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 	"strings"
 	"time"
+
+	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"

@@ -21,8 +21,8 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/luci/auth"
-	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
+	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
+	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
@@ -76,8 +76,8 @@ type task struct {
 // test_runner as a service.
 type clientImpl struct {
 	swarmingClient swarmingClient
-	bbClient       buildbucket_pb.BuildsClient
-	builder        *buildbucket_pb.BuilderID
+	bbClient       buildbucketpb.BuildsClient
+	builder        *buildbucketpb.BuilderID
 	knownTasks     map[TaskReference]*task
 }
 
@@ -85,7 +85,7 @@ type clientImpl struct {
 var _ Client = &clientImpl{}
 
 type swarmingClient interface {
-	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
+	BotExists(context.Context, []*swarmingapi.SwarmingRpcsStringPair) (bool, error)
 }
 
 // NewClient creates a concrete instance of a Client.
@@ -101,7 +101,7 @@ func NewClient(ctx context.Context, cfg *config.Config) (Client, error) {
 	return &clientImpl{
 		swarmingClient: sc,
 		bbClient:       bbc,
-		builder: &buildbucket_pb.BuilderID{
+		builder: &buildbucketpb.BuilderID{
 			Project: cfg.TestRunner.Buildbucket.Project,
 			Bucket:  cfg.TestRunner.Buildbucket.Bucket,
 			Builder: cfg.TestRunner.Buildbucket.Builder,
@@ -110,7 +110,7 @@ func NewClient(ctx context.Context, cfg *config.Config) (Client, error) {
 	}, nil
 }
 
-func newBBClient(ctx context.Context, cfg *config.Config_Buildbucket) (buildbucket_pb.BuildsClient, error) {
+func newBBClient(ctx context.Context, cfg *config.Config_Buildbucket) (buildbucketpb.BuildsClient, error) {
 	hClient, err := httpClient(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "create buildbucket client").Err()
@@ -119,7 +119,7 @@ func newBBClient(ctx context.Context, cfg *config.Config_Buildbucket) (buildbuck
 		C:    hClient,
 		Host: cfg.Host,
 	}
-	return buildbucket_pb.NewBuildsPRPCClient(pClient), nil
+	return buildbucketpb.NewBuildsPRPCClient(pClient), nil
 }
 
 // TODO(crbug.com/1115207): dedupe with swarmingHTTPClient.
@@ -230,7 +230,7 @@ func (c *clientImpl) FetchResults(ctx context.Context, t TaskReference) (*FetchR
 	if !ok {
 		return nil, errors.Reason("fetch results: could not find task among launched tasks").Err()
 	}
-	req := &buildbucket_pb.GetBuildRequest{
+	req := &buildbucketpb.GetBuildRequest{
 		Id:     task.bbID,
 		Fields: &field_mask.FieldMask{Paths: getBuildFieldMask},
 	}
@@ -263,16 +263,16 @@ var lifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
 	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
 }
 
-var bbStatusToLifeCycle = map[buildbucket_pb.Status]test_platform.TaskState_LifeCycle{
-	buildbucket_pb.Status_SCHEDULED:     test_platform.TaskState_LIFE_CYCLE_PENDING,
-	buildbucket_pb.Status_STARTED:       test_platform.TaskState_LIFE_CYCLE_RUNNING,
-	buildbucket_pb.Status_SUCCESS:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	buildbucket_pb.Status_FAILURE:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	buildbucket_pb.Status_INFRA_FAILURE: test_platform.TaskState_LIFE_CYCLE_ABORTED,
-	buildbucket_pb.Status_CANCELED:      test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+var bbStatusToLifeCycle = map[buildbucketpb.Status]test_platform.TaskState_LifeCycle{
+	buildbucketpb.Status_SCHEDULED:     test_platform.TaskState_LIFE_CYCLE_PENDING,
+	buildbucketpb.Status_STARTED:       test_platform.TaskState_LIFE_CYCLE_RUNNING,
+	buildbucketpb.Status_SUCCESS:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+	buildbucketpb.Status_FAILURE:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+	buildbucketpb.Status_INFRA_FAILURE: test_platform.TaskState_LIFE_CYCLE_ABORTED,
+	buildbucketpb.Status_CANCELED:      test_platform.TaskState_LIFE_CYCLE_CANCELLED,
 }
 
-func extractResult(from *buildbucket_pb.Build) (*skylab_test_runner.Result, error) {
+func extractResult(from *buildbucketpb.Build) (*skylab_test_runner.Result, error) {
 	op := from.GetOutput().GetProperties().GetFields()
 	if op == nil {
 		return nil, fmt.Errorf("extract results from build %d: missing output properties", from.Id)

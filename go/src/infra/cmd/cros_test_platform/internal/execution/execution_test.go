@@ -19,7 +19,7 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
 
-	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
+	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -664,9 +664,9 @@ func invocationsWithServerTests(names ...string) []*steps.EnumerationResponse_Au
 
 func serverTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
+		Test: &buildapi.AutotestTest{
 			Name:                 name,
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
+			ExecutionEnvironment: buildapi.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
 		},
 		TestArgs: args,
 	}
@@ -674,9 +674,9 @@ func serverTestInvocation(name string, args string) *steps.EnumerationResponse_A
 
 func clientTestInvocation(name string, args string) *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
+		Test: &buildapi.AutotestTest{
 			Name:                 name,
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
+			ExecutionEnvironment: buildapi.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
 		},
 		TestArgs: args,
 	}

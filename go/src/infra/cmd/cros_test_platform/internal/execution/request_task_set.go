@@ -7,6 +7,8 @@ package execution
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/build"
 	"infra/cmd/cros_test_platform/internal/execution/response"
@@ -14,7 +16,6 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/cmd/cros_test_platform/internal/execution/types"
-	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"

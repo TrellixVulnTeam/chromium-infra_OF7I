@@ -8,8 +8,9 @@ package retry
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/types"
 	"math"
+
+	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"

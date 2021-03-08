@@ -6,9 +6,10 @@ package cmd
 
 import (
 	"context"
-	"infra/cmd/cros_test_platform/internal/testutils"
 	"path/filepath"
 	"testing"
+
+	"infra/cmd/cros_test_platform/internal/testutils"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 

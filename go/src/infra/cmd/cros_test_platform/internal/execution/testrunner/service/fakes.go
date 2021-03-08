@@ -7,6 +7,7 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"infra/cmd/cros_test_platform/internal/execution/types"
 	"infra/libs/skylab/request"
 

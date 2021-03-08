@@ -17,8 +17,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"infra/cmd/cros_test_platform/luciexe/execute"
 	"os"
+
+	"infra/cmd/cros_test_platform/luciexe/execute"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"

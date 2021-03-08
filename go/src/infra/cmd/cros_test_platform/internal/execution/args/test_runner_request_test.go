@@ -16,7 +16,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
+	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -97,7 +97,7 @@ func TestClientTest(t *testing.T) {
 	Convey("Given a client test", t, func() {
 		ctx := context.Background()
 		var inv steps.EnumerationResponse_AutotestInvocation
-		setExecutionEnvironment(&inv, build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT)
+		setExecutionEnvironment(&inv, buildapi.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT)
 		Convey("when generating a test runner request", func() {
 			g := Generator{
 				Invocation: &inv,
@@ -119,7 +119,7 @@ func TestServerTest(t *testing.T) {
 	Convey("Given a server test", t, func() {
 		ctx := context.Background()
 		var inv steps.EnumerationResponse_AutotestInvocation
-		setExecutionEnvironment(&inv, build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER)
+		setExecutionEnvironment(&inv, buildapi.AutotestTest_EXECUTION_ENVIRONMENT_SERVER)
 		Convey("when generating a test runner request", func() {
 			g := Generator{
 				Invocation: &inv,

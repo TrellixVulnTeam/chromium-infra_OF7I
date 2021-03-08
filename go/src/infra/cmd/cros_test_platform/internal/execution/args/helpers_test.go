@@ -7,30 +7,30 @@ package args
 import (
 	"time"
 
-	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
+	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func basicInvocation() *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
-		Test: &build_api.AutotestTest{
-			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
+		Test: &buildapi.AutotestTest{
+			ExecutionEnvironment: buildapi.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
 		},
 	}
 }
 
 func setTestName(inv *steps.EnumerationResponse_AutotestInvocation, name string) {
 	if inv.Test == nil {
-		inv.Test = &build_api.AutotestTest{}
+		inv.Test = &buildapi.AutotestTest{}
 	}
 	inv.Test.Name = name
 }
 
-func setExecutionEnvironment(inv *steps.EnumerationResponse_AutotestInvocation, env build_api.AutotestTest_ExecutionEnvironment) {
+func setExecutionEnvironment(inv *steps.EnumerationResponse_AutotestInvocation, env buildapi.AutotestTest_ExecutionEnvironment) {
 	if inv.Test == nil {
-		inv.Test = &build_api.AutotestTest{}
+		inv.Test = &buildapi.AutotestTest{}
 	}
 	inv.Test.ExecutionEnvironment = env
 }
@@ -55,24 +55,6 @@ func setBuild(p *test_platform.Request_Params, build string) {
 		&test_platform.Request_Params_SoftwareDependency{
 			Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
 				ChromeosBuild: build,
-			},
-		})
-}
-
-func setFWRO(p *test_platform.Request_Params, ver string) {
-	p.SoftwareDependencies = append(p.SoftwareDependencies,
-		&test_platform.Request_Params_SoftwareDependency{
-			Dep: &test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild{
-				RoFirmwareBuild: ver,
-			},
-		})
-}
-
-func setFWRW(p *test_platform.Request_Params, ver string) {
-	p.SoftwareDependencies = append(p.SoftwareDependencies,
-		&test_platform.Request_Params_SoftwareDependency{
-			Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{
-				RwFirmwareBuild: ver,
 			},
 		})
 }
