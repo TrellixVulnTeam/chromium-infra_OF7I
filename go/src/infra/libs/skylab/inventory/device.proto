@@ -433,7 +433,7 @@ enum ServoFwChannel {
   // Servo firmware from Stable channel.
   SERVO_FW_STABLE = 0;
   // The previous Servo firmware from Stable channel.
-  SERVO_FW_PREVIOUS = 1;
+  SERVO_FW_PREV = 1;
   // Servo firmware from Dev channel.
   SERVO_FW_DEV = 2;
   // Servo firmware from Alpha channel.
