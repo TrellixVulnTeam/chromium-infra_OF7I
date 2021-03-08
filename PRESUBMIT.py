@@ -469,6 +469,7 @@ def CheckChangeOnUpload(input_api, output_api):  # pragma: no cover
     PylintChecks(input_api, output_api, only_changed=True)))
   output.extend(NoForkCheck(input_api, output_api))
   output.extend(EmptiedFilesCheck(input_api, output_api))
+  output.extend(CheckInclusiveLanguage(input_api, output_api))
   return output
 
 
@@ -482,3 +483,111 @@ def CheckChangeOnCommit(input_api, output_api):  # pragma: no cover
       output_api,
       json_url='http://infra-status.appspot.com/current?format=json'))
   return output
+
+# string pattern, sequence of strings to show when pattern matches,
+# error flag. True if match is a presubmit error, otherwise it's a warning.
+_NON_INCLUSIVE_TERMS = (
+    (
+        # Note that \b pattern in python re is pretty particular. In this
+        # regexp, 'class WhiteList ...' will match, but 'class FooWhiteList
+        # ...' will not. This may require some tweaking to catch these cases
+        # without triggering a lot of false positives. Leaving it naive and
+        # less matchy for now.
+        r'/\b(?i)((black|white)list|master|slave)\b',  # nocheck
+        (
+            'Please don\'t use blacklist, whitelist,'  # nocheck
+            'master, or slave in your',  # nocheck
+            'code and make every effort to use other terms. Using "// nocheck"',
+            'at the end of the offending line will bypass this PRESUBMIT error',
+            'but avoid using this whenever possible. Reach out to',
+            'community@chromium.org if you have questions'),
+        False),)
+
+
+def _GetMessageForMatchingTerm(input_api, affected_file, line_number, line,
+                               term, message):
+  """Helper method for CheckInclusiveLanguage.
+
+  Returns an string composed of the name of the file, the line number where the
+  match has been found and the additional text passed as |message| in case the
+  target type name matches the text inside the line passed as parameter.
+  """
+  result = []
+
+  if line.endswith(" nocheck"):  # A // nocheck comment will bypass this error.
+    return result
+
+  # Ignore C-style comments about banned terms.
+  if input_api.re.search(r"^ *//", line):
+    return result
+
+  # Ignore Python-style comments about banned terms.
+  # This actually removes comment text from the first # on.
+  if input_api.re.search(r"#.*$", line):
+    line = input_api.re.sub(r"#.*$", "", line)
+
+  matched = False
+  if term[0:1] == '/':
+    regex = term[1:]
+    if input_api.re.search(regex, line):
+      matched = True
+  elif term in line:
+    matched = True
+
+  if matched:
+    result.append('    %s:%d:' % (affected_file.LocalPath(), line_number))
+    for message_line in message:
+      result.append('      %s' % message_line)
+
+  return result
+
+
+def CheckInclusiveLanguage(input_api, output_api):
+  """Make sure that banned non-inclusive terms are not used."""
+  warnings = []
+  errors = []
+
+  # Note that this matches exact path prefixes, and does not match
+  # subdirectories. Only files directly in an exlcluded path will
+  # match.
+  def IsExcludedFile(affected_file, excluded_paths):
+    local_dir = input_api.os_path.dirname(affected_file.LocalPath())
+    return local_dir in excluded_paths
+
+  def CheckForMatch(affected_file, line_num, line, term, message, error):
+    problems = _GetMessageForMatchingTerm(input_api, affected_file, line_num,
+                                          line, term, message)
+
+    if problems:
+      if error:
+        errors.extend(problems)
+      else:
+        warnings.extend(problems)
+
+  excluded_paths = []
+  f = input_api.ReadFile(
+      input_api.os_path.join(input_api.change.RepositoryRoot(), 'infra',
+                             'inclusive_language_presubmit_exempt_dirs.txt'))
+  for line in f.split('\n'):
+    path = line.split(' ')[0]
+    if len(path) > 0:
+      excluded_paths.append(path)
+
+  excluded_paths = set(excluded_paths)
+  for f in input_api.AffectedFiles():
+    for line_num, line in f.ChangedContents():
+      for term, message, error in _NON_INCLUSIVE_TERMS:
+        if IsExcludedFile(f, excluded_paths):
+          continue
+        CheckForMatch(f, line_num, line, term, message, error)
+
+  result = []
+  if (warnings):
+    result.append(
+        output_api.PresubmitPromptWarning(
+            'Banned non-inclusive language was used.\n' + '\n'.join(warnings)))
+  if (errors):
+    result.append(
+        output_api.PresubmitError('Banned non-inclusive language was used.\n' +
+                                  '\n'.join(errors)))
+  return result
