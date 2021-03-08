@@ -6,28 +6,50 @@ package tasks
 
 import (
 	"context"
-	"go.chromium.org/luci/auth/client/authcli"
-	"infra/cmd/skylab/internal/site"
+	"fmt"
 
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
+
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
-	inv "infra/libs/skylab/inventory/inventoryclient"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// getInventoryClient produces an inventory client.
-func getInventoryClient(ctx context.Context, authFlags *authcli.Flags, e site.Environment) (inv.Client, error) {
+// getUFSClient produces an UFS client.
+func getUFSClient(ctx context.Context, authFlags *authcli.Flags, e site.Environment) (ufsAPI.FleetClient, error) {
 	hc, err := cmdlib.NewHTTPClient(ctx, authFlags)
 	if err != nil {
 		return nil, err
 	}
-	return inv.NewInventoryClient(hc, e.InventoryService, site.DefaultPRPCOptions), nil
+	return ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UFSService,
+		Options: site.UFSPRPCOptions,
+	}), nil
 }
 
-// getModelForHost contacts the inventory v2 service and gets the model associated with
+// getModelForHost contacts the UFS service and gets the model associated with
 // a given hostname.
-func getModelForHost(ctx context.Context, ic inv.Client, host string) (string, error) {
-	dut, err := ic.GetDutInfo(ctx, host, true)
+func getModelForHost(ctx context.Context, ic ufsAPI.FleetClient, host string) (string, error) {
+	ctx = skycmdlib.SetupContext(ctx, ufsUtil.OSNamespace)
+	lse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, host),
+	})
 	if err != nil {
 		return "", err
 	}
-	return dut.GetCommon().GetLabels().GetModel(), nil
+	if len(lse.GetMachines()) == 0 {
+		return "", errors.New(fmt.Sprintf("Invalid host %s, no associated asset/machine found", lse.Name))
+	}
+	machine, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, lse.GetMachines()[0]),
+	})
+	if err != nil {
+		return "", err
+	}
+	return machine.GetChromeosMachine().GetModel(), nil
 }

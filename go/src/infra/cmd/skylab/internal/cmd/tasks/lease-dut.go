@@ -159,11 +159,13 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
 func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, bc *bb.Client, leaseDuration time.Duration, host string) (taskID int64, err error) {
-	ic, err := getInventoryClient(ctx, &c.authFlags, c.envFlags.Env())
+	ic, err := getUFSClient(ctx, &c.authFlags, c.envFlags.Env())
 	if err != nil {
 		return 0, err
 	}
 
+	// This is done to allow the lease task to be tagged with the model.
+	// This allows to rate-limit the number of leases for a given model M by checking for leases with the label-model:M tag.
 	model, err := getModelForHost(ctx, ic, host)
 	if err != nil {
 		return 0, err

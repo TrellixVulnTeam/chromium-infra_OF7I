@@ -89,7 +89,7 @@ func (c *releaseDutsRun) cancelLeaseTasks(ctx context.Context, w io.Writer, clie
 }
 
 func (c *releaseDutsRun) cancelLeaseTaskForHost(ctx context.Context, w io.Writer, client *swarming.Client, hostname string) error {
-	ic, err := getInventoryClient(ctx, &c.authFlags, c.envFlags.Env())
+	ic, err := getUFSClient(ctx, &c.authFlags, c.envFlags.Env())
 	if err != nil {
 		return err
 	}
