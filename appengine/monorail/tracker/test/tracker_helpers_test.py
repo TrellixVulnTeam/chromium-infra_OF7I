@@ -2225,6 +2225,33 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
             delta_8, delta_9, delta_10, delta_11
         ])
 
+  def testAssertIssueChangesValid_RequiredField(self):
+    """Asserts fields and requried fields.."""
+    issue_1 = _Issue('chicken', 1)
+    self.services.issue.TestAddIssue(issue_1)
+    delta_1 = tracker_pb2.IssueDelta()
+    exp_d1 = copy.deepcopy(delta_1)
+
+    required_fd = tracker_bizobj.MakeFieldDef(
+        124, 789, 'StrField', tracker_pb2.FieldTypes.STR_TYPE, None, '', True,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.services.config.TestAddFieldDef(required_fd)
+
+    issue_delta_pairs = [(issue_1, delta_1)]
+    comment = 'just a plain comment'
+    tracker_helpers._AssertIssueChangesValid(
+        self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
+
+    # Check we can handle adding a field value when issue is in invalid state.
+    fv = tracker_bizobj.MakeFieldValue(
+        self.int_fd.field_id, 998, None, None, None, None, False)
+    delta_2 = tracker_pb2.IssueDelta(field_vals_add=[fv])
+    exp_d2 = copy.deepcopy(delta_2)
+    tracker_helpers._AssertIssueChangesValid(
+        self.cnxn, issue_delta_pairs, self.services)
+    self.assertEqual([exp_d1, exp_d2], [delta_1, delta_2])
+
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
 

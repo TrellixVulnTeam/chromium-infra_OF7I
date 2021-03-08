@@ -1588,10 +1588,14 @@ def _AssertIssueChangesValid(
         err_agg.AddErrorMessage('{}: Summary required.', issue_ref)
       if delta.status == '':
         err_agg.AddErrorMessage('{}: Status is required.', issue_ref)
+      # Do not pass in issue for validation, as issue is pre-update, and would
+      # result in being unable to edit issues in invalid states.
       fvs_err_msgs = field_helpers.ValidateCustomFields(
-          cnxn, services, delta.field_vals_add, config, project, issue=issue)
+          cnxn, services, delta.field_vals_add, config, project)
       if fvs_err_msgs:
         err_agg.AddErrorMessage('{}: {}', issue_ref, '\n'.join(fvs_err_msgs))
+      # TODO(crbug.com/monorail/9156): Validate that we do not remove fields
+      # such that a required field becomes unset.
 
 
 def AssertUsersExist(cnxn, services, user_ids, err_agg):
