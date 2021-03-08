@@ -199,12 +199,28 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 
+		var servoUpdated bool
+
+		// Check if servo is being updated. We can avoid updating servo otherwise.
+		if mask != nil && len(mask.Paths) > 0 {
+			servoUpdated = util.ContainsAnyStrings(mask.Paths,
+				"dut.servo.hostname",
+				"dut.servo.port",
+				"dut.servo.serial",
+				"dut.servo.type",
+				"dut.servo.topology",
+				"dut.servo.fwchannel")
+		} else {
+			// Update servo on full update
+			servoUpdated = true
+		}
+
 		// Common refs to avoid multiple queries
 		var newLabstationMachinelse *ufspb.MachineLSE
 		var hcNewLabstation *HistoryClient
 
 		// Remove the old Servo info from labstation record. Unless it's servo V3 device
-		if oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) {
+		if servoUpdated && oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) {
 			// Remove the servo from the labstation
 			oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
 			if err != nil {
@@ -238,7 +254,7 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		}
 
 		// Process newServo and getNewLabstationMachinelse if available. Don't care about labstation if it's a ServoV3 device
-		if newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+		if servoUpdated && newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
 			if newLabstationMachinelse == nil {
 				// Check if the Labstation MachineLSE exists in the system first. No use doing anything if it doesn't exist.
 				newLabstationMachinelse, err = getLabstationMachineLSE(ctx, newServo.GetServoHostname())
