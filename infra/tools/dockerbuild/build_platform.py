@@ -212,14 +212,14 @@ ALL = {
             manylinux_name=None,
             cross_triple='',
             wheel_abi='cp27m',
-            wheel_plat=('macosx_10_6_intel',),
+            wheel_plat=('macosx_10_11_x86_64',),
             dockcross_base=None,
             openssl_target='darwin64-x86_64-cc',
             packaged=True,
             cipd_platform='mac-amd64',
             # This ensures compatibibility regardless of the OS version this
             # runs on.
-            env={'MACOSX_DEPLOYMENT_TARGET': '10.13'},
+            env={'MACOSX_DEPLOYMENT_TARGET': '10.11'},
         ),
         Platform(
             # TODO: Rename to -py3 to conform to other Python 3 platform names.
@@ -227,7 +227,7 @@ ALL = {
             manylinux_name=None,
             cross_triple='',
             wheel_abi='cp38',
-            wheel_plat=('macosx_10_15_intel',),
+            wheel_plat=('macosx_10_11_x86_64',),
             dockcross_base=None,
             openssl_target='darwin64-x86_64-cc',
             packaged=True,
@@ -236,7 +236,7 @@ ALL = {
             # https://github.com/giampaolo/psutil/issues/1832
             env={
                 'ARCHFLAGS': '-arch x86_64',
-                'MACOSX_DEPLOYMENT_TARGET': '10.13'
+                'MACOSX_DEPLOYMENT_TARGET': '10.11'
             },
         ),
         Platform(
