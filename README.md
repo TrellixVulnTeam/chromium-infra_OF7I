@@ -17,7 +17,7 @@ The rest of this page is specific to this repo.
 * [infra/services/](infra/services): standalone programs intended to be run as
   daemons.
 * [infra/tools](infra/tools): command-line tools, intended to be run by developers.
-* [appengine/](appengine): many Chrome-infra-managed AppEngine applications
+* [appengine/](appengine): many Chrome-infra-managed AppEngine applications.
 * [infra/experimental](infra/experimental): for, well, experimental stuff. Once
   they are stabilized and reviewed, they should be moved in a more permanent
   place.
