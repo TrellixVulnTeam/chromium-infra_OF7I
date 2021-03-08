@@ -22,12 +22,17 @@ fi
 # We assume here that "overall" gcloud SDK version is bumped whenever some of
 # the dependencies change in a significant way. If a dependency changes without
 # gcloud SDK version bump, 3pp won't notice this.
+LINUX_EXTRAS=
+if [ "$(uname -s)" == "Linux" ]; then
+      LINUX_EXTRAS=cloud-spanner-emulator
+fi
 ./google-cloud-sdk/bin/gcloud components install -q \
     app-engine-go \
     app-engine-python \
     app-engine-python-extras \
     docker-credential-gcr \
-    kubectl
+    kubectl \
+    $LINUX_EXTRAS
 
 # This is just a dead weight in the package, we won't rollback.
 rm -rf ./google-cloud-sdk/.install/.backup
