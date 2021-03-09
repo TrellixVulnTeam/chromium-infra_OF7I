@@ -9,7 +9,7 @@ chopsui/ has been published as the bower package "chopsui".
 
 ## Definitions
 
-[infra repo](https://chromium.googlesource.com/infra/infra/+/master/crdx/chopsui/)
+[infra repo](https://chromium.googlesource.com/infra/infra/+/main/crdx/chopsui/)
 
 -   The chopsui directory in the infra repo
 

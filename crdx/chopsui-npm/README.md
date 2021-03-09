@@ -25,7 +25,7 @@ To set up:
 2. Authenticate in npm with `npm adduser`.
 
 To publish a new version:
-1. Sync a clean branch with upstream set to `origin/master`.
+1. Sync a clean branch with upstream set to `origin/main`.
 2. Create a new version with `npx lerna version --no-git-tag-version`. Lerna will prompt you to select a new version number, detect which packages have changed since the last version, and locally update the json files.
 3. Commit the changes, upload them for code review, and land them.
 4. Sync to the newly landed commit.

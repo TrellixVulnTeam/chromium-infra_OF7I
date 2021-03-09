@@ -4,7 +4,7 @@
 
 // This is a karma reporter that produces test results JSON suitable for
 // uploading to test-results.appspot.com. For more details, see
-// https://chromium.googlesource.com/chromium/src/+/master/docs/testing/json_test_results_format.md
+// https://chromium.googlesource.com/chromium/src/+/main/docs/testing/json_test_results_format.md
 
 const path = require('path');
 const fs = require('fs');

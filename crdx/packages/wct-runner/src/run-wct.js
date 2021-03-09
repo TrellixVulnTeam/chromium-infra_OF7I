@@ -158,7 +158,7 @@ async function main() {
 
   console.log('using chrome binary ' + puppeteer.executablePath());
   // TODO: Allow chrome version pinning using the API:
-  // https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#class-browserfetcher
+  // https://github.com/GoogleChrome/puppeteer/blob/main/docs/api.md#class-browserfetcher
 
   const browser = await puppeteer.launch(launchOptions);
   console.log('chrome version: ' + await browser.version());
