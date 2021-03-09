@@ -8,6 +8,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
@@ -15,6 +16,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
@@ -130,6 +132,24 @@ func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, p
 // UpdateState updates state record for a resource.
 func UpdateState(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
 	f := func(ctx context.Context) error {
+		// To update the MachineLSE state when a state record is being updated.
+		// TODO(eshwarn): Remove this code once this is in drone(https://chromium-review.googlesource.com/c/infra/infra/+/2739908)
+		name := util.RemovePrefix(stateRecord.GetResourceName())
+		lse, err := inventory.GetMachineLSE(ctx, name)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to update ResourceState: GetMachineLSE %s failed: %s", name, err)
+		} else {
+			// Copy for logging
+			oldMachinelseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
+			lse.ResourceState = stateRecord.GetState()
+			if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
+				logging.Errorf(ctx, "Failed to update ResourceState: BatchUpdateMachineLSEs %s : %s", lse.GetName(), err)
+			} else {
+				hclse := getHostHistoryClient(lse)
+				hclse.LogMachineLSEChanges(oldMachinelseCopy, lse)
+				hclse.SaveChangeEvents(ctx)
+			}
+		}
 		hc := getStateRecordHistoryClient(stateRecord)
 		if err := hc.stUdt.updateStateHelper(ctx, stateRecord.GetState()); err != nil {
 			return err
