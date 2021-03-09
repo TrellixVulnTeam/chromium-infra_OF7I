@@ -14,14 +14,14 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
-	"go.chromium.org/luci/lucictx"
 
-	fleet "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/cros/cmd/phosphorus/internal/botcache"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
+	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
+	ufsutil "infra/unifiedfleet/app/util"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
@@ -104,7 +104,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	ctx := cli.GetContext(a, c, env)
 
-	client, err := newInventoryClient(ctx, request.Config.CrosInventoryService, &c.authFlags)
+	client, err := ufs.NewClient(ctx, request.Config.CrosUfsService, &c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -172,66 +172,17 @@ func validateLoadRequest(request *skylab_local_state.LoadRequest) error {
 	return nil
 }
 
-// newInventoryClient creates an cros inventory service client.
-func newInventoryClient(ctx context.Context, crosInventoryService string, authFlags *authcli.Flags) (fleet.InventoryClient, error) {
-	authOpts, err := authFlags.Options()
-	if err != nil {
-		return nil, errors.Annotate(err, "create new inventory client").Err()
+// getDutInfo fetches the DUT inventory entry from UFS.
+func getDutInfo(ctx context.Context, client ufsapi.FleetClient, dutName string) (*inventory.DeviceUnderTest, error) {
+	osctx := ufs.SetupContext(ctx, ufsutil.OSNamespace)
+	req := &ufsapi.GetChromeOSDeviceDataRequest{
+		Hostname: dutName,
 	}
-
-	authCtx, err := lucictx.SwitchLocalAccount(ctx, "system")
-	if err == nil {
-		// If there's a system account use it (the case of running on Swarming).
-		// Otherwise default to user credentials (the local development case).
-		ctx = authCtx
-		authOpts.Method = auth.LUCIContextMethod
-	}
-
-	a := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts)
-
-	httpClient, err := a.Client()
-	if err != nil {
-		return nil, errors.Annotate(err, "create new inventory client").Err()
-	}
-
-	pc := prpc.Client{
-		C:    httpClient,
-		Host: crosInventoryService,
-	}
-
-	return fleet.NewInventoryPRPCClient(&pc), nil
-}
-
-// getDutInfo fetches the DUT inventory entry from the admin service.
-func getDutInfo(ctx context.Context, client fleet.InventoryClient, dutName string) (*inventory.DeviceUnderTest, error) {
-	devID := &fleet.DeviceID{Id: &fleet.DeviceID_Hostname{Hostname: dutName}}
-	req := &fleet.GetCrosDevicesRequest{
-		Ids: []*fleet.DeviceID{devID},
-	}
-	resp, err := client.GetCrosDevices(ctx, req)
+	resp, err := client.GetChromeOSDeviceData(osctx, req)
 	if err != nil {
 		return nil, errors.Annotate(err, fmt.Sprintf("get DUT info for %s", dutName)).Err()
 	}
-
-	devices := resp.GetData()
-	if len(devices) == 1 {
-		dut, err := fleet.AdaptToV1DutSpec(devices[0])
-		if err != nil {
-			return nil, errors.Annotate(err, fmt.Sprintf("get DUT info for %s", dutName)).Err()
-		}
-		return dut, nil
-	} else if len(devices) > 1 {
-		return nil, errors.Reason("get DUT info for %s: more than 1 DUT was returned in passed list!", dutName).Err()
-	}
-
-	failedDevies := resp.GetFailedDevices()
-	if len(failedDevies) == 1 {
-		return nil, errors.Reason(failedDevies[0].ErrorMsg).Err()
-	} else if len(failedDevies) > 1 {
-		return nil, errors.Reason("get DUT info for %s: more than 1 DUT was returned in failed list!", dutName).Err()
-	}
-
-	return nil, errors.Reason("get DUT info for %s: no data responded in either passed or failed list!", dutName).Err()
+	return resp.GetDutV1(), nil
 }
 
 // hostInfoFromDutInfo extracts attributes and labels from an inventory

@@ -12,8 +12,10 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/grpc/metadata"
 
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // prpcOptions is used for UFS PRPC clients.
@@ -48,4 +50,10 @@ func prpcOptionWithUserAgent(userAgent string) *prpc.Options {
 	options := *prpc.DefaultOptions()
 	options.UserAgent = userAgent
 	return &options
+}
+
+// SetupContext set up the outgoing context for API calls.
+func SetupContext(ctx context.Context, namespace string) context.Context {
+	md := metadata.Pairs(ufsutil.Namespace, namespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }
