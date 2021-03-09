@@ -5,8 +5,10 @@
 package asset
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/golang/protobuf/proto"
@@ -33,11 +35,14 @@ shivas delete asset {assetname}
 
 shivas delete asset {assetname1} {assetname2}
 
+shivas delete asset -scan
+
 Deletes the Asset(s).`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &deleteAsset{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.Flags.BoolVar(&c.scan, "scan", false, "Use barcode scanner to delete multiple assets.")
 		return c
 	},
 }
@@ -46,6 +51,7 @@ type deleteAsset struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
+	scan      bool
 }
 
 func (c *deleteAsset) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -72,6 +78,10 @@ func (c *deleteAsset) innerRun(a subcommands.Application, args []string, env sub
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if c.scan {
+		c.scanAndDelete(ctx, ic, a.GetOut(), os.Stdin)
+		return nil
+	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
 	if prompt != nil && !prompt(fmt.Sprintf("Are you sure you want to delete the asset(s): %s", args)) {
 		return nil
@@ -101,8 +111,25 @@ func (c *deleteAsset) deleteSingle(ctx context.Context, ic ufsAPI.FleetClient, n
 }
 
 func (c *deleteAsset) validateArgs() error {
-	if c.Flags.NArg() == 0 {
+	if !c.scan && c.Flags.NArg() == 0 {
 		return cmdlib.NewUsageError(c.Flags, "Please provide the name(s) of the asset to delete.")
 	}
 	return nil
+}
+
+// scanAndDelete is intended to the used with a scanner for deleting assets.
+func (c *deleteAsset) scanAndDelete(ctx context.Context, ic ufsAPI.FleetClient, w io.Writer, r io.Reader) {
+	scanner := bufio.NewScanner(r)
+	fmt.Fprintf(w, "Connect the barcode scanner to your device.\n")
+	fmt.Fprintf(w, "Scan asset tag to delete: ")
+	for scanner.Scan() {
+		asset := scanner.Text()
+		err := c.deleteSingle(ctx, ic, asset)
+		if err != nil {
+			fmt.Fprintf(w, "Failed to delete %s: %s\n", asset, err.Error())
+		} else {
+			fmt.Fprintf(w, "Successfully deleted %s \n", asset)
+		}
+		fmt.Fprintf(w, "\nScan asset tag to delete: ")
+	}
 }
