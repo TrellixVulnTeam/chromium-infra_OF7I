@@ -25,12 +25,13 @@ def main():
   if options.verbose:
     logging.getLogger().setLevel(logging.DEBUG)
 
-  cipd_ensure_list(os.path.join(os.path.abspath(options.dest), 'gcloud'), [
-    (
-      'infra/3pp/tools/gcloud/${os=mac,linux}-${arch=amd64}',
-      'version:329.0.0.chromium1',
-    ),
-  ])
+  cipd_ensure_list(
+      os.path.join(os.path.abspath(options.dest), 'gcloud'), [
+          (
+              'infra/3pp/tools/gcloud/${os=mac,linux}-${arch=amd64}',
+              'version:331.0.0.chromium1',
+          ),
+      ])
   return 0
 
 
