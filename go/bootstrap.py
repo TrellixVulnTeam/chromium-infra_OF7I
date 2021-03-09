@@ -435,6 +435,7 @@ def get_go_environ_diff(layout):
       os.path.join(ROOT, 'cipd'),
       os.path.join(ROOT, 'cipd', 'bin'),
       os.path.join(ROOT, 'luci', 'appengine', 'components', 'tools'),
+      os.path.join(GCLIENT_ROOT, 'gcloud', 'bin'),
   ]
   path_prefixes.extend(os.path.join(p, '.vendor', 'bin') for p in vendor_paths)
 
