@@ -80,7 +80,7 @@ export class ChopsdashApp extends PolymerElement {
           <i class="red circle"></i> Service outage<br/>
           <p class="subtext">
             Click
-            <a href="https://chromium.googlesource.com/infra/infra/+/master/doc/status_dash_def.md">
+            <a href="https://chromium.googlesource.com/infra/infra/+/main/doc/status_dash_def.md">
               here
             </a>
             for more detailed status definitions.
