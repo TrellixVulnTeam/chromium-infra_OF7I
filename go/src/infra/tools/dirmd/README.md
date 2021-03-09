@@ -31,7 +31,8 @@ For file schema, see [`Metadata` message](./proto/dir_metadata.proto).
 ### Inheritance
 
 DIR_METADATA files apply to all contents of a directory including its
-subdirectories. By default, individual fields are inherited by subdirectories.
+subdirectories, unless overridden by `Metadata.inherit_from` field.
+When inheriting metadata, normally inheritance happens per-field.
 In the following, example, the value of `monorail.project` field in directory
 `a/b` is "chromium".
 
