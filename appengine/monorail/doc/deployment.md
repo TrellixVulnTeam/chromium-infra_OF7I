@@ -57,8 +57,6 @@ use the default "ENV" = dev, provide the release branch, and leave "BUILD_ID" em
     The input should be in the form of `refs/releases/monorail/[*deployment number*]`.
     e.g. "refs/releases/monorail/1" builds from HEAD of
     [infra/infra/+/refs/releases/monorail/1](https://chromium.googlesource.com/infra/infra/+/refs/releases/monorail/1).
-    It will also accept "master" to build from HEAD of the infra
-    [master branch](https://chromium.googlesource.com/infra/infra/+/refs/heads/master).
 *   The "ENV" parameter can be set to "dev", "staging", or "prod" to
     automatically trigger `Deploy Dev`, `Deploy Staging`, or `Deploy
     Production` (respectively) with a successful finish of `Deploy Monorail`.

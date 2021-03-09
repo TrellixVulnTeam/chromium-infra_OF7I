@@ -157,7 +157,7 @@ You may not have six.moves in your virtual environment and you may need to insta
 
 ## Supported browsers
 
-Monorail supports all browsers defined in the [Chrome Ops guidelines](https://chromium.googlesource.com/infra/infra/+/master/doc/front_end.md).
+Monorail supports all browsers defined in the [Chrome Ops guidelines](https://chromium.googlesource.com/infra/infra/+/main/doc/front_end.md).
 
 File a browser compatability bug
 [here](https://bugs.chromium.org/p/monorail/issues/entry?labels=Type-Defect,Priority-Medium,BrowserCompat).

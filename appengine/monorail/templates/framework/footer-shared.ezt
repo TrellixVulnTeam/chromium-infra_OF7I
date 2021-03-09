@@ -14,10 +14,10 @@
     <a href="https://bugs.fuchsia.dev/p/fuchsia/issues/entry?template=Report+Community+Abuse" title="Monorail [app_version]">Report Abuse</a>
   [end]
   <a href="https://bugs.chromium.org/p/monorail/adminIntro" title="Monorail [app_version]">About Monorail</a>
-  <a href="https://chromium.googlesource.com/infra/infra/+/master/appengine/monorail/doc/userguide/README.md">User Guide</a>
-  <a href="https://chromium.googlesource.com/infra/infra/+/master/appengine/monorail/doc/release-notes.md">Release Notes</a>
+  <a href="https://chromium.googlesource.com/infra/infra/+/main/appengine/monorail/doc/userguide/README.md">User Guide</a>
+  <a href="https://chromium.googlesource.com/infra/infra/+/main/appengine/monorail/doc/release-notes.md">Release Notes</a>
   <a href="https://bugs.chromium.org/p/monorail/issues/entry?template=Online%20Feedback" target="_blank">Feedback on Monorail</a>
-  <a href="https://chromium.googlesource.com/infra/infra/+/master/appengine/monorail/doc/terms.md">Terms</a>
+  <a href="https://chromium.googlesource.com/infra/infra/+/main/appengine/monorail/doc/terms.md">Terms</a>
   <a href="https://www.google.com/policies/privacy/">Privacy</a>
 </div>
 

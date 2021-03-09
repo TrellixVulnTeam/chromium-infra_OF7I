@@ -50,7 +50,7 @@ We generally aim to write a modern codebase that makes use of recent JavaScript 
 
 #### Browser support guidelines
 
-All code written **must** target the two latest stable versions of each of the following browsers, per the [Chrome Ops Browser Support Guidelines](https://chromium.googlesource.com/infra/infra/+/master/doc/front_end.md#browser-support).
+All code written **must** target the two latest stable versions of each of the following browsers, per the [Chrome Ops Browser Support Guidelines](https://chromium.googlesource.com/infra/infra/+/main/doc/front_end.md#browser-support).
 
 
 ### Avoid unexpected Object mutations

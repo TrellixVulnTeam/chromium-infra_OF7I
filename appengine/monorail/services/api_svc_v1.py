@@ -65,8 +65,9 @@ from infra_libs.ts_mon.common import http_metrics
 
 
 ENDPOINTS_API_NAME = 'monorail'
-DOC_URL = ('https://chromium.googlesource.com/infra/infra/+/master/'
-           'appengine/monorail/doc/api.md')
+DOC_URL = (
+    'https://chromium.googlesource.com/infra/infra/+/main/'
+    'appengine/monorail/doc/api.md')
 
 
 def monorail_api_method(

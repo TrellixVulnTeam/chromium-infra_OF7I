@@ -1,7 +1,7 @@
 // Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-// Based on: https://source.chromium.org/chromium/infra/infra/+/master:appengine/monorail/project/project_constants.py;l=13
+// Based on: https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/project/project_constants.py;l=13
 const PROJECT_NAME_PATTERN = '[a-z0-9][-a-z0-9]*[a-z0-9]';
 const USER_ID_PATTERN = '\\d+';
 
