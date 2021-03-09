@@ -1773,3 +1773,12 @@ func ServoSetupTypeAllowedValuesString() string {
 	}
 	return fmt.Sprintf("[%s]", strings.Join(servoSetupTypeAllowedValueList, ", "))
 }
+
+// ServoFwChannelAllowedValuesString returns a string description of all allowed values for servo firmware channel.
+func ServoFwChannelAllowedValuesString() string {
+	valueList := []string{}
+	for name := range chromeosLab.ServoFwChannel_value {
+		valueList = append(valueList, strings.TrimPrefix(name, "SERVO_FW_"))
+	}
+	return fmt.Sprintf("[%s]", strings.Join(valueList, ", "))
+}

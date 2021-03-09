@@ -32,12 +32,13 @@ import (
 
 const (
 	// Servo related UpdateMask paths.
-	servoHostPath     = "dut.servo.hostname"
-	servoPortPath     = "dut.servo.port"
-	servoSerialPath   = "dut.servo.serial"
-	servoSetupPath    = "dut.servo.setup"
-	servoTypePath     = "dut.servo.type"
-	servoTopologyPath = "dut.servo.topology"
+	servoHostPath      = "dut.servo.hostname"
+	servoPortPath      = "dut.servo.port"
+	servoSerialPath    = "dut.servo.serial"
+	servoSetupPath     = "dut.servo.setup"
+	servoFwChannelPath = "dut.servo.fwchannel"
+	servoTypePath      = "dut.servo.type"
+	servoTopologyPath  = "dut.servo.topology"
 
 	// LSE related UpdateMask paths.
 	machinesPath    = "machines"
@@ -118,6 +119,7 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. Clearing this field will delete the servo in DUT. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+".")
+		c.Flags.StringVar(&c.servoFwChannel, "servo-fw-channel", "", "servo firmware channel. Allowed values are "+cmdhelp.ServoFwChannelAllowedValuesString()+".")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the DUT.")
 		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
 		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values. "+cmdhelp.ClearFieldHelpText)
@@ -170,6 +172,7 @@ type updateDUT struct {
 	servo            string
 	servoSerial      string
 	servoSetupType   string
+	servoFwChannel   string
 	pools            []string
 	licenseTypes     []string
 	licenseIds       []string
@@ -352,6 +355,11 @@ func (c updateDUT) validateArgs() error {
 		if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; c.servoSetupType != "" && !ok {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid value for servo setup type. Valid values are "+cmdhelp.ServoSetupTypeAllowedValuesString())
 		}
+		// Check if servo firmware channel is valid.
+		// Note: This check is run irrespective of servo input because it is possible to perform an update on only this field.
+		if _, ok := chromeosLab.ServoFwChannel_value[appendServoFwChannelPrefix(c.servoFwChannel)]; c.servoFwChannel != "" && !ok {
+			return cmdlib.NewQuietUsageError(c.Flags, "Invalid value for servo firmware channel. Valid values are "+cmdhelp.ServoFwChannelAllowedValuesString())
+		}
 		// Check if the license input is valid if it's not being cleared.
 		if !ufsUtil.ContainsAnyStrings(c.licenseIds, utils.ClearFieldValue) {
 			if len(c.licenseTypes) != len(c.licenseIds) {
@@ -529,7 +537,7 @@ func (c *updateDUT) parseMCSV() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 }
 
 func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.MachineLSE, *field_mask.FieldMask, error) {
-	var name, servo, servoSerial, servoSetup, rpmHost, rpmOutlet string
+	var name, servo, servoSerial, servoSetup, servoFwChannel, rpmHost, rpmOutlet string
 	var pools, machines []string
 	if recMap != nil {
 		// CSV map. Assign all the params to the variables.
@@ -620,8 +628,11 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 		}
 	}
 
+	if c.servoFwChannel != "" {
+		servoFwChannel = appendServoFwChannelPrefix(c.servoFwChannel)
+	}
 	// Create and assign servo and corresponding masks.
-	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial)
+	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -818,7 +829,7 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 }
 
 // generateServoWithMask generates a servo object from the given inputs and corresponding mask.
-func generateServoWithMask(servo, servoSetup, servoSerial string) (*chromeosLab.Servo, []string, error) {
+func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string) (*chromeosLab.Servo, []string, error) {
 	// Attempt to parse servo hostname and port.
 	servoHost, servoPort, err := parseServoHostnamePort(servo)
 	if err != nil {
@@ -842,6 +853,12 @@ func generateServoWithMask(servo, servoSetup, servoSerial string) (*chromeosLab.
 		paths = append(paths, servoSetupPath)
 		sst := chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(servoSetup)])
 		newServo.ServoSetup = sst
+	}
+
+	if servoFwChannel != "" {
+		paths = append(paths, servoFwChannelPath)
+		sst := chromeosLab.ServoFwChannel(chromeosLab.ServoFwChannel_value[appendServoFwChannelPrefix(servoFwChannel)])
+		newServo.ServoFwChannel = sst
 	}
 
 	if servoSerial != "" {
@@ -1080,4 +1097,8 @@ func (c *updateDUT) deployDUTToSwarming(ctx context.Context, tc *swarming.TaskCr
 	fmt.Printf("Triggered Deploy task for DUT %s. Follow the deploy job at %s\n", hostname, task.TaskURL)
 
 	return nil
+}
+
+func appendServoFwChannelPrefix(servoFwChannel string) string {
+	return fmt.Sprintf("SERVO_FW_%s", servoFwChannel)
 }
