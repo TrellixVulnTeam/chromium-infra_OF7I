@@ -15,10 +15,12 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/retry"
 
-	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/libs/skylab/inventory"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsutil "infra/unifiedfleet/app/util"
 )
 
 // Store holds a DUT's inventory info and adds a Close method.
@@ -59,16 +61,16 @@ func (s *Store) Close(ctx context.Context) error {
 // to the loaded DUT info.
 type UpdateFunc func(ctx context.Context, dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
 
-// Load loads the bot's DUT's info from the inventory V2.
+// Load loads the bot's DUT's info from the UFS.
 //
 // This function returns a Store that should be closed to update the inventory
 // with any changes to the info, using a supplied UpdateFunc. If UpdateFunc is
 // nil, the inventory is not updated.
 func Load(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getDutInfoFromV2)
+	return load(ctx, b, f, getDutInfoFromUFS)
 }
 
-type getDutInfoFuncV2 func(context.Context, invV2.InventoryClient, *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error)
+type getDutInfoFuncUFS func(context.Context, ufsAPI.FleetClient, *ufsAPI.GetChromeOSDeviceDataRequest) (*ufspb.ChromeOSDeviceData, error)
 
 // getStableVersion fetches the current stable version from an inventory client
 func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostname string) (map[string]string, error) {
@@ -96,41 +98,28 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostnam
 	return s, nil
 }
 
-func loadFromV2(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncV2) (*inventory.DeviceUnderTest, error) {
-	client, err := swmbot.InventoryV2Client(ctx, b)
+func loadFromUFS(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncUFS) (*inventory.DeviceUnderTest, error) {
+	client, err := swmbot.UFSClient(ctx, b)
 	if err != nil {
-		return nil, errors.Annotate(err, "load from inventory V2: initialize V2 client").Err()
+		return nil, errors.Annotate(err, "load from UFS: initialize UFS client").Err()
 	}
-	req := invV2.GetCrosDevicesRequest{
-		Ids: []*invV2.DeviceID{
-			{
-				Id: &invV2.DeviceID_ChromeosDeviceId{
-					ChromeosDeviceId: b.DUTID,
-				},
-			},
-		},
+	req := ufsAPI.GetChromeOSDeviceDataRequest{
+		ChromeosDeviceId: b.DUTID,
 	}
 	resp, err := gf(ctx, client, &req)
 	if err != nil {
-		return nil, errors.Annotate(err, "load from inventory V2").Err()
+		return nil, errors.Annotate(err, "load from UFS").Err()
 	}
-	if len(resp.GetData()) == 0 {
-		return nil, errors.New("load from inventory V2: no results from V2 (neither successful nor failed)")
-	}
-	dut, err := invV2.AdaptToV1DutSpec(resp.GetData()[0])
-	if err != nil {
-		return nil, errors.Annotate(err, "load from inventory V2: fail to convert").Err()
-	}
-	return dut, nil
+	return resp.GetDutV1(), nil
 }
 
-func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfV2 getDutInfoFuncV2) (*Store, error) {
+func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfUFS getDutInfoFuncUFS) (*Store, error) {
 	ctx, err := swmbot.WithSystemAccount(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
-	log.Printf("Loading DUT info from Inventory V2")
-	dutV2, err := loadFromV2(ctx, b, gfV2)
+	log.Printf("Loading DUT info from UFS")
+	dut, err := loadFromUFS(ctx, b, gfUFS)
 	if err != nil {
 		log.Printf("(not fatal) fail to load DUT from inventory V2: %s", err)
 	}
@@ -141,7 +130,7 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfV2 getDutInfoFun
 	}
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
-	hostname := dutV2.GetCommon().GetHostname()
+	hostname := dut.GetCommon().GetHostname()
 	sv, err := getStableVersion(ctx, c, hostname)
 	if err != nil {
 		sv = map[string]string{}
@@ -149,26 +138,23 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfV2 getDutInfoFun
 	}
 	// once we reach this point, sv is guaranteed to be non-nil
 	store := &Store{
-		DUT:            dutV2,
-		oldDUT:         proto.Clone(dutV2).(*inventory.DeviceUnderTest),
+		DUT:            dut,
+		oldDUT:         proto.Clone(dut).(*inventory.DeviceUnderTest),
 		updateFunc:     uf,
 		StableVersions: sv,
 	}
 	return store, nil
 }
 
-func getDutInfoFromV2(ctx context.Context, c invV2.InventoryClient, req *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error) {
-	var resp *invV2.GetCrosDevicesResponse
+func getDutInfoFromUFS(ctx context.Context, c ufsAPI.FleetClient, req *ufsAPI.GetChromeOSDeviceDataRequest) (*ufspb.ChromeOSDeviceData, error) {
+	var resp *ufspb.ChromeOSDeviceData
 	f := func() (err error) {
-		resp, err = c.GetCrosDevices(ctx, req)
+		osCtx := swmbot.SetupContext(ctx, ufsutil.OSNamespace)
+		resp, err = c.GetChromeOSDeviceData(osCtx, req)
 		return err
 	}
-	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.getDutInfoFromV2")); err != nil {
-		return nil, errors.Annotate(err, "retry getDutInfoFromV2").Err()
-	}
-	if len(resp.GetFailedDevices()) > 0 {
-		fd := resp.GetFailedDevices()[0]
-		return nil, errors.New(fmt.Sprintf("fail to load %s from V2: %s", fd.GetHostname(), fd.GetErrorMsg()))
+	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.getDutInfoFuncUFS")); err != nil {
+		return nil, errors.Annotate(err, "retry getDutInfoFuncUFS").Err()
 	}
 	return resp, nil
 }
