@@ -1,7 +1,11 @@
 package asset
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -136,8 +140,7 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 		fmt.Printf("Not implemented")
 		return nil
 	} else if c.scan {
-		fmt.Printf("Not implemented")
-		return nil
+		return c.scanAndAddAsset(ctx, ic, a.GetOut(), os.Stdin)
 	}
 
 	if len(reqs) == 0 {
@@ -174,6 +177,16 @@ func (c *addAsset) validateArgs() error {
 		}
 		if c.location == "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid zone %s", c.zone)
+		}
+		if c.assetType == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Missing asset type")
+		} else if !ufsUtil.IsAssetType(c.assetType) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Invalid asset type %s", c.assetType)
+		}
+	}
+	if c.scan {
+		if c.location == "" && c.rack == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Need location or rack to start scan")
 		}
 		if c.assetType == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Missing asset type")
@@ -280,4 +293,104 @@ func (c *addAsset) parseMCSV() ([]*ufsAPI.CreateAssetRequest, error) {
 		reqs = append(reqs, req)
 	}
 	return reqs, nil
+}
+
+// scanAndAddAsset loops around and collects assets to be added to UFS. Useful for use with barcode scanner.
+func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w io.Writer, r io.Reader) error {
+	var location *ufspb.Location
+	scanner := bufio.NewScanner(r)
+
+	// Attempt to get location
+	location, err := deriveLocation(ctx, ic, c.location, c.rack, c.zone, c.aisle, c.row, c.position)
+	if err != nil {
+		return err
+	}
+	// Throw an error if we don't know what rack we are putting the assets in. UFS will not accept this input.
+	if location.GetRack() == "" {
+		return cmdlib.NewQuietUsageError(c.Flags, "Cannot determine the rack from inputs. Try using -rack to explicity assign rack")
+	}
+
+	// Asset type set for this session
+	assetType := ufsUtil.ToAssetType(c.assetType)
+
+	fmt.Fprintf(w, "Connect the barcode scanner to your device.\n")
+	prompt(w, location.GetRack())
+	for scanner.Scan() {
+		token := scanner.Text()
+		if token == "" {
+			prompt(w, location.GetRack())
+			continue
+		}
+		// Attempt to update location mid scan
+		if utils.IsLocation(token) {
+			l, err := utils.GetLocation(token)
+			if err != nil || l.GetRack() == "" {
+				fmt.Fprintf(w, "Cannot determine rack for the location %s. %s\n", token, err.Error())
+				continue
+			}
+			location = l
+			prompt(w, location.GetRack())
+			continue
+		}
+
+		// Create and add asset
+		asset := &ufspb.Asset{
+			Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
+			Location: location,
+			Type:     assetType,
+		}
+
+		_, err := ic.CreateAsset(ctx, &ufsAPI.CreateAssetRequest{
+			Asset: asset,
+		})
+
+		if err != nil {
+			fmt.Fprintf(w, "Failed to add asset %s to UFS. %s \n", token, err.Error())
+		} else {
+			fmt.Fprintf(w, "Added asset %s to UFS \n", token)
+		}
+		prompt(w, location.GetRack())
+	}
+	return nil
+}
+
+// deriveLocation Attempts to get location from all the possible inputs to the command.
+func deriveLocation(ctx context.Context, ic ufsAPI.FleetClient, location, rack, zone, aisle, row, position string) (*ufspb.Location, error) {
+	var loc *ufspb.Location
+	// Attempt to decode location string if given.
+	if location != "" {
+		var err error
+		loc, err = utils.GetLocation(location)
+		if err != nil {
+			return nil, err
+		}
+		return loc, nil
+	} else if rack != "" {
+		// If rack is input, check it's existence and get location from UFS.
+		rack, err := ic.GetRack(ctx, &ufsAPI.GetRackRequest{
+			Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack),
+		})
+		if err != nil {
+			return nil, err
+		}
+		loc = rack.GetLocation()
+		// Update position if given or clear the field.
+		loc.Position = position
+		return loc, nil
+	}
+	// Attempt to generate location using raw inputs
+	if loc == nil {
+		loc = &ufspb.Location{}
+	}
+	loc.Rack = rack
+	loc.Zone = ufsUtil.ToUFSZone(zone)
+	loc.Aisle = aisle
+	loc.Position = position
+	loc.Row = row
+	return loc, nil
+}
+
+// prompt prints the current rack for the scan. To be used by scanAndAddAsset
+func prompt(w io.Writer, rack string) {
+	fmt.Fprintf(w, "\nScan asset to be placed in %s: ", rack)
 }
