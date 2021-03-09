@@ -11,9 +11,10 @@ func TestDeployTaskCommand(t *testing.T) {
 	t.Parallel()
 	Convey("deployTaskCommand", t, func() {
 		tc := &TaskCreator{
-			session:       "TestSession",
-			LogdogService: "logdog://fake-logdog.appspot.com",
-			LUCIProject:   "chromeos",
+			session:        "TestSession",
+			LogdogService:  "logdog://fake-logdog.appspot.com",
+			LUCIProject:    "chromeos",
+			logdogTaskCode: "logdoc_code",
 		}
 		Convey("deployTaskCommand - Happy path", func() {
 			actions := []string{"do-nothing", "do-something"}
@@ -51,6 +52,7 @@ func TestDeployDUTTask(t *testing.T) {
 			LogdogService:          "fake-logdog.appspot.com",
 			LUCIProject:            "chromeos",
 			SwarmingServiceAccount: "testServiceAccount@testmail.com",
+			logdogTaskCode:         "logdoc_code",
 		}
 		Convey("deployDUTTask - Happy path", func() {
 			req := tc.deployDUTTask("test-1", "testDUT", "testPool", "testUser", 30, []string{"reboot"}, []string{"test:yes"}, map[string]string{"bluetooth": "NO"})

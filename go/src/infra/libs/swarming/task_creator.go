@@ -56,9 +56,11 @@ type TaskCreator struct {
 	authenticator *auth.Authenticator
 	// LogdogService is the logdog service for the task logs
 	LogdogService string
-	// SwarmingServiceAccount is the service account to be used
+	// logdogTaskCode keeps unique code for each creating task. Please call GenerateLogdogTaskCode() for each task.
+	logdogTaskCode string
+	// SwarmingServiceAccount is the service account to be used.
 	SwarmingServiceAccount string
-
+	// LUCIProject is the name of the project used to create the task.
 	LUCIProject string
 }
 
@@ -97,11 +99,18 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, swarmingServi
 }
 
 // LogdogURL returns the logdog URL for task logs, empty string if logdog service not set.
+//
+// The logdogURL has to be unique for each task and to guaranty it please call GenerateLogdogTaskCode() before create new task.
 func (tc *TaskCreator) LogdogURL() string {
 	if tc.LogdogService != "" {
-		return fmt.Sprintf("logdog://%s/%s/%s/+/annotations", tc.LogdogService, tc.LUCIProject, tc.session)
+		return fmt.Sprintf("logdog://%s/%s/%s/+/annotations", tc.LogdogService, tc.LUCIProject, tc.logdogTaskCode)
 	}
 	return ""
+}
+
+// GenerateLogdogTaskCode generate new unique code for each task used in logdog URL.
+func (tc *TaskCreator) GenerateLogdogTaskCode() {
+	tc.logdogTaskCode = uuid.New().String()
 }
 
 // MapToSwarmingDimensions converts from a go map to SwarmingRpcsStringPair

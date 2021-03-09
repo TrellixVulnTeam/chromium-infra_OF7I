@@ -66,6 +66,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
 	for _, host := range args {
+		creator.GenerateLogdogTaskCode()
 		cmd := &worker.Command{TaskName: c.taskName()}
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
 		var task *swarming.TaskInfo

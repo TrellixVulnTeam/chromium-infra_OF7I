@@ -87,6 +87,7 @@ func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcom
 			TaskName: "admin_audit",
 			Actions:  c.actions,
 		}
+		creator.GenerateLogdogTaskCode()
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
 		task, err := creator.AuditTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
 		if err != nil {

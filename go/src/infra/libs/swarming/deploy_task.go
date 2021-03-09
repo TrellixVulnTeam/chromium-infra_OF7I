@@ -101,5 +101,6 @@ func (tc *TaskCreator) DeployDut(ctx context.Context, hostname, dutID, pool stri
 	if err != nil {
 		return nil, errors.Annotate(err, "Unable to get user info").Err()
 	}
+	tc.GenerateLogdogTaskCode()
 	return tc.schedule(ctx, tc.deployDUTTask(hostname, dutID, pool, user, timeout, actions, tags, dimensions))
 }
