@@ -67,6 +67,7 @@ GLIDE_SOURCE = {
     'rev': 'refs/tags/v0.13.3',
     'patches': [
         '0001-Fix-edge-case-related-to-git-submodules-on-Windows.patch',
+        '0002-Support-major-version-suffix-in-Go-modules.patch',
     ],
   },
 }
