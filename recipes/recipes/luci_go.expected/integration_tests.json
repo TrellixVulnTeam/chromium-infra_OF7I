@@ -170,7 +170,8 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "INTEGRATION_TESTS": "1"
+      "INTEGRATION_TESTS": "1",
+      "SPANNER_EMULATOR": "1"
     },
     "infra_step": true,
     "name": "init infra go env",
@@ -206,7 +207,8 @@
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INTEGRATION_TESTS": "1"
+      "INTEGRATION_TESTS": "1",
+      "SPANNER_EMULATOR": "1"
     },
     "env_prefixes": {
       "PATH": [
@@ -230,7 +232,8 @@
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INTEGRATION_TESTS": "1"
+      "INTEGRATION_TESTS": "1",
+      "SPANNER_EMULATOR": "1"
     },
     "env_prefixes": {
       "PATH": [
@@ -255,7 +258,8 @@
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INTEGRATION_TESTS": "1"
+      "INTEGRATION_TESTS": "1",
+      "SPANNER_EMULATOR": "1"
     },
     "env_prefixes": {
       "PATH": [

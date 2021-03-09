@@ -48,6 +48,10 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests):
     env['GOARCH'] = GOARCH
   if run_integration_tests:
     env['INTEGRATION_TESTS'] = '1'
+    # Flag to running spanner tests using the Cloud Spanner Emulator.
+    # TODO(crbug.com/1066993): Remove this extra flag when we're ready to
+    # always running spanner tests using the emulator.
+    env['SPANNER_EMULATOR'] = '1'
 
   with api.context(env=env), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
