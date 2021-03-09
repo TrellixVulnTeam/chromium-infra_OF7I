@@ -141,8 +141,14 @@ class Wheel(_Wheel):
     if not self.spec.universal and BINARY_VERSION_SUFFIX:
       version_tag += BINARY_VERSION_SUFFIX
     tags = [version_tag]
+
     if git_revision is not None:
       tags.append('git_revision:%s' % (git_revision,))
+
+    base = self.plat.dockcross_base
+    if base is not None and 'manylinux' in base:
+      tags.append('manylinux_version:%s' % (base,))
+
     return cipd.Package(
         name=('/'.join(p.replace('.', '_') for p in base_path)).lower(),
         tags=tuple(tags),
