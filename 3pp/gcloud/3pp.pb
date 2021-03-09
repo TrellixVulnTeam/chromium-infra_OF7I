@@ -5,7 +5,7 @@ create {
     unpack_archive: true
     no_archive_prune: true
     patch_dir: "patches"
-    patch_version: "chromium1"
+    patch_version: "chromium2"
   }
   build {
     no_toolchain: true
