@@ -830,6 +830,9 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 
 // generateServoWithMask generates a servo object from the given inputs and corresponding mask.
 func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string) (*chromeosLab.Servo, []string, error) {
+	if servo == "" && servoSetup == "" && servoSerial == "" && servoFwChannel == "" {
+		return nil, nil, nil
+	}
 	// Attempt to parse servo hostname and port.
 	servoHost, servoPort, err := parseServoHostnamePort(servo)
 	if err != nil {
@@ -1068,7 +1071,6 @@ func (c *updateDUT) updateDUTToUFS(ctx context.Context, ic ufsAPI.FleetClient, r
 		return err
 	}
 	req.MachineLSE.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, req.MachineLSE.Name)
-
 	res, err := ic.UpdateMachineLSE(ctx, req)
 	if err != nil {
 		return err
