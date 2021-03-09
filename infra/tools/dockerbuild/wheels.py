@@ -580,6 +580,12 @@ SPECS.update({
             ['manylinux-x64-py3'],
             pyversions=['py3'],
         ),
+        Prebuilt(
+            'tensorflow',
+            '2.4.1',
+            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            pyversions=['py3'],
+        ),
     )
 })
 

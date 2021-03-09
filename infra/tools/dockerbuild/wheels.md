@@ -4659,6 +4659,22 @@ wheel: <
 
 * *universal*
 
+## **tensorflow**
+
+### 2.4.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow/${vpython_platform}"
+  version: "version:2.4.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **tlslite**
 
 ### 0.4.9
