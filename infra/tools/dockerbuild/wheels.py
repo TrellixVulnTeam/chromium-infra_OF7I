@@ -497,9 +497,17 @@ SPECS.update({
             'freetype-py',
             '2.1.0.post1',
             [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
+                'mac-x64',
+                'mac-x64-cp38',
+                'manylinux-x86',
+                'manylinux-x64',
+                'manylinux-x64-py3',
+                'windows-x86',
+                'windows-x86-py3',
+                'windows-x64',
+                'windows-x64-py3',
             ],
+            pyversions=['py2', 'py3'],
         ),
         Prebuilt(
             'lxml',
