@@ -127,10 +127,11 @@ For more details, please visit the build page at %s`, statusString, buildSummary
 	}
 }
 
-// CancelBuildWithBotID cancels any pending or active builds created after the
-// given timestamp, with the given Swarming bot ID, if they were launched by
-// the given user. The optional cancellation reason is used if not blank.
-func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCreateTime *timestamppb.Timestamp, user, reason string, writer io.Writer) error {
+// CancelBuildsByUser cancels any pending or active build created after the
+// given timestamp that was launched by the given user. An optional bot ID list
+// can be given, which restricts cancellations to builds running on bots on the
+// given list. The optional cancellation reason is used if not blank.
+func (c *Client) CancelBuildsByUser(ctx context.Context, writer io.Writer, earliestCreateTime *timestamppb.Timestamp, user string, ids []string, reason string) error {
 	if reason == "" {
 		reason = "cancelled from crosfleet CLI"
 	}
@@ -158,13 +159,13 @@ func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCr
 			return err
 		}
 		for _, build := range response.Builds {
-			if !isUnfinishedBuildWithBotID(build, id) {
-				continue
-			}
 			if build.CreatedBy != fmt.Sprintf("user:%s", user) {
 				continue
 			}
-			fmt.Fprintf(writer, "Canceling build at %s for bot ID %s\n", c.BuildURL(build.Id), id)
+			if !isUnfinishedBuildWithBotID(build, ids) {
+				continue
+			}
+			fmt.Fprintf(writer, "Canceling build at %s\n", c.BuildURL(build.Id))
 			_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
 				Id:              build.Id,
 				SummaryMarkdown: reason,
@@ -181,7 +182,7 @@ func (c *Client) CancelBuildWithBotID(ctx context.Context, id string, earliestCr
 	}
 
 	if cancelled == 0 {
-		fmt.Fprintf(writer, "No pending or active builds found with bot ID %s that were launched by the current user (%s)\n", id, user)
+		fmt.Fprintf(writer, "No pending or active builds found that were launched by the current user (%s)\n", user)
 	}
 	return nil
 }
@@ -238,18 +239,25 @@ func bbTags(tags map[string]string) []*buildbucketpb.StringPair {
 }
 
 // isUnfinishedBuildWithBotID returns true if the build is either scheduled with
-// the given bot ID as a requested dimension, or already started and
-// provisioned with the given bot ID.
-func isUnfinishedBuildWithBotID(build *buildbucketpb.Build, id string) bool {
+// one of the (optional) given bot IDs as a requested dimension, or already
+// started and provisioned with one of the (optional) given bot IDs. If the bot
+// ID list is left empty, the function will return true for any scheduled or
+// started build.
+func isUnfinishedBuildWithBotID(build *buildbucketpb.Build, ids []string) bool {
+	wantIDMatch := len(ids) > 0
 	switch build.Status {
 	case buildbucketpb.Status_SCHEDULED:
-		if FindDimValInRequestedDims("id", build) == id {
+		if !wantIDMatch {
 			return true
 		}
+		requestedID := FindDimValInRequestedDims("id", build)
+		return idMatch(requestedID, ids)
 	case buildbucketpb.Status_STARTED:
-		if FindDimValInFinalDims("id", build) == id {
+		if !wantIDMatch {
 			return true
 		}
+		provisionedID := FindDimValInFinalDims("id", build)
+		return idMatch(provisionedID, ids)
 	}
 	return false
 }
@@ -279,4 +287,14 @@ func FindDimValInFinalDims(dim string, build *buildbucketpb.Build) string {
 		}
 	}
 	return ""
+}
+
+// idMatch returns true if the given ID to match is found in the given ID list.
+func idMatch(idToMatch string, idList []string) bool {
+	for _, id := range idList {
+		if idToMatch == id {
+			return true
+		}
+	}
+	return false
 }

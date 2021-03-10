@@ -18,9 +18,12 @@ import (
 )
 
 var abandon = &subcommands.Command{
-	UsageLine: "abandon HOST [HOST...]",
+	UsageLine: "abandon [HOST...]",
 	ShortDesc: "abandon DUTs which were previously leased via 'dut lease'",
 	LongDesc: `Abandon DUTs which were previously leased via 'dut lease'.
+
+If no hostnames are entered, all pending or active leases by the current user
+will be abandoned.
 
 This command's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,
@@ -49,10 +52,6 @@ func (c *abandonRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if len(args) == 0 {
-		return cmdlib.NewUsageError(c.Flags, "must specify at least one DUT hostname")
-	}
-
 	ctx := cli.GetContext(a, c, env)
 	userEmail, err := common.GetUserEmail(ctx, &c.authFlags)
 	if err != nil {
@@ -67,16 +66,19 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	earliestCreateTime := earliestActiveLeaseTimestamp()
+	var botIDs []string
 	for _, hostname := range args {
 		correctedHostname := correctedHostname(hostname)
 		id, err := hostnameToBotID(ctx, swarmingService, correctedHostname)
 		if err != nil {
 			return err
 		}
-		err = bbClient.CancelBuildWithBotID(ctx, id, earliestCreateTime, userEmail, c.reason, a.GetOut())
-		if err != nil {
-			return err
-		}
+		botIDs = append(botIDs, id)
+	}
+
+	err = bbClient.CancelBuildsByUser(ctx, a.GetOut(), earliestCreateTime, userEmail, botIDs, c.reason)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -77,8 +77,9 @@ func TestBBTags(t *testing.T) {
 }
 
 var testUnfinishedBuildWithBotIDData = []struct {
-	build      *buildbucketpb.Build
-	wantAnswer bool
+	build                    *buildbucketpb.Build
+	wantAnswerWithIDMatch    bool
+	wantAnswerWithoutIDMatch bool
 }{
 	{ // Scheduled with the matching bot ID requested
 		&buildbucketpb.Build{
@@ -87,11 +88,12 @@ var testUnfinishedBuildWithBotIDData = []struct {
 				Buildbucket: &buildbucketpb.BuildInfra_Buildbucket{
 					RequestedDimensions: []*buildbucketpb.RequestedDimension{
 						{Key: "foo", Value: "bar"},
-						{Key: "id", Value: "matching-id"},
+						{Key: "id", Value: "matching-id1"},
 					},
 				},
 			},
 		},
+		true,
 		true,
 	},
 	{ // Scheduled with a different bot ID requested
@@ -107,6 +109,7 @@ var testUnfinishedBuildWithBotIDData = []struct {
 			},
 		},
 		false,
+		true,
 	},
 	{ // Started with the matching bot ID provisioned
 		&buildbucketpb.Build{
@@ -121,11 +124,12 @@ var testUnfinishedBuildWithBotIDData = []struct {
 				Swarming: &buildbucketpb.BuildInfra_Swarming{
 					BotDimensions: []*buildbucketpb.StringPair{
 						{Key: "foo", Value: "bar"},
-						{Key: "id", Value: "matching-id"},
+						{Key: "id", Value: "matching-id2"},
 					},
 				},
 			},
 		},
+		true,
 		true,
 	},
 	{ // Started with a different bot ID provisioned
@@ -135,7 +139,7 @@ var testUnfinishedBuildWithBotIDData = []struct {
 				Buildbucket: &buildbucketpb.BuildInfra_Buildbucket{
 					RequestedDimensions: []*buildbucketpb.RequestedDimension{
 						{Key: "foo", Value: "bar"},
-						{Key: "id", Value: "matching-id"},
+						{Key: "id", Value: "matching-id1"},
 					},
 				},
 				Swarming: &buildbucketpb.BuildInfra_Swarming{
@@ -147,6 +151,7 @@ var testUnfinishedBuildWithBotIDData = []struct {
 			},
 		},
 		false,
+		true,
 	},
 	{ // Neither scheduled nor started
 		&buildbucketpb.Build{
@@ -155,17 +160,18 @@ var testUnfinishedBuildWithBotIDData = []struct {
 				Buildbucket: &buildbucketpb.BuildInfra_Buildbucket{
 					RequestedDimensions: []*buildbucketpb.RequestedDimension{
 						{Key: "foo", Value: "bar"},
-						{Key: "id", Value: "matching-id"},
+						{Key: "id", Value: "matching-id2"},
 					},
 				},
 				Swarming: &buildbucketpb.BuildInfra_Swarming{
 					BotDimensions: []*buildbucketpb.StringPair{
 						{Key: "foo", Value: "bar"},
-						{Key: "id", Value: "matching-id"},
+						{Key: "id", Value: "matching-id2"},
 					},
 				},
 			},
 		},
+		false,
 		false,
 	},
 }
@@ -175,9 +181,14 @@ func TestUnfinishedBuildWithBotID(t *testing.T) {
 	for _, tt := range testUnfinishedBuildWithBotIDData {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s)", tt.build), func(t *testing.T) {
-			gotAnswer := isUnfinishedBuildWithBotID(tt.build, "matching-id")
-			if tt.wantAnswer != gotAnswer {
-				t.Errorf("unexpected error: wanted %v, got %v", tt.wantAnswer, gotAnswer)
+			idList := []string{"matching-id1", "matching-id2"}
+			gotAnswerWithIDMatch := isUnfinishedBuildWithBotID(tt.build, idList)
+			if tt.wantAnswerWithIDMatch != gotAnswerWithIDMatch {
+				t.Errorf("unexpected error: wanted %v, got %v", tt.wantAnswerWithIDMatch, gotAnswerWithIDMatch)
+			}
+			gotAnswerWithoutIDMatch := isUnfinishedBuildWithBotID(tt.build, nil)
+			if tt.wantAnswerWithoutIDMatch != gotAnswerWithoutIDMatch {
+				t.Errorf("unexpected error: wanted %v, got %v", tt.wantAnswerWithoutIDMatch, gotAnswerWithoutIDMatch)
 			}
 		})
 	}
