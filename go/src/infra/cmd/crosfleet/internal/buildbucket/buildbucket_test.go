@@ -22,8 +22,8 @@ func TestAddServiceVersion(t *testing.T) {
 		"$chromeos/service_version": map[string]interface{}{
 			// Convert to protoreflect.ProtoMessage for easier type comparison.
 			"version": (&test_platform.ServiceVersion{
-				CrosfleetTool: 1,
-				SkylabTool:    1,
+				CrosfleetTool: 3,
+				SkylabTool:    3,
 			}).ProtoReflect().Interface(),
 		},
 	}
