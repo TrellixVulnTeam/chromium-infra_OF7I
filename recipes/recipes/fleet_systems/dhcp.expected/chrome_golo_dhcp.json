@@ -179,32 +179,6 @@
   },
   {
     "cmd": [
-      "luci-auth",
-      "token",
-      "-scopes",
-      "https://www.googleapis.com/auth/cloud-platform",
-      "-lifetime",
-      "3m"
-    ],
-    "infra_step": true,
-    "name": "get access token for default account"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[infra::docker]/resources/docker_login.py",
-      "--server",
-      "gcr.io",
-      "--service-account-token-file",
-      "extra.secret.token.should.not.be.logged",
-      "--config-file",
-      "[CLEANUP]/.docker"
-    ],
-    "name": "docker login"
-  },
-  {
-    "cmd": [
       "cipd",
       "ensure",
       "-root",
@@ -239,7 +213,8 @@
       "-json",
       "-namespace",
       "browser",
-      "-noemit"
+      "-noemit",
+      "test-host"
     ],
     "infra_step": true,
     "name": "get ufs host data",
@@ -263,7 +238,8 @@
       "-json",
       "-namespace",
       "browser",
-      "-noemit"
+      "-noemit",
+      "test-host"
     ],
     "infra_step": true,
     "name": "get ufs vm data",
@@ -278,6 +254,32 @@
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
+  },
+  {
+    "cmd": [
+      "luci-auth",
+      "token",
+      "-scopes",
+      "https://www.googleapis.com/auth/cloud-platform",
+      "-lifetime",
+      "3m"
+    ],
+    "infra_step": true,
+    "name": "get access token for default account"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[infra::docker]/resources/docker_login.py",
+      "--server",
+      "gcr.io",
+      "--service-account-token-file",
+      "extra.secret.token.should.not.be.logged",
+      "--config-file",
+      "[CLEANUP]/.docker"
+    ],
+    "name": "docker login"
   },
   {
     "cmd": [
