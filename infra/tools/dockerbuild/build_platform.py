@@ -299,7 +299,10 @@ def NativePlatforms():
   if sys.platform == 'darwin':
     return [ALL['mac-x64'], ALL['mac-x64-cp38']]
   elif sys.platform == 'win32':
-    return [ALL['windows-x86'], ALL['windows-x64'], ALL['windows-x64-py3']]
+    return [
+        ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
+        ALL['windows-x64-py3']
+    ]
   elif sys.platform == 'linux2':
     # Linux platforms are built with docker, so Linux doesn't support any
     # platforms natively.
