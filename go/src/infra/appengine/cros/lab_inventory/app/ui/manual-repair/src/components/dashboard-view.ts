@@ -15,7 +15,7 @@ import {connect} from 'pwa-helpers';
 import {getManualRepairBaseUrl} from '../shared/helpers/environment-helpers';
 import {formatRecordTimestamp} from '../shared/helpers/repair-record-helpers';
 import {SHARED_STYLES} from '../shared/shared-styles';
-import {prpcClient} from '../state/prpc';
+import {inventoryApiVersion, inventoryClient} from '../state/prpc';
 import {store} from '../state/store';
 
 
@@ -126,9 +126,9 @@ import {store} from '../state/store';
       recordMsg['repair_state'] = 'STATE_COMPLETED';
     }
 
-    let response = await prpcClient
+    let response = await inventoryClient
                        .call(
-                           'inventory.Inventory', 'ListManualRepairRecords',
+                           inventoryApiVersion, 'ListManualRepairRecords',
                            recordMsg, this.user.authHeaders)
                        .then(
                            res => {

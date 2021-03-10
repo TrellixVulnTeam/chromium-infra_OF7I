@@ -17,7 +17,7 @@ import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
 import {filterUndefinedKeys, filterZeroFromSet} from '../../shared/helpers/common-helpers';
-import {checkDeviceType, getAssetTag, getHostname, getRepairTargetType} from '../../shared/helpers/repair-record-helpers';
+import {checkDeviceType, getAssetTag, getBoard, getHostname, getModel, getPhase, getRepairTargetType, getServoAssetTag, getServoType} from '../../shared/helpers/repair-record-helpers';
 import {router} from '../../shared/router';
 import {SHARED_STYLES} from '../../shared/shared-styles';
 import {receiveAppMessage} from '../../state/reducers/message';
@@ -454,36 +454,32 @@ enum FormAction {
           <mwc-textfield
             disabled
             label="Labstation Type (Board)"
-            value="Coming Soon"
+            value="${getBoard(this.deviceInfo)}"
           ></mwc-textfield>
           <mwc-textfield
             disabled
             label="Model"
-            value="${this.deviceInfo.deviceConfig?.id?.modelId?.value}"
+            value="${getModel(this.deviceInfo)}"
           ></mwc-textfield>
           <mwc-textfield
             disabled
             label="Phase"
-            value="${this.deviceInfo.manufacturingConfig?.devicePhase}"
+            value="${getPhase(this.deviceInfo)}"
           ></mwc-textfield>
           ${
-        checkDeviceType(this.deviceInfo) === TYPE_DUT ?
-            html`
+        checkDeviceType(this.deviceInfo) === TYPE_DUT ? html`
             <mwc-textfield
-            disabled
-            label="Servo Asset Tag"
-            value="${
-                this.deviceInfo.labConfig?.dut?.peripherals?.servo
-                    ?.servoSerial}"
+              disabled
+              label="Servo Asset Tag"
+              value="${getServoAssetTag(this.deviceInfo)}"
             ></mwc-textfield>
             <mwc-textfield
               disabled
               label="Servo Type"
-              value="${
-                this.deviceInfo.labConfig?.dut?.peripherals?.servo?.servoType}"
+              value="${getServoType(this.deviceInfo)}"
             ></mwc-textfield>
             ` :
-            null}
+                                                        null}
           <mwc-textfield
             disabled
             helperPersistent

@@ -6,10 +6,12 @@ import '@material/mwc-top-app-bar-fixed';
 import '@material/mwc-icon-button';
 import '@chopsui/chops-signin';
 import '@chopsui/chops-signin-aware/chops-signin-aware';
+
 import {Drawer} from '@material/mwc-drawer';
 import {customElement, html, LitElement} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
+import {oauthClientID} from '../shared/oauth';
 import {SHARED_STYLES} from '../shared/shared-styles';
 import {receiveUser} from '../state/reducers/user';
 import {store} from '../state/store';
@@ -31,7 +33,7 @@ import {store} from '../state/store';
         <h3 slot="title">Manual Repair Records</h3>
         <chops-signin
           slot="actionItems"
-          client-id="974141142451-7804s4o2kugouvi6vndg3pm91jqfmmh1.apps.googleusercontent.com">
+          client-id="${oauthClientID}">
         </chops-signin>
         <chops-signin-aware
           id="csa"

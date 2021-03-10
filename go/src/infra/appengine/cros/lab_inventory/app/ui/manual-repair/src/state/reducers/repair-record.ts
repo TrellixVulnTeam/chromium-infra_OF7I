@@ -5,7 +5,7 @@
 import {Action} from 'redux';
 import {ThunkAction} from 'redux-thunk';
 
-import {prpcClient} from '../prpc';
+import {defaultUfsHeaders, inventoryApiVersion, inventoryClient, ufsApiVersion, ufsClient} from '../prpc';
 import {AppThunk, AppThunkDispatch} from '../store';
 
 import {ApplicationState} from './index';
@@ -89,9 +89,9 @@ export function getRecordInfo(
     ThunkAction<void, ApplicationState, unknown, Action<string>> {
   return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: string} = {'hostname': hostname};
-    return prpcClient
+    return inventoryClient
         .call(
-            'inventory.Inventory', 'GetDeviceManualRepairRecord', recordMsg,
+            inventoryApiVersion, 'GetDeviceManualRepairRecord', recordMsg,
             headers)
         .then(
             res => dispatch(receiveRecordInfo(res)),
@@ -113,13 +113,15 @@ export function getDeviceInfo(
     hostname: string, headers: {[key: string]: string}):
     ThunkAction<void, ApplicationState, unknown, Action<string>> {
   return function(dispatch: AppThunkDispatch) {
-    const deviceMsg: {[key: string]: Array<{[key: string]: string}>} = {
-      'ids': [{'hostname': hostname}]
+    const deviceMsg: {[key: string]: string} = {
+      'hostname': hostname,
     };
-    return prpcClient
-        .call('inventory.Inventory', 'GetCrosDevices', deviceMsg, headers)
+    return ufsClient
+        .call(
+            ufsApiVersion, 'GetChromeOSDeviceData', deviceMsg,
+            Object.assign({}, defaultUfsHeaders, headers))
         .then(
-            res => dispatch(receiveDeviceInfo(res.data?.[0])),
+            res => {dispatch(receiveDeviceInfo(res))},
             err => Promise.all([
               dispatch(receiveDeviceInfoError(err)),
               dispatch(receiveAppMessage(err.description)),
@@ -143,9 +145,9 @@ export function createRepairRecord(
     headers: {[key: string]: string}): AppThunk<Promise<object>> {
   return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: Object} = {'device_repair_record': record};
-    return prpcClient
+    return inventoryClient
         .call(
-            'inventory.Inventory', 'CreateDeviceManualRepairRecord', recordMsg,
+            inventoryApiVersion, 'CreateDeviceManualRepairRecord', recordMsg,
             headers)
         .then(
             res => res,
@@ -179,9 +181,9 @@ export function updateRepairRecord(
       'id': recordId,
       'device_repair_record': record,
     };
-    return prpcClient
+    return inventoryClient
         .call(
-            'inventory.Inventory', 'UpdateDeviceManualRepairRecord', recordMsg,
+            inventoryApiVersion, 'UpdateDeviceManualRepairRecord', recordMsg,
             headers)
         .then(
             res => res,
@@ -229,10 +231,9 @@ export function getRepairHistory(
       'asset_tag': assetTag,
       'limit': -1,
     };
-    return prpcClient
+    return inventoryClient
         .call(
-            'inventory.Inventory', 'ListManualRepairRecords', recordMsg,
-            headers)
+            inventoryApiVersion, 'ListManualRepairRecords', recordMsg, headers)
         .then(
             res => dispatch(receiveRepairHistory(res)),
             err => {

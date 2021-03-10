@@ -14,7 +14,7 @@ import {connect} from 'pwa-helpers';
 import {filterUndefinedKeys, filterZeroFromSet} from '../shared/helpers/common-helpers';
 import {formatRecordTimestamp, getAssetTag, getHostname, getRepairTargetType} from '../shared/helpers/repair-record-helpers';
 import {SHARED_STYLES} from '../shared/shared-styles';
-import {prpcClient} from '../state/prpc';
+import {defaultUfsHeaders, inventoryApiVersion, inventoryClient, ufsApiVersion, ufsClient} from '../state/prpc';
 import {clearAppMessage, receiveAppMessage} from '../state/reducers/message';
 import {store, thunkDispatch} from '../state/store';
 
@@ -192,53 +192,59 @@ import * as repairConst from './repair-form/repair-form-constants';
    * getDevices makes an RPC call with the entered hostnames to get
    * existing datastore device info if any.
    */
-  async getDevices(hostnames: Array<string>) {
-    const ids: Array<{[key: string]: string}> = hostnames.map((h: string) => {
-      return {
-        'hostname': h,
-      };
-    });
-    const deviceMsg: {[key: string]: Array<{[key: string]: string}>} = {
-      'ids': ids,
-    };
+  getDevices(hostnames: Array<string>) {
+    let deviceRequests: Array<any> = [];
+    this.devices = [];
 
-    let response = await prpcClient
-                       .call(
-                           'inventory.Inventory', 'GetCrosDevices', deviceMsg,
-                           this.user.authHeaders)
-                       .then(
-                           res => {
-                             this.devices = res;
-                           },
-                           err => {
-                             throw Error(err.description);
-                           },
-                       );
-    return response;
+    hostnames.forEach(h => {
+      deviceRequests.push(
+          ufsClient
+              .call(
+                  ufsApiVersion, 'GetChromeOSDeviceData', {
+                    'hostname': h,
+                  },
+                  Object.assign({}, defaultUfsHeaders, this.user.authHeaders))
+              .then(
+                  res => {
+                    this.devices.push({
+                      hostname: h,
+                      deviceData: res,
+                    });
+                  },
+                  err => {
+                    this.devices.push({
+                      hostname: h,
+                      deviceData: null,
+                    });
+                    console.error(err.description);
+                  },
+                  ));
+    });
+
+    return deviceRequests;
   }
 
   /**
    * getRecords makes an RPC call with the entered hostnames to get
    * existing datastore repair records if any.
    */
-  async getRecords(hostnames: Array<string>) {
+  getRecords(hostnames: Array<string>) {
     const recordMsg: {[key: string]: any} = {
       'hostnames': hostnames,
     };
 
-    let response = await prpcClient
-                       .call(
-                           'inventory.Inventory', 'BatchGetManualRepairRecords',
-                           recordMsg, this.user.authHeaders)
-                       .then(
-                           res => {
-                             this.repairRecords = res;
-                           },
-                           err => {
-                             throw Error(err.description);
-                           },
-                       );
-    return response;
+    return inventoryClient
+        .call(
+            inventoryApiVersion, 'BatchGetManualRepairRecords', recordMsg,
+            this.user.authHeaders)
+        .then(
+            res => {
+              this.repairRecords = res;
+            },
+            err => {
+              console.error(err.description);
+            },
+        );
   }
 
   /**
@@ -252,9 +258,9 @@ import * as repairConst from './repair-form/repair-form-constants';
     };
 
     let response =
-        await prpcClient
+        await inventoryClient
             .call(
-                'inventory.Inventory', 'BatchCreateManualRepairRecords',
+                inventoryApiVersion, 'BatchCreateManualRepairRecords',
                 recordsMsg, this.user.authHeaders)
             .then(
                 res => {
@@ -285,17 +291,15 @@ import * as repairConst from './repair-form/repair-form-constants';
     });
     this.disableSubmit = false;
 
-    this.devices.data.forEach((device) => {
-      hostsInfo[getHostname(device)]['deviceInfo'] = device;
-    });
+    this.devices.forEach((device) => {
+      hostsInfo[device.hostname]['deviceInfo'] = device.deviceData;
 
-    if ('failedDevices' in this.devices) {
-      this.devices.failedDevices.forEach((failed) => {
-        hostsInfo[failed.hostname]['deviceExists'] = false;
-        hostsInfo[failed.hostname]['readyMsg'] +=
-            'NO: Device does not exist. Device could not be found in Inventory v2.\n';
-      });
-    }
+      if (isEmpty(device.deviceData)) {
+        hostsInfo[device.hostname]['deviceExists'] = false;
+        hostsInfo[device.hostname]['readyMsg'] +=
+            'NO: Device does not exist. Device could not be found in UFS.\n';
+      }
+    });
 
     this.repairRecords.repairRecords.forEach((record) => {
       if ('repairRecord' in record) {
@@ -327,15 +331,17 @@ import * as repairConst from './repair-form/repair-form-constants';
    * host has an open repair record.
    */
   validateHosts() {
-    const devicesPromise = this.getDevices(this.hostnames);
+    const devicesPromises = this.getDevices(this.hostnames);
     const recordsPromise = this.getRecords(this.hostnames);
 
-    Promise
+    return Promise
         .all([
-          devicesPromise,
+          ...devicesPromises,
           recordsPromise,
         ])
-        .then(() => this.processHostsInfo());
+        .then(() => {
+          this.processHostsInfo();
+        });
   }
 
   /**
@@ -595,19 +601,20 @@ import * as repairConst from './repair-form/repair-form-constants';
       });
     } else {
       thunkDispatch(receiveAppMessage(
-          'Please remove or fixed the hosts that are not ready.'));
+          'Please remove or fix the hosts that are not ready.'));
     }
   }
 
   searchKeyboardListener(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       thunkDispatch(clearAppMessage());
+      this.submitting = true;
 
       e.preventDefault();
       if (this.hostnamesInput && this.user.signedIn &&
           !isEmpty(this.user.profile)) {
         this.hostnames = this.splitHostnames();
-        this.validateHosts();
+        this.validateHosts().then(() => this.submitting = false);
         this.submitResults = [];
       } else if (!this.user.signedIn) {
         thunkDispatch(receiveAppMessage('Please sign in to continue!'));

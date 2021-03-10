@@ -18,9 +18,10 @@ import {RepairHistoryList, RepairHistoryRow, rspActions} from '../../components/
 export function checkDeviceType(deviceInfo): string {
   if (isEmpty(deviceInfo)) return TYPE_UNKNOWN;
 
-  if (TYPE_DUT in deviceInfo.labConfig) {
+  if (TYPE_DUT in deviceInfo.labConfig?.chromeosMachineLse?.deviceLse) {
     return TYPE_DUT;
-  } else if (TYPE_LABSTATION in deviceInfo.labConfig) {
+  } else if (
+      TYPE_LABSTATION in deviceInfo.labConfig?.chromeosMachineLse?.deviceLse) {
     return TYPE_LABSTATION;
   }
   return TYPE_UNKNOWN;
@@ -49,13 +50,7 @@ export function getRepairTargetType(deviceInfo): number {
  */
 export function getHostname(deviceInfo): string {
   if (isEmpty(deviceInfo)) return '';
-
-  if (checkDeviceType(deviceInfo) === TYPE_DUT) {
-    return deviceInfo.labConfig?.dut?.hostname;
-  } else if (checkDeviceType(deviceInfo) === TYPE_LABSTATION) {
-    return deviceInfo.labConfig?.labstation?.hostname;
-  }
-  return '';
+  return deviceInfo.labConfig?.hostname;
 }
 
 /**
@@ -65,8 +60,67 @@ export function getHostname(deviceInfo): string {
  * @returns           Asset tag of device.
  */
 export function getAssetTag(deviceInfo): string {
-  return deviceInfo.labConfig?.id?.value;
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.machine?.name;
 }
+
+/**
+ * Parse deviceInfo object and return servo asset tag.
+ *
+ * @param deviceInfo  Device info object received from state.
+ * @returns           Servo asset tag of device.
+ */
+export function getServoAssetTag(deviceInfo): string {
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.labConfig?.chromeosMachineLse?.deviceLse?.dut?.peripherals
+      ?.servo?.servoSerial;
+}
+
+/**
+ * Parse deviceInfo object and return servo type.
+ *
+ * @param deviceInfo  Device info object received from state.
+ * @returns           Servo type of device.
+ */
+export function getServoType(deviceInfo): string {
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.labConfig?.chromeosMachineLse?.deviceLse?.dut?.peripherals
+      ?.servo?.servoType;
+}
+
+/**
+ * Parse deviceInfo object and return model.
+ *
+ * @param deviceInfo  Device info object received from state.
+ * @returns           Model of device.
+ */
+export function getModel(deviceInfo): string {
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.deviceConfig?.id?.modelId?.value;
+}
+
+/**
+ * Parse deviceInfo object and return board.
+ *
+ * @param deviceInfo  Device info object received from state.
+ * @returns           Board of device.
+ */
+export function getBoard(deviceInfo): string {
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.deviceConfig?.id?.platformId?.value;
+}
+
+/**
+ * Parse deviceInfo object and return phase.
+ *
+ * @param deviceInfo  Device info object received from state.
+ * @returns           Phase of device.
+ */
+export function getPhase(deviceInfo): string {
+  if (isEmpty(deviceInfo)) return '';
+  return deviceInfo.manufacturingConfig?.devicePhase;
+}
+
 
 /**
  * Takes a component name and returns the list of repair action strings
