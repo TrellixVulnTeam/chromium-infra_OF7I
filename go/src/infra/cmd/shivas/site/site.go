@@ -174,7 +174,7 @@ var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
 const Major = 7
 
 // Minor is the Minor version number
-const Minor = 0
+const Minor = 1
 
 // Patch is the PAtch version number
 const Patch = 0
