@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 DEPS = [
+  'infra/provenance',
+
   'recipe_engine/archive',
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',

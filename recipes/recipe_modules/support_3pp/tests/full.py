@@ -19,6 +19,10 @@ DEPS = [
   'support_3pp',
 ]
 
+KEY_PATH = ('projects/chops-kms/locations/global/keyRings/'
+            'chrome-official/cryptoKeys/infra-signing-key/'
+            'cryptoKeyVersions/1')
+
 PROPERTIES = {
   'GOOS': Property(),
   'GOARCH': Property(),
@@ -368,6 +372,7 @@ def GenTests(api):
     test = (api.test('integration_test_%s-%s' % (goos, goarch))
       + api.platform(plat_name, 64)  # assume all hosts are 64 bits.
       + api.properties(GOOS=goos, GOARCH=goarch)
+      + api.properties(key_path=KEY_PATH)
       + api.buildbucket.ci_build()
       + api.step_data('find package specs', api.file.glob_paths([
           pkg_repo_path % sep.join(pkg_dir.split('/')) for pkg_dir, _ in pkgs]))
@@ -508,6 +513,7 @@ def GenTests(api):
   '''
   yield (api.test('building-package-failed')
       + api.properties(GOOS='linux', GOARCH='amd64')
+      + api.properties(key_path=KEY_PATH)
       + api.step_data(
           'find package specs',
           api.file.glob_paths(['%s/3pp.pb' % pkg for pkg in ['dep', 'tool']]))
@@ -623,7 +629,8 @@ def GenTests(api):
   upload { pkg_prefix: "tools" }
   '''
   yield (api.test('cross-compile-self-dep') + api.platform('linux', 64) +
-         api.properties(GOOS='linux', GOARCH='arm64') + api.step_data(
+         api.properties(GOOS='linux', GOARCH='arm64')
+         + api.properties(key_path=KEY_PATH) + api.step_data(
              'find package specs',
              api.file.glob_paths(['dir_build_tools/self_dependency/3pp.pb'])) +
          api.step_data(

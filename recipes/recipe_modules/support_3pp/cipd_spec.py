@@ -231,7 +231,7 @@ class CIPDSpec(object):
     self._api.file.move(
       'mv built cipd pkg to cache', tmpfile, local_path)
 
-  def ensure_uploaded(self, latest=False, extra_tags=None):
+  def ensure_uploaded(self, latest=False, extra_tags=None, metadata=None):
     """Uploads, registers and tags the copy of this package we have on the
     local machine to the CIPD server.
 
@@ -239,8 +239,7 @@ class CIPDSpec(object):
       * latest (bool) - If True, will also set the `latest` ref for the package
         we upload.
       * extra_tags (dict) - Extra tags to attach to the package.
-      * force_update (bool) - If True, register the package on the CIPD server,
-        even if it already exists.
+      * metadata (List[Metadata]) - Metadata to attach to the package.
     """
     pkg_path = self.local_pkg_path()
     assert pkg_path
@@ -256,5 +255,6 @@ class CIPDSpec(object):
         self._pkg, self.tag, test_data_tags=(), test_data_refs=())
     except self._api.step.StepFailure:
       self._api.step.active_result.presentation.status = self._api.step.SUCCESS
-      self._api.cipd.register(self._pkg, pkg_path, tags=tags, refs=refs)
+      self._api.cipd.register(self._pkg, pkg_path, tags=tags,
+                              refs=refs, metadata=metadata)
       self._remote_tags = tags

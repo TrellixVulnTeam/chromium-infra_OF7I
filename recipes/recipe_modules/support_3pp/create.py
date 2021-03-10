@@ -7,6 +7,7 @@
 This defines the encapsulating logic for fetching, building, packaging, testing
 and uploading a ResolvedSpec.
 """
+import json
 import re
 
 from . import source
@@ -126,11 +127,33 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
         verify.run_test(api, workdir, spec, cipd_spec)
 
     if not force_build:
+      # Generates BCID attestation for built cipd package.
+      with api.step.nest('attach provenance'):
+        key_path = api.properties.get('key_path')
+        if key_path:
+          provenance_manifest = {
+            'recipe': api.properties.get('recipe'),
+            'exp': 0,
+          }
+          package_hash = api.file.file_hash(cipd_spec.local_pkg_path(),
+                                            test_data='deadbeef')
+          provenance_manifest['subjectHash'] = package_hash
+          temp_dir = api.path.mkdtemp('tmp')
+          manifest_path = temp_dir.join('manifest.json')
+          api.file.write_text('Provenance manifest', manifest_path,
+                              json.dumps(provenance_manifest))
+          provenance_path = temp_dir.join('provenance.attestation')
+          api.provenance.generate(key_path, manifest_path, provenance_path)
+
       with api.step.nest('do upload') as upload_presentation:
         extra_tags = {'3pp_ecosystem_hash': ecosystem_hash}
+        provenance_md = [api.cipd.Metadata(
+            key='provenance',
+            value_from_file=provenance_path)] if api.properties.get(
+                'key_path') else []
         if spec.create_pb.package.alter_version_re:
           extra_tags['real_version'] = version
-        cipd_spec.ensure_uploaded(is_latest, extra_tags)
+        cipd_spec.ensure_uploaded(is_latest, extra_tags, metadata=provenance_md)
 
         # the active_result could be from cipd.describe or cipd.register
         upload_step_result = api.step.active_result
