@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	tricium "infra/tricium/api/v1"
@@ -15,16 +17,19 @@ const (
 )
 
 func TestInclusiveLanguageChecker(t *testing.T) {
-
+	buildDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("error getting current working directory: %v", err)
+	}
 	Convey("Produces no comment for text containing no blocked terms", t, func() {
 		results := &tricium.Data_Results{}
-		checkInclusiveLanguage(okSource, results)
+		checkInclusiveLanguage(filepath.Join(buildDir, okSource), okSource, results)
 		So(results.Comments, ShouldBeNil)
 	})
 
 	Convey("Flags blocked terms in file contents", t, func() {
 		results := &tricium.Data_Results{}
-		checkInclusiveLanguage(okPathNotOkSource, results)
+		checkInclusiveLanguage(filepath.Join(buildDir, okPathNotOkSource), okPathNotOkSource, results)
 		So(results.Comments, ShouldNotBeNil)
 		So(results.Comments[0], ShouldResemble, &tricium.Data_Comment{
 			Category:  "InclusiveLanguageCheck/Warning",
@@ -50,7 +55,7 @@ func TestInclusiveLanguageChecker(t *testing.T) {
 
 	Convey("Flags blocked terms in file names and file contents", t, func() {
 		results := &tricium.Data_Results{}
-		checkInclusiveLanguage(notOkPath, results)
+		checkInclusiveLanguage(filepath.Join(buildDir, notOkPath), notOkPath, results)
 		So(results.Comments, ShouldNotBeNil)
 		So(results.Comments[0], ShouldResemble, &tricium.Data_Comment{
 			Category:  "InclusiveLanguageCheck/Warning",

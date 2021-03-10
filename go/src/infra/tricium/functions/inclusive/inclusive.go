@@ -58,7 +58,7 @@ func main() {
 			log.Printf("Skipping binary file %q.", file.Path)
 			continue
 		}
-		checkInclusiveLanguage(filepath.Join(*inputDir, file.Path), results)
+		checkInclusiveLanguage(filepath.Join(*inputDir, file.Path), file.Path, results)
 	}
 
 	// Write Tricium RESULTS data.
@@ -85,18 +85,18 @@ func findMatches(s string) (ret []match) {
 	return ret
 }
 
-func checkInclusiveLanguage(path string, results *tricium.Data_Results) {
-	for _, m := range findMatches(path) {
-		results.Comments = append(results.Comments, inclusiveLanguageComment(path, path, 0, m.start, m.end))
+func checkInclusiveLanguage(abspath, relpath string, results *tricium.Data_Results) {
+	for _, m := range findMatches(relpath) {
+		results.Comments = append(results.Comments, inclusiveLanguageComment(relpath, relpath, 0, m.start, m.end))
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(abspath)
 	if err != nil {
-		log.Panicf("Failed to open file: %v, path: %s", err, path)
+		log.Panicf("Failed to open file: %v, path: %s", err, abspath)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Panicf("Failed to close file: %v, path: %s", err, path)
+			log.Panicf("Failed to close file: %v, path: %s", err, abspath)
 		}
 	}()
 
@@ -107,7 +107,7 @@ func checkInclusiveLanguage(path string, results *tricium.Data_Results) {
 
 		// Check for non-inclusive terms.
 		for _, m := range findMatches(line) {
-			results.Comments = append(results.Comments, inclusiveLanguageComment(path, line, lineNum, m.start, m.end))
+			results.Comments = append(results.Comments, inclusiveLanguageComment(relpath, line, lineNum, m.start, m.end))
 		}
 		lineNum++
 	}
