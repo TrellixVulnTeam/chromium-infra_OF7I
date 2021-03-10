@@ -22,17 +22,26 @@ DEPS = [
 ]
 
 PROPERTIES = {
-    'source_repo': Property(
-        help='The URL of the repo to be mirrored with submodules'),
-    'target_repo': Property(
-        help='The URL of the mirror repo to be built/maintained'),
-    'extra_submodules': Property(
-        default=[],
-        help='A list of <path>=<url> strings, indicating extra submodules to '
-             'add to the mirror repo.'),
-    'refs': Property(
-        default=['refs/heads/master'],
-        help='A list of refs for which submodules should be added.'),
+    'source_repo':
+        Property(help='The URL of the repo to be mirrored with submodules'),
+    'target_repo':
+        Property(help='The URL of the mirror repo to be built/maintained'),
+    'extra_submodules':
+        Property(
+            default=[],
+            help='A list of <path>=<url> strings, indicating extra submodules '
+            'to add to the mirror repo.'),
+    'refs':
+        Property(
+            default=['refs/heads/master'],
+            help='A list of refs for which submodules should be added.'),
+    'overlays':
+        Property(
+            default=[],
+            help='A list of DEPS prefixes to be included as submodules to the '
+            'mirror repo. Prefix is stripped from DEPS path. Example: '
+            'if DEPS contains foo/bar=baz.git and overlay is foo, then the '
+            'mirror repo will have submodule baz.git in path bar.'),
 }
 
 COMMIT_USERNAME = 'Submodules bot'
@@ -42,7 +51,7 @@ COMMIT_EMAIL_ADDRESS = \
 SHA1_RE = re.compile(r'[0-9a-fA-F]{40}')
 
 
-def RunSteps(api, source_repo, target_repo, extra_submodules, refs):
+def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
   _, source_project = api.gitiles.parse_repo_url(source_repo)
 
   # NOTE: This name must match the definition in cr-buildbucket.cfg. Do not
@@ -115,7 +124,7 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs):
         deps[path] = {'url': url, 'rev': 'master'}
 
       update_index_entries, gitmodules_entries = GetSubmodules(
-          api, deps, source_checkout_name)
+          api, deps, source_checkout_name, overlays)
 
       # This adds submodule entries to the index without cloning the underlying
       # repository.
@@ -161,7 +170,7 @@ def RefToRemoteRef(ref):
   return ref
 
 
-def GetSubmodules(api, deps, source_checkout_name):
+def GetSubmodules(api, deps, source_checkout_name, overlays):
   gitmodules_entries = []
   update_index_entries = []
   for path, entry in deps.iteritems():
@@ -170,14 +179,6 @@ def GetSubmodules(api, deps, source_checkout_name):
     if rev is None:
       rev = 'HEAD'
 
-    # Filter out any DEPS that point outside of the repo, as there's no way to
-    # represent this with submodules.
-    #
-    # Note that source_checkout_name has a slash on the end, so this will
-    # correctly filter out any path which has the checkout name as a prefix.
-    # For example, src-internal in the src DEPS file.
-    if not path.startswith(source_checkout_name):
-      continue
     # Filter out the root repo itself, which shows up for some reason.
     if path == source_checkout_name:
       continue
@@ -187,8 +188,24 @@ def GetSubmodules(api, deps, source_checkout_name):
            for other_path in deps.iterkeys()):
       continue
 
-    # json.loads returns unicode but the recipe framework can only handle str.
-    path = str(path[len(source_checkout_name):])
+    # Filter out any DEPS that point outside of the repo, as there's no way to
+    # represent this with submodules, unless they are in overlays.
+    #
+    # Note that source_checkout_name has a slash on the end, so this will
+    # correctly filter out any path which has the checkout name as a prefix.
+    # For example, src-internal in the src DEPS file.
+    if not path.startswith(source_checkout_name):
+      should_include = False
+      for overlay in overlays:
+        if path.startswith(overlay) and path != overlay:
+          should_include = True
+          path = str(path[len(overlay.rstrip('/')) + 1:])
+          break
+      if not should_include:
+        continue
+    else:
+      # json.loads returns unicode but the recipe framework can only handle str.
+      path = str(path[len(source_checkout_name):])
 
     path = path.rstrip('/')
 
@@ -262,8 +279,12 @@ fake_src_deps = """
     "rev": "13a00f110ef910a25763346d6538b60f12845656"
   },
   "src-internal": {
-    "url": "https://chromi-internal.googlesource.com/chrome/src-internal.git",
+    "url": "https://chrome-internal.googlesource.com/chrome/src-internal.git",
     "rev": "34b7d6a218430e7ff716b81854743a30cfbd3967"
+  },
+  "tooling/some_tooling_repo": {
+    "url": "https://chrome-internal.googlesource.com/some_tooling_repo.git",
+    "rev": "0000000000000000000000000000000000000000"
   },
   "src/": {
     "url": "https://chromium.googlesource.com/chromium/src.git",
@@ -571,3 +592,23 @@ def GenTests(api):
           'Process refs/branch-heads/4044.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
+
+  yield (api.test('overlays') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+      overlays=['tooling']) +
+         api.step_data('Check for existing source checkout dir',
+                       api.raw_io.stream_output('src', stream='stdout')) +
+         api.step_data(
+             'Process refs/heads/master.'
+             'Check for new commits.Find latest commit to target repo',
+             api.json.output({
+                 'log': [{
+                     'commit': 'a' * 40,
+                     'author': {
+                         'name': 'Someone else'
+                     },
+                 },]
+             })) + api.step_data(
+                 'Process refs/heads/master.gclient evaluate DEPS',
+                 api.raw_io.stream_output(fake_src_deps, stream='stdout')))

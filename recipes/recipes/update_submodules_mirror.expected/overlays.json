@@ -125,26 +125,12 @@
   {
     "cmd": [
       "git",
-      "ls-remote",
-      "https://extra.googlesource.com/extra",
-      "master"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "Process refs/heads/master.git ls-remote",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
       "update-index",
       "--add",
       "--cacheinfo",
-      "160000,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,extra",
-      "--cacheinfo",
       "160000,4ad2459561d76217c9b7aff412c5c086b491078a,v8",
+      "--cacheinfo",
+      "160000,0000000000000000000000000000000000000000,some_tooling_repo",
       "--cacheinfo",
       "160000,13a00f110ef910a25763346d6538b60f12845656,buildtools"
     ],
@@ -163,19 +149,19 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[submodule \"extra\"]\n\tpath = extra\n\turl = https://extra.googlesource.com/extra\n[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
+      "[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"some_tooling_repo\"]\n\tpath = some_tooling_repo\n\turl = https://chrome-internal.googlesource.com/some_tooling_repo.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
       "[CACHE]/codesearch_update_submodules_mirror/src/.gitmodules"
     ],
     "infra_step": true,
     "name": "Process refs/heads/master.Write .gitmodules file",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@[submodule \"extra\"]@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@\tpath = extra@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@\turl = https://extra.googlesource.com/extra@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"v8\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = v8@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/v8/v8.git@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@[submodule \"some_tooling_repo\"]@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@\tpath = some_tooling_repo@@@",
+      "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chrome-internal.googlesource.com/some_tooling_repo.git@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"buildtools\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = buildtools@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/chromium/buildtools.git@@@",
