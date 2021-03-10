@@ -862,6 +862,7 @@ SPECS.update({
         Universal('smmap2', '2.0.3'),
         Universal('soupsieve', '1.9.5'),
         Universal('tempora', '1.11'),
+        Universal('tf-agents', '0.7.1', pyversions=['py3']),
         Universal('toml', '0.10.1', pyversions=['py3']),
         Universal('typing', '3.6.4'),
         Universal('uritemplate', '3.0.0'),

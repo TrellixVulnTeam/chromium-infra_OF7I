@@ -4675,6 +4675,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+## **tf-agents**
+
+### 0.7.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tf-agents-py2_py3"
+  version: "version:0.7.1"
+>
+```
+
+
+* *universal*
+
 ## **tlslite**
 
 ### 0.4.9
