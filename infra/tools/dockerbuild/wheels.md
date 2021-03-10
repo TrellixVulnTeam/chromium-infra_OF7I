@@ -1164,7 +1164,6 @@ wheel: <
 * *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
-* *windows-x86-py3*
 
 ### 2.9.2
 
@@ -1218,6 +1217,7 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 * *windows-x64*
+* *windows-x64-py3*
 * *windows-x86*
 * *windows-x86-py3*
 
@@ -4690,13 +4690,13 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
-## **tf-agents**
+## **tf-agents-py3**
 
 ### 0.7.1
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/tf-agents-py2_py3"
+  name: "infra/python/wheels/tf-agents-py3"
   version: "version:0.7.1"
 >
 ```

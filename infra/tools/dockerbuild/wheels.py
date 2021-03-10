@@ -938,7 +938,10 @@ SPECS.update({
             '2.6.1',
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
-            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3'],
+            skip_plat=[
+                'mac-x64-cp38', 'linux-arm64-py3', 'windows-x86-py3',
+                'windows-x64-py3'
+            ],
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
             'cryptography',
@@ -955,8 +958,10 @@ SPECS.update({
             '3.3.1',
             openssl='1.1.1i',
             pyversions=['py2', 'py3'],
-            skip_plat=['windows-x64-py3'],
-            packaged=['windows-x86', 'windows-x64'],
+            packaged=[
+                'windows-x86', 'windows-x86-py3', 'windows-x64',
+                'windows-x64-py3'
+            ],
         ),
     )
 })
