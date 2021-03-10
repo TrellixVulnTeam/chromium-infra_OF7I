@@ -753,6 +753,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ## **beautifulsoup4**
 
@@ -935,6 +936,7 @@ wheel: <
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
 * *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **chardet**
 
@@ -1162,6 +1164,7 @@ wheel: <
 * *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
+* *windows-x86-py3*
 
 ### 2.9.2
 
@@ -1189,6 +1192,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ### 3.3.1
 
@@ -1215,6 +1219,7 @@ wheel: <
 * *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
+* *windows-x86-py3*
 
 ## **debugpy**
 
@@ -2020,6 +2025,7 @@ wheel: <
 * *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
+* *windows-x86-py3*
 
 ### 1.0.0
 
@@ -2047,6 +2053,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ## **grpc-google-iam-admin-v1**
 
@@ -2387,6 +2394,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ### 1.4.3
 
@@ -2401,6 +2409,7 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **libusb1**
 
@@ -2843,6 +2852,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x86-py3*
 
 ## **oauth2client**
 
@@ -2996,6 +3006,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *windows-x86-py3*
 
 ## **parameterized**
 
@@ -3097,6 +3108,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ## **pbr**
 
@@ -3505,6 +3517,7 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
 
 ### 5.7.2
 
@@ -3520,6 +3533,7 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **py**
 
@@ -3890,6 +3904,7 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *windows-x86-py3*
 
 ## **pyobjc**
 

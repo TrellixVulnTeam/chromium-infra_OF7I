@@ -252,6 +252,18 @@ ALL = {
             env={},
         ),
         Platform(
+            name='windows-x86-py3',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp38',
+            wheel_plat=('win32',),
+            dockcross_base=None,
+            openssl_target='Cygwin-x86',
+            packaged=True,
+            cipd_platform='windows-386',
+            env={},
+        ),
+        Platform(
             name='windows-x64',
             manylinux_name=None,
             cross_triple='',
