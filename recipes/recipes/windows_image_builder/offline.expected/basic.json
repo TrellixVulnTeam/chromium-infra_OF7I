@@ -1,0 +1,13 @@
+[
+  {
+    "cmd": [],
+    "name": "read user config",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@read user config@succeed@@@",
+      "@@@STEP_LOG_END@read user config@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

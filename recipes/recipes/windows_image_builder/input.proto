@@ -1,0 +1,13 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.windows_image_builder.input;
+
+// Input properties recognized by 'windows_image_builder/offline' recipe.
+message Inputs {
+  // config path for checkout, e.g. "configs/win10-image/generated/win10_2013_x64.cfg".
+  string config_path = 1;
+}
