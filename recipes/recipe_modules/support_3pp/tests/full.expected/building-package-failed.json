@@ -369,7 +369,7 @@
       "git",
       "fetch",
       "origin",
-      "hash",
+      "master",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/pkg/dep/linux-amd64/1.5.0-rc1/checkout",
@@ -2119,7 +2119,7 @@
       "git",
       "fetch",
       "origin",
-      "hash",
+      "master",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/checkout",

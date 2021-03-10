@@ -407,20 +407,27 @@ message CipdSource {
 // $_3PP_VERSION environment variable is not present.
 //
 // If this version needs to be fetched, the script will be invoked as
-// `script checkout </abs/path/to/checkout>`. The checkout directory will
-// exist and be empty.
+// `script get_url` and is expected to print to stdout a json string of
+// the download manifest. For example:
+//   {
+//     "url": ["https://some_url/foo_1.2.3.zip"],
+//     "ext": ".zip", # optional when the extension is ".tar.gz",
+//                    # ignored when "name" is present
+//     "name": ["foo.zip"]
+//   }
 message ScriptSource {
   // (required) Name (and args) of a script adjacent to 3pp.pb.
   //
-  // For example if this is `["fetch.py", "url"]`, then the recipe will
+  // For example if this is `["fetch.py", "foo"]`, then the recipe will
   // do:
   //
   //   $ cd /nowhere/in/particular
-  //   $ python /path/to/repo/subdir/package_name/fetch.py url latest
+  //   $ python /path/to/repo/subdir/package_name/fetch.py foo latest
   //   1.2.3
   //   $ _3PP_VERSION=1.2.3 python \
-  //     /path/to/repo/subdir/package_name/fetch.py url checkout \
+  //     /path/to/repo/subdir/package_name/fetch.py foo get_url \
   //     /path/to/checkout
+  //   {"url": ["https://some_url/foo_1.2.3.zip"], "ext": ".zip"}'
   repeated string name = 1;
   // TODO(akashmukherjee): Remove this field after complete migration.
   // (optional) Boolean to use new downloader workflow.
@@ -430,6 +437,20 @@ message ScriptSource {
   // the artifact.
   //
   bool use_fetch_raw_workflow = 1001;
+  // TODO(crbug.com/1185395): Implement a permanent solution for this flow.
+  // (optional) Boolean to use fetch scripts to download artifacts.
+  //
+  // If present, the recipe will use fetch scripts to download artifacts via
+  // calling the "checkout" option.
+  //
+  // By reusing the same example above, the recipe will do:
+  //   $ cd /nowhere/in/particular
+  //   $ python /path/to/repo/subdir/package_name/fetch.py foo latest
+  //   1.2.3
+  //   $ _3PP_VERSION=1.2.3 python \
+  //     /path/to/repo/subdir/package_name/fetch.py foo checkout \
+  //     /path/to/checkout
+  bool use_fetch_checkout_workflow = 1002;
 }
 
 // This will provide a original download url to fetch sources from third party.

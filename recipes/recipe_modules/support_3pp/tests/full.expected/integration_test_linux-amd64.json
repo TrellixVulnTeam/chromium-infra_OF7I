@@ -54,6 +54,7 @@
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_fetch/fetch_and_package/3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_tools/already_uploaded/3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_tools/pkg/3pp.pb@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_tools/pkg_checkout/3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_tools/posix_tool/3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_tools/windows_experiment/3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/unsupported/3pp.pb@@@",
@@ -672,6 +673,61 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
+      "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/3pp.pb",
+      "/path/to/tmp/"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.read 'dir_tools/pkg_checkout/3pp.pb'",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    source { script {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      name: \"fetch.py\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      use_fetch_checkout_workflow: true@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      tool: \"build_tools/tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      dep:  \"deps/dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  upload { pkg_prefix: \"tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "../[CACHE]/builder/package_repo/dir_tools/pkg_checkout"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.Compute hash for 'tools/pkg_checkout'",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
       "[CACHE]/builder/package_repo/dir_tools/posix_tool/3pp.pb",
       "/path/to/tmp/"
     ],
@@ -1080,7 +1136,7 @@
       "git",
       "fetch",
       "origin",
-      "hash",
+      "master",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/deps/bottom_dep_git/linux-amd64/1.5.0-rc1/checkout",
@@ -1756,7 +1812,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -2438,7 +2494,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -2899,7 +2955,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -3561,7 +3617,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -4292,7 +4348,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -5026,7 +5082,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -5341,7 +5397,7 @@
       "git",
       "fetch",
       "origin",
-      "hash",
+      "master",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
@@ -6307,7 +6363,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -7531,7 +7587,7 @@
       "pkg-register",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -8327,7 +8383,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -9298,7 +9354,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:09bf399824ec55f467ffb664b9fe2fd53a922c66a348be85166c236dea13ed26",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -9328,6 +9384,942 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
+      "latest"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "name": "building tools/pkg_checkout.fetch.py latest",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@resolved version: 2.0.0@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/tools/pkg_checkout/linux-amd64",
+      "-version",
+      "version:2.0.0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "name": "building tools/pkg_checkout.cipd describe 3pp/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.mkdir -p [workdir]",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.fetch sources",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.fetch sources.installing tools",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-root",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.fetch sources.installing deps",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-root",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/deps_prefix",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[CACHE]/3pp_cipd/3pp/deps/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-root",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/deps_prefix",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.mkdir -p [workdir]/checkout/",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/sources/script/tools/pkg_checkout/linux-amd64",
+      "-version",
+      "version:2.0.0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.cipd describe 3pp/sources/script/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
+      "checkout",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.fetch.py checkout [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg_checkout/linux-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout\"}",
+      "-out",
+      "[CLEANUP]/tmp_tmp_33",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.build 3pp/sources/script/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/script/tools/pkg_checkout/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/3pp/sources/script/tools/pkg_checkout/linux-amd64"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.ensure cipd pkg cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_33",
+      "[CACHE]/3pp_cipd/3pp/sources/script/tools/pkg_checkout/linux-amd64/40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.mv built cipd pkg to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/sources/script/tools/pkg_checkout/linux-amd64",
+      "-version",
+      "version:2.0.0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CACHE]/3pp_cipd/3pp/sources/script/tools/pkg_checkout/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-tag",
+      "build_id:8945511751514863184",
+      "-tag",
+      "version:2.0.0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.fetch sources.upload source to cipd.register 3pp/sources/script/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/script/tools/pkg_checkout/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/sources/script/tools/pkg_checkout/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/sources/script/tools/pkg_checkout/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_deps/bottom_dep_git",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/deps/bottom_dep_git"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/bottom_dep_git",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_deps/bottom_dep_url",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/deps/bottom_dep_url"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/bottom_dep_url",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_deps/deep_dep",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/deps/deep_dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/deep_dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_build_tools/tool",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/build_tools/tool"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition build_tools/tool",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_deps/dep",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/deps/dep"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]/builder/package_repo/dir_tools/pkg_checkout",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/tools/pkg_checkout"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.fetch sources.copy package definition tools/pkg_checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.run installation",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/out"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.run installation.make output dir",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython",
+      "-u",
+      "-m",
+      "infra.tools.dockerbuild",
+      "--logs-debug",
+      "run",
+      "--platform",
+      "manylinux-x64",
+      "--workdir",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0",
+      "--env-prefix",
+      "PATH",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix",
+      "--env-prefix",
+      "PATH",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix/bin",
+      "--env",
+      "_3PP_CIPD_PACKAGE_NAME",
+      "tools/pkg_checkout",
+      "--env",
+      "_3PP_TOOL_PLATFORM",
+      "linux-amd64",
+      "--env",
+      "GOOS",
+      "linux",
+      "--env",
+      "_3PP_VERSION",
+      "2.0.0",
+      "--env",
+      "GOARCH",
+      "amd64",
+      "--env",
+      "_3PP_PLATFORM",
+      "linux-amd64",
+      "--",
+      "bash",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout/.3pp/tools/pkg_checkout/install.sh",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/out",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/deps_prefix"
+    ],
+    "cwd": "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "PYTHONPATH": "RECIPE_REPO[infra]",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix",
+        "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix/bin"
+      ]
+    },
+    "name": "building tools/pkg_checkout.run installation.install.sh [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/out [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/deps_prefix",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg_checkout/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/out\"}",
+      "-out",
+      "[CLEANUP]/tmp_tmp_34",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.build 3pp/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/pkg_checkout/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/3pp/tools/pkg_checkout/linux-amd64"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.ensure cipd pkg cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_34",
+      "[CACHE]/3pp_cipd/3pp/tools/pkg_checkout/linux-amd64/40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.mv built cipd pkg to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.attach provenance",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]/3pp_cipd/3pp/tools/pkg_checkout/linux-amd64/40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.attach provenance.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "[CLEANUP]/tmp_tmp_35/manifest.json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_checkout.attach provenance.Provenance manifest",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_END@manifest.json@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/provenance/provenance",
+      "generate",
+      "-input",
+      "[CLEANUP]/tmp_tmp_35/manifest.json",
+      "-output",
+      "[CLEANUP]/tmp_tmp_35/provenance.attestation",
+      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.attach provenance.generate",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_checkout.do upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LINK@40-chars-fake-of-the-package-instance_id@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg_checkout/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/tools/pkg_checkout/linux-amd64",
+      "-version",
+      "version:2.0.0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.do upload.cipd describe 3pp/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CACHE]/3pp_cipd/3pp/tools/pkg_checkout/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-ref",
+      "latest",
+      "-tag",
+      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "-tag",
+      "build_id:8945511751514863184",
+      "-tag",
+      "version:2.0.0",
+      "-metadata-from-file",
+      "provenance:[CLEANUP]/tmp_tmp_35/provenance.attestation",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "name": "building tools/pkg_checkout.do upload.register 3pp/tools/pkg_checkout/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/pkg_checkout/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/tools/pkg_checkout/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg_checkout/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

@@ -286,6 +286,7 @@ class Manifest(object):
     * source_uri (required) - Remote artifact resource location(s) URL/URI.
         source_uri is a list of str.
     * path - Dictates where to download the sources to, e.g. checkout dir.
+    * protocol_args (list(str)) - A list of str to be passed to protocol.
     * source_hash (str) - source_hash returned from resolved version. This is
       external hash of the GitSource.
     * ext - Extension used for downloading sources.
@@ -299,12 +300,14 @@ class Manifest(object):
                protocol,
                source_uri,
                path,
+               protocol_args=None,
                source_hash=None,
                ext=None,
                artifact_names=None):
     self.protocol = protocol
     self.source_uri = source_uri
     self.path = path
+    self.protocol_args = protocol_args or []
     self.source_hash = source_hash
     self.ext = ext
     self.artifact_names = artifact_names
@@ -336,30 +339,35 @@ def _generate_download_manifest(api, spec, checkout_dir,
                     checkout_dir, ext=source_method_pb.extension or '.tar.gz')
 
   elif method_name == 'script':
-    # version is already in env as $_3PP_VERSION
     script = spec.pkg_dir.join(source_method_pb.name[0])
-    args = map(str, source_method_pb.name[1:]) + ['get_url']
-    result = run_script(
-        api,
-        script,
-        *args,
-        stdout=api.json.output(),
-        step_test_data=lambda: api.json.test_api.output_stream({
-            'url': ['https://some.internet.example.com/%s' % (
-                spec.cipd_pkg_name,)],
-            'ext': '.test',
-            'name': ['test_source']
-        }))
-    source_uri, ext = result.stdout['url'], result.stdout['ext']
-    # Setting source artifact name is optional, used by `pip_bootstrap`.
-    artifact_names = result.stdout.get('name')
-    # Verify source_uri and artifact_names are equal length, if present.
-    if artifact_names:
-      assert len(source_uri) == len(
-          artifact_names
-      ), 'Number of download URLs should be equal to number of artifacts.'
-    return Manifest(
-        'url', source_uri, checkout_dir, ext=ext, artifact_names=artifact_names)
+    if source_method_pb.use_fetch_checkout_workflow:
+      # version is already in env as $_3PP_VERSION
+      script_args = map(str, source_method_pb.name[1:]) + ['checkout']
+      return Manifest('script', script, checkout_dir, protocol_args=script_args)
+    else:
+      # version is already in env as $_3PP_VERSION
+      args = map(str, source_method_pb.name[1:]) + ['get_url']
+      result = run_script(
+          api,
+          script,
+          *args,
+          stdout=api.json.output(),
+          step_test_data=lambda: api.json.test_api.output_stream({
+              'url': ['https://some.internet.example.com/%s' % (
+                  spec.cipd_pkg_name,)],
+              'ext': '.test',
+              'name': ['test_source']
+          }))
+      source_uri, ext = result.stdout['url'], result.stdout['ext']
+      # Setting source artifact name is optional, used by `pip_bootstrap`.
+      artifact_names = result.stdout.get('name')
+      # Verify source_uri and artifact_names are equal length, if present.
+      if artifact_names:
+        assert len(source_uri) == len(
+            artifact_names
+        ), 'Number of download URLs should be equal to number of artifacts.'
+      return Manifest('url', source_uri, checkout_dir,
+                      ext=ext, artifact_names=artifact_names)
 
   else:  # pragma: no cover
     assert False, 'Unknown source type %r' % (method_name,)
@@ -384,6 +392,10 @@ def _download_source(api, download_manifest):
       else:  # pragma: no cover
         artifact = download_manifest.artifact_names[i]
       api.url.get_file(uri, api.path.join(download_manifest.path, artifact))
+  elif download_manifest.protocol == 'script':
+    script = download_manifest.source_uri
+    args = download_manifest.protocol_args + [download_manifest.path]
+    run_script(api, script, *args)
   else:  # pragma: no cover
     assert False, 'Unknown download protocol  %r' % (protocol,)
 

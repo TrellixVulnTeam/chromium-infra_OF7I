@@ -287,6 +287,20 @@ def GenTests(api):
   upload { pkg_prefix: "tools" }
   '''
 
+  pkgs_dict['dir_tools/pkg_checkout'] = '''
+  create {
+    source { script {
+      name: "fetch.py"
+      use_fetch_checkout_workflow: true
+    } }
+    build {
+      tool: "build_tools/tool"
+      dep:  "deps/dep"
+    }
+  }
+  upload { pkg_prefix: "tools" }
+  '''
+
   pkgs_dict['unsupported'] = '''
   create { unsupported: true }
   '''
