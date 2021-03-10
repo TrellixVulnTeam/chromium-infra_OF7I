@@ -328,7 +328,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'numpy',
             '1.19.2',
-            skip_plat=['mac-x64-cp38', 'windows-x64-py3'],
+            skip_plat=['mac-x64-cp38', 'windows-x86-py3', 'windows-x64-py3'],
             packaged=[],
             pyversions=['py3'],
         ),
@@ -336,7 +336,7 @@ SPECS.update({
             'pandas',
             '1.1.3',
             packaged=[],
-            skip_plat=['mac-x64-cp38', 'windows-x64-py3'],
+            skip_plat=['mac-x64-cp38', 'windows-x86-py3', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -408,7 +408,10 @@ SPECS.update({
             'pynacl',
             '1.2.1',
             packaged=(),
-            skip_plat=['mac-x64-cp38', 'linux-arm64-py3', 'windows-x64-py3'],
+            skip_plat=[
+                'mac-x64-cp38', 'linux-arm64-py3', 'windows-x86-py3',
+                'windows-x64-py3'
+            ],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(

@@ -2852,7 +2852,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
-* *windows-x86-py3*
 
 ## **oauth2client**
 
@@ -3006,7 +3005,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
-* *windows-x86-py3*
 
 ## **parameterized**
 
@@ -3904,7 +3902,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
-* *windows-x86-py3*
 
 ## **pyobjc**
 
