@@ -8,6 +8,8 @@
 Intended to be used from a PRESUBMIT check.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import subprocess
 import sys
@@ -57,7 +59,7 @@ def mk_checker(*tool_name):
         retcode = proc.returncode or 1
 
     for err in found_errs:
-      print err
+      print(err)
     return retcode
   return _inner
 
@@ -74,11 +76,11 @@ def gofmt_main(verbose, filestream):
         stderr=subprocess.PIPE)
     out, err = proc.communicate()
     if proc.returncode:
-      print err,
+      print(err, end=' ')
       return False
     if out:
       if verbose:
-        print out,
+        print(out, end=' ')
       return False
     return True
 
@@ -88,22 +90,22 @@ def gofmt_main(verbose, filestream):
       bad.append(fpath)
   if bad:
     root = WORKSPACE_ROOT.rstrip(os.sep) + os.sep
-    print 'Badly formated Go files:'
+    print('Badly formated Go files:')
     for p in bad:
       if p.startswith(root):
         p = p[len(root):]
-      print '  %s' % p
-    print
-    print 'Consider running \'gofmt -s -w /path/to/infra\''
+      print('  %s' % p)
+    print()
+    print('Consider running \'gofmt -s -w /path/to/infra\'')
   return 0 if not bad else 1
 
 
 def show_help():
-  print 'Usage: check.py [--verbose] <tool>'
-  print 'List of file paths to operate is read from stdin.'
-  print 'Available tools:'
+  print('Usage: check.py [--verbose] <tool>')
+  print('List of file paths to operate is read from stdin.')
+  print('Available tools:')
   for x in TOOL_FUNC:
-    print "  *", x
+    print("  *", x)
   sys.exit(1)
 
 

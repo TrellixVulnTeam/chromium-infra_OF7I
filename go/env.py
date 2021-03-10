@@ -13,6 +13,8 @@ Or it can be used to wrap a command:
 $ ./env.py go version
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 assert __name__ == '__main__'
 
 import imp
@@ -51,14 +53,14 @@ if sys.platform == 'win32':
   def emit_env_var(key, value):
     # TODO: The quoting here is probably insufficient for all corner cases.
     # We strip "'" because cmd.exe doesn't like it in PATH for some reason.
-    print 'set %s=%s' % (key, pipes.quote(value).strip("'"))
+    print('set %s=%s' % (key, pipes.quote(value).strip("'")))
 else:
   def emit_env_var(key, value):
     orig_value, value = value, _escape_special(value)
     # We will only use the $'...' notation if there was an escaped character
     # in the string.
-    print 'export %s=%s%s' % (key, ('$') if orig_value != value else (''),
-                              pipes.quote(value))
+    print('export %s=%s%s' % (key, ('$') if orig_value != value else
+                              (''), pipes.quote(value)))
 
 
 def main():
@@ -85,11 +87,11 @@ def main():
     if 'VIRTUAL_ENV' in old:
       emit_env_var('VIRTUAL_ENV', old['VIRTUAL_ENV'])
     if sys.platform != 'win32' and sys.stdout.isatty():
-      print
-      print '# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-      print '# WRAP THIS COMMAND IN "eval" TO HAVE AN EFFECT!'
-      print '#    eval `./env.py`'
-      print '# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      print()
+      print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+      print('# WRAP THIS COMMAND IN "eval" TO HAVE AN EFFECT!')
+      print('#    eval `./env.py`')
+      print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
   else:
     exe = args[0]
     if exe == 'python':

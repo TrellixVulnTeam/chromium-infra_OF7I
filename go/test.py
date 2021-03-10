@@ -18,6 +18,8 @@ By default runs all tests for infra/*.
 # This file once had a much more complicated implementation that verified code
 # coverage and allowed skipping tests per platform.
 
+from __future__ import absolute_import
+from __future__ import print_function
 import errno
 import os
 import subprocess
@@ -56,8 +58,8 @@ def run_tests(package_root):
     0 if all tests pass..
   """
   if not check_go_available():
-    print 'Can\'t find Go executable in PATH.'
-    print 'Use ./env.py python test.py'
+    print('Can\'t find Go executable in PATH.')
+    print('Use ./env.py python test.py')
     return 1
   clean_go_bin()
   proc = subprocess.Popen(['go', 'test', '%s/...' % package_root])
@@ -71,7 +73,7 @@ def main(args):
   elif len(args) == 1:
     package_root = args[0]
   else:
-    print >> sys.stderr, sys.modules['__main__'].__doc__.strip()
+    print(sys.modules['__main__'].__doc__.strip(), file=sys.stderr)
     return 1
   return run_tests(package_root)
 

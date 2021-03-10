@@ -10,6 +10,8 @@
 - Fetches code dependencies via deps.py.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import argparse
 import collections
 import contextlib
@@ -595,7 +597,7 @@ def bootstrap(layout, logging_level, args=None):
       separators=(',', ': '))
 
   if json_output == '-':
-    print json_blob
+    print(json_blob)
   elif json_output:
     with open(json_output, 'w') as f:
       f.write(json_blob)

@@ -5,6 +5,8 @@
 
 """Checks go package imports to ensure they're not too wacky."""
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import subprocess
 import sys
@@ -155,7 +157,7 @@ def main():
   lines += check_only_allowlisted_deps()
 
   for l in lines:
-    print l
+    print(l)
 
   if lines:
     sys.exit(1)

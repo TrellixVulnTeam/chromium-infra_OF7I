@@ -8,6 +8,8 @@
 It wraps env.py, runs `gomobile init`, and adds mobile-specific env vars.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 assert __name__ == '__main__'
 
 import os
@@ -74,10 +76,10 @@ if 'android' in old.get('GOOS', ''):
 cwd = os.path.dirname(os.path.realpath(__file__))
 if len(sys.argv) == 1:
   cmd = [sys.executable, 'env.py']
-  print subprocess.check_output(cmd, env=new, cwd=cwd).strip()
+  print(subprocess.check_output(cmd, env=new, cwd=cwd).strip())
   for key, value in sorted(new.iteritems()):
     if old.get(key) != value:
-      print 'export %s=%s' % (key, pipes.quote(value))
+      print('export %s=%s' % (key, pipes.quote(value)))
 else:
   cmd = [sys.executable, 'env.py']
   cmd.extend(sys.argv[1:])

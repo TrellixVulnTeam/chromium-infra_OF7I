@@ -28,6 +28,8 @@ To remove a temptation to use "glide update" directly (it won't work as
 expected), we rename glide.yaml and glide.lock into deps.yaml and deps.lock.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import argparse
 import collections
 import contextlib
@@ -185,19 +187,19 @@ def compare_deps(before, after):
 
   new_deps = flatten_after - flatten_before
   if new_deps:
-    print '-'*74
-    print 'Dependencies added to deps.lock:'
+    print('-' * 74)
+    print('Dependencies added to deps.lock:')
     for p in sorted(new_deps):
-      print '  * %s' % p
-    print '-'*74
+      print('  * %s' % p)
+    print('-' * 74)
 
   rem_deps = flatten_before - flatten_after
   if rem_deps:
-    print '-'*74
-    print 'Dependencies removed from deps.lock:'
+    print('-' * 74)
+    print('Dependencies removed from deps.lock:')
     for p in sorted(rem_deps):
-      print '  * %s' % p
-    print '-'*74
+      print('  * %s' % p)
+    print('-' * 74)
 
   # Package name => mirror repo URL (usually on *.googlesource.com) or '' if
   # no mirror defines.
@@ -215,20 +217,21 @@ def compare_deps(before, after):
       bumps.append((pkg, rev_before[pkg], rev))
   bumps.sort()
   if bumps:
-    print '-'*74
-    print 'Updated repos:'
+    print('-' * 74)
+    print('Updated repos:')
     gs = [v for v in bumps if is_googlesource(mirrors[v[0]])]
     rest = [v for v in bumps if not is_googlesource(mirrors[v[0]])]
     for pkg, sha1_before, sha1_after in gs:
-      print '%s/+log/%s..%s' % (mirrors[pkg], sha1_before[:12], sha1_after[:12])
+      print('%s/+log/%s..%s' %
+            (mirrors[pkg], sha1_before[:12], sha1_after[:12]))
     for pkg, sha1_before, sha1_after in rest:
-      print '%s: %s -> %s' % (pkg, sha1_before, sha1_after)
-    print '-'*74
-    print
+      print('%s: %s -> %s' % (pkg, sha1_before, sha1_after))
+    print('-' * 74)
+    print()
     print (
         'IMPORTANT: Please include the above updated repos report in the '
         'commit message.')
-    print
+    print()
 
   # Print a list of packages that need git mirrors. All of them do, so it just
   # prints a list of packages without 'repo' field set.
@@ -239,7 +242,7 @@ def compare_deps(before, after):
       bad_ones.append(pkg)
   if bad_ones:
     bad_ones.sort(key=lambda p: p['name'])
-    print BANNER_START
+    print(BANNER_START)
     print (
         'Some packages that have been added to deps.yaml directly or pulled\n'
         'as transitive dependencies of packages specified in deps.yaml don\'t\n'
@@ -247,29 +250,28 @@ def compare_deps(before, after):
         'dependencies directly from source-of-truth repos. This is usually\n'
         'a bad idea. We\'d have to update deps.yaml with information about\n'
         'the mirrors.')
-    print
+    print()
     print (
         'First setup the following git mirrors (you may need to file an\n'
         '"Infra-Git" ticket to do that):')
     for p in bad_ones:
-      print '  * https://chromium.googlesource.com/external/%s.git' % p['name']
-    print
+      print('  * https://chromium.googlesource.com/external/%s.git' % p['name'])
+    print()
     print (
         'Once all mirrors are up, make sure deps.yaml has the following\n'
         'records (by putting them there or modifying existing ones) and\n'
         'rerun "deps.py update" again:')
-    print
+    print()
     for p in bad_ones:
-      print '- package: %s' % p['name']
-      print (
-          '  repo: https://chromium.googlesource.com/external/%s.git' %
-          p['name'])
-      print '  version: master'
+      print('- package: %s' % p['name'])
+      print(('  repo: https://chromium.googlesource.com/external/%s.git' %
+             p['name']))
+      print('  version: master')
       if p.get('subpackages'):
-        print '  subpackages:'
+        print('  subpackages:')
         for subpkg in p['subpackages']:
-          print '  - %s' % subpkg
-    print BANNER_END
+          print('  - %s' % subpkg)
+    print(BANNER_END)
 
   # Did 'after' change in a meaningful way? Glide likes to touch 'updated' field
   # no matter what. We ignore it when comparing deps.
@@ -321,7 +323,7 @@ def unhack_vendor(workspace):
     deps_after = yaml.safe_load(lock_after)
 
     if compare_deps(deps_before, deps_after):
-      print 'Run "deps.py install" to reinstall dependencies when ready.'
+      print('Run "deps.py install" to reinstall dependencies when ready.')
     else:
       # No changes? Just put glide.lock back as it was, since new glide.lock
       # differs only in not very useful 'updated' timestamp field.
@@ -342,14 +344,15 @@ def unhack_vendor(workspace):
     if os.path.exists(applied_lock):
       os.remove(applied_lock)
 
-    print >> sys.stderr, BANNER_START
-    print >> sys.stderr, (
-        '%s was probably left in an inconsistent state!\n' % (
-            workspace.vendor_root,))
-    print >> sys.stderr, (
-        'You may want to remove it completely and build it again by running\n'
-        '"deps.py install".')
-    print >> sys.stderr, BANNER_END
+    print(BANNER_START, file=sys.stderr)
+    print(('%s was probably left in an inconsistent state!\n' %
+           (workspace.vendor_root,)),
+          file=sys.stderr)
+    print(
+        ('You may want to remove it completely and build it again by running\n'
+         '"deps.py install".'),
+        file=sys.stderr)
+    print(BANNER_END, file=sys.stderr)
     raise
 
   finally:
@@ -506,7 +509,7 @@ def purify_directory(root, path):
     elif not is_source_or_license(rel_path):
       os.remove(full_path)
     else:
-      os.chmod(full_path, 0444)
+      os.chmod(full_path, 0o444)
       has_files = True
   return has_files
 
@@ -628,11 +631,11 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
   pkg = workspace.deps_cipd_pkg
   ver = get_bundle_ver(required)
   if not skip_bundle:
-    print 'Searching for a bundle with dependencies in CIPD...'
-    print 'CIPD package: %s' % get_cipd_pkg_url(pkg, ver)
+    print('Searching for a bundle with dependencies in CIPD...')
+    print('CIPD package: %s' % get_cipd_pkg_url(pkg, ver))
     use_bundle = is_existing_bundle(workspace, pkg, ver)
     if not use_bundle:
-      print 'Not found, falling back to using "glide install".'
+      print('Not found, falling back to using "glide install".')
 
   if use_bundle:
     # Don't retry, cipd does retries itself.
@@ -641,7 +644,7 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
       ret = cipd(workspace, ['ensure', '-ensure-file', tmp, '-root',
                               workspace.vendor_root])
     if ret:
-      print 'Failed to install dependencies from the bundle. See logs.'
+      print('Failed to install dependencies from the bundle. See logs.')
       return ret
 
     # Double check we've got what we requested.
@@ -662,15 +665,14 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
         except CallFailed as e:
           if retry < GLIDE_INSTALL_RETRIES - 1:
             delay = 2 ** retry
-            print(
-                'Failed to install dependencies. Deleting Glide cache and '
-                'retrying after %d sec.' % delay)
+            print(('Failed to install dependencies. Deleting Glide cache and '
+                   'retrying after %d sec.' % delay))
             obliterate_glide_cache(workspace)
             time.sleep(delay)
           else:
             raise e
     # Remove all garbage, we need only non-test source code to use dependencies.
-    print 'Removing non-source code files...'
+    print('Removing non-source code files...')
     purify_directory(os.path.join(workspace.vendor_root, 'src'), '')
 
   # We will install only interesting subset of executables below. Nuke
@@ -686,11 +688,11 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
     pkg_path = os.path.join(
         workspace.vendor_root, 'src', pkg.replace('/', os.sep))
     if not os.path.isdir(pkg_path):
-      print 'No Go package for vendored tool [%s] at: %s' % (pkg, pkg_path)
+      print('No Go package for vendored tool [%s] at: %s' % (pkg, pkg_path))
       continue
     to_install.append(pkg)
 
-  print 'Rebuilding tools...'
+  print('Rebuilding tools...')
   call(workspace, 'go', ['install', '-v'] + to_install)
 
   # Put a marker file that indicates we successfully installed all deps.
@@ -718,7 +720,7 @@ def update(workspace):
       deps_after = yaml.safe_load(read_file(lock_path))
       if deps == deps_after:
         break
-      print 'One more time...'
+      print('One more time...')
       deps = deps_after
   return 0
 
@@ -762,14 +764,14 @@ def bundle(workspace, out_file=None):
 
   pkg = workspace.deps_cipd_pkg
   ver = get_bundle_ver(lock_file)
-  print 'CIPD package: %s' % get_cipd_pkg_url(workspace.deps_cipd_pkg, ver)
+  print('CIPD package: %s' % get_cipd_pkg_url(workspace.deps_cipd_pkg, ver))
 
   if not out_file:
-    print 'Checking whether the bundle is already uploaded...'
+    print('Checking whether the bundle is already uploaded...')
     if is_existing_bundle(workspace, pkg, ver):
-      print 'Yep, no need to upload it.'
+      print('Yep, no need to upload it.')
       return 0
-    print 'Nope. Uploading it...'
+    print('Nope. Uploading it...')
 
   # Make sure we have all deps installed for git.
   if install(workspace, force=True, skip_bundle=True):
@@ -802,10 +804,10 @@ def bundle(workspace, out_file=None):
       cmd = ['create', '-pkg-def', tmp, '-tag', ver, '-ref', 'latest']
     cmd.extend(['-hash-algo', 'sha256'])
     if cipd(workspace, cmd):
-      print 'FAILED! See logs.'
+      print('FAILED! See logs.')
       return 1
 
-  print 'Done!'
+  print('Done!')
   return 0
 
 
@@ -881,7 +883,7 @@ def main(args):
       return bundle(workspace, opts.to_file)
     assert False, 'Unreachable'
   except CallFailed as exc:
-    print >> sys.stderr, str(exc)
+    print(str(exc), file=sys.stderr)
     return 1
 
 
