@@ -90,7 +90,7 @@ def GoCheckers(input_api, output_api):
     return []
   stdin = '\n'.join(affected_files)
 
-  tool_names = ['gofmt', 'govet', 'golint']
+  tool_names = ['gofmt', 'govet']
   ret = []
   for tool_name in tool_names:
     cmd = [
