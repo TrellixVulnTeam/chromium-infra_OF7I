@@ -1,11 +1,13 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -21,9 +23,9 @@ var macAddress = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`)
 // return anything as required by https://cloud.google.com/pubsub/docs/push,
 // this is because by default the return is 200 OK for http POST requests.
 // It does return a http error if the datastore update fails.
-func HaRTPushHandler(context *router.Context) {
-	ctx := context.Context
-	res, err := util.NewPSRequest(context.Request)
+func HaRTPushHandler(routerContext *router.Context) {
+	ctx := routerContext.Context
+	res, err := util.NewPSRequest(routerContext.Request)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to read push req %v", err)
 		return
@@ -46,22 +48,29 @@ func HaRTPushHandler(context *router.Context) {
 		allinfo := response.GetAssets()
 		logging.Infof(ctx, "Updating %v assets", len(allinfo))
 		assetsToUpdate := make([]*ufspb.Asset, 0, len(allinfo))
-		for _, iv2assetinfo := range allinfo {
-			ufsAsset, err := registration.GetAsset(ctx, iv2assetinfo.GetAssetTag())
-			if err != nil {
-				logging.Warningf(ctx, "Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
-				continue
+
+		f := func(ctx context.Context) error {
+			for _, iv2assetinfo := range allinfo {
+				ufsAsset, err := registration.GetAsset(ctx, iv2assetinfo.GetAssetTag())
+				if err != nil {
+					logging.Warningf(ctx, "Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
+					continue
+				}
+				if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
+					logging.Debugf(ctx, "Updating %v", ufsAsset.GetName())
+					ufsAsset.Info = info
+					assetsToUpdate = append(assetsToUpdate, ufsAsset)
+				}
 			}
-			if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
-				logging.Debugf(ctx, "Updating %v", ufsAsset.GetName())
-				ufsAsset.Info = info
-				assetsToUpdate = append(assetsToUpdate, ufsAsset)
+			if _, err = registration.BatchUpdateAssets(ctx, assetsToUpdate); err != nil {
+				// Return http err if we fail to update.
+				http.Error(routerContext.Writer, "Internal server error", http.StatusInternalServerError)
+				return err
 			}
+			return nil
 		}
-		if _, err = registration.BatchUpdateAssets(ctx, assetsToUpdate); err != nil {
-			// Return http err if we fail to update.
-			http.Error(context.Writer, "Internal server error", http.StatusInternalServerError)
-			logging.Warningf(ctx, "Failed to update assets %v", err)
+		if datastore.RunInTransaction(ctx, f, nil); err != nil {
+			logging.Errorf(ctx, "Failed to update assets %v", err)
 		}
 	}
 	logging.Debugf(ctx, "Status: %v", response.GetRequestStatus())
@@ -77,6 +86,9 @@ func HaRTPushHandler(context *router.Context) {
 // from hartAssetInfo if any of these were updated.
 func updateAssetInfoFromHart(ufsAssetInfo, hartAssetInfo *ufspb.AssetInfo) *ufspb.AssetInfo {
 	var updated bool
+	if ufsAssetInfo == nil {
+		ufsAssetInfo = &ufspb.AssetInfo{}
+	}
 	if ufsAssetInfo.GetCostCenter() != hartAssetInfo.GetCostCenter() {
 		updated = true
 		// Update CostCenter if it's changed
