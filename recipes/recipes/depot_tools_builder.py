@@ -31,13 +31,13 @@ def RunSteps(api):
   api.step('mkdir depot_tools', ['mkdir', api.path['checkout']])
 
   with api.step.nest('clone + checkout'):
-    api.git('clone', '--single-branch', '-n', REPO_URL, api.path['checkout'])
+    api.git('clone', '-n', REPO_URL, api.path['checkout'])
     api.step.active_result.presentation.properties['got_revision'] = (
         api.buildbucket.gitiles_commit.id)
     api.git('config', 'core.autocrlf', 'false', name='set autocrlf')
     api.git('config', 'core.filemode', 'false', name='set filemode')
     api.git('config', 'core.symlinks', 'false', name='set symlinks')
-    api.git('checkout', 'origin/master')
+    api.git('checkout', 'origin/main')
     api.git('reset', '--hard', api.buildbucket.gitiles_commit.id)
     api.git('reflog', 'expire', '--all')
     api.git('gc', '--aggressive', '--prune=all')
