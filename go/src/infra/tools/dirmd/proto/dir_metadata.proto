@@ -20,8 +20,10 @@ option go_package = "infra/tools/dirmd/proto;dirmdpb";
 message Metadata {
   // The directory to inherit results from. Valid values:
   // *   empty string, which means the parent directory. This is the default.
-  // *   a root-relative path, e.g. "components/autofill" for
-  //     https://source.chromium.org/chromium/chromium/src/+/master:components/autofill/
+  // *   a source-absolute path. The root is specified via -root flag, so it is
+  //     not necessarily the repo root (it is for chromium/src though).
+  //     Example: "//components/autofill" for
+  //     https://source.chromium.org/chromium/chromium/src/+/HEAD:components/autofill/
   //     Note: paths relative to DIR_METADATA file are not supported.
   // *   "-" means do not inherit from anything.
   //     This is equivalent to "set noparent" in OWNERS files.
