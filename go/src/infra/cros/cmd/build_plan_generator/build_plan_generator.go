@@ -246,8 +246,9 @@ func (c *checkBuild) fetchConfigFromGitiles() (*fetchConfigResult, error) {
 	if err := proto.Unmarshal([]byte((*m)[builderConfigsPath]), builderConfigs); err != nil {
 		return nil, fmt.Errorf("Couldn't decode %s as a BuilderConfigs\n%v", (*m)[builderConfigsPath], err)
 	}
-	log.Printf("Fetched config from Gitiles:\n%s\n\n%s\n\n%s",
-		proto.MarshalTextString(buildIrrelevanceConfig), proto.MarshalTextString(targetTestRequirementsConfig), proto.MarshalTextString(builderConfigs))
+	// It can be useful to log these when debugging, but they currently add >6 MB of text to the logging
+	// log.Printf("Fetched config from Gitiles:\n%s\n\n%s\n\n%s",
+	//	proto.MarshalTextString(buildIrrelevanceConfig), proto.MarshalTextString(targetTestRequirementsConfig), proto.MarshalTextString(builderConfigs))
 	return &fetchConfigResult{
 		buildIrrelevanceCfg: buildIrrelevanceConfig,
 		slimBuildCfg:        slimBuildConfig,
