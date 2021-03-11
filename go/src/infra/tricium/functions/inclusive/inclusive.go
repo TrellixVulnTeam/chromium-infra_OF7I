@@ -30,8 +30,8 @@ var (
 		"slave":     "replica",
 	}
 	commentText = map[string]string{
-		"blacklist": "Nit: Please avoid 'blacklist'. Suggested replacements include 'blocklist' and 'denylilst'. Reach out to community@chromium.org if you have questions.",
-		"whitelist": "Nit: Please avoid 'whitelist'. Suggested replacements include 'allowlist' and 'safelilst'. Reach out to community@chromium.org if you have questions.",
+		"blacklist": "Nit: Please avoid 'blacklist'. Suggested replacements include 'blocklist' and 'denylist'. Reach out to community@chromium.org if you have questions.",
+		"whitelist": "Nit: Please avoid 'whitelist'. Suggested replacements include 'allowlist' and 'safelist'. Reach out to community@chromium.org if you have questions.",
 		"master":    "Nit: Please avoid 'master'. Suggested replacements include 'main' and 'primary' and 'producer'. Reach out to community@chromium.org if you have questions.",
 		"slave":     "Nit: Please avoid 'slave'. Suggested replacements include 'replica' and 'secondary' and 'consumer'. Reach out to community@chromium.org if you have questions.",
 	}
