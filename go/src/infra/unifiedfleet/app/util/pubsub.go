@@ -1,9 +1,17 @@
 package util
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+
+	"cloud.google.com/go/pubsub"
+	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/common/errors"
+
+	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/config"
 )
 
 // PSRequest helps to unmarshall json data sent from pubsub
@@ -34,4 +42,53 @@ func (p *PSRequest) DecodeMessage() ([]byte, error) {
 		return data, err
 	}
 	return nil, err
+}
+
+// PublishHaRTAssetInfoRequest sends a request for asset info update for given assets
+func PublishHaRTAssetInfoRequest(ctx context.Context, assets []string) (err error) {
+	// Create a pubsub topic for publish to HaRT for update
+	conf := config.Get(ctx).GetHart()
+	batchSize := int(conf.GetBatchSize()) // Convert uint32 to int.
+	if batchSize == 0 {
+		return errors.Reason("PublishHaRTAssetInfoRequest - batch_size cannot be 0. Set correct configuration").Err()
+	}
+	proj := conf.GetProject()
+	topic := conf.GetTopic()
+	client, err := pubsub.NewClient(ctx, proj)
+	var top *pubsub.Topic
+	if err != nil {
+		return errors.Annotate(err, "PublishHaRTAssetInfoRequest - Failed to publish asset info update request to %s", proj).Err()
+	}
+	// Return resources at the end of request
+	defer client.Close()
+
+	top = client.Topic(topic)
+	// Topic's publish methods creates a few go routines. Call stop before returning.
+	defer top.Stop()
+
+	for i := 0; i < len(assets); i += batchSize {
+		msg := &ufspb.AssetInfoRequest{}
+		if (i + batchSize) <= len(assets) {
+			msg.AssetTags = assets[i : i+batchSize]
+		} else {
+			msg.AssetTags = assets[i:]
+		}
+		data, e := proto.Marshal(msg)
+		if e != nil {
+			// Append error messages to a single error.
+			err = errors.Annotate(err, "Failed to marshal message %v: %v", msg, e.Error()).Err()
+			continue
+		}
+		result := top.Publish(ctx, &pubsub.Message{
+			Data: data,
+		})
+		// Wait until the transaction is completed
+		s, e := result.Get(ctx)
+		if e != nil {
+			// Append error messages to a single error.
+			err = errors.Annotate(err, "PubSub req %v failed: %s", s, e.Error()).Err()
+			continue
+		}
+	}
+	return
 }

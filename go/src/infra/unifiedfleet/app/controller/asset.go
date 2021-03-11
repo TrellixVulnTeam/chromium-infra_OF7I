@@ -25,8 +25,8 @@ import (
 
 // AssetRegistration registers the given asset to the datastore after validation
 func AssetRegistration(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, error) {
+
 	hc := &HistoryClient{}
-	var err error
 	f := func(ctx context.Context) error {
 		if err := validateAssetRegistration(ctx, asset); err != nil {
 			return err
@@ -44,10 +44,16 @@ func AssetRegistration(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, e
 		hc.LogAssetChanges(nil, asset)
 		return hc.SaveChangeEvents(ctx)
 	}
-	if err = datastore.RunInTransaction(ctx, f, nil); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "AddAsset - unable to update asset %s", asset.GetName()).Err()
 	}
-	return asset, err
+	// On successful update to datastore, make an asset info request.
+	herr := util.PublishHaRTAssetInfoRequest(ctx, []string{asset.GetName()})
+	if herr != nil {
+		// Don't return this error. Cron job will eventually get to update this.
+		logging.Warningf(ctx, "AssetRegistration - Faild to publish request for asset info to HaRT. %v", herr)
+	}
+	return asset, nil
 }
 
 // UpdateAsset updates the asset record to the datastore after validation

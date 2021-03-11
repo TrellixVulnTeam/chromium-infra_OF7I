@@ -13,6 +13,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/config"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
@@ -63,6 +64,12 @@ func mockAssetInfo(serialNumber, costCenter, googleCodeName, model, buildTarget,
 func TestAssetRegistration(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	// Set values to HaRT config. Else the tests trigger a request and wait for response. Timing out eventually
+	config.Get(ctx).Hart = &config.PubSub{
+		Project:   "nonexistent-testing-project",
+		Topic:     "vertical migration of zooplankton",
+		BatchSize: 0,
+	}
 	Convey("Testing AssetRegistration", t, func() {
 		Convey("Register asset with existing rack", func() {
 			r := mockRack("chromeos6-row2-rack3", "2", ufspb.Zone_ZONE_CHROMEOS6)
