@@ -1068,7 +1068,7 @@ func (c *updateDUT) updateDUTToUFS(ctx context.Context, ic ufsAPI.FleetClient, r
 		return err
 	}
 	// Print existing LSE before update.
-	if err := utils.PrintExistingHost(ctx, ic, req.MachineLSE.GetName()); err != nil {
+	if err := utils.PrintExistingDUT(ctx, ic, req.MachineLSE.GetName()); err != nil {
 		return err
 	}
 	req.MachineLSE.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, req.MachineLSE.Name)

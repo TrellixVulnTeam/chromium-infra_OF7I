@@ -455,7 +455,7 @@ func (c *updateLabstation) updateLabstationToUFS(ctx context.Context, ic ufsAPI.
 		return err
 	}
 	// Print existing LSE before update.
-	if err := utils.PrintExistingHost(ctx, ic, req.MachineLSE.GetName()); err != nil {
+	if err := utils.PrintExistingDUT(ctx, ic, req.MachineLSE.GetName()); err != nil {
 		return err
 	}
 	req.MachineLSE.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, req.MachineLSE.Name)

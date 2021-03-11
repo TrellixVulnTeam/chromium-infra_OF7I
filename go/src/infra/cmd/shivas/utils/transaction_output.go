@@ -168,6 +168,23 @@ func PrintExistingHost(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	return nil
 }
 
+// PrintExistingDUT prints the old host in update/delete operations
+func PrintExistingDUT(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+	res, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get DUT").Err()
+	}
+	if res == nil {
+		return errors.Reason("The returned resp is empty").Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The DUT before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return nil
+}
+
 // PrintExistingVM prints the old vm in update/delete operations
 func PrintExistingVM(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
 	res, err := ic.GetVM(ctx, &ufsAPI.GetVMRequest{
