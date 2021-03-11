@@ -1,0 +1,95 @@
+{
+	"gerritChanges": [
+		{
+			"serializedProto": "CiBjaHJvbWl1bS1yZXZpZXcuZ29vZ2xlc291cmNlLmNvbRIeY2hyb21pdW1vcy9wbGF0Zm9ybS90YXN0LXRlc3RzGNHebSAB"
+		}
+	],
+	"gitiles_commit": {
+		"serializedProto": "CiBjaHJvbWUtaW50ZXJuYWwuZ29vZ2xlc291cmNlLmNvbRIaY2hyb21lb3MvbWFuaWZlc3QtaW50ZXJuYWwaKDg2NmUyYTMxMzI0MWJmNmVkOTMxMTQ4ZWQ0M2VhMTIyMzVhNGZiYzU="
+	},
+	"manifestCommit": "866e2a313241bf6ed931148ed43ea12235a4fbc5",
+	"builderConfigs": [
+		{
+			"id": {
+				"name": "amd64-generic-bisect",
+				"branch": "main",
+				"type": "POSTSUBMIT"
+			},
+			"general": {
+				"critical": true,
+				"environment": "PRODUCTION",
+				"runWhen": {
+					"mode": "ONLY_RUN_ON_FILE_MATCH",
+					"filePatterns": [
+						"src/project/dedede/boten/sw_build_config/**"
+					]
+				}
+			},
+			"artifacts": {
+				"prebuilts": "PUBLIC",
+				"artifactTypes": [
+					"IMAGE_ZIP",
+					"EBUILD_LOGS",
+					"CPE_REPORT"
+				]
+			},
+			"chrome": {},
+			"build": {
+				"installPackages": {
+					"runSpec": "RUN_EXIT"
+				}
+			},
+			"unitTests": {
+				"ebuildsRunSpec": "RUN"
+			}
+		},
+		{
+			"id": {
+				"name": "amd64-generic-cq",
+				"branch": "main",
+				"type": "CQ"
+			},
+			"general": {
+				"critical": true,
+				"environment": "PRODUCTION",
+				"runWhen": {
+					"mode": "ALWAYS_RUN"
+				}
+			},
+			"artifacts": {
+				"prebuilts": "NONE",
+				"artifactTypes": [
+					"IMAGE_ZIP",
+					"AUTOTEST_FILES",
+					"TAST_FILES",
+					"PINNED_GUEST_IMAGES",
+					"EBUILD_LOGS",
+					"TEST_UPDATE_PAYLOAD"
+				],
+				"artifactsGsBucket": "chromeos-image-archive"
+			},
+			"chrome": {},
+			"build": {
+				"buildImages": {
+					"imageTypes": [
+						"TEST",
+						"TEST_VM"
+					]
+				},
+				"installPackages": {
+					"runSpec": "RUN"
+				},
+				"applyGerritChanges": true
+			},
+			"unitTests": {
+				"packageBlacklist": [
+					{
+						"packageName": "chromite",
+						"category": "chromeos-base"
+					}
+				],
+				"ebuildsRunSpec": "RUN"
+			}
+		}
+	]
+}

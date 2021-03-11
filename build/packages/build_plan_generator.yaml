@@ -1,0 +1,10 @@
+package: chromiumos/infra/build_plan_generator/${platform}
+description: Used by CI orchestrator builds to plan work.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/build_plan_generator
+root: ../../go/bin
+data:
+  - file: build_plan_generator${exe_suffix}
+  - version_file: .versions/build_plan_generator${exe_suffix}.cipd_version
