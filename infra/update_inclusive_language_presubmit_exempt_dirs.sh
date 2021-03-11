@@ -4,8 +4,9 @@
 # found in the LICENSE file.
 
 # Produce a list of directories that contain files with instances of
-# non-inclusive language (e.g. whitelist, blacklist, master, slave). Each line
-# is formatted: <path> <instance count across files> <distinct file count>
+# non-inclusive language (e.g. whitelist, blacklist, master, slave). // nocheck
+# Each line is formatted:
+# <path> <instance count across files> <distinct file count>
 # (separated by spaces). The counts are not recursive, so they do not sum up
 # values from child directories, only files directly in the listed path.
 #
@@ -27,7 +28,9 @@
 # instance, you should run this from the parent of the current directory
 # rather than from this directory.
 
-git grep -c -E '\b((black|white)list|master|slave)\b' | \
+NON_INCLUSIVE_TERMS='\b((black|white)list|master|slave)\b' # // nocheck
+
+git grep -c -E $NON_INCLUSIVE_TERMS | \
   awk -F ":" 'NF {cmd=sprintf("dirname %s",$1);cmd | getline dirname; \
   a[dirname] += $2; b[dirname] += 1} END {for (i in a) print i, a[i], b[i]}' \
   | sort

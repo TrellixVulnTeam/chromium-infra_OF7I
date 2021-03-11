@@ -250,7 +250,6 @@ go/src/infra/unifiedfleet 1 1
 go/src/infra/unifiedfleet/app/config 1 1
 go/src/infra/unifiedfleet/app/controller 1 1
 go/src/infra/unifiedfleet/app/util/osutil 1 1
-infra 2 1
 infra/config 4 2
 infra/config/generated 104 6
 infra/config/lib 1 1
