@@ -537,7 +537,7 @@ func (c *updateDUT) parseMCSV() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 }
 
 func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.MachineLSE, *field_mask.FieldMask, error) {
-	var name, servo, servoSerial, servoSetup, servoFwChannel, rpmHost, rpmOutlet string
+	var name, servo, servoSerial, servoSetup, rpmHost, rpmOutlet string
 	var pools, machines []string
 	if recMap != nil {
 		// CSV map. Assign all the params to the variables.
@@ -628,11 +628,8 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 		}
 	}
 
-	if c.servoFwChannel != "" {
-		servoFwChannel = appendServoFwChannelPrefix(c.servoFwChannel)
-	}
 	// Create and assign servo and corresponding masks.
-	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel)
+	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial, c.servoFwChannel)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -844,8 +841,7 @@ func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string
 	}
 
 	newServo := &chromeosLab.Servo{}
-	// Clear servo_type and servo_topology before deploying. Specifying path only assigns default empty values.
-	paths := []string{servoTypePath, servoTopologyPath}
+	var paths []string
 	// Check and update servo port.
 	if servoPort != int32(0) {
 		paths = append(paths, servoPortPath)
@@ -873,6 +869,11 @@ func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string
 		paths = append(paths, servoHostPath)
 		newServo.ServoHostname = servoHost
 	}
+	if servoHost != "" || servoSerial != "" || servoSetup != "" || servoPort != int32(0) {
+		// Clear servo_type and servo_topology before deploying. Specifying path only assigns default empty values.
+		paths = append(paths, servoTypePath, servoTopologyPath)
+	}
+
 	return newServo, paths, nil
 }
 
