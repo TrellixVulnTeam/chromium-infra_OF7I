@@ -5,10 +5,8 @@ import (
 	"regexp"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
-	"google.golang.org/protobuf/testing/protocmp"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/model/registration"
@@ -54,9 +52,9 @@ func HaRTPushHandler(context *router.Context) {
 				logging.Warningf(ctx, "Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
 				continue
 			}
-			if !compare(ufsAsset.GetInfo(), iv2assetinfo) {
-				logging.Infof(ctx, "Updating %v", ufsAsset.GetName())
-				ufsAsset.Info = iv2assetinfo
+			if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
+				logging.Debugf(ctx, "Updating %v", ufsAsset.GetName())
+				ufsAsset.Info = info
 				assetsToUpdate = append(assetsToUpdate, ufsAsset)
 			}
 		}
@@ -66,15 +64,52 @@ func HaRTPushHandler(context *router.Context) {
 			logging.Warningf(ctx, "Failed to update assets %v", err)
 		}
 	}
-	logging.Infof(ctx, "Status: %v", response.GetRequestStatus())
+	logging.Debugf(ctx, "Status: %v", response.GetRequestStatus())
 	missing := response.GetMissingAssetTags()
-	logging.Infof(ctx, "Missing[%v]: %v", len(missing), missing)
+	logging.Debugf(ctx, "Missing[%v]: %v", len(missing), missing)
 	failed := response.GetFailedAssetTags()
-	logging.Infof(ctx, "Failed[%v]: %v", len(failed), failed)
-	logging.Infof(ctx, "Success reported for %v assets", len(response.GetAssets()))
+	logging.Debugf(ctx, "Failed[%v]: %v", len(failed), failed)
+	logging.Debugf(ctx, "Success reported for %v assets", len(response.GetAssets()))
 	return
 }
 
-func compare(iv2assetinfo, ufsassetinfo *ufspb.AssetInfo) bool {
-	return cmp.Equal(iv2assetinfo, ufsassetinfo, protocmp.Transform())
+// updateAssetInfoFromHart copies cost_center, google_code_name, model, build_target, reference_board and phase
+// from hartAssetInfo if any of these were updated.
+func updateAssetInfoFromHart(ufsAssetInfo, hartAssetInfo *ufspb.AssetInfo) *ufspb.AssetInfo {
+	var updated bool
+	if ufsAssetInfo.GetCostCenter() != hartAssetInfo.GetCostCenter() {
+		updated = true
+		// Update CostCenter if it's changed
+		ufsAssetInfo.CostCenter = hartAssetInfo.GetCostCenter()
+	}
+	if ufsAssetInfo.GetGoogleCodeName() != hartAssetInfo.GetGoogleCodeName() {
+		updated = true
+		// Update GoogleCodeName if it's changed
+		ufsAssetInfo.GoogleCodeName = hartAssetInfo.GetGoogleCodeName()
+	}
+	if ufsAssetInfo.GetModel() != hartAssetInfo.GetModel() {
+		updated = true
+		// Update Model if it's changed
+		ufsAssetInfo.Model = hartAssetInfo.GetModel()
+	}
+	if ufsAssetInfo.GetBuildTarget() != hartAssetInfo.GetBuildTarget() {
+		updated = true
+		// Update BuildTarget if it's changed
+		ufsAssetInfo.BuildTarget = hartAssetInfo.GetBuildTarget()
+	}
+	if ufsAssetInfo.GetReferenceBoard() != hartAssetInfo.GetReferenceBoard() {
+		updated = true
+		// Update ReferenceBoard if it's changed
+		ufsAssetInfo.ReferenceBoard = hartAssetInfo.GetReferenceBoard()
+	}
+	if ufsAssetInfo.GetPhase() != hartAssetInfo.GetPhase() {
+		updated = true
+		// Update Phase if it's changed
+		ufsAssetInfo.Phase = hartAssetInfo.GetPhase()
+	}
+	// Avoid write to DB if nothing was updated
+	if updated {
+		return ufsAssetInfo
+	}
+	return nil
 }
