@@ -1,0 +1,10 @@
+package: chromiumos/infra/pointless_build_checker/${platform}
+description: Used by CI orchestrator builds to identify pointless builds.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/pointless_build_checker
+root: ../../go/bin
+data:
+  - file: pointless_build_checker${exe_suffix}
+  - version_file: .versions/pointless_build_checker${exe_suffix}.cipd_version

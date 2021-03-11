@@ -1,0 +1,160 @@
+{
+    "depGraph": {
+        "buildTarget": {
+            "name": "tatl"
+        },
+        "packageDeps": [
+            {
+                "dependencyPackages": [
+                    {
+                        "category": "app-portage",
+                        "packageName": "elt-patches",
+                        "version": "20170815"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "autoconf",
+                        "version": "2.69"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "automake",
+                        "version": "1.15.1-r2"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "bison",
+                        "version": "3.0.4-r1"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "libtool",
+                        "version": "2.4.6-r6"
+                    },
+                    {
+                        "category": "virtual",
+                        "packageName": "pkgconfig",
+                        "version": "0-r1"
+                    }
+                ],
+                "dependencySourcePaths": [
+                    {
+                        "path": "src/third_party/chromiumos-overlay/eclass"
+                    },
+                    {
+                        "path": "src/third_party/chromiumos-overlay/x11-libs/libxkbcommon/libxkbcommon-0.8.2-r1.ebuild"
+                    }
+                ],
+                "packageInfo": {
+                    "category": "x11-libs",
+                    "packageName": "libxkbcommon",
+                    "version": "0.8.2-r1"
+                }
+            },
+            {
+                "dependencyPackages": [
+                    {
+                        "category": "dev-libs",
+                        "packageName": "libltdl",
+                        "version": "2.4.6"
+                    },
+                    {
+                        "category": "media-libs",
+                        "packageName": "alsa-lib",
+                        "version": "1.1.6-r3"
+                    },
+                    {
+                        "category": "media-libs",
+                        "packageName": "libogg",
+                        "version": "1.3.0"
+                    },
+                    {
+                        "category": "media-libs",
+                        "packageName": "libvorbis",
+                        "version": "1.3.5"
+                    },
+                    {
+                        "category": "media-sound",
+                        "packageName": "gsm",
+                        "version": "1.0.13"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "autoconf",
+                        "version": "2.69"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "automake",
+                        "version": "1.15.1-r2"
+                    },
+                    {
+                        "category": "sys-devel",
+                        "packageName": "libtool",
+                        "version": "2.4.6-r6"
+                    },
+                    {
+                        "category": "virtual",
+                        "packageName": "pkgconfig",
+                        "version": "0-r1"
+                    }
+                ],
+                "dependencySourcePaths": [
+                    {
+                        "path": "src/overlays/overlay-tatl"
+                    },
+                    {
+                        "path": "src/overlays/project-termina"
+                    },
+                    {
+                        "path": "src/private-overlays/chromeos-overlay"
+                    },
+                    {
+                        "path": "src/private-overlays/chromeos-partner-overlay"
+                    },
+                    {
+                        "path": "src/third_party/chromiumos-overlay"
+                    },
+                    {
+                        "path": "src/third_party/eclass-overlay"
+                    },
+                    {
+                        "path": "src/third_party/portage-stable"
+                    }
+                ],
+                "packageInfo": {
+                    "category": "media-sound",
+                    "packageName": "sox",
+                    "version": "14.4.2-r1"
+                }
+            },
+            {
+                "dependencySourcePaths": [
+                    {
+                        "path": "src/third_party/chromiumos-overlay/eclass"
+                    },
+                    {
+                        "path": "src/third_party/portage-stable/sys-apps/which/which-2.21.ebuild"
+                    }
+                ],
+                "packageInfo": {
+                    "category": "sys-apps",
+                    "packageName": "which",
+                    "version": "2.21"
+                }
+            }
+        ]
+    },
+    "gerritChanges": [
+        {
+            "serializedProto": "CiBjaHJvbWl1bS1yZXZpZXcuZ29vZ2xlc291cmNlLmNvbRITY2hyb21pdW1vcy9jaHJvbWl0ZRiolGYgAw=="
+        },
+        {
+            "serializedProto": "CiBjaHJvbWl1bS1yZXZpZXcuZ29vZ2xlc291cmNlLmNvbRIdY2hyb21pdW1vcy90aGlyZF9wYXJ0eS9rZXJuZWwYhpZ1IAE="
+        }
+    ],
+    "gitiles_commit": {
+        "serializedProto": "CiBjaHJvbWUtaW50ZXJuYWwuZ29vZ2xlc291cmNlLmNvbRIaY2hyb21lb3MvbWFuaWZlc3QtaW50ZXJuYWwaKGE3N2VlYjUzMTcyMjFlYzhiNmFlMGMwNjI3OTczY2M3YjczYjNlZWY="
+    },
+    "manifestCommit": "a77eeb5317221ec8b6ae0c0627973cc7b73b3eef"
+}
