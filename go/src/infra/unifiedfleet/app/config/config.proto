@@ -46,4 +46,8 @@ message OSNetworkConfig {
 message PubSub {
   string project = 1;
   string topic = 2;
+  // Batch size for batching publish requests for asset_info update. HaRT
+  // services have been known to fail for batch_size > 100. Changing this
+  // value might disable HaRT updates.
+  uint32 batch_size = 3;
 }
