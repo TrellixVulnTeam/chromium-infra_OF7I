@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/auth"
@@ -206,6 +207,13 @@ func defaultServiceAccountJSONPath() string {
 //
 // Returns empty string if can't do it.
 func projectIDFromServiceAccountJSON(path string) string {
+	if path == auth.GCEServiceAccount {
+		p, err := metadata.ProjectID()
+		if err != nil {
+			return ""
+		}
+		return p
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return ""
