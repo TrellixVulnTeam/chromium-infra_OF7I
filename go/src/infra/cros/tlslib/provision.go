@@ -205,9 +205,9 @@ func clearTPM(c *ssh.Client) error {
 	return runCmd(c, "crossystem clear_tpm_owner_request=1")
 }
 
-func rebootDUT(c *ssh.Client) error {
-	// Reboot in the background, giving time for the ssh invocation to cleanly terminate.
-	return runCmd(c, "(sleep 2 && reboot) &")
+func rebootDUT(c *ssh.Client) {
+	// Reboot, ignoring the SSH disconnection.
+	_ = runCmd(c, "reboot")
 }
 
 func runLabMachineAutoReboot(c *ssh.Client) {

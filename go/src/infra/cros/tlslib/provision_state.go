@@ -102,10 +102,7 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
 	runLabMachineAutoReboot(p.c)
-	if err := rebootDUT(p.c); err != nil {
-		p.revertProvisionOS(pi)
-		return fmt.Errorf("provisionOS: failed reboot DUT, %s", err)
-	}
+	rebootDUT(p.c)
 	return nil
 }
 
