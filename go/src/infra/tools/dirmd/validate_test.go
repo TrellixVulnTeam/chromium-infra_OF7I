@@ -9,7 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	dirmdpb "infra/tools/dirmd/proto"
+
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestValidateFile(t *testing.T) {
@@ -40,5 +43,33 @@ func TestValidateFile(t *testing.T) {
 
 		suite("testdata/validation/valid", true)
 		suite("testdata/validation/invalid", false)
+	})
+}
+
+func TestValidate(t *testing.T) {
+	t.Parallel()
+
+	Convey(`TestValidate`, t, func() {
+		Convey(`inherit_from`, func() {
+			Convey(`Empty`, func() {
+				err := Validate(&dirmdpb.Metadata{})
+				So(err, ShouldBeNil)
+			})
+
+			Convey(`-`, func() {
+				err := Validate(&dirmdpb.Metadata{InheritFrom: "-"})
+				So(err, ShouldBeNil)
+			})
+
+			Convey(`root`, func() {
+				err := Validate(&dirmdpb.Metadata{InheritFrom: "//"})
+				So(err, ShouldBeNil)
+			})
+
+			Convey(`does not start with //`, func() {
+				err := Validate(&dirmdpb.Metadata{InheritFrom: "foo/bar"})
+				So(err, ShouldErrLike, "must start with //")
+			})
+		})
 	})
 }
