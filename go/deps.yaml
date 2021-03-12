@@ -587,3 +587,18 @@ import:
 - package: github.com/bmatcuk/doublestar
   repo: https://chromium.googlesource.com/external/github.com/bmatcuk/doublestar.git
   version: upstream/master
+- package: github.com/dgraph-io/badger/v3
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
+- package: github.com/DataDog/zstd
+  repo: https://chromium.googlesource.com/external/github.com/DataDog/zstd.git
+- package: github.com/cespare/xxhash
+  repo: https://chromium.googlesource.com/external/github.com/cespare/xxhash.git
+- package: github.com/dgraph-io/ristretto
+  repo: https://chromium.googlesource.com/external/github.com/dgraph-io/ristretto.git
+- package: github.com/gogo/protobuf
+  repo: https://chromium.googlesource.com/external/github.com/gogo/protobuf.git
+- package: github.com/golang/snappy
+  repo: https://chromium.googlesource.com/external/github.com/golang/snappy.git
+- package: github.com/google/flatbuffers
+  repo: https://chromium.googlesource.com/external/github.com/google/flatbuffers.git

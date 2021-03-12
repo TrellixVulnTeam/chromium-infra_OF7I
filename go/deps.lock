@@ -1,8 +1,8 @@
-hash: 8ab722f9a0b339783839d317ba0ebe5d77190e07fdd5fe9a6b120501e18bbab5
-updated: 2021-03-10T20:50:58.553893596Z
+hash: ed82ead6e36477f9e6fbef0dd48fac477a2db72801f4f2e83c4770041143ab24
+updated: 2021-03-11T13:08:36.31407985+09:00
 imports:
 - name: cloud.google.com/go
-  version: 7b265c31d18abf4998af13e547bdf0fb1ed904b3
+  version: 8d772f098dd1ca91d33c4e28fc4abfec6f60fa83
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -57,8 +57,11 @@ imports:
 - name: github.com/census-instrumentation/opencensus-proto
   version: 54c9a4c53e1fa422b92e3ae1cd6c72e181f744db
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-proto.git
+- name: github.com/cespare/xxhash
+  version: 1a548c8655f85f3ffcf3578aa1dc8f922ecb6a98
+  repo: https://chromium.googlesource.com/external/github.com/cespare/xxhash.git
 - name: github.com/chromedp/cdproto
-  version: 50b9f457e822393897f36c685c6877390a076894
+  version: 4e41b2544bc6b51d93c38037963943178eaee449
   repo: https://chromium.googlesource.com/external/github.com/chromedp/cdproto.git
   subpackages:
   - '...'
@@ -81,11 +84,20 @@ imports:
 - name: github.com/DATA-DOG/go-sqlmock
   version: 07eed2a098e9dafef5b368a00e005341398dc6d8
   repo: https://chromium.googlesource.com/external/github.com/DATA-DOG/go-sqlmock.git
+- name: github.com/DataDog/zstd
+  version: 2bf71ec4836011b92dc78df3b9ace6b40e65f7df
+  repo: https://chromium.googlesource.com/external/github.com/DataDog/zstd.git
 - name: github.com/davecgh/go-spew
   version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
   repo: https://chromium.googlesource.com/external/github.com/davecgh/go-spew.git
   subpackages:
   - spew
+- name: github.com/dgraph-io/badger/v3
+  version: 2245c18dfd1f6242681749b247fe2f09803a68a4
+  repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
+- name: github.com/dgraph-io/ristretto
+  version: a4346e5d1f905d753d69fa020e6f6c5930b35c62
+  repo: https://chromium.googlesource.com/external/github.com/dgraph-io/ristretto.git
 - name: github.com/disintegration/imaging
   version: d40f48ce0f098c53ab1fcd6e0e402da682262da5
   repo: https://chromium.googlesource.com/external/github.com/disintegration/imaging.git
@@ -118,6 +130,9 @@ imports:
 - name: github.com/go-sql-driver/mysql
   version: 33267428f77eb99023f936a2b9b330416053d67a
   repo: https://chromium.googlesource.com/external/github.com/go-sql-driver/mysql.git
+- name: github.com/gogo/protobuf
+  version: b03c65ea87cdc3521ede29f62fe3ce239267c1bc
+  repo: https://chromium.googlesource.com/external/github.com/gogo/protobuf.git
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
   repo: https://chromium.googlesource.com/external/github.com/golang/glog.git
@@ -144,6 +159,9 @@ imports:
   - jsonpb
   - proto
   - protoc-gen-go
+- name: github.com/golang/snappy
+  version: 674baa8c7fc30da5df3074a459494a7e6b427dff
+  repo: https://chromium.googlesource.com/external/github.com/golang/snappy.git
 - name: github.com/gomodule/redigo
   version: 72af8129e040d6f962772a8c582e5e9f22085788
   repo: https://chromium.googlesource.com/external/github.com/gomodule/redigo.git
@@ -152,11 +170,14 @@ imports:
 - name: github.com/google/cel-go
   version: 385dcdcbc4865cb64aa953c12d7549615cb5fd03
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
+- name: github.com/google/flatbuffers
+  version: fc4fffea41f5b682198edfc72eca536d33fd848c
+  repo: https://chromium.googlesource.com/external/github.com/google/flatbuffers.git
 - name: github.com/google/go-cmp
   version: 8fa37b4dd109f12e42b131e485268768f18bcbf8
   repo: https://chromium.googlesource.com/external/github.com/google/go-cmp.git
 - name: github.com/google/go-querystring
-  version: 6c9448afb101fc8db2e49bfbf96f180ccef6aa4e
+  version: 1f4a1f9d6e29d314b2513651973fca5c4d4498f1
   repo: https://chromium.googlesource.com/external/github.com/google/go-querystring.git
   subpackages:
   - query
