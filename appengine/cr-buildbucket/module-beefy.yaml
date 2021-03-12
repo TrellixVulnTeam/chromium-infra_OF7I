@@ -30,17 +30,6 @@ handlers:
   script: apps.frontend
   secure: always
 
-# Allow only Builds service.
-- url: /build/.+
-  script: apps.frontend
-  secure: always
-- url: /prpc/buildbucket.v2.Builds/.+
-  script: apps.frontend
-  secure: always
-- url: /python/prpc/buildbucket.v2.Builds/.+
-  script: apps.frontend
-  secure: always
-
 # These libraries are not used, but removing them from here
 # adds complexity in code: dynamic imports or splitting the frontend app.
 libraries:
