@@ -56,6 +56,7 @@ func HaRTPushHandler(routerContext *router.Context) {
 					logging.Warningf(ctx, "Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
 					continue
 				}
+				logging.Debugf(ctx, "UFS: %v,\n IV2:%v", ufsAsset.GetInfo(), iv2assetinfo)
 				if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
 					logging.Debugf(ctx, "Updating %v", ufsAsset.GetName())
 					ufsAsset.Info = info
