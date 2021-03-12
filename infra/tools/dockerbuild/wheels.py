@@ -558,6 +558,11 @@ SPECS.update({
             ],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
+        Prebuilt(
+            'pillow',
+            '8.1.2',
+            ['manylinux-x64-py3', 'windows-x64-py3'],
+        ),
         Prebuilt('pynacl', '1.2.1', ['manylinux-x64', 'mac-x64']),
         Prebuilt(
             'pypiwin32',

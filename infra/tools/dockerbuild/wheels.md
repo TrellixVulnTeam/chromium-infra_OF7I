@@ -3204,6 +3204,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 8.1.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pillow/${vpython_platform}"
+  version: "version:8.1.2"
+>
+```
+
+
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **pipenv-py2**
 
 ### 2018.11.26
