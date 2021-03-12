@@ -1014,7 +1014,8 @@ func removeServoEntryFromLabstation(ctx context.Context, servo *chromeosLab.Serv
 			return nil
 		}
 	}
-	return status.Errorf(codes.FailedPrecondition, "Cannot remove servo %v from labstation %s as it contains no such record. %v", servo, labstation.GetHostname(), servos)
+	logging.Errorf(ctx, "Cannot remove servo %v from labstation %s as it contains no such record. %v", servo, labstation.GetHostname(), servos)
+	return nil
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.
