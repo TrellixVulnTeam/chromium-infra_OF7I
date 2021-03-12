@@ -49,7 +49,7 @@ func TestParseConfigBundle(t *testing.T) {
 						device.Config_HARDWARE_FEATURE_FINGERPRINT,
 					})
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
-					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
+					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_COMET_LAKE_U)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 					So(dc.GetVideoAccelerationSupports(), ShouldResemble, []device.Config_VideoAcceleration{
 						device.Config_VIDEO_ACCELERATION_H264,
@@ -76,7 +76,7 @@ func TestParseConfigBundle(t *testing.T) {
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
 					})
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
-					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
+					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_COMET_LAKE_U)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 					So(dc.GetEc(), ShouldEqual, device.Config_EC_CHROME)
 					So(dc.GetVideoAccelerationSupports(), ShouldResemble, []device.Config_VideoAcceleration{
@@ -129,7 +129,7 @@ func TestParseConfigBundle(t *testing.T) {
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
 					})
-					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
+					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_NVME)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 				case "PROJECT-WL:64":
@@ -142,7 +142,7 @@ func TestParseConfigBundle(t *testing.T) {
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
 					})
-					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
+					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_NVME)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 				default:

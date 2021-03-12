@@ -110,8 +110,8 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 				HardwareFeatures: parseHardwareFeatures(configBundle.GetComponents(), c.GetHardwareFeatures()),
 				// Note: no STORAGE_SSD, STORAGE_HDD, STORAGE_UFS storage
 				// label-storage is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/B8spRMj22aUWkbb
-				Storage: parseStorage(c.GetHardwareTopology()),
-				Soc:     parseSoc(configBundle.GetComponents()),
+				Storage: parseStorage(c.GetHardwareTopology(), configBundle.GetComponents()),
+				Soc:     parseSoc(d.GetPlatform().GetName()),
 				Cpu:     parseArchitecture(configBundle.GetComponents()),
 				Ec:      parseEcType(c.GetHardwareFeatures()),
 
@@ -209,14 +209,19 @@ func parsePowerSupply(ff api.HardwareFeatures_FormFactor_FormFactorType) device.
 	}
 }
 
-func parseSoc(components []*api.Component) device.Config_SOC {
-	for _, c := range components {
-		if soc := c.GetSoc(); soc != nil {
-			familyName := c.GetSoc().GetFamily().GetName()
-			v, ok := device.Config_SOC_value[fmt.Sprintf("SOC_%s", strings.ToUpper(familyName))]
-			if ok {
-				return device.Config_SOC(v)
-			}
+func parseSoc(platformName string) device.Config_SOC {
+	if platformName == "" {
+		return device.Config_SOC_UNSPECIFIED
+	}
+	v, ok := device.Config_SOC_value[fmt.Sprintf("SOC_%s", strings.ToUpper(platformName))]
+	if ok {
+		return device.Config_SOC(v)
+	}
+
+	// e.g. COMET_LAKE => SOC_COMET_LAKE_U
+	for k, v := range device.Config_SOC_value {
+		if strings.Contains(k, platformName) {
+			return device.Config_SOC(v)
 		}
 	}
 	return device.Config_SOC_UNSPECIFIED
@@ -279,15 +284,35 @@ func parseHardwareFeatures(components []*api.Component, hf *api.HardwareFeatures
 	return res
 }
 
-func parseStorage(hf *api.HardwareTopology) device.Config_Storage {
-	switch hf.GetNonVolatileStorage().GetHardwareFeature().GetStorage().GetStorageType() {
-	case api.Component_Storage_NVME:
+func matchStorageType(st string) device.Config_Storage {
+	switch st {
+	case api.Component_Storage_NVME.String():
 		return device.Config_STORAGE_NVME
-	case api.Component_Storage_EMMC:
+	case api.Component_Storage_EMMC.String():
 		return device.Config_STORAGE_MMC
-	default:
-		return device.Config_STORAGE_UNSPECIFIED
 	}
+	return device.Config_STORAGE_UNSPECIFIED
+}
+
+func parseStorage(hf *api.HardwareTopology, components []*api.Component) device.Config_Storage {
+	v := matchStorageType(hf.GetNonVolatileStorage().GetHardwareFeature().GetStorage().GetStorageType().String())
+	if v != device.Config_STORAGE_UNSPECIFIED {
+		return v
+	}
+
+	storageComponent := make(map[string]bool)
+	for _, c := range components {
+		if t := c.GetStorage().GetType(); t != api.Component_Storage_STORAGE_TYPE_UNKNOWN {
+			storageComponent[t.String()] = true
+		}
+	}
+	// Verify if all storage components have the same storage type
+	if len(storageComponent) == 1 {
+		for k := range storageComponent {
+			return matchStorageType(k)
+		}
+	}
+	return device.Config_STORAGE_UNSPECIFIED
 }
 
 func parseArchitecture(components []*api.Component) device.Config_Architecture {

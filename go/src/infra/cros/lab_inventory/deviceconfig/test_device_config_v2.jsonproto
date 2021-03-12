@@ -36,6 +36,33 @@
       "components": [
         {
           "id": {
+            "value": "a1"
+          },
+          "name": "a1",
+          "storage": {
+            "type": "NVME"
+          }
+        },
+        {
+          "id": {
+            "value": "a2"
+          },
+          "name": "a2",
+          "storage": {
+            "type": "NVME"
+          }
+        },
+        {
+          "id": {
+            "value": "a3"
+          },
+          "name": "a3",
+          "storage": {
+            "type": "NVME"
+          }
+        },
+        {
+          "id": {
             "value": "elants_01FF_1234"
           },
           "manufacturerId": {
@@ -838,18 +865,6 @@
                   },
                   "id": "STYLUS",
                   "type": 4
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "eMMC"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": "EMMC"
-                    }
-                  },
-                  "id": "EMMC",
-                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
@@ -953,18 +968,6 @@
                   },
                   "id": "SCREEN",
                   "type": 1
-                },
-                "nonVolatileStorage": {
-                  "description": {
-                    "EN": "eMMC"
-                  },
-                  "hardwareFeature": {
-                    "storage": {
-                      "storageType": "EMMC"
-                    }
-                  },
-                  "id": "EMMC",
-                  "type": "NON_VOLATILE_STORAGE"
                 }
               },
               "id": {
