@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"infra/cros/tlslib/internal/resource"
 	"infra/libs/sshpool"
 )
 
@@ -43,6 +44,7 @@ type Server struct {
 	clientPool *sshpool.Pool
 	sshConfig  *ssh.ClientConfig
 	lroMgr     *lro.Manager
+	resMgr     *resource.Manager
 }
 
 // Option to use to create a new TLS server.
@@ -84,6 +86,8 @@ func (s *Server) Serve(l net.Listener) error {
 	defer s.clientPool.Close()
 	s.lroMgr = lro.New()
 	defer s.lroMgr.Close()
+	s.resMgr = resource.NewManager()
+	defer s.resMgr.Close()
 
 	tls.RegisterCommonServer(s.grpcServ, s)
 	longrunning.RegisterOperationsServer(s.grpcServ, s.lroMgr)
