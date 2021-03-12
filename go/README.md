@@ -15,6 +15,12 @@ The steps for getting the code are:
     eval `infra/go/env.py`
     ```
 
+    On Windows
+
+    ```cmd.exe
+    call infra\go\env.cmd
+    ```
+
 
 ### Quick Setup
 
