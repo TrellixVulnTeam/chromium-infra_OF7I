@@ -6,8 +6,6 @@ import math
 import re
 
 from analysis import callstack_detectors
-from analysis.callstack_filters import (
-    FilterFramesBeforeAndInBetweenSignatureParts)
 from analysis.callstack_filters import FilterInlineFunction
 from analysis.callstack_filters import KeepTopNFrames
 from analysis.stacktrace import CallStackBuffer
@@ -22,12 +20,13 @@ DEFAULT_TOP_N_FRAMES = 7
 
 class FracasCrashParser(object):
 
-  def Parse(self, stacktrace_string, deps, signature=None, top_n_frames=None):
+  def Parse(self, stacktrace_string, deps, top_n_frames=None):
     """Parse fracas stacktrace string into Stacktrace instance."""
     # Filters to filter callstack buffers.
-    filters = [FilterFramesBeforeAndInBetweenSignatureParts(signature),
-               FilterInlineFunction(),
-               KeepTopNFrames(top_n_frames or DEFAULT_TOP_N_FRAMES)]
+    filters = [
+        FilterInlineFunction(),
+        KeepTopNFrames(top_n_frames or DEFAULT_TOP_N_FRAMES)
+    ]
     stacktrace_buffer = StacktraceBuffer(filters=filters)
 
     stack_detector = callstack_detectors.ChromeCrashStackDetector()
@@ -56,7 +55,7 @@ class CracasCrashParser(object):
   def __init__(self):
     self._sub_parser = FracasCrashParser()
 
-  def Parse(self, stacktrace_list, deps, signature=None, top_n_frames=None):
+  def Parse(self, stacktrace_list, deps, top_n_frames=None):
     """Parses a list of stacktrace strings.
 
     Note that Cracas sends stacktrace strings from different reports, if they
@@ -67,7 +66,6 @@ class CracasCrashParser(object):
     callstacks = []
     for stacktrace_str in stacktrace_list:
       sub_stacktrace = self._sub_parser.Parse(stacktrace_str, deps,
-                                              signature=signature,
                                               top_n_frames=top_n_frames)
       if sub_stacktrace:
         callstacks.extend(sub_stacktrace.stacks)
