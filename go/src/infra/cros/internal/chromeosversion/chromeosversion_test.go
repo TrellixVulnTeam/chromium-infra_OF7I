@@ -200,3 +200,21 @@ func TestUpdateVersionFile_success(t *testing.T) {
 		t.Fatalf("version mismatch: got %+v, expected %+v", v, versionInfo)
 	}
 }
+
+func TestComponentToBumpFromBranch(t *testing.T) {
+	tests := map[string]VersionComponent{
+		"main":                      Build,
+		"release-R89-1234.B":        Branch,
+		"firmware-atlas-11827.B":    Branch,
+		"firmware-nami-10775.108.B": Patch,
+		"stabilize-10443.B":         Branch,
+		"stabilize-10443.99.B":      Patch,
+	}
+
+	for branch, expectedComponent := range tests {
+		component := ComponentToBumpFromBranch(branch)
+		if component != expectedComponent {
+			t.Fatalf("mismatch on ComponentToBumpFromBranch(%s): got %v, expected %v", branch, component, expectedComponent)
+		}
+	}
+}

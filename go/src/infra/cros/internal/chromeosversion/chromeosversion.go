@@ -42,6 +42,7 @@ var (
 )
 
 const (
+	branchRegex   string = `.*-(?P<build>[0-9]+)(?P<branch>\.[0-9]+)?\.B`
 	keyValueRegex string = `(?P<prefix>%s=)(\d+)(?P<suffix>\b)`
 	pushBranch    string = "tmp_checkin_branch"
 )
@@ -235,4 +236,28 @@ func (v *VersionInfo) UpdateVersionFile() error {
 	}
 
 	return nil
+}
+
+// ComponentToBumpFromBranch returns the version component to bump
+// based on the branch name.
+func ComponentToBumpFromBranch(branch string) VersionComponent {
+	re := regexp.MustCompile(branchRegex)
+	match := re.FindStringSubmatch(branch)
+
+	// Branch doesn't match regex, assume ToT and bump build number.
+	if match == nil {
+		return Build
+	}
+
+	result := make(map[string]string)
+	for i, name := range re.SubexpNames() {
+		if i != 0 && name != "" {
+			result[name] = match[i]
+		}
+	}
+
+	if result["branch"] != "" {
+		return Patch
+	}
+	return Branch
 }

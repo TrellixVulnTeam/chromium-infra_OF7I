@@ -117,6 +117,17 @@ func TestBumpVersion(t *testing.T) {
 				PatchNumber:       1,
 			},
 		},
+		// Full coverage for possible branch names is in the chromeosversion package,
+		// so a single check suffices here.
+		{
+			flag: "--bump_from_branch_name=firmware-nami-10775.108.B",
+			expectedVersion: chromeosversion.VersionInfo{
+				ChromeBranch:      90,
+				BuildNumber:       13781,
+				BranchBuildNumber: 0,
+				PatchNumber:       1,
+			},
+		},
 	}
 
 	for _, test := range tests {

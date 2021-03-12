@@ -32,13 +32,23 @@ func cmdBumpVersion() *subcommands.Command {
 				"Bump the branch version component (e.g. 45 in R89.13729.45.0).")
 			b.Flags.BoolVar(&b.bumpPatchComponent, "bump_patch_component", false,
 				"Bump the milestone version component (e.g. 1 in R89.13729.45.1).")
+			b.Flags.StringVar(&b.bumpFromBranchName, "bump_from_branch_name", "",
+				"Infer which component to bump from the branch name "+
+					"(e.g. firmware-atlas-11827.B).")
 			return b
 		}}
 }
 
 func (b *bumpVersion) componentToBump() (chromeosversion.VersionComponent, error) {
+	flags := []bool{
+		b.bumpMilestoneComponent,
+		b.bumpBuildComponent,
+		b.bumpBranchComponent,
+		b.bumpPatchComponent,
+		b.bumpFromBranchName != "",
+	}
 	count := 0
-	for _, t := range []bool{b.bumpMilestoneComponent, b.bumpBuildComponent, b.bumpBranchComponent, b.bumpPatchComponent} {
+	for _, t := range flags {
 		if t {
 			count++
 		}
@@ -47,7 +57,8 @@ func (b *bumpVersion) componentToBump() (chromeosversion.VersionComponent, error
 	if count > 1 {
 		return chromeosversion.Unspecified,
 			fmt.Errorf("only one of --bump_milestone_component, --bump_build_component, " +
-				"--bump_branch_component, and --bump_patch_component can be set")
+				"--bump_branch_component, --bump_patch_component, and " +
+				"--bump_from_branch_name can be set")
 	} else if b.bumpMilestoneComponent {
 		return chromeosversion.ChromeBranch, nil
 	} else if b.bumpBuildComponent {
@@ -56,6 +67,8 @@ func (b *bumpVersion) componentToBump() (chromeosversion.VersionComponent, error
 		return chromeosversion.Branch, nil
 	} else if b.bumpPatchComponent {
 		return chromeosversion.Patch, nil
+	} else if branch := b.bumpFromBranchName; branch != "" {
+		return chromeosversion.ComponentToBumpFromBranch(branch), nil
 	}
 	return chromeosversion.Unspecified, fmt.Errorf("no component specified")
 }
@@ -107,6 +120,7 @@ type bumpVersion struct {
 	bumpBuildComponent     bool
 	bumpBranchComponent    bool
 	bumpPatchComponent     bool
+	bumpFromBranchName     string
 }
 
 // GetApplication returns an instance of the application.
