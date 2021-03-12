@@ -9,6 +9,8 @@ create {
   source { git {
     repo: "https://chromium.googlesource.com/external/github.com/git/git"
     tag_pattern: "v%s"
+
+    version_restriction: { op: EQ val: "2.30.2" }
   }}
 
   build {
