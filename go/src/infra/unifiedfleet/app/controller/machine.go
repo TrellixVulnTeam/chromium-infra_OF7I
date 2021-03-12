@@ -75,9 +75,14 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		if machine.GetChromeBrowserMachine() != nil {
 			// Update deployment record
 			if machine.GetSerialNumber() != "" {
-				dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
-				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
-					return errors.Annotate(err, "unable to update deployment record").Err()
+				// If the deployment record already exist, it usually means sth weird happened, but we will keep
+				// the existing deployment record anyway.
+				_, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
+				if util.IsNotFoundError(err) {
+					dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+					if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
+						return errors.Annotate(err, "unable to update deployment record").Err()
+					}
 				}
 			}
 			// We fill the machine object with newly created nics/drac from nic/drac table
@@ -174,9 +179,14 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 		// Update deployment record if serial number is updated
 		if machine.GetChromeBrowserMachine() != nil && oldMachineCopy.GetSerialNumber() != machine.GetSerialNumber() {
-			dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
-			if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
-				return errors.Annotate(err, "unable to update deployment record").Err()
+			// If the deployment record for newly updated machine's serial number already exist, it usually
+			// means sth weird happened, but we will keep the existing deployment record anyway.
+			_, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
+			if util.IsNotFoundError(err) {
+				dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
+					return errors.Annotate(err, "unable to update deployment record").Err()
+				}
 			}
 			if oldMachineCopy.GetSerialNumber() != "" {
 				if err := inventory.DeleteDeployment(ctx, oldMachineCopy.GetSerialNumber()); err != nil {
