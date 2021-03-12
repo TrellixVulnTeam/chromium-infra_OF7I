@@ -16,7 +16,6 @@ from analysis.keyword_extractor import FilePathExtractor
 from analysis.type_enums import CrashClient
 from common.model.clusterfuzz_analysis import ClusterfuzzAnalysis
 from common.model.cracas_crash_analysis import CracasCrashAnalysis
-from common.model.fracas_crash_analysis import FracasCrashAnalysis
 from common.model.inverted_index import ClusterfuzzInvertedIndex
 from common.model.inverted_index import ChromeCrashInvertedIndex
 from common.model.inverted_index import InvertedIndex
@@ -24,7 +23,7 @@ from gae_libs.handlers.base_handler import BaseHandler, Permission
 from libs import time_util
 
 CRASH_ANALYSIS_TO_INVERTED_INDEX = {
-    FracasCrashAnalysis: ChromeCrashInvertedIndex,
+    CracasCrashAnalysis: ChromeCrashInvertedIndex,
     ClusterfuzzAnalysis: ClusterfuzzInvertedIndex
 }
 

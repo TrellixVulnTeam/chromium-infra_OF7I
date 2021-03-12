@@ -19,7 +19,7 @@ from analysis.stacktrace import StackFrame
 from analysis.stacktrace import Stacktrace
 from backend.handlers.update_inverted_index import UpdateInvertedIndex
 from backend.handlers.update_inverted_index import UpdateInvertedIndexForCrash
-from common.model.fracas_crash_analysis import FracasCrashAnalysis
+from common.model.cracas_crash_analysis import CracasCrashAnalysis
 from common.model.inverted_index import ChromeCrashInvertedIndex
 from frontend.handlers import crash_config
 from gae_libs.http.http_client_appengine import HttpClientAppengine
@@ -51,11 +51,11 @@ class UpdateInvertedIndexTest(TestCase):
 
   def testUpdateInvetedIndexHandlerWithNoStacktrace(self):
     """Tests ``UpdateInvertedIndex`` handler when there is no stacktraces."""
-    crash_analysis1 = FracasCrashAnalysis.Create('sig1')
+    crash_analysis1 = CracasCrashAnalysis.Create('sig1')
     crash_analysis1.signature = 'sig1'
     crash_analysis1.requested_time = datetime.utcnow() - timedelta(hours=1)
     crash_analysis1.put()
-    crash_analysis2 = FracasCrashAnalysis.Create('sig2')
+    crash_analysis2 = CracasCrashAnalysis.Create('sig2')
     crash_analysis2.signature = 'sig2'
     crash_analysis2.requested_time = datetime.utcnow() - timedelta(hours=1)
     crash_analysis2.put()
@@ -68,7 +68,7 @@ class UpdateInvertedIndexTest(TestCase):
 
   def testUpdateInvetedIndexHandlerWithStacktraces(self):
     """Tests ``UpdateInvertedIndex`` handler when there are stacktraces."""
-    crash_analysis = FracasCrashAnalysis.Create('sig1')
+    crash_analysis = CracasCrashAnalysis.Create('sig1')
     crash_analysis.identifiers = {'signature': 'sig1'}
     crash_analysis.requested_time = datetime.utcnow() - timedelta(hours=1)
 
