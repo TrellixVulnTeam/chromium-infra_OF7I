@@ -63,6 +63,10 @@ func HaRTPushHandler(routerContext *router.Context) {
 				if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
 					logging.Debugf(ctx, "HaRTPushHandler - Updating %v", ufsAsset.GetName())
 					ufsAsset.Info = info
+					// Copy model if not there, Avoiding a situation where hart does a wrong name update
+					if ufsAsset.Model != "" {
+						ufsAsset.Model = ufsAsset.Info.Model
+					}
 					assetsToUpdate = append(assetsToUpdate, ufsAsset)
 				}
 			}
@@ -89,7 +93,9 @@ func HaRTPushHandler(routerContext *router.Context) {
 func updateAssetInfoFromHart(ufsAssetInfo, hartAssetInfo *ufspb.AssetInfo) *ufspb.AssetInfo {
 	var updated bool
 	if ufsAssetInfo == nil {
-		ufsAssetInfo = &ufspb.AssetInfo{}
+		ufsAssetInfo = &ufspb.AssetInfo{
+			AssetTag: hartAssetInfo.GetAssetTag(),
+		}
 	}
 	if ufsAssetInfo.GetCostCenter() != hartAssetInfo.GetCostCenter() {
 		updated = true
