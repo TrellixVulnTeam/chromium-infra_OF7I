@@ -99,7 +99,7 @@ def _has_changed_files(api, path, exclude_dir=None):
   return len(files) > 0
 
 
-def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
+def _step_run_py_tests(api, cwd, python3=False, timeout=None):
   luci_dir = api.context.cwd
   with api.context(cwd=cwd):
     cfg = api.context.cwd.join('unittest.cfg')
@@ -112,8 +112,12 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
       venv = luci_dir.join('.vpython')
       py = 'python2'
 
-    api.python('run tests %s' % py, 'test.py', args=testpy_args, venv=venv,
-               timeout=timeout, ok_ret=ok_ret)
+    api.python(
+        'run tests %s' % py,
+        'test.py',
+        args=testpy_args,
+        venv=venv,
+        timeout=timeout)
 
 
 def _step_auth_tests(api, changes):
@@ -209,10 +213,7 @@ def _step_swarming_bot_tests(api, changes):
                                       'swarming_bot')
   with api.step.nest('swarming bot'):
     _step_run_py_tests(api, bot_dir)
-    # TODO(crbug.com/1017545): enable python3 on Windows.
-    # swarming bot tests run in python3, but it ignores failures on Windows.
-    ok_ret = 'any' if api.platform.is_win else (0,)
-    _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
+    _step_run_py_tests(api, bot_dir, python3=True)
 
 
 def _step_swarming_ui_tests(api, changes):
