@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"net/http"
 	"regexp"
 
 	"github.com/golang/protobuf/proto"
@@ -24,15 +23,20 @@ var macAddress = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`)
 // this is because by default the return is 200 OK for http POST requests.
 // It does return a http error if the datastore update fails.
 func HaRTPushHandler(routerContext *router.Context) {
-	ctx := routerContext.Context
+	// Add namespace as the response from HaRT doesn't have namespace.
+	ctx, err := util.SetupDatastoreNamespace(routerContext.Context, util.OSNamespace)
+	if err != nil {
+		logging.Errorf(ctx, "HaRTPushHandler - Failed to add namespace to context")
+		return
+	}
 	res, err := util.NewPSRequest(routerContext.Request)
 	if err != nil {
-		logging.Errorf(ctx, "Failed to read push req %v", err)
+		logging.Errorf(ctx, "HaRTPushHandler - Failed to read push req %v", err)
 		return
 	}
 	data, err := res.DecodeMessage()
 	if err != nil {
-		logging.Errorf(ctx, "Failed to read data %v", err)
+		logging.Errorf(ctx, "HaRTPushHandler - Failed to read data %v", err)
 		return
 	}
 	// Decode the proto contained in the payload
@@ -41,31 +45,28 @@ func HaRTPushHandler(routerContext *router.Context) {
 	if perr != nil {
 		// Avoid returning error, as the data contains some assets not
 		// known to HaRT and those will always fail.
-		logging.Errorf(ctx, "Failed to decode proto %v", perr)
+		logging.Errorf(ctx, "HaRTPushHandler - Failed to decode proto %v", perr)
 		return
 	}
 	if response.GetRequestStatus() == ufspb.RequestStatus_OK {
 		allinfo := response.GetAssets()
-		logging.Infof(ctx, "Updating %v assets", len(allinfo))
+		logging.Infof(ctx, "HaRTPushHandler - Updating %v assets", len(allinfo))
 		assetsToUpdate := make([]*ufspb.Asset, 0, len(allinfo))
 
 		f := func(ctx context.Context) error {
 			for _, iv2assetinfo := range allinfo {
 				ufsAsset, err := registration.GetAsset(ctx, iv2assetinfo.GetAssetTag())
 				if err != nil {
-					logging.Warningf(ctx, "Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
+					logging.Warningf(ctx, "HaRTPushHandler - Cannot update asset [%v], not found in DS", iv2assetinfo.GetAssetTag())
 					continue
 				}
-				logging.Debugf(ctx, "UFS: %v,\n IV2:%v", ufsAsset.GetInfo(), iv2assetinfo)
 				if info := updateAssetInfoFromHart(ufsAsset.GetInfo(), iv2assetinfo); info != nil {
-					logging.Debugf(ctx, "Updating %v", ufsAsset.GetName())
+					logging.Debugf(ctx, "HaRTPushHandler - Updating %v", ufsAsset.GetName())
 					ufsAsset.Info = info
 					assetsToUpdate = append(assetsToUpdate, ufsAsset)
 				}
 			}
 			if _, err = registration.BatchUpdateAssets(ctx, assetsToUpdate); err != nil {
-				// Return http err if we fail to update.
-				http.Error(routerContext.Writer, "Internal server error", http.StatusInternalServerError)
 				return err
 			}
 			return nil
