@@ -767,7 +767,7 @@ func TestDeleteMachine(t *testing.T) {
 			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
 			err = DeleteMachine(ctx, "machine-3")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
+			So(err.Error(), ShouldContainSubstring, "is occupied")
 
 			resp, _ := registration.GetMachine(ctx, "machine-3")
 			So(resp, ShouldNotBeNil)

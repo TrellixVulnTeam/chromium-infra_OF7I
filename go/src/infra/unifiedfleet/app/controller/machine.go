@@ -35,7 +35,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		hc := getMachineHistoryClient(machine)
 		// Validate input
 		if err := validateMachineRegistration(ctx, machine); err != nil {
-			return errors.Annotate(err, "MachineRegistration - validation failed").Err()
+			return errors.Annotate(err, "validation failed").Err()
 		}
 
 		// Create nics
@@ -47,7 +47,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 				nic.Zone = machine.GetLocation().GetZone().String()
 			}
 			if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
-				return errors.Annotate(err, "MachineRegistration - unable to batch update nics").Err()
+				return errors.Annotate(err, "unable to batch update nics").Err()
 			}
 			// We do not save nic objects in machine table
 			machine.GetChromeBrowserMachine().NicObjects = nil
@@ -60,7 +60,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			drac.Rack = machine.GetLocation().GetRack()
 			drac.Zone = machine.GetLocation().GetZone().String()
 			if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
-				return errors.Annotate(err, "MachineRegistration - unable to batch update drac").Err()
+				return errors.Annotate(err, "unable to batch update drac").Err()
 			}
 			// We do not save drac object in machine table
 			machine.GetChromeBrowserMachine().DracObject = nil
@@ -69,7 +69,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		// Create the machine
 		machine.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
-			return errors.Annotate(err, "MachineRegistration - unable to batch update machine").Err()
+			return errors.Annotate(err, "unable to batch update machine").Err()
 		}
 
 		if machine.GetChromeBrowserMachine() != nil {
@@ -96,7 +96,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return nil, errors.Annotate(err, "MachineRegistration - failed to create machine/nics/drac in datastore").Err()
+		return nil, errors.Annotate(err, "MachineRegistration").Err()
 	}
 	return machine, nil
 }
@@ -117,12 +117,12 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		// Get the existing/old machine
 		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
 		if err != nil {
-			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
+			return errors.Annotate(err, "get machine %s failed", machine.GetName()).Err()
 		}
 
 		// Validate input
 		if err := validateUpdateMachine(ctx, oldMachine, machine, mask); err != nil {
-			return errors.Annotate(err, "UpdateMachine - validation failed").Err()
+			return errors.Annotate(err, "validation failed").Err()
 		}
 
 		// Copy for logging
@@ -147,17 +147,17 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 		// Do not let updating from browser to os or vice versa change for machine.
 		if oldMachine.GetChromeBrowserMachine() != nil && machine.GetChromeosMachine() != nil {
-			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update a browser machine to os machine. Please delete the browser machine and create a new os machine")
+			return status.Error(codes.InvalidArgument, "cannot update a browser machine to os machine. Please delete the browser machine and create a new os machine")
 		}
 		if oldMachine.GetChromeosMachine() != nil && machine.GetChromeBrowserMachine() != nil {
-			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update an os machine to browser machine. Please delete the os machine and create a new browser machine")
+			return status.Error(codes.InvalidArgument, "cannot update an os machine to browser machine. Please delete the os machine and create a new browser machine")
 		}
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			machine, err = processMachineUpdateMask(ctx, oldMachine, machine, mask, hc)
 			if err != nil {
-				return errors.Annotate(err, "UpdateMachine - processing update mask failed").Err()
+				return errors.Annotate(err, "processing update mask failed").Err()
 			}
 		} else if machine.GetLocation().GetRack() != oldMachine.GetLocation().GetRack() ||
 			machine.GetLocation().GetZone() != oldMachine.GetLocation().GetZone() {
@@ -168,7 +168,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			oldIndexMap := map[string]string{
 				"zone": oldMachine.GetLocation().GetZone().String(), "rack": oldMachine.GetLocation().GetRack()}
 			if err = updateIndexingForMachineResources(ctx, oldMachine, indexMap, oldIndexMap, hc); err != nil {
-				return errors.Annotate(err, "UpdateMachine - update zone and rack indexing failed").Err()
+				return errors.Annotate(err, "update zone and rack indexing failed").Err()
 			}
 		}
 
@@ -201,14 +201,14 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 		// update the machine
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
-			return errors.Annotate(err, "UpdateMachine - unable to batch update machine %s", machine.Name).Err()
+			return errors.Annotate(err, "unable to batch update machine %s", machine.Name).Err()
 		}
 		hc.LogMachineChanges(oldMachineCopy, machine)
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return nil, errors.Annotate(err, "UpdateMachine - failed to update machine %s in datastore", machine.Name).Err()
+		return nil, errors.Annotate(err, "UpdateMachine").Err()
 	}
 	if oldMachine.GetChromeBrowserMachine() != nil {
 		// We fill the machine object with its nics/drac from nic/drac table
@@ -492,7 +492,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 		// 1. Get the machine
 		machine, err := registration.GetMachine(ctx, id)
 		if status.Code(err) == codes.Internal {
-			return errors.Annotate(err, "DeleteMachine - failed to get machine %s", id).Err()
+			return errors.Annotate(err, "failed to get machine %s", id).Err()
 		}
 		if machine == nil {
 			return status.Errorf(codes.NotFound, ufsds.NotFound)
@@ -500,7 +500,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 
 		// 2. Check if any other resource references this machine.
 		if err = validateDeleteMachine(ctx, machine); err != nil {
-			return errors.Annotate(err, "DeleteMachine - validation failed").Err()
+			return errors.Annotate(err, "validation failed").Err()
 		}
 
 		//Only for a browser machine
@@ -517,12 +517,12 @@ func DeleteMachine(ctx context.Context, id string) error {
 			}
 			for _, nicID := range nicIDs {
 				if err := deleteNicHelper(ctx, nicID, false); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to delete associated nic %s", nicID).Err()
+					return errors.Annotate(err, "failed to delete associated nic %s", nicID).Err()
 				}
 			}
 			if dracID != "" {
 				if err := deleteDracHelper(ctx, dracID, false); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to delete associated drac %s", dracID).Err()
+					return errors.Annotate(err, "failed to delete associated drac %s", dracID).Err()
 				}
 			}
 		}
@@ -537,7 +537,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return errors.Annotate(err, "DeleteMachine - failed to delete machine and its associated nics and drac in datastore").Err()
+		return errors.Annotate(err, "DeleteMachine").Err()
 	}
 	return nil
 }
@@ -788,12 +788,12 @@ func validateDeleteMachine(ctx context.Context, machine *ufspb.Machine) error {
 	}
 	if len(machinelses) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Machine %s cannot be deleted because there are other resources which are referring this Machine.", machine.GetName()))
+		errorMsg.WriteString(fmt.Sprintf("Machine %s is occupied.", machine.GetName()))
 		errorMsg.WriteString(fmt.Sprintf("\nHosts referring the Machine:\n"))
 		for _, machinelse := range machinelses {
 			errorMsg.WriteString(machinelse.Name + ", ")
 		}
-		errorMsg.WriteString(fmt.Sprintf("\nPlease delete the hosts and then delete the machine.\n"))
+		errorMsg.WriteString(fmt.Sprintf("\nPlease delete the hosts first.\n"))
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
