@@ -35,28 +35,49 @@ import (
 
 const bufSize = 1024 * 1024
 
+func registerPinpointServer(t *testing.T, srv *pinpointServer) func(context.Context, string) (net.Conn, error) {
+	t.Helper()
+
+	l := bufconn.Listen(bufSize)
+	t.Cleanup(func() { l.Close() })
+	s := grpc.NewServer()
+	t.Cleanup(func() { s.Stop() })
+	dialer := func(context.Context, string) (net.Conn, error) {
+		return l.Dial()
+	}
+	pinpoint.RegisterPinpointServer(s, srv)
+	go func() {
+		if err := s.Serve(l); err != nil {
+			log.Fatalf("Server startup failed.")
+		}
+	}()
+	return dialer
+}
+
+func startFakeLegacyServer(t *testing.T, httpResponses map[string]string) *httptest.Server {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, found := httpResponses[r.URL.Path]
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Not found")
+			return
+		}
+		fmt.Fprintln(w, resp)
+	}))
+	t.Cleanup(ts.Close)
+	return ts
+}
+
 func TestServerService(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	Convey("Given a grpc server without a client", t, func() {
-		ctx := context.Background()
-		l := bufconn.Listen(bufSize)
-		defer l.Close()
-		s := grpc.NewServer()
-		defer s.Stop()
-		dialer := func(context.Context, string) (net.Conn, error) {
-			return l.Dial()
-		}
-		pinpoint.RegisterPinpointServer(s, &pinpointServer{})
-		go func() {
-			if err := s.Serve(l); err != nil {
-				log.Fatalf("Server startup failed.")
-			}
-		}()
+		dialer := registerPinpointServer(t, &pinpointServer{})
 
 		Convey("When we connect to the Pinpoint service", func() {
 			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 			So(err, ShouldBeNil)
-			defer conn.Close()
+			t.Cleanup(func() { conn.Close() })
 			client := pinpoint.NewPinpointClient(conn)
 
 			Convey("Then requests to ScheduleJob will fail with 'misconfigured service'", func() {
@@ -69,25 +90,9 @@ func TestServerService(t *testing.T) {
 	})
 
 	Convey("Given a grpc server with a legacy client not behind the ESP", t, func() {
-		ctx := context.Background()
-		l := bufconn.Listen(bufSize)
-		defer l.Close()
-		s := grpc.NewServer()
-		defer s.Stop()
-		dialer := func(context.Context, string) (net.Conn, error) {
-			return l.Dial()
-		}
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "{}")
-		}))
-		defer ts.Close()
+		ts := startFakeLegacyServer(t, nil)
 		log.Printf("legacy service = %s", ts.URL)
-		pinpoint.RegisterPinpointServer(s, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
-		go func() {
-			if err := s.Serve(l); err != nil {
-				log.Fatalf("Server startup failed.")
-			}
-		}()
+		dialer := registerPinpointServer(t, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
 
 		Convey("When we connect to the Pinpoint service", func() {
 			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
@@ -105,39 +110,24 @@ func TestServerService(t *testing.T) {
 
 func TestGetJob(t *testing.T) {
 	t.Parallel()
-	Convey("Given a grpc server with a client", t, func() {
-		ctx := context.Background()
-		l := bufconn.Listen(bufSize)
-		defer l.Close()
-		s := grpc.NewServer()
-		defer s.Stop()
-		dialer := func(context.Context, string) (net.Conn, error) {
-			return l.Dial()
-		}
-		// Check the path target before we give a response.
-		httpResponses := make(map[string]string)
+	definedJobExperimentJSON, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		mockResponse := func(path, response string) {
-			httpResponses[path] = response
-		}
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("TEST: %s", r.URL.String())
-			resp, found := httpResponses[r.URL.Path]
-			if !found {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "Not found")
-				return
-			}
-			fmt.Fprintln(w, resp)
-		}))
-		defer ts.Close()
-		log.Printf("legacy service = %s", ts.URL)
-		pinpoint.RegisterPinpointServer(s, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
-		go func() {
-			if err := s.Serve(l); err != nil {
-				log.Fatalf("Server startup failed.")
-			}
-		}()
+	const (
+		definedJobID   = "11423cdd520000"
+		definedJobName = "jobs/legacy-" + definedJobID
+	)
+	ts := startFakeLegacyServer(t, map[string]string{
+		"/api/job/" + definedJobID: string(definedJobExperimentJSON),
+	})
+	defer ts.Close()
+	log.Printf("legacy service = %s", ts.URL)
+
+	ctx := context.Background()
+	Convey("Given a grpc server with a client", t, func() {
+		dialer := registerPinpointServer(t, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
 
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 		So(err, ShouldBeNil)
@@ -145,16 +135,13 @@ func TestGetJob(t *testing.T) {
 		client := pinpoint.NewPinpointClient(conn)
 
 		Convey("When we attempt to get a defined job", func() {
-			c, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
-			So(err, ShouldBeNil)
-			mockResponse("/api/job/11423cdd520000", string(c))
 			j, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
-				Name: "jobs/legacy-11423cdd520000",
+				Name: definedJobName,
 			})
 
 			Convey("Then we find details in the response proto", func() {
 				So(err, ShouldBeNil)
-				So(j.Name, ShouldEqual, "jobs/legacy-11423cdd520000")
+				So(j.Name, ShouldEqual, definedJobName)
 			})
 		})
 
@@ -180,11 +167,8 @@ func TestGetJob(t *testing.T) {
 		})
 
 		Convey("When we attempt go get an experiment job with results", func() {
-			c, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
-			So(err, ShouldBeNil)
-			mockResponse("/api/job/12345678", string(c))
 			j, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
-				Name: "jobs/legacy-12345678",
+				Name: definedJobName,
 			})
 			Convey("Then we find the results in the response", func() {
 				So(err, ShouldBeNil)
