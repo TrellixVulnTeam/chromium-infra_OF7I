@@ -213,12 +213,19 @@ func parseSoc(platformName string) device.Config_SOC {
 	if platformName == "" {
 		return device.Config_SOC_UNSPECIFIED
 	}
+	// Filter out the non-parsable platform name first
+	switch platformName {
+	case "KABY_LAKE":
+		return device.Config_SOC_KABYLAKE_U
+	}
+
+	// Check exact matching
 	v, ok := device.Config_SOC_value[fmt.Sprintf("SOC_%s", strings.ToUpper(platformName))]
 	if ok {
 		return device.Config_SOC(v)
 	}
 
-	// e.g. COMET_LAKE => SOC_COMET_LAKE_U
+	// Check fuzzy matching: e.g. COMET_LAKE => SOC_COMET_LAKE_U
 	for k, v := range device.Config_SOC_value {
 		if strings.Contains(k, platformName) {
 			return device.Config_SOC(v)
