@@ -21,6 +21,8 @@ wheel: <
 >
 """
 
+VPYTHON = 'vpython.bat' if sys.platform.startswith('win') else 'vpython'
+
 
 class TestPython(unittest.TestCase):
 
@@ -119,11 +121,15 @@ class TestPython(unittest.TestCase):
 
     script = 'import psutil; print psutil'
     cmd = [
-      'vpython',
-      '-vpython-interpreter', self.python,
-      '-vpython-spec', vpython_spec,
-      '-vpython-root', os.path.join(self.test_tdir, 'vpython'),
-      '-c', script,
+        VPYTHON,
+        '-vpython-interpreter',
+        self.python,
+        '-vpython-spec',
+        vpython_spec,
+        '-vpython-root',
+        os.path.join(self.test_tdir, 'vpython'),
+        '-c',
+        script,
     ]
     rv = subprocess.call(cmd)
     self.assertEqual(rv, 0)
@@ -141,12 +147,15 @@ class TestPython(unittest.TestCase):
       'import OpenSSL; '
       'import cryptography.hazmat.bindings.openssl.binding')
     cmd = [
-      'vpython',
-      '-vpython-interpreter', self.python,
-      '-vpython-spec', os.path.join(
-        os.path.dirname(__file__), 'example.vpython'),
-      '-vpython-root', os.path.join(self.test_tdir, 'vpython'),
-      '-c', script,
+        VPYTHON,
+        '-vpython-interpreter',
+        self.python,
+        '-vpython-spec',
+        os.path.join(os.path.dirname(__file__), 'example.vpython'),
+        '-vpython-root',
+        os.path.join(self.test_tdir, 'vpython'),
+        '-c',
+        script,
     ]
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=self.env)
