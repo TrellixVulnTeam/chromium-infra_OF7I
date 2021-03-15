@@ -2757,6 +2757,20 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 
+## **ninja**
+
+### 1.10.0.post2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/ninja/${vpython_platform}"
+  version: "version:1.10.0.post2"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **nose**
 
 ### 1.3.7

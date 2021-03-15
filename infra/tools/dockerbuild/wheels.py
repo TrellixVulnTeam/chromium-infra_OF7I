@@ -305,6 +305,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'ninja',
+            '1.10.0.post2',
+            packaged=(),
+            only_plat=['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'numpy',
             '1.11.3',
             abi_map={
