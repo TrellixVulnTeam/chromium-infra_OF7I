@@ -3386,12 +3386,12 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".zip\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".test\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"test_source.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"test_source\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"url\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"https://some.example.com/tools/fetch_and_package.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"https://some.internet.example.com/tools/fetch_and_package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -3403,11 +3403,11 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]\\resources\\pycurl.py",
       "--url",
-      "https://some.example.com/tools/fetch_and_package.zip",
+      "https://some.internet.example.com/tools/fetch_and_package",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]\\3pp\\wd\\tools\\fetch_and_package\\linux-amd64\\2.0.0\\checkout\\test_source.zip"
+      "[START_DIR]\\3pp\\wd\\tools\\fetch_and_package\\linux-amd64\\2.0.0\\checkout\\test_source"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -3418,7 +3418,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/fetch_and_package.fetch sources.GET https://some.example.com/tools/fetch_and_package.zip",
+    "name": "building tools/fetch_and_package.fetch sources.GET https://some.internet.example.com/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -3994,12 +3994,12 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".zip\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".test\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"test_source.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"test_source\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"url\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"https://some.example.com/tools/windows_experiment.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"https://some.internet.example.com/tools/windows_experiment\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -4011,11 +4011,11 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]\\resources\\pycurl.py",
       "--url",
-      "https://some.example.com/tools/windows_experiment.zip",
+      "https://some.internet.example.com/tools/windows_experiment",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout\\test_source.zip"
+      "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout\\test_source"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -4026,7 +4026,7 @@
       "_3PP_TOOL_PLATFORM": "windows-amd64",
       "_3PP_VERSION": "2.0.0.windows.1"
     },
-    "name": "building tools/windows_experiment.fetch sources.GET https://some.example.com/tools/windows_experiment.zip",
+    "name": "building tools/windows_experiment.fetch sources.GET https://some.internet.example.com/tools/windows_experiment",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -8671,12 +8671,12 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".zip\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".test\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"test_source.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"test_source\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"url\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"https://some.example.com/tools/pkg.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"https://some.internet.example.com/tools/pkg\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -8688,11 +8688,11 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]\\resources\\pycurl.py",
       "--url",
-      "https://some.example.com/tools/pkg.zip",
+      "https://some.internet.example.com/tools/pkg",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]\\3pp\\wd\\tools\\pkg\\windows-amd64\\2.0.0\\checkout\\test_source.zip"
+      "[START_DIR]\\3pp\\wd\\tools\\pkg\\windows-amd64\\2.0.0\\checkout\\test_source"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -8703,7 +8703,7 @@
       "_3PP_TOOL_PLATFORM": "windows-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/pkg.fetch sources.GET https://some.example.com/tools/pkg.zip",
+    "name": "building tools/pkg.fetch sources.GET https://some.internet.example.com/tools/pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]

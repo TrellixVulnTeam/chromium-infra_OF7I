@@ -270,12 +270,12 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".zip\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".test\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"test_source.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"test_source\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"url\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"https://some.example.com/tools/self_dependency.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"https://some.internet.example.com/tools/self_dependency\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -287,11 +287,11 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://some.example.com/tools/self_dependency.zip",
+      "https://some.internet.example.com/tools/self_dependency",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]/3pp/wd/tools/self_dependency/linux-amd64/2.0.0/checkout/test_source.zip"
+      "[START_DIR]/3pp/wd/tools/self_dependency/linux-amd64/2.0.0/checkout/test_source"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -302,7 +302,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency.fetch sources.GET https://some.example.com/tools/self_dependency.zip",
+    "name": "building tools/self_dependency.fetch sources.GET https://some.internet.example.com/tools/self_dependency",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -950,12 +950,12 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".zip\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"ext\": \".test\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"test_source.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"test_source\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"url\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"https://some.example.com/tools/self_dependency.zip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"https://some.internet.example.com/tools/self_dependency\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -967,11 +967,11 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://some.example.com/tools/self_dependency.zip",
+      "https://some.internet.example.com/tools/self_dependency",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
-      "[START_DIR]/3pp/wd/tools/self_dependency/linux-arm64/2.0.0/checkout/test_source.zip"
+      "[START_DIR]/3pp/wd/tools/self_dependency/linux-arm64/2.0.0/checkout/test_source"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -982,7 +982,7 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
-    "name": "building tools/self_dependency (2).fetch sources.GET https://some.example.com/tools/self_dependency.zip",
+    "name": "building tools/self_dependency (2).fetch sources.GET https://some.internet.example.com/tools/self_dependency",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]

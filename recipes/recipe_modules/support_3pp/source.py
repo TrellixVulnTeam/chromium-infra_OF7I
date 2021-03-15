@@ -353,14 +353,14 @@ def _generate_download_manifest(api, spec, checkout_dir,
           *args,
           stdout=api.json.output(),
           step_test_data=lambda: api.json.test_api.output_stream({
-              'url': ['https://some.example.com/%s.zip' % spec.cipd_pkg_name],
-              'ext': '.zip',
-              'name': ['test_source.zip']
+              'url': ['https://some.internet.example.com/%s' % (
+                  spec.cipd_pkg_name,)],
+              'ext': '.test',
+              'name': ['test_source']
           }))
-      source_uri = result.stdout['url']
-      ext, artifact_names = result.stdout.get('ext'), result.stdout.get('name')
-      if not ext and not artifact_names:  # pragma: no cover
-        assert False, '"ext" and "name" cannot be both empty.'
+      source_uri, ext = result.stdout['url'], result.stdout['ext']
+      # Setting source artifact name is optional, used by `pip_bootstrap`.
+      artifact_names = result.stdout.get('name')
       # Verify source_uri and artifact_names are equal length, if present.
       if artifact_names:
         assert len(source_uri) == len(
