@@ -75,7 +75,7 @@ func TestParseConfigBundle(t *testing.T) {
 						device.Config_HARDWARE_FEATURE_TOUCHSCREEN,
 						device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD,
 					})
-					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
+					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_SSD)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_COMET_LAKE_U)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
 					So(dc.GetEc(), ShouldEqual, device.Config_EC_CHROME)

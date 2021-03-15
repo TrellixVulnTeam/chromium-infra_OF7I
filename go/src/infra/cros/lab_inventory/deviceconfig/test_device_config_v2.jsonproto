@@ -380,7 +380,7 @@
                   },
                   "hardwareFeature": {
                     "storage": {
-                      "storageType": "EMMC"
+                      "storageType": "SATA"
                     }
                   },
                   "id": "EMMC",
