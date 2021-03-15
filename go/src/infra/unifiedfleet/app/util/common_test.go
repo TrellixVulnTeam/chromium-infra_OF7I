@@ -15,5 +15,7 @@ func TestGetHiveForDut(t *testing.T) {
 		So(GetHiveForDut("satlab-xx12sha23-chromeos1-row2-rack3-host4"), ShouldEqual, "satlab-xx12sha23")
 		So(GetHiveForDut("satlab-12:sha45-em25-desk-noogler"), ShouldEqual, "satlab-12:sha45")
 		So(GetHiveForDut("chromeos1-row2-rack3-host4"), ShouldEqual, "")
+		So(GetHiveForDut("cros-mtv1950-144-rack204-host1"), ShouldEqual, "cros-mtv1950-144")
+		So(GetHiveForDut("cros-mtv1950-144-rack204-host2"), ShouldEqual, "cros-mtv1950-144")
 	})
 }

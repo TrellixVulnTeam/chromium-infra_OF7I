@@ -28,8 +28,14 @@ const (
 	OperationPageSize int = 500
 )
 
-// satlabRegex regular espression to get the hive value from a DUT hostname
+// satlabRegex regular expression to get the hive value from a DUT hostname.
 var satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
+
+// gtransitRegex regular expression to identify a gTransit DUT hostname.
+var gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+-host[\d]+`)
+
+// gtransitHive hive value for a gTransit DUT.
+const gtransitHive string = "cros-mtv1950-144"
 
 // Key is a type for use in adding values to context. It is not recommended to use plain string as key.
 type Key string
@@ -166,7 +172,10 @@ func ProtoEqual(i, j proto.Message) bool {
 //
 // hive value is derived from the DUT hostname.
 func GetHiveForDut(hostname string) string {
-	/* TODO(eshwarn): Add logic to get hive for gTransit DUTs*/
+	// gTransit DUTs.
+	if gtransitRegex.MatchString(hostname) {
+		return gtransitHive
+	}
 	// Satlab DUTs.
 	if satlabRegex.MatchString(hostname) {
 		return satlabRegex.FindString(hostname)
