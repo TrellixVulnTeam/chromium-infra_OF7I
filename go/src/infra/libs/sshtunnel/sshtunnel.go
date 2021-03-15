@@ -85,28 +85,33 @@ func (t *Tunnel) handleConn(localAddr string) {
 			}
 			t.registerConnToClose(ctx, localConn)
 			t.registerConnToClose(ctx, remoteConn)
-			t.mirrorConn(remoteConn, localConn)
+			t.mirrorConn(remoteConn.(ssh.Channel), localConn.(*net.TCPConn))
 		}()
 	}
 }
 
 // mirrorConn is a helper function that mirrors input and output between two
 // connections.
-func (t *Tunnel) mirrorConn(lConn, rConn net.Conn) {
+func (t *Tunnel) mirrorConn(rConn ssh.Channel, lConn *net.TCPConn) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if _, err := io.Copy(lConn, rConn); err != nil {
-			t.logf("%s", err)
-		}
+		n, err := io.Copy(lConn, rConn)
+		lConn.CloseWrite()
+		t.logf("Return values from copying remote -> local: %v, %v", n, err)
 	}()
-	if _, err := io.Copy(rConn, lConn); err != nil {
-		t.logf("%s", err)
-	}
+	n, err := io.Copy(rConn, lConn)
+	// Some clients may rely on the TCP stream EOF to finish processing, see
+	// b/181387105#comment7 for details.
+	rConn.CloseWrite()
+	t.logf("Return values from copying local -> remote : %v, %v", n, err)
 	wg.Wait()
 }
 
+// registerConnToClose ties the connection with the context.
+// It allows us to close the connection by cancelling the context. Otherwise we
+// have no way to interrupt the connection.
 func (t *Tunnel) registerConnToClose(ctx context.Context, conn net.Conn) {
 	t.wg.Add(1)
 	go func() {
