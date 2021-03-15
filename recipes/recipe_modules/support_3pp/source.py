@@ -332,7 +332,8 @@ def _generate_download_manifest(api, spec, checkout_dir,
   method_name, source_method_pb = spec.source_method
 
   if method_name == 'git':
-    return Manifest('git', source_method_pb.repo, checkout_dir, source_hash)
+    return Manifest(
+        'git', source_method_pb.repo, checkout_dir, source_hash=source_hash)
 
   elif method_name == 'url':
     return Manifest('url', [source_method_pb.download_url],

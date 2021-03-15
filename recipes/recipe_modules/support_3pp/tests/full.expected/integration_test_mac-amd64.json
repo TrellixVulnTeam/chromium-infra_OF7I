@@ -1143,7 +1143,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "hash",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/deps/bottom_dep_git/mac-amd64/1.5.0-rc1/checkout",
@@ -6064,7 +6064,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "hash",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/git_tool/mac-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
