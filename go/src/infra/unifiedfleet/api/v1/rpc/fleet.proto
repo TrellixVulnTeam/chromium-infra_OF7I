@@ -384,8 +384,11 @@ service Fleet {
   // BatchUpdateMachineLSEDeployment updates the deployment records for a batch of hosts.
   rpc BatchUpdateMachineLSEDeployment(BatchUpdateMachineLSEDeploymentRequest) returns (BatchUpdateMachineLSEDeploymentResponse);
 
-  // GetMachineLSEDeployment retrieves a deployment record for a host.
+  // GetMachineLSEDeployment retrieves a deployment record for a given host identifier, e.g. serial number.
   rpc GetMachineLSEDeployment(GetMachineLSEDeploymentRequest) returns (models.MachineLSEDeployment);
+
+  // BatchGetMachineLSEDeployments retrieves a batch of deployment records.
+  rpc BatchGetMachineLSEDeployments(BatchGetMachineLSEDeploymentsRequest) returns (BatchGetMachineLSEDeploymentsResponse);
 
   // ListMachineLSEDeployments lists all deployment records which fulfill the requirements
   rpc ListMachineLSEDeployments(ListMachineLSEDeploymentsRequest) returns (ListMachineLSEDeploymentsResponse);
@@ -413,11 +416,24 @@ message BatchUpdateMachineLSEDeploymentResponse {
 }
 
 message GetMachineLSEDeploymentRequest {
-  // The hostname of the deployment record to retrieve.
+  // The host identifier (e.g. serial number) to retrieve the deployment record.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSEDeployment" }
   ];
+}
+
+message BatchGetMachineLSEDeploymentsRequest {
+  // The parent resource shared by all machine lse deployment records being retrieved.
+  string parent = 1;
+  // The names (e.g. serial number) of the machine lse deployment records to retrieve.
+  // Format: machineLSEDeployments/{name}
+  repeated string names = 2;
+}
+
+message BatchGetMachineLSEDeploymentsResponse {
+  // The Machine lses deployment records to retrieve.
+  repeated models.MachineLSEDeployment machine_lse_deployments = 1;
 }
 
 message ListMachineLSEDeploymentsRequest {
@@ -1830,7 +1846,7 @@ message BatchGetMachineLSEsRequest {
   // The parent resource shared by all machine lses being retrieved.
   string parent = 1;
   // The names of the machine lses to retrieve.
-  // Format: machinelses/{name}
+  // Format: machineLSEs/{name}
   repeated string names = 2;
 }
 

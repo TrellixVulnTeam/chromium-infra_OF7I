@@ -552,6 +552,11 @@ func (fs *FleetServerImpl) GetMachineLSEDeployment(ctx context.Context, req *ufs
 	return nil, nil
 }
 
+// BatchGetMachineLSEDeployments retrieves a batch of deployment records for hosts
+func (fs *FleetServerImpl) BatchGetMachineLSEDeployments(ctx context.Context, req *ufsAPI.BatchGetMachineLSEDeploymentsRequest) (resp *ufsAPI.BatchGetMachineLSEDeploymentsResponse, err error) {
+	return nil, nil
+}
+
 // ListMachineLSEDeployments retrieves a list of deployment records
 func (fs *FleetServerImpl) ListMachineLSEDeployments(ctx context.Context, req *ufsAPI.ListMachineLSEDeploymentsRequest) (resp *ufsAPI.ListMachineLSEDeploymentsResponse, err error) {
 	return nil, nil

@@ -2034,6 +2034,23 @@ func (s *DecoratedFleet) GetMachineLSEDeployment(ctx context.Context, req *GetMa
 	return
 }
 
+func (s *DecoratedFleet) BatchGetMachineLSEDeployments(ctx context.Context, req *BatchGetMachineLSEDeploymentsRequest) (rsp *BatchGetMachineLSEDeploymentsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetMachineLSEDeployments", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetMachineLSEDeployments(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetMachineLSEDeployments", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ListMachineLSEDeployments(ctx context.Context, req *ListMachineLSEDeploymentsRequest) (rsp *ListMachineLSEDeploymentsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
