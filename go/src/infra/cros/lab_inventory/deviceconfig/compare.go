@@ -65,6 +65,7 @@ func compareBoxsterWithV0(ctx context.Context, boxsterCfgs, v0Cfgs []*device.Con
 					protoreflect.Name("oem"),
 					protoreflect.Name("odm"),
 					protoreflect.Name("id"),
+					protoreflect.Name("firmware_configuration"),
 				}
 				opt1 := protocmp.IgnoreFields(newFound, names...)
 				diff = append(diff, cmp.Diff(newFound, newC, protocmp.Transform(), opt1))
