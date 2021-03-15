@@ -29,11 +29,12 @@ func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 	if c.Change == 0 {
 		notFound = append(notFound, "change")
 	}
-	if c.Patchset == 0 {
-		notFound = append(notFound, "patchset")
-	}
 	if len(notFound) > 0 {
 		return "", errors.Reason("the following fields are required but are not set: %v", notFound).Err()
+	}
+	// Patchset is optional, in which case we'll omit it.
+	if c.Patchset == 0 {
+		return fmt.Sprintf("https://%s/c/%s/+/%d", c.Host, c.Project, c.Change), nil
 	}
 	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
 }

@@ -784,3 +784,63 @@ func TestSimpleConversions(t *testing.T) {
 	})
 
 }
+
+func TestGerritChangeToURL(t *testing.T) {
+	t.Parallel()
+	Convey("Given valid GerritChange", t, func() {
+		c := &pinpoint.GerritChange{
+			Host:    "host",
+			Project: "project",
+			Change:  123456,
+		}
+		Convey("When the patchset is provided", func() {
+			c.Patchset = 1
+			Convey("Then we see the patchset in the URL", func() {
+				u, err := gerritChangeToURL(c)
+				So(err, ShouldBeNil)
+				So(u, ShouldEqual, "https://host/c/project/+/123456/1")
+			})
+		})
+		Convey("When the patset is not provided", func() {
+			Convey("Then we see no patchset in the URL", func() {
+				u, err := gerritChangeToURL(c)
+				So(err, ShouldBeNil)
+				So(u, ShouldNotEndWith, "/1")
+				So(u, ShouldEqual, "https://host/c/project/+/123456")
+			})
+		})
+	})
+	Convey("Given an invalidly GerritChange", t, func() {
+		c := &pinpoint.GerritChange{
+			Host:     "host",
+			Project:  "project",
+			Change:   123456,
+			Patchset: 7,
+		}
+
+		Convey("When it is missing a host", func() {
+			c.Host = ""
+			Convey("Then conversion fails", func() {
+				_, err := gerritChangeToURL(c)
+				So(err, ShouldBeError)
+				So(err.Error(), ShouldContainSubstring, "host")
+			})
+		})
+		Convey("When it is missing a project", func() {
+			c.Project = ""
+			Convey("Then conversion fails", func() {
+				_, err := gerritChangeToURL(c)
+				So(err, ShouldBeError)
+				So(err.Error(), ShouldContainSubstring, "project")
+			})
+		})
+		Convey("When it is missing a change", func() {
+			c.Change = 0
+			Convey("Then conversion fails", func() {
+				_, err := gerritChangeToURL(c)
+				So(err, ShouldBeError)
+				So(err.Error(), ShouldContainSubstring, "change")
+			})
+		})
+	})
+}
