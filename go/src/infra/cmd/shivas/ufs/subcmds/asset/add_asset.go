@@ -42,6 +42,7 @@ var AddAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.aisle, "aisle", "", "Aisle that the asset is in")
 		c.Flags.StringVar(&c.row, "row", "", "Row that the asset is in")
 		c.Flags.StringVar(&c.rack, "rack", "", "Rack that the asset is in")
+		c.Flags.StringVar(&c.shelf, "shelf", "", "Shelf on the rack that the asset is in")
 		c.Flags.StringVar(&c.position, "position", "", "Position that the asset is in")
 		c.Flags.StringVar(&c.model, "model", "", "model of the asset")
 		c.Flags.StringVar(&c.board, "board", "", "board/build target of the device")
@@ -185,9 +186,6 @@ func (c *addAsset) validateArgs() error {
 		}
 	}
 	if c.scan {
-		if c.location == "" && c.rack == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Need location or rack to start scan")
-		}
 		if c.assetType == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Missing asset type")
 		} else if !ufsUtil.IsAssetType(c.assetType) {
@@ -301,16 +299,12 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 	scanner := bufio.NewScanner(r)
 
 	// Attempt to get location
-	location, err := deriveLocation(ctx, ic, c.location, c.rack, c.zone, c.aisle, c.row, c.position)
+	location, err := deriveLocation(ctx, ic, c.location, c.rack, c.shelf, c.position)
 	if err != nil {
-		return err
+		if c.commonFlags.Verbose() {
+			fmt.Fprintf(w, "Cannot determine location from inputs. Need to scan the location.\n%v\n", err)
+		}
 	}
-	// Throw an error if we don't know what rack we are putting the assets in. UFS will not accept this input.
-	if location.GetRack() == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Cannot determine the rack from inputs. Try using -rack to explicity assign rack")
-	}
-
-	// Asset type set for this session
 	assetType := ufsUtil.ToAssetType(c.assetType)
 
 	fmt.Fprintf(w, "Connect the barcode scanner to your device.\n")
@@ -321,7 +315,7 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 			prompt(w, location.GetRack())
 			continue
 		}
-		// Attempt to update location mid scan
+		// Attempt to update location
 		if utils.IsLocation(token) {
 			l, err := utils.GetLocation(token)
 			if err != nil || l.GetRack() == "" {
@@ -333,21 +327,23 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 			continue
 		}
 
-		// Create and add asset
-		asset := &ufspb.Asset{
-			Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
-			Location: location,
-			Type:     assetType,
-		}
+		if location != nil {
+			// Create and add asset
+			asset := &ufspb.Asset{
+				Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
+				Location: location,
+				Type:     assetType,
+			}
 
-		_, err := ic.CreateAsset(ctx, &ufsAPI.CreateAssetRequest{
-			Asset: asset,
-		})
+			_, err := ic.CreateAsset(ctx, &ufsAPI.CreateAssetRequest{
+				Asset: asset,
+			})
 
-		if err != nil {
-			fmt.Fprintf(w, "Failed to add asset %s to UFS. %s \n", token, err.Error())
-		} else {
-			fmt.Fprintf(w, "Added asset %s to UFS \n", token)
+			if err != nil {
+				fmt.Fprintf(w, "Failed to add asset %s to UFS. %s \n", token, err.Error())
+			} else {
+				fmt.Fprintf(w, "Added asset %s to UFS \n", token)
+			}
 		}
 		prompt(w, location.GetRack())
 	}
@@ -355,7 +351,7 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 }
 
 // deriveLocation Attempts to get location from all the possible inputs to the command.
-func deriveLocation(ctx context.Context, ic ufsAPI.FleetClient, location, rack, zone, aisle, row, position string) (*ufspb.Location, error) {
+func deriveLocation(ctx context.Context, ic ufsAPI.FleetClient, location, rack, shelf, position string) (*ufspb.Location, error) {
 	var loc *ufspb.Location
 	// Attempt to decode location string if given.
 	if location != "" {
@@ -367,30 +363,28 @@ func deriveLocation(ctx context.Context, ic ufsAPI.FleetClient, location, rack, 
 		return loc, nil
 	} else if rack != "" {
 		// If rack is input, check it's existence and get location from UFS.
-		rack, err := ic.GetRack(ctx, &ufsAPI.GetRackRequest{
+		rackProto, err := ic.GetRack(ctx, &ufsAPI.GetRackRequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack),
 		})
 		if err != nil {
 			return nil, err
 		}
-		loc = rack.GetLocation()
+		loc = rackProto.GetLocation()
+		// Assign rack as the rack field in location of rack may not have the rack name assigned (tongue twister!!)
+		loc.Rack = rack
+		loc.Shelf = shelf
 		// Update position if given or clear the field.
 		loc.Position = position
 		return loc, nil
 	}
-	// Attempt to generate location using raw inputs
-	if loc == nil {
-		loc = &ufspb.Location{}
-	}
-	loc.Rack = rack
-	loc.Zone = ufsUtil.ToUFSZone(zone)
-	loc.Aisle = aisle
-	loc.Position = position
-	loc.Row = row
-	return loc, nil
+	return nil, fmt.Errorf("Couldn't determine location from the data given.")
 }
 
 // prompt prints the current rack for the scan. To be used by scanAndAddAsset
 func prompt(w io.Writer, rack string) {
-	fmt.Fprintf(w, "\nScan asset to be placed in %s: ", rack)
+	if rack != "" {
+		fmt.Fprintf(w, "\nScan asset to be placed in %s: ", rack)
+	} else {
+		fmt.Fprintf(w, "\nScan a location tag:")
+	}
 }
