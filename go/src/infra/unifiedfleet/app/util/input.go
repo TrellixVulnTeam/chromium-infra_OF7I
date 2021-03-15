@@ -15,9 +15,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/info"
 	"google.golang.org/genproto/googleapis/api/annotations"
-	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
 const (
@@ -33,6 +33,8 @@ const (
 	ChromePlatformCollection string = "chromeplatforms"
 	// MachineLSECollection refers to the prefix of the corresponding resource.
 	MachineLSECollection string = "machineLSEs"
+	// MachineLSEDeploymentCollection refers to the prefix of the corresponding resource.
+	MachineLSEDeploymentCollection string = "machineLSEDeployments"
 	// HostCollection refers to the prefix of the corresponding resource.
 	HostCollection string = "hosts"
 	// RackLSECollection refers to the prefix of the corresponding resource.

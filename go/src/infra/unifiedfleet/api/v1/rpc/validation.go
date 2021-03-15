@@ -20,39 +20,40 @@ import (
 
 // Error messages for input validation
 var (
-	NilEntity                     string = "Invalid input - No Entity to add/update."
-	EmptyID                       string = "Invalid input - Entity ID is empty."
-	EmptyName                     string = "Invalid input - Entity Name is empty."
-	InvalidMac                    string = "invalid mac address"
-	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(_:.]{3,63}$`"
-	HostnamePattern               string = "Name must match the regular expression `^[a-zA-Z0-9-.]{1,63}$`"
-	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
-	InvalidHostname               string = fmt.Sprintf("%s%s", "Invalid input - ", HostnamePattern)
-	InvalidTags                   string = "Invalid input - Tags must not include '='."
-	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
-	AssetNameFormat               string = "Invalid input - Entity Name pattern should be assets/{asset}."
-	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
-	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
-	ChromePlatformNameFormat      string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
-	CachingServiceNameFormat      string = "Invalid input - Entity Name pattern should be cachingservices/{ipv4}."
-	MachineLSENameFormat          string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
-	VMNameFormat                  string = "Invalid input - Entity Name pattern should be vms/{vm}."
-	RackLSENameFormat             string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
-	NicNameFormat                 string = "Invalid input - Entity Name pattern should be nics/{nic}."
-	KVMNameFormat                 string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
-	RPMNameFormat                 string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
-	DracNameFormat                string = "Invalid input - Entity Name pattern should be dracs/{drac}."
-	SwitchNameFormat              string = "Invalid input - Entity Name pattern should be switches/{switch}."
-	VlanNameFormat                string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
-	MachineLSEPrototypeNameFormat string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
-	RackLSEPrototypeNameFormat    string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
-	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
-	EmptyMachineName              string = "Invalid input - Machine name cannot be empty."
-	EmptyHostName                 string = "Invalid input - Host name cannot be empty."
-	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
-	FilterFormat                  string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
-	InvalidFilterFormat           string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
-	IPV4Format                    string = "Invalid input - %s pattern should be an ipv4 address"
+	NilEntity                      string = "Invalid input - No Entity to add/update."
+	EmptyID                        string = "Invalid input - Entity ID is empty."
+	EmptyName                      string = "Invalid input - Entity Name is empty."
+	InvalidMac                     string = "invalid mac address"
+	ValidName                      string = "Name must match the regular expression `^[a-zA-Z0-9-)(_:.]{3,63}$`"
+	HostnamePattern                string = "Name must match the regular expression `^[a-zA-Z0-9-.]{1,63}$`"
+	InvalidCharacters              string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
+	InvalidHostname                string = fmt.Sprintf("%s%s", "Invalid input - ", HostnamePattern)
+	InvalidTags                    string = "Invalid input - Tags must not include '='."
+	InvalidPageSize                string = "Invalid input - PageSize should be non-negative."
+	AssetNameFormat                string = "Invalid input - Entity Name pattern should be assets/{asset}."
+	MachineNameFormat              string = "Invalid input - Entity Name pattern should be machines/{machine}."
+	RackNameFormat                 string = "Invalid input - Entity Name pattern should be racks/{rack}."
+	ChromePlatformNameFormat       string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
+	CachingServiceNameFormat       string = "Invalid input - Entity Name pattern should be cachingservices/{ipv4}."
+	MachineLSENameFormat           string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
+	MachineLSEDeploymentNameFormat string = "Invalid input - Entity Name pattern should be machineLSEDeployments/{name}."
+	VMNameFormat                   string = "Invalid input - Entity Name pattern should be vms/{vm}."
+	RackLSENameFormat              string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
+	NicNameFormat                  string = "Invalid input - Entity Name pattern should be nics/{nic}."
+	KVMNameFormat                  string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
+	RPMNameFormat                  string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
+	DracNameFormat                 string = "Invalid input - Entity Name pattern should be dracs/{drac}."
+	SwitchNameFormat               string = "Invalid input - Entity Name pattern should be switches/{switch}."
+	VlanNameFormat                 string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
+	MachineLSEPrototypeNameFormat  string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
+	RackLSEPrototypeNameFormat     string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
+	ResourceFormat                 string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
+	EmptyMachineName               string = "Invalid input - Machine name cannot be empty."
+	EmptyHostName                  string = "Invalid input - Host name cannot be empty."
+	EmptyRackName                  string = "Invalid input - Rack name cannot be empty."
+	FilterFormat                   string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
+	InvalidFilterFormat            string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
+	IPV4Format                     string = "Invalid input - %s pattern should be an ipv4 address"
 )
 
 var (
@@ -79,6 +80,7 @@ var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 var assetRegex = regexp.MustCompile(`assets\.*`)
+var machineLSEDeploymentRegex = regexp.MustCompile(`machineLSEDeployments\.*`)
 
 // matches "cachingservices/{ipv4}"
 var cachingServiceRegex = regexp.MustCompile(`cachingservices/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`)
@@ -1143,6 +1145,11 @@ func (r *GetChromeOSDeviceDataRequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
 	}
 	return nil
+}
+
+// Validate validates input requests of GetMachineLSEDeployment.
+func (r *GetMachineLSEDeploymentRequest) Validate() error {
+	return validateResourceName(machineLSEDeploymentRegex, MachineLSEDeploymentNameFormat, r.Name)
 }
 
 // Validate validates input requests of UpdateMachineLSEDeploymentRequest.

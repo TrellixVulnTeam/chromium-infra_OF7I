@@ -6,9 +6,10 @@ package frontend
 
 import (
 	"fmt"
-	"google.golang.org/grpc/codes"
 	"strconv"
 	"testing"
+
+	"google.golang.org/grpc/codes"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -1412,6 +1413,59 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			ds, err = state.GetDutState(ctx, "mock_labstation_id")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestGetMachineLSEDeployment(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("GetMachineLSEDeployment", t, func() {
+		Convey("Get machine lse deployment record by existing ID", func() {
+			dr1, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{
+				{
+					SerialNumber: "dr-get-1",
+				},
+			})
+			So(err, ShouldBeNil)
+			So(dr1, ShouldHaveLength, 1)
+			dr1[0].SerialNumber = util.AddPrefix(util.MachineLSEDeploymentCollection, dr1[0].SerialNumber)
+
+			req := &ufsAPI.GetMachineLSEDeploymentRequest{
+				Name: util.AddPrefix(util.MachineLSEDeploymentCollection, "dr-get-1"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEDeployment(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dr1[0])
+		})
+		Convey("Get machine lse deployment record by non-existing ID", func() {
+			req := &ufsAPI.GetMachineLSEDeploymentRequest{
+				Name: util.AddPrefix(util.MachineLSEDeploymentCollection, "dr-get-2"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEDeployment(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get machine lse deployment record - Invalid input empty name", func() {
+			req := &ufsAPI.GetMachineLSEDeploymentRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetMachineLSEDeployment(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+		Convey("Get machine lse deployment record - Invalid input invalid characters", func() {
+			req := &ufsAPI.GetMachineLSEDeploymentRequest{
+				Name: util.AddPrefix(util.MachineLSEDeploymentCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEDeployment(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }

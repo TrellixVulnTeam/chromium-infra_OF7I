@@ -19,6 +19,16 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+// GetMachineLSEDeployment returns the deployment record for the given id.
+func GetMachineLSEDeployment(ctx context.Context, id string) (*ufspb.MachineLSEDeployment, error) {
+	return inventory.GetMachineLSEDeployment(ctx, id)
+}
+
+// BatchGetMachineLSEDeployments returns a batch of deployment records.
+func BatchGetMachineLSEDeployments(ctx context.Context, ids []string) ([]*ufspb.MachineLSEDeployment, error) {
+	return inventory.BatchGetMachineLSEDeployments(ctx, ids)
+}
+
 // UpdateMachineLSEDeployment updates a machine lse deployment to datastore
 func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeployment, mask *field_mask.FieldMask) (*ufspb.MachineLSEDeployment, error) {
 	f := func(ctx context.Context) error {

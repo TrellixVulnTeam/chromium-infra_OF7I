@@ -78,6 +78,28 @@ func GetMachineLSEDeployment(ctx context.Context, id string) (*ufspb.MachineLSED
 	return nil, err
 }
 
+func getMachineLSEDeploymentID(pm proto.Message) string {
+	p := pm.(*ufspb.MachineLSEDeployment)
+	return p.GetSerialNumber()
+}
+
+// BatchGetMachineLSEDeployments returns a batch of deployment records from datastore.
+func BatchGetMachineLSEDeployments(ctx context.Context, ids []string) ([]*ufspb.MachineLSEDeployment, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.MachineLSEDeployment{SerialNumber: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newMachineLSEDeploymentEntity, getMachineLSEDeploymentID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.MachineLSEDeployment, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.MachineLSEDeployment)
+	}
+	return res, nil
+}
+
 // DeleteDeployment deletes a deployment record
 func DeleteDeployment(ctx context.Context, id string) error {
 	return ufsds.Delete(ctx, &ufspb.MachineLSEDeployment{SerialNumber: id}, newMachineLSEDeploymentEntity)

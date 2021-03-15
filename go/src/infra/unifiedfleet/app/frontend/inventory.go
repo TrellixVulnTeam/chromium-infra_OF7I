@@ -549,12 +549,38 @@ func (fs *FleetServerImpl) BatchUpdateMachineLSEDeployment(ctx context.Context, 
 
 // GetMachineLSEDeployment retrieves the deployment record for a host
 func (fs *FleetServerImpl) GetMachineLSEDeployment(ctx context.Context, req *ufsAPI.GetMachineLSEDeploymentRequest) (resp *ufspb.MachineLSEDeployment, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	dr, err := controller.GetMachineLSEDeployment(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	dr.SerialNumber = util.AddPrefix(util.MachineLSEDeploymentCollection, dr.SerialNumber)
+	return dr, err
 }
 
 // BatchGetMachineLSEDeployments retrieves a batch of deployment records for hosts
 func (fs *FleetServerImpl) BatchGetMachineLSEDeployments(ctx context.Context, req *ufsAPI.BatchGetMachineLSEDeploymentsRequest) (resp *ufsAPI.BatchGetMachineLSEDeploymentsResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	drs, err := controller.BatchGetMachineLSEDeployments(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, dr := range drs {
+		dr.SerialNumber = util.AddPrefix(util.MachineLSEDeploymentCollection, dr.SerialNumber)
+	}
+	return &ufsAPI.BatchGetMachineLSEDeploymentsResponse{
+		MachineLseDeployments: drs,
+	}, nil
 }
 
 // ListMachineLSEDeployments retrieves a list of deployment records
