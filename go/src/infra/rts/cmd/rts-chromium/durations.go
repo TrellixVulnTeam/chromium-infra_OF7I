@@ -116,6 +116,8 @@ WITH
 				-- The leading quote is there because it is a JSON string.
 				WHERE f NOT LIKE '"src/%'
 			)
+
+			AND (@clOwner = "" or EXISTS(SELECT 0 FROM b.tags WHERE key = 'cq_cl_owner' AND value = @clOwner))
 	),
 
 	affected_files AS (

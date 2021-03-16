@@ -33,6 +33,7 @@ type baseHistoryRun struct {
 	endTime      time.Time
 	builderRegex string
 	testIDRegex  string
+	clOwner      string
 
 	authOpt       *auth.Options
 	authenticator *auth.Authenticator
@@ -45,6 +46,7 @@ func (r *baseHistoryRun) RegisterBaseFlags(fs *flag.FlagSet) {
 	fs.Var(luciflag.Date(&r.endTime), "to", "Fetch results until this date; format: 2020-01-15")
 	fs.StringVar(&r.builderRegex, "builder", ".*", "A regular expression for builder. Implicitly wrapped with ^ and $.")
 	fs.StringVar(&r.testIDRegex, "test", ".*", "A regular expression for test. Implicitly wrapped with ^ and $.")
+	fs.StringVar(&r.clOwner, "cl-owner", "", "CL owner, e.g. someone@chromium.org")
 }
 
 func (r *baseHistoryRun) ValidateBaseFlags() error {
@@ -111,6 +113,7 @@ func (r *baseHistoryRun) runQuery(ctx context.Context, sql string, extraParams .
 		{Name: "testIdRegexp", Value: prepRe(r.testIDRegex)},
 		{Name: "minChangedFiles", Value: minChangedFiles},
 		{Name: "maxChangedFiles", Value: maxChangedFiles},
+		{Name: "clOwner", Value: r.clOwner},
 	}
 	q.Parameters = append(q.Parameters, extraParams...)
 
