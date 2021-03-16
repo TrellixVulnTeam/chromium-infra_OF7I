@@ -567,9 +567,6 @@ import:
 - package: golang.org/x/term
   version: master
   repo: https://go.googlesource.com/term.git
-- package: go.etcd.io/bbolt
-  version: master
-  repo: https://chromium.googlesource.com/external/github.com/etcd-io/bbolt.git
 - package: github.com/stoewer/go-strcase
   version: master
   repo: https://chromium.googlesource.com/external/github.com/stoewer/go-strcase.git
