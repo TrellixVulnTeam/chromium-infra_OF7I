@@ -444,25 +444,31 @@ def get_go_environ_diff(layout):
   # GOBIN often contain "WIP" variant of system binaries, pick them up last.
   path_suffixes = [os.path.join(layout.workspace, 'bin')]
 
+  env = {
+      'GOROOT': os.path.join(layout.toolset_root, 'go'),
+      'GOBIN': os.path.join(layout.workspace, 'bin'),
+      'GOPATH': os.pathsep.join(all_go_paths),
+
+      # Don't use default cache in '~'.
+      'GOCACHE': os.path.join(layout.workspace, '.cache'),
+
+      # Infra Go workspace doesn't use advanced build systems,
+      # which inject custom `gopackagesdriver` binary. See also
+      # https://github.com/golang/tools/blob/54c614fe050cac95ace393a63f164149942ecbde/go/packages/external.go#L49
+      'GOPACKAGESDRIVER': 'off',
+
+      # Infra Go workspace is not ready for modules yet, attempting to use
+      # them will cause pain.
+      'GOPROXY': 'off',
+      'GO111MODULE': 'off',
+  }
+
+  if sys.platform == 'win32':
+    # Windows doesn't have gcc.
+    env['CGO_ENABLED'] = '0'
+
   return EnvironDiff(
-      env={
-          'GOROOT': os.path.join(layout.toolset_root, 'go'),
-          'GOBIN': os.path.join(layout.workspace, 'bin'),
-          'GOPATH': os.pathsep.join(all_go_paths),
-
-          # Don't use default cache in '~'.
-          'GOCACHE': os.path.join(layout.workspace, '.cache'),
-
-          # Infra Go workspace doesn't use advanced build systems,
-          # which inject custom `gopackagesdriver` binary. See also
-          # https://github.com/golang/tools/blob/54c614fe050cac95ace393a63f164149942ecbde/go/packages/external.go#L49
-          'GOPACKAGESDRIVER': 'off',
-
-          # Infra Go workspace is not ready for modules yet, attempting to use
-          # them will cause pain.
-          'GOPROXY': 'off',
-          'GO111MODULE': 'off',
-      },
+      env=env,
       env_prefixes={'PATH': path_prefixes},
       env_suffixes={'PATH': path_suffixes},
   )
