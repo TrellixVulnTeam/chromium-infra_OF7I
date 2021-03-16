@@ -396,10 +396,10 @@ func createDutLabels(devConfig *device.Config, osType *inventory.SchedulableLabe
 	_, ok := noArcBoardMap[devcfgID.GetPlatformId().GetValue()]
 	arc := !ok
 	// Use GetXXX in case any object is nil.
-	platform := devcfgID.GetPlatformId().GetValue()
-	brand := devcfgID.GetBrandId().GetValue()
-	model := devcfgID.GetModelId().GetValue()
-	variant := devcfgID.GetVariantId().GetValue()
+	platform := strings.ToLower(devcfgID.GetPlatformId().GetValue())
+	brand := strings.ToLower(devcfgID.GetBrandId().GetValue())
+	model := strings.ToLower(devcfgID.GetModelId().GetValue())
+	variant := strings.ToLower(devcfgID.GetVariantId().GetValue())
 
 	labels := inventory.SchedulableLabels{
 		Arc:               &arc,
