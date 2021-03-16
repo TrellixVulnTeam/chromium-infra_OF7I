@@ -655,6 +655,7 @@ SPECS.update({
         UniversalSource('httplib2', '0.10.3'),
         UniversalSource('httplib2', '0.12.1'),
         UniversalSource('httplib2', '0.13.1'),
+        UniversalSource('importlab', '0.6.1', pyversions=['py3']),
         UniversalSource('ink-extensions', '1.0.2'),
         UniversalSource('inotify_simple', '1.1.7'),
         UniversalSource('itsdangerous', '1.1.0'),

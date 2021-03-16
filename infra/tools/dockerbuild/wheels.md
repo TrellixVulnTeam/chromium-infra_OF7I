@@ -2204,6 +2204,20 @@ wheel: <
 
 * *universal*
 
+## **importlab-py3**
+
+### 0.6.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/importlab-py3"
+  version: "version:0.6.1"
+>
+```
+
+
+* *universal*
+
 ## **importlib-metadata**
 
 ### 1.6.0
