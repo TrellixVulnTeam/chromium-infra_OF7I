@@ -39,6 +39,7 @@
       "excluded_builders": [
         "android-incremental-dbg",
         "android-nougat-arm64-rel",
+        "android-pie-arm64-coverage-experimental-rel",
         "Oreo Phone Tester"
       ]
     },
