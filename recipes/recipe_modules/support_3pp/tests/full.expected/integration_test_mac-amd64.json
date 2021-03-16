@@ -1987,7 +1987,7 @@
       "describe",
       "3pp/deps/bottom_dep_url/mac-amd64",
       "-version",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2003,7 +2003,7 @@
     "name": "building deps/bottom_dep_url.cipd describe 3pp/deps/bottom_dep_url/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.2.3' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2080,7 +2080,7 @@
       "describe",
       "3pp/sources/url/deps/bottom_dep_url/mac-amd64",
       "-version",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2097,7 +2097,7 @@
     "name": "building deps/bottom_dep_url.fetch sources.cipd describe 3pp/sources/url/deps/bottom_dep_url/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:1.2.3' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2235,7 +2235,7 @@
       "describe",
       "3pp/sources/url/deps/bottom_dep_url/mac-amd64",
       "-version",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2267,7 +2267,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2718,7 +2718,7 @@
       "describe",
       "3pp/deps/bottom_dep_url/mac-amd64",
       "-version",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2754,7 +2754,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.2.3",
+      "version:2@1.2.3",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_7/provenance.attestation",
       "-json-output",
@@ -2793,7 +2793,7 @@
       "describe",
       "3pp/deps/deep_dep/mac-amd64",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2809,7 +2809,7 @@
     "name": "building deps/deep_dep.cipd describe 3pp/deps/deep_dep/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2886,7 +2886,7 @@
       "pkg-fetch",
       "source/deep_dep",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-out",
       "[CLEANUP]/tmp_tmp_8",
       "-json-output",
@@ -2905,10 +2905,10 @@
     "name": "building deps/deep_dep.fetch sources.cipd pkg-fetch source/deep_dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:2@1.0.0-@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.0.0-\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/deep_dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -2952,7 +2952,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_8",
-      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---"
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -2974,7 +2974,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---",
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-",
       "-root",
       "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.0.0/checkout",
       "-json-output",
@@ -2990,13 +2990,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.0.0---",
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.0.0-\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -3194,7 +3194,7 @@
       "describe",
       "3pp/deps/deep_dep/mac-amd64",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3230,7 +3230,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_10/provenance.attestation",
       "-json-output",
@@ -3269,7 +3269,7 @@
       "describe",
       "3pp/tools/already_uploaded/mac-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3345,7 +3345,7 @@
       "describe",
       "3pp/tools/fetch_and_package",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3360,7 +3360,7 @@
     "name": "building tools/fetch_and_package.cipd describe 3pp/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3435,7 +3435,7 @@
       "describe",
       "3pp/sources/script/tools/fetch_and_package/linux-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3451,7 +3451,7 @@
     "name": "building tools/fetch_and_package.fetch sources.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3616,7 +3616,7 @@
       "describe",
       "3pp/sources/script/tools/fetch_and_package/linux-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3647,7 +3647,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3859,7 +3859,7 @@
       "describe",
       "3pp/tools/fetch_and_package",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3894,7 +3894,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_13/provenance.attestation",
       "-json-output",
@@ -3932,7 +3932,7 @@
       "describe",
       "3pp/tools/posix_tool/mac-amd64",
       "-version",
-      "version:1.2.0",
+      "version:2@1.2.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3948,7 +3948,7 @@
     "name": "building tools/posix_tool.cipd describe 3pp/tools/posix_tool/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.2.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -4025,7 +4025,7 @@
       "pkg-fetch",
       "source/posix_tool",
       "-version",
-      "version:1.2.0",
+      "version:2@1.2.0",
       "-out",
       "[CLEANUP]/tmp_tmp_14",
       "-json-output",
@@ -4044,10 +4044,10 @@
     "name": "building tools/posix_tool.fetch sources.cipd pkg-fetch source/posix_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/posix_tool resolved-instance_id-of-version:1.2.0---@@@",
+      "@@@STEP_TEXT@source/posix_tool resolved-instance_id-of-version:2@1.2.0-@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.2.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.2.0-\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/posix_tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -4091,7 +4091,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_14",
-      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---"
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -4113,7 +4113,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-",
       "-root",
       "[START_DIR]/3pp/wd/tools/posix_tool/mac-amd64/1.2.0/checkout",
       "-json-output",
@@ -4129,13 +4129,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.2.0"
     },
-    "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
+    "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.2.0---\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.2.0-\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -4714,7 +4714,7 @@
       "describe",
       "3pp/tools/posix_tool/mac-amd64",
       "-version",
-      "version:1.2.0",
+      "version:2@1.2.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4750,7 +4750,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.2.0",
+      "version:2@1.2.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_17/provenance.attestation",
       "-json-output",
@@ -4811,7 +4811,7 @@
       "describe",
       "3pp/tools/windows_experiment/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4827,7 +4827,7 @@
     "name": "building tools/windows_experiment.cipd describe 3pp/tools/windows_experiment/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -4904,7 +4904,7 @@
       "describe",
       "3pp/sources/script/tools/windows_experiment/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4921,7 +4921,7 @@
     "name": "building tools/windows_experiment.fetch sources.cipd describe 3pp/sources/script/tools/windows_experiment/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -5091,7 +5091,7 @@
       "describe",
       "3pp/sources/script/tools/windows_experiment/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -5123,7 +5123,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -5574,7 +5574,7 @@
       "describe",
       "3pp/tools/windows_experiment/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -5610,7 +5610,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_20/provenance.attestation",
       "-json-output",
@@ -8653,7 +8653,7 @@
       "describe",
       "3pp/deps/dep/mac-amd64",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8669,7 +8669,7 @@
     "name": "building deps/dep.cipd describe 3pp/deps/dep/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -8824,7 +8824,7 @@
       "pkg-fetch",
       "source/dep",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-out",
       "[CLEANUP]/tmp_tmp_28",
       "-json-output",
@@ -8843,10 +8843,10 @@
     "name": "building deps/dep.fetch sources.cipd pkg-fetch source/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:1.0.0---@@@",
+      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:2@1.0.0-@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.0.0-\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -8890,7 +8890,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_28",
-      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---"
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -8912,7 +8912,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-",
       "-root",
       "[START_DIR]/3pp/wd/deps/dep/mac-amd64/1.0.0/checkout",
       "-json-output",
@@ -8928,13 +8928,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
+    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.0.0-\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -9472,7 +9472,7 @@
       "describe",
       "3pp/deps/dep/mac-amd64",
       "-version",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9508,7 +9508,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.0.0",
+      "version:2@1.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_30/provenance.attestation",
       "-json-output",
@@ -9569,7 +9569,7 @@
       "describe",
       "3pp/tools/pkg/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9585,7 +9585,7 @@
     "name": "building tools/pkg.cipd describe 3pp/tools/pkg/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -9772,7 +9772,7 @@
       "describe",
       "3pp/sources/script/tools/pkg/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9789,7 +9789,7 @@
     "name": "building tools/pkg.fetch sources.cipd describe 3pp/sources/script/tools/pkg/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -9959,7 +9959,7 @@
       "describe",
       "3pp/sources/script/tools/pkg/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9991,7 +9991,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -10577,7 +10577,7 @@
       "describe",
       "3pp/tools/pkg/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -10613,7 +10613,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_33/provenance.attestation",
       "-json-output",
@@ -10674,7 +10674,7 @@
       "describe",
       "3pp/tools/pkg_checkout/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -10690,7 +10690,7 @@
     "name": "building tools/pkg_checkout.cipd describe 3pp/tools/pkg_checkout/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -10877,7 +10877,7 @@
       "describe",
       "3pp/sources/script/tools/pkg_checkout/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -10894,7 +10894,7 @@
     "name": "building tools/pkg_checkout.fetch sources.cipd describe 3pp/sources/script/tools/pkg_checkout/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -11028,7 +11028,7 @@
       "describe",
       "3pp/sources/script/tools/pkg_checkout/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -11060,7 +11060,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -11646,7 +11646,7 @@
       "describe",
       "3pp/tools/pkg_checkout/mac-amd64",
       "-version",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -11682,7 +11682,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2.0.0",
+      "version:2@2.0.0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_36/provenance.attestation",
       "-json-output",

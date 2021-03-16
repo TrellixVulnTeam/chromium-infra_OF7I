@@ -5,13 +5,11 @@
 import re
 
 
-# The epoch is prepended to the source version when looking up the source
-# package in CIPD. This allows for changes in the source archive format.
-# The epoch is specified per source method. If a method does not appear here,
-# there will be no epoch prepended to the version.
-SOURCE_PACKAGE_EPOCHS = {
-    'git': '2',
-}
+# The epoch is prepended to the version when constructing the version: tag
+# for both the source package and the final built package. It must be
+# incremented in the case of incompatible changes to the source package
+# format, or any time that we need to force new builds of all packages.
+PACKAGE_EPOCH = '2'
 
 
 def parse_name_version(name_version):
@@ -245,10 +243,8 @@ class ResolvedSpec(object):
           self.create_pb.package.alter_version_re,
           self.create_pb.package.alter_version_replace,
           version)
-    symver = '%s%s' % (version, '.'+patch_ver if patch_ver else '')
-    epoch = SOURCE_PACKAGE_EPOCHS.get(self.source_method[0])
-    symver = '%s@%s' % (epoch, symver) if epoch else symver
-
+    symver = '%s@%s%s' % (PACKAGE_EPOCH, version,
+                          '.' + patch_ver if patch_ver else '')
     return self._cipd_spec_pool.get(full_cipd_pkg_name, symver)
 
   def source_cipd_spec(self, version):
@@ -260,8 +256,7 @@ class ResolvedSpec(object):
     """
     method, source_method_pb = self.source_method
     pkg_name = source_method_pb.pkg if method == 'cipd' else self.source_cache
-    epoch = SOURCE_PACKAGE_EPOCHS.get(method)
-    source_version = '%s@%s' % (epoch, version) if epoch else version
+    source_version = '%s@%s' % (PACKAGE_EPOCH, version)
 
     return self._cipd_spec_pool.get(pkg_name,
                                     source_version) if pkg_name else None
