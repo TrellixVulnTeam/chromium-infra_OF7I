@@ -1239,6 +1239,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **decorator-py3**
+
+### 4.4.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/decorator-py3"
+  version: "version:4.4.2"
+>
+```
+
+
+* *universal*
+
 ## **distlib-py2**
 
 ### 0.3.0
