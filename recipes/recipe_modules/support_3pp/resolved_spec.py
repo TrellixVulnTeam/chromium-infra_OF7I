@@ -5,6 +5,15 @@
 import re
 
 
+# The epoch is prepended to the source version when looking up the source
+# package in CIPD. This allows for changes in the source archive format.
+# The epoch is specified per source method. If a method does not appear here,
+# there will be no epoch prepended to the version.
+SOURCE_PACKAGE_EPOCHS = {
+    'git': '2',
+}
+
+
 def parse_name_version(name_version):
   """Parses a package 'name', or 'name@version'.
 
@@ -249,8 +258,11 @@ class ResolvedSpec(object):
     """
     method, source_method_pb = self.source_method
     pkg_name = source_method_pb.pkg if method == 'cipd' else self.source_cache
+    epoch = SOURCE_PACKAGE_EPOCHS.get(method)
+    source_version = '%s:%s' % (epoch, version) if epoch else version
 
-    return self._cipd_spec_pool.get(pkg_name, version) if pkg_name else None
+    return self._cipd_spec_pool.get(pkg_name,
+                                    source_version) if pkg_name else None
 
   @property
   def _sort_tuple(self):
