@@ -197,7 +197,7 @@
       "describe",
       "3pp/pkg/dep/linux-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -212,7 +212,7 @@
     "name": "building pkg/dep.cipd describe 3pp/pkg/dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -260,7 +260,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -316,7 +316,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -332,7 +332,7 @@
     "name": "building pkg/dep.fetch sources.cipd describe 3pp/sources/git/go.repo/dep (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -605,7 +605,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -636,7 +636,7 @@
       "-tag",
       "external_hash:hash",
       "-tag",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -800,7 +800,7 @@
       "describe",
       "3pp/build_tools/tool/linux-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -815,7 +815,7 @@
     "name": "building build_tools/tool.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -901,7 +901,7 @@
       "describe",
       "3pp/pkg/dep/linux-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -952,7 +952,7 @@
       "pkg-fetch",
       "3pp/pkg/dep/linux-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-out",
       "[CLEANUP]/tmp_tmp_3",
       "-json-output",
@@ -970,10 +970,10 @@
     "name": "building build_tools/tool.fetch sources.installing tools.cipd pkg-fetch 3pp/pkg/dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@3pp/pkg/dep/linux-amd64 resolved-instance_id-of-version:1.5.0-rc@@@",
+      "@@@STEP_TEXT@3pp/pkg/dep/linux-amd64 resolved-instance_id-of-version:2@1.5.0-@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.5.0-\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/dep/linux-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -1016,7 +1016,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_3",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc"
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:2@1.5.0-"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -1037,7 +1037,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:2@1.5.0-",
       "-root",
       "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/tools_prefix",
       "-json-output",
@@ -1052,13 +1052,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+    "name": "building build_tools/tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:2@1.5.0-",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.5.0-rc\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.5.0-\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -1097,7 +1097,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1113,7 +1113,7 @@
     "name": "building build_tools/tool.fetch sources.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1386,7 +1386,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1415,7 +1415,7 @@
       "pkg-register",
       "[CACHE]/3pp_cipd/3pp/sources/git/go.repo/tool/40-chars-fake-of-the-package-instance_id",
       "-tag",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1817,7 +1817,7 @@
       "describe",
       "3pp/build_tools/tool/linux-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1848,7 +1848,7 @@
       "-tag",
       "3pp_ecosystem_hash:c2719ea17aebff53d40f52891cdc3c4758212d89987565de4a740d6c46f8deb2",
       "-tag",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_6/provenance.attestation",
       "-json-output",
@@ -1909,7 +1909,7 @@
       "describe",
       "3pp/build_tools/tool/linux-amd64",
       "-version",
-      "version:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1924,7 +1924,7 @@
     "name": "building build_tools/tool (2).cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:v1.4.1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@v1.4.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1977,7 +1977,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:2@1.5.0-",
       "-root",
       "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/tools_prefix",
       "-json-output",
@@ -1992,13 +1992,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building build_tools/tool (2).fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+    "name": "building build_tools/tool (2).fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:2@1.5.0-",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.5.0-rc\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.5.0-\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -2010,7 +2010,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2066,7 +2066,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2082,7 +2082,7 @@
     "name": "building build_tools/tool (2).fetch sources.cipd describe 3pp/sources/git/go.repo/tool (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:v1.4.1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@v1.4.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2355,7 +2355,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2386,7 +2386,7 @@
       "-tag",
       "external_hash:hash",
       "-tag",
-      "version:2:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2750,7 +2750,7 @@
       "describe",
       "3pp/build_tools/tool/linux-amd64",
       "-version",
-      "version:v1.4.1",
+      "version:2@v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2783,7 +2783,7 @@
       "-tag",
       "3pp_ecosystem_hash:c2719ea17aebff53d40f52891cdc3c4758212d89987565de4a740d6c46f8deb2",
       "-tag",
-      "version:v1.4.1",
+      "version:2@v1.4.1",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_9/provenance.attestation",
       "-json-output",

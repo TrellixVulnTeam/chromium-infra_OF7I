@@ -246,6 +246,8 @@ class ResolvedSpec(object):
           self.create_pb.package.alter_version_replace,
           version)
     symver = '%s%s' % (version, '.'+patch_ver if patch_ver else '')
+    epoch = SOURCE_PACKAGE_EPOCHS.get(self.source_method[0])
+    symver = '%s@%s' % (epoch, symver) if epoch else symver
 
     return self._cipd_spec_pool.get(full_cipd_pkg_name, symver)
 
@@ -259,7 +261,7 @@ class ResolvedSpec(object):
     method, source_method_pb = self.source_method
     pkg_name = source_method_pb.pkg if method == 'cipd' else self.source_cache
     epoch = SOURCE_PACKAGE_EPOCHS.get(method)
-    source_version = '%s:%s' % (epoch, version) if epoch else version
+    source_version = '%s@%s' % (epoch, version) if epoch else version
 
     return self._cipd_spec_pool.get(pkg_name,
                                     source_version) if pkg_name else None

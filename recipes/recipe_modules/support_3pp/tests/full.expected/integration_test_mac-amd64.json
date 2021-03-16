@@ -965,7 +965,7 @@
       "describe",
       "3pp/deps/bottom_dep_git/mac-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -981,7 +981,7 @@
     "name": "building deps/bottom_dep_git.cipd describe 3pp/deps/bottom_dep_git/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1030,7 +1030,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1088,7 +1088,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1105,7 +1105,7 @@
     "name": "building deps/bottom_dep_git.fetch sources.cipd describe 3pp/sources/git/go.repo/dep (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1388,7 +1388,7 @@
       "describe",
       "3pp/sources/git/go.repo/dep",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1422,7 +1422,7 @@
       "-tag",
       "external_hash:hash",
       "-tag",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1912,7 +1912,7 @@
       "describe",
       "3pp/deps/bottom_dep_git/mac-amd64",
       "-version",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1948,7 +1948,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_4/provenance.attestation",
       "-json-output",
@@ -5674,7 +5674,7 @@
       "describe",
       "3pp/build_tools/git_tool/mac-amd64",
       "-version",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -5691,7 +5691,7 @@
     "name": "building build_tools/git_tool.cipd describe 3pp/build_tools/git_tool/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1.chops.1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1.chops.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -5748,7 +5748,7 @@
       "pkg-fetch",
       "3pp/build_tools/tool/mac-amd64",
       "-version",
-      "version:0.9.0.chops.1",
+      "version:2@0.9.0.chops.1",
       "-out",
       "[CLEANUP]/tmp_tmp_21",
       "-json-output",
@@ -5768,10 +5768,10 @@
     "name": "building build_tools/git_tool.fetch sources.installing tools.cipd pkg-fetch 3pp/build_tools/tool/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@3pp/build_tools/tool/mac-amd64 resolved-instance_id-of-version:0.9.0.ch@@@",
+      "@@@STEP_TEXT@3pp/build_tools/tool/mac-amd64 resolved-instance_id-of-version:2@0.9.0.@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:0.9.0.ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@0.9.0.\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/build_tools/tool/mac-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -5816,7 +5816,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_21",
-      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:0.9.0.ch"
+      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:2@0.9.0."
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -5839,7 +5839,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:0.9.0.ch",
+      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:2@0.9.0.",
       "-root",
       "[START_DIR]/3pp/wd/build_tools/git_tool/mac-amd64/1.5.0-rc1/tools_prefix",
       "-json-output",
@@ -5856,13 +5856,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/git_tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:0.9.0.ch",
+    "name": "building build_tools/git_tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:2@0.9.0.",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:0.9.0.ch\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@0.9.0.\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -5947,7 +5947,7 @@
       "describe",
       "3pp/sources/git/go.repo/git_tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6007,7 +6007,7 @@
       "describe",
       "3pp/sources/git/go.repo/git_tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6025,7 +6025,7 @@
     "name": "building build_tools/git_tool.fetch sources.cipd describe 3pp/sources/git/go.repo/git_tool (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -6318,7 +6318,7 @@
       "describe",
       "3pp/sources/git/go.repo/git_tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6353,7 +6353,7 @@
       "-tag",
       "external_hash:hash",
       "-tag",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7136,7 +7136,7 @@
       "describe",
       "3pp/build_tools/git_tool/mac-amd64",
       "-version",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7173,7 +7173,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_24/provenance.attestation",
       "-json-output",
@@ -7213,7 +7213,7 @@
       "describe",
       "3pp/build_tools/tool/mac-amd64",
       "-version",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7230,7 +7230,7 @@
     "name": "building build_tools/tool.cipd describe 3pp/build_tools/tool/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1.chops.1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1.chops.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -7285,7 +7285,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:0.9.0.ch",
+      "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:2@0.9.0.",
       "-root",
       "[START_DIR]/3pp/wd/build_tools/tool/mac-amd64/1.5.0-rc1/tools_prefix",
       "-json-output",
@@ -7302,13 +7302,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building build_tools/tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:0.9.0.ch",
+    "name": "building build_tools/tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/resolved-instance_id-of-version:2@0.9.0.",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:0.9.0.ch\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@0.9.0.\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -7422,7 +7422,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7440,7 +7440,7 @@
     "name": "building build_tools/tool.fetch sources.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2:1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -7733,7 +7733,7 @@
       "describe",
       "3pp/sources/git/go.repo/tool",
       "-version",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7766,7 +7766,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2:1.5.0-rc1",
+      "version:2@1.5.0-rc1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8549,7 +8549,7 @@
       "describe",
       "3pp/build_tools/tool/mac-amd64",
       "-version",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8584,7 +8584,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:1.5.0-rc1.chops.1",
+      "version:2@1.5.0-rc1.chops.1",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_27/provenance.attestation",
       "-json-output",
