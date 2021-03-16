@@ -2771,6 +2771,20 @@ wheel: <
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
 
+## **networkx-py3**
+
+### 2.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/networkx-py3"
+  version: "version:2.5"
+>
+```
+
+
+* *universal*
+
 ## **ninja**
 
 ### 1.10.0.post2
