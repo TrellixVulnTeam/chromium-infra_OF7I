@@ -26,7 +26,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -61,7 +60,6 @@ var (
 		// Provide access to the email address of the user.
 		"https://www.googleapis.com/auth/userinfo.email",
 	}
-	jobNameRe = regexp.MustCompile(`^jobs/legacy-(?P<id>[a-f0-9]+)$`)
 )
 
 func getRequestingUserEmail(ctx context.Context) (string, error) {
@@ -163,17 +161,9 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 			"misconfigured service, please try again later")
 	}
 
-	// Make a request to the legacy API.
-	// Ensure that r.Id is a hex number.
-	if !jobNameRe.MatchString(r.Name) {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"invalid id format, must match %s", jobNameRe.String())
-	}
-	matches := jobNameRe.FindStringSubmatch(r.Name)
-	legacyID := string(matches[jobNameRe.SubexpIndex("id")])
-	if len(legacyID) == 0 {
-		return nil, status.Error(codes.Unimplemented, "future ids not supported yet")
+	legacyID, err := pinpoint.LegacyJobID(r.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "bad name %q: %v", r.Name, err)
 	}
 
 	u := fmt.Sprintf("%s/api/job/%s?o=STATE", s.legacyPinpointService, legacyID)
@@ -256,8 +246,41 @@ func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsReque
 }
 
 func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobRequest) (*pinpoint.Job, error) {
-	// TODO(dberris): Implement this!
-	return nil, status.Error(codes.Unimplemented, "TODO")
+	userEmail, err := getRequestingUserEmail(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.Reason == "" || r.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "must set the 'reason' and 'name' fields")
+	}
+	legacyID, err := pinpoint.LegacyJobID(r.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	query := url.Values{
+		"job_id": {legacyID},
+		"reason": {r.Reason},
+		"user":   {userEmail},
+	}.Encode()
+	u := fmt.Sprintf("%s/api/job/cancel?%s", s.legacyPinpointService, query)
+	if _, err := url.Parse(u); err != nil {
+		grpclog.Errorf("Invalid URL: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to form a valid legacy request")
+	}
+	grpclog.Infof("POST %s", u)
+	res, err := s.LegacyClient.Post(u, "", nil)
+	if err != nil {
+		grpclog.Errorf("HTTP Request Error: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed retrieving job data from legacy service")
+	}
+	res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, "failed request: %s", res.Status)
+	}
+	return s.GetJob(ctx, &pinpoint.GetJobRequest{Name: r.Name})
 }
 
 // Email address for the service account to use.

@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"io/ioutil"
@@ -26,6 +27,7 @@ import (
 	"testing"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -177,6 +179,70 @@ func TestGetJob(t *testing.T) {
 				So(exp.BaseCommit.GitHash, ShouldEqual, "0d8952cfc50b039bf50320c9d3db82b164f3e549")
 				So(exp.ExperimentPatch.Change, ShouldEqual, 2560197)
 				So(exp.ExperimentPatch.Patchset, ShouldEqual, 12)
+			})
+		})
+	})
+}
+
+func TestCancelJob(t *testing.T) {
+	t.Parallel()
+	definedJobExperimentJSON, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const (
+		definedJobID   = "11423cdd520000"
+		definedJobName = "jobs/legacy-" + definedJobID
+	)
+	ts := startFakeLegacyServer(t, map[string]string{
+		"/api/job/" + definedJobID: string(definedJobExperimentJSON),
+		"/api/job/cancel":          "",
+	})
+	defer ts.Close()
+	log.Printf("legacy service = %s", ts.URL)
+
+	ctx := context.Background()
+	authorizedCtx := metadata.NewOutgoingContext(ctx, metadata.MD{
+		endpointsHeader: []string{
+			base64.RawURLEncoding.EncodeToString([]byte(`{"email": "anonymous-user@example.com"}`)),
+		},
+	})
+	Convey("Given a grpc server with a client", t, func() {
+		dialer := registerPinpointServer(t, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
+
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+		So(err, ShouldBeNil)
+		defer conn.Close()
+		client := pinpoint.NewPinpointClient(conn)
+
+		Convey("with an un-authenticated connection", func() {
+			Convey("We fail to cancel the job", func() {
+				_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
+				So(err, ShouldBeError)
+			})
+		})
+
+		Convey("with an authenticated connection", func() {
+			Convey("with an authorized connection", func() {
+				ctx := authorizedCtx
+				Convey("We fail to cancel the Job without a reason", func() {
+					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName})
+					So(err, ShouldBeError)
+				})
+				Convey("We fail to cancel the Job without a name", func() {
+					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Reason: "because"})
+					So(err, ShouldBeError)
+				})
+				Convey("We can cancel a job with name and reason", func() {
+					j, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
+					So(err, ShouldBeNil)
+					So(j.Name, ShouldEqual, definedJobName)
+				})
+				Convey("We fail to cancel a missing job", func() {
+					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: "doesnt-exist", Reason: "because"})
+					So(err, ShouldBeError)
+				})
 			})
 		})
 	})
