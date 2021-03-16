@@ -44,6 +44,7 @@ github.com/Masterminds/squirrel
 github.com/StackExchange/wmi
 github.com/VividCortex/mysqlerr
 github.com/andygrunwald/go-gerrit
+github.com/dgraph-io/badger/v3
 github.com/dustin/go-humanize
 github.com/go-sql-driver/mysql
 github.com/gomodule/redigo/redis
@@ -73,7 +74,6 @@ github.com/bmatcuk/doublestar
 
 # Other stuff
 contrib.go.opencensus.io/exporter
-go.etcd.io/bbolt
 go.opencensus.io/exporter
 go.opencensus.io/plugin/ocgrpc
 go.opencensus.io/trace
