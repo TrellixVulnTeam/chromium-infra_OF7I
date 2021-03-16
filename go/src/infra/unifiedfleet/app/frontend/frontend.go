@@ -39,7 +39,8 @@ func InstallHandlers(r *router.Router, mc router.MiddlewareChain) {
 		}
 		next(ctx)
 	})
-	r.POST("/pubsub/hart", mc, HaRTPushHandler)
+	// TODO(crbug.com/1188488): Enable after outage and fixes.
+	// r.POST("/pubsub/hart", mc, HaRTPushHandler)
 }
 
 // checkAccess verifies that the request is from an authorized user.
