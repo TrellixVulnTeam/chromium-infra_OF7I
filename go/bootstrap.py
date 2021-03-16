@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env python3
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -339,7 +339,8 @@ def fetch_glide_code(workspace, spec):
 
 
 def get_git_repository_head(path):
-  head = subprocess.check_output([GIT_EXE, '-C', path, 'rev-parse', 'HEAD'])
+  head = subprocess.check_output([GIT_EXE, '-C', path, 'rev-parse', 'HEAD'],
+                                 universal_newlines=True)
   return head.strip()
 
 
@@ -509,7 +510,7 @@ def get_go_environ(layout):
       if p.startswith(os.path.join(GCLIENT_ROOT, d, 'go')):
         return False
     return True
-  path = filter(should_keep, path)
+  path = list(filter(should_keep, path))
 
   # Insert new entries to PATH.
   env['PATH'] = os.pathsep.join(path_prefixes + path + path_suffixes)
@@ -589,7 +590,7 @@ def bootstrap(layout, logging_level, args=None):
   finally:
     # Restore os.environ back. Have to do it key-by-key to actually modify the
     # process environment (replacing os.environ object as a whole does nothing).
-    for k, v in prev_environ.iteritems():
+    for k, v in prev_environ.items():
       if v is not None:
         os.environ[k] = v
 

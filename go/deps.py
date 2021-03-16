@@ -471,7 +471,7 @@ def temp_file(body=None, root=None):
   fd, tmp = tempfile.mkstemp(suffix='go_deps_py', dir=root)
   try:
     if body:
-      with os.fdopen(fd, 'wb') as f:
+      with os.fdopen(fd, 'w') as f:
         f.write(body)
     else:
       os.close(fd)
@@ -560,7 +560,8 @@ def get_bundle_ver(lock_file_body):
   glide_lock = yaml.safe_load(lock_file_body)
   glide_lock.pop('hash', None)
   glide_lock.pop('updated', None)
-  sha1 = hashlib.sha1(json.dumps(glide_lock, sort_keys=True)).hexdigest()
+  sha1 = hashlib.sha1(json.dumps(glide_lock,
+                                 sort_keys=True).encode()).hexdigest()
   return '%s:%s' % (BUNDLE_FORMAT_TAG, sha1)
 
 
