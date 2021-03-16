@@ -477,6 +477,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'typed-ast',
+            '1.4.2',
+            packaged=(),
+            only_plat=['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'wrapt',
             '1.10.11',
             packaged=(),

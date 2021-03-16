@@ -4760,6 +4760,20 @@ wheel: <
 
 * *universal*
 
+## **typed-ast**
+
+### 1.4.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/typed-ast/${vpython_platform}"
+  version: "version:1.4.2"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **typing**
 
 ### 3.6.4
