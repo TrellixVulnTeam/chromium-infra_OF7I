@@ -68,6 +68,7 @@ def datastore_emulator(worker_id):
     with test_utils.with_emulator('datastore', port) as envs:
         yield envs
 
+
 # What follows here are bisection-related fixtures, also useful for testing
 # individual evaluators.
 @pytest.fixture
