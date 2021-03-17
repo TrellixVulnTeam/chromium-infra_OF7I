@@ -861,6 +861,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         CoveragePercentage(
             path='//dir/test.cc', total_lines=1, covered_lines=1)
     ]
+    entity.absolute_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    entity.incremental_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
     entity.put()
 
     request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
@@ -877,6 +885,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                     "total": 2,
                 },
                 "incremental_coverage": {
+                    "covered": 1,
+                    "total": 1,
+                },
+                "absolute_unit_tests_coverage": {
+                    "covered": 1,
+                    "total": 2,
+                },
+                "incremental_unit_tests_coverage": {
                     "covered": 1,
                     "total": 1,
                 },
@@ -912,6 +928,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         CoveragePercentage(
             path='//dir/test.cc', total_lines=1, covered_lines=1)
     ]
+    entity.absolute_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    entity.incremental_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
     entity.put()
 
     request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
@@ -928,6 +952,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                     "total": 2,
                 },
                 "incremental_coverage": {
+                    "covered": 1,
+                    "total": 1,
+                },
+                "absolute_unit_tests_coverage": {
+                    "covered": 1,
+                    "total": 2,
+                },
+                "incremental_unit_tests_coverage": {
                     "covered": 1,
                     "total": 1,
                 },

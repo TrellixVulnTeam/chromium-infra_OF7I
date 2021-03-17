@@ -1148,27 +1148,39 @@ class ServeCodeCoverageData(BaseHandler):
 
       return {'data': {'data': formatted_data,}, 'allowed_origin': '*'}
 
-    def _ServePercentages(abs_coverage, inc_coverage):
+    def _ServePercentages(abs_coverage, inc_coverage, abs_unit_tests_coverage,
+                          inc_unit_tests_coverage):
       """Serves percentages coverage data."""
-      path_to_abs_coverage = {}
-      path_to_inc_coverage = {}
-      for e in abs_coverage:
-        path_to_abs_coverage[e.path] = {
-            'covered': e.covered_lines,
-            'total': e.total_lines,
-        }
-      for e in inc_coverage:
-        path_to_inc_coverage[e.path] = {
-            'covered': e.covered_lines,
-            'total': e.total_lines,
-        }
+
+      def _GetCoverageMetricsPerFile(coverage):
+        coverage_per_file = {}
+        for e in coverage:
+          coverage_per_file[e.path] = {
+              'covered': e.covered_lines,
+              'total': e.total_lines,
+          }
+        return coverage_per_file
+
+      abs_coverage_per_file = _GetCoverageMetricsPerFile(abs_coverage)
+      inc_coverage_per_file = _GetCoverageMetricsPerFile(inc_coverage)
+      abs_unit_tests_coverage_per_file = _GetCoverageMetricsPerFile(
+          abs_unit_tests_coverage)
+      inc_unit_tests_coverage_per_file = _GetCoverageMetricsPerFile(
+          inc_unit_tests_coverage)
 
       formatted_data = {'files': []}
-      for p in path_to_abs_coverage:
+      for p in abs_coverage_per_file:
         formatted_data['files'].append({
-            'path': p[2:],
-            'absolute_coverage': path_to_abs_coverage[p],
-            'incremental_coverage': path_to_inc_coverage.get(p, None),
+            'path':
+                p[2:],
+            'absolute_coverage':
+                abs_coverage_per_file[p],
+            'incremental_coverage':
+                inc_coverage_per_file.get(p, None),
+            'absolute_unit_tests_coverage':
+                abs_unit_tests_coverage_per_file.get(p, None),
+            'incremental_unit_tests_coverage':
+                inc_unit_tests_coverage_per_file.get(p, None),
         })
 
       return {'data': {'data': formatted_data,}, 'allowed_origin': '*'}
@@ -1226,7 +1238,9 @@ class ServeCodeCoverageData(BaseHandler):
     if entity:
       if is_serving_percentages:
         return _ServePercentages(entity.absolute_percentages,
-                                 entity.incremental_percentages)
+                                 entity.incremental_percentages,
+                                 entity.absolute_percentages_unit,
+                                 entity.incremental_percentages_unit)
 
       return _ServeLines(entity.data)
 
@@ -1251,7 +1265,9 @@ class ServeCodeCoverageData(BaseHandler):
 
     if is_serving_percentages:
       return _ServePercentages(latest_entity.absolute_percentages,
-                               latest_entity.incremental_percentages)
+                               latest_entity.incremental_percentages,
+                               latest_entity.absolute_percentages_unit,
+                               latest_entity.incremental_percentages_unit)
 
     try:
       rebased_coverage_data = (
