@@ -165,6 +165,18 @@ func (r *selectRun) logChangedFiles(ctx context.Context) {
 	logging.Infof(ctx, "%s", msg)
 }
 
+// testNameReplacer is used to prepare a test name to be used in a .filter file.
+var testNameReplacer = strings.NewReplacer(
+	// Escape stars, since filter file lines are actually globs.
+	"*", "\\*",
+
+	// Java test names use "#" as a separator of class name and method name,
+	// but the filter files accept "." instead (probably because comments start
+	// with "#"). Thus replace "#" with ".".
+	// Note: only Java tests use "#" in their test names.
+	"#", ".",
+)
+
 func writeFilterFile(fileName string, toSkip []string) error {
 	f, err := os.Create(fileName)
 	if err != nil {
@@ -173,8 +185,7 @@ func writeFilterFile(fileName string, toSkip []string) error {
 	defer f.Close()
 
 	for _, name := range toSkip {
-		// Escape stars, since filter file lines are actually globs.
-		name = strings.Replace(name, "*", "\\*", -1)
+		name = testNameReplacer.Replace(name)
 		if _, err := fmt.Fprintf(f, "-%s\n", name); err != nil {
 			return err
 		}
