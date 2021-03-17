@@ -26,10 +26,14 @@ type experimentBaseRun struct {
 	baseCommandRun
 	issue         bugValue
 	configuration string
-	repository    string
-	baseCommit    string
-	expCommit     string
-	baseCL, expCL clValue
+
+	// Git and Gerrit specific configuration flags for specifying CLs we're
+	// running experiments with.
+	gitilesHost, gerritHost, repository string
+
+	// Commits and CLs for the base and experimental versions.
+	baseCommit, expCommit string
+	baseCL, expCL         clValue
 }
 
 // TODO(crbug.com/1174964): Move these parsers to luci/common/flags then migrate when done.
@@ -101,24 +105,34 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 	e.Flags.StringVar(&e.configuration, "cfg", "", text.Doc(`
 		Configuration name supported by Pinpoint (AKA bot).
 		`))
-	// TODO(crbug.com/1172875): Provide a command to query the list of supported repositories.
-	e.Flags.StringVar(&e.repository, "repo", "chromium", text.Doc(`
-		Repository to build/run the Pinpoint job against.`))
 	e.Flags.StringVar(&e.baseCommit, "base-commit", "HEAD", text.Doc(`
 		git commit hash (symbolic like HEAD, short-form, or long-form)
-		for the base build.`))
+		for the base build.
+	`))
 	e.Flags.Var(&e.baseCL, "base-cl", text.Doc(`
 		Gerrit CL to apply to base-commit (optional).
-		This must be of the form <cl number>/<patchset number> or just <cl number>.
-		When <patchset number> is not provided, we'll use the latest patchset of the CL.
+		This must be of the form <cl number>/<patchset number> or just <cl
+		number>. When <patchset number> is not provided, we'll use the latest
+		patchset of the CL.
 	`))
 	e.Flags.StringVar(&e.expCommit, "exp-commit", "HEAD", text.Doc(`
 		git commit hash (symbolic like HEAD, short-form, or long-form)
-		for experiment build. This may be different from -base-commit.
-		`))
+		for the experiment build. This may be different from -base-commit
+		and defaults to what -base-commit is set to.
+	`))
 	e.Flags.Var(&e.expCL, "exp-cl", text.Doc(`
 		Gerrit CL to apply to exp-commit.
-		This must be of the form <cl number>/<patchset number> or just <cl number>.
-		When <patchset number> is not provided, we'll use the latest patchset of the CL.
+		This must be of the form <cl number>/<patchset number> or just <cl
+		number>. When <patchset number> is not provided, we'll use the latest
+		patchset of the CL.
+	`))
+	e.Flags.StringVar(&e.gitilesHost, "gitiles-host", "chromium.googlesource.com", text.Doc(`
+		Gitiles host to retrieve commits from.
+	`))
+	e.Flags.StringVar(&e.gerritHost, "gerrit-host", "chromium-review.googlesource.com", text.Doc(`
+		Gerrit host to retrieve CLs from.
+	`))
+	e.Flags.StringVar(&e.repository, "repository", "chromium/src", text.Doc(`
+		Project associated with Gerrit and Gitiles to fetch code and CLs from.
 	`))
 }

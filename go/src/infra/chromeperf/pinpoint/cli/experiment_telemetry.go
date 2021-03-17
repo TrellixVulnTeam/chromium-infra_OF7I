@@ -36,16 +36,25 @@ type experimentTelemetryRun struct {
 
 func cmdTelemetryExperiment(p Param) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "experiment-telemetry-start <--flag...> -- <extra telemetry args>",
+		UsageLine: "experiment-telemetry-start <-flag...> -- <extra telemetry args>",
 		ShortDesc: "starts a telemetry a/b experiment",
 		LongDesc: text.Doc(`
 			Starts an A/B experiment between two builds (a base and experiment) generating results.
 			The extra telemetry arguments are passed to the invocation of the benchmark runner as-is.
 			To differentiate flags for the subcommand, you can use '--':
 
-			experiment-telemetry-start --benchmark=... -- --enable_features ...
+			    experiment-telemetry-start -benchmark=... -- --enable_features ...
 
 			The extra telemetry args will be treated as a space-separated list.
+
+			Comparing at different commits:
+
+ 			    experiment-telemetry-start -benchmark=... -base-commit <...> -exp-commit <...>
+
+			Applying non-chromium/src patches:
+
+			    experiment-telemetry-start -project=v8 ...
+
 		`),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &experimentTelemetryRun{}
@@ -71,13 +80,6 @@ func (e *experimentTelemetryRun) RegisterFlags(p Param) {
 		When empty defaults to all measurements produced by the benchmark (optional).
 	`))
 }
-
-const (
-	chromiumGitilesHost    = "chromium.googlesource.com"
-	chromiumGerritHost     = "chromium-review.googlesource.com"
-	chromiumGerritProject  = "chromium/src"
-	chromiumGitilesProject = "chromium/src"
-)
 
 func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extraArgs []string) *pinpoint.TelemetryBenchmark {
 	tb := &pinpoint.TelemetryBenchmark{
@@ -109,6 +111,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	if err != nil {
 		return errors.Annotate(err, "failed to create a Pinpoint client").Err()
 	}
+
 	js := &pinpoint.JobSpec{
 		ComparisonMode: pinpoint.JobSpec_PERFORMANCE,
 		Config:         e.configuration,
@@ -118,15 +121,14 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		JobKind: &pinpoint.JobSpec_Experiment{
 			Experiment: &pinpoint.Experiment{
 				BaseCommit: &pinpoint.GitilesCommit{
-					Host:    chromiumGitilesHost,
-					Project: chromiumGitilesProject,
+					Host:    e.gitilesHost,
+					Project: e.repository,
 					GitHash: e.baseCommit,
 				},
-				ExperimentPatch: &pinpoint.GerritChange{
-					Host:     chromiumGerritHost,
-					Project:  chromiumGerritProject,
-					Change:   e.expCL.clNum,
-					Patchset: e.expCL.patchSet,
+				ExperimentCommit: &pinpoint.GitilesCommit{
+					Host:    e.gitilesHost,
+					Project: e.repository,
+					GitHash: e.expCommit,
 				},
 			},
 		},
@@ -145,17 +147,18 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	}
 	if e.baseCL.clNum > 0 {
 		exp.BasePatch = &pinpoint.GerritChange{
-			Host:     chromiumGerritHost,
-			Project:  chromiumGerritProject,
+			Host:     e.gerritHost,
+			Project:  e.repository,
 			Change:   e.baseCL.clNum,
 			Patchset: e.baseCL.patchSet,
 		}
 	}
-	if len(e.expCommit) > 0 {
-		exp.ExperimentCommit = &pinpoint.GitilesCommit{
-			Host:    chromiumGitilesHost,
-			Project: chromiumGitilesProject,
-			GitHash: e.expCommit,
+	if e.expCL.clNum > 0 {
+		exp.ExperimentPatch = &pinpoint.GerritChange{
+			Host:     e.gerritHost,
+			Project:  e.repository,
+			Change:   e.expCL.clNum,
+			Patchset: e.expCL.patchSet,
 		}
 	}
 	j, err := c.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{Job: js})
