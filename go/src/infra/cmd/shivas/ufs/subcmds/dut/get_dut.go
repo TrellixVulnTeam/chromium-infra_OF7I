@@ -189,8 +189,10 @@ func (c *getDut) formatFilters() []string {
 }
 
 func printDutFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
-	machineMap := make(map[string]*ufspb.Machine, 0)
+	lseTomachineMap := make(map[string]*ufspb.Machine, 0)
 	lses := make([]*ufspb.MachineLSE, len(msgs))
+	idTomachineMap := make(map[string]*ufspb.Machine, 0)
+	ids := make([]string, 0, 0)
 	for i, r := range msgs {
 		lses[i] = r.(*ufspb.MachineLSE)
 		lses[i].Name = ufsUtil.RemovePrefix(lses[i].Name)
@@ -198,12 +200,29 @@ func printDutFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Messa
 			fmt.Println("Invalid host ", lses[i].Name)
 			continue
 		}
-		res, _ := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
-			Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, lses[i].GetMachines()[0]),
-		})
-		machineMap[lses[i].Name] = res
+		ids = append(ids, ufsUtil.AddPrefix(ufsUtil.MachineCollection, lses[i].GetMachines()[0]))
 	}
-	utils.PrintDutsFull(lses, machineMap)
+	res, err := ic.BatchGetMachines(ctx, &ufsAPI.BatchGetMachinesRequest{
+		Names: ids,
+	})
+	if err != nil {
+		fmt.Println("Failed to get machines. Printing only partial information.", err)
+		return printDutNormal(msgs, false, false)
+	}
+	for _, machine := range res.GetMachines() {
+		idTomachineMap[ufsUtil.RemovePrefix(machine.GetName())] = machine
+	}
+	for i := range lses {
+		if len(lses[i].GetMachines()) == 0 {
+			continue
+		}
+		machine, ok := idTomachineMap[lses[i].GetMachines()[0]]
+		if !ok {
+			continue
+		}
+		lseTomachineMap[lses[i].Name] = machine
+	}
+	utils.PrintDutsFull(lses, lseTomachineMap)
 	return nil
 }
 
