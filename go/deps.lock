@@ -1,8 +1,8 @@
 hash: aa481bc6d758d664d0801d080811205766a6265f316af63d1bb040c8c166ea8f
-updated: 2021-03-16T14:48:48.814507005+09:00
+updated: 2021-03-17T11:24:07.892654337+09:00
 imports:
 - name: cloud.google.com/go
-  version: df28999076fa91939038c06a706fc63811b20932
+  version: d8689f1d32be83f9bbbacb9dd24ce085d81d79e8
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -96,7 +96,7 @@ imports:
   version: 2245c18dfd1f6242681749b247fe2f09803a68a4
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
 - name: github.com/dgraph-io/ristretto
-  version: e4f298c8aa88bdedc4bd62812721895273abc23c
+  version: 6b99600c6cd958495fea33af2bf650c706da4c14
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/ristretto.git
 - name: github.com/disintegration/imaging
   version: d40f48ce0f098c53ab1fcd6e0e402da682262da5
@@ -462,7 +462,7 @@ imports:
   version: 74c10e2c17dcdb1cd5ff8044e33d9338820db233
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 0364c525d92e341a99f77e10c942c94dfcf76435
+  version: 3a0fcf7b0791c1ce3717e95b5effe156060d258b
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -489,7 +489,7 @@ imports:
   version: 19d50cac98aa7a8e0a0c8b6a9bfd3a99e653c0cc
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
-  version: 34ac3e1c2000a6db9fe30a4d99f2200a8a3600c8
+  version: d523dce5a7f4b994f7ed0531dbe44cd8fd803e26
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context/ctxhttp
@@ -505,7 +505,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: c6e025ad80050062a239b53e0718310505381625
+  version: 77fc1eacc6aaf85d786cc0e8343c191ce26ef821
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -520,7 +520,7 @@ imports:
   version: f8bda1e9f3badef837c98cbaf4f7c335de90f266
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 6d45e3d999c13387b54fe2b35939efb993dda8e3
+  version: 9e9211a98eaaa68d7daee70aabe3d1d28f421525
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -572,7 +572,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 1e7119b13689dac5b8fe0a70118434eff96e997b
+  version: 967933baf52a7bd113bfc23cbf4c5d01b8367d5b
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
