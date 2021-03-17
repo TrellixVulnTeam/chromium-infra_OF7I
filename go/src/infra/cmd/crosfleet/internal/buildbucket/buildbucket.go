@@ -49,7 +49,7 @@ type Client struct {
 
 // NewClient returns a new client to interact with Buildbucket builds from the
 // given builder.
-func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, authFlags authcli.Flags) (*Client, error) {
+func NewClient(ctx context.Context, builder *buildbucketpb.BuilderID, bbService string, authFlags authcli.Flags) (*Client, error) {
 	httpClient, err := cmdlib.NewHTTPClient(ctx, &authFlags)
 	if err != nil {
 		return nil, err
@@ -57,13 +57,13 @@ func NewClient(ctx context.Context, builderInfo site.BuildbucketBuilderInfo, aut
 
 	prpcClient := &prpc.Client{
 		C:       httpClient,
-		Host:    builderInfo.Host,
+		Host:    bbService,
 		Options: site.DefaultPRPCOptions,
 	}
 
 	return &Client{
 		client:    buildbucketpb.NewBuildsPRPCClient(prpcClient),
-		builderID: builderInfo.BuilderID,
+		builderID: builder,
 	}, nil
 }
 
@@ -202,6 +202,30 @@ func (c *Client) GetBuild(ctx context.Context, ID int64, fields ...string) (*bui
 		return nil, errors.Annotate(err, "get build").Err()
 	}
 	return build, nil
+}
+
+// GetLatestGreenBuild gets the latest green build for the client's builder.
+// To optimize runtime, this call is only configured to populate the build's ID
+// and output properties. More fields can be added to the field mask if needed.
+func (c *Client) GetLatestGreenBuild(ctx context.Context) (*buildbucketpb.Build, error) {
+	searchBuildsRequest := &buildbucketpb.SearchBuildsRequest{
+		Predicate: &buildbucketpb.BuildPredicate{
+			Builder: c.builderID,
+			Status:  buildbucketpb.Status_SUCCESS,
+		},
+		Fields: &field_mask.FieldMask{Paths: []string{
+			"builds.*.id",
+			"builds.*.output.properties",
+		}},
+	}
+	response, err := c.client.SearchBuilds(ctx, searchBuildsRequest)
+	if err != nil {
+		return nil, err
+	}
+	if len(response.Builds) == 0 {
+		return nil, fmt.Errorf("no green builds found for builder %s", c.builderID.Builder)
+	}
+	return response.Builds[0], nil
 }
 
 // BuildURL constructs the URL for the LUCI page of the build (of the client's

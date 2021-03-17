@@ -21,36 +21,25 @@ type Environment struct {
 	SwarmingService string
 
 	// Buildbucket-specific values.
-	CTPBuilderInfo       BuildbucketBuilderInfo
-	DUTLeaserBuilderInfo BuildbucketBuilderInfo
-}
-
-// BuildbucketBuilderInfo contains information for initializing a
-// Buildbucket client that talks to a specific builder.
-type BuildbucketBuilderInfo struct {
-	Host      string
-	BuilderID *buildbucket_pb.BuilderID
+	BuildbucketService string
+	CTPBuilder         *buildbucket_pb.BuilderID
+	DUTLeaserBuilder   *buildbucket_pb.BuilderID
 }
 
 // Prod is the environment for prod.
 var Prod = Environment{
 	SwarmingService: "https://chromeos-swarming.appspot.com/",
 
-	CTPBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "testplatform",
-			Builder: "cros_test_platform",
-		},
+	BuildbucketService: "cr-buildbucket.appspot.com",
+	CTPBuilder: &buildbucket_pb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "testplatform",
+		Builder: "cros_test_platform",
 	},
-	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "test_runner",
-			Builder: "dut_leaser",
-		},
+	DUTLeaserBuilder: &buildbucket_pb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "test_runner",
+		Builder: "dut_leaser",
 	},
 }
 
@@ -58,21 +47,16 @@ var Prod = Environment{
 var Dev = Environment{
 	SwarmingService: "https://chromium-swarm-dev.appspot.com/",
 
-	CTPBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "testplatform",
-			Builder: "cros_test_platform-dev",
-		},
+	BuildbucketService: "cr-buildbucket.appspot.com",
+	CTPBuilder: &buildbucket_pb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "testplatform",
+		Builder: "cros_test_platform-dev",
 	},
-	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "test_runner",
-			Builder: "dut_leaser",
-		},
+	DUTLeaserBuilder: &buildbucket_pb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "test_runner",
+		Builder: "dut_leaser",
 	},
 }
 

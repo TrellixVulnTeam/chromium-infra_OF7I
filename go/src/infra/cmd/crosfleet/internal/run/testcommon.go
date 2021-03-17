@@ -8,13 +8,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"infra/cmdsupport/cmdlib"
+	"io"
 	"strings"
 	"time"
+
+	"go.chromium.org/luci/auth/client/authcli"
+	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
-	"infra/cmdsupport/cmdlib"
 
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
@@ -53,7 +57,8 @@ type testCommonFlags struct {
 
 // Registers run command-specific flags
 func (c *testCommonFlags) register(f *flag.FlagSet) {
-	f.StringVar(&c.image, "image", "", "Fully specified image name to run test against, e.g. octopus-release/R89-13609.0.0.")
+	f.StringVar(&c.image, "image", "", `Optional fully specified image name to run test against, e.g. octopus-release/R89-13609.0.0.
+If no value is passed, test will run against the latest green build for the given board.`)
 	f.StringVar(&c.board, "board", "", "Board to run tests on.")
 	f.StringVar(&c.model, "model", "", "Model to run tests on.")
 	f.StringVar(&c.pool, "pool", "", "Device pool to run tests on.")
@@ -74,6 +79,25 @@ If a Quota Scheduler account is specified via -qs-account, this value is not use
 	f.BoolVar(&c.json, "json", false, "Format output as JSON.")
 }
 
+// validateAndAutocompleteFlags returns any errors after validating the CLI
+// flags, and autocompletes the -image flag unless it was specified by the user.
+func (c *testCommonFlags) validateAndAutocompleteFlags(ctx context.Context, f *flag.FlagSet, mainArgType, bbService string, authFlags authcli.Flags, writer io.Writer) error {
+	if err := c.validateArgs(f, mainArgType); err != nil {
+		return err
+	}
+	// If no image was specified, determine the latest green image for the
+	// given board.
+	if c.image == "" {
+		latestImage, err := latestImage(ctx, c.board, bbService, authFlags)
+		if err != nil {
+			return fmt.Errorf("error determining the latest image for board %s: %v", c.board, err)
+		}
+		fmt.Fprintf(writer, "Using latest green build image %s for board %s\n", latestImage, c.board)
+		c.image = latestImage
+	}
+	return nil
+}
+
 func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) error {
 	var errors []string
 	if c.board == "" {
@@ -81,9 +105,6 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 	}
 	if c.pool == "" {
 		errors = append(errors, "missing pool flag")
-	}
-	if c.image == "" {
-		errors = append(errors, "missing image flag")
 	}
 	if c.priority < MinSwarmingPriority || c.priority > MaxSwarmingPriority {
 		errors = append(errors, fmt.Sprintf("priority flag should be in [%d, %d]", MinSwarmingPriority, MaxSwarmingPriority))
@@ -96,6 +117,32 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 		return cmdlib.NewUsageError(*f, strings.Join(errors, "\n"))
 	}
 	return nil
+}
+
+// latestImage gets the build image from the latest green postsubmit build for
+// the given board.
+func latestImage(ctx context.Context, board, bbService string, authFlags authcli.Flags) (string, error) {
+	postsubmitBuilder := &buildbucketpb.BuilderID{
+		Project: "chromeos",
+		Bucket:  "postsubmit",
+		Builder: fmt.Sprintf("%s-postsubmit", board),
+	}
+	postsubmitBBClient, err := buildbucket.NewClient(ctx, postsubmitBuilder, bbService, authFlags)
+	if err != nil {
+		return "", err
+	}
+	latestGreenPostsubmit, err := postsubmitBBClient.GetLatestGreenBuild(ctx)
+	if err != nil {
+		return "", err
+	}
+	outputProperties := latestGreenPostsubmit.Output.Properties.GetFields()
+	artifacts := outputProperties["artifacts"].GetStructValue().GetFields()
+	image := artifacts["gs_path"].GetStringValue()
+	if image == "" {
+		buildURL := postsubmitBBClient.BuildURL(latestGreenPostsubmit.Id)
+		return "", fmt.Errorf("most recent postsubmit for board %s has no corresponding build image; visit postsubmit build at %s for more details", board, buildURL)
+	}
+	return image, nil
 }
 
 // buildTags combines test metadata tags with user-added tags.

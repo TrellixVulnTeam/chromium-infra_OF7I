@@ -85,16 +85,16 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 		"lease_length_minutes": c.durationMins,
 	}
 
-	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilderInfo, c.authFlags)
+	leasesBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {
 		return err
 	}
-	buildID, err := bbClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
-	fmt.Fprintf(a.GetErr(), "Requesting %d minute lease at %s\n", c.durationMins, bbClient.BuildURL(buildID))
+	buildID, err := leasesBBClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
+	fmt.Fprintf(a.GetErr(), "Requesting %d minute lease at %s\n", c.durationMins, leasesBBClient.BuildURL(buildID))
 	if c.exitEarly {
 		return nil
 	}
-	build, err := bbClient.WaitForBuildStart(ctx, buildID)
+	build, err := leasesBBClient.WaitForBuildStart(ctx, buildID)
 	if err != nil {
 		return err
 	}

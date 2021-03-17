@@ -26,7 +26,7 @@ var test = &subcommands.Command{
 	ShortDesc: "runs an individual test",
 	LongDesc: `Launches an individual test task with the given test name.
 
-You must supply -board, -image, and -pool.
+You must supply -board and -pool.
 
 This command does not wait for the task to start running.
 
@@ -59,23 +59,24 @@ func (c *testRun) Run(a subcommands.Application, args []string, env subcommands.
 }
 
 func (c *testRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(&c.Flags, testCmdName); err != nil {
+	bbService := c.envFlags.Env().BuildbucketService
+	ctx := cli.GetContext(a, c, env)
+	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testCmdName, bbService, c.authFlags, a.GetErr()); err != nil {
 		return err
 	}
 	testPlan := testPlanForTests(c.testArgs, args)
 	testNamesLabel := testOrSuiteNamesLabel(args)
 	buildTags := c.buildTags(testCmdName, testNamesLabel)
 
-	ctx := cli.GetContext(a, c, env)
-	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
+	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, bbService, c.authFlags)
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, bbClient, testPlan, buildTags, &c.testCommonFlags)
+	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testCmdName, bbClient.BuildURL(buildID))
+	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testCmdName, ctpBBClient.BuildURL(buildID))
 	return nil
 }
 

@@ -61,7 +61,7 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilderInfo, c.authFlags)
+	leasesBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().DUTLeaserBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 		botIDs = append(botIDs, id)
 	}
 
-	err = bbClient.CancelBuildsByUser(ctx, a.GetOut(), earliestCreateTime, userEmail, botIDs, c.reason)
+	err = leasesBBClient.CancelBuildsByUser(ctx, a.GetOut(), earliestCreateTime, userEmail, botIDs, c.reason)
 	if err != nil {
 		return err
 	}

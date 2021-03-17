@@ -28,7 +28,7 @@ var testplan = &subcommands.Command{
 	ShortDesc: "runs a test plan",
 	LongDesc: `Launches a test plan task for a given test plan file.
 
-You must supply -board, -image and -pool.
+You must supply -board and -pool.
 
 This command is more general than "run test" or "run suite". The supplied
 test plan should conform to the TestPlan proto as defined here:
@@ -63,7 +63,9 @@ func (c *planRun) Run(a subcommands.Application, args []string, env subcommands.
 }
 
 func (c *planRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(&c.Flags, testPlanCmdName); err != nil {
+	bbService := c.envFlags.Env().BuildbucketService
+	ctx := cli.GetContext(a, c, env)
+	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testPlanCmdName, bbService, c.authFlags, a.GetErr()); err != nil {
 		return err
 	}
 	if len(args) > 1 {
@@ -76,16 +78,15 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 	// Don't create a tag for the user's test plan file.
 	buildTags := c.buildTags(testCmdName, "")
 
-	ctx := cli.GetContext(a, c, env)
-	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
+	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, bbClient, testPlan, buildTags, &c.testCommonFlags)
+	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testPlanCmdName, bbClient.BuildURL(buildID))
+	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testPlanCmdName, ctpBBClient.BuildURL(buildID))
 	return nil
 }
 

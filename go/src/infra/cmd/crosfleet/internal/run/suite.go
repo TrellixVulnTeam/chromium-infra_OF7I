@@ -26,7 +26,7 @@ var suite = &subcommands.Command{
 	ShortDesc: "runs a test suite",
 	LongDesc: `Launches a suite task with the given suite name.
 
-You must supply -board, -image, and -pool.
+You must supply -board and -pool.
 
 This command does not wait for the task to start running.
 
@@ -57,23 +57,24 @@ func (c *suiteRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 func (c *suiteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(&c.Flags, suiteCmdName); err != nil {
+	bbService := c.envFlags.Env().BuildbucketService
+	ctx := cli.GetContext(a, c, env)
+	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, suiteCmdName, bbService, c.authFlags, a.GetErr()); err != nil {
 		return err
 	}
 	testPlan := testPlanForSuites(args)
 	suiteNamesLabel := testOrSuiteNamesLabel(args)
 	buildTags := c.buildTags(testCmdName, suiteNamesLabel)
 
-	ctx := cli.GetContext(a, c, env)
-	bbClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilderInfo, c.authFlags)
+	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, bbClient, testPlan, buildTags, &c.testCommonFlags)
+	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", suiteCmdName, bbClient.BuildURL(buildID))
+	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", suiteCmdName, ctpBBClient.BuildURL(buildID))
 	return nil
 }
 

@@ -33,7 +33,6 @@ var testValidateArgsData = []struct {
 		[]string{},
 		`missing board flag
 missing pool flag
-missing image flag
 priority flag should be in [50, 255]
 missing suite-name arg`,
 	},
