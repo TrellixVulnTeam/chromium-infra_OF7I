@@ -1,17 +1,16 @@
 package: infra/tools/luci/cas/${platform}
 description: Tool upload and download files from CAS server.
 platforms:
-  # TODO(crbug.com/1172879): re-enable all.
   - linux-386
   - linux-amd64
   - linux-arm64
-  # - linux-armv6l
+  - linux-armv6l
   - linux-mipsle
-  # - linux-mips64
-  # - linux-mips64le
+  - linux-mips64
+  - linux-mips64le
   - linux-ppc64
   - linux-ppc64le
-  # - linux-s390x
+  - linux-s390x
   - mac-amd64
   - mac-arm64
   - windows-386
