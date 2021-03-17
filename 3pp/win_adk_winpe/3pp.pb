@@ -7,7 +7,6 @@ create {
       extension: ".exe"
     }
   }
-  build {}
 }
 
 upload { pkg_prefix: "tools" }
