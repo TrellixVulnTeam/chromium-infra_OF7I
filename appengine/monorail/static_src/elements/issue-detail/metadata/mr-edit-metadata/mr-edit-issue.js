@@ -9,7 +9,6 @@ import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as ui from 'reducers/ui.js';
 import {arrayToEnglish} from 'shared/helpers.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 import './mr-edit-metadata.js';
 import 'shared/typedef.js';
 
@@ -22,13 +21,6 @@ import ClientLogger from 'monitoring/client-logger.js';
  *
  */
 export class MrEditIssue extends connectStore(LitElement) {
-  /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-    ];
-  }
-
   /** @override */
   render() {
     const issue = this.issue || {};
@@ -130,6 +122,11 @@ export class MrEditIssue extends connectStore(LitElement) {
   }
 
   /** @override */
+  createRenderRoot() {
+    return this;
+  }
+
+  /** @override */
   stateChanged(state) {
     this.issue = issueV0.viewedIssue(state);
     this.issueRef = issueV0.viewedIssueRef(state);
@@ -187,7 +184,7 @@ export class MrEditIssue extends connectStore(LitElement) {
    * Resets all form fields to their initial values.
    */
   reset() {
-    const form = this.shadowRoot.querySelector('mr-edit-metadata');
+    const form = this.querySelector('mr-edit-metadata');
     if (!form) return;
     form.reset();
   }
@@ -196,7 +193,7 @@ export class MrEditIssue extends connectStore(LitElement) {
    * Dispatches an action to save issue changes on the server.
    */
   async save() {
-    const form = this.shadowRoot.querySelector('mr-edit-metadata');
+    const form = this.querySelector('mr-edit-metadata');
     if (!form) return;
 
     const delta = form.delta;
@@ -229,10 +226,10 @@ export class MrEditIssue extends connectStore(LitElement) {
    * Focuses the edit form in response to the 'r' hotkey.
    */
   focus() {
-    const editHeader = this.shadowRoot.querySelector('#makechanges');
+    const editHeader = this.querySelector('#makechanges');
     editHeader.scrollIntoView();
 
-    const editForm = this.shadowRoot.querySelector('mr-edit-metadata');
+    const editForm = this.querySelector('mr-edit-metadata');
     editForm.focus();
   }
 

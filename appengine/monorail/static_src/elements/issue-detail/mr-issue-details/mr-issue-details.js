@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
@@ -20,33 +20,6 @@ import {commentListToDescriptionList} from 'shared/convertersV0.js';
  */
 export class MrIssueDetails extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return css`
-      :host {
-        font-size: var(--chops-main-font-size);
-        background-color: var(--chops-white);
-        padding: 0;
-        padding-bottom: 1em;
-        display: flex;
-        align-items: stretch;
-        justify-content: flex-start;
-        flex-direction: column;
-        margin: 0;
-        box-sizing: border-box;
-      }
-      h3 {
-        margin-top: 1em;
-      }
-      mr-description {
-        margin-bottom: 1em;
-      }
-      mr-edit-issue {
-        margin-top: 40px;
-      }
-    `;
-  }
-
-  /** @override */
   render() {
     let comments = [];
     let descriptions = [];
@@ -59,6 +32,28 @@ export class MrIssueDetails extends connectStore(LitElement) {
     }
 
     return html`
+      <style>
+        mr-issue-details {
+          font-size: var(--chops-main-font-size);
+          background-color: var(--chops-white);
+          padding-bottom: 1em;
+          display: flex;
+          align-items: stretch;
+          justify-content: flex-start;
+          flex-direction: column;
+          margin: 0;
+          box-sizing: border-box;
+        }
+        h3 {
+          margin-top: 1em;
+        }
+        mr-description {
+          margin-bottom: 1em;
+        }
+        mr-edit-issue {
+          margin-top: 40px;
+        }
+      </style>
       <mr-description .descriptionList=${descriptions}></mr-description>
       <mr-comment-list
         headingLevel="2"
@@ -84,6 +79,11 @@ export class MrIssueDetails extends connectStore(LitElement) {
     super();
     this.commentsByApproval = new Map();
     this.issuePermissions = [];
+  }
+
+  /** @override */
+  createRenderRoot() {
+    return this;
   }
 
   /** @override */
@@ -149,11 +149,12 @@ export class MrIssueDetails extends connectStore(LitElement) {
  * @return {!Array<Promise<Boolean>>}
  */
 function _subtreeUpdateComplete(element) {
-  if (!(element.shadowRoot && element.updateComplete)) {
+  if (!element.updateComplete) {
     return [];
   }
 
-  const children = element.shadowRoot.querySelectorAll('*');
+  const context = element.shadowRoot ? element.shadowRoot : element;
+  const children = context.querySelectorAll('*');
   const childPromises = Array.from(children, (e) => _subtreeUpdateComplete(e));
   return [element.updateComplete].concat(...childPromises);
 }

@@ -72,7 +72,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
           --approval-bg-color: hsl(5, 60%, 92%);
           --approval-accent-color: hsl(357, 100%, 39%);
         }
-        chops-button {
+        chops-button.edit-survey {
           border: var(--chops-normal-border);
           margin: 0;
         }
@@ -192,7 +192,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
           role="heading"
         >
           ${this.fieldName} Survey
-          <chops-button @click=${this._openSurveyEditor}>
+          <chops-button class="edit-survey" @click=${this._openSurveyEditor}>
             Edit responses
           </chops-button>
         </h4>

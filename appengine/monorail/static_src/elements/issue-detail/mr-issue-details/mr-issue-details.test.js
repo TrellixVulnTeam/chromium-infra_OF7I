@@ -26,7 +26,7 @@ describe('mr-issue-details', () => {
 
     await element.updateComplete;
 
-    assert.isNotNull(element.shadowRoot.querySelector('mr-edit-issue'));
+    assert.isNotNull(element.querySelector('mr-edit-issue'));
   });
 
   it('mr-edit-issue is hidden if user has no addissuecomment', async () => {
@@ -34,6 +34,6 @@ describe('mr-issue-details', () => {
 
     await element.updateComplete;
 
-    assert.isNull(element.shadowRoot.querySelector('mr-edit-issue'));
+    assert.isNull(element.querySelector('mr-edit-issue'));
   });
 });

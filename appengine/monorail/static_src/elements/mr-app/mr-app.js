@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 import {repeat} from 'lit-html/directives/repeat';
 import page from 'page';
 import qs from 'qs';
@@ -40,14 +40,22 @@ const QUERY_PARAMS_THAT_RESET_SCROLL = ['q', 'mode', 'id'];
  */
 export class MrApp extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-      css`
-        :host {
+  render() {
+    return html`
+      <style>
+        ${SHARED_STYLES}
+        mr-app {
           display: block;
           padding-top: var(--monorail-header-height);
           margin-top: -1px; /* Prevent a double border from showing up. */
+
+          /* From shared-styles.js. */
+          --mr-edit-field-padding: 0.125em 4px;
+          --mr-edit-field-width: 90%;
+          --mr-input-grid-gap: 6px;
+          font-family: var(--chops-font-family);
+          color: var(--chops-primary-font-color);
+          font-size: var(--chops-main-font-size);
         }
         main {
           border-top: var(--chops-normal-border);
@@ -66,13 +74,7 @@ export class MrApp extends connectStore(LitElement) {
           position: static;
           margin-top: 0.5em;
         }
-      `,
-    ];
-  }
-
-  /** @override */
-  render() {
-    return html`
+      </style>
       <mr-header
         .userDisplayName=${this.userDisplayName}
         .loginUrl=${this.loginUrl}
@@ -212,6 +214,11 @@ export class MrApp extends connectStore(LitElement) {
      * because we don't want to re-render when updating this.
      */
     this._lastContext = undefined;
+  }
+
+  /** @override */
+  createRenderRoot() {
+    return this;
   }
 
   /** @override */

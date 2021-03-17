@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import page from 'page';
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import 'elements/chops/chops-button/chops-button.js';
 import './mr-issue-header.js';
@@ -17,7 +17,6 @@ import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_DELETE_PERMISSION} from 'shared/consts/permissions.js';
 
 // eslint-disable-next-line max-len
@@ -40,19 +39,18 @@ const DETAIL_COMMENT_COUNT = 100;
  */
 export class MrIssuePage extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-      css`
-        :host {
+  render() {
+    return html`
+      <style>
+        mr-issue-page {
           --mr-issue-page-horizontal-padding: 12px;
           --mr-toggled-font-family: inherit;
           --monorail-metadata-toggled-bg: var(--monorail-metadata-open-bg);
         }
-        :host([issueClosed]) {
+        mr-issue-page[issueClosed] {
           --monorail-metadata-toggled-bg: var(--monorail-metadata-closed-bg);
         }
-        :host([codeFont]) {
+        mr-issue-page[codeFont] {
           --mr-toggled-font-family: Monospace;
         }
         .container-issue {
@@ -166,13 +164,7 @@ export class MrIssuePage extends connectStore(LitElement) {
             position: static;
           }
         }
-      `,
-    ];
-  }
-
-  /** @override */
-  render() {
-    return html`
+      </style>
       <mr-click-throughs
          .userDisplayName=${this.userDisplayName}></mr-click-throughs>
       ${this._renderIssue()}
@@ -314,6 +306,11 @@ export class MrIssuePage extends connectStore(LitElement) {
   }
 
   /** @override */
+  createRenderRoot() {
+    return this;
+  }
+
+  /** @override */
   stateChanged(state) {
     this.projectName = projectV0.viewedProjectName(state);
     this.issue = issueV0.viewedIssue(state);
@@ -377,7 +374,7 @@ export class MrIssuePage extends connectStore(LitElement) {
    * @param {CustomEvent} e
    */
   _openDialog(e) {
-    this.shadowRoot.querySelector('#' + e.detail.dialogId).open(e);
+    this.querySelector('#' + e.detail.dialogId).open(e);
   }
 
   /**

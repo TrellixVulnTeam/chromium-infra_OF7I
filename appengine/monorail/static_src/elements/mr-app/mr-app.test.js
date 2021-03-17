@@ -50,8 +50,7 @@ describe('mr-app', () => {
 
       await element.updateComplete;
 
-      const snackbars =
-        element.shadowRoot.querySelectorAll('chops-snackbar');
+      const snackbars = element.querySelectorAll('chops-snackbar');
 
       assert.equal(snackbars.length, 0);
     });
@@ -65,8 +64,7 @@ describe('mr-app', () => {
 
       await element.updateComplete;
 
-      const snackbars =
-        element.shadowRoot.querySelectorAll('chops-snackbar');
+      const snackbars = element.querySelectorAll('chops-snackbar');
 
       assert.equal(snackbars.length, 3);
 
@@ -82,7 +80,7 @@ describe('mr-app', () => {
 
       await element.updateComplete;
 
-      const snackbar = element.shadowRoot.querySelector('chops-snackbar');
+      const snackbar = element.querySelector('chops-snackbar');
 
       snackbar.close();
 
@@ -215,10 +213,10 @@ describe('mr-app', () => {
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
-    const main = element.shadowRoot.querySelector('main');
+    const main = element.querySelector('main');
     assert.equal(main.children.length, 1);
 
-    const issuePage = element.shadowRoot.querySelector('mr-issue-page');
+    const issuePage = element.querySelector('mr-issue-page');
     assert.isDefined(issuePage, 'issue page is defined');
     assert.equal(issuePage.issueRef.projectName, 'chromium');
     assert.equal(issuePage.issueRef.localId, 234);
@@ -231,10 +229,10 @@ describe('mr-app', () => {
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
-    const main = element.shadowRoot.querySelector('main');
+    const main = element.querySelector('main');
     assert.equal(main.children.length, 1);
 
-    const listPage = element.shadowRoot.querySelector('mr-list-page');
+    const listPage = element.querySelector('mr-list-page');
     assert.isDefined(listPage, 'list page is defined');
   });
 
@@ -246,10 +244,10 @@ describe('mr-app', () => {
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
-    const main = element.shadowRoot.querySelector('main');
+    const main = element.querySelector('main');
     assert.equal(main.children.length, 1);
 
-    const gridPage = element.shadowRoot.querySelector('mr-grid-page');
+    const gridPage = element.querySelector('mr-grid-page');
     assert.isDefined(gridPage, 'grid page is defined');
   });
 

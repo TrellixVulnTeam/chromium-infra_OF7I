@@ -17,11 +17,11 @@ let movedElement;
 let issueElement;
 
 function populateElementReferences() {
-  loadingElement = element.shadowRoot.querySelector('#loading');
-  fetchErrorElement = element.shadowRoot.querySelector('#fetch-error');
-  deletedElement = element.shadowRoot.querySelector('#deleted');
-  movedElement = element.shadowRoot.querySelector('#moved');
-  issueElement = element.shadowRoot.querySelector('#issue');
+  loadingElement = element.querySelector('#loading');
+  fetchErrorElement = element.querySelector('#fetch-error');
+  deletedElement = element.querySelector('#deleted');
+  movedElement = element.querySelector('#moved');
+  issueElement = element.querySelector('#issue');
 }
 
 describe('mr-issue-page', () => {
@@ -164,13 +164,13 @@ describe('mr-issue-page', () => {
 
     assert.isNotNull(deletedElement);
 
-    let button = element.shadowRoot.querySelector('.undelete');
+    let button = element.querySelector('.undelete');
     assert.isNull(button);
 
     element.issuePermissions = ['deleteissue'];
     await element.updateComplete;
 
-    button = element.shadowRoot.querySelector('.undelete');
+    button = element.querySelector('.undelete');
     assert.isNotNull(button);
 
     store.dispatch.restore();
@@ -212,7 +212,7 @@ describe('mr-issue-page', () => {
     element.issuePermissions = ['deleteissue'];
     await element.updateComplete;
 
-    const button = element.shadowRoot.querySelector('.undelete');
+    const button = element.querySelector('.undelete');
     button.click();
 
     sinon.assert.calledWith(prpcClient.call, 'monorail.Issues', 'GetIssue',

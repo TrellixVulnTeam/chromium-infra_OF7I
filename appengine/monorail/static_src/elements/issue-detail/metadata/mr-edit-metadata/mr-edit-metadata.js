@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import debounce from 'debounce';
 
@@ -25,7 +25,6 @@ import {displayNameToUserRef, labelStringToRef, componentStringToRef,
 } from 'shared/convertersV0.js';
 import {isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
 import * as projectV0 from 'reducers/projectV0.js';
@@ -51,19 +50,18 @@ const DEBOUNCED_PRESUBMIT_TIME_OUT = 400;
  */
 export class MrEditMetadata extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-      css`
-        :host {
+  render() {
+    return html`
+      <style>
+        mr-edit-metadata {
           display: block;
           font-size: var(--chops-main-font-size);
         }
-        :host(.edit-actions-right) .edit-actions {
+        mr-edit-metadata.edit-actions-right .edit-actions {
           flex-direction: row-reverse;
           text-align: right;
         }
-        :host(.edit-actions-right) .edit-actions chops-checkbox {
+        mr-edit-metadata.edit-actions-right .edit-actions chops-checkbox {
           text-align: left;
         }
         .edit-actions chops-checkbox {
@@ -165,13 +163,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         mr-issue-star {
           margin-right: 4px;
         }
-      `,
-    ];
-  }
-
-  /** @override */
-  render() {
-    return html`
+      </style>
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
       <form id="editForm"
@@ -657,6 +649,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
   }
 
   /** @override */
+  createRenderRoot() {
+    return this;
+  }
+
+  /** @override */
   firstUpdated() {
     this.hasRendered = true;
   }
@@ -671,7 +668,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     if (!this.hasRendered) return;
 
     const commentContent = this.getCommentContent();
-    const attachmentsElement = this.shadowRoot.querySelector('mr-upload');
+    const attachmentsElement = this.querySelector('mr-upload');
     this.isDirty = !isEmptyObject(this.delta) || Boolean(commentContent) ||
       attachmentsElement.hasAttachments;
   }
@@ -768,11 +765,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * Resets the edit form values to their default values.
    */
   reset() {
-    const form = this.shadowRoot.querySelector('#editForm');
+    const form = this.querySelector('#editForm');
     if (!form) return;
 
     form.reset();
-    const statusInput = this.shadowRoot.querySelector('#statusInput');
+    const statusInput = this.querySelector('#statusInput');
     if (statusInput) {
       statusInput.reset();
     }
@@ -783,18 +780,18 @@ export class MrEditMetadata extends connectStore(LitElement) {
     // behavior with custom input elements.
     if (this.isApproval) {
       if (this.hasApproverPrivileges) {
-        const approversInput = this.shadowRoot.querySelector(
+        const approversInput = this.querySelector(
             '#approversInput');
         if (approversInput) {
           approversInput.reset();
         }
       }
     }
-    this.shadowRoot.querySelectorAll('mr-edit-field').forEach((el) => {
+    this.querySelectorAll('mr-edit-field').forEach((el) => {
       el.reset();
     });
 
-    const uploader = this.shadowRoot.querySelector('mr-upload');
+    const uploader = this.querySelector('mr-upload');
     if (uploader) {
       uploader.reset();
     }
@@ -850,7 +847,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   async focus() {
     await this.updateComplete;
-    this.shadowRoot.querySelector('#commentText').focus();
+    this.querySelector('#commentText').focus();
   }
 
   /**
@@ -858,12 +855,12 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * @return {string}
    */
   getCommentContent() {
-    return this.shadowRoot.querySelector('#commentText').value;
+    return this.querySelector('#commentText').value;
   }
 
   async getAttachments() {
     try {
-      return await this.shadowRoot.querySelector('mr-upload').loadFiles();
+      return await this.querySelector('mr-upload').loadFiles();
     } catch (e) {
       this.error = `Error while loading file for attachment: ${e.message}`;
     }
@@ -911,11 +908,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _getDelta() {
     const result = {};
-    const root = this.shadowRoot;
 
     const {projectName, localId} = this.issueRef;
 
-    const statusInput = root.querySelector('#statusInput');
+    const statusInput = this.querySelector('#statusInput');
     if (this._canEditStatus && statusInput) {
       const statusDelta = statusInput.delta;
       if (statusDelta.mergedInto) {
@@ -937,7 +933,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       // cc, and status similarly to custom fields to reduce repeated code.
 
       if (this._canEditSummary) {
-        const summaryInput = root.querySelector('#summaryInput');
+        const summaryInput = this.querySelector('#summaryInput');
         if (summaryInput) {
           const newSummary = summaryInput.value;
           if (newSummary !== this.summary) {
@@ -947,7 +943,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       }
 
       if (this._canEditOwner) {
-        const ownerInput = root.querySelector('#ownerInput');
+        const ownerInput = this.querySelector('#ownerInput');
         if (ownerInput) {
           const newOwner = ownerInput.value;
           if (newOwner !== this.ownerName) {
@@ -1003,7 +999,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    *   the message for a given removed field.
    */
   _updateDeltaWithAddedAndRemoved(delta, fieldName, key, addFn, removeFn) {
-    const input = this.shadowRoot.querySelector(`#${fieldName}Input`);
+    const input = this.querySelector(`#${fieldName}Input`);
     if (!input) return;
 
     const valuesAdd = input.getValuesAdded();
@@ -1057,7 +1053,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     const target = e.target;
     const forValue = target.getAttribute('for');
     if (forValue) {
-      const customInput = this.shadowRoot.querySelector('#' + forValue);
+      const customInput = this.querySelector('#' + forValue);
       if (customInput && customInput.focus) {
         customInput.focus();
       }

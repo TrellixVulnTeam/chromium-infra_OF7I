@@ -49,7 +49,7 @@ describe('mr-edit-metadata', () => {
     it('saves on form submit', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new Event('submit', {bubbles: true, cancelable: true}));
 
       sinon.assert.calledOnce(saveStub);
@@ -58,7 +58,7 @@ describe('mr-edit-metadata', () => {
     it('saves when clicking the save button', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('.save-changes').click();
+      element.querySelector('.save-changes').click();
 
       sinon.assert.calledOnce(saveStub);
     });
@@ -66,11 +66,11 @@ describe('mr-edit-metadata', () => {
     it('does not save on random keydowns', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'a', ctrlKey: true}));
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'b', ctrlKey: false}));
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'c', metaKey: true}));
 
       sinon.assert.notCalled(saveStub);
@@ -79,7 +79,7 @@ describe('mr-edit-metadata', () => {
     it('does not save on Enter without Ctrl', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'Enter', ctrlKey: false}));
 
       sinon.assert.notCalled(saveStub);
@@ -88,7 +88,7 @@ describe('mr-edit-metadata', () => {
     it('saves on Ctrl+Enter', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'Enter', ctrlKey: true}));
 
       sinon.assert.calledOnce(saveStub);
@@ -97,7 +97,7 @@ describe('mr-edit-metadata', () => {
     it('saves on Ctrl+Meta', async () => {
       await element.updateComplete;
 
-      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+      element.querySelector('#editForm').dispatchEvent(
           new KeyboardEvent('keydown', {key: 'Enter', metaKey: true}));
 
       sinon.assert.calledOnce(saveStub);
@@ -142,7 +142,7 @@ describe('mr-edit-metadata', () => {
     // Wait for <chops-chip-input> to finish its update cycle.
     await element.updateComplete;
 
-    const button = element.shadowRoot.querySelector('.save-changes');
+    const button = element.querySelector('.save-changes');
 
     assert.isTrue(element.disabled);
     assert.isTrue(button.disabled);
@@ -161,7 +161,7 @@ describe('mr-edit-metadata', () => {
     assert.isFalse(element.isDirty);
 
     // User makes some changes.
-    const comment = element.shadowRoot.querySelector('#commentText');
+    const comment = element.querySelector('#commentText');
     comment.value = 'Value';
     comment.dispatchEvent(new Event('keyup'));
 
@@ -186,7 +186,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     // User makes some changes.
-    const comment = element.shadowRoot.querySelector('#commentText');
+    const comment = element.querySelector('#commentText');
     comment.value = 'Value';
     comment.dispatchEvent(new Event('keyup'));
 
@@ -256,7 +256,7 @@ describe('mr-edit-metadata', () => {
     element.sendEmail = false;
 
     await element.updateComplete;
-    const checkbox = element.shadowRoot.querySelector('#sendEmail');
+    const checkbox = element.querySelector('#sendEmail');
 
     await checkbox.updateComplete;
 
@@ -289,7 +289,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector('#statusInput');
+    const statusComponent = element.querySelector('#statusInput');
     statusComponent.status = 'Old';
 
     await element.updateComplete;
@@ -309,7 +309,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector('#statusInput');
+    const statusComponent = element.querySelector('#statusInput');
     statusComponent.shadowRoot.querySelector('#mergedIntoInput').setValue('xx');
     assert.deepEqual(element.delta, {});
     assert.equal(
@@ -325,7 +325,7 @@ describe('mr-edit-metadata', () => {
 
     ['blockedOn', 'blocking'].forEach((fieldName) => {
       const input =
-        element.shadowRoot.querySelector(`#${fieldName}Input`);
+        element.querySelector(`#${fieldName}Input`);
       input.setValue(['123']);
       assert.deepEqual(element.delta, {});
       assert.equal(
@@ -358,8 +358,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector(
-        '#statusInput');
+    const statusComponent = element.querySelector('#statusInput');
     const root = statusComponent.shadowRoot;
     const statusInput = root.querySelector('#statusInput');
     statusInput.value = 'Duplicate';
@@ -387,13 +386,13 @@ describe('mr-edit-metadata', () => {
   it('cannot set invalid emails', async () => {
     await element.updateComplete;
 
-    element.shadowRoot.querySelector('#ccInput').setValue(['invalid!email']);
+    element.querySelector('#ccInput').setValue(['invalid!email']);
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
         `Invalid email address: invalid!email`);
 
-    element.shadowRoot.querySelector('#ownerInput').setValue('invalid!email2');
+    element.querySelector('#ownerInput').setValue('invalid!email2');
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
@@ -415,9 +414,9 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const blockedOnInput = element.shadowRoot.querySelector('#blockedOnInput');
-    const blockingInput = element.shadowRoot.querySelector('#blockingInput');
-    const statusInput = element.shadowRoot.querySelector('#statusInput');
+    const blockedOnInput = element.querySelector('#blockedOnInput');
+    const blockingInput = element.querySelector('#blockingInput');
+    const statusInput = element.querySelector('#statusInput');
 
     await element.updateComplete;
 
@@ -466,7 +465,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector(
+    const statusComponent = element.querySelector(
         '#statusInput');
     const root = statusComponent.shadowRoot;
     const statusInput = root.querySelector('#statusInput');
@@ -491,7 +490,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    element.shadowRoot.querySelector(
+    element.querySelector(
         '#summaryInput').value = 'newfangled fancy summary';
     assert.deepEqual(element.delta, {
       summary: 'newfangled fancy summary',
@@ -523,8 +522,8 @@ describe('mr-edit-metadata', () => {
     ];
 
     await element.updateComplete;
-    assert.isFalse(element.shadowRoot.querySelector('#normalFdInput').hidden);
-    assert.isTrue(element.shadowRoot.querySelector('#cantEditFdInput').hidden);
+    assert.isFalse(element.querySelector('#normalFdInput').hidden);
+    assert.isTrue(element.querySelector('#cantEditFdInput').hidden);
   });
 
   it('changing custom fields produces delta', async () => {
@@ -548,8 +547,8 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    element.shadowRoot.querySelector('#testFieldInput').setValue('test value');
-    element.shadowRoot.querySelector('#fakeFieldInput').setValue('');
+    element.querySelector('#testFieldInput').setValue('test value');
+    element.querySelector('#fakeFieldInput').setValue('');
     assert.deepEqual(element.delta, {
       fieldValsAdd: [
         {
@@ -586,7 +585,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    element.shadowRoot.querySelector('#approversInput').setValue(
+    element.querySelector('#approversInput').setValue(
         ['chicken@example.com', 'foo@example.com', 'dog@example.com']);
 
     await element.updateComplete;
@@ -613,7 +612,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    const blockedOnInput = element.shadowRoot.querySelector('#blockedOnInput');
+    const blockedOnInput = element.querySelector('#blockedOnInput');
     blockedOnInput.setValue(['1234', 'v8:5678']);
 
     await element.updateComplete;
@@ -664,7 +663,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    element.shadowRoot.querySelector(
+    element.querySelector(
         '#enumFieldInput').setValue(['one', 'two']);
 
     await element.updateComplete;
@@ -716,8 +715,8 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    element.shadowRoot.querySelector('#enumFieldInput').setValue(['two']);
-    element.shadowRoot.querySelector('#enumField2Input').setValue(['three']);
+    element.querySelector('#enumFieldInput').setValue(['two']);
+    element.querySelector('#enumField2Input').setValue(['three']);
 
     await element.updateComplete;
 
@@ -751,7 +750,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const compInput = element.shadowRoot.querySelector('#componentsInput');
+    const compInput = element.querySelector('#componentsInput');
 
     compInput.setValue(['Hello>World']);
 
@@ -782,15 +781,13 @@ describe('mr-edit-metadata', () => {
   });
 
   it('approver input appears when user has privileges', async () => {
-    assert.isNull(
-        element.shadowRoot.querySelector('#approversInput'));
+    assert.isNull(element.querySelector('#approversInput'));
     element.isApproval = true;
     element.hasApproverPrivileges = true;
 
     await element.updateComplete;
 
-    assert.isNotNull(
-        element.shadowRoot.querySelector('#approversInput'));
+    assert.isNotNull(element.querySelector('#approversInput'));
   });
 
   it('reset empties form values', async () => {
@@ -813,21 +810,19 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const uploader = element.shadowRoot.querySelector('mr-upload');
+    const uploader = element.querySelector('mr-upload');
     uploader.files = [
       {name: 'test.png'},
       {name: 'rutabaga.png'},
     ];
 
-    element.shadowRoot.querySelector('#testFieldInput').setValue('testy test');
-    element.shadowRoot.querySelector('#fakeFieldInput').setValue('hello world');
+    element.querySelector('#testFieldInput').setValue('testy test');
+    element.querySelector('#fakeFieldInput').setValue('hello world');
 
     await element.reset();
 
-    assert.lengthOf(element.shadowRoot.querySelector(
-        '#testFieldInput').value, 0);
-    assert.lengthOf(element.shadowRoot.querySelector(
-        '#fakeFieldInput').value, 0);
+    assert.lengthOf(element.querySelector('#testFieldInput').value, 0);
+    assert.lengthOf(element.querySelector('#fakeFieldInput').value, 0);
     assert.lengthOf(uploader.files, 0);
   });
 
@@ -848,7 +843,7 @@ describe('mr-edit-metadata', () => {
       await element.updateComplete;
 
       allFields.forEach((fieldName) => {
-        const field = element.shadowRoot.querySelector(`#${fieldName}Input`);
+        const field = element.querySelector(`#${fieldName}Input`);
         if (testCase.nonNull.includes(fieldName)) {
           assert.isNotNull(field);
         } else {
@@ -872,8 +867,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector(
-        '#statusInput');
+    const statusComponent = element.querySelector('#statusInput');
     const root = statusComponent.shadowRoot;
     assert.equal(
         root.querySelector('#mergedIntoInput').value, '1234');
@@ -893,8 +887,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    const statusComponent = element.shadowRoot.querySelector(
-        '#statusInput');
+    const statusComponent = element.querySelector('#statusInput');
     const root = statusComponent.shadowRoot;
     assert.equal(
         root.querySelector('#mergedIntoInput').value, 'monorail:1234');
@@ -909,7 +902,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const blockingInput = element.shadowRoot.querySelector('#blockingInput');
+    const blockingInput = element.querySelector('#blockingInput');
 
     assert.deepEqual(['1234', 'monorail:4567'], blockingInput.values);
   });
@@ -923,8 +916,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const actualValues =
-      element.shadowRoot.querySelector('#ccInput').values;
+    const actualValues = element.querySelector('#ccInput').values;
     assert.deepEqual(actualValues, [
       'test@example.com',
       'someone@example.com',

@@ -31,7 +31,7 @@ describe('mr-edit-issue', () => {
   it('scrolls into view on #makechanges hash', async () => {
     await element.updateComplete;
 
-    const header = element.shadowRoot.querySelector('#makechanges');
+    const header = element.querySelector('#makechanges');
     sinon.stub(header, 'scrollIntoView');
 
     element.focusId = 'makechanges';
@@ -77,7 +77,7 @@ describe('mr-edit-issue', () => {
   it('shows current status even if not defined for project', async () => {
     await element.updateComplete;
 
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    const editMetadata = element.querySelector('mr-edit-metadata');
     assert.deepEqual(editMetadata.statuses, []);
 
     element.projectConfig = {statusDefs: [
@@ -119,7 +119,7 @@ describe('mr-edit-issue', () => {
   it('ignores deprecated statuses, unless used on current issue', async () => {
     await element.updateComplete;
 
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    const editMetadata = element.querySelector('mr-edit-metadata');
     assert.deepEqual(editMetadata.statuses, []);
 
     element.projectConfig = {statusDefs: [
@@ -164,7 +164,7 @@ describe('mr-edit-issue', () => {
   it('logs issue-update metrics', async () => {
     await element.updateComplete;
 
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    const editMetadata = element.querySelector('mr-edit-metadata');
 
     sinon.stub(editMetadata, 'delta').get(() => ({summary: 'test'}));
 
@@ -189,7 +189,7 @@ describe('mr-edit-issue', () => {
     element.issueRef = {};
 
     await element.updateComplete;
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    const editMetadata = element.querySelector('mr-edit-metadata');
     editMetadata.dispatchEvent(new CustomEvent('change', {
       detail: {
         delta: {
@@ -207,7 +207,7 @@ describe('mr-edit-issue', () => {
     element.issueRef = {};
 
     await element.updateComplete;
-    const editMetadata = element.shadowRoot.querySelector('mr-edit-metadata');
+    const editMetadata = element.querySelector('mr-edit-metadata');
     editMetadata.dispatchEvent(new CustomEvent('change', {
       detail: {
         delta: {},
