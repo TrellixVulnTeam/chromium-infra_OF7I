@@ -20,4 +20,20 @@ describe('mr-issue-details', () => {
   it('initializes', () => {
     assert.instanceOf(element, MrIssueDetails);
   });
+
+  it('mr-edit-issue is displayed if user has addissuecomment', async () => {
+    element.issuePermissions = ['addissuecomment'];
+
+    await element.updateComplete;
+
+    assert.isNotNull(element.shadowRoot.querySelector('mr-edit-issue'));
+  });
+
+  it('mr-edit-issue is hidden if user has no addissuecomment', async () => {
+    element.issuePermissions = [];
+
+    await element.updateComplete;
+
+    assert.isNull(element.shadowRoot.querySelector('mr-edit-issue'));
+  });
 });

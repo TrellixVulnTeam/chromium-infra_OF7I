@@ -40,6 +40,9 @@ export class MrIssueDetails extends connectStore(LitElement) {
       mr-description {
         margin-bottom: 1em;
       }
+      mr-edit-issue {
+        margin-top: 40px;
+      }
     `;
   }
 
@@ -61,9 +64,9 @@ export class MrIssueDetails extends connectStore(LitElement) {
         headingLevel="2"
         .comments=${comments}
         .commentsShownCount=${this.commentsShownCount}
-      >
-        <mr-edit-issue></mr-edit-issue>
-      </mr-comment-list>
+      ></mr-comment-list>
+      ${this.issuePermissions.includes('addissuecomment') ?
+        html`<mr-edit-issue></mr-edit-issue>` : ''}
     `;
   }
 
@@ -72,6 +75,7 @@ export class MrIssueDetails extends connectStore(LitElement) {
     return {
       commentsByApproval: {type: Object},
       commentsShownCount: {type: Number},
+      issuePermissions: {type: Array},
     };
   }
 
@@ -79,11 +83,13 @@ export class MrIssueDetails extends connectStore(LitElement) {
   constructor() {
     super();
     this.commentsByApproval = new Map();
+    this.issuePermissions = [];
   }
 
   /** @override */
   stateChanged(state) {
     this.commentsByApproval = issueV0.commentsByApprovalName(state);
+    this.issuePermissions = issueV0.permissions(state);
   }
 
   /** @override */

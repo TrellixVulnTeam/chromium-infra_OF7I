@@ -201,4 +201,20 @@ describe('mr-approval-card', () => {
 
     assert.isFalse(element.opened);
   });
+
+  it('mr-edit-metadata is displayed if user has addissuecomment', async () => {
+    element.issuePermissions = ['addissuecomment'];
+
+    await element.updateComplete;
+
+    assert.isNotNull(element.shadowRoot.querySelector('mr-edit-metadata'));
+  });
+
+  it('mr-edit-metadata is hidden if user has no addissuecomment', async () => {
+    element.issuePermissions = [];
+
+    await element.updateComplete;
+
+    assert.isNull(element.shadowRoot.querySelector('mr-edit-metadata'));
+  });
 });

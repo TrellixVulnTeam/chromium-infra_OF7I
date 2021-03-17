@@ -8,13 +8,10 @@ import {LitElement, html, css} from 'lit-element';
 import '../../chops/chops-button/chops-button.js';
 import './mr-comment.js';
 import {connectStore} from 'reducers/base.js';
-import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import {userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-
-const ADD_ISSUE_COMMENT_PERMISSION = 'addissuecomment';
 
 /**
  * `<mr-comment-list>`
@@ -31,7 +28,6 @@ export class MrCommentList extends connectStore(LitElement) {
     this.comments = [];
     this.headingLevel = 4;
 
-    this.issuePermissions = [];
     this.focusId = null;
 
     this.usersProjects = new Map();
@@ -46,7 +42,6 @@ export class MrCommentList extends connectStore(LitElement) {
       comments: {type: Array},
       headingLevel: {type: Number},
 
-      issuePermissions: {type: Array},
       focusId: {type: String},
 
       usersProjects: {type: Object},
@@ -57,7 +52,6 @@ export class MrCommentList extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issuePermissions = issueV0.permissions(state);
     this.focusId = ui.focusId(state);
     this.usersProjects = userV0.projectsPerUser(state);
   }
@@ -124,10 +118,6 @@ export class MrCommentList extends connectStore(LitElement) {
     html`${this.comments.slice(0, hiddenCount).map(
         this.renderComment.bind(this))}`)}
       ${this.comments.slice(hiddenCount).map(this.renderComment.bind(this))}
-      <div class="edit-slot"
-          ?hidden=${!_canAddComment(this.issuePermissions)}>
-        <slot></slot>
-      </div>
     `;
   }
 
@@ -168,15 +158,6 @@ export class MrCommentList extends connectStore(LitElement) {
  */
 function _hiddenCount(commentCount, commentsShownCount) {
   return Math.max(commentCount - commentsShownCount, 0);
-}
-
-/**
- * @param {Array<string>} issuePermissions
- * @return {boolean} Whether the user has permission to add a comment or not.
- * @private
- */
-function _canAddComment(issuePermissions) {
-  return (issuePermissions || []).includes(ADD_ISSUE_COMMENT_PERMISSION);
 }
 
 customElements.define('mr-comment-list', MrCommentList);

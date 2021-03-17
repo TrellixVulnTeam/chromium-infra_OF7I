@@ -141,6 +141,9 @@ export class MrApprovalCard extends connectStore(LitElement) {
           justify-content: space-between;
           align-items: flex-end;
         }
+        .edit-header {
+          margin-top: 40px;
+        }
       `,
     ];
   }
@@ -200,8 +203,9 @@ export class MrApprovalCard extends connectStore(LitElement) {
         <mr-comment-list
           headingLevel=4
           .comments=${this.comments}
-        >
-          <h4 id="edit${this.fieldName}" class="medium-heading">
+        ></mr-comment-list>
+        ${this.issuePermissions.includes('addissuecomment') ? html`
+          <h4 id="edit${this.fieldName}" class="medium-heading edit-header">
             Editing approval: ${this.phaseName} &gt; ${this.fieldName}
           </h4>
           <mr-edit-metadata
@@ -217,7 +221,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
             @save=${this.save}
             @discard=${this.reset}
           ></mr-edit-metadata>
-        </mr-comment-list>
+        ` : ''}
       </chops-collapse>
     `;
   }
@@ -234,6 +238,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
       user: {type: Object},
       issue: {type: Object},
       issueRef: {type: Object},
+      issuePermissions: {type: Array},
       projectConfig: {type: Object},
       comments: {type: String},
       opened: {
@@ -253,6 +258,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     this.opened = false;
     this.comments = [];
     this.fieldDefs = [];
+    this.issuePermissions = [];
     this._allSurveys = [];
   }
 
@@ -274,6 +280,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     this.user = userV0.currentUser(state);
     this.issue = issueV0.viewedIssue(state);
     this.issueRef = issueV0.viewedIssueRef(state);
+    this.issuePermissions = issueV0.permissions(state);
     this.projectConfig = projectV0.viewedConfig(state);
     this.updatingApproval = issueV0.requests(state).updateApproval.requesting;
     this.updateError = issueV0.requests(state).updateApproval.error;

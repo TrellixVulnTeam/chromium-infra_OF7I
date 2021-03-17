@@ -105,22 +105,4 @@ describe('mr-comment-list', () => {
 
     assert.isTrue(element._hideComments);
   });
-
-  it('edit-metadata is displayed if user has addissuecomment', async () => {
-    element.issuePermissions = ['addissuecomment'];
-
-    await element.updateComplete;
-
-    assert.isNull(
-        element.shadowRoot.querySelector('.edit-slot').getAttribute('hidden'));
-  });
-
-  it('edit-metadata is hidden if user has no addissuecomment', async () => {
-    element.issuePermissions = [];
-
-    await element.updateComplete;
-
-    assert.isNotNull(
-        element.shadowRoot.querySelector('.edit-slot').getAttribute('hidden'));
-  });
 });
