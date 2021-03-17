@@ -43,7 +43,8 @@ var inventoryDumpToolkit = map[string]getAllFunc{
 }
 
 var stateDumpToolkit = map[string]getAllFunc{
-	"state_records": getAllStateRecordMsgs,
+	"state_records":    getAllStateRecordMsgs,
+	"dutstate_records": getAllDutStateRecordMsgs,
 }
 
 var configurationDumpToolkit = map[string]getAllFunc{
@@ -419,6 +420,20 @@ func getAllStateRecordMsgs(ctx context.Context) ([]proto.Message, error) {
 			break
 		}
 		startToken = nextToken
+	}
+	return msgs, nil
+}
+
+func getAllDutStateRecordMsgs(ctx context.Context) ([]proto.Message, error) {
+	states, err := state.ListAllDutStates(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	msgs := make([]proto.Message, len(states))
+	for idx, state := range states {
+		msgs[idx] = &apibq.DUTStateRecordRow{
+			State: state,
+		}
 	}
 	return msgs, nil
 }

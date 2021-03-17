@@ -19,6 +19,7 @@ import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/rack.proto";
 import "infra/unifiedfleet/api/v1/models/rack_lse.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 
 message ChangeEventRow {
     models.ChangeEvent change_event = 1;
@@ -112,4 +113,8 @@ message DHCPConfigRow {
 
 message IPRow {
     models.IP ip = 1;
+}
+
+message DUTStateRecordRow {
+    models.chromeos.lab.DutState state = 1;
 }
