@@ -112,6 +112,9 @@ message Vlan {
 
     // Record the ACL info of the vlan
     string realm = 13;
+
+    // Tags user can attach for easy querying/searching
+    repeated string tags = 14;
 }
 
 message DHCPConfig {

@@ -1057,6 +1057,9 @@ func (r *CreateVlanRequest) Validate() error {
 	if r.Vlan.GetVlanAddress() == "" {
 		return status.Errorf(codes.InvalidArgument, "Empty cidr block for vlan")
 	}
+	if !util.ValidateTags(r.Vlan.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
 	return nil
 }
 
@@ -1064,6 +1067,9 @@ func (r *CreateVlanRequest) Validate() error {
 func (r *UpdateVlanRequest) Validate() error {
 	if r.Vlan == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !util.ValidateTags(r.Vlan.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
 	return validateResourceName(vlanRegex, VlanNameFormat, r.Vlan.GetName())
 }

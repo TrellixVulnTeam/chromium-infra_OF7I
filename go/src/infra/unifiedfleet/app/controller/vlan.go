@@ -587,6 +587,8 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 			oldVlan.FreeStartIpv4Str = vlan.FreeStartIpv4Str
 		case "free_end_ip":
 			oldVlan.FreeEndIpv4Str = vlan.FreeEndIpv4Str
+		case "tags":
+			oldVlan.Tags = mergeTags(oldVlan.GetTags(), vlan.GetTags())
 		}
 	}
 	return oldVlan, nil

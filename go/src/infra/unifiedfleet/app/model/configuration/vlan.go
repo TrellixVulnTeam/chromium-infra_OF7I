@@ -31,6 +31,7 @@ type VlanEntity struct {
 	State     string   `gae:"state"`
 	CidrBlock string   `gae:"cidr_block"`
 	Zones     []string `gae:"zone"`
+	Tags      []string `gae:"tags"`
 	// ufspb.Vlan cannot be directly used as it contains pointer.
 	Vlan []byte `gae:",noindex"`
 }
@@ -62,6 +63,7 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		State:     p.GetResourceState().String(),
 		CidrBlock: p.GetVlanAddress(),
 		Zones:     zones,
+		Tags:      p.GetTags(),
 		Vlan:      vlan,
 	}, nil
 }
@@ -259,8 +261,10 @@ func GetVlanIndexedFieldName(input string) (string, error) {
 		field = "state"
 	case util.ZoneFilterName:
 		field = "zone"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for vlan are state/zone", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for vlan are state/zone/tags", input)
 	}
 	return field, nil
 }

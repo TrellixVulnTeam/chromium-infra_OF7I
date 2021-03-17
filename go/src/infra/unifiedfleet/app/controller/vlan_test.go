@@ -83,6 +83,7 @@ func TestCreateVlan(t *testing.T) {
 			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "192.168.100.6")
 			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "192.168.100.26")
 			So(resp.GetZones(), ShouldHaveLength, 2)
+			So(resp.GetTags(), ShouldBeNil)
 
 			startIPInt, err := util.IPv4StrToInt("192.168.100.6")
 			endIPInt, err := util.IPv4StrToInt("192.168.100.26")
@@ -453,6 +454,20 @@ func TestUpdateVlan(t *testing.T) {
 			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"zones"}})
 			So(resp, ShouldNotBeNil)
 			So(resp.GetZones(), ShouldResemble, []ufspb.Zone(nil))
+		})
+
+		Convey("Update vlan - partial update tags", func() {
+			vlan1 := mockVlan("update-vlan-12", "7.7.7.0/27")
+			vlan1.Tags = []string{"tag-1"}
+			vlan1.Description = "before update"
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Tags = []string{"tag-2"}
+			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})
 		})
 	})
 }
