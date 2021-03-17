@@ -311,7 +311,7 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 		name = recMap["name"]
 		rpmHost = recMap["rpm_host"]
 		rpmOutlet = recMap["rpm_outlet"]
-		machines = []string{recMap["machine"]}
+		machines = []string{recMap["asset"]}
 		pools = strings.Fields(recMap["pools"])
 	} else {
 		// command line parameters
