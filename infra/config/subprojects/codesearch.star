@@ -15,6 +15,10 @@ luci.bucket(
             roles = acl.BUILDBUCKET_TRIGGERER,
             users = "luci-scheduler@appspot.gserviceaccount.com",
         ),
+        acl.entry(
+            roles = acl.BUILDBUCKET_TRIGGERER,
+            groups = "mdb/chrome-ops-source",
+        ),
     ],
 )
 
