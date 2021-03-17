@@ -100,7 +100,12 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	}
 	host := buildbucket.FindDimValInFinalDims("dut_name", build)
 	endTime := time.Now().Add(time.Duration(c.durationMins) * time.Minute).Format(time.RFC822)
-	fmt.Fprintf(a.GetOut(), "Leased %s until %s\n", host, endTime)
+	fmt.Fprintf(a.GetOut(), "Leased %s until %s\n\n", host, endTime)
+	if err = printDUTInfo(ctx, &c.authFlags, a.GetErr(), c.envFlags.Env().UFSService, false, host); err != nil {
+		// Don't fail the command here, since the DUT is already leased.
+		fmt.Fprintf(a.GetErr(), "Unable to print DUT info: %v", err)
+		return nil
+	}
 	return nil
 }
 

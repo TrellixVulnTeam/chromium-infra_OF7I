@@ -19,6 +19,7 @@ import (
 // Environment contains environment specific values.
 type Environment struct {
 	SwarmingService string
+	UFSService      string
 
 	// Buildbucket-specific values.
 	BuildbucketService string
@@ -29,6 +30,7 @@ type Environment struct {
 // Prod is the environment for prod.
 var Prod = Environment{
 	SwarmingService: "https://chromeos-swarming.appspot.com/",
+	UFSService:      "ufs.api.cr.dev",
 
 	BuildbucketService: "cr-buildbucket.appspot.com",
 	CTPBuilder: &buildbucket_pb.BuilderID{
@@ -46,6 +48,7 @@ var Prod = Environment{
 // Dev is the environment for dev.
 var Dev = Environment{
 	SwarmingService: "https://chromium-swarm-dev.appspot.com/",
+	UFSService:      "staging.ufs.api.cr.dev",
 
 	BuildbucketService: "cr-buildbucket.appspot.com",
 	CTPBuilder: &buildbucket_pb.BuilderID{

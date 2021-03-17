@@ -15,6 +15,7 @@ var dutApplication = &cli.Application{
 	Name:  "crosfleet dut",
 	Title: "Interact with DUTs.",
 	Commands: []*subcommands.Command{
+		info,
 		lease,
 		abandon,
 		subcommands.CmdHelp,
