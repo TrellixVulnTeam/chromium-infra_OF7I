@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -154,7 +155,7 @@ func getPrejobResults(dir string) *skylab_test_runner.Result_Prejob {
 	for _, prejob := range prejobs {
 		steps = append(steps, &skylab_test_runner.Result_Prejob_Step{
 			Name:    prejob.Name,
-			Verdict: getPrejobVerdict(prejob.Dir),
+			Verdict: getPrejobVerdict(prejob.Name, prejob.Dir),
 		})
 	}
 	return &skylab_test_runner.Result_Prejob{
@@ -184,8 +185,18 @@ func getPrejobs(parentDir string) ([]prejobInfo, error) {
 	return prejobs, nil
 }
 
-func getPrejobVerdict(prejobDir string) skylab_test_runner.Result_Prejob_Step_Verdict {
+func getPrejobVerdict(prejobName, prejobDir string) skylab_test_runner.Result_Prejob_Step_Verdict {
 	exitStatusFilePath := filepath.Join(prejobDir, exitStatusFile)
+
+	if prejobName == "provision" {
+		if _, err := os.Stat(exitStatusFilePath); err != nil {
+			// If the prejob is "provision" and the .autoserv_execute file
+			// does not exist, we assume that provisioning was done via TLS,
+			// not Autoserv (see b/182579728, b/182416536).
+			// We assume success, relying on an earlier step to indicate failure.
+			return skylab_test_runner.Result_Prejob_Step_VERDICT_PASS
+		}
+	}
 	exitStatusContent, err := ioutil.ReadFile(exitStatusFilePath)
 
 	if err != nil {

@@ -297,6 +297,7 @@ func provisionViaAutoserv(ctx context.Context, tag string, r *phosphorus.PrejobR
 		Labels:     labels,
 		ResultsDir: fullPath,
 	}
+
 	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
 	if err != nil {
 		return nil, errors.Annotate(err, "run provision").Err()
@@ -336,6 +337,14 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 	if desired == "" {
 		logging.Infof(ctx, "Skipping Chrome OS image provision because no specific version was requested.")
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
+	}
+
+	logging.Infof(ctx, "Copying host file")
+	resultsDir := r.Config.GetTask().GetResultsDir()
+	hostSubDir := fmt.Sprintf("provision_%s_os", r.DutHostname)
+	fullHostPath := filepath.Join(r.Config.Task.ResultsDir, hostSubDir)
+	if err := atutil.LinkHostInfoFile(resultsDir, fullHostPath, r.DutHostname); err != nil {
+		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
 
 	logging.Infof(ctx, "Starting to provision Chrome OS via TLS.")
