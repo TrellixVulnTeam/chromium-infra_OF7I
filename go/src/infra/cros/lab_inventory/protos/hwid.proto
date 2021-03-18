@@ -1,0 +1,33 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+//
+// Copied from google3/google/internal/chromeos/hwid/v2/hwid_service.proto
+
+syntax = "proto3";
+
+package inventory.libs.protos;
+
+option go_package = "infra/cros/lab_inventory/protos;invlibs";
+
+// The response message for `HwidService.GetDutLabel`.
+message GetDutLabelResponse {
+  // The DUT labels decoded from the HWID string.
+  DutLabel dut_label = 1;
+}
+
+// A set of labels representing the features of the device, can be revealed
+// by decoding the HWID string.
+message DutLabel {
+  // Possible labels in the labels field.
+  repeated string possible_labels = 1;
+
+  // All labels extracted from the HWID string.
+  message Label {
+    // Name of the label, will always exist in the field of `possible_labels`.
+    string name = 1;  // required
+    // The valid of this label.
+    string value = 2;  // required
+  }
+  repeated Label labels = 2;  // NOLINT
+}
