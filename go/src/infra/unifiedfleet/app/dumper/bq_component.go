@@ -43,15 +43,15 @@ var inventoryDumpToolkit = map[string]getAllFunc{
 }
 
 var stateDumpToolkit = map[string]getAllFunc{
-	"state_records":    getAllStateRecordMsgs,
-	"dutstate_records": getAllDutStateRecordMsgs,
+	"state_records": getAllStateRecordMsgs,
+	"dutstates":     getAllDutStateRecordMsgs,
 }
 
 var configurationDumpToolkit = map[string]getAllFunc{
 	"chrome_platforms":       getAllChromePlatformMsgs,
 	"vlans":                  getAllVlanMsgs,
 	"rack_lse_prototypes":    getAllRackLSEPrototypeMsgs,
-	"machine_lse_prototypes": getAllMachineLSEsMsgs,
+	"machine_lse_prototypes": getAllMachineLSEPrototypeMsgs,
 	"dhcps":                  getAllDHCPMsgs,
 	"ips":                    getAllIPMsgs,
 }
