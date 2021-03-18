@@ -17,6 +17,7 @@ import (
 	bqlib "infra/cros/lab_inventory/bq"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	apibq "infra/unifiedfleet/api/v1/models/bigquery"
+	chromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/util"
@@ -176,6 +177,15 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			msgs["state_records"] = append(msgs["state_records"], &apibq.StateRecordRow{
 				StateRecord: &data,
 				Delete:      s.Delete,
+			})
+		case util.DutStateCollection:
+			var data chromeoslab.DutState
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["dutstates"] = append(msgs["dutstates"], &apibq.DUTStateRecordRow{
+				State: &data,
 			})
 		}
 	}

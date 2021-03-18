@@ -69,7 +69,7 @@ func TestUpdateDutState(t *testing.T) {
 			So(newDS.GetChameleon(), ShouldEqual, chromeosLab.PeripheralState_BROKEN)
 			So(newDS.GetStorageState(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NEED_REPLACEMENT)
 			// Verify changes
-			changes, err := history.QueryChangesByPropertyName(osCtx, "name", "machines/update-dutstate-id2")
+			changes, err := history.QueryChangesByPropertyName(osCtx, "name", "dutstates/update-dutstate-id2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 3)
 			So(changes[0].GetEventLabel(), ShouldEqual, "dut_state.servo")
@@ -81,7 +81,7 @@ func TestUpdateDutState(t *testing.T) {
 			So(changes[2].GetEventLabel(), ShouldEqual, "dut_state.storage_state")
 			So(changes[2].GetOldValue(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_ACCEPTABLE.String())
 			So(changes[2].GetNewValue(), ShouldEqual, chromeosLab.HardwareState_HARDWARE_NEED_REPLACEMENT.String())
-			msgs, err := history.QuerySnapshotMsgByPropertyName(osCtx, "resource_name", "machines/update-dutstate-id2")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(osCtx, "resource_name", "dutstates/update-dutstate-id2")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)

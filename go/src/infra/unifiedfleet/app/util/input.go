@@ -63,6 +63,8 @@ const (
 	StateCollection string = "states"
 	// CachingServiceCollection refers to the prefix of the CachingService.
 	CachingServiceCollection string = "cachingservices"
+	// DutStateCollection refers to the prefix of the DutStates id in change history
+	DutStateCollection string = "dutstates"
 
 	// DefaultImporter refers to the user of the cron job importer
 	DefaultImporter string = "crimson-importer"

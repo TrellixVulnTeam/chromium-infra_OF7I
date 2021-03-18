@@ -500,9 +500,9 @@ func (hc *HistoryClient) LogDutStateChanges(oldData, newData *chromeosLab.DutSta
 	if oldData == nil && newData == nil {
 		return
 	}
-	resourceName := util.AddPrefix(util.MachineCollection, newData.GetId().GetValue())
+	resourceName := util.AddPrefix(util.DutStateCollection, newData.GetId().GetValue())
 	if oldData != nil {
-		resourceName = util.AddPrefix(util.MachineCollection, oldData.GetId().GetValue())
+		resourceName = util.AddPrefix(util.DutStateCollection, oldData.GetId().GetValue())
 	}
 
 	if oldData == nil {
