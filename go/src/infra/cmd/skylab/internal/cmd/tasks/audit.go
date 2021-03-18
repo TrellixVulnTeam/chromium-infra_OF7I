@@ -10,11 +10,8 @@ import (
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	"infra/cmd/skylab/internal/cmd/utils"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 )
@@ -63,84 +60,31 @@ func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	fmt.Fprint(a.GetErr(), "\nThis command is deprecated and will be removed on 03/01/2021. Please use 'shivas audit-duts ...'\n\n")
-	if err := c.validateArgs(args); err != nil {
-		return err
-	}
-	actions, err := c.actions()
-	if err != nil {
-		return err
-	}
-
-	ctx := cli.GetContext(a, c, env)
-	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
-	if err != nil {
-		return err
-	}
-
-	successMap := make(map[string]utils.TaskInfo)
-	errorMap := make(map[string]error)
-	for _, host := range args {
-		dutName := skycmdlib.FixSuspiciousHostname(host)
-		if dutName != host {
-			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
-		}
-		task, err := creator.AuditTask(ctx, dutName, actions, c.expirationMins*60)
-		if err != nil {
-			errorMap[dutName] = err
-		} else {
-			successMap[dutName] = task
-		}
-	}
-	if len(errorMap) > 0 {
-		fmt.Fprintln(a.GetOut(), "\n### Failed to create ###")
-		for host, err := range errorMap {
-			fmt.Fprintf(a.GetOut(), "%s: %s\n", host, err.Error())
-		}
-	}
-	if len(successMap) > 0 {
-		fmt.Fprintf(a.GetOut(), "\n### Successful created - %d ###\n", len(successMap))
-		for host, task := range successMap {
-			fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", task.TaskURL, host)
-		}
-		if len(successMap) > 1 {
-			fmt.Fprintln(a.GetOut(), "\n### Batch tasks URL ###")
-			fmt.Fprintln(a.GetOut(), creator.SessionTasksURL())
-		}
-	}
-	return nil
-}
-
-func (c *auditRun) validateArgs(args []string) error {
-	if c.expirationMins >= dayInMinutes {
-		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
-	}
+	hosts := args
 	if len(args) == 0 {
-		return errors.Reason("at least one host has to provided").Err()
+		hosts = []string{"host1", "host2", "..."}
 	}
-	return nil
-}
-
-// Collect actions to run. If we do not by specified action or all of them if no action specified.
-func (c *auditRun) actions() (string, error) {
-	var a []string
+	var options []string
 	if c.runVerifyDUTStorage {
-		a = append(a, "verify-dut-storage")
+		options = append(options, "-dut-storage")
 	}
 	if c.runVerifyServoUSB {
-		a = append(a, "verify-servo-usb-drive")
+		options = append(options, "-servo-usb")
 	}
 	if c.runVerifyServoFw {
-		a = append(a, "verify-servo-fw")
+		options = append(options, "-servo-fw")
 	}
 	if c.runFlashServoKeyboardMap {
-		a = append(a, "flash-servo-keyboard-map")
+		options = append(options, "-servo-keyboard")
 	}
 	if c.runVerifyDutMacaddr {
-		a = append(a, "verify-dut-macaddr")
+		options = append(options, "-dut-macaddr")
 	}
-	if len(a) == 0 {
-		return "", errors.Reason("No actions to run").Err()
+	if len(options) == 0 {
+		options = append(options, "[OPTIONS]")
 	}
-	return strings.Join(a, ","), nil
+	return cmdlib.NewUsageError(
+		c.Flags,
+		"skylab audit has been removed! Please use:\n\nshivas audit-duts "+strings.Join(options, " ")+" "+strings.Join(hosts, " ")+"\n",
+	)
 }

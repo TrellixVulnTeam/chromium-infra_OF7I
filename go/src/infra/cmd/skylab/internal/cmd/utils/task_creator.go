@@ -7,7 +7,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
@@ -124,138 +123,6 @@ func (tc *TaskCreator) getDeployTaskRequest(dutID, actions string) *swarming_api
 	}
 }
 
-// RepairTask creates admin_repair task for particular DUT
-func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
-	dims, err := tc.dimsWithBotID(ctx, host)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to get dimensions for %s", host).Err()
-	}
-	c := worker.Command{
-		TaskName: "admin_repair",
-	}
-	c.Config(tc.Environment.Wrapped())
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: int64(expirationSec),
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command:              c.Args(),
-			Dimensions:           dims,
-			ExecutionTimeoutSecs: 5400,
-		},
-		WaitForCapacity: true,
-	}}
-	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_repair",
-		Tags:           tc.combineTags("repair", c.LogDogAnnotationURL, nil),
-		TaskSlices:     slices,
-		Priority:       defaultTaskPriority,
-		ServiceAccount: tc.Environment.ServiceAccount,
-	}
-	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
-	defer cf()
-	resp, err := tc.Client.CreateTask(ctx, r)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to create task").Err()
-	}
-	return resp.TaskId, nil
-}
-
-// VerifyTask creates admin_verify task for particular DUT.
-func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSec int) (TaskInfo, error) {
-	dims, err := tc.dimsWithBotID(ctx, host)
-	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "failed to get dimensions for %s", host).Err()
-	}
-	c := worker.Command{
-		TaskName: "admin_verify",
-	}
-	c.Config(tc.Environment.Wrapped())
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: int64(expirationSec),
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command:              c.Args(),
-			Dimensions:           dims,
-			ExecutionTimeoutSecs: 5400,
-		},
-		WaitForCapacity: true,
-	}}
-	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_verify",
-		Tags:           tc.combineTags("verify", c.LogDogAnnotationURL, nil),
-		TaskSlices:     slices,
-		Priority:       defaultTaskPriority,
-		ServiceAccount: tc.Environment.ServiceAccount,
-	}
-	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
-	defer cf()
-	resp, err := tc.Client.CreateTask(ctx, r)
-	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "failed to create task").Err()
-	}
-	task := TaskInfo{
-		ID:      resp.TaskId,
-		TaskURL: tc.taskURL(resp.TaskId),
-	}
-	return task, nil
-}
-
-// AuditTask creates admin_audit task for particular DUT.
-func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expirationSec int) (TaskInfo, error) {
-	dims, err := tc.dimsWithBotID(ctx, host)
-	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "failed to get dimensions for %s", host).Err()
-	}
-	c := worker.Command{
-		TaskName: "admin_audit",
-		Actions:  actions,
-	}
-	c.Config(tc.Environment.Wrapped())
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: int64(expirationSec),
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command:              c.Args(),
-			Dimensions:           dims,
-			ExecutionTimeoutSecs: 28800,
-		},
-		WaitForCapacity: true,
-	}}
-	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_audit",
-		Tags:           tc.combineTags("audit", c.LogDogAnnotationURL, nil),
-		TaskSlices:     slices,
-		Priority:       defaultTaskPriority,
-		ServiceAccount: tc.Environment.ServiceAccount,
-	}
-	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
-	defer cf()
-	resp, err := tc.Client.CreateTask(ctx, r)
-	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "failed to create task").Err()
-	}
-	task := TaskInfo{
-		ID:      resp.TaskId,
-		TaskURL: tc.taskURL(resp.TaskId),
-	}
-	return task, nil
-}
-
-// appendUniqueDimensions takes a base []*swarming_api.SwarmingRpcsStringPair and an arbitrary
-// number of key-value pairs and appends them onto the first slice.
-func appendUniqueDimensions(first []*swarming_api.SwarmingRpcsStringPair, rest ...*swarming_api.SwarmingRpcsStringPair) []*swarming_api.SwarmingRpcsStringPair {
-	seen := make(map[string]bool)
-	for _, item := range first {
-		seen[item.Key] = true
-	}
-
-	for _, item := range rest {
-		if seen[item.Key] {
-			continue
-		}
-		first = append(first, item)
-		seen[item.Key] = true
-	}
-	return first
-}
-
 func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string, error) {
 	return tc.Client.DutNameToBotID(ctx, host)
 }
@@ -270,60 +137,14 @@ func getLeaseCommand(updateDutState bool) []string {
 	return []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
 }
 
-// appendUniqueTags takes a []string and adds items to it if they're unique
-func appendUniqueTags(first []string, rest ...string) []string {
-	seen := make(map[string]bool)
-	for _, item := range first {
-		key := getTagPrefix(item)
-		seen[key] = true
-	}
-	for _, item := range rest {
-		key := getTagPrefix(item)
-		if seen[key] {
-			continue
-		}
-		first = append(first, item)
-		seen[key] = true
-	}
-	return first
-}
-
-// getTagPrefix gets the key in a string of the form key:value.
-func getTagPrefix(s string) string {
-	delimIdx := strings.Index(s, ":")
-	if delimIdx == -1 {
-		return ""
-	}
-	return s[0:delimIdx]
-}
-
 // sessionTag return admin session tag for swarming.
 func (tc *TaskCreator) sessionTag() string {
 	return fmt.Sprintf("admin_session:%s", tc.session)
 }
 
-// SessionTasksURL gets URL to see all created tasks belong to the session.
-func (tc *TaskCreator) SessionTasksURL() string {
-	tags := []string{
-		tc.sessionTag(),
-	}
-	return swarming.TaskListURLForTags(tc.Environment.SwarmingService, tags)
-}
-
 // taskURL generates URL to the task in swarming.
 func (tc *TaskCreator) taskURL(id string) string {
 	return swarming.TaskURL(tc.Environment.SwarmingService, id)
-}
-
-func (tc *TaskCreator) dimsWithBotID(ctx context.Context, host string) ([]*swarming_api.SwarmingRpcsStringPair, error) {
-	id, err := tc.dutNameToBotID(ctx, host)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
-	}
-	return []*swarming_api.SwarmingRpcsStringPair{
-		{Key: "pool", Value: swarming.SkylabPool},
-		{Key: "id", Value: id},
-	}, nil
 }
 
 func dimsWithDUTID(dutID string) []*swarming_api.SwarmingRpcsStringPair {
