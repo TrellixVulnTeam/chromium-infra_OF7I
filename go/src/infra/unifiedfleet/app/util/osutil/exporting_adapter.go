@@ -391,13 +391,12 @@ func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 	setCr50Configs(l, s)
 }
 
-func createDutLabels(devConfig *device.Config, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
-	devcfgID := devConfig.GetId()
+func createDutLabels(machine *ufspb.Machine, devConfig *device.Config, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
 	// Use GetXXX in case any object is nil.
-	platform := strings.ToLower(devcfgID.GetPlatformId().GetValue())
-	brand := strings.ToLower(devcfgID.GetBrandId().GetValue())
-	model := strings.ToLower(devcfgID.GetModelId().GetValue())
-	variant := strings.ToLower(devcfgID.GetVariantId().GetValue())
+	platform := machine.GetChromeosMachine().GetBuildTarget()
+	brand := strings.ToLower(devConfig.GetId().GetBrandId().GetValue())
+	model := machine.GetChromeosMachine().GetModel()
+	variant := machine.GetChromeosMachine().GetSku()
 
 	_, ok := noArcBoardMap[platform]
 	arc := !ok
@@ -468,14 +467,14 @@ func adaptV2DutToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.DeviceUnd
 		append("servo_fw_channel", p.GetServo().GetServoFwChannel().String()[len("SERVO_FW_"):])
 
 	osType := inventory.SchedulableLabels_OS_TYPE_INVALID
-	if board := devConfig.GetId().GetPlatformId().GetValue(); board != "" {
+	if board := machine.GetChromeosMachine().GetBuildTarget(); board != "" {
 		var found bool
 		if osType, found = boardToOsTypeMapping[board]; !found {
 			osType = inventory.SchedulableLabels_OS_TYPE_CROS
 		}
 	}
 
-	labels := createDutLabels(devConfig, &osType)
+	labels := createDutLabels(machine, devConfig, &osType)
 
 	setDutPools(labels, dut.GetPools())
 	setLicenses(labels, dut.GetLicenses())
@@ -516,7 +515,7 @@ func adaptV2LabstationToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.De
 		append("powerunit_outlet", l.GetRpm().GetPowerunitOutlet()).
 		append("serial_number", sn)
 	osType := inventory.SchedulableLabels_OS_TYPE_LABSTATION
-	labels := createDutLabels(devConfig, &osType)
+	labels := createDutLabels(machine, devConfig, &osType)
 	// Hardcode labstation labels.
 	labels.Platform = &emptyString
 	acOnly := "AC_only"

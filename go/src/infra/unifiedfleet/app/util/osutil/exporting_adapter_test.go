@@ -53,7 +53,10 @@ var machine = ufspb.Machine{
 	SerialNumber: "test_serial",
 	Device: &ufspb.Machine_ChromeosMachine{
 		ChromeosMachine: &ufspb.ChromeOSMachine{
-			Hwid: "test_hwid",
+			Hwid:        "test_hwid",
+			BuildTarget: "coral",
+			Model:       "test_model",
+			Sku:         "test_variant",
 		},
 	},
 }
@@ -166,7 +169,10 @@ var labstationMachine = ufspb.Machine{
 	SerialNumber: "labstation_serial",
 	Device: &ufspb.Machine_ChromeosMachine{
 		ChromeosMachine: &ufspb.ChromeOSMachine{
-			Hwid: "labstation_hwid",
+			Hwid:        "labstation_hwid",
+			BuildTarget: "guado",
+			Model:       "test_model",
+			Sku:         "",
 		},
 	},
 }
@@ -553,7 +559,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			//dataCopy.LabConfig = proto.Clone(data.LabConfig).(*ufspb.MachineLSE)
-			dataCopy.GetDeviceConfig().GetId().GetPlatformId().Value = board
+			dataCopy.GetMachine().GetChromeosMachine().BuildTarget = board
 			d2, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			s2, err := inventory.WriteLabToString(&inventory.Lab{
