@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/protobuf/encoding/prototext"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 
 	dirmdpb "infra/tools/dirmd/proto"
@@ -68,8 +69,7 @@ func ReadMapping(root string, form dirmdpb.MappingForm) (*Mapping, error) {
 func ReadComputed(root string, targets ...string) (*Mapping, error) {
 	r := &mappingReader{Root: root}
 	for _, target := range targets {
-		// TODO(crbug.com/1179786): add support for InheritFrom.
-		if err := r.readUpMissing(target); err != nil {
+		if err := r.readInheritedMissing(target); err != nil {
 			return nil, errors.Annotate(err, "failed to read metadata for %q", target).Err()
 		}
 	}
@@ -188,13 +188,15 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	}
 }
 
-// readUpMissing reads metadata of directories on the node path from target to
-// root, and stops as soon as it finds a directory with metadata.
-func (r *mappingReader) readUpMissing(target string) error {
+// readInheritedMissing reads metadata of the target dir and its inheritance chain,
+// and stops as soon as it finds a directory with metadata.
+func (r *mappingReader) readInheritedMissing(target string) error {
 	root := filepath.Clean(r.Root)
 	target = filepath.Clean(target)
 
+	chain := stringset.New(1) // to detect cycles
 	for {
+		chain.Add(target)
 		key, err := r.DirKey(target)
 		switch {
 		case err != nil:
@@ -204,7 +206,8 @@ func (r *mappingReader) readUpMissing(target string) error {
 			return nil
 		}
 
-		switch meta, err := ReadMetadata(target); {
+		meta, err := ReadMetadata(target)
+		switch {
 		case err != nil:
 			return errors.Annotate(err, "failed to read metadata of %q", target).Err()
 
@@ -215,18 +218,29 @@ func (r *mappingReader) readUpMissing(target string) error {
 			r.Dirs[key] = meta
 		}
 
-		if target == root {
+		// Transition to the next node in the inheritance chain.
+		var next string
+		switch {
+		case meta.GetInheritFrom() == "" && target == root:
 			return nil
+
+		case meta.GetInheritFrom() == "":
+			next = filepath.Dir(target)
+
+		case meta.InheritFrom == NoInheritance:
+			return nil
+
+		case strings.HasPrefix(meta.InheritFrom, "//"):
+			next = filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(meta.InheritFrom, "//")))
+
+		default:
+			return errors.Reason("unexpected inherit_from value %q in dir %q", meta.InheritFrom, target).Err()
 		}
 
-		// Go up.
-		parent := filepath.Dir(target)
-		if parent == target {
-			// We have reached the root of the file system, but not `root`.
-			// This is impossible because DirKey would have failed.
-			panic("impossible")
+		if chain.Has(next) {
+			return errors.Reason("inheritance cycle with dir %q is detected", target).Err()
 		}
-		target = parent
+		target = next
 	}
 }
 

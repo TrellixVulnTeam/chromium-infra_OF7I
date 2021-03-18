@@ -50,6 +50,15 @@ func TestRead(t *testing.T) {
 					},
 					// "subdir_with_owners/empty_subdir" is not present because it has
 					// no metadata.
+					"inherit_from": {
+						InheritFrom: "//subdir",
+						Monorail: &dirmdpb.Monorail{
+							Component: "Another>Component",
+						},
+					},
+					"inherit_from/x": {
+						TeamEmail: "x@chromium.org",
+					},
 				},
 			})
 		})
@@ -93,6 +102,35 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
+					"inherit_from": {
+						InheritFrom: "//subdir",
+						TeamEmail:   "team-email@chromium.org",
+						Os:          dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Another>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+					"inherit_from/x": {
+						TeamEmail: "x@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Another>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 				},
 			})
 		})
@@ -128,6 +166,35 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
+					"inherit_from": {
+						InheritFrom: "//subdir",
+						TeamEmail:   "team-email@chromium.org",
+						Os:          dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Another>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+					"inherit_from/x": {
+						TeamEmail: "x@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Another>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 				},
 			})
 		})
@@ -161,31 +228,90 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
+					"inherit_from": {
+						InheritFrom: "//subdir",
+						Monorail: &dirmdpb.Monorail{
+							Component: "Another>Component",
+						},
+
+						Resultdb: &dirmdpb.ResultDB{
+							// This is a bug. These tags shouldn't be here.
+							// TODO(crbug.com/1188314): remove this.
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+					"inherit_from/x": {
+						TeamEmail: "x@chromium.org",
+						Resultdb: &dirmdpb.ResultDB{
+							// This is a bug. These tags shouldn't be here.
+							// TODO(crbug.com/1188314): remove this.
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 				},
 			})
 		})
 	})
 
 	Convey(`ReadComputed`, t, func() {
-		m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/a", "testdata/inheritance/a/b")
-		So(err, ShouldBeNil)
-		So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
-			Dirs: map[string]*dirmdpb.Metadata{
-				"a": {
-					TeamEmail: "chromium-review@chromium.org",
-					Monorail: &dirmdpb.Monorail{
-						Project:   "chromium",
-						Component: "Component",
+		Convey(`a, a/b`, func() {
+			m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/a", "testdata/inheritance/a/b")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a": {
+						TeamEmail: "chromium-review@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Component",
+						},
+					},
+					"a/b": {
+						TeamEmail: "chromium-review@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Component>Child",
+						},
 					},
 				},
-				"a/b": {
-					TeamEmail: "chromium-review@chromium.org",
-					Monorail: &dirmdpb.Monorail{
-						Project:   "chromium",
-						Component: "Component>Child",
+			})
+		})
+		Convey(`inherit_from`, func() {
+			m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/inherit_from_ab")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"inherit_from_ab": {
+						InheritFrom: "//a/b",
+						TeamEmail:   "chromium-review@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Component>Child",
+						},
+						Os: dirmdpb.OS_LINUX,
 					},
 				},
-			},
+			})
+		})
+		Convey(`no_inheritance`, func() {
+			m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/a/b/no_inheritance")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/no_inheritance": {
+						InheritFrom: "-",
+						Monorail: &dirmdpb.Monorail{
+							Component: "No>Inheritance",
+						},
+					},
+				},
+			})
 		})
 	})
 }

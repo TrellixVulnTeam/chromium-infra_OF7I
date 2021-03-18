@@ -1,0 +1,4 @@
+inherit_from: "-"
+monorail {
+  component: "No>Inheritance"
+}

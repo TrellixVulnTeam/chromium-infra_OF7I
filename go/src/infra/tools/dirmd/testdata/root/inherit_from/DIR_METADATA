@@ -1,0 +1,4 @@
+inherit_from: "//subdir"
+monorail {
+  component: "Another>Component"
+}
