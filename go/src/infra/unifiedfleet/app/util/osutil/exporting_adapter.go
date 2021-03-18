@@ -393,13 +393,14 @@ func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 
 func createDutLabels(devConfig *device.Config, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
 	devcfgID := devConfig.GetId()
-	_, ok := noArcBoardMap[devcfgID.GetPlatformId().GetValue()]
-	arc := !ok
 	// Use GetXXX in case any object is nil.
 	platform := strings.ToLower(devcfgID.GetPlatformId().GetValue())
 	brand := strings.ToLower(devcfgID.GetBrandId().GetValue())
 	model := strings.ToLower(devcfgID.GetModelId().GetValue())
 	variant := strings.ToLower(devcfgID.GetVariantId().GetValue())
+
+	_, ok := noArcBoardMap[platform]
+	arc := !ok
 
 	labels := inventory.SchedulableLabels{
 		Arc:               &arc,
