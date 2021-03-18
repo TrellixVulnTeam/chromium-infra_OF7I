@@ -13,15 +13,11 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
-	"io"
+	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/grpc/prpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -64,89 +60,77 @@ func (c *infoRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return fmt.Errorf("missing DUT hostname arg")
 	}
 	ctx := cli.GetContext(a, c, env)
-	return printDUTInfo(ctx, &c.authFlags, a.GetOut(), c.envFlags.Env().UFSService, c.json, args...)
-}
-
-// printDUTInfo pretty-prints information about the DUT with the given hostname
-// to the command line.
-func printDUTInfo(ctx context.Context, authFlags *authcli.Flags, w io.Writer, ufsService string, json bool, hostnames ...string) error {
-	ctx = contextWithOSNamespace(ctx)
-	ufsClient, err := newUFSClient(ctx, ufsService, authFlags)
+	ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
 	if err != nil {
 		return err
 	}
-	for _, hostname := range hostnames {
-		correctedHostname := correctedHostname(hostname)
-		labSetup, err := ufsClient.GetMachineLSE(ctx, &ufsapi.GetMachineLSERequest{
-			Name: ufsutil.AddPrefix(ufsutil.MachineLSECollection, correctedHostname),
-		})
+
+	var infoList []string
+	for _, hostname := range args {
+		info, err := dutInfo(ctx, ufsClient, c.json, hostname)
 		if err != nil {
 			return err
 		}
-		machine, err := ufsClient.GetMachine(ctx, &ufsapi.GetMachineRequest{
-			Name: ufsutil.AddPrefix(ufsutil.MachineCollection, labSetup.GetMachines()[0]),
-		})
-		if err != nil {
-			return err
-		}
-		if json {
-			printDUTInfoAsJSON(labSetup, machine, w)
-		} else {
-			printDUTInfoAsBashVariables(labSetup, machine, w)
-		}
-		fmt.Fprintf(w, "\n")
+		infoList = append(infoList, info)
+	}
+	if c.json {
+		fmt.Fprintf(a.GetOut(), "[%s]\n", strings.Join(infoList, ",\n"))
+	} else {
+		fmt.Fprintf(a.GetOut(), "%s\n\n", strings.Join(infoList, "\n\n"))
 	}
 	return nil
 }
 
-// newUFSClient returns a new client to interact with the Unified Fleet System.
-func newUFSClient(ctx context.Context, ufsService string, authFlags *authcli.Flags) (ufsapi.FleetClient, error) {
-	httpClient, err := cmdlib.NewHTTPClient(ctx, authFlags)
+// dutInfo returns pretty-printed information about the DUT with the given
+// hostname. There is no newline at the end of the info string.
+func dutInfo(ctx context.Context, ufsClient ufsapi.FleetClient, json bool, hostname string) (string, error) {
+	ctx = contextWithOSNamespace(ctx)
+	correctedHostname := correctedHostname(hostname)
+	labSetup, err := ufsClient.GetMachineLSE(ctx, &ufsapi.GetMachineLSERequest{
+		Name: ufsutil.AddPrefix(ufsutil.MachineLSECollection, correctedHostname),
+	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return ufsapi.NewFleetPRPCClient(&prpc.Client{
-		C:       httpClient,
-		Host:    ufsService,
-		Options: site.DefaultPRPCOptions,
-	}), nil
+	machine, err := ufsClient.GetMachine(ctx, &ufsapi.GetMachineRequest{
+		Name: ufsutil.AddPrefix(ufsutil.MachineCollection, labSetup.GetMachines()[0]),
+	})
+	if err != nil {
+		return "", err
+	}
+	if json {
+		return dutInfoAsJSON(labSetup, machine), nil
+	} else {
+		return dutInfoAsBashVariables(labSetup, machine), nil
+	}
 }
 
-func printDUTInfoAsBashVariables(labSetup *ufspb.MachineLSE, machine *ufspb.Machine, w io.Writer) {
+func dutInfoAsBashVariables(labSetup *ufspb.MachineLSE, machine *ufspb.Machine) string {
 	dut := labSetup.GetChromeosMachineLse().GetDeviceLse().GetDut()
-	fmt.Fprintf(w, "DUT_HOSTNAME=%s.cros\n", dut.Hostname)
-	fmt.Fprintf(w, "MODEL=%s\n", machine.GetChromeosMachine().GetModel())
-	fmt.Fprintf(w, "BOARD=%s\n", machine.GetChromeosMachine().GetBuildTarget())
+
+	info := fmt.Sprintf(`DUT_HOSTNAME=%s.cros
+MODEL=%s
+BOARD=%s`,
+		dut.Hostname,
+		machine.GetChromeosMachine().GetModel(),
+		machine.GetChromeosMachine().GetBuildTarget())
 
 	servo := dut.GetPeripherals().GetServo()
 	if servo == nil {
-		return
+		return info
 	}
-	fmt.Fprintf(w, "SERVO_HOSTNAME=%s\n", servo.GetServoHostname())
-	fmt.Fprintf(w, "SERVO_PORT=%d\n", servo.GetServoPort())
-	fmt.Fprintf(w, "SERVO_SERIAL=%s\n", servo.GetServoSerial())
-	return
+	info += fmt.Sprintf(`
+SERVO_HOSTNAME=%s
+SERVO_PORT=%d
+SERVO_SERIAL=%s`,
+		servo.GetServoHostname(),
+		servo.GetServoPort(),
+		servo.GetServoSerial())
+
+	return info
 }
 
-func printDUTInfoAsJSON(labSetup *ufspb.MachineLSE, machine *ufspb.Machine, w io.Writer) {
-	fmt.Fprintf(w, "{\"MachineLSE\":\t%s,\n", protoJSON(labSetup))
-	fmt.Fprintf(w, "\"Machine\":\t%s}\n", protoJSON(machine))
-	return
-}
-
-func protoJSON(message proto.Message) []byte {
-	marshalOpts := protojson.MarshalOptions{
-		EmitUnpopulated: false,
-		Indent:          "\t",
-	}
-	json, err := marshalOpts.Marshal(proto.MessageV2(message))
-	if err != nil {
-		panic("Failed to marshal JSON")
-	}
-	return json
-}
-
-func contextWithOSNamespace(ctx context.Context) context.Context {
-	osMetadata := metadata.Pairs(ufsutil.Namespace, ufsutil.OSNamespace)
-	return metadata.NewOutgoingContext(ctx, osMetadata)
+func dutInfoAsJSON(labSetup *ufspb.MachineLSE, machine *ufspb.Machine) string {
+	return fmt.Sprintf(`{"MachineLSE": %s,
+"Machine": %s}`, protoJSON(labSetup), protoJSON(machine))
 }

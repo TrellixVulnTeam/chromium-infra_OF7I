@@ -7,16 +7,37 @@ package dut
 import (
 	"context"
 	"fmt"
+	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
+	ufsutil "infra/unifiedfleet/app/util"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/auth/client/authcli"
 	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const swarmingAPISuffix = "_ah/api/swarming/v1/"
+
+// newUFSClient returns a new client to interact with the Unified Fleet System.
+func newUFSClient(ctx context.Context, ufsService string, authFlags *authcli.Flags) (ufsapi.FleetClient, error) {
+	httpClient, err := cmdlib.NewHTTPClient(ctx, authFlags)
+	if err != nil {
+		return nil, err
+	}
+	return ufsapi.NewFleetPRPCClient(&prpc.Client{
+		C:       httpClient,
+		Host:    ufsService,
+		Options: site.DefaultPRPCOptions,
+	}), nil
+}
 
 // newSwarmingService returns a new service to interact with the Swarming API.
 func newSwarmingService(ctx context.Context, swarmingServicePath string, authFlags *authcli.Flags) (*swarmingapi.Service, error) {
@@ -52,4 +73,24 @@ func correctedHostname(hostname string) string {
 	hostname = strings.TrimPrefix(hostname, "crossk-")
 	hostname = strings.TrimSuffix(hostname, ".cros")
 	return hostname
+}
+
+// protoJSON returns the given proto message as pretty-printed JSON.
+func protoJSON(message proto.Message) []byte {
+	marshalOpts := protojson.MarshalOptions{
+		EmitUnpopulated: false,
+		Indent:          "\t",
+	}
+	json, err := marshalOpts.Marshal(proto.MessageV2(message))
+	if err != nil {
+		panic("Failed to marshal JSON")
+	}
+	return json
+}
+
+// contextWithOSNamespace adds an "os" namespace to the given context, which
+// is required for API calls to UFS.
+func contextWithOSNamespace(ctx context.Context) context.Context {
+	osMetadata := metadata.Pairs(ufsutil.Namespace, ufsutil.OSNamespace)
+	return metadata.NewOutgoingContext(ctx, osMetadata)
 }
