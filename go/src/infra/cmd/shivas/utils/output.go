@@ -23,6 +23,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	chromeoslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -1288,7 +1289,12 @@ func PrintDutsFull(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machin
 			fmt.Fprintf(tw, "Servo: None\n")
 		}
 
-		rpm := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm()
+		var rpm *chromeoslab.OSRPM
+		if dut.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			rpm = dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm()
+		} else {
+			rpm = dut.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm()
+		}
 		if rpm != nil {
 			fmt.Fprintf(tw, "RPM:\n")
 			fmt.Fprintf(tw, "\thostname\t%s\n", rpm.GetPowerunitName())
@@ -1325,7 +1331,12 @@ func PrintDutsShort(res []proto.Message, keysOnly bool) {
 			fmt.Fprintf(tw, "Servo: None\n")
 		}
 
-		rpm := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm()
+		var rpm *chromeoslab.OSRPM
+		if dut.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			rpm = dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetRpm()
+		} else {
+			rpm = dut.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm()
+		}
 		if rpm != nil {
 			fmt.Fprintf(tw, "RPM:\n")
 			fmt.Fprintf(tw, "\thostname\t%s\n", rpm.GetPowerunitName())
