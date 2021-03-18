@@ -16,8 +16,8 @@ import (
 // tunnelManager keeps track of SSH tunnels. Any client using tunnelManager must
 // call Close() to ensure all tunnels are cleaned up after use.
 type tunnelManager struct {
-	mu         sync.Mutex
-	tunnelList []*sshtunnel.Tunnel
+	mu      sync.Mutex
+	tunnels []*sshtunnel.Tunnel
 }
 
 // newTunnelManager creates a new tunnelManager which should be closed after
@@ -34,7 +34,7 @@ func (m *tunnelManager) NewTunnel(localAddr string, remoteAddr string, c *ssh.Cl
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.tunnelList = append(m.tunnelList, t)
+	m.tunnels = append(m.tunnels, t)
 	return t, nil
 }
 
@@ -43,7 +43,7 @@ func (m *tunnelManager) Close() {
 	var wg sync.WaitGroup
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for _, t := range m.tunnelList {
+	for _, t := range m.tunnels {
 		wg.Add(1)
 		go func(t *sshtunnel.Tunnel) {
 			defer wg.Done()
@@ -51,6 +51,6 @@ func (m *tunnelManager) Close() {
 		}(t)
 	}
 	wg.Wait()
-	m.tunnelList = nil
+	m.tunnels = nil
 	log.Printf("sshtunnel manager: All tunnels closed")
 }

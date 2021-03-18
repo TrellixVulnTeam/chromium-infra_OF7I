@@ -7,6 +7,7 @@ package sshtunnel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -70,7 +71,13 @@ func (t *Tunnel) handleConn(localAddr string) {
 	for t.IsAlive() {
 		remoteConn, err := t.listener.Accept()
 		if err != nil {
-			t.logf("%s", err)
+			t.logf("handleConn: %s", err)
+			if errors.Is(err, io.EOF) {
+				// Check for EOF error and return to handle endless error
+				// logging when SSH connection drops for any reason.
+				// See b/181266304 for more details.
+				return
+			}
 			continue
 		}
 		ctx, cancel := context.WithCancel(t.ctx)
@@ -83,6 +90,10 @@ func (t *Tunnel) handleConn(localAddr string) {
 				t.logf("%s", err)
 				return
 			}
+			// The basic network API does not support context cancellation,
+			// but only timeout and interrupting by closing the connection. So,
+			// rely on the cancellation context to unblock any conn Read/Write
+			// calls.
 			t.registerConnToClose(ctx, localConn)
 			t.registerConnToClose(ctx, remoteConn)
 			t.mirrorConn(remoteConn.(ssh.Channel), localConn.(*net.TCPConn))
