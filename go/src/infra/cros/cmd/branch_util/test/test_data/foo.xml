@@ -1,0 +1,34 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="cros" fetch="foo"
+    />
+  <project path="src/repohooks" name="chromiumos/repohooks"
+           groups="minilayout,firmware,buildtools,labtools,crosvm"
+           revision="refs/heads/foo" />
+  <repo-hooks in-project="chromiumos/repohooks" enabled-list="pre-upload" />
+
+  <!--This comment should persist.-->
+  <project name="chromiumos/manifest"
+           path="manifest"
+           revision="refs/heads/foo"/>
+
+  <new-element name="this should persist" />
+
+  <project name="chromiumos/overlays/chromiumos-overlay"
+           path="src/third_party/chromiumos-overlay"
+           revision="refs/heads/foo"/>
+
+  <project name="external/implicit-pinned"
+           path="src/third_party/implicit-pinned"
+           revision="refs/heads/implicit-pinned"/>
+
+  <!--This comment should also persist.-->
+  <project name="chromiumos/multicheckout"
+           path="src/third_party/multicheckout-a"
+           revision="refs/heads/multicheckout-a"/>
+
+  <project name="chromiumos/multicheckout"
+           path="src/third_party/multicheckout-b"
+           revision="refs/heads/multicheckout-b"/>
+
+</manifest>

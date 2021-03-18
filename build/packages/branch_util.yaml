@@ -1,0 +1,10 @@
+package: chromiumos/infra/branch_util/${platform}
+description: The ChromeOS branching tool, see go/cros-branch
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/branch_util
+root: ../../go/bin
+data:
+  - file: branch_util${exe_suffix}
+  - version_file: .versions/branch_util${exe_suffix}.cipd_version

@@ -56,7 +56,7 @@ func FetchFilesFromGitiles(ctx context.Context, authedClient *http.Client, host,
 }
 
 // DownloadFileFromGitiles downloads a file from Gitiles.
-func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref string, path string) (string, error) {
+func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref, path string) (string, error) {
 	var gc gitilespb.GitilesClient
 	var err error
 	if MockGitiles != nil {

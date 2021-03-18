@@ -599,3 +599,6 @@ import:
   repo: https://chromium.googlesource.com/external/github.com/golang/snappy.git
 - package: github.com/google/flatbuffers
   repo: https://chromium.googlesource.com/external/github.com/google/flatbuffers.git
+- package: github.com/otiai10/copy
+  repo: https://chromium.googlesource.com/external/github.com/otiai10/copy.git
+  version: upstream/main

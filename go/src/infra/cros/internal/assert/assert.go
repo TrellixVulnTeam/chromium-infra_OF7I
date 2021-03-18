@@ -33,6 +33,14 @@ func ErrorContains(t *testing.T, err error, s string) {
 	}
 }
 
+// BoolsEqual checks that the two bools are equal.
+func BoolsEqual(t *testing.T, a, b bool) {
+	t.Helper()
+	if a != b {
+		t.Fatalf("assert failed: %v != %v", a, b)
+	}
+}
+
 // IntsEqual checks that the two ints are equal.
 func IntsEqual(t *testing.T, a, b int) {
 	t.Helper()
