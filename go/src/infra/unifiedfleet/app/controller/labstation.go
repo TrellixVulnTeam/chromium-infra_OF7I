@@ -87,6 +87,11 @@ func UpdateLabstation(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
 
+		// Validate the input from labstation perspective
+		if err := validateUpdateLabstation(ctx, oldMachinelse, machinelse, mask); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to update labstation").Err()
+		}
+
 		// Assign hostname to the labstation.
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 		// Copy output only fields.
@@ -272,4 +277,25 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 		}
 	}
 	return oldMachineLSE, nil
+}
+
+// validateUpdateLabstation checks if servos are being updated on full update or if the MLSE is a labstation
+func validateUpdateLabstation(ctx context.Context, oldLabstation, labstation *ufspb.MachineLSE, mask *field_mask.FieldMask) error {
+	// Check if labstation MachineLSE is updating any servo information
+	// It is also not allowed to update the servo Hostname and servo Port of any servo.
+	// Servo info is added/updated into Labstation only when a DUT(MachineLSE) is added/updated
+	if labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		if mask == nil || len(mask.Paths) == 0 {
+			// Full update. Avoid changing labstation servo data.
+			newServos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+			if oldLabstation != nil {
+				existingServos := oldLabstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+				if !testServoEq(newServos, existingServos) {
+					return status.Errorf(codes.FailedPrecondition, "Servos are not allowed to be updated in redeploying labstations")
+				}
+			}
+		}
+		return nil
+	}
+	return status.Errorf(codes.FailedPrecondition, "Not a valid labstation")
 }

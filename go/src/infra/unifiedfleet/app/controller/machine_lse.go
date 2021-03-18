@@ -1239,25 +1239,7 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		return err
 	}
 
-	// 1. This check is only for a Labstation
-	// Check if labstation MachineLSE is updating any servo information
-	// It is also not allowed to update the servo Hostname and servo Port of any servo.
-	// Servo info is added/updated into Labstation only when a DUT(MachineLSE) is added/updated
-	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
-		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
-		existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
-		if status.Code(err) == codes.Internal {
-			return err
-		}
-		if existingLabstationMachinelse != nil {
-			existingServos := existingLabstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
-			if !testServoEq(newServos, existingServos) {
-				return status.Errorf(codes.FailedPrecondition, "Servos are not allowed to be updated in redeploying labstations")
-			}
-		}
-	}
-
-	// 2. Check if resources does not exist
+	// 1. Check if resources does not exist
 	// Aggregate resource to check if machinelse does not exist
 	resourcesNotfound := []*Resource{GetMachineLSEResource(machinelse.Name)}
 	// Aggregate resource to check if machines does not exist
@@ -1282,7 +1264,7 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		return errors.Annotate(err, "%s", machinelse.Name).Err()
 	}
 
-	// 3. Check if any machine is already associated with another MachineLSE
+	// 2. Check if any machine is already associated with another MachineLSE
 	// A machine cannot be associated with multiple hosts/machinelses
 	for _, machineName := range machinelse.GetMachines() {
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machineName, true)
@@ -1315,7 +1297,7 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		}
 	}
 
-	// 4. Check if the OS MachineLSE DUT/Labstation is trying to use an already used rpm name and rpm port
+	// 3. Check if the OS MachineLSE DUT/Labstation is trying to use an already used rpm name and rpm port
 	rpmName, rpmPort := getRPMNamePortForOSMachineLSE(machinelse)
 	if rpmName != "" && rpmPort != "" {
 		lses, err := inventory.QueryMachineLSEByPropertyNames(ctx, map[string]string{"rpm_id": rpmName, "rpm_port": rpmPort}, true)
