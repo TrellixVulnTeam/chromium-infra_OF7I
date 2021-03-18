@@ -127,6 +127,51 @@ For more details, please visit the build page at %s`, statusString, buildSummary
 	}
 }
 
+// getAllBuilds performs a SearchBuilds call with the given SearchBuildsRequest,
+// and returns all the builds that were found. For searches that return many
+// builds, this function avoids having to deal with search pagination logic.
+// This function only searches builds from the Client's builder.
+func (c *Client) getAllBuilds(ctx context.Context, searchBuildsRequest *buildbucketpb.SearchBuildsRequest) ([]*buildbucketpb.Build, error) {
+	// The Client is only designed to interact with builds from its builderID,
+	// so we set that builderID within this function to keep the caller's
+	// request simple.
+	searchBuildsRequest.Predicate.Builder = c.builderID
+	// Reset the PageToken to ensure we start at the beginning of the results.
+	searchBuildsRequest.PageToken = ""
+
+	var allBuilds []*buildbucketpb.Build
+	for {
+		response, err := c.client.SearchBuilds(ctx, searchBuildsRequest)
+		if err != nil {
+			return nil, err
+		}
+		allBuilds = append(allBuilds, response.Builds...)
+		if response.NextPageToken == "" {
+			break
+		}
+		searchBuildsRequest.PageToken = response.NextPageToken
+	}
+	return allBuilds, nil
+}
+
+// GetAllBuildsForUser finds returns all builds created by the given user
+// matching the given SearchBuildsRequest. This function expects the field
+// "builds.*.created_by" to be included in the field mask of the given
+// SearchBuildRequest.
+func (c *Client) GetAllBuildsByUser(ctx context.Context, user string, searchBuildsRequest *buildbucketpb.SearchBuildsRequest) ([]*buildbucketpb.Build, error) {
+	allBuilds, err := c.getAllBuilds(ctx, searchBuildsRequest)
+	if err != nil {
+		return nil, err
+	}
+	var buildsByUser []*buildbucketpb.Build
+	for _, build := range allBuilds {
+		if build.CreatedBy == fmt.Sprintf("user:%s", user) {
+			buildsByUser = append(buildsByUser, build)
+		}
+	}
+	return buildsByUser, nil
+}
+
 // CancelBuildsByUser cancels any pending or active build created after the
 // given timestamp that was launched by the given user. An optional bot ID list
 // can be given, which restricts cancellations to builds running on bots on the
@@ -136,53 +181,68 @@ func (c *Client) CancelBuildsByUser(ctx context.Context, writer io.Writer, earli
 		reason = "cancelled from crosfleet CLI"
 	}
 
-	searchBuildsRequest := &buildbucketpb.SearchBuildsRequest{
+	fieldsMask := &field_mask.FieldMask{Paths: []string{
+		"builds.*.created_by",
+		"builds.*.id",
+		"builds.*.status",
+		"builds.*.infra",
+	}}
+	timeRange := &buildbucketpb.TimeRange{
+		StartTime: earliestCreateTime,
+	}
+	scheduledBuilds, err := c.GetAllBuildsByUser(ctx, user, &buildbucketpb.SearchBuildsRequest{
 		Predicate: &buildbucketpb.BuildPredicate{
-			Builder: c.builderID,
-			CreateTime: &buildbucketpb.TimeRange{
-				StartTime: earliestCreateTime,
-			},
+			CreateTime: timeRange,
+			Status:     buildbucketpb.Status_SCHEDULED,
 		},
-		Fields: &field_mask.FieldMask{Paths: []string{
-			"builds.*.created_by",
-			"builds.*.id",
-			"builds.*.status",
-			"builds.*.infra",
-		}},
-		PageToken: "",
+		Fields: fieldsMask,
+	})
+	if err != nil {
+		return err
+	}
+	startedBuilds, err := c.GetAllBuildsByUser(ctx, user, &buildbucketpb.SearchBuildsRequest{
+		Predicate: &buildbucketpb.BuildPredicate{
+			CreateTime: timeRange,
+			Status:     buildbucketpb.Status_STARTED,
+		},
+		Fields: fieldsMask,
+	})
+	if err != nil {
+		return err
 	}
 
-	cancelled := 0
-	for {
-		response, err := c.client.SearchBuilds(ctx, searchBuildsRequest)
+	var buildsToCancel []*buildbucketpb.Build
+	// Only filter the builds by bot ID if bot IDs were given.
+	if len(ids) > 0 {
+		for _, scheduledBuild := range scheduledBuilds {
+			requestedBotID := FindDimValInRequestedDims("id", scheduledBuild)
+			if idMatch(requestedBotID, ids) {
+				buildsToCancel = append(buildsToCancel, scheduledBuild)
+			}
+		}
+		for _, startedBuild := range startedBuilds {
+			provisionedBotID := FindDimValInFinalDims("id", startedBuild)
+			if idMatch(provisionedBotID, ids) {
+				buildsToCancel = append(buildsToCancel, startedBuild)
+			}
+		}
+	} else {
+		buildsToCancel = append(scheduledBuilds, startedBuilds...)
+	}
+	if len(buildsToCancel) == 0 {
+		fmt.Fprintf(writer, "No scheduled or active builds found that were launched by the current user (%s)\n", user)
+		return nil
+	}
+
+	for _, build := range buildsToCancel {
+		fmt.Fprintf(writer, "Canceling build at %s\n", c.BuildURL(build.Id))
+		_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
+			Id:              build.Id,
+			SummaryMarkdown: reason,
+		})
 		if err != nil {
 			return err
 		}
-		for _, build := range response.Builds {
-			if build.CreatedBy != fmt.Sprintf("user:%s", user) {
-				continue
-			}
-			if !isUnfinishedBuildWithBotID(build, ids) {
-				continue
-			}
-			fmt.Fprintf(writer, "Canceling build at %s\n", c.BuildURL(build.Id))
-			_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
-				Id:              build.Id,
-				SummaryMarkdown: reason,
-			})
-			if err != nil {
-				return err
-			}
-			cancelled++
-		}
-		if response.NextPageToken == "" {
-			break
-		}
-		searchBuildsRequest.PageToken = response.NextPageToken
-	}
-
-	if cancelled == 0 {
-		fmt.Fprintf(writer, "No pending or active builds found that were launched by the current user (%s)\n", user)
 	}
 	return nil
 }
@@ -218,6 +278,8 @@ func (c *Client) GetLatestGreenBuild(ctx context.Context) (*buildbucketpb.Build,
 			"builds.*.output.properties",
 		}},
 	}
+	// Avoid the getAllBuilds function since it scrolls through all pages of
+	// the search result, and we only want the most recent build.
 	response, err := c.client.SearchBuilds(ctx, searchBuildsRequest)
 	if err != nil {
 		return nil, err
@@ -260,30 +322,6 @@ func bbTags(tags map[string]string) []*buildbucketpb.StringPair {
 		})
 	}
 	return bbTagList
-}
-
-// isUnfinishedBuildWithBotID returns true if the build is either scheduled with
-// one of the (optional) given bot IDs as a requested dimension, or already
-// started and provisioned with one of the (optional) given bot IDs. If the bot
-// ID list is left empty, the function will return true for any scheduled or
-// started build.
-func isUnfinishedBuildWithBotID(build *buildbucketpb.Build, ids []string) bool {
-	wantIDMatch := len(ids) > 0
-	switch build.Status {
-	case buildbucketpb.Status_SCHEDULED:
-		if !wantIDMatch {
-			return true
-		}
-		requestedID := FindDimValInRequestedDims("id", build)
-		return idMatch(requestedID, ids)
-	case buildbucketpb.Status_STARTED:
-		if !wantIDMatch {
-			return true
-		}
-		provisionedID := FindDimValInFinalDims("id", build)
-		return idMatch(provisionedID, ids)
-	}
-	return false
 }
 
 // FindDimValInRequestedDims finds the given dimension value in the build's
