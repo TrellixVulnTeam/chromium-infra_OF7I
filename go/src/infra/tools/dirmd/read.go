@@ -68,12 +68,15 @@ func ReadMapping(root string, form dirmdpb.MappingForm) (*Mapping, error) {
 func ReadComputed(root string, targets ...string) (*Mapping, error) {
 	r := &mappingReader{Root: root}
 	for _, target := range targets {
+		// TODO(crbug.com/1179786): add support for InheritFrom.
 		if err := r.readUpMissing(target); err != nil {
 			return nil, errors.Annotate(err, "failed to read metadata for %q", target).Err()
 		}
 	}
 
-	r.ComputeAll()
+	if err := r.ComputeAll(); err != nil {
+		return nil, err
+	}
 
 	// Filter by targets.
 	ret := NewMapping(len(targets))
@@ -177,12 +180,12 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 
 	switch form {
 	case dirmdpb.MappingForm_REDUCED:
-		r.Mapping.Reduce()
+		return r.Mapping.Reduce()
 	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
-		r.Mapping.ComputeAll()
+		return r.Mapping.ComputeAll()
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 // readUpMissing reads metadata of directories on the node path from target to
