@@ -24,6 +24,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -56,8 +57,36 @@ func registerPinpointServer(t *testing.T, srv *pinpointServer) func(context.Cont
 	return dialer
 }
 
-func startFakeLegacyServer(t *testing.T, httpResponses map[string]string) *httptest.Server {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+type requestRecorder struct {
+	*httptest.Server
+
+	// List of URLs of received requests during recording.
+	urls      []*url.URL
+	recording bool
+}
+
+// startRecord begins the storage of URLs executed on the test server. It
+// returns a function which can be used to retrieve results. Note that the
+// returned function must be called in order to clean up.
+func (rr *requestRecorder) startRecord() (done func() []*url.URL) {
+	if rr.recording {
+		panic(fmt.Sprintf("Invalid state: startRecorder called before prior recording was finished"))
+	}
+	rr.recording = true
+	rr.urls = nil
+	return func() []*url.URL {
+		rr.recording = false
+		return rr.urls
+	}
+}
+
+func startFakeLegacyServer(t *testing.T, httpResponses map[string]string) *requestRecorder {
+	ret := new(requestRecorder)
+	ret.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ret.recording {
+			ret.urls = append(ret.urls, r.URL)
+		}
+
 		resp, found := httpResponses[r.URL.Path]
 		if !found {
 			w.WriteHeader(http.StatusNotFound)
@@ -66,8 +95,8 @@ func startFakeLegacyServer(t *testing.T, httpResponses map[string]string) *httpt
 		}
 		fmt.Fprintln(w, resp)
 	}))
-	t.Cleanup(ts.Close)
-	return ts
+	t.Cleanup(ret.Server.Close)
+	return ret
 }
 
 func TestServerService(t *testing.T) {
@@ -244,6 +273,44 @@ func TestCancelJob(t *testing.T) {
 					So(err, ShouldBeError)
 				})
 			})
+		})
+	})
+}
+
+func TestListJob(t *testing.T) {
+	t.Parallel()
+	listResponseJSON, err := ioutil.ReadFile("testdata/example-list-response.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ts := startFakeLegacyServer(t, map[string]string{
+		"/api/jobs": string(listResponseJSON),
+	})
+	defer ts.Close()
+
+	ctx := context.Background()
+	Convey("Given a grpc server with a client", t, func() {
+		dialer := registerPinpointServer(t, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
+
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+		So(err, ShouldBeNil)
+		defer conn.Close()
+		client := pinpoint.NewPinpointClient(conn)
+
+		Convey("listing results is successful", func() {
+			_, err := client.ListJobs(ctx, &pinpoint.ListJobsRequest{})
+			So(err, ShouldBeNil)
+		})
+		Convey("filters in the RPC request make it to the legacy service", func() {
+			const filter = "THE FILTER"
+
+			getURLs := ts.startRecord()
+			_, err := client.ListJobs(ctx, &pinpoint.ListJobsRequest{Filter: filter})
+			urls := getURLs()
+			So(err, ShouldBeNil)
+			So(len(urls), ShouldEqual, 1)
+			So(urls[0].String(), ShouldContainSubstring, url.QueryEscape(filter))
 		})
 	})
 }

@@ -201,11 +201,6 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 }
 
 func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {
-	if r.Filter != "" {
-		// TODO(chowski): Implement this!
-		return nil, status.Error(codes.Unimplemented, "TODO: implement filtering")
-	}
-
 	if r.PageSize != 0 || r.PageToken != "" {
 		// TODO(chowski): Implement this!
 		return nil, status.Error(codes.Unimplemented, "TODO: implement pagination/page size")
@@ -217,7 +212,11 @@ func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsReque
 			"misconfigured service, please try again later")
 	}
 
-	u := fmt.Sprintf("%s/api/jobs?o=STATE", s.legacyPinpointService)
+	query := url.Values{
+		"o":      {"STATE"},
+		"filter": {r.Filter},
+	}.Encode()
+	u := fmt.Sprintf("%s/api/jobs?%s", s.legacyPinpointService, query)
 	grpclog.Infof("GET %s", u)
 	res, err := s.LegacyClient.Get(u)
 	if err != nil {
