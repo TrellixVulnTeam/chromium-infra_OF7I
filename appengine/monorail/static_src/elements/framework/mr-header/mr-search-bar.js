@@ -446,16 +446,12 @@ export class MrSearchBar extends LitElement {
     } else if (hasChanges) {
       this._page(url);
     } else {
-      if (isOldPage) {
-        location.reload();
-      } else {
-        // TODO(zhangtiff): Replace this event with Redux once all of Monorail
-        // uses Redux.
-        // This is needed because navigating to the exact same page does not
-        // cause a URL change to happen.
-        this.dispatchEvent(new Event('refreshList',
-            {'composed': true, 'bubbles': true}));
-      }
+      // TODO(zhangtiff): Replace this event with Redux once all of Monorail
+      // uses Redux.
+      // This is needed because navigating to the exact same page does not
+      // cause a URL change to happen.
+      this.dispatchEvent(new Event('refreshList',
+          {'composed': true, 'bubbles': true}));
     }
   }
 
