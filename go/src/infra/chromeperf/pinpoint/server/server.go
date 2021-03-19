@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/server/convert"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -185,6 +186,8 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 	case http.StatusOK:
 		break
 	default:
+		bs, _ := ioutil.ReadAll(res.Body)
+		grpclog.Errorf("HTTP status %s: %s", res.Status, bs)
 		return nil, status.Errorf(codes.Internal, "failed request to legacy service: %s", res.Status)
 	}
 
@@ -282,21 +285,26 @@ func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobReq
 	return s.GetJob(ctx, &pinpoint.GetJobRequest{Name: r.Name})
 }
 
-// Email address for the service account to use.
-var serviceAccountEmail = flag.String("service_account", "", "service account email")
+// New returns a pinpointServer configured to contact the legacy API with the
+// provided base URL and HTTP client.
+func New(legacyPinpointBaseURL string, client *http.Client) *pinpointServer {
+	return &pinpointServer{
+		legacyPinpointService: legacyPinpointBaseURL,
+		LegacyClient:          client,
+	}
+}
 
-// Contents of the service account credentials PEM file.
-var privateKey = flag.String("private_key", "", "service account PEM file contents")
-
-// Flag to configure the legacy Pinpoint service URL base.
-var legacyPinpointServiceFlag = flag.String(
-	"legacy_pinpoint_service",
-	"https://pinpoint-dot-chromeperf.appspot.com",
-	"base URL for the legacy Pinpoint service",
-)
-
-// Main is the actual main body function.
+// Main is the actual main body function. It registers flags, parses them, and
+// kicks off a gRPC service to host
 func Main() {
+	legacyPinpointServiceFlag := flag.String(
+		"legacy_pinpoint_service",
+		"https://pinpoint-dot-chromeperf.appspot.com",
+		"base URL for the legacy Pinpoint service",
+	)
+	serviceAccountEmail := flag.String("service_account", "", "If specified, this email address is used as the identity of the service")
+	privateKey := flag.String("private_key", "", "Required if -service_account is set; contents of the service account credentials PEM file.")
+
 	// TODO(crbug/1059667): Wire up a cloud logging implementation (Stackdriver).
 	flag.Parse()
 	if _, err := url.Parse(*legacyPinpointServiceFlag); err != nil {
@@ -329,7 +337,7 @@ func Main() {
 		}
 	}
 
-	pinpoint.RegisterPinpointServer(s, &pinpointServer{legacyPinpointService: *legacyPinpointServiceFlag, LegacyClient: client})
+	pinpoint.RegisterPinpointServer(s, New(*legacyPinpointServiceFlag, client))
 	h.SetServingStatus("pinpoint", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)
