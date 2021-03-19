@@ -477,7 +477,6 @@ def CheckChangeOnCommit(input_api, output_api):  # pragma: no cover
   output = CommonChecks(input_api, output_api)
   output.extend(input_api.RunTests(
     PylintChecks(input_api, output_api, only_changed=False)))
-  output.extend(input_api.canned_checks.CheckOwners(input_api, output_api))
   output.extend(input_api.canned_checks.CheckTreeIsOpen(
       input_api,
       output_api,
