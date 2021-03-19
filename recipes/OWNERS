@@ -1,8 +1,9 @@
 bpastene@chromium.org
-# Temporarily removed per crbug/1147155
-# iannucci@chromium.org
+iannucci@chromium.org
 martiniss@chromium.org
-tandrii@chromium.org
+tandrii@google.com
 yiwzhang@google.com
 
 per-file README.recipes.md=*
+# recipes.py is auto-copied by the recipe roller.
+per-file recipes.py=recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com
