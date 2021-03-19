@@ -3,17 +3,20 @@ package cli
 import (
 	"context"
 	"flag"
+	"fmt"
 	"infra/chromeperf/pinpoint"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // downloadResultsToDir copies the results associated with the provided job to the dstDir.
@@ -113,4 +116,63 @@ func (drm *downloadResultsMixin) doDownloadResults(ctx context.Context, job *pin
 		return errs
 	}
 	return nil
+}
+
+type waitForJobMixin struct {
+	wait bool
+
+	// TODO(dberris): Centralise the logging and allow for quiet mode.
+	quiet bool
+}
+
+func (wjm *waitForJobMixin) RegisterFlags(flags *flag.FlagSet) {
+	flags.BoolVar(&wjm.wait, "wait", false, text.Doc(`
+		When enabled, will wait for a job to complete.
+	`))
+	flags.BoolVar(&wjm.quiet, "quiet", false, text.Doc(`
+		Suppress progress output when waiting.
+	`))
+}
+
+// waitForJob can return a nil job in case `j` is also nil, and return a valid
+// pointer to a Job in case there's an error, indicating partial success.
+func (wjm *waitForJobMixin) waitForJob(
+	ctx context.Context,
+	c pinpoint.PinpointClient,
+	j *pinpoint.Job,
+	o io.Writer,
+) (*pinpoint.Job, error) {
+	if !wjm.wait || j == nil {
+		return j, nil
+	}
+	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(j.Name)}
+	poll := time.NewTicker(10 * time.Second)
+	defer poll.Stop()
+
+	lastJob := j
+	for {
+		resp, err := c.GetJob(ctx, req)
+		if err != nil {
+			return j, errors.Annotate(err, "failed during GetJob").Err()
+		}
+		if !wjm.quiet && lastJob.GetLastUpdateTime().AsTime() != resp.GetLastUpdateTime().AsTime() {
+			out := prototext.MarshalOptions{Multiline: true}.Format(lastJob)
+			fmt.Fprintln(o, out)
+			fmt.Fprintln(o, "--------------------------------")
+		}
+		lastJob = resp
+		if s := lastJob.State; s != pinpoint.Job_RUNNING && s != pinpoint.Job_PENDING {
+			if !wjm.quiet {
+				fmt.Fprintf(o, "Final state for job %q: %v\n", lastJob.Name, s)
+			}
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return lastJob, errors.Annotate(ctx.Err(), "polling for job wait cancelled").Err()
+		case <-poll.C:
+			// loop back around and retry.
+		}
+	}
+	return lastJob, nil
 }

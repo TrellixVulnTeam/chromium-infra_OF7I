@@ -2,18 +2,23 @@ package pinpoint
 
 import (
 	"regexp"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 )
 
-// LegacyJobName takes the "short" ID (e.g. just a string of hex digits) and
-// turns it into a fully-qualified job name compatible with the legacy pinpoint
-// service.
+const legacyPrefix = "jobs/legacy-"
+
+// LegacyJobName takes an ID (e.g. just a string of hex digits) and turns it
+// into a fully-qualified job name compatible with the legacy pinpoint service.
 //
 // TODO(chowski): reuse this function throughout the codebase instead of
 // continuing to hard-code the logic in multiple places.
-func LegacyJobName(shortID string) string {
-	return "jobs/legacy-" + shortID
+func LegacyJobName(jobID string) string {
+	if strings.HasPrefix(jobID, legacyPrefix) {
+		return jobID
+	}
+	return legacyPrefix + jobID
 }
 
 var jobNameRe = regexp.MustCompile(`^jobs/legacy-(?P<id>[a-f0-9]+)$`)

@@ -39,22 +39,23 @@ func cmdTelemetryExperiment(p Param) *subcommands.Command {
 		UsageLine: "experiment-telemetry-start <-flag...> -- <extra telemetry args>",
 		ShortDesc: "starts a telemetry a/b experiment",
 		LongDesc: text.Doc(`
-			Starts an A/B experiment between two builds (a base and experiment) generating results.
-			The extra telemetry arguments are passed to the invocation of the benchmark runner as-is.
-			To differentiate flags for the subcommand, you can use '--':
-
-			    experiment-telemetry-start -benchmark=... -- --enable_features ...
-
-			The extra telemetry args will be treated as a space-separated list.
-
-			Comparing at different commits:
-
- 			    experiment-telemetry-start -benchmark=... -base-commit <...> -exp-commit <...>
-
-			Applying non-chromium/src patches:
-
-			    experiment-telemetry-start -project=v8 ...
-
+		experiment-telemetry-start schedules an A/B experiment between two builds (a
+		base and experiment) generating results. The extra telemetry arguments are
+		passed to the invocation of the benchmark runner as-is. To differentiate
+		flags for the subcommand, you can use '--':
+		
+		experiment-telemetry-start -benchmark=... -- --enable_features ...
+		
+		The extra telemetry args will be treated as a space-separated list.
+		
+		Comparing at different commits:
+			experiment-telemetry-start -benchmark=... -base-commit <...> -exp-commit <...>
+			
+		Applying non-chromium/src patches:
+			experiment-telemetry-start -project=v8 ...
+			
+		Waiting for and downloading results:
+			experiment-telemetry-start -benchmark=... -wait -download-results
 		`),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &experimentTelemetryRun{}
@@ -174,5 +175,9 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		out = jobURL
 	}
 	fmt.Fprintf(a.GetOut(), "Pinpoint job scheduled: %s\n", out)
-	return nil
+	j, err = e.waitForJobMixin.waitForJob(ctx, c, j, a.GetOut())
+	if err != nil {
+		return err
+	}
+	return e.downloadResultsMixin.doDownloadResults(ctx, j)
 }

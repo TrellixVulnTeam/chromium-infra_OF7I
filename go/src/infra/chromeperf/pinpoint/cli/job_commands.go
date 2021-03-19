@@ -7,7 +7,6 @@ import (
 	"infra/chromeperf/pinpoint"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -61,6 +60,7 @@ func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []s
 
 type getJob struct {
 	baseCommandRun
+	waitForJobMixin
 	downloadResultsMixin
 	name string
 }
@@ -93,6 +93,7 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	if gj.name == "" {
 		return errors.Reason("must set -name").Err()
 	}
+
 	c, err := gj.pinpointClient(ctx)
 	if err != nil {
 		return err
@@ -106,14 +107,19 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
 
+	resp, err = gj.waitForJobMixin.waitForJob(ctx, c, resp, a.GetOut())
+	if err != nil {
+		return err
+	}
+
 	return gj.downloadResultsMixin.doDownloadResults(ctx, resp)
 }
 
 type waitJob struct {
 	baseCommandRun
 	downloadResultsMixin
-	name  string
 	quiet bool
+	name  string
 }
 
 func cmdWaitJob(p Param) *subcommands.Command {
@@ -149,44 +155,29 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	if wj.name == "" {
 		return errors.Reason("must set -name").Err()
 	}
+
 	c, err := wj.pinpointClient(ctx)
 	if err != nil {
 		return err
 	}
 
 	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(wj.name)}
-	poll := time.NewTicker(10 * time.Second)
-	defer poll.Stop()
-
-	var lastJob *pinpoint.Job
-	for {
-		resp, err := c.GetJob(ctx, req)
-		if err != nil {
-			return errors.Annotate(err, "failed during GetJob").Err()
-		}
-		if !wj.quiet && resp.GetLastUpdateTime().AsTime() != lastJob.GetLastUpdateTime().AsTime() {
-			out := prototext.MarshalOptions{Multiline: true}.Format(resp)
-			fmt.Println(out)
-			fmt.Println("--------------------------------")
-		}
-		lastJob = resp
-
-		if s := resp.State; s != pinpoint.Job_RUNNING && s != pinpoint.Job_PENDING {
-			if !wj.quiet {
-				fmt.Printf("Final state for job %q: %v\n", resp.Name, s)
-			}
-			break
-		}
-
-		select {
-		case <-ctx.Done():
-			return errors.Annotate(ctx.Err(), "polling for wait-job cancelled").Err()
-		case <-poll.C:
-			// loop back around and retry.
-		}
+	resp, err := c.GetJob(ctx, req)
+	if err != nil {
+		return errors.Annotate(err, "failed during GetJob").Err()
 	}
 
-	return wj.downloadResultsMixin.doDownloadResults(ctx, lastJob)
+	// Force `wait` to true because we're always meant to wait with wait-job.
+	w := &waitForJobMixin{
+		wait:  true,
+		quiet: wj.quiet,
+	}
+	job, err := w.waitForJob(ctx, c, resp, a.GetOut())
+	if err != nil {
+		return err
+	}
+
+	return wj.downloadResultsMixin.doDownloadResults(ctx, job)
 }
 
 type cancelJob struct {

@@ -24,6 +24,8 @@ import (
 
 type experimentBaseRun struct {
 	baseCommandRun
+	waitForJobMixin
+	downloadResultsMixin
 	issue         bugValue
 	configuration string
 
@@ -98,6 +100,8 @@ func (c *clValue) Set(i string) error {
 
 func (e *experimentBaseRun) RegisterFlags(p Param) {
 	e.baseCommandRun.RegisterFlags(p)
+	e.waitForJobMixin.RegisterFlags(&e.Flags)
+	e.downloadResultsMixin.RegisterFlags(&e.Flags)
 	e.Flags.Var(&e.issue, "bug", text.Doc(`
 		Monorail issue id in the form <project>:<issue id>.
 	`))
