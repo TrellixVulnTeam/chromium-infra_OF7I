@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z,go.chromium.org/luci/cv/api/recipe/v1;recipe',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"Q\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\"\xfb\x01\n\x06Output\x12\x1b\n\x13triggered_build_ids\x18\x01 \x03(\x03\x12&\n\x05retry\x18\x02 \x01(\x0e\x32\x17.cq.recipe.Output.Retry\x12&\n\x05reuse\x18\x03 \x03(\x0b\x32\x17.cq.recipe.Output.Reuse\x1a*\n\x05Reuse\x12\x13\n\x0bkind_regexp\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x65ny\x18\x02 \x01(\x08\"X\n\x05Retry\x12\x1c\n\x18OUTPUT_RETRY_UNSPECIFIED\x10\x00\x12\x18\n\x14OUTPUT_RETRY_ALLOWED\x10\x01\x12\x17\n\x13OUTPUT_RETRY_DENIED\x10\x02\x42.Z,go.chromium.org/luci/cv/api/recipe/v1;recipeb\x06proto3'
+  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"c\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\x12\x10\n\x08run_mode\x18\x05 \x01(\t\"\xfb\x01\n\x06Output\x12\x1b\n\x13triggered_build_ids\x18\x01 \x03(\x03\x12&\n\x05retry\x18\x02 \x01(\x0e\x32\x17.cq.recipe.Output.Retry\x12&\n\x05reuse\x18\x03 \x03(\x0b\x32\x17.cq.recipe.Output.Reuse\x1a*\n\x05Reuse\x12\x13\n\x0bmode_regexp\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x65ny\x18\x02 \x01(\x08\"X\n\x05Retry\x12\x1c\n\x18OUTPUT_RETRY_UNSPECIFIED\x10\x00\x12\x18\n\x14OUTPUT_RETRY_ALLOWED\x10\x01\x12\x17\n\x13OUTPUT_RETRY_DENIED\x10\x02\x42.Z,go.chromium.org/luci/cv/api/recipe/v1;recipeb\x06proto3'
 )
 
 
@@ -49,8 +49,8 @@ _OUTPUT_RETRY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=308,
-  serialized_end=396,
+  serialized_start=326,
+  serialized_end=414,
 )
 _sym_db.RegisterEnumDescriptor(_OUTPUT_RETRY)
 
@@ -91,6 +91,13 @@ _INPUT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='run_mode', full_name='cq.recipe.Input.run_mode', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -104,7 +111,7 @@ _INPUT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=142,
+  serialized_end=160,
 )
 
 
@@ -117,7 +124,7 @@ _OUTPUT_REUSE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='kind_regexp', full_name='cq.recipe.Output.Reuse.kind_regexp', index=0,
+      name='mode_regexp', full_name='cq.recipe.Output.Reuse.mode_regexp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -142,8 +149,8 @@ _OUTPUT_REUSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=264,
-  serialized_end=306,
+  serialized_start=282,
+  serialized_end=324,
 )
 
 _OUTPUT = _descriptor.Descriptor(
@@ -188,8 +195,8 @@ _OUTPUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=145,
-  serialized_end=396,
+  serialized_start=163,
+  serialized_end=414,
 )
 
 _OUTPUT_REUSE.containing_type = _OUTPUT
