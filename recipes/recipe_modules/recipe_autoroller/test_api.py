@@ -21,8 +21,7 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
                 nontrivial_dryrun=True,
                 nontrivial_autosubmit=True,
                 include_autoroll_options=True,
-                no_cc_authors=False,
-                bot_commit=False):
+                no_cc_authors=False):
     spec = {
         'api_version': 2,
         'deps': {
@@ -38,7 +37,6 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
               'tbr_emails': list(tbr_emails),
               'automatic_commit': trivial_commit,
               'dry_run': trivial_dryrun,
-              'bot_commit': bot_commit,
           },
           'nontrivial': {
               'extra_reviewer_emails': list(extra_reviewers),
