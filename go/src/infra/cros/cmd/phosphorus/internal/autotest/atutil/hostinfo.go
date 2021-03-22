@@ -62,9 +62,8 @@ func LinkHostInfoFile(srcResultsDir, dstResultDir, host string) error {
 	if err := os.MkdirAll(dstdir, 0777); err != nil {
 		return err
 	}
-	f := fmt.Sprintf("%s.store", host)
-	src := HostInfoFilePath(srcResultsDir, f)
-	dst := HostInfoFilePath(dstResultDir, f)
+	src := HostInfoFilePath(srcResultsDir, host)
+	dst := HostInfoFilePath(dstResultDir, host)
 	if err := linkFile(src, dst); err != nil {
 		return err
 	}
