@@ -1,10 +1,57 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package atutil
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
+
+// HostInfo is a struct providing a mapping
+// to an autotest host_info file.
+type HostInfo struct {
+	Attributes        map[string]string `json:"attributes"`
+	Labels            []string          `json:"labels"`
+	SerializerVersion int               `json:"serializer_version,omitempty"`
+	StableVersions    map[string]string `json:"stable_versions"`
+}
+
+func HostInfoFilePath(rootDir, host string) string {
+	f := fmt.Sprintf("%s.store", host)
+	return filepath.Join(rootDir, hostInfoSubDir, f)
+}
+
+func AddLabelToHostInfoFile(filePath, label string) error {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return errors.Wrap(err, "add label to host info file")
+	}
+	hostInfo := HostInfo{}
+	if err := json.Unmarshal([]byte(data), &hostInfo); err != nil {
+		return errors.Wrap(err, "add label to host info file")
+	}
+
+	if hostInfo.StableVersions == nil {
+		hostInfo.StableVersions = make(map[string]string)
+	}
+	hostInfo.Labels = append(hostInfo.Labels, label)
+	data, err = json.MarshalIndent(hostInfo, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "add label to host info file")
+	}
+
+	if err := ioutil.WriteFile(filePath, data, 0); err != nil {
+		return errors.Wrap(err, "add label to host info file")
+	}
+	return nil
+}
 
 // LinkHostInfoFile prepares the host info store by linking the host
 // file in the dstResultDir to the srcResultsDir.
@@ -16,8 +63,8 @@ func LinkHostInfoFile(srcResultsDir, dstResultDir, host string) error {
 		return err
 	}
 	f := fmt.Sprintf("%s.store", host)
-	src := filepath.Join(srcResultsDir, hostInfoSubDir, f)
-	dst := filepath.Join(dstdir, f)
+	src := HostInfoFilePath(srcResultsDir, f)
+	dst := HostInfoFilePath(dstResultDir, f)
 	if err := linkFile(src, dst); err != nil {
 		return err
 	}

@@ -338,8 +338,16 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
-	logging.Infof(ctx, "Copying host file")
+	logging.Infof(ctx, "Adding chromeos-version label to host file")
 	resultsDir := r.Config.GetTask().GetResultsDir()
+	err := atutil.AddLabelToHostInfoFile(
+		atutil.HostInfoFilePath(resultsDir, r.DutHostname),
+		fmt.Sprintf("%s:%s", chromeOSBuildKey, desired))
+	if err != nil {
+		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
+	}
+
+	logging.Infof(ctx, "Copying host file")
 	hostSubDir := fmt.Sprintf("provision_%s_os", r.DutHostname)
 	fullHostPath := filepath.Join(r.Config.Task.ResultsDir, hostSubDir)
 	if err := atutil.LinkHostInfoFile(resultsDir, fullHostPath, r.DutHostname); err != nil {
@@ -399,8 +407,9 @@ func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation
 		// Error here is a failure in the provision attempt.
 		// TODO(pprabhu) Surface detailed errors up.
 		// See https://docs.google.com/document/d/12w5pPntorUY1cgDHHxT3Nu6wdhVox288g5_BnyKCPOE/edit#heading=h.fj6zbs6kop08
-		logging.Errorf(ctx, "Operation failed: (code: %s, message: %s, details: %s", s.Code, s.Message, s.Details)
-		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, nil
+		err := fmt.Errorf("Operation failed: (code: %d, message: %+v, details: %s", s.Code, s.Message, s.Details)
+		logging.Errorf(ctx, err.Error())
+		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_FAILED}, err
 	}
 	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 }

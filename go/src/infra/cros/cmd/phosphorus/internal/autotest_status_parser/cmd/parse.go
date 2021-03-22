@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,8 @@ import (
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/logging"
 )
 
 const (
@@ -58,23 +61,24 @@ type parseRun struct {
 }
 
 func (c *parseRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.innerRun(a, args, env); err != nil {
+	ctx := cli.GetContext(a, c, env)
+	if err := c.innerRun(ctx, a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s\n", err)
 		return 1
 	}
 	return 0
 }
 
-func (c *parseRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *parseRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
 	dir := c.Flags.Args()[0]
 
 	testDir := filepath.Join(dir, testSubdir)
-	autotestResult := getTestResults(testDir)
+	autotestResult := getTestResults(ctx, testDir)
 
-	prejobResult := getPrejobResults(dir)
+	prejobResult := getPrejobResults(ctx, dir)
 
 	result := skylab_test_runner.Result{
 		Harness: &skylab_test_runner.Result_AutotestResult{
@@ -98,11 +102,12 @@ func (c *parseRun) validateArgs() error {
 
 // getTestResults extracts all test case results from the status.log file
 // inside the given results directory.
-func getTestResults(dir string) skylab_test_runner.Result_Autotest {
+func getTestResults(ctx context.Context, dir string) skylab_test_runner.Result_Autotest {
 	resultsSummaryPath := filepath.Join(dir, resultsSummaryFile)
 	resultsSummaryContent, err := ioutil.ReadFile(resultsSummaryPath)
 
 	if err != nil {
+		logging.Errorf(ctx, err.Error())
 		// Errors in reading status.log are expected when the server
 		// job is aborted.
 		return skylab_test_runner.Result_Autotest{
@@ -116,6 +121,7 @@ func getTestResults(dir string) skylab_test_runner.Result_Autotest {
 	exitStatusContent, err := ioutil.ReadFile(exitStatusFilePath)
 
 	if err != nil {
+		logging.Errorf(ctx, err.Error())
 		return skylab_test_runner.Result_Autotest{
 			TestCases:  testCases,
 			Incomplete: true,
@@ -135,13 +141,13 @@ type prejobInfo struct {
 	Dir  string
 }
 
-func getPrejobResults(dir string) *skylab_test_runner.Result_Prejob {
+func getPrejobResults(ctx context.Context, dir string) *skylab_test_runner.Result_Prejob {
 	var steps []*skylab_test_runner.Result_Prejob_Step
 
 	prejobs, err := getPrejobs(dir)
 
 	if err != nil {
-		// TODO(zamorzaev): find a better way to surface this error.
+		logging.Errorf(ctx, err.Error())
 		return &skylab_test_runner.Result_Prejob{
 			Step: []*skylab_test_runner.Result_Prejob_Step{
 				{
