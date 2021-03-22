@@ -15,7 +15,7 @@ import (
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/google"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // RequestStepUpdater provides methods to update a step corresponding to the
@@ -111,13 +111,13 @@ func appendNewStep(build *bbpb.Build, name string) *bbpb.Step {
 	step := &bbpb.Step{
 		Name:      name,
 		Status:    bbpb.Status_STARTED,
-		StartTime: google.NewTimestamp(time.Now()),
+		StartTime: timestamppb.New(time.Now()),
 	}
 	build.Steps = append(build.Steps, step)
 	return step
 }
 
 func closeStep(s *bbpb.Step) {
-	s.EndTime = google.NewTimestamp(time.Now())
+	s.EndTime = timestamppb.New(time.Now())
 	s.Status = bbpb.Status_SUCCESS
 }

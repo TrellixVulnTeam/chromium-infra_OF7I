@@ -23,7 +23,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
@@ -146,7 +145,7 @@ func getDUT(ctx context.Context, e *dutEntity) (*DeviceUnderTest, error) {
 }
 
 func isEntityStale(ctx context.Context, e *dutEntity) bool {
-	validity := google.DurationFromProto(config.Get(ctx).GetInventory().GetDutInfoCacheValidity())
+	validity := config.Get(ctx).GetInventory().GetDutInfoCacheValidity().AsDuration()
 	now := time.Now().UTC()
 	return now.Sub(e.Updated) > validity
 }

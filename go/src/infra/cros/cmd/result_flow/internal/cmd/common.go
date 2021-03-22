@@ -24,7 +24,6 @@ import (
 	pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/api/option"
 	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 	"google.golang.org/grpc"
@@ -85,7 +84,7 @@ func writeJSONPb(outFile string, payload proto.Message) error {
 
 func getDeadline(rq *timestamp.Timestamp, defaultTimeoutSec int) time.Time {
 	if rq != nil {
-		return google.TimeFromProto(rq)
+		return rq.AsTime()
 	}
 	return time.Now().Add(time.Second * time.Duration(defaultTimeoutSec))
 }

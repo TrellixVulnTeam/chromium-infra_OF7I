@@ -31,10 +31,11 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 
 	"github.com/golang/protobuf/ptypes/duration"
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/server/auth"
@@ -410,7 +411,7 @@ func TimeSinceBotTaskN(tr *swarming.SwarmingRpcsTaskResult, now time.Time) (*dur
 	if t.IsZero() {
 		return nil, nil
 	}
-	return google.NewDuration(now.Sub(t)), nil
+	return durationpb.New(now.Sub(t)), nil
 }
 
 // TaskDoneTime returns the time when the given task completed on a

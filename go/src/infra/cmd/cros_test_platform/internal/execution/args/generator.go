@@ -19,6 +19,7 @@ import (
 	"infra/libs/skylab/worker"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang/protobuf/ptypes"
 	buildapi "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
@@ -28,7 +29,6 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 )
 
 // Generator defines the set of inputs for creating a request.Args object.
@@ -448,8 +448,14 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		return nil, errors.Annotate(err, "create test runner request").Err()
 	}
 	kv := g.keyvals(ctx)
+
+	var deadline *timestamppb.Timestamp
+	if !g.Deadline.IsZero() {
+		deadline = timestamppb.New(g.Deadline)
+	}
+
 	return &skylab_test_runner.Request{
-		Deadline: google.NewTimestamp(g.Deadline),
+		Deadline: deadline,
 		Prejob: &skylab_test_runner.Request_Prejob{
 			SoftwareDependencies: g.Params.SoftwareDependencies,
 		},

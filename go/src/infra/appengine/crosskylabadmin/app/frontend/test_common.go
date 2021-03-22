@@ -24,8 +24,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"go.chromium.org/luci/appengine/gaetesting"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
@@ -96,8 +96,8 @@ func testingContext() context.Context {
 		Cron: &config.Cron{
 			FleetAdminTaskPriority:     33,
 			EnsureTasksCount:           3,
-			RepairIdleDuration:         google.NewDuration(10),
-			RepairAttemptDelayDuration: google.NewDuration(10),
+			RepairIdleDuration:         durationpb.New(10),
+			RepairAttemptDelayDuration: durationpb.New(10),
 		},
 	})
 	datastore.GetTestable(c).Consistent(true)

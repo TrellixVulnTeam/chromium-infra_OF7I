@@ -20,7 +20,6 @@ import (
 	bpipb "go.chromium.org/chromiumos/infra/proto/go/uprev/build_parallels_image"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/grpc"
 )
 
@@ -72,7 +71,7 @@ func (c *provisionRun) innerRun(ctx context.Context, env subcommands.Env) error 
 		return err
 	}
 
-	if d := google.TimeFromProto(r.Deadline); !d.IsZero() {
+	if d := r.Deadline.AsTime(); !d.IsZero() {
 		var c context.CancelFunc
 		log.Printf("Running with deadline %s (current time: %s)", d, time.Now().UTC())
 		ctx, c = context.WithDeadline(ctx, d)

@@ -21,7 +21,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -81,7 +80,7 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		return err
 	}
 
-	if d := google.TimeFromProto(r.Deadline); !d.IsZero() {
+	if d := r.Deadline.AsTime(); !d.IsZero() {
 		var c context.CancelFunc
 		log.Printf("Running with deadline %s (current time: %s)", d, time.Now().UTC())
 		ctx, c = context.WithDeadline(ctx, d)

@@ -24,11 +24,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
@@ -71,7 +71,7 @@ func (is *ServerImpl) GetDutInfo(ctx context.Context, req *fleet.GetDutInfoReque
 	}
 	return &fleet.GetDutInfoResponse{
 		Spec:    data,
-		Updated: google.NewTimestamp(updated),
+		Updated: timestamppb.New(updated),
 	}, nil
 }
 

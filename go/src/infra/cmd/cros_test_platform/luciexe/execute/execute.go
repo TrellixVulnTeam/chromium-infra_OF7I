@@ -21,7 +21,6 @@ import (
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution"
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
@@ -116,7 +115,7 @@ func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
 }
 
 func inferDeadline(r *steps.ExecuteRequests) (time.Time, error) {
-	c := google.TimeFromProto(r.GetBuild().GetCreateTime())
+	c := r.GetBuild().GetCreateTime().AsTime()
 	if c.IsZero() {
 		return c, errors.Reason("infer deadline: build creation time not known").Err()
 	}

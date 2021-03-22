@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/api/option"
 
 	"infra/cros/cmd/result_flow/internal/message"
@@ -131,7 +130,7 @@ func (c *publishRun) loadPublishRequest() error {
 	c.shouldPollForCompletion = r.GetShouldPollForCompletion()
 	c.parentUID = r.GetParentUid()
 	if r.GetDeadline() != nil {
-		c.deadline = google.TimeFromProto(r.GetDeadline())
+		c.deadline = r.GetDeadline().AsTime()
 	} else {
 		c.deadline = time.Now().Add(time.Second * time.Duration(site.DefaultDeadlineSeconds))
 	}
