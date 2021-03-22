@@ -33,9 +33,6 @@ import yaml
 # Root of infra.git repository.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Root of infra gclient solution.
-GCLIENT_ROOT = os.path.dirname(ROOT)
-
 # Where to upload packages to by default.
 PACKAGE_REPO_SERVICE = 'https://chrome-infra-packages.appspot.com'
 
@@ -407,31 +404,12 @@ def print_go_step_title(title):
 
 
 @contextlib.contextmanager
-def hacked_workspace(go_workspace, go_environ):
-  """Symlinks Go workspace into new root, modifies os.environ.
-
-  Go toolset embeds absolute paths to *.go files into the executable. Use
-  symlink with stable path to make executables independent of checkout path.
+def workspace_env(go_environ):
+  """Puts Go env vars from go_environ into os.environ.
 
   Args:
-    go_workspace: path to 'infra/go' or 'infra_internal/go'.
     go_environ: instance of GoEnviron object with go related env vars.
-
-  Yields:
-    Path where go_workspace is symlinked to.
   """
-  new_root = None
-  new_workspace = go_workspace
-  if not IS_WINDOWS:
-    new_root = '/tmp/_chrome_infra_build'
-    if os.path.exists(new_root):
-      assert os.path.islink(new_root)
-      os.remove(new_root)
-    os.symlink(GCLIENT_ROOT, new_root)
-    rel = os.path.relpath(go_workspace, GCLIENT_ROOT)
-    assert not rel.startswith('..'), rel
-    new_workspace = os.path.join(new_root, rel)
-
   orig_environ = os.environ.copy()
   go_environ.apply_to_environ()
 
@@ -449,8 +427,8 @@ def hacked_workspace(go_workspace, go_environ):
   # the build non-deterministic. 'ld' uses os.Getcwd(), and os.Getcwd()'s doc
   # says: "If the current directory can be reached via multiple paths (due to
   # symbolic links), Getwd may return any one of them." It happens indeed. So we
-  # can't switch to 'new_workspace'. Switch to '/' instead, cwd is actually not
-  # important when building Go code.
+  # can't switch to a checkout directory. Switch to '/' instead, cwd is actually
+  # not important when building Go code.
   #
   # Protip: To view debug info in an obj file:
   #   gobjdump -g <binary>
@@ -461,7 +439,7 @@ def hacked_workspace(go_workspace, go_environ):
   if not IS_WINDOWS:
     os.chdir('/')
   try:
-    yield new_workspace
+    yield
   finally:
     os.chdir(prev_cwd)
     # Apparently 'os.environ = orig_environ' doesn't actually modify process
@@ -471,8 +449,6 @@ def hacked_workspace(go_workspace, go_environ):
     for k in os.environ.keys():
       if k not in orig_environ:
         os.environ.pop(k)
-    if new_root:
-      os.remove(new_root)
 
 
 def bootstrap_go_toolset(go_workspace):
@@ -481,12 +457,12 @@ def bootstrap_go_toolset(go_workspace):
   Used to verify that our platform detection in get_host_package_vars() matches
   the Go toolset being used.
   """
-  with hacked_workspace(go_workspace, GoEnviron.host_native()) as new_workspace:
+  with workspace_env(GoEnviron.host_native()):
     print_go_step_title('Making sure Go toolset is installed')
     # env.py does the actual job of bootstrapping if the toolset is missing.
     output = subprocess.check_output(
         args=[
-          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
+          'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
           'go', 'env',
         ],
         executable=sys.executable)
@@ -505,7 +481,7 @@ def bootstrap_go_toolset(go_workspace):
     print_go_step_title('Go version')
     output = subprocess.check_output(
         args=[
-          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
+          'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
           'go', 'version',
         ],
         executable=sys.executable)
@@ -528,11 +504,11 @@ def run_go_clean(go_workspace, go_environ, packages):
     go_environ: instance of GoEnviron object with go related env vars.
     packages: list of go packages to clean (can include '...' patterns).
   """
-  with hacked_workspace(go_workspace, go_environ) as new_workspace:
+  with workspace_env(go_environ):
     print_go_step_title('Cleaning:\n  %s' % '\n  '.join(packages))
     subprocess.check_call(
         args=[
-          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
+          'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
           'go', 'clean', '-i', '-r',
         ] + list(packages),
         executable=sys.executable,
@@ -556,12 +532,12 @@ def run_go_install(go_workspace, go_environ, packages, rebuild=False):
   """
   rebuild_opt = ['-a'] if rebuild else []
   title = 'Rebuilding' if rebuild else 'Building'
-  with hacked_workspace(go_workspace, go_environ) as new_workspace:
+  with workspace_env(go_environ):
     print_go_step_title('%s:\n  %s' % (title, '\n  '.join(packages)))
     subprocess.check_call(
         args=[
-          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
-          'go', 'install', '-v',
+          'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
+          'go', 'install', '-trimpath', "-ldflags=-buildid=", '-v',
         ] + rebuild_opt + list(packages),
         executable=sys.executable,
         stderr=subprocess.STDOUT)
@@ -579,13 +555,15 @@ def run_go_build(go_workspace, go_environ, package, output, rebuild=False):
   """
   rebuild_opt = ['-a'] if rebuild else []
   title = 'Rebuilding' if rebuild else 'Building'
-  with hacked_workspace(go_workspace, go_environ) as new_workspace:
+  with workspace_env(go_environ):
     print_go_step_title('%s %s' % (title, package))
     subprocess.check_call(
         args=[
-          'python', '-u', os.path.join(new_workspace, get_env_dot_py()),
+          'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
           'go', 'build',
-        ] + rebuild_opt + ['-v', '-o', output, package],
+        ] + rebuild_opt + [
+          '-trimpath', "-ldflags=-buildid=", '-v', '-o', output, package,
+        ],
         executable=sys.executable,
         stderr=subprocess.STDOUT)
 
