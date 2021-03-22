@@ -12,10 +12,13 @@ This is also enforced by PRESUBMIT.py script.
 load("//lib/build.star", "build")
 load("//lib/infra.star", "infra")
 
-lucicfg.check_version("1.18.4", "Please update depot_tools")
+lucicfg.check_version("1.23.1", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
+
+# Enable v2 bucket names in LUCI Scheduler config.
+lucicfg.enable_experiment("crbug.com/1182002")
 
 lucicfg.config(
     config_dir = "generated",
