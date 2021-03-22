@@ -107,13 +107,13 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 		fmt.Fprintf(a.GetErr(), "Unable to contact UFS to print DUT info: %v", err)
 		return nil
 	}
-	dutInfo, err := dutInfo(ctx, ufsClient, false, host)
+	dutInfo, err := getDutInfo(ctx, ufsClient, host)
 	if err != nil {
 		// Don't fail the command here, since the DUT is already leased.
 		fmt.Fprintf(a.GetErr(), "Unable to print DUT info: %v", err)
 		return nil
 	}
-	fmt.Fprintf(a.GetErr(), "%s\n\n", dutInfo)
+	fmt.Fprintf(a.GetErr(), "%s\n\n", dutInfoAsBashVariables(dutInfo))
 	return nil
 }
 

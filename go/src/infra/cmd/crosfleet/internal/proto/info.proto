@@ -1,0 +1,28 @@
+// Copyright 2021 The Chromium Authors. All Rights Reserved.
+// Use of this source code is governed by the Apache v2.0 license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package crosfleet.crosfleetpb;
+
+//import "go.chromium.org/luci/buildbucket/proto/build.proto";
+import "infra/unifiedfleet/api/v1/models/machine.proto";
+import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
+
+option go_package = "infra/cmd/crosfleet/internal/proto;crosfleetpb";
+
+// DUTInfo contains details about the physical lab setup and machine of a
+// particular DUT.
+message DUTInfo {
+  // The DUT's hostname.
+  string Hostname = 1;
+  // The DUT's lab setup.
+  unifiedfleet.api.v1.models.MachineLSE LabSetup = 2;
+  // The DUT's physical machine.
+  unifiedfleet.api.v1.models.Machine Machine= 3;
+}
+
+message DUTInfoList {
+  repeated DUTInfo DUTs = 1;
+}
