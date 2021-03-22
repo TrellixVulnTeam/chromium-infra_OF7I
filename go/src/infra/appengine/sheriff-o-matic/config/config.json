@@ -6,24 +6,21 @@
   "builder_groups": {
     "chrome": {
       "excluded_builders": [
-        "chromeos-arm-generic-beta",
-        "chromeos-arm-generic-ltc",
-        "chromeos-arm-generic-stable",
-        "chromeos-betty-pi-arc-chrome-beta",
         "chromeos-betty-pi-arc-chrome-ltc",
         "chromeos-betty-pi-arc-chrome-lts",
         "chromeos-betty-pi-arc-chrome-stable",
-        "chromeos-eve-chrome-beta",
         "chromeos-eve-chrome-ltc",
         "chromeos-eve-chrome-lts",
         "chromeos-eve-chrome-stable",
-        "chromeos-kevin-chrome-beta",
         "chromeos-kevin-chrome-ltc",
         "chromeos-kevin-chrome-lts",
         "chromeos-kevin-chrome-stable",
-        "linux-chromeos-beta",
         "linux-chromeos-ltc",
-        "linux-chromeos-stable"
+        "linux-chromeos-lts",
+        "linux-chromeos-stable",
+        "linux64-ltc",
+        "linux64-lts",
+        "linux64-stable"
       ]
     },
     "chromium": {
