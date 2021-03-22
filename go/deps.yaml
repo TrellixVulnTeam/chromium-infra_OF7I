@@ -250,9 +250,6 @@ import:
 - package: github.com/shirou/gopsutil
   version: 3202231bcdbd3a6d236dbcc3ec92a96ddfa7168f
   repo: https://chromium.googlesource.com/external/github.com/shirou/gopsutil.git
-- package: github.com/shirou/w32
-  version: master
-  repo: https://chromium.googlesource.com/external/github.com/shirou/w32.git
 - package: github.com/StackExchange/wmi
   version: master
   repo: https://chromium.googlesource.com/external/github.com/StackExchange/wmi.git
