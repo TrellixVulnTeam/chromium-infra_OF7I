@@ -1498,6 +1498,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/gevent/${vpython_platform}"
+  version: "version:1.5.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **gin-py3**
 
 ### 0.1.006

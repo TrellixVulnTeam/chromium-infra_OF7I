@@ -230,6 +230,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'gevent',
+            '1.5.0',
+            packaged=(),
+            only_plat=('manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'google-crc32c',
             '1.1.2',
             packaged=[],
