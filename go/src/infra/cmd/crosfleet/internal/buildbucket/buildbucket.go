@@ -67,6 +67,11 @@ func NewClient(ctx context.Context, builder *buildbucketpb.BuilderID, bbService 
 	}, nil
 }
 
+// NewClientForTesting returns a new client with only the builderID configured.
+func NewClientForTesting(builder *buildbucketpb.BuilderID) *Client {
+	return &Client{builderID: builder}
+}
+
 // ScheduleBuild schedules a new build (of the client's builder) with the given
 // properties, tags, bot dimensions, and Buildbucket priority, and returns the
 // ID of the scheduled build.

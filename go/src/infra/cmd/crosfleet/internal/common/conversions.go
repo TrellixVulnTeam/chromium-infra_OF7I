@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	structbuilder "google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // JSONPBUnmarshaler unmarshals JSON into proto messages.
@@ -78,4 +80,10 @@ func protoToStructVal(msg protoreflect.ProtoMessage) (*structpb.Value, error) {
 	return &structpb.Value{
 		Kind: &structpb.Value_StructValue{StructValue: msgStruct},
 	}, nil
+}
+
+// OffsetTimestamp returns a timestamp offset from the current time by the
+// given number of minutes.
+func OffsetTimestamp(minutes int64) *timestamppb.Timestamp {
+	return timestamppb.New(time.Now().Add(time.Duration(minutes) * time.Minute))
 }

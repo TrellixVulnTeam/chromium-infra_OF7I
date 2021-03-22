@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package crosfleet.crosfleetpb;
 
-//import "go.chromium.org/luci/buildbucket/proto/build.proto";
+import "go.chromium.org/luci/buildbucket/proto/build.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
 
@@ -25,4 +25,15 @@ message DUTInfo {
 
 message DUTInfoList {
   repeated DUTInfo DUTs = 1;
+}
+
+message LeaseInfo {
+  // The dut_leaser Buildbucket build.
+  buildbucket.v2.Build Build = 2;
+  // Information about the leased DUT.
+  DUTInfo DUT = 3;
+}
+
+message LeaseInfoList {
+  repeated LeaseInfo Leases = 1;
 }

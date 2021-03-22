@@ -9,12 +9,10 @@ import (
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var abandon = &subcommands.Command{
@@ -65,7 +63,7 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	earliestCreateTime := earliestActiveLeaseTimestamp()
+	earliestCreateTime := common.OffsetTimestamp(-1 * maxLeaseLengthMinutes)
 	var botIDs []string
 	for _, hostname := range args {
 		correctedHostname := correctedHostname(hostname)
@@ -81,10 +79,4 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	return nil
-}
-
-// earliestActiveLeaseTimestamp returns the earliest possible creation
-// timestamp for leases that haven't timed out.
-func earliestActiveLeaseTimestamp() *timestamppb.Timestamp {
-	return timestamppb.New(time.Now().Add(-1 * time.Minute * maxLeaseLengthMinutes))
 }

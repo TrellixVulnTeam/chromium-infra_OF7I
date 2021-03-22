@@ -13,6 +13,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -85,8 +86,7 @@ func (c *infoRun) innerRun(a subcommands.Application, args []string, env subcomm
 	return nil
 }
 
-// getDutInfo returns information about the DUT with the given hostname. There
-// is no newline at the end of the info string.
+// getDutInfo returns information about the DUT with the given hostname.
 func getDutInfo(ctx context.Context, ufsClient ufsapi.FleetClient, hostname string) (*dutinfopb.DUTInfo, error) {
 	ctx = contextWithOSNamespace(ctx)
 	correctedHostname := correctedHostname(hostname)
@@ -110,26 +110,33 @@ func getDutInfo(ctx context.Context, ufsClient ufsapi.FleetClient, hostname stri
 }
 
 // dutInfoAsBashVariables returns a pretty-printed string containing info about
-// the given DUT formatted as bash variables.
+// the given DUT formatted as bash variables. Only the variables that are found
+// in the DUT info proto message are printed.
 func dutInfoAsBashVariables(info *dutinfopb.DUTInfo) string {
-	infoString := fmt.Sprintf(`DUT_HOSTNAME=%s.cros
-MODEL=%s
-BOARD=%s`,
-		info.GetHostname(),
-		info.GetMachine().GetChromeosMachine().GetModel(),
-		info.GetMachine().GetChromeosMachine().GetBuildTarget())
+	var bashVars []string
+
+	hostname := info.GetHostname()
+	if hostname != "" {
+		bashVars = append(bashVars,
+			fmt.Sprintf("DUT_HOSTNAME=%s.cros", hostname))
+	}
+
+	chromeOSMachine := info.GetMachine().GetChromeosMachine()
+	if chromeOSMachine != nil {
+		bashVars = append(bashVars,
+			fmt.Sprintf("MODEL=%s\nBOARD=%s",
+				chromeOSMachine.GetModel(),
+				chromeOSMachine.GetBuildTarget()))
+	}
 
 	servo := info.GetLabSetup().GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-	if servo == nil {
-		return infoString
+	if servo != nil {
+		bashVars = append(bashVars,
+			fmt.Sprintf("SERVO_HOSTNAME=%s\nSERVO_PORT=%d\nSERVO_SERIAL=%s",
+				servo.GetServoHostname(),
+				servo.GetServoPort(),
+				servo.GetServoSerial()))
 	}
-	infoString += fmt.Sprintf(`
-SERVO_HOSTNAME=%s
-SERVO_PORT=%d
-SERVO_SERIAL=%s`,
-		servo.GetServoHostname(),
-		servo.GetServoPort(),
-		servo.GetServoSerial())
 
-	return infoString
+	return strings.Join(bashVars, "\n")
 }

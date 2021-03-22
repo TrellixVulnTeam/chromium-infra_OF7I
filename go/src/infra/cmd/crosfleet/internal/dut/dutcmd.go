@@ -17,6 +17,7 @@ var dutApplication = &cli.Application{
 	Commands: []*subcommands.Command{
 		info,
 		lease,
+		leases,
 		abandon,
 		subcommands.CmdHelp,
 	},
