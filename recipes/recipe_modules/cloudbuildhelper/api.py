@@ -333,7 +333,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           test_data=test_data if test_data is not None else ['target.yaml']))
     return paths
 
-  def do_roll(self, repo_url, root, callback):
+  def do_roll(self, repo_url, root, callback, ref='master'):
     """Checks out a repo, calls the callback to modify it, uploads the result.
 
     Args:
@@ -343,16 +343,17 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           set to `root`. It can modify files there and either return None to
           skip the roll or RollCL to attempt the roll. If no files are modified,
           the roll will be skipped regardless of the return value.
+      * ref (str) - a ref to update (e.g. "main").
 
     Returns:
       * (None, None) if didn't create a CL (because nothing has changed).
       * (Issue number, Issue URL) if created a CL.
     """
-    self.m.git.checkout(repo_url, ref='HEAD', dir_path=root, submodules=False)
+    self.m.git.checkout(repo_url, ref=ref, dir_path=root, submodules=False)
 
     with self.m.context(cwd=root):
       self.m.git('branch', '-D', 'roll-attempt', ok_ret=(0, 1))
-      self.m.git('checkout', '-t', 'origin/HEAD', '-b', 'roll-attempt')
+      self.m.git('checkout', '-t', 'origin/'+ref, '-b', 'roll-attempt')
 
       # Let the caller modify files in root.
       verdict = callback(root)

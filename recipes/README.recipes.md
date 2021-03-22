@@ -113,7 +113,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#336)(self, repo_url, root, callback):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#336)(self, repo_url, root, callback, ref='master'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -124,6 +124,7 @@ Args:
       set to `root`. It can modify files there and either return None to
       skip the roll or RollCL to attempt the roll. If no files are modified,
       the roll will be skipped regardless of the return value.
+  * ref (str) - a ref to update (e.g. "main").
 
 Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
