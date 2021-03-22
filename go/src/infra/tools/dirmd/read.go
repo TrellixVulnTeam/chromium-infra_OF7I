@@ -163,8 +163,9 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 		case form == dirmdpb.MappingForm_FULL:
 			// Ensure the key is registered in the mapping, so that ComputeAll()
 			// populates it below.
+			// Must not be nil because ComputeAll() doesn't support it.
 			mu.Lock()
-			r.Dirs[key] = nil
+			r.Dirs[key] = &dirmdpb.Metadata{}
 			mu.Unlock()
 		}
 

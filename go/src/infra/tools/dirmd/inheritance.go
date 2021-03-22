@@ -64,10 +64,15 @@ func (m *Mapping) computeAll(reduce bool) error {
 			return ret, nil
 		}
 		defer func() {
-			computed[dir] = mdComputed
+			if mdComputed != nil {
+				computed[dir] = mdComputed
+			}
 		}()
 
 		// Check for cycles.
+		if md == nil {
+			panic("nil metadata")
+		}
 		if _, ok := currentChain[md]; ok {
 			return nil, errors.Reason("inheritance cycle with dir %q is detected", dir).Err()
 		}

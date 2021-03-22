@@ -86,6 +86,20 @@ func TestRead(t *testing.T) {
 							},
 						},
 					},
+					"subdir/no-own-meta": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
 					"subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
