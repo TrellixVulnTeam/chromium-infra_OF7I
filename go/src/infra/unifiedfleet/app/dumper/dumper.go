@@ -36,16 +36,16 @@ func InitServer(srv *server.Server, opts Options) {
 		run(ctx, minInterval)
 	})
 	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
+		cron.Run(ctx, 60*time.Minute, cron.EVERY, dumpCrosInventory)
 	})
 	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, dumpChangeEvent)
+		cron.Run(ctx, 10*time.Minute, cron.EVERY, dumpChangeEvent)
 	})
 	srv.RunInBackground("ufs.snapshot_msg.BqDump", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, dumpChangeSnapshots)
+		cron.Run(ctx, 10*time.Minute, cron.EVERY, dumpChangeSnapshots)
 	})
 	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
+		cron.Run(ctx, 60*time.Minute, cron.EVERY, dumpCrosNetwork)
 	})
 	/*srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, SyncMachinesFromAssets)
@@ -54,21 +54,21 @@ func InitServer(srv *server.Server, opts Options) {
 		cron.Run(ctx, 60*time.Minute, SyncAssetInfoFromHaRT)
 	})*/
 	srv.RunInBackground("ufs.sync_assets.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, SyncAssetsFromIV2)
+		cron.Run(ctx, 5*time.Minute, cron.HOURLY, SyncAssetsFromIV2)
 	})
 	srv.RunInBackground("ufs.push_to_drone_queen", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, pushToDroneQueen)
+		cron.Run(ctx, 10*time.Minute, cron.EVERY, pushToDroneQueen)
 	})
 	srv.RunInBackground("ufs.dump_to_invV2_devices", func(ctx context.Context) {
-		cron.Run(ctx, 24*60*time.Minute, DumpToInventoryDeviceSnapshot)
+		cron.Run(ctx, 10*time.Minute, cron.DAILY, DumpToInventoryDeviceSnapshot)
 	})
 	srv.RunInBackground("ufs.dump_to_invV2_dutstates", func(ctx context.Context) {
-		cron.Run(ctx, 24*60*time.Minute, DumpToInventoryDutStateSnapshot)
+		cron.Run(ctx, 15*time.Minute, cron.DAILY, DumpToInventoryDutStateSnapshot)
 	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
-	cron.Run(ctx, minInterval, dump)
+	cron.Run(ctx, minInterval, cron.EVERY, dump)
 }
 
 func dump(ctx context.Context) error {
