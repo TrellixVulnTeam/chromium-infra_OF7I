@@ -1,6 +1,7 @@
 {
     "attributes": {
         "HWID": "DELBIN-XHVI C2B-H4D-E3E-Q9A-A7G",
+        "job_repo_url": "to be deleted",
         "powerunit_hostname": "chromeos6-row15_16-rack24-rpm1",
         "powerunit_outlet": "AA3",
         "serial_number": "LCNTCVN0252451H",
@@ -18,6 +19,7 @@
         "device-sku:65540",
         "sku:delbin_11th_Gen_IntelR_CoreTM_i3_1115G4_3_00GHz_8GB",
         "platform:volteer",
+        "cros-version:to-be-deleted",
         "wifi_chip:wireless_cc8d134f",
         "ec:cros",
         "os:cros",

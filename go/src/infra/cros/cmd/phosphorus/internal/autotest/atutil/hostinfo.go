@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -28,7 +29,7 @@ func HostInfoFilePath(rootDir, host string) string {
 	return filepath.Join(rootDir, hostInfoSubDir, f)
 }
 
-func AddLabelToHostInfoFile(filePath, label string) error {
+func AddCrosVersionLabelToHostInfoFile(filePath, value string) error {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return errors.Wrap(err, "add label to host info file")
@@ -41,7 +42,16 @@ func AddLabelToHostInfoFile(filePath, label string) error {
 	if hostInfo.StableVersions == nil {
 		hostInfo.StableVersions = make(map[string]string)
 	}
-	hostInfo.Labels = append(hostInfo.Labels, label)
+
+	// Clear existing job_repo_url attribute and cros-version label.
+	delete(hostInfo.Attributes, "job_repo_url")
+	for i, label := range hostInfo.Labels {
+		if strings.HasPrefix(label, "cros-version:") {
+			hostInfo.Labels = append(hostInfo.Labels[:i], hostInfo.Labels[i+1:]...)
+			break
+		}
+	}
+	hostInfo.Labels = append(hostInfo.Labels, fmt.Sprintf("cros-version:%s", value))
 	data, err = json.MarshalIndent(hostInfo, "", "    ")
 	if err != nil {
 		return errors.Wrap(err, "add label to host info file")

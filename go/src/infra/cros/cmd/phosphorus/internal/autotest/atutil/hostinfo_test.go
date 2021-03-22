@@ -15,7 +15,7 @@ import (
 	"infra/cros/internal/assert"
 )
 
-func TestAddLabelToHostInfoFile(t *testing.T) {
+func TestAddCrosVersionLabelToHostInfoFile(t *testing.T) {
 	tmpDir := "hostinfo_tmp_dir"
 	tmpDir, err := ioutil.TempDir("", tmpDir)
 	defer os.RemoveAll(tmpDir)
@@ -28,8 +28,7 @@ func TestAddLabelToHostInfoFile(t *testing.T) {
 	err = ioutil.WriteFile(tmpPath, fileContents, 0644)
 	assert.NilError(t, err)
 
-	newLabel := "cros-version:foo"
-	assert.NilError(t, AddLabelToHostInfoFile(tmpPath, newLabel))
+	assert.NilError(t, AddCrosVersionLabelToHostInfoFile(tmpPath, "foo"))
 
 	// Check that file matches expectation.
 	preData, err := ioutil.ReadFile(tmpPath)
