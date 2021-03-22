@@ -74,6 +74,8 @@ def _check_changes(api):
               api, 'appengine/swarming', exclude_dir='appengine/swarming/ui2'),
       'swarming_ui':
           _has_changed_files(api, 'appengine/swarming/ui2'),
+      'appengine_third_party':
+          _has_changed_files(api, 'appengine/third_party'),
   }
 
 
@@ -124,7 +126,7 @@ def _step_auth_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['auth_service', 'components', 'vpython']
+  deps = ['auth_service', 'components', 'vpython', 'appengine_third_party']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -138,7 +140,7 @@ def _step_components_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['components', 'vpython']
+  deps = ['components', 'vpython', 'appengine_third_party']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -153,7 +155,7 @@ def _step_config_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['config_service', 'components', 'vpython']
+  deps = ['config_service', 'components', 'vpython', 'appengine_third_party']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -167,7 +169,7 @@ def _step_isolate_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['isolate', 'client', 'components']
+  deps = ['isolate', 'client', 'components', 'appengine_third_party']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -190,7 +192,10 @@ def _step_client_tests(api, changes):
 
 
 def _step_swarming_tests(api, changes):
-  deps = ['swarming', 'client', 'components', 'vpython3', 'vpython']
+  deps = [
+      'swarming', 'client', 'components', 'vpython3', 'vpython',
+      'appengine_third_party'
+  ]
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return

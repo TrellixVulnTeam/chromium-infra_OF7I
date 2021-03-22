@@ -165,16 +165,17 @@
     "cmd": [],
     "name": "check changes",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@changes@client: True@@@",
-      "@@@STEP_LOG_LINE@changes@components: True@@@",
       "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
-      "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
-      "@@@STEP_LOG_LINE@changes@isolate: True@@@",
-      "@@@STEP_LOG_LINE@changes@vpython: False@@@",
-      "@@@STEP_LOG_LINE@changes@config_service: True@@@",
-      "@@@STEP_LOG_LINE@changes@swarming: True@@@",
       "@@@STEP_LOG_LINE@changes@auth_service: True@@@",
       "@@@STEP_LOG_LINE@changes@vpython3: False@@@",
+      "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
+      "@@@STEP_LOG_LINE@changes@appengine_third_party: False@@@",
+      "@@@STEP_LOG_LINE@changes@swarming: True@@@",
+      "@@@STEP_LOG_LINE@changes@isolate: True@@@",
+      "@@@STEP_LOG_LINE@changes@client: True@@@",
+      "@@@STEP_LOG_LINE@changes@components: True@@@",
+      "@@@STEP_LOG_LINE@changes@vpython: False@@@",
+      "@@@STEP_LOG_LINE@changes@config_service: True@@@",
       "@@@STEP_LOG_END@changes@@@"
     ]
   },
@@ -342,6 +343,22 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@change list@appengine/swarming/ui2/bar.js@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/third_party"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/third_party",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
