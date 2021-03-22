@@ -73,6 +73,7 @@ else
       # worth it to turn on LTO there.
       LDFLAGS="-flto $LDFLAGS"
       CFLAGS="-flto"
+      ARFLAGS="--plugin=$(gcc --print-file-name=liblto_plugin.so)"
       ;;
     *)
       # Cross compiling; git wants to run little programs to detect these, but
@@ -96,6 +97,7 @@ EOF
 fi
 
 
+export ARFLAGS
 export CPPFLAGS
 export CFLAGS
 export EXPATDIR
