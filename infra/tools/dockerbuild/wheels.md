@@ -1101,6 +1101,8 @@ wheel: <
 * *manylinux-x64-ucs2*
 * *manylinux-x86*
 * *manylinux-x86-ucs2*
+* *windows-x64*
+* *windows-x86*
 
 ## **crontab**
 

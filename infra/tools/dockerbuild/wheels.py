@@ -214,10 +214,6 @@ SPECS.update({
             'crcmod',
             '1.7',
             packaged=(),
-            skip_plat=[
-                'windows-x86',
-                'windows-x64',
-            ],
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
