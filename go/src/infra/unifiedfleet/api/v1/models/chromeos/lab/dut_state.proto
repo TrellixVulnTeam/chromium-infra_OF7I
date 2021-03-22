@@ -9,7 +9,7 @@ package unifiedfleet.api.v1.models.chromeos.lab;
 option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 
 import "google/protobuf/timestamp.proto";
-import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
+import "google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
 
 // This proto defines status labels in lab config of a DUT.

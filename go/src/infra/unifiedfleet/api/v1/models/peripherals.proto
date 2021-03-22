@@ -10,7 +10,7 @@ option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
 
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
-import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
+import "google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
 
 message KVM {
