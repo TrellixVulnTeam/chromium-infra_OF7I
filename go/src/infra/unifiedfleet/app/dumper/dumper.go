@@ -29,7 +29,7 @@ type Options struct {
 // InitServer initializes a purger server.
 func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
-		minInterval := 24 * 60 * time.Minute
+		minInterval := 20 * time.Minute
 		if opts.CronInterval > 0 {
 			minInterval = opts.CronInterval
 		}
@@ -68,7 +68,7 @@ func InitServer(srv *server.Server, opts Options) {
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
-	cron.Run(ctx, minInterval, cron.EVERY, dump)
+	cron.Run(ctx, minInterval, cron.DAILY, dump)
 }
 
 func dump(ctx context.Context) error {
