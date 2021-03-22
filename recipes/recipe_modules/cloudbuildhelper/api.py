@@ -348,11 +348,11 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * (None, None) if didn't create a CL (because nothing has changed).
       * (Issue number, Issue URL) if created a CL.
     """
-    self.m.git.checkout(repo_url, dir_path=root, submodules=False)
+    self.m.git.checkout(repo_url, ref='HEAD', dir_path=root, submodules=False)
 
     with self.m.context(cwd=root):
       self.m.git('branch', '-D', 'roll-attempt', ok_ret=(0, 1))
-      self.m.git('checkout', '-t', 'origin/master', '-b', 'roll-attempt')
+      self.m.git('checkout', '-t', 'origin/HEAD', '-b', 'roll-attempt')
 
       # Let the caller modify files in root.
       verdict = callback(root)

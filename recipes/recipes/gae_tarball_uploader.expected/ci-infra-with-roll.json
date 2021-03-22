@@ -254,7 +254,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "HEAD",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/roll",
@@ -329,7 +329,7 @@
       "git",
       "checkout",
       "-t",
-      "origin/master",
+      "origin/HEAD",
       "-b",
       "roll-attempt"
     ],
