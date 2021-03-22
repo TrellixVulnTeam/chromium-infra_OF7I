@@ -2,8 +2,8 @@ create {
   platform_re: "linux-.*|mac-.*"
   source {
     url {
-      download_url: "https://www.openssl.org/source/openssl-1.1.1d.tar.gz"
-      version: "1.1.1d"
+      download_url: "https://www.openssl.org/source/openssl-1.1.1j.tar.gz"
+      version: "1.1.1j"
     }
     patch_version: "chromium.1"
     patch_dir: "patches"
