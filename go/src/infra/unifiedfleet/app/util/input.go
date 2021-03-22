@@ -354,6 +354,7 @@ var StrToUFSZone = map[string]string{
 	"unspecified":       "ZONE_UNSPECIFIED",
 	"cros_googler_desk": "ZONE_CROS_GOOGLER_DESK",
 	"mtv1950_testing":   "ZONE_MTV1950_TESTING",
+	"satlab":            "ZONE_SATLAB",
 }
 
 // IsUFSZone checks if a string refers to a valid UFS zone.

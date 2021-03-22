@@ -81,4 +81,5 @@ enum Zone {
     ZONE_FUCHSIA = 15; // "lab01" // Building ? Room ?
     ZONE_CROS_GOOGLER_DESK = 16; // "desk" // For cros assets given to googlers
     ZONE_MTV1950_TESTING = 17; // "mtv1950" // temporary zone for testing cros assets in gTransit
+    ZONE_SATLAB = 18; // "satlab" // zone for satlab duts
 }

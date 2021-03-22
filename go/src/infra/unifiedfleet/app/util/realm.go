@@ -133,6 +133,9 @@ func ToUFSRealm(zone string) string {
 	} else if ufsZone == ufspb.Zone_ZONE_CHROMEOS3 || ufsZone == ufspb.Zone_ZONE_CHROMEOS5 ||
 		ufsZone == ufspb.Zone_ZONE_CHROMEOS7 || ufsZone == ufspb.Zone_ZONE_CHROMEOS15 {
 		return AcsLabAdminRealm
+	} else if ufsZone == ufspb.Zone_ZONE_SATLAB {
+		// TODO(eshwar) : Create a new satlab realm and return it here.
+		return ""
 	}
 	return AtlLabAdminRealm
 }
