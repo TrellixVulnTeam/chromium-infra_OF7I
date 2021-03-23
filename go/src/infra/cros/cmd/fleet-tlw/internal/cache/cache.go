@@ -14,7 +14,7 @@ import (
 // implementation. The main goal of it is for unit test.
 type Environment interface {
 	// Subnets returns the caching subnets.
-	// The callers cannot modify the returned slice.
+	// The slice returned may be shared, so do not modify it.
 	// This function is concurrency safe.
 	Subnets() []Subnet
 	// IsBackendHealthy checks whether the current backend is healthy.

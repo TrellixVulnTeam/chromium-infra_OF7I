@@ -132,14 +132,16 @@ func (s *tlwServer) cache(ctx context.Context, parsedURL *url.URL, addr, opName 
 	cs, err := s.cFrontend.AssignBackend(addr, path)
 	if err != nil {
 		log.Printf("CacheForDut: %s", err)
-		s.lroMgr.SetError(opName, status.New(codes.FailedPrecondition, err.Error()))
+		if err := s.lroMgr.SetError(opName, status.New(codes.FailedPrecondition, err.Error())); err != nil {
+			log.Printf("CacheForDut: failed to set error on %s: %s", opName, err)
+		}
 		return
 	}
 
 	u := fmt.Sprintf("%s/download/%s", strings.TrimSuffix(cs, "/"), path)
 	log.Printf("CacheForDut: result URL: %s", u)
 	if err := s.lroMgr.SetResult(opName, &tls.CacheForDutResponse{Url: u}); err != nil {
-		log.Printf("CacheForDut: failed while updating result: %s", err)
+		log.Printf("CacheForDut: failed to set result on %s: %s", opName, err)
 	}
 	log.Printf("CacheForDut: Operation Completed = %v", opName)
 }

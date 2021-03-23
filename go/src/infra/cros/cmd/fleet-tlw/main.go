@@ -6,19 +6,24 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"sync"
-
-	"infra/cros/cmd/fleet-tlw/internal/cache"
+	"time"
 
 	"google.golang.org/grpc"
+
+	"infra/cros/cmd/fleet-tlw/internal/cache"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
 var (
-	port = flag.Int("port", 0, "Port to listen to")
+	port            = flag.Int("port", 0, "Port to listen to")
+	ufsService      = flag.String("ufs-service", "ufs.api.cr.dev", "Host of the UFS service")
+	svcAcctJSONPath = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
 )
 
 func main() {
@@ -35,9 +40,7 @@ func innerMain() error {
 	}
 	s := grpc.NewServer()
 
-	// TODO (guocb) Fetch caching backends data from UFS after migration to
-	// caching cluster.
-	ce, err := cache.NewDevserverEnv(cache.AutotestConfig)
+	ce, err := cacheEnv()
 	if err != nil {
 		return err
 	}
@@ -61,4 +64,19 @@ func innerMain() error {
 		s.GracefulStop()
 	}()
 	return s.Serve(l)
+}
+
+func cacheEnv() (cache.Environment, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	uc, err := ufsapi.NewClient(ctx, ufsapi.ServiceName(*ufsService), ufsapi.ServiceAccountJSONPath(*svcAcctJSONPath), ufsapi.UserAgent("fleet-tlw/3.0.0"))
+	if err != nil {
+		return nil, err
+	}
+	ce, err := cache.NewUFSEnv(uc)
+	if err != nil {
+		return nil, err
+	}
+
+	return ce, nil
 }
