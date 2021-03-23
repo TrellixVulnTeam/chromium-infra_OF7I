@@ -286,7 +286,8 @@ func TestCreateMachineLSE(t *testing.T) {
 
 		Convey("Create new machineLSE with existing machines", func() {
 			machine1 := &ufspb.Machine{
-				Name: "machine-3",
+				Name:         "machine-3",
+				SerialNumber: "machine-3-serial",
 			}
 			_, err := registration.CreateMachine(ctx, machine1)
 			So(err, ShouldBeNil)
@@ -304,6 +305,9 @@ func TestCreateMachineLSE(t *testing.T) {
 			s, err = state.GetStateRecord(ctx, "machines/machine-3")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			dr, err := inventory.GetMachineLSEDeployment(ctx, "machine-3-serial")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, "machinelse-3")
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-3")
@@ -312,6 +316,32 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
+		})
+
+		Convey("Create new machineLSE with existing machines & existing deployment record", func() {
+			machine1 := &ufspb.Machine{
+				Name:         "machine-dr-3",
+				SerialNumber: "machine-dr-3-serial",
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+
+			machineLSE2 := &ufspb.MachineLSE{
+				Hostname: "machinelse-dr-3",
+				Machines: []string{"machine-dr-3"},
+			}
+
+			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.FormatDeploymentRecord("", machine1.GetSerialNumber())})
+			So(err, ShouldBeNil)
+			dr, err := inventory.GetMachineLSEDeployment(ctx, "machine-dr-3-serial")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, "no-host-yet-machine-dr-3-serial")
+
+			_, err = CreateMachineLSE(ctx, machineLSE2, nil)
+			So(err, ShouldBeNil)
+			dr, err = inventory.GetMachineLSEDeployment(ctx, "machine-dr-3-serial")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, "machinelse-dr-3")
 		})
 
 		Convey("Create new machineLSE with a machine already attached to a different machinelse - error", func() {
@@ -1213,7 +1243,8 @@ func TestDeleteMachineLSE(t *testing.T) {
 				},
 			}
 			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
-				Name: "machine-delete-1",
+				Name:         "machine-delete-1",
+				SerialNumber: "machine-delete-1-serial",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
@@ -1224,6 +1255,10 @@ func TestDeleteMachineLSE(t *testing.T) {
 
 			err = DeleteMachineLSE(ctx, "machinelse-delete-1")
 			So(err, ShouldBeNil)
+			_, err = inventory.GetMachineLSEDeployment(ctx, "machine-delete-1-serial")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
 			// verify changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-delete-1")
 			So(err, ShouldBeNil)
@@ -1283,6 +1318,37 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(msgs, ShouldHaveLength, 2)
 			So(msgs[0].Delete, ShouldBeFalse)
 			So(msgs[1].Delete, ShouldBeFalse)
+		})
+
+		Convey("Delete machineLSE with existing deployment record - happy path", func() {
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-delete-2",
+				Hostname: "machinelse-delete-2",
+				Machines: []string{"machine-delete-2"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:         "machine-delete-2",
+				SerialNumber: "machine-delete-2-serial",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = CreateMachineLSE(ctx, machineLSE1, nil)
+			So(err, ShouldBeNil)
+			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.FormatDeploymentRecord("machinelse-delete-2", "machine-delete-2-serial")})
+			So(err, ShouldBeNil)
+			_, err = inventory.GetMachineLSEDeployment(ctx, "machine-delete-2-serial")
+			So(err, ShouldBeNil)
+
+			err = DeleteMachineLSE(ctx, "machinelse-delete-2")
+			So(err, ShouldBeNil)
+			_, err = inventory.GetMachineLSEDeployment(ctx, "machine-delete-2-serial")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }

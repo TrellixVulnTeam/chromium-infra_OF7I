@@ -214,10 +214,13 @@ func FormatDHCPHostnames(names []string) []string {
 	return names
 }
 
-// GetEmtpyDeploymentRecord initialize an empty MachineLSE deployment record object by given serial number.
-func GetEmtpyDeploymentRecord(serialNumber string) *ufspb.MachineLSEDeployment {
+// FormatDeploymentRecord initialize a MachineLSE deployment record object by hostname and given serial number.
+func FormatDeploymentRecord(hostname, serialNumber string) *ufspb.MachineLSEDeployment {
+	if hostname == "" {
+		hostname = GetHostnameWithNoHostPrefix(serialNumber)
+	}
 	return &ufspb.MachineLSEDeployment{
-		Hostname:             GetHostnameWithNoHostPrefix(serialNumber),
+		Hostname:             hostname,
 		SerialNumber:         serialNumber,
 		DeploymentIdentifier: "",
 		ConfigsToPush:        nil,

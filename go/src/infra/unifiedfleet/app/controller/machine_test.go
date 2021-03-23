@@ -474,7 +474,7 @@ func TestUpdateMachine(t *testing.T) {
 			}
 			_, err := registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
-			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())})
+			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.FormatDeploymentRecord("", machine.GetSerialNumber())})
 			So(err, ShouldBeNil)
 
 			machine1 := &ufspb.Machine{

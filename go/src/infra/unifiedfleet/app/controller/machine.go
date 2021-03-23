@@ -79,7 +79,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 				// the existing deployment record anyway.
 				_, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
 				if util.IsNotFoundError(err) {
-					dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+					dr := util.FormatDeploymentRecord("", machine.GetSerialNumber())
 					if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 						return errors.Annotate(err, "unable to update deployment record").Err()
 					}
@@ -183,7 +183,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			// means sth weird happened, but we will keep the existing deployment record anyway.
 			_, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
 			if util.IsNotFoundError(err) {
-				dr := util.GetEmtpyDeploymentRecord(machine.GetSerialNumber())
+				dr := util.FormatDeploymentRecord("", machine.GetSerialNumber())
 				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 					return errors.Annotate(err, "unable to update deployment record").Err()
 				}
