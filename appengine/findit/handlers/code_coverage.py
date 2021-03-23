@@ -791,7 +791,7 @@ class ProcessCodeCoverageData(BaseHandler):
         queue_name='code-coverage-fetch-source-file',
         params=params)
 
-  def _ProcessCLPatchData(self, patch, coverage_data):
+  def _ProcessCLPatchData(self, mimic_builder, patch, coverage_data):
     """Processes and updates coverage data for per-cl build.
 
     Part of the responsibility of this method is to calculate per-file coverage
@@ -801,32 +801,63 @@ class ProcessCodeCoverageData(BaseHandler):
     2. For metrics tracking to understand the impact of the coverage data.
 
     Args:
+      mimic_builder (string): Name of the builder that we are mimicking coverage
+                              data belongs to. For example, if linux-rel is
+                              producing unit tests coverage, mimic_builder name
+                              would be 'linux-rel_unit'.
       patch (buildbucket.v2.GerritChange): A gerrit change with fields: host,
                                            project, change, patchset.
       coverage_data (list): A list of File in coverage proto.
-      build_id (int): Id of the build to process coverage data for.
     """
 
     @ndb.tasklet
     @ndb.transactional
     def _UpdateCoverageDataAsync():
+
+      def _GetEntity(entity):
+        if entity:
+          entity.data = code_coverage_util.MergeFilesCoverageDataForPerCL(
+              entity.data, coverage_data)
+        else:
+          entity = PresubmitCoverageData.Create(
+              server_host=patch.host,
+              change=patch.change,
+              patchset=patch.patchset,
+              data=coverage_data)
+        entity.absolute_percentages = (
+            code_coverage_util.CalculateAbsolutePercentages(entity.data))
+        entity.incremental_percentages = (
+            code_coverage_util.CalculateIncrementalPercentages(
+                patch.host, patch.project, patch.change, patch.patchset,
+                entity.data))
+        return entity
+
+      def _GetEntityForUnit(entity):
+        if entity:
+          entity.data_unit = code_coverage_util.MergeFilesCoverageDataForPerCL(
+              entity.data_unit, coverage_data)
+        else:
+          entity = PresubmitCoverageData.Create(
+              server_host=patch.host,
+              change=patch.change,
+              patchset=patch.patchset,
+              data_unit=coverage_data)
+        entity.absolute_percentages_unit = (
+            code_coverage_util.CalculateAbsolutePercentages(entity.data_unit))
+        entity.incremental_percentages_unit = (
+            code_coverage_util.CalculateIncrementalPercentages(
+                patch.host, patch.project, patch.change, patch.patchset,
+                entity.data_unit))
+        return entity
+
       entity = yield PresubmitCoverageData.GetAsync(
           server_host=patch.host, change=patch.change, patchset=patch.patchset)
-      if entity:
-        entity.data = code_coverage_util.MergeFilesCoverageDataForPerCL(
-            entity.data, coverage_data)
+      # Update/Create entity with unit test coverage fields populated
+      # if mimic_builder represents a unit tests only builder.
+      if mimic_builder.endswith('_unit'):
+        entity = _GetEntityForUnit(entity)
       else:
-        entity = PresubmitCoverageData.Create(
-            server_host=patch.host,
-            change=patch.change,
-            patchset=patch.patchset,
-            data=coverage_data)
-      entity.absolute_percentages = (
-          code_coverage_util.CalculateAbsolutePercentages(entity.data))
-      entity.incremental_percentages = (
-          code_coverage_util.CalculateIncrementalPercentages(
-              patch.host, patch.project, patch.change, patch.patchset,
-              entity.data))
+        entity = _GetEntity(entity)
       yield entity.put_async()
 
     update_future = _UpdateCoverageDataAsync()
@@ -864,7 +895,7 @@ class ProcessCodeCoverageData(BaseHandler):
     for f in delete_futures:
       f.get_result()
 
-  def _processCodeCoverageData(self, build_id):
+  def _ProcessCodeCoverageData(self, build_id):
     build = GetV2Build(
         build_id,
         fields=FieldMask(paths=['id', 'output.properties', 'input', 'builder']))
@@ -918,15 +949,13 @@ class ProcessCodeCoverageData(BaseHandler):
       # For presubmit coverage, save the whole data in json.
       # Assume there is only 1 patch which is true in CQ.
       assert len(build.input.gerrit_changes) == 1, 'Expect only one patchset'
-      # For presubmit coverage, only one type of coverage is expected from
-      # the builder.
-      assert len(gs_metadata_dirs
-                ) == 1, 'Expect only one test type coverage for presubmit'
-      full_gs_metadata_dir = '/%s/%s' % (gs_bucket, gs_metadata_dirs[0])
-      all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
-      data = _GetValidatedData(all_json_gs_path)
-      patch = build.input.gerrit_changes[0]
-      self._ProcessCLPatchData(patch, data['files'])
+      for gs_metadata_dir, mimic_builder_name in zip(gs_metadata_dirs,
+                                                     mimic_builder_names):
+        full_gs_metadata_dir = '/%s/%s' % (gs_bucket, gs_metadata_dir)
+        all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
+        data = _GetValidatedData(all_json_gs_path)
+        patch = build.input.gerrit_changes[0]
+        self._ProcessCLPatchData(mimic_builder_name, patch, data['files'])
     else:
       if (properties.get('coverage_override_gitiles_commit', False) or
           not self._IsGitilesCommitAvailable(build.input.gitiles_commit)):
@@ -970,7 +999,7 @@ class ProcessCodeCoverageData(BaseHandler):
       return
 
     build_id = int(match.group(1))
-    return self._processCodeCoverageData(build_id)
+    return self._ProcessCodeCoverageData(build_id)
 
   def HandleGet(self):
     return self.HandlePost()  # For local testing purpose.

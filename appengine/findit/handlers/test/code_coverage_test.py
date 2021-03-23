@@ -377,6 +377,102 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage, '_GetValidatedData')
   @mock.patch.object(code_coverage, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testProcessCLPatchDataUnitTestBuilder(self,
+                                            mocked_is_request_from_appself,
+                                            mocked_get_build,
+                                            mocked_get_validated_data,
+                                            mocked_abs_percentages,
+                                            mocked_inc_percentages):
+    # Mock buildbucket v2 API.
+    build = mock.Mock()
+    build.builder.project = 'chromium'
+    build.builder.bucket = 'try'
+    build.builder.builder = 'linux-rel'
+    build.output.properties.items.return_value = [
+        ('coverage_is_presubmit', True),
+        ('coverage_gs_bucket', 'code-coverage-data'),
+        ('coverage_metadata_gs_paths', [
+            'presubmit/chromium-review.googlesource.com/138000/4/try/'
+            'linux-rel_unit/123456789/metadata'
+        ]), ('mimic_builder_names', ['linux-rel_unit'])
+    ]
+    build.input.gerrit_changes = [
+        mock.Mock(
+            host='chromium-review.googlesource.com',
+            project='chromium/src',
+            change=138000,
+            patchset=4)
+    ]
+    mocked_get_build.return_value = build
+
+    # Mock get validated data from cloud storage.
+    coverage_data = {
+        'dirs': None,
+        'files': [{
+            'path':
+                '//dir/test.cc',
+            'lines': [{
+                'count': 100,
+                'first': 1,
+                'last': 1,
+            }, {
+                'count': 0,
+                'first': 2,
+                'last': 2,
+            }],
+        }],
+        'summaries': None,
+        'components': None,
+    }
+    mocked_get_validated_data.return_value = coverage_data
+
+    abs_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    mocked_abs_percentages.return_value = abs_percentages
+
+    inc_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
+    mocked_inc_percentages.return_value = inc_percentages
+
+    request_url = '/coverage/task/process-data/build/123456789'
+    response = self.test_app.post(request_url)
+    self.assertEqual(200, response.status_int)
+    mocked_is_request_from_appself.assert_called()
+
+    mocked_get_validated_data.assert_called_with(
+        '/code-coverage-data/presubmit/chromium-review.googlesource.com/138000/'
+        '4/try/linux-rel_unit/123456789/metadata/all.json.gz')
+
+    expected_entity = PresubmitCoverageData.Create(
+        server_host='chromium-review.googlesource.com',
+        change=138000,
+        patchset=4,
+        data_unit=coverage_data['files'])
+    expected_entity.absolute_percentages_unit = abs_percentages
+    expected_entity.incremental_percentages_unit = inc_percentages
+    expected_entity.insert_timestamp = datetime.now()
+    expected_entity.update_timestamp = datetime.now()
+    fetched_entities = PresubmitCoverageData.query().fetch()
+
+    self.assertEqual(1, len(fetched_entities))
+    self.assertEqual(expected_entity.cl_patchset,
+                     fetched_entities[0].cl_patchset)
+    self.assertEqual(expected_entity.data_unit, fetched_entities[0].data_unit)
+    self.assertEqual(expected_entity.absolute_percentages_unit,
+                     fetched_entities[0].absolute_percentages_unit)
+    self.assertEqual(expected_entity.incremental_percentages_unit,
+                     fetched_entities[0].incremental_percentages_unit)
+    self.assertEqual(expected_entity.based_on, fetched_entities[0].based_on)
+
+  @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
+  @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
+  @mock.patch.object(code_coverage, '_GetValidatedData')
+  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testProcessCLPatchDataMergingData(self, _, mocked_get_build,
                                         mocked_get_validated_data,
                                         mocked_abs_percentages,

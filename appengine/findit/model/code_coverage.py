@@ -234,7 +234,7 @@ class PresubmitCoverageData(ndb.Model):
         project=project,
         change=change,
         patchset=patchset)
-    return cls(key=key, cl_patchset=cl_patchset, data=data)
+    return cls(key=key, cl_patchset=cl_patchset, data=data, data_unit=data_unit)
 
   @classmethod
   def Get(cls, server_host, change, patchset):
