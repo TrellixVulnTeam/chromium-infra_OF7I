@@ -566,6 +566,42 @@ func TestUpdateMachine(t *testing.T) {
 			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix("serial-update"))
 		})
 
+		Convey("Partial Update machine - update serial number, machine has a corresponding lse", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-update-serial-with-lse",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-update-serial-with-lse",
+				Hostname: "machinelse-update-serial-with-lse",
+				Machines: []string{"machine-update-serial-with-lse"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				},
+			}
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+
+			// Partial update
+			machine1 := &ufspb.Machine{
+				Name:         "machine-update-serial-with-lse",
+				SerialNumber: "serial-update-with-lse",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"serialNumber"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetSerialNumber(), ShouldResemble, "serial-update-with-lse")
+			dr, err := inventory.GetMachineLSEDeployment(ctx, "serial-update-with-lse")
+			So(err, ShouldBeNil)
+			So(dr.GetHostname(), ShouldEqual, "machinelse-update-serial-with-lse")
+		})
+
 		Convey("Partial Update machine - duplicated kvm", func() {
 			_, err := registration.CreateKVM(ctx, &ufspb.KVM{
 				Name: "kvm-update-duplicate1",

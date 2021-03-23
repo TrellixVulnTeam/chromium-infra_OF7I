@@ -180,10 +180,21 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		// Update deployment record if serial number is updated
 		if machine.GetChromeBrowserMachine() != nil && oldMachineCopy.GetSerialNumber() != machine.GetSerialNumber() {
 			// If the deployment record for newly updated machine's serial number already exist, it usually
-			// means sth weird happened, but we will keep the existing deployment record anyway.
+			// means sth weird happened, but we will keep the existing deployment record anyway, even if
+			// the attached hostname may be not correct.
 			_, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
 			if util.IsNotFoundError(err) {
-				dr := util.FormatDeploymentRecord("", machine.GetSerialNumber())
+				hostname := ""
+				lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), true)
+				if err != nil {
+					logging.Infof(ctx, "fail to get hosts for machine %s", machine.GetName())
+				} else if len(lses) > 0 {
+					// It's possible that when the host is added to UFS, the corresponding machine
+					// doesn't have any serial number. Later users add the serial numbers back for
+					// the machine, then the deployment record should be updated also.
+					hostname = lses[0].GetName()
+				}
+				dr := util.FormatDeploymentRecord(hostname, machine.GetSerialNumber())
 				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 					return errors.Annotate(err, "unable to update deployment record").Err()
 				}
