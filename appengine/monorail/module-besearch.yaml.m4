@@ -87,3 +87,4 @@ skip_files:
 - ^(.*/)?.*/RCS/.*$
 - ^(.*/)?\..*$
 - node_modules/
+- venv/

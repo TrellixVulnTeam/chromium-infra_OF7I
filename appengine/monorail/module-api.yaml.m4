@@ -85,3 +85,4 @@ skip_files:
 - schema/
 - doc/
 - tools/
+- venv/
