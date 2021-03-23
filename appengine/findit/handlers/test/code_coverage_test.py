@@ -968,6 +968,55 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     })
     self.assertEqual(expected_response_body, response.body)
 
+  def testServeCLPatchPercentagesDataJustUnitTestCoverage(self):
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    change = 138000
+    patchset = 4
+    data = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 2,
+        }],
+    }]
+    entity = PresubmitCoverageData.Create(
+        server_host=host, change=change, patchset=patchset, data=data)
+    entity.absolute_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    entity.incremental_percentages_unit = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
+    entity.put()
+
+    request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
+                   '&patchset=%d&type=percentages&concise=1') % (
+                       host, project, change, patchset)
+    response = self.test_app.get(request_url)
+
+    expected_response_body = json.dumps({
+        'data': {
+            'files': [{
+                "path": "dir/test.cc",
+                "absolute_coverage": None,
+                "incremental_coverage": None,
+                "absolute_unit_tests_coverage": {
+                    "covered": 1,
+                    "total": 2,
+                },
+                "incremental_unit_tests_coverage": {
+                    "covered": 1,
+                    "total": 1,
+                },
+            }]
+        },
+    })
+    self.assertEqual(expected_response_body, response.body)
+
   def testServeFullRepoProjectView(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
 

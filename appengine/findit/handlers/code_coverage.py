@@ -1169,12 +1169,13 @@ class ServeCodeCoverageData(BaseHandler):
           inc_unit_tests_coverage)
 
       formatted_data = {'files': []}
-      for p in abs_coverage_per_file:
+      for p in set(abs_coverage_per_file.keys() +
+                   abs_unit_tests_coverage_per_file.keys()):
         formatted_data['files'].append({
             'path':
                 p[2:],
             'absolute_coverage':
-                abs_coverage_per_file[p],
+                abs_coverage_per_file.get(p, None),
             'incremental_coverage':
                 inc_coverage_per_file.get(p, None),
             'absolute_unit_tests_coverage':
