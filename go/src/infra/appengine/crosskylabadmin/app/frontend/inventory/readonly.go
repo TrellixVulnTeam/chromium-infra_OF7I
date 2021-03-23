@@ -36,7 +36,6 @@ import (
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/gitstore"
-	"infra/cros/lab_inventory/utilization"
 	"infra/libs/skylab/inventory"
 )
 
@@ -118,27 +117,9 @@ func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStable
 }
 
 // ReportInventory reports metrics of duts in inventory.
+//
+// This method is deprecated. UFS reports the inventory metrics.
 func (is *ServerImpl) ReportInventory(ctx context.Context, req *fleet.ReportInventoryRequest) (resp *fleet.ReportInventoryResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-
-	store, err := is.newStore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := store.Refresh(ctx); err != nil {
-		return nil, err
-	}
-
-	if !req.GetSkipInventoryMetrics() {
-		duts, err := GetDutsByEnvironment(ctx, store)
-		if err != nil {
-			return nil, err
-		}
-		utilization.ReportInventoryMetrics(ctx, duts)
-	}
-	utilization.ReportServerMetrics(ctx, store.Infrastructure.GetServers())
 	return &fleet.ReportInventoryResponse{}, nil
 }
 
