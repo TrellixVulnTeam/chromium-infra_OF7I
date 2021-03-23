@@ -9,21 +9,24 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"sync"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"infra/cros/cmd/fleet-tlw/internal/cache"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
+
+	"golang.org/x/crypto/ssh"
+	"google.golang.org/grpc"
 )
 
 var (
 	port            = flag.Int("port", 0, "Port to listen to")
 	ufsService      = flag.String("ufs-service", "ufs.api.cr.dev", "Host of the UFS service")
 	svcAcctJSONPath = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
+	proxySSHKey     = flag.String("proxy-ssh-key", "", "Path to SSH key for SSH proxy servers (no auth for ExposePortToDut Proxy Mode if unset)")
 )
 
 func main() {
@@ -45,11 +48,21 @@ func innerMain() error {
 		return err
 	}
 
-	tlw := newTLWServer(ce)
+	proxySSHSigner, err := authMethodFromKey(*proxySSHKey)
+	if err != nil {
+		return err
+	}
+
+	tlw := newTLWServer(ce, proxySSHSigner)
 	tlw.registerWith(s)
 	defer tlw.Close()
 
-	ss := newSessionServer(ce)
+	// TODO(sanikak): Every time a new parameter is added to the tlw server,
+	// it needs to be added to the session server. This is not ideal. A better
+	// way to accomplish the same objective will be to add a "TLW config" that
+	// configures the TLWServer, and sessionServer has a copy to use for new
+	// TLW servers.
+	ss := newSessionServer(ce, proxySSHSigner)
 	ss.registerWith(s)
 	defer ss.Close()
 
@@ -79,4 +92,16 @@ func cacheEnv() (cache.Environment, error) {
 	}
 
 	return ce, nil
+}
+
+func authMethodFromKey(keyfile string) (ssh.Signer, error) {
+	key, err := ioutil.ReadFile(keyfile)
+	if err != nil {
+		return nil, err
+	}
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return nil, err
+	}
+	return signer, nil
 }

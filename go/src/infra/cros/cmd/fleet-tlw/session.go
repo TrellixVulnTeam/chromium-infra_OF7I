@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -51,7 +52,8 @@ func (s session) toProto(name string) *access.Session {
 
 type sessionServer struct {
 	access.UnimplementedFleetServer
-	wg sync.WaitGroup
+	wg             sync.WaitGroup
+	proxySSHSigner ssh.Signer
 
 	// Unsafe to set concurrently, only set on init
 	env cache.Environment
@@ -65,9 +67,10 @@ type sessionServer struct {
 // newSessionServer creates a new sessionServer.
 // It should be closed after use.
 // The gRPC server should be stopped first to ensure there are no new requests.
-func newSessionServer(e cache.Environment) *sessionServer {
+func newSessionServer(e cache.Environment, proxySSHSigner ssh.Signer) *sessionServer {
 	return &sessionServer{
-		sessions: make(map[string]sessionContext),
+		proxySSHSigner: proxySSHSigner,
+		sessions:       make(map[string]sessionContext),
 	}
 }
 
@@ -93,7 +96,7 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw := newTLWServer(s.env)
+	tlw := newTLWServer(s.env, s.proxySSHSigner)
 	tlw.registerWith(gs)
 	// This goroutine is stopped by the session cancellation that
 	// is set up below.
