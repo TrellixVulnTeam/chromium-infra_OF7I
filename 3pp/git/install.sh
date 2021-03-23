@@ -71,9 +71,9 @@ else
       # LTO requires an extra plugin to gcc which isn't available when cross
       # compiling. However, linux-amd64 is our most useful platform, so it's
       # worth it to turn on LTO there.
+      AR=${AR%ar}gcc-ar
       LDFLAGS="-flto $LDFLAGS"
       CFLAGS="-flto"
-      ARFLAGS="--plugin=$(gcc --print-file-name=liblto_plugin.so)"
       ;;
     *)
       # Cross compiling; git wants to run little programs to detect these, but
@@ -97,7 +97,7 @@ EOF
 fi
 
 
-export ARFLAGS
+export AR
 export CPPFLAGS
 export CFLAGS
 export EXPATDIR
