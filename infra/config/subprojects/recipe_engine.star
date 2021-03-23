@@ -18,7 +18,10 @@ infra.console_view(
 
 luci.cq_group(
     name = "recipes-py",
-    watch = cq.refset(repo = REPO_URL, refs = [r"refs/heads/master"]),
+    watch = cq.refset(
+        repo = REPO_URL,
+        refs = [r"refs/heads/master", r"refs/heads/main"],
+    ),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
 
