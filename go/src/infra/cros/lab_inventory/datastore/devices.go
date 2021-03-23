@@ -22,7 +22,6 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	"infra/cros/lab_inventory/changehistory"
-	"infra/cros/lab_inventory/utilization"
 	"infra/cros/lab_inventory/utils"
 )
 
@@ -859,25 +858,6 @@ func BatchUpdateDevices(ctx context.Context, duts []*DeviceProperty) error {
 		return datastore.Put(ctx, entities)
 	}
 	return datastore.RunInTransaction(ctx, f, nil)
-}
-
-// ReportInventory reports the inventory metrics.
-func ReportInventory(ctx context.Context, environment string) error {
-	results, err := GetAllDevices(ctx)
-	if err != nil {
-		return errors.Annotate(err, "report inventory").Err()
-	}
-	var devices []*lab.ChromeOSDevice
-	for _, r := range results {
-		var d lab.ChromeOSDevice
-		if err := r.Entity.GetCrosDeviceProto(&d); err != nil {
-			logging.Errorf(ctx, "failed to get device proto: %v", r.Entity)
-			continue
-		}
-		devices = append(devices, &d)
-	}
-	utilization.ReportInventoryMetricsV2(ctx, devices, environment)
-	return nil
 }
 
 // cleanPreDeployFields resets values for the fields re-generated during deployment.

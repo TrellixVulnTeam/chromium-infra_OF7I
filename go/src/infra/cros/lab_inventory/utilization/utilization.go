@@ -10,9 +10,7 @@ import (
 	"fmt"
 	invV1 "infra/libs/skylab/inventory"
 
-	invV2 "go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 )
@@ -27,133 +25,6 @@ var dutmonMetric = metric.NewInt(
 	field.String("status"),
 	field.Bool("is_locked"),
 )
-
-var inventoryMetric = metric.NewInt(
-	"chromeos/skylab/inventory/dut_count",
-	"The number of DUTs in a given bucket",
-	nil,
-	field.String("board"),
-	field.String("model"),
-	field.String("pool"),
-	field.String("environment"),
-)
-
-var serverMetric = metric.NewInt(
-	"chromeos/skylab/inventory/server_count",
-	"The number of servers in a given bucket",
-	nil,
-	field.String("hostname"),
-	field.String("environment"),
-	field.String("role"),
-	field.String("status"),
-)
-
-// ReportInventoryMetrics reports the inventory metrics to monarch.
-func ReportInventoryMetrics(ctx context.Context, duts []*invV1.DeviceUnderTest) {
-	logging.Infof(ctx, "report inventory metrics for %d duts", len(duts))
-	c := make(inventoryCounter)
-	for _, d := range duts {
-		b := getBucketForDUT(d)
-		c[b]++
-	}
-	c.Report(ctx)
-}
-
-// ReportInventoryMetricsV2 reports the inventory metrics to monarch.
-func ReportInventoryMetricsV2(ctx context.Context, devices []*invV2.ChromeOSDevice, environment string) {
-	logging.Infof(ctx, "report inventory metrics for %d devices", len(devices))
-	c := make(inventoryCounter)
-	for _, d := range devices {
-		b := getBucketForDevice(d)
-		b.environment = environment
-		c[b]++
-	}
-	c.Report(ctx)
-}
-
-// ReportServerMetrics reports the servers metrics to monarch.
-func ReportServerMetrics(ctx context.Context, servers []*invV1.Server) {
-	logging.Infof(ctx, "report inventory metrics for %d servers", len(servers))
-	c := make(serverCounter)
-	for _, d := range servers {
-		b := getBucketForServer(d)
-		c[b]++
-	}
-	c.Report(ctx)
-}
-
-func (c inventoryCounter) Report(ctx context.Context) {
-	for b, count := range c {
-		logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
-		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
-	}
-}
-
-func (c serverCounter) Report(ctx context.Context) {
-	for b, count := range c {
-		logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
-		serverMetric.Set(ctx, int64(count), b.hostname, b.environment, b.role, b.status)
-	}
-}
-
-type inventoryCounter map[bucket]int
-type serverCounter map[serverBucket]int
-
-func getBucketForDUT(d *invV1.DeviceUnderTest) bucket {
-	b := bucket{
-		board:       "[None]",
-		model:       "[None]",
-		pool:        "[None]",
-		environment: "[None]",
-	}
-	l := d.GetCommon().GetLabels()
-	b.board = l.GetBoard()
-	b.model = l.GetModel()
-	var pools []string
-	cp := l.GetCriticalPools()
-	for _, p := range cp {
-		pools = append(pools, invV1.SchedulableLabels_DUTPool_name[int32(p)])
-	}
-	pools = append(pools, l.GetSelfServePools()...)
-	b.pool = getReportPool(pools)
-	b.environment = d.GetCommon().GetEnvironment().String()
-	return b
-}
-
-func getBucketForDevice(d *invV2.ChromeOSDevice) bucket {
-	devCfg := d.GetDeviceConfigId()
-	b := bucket{
-		board:       devCfg.GetPlatformId().GetValue(),
-		model:       devCfg.GetModelId().GetValue(),
-		pool:        "[None]",
-		environment: "[None]",
-	}
-	if dut := d.GetDut(); dut != nil {
-		b.pool = getReportPool(dut.GetPools())
-	}
-	if labstation := d.GetLabstation(); labstation != nil {
-		b.pool = getReportPool(labstation.GetPools())
-	}
-	return b
-}
-
-func getBucketForServer(s *invV1.Server) serverBucket {
-	b := serverBucket{
-		hostname:    "[None]",
-		environment: "[None]",
-		role:        "[None]",
-		status:      "[None]",
-	}
-	b.hostname = s.GetHostname()
-	b.environment = s.GetEnvironment().String()
-	var roles []string
-	for _, r := range s.GetRoles() {
-		roles = append(roles, r.String())
-	}
-	b.role = summarizeValues(roles)
-	b.status = s.GetStatus().String()
-	return b
-}
 
 // ReportMetrics reports DUT utilization metrics akin to dutmon in Autotest
 //
@@ -183,21 +54,6 @@ type bucket struct {
 
 func (b bucket) String() string {
 	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s", b.board, b.model, b.pool, b.environment)
-}
-
-// serverBucket contains static server dimensions.
-//
-// role & status follows definition:
-// https://chromium.git.corp.google.com/infra/infra//+/caab71d0f852c760b0a0c5238d8edf699527f922/go/src/infra/libs/skylab/inventory/server.proto#12
-type serverBucket struct {
-	hostname    string
-	environment string
-	role        string
-	status      string
-}
-
-func (b serverBucket) String() string {
-	return fmt.Sprintf("hostname: %s, env: %s, role: %s, status: %s", b.hostname, b.environment, b.role, b.status)
 }
 
 // status is a dynamic DUT dimension.

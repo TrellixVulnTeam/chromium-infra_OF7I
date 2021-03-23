@@ -71,8 +71,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/push-to-drone-queen", mwCron, logAndSetHTTPErr(pushToDroneQueenCronHandler))
 
-	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
-
 	r.GET("/internal/cron/sync-device-list-to-drone-config", mwCron, logAndSetHTTPErr(syncDeviceListToDroneConfigHandler))
 
 	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevicesHandler))
@@ -377,15 +375,6 @@ func GetHiveForDut(d string) string {
 	}
 	// Main lab DUTs.
 	return ""
-}
-
-func reportInventoryCronHandler(c *router.Context) error {
-	logging.Infof(c.Context, "start reporting inventory")
-	if config.Get(c.Context).EnableInventoryReporting {
-		return datastore.ReportInventory(c.Context, config.Get(c.Context).Environment)
-	}
-	logging.Infof(c.Context, "not enabled yet")
-	return nil
 }
 
 func syncDeviceListToDroneConfigHandler(c *router.Context) error {
