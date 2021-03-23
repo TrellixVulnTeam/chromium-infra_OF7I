@@ -105,10 +105,8 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 }
 
 // WaitForBuildStart polls Buildbucket to check the status of the build with
-// the given ID, and returns the build once it has started. Specific fields can
-// be specified to populate on the the returned build; if none are specified,
-// all build fields will be populated.
-func (c *Client) WaitForBuildStart(ctx context.Context, id int64) (*buildbucketpb.Build, error) {
+// the given ID, and returns the build once it has started the given step.
+func (c *Client) WaitForBuildStepStart(ctx context.Context, id int64, stepName string) (*buildbucketpb.Build, error) {
 	for {
 		build, err := c.GetBuild(ctx, id)
 		if err != nil {
@@ -118,7 +116,14 @@ func (c *Client) WaitForBuildStart(ctx context.Context, id int64) (*buildbucketp
 		case buildbucketpb.Status_SCHEDULED:
 			time.Sleep(10 * time.Second)
 		case buildbucketpb.Status_STARTED:
-			return build, nil
+			// For the purposes of this function, it is sufficient just to check
+			// that the step exists (i.e. the build has reached and started the
+			// step), and ignore the step's current status, since we already
+			// confirmed the build has the overall healthy status "started".
+			if containsStep(build.GetSteps(), stepName) {
+				return build, nil
+			}
+			time.Sleep(10 * time.Second)
 		default:
 			statusString := buildbucketpb.Status_name[int32(s)]
 			buildSummary := ""
@@ -360,6 +365,17 @@ func FindDimValInFinalDims(dim string, build *buildbucketpb.Build) string {
 func idMatch(idToMatch string, idList []string) bool {
 	for _, id := range idList {
 		if idToMatch == id {
+			return true
+		}
+	}
+	return false
+}
+
+// containsStep returns true if a step with the given name is found in the
+// given slice of steps.
+func containsStep(steps []*buildbucketpb.Step, stepName string) bool {
+	for _, step := range steps {
+		if step.Name == stepName {
 			return true
 		}
 	}

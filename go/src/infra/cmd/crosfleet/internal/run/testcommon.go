@@ -13,6 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/maruel/subcommands"
+
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 
@@ -20,7 +24,6 @@ import (
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/luci/common/errors"
@@ -35,6 +38,10 @@ const (
 	MaxSwarmingPriority = int64(255)
 	// imageArchiveBaseURL is the base url for the ChromeOS image archive.
 	imageArchiveBaseURL = "gs://chromeos-image-archive/"
+	// ctpExecuteStepName is the name of the test-execution step in any
+	// cros_test_platform Buildbucket build. This step is not started until
+	// all request-validation and setup steps are passed.
+	ctpExecuteStepName = "execute"
 )
 
 // testCommonFlags contains parameters common to the "run
@@ -52,6 +59,7 @@ type testCommonFlags struct {
 	provisionLabels map[string]string
 	addedTags       map[string]string
 	keyvals         map[string]string
+	exitEarly       bool
 	json            bool
 }
 
@@ -76,6 +84,7 @@ If a Quota Scheduler account is specified via -qs-account, this value is not use
 	f.Var(flagx.KeyVals(&c.addedTags), "tags", "Comma-separated Swarming tags in same format as -tag.")
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyval", "Autotest keyval in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyvals", "Comma-separated Autotest keyvals in same format as -keyval.")
+	f.BoolVar(&c.exitEarly, "exit-early", false, "Exit command as soon as test is scheduled. crosfleet will not notify on test validation failure.")
 	f.BoolVar(&c.json, "json", false, "Format output as JSON.")
 }
 
@@ -191,11 +200,44 @@ func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[st
 	return tags
 }
 
+// testRunLauncher contains the necessary information to launch and validate a
+// CTP test plan.
+type ctpRunLauncher struct {
+	cliApp    subcommands.Application
+	cmdName   string
+	bbClient  *buildbucket.Client
+	testPlan  *test_platform.Request_TestPlan
+	buildTags map[string]string
+	cliFlags  *testCommonFlags
+	exitEarly bool
+}
+
+// launchAndValidateTestPlan requests a run of the given CTP run launcher's
+// test plan, and returns the ID of the launched cros_test_platform Buildbucket
+// build. Unless the exitEarly arg is passed as true, the function waits to
+// return until the build passes request-validation and setup steps.
+func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
+	buildID, err := l.launchCTPBuild(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(l.cliApp.GetErr(), "Requesting %s run at %s\n", l.cmdName, l.bbClient.BuildURL(buildID))
+	if l.exitEarly {
+		return nil
+	}
+	_, err = l.bbClient.WaitForBuildStepStart(ctx, buildID, ctpExecuteStepName)
+	if err != nil {
+		return nil
+	}
+	fmt.Fprintf(l.cliApp.GetOut(), "Successfully started %s run\n", l.cmdName)
+	return nil
+}
+
 // launchCTPBuild uses the given Buildbucket client to launch a
-// cros_test_platform Buildbucket build for the given test plan, build tags,
-// and command line flags, and returns the ID of the launched build.
-func launchCTPBuild(ctx context.Context, bbClient *buildbucket.Client, testPlan *test_platform.Request_TestPlan, buildTags map[string]string, cliFlags *testCommonFlags) (int64, error) {
-	ctpRequest, err := testPlatformRequest(testPlan, buildTags, cliFlags)
+// cros_test_platform Buildbucket build for the CTP run launcher's test plan,
+// build tags, and command line flags, and returns the ID of the launched build.
+func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context) (int64, error) {
+	ctpRequest, err := l.testPlatformRequest()
 	if err != nil {
 		return 0, err
 	}
@@ -211,43 +253,43 @@ func launchCTPBuild(ctx context.Context, bbClient *buildbucket.Client, testPlan 
 	//
 	// buildProps contains separate dimensions and priority values to apply to
 	// the child test_runner builds that will be launched by the parent build.
-	return bbClient.ScheduleBuild(ctx, buildProps, nil, buildTags, 0)
+	return l.bbClient.ScheduleBuild(ctx, buildProps, nil, l.buildTags, 0)
 }
 
 // testPlatformRequest constructs a cros_test_platform.Request from the given
 // test plan, build tags, and command line flags.
-func testPlatformRequest(testPlan *test_platform.Request_TestPlan, buildTags map[string]string, cliFlags *testCommonFlags) (*test_platform.Request, error) {
-	softwareDependencies, err := cliFlags.softwareDependencies()
+func (l *ctpRunLauncher) testPlatformRequest() (*test_platform.Request, error) {
+	softwareDependencies, err := l.cliFlags.softwareDependencies()
 	if err != nil {
 		return nil, err
 	}
 
 	return &test_platform.Request{
-		TestPlan: testPlan,
+		TestPlan: l.testPlan,
 		Params: &test_platform.Request_Params{
 			FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
-				SwarmingDimensions: common.ToKeyvalSlice(cliFlags.addedDims),
+				SwarmingDimensions: common.ToKeyvalSlice(l.cliFlags.addedDims),
 			},
 			HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
-				Model: cliFlags.model,
+				Model: l.cliFlags.model,
 			},
 			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
-				BuildTarget: &chromiumos.BuildTarget{Name: cliFlags.board},
+				BuildTarget: &chromiumos.BuildTarget{Name: l.cliFlags.board},
 			},
 			SoftwareDependencies: softwareDependencies,
-			Scheduling:           cliFlags.schedulingParams(),
+			Scheduling:           l.cliFlags.schedulingParams(),
 			Decorations: &test_platform.Request_Params_Decorations{
-				AutotestKeyvals: cliFlags.keyvals,
-				Tags:            common.ToKeyvalSlice(buildTags),
+				AutotestKeyvals: l.cliFlags.keyvals,
+				Tags:            common.ToKeyvalSlice(l.buildTags),
 			},
-			Retry: cliFlags.retryParams(),
+			Retry: l.cliFlags.retryParams(),
 			Metadata: &test_platform.Request_Params_Metadata{
-				TestMetadataUrl:        imageArchiveBaseURL + cliFlags.image,
-				DebugSymbolsArchiveUrl: imageArchiveBaseURL + cliFlags.image,
+				TestMetadataUrl:        imageArchiveBaseURL + l.cliFlags.image,
+				DebugSymbolsArchiveUrl: imageArchiveBaseURL + l.cliFlags.image,
 			},
 			Time: &test_platform.Request_Params_Time{
-				MaximumDuration: ptypes.DurationProto(
-					time.Duration(cliFlags.timeoutMins) * time.Minute),
+				MaximumDuration: durationpb.New(
+					time.Duration(l.cliFlags.timeoutMins) * time.Minute),
 			},
 		},
 	}, nil

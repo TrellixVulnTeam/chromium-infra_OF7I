@@ -94,7 +94,7 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	if c.exitEarly {
 		return nil
 	}
-	build, err := leasesBBClient.WaitForBuildStart(ctx, buildID)
+	build, err := leasesBBClient.WaitForBuildStepStart(ctx, buildID, c.leaseStartStepName())
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (c *leaseFlags) register(f *flag.FlagSet) {
 the lease won't start until that task completes.`)
 	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional DUT dimension in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional DUT dimensions in same format as -dim.")
-	f.BoolVar(&c.exitEarly, "exit-early", false, `Exit command as soon as lease is scheduled. crosfleet will not notify on lease failure,
+	f.BoolVar(&c.exitEarly, "exit-early", false, `Exit command as soon as lease is scheduled. crosfleet will not notify on lease validation failure,
 or print the hostname of the leased DUT.`)
 }
 
@@ -213,4 +213,10 @@ func (c *leaseFlags) hasOnePrimaryDim() bool {
 		}
 	}
 	return count == 1
+}
+
+func (c *leaseRun) leaseStartStepName() string {
+	hours := c.durationMins / 60
+	mins := c.durationMins % 60
+	return fmt.Sprintf("lease DUT for %d hr %d min", hours, mins)
 }

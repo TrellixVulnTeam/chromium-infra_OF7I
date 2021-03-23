@@ -82,12 +82,17 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
-	if err != nil {
-		return err
+
+	testLauncher := ctpRunLauncher{
+		cliApp:    a,
+		cmdName:   testPlanCmdName,
+		bbClient:  ctpBBClient,
+		testPlan:  testPlan,
+		buildTags: buildTags,
+		cliFlags:  &c.testCommonFlags,
+		exitEarly: c.exitEarly,
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testPlanCmdName, ctpBBClient.BuildURL(buildID))
-	return nil
+	return testLauncher.launchAndValidateTestPlan(ctx)
 }
 
 func readTestPlan(path string) (*test_platform.Request_TestPlan, error) {

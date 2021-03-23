@@ -370,7 +370,12 @@ func TestTestPlatformRequest(t *testing.T) {
 			},
 		},
 	}
-	gotRequest, err := testPlatformRequest(&test_platform.Request_TestPlan{}, buildTags, cliFlags)
+	runLauncher := ctpRunLauncher{
+		testPlan:  &test_platform.Request_TestPlan{},
+		buildTags: buildTags,
+		cliFlags:  cliFlags,
+	}
+	gotRequest, err := runLauncher.testPlatformRequest()
 	if err != nil {
 		t.Fatalf("unexpected error constructing Test Platform request: %v", err)
 	}

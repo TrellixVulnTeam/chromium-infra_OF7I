@@ -72,12 +72,17 @@ func (c *testRun) innerRun(a subcommands.Application, args []string, env subcomm
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
-	if err != nil {
-		return err
+
+	testLauncher := ctpRunLauncher{
+		cliApp:    a,
+		cmdName:   testCmdName,
+		bbClient:  ctpBBClient,
+		testPlan:  testPlan,
+		buildTags: buildTags,
+		cliFlags:  &c.testCommonFlags,
+		exitEarly: c.exitEarly,
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", testCmdName, ctpBBClient.BuildURL(buildID))
-	return nil
+	return testLauncher.launchAndValidateTestPlan(ctx)
 }
 
 // testPlanForTests constructs a Test Platform test plan for the given tests.

@@ -134,3 +134,37 @@ func TestBotDimsAndBuildTagsData(t *testing.T) {
 		})
 	}
 }
+
+var testLeaseStartStepName = []struct {
+	durationMins int64
+	wantStepName string
+}{
+	{
+		59,
+		"lease DUT for 0 hr 59 min",
+	},
+	{
+		60,
+		"lease DUT for 1 hr 0 min",
+	},
+	{
+		61,
+		"lease DUT for 1 hr 1 min",
+	},
+}
+
+func TestLeaseStartStepName(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testLeaseStartStepName {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantStepName), func(t *testing.T) {
+			t.Parallel()
+			leaseRun := &leaseRun{}
+			leaseRun.durationMins = tt.durationMins
+			gotStepName := leaseRun.leaseStartStepName()
+			if diff := cmp.Diff(tt.wantStepName, gotStepName); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
+	}
+}

@@ -70,12 +70,17 @@ func (c *suiteRun) innerRun(a subcommands.Application, args []string, env subcom
 	if err != nil {
 		return err
 	}
-	buildID, err := launchCTPBuild(ctx, ctpBBClient, testPlan, buildTags, &c.testCommonFlags)
-	if err != nil {
-		return err
+
+	testLauncher := ctpRunLauncher{
+		cliApp:    a,
+		cmdName:   suiteCmdName,
+		bbClient:  ctpBBClient,
+		testPlan:  testPlan,
+		buildTags: buildTags,
+		cliFlags:  &c.testCommonFlags,
+		exitEarly: c.exitEarly,
 	}
-	fmt.Fprintf(a.GetOut(), "Running %s at %s\n", suiteCmdName, ctpBBClient.BuildURL(buildID))
-	return nil
+	return testLauncher.launchAndValidateTestPlan(ctx)
 }
 
 // testPlanForSuites constructs a Test Platform test plan for the given tests.
