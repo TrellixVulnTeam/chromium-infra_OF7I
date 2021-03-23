@@ -3355,6 +3355,20 @@ wheel: <
 
 * *universal*
 
+## **pluggy-py3**
+
+### 0.13.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pluggy-py3"
+  version: "version:0.13.1"
+>
+```
+
+
+* *universal*
+
 ## **ply**
 
 ### 3.11
@@ -4183,6 +4197,34 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pytest-py2_py3"
   version: "version:4.1.1"
+>
+```
+
+
+* *universal*
+
+## **pytest-py3**
+
+### 6.2.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-py3"
+  version: "version:6.2.2"
+>
+```
+
+
+* *universal*
+
+## **pytest-asyncio-py3**
+
+### 0.14.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-asyncio-py3"
+  version: "version:0.14.0"
 >
 ```
 
