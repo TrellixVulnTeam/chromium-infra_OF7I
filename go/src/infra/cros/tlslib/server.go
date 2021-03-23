@@ -141,6 +141,14 @@ func (s *Server) ProvisionDut(ctx context.Context, req *tls.ProvisionDutRequest)
 	return op, status.Error(codes.OK, "ProvisionDut started")
 }
 
+// ProvisionLacros implements TLS provision API for Lacros.
+func (s *Server) ProvisionLacros(ctx context.Context, req *tls.ProvisionLacrosRequest) (*longrunning.Operation, error) {
+	op := s.lroMgr.NewOperation()
+	go s.provisionLacros(req, op.Name)
+
+	return op, status.Error(codes.OK, "ProvisionLacros started")
+}
+
 // ExecDutCommand implements TLS ExecDutCommand API.
 func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {
 	// Batch size of stdout, stderr.

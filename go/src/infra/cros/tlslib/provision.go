@@ -44,7 +44,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: failed to create provisionState, %s", err),
-			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
+			tls.ProvisionDutResponse_REASON_INVALID_REQUEST.String()))
 		return
 	}
 
@@ -54,7 +54,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.InvalidArgument,
 			fmt.Sprintf("provision: DUT SSH address unattainable prior to provisioning, %s", err),
-			tls.ProvisionDutResponse_REASON_INVALID_REQUEST))
+			tls.ProvisionDutResponse_REASON_INVALID_REQUEST.String()))
 		return
 	}
 
@@ -64,7 +64,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.FailedPrecondition,
 			fmt.Sprintf("provision: DUT unreachable prior to provisioning (SSH client), %s", err),
-			tls.ProvisionDutResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION))
+			tls.ProvisionDutResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION.String()))
 		return
 	}
 	defer disconnect()
@@ -75,7 +75,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning OS",
-			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT.String()))
 		return
 	default:
 	}
@@ -85,7 +85,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to get the builder path from DUT, %s", err),
-			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 		return
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
@@ -94,7 +94,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to provision OS, %s", err),
-				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
 
@@ -107,7 +107,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to connect to DUT after reboot, %s", err),
-				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
 		defer disconnect()
@@ -116,7 +116,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			setError(newOperationError(
 				codes.Aborted,
 				fmt.Sprintf("provision: failed to verify OS provision, %s", err),
-				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
 	} else {
@@ -129,7 +129,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.DeadlineExceeded,
 			"provision: timed out before provisioning DLCs",
-			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT.String()))
 		return
 	default:
 	}
@@ -137,12 +137,72 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		setError(newOperationError(
 			codes.Aborted,
 			fmt.Sprintf("provision: failed to provision DLCs, %s", err),
-			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED))
+			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 		return
 	}
 
 	if err := s.lroMgr.SetResult(opName, &tls.ProvisionDutResponse{}); err != nil {
 		log.Printf("provision: failed to set Opertion result, %s", err)
+	}
+}
+
+func (s *Server) provisionLacros(req *tls.ProvisionLacrosRequest, opName string) {
+	log.Printf("provisionLacros: started %v", opName)
+	defer log.Printf("provisionLacros: finished %v", opName)
+
+	// Set a timeout for provisioning Lacros.
+	// TODO(kimjae): Tie the context with timeout to op by passing to lroMgr.
+	ctx, cancel := context.WithTimeout(s.ctx, time.Hour)
+	defer cancel()
+
+	setError := func(opErr *status.Status) {
+		if err := s.lroMgr.SetError(opName, opErr); err != nil {
+			log.Printf("provision: failed to set Operation error, %s", err)
+		}
+	}
+
+	p, err := newProvisionLacrosState(s, req)
+	if err != nil {
+		setError(newOperationError(
+			codes.InvalidArgument,
+			fmt.Sprintf("provisionLacros: failed to create provisionLacrosState, %s", err),
+			tls.ProvisionLacrosResponse_REASON_INVALID_REQUEST.String()))
+		return
+	}
+
+	// Verify that the DUT is reachable.
+	addr, err := s.getSSHAddr(ctx, req.GetName())
+	if err != nil {
+		setError(newOperationError(
+			codes.InvalidArgument,
+			fmt.Sprintf("provisionLacros: DUT SSH address unattainable prior to provisioning Lacros, %s", err),
+			tls.ProvisionLacrosResponse_REASON_INVALID_REQUEST.String()))
+		return
+	}
+
+	// Connect to the DUT.
+	disconnect, err := p.connect(ctx, addr)
+	if err != nil {
+		setError(newOperationError(
+			codes.FailedPrecondition,
+			fmt.Sprintf("provisionLacros: DUT unreachable prior to provisioning Lacros (SSH client), %s", err),
+			tls.ProvisionLacrosResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION.String()))
+		return
+	}
+	defer disconnect()
+
+	// Provision Lacros onto the DUT.
+	if err := p.provisionLacros(ctx); err != nil {
+		setError(newOperationError(
+			codes.Aborted,
+			fmt.Sprintf("provisionLacros: failed to provision Lacros onto the DUT, %s", err),
+			tls.ProvisionLacrosResponse_REASON_PROVISIONING_FAILED.String()))
+		return
+	}
+
+	// Lacros provisioning was successful!
+	if err := s.lroMgr.SetResult(opName, &tls.ProvisionLacrosResponse{}); err != nil {
+		log.Printf("provisionLacros: failed to set Opertion result for %v, %s", opName, err)
 	}
 }
 
@@ -172,10 +232,10 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 }
 
 // newOperationError is a helper in creating Operation_Error and marshals ErrorInfo.
-func newOperationError(c codes.Code, msg string, reason tls.ProvisionDutResponse_Reason) *status.Status {
+func newOperationError(c codes.Code, msg, reason string) *status.Status {
 	s := status.New(c, msg)
 	s, err := s.WithDetails(&errdetails.ErrorInfo{
-		Reason: reason.String(),
+		Reason: reason,
 	})
 	if err != nil {
 		panic("Failed to set status details")
