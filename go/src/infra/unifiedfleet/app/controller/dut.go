@@ -642,7 +642,7 @@ func processUpdateMachineLSEDUTMask(oldDut, newDut *chromeosLab.DeviceUnderTest,
 		if oldDut.GetPeripherals().GetChameleon() == nil {
 			oldDut.GetPeripherals().Chameleon = &chromeosLab.Chameleon{}
 		}
-		if newDut.GetPeripherals().GetChameleon() != nil {
+		if newDut.GetPeripherals().GetChameleon() != nil && len(newDut.GetPeripherals().GetChameleon().GetChameleonPeripherals()) > 0 {
 			for _, ctype := range newDut.GetPeripherals().GetChameleon().GetChameleonPeripherals() {
 				// Copy chameleon peripherals. Avoid copying invalid values.
 				if ctype != chromeosLab.ChameleonType_CHAMELEON_TYPE_INVALID {

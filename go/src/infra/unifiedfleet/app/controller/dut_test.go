@@ -1411,6 +1411,60 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// State should be unchanged.
 			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Test the same thing but with empty chameleon struct. Expectation is that UFS ignores the empty struct given and sets chameleon to nil on delete.
+			// Add chameleon to the DUT.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				AudioBoard:           true,
+			}
+			dut2.UpdateTime = nil
+			// Update the DUT with proper mask.
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.chameleon.type", "dut.chameleon.audioboard"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Validate proto after update.
+			So(dut2, ShouldResembleProto, resp)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 7)
+			So(changes[5].OldValue, ShouldEqual, "[]")
+			So(changes[5].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[6].OldValue, ShouldEqual, "false")
+			So(changes[6].NewValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 4)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-14")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			// Delete chameleon
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{}
+			// UpdateDUT with at least one of the chameleon paths
+			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.chameleon.type"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			// Chameleon should be assigned to nil and not empty struct.
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = nil
+			// Validate proto after update.
+			So(resp, ShouldResembleProto, dut2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 9)
+			// Verify Chameleon types deleted
+			So(changes[7].NewValue, ShouldEqual, "[]")
+			So(changes[7].OldValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			// Verify audiobox reset
+			So(changes[8].NewValue, ShouldEqual, "false")
+			So(changes[8].OldValue, ShouldEqual, "true")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 5)
+			s, err = state.GetStateRecord(ctx, "hosts/dut-14")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+
 		})
 
 		Convey("UpdateDUT - Add wifi to DUT", func() {
