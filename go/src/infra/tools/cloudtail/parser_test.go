@@ -202,6 +202,25 @@ func TestGlogLogsParser(t *testing.T) {
 	})
 }
 
+func TestLucipyLogsParser(t *testing.T) {
+	testTextLogsParser(t, &lucipyLogsParser{}, []textTestCase{
+		{
+			line:        "not a valid log line",
+			wantSuccess: false,
+		},
+		{
+			line:          "23176 2021-03-19 02:14:18.237 I: Hello World",
+			wantSuccess:   true,
+			wantTimestamp: "2021-03-19T02:14:18.237000+00:00",
+			wantSeverity:  Info,
+			wantPayload:   "Hello World",
+			wantLabels: map[string]string{
+				"processID": "23176",
+			},
+		},
+	})
+}
+
 type callbackParser struct {
 	cb      func(line string) *Entry
 	mergeCb func(line string, e *Entry) bool

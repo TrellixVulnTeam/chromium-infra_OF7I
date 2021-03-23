@@ -53,6 +53,7 @@ func StdParser() LogParser {
 		&puppetLogsParser{},
 		&apacheErrorLogsParser{time.Local},
 		&glogLogsParser{},
+		&lucipyLogsParser{},
 	}
 }
 
@@ -348,6 +349,58 @@ func (p *glogLogsParser) ParseLogLine(line string) *Entry {
 }
 
 func (p *glogLogsParser) MergeLogLine(line string, e *Entry) bool {
+	e.TextPayload += "\n" + line
+	return true
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+var (
+	// https://source.chromium.org/chromium/infra/infra/+/main:luci/client/utils/logging_utils.py;l=185;drc=8bd684954b02647a9fb036d9852f4017bf6953b4
+	lucipyLogRe = regexp.MustCompile(
+		`^` +
+			`(\d+)` + // Process ID
+			// https://source.chromium.org/chromium/infra/infra/+/main:luci/client/utils/logging_utils.py;l=156;drc=8bd684954b02647a9fb036d9852f4017bf6953b4
+			` (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}.\d{3})` + // %Y-%m-%d %H:%M:%S.%fff
+			` ([DIWEC]):` + // Severity
+			` (.*)`) // Message
+
+	lucipyLogSeverities = map[string]Severity{
+		"D": Debug,
+		"I": Info,
+		"W": Warning,
+		"E": Error,
+		"C": Critical,
+	}
+)
+
+type lucipyLogsParser struct{}
+
+func (p *lucipyLogsParser) ParseLogLine(line string) *Entry {
+	matches := lucipyLogRe.FindStringSubmatch(line)
+	if matches == nil {
+		return nil
+	}
+	processID := matches[1]
+	timestamp, err := time.Parse(time.RFC3339Nano, fmt.Sprintf("%sT%s000000Z", matches[2], matches[3]))
+	if err != nil {
+		return nil
+	}
+	severity := matches[4]
+	message := matches[5]
+
+	return &Entry{
+		Timestamp:   timestamp,
+		Severity:    lucipyLogSeverities[severity],
+		TextPayload: message,
+		ParsedBy:    p,
+		Labels: map[string]string{
+			"processID": processID,
+		},
+	}
+}
+
+func (p *lucipyLogsParser) MergeLogLine(line string, e *Entry) bool {
 	e.TextPayload += "\n" + line
 	return true
 }
