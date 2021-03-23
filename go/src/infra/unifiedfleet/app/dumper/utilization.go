@@ -73,7 +73,7 @@ func reportUFSInventoryCronHandler(ctx context.Context) (err error) {
 
 func (c inventoryCounter) Report(ctx context.Context) {
 	for b, count := range c {
-		logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
+		//logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
 		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
 	}
 }

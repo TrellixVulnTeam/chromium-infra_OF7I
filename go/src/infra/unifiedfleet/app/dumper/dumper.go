@@ -65,7 +65,7 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.dump_to_invV2_dutstates", func(ctx context.Context) {
 		cron.Run(ctx, 15*time.Minute, cron.DAILY, DumpToInventoryDutStateSnapshot)
 	})
-	srv.RunInBackground("ufs.report-inventory", func(ctx context.Context) {
+	srv.RunInBackground("ufs.report_inventory", func(ctx context.Context) {
 		cron.Run(ctx, 5*time.Minute, cron.EVERY, reportUFSInventoryCronHandler)
 	})
 }
