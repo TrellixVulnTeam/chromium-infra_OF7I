@@ -277,7 +277,7 @@
       "git",
       "checkout",
       "-t",
-      "origin/master",
+      "origin/main",
       "-b",
       "roll-pins"
     ],

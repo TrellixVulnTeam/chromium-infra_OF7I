@@ -56,7 +56,7 @@ def _send_cl(api, root, updated, tbrs, commit):
 
   with api.context(cwd=root):
     api.git('branch', '-D', 'roll-pins', ok_ret=(0, 1))
-    api.git('checkout', '-t', 'origin/master', '-b', 'roll-pins')
+    api.git('checkout', '-t', 'origin/main', '-b', 'roll-pins')
     api.git('commit', '-a', '-m', desc)
 
     api.git_cl.upload(desc, name='git cl upload', upload_args=[
