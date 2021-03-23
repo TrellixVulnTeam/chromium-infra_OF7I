@@ -98,8 +98,39 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			return
 		}
 
+		if !req.GetPreserveStateful() {
+			if err := p.wipeStateful(ctx); err != nil {
+				setError(newOperationError(
+					codes.Aborted,
+					fmt.Sprintf("provision: failed to wipe stateful, %s", err),
+					tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+				return
+			}
+			// After a reboot, need a new client connection.
+			sshCtx, cancel := context.WithTimeout(ctx, 300*time.Second)
+			defer cancel()
+
+			disconnect, err := p.connect(sshCtx, addr)
+			if err != nil {
+				setError(newOperationError(
+					codes.Aborted,
+					fmt.Sprintf("provision: failed to connect to DUT after wipe reboot, %s", err),
+					tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+				return
+			}
+			defer disconnect()
+		}
+
+		if err := p.provisionStateful(ctx); err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to provision stateful, %s", err),
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+			return
+		}
+
 		// After a reboot, need a new client connection.
-		sshCtx, cancel := context.WithTimeout(context.TODO(), 300*time.Second)
+		sshCtx, cancel := context.WithTimeout(ctx, 300*time.Second)
 		defer cancel()
 
 		disconnect, err := p.connect(sshCtx, addr)

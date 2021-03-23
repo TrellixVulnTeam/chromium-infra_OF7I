@@ -101,6 +101,27 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 		p.revertProvisionOS(pi)
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
+	return nil
+}
+
+func (p *provisionState) wipeStateful(ctx context.Context) error {
+	if err := runCmd(p.c, "echo 'fast keepimg' > /mnt/stateful_partition/factory_install_reset"); err != nil {
+		return fmt.Errorf("wipeStateful: Failed to to write to factory reset file, %s", err)
+	}
+
+	runLabMachineAutoReboot(p.c)
+	rebootDUT(p.c)
+	return nil
+}
+
+func (p *provisionState) provisionStateful(ctx context.Context) error {
+	stopSystemDaemons(p.c)
+
+	if err := p.installStateful(ctx); err != nil {
+		p.revertStatefulInstall()
+		return fmt.Errorf("provisionStateful: falied to install stateful partition, %s", err)
+	}
+
 	runLabMachineAutoReboot(p.c)
 	rebootDUT(p.c)
 	return nil
@@ -161,15 +182,11 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo) []error {
 	kernelErr := make(chan error)
 	rootErr := make(chan error)
-	statefulErr := make(chan error)
 	go func() {
 		kernelErr <- p.installKernel(ctx, pi)
 	}()
 	go func() {
 		rootErr <- p.installRoot(ctx, pi)
-	}()
-	go func() {
-		statefulErr <- p.installStateful(ctx)
 	}()
 
 	var provisionErrs []error
@@ -177,10 +194,6 @@ func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo
 		provisionErrs = append(provisionErrs, err)
 	}
 	if err := <-rootErr; err != nil {
-		provisionErrs = append(provisionErrs, err)
-	}
-	if err := <-statefulErr; err != nil {
-		p.revertStatefulInstall()
 		provisionErrs = append(provisionErrs, err)
 	}
 	return provisionErrs
