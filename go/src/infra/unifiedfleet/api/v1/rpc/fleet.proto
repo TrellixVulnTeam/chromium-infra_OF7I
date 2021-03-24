@@ -10,9 +10,9 @@ option go_package = "infra/unifiedfleet/api/v1/rpc;ufspb";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
-import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
-import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
-import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/rpc/status.proto";
 import "infra/unifiedfleet/api/v1/models/asset.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
 import "infra/unifiedfleet/api/v1/models/caching_service.proto";

@@ -9,7 +9,7 @@ package unifiedfleet.api.v1.models;
 option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
 
 import "google/protobuf/timestamp.proto";
-import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "google/api/resource.proto";
 import "google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/models/location.proto";
 import "infra/unifiedfleet/api/v1/models/assetinfo.proto";

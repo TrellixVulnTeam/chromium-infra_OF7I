@@ -8,7 +8,7 @@ package unifiedfleet.api.v1.models;
 
 option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
 
-import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "google/api/resource.proto";
 
 // Location of the asset(Rack/Machine) in the lab
 // For Browser machine, lab and rack are the only field to fill in.
