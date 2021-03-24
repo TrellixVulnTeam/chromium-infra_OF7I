@@ -16,6 +16,8 @@ package cli
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -85,6 +87,65 @@ func TestBugFlagParsing(t *testing.T) {
 		})
 		Convey("project:01", func() {
 			So(fs.Parse([]string{"-bug", "project:01"}), ShouldNotBeNil)
+		})
+	})
+}
+
+func hardcodedCommandOutput(data string) writeGitCLJSON {
+	return func(intoFile string) error {
+		if err := ioutil.WriteFile(intoFile, []byte(data), 0666); err != nil {
+			panic(fmt.Sprintf("unexpected error while writing out fake data to %q: %v", intoFile, err))
+		}
+		return nil
+	}
+}
+
+const (
+	// The output from running `git cl issue --json $FILE` inside the pinpoint
+	// directory as of 2021-03-23.
+	infraGitClIssueOutput = `{"gerrit_host": "chromium-review.googlesource.com", "gerrit_project": "infra/infra", "issue_url": null, "issue": null}`
+	// Constants to represent the values in infraGitClIssueOutput
+	infraGerritHost  = "chromium-review.googlesource.com"
+	infraGitilesHost = "chromium.googlesource.com"
+	infraRepository  = "infra/infra"
+
+	// The output from running `git cl issue --json $FILE` before
+	// https://crrev.com/c/2766153 was applied.
+	oldGitClIssueOutput = `{"issue_url": null, "issue": null}`
+)
+
+func TestGuessRepositoryDefaults(t *testing.T) {
+	t.Parallel()
+	Convey("When provided appropriate JSON data", t, func() {
+		gitiles, gerrit, repo, err := guessRepositoryDefaults(hardcodedCommandOutput(infraGitClIssueOutput))
+
+		Convey("should return infra information", func() {
+			So(err, ShouldBeNil)
+			So(gitiles, ShouldEqual, infraGitilesHost)
+			So(gerrit, ShouldEqual, infraGerritHost)
+			So(repo, ShouldEqual, infraRepository)
+		})
+	})
+
+	Convey("When provided outdated JSON data", t, func() {
+		gitiles, gerrit, repo, err := guessRepositoryDefaults(hardcodedCommandOutput(oldGitClIssueOutput))
+
+		Convey("should return default information", func() {
+			So(err, ShouldBeError)
+			So(gitiles, ShouldEqual, defaultGitilesHost)
+			So(gerrit, ShouldEqual, defaultGerritHost)
+			So(repo, ShouldEqual, defaultRepository)
+		})
+	})
+
+	Convey("When provided invalid JSON data", t, func() {
+		gitiles, gerrit, repo, err := guessRepositoryDefaults(hardcodedCommandOutput("invalid json"))
+
+		Convey("should return default information", func() {
+			So(err, ShouldBeError)
+			So(gitiles, ShouldEqual, defaultGitilesHost)
+			So(gerrit, ShouldEqual, defaultGerritHost)
+			So(repo, ShouldEqual, defaultRepository)
 		})
 	})
 }

@@ -15,11 +15,18 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.chromium.org/luci/common/data/text"
+	"go.chromium.org/luci/common/errors"
 )
 
 type experimentBaseRun struct {
@@ -130,13 +137,76 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 		number>. When <patchset number> is not provided, we'll use the latest
 		patchset of the CL.
 	`))
-	e.Flags.StringVar(&e.gitilesHost, "gitiles-host", "chromium.googlesource.com", text.Doc(`
-		Gitiles host to retrieve commits from.
+
+	// We drop the error because we don't want to spam the user if they are
+	// running from some random directory.
+	gitilesHost, gerritHost, repository, _ := guessRepositoryDefaults(realGitCLIssue)
+
+	e.Flags.StringVar(&e.gitilesHost, "gitiles-host", gitilesHost, text.Doc(`
+      Gitiles host to retrieve commits from. This flag's default is inferred
+      from the directory where the command is executed.
 	`))
-	e.Flags.StringVar(&e.gerritHost, "gerrit-host", "chromium-review.googlesource.com", text.Doc(`
-		Gerrit host to retrieve CLs from.
+	e.Flags.StringVar(&e.gerritHost, "gerrit-host", gerritHost, text.Doc(`
+      Gerrit host to retrieve CLs from. This flag's default is inferred from
+      the directory where the command is executed.
 	`))
-	e.Flags.StringVar(&e.repository, "repository", "chromium/src", text.Doc(`
-		Project associated with Gerrit and Gitiles to fetch code and CLs from.
+	e.Flags.StringVar(&e.repository, "repository", repository, text.Doc(`
+      Project associated with Gerrit and Gitiles to fetch code and CLs from.
+      This flag's default is inferred from the directory where the command is
+      executed.
 	`))
+}
+
+const (
+	defaultGitilesHost = "chromium.googlesource.com"
+	defaultGerritHost  = "chromium-review.googlesource.com"
+	defaultRepository  = "chromium/src"
+)
+
+// guessRepositoryDefaults returns appropriate default values for a variety of
+// flags. If no good default value can be inferred from the environment, or an
+// error occurs, chromium-specific values will be returned along with any
+// relevant error.
+func guessRepositoryDefaults(writeJSON writeGitCLJSON) (gitilesHost, gerritHost, repository string, _ error) {
+	var tmpName string
+	{
+		dir, err := ioutil.TempDir("", "pinpoint_git_cl")
+		if err != nil {
+			return defaultGitilesHost, defaultGerritHost, defaultRepository, err
+		}
+		defer os.RemoveAll(dir)
+		tmpName = filepath.Join(dir, "issue.json")
+	}
+
+	if err := writeJSON(tmpName); err != nil {
+		return defaultGitilesHost, defaultGerritHost, defaultRepository, err
+	}
+	bs, err := ioutil.ReadFile(tmpName)
+	if err != nil {
+		return defaultGitilesHost, defaultGerritHost, defaultRepository, err
+	}
+	var x struct {
+		GerritHost    string `json:"gerrit_host"`
+		GerritProject string `json:"gerrit_project"`
+	}
+	if err := json.Unmarshal(bs, &x); err != nil {
+		return defaultGitilesHost, defaultGerritHost, defaultRepository, err
+	}
+	if x.GerritHost == "" || x.GerritProject == "" {
+		return defaultGitilesHost, defaultGerritHost, defaultRepository, errors.Reason("no gerrit_host and/or gerrit_project found in `git cl issue` output: %s", bs).Err()
+	}
+	// Guess the gitiles host based off the gerrit host
+	gitilesHost = strings.Replace(x.GerritHost, "-review", "", 1)
+	return gitilesHost, x.GerritHost, x.GerritProject, nil
+}
+
+// writeGitCLJSON encapsulates the operation of executing `git cl issue` in a
+// way that is easy to swap out for testing. Upon returning, the file at the
+// provided path should be overwritten with the output JSON data.
+//
+// Use realGitCLIssue to actually execute the git command.
+type writeGitCLJSON func(intoFile string) error
+
+func realGitCLIssue(intoFile string) error {
+	return exec.Command("git", "cl", "issue", "--json", intoFile).Run()
 }
