@@ -474,7 +474,8 @@ class MonorailServicerTest(unittest.TestCase):
       self.assertEqual(expected_code, self.prpc_context._code)
     else:
       self.assertFalse(processed)
-      self.assertEqual(codes.StatusCode.OK, self.prpc_context._code)
+      # Uncaught exceptions should indicate an error.
+      self.assertEqual(codes.StatusCode.INTERNAL, self.prpc_context._code)
     if details is not None:
       self.assertEqual(details, self.prpc_context._details)
 

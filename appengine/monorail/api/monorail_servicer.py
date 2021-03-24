@@ -353,6 +353,8 @@ class MonorailServicer(object):
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details('Bad XSRF token.')
     else:
+      prpc_context.set_code(codes.StatusCode.INTERNAL)
+      prpc_context.set_details('Potential programming error.')
       return False  # Re-raise any exception from programming errors.
     return True  # It if was one of the cases above, don't reraise.
 

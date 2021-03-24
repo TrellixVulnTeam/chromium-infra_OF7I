@@ -404,6 +404,8 @@ class MonorailServicer(object):
       prpc_context.set_details(
           'Page token invalid or incorrect for the accompanying request')
     else:
+      prpc_context.set_code(codes.StatusCode.INTERNAL)
+      prpc_context.set_details('Potential programming error.')
       return False  # Re-raise any exception from programming errors.
     return True  # It if was one of the cases above, don't reraise.
 
@@ -424,7 +426,6 @@ class MonorailServicer(object):
         'name': method_identifier,
         'is_robot': False,
         }
-
     http_metrics.server_durations.add(elapsed_ms, fields=fields)
     http_metrics.server_response_status.increment(fields=fields)
     http_metrics.server_request_bytes.add(
