@@ -133,7 +133,7 @@ func TestServerService(t *testing.T) {
 			client := pinpoint.NewPinpointClient(conn)
 			Convey("Then requests to ScheduleJob will fail with 'missing required auth header'", func() {
 				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
-				So(err, ShouldNotBeNil)
+				So(err, ShouldBeStatusError, codes.PermissionDenied)
 				So(err.Error(), ShouldContainSubstring, "missing required auth header")
 			})
 		})
@@ -182,8 +182,7 @@ func TestGetJob(t *testing.T) {
 				Name: "jobs/legacy-02",
 			})
 			Convey("Then we get an error in the gRPC request", func() {
-				So(err, ShouldNotBeNil)
-				So(grpc.Code(err), ShouldEqual, codes.NotFound)
+				So(err, ShouldBeStatusError, codes.NotFound)
 			})
 
 		})
@@ -193,8 +192,7 @@ func TestGetJob(t *testing.T) {
 				Name: "jobs/legacy-",
 			})
 			Convey("Then we get an error in the gRPC request", func() {
-				So(err, ShouldNotBeNil)
-				So(grpc.Code(err), ShouldEqual, codes.InvalidArgument)
+				So(err, ShouldBeStatusError, codes.InvalidArgument)
 			})
 		})
 
@@ -249,7 +247,7 @@ func TestCancelJob(t *testing.T) {
 		Convey("with an un-authenticated connection", func() {
 			Convey("We fail to cancel the job", func() {
 				_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
-				So(err, ShouldBeError)
+				So(err, ShouldBeStatusError, codes.PermissionDenied)
 			})
 		})
 
@@ -258,11 +256,11 @@ func TestCancelJob(t *testing.T) {
 				ctx := authorizedCtx
 				Convey("We fail to cancel the Job without a reason", func() {
 					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName})
-					So(err, ShouldBeError)
+					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 				Convey("We fail to cancel the Job without a name", func() {
 					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Reason: "because"})
-					So(err, ShouldBeError)
+					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 				Convey("We can cancel a job with name and reason", func() {
 					j, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
@@ -271,7 +269,7 @@ func TestCancelJob(t *testing.T) {
 				})
 				Convey("We fail to cancel a missing job", func() {
 					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: "doesnt-exist", Reason: "because"})
-					So(err, ShouldBeError)
+					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 			})
 		})
