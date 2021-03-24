@@ -34,6 +34,7 @@ def recipe(name, use_bbagent = True):
         name = name,
         recipe = recipe,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromium/tools/build",
+        cipd_version = "refs/heads/master",
         use_bbagent = use_bbagent,
     )
 

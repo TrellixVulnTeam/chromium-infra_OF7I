@@ -104,6 +104,9 @@ luci.builder.defaults.execution_timeout.set(45 * time.minute)
 luci.builder.defaults.experiments.set({"luci.use_realms": 100})
 luci.builder.defaults.properties.set({"$kitchen": {"emulate_gce": True}})
 
+# Global recipe defaults
+luci.recipe.defaults.cipd_version.set("refs/heads/main")
+
 # Resources shared by all subprojects.
 
 luci.bucket(name = "ci")

@@ -45,12 +45,24 @@ def console_view(name, title, repo = None):
     )
 
 def cq_group(name, repo = None, tree_status_host = None):
-    """Defines a CQ group watching refs/heads/*."""
+    """Defines a CQ group watching refs/heads/(main|master).
+
+    This currently watches the 'master' ref only for repos which
+    are not `infra.REPO_URL`.
+
+    Args:
+      name: The human- and machine-readable name of the CQ group.
+      repo: https URL of the git repo for this CQ group to monitor.
+      tree_status_host: Hostname of the tree_status_host for this CQ group.
+    """
+    refs = ["refs/heads/main"]
+    if repo and repo != infra.REPO_URL:
+        refs.append("refs/heads/master")
     luci.cq_group(
         name = name,
         watch = cq.refset(
             repo = repo or infra.REPO_URL,
-            refs = ["refs/heads/master", "refs/heads/main"],
+            refs = refs,
         ),
         tree_status_host = tree_status_host,
         retry_config = cq.RETRY_NONE,
