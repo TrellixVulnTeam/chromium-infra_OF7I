@@ -106,6 +106,10 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 		return nil, err
 	}
 
+	if r.Job == nil {
+		return nil, status.Error(codes.InvalidArgument, "must set Job in request")
+	}
+
 	// Before we make this service the source of truth for the Pinpoint service, we first proxy requests to the
 	// actual Pinpoint legacy API from the provided request.
 	values, err := convert.JobToValues(r.Job, userEmail)
@@ -126,6 +130,7 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 	case http.StatusOK:
 		break
 	default:
+		grpclog.Errorf("Got unexpected Status from /api/new: %v", res.Status)
 		return nil, status.Errorf(codes.Internal, "Internal error")
 	}
 

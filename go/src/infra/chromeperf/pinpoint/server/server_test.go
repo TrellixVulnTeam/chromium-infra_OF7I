@@ -27,13 +27,14 @@ import (
 	"net/url"
 	"testing"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/test/bufconn"
+
+	. "infra/chromeperf/pinpoint/assertions"
 
 	. "github.com/smartystreets/goconvey/convey"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 const bufSize = 1024 * 1024
@@ -311,6 +312,61 @@ func TestListJob(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(len(urls), ShouldEqual, 1)
 			So(urls[0].String(), ShouldContainSubstring, url.QueryEscape(filter))
+		})
+	})
+}
+
+func TestScheduleJob(t *testing.T) {
+	t.Parallel()
+
+	const jobID = "1234567890abcd"
+	jobName := pinpoint.LegacyJobName(jobID)
+	ts := startFakeLegacyServer(t, map[string]string{
+		"/api/new": fmt.Sprintf(`{"jobId": %q}`, jobID),
+	})
+	defer ts.Close()
+
+	ctx := context.Background()
+	authorizedCtx := metadata.NewOutgoingContext(ctx, metadata.MD{
+		endpointsHeader: []string{
+			base64.RawURLEncoding.EncodeToString([]byte(`{"email": "user@example.com"}`)),
+		},
+	})
+	Convey("Given a grpc server with a client", t, func() {
+		dialer := registerPinpointServer(t, &pinpointServer{legacyPinpointService: ts.URL, LegacyClient: &http.Client{}})
+
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
+		So(err, ShouldBeNil)
+		defer conn.Close()
+		client := pinpoint.NewPinpointClient(conn)
+
+		Convey("without authentication, ScheduleJob fails", func() {
+			_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+			So(err, ShouldBeStatusError, codes.PermissionDenied)
+		})
+		Convey("with authentication", func() {
+			ctx := authorizedCtx
+
+			Convey("without appropriate arguments, ScheduleJob fails", func() {
+				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				So(err, ShouldBeStatusError, codes.InvalidArgument)
+			})
+
+			Convey("with correct GTestBenchmark arguments, ScheduleJob succeeds", func() {
+				j, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
+					Job: &pinpoint.JobSpec{
+						Arguments: &pinpoint.JobSpec_GtestBenchmark{
+							GtestBenchmark: &pinpoint.GTestBenchmark{
+								Benchmark:   "benchmark",
+								Test:        "test",
+								Measurement: "measurement",
+							},
+						},
+					},
+				})
+				So(err, ShouldBeNil)
+				So(j.Name, ShouldEqual, jobName)
+			})
 		})
 	})
 }

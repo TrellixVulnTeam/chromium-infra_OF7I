@@ -2,7 +2,6 @@ package fakelegacy_test
 
 import (
 	"context"
-	"fmt"
 	"net/http/httptest"
 	"sort"
 	"testing"
@@ -12,24 +11,14 @@ import (
 	"infra/chromeperf/pinpoint/server"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
+	. "infra/chromeperf/pinpoint/assertions"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 // Path to the directory which contains templates for API responses.
 const templateDir = "templates/"
-
-// TODO(chowski): move this to a more common location for reuse.
-func shouldBeStatusError(got interface{}, want ...interface{}) string {
-	err := got.(error)
-	wantCode := want[0].(codes.Code)
-	s, ok := status.FromError(err)
-	if !ok {
-		return fmt.Sprintf("error was not a Status error, found %T", err)
-	}
-	return ShouldEqual(s.Code(), wantCode)
-}
 
 func TestStaticUsage(t *testing.T) {
 	const (
@@ -70,7 +59,7 @@ func TestStaticUsage(t *testing.T) {
 	})
 	Convey("GetJob should return NotFound for unknown job", t, func() {
 		_, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName("86753098675309")})
-		So(err, shouldBeStatusError, codes.NotFound)
+		So(err, ShouldBeStatusError, codes.NotFound)
 	})
 	Convey("ListJobs should return both known jobs", t, func() {
 		list, err := grpcPinpoint.ListJobs(ctx, &pinpoint.ListJobsRequest{})
