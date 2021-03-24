@@ -18,7 +18,7 @@ infra.console_view(
 
 luci.cq_group(
     name = "build",
-    watch = cq.refset(repo = REPO_URL, refs = [r"refs/heads/master"]),
+    watch = cq.refset(repo = REPO_URL, refs = [r"refs/heads/master", r"refs/heads/main"]),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
 

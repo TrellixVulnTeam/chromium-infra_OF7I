@@ -10,7 +10,7 @@ REPO_URL = "https://chromium.googlesource.com/infra/testing/expect_tests"
 
 luci.cq_group(
     name = "expect_tests",
-    watch = cq.refset(repo = REPO_URL, refs = [r"refs/heads/master"]),
+    watch = cq.refset(repo = REPO_URL, refs = [r"refs/heads/master", r"refs/heads/main"]),
     retry_config = cq.RETRY_NONE,
 )
 
