@@ -296,9 +296,23 @@ func clearTPM(c *ssh.Client) error {
 	return runCmd(c, "crossystem clear_tpm_owner_request=1")
 }
 
-func rebootDUT(c *ssh.Client) {
+func rebootDUT(ctx context.Context, c *ssh.Client) error {
 	// Reboot, ignoring the SSH disconnection.
 	_ = runCmd(c, "reboot")
+
+	// Wait so following commands don't run before an actual reboot has kicked off
+	// by waiting for the client connection to shutdown or a timeout.
+	wait := make(chan interface{})
+	go func() {
+		_ = c.Wait()
+		close(wait)
+	}()
+	select {
+	case <-wait:
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("rebootDUT: timeout waiting waiting for reboot")
+	}
 }
 
 func runLabMachineAutoReboot(c *ssh.Client) {

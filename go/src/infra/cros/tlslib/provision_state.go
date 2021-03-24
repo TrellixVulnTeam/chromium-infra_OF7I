@@ -110,7 +110,9 @@ func (p *provisionState) wipeStateful(ctx context.Context) error {
 	}
 
 	runLabMachineAutoReboot(p.c)
-	rebootDUT(p.c)
+	if err := rebootDUT(ctx, p.c); err != nil {
+		return fmt.Errorf("wipeStateful: failed to reboot DUT, %s", err)
+	}
 	return nil
 }
 
@@ -123,7 +125,9 @@ func (p *provisionState) provisionStateful(ctx context.Context) error {
 	}
 
 	runLabMachineAutoReboot(p.c)
-	rebootDUT(p.c)
+	if err := rebootDUT(ctx, p.c); err != nil {
+		return fmt.Errorf("provisionStateful: failed to reboot DUT, %s", err)
+	}
 	return nil
 }
 
@@ -133,8 +137,8 @@ func (p *provisionState) verifyOSProvision() error {
 		return fmt.Errorf("verify OS provision: failed to get builder path, %s", err)
 	}
 	if actualBuilderPath != p.targetBuilderPath {
-		return fmt.Errorf("verify OS provision: DUT is on builder path %s when expected builder path is %s, %s",
-			actualBuilderPath, p.targetBuilderPath, err)
+		return fmt.Errorf("verify OS provision: DUT is on builder path %s when expected builder path is %s",
+			actualBuilderPath, p.targetBuilderPath)
 	}
 	return nil
 }
