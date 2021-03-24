@@ -105,6 +105,11 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.chaos, "chaos", false, "adding this flag will specify if chaos is present")
 		c.Flags.BoolVar(&c.audioCable, "audiocable", false, "adding this flag will specify if audiocable is present")
 		c.Flags.BoolVar(&c.smartUSBHub, "smartusbhub", false, "adding this flag will specify if smartusbhub is present")
+
+		// Machine fields
+		// crbug.com/1188488 showed us that it might be wise to add model/board during deployment if required.
+		c.Flags.StringVar(&c.model, "model", "", "model of the DUT undergoing deployment. If not given, HaRT data is used. Fails if model is not known for the DUT")
+		c.Flags.StringVar(&c.board, "board", "", "board of the DUT undergoing deployment. If not given, HaRT data is used. Fails if board is not known for the DUT")
 		return c
 	},
 }
@@ -161,11 +166,17 @@ type addDUT struct {
 	chaos             bool
 	audioCable        bool
 	smartUSBHub       bool
+
+	// Machine specific fields
+	model string
+	board string
 }
 
 var mcsvFields = []string{
 	"name",
 	"asset",
+	"model",
+	"board",
 	"servo_host",
 	"servo_port",
 	"servo_serial",
@@ -173,6 +184,15 @@ var mcsvFields = []string{
 	"rpm_host",
 	"rpm_outlet",
 	"pools",
+}
+
+// dutDeployUFSParams contains all the data that are needed for deployment of a single DUT
+// Asset and its update paths are required here to update location, model and board for the DUT
+// See: crbug.com/1188488 for why model and board need to be updated.
+type dutDeployUFSParams struct {
+	DUT   *ufspb.MachineLSE // MachineLSE of the DUT to be updated
+	Asset *ufspb.Asset      // Asset underlying the DUT being updated
+	Paths []string          // Update paths for the Asset being updated
 }
 
 func (c *addDUT) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -209,7 +229,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	tc.LogdogService = e.LogdogService
 	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
 
-	machineLSEs, err := c.parseArgs()
+	dutParams, err := c.parseArgs()
 	if err != nil {
 		return err
 	}
@@ -224,27 +244,27 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 			Options: site.DefaultPRPCOptions,
 		})
 
-		for _, lse := range machineLSEs {
-			if len(lse.GetMachines()) == 0 {
-				fmt.Printf("Failed to add DUT %s to UFS. It is not linked to any Asset(Machine).\n", lse.GetName())
+		for _, param := range dutParams {
+			if len(param.DUT.GetMachines()) == 0 {
+				fmt.Printf("Failed to add DUT %s to UFS. It is not linked to any Asset(Machine).\n", param.DUT.GetName())
 				continue
 			}
-			if err := c.addDutToUFS(ctx, ic, lse); err != nil {
-				fmt.Printf("Failed to add DUT %s to UFS. Skipping deployment. %s", lse.GetName(), err.Error())
+			if err := c.addDutToUFS(ctx, ic, param); err != nil {
+				fmt.Printf("Failed to add DUT %s to UFS. Skipping deployment. %s", param.DUT.GetName(), err.Error())
 				// skip deployment
 				continue
 			}
-			c.deployDutToSwarming(ctx, tc, lse)
+			c.deployDutToSwarming(ctx, tc, param.DUT)
 		}
-		if len(machineLSEs) > 1 {
+		if len(dutParams) > 1 {
 			fmt.Fprintf(a.GetOut(), "\nBatch tasks URL: %s\n\n", tc.SessionTasksURL())
 		}
 		return nil
 	}
 
 	// Run the deployment task
-	for _, lse := range machineLSEs {
-		c.deployDutToSwarming(ctx, tc, lse)
+	for _, param := range dutParams {
+		c.deployDutToSwarming(ctx, tc, param.DUT)
 	}
 	return nil
 }
@@ -320,7 +340,7 @@ func (c addDUT) validateArgs() error {
 	return nil
 }
 
-func (c *addDUT) parseArgs() ([]*ufspb.MachineLSE, error) {
+func (c *addDUT) parseArgs() ([]*dutDeployUFSParams, error) {
 	if c.newSpecsFile != "" {
 		if utils.IsCSVFile(c.newSpecsFile) {
 			return c.parseMCSV()
@@ -329,23 +349,31 @@ func (c *addDUT) parseArgs() ([]*ufspb.MachineLSE, error) {
 		if err := utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return nil, err
 		}
-		return []*ufspb.MachineLSE{machinelse}, nil
+		asset, paths, err := c.initializeAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "")
+		if err != nil {
+			return nil, err
+		}
+		return []*dutDeployUFSParams{{
+			DUT:   machinelse,
+			Asset: asset,
+			Paths: paths,
+		}}, nil
 	}
 	// command line parameters
-	lse, err := c.initializeLSE(nil)
+	dutParams, err := c.initializeLSEAndAsset(nil)
 	if err != nil {
 		return nil, err
 	}
-	return []*ufspb.MachineLSE{lse}, nil
+	return []*dutDeployUFSParams{dutParams}, nil
 }
 
 // parseMCSV parses the MCSV file and returns MachineLSEs
-func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
+func (c *addDUT) parseMCSV() ([]*dutDeployUFSParams, error) {
 	records, err := utils.ParseMCSVFile(c.newSpecsFile)
 	if err != nil {
 		return nil, err
 	}
-	var lses []*ufspb.MachineLSE
+	var dutParams []*dutDeployUFSParams
 	for i, rec := range records {
 		// if i is 1, determine whether this is a header
 		if i == 0 && utils.LooksLikeHeader(rec) {
@@ -358,30 +386,30 @@ func (c *addDUT) parseMCSV() ([]*ufspb.MachineLSE, error) {
 		for j, title := range mcsvFields {
 			recMap[title] = rec[j]
 		}
-		lse, err := c.initializeLSE(recMap)
+		p, err := c.initializeLSEAndAsset(recMap)
 		if err != nil {
 			fmt.Printf("Error [%s:%v]: %v. Skipping add on this line\n", c.newSpecsFile, i+1, err.Error())
 		} else {
-			lses = append(lses, lse)
+			dutParams = append(dutParams, p)
 		}
 	}
-	return lses, nil
+	return dutParams, nil
 }
 
-func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
-	// Update the asset location by using the lse name or user provided zone/rack info.
-	if err := c.updateAssetLocation(ctx, ic, lse); err != nil {
+func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, param *dutDeployUFSParams) error {
+	// Attempt to update the changes to asset first.
+	if err := c.updateAssetToUFS(ctx, ic, param.Asset, param.Paths); err != nil {
 		return err
 	}
-	if !ufsUtil.ValidateTags(lse.Tags) {
+	if !ufsUtil.ValidateTags(param.DUT.Tags) {
 		return fmt.Errorf(ufsAPI.InvalidTags)
 	}
 	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
-		MachineLSE:   lse,
-		MachineLSEId: lse.GetName(),
+		MachineLSE:   param.DUT,
+		MachineLSEId: param.DUT.GetName(),
 	})
 	if err != nil {
-		fmt.Printf("Failed to add DUT %s to UFS. UFS add failed %s\n", lse.GetName(), err)
+		fmt.Printf("Failed to add DUT %s to UFS. UFS add failed %s\n", param.DUT.GetName(), err)
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
@@ -400,7 +428,7 @@ func (c *addDUT) deployDutToSwarming(ctx context.Context, tc *swarming.TaskCreat
 	return nil
 }
 
-func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, error) {
+func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSParams, error) {
 	lse := &ufspb.MachineLSE{
 		Lse: &ufspb.MachineLSE_ChromeosMachineLse{
 			ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
@@ -424,7 +452,7 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 			},
 		},
 	}
-	var name, servoHost, servoSerial, rpmHost, rpmOutlet string
+	var name, servoHost, servoSerial, rpmHost, rpmOutlet, model, board string
 	var pools, machines []string
 	var servoPort int32
 	var servoSetup chromeosLab.ServoSetupType
@@ -454,6 +482,8 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 		rpmOutlet = recMap["rpm_outlet"]
 		machines = []string{recMap["asset"]}
 		pools = strings.Fields(recMap["pools"])
+		model = recMap["model"]
+		board = recMap["board"]
 	} else {
 		// command line parameters
 		name = c.hostname
@@ -468,6 +498,8 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 		rpmOutlet = c.rpmOutlet
 		machines = []string{c.asset}
 		pools = c.pools
+		model = c.model
+		board = c.board
 	}
 	lse.Name = name
 	lse.Hostname = name
@@ -537,7 +569,71 @@ func (c *addDUT) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, err
 	peripherals.Camerabox = c.cameraBox
 	peripherals.Chaos = c.chaos
 	peripherals.SmartUsbhub = c.smartUSBHub
-	return lse, nil
+	// Get the updated asset and update paths
+	asset, paths, err := c.initializeAssetUpdate(lse.GetName(), machines[0], model, board)
+	if err != nil {
+		return nil, err
+	}
+	return &dutDeployUFSParams{
+		DUT:   lse,
+		Asset: asset,
+		Paths: paths,
+	}, nil
+}
+
+// initializeAssetUpdate initializes asset proto and update mask for updating the asset
+func (c *addDUT) initializeAssetUpdate(hostname, machine, model, board string) (*ufspb.Asset, []string, error) {
+	loc, err := utils.GetLocation(hostname)
+	if err != nil {
+		fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", hostname)
+		return nil, nil, err
+	}
+	asset := &ufspb.Asset{
+		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, machine),
+		Location: loc,
+		Info:     &ufspb.AssetInfo{},
+	}
+	// Create the update field mask.
+	var paths []string
+	// Override zone info with user provided option.
+	if c.zone != "" {
+		asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
+	}
+	// Override rack info with user provided option.
+	if c.rack != "" {
+		asset.GetLocation().Rack = c.rack
+	}
+	// Override model with user provided option.
+	if model != "" {
+		asset.Model = model
+		asset.GetInfo().Model = model
+		paths = append(paths, "model")
+	}
+	// Override board with user provided option
+	if board != "" {
+		asset.GetInfo().BuildTarget = board
+		paths = append(paths, "info.build_target")
+	}
+	if asset.GetLocation().GetZone() != ufspb.Zone_ZONE_UNSPECIFIED {
+		paths = append(paths, "location.zone")
+		asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
+	}
+	if asset.GetLocation().GetRack() != "" {
+		paths = append(paths, "location.rack")
+	}
+	if asset.GetLocation().GetRackNumber() != "" {
+		paths = append(paths, "location.rack_number")
+	}
+	if asset.GetLocation().GetRow() != "" {
+		paths = append(paths, "location.row")
+	}
+	if asset.GetLocation().GetPosition() != "" {
+		paths = append(paths, "location.position")
+	}
+	if asset.GetLocation().GetBarcodeName() != "" {
+		paths = append(paths, "location.barcode_name")
+	}
+	return asset, paths, nil
 }
 
 func parseServoHostnamePort(servo string) (string, int32, error) {
@@ -574,60 +670,18 @@ func appendServoSetupPrefix(servoSetup string) string {
 	return fmt.Sprintf("SERVO_SETUP_%s", servoSetup)
 }
 
-// updateAssetLocation updates the asset location by MachineLSE name or by user provided zone/rack info.
-//
-// If DUT(MachineLSE) creation fails in UFS, its ok not to revert the asset location back to original.
-// The user will again try to deploy/add this DUT and during that time the asset location
-// will be set back to the correct value if there is any inconsistency.
-func (c *addDUT) updateAssetLocation(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
-	// Get the location info from DUT name.
-	loc, err := utils.GetLocation(lse.GetName())
-	if err != nil {
-		fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", lse.GetName())
-		return err
+// updateAssetToUFS calls UpdateAsset API in UFS with asset and partial paths
+func (c *addDUT) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetClient, asset *ufspb.Asset, paths []string) error {
+	if len(paths) == 0 {
+		// If no update is available. Skip doing anything
+		return nil
 	}
-	asset := &ufspb.Asset{
-		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, lse.GetMachines()[0]),
-		Location: loc,
+	mask := &field_mask.FieldMask{
+		Paths: paths,
 	}
-	// Override zone info with user provided option.
-	if c.zone != "" {
-		asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
-	}
-	// Override rack info with user provided option.
-	if c.rack != "" {
-		asset.GetLocation().Rack = c.rack
-	}
-	// Create the update field mask.
-	mask := &field_mask.FieldMask{}
-	if asset.GetLocation().GetZone() != ufspb.Zone_ZONE_UNSPECIFIED {
-		mask.Paths = append(mask.Paths, "location.zone")
-		asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
-	}
-	if asset.GetLocation().GetRack() != "" {
-		mask.Paths = append(mask.Paths, "location.rack")
-	}
-	if asset.GetLocation().GetRackNumber() != "" {
-		mask.Paths = append(mask.Paths, "location.rack_number")
-	}
-	if asset.GetLocation().GetRow() != "" {
-		mask.Paths = append(mask.Paths, "location.row")
-	}
-	if asset.GetLocation().GetPosition() != "" {
-		mask.Paths = append(mask.Paths, "location.position")
-	}
-	if asset.GetLocation().GetBarcodeName() != "" {
-		mask.Paths = append(mask.Paths, "location.barcode_name")
-	}
-	if len(mask.Paths) > 0 {
-		_, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{
-			Asset:      asset,
-			UpdateMask: mask,
-		})
-		if err != nil {
-			fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", lse.GetName())
-			return err
-		}
-	}
-	return nil
+	_, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{
+		Asset:      asset,
+		UpdateMask: mask,
+	})
+	return err
 }

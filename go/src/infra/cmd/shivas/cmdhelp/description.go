@@ -207,12 +207,12 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 [MCSV Mode]
 The file may have multiple or one dut csv record.
-The header format and sequence should be: [name,asset,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
+The header format and sequence should be: [name,asset,model,board,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
 Example mcsv format:
-name,asset,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
-dut-1,asset-1,servo-1,9998,ServoXdw,REGULAR,rpm-1,23,"CTS QUOTA"
-dut-2,asset-2,servo-2,9998,ServoYdw,,rpm-2,43,QUOTA
-dut-3,asset-3,chromeos6-row2-rack3-host4-servo,,,,,,,`
+name,asset,model,board,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
+dut-1,asset-1,eve,eve,servo-1,9998,ServoXdw,REGULAR,rpm-1,23,"CTS QUOTA"
+dut-2,asset-2,kevin,kevin,servo-2,9998,ServoYdw,,rpm-2,43,QUOTA
+dut-3,asset-3,,,chromeos6-row2-rack3-host4-servo,,,,,,,`
 
 	// DUTUpdateFileText description for json file input
 	DUTUpdateFileText string = `Path to a file(.json) containing DUT specification.
