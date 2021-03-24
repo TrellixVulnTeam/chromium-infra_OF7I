@@ -1,0 +1,10 @@
+{
+   "count": "{{ len . }}",
+   "jobs": [
+      {{ range $i, $v := . }}
+         {{- if (gt $i 0) }},{{end}}
+         {{ template "job.tmpl" $v }}
+      {{ end }}
+   ]
+}
+

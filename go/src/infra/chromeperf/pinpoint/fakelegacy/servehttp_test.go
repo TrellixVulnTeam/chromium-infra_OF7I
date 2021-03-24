@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
+	"sort"
 	"testing"
 
 	"infra/chromeperf/pinpoint"
@@ -30,17 +31,24 @@ func shouldBeStatusError(got interface{}, want ...interface{}) string {
 	return ShouldEqual(s.Code(), wantCode)
 }
 
-func TestGetJob(t *testing.T) {
+func TestStaticUsage(t *testing.T) {
 	const (
-		jobID = "abcdef01234567"
-		user  = "user@example.com"
+		user   = "user@example.com"
+		jobID0 = "00000000000000"
+		jobID1 = "11111111111111"
 	)
-	legacyName := pinpoint.LegacyJobName(jobID)
+	legacyName0 := pinpoint.LegacyJobName(jobID0)
+	legacyName1 := pinpoint.LegacyJobName(jobID1)
 	fake, err := fakelegacy.NewServer(
 		templateDir,
 		map[string]*fakelegacy.Job{
-			jobID: {
-				ID:        jobID,
+			jobID0: {
+				ID:        jobID0,
+				Status:    fakelegacy.CompletedStatus,
+				UserEmail: user,
+			},
+			jobID1: {
+				ID:        jobID1,
 				Status:    fakelegacy.CompletedStatus,
 				UserEmail: user,
 			},
@@ -56,12 +64,23 @@ func TestGetJob(t *testing.T) {
 
 	ctx := context.Background()
 	Convey("GetJob should return known job", t, func() {
-		j, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName})
+		j, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName0})
 		So(err, ShouldBeNil)
-		So(j.Name, ShouldEqual, legacyName)
+		So(j.Name, ShouldEqual, legacyName0)
 	})
 	Convey("GetJob should return NotFound for unknown job", t, func() {
 		_, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName("86753098675309")})
 		So(err, shouldBeStatusError, codes.NotFound)
+	})
+	Convey("ListJobs should return both known jobs", t, func() {
+		list, err := grpcPinpoint.ListJobs(ctx, &pinpoint.ListJobsRequest{})
+		So(err, ShouldBeNil)
+		So(list.Jobs, ShouldHaveLength, 2)
+
+		sort.Slice(list.Jobs, func(i, j int) bool {
+			return list.Jobs[i].Name < list.Jobs[j].Name
+		})
+		So(list.Jobs[0].Name, ShouldEqual, legacyName0)
+		So(list.Jobs[1].Name, ShouldEqual, legacyName1)
 	})
 }

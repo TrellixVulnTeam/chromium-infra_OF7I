@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 // NewServer sets up a fake Pinpoint Legacy HTTP server configured to serve
@@ -71,6 +73,7 @@ type legacyResult struct {
 func (s *Server) Handler() http.Handler {
 	mux := new(http.ServeMux)
 	mux.Handle("/api/job/", legacyHandler(s.getJob))
+	mux.Handle("/api/jobs", legacyHandler(s.listJobs))
 	return mux
 }
 
@@ -89,5 +92,28 @@ func (s *Server) getJob(req *http.Request) (*legacyResult, int, error) {
 	return &legacyResult{
 		s.templates.Job,
 		j,
+	}, 0, nil
+}
+
+// listJobs implements listing job requests.
+func (s *Server) listJobs(req *http.Request) (*legacyResult, int, error) {
+	args := req.URL.Query()
+	if args.Get("filter") != "" {
+		return nil, 400, errors.Reason("TODO: implement filter").Err()
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var list []Job
+	for _, j := range s.jobData {
+		// Copy in the Job data while we have the lock to avoid races after this
+		// function returns (while the returned data is being templated).
+		list = append(list, *j)
+	}
+
+	return &legacyResult{
+		s.templates.List,
+		list,
 	}, 0, nil
 }
