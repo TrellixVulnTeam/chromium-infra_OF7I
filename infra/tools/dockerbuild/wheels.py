@@ -797,6 +797,7 @@ SPECS.update({
         Universal('idna', '2.5'),
         Universal('idna', '2.8'),
         Universal('importlib-metadata', '1.6.0'),
+        Universal('iniconfig', '1.1.1', pyversions=['py3']),
         Universal('ipaddress', '1.0.18', pyversions=['py2']),
         Universal('iso8601', '0.1.12'),
         Universal('isort', '4.3.4'),
