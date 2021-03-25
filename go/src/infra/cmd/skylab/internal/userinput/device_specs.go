@@ -515,8 +515,8 @@ const example = `{
 				"audioLoopbackDongle": true,
 				"chameleon": false,
 				"chameleonType": [
-					"CHAMELEON_TYPE_BT_HID",
-					"CHAMELEON_TYPE_DP_HDMI"
+					"CHAMELEON_TYPE_DP",
+					"CHAMELEON_TYPE_HDMI"
 				],
 				"conductive": false,
 				"huddly": false,
