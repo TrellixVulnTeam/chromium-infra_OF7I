@@ -1328,7 +1328,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Add chameleon to the DUT.
 			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
-				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_HDMI, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
 				AudioBoard:           true,
 			}
 			dut2.UpdateTime = nil
@@ -1343,7 +1343,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(changes, ShouldHaveLength, 3)
 			// Chameleon type recorded.
 			So(changes[1].OldValue, ShouldEqual, "[]")
-			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_HDMI CHAMELEON_TYPE_DP]")
 			// Chameleon audioboard recorded.
 			So(changes[2].OldValue, ShouldEqual, "false")
 			So(changes[2].NewValue, ShouldEqual, "true")
@@ -1363,7 +1363,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Add chameleon to the DUT.
 			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
-				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_HDMI, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
 				AudioBoard:           true,
 			}
 			dut2.UpdateTime = nil
@@ -1377,7 +1377,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 3)
 			So(changes[1].OldValue, ShouldEqual, "[]")
-			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[1].NewValue, ShouldEqual, "[CHAMELEON_TYPE_HDMI CHAMELEON_TYPE_DP]")
 			So(changes[2].OldValue, ShouldEqual, "false")
 			So(changes[2].NewValue, ShouldEqual, "true")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
@@ -1400,7 +1400,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(changes, ShouldHaveLength, 5)
 			// Verify Chameleon types deleted
 			So(changes[3].NewValue, ShouldEqual, "[]")
-			So(changes[3].OldValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[3].OldValue, ShouldEqual, "[CHAMELEON_TYPE_HDMI CHAMELEON_TYPE_DP]")
 			// Verify audiobox reset
 			So(changes[4].NewValue, ShouldEqual, "false")
 			So(changes[4].OldValue, ShouldEqual, "true")
@@ -1414,7 +1414,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Test the same thing but with empty chameleon struct. Expectation is that UFS ignores the empty struct given and sets chameleon to nil on delete.
 			// Add chameleon to the DUT.
 			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Chameleon = &chromeosLab.Chameleon{
-				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_HID, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
+				ChameleonPeripherals: []chromeosLab.ChameleonType{chromeosLab.ChameleonType_CHAMELEON_TYPE_HDMI, chromeosLab.ChameleonType_CHAMELEON_TYPE_DP},
 				AudioBoard:           true,
 			}
 			dut2.UpdateTime = nil
@@ -1428,7 +1428,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 7)
 			So(changes[5].OldValue, ShouldEqual, "[]")
-			So(changes[5].NewValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[5].NewValue, ShouldEqual, "[CHAMELEON_TYPE_HDMI CHAMELEON_TYPE_DP]")
 			So(changes[6].OldValue, ShouldEqual, "false")
 			So(changes[6].NewValue, ShouldEqual, "true")
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-14")
@@ -1453,7 +1453,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(changes, ShouldHaveLength, 9)
 			// Verify Chameleon types deleted
 			So(changes[7].NewValue, ShouldEqual, "[]")
-			So(changes[7].OldValue, ShouldEqual, "[CHAMELEON_TYPE_BT_HID CHAMELEON_TYPE_DP]")
+			So(changes[7].OldValue, ShouldEqual, "[CHAMELEON_TYPE_HDMI CHAMELEON_TYPE_DP]")
 			// Verify audiobox reset
 			So(changes[8].NewValue, ShouldEqual, "false")
 			So(changes[8].OldValue, ShouldEqual, "true")

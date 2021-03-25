@@ -34,8 +34,8 @@ var mockDUT = &lab.ChromeOSDevice_Dut{
 			},
 			Chameleon: &lab.Chameleon{
 				ChameleonPeripherals: []lab.ChameleonType{
-					lab.ChameleonType_CHAMELEON_TYPE_BT_BLE_HID,
-					lab.ChameleonType_CHAMELEON_TYPE_BT_PEER,
+					lab.ChameleonType_CHAMELEON_TYPE_DP,
+					lab.ChameleonType_CHAMELEON_TYPE_HDMI,
 				},
 				AudioBoard: true,
 			},

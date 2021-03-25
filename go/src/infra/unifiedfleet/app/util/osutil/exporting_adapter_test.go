@@ -77,8 +77,8 @@ var lse = ufspb.MachineLSE{
 								Servo: &servoInV2,
 								Chameleon: &chromeosLab.Chameleon{
 									ChameleonPeripherals: []chromeosLab.ChameleonType{
-										chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_BLE_HID,
-										chromeosLab.ChameleonType_CHAMELEON_TYPE_BT_PEER,
+										chromeosLab.ChameleonType_CHAMELEON_TYPE_DP,
+										chromeosLab.ChameleonType_CHAMELEON_TYPE_HDMI,
 									},
 									AudioBoard: true,
 								},
@@ -356,8 +356,8 @@ common {
 			audio_cable: true
 			audio_loopback_dongle: false
 			chameleon: true
-			chameleon_type: CHAMELEON_TYPE_BT_BLE_HID
-			chameleon_type: CHAMELEON_TYPE_BT_PEER
+			chameleon_type: CHAMELEON_TYPE_DP
+			chameleon_type: CHAMELEON_TYPE_HDMI
 			conductive: true
 			huddly: true
 			mimo: true

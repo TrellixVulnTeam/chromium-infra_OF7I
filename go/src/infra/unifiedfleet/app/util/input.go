@@ -465,15 +465,11 @@ func ToUFSDeviceType(devicetype string) ufspb.ChromeOSDeviceType {
 
 // StrToChameleonType refers a map between a string to a ChameleonType map.
 var StrToChameleonType = map[string]string{
-	"invalid":    "CHAMELEON_TYPE_INVALID",
-	"bthid":      "CHAMELEON_TYPE_BT_HID",
-	"dp":         "CHAMELEON_TYPE_DP",
-	"dphdmi":     "CHAMELEON_TYPE_DP_HDMI",
-	"vga":        "CHAMELEON_TYPE_VGA",
-	"hdmi":       "CHAMELEON_TYPE_HDMI",
-	"btblehid":   "CHAMELEON_TYPE_BT_BLE_HID",
-	"bta2dpsink": "CHAMELEON_TYPE_BT_A2DP_SINK",
-	"btpeer":     "CHAMELEON_TYPE_BT_PEER",
+	"invalid": "CHAMELEON_TYPE_INVALID",
+	"dp":      "CHAMELEON_TYPE_DP",
+	"dphdmi":  "CHAMELEON_TYPE_DP_HDMI",
+	"vga":     "CHAMELEON_TYPE_VGA",
+	"hdmi":    "CHAMELEON_TYPE_HDMI",
 }
 
 // IsChameleonType checks if a string refers to a valid ChameleonType.
