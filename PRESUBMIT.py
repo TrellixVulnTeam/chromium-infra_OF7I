@@ -500,7 +500,7 @@ _NON_INCLUSIVE_TERMS = (
             'at the end of the offending line will bypass this PRESUBMIT error',
             'but avoid using this whenever possible. Reach out to',
             'community@chromium.org if you have questions'),
-        False),)
+        True),)
 
 
 def _GetMessageForMatchingTerm(input_api, affected_file, line_number, line,
