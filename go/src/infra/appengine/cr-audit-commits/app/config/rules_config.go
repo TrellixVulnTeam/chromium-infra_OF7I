@@ -16,7 +16,7 @@ import (
 const (
 	// StuckScannerDuration refers how many hours after a ref stops auditing,
 	// a bug will be filed.
-	StuckScannerDuration = time.Duration(2) * time.Hour
+	StuckScannerDuration = time.Duration(24) * time.Hour
 
 	// MaxCommitsPerRefUpdate is the maximum commits that the Gitiles git.Log
 	// API should return every time it is called.
