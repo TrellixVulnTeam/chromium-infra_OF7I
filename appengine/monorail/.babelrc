@@ -8,11 +8,15 @@
     "@babel/preset-react"
   ],
   "plugins": [
+    // Allows the use of class properties.
+    "@babel/plugin-proposal-class-properties",
+    // Allows the use of decorators.
+    ["@babel/plugin-proposal-decorators", {"decoratorsBeforeExport": true}],
+    // Allows the use of ES6 spread operators.
+    "@babel/plugin-proposal-object-rest-spread",
     // Support Webpack's import() feature, which uses Promises.
     "@babel/plugin-syntax-dynamic-import",
     // Supports transforming JSX syntax into JavaScript.
-    "@babel/plugin-transform-react-jsx",
-    // Allows the use of ES6 spread operators.
-    "@babel/plugin-proposal-object-rest-spread"
+    "@babel/plugin-transform-react-jsx"
   ]
 }
