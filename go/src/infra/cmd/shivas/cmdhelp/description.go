@@ -966,7 +966,7 @@ Example host(DUT) for an OS machine:
                     "chameleon": {
                         "chameleonPeripherals": [
                             "CHAMELEON_TYPE_HDMI",
-                            "CHAMELEON_TYPE_BT_BLE_HID"
+                            "CHAMELEON_TYPE_DP"
                         ],
                         "audioBoard": true
                     },
