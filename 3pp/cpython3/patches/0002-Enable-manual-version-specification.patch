@@ -33,7 +33,7 @@ diff --git a/configure.ac b/configure.ac
 index 620b48a6e7..b5877e6ce8 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2893,6 +2893,18 @@ LDFLAGS="-fsanitize=address $LDFLAGS"
+@@ -2893,5 +2893,17 @@ LDFLAGS="-fsanitize=address $LDFLAGS"
  AC_CHECK_LIB(nsl, t_open, [LIBS="-lnsl $LIBS"]) # SVR4
  AC_CHECK_LIB(socket, socket, [LIBS="-lsocket $LIBS"], [], $LIBS) # SVR4 sockets
  
@@ -51,7 +51,6 @@ index 620b48a6e7..b5877e6ce8 100644
 +
  AC_MSG_CHECKING(for --with-libs)
  AC_ARG_WITH(libs,
-             AS_HELP_STRING([--with-libs='lib1 ...'], [link against additional libs]),
 diff --git a/pyconfig.h.in b/pyconfig.h.in
 index a82e82cc9c..6fb3172177 100644
 --- a/pyconfig.h.in

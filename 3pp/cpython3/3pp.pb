@@ -12,7 +12,7 @@ create {
       tag_pattern: "v%s",
 
       # Pin to 3.8.x for now.
-      version_restriction: { op: LT val: "3.9a0"}
+      version_restriction: { op: LT val: "3.10a0"}
     }
     patch_dir: "patches"
   }

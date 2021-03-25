@@ -47,6 +47,30 @@ def _temp_sys_builtins(*v):
 
 
 @contextlib.contextmanager
+def _temp_subprocess():
+  # Starting in Python 3.9, distutils.spawn uses subprocess. subprocess requires
+  # C extensions built from setup.py, which uses distutils. To fix the circular
+  # dependency they also introduced _bootsubprocess, a pure Python
+  # implementation of the subset of subprocess required by setup.py.
+  #
+  # This function replicates the hack from setup.py to temporarily insert
+  # _bootsubprocess as subprocess, while also remaining compatible with 3.8
+  # where _bootsubprocess doesn't exist.
+  try:
+    import _bootsubprocess
+    sys.modules['subprocess'] = _bootsubprocess
+    del _bootsubprocess
+
+    yield
+
+    del sys.modules['subprocess']
+  except ImportError:
+    # We must be on 3.8. We can't import _bootsubprocess or subprocess, but we
+    # don't need to as distutils doesn't use subprocess on 3.8.
+    yield
+
+
+@contextlib.contextmanager
 def _temp_sys_path(root, pybuilddir):
   extra_paths = [
     os.path.join(root),  # to import `setup`
@@ -67,6 +91,7 @@ def _get_extensions(root, pybuilddir):
   with \
       _temp_sys_path(root, pybuilddir), \
       _temp_sys_builtins(), \
+      _temp_subprocess(), \
       _temp_sys_argv(['python', 'build_ext']):
 
     import distutils
