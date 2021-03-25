@@ -64,7 +64,7 @@ func (c *suiteRun) innerRun(a subcommands.Application, args []string, env subcom
 	}
 	testPlan := testPlanForSuites(args)
 	suiteNamesLabel := testOrSuiteNamesLabel(args)
-	buildTags := c.buildTags(testCmdName, suiteNamesLabel)
+	buildTags := c.buildTags(suiteCmdName, suiteNamesLabel)
 
 	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {

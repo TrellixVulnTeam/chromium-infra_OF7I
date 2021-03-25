@@ -76,7 +76,7 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	// Don't create a tag for the user's test plan file.
-	buildTags := c.buildTags(testCmdName, "")
+	buildTags := c.buildTags(testPlanCmdName, "")
 
 	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {

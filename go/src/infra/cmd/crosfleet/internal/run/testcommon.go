@@ -227,7 +227,7 @@ func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
 	}
 	_, err = l.bbClient.WaitForBuildStepStart(ctx, buildID, ctpExecuteStepName)
 	if err != nil {
-		return nil
+		return err
 	}
 	fmt.Fprintf(l.cliApp.GetOut(), "Successfully started %s run\n", l.cmdName)
 	return nil
