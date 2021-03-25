@@ -75,8 +75,8 @@ var devInV2 = lab.ChromeOSDevice{
 				Servo: &servoInV2,
 				Chameleon: &lab.Chameleon{
 					ChameleonPeripherals: []lab.ChameleonType{
-						lab.ChameleonType_CHAMELEON_TYPE_BT_BLE_HID,
-						lab.ChameleonType_CHAMELEON_TYPE_BT_PEER,
+						lab.ChameleonType_CHAMELEON_TYPE_DP,
+						lab.ChameleonType_CHAMELEON_TYPE_HDMI,
 					},
 					AudioBoard: true,
 				},
@@ -345,8 +345,8 @@ common {
 			audio_cable: true
 			audio_loopback_dongle: false
 			chameleon: true
-			chameleon_type: CHAMELEON_TYPE_BT_BLE_HID
-			chameleon_type: CHAMELEON_TYPE_BT_PEER
+			chameleon_type: CHAMELEON_TYPE_DP
+			chameleon_type: CHAMELEON_TYPE_HDMI
 			conductive: true
 			huddly: true
 			mimo: true
