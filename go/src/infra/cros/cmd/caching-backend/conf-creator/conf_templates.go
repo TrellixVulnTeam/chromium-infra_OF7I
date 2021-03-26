@@ -52,9 +52,13 @@ http {
   upstream gs_archive_servers {
     {{ if .UpstreamHost }}
     server {{ .UpstreamHost }} fail_timeout=10s;
-    server 127.0.0.1:8000 backup;
+    {{ range .Ports -}}
+    server 127.0.0.1:{{.}} backup;
+    {{ end -}}
     {{ else }}
-    server 127.0.0.1:8000 fail_timeout=10s;
+    {{ range .Ports -}}
+    server 127.0.0.1:{{.}} fail_timeout=10s;
+    {{ end -}}
     {{ end }}
   }
   server {

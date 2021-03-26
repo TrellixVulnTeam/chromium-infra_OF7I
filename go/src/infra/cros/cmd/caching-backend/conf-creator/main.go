@@ -30,6 +30,8 @@ var (
 	serviceAccountJSONPath   = flag.String("service-account", "/creds/service_accounts/artifacts-downloader-service-account.json", "Path to the service account JSON key file.")
 	ufsService               = flag.String("ufs-host", "ufs.api.cr.dev", "Host of the UFS service. By default, the prod service host will be used.")
 	cacheSizeInGB            = flag.Uint("nginx-cache-size", 750, "The size of nginx cache in GB. By default, it will be set to 750.")
+	gsaServerCount           = flag.Uint("gsa-server-count", 1, "The number of upstream gs_archive_server instances to be added in nginx-conf. Default is 1.")
+	gsaInitialPort           = flag.Uint("gsa-initial-port", 8000, "The port number for the first instance of the gs_archive_server in nginx.conf. Port number will increase by 1 for all subsequent entries. Default is 8000.")
 )
 
 var (
@@ -71,7 +73,11 @@ func innerMain() error {
 		return nil
 	}
 	var n = nginxConfData{
-		CacheSizeInGB: *cacheSizeInGB,
+		// TODO(sanikak): Define types to make the unit clearer.
+		// E.g.  type gigabyte int.
+		CacheSizeInGB:  int(*cacheSizeInGB),
+		GSAServerCount: int(*gsaServerCount),
+		GSAInitialPort: int(*gsaInitialPort),
 	}
 	var k = keepalivedConfData{}
 	switch {

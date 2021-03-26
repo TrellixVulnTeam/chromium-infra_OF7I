@@ -24,8 +24,20 @@ const (
 // nginxConfData contains information about the node which is necessary to
 // create the nginx.conf file.
 type nginxConfData struct {
-	UpstreamHost  string
-	CacheSizeInGB uint
+	UpstreamHost   string
+	CacheSizeInGB  int
+	GSAServerCount int
+	GSAInitialPort int
+}
+
+// Ports returns a slice of ports for the gs_archive_server upstream or backup
+// list.
+func (n nginxConfData) Ports() []int {
+	var ports []int
+	for i := 0; i < n.GSAServerCount; i += 1 {
+		ports = append(ports, n.GSAInitialPort+i)
+	}
+	return ports
 }
 
 // keepalivedConfData contains information about the node which is necessary to
