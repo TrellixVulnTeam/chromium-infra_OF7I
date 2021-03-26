@@ -28,6 +28,7 @@
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage)
+  * [cv_testing/tryjob](#recipes-cv_testing_tryjob) &mdash; Recipe to test LUCI CQ/CV itself.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
   * [docker:examples/full](#recipes-docker_examples_full)
   * [docker_image_builder](#recipes-docker_image_builder)
@@ -1004,6 +1005,13 @@ To build a new package for all platforms:
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#5): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#11)(api):**
+### *recipes* / [cv\_testing/tryjob](/recipes/recipes/cv_testing/tryjob.py)
+
+[DEPS](/recipes/recipes/cv_testing/tryjob.py#9): [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+Recipe to test LUCI CQ/CV itself.
+
+&mdash; **def [RunSteps](/recipes/recipes/cv_testing/tryjob.py#18)(api, properties):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
 [DEPS](/recipes/recipes/depot_tools_builder.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1272,6 +1280,7 @@ This recipe runs windows offline builder for a given user config.
 [recipe_engine/recipe_modules/cipd]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-cipd
 [recipe_engine/recipe_modules/commit_position]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-commit_position
 [recipe_engine/recipe_modules/context]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-context
+[recipe_engine/recipe_modules/cq]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-cq
 [recipe_engine/recipe_modules/file]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-file
 [recipe_engine/recipe_modules/futures]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-futures
 [recipe_engine/recipe_modules/json]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/3e3066d09b2533431b3999dcefadac28fa2e0e33/README.recipes.md#recipe_modules-json
