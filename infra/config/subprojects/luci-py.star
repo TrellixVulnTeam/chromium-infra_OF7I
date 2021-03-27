@@ -52,7 +52,7 @@ try_builder(
     properties = {
         "gclient_config_name": "luci_py",
         "patch_root": "infra/luci",
-        "analyzers": ["Spacey", "Spellchecker"],
+        "analyzers": ["Spellchecker"],
     },
     in_cq = False,
 )

@@ -121,7 +121,7 @@ try_builder(
     properties = {
         "gclient_config_name": "luci_go",
         "patch_root": "infra/go/src/go.chromium.org/luci",
-        "analyzers": ["Gosec", "Spacey", "Spellchecker"],
+        "analyzers": ["Gosec", "Spellchecker"],
     },
     in_cq = False,
 )
