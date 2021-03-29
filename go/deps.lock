@@ -1,8 +1,8 @@
-hash: 57f59d9e3e4411183463ee57ca49fad53a08cf65d11348d701f7ae85b79cd84e
-updated: 2021-03-23T19:33:37.98888479+09:00
+hash: 2a3f80da00eee21e06dd1568e6f61c19981d87c83d79020c66f75cd1a8d405e4
+updated: 2021-03-24T15:36:49.957879515-04:00
 imports:
 - name: cloud.google.com/go
-  version: ab4824a7914864228e59b244d6382de862139524
+  version: 1bdaf93c25995264d7f6933eaa9ab9362b089ba2
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -90,7 +90,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/dgraph-io/badger/v3
-  version: d66dff249b9d649ae2ff1d8f97d8db81a7975280
+  version: 8cb704777dc557ddd8faca07a28a7b62c4f44bc8
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
 - name: github.com/dgraph-io/ristretto
   version: 74754f61e01846f9fbc951a12b62264c185e0877
@@ -139,7 +139,7 @@ imports:
   - gomock
   - mockgen
 - name: github.com/golang/protobuf
-  version: a36a1a1c346d5cb6951b9440755adb530334f910
+  version: af940030a2b77f37337632168f18403433e21e61
   repo: https://chromium.googlesource.com/external/github.com/golang/protobuf.git
   subpackages:
   - jsonpb
@@ -168,7 +168,7 @@ imports:
   subpackages:
   - query
 - name: github.com/google/pprof
-  version: b188cf6ae17b6bde5b56831b80e231c37370aefa
+  version: 8eee2492667d02addff417580aea05e9d535866b
   repo: https://chromium.googlesource.com/external/github.com/google/pprof.git
   subpackages:
   - profile
@@ -243,7 +243,7 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: 1454288976f89f359cd293ff1151f61532dd12ff
+  version: 2bb69be191060caa8faf032ba91006f16d65da4b
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
@@ -337,7 +337,7 @@ imports:
   version: 5dd12d0cfe7f152f80558d591504ce685299311e
   repo: https://chromium.googlesource.com/external/github.com/pkg/errors.git
 - name: github.com/pkg/sftp
-  version: ec19f0847c529c65b988b59dd25487c00f5fe25c
+  version: f5f52ff56bd8711f52e51caf51cee29f0f093b9d
   repo: https://chromium.googlesource.com/external/github.com/pkg/sftp.git
 - name: github.com/pmezard/go-difflib
   version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
@@ -431,7 +431,7 @@ imports:
   version: 49838f207d61097fc0ebb8aeef306913388376ca
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
 - name: go.skia.org/infra
-  version: caef28fbb1d73a76f53167699b5d04461d4bdced
+  version: 8bba672fbe1b933b32624d0a3d7675ff7382223c
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -439,7 +439,7 @@ imports:
   version: 74c10e2c17dcdb1cd5ff8044e33d9338820db233
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 9b76b0884b63b8c7298cd24147f863f13df739f4
+  version: d7600ec889c89d486672e9ccd1b30bab50c15047
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -463,15 +463,15 @@ imports:
   subpackages:
   - cmd/gomobile
 - name: golang.org/x/mod
-  version: 19d50cac98aa7a8e0a0c8b6a9bfd3a99e653c0cc
+  version: 1cc8812c174051b683218263abf0229b3b105e75
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
-  version: d523dce5a7f4b994f7ed0531dbe44cd8fd803e26
+  version: 2c4c8ecb78268216043e44dec6fd50f638b62158
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context/ctxhttp
 - name: golang.org/x/oauth2
-  version: cd4f82c27b84ec2516d3c38a5b5acaf8823e2702
+  version: 22b0adad7558c54bf49787666d8773cae1dd3e77
   repo: https://go.googlesource.com/oauth2.git
   subpackages:
   - google
@@ -482,7 +482,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 1e4c9ba3b0c4fcddbe90893331bdc829813066a1
+  version: 47abb6519492c2e7f35c3a9f4d655f2bd32607cc
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -497,7 +497,7 @@ imports:
   version: f8bda1e9f3badef837c98cbaf4f7c335de90f266
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: d8aeb16bb5b3e0e830afa773937316886ad84919
+  version: 52cb77242b3b8f2a2e9b736cc4ade34b161eefba
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -543,13 +543,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: 5f0e89347f5acfbfe2190bf5c29698dab3330c60
+  version: 3032e8ff099e8ca8e306b35b3c5f5d5c762fd36a
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: d26af8e3916597bde07641df24c3d38ca9b1f5a2
+  version: 702608ffae4d03a6821b96d3e2311973d34b96dc
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
