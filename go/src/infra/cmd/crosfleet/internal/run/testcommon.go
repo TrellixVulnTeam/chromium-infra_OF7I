@@ -75,7 +75,7 @@ If no account is set, tests are scheduled using -priority flag.`)
 	f.IntVar(&c.maxRetries, "max-retries", 0, "Maximum retries allowed. No retry if set to 0.")
 	f.Int64Var(&c.priority, "priority", DefaultSwarmingPriority, `Swarming scheduling priority for tests, between 50 and 255 (lower values indicate higher priorities).
 If a Quota Scheduler account is specified via -qs-account, this value is not used.`)
-	f.IntVar(&c.timeoutMins, "timeout-mins", 30, "Test run timeout.")
+	f.IntVar(&c.timeoutMins, "timeout-mins", 360, "Test run timeout.")
 	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional scheduling dimension in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional scheduling addedDims in same format as -dim.")
 	f.Var(flagx.KeyVals(&c.provisionLabels), "provision-label", "Additional provisionable label in format key=val or key:val; may be specified multiple times.")
