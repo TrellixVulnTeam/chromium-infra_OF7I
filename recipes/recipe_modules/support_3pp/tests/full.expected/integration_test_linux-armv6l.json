@@ -1388,6 +1388,7 @@
     "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1797,6 +1798,7 @@
     "name": "building deps/bottom_dep_git.do upload.cipd describe 3pp/deps/bottom_dep_git/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2328,6 +2330,7 @@
     "name": "building deps/bottom_dep_git (2).do upload.cipd describe 3pp/deps/bottom_dep_git/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2641,6 +2644,7 @@
     "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3010,6 +3014,7 @@
     "name": "building deps/bottom_dep_url.do upload.cipd describe 3pp/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3323,6 +3328,7 @@
     "name": "building deps/bottom_dep_url (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3692,6 +3698,7 @@
     "name": "building deps/bottom_dep_url (2).do upload.cipd describe 3pp/deps/bottom_dep_url/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -4153,6 +4160,7 @@
     "name": "building deps/deep_dep.do upload.cipd describe 3pp/deps/deep_dep/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -4572,6 +4580,7 @@
     "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -4815,6 +4824,7 @@
     "name": "building tools/fetch_and_package.do upload.cipd describe 3pp/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -5546,6 +5556,7 @@
     "name": "building tools/posix_tool.do upload.cipd describe 3pp/tools/posix_tool/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -5911,6 +5922,7 @@
     "name": "building tools/windows_experiment.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/windows_experiment/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -6280,6 +6292,7 @@
     "name": "building tools/windows_experiment.do upload.cipd describe 3pp/tools/windows_experiment/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -7001,6 +7014,7 @@
     "name": "building build_tools/git_tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -7691,6 +7705,7 @@
     "name": "building build_tools/git_tool.do upload.cipd describe 3pp/build_tools/git_tool/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1.chops.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -8284,6 +8299,7 @@
     "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -8973,6 +8989,7 @@
     "name": "building build_tools/tool.do upload.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1.chops.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -9906,6 +9923,7 @@
     "name": "building build_tools/tool (2).do upload.cipd describe 3pp/build_tools/tool/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1.chops.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -10700,6 +10718,7 @@
     "name": "building deps/dep.do upload.cipd describe 3pp/deps/dep/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -11172,6 +11191,7 @@
     "name": "building tools/pkg.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -11671,6 +11691,7 @@
     "name": "building tools/pkg.do upload.cipd describe 3pp/tools/pkg/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -12108,6 +12129,7 @@
     "name": "building tools/pkg_checkout.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg_checkout/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -12607,6 +12629,7 @@
     "name": "building tools/pkg_checkout.do upload.cipd describe 3pp/tools/pkg_checkout/linux-armv6l",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",

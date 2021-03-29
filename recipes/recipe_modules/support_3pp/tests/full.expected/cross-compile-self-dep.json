@@ -423,6 +423,7 @@
     "name": "building tools/self_dependency.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -702,6 +703,7 @@
     "name": "building tools/self_dependency.do upload.cipd describe 3pp/tools/self_dependency/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1103,6 +1105,7 @@
     "name": "building tools/self_dependency (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/self_dependency/linux-arm64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1470,6 +1473,7 @@
     "name": "building tools/self_dependency (2).do upload.cipd describe 3pp/tools/self_dependency/linux-arm64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@2.0.0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",

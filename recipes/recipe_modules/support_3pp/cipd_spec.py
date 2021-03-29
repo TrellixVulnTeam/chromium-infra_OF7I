@@ -67,6 +67,20 @@ class CIPDSpec(object):
         'tag %r not found' % (self.tag,))
       return False
 
+  def exists_in_cipd(self):
+    try:
+      self._remote_describe()
+      return True
+    except self._api.step.StepFailure:
+      result = self._api.step.active_result
+      result.presentation.status = self._api.step.SUCCESS
+      if 'ambiguity when resolving the tag' in result.json.output['error']:
+        result.presentation.step_text = 'multiple instances with tag %r' % (
+            self.tag,)
+        return True
+      result.presentation.step_text = 'tag %r not found' % (self.tag,)
+      return False
+
   def _remote_describe(self):
     # by default, make this return no tags in test mode.
     desc = self._api.cipd.describe(
@@ -249,12 +263,8 @@ class CIPDSpec(object):
     tags.update(extra_tags or {})
     refs = ['latest'] if latest else []
 
-    try:
-      # Double check to see that we didn't get scooped by a concurrent recipe.
-      self._api.cipd.describe(
-        self._pkg, self.tag, test_data_tags=(), test_data_refs=())
-    except self._api.step.StepFailure:
-      self._api.step.active_result.presentation.status = self._api.step.SUCCESS
+    # Double check to see that we didn't get scooped by a concurrent recipe.
+    if not self.exists_in_cipd():
       self._api.cipd.register(self._pkg, pkg_path, tags=tags,
                               refs=refs, metadata=metadata)
       self._remote_tags = tags

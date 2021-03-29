@@ -80,7 +80,7 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
 
       cipd_spec = spec.cipd_spec(version)
       # See if the specific version is uploaded
-      if force_build or not cipd_spec.check():
+      if force_build or not cipd_spec.exists_in_cipd():
         # Otherwise, build it
         _build_impl(
             api, cipd_spec, is_latest, spec_lookup, force_build,

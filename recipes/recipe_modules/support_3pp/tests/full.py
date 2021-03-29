@@ -585,6 +585,22 @@ def GenTests(api):
       + api.post_process(post_process.DropExpectation)
   )
 
+  yield (api.test('ambiguous-version-tag') +
+         api.properties(GOOS='linux', GOARCH='amd64', use_new_checkout=True) +
+         api.step_data('find package specs',
+                       api.file.glob_paths(['%s/3pp.pb' % pkg])) +
+         api.step_data(
+             mk_name("load package specs", "read '%s/3pp.pb'" % pkg),
+             api.file.read_text(pkgs_dict[pkg])) + api.step_data(
+                 mk_name('building deps/bottom_dep_git',
+                         'cipd describe 3pp/deps/bottom_dep_git/linux-amd64'),
+                 api.json.output({
+                     "error": ("ambiguity when resolving the tag, " +
+                               "more than one instance has it"),
+                     "result": None
+                 }),
+                 retcode=1))
+
   # test for source url package.
   pkg = 'dir_deps/bottom_dep_url'
   yield (api.test('source-url-test')

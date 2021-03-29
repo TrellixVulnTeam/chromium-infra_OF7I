@@ -621,6 +621,7 @@
     "name": "building pkg/dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1402,6 +1403,7 @@
     "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1833,6 +1835,7 @@
     "name": "building build_tools/tool.do upload.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.5.0-rc1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2371,6 +2374,7 @@
     "name": "building build_tools/tool (2).fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@v1.4.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2766,6 +2770,7 @@
     "name": "building build_tools/tool (2).do upload.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@v1.4.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
