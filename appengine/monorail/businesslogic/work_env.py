@@ -1351,10 +1351,13 @@ class WorkEnv(object):
       paginate_start, sort_spec):
     # type: (str, Sequence[str], int, int, int, str) -> ListResult
     """Search for issues in the given projects."""
-    # TODO(crbug.com/monorail/7678): Remove can. Replace
-    # project_names with project_ids.
+    # View permissions and project existence check.
+    _projects = self.GetProjectsByName(query_project_names)
     # TODO(crbug.com/monorail/6988): Delete ListIssues when endpoints and v1
     # are deprecated. Move pipeline call to SearchIssues.
+    # TODO(crbug.com/monorail/7678): Remove can. Pass project_ids
+    # into pipeline call instead of project_names into SearchIssues call.
+    # project_names with project_ids.
     use_cached_searches = not settings.local_mode
     pipeline = self.ListIssues(
         query_string, query_project_names, me_user_id, items_per_page,

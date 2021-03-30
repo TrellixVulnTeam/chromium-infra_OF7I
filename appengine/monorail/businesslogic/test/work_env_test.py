@@ -1777,7 +1777,7 @@ class WorkEnvTest(unittest.TestCase):
     mocked_instance.total_count = 10
     mocked_instance.visible_results = ['a', 'b']
     with self.work_env as we:
-      actual = we.SearchIssues('', ['monorail'], 123, 20, 0, '')
+      actual = we.SearchIssues('', ['proj'], 123, 20, 0, '')
     expected = work_env.ListResult(['a', 'b'], None)
     self.assertEqual(actual, expected)
 
@@ -1787,9 +1787,19 @@ class WorkEnvTest(unittest.TestCase):
     mocked_instance.total_count = 50
     mocked_instance.visible_results = ['a', 'b']
     with self.work_env as we:
-      actual = we.SearchIssues('', ['monorail'], 123, 20, 0, '')
+      actual = we.SearchIssues('', ['proj'], 123, 20, 0, '')
     expected = work_env.ListResult(['a', 'b'], 20)
     self.assertEqual(actual, expected)
+
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testSearchIssues_NoSuchProject(self, mocked_pipeline):
+    mocked_instance = mocked_pipeline.return_value
+    mocked_instance.total_count = 10
+    mocked_instance.visible_results = ['a', 'b']
+
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      with self.work_env as we:
+        we.SearchIssues('', ['chicken'], 123, 20, 0, '')
 
   @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
   def testListIssues_Normal(self, mocked_pipeline):

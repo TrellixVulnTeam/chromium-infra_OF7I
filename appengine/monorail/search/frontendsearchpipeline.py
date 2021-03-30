@@ -735,8 +735,9 @@ def _GetNonviewableIIDs(
       for sid in needed_shard_ids:
         keys.append('%d;%d;%d' % (pid, logged_in_user_id, sid))
   else:
-    keys = [('all;%d;%d' % sid)
-            for (logged_in_user_id, sid) in needed_shard_ids]
+    keys = [
+        ('all;%d;%d' % (logged_in_user_id, sid)) for sid in needed_shard_ids
+    ]
 
   if use_cached_searches:
     cached_dict = memcache.get_multi(
