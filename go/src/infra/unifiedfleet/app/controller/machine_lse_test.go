@@ -17,6 +17,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
@@ -380,8 +381,15 @@ func TestCreateMachineLSE(t *testing.T) {
 func TestCreateMachineLSELabstation(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
 	machine := &ufspb.Machine{
 		Name: "machine-4",
+		Device: &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: &ufspb.ChromeOSMachine{
+				BuildTarget: "test",
+				Model:       "test",
+			},
+		},
 	}
 	registration.CreateMachine(ctx, machine)
 	Convey("CreateMachineLSE for a Labstation", t, func() {

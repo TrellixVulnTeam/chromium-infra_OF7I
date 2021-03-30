@@ -62,11 +62,6 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
 
-		// Validate device config
-		if err := validateDeviceConfig(ctx, machine); err != nil {
-			return errors.Annotate(err, "Validation error - Failed to create DUT").Err()
-		}
-
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
 		machine.ResourceState = ufspb.State_STATE_SERVING
 		setOutputField(ctx, machine, machinelse)

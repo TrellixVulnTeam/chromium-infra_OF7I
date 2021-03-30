@@ -1051,8 +1051,9 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 		return err
 	}
 
-	//1. Check for servos for Labstation deployment
+	// 1. Check for servos in labstation
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		// Check for servos for Labstation deployment
 		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 		if len(newServos) != 0 {
 			return status.Errorf(codes.FailedPrecondition, "Servos are not allowed "+
@@ -1132,6 +1133,15 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("The rpm powerunit_name and powerunit_outlet is already in use by %s.", lses[0].GetName()))
 		}
 	}
+
+	// 6. Check for device config if its an OS MachineLSE
+	if machinelse.GetChromeosMachineLse().GetDeviceLse() != nil {
+		// Validate device config
+		if err := validateDeviceConfig(ctx, machine); err != nil {
+			return errors.Annotate(err, "Validation error - Missing device config").Err()
+		}
+	}
+
 	return nil
 }
 

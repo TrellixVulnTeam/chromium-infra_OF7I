@@ -8,6 +8,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
@@ -16,6 +17,7 @@ import (
 func TestUpdateLabstation(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
 	Convey("UpdateLabstation", t, func() {
 		Convey("UpdateLabstation - Non-existent labstation", func() {
 			labstation1 := mockLabstation("labstation-1", "machine-1")
@@ -32,7 +34,15 @@ func TestUpdateLabstation(t *testing.T) {
 		})
 		Convey("UpdateLabstation - Delete machine, mask update", func() {
 			// Reset a machine by setting machines to nil and machines update mask
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-2"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-2",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation2 := mockLabstation("labstation-2", "machine-2")
 			res, err := CreateLabstation(ctx, labstation2)
@@ -57,7 +67,15 @@ func TestUpdateLabstation(t *testing.T) {
 		})
 		Convey("UpdateLabstation - Delete machine", func() {
 			// Reset a machine in maskless update.
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-3"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-3", "machine-3")
 			res, err := CreateLabstation(ctx, labstation1)
@@ -82,7 +100,15 @@ func TestUpdateLabstation(t *testing.T) {
 		})
 		Convey("UpdateLabstation - Reset rpm using update mask", func() {
 			// Delete rpm using update mask and setting rpm name to nil
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-4"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-4",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-4", "machine-4")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.OSRPM{
@@ -118,7 +144,15 @@ func TestUpdateLabstation(t *testing.T) {
 		})
 		Convey("UpdateLabstation - Reset rpm outlet using update mask", func() {
 			// Reset rpm outlet using a mask update. Should fail.
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-5"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-5",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-5", "machine-5")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Rpm = &chromeosLab.OSRPM{
@@ -182,7 +216,15 @@ func TestUpdateLabstation(t *testing.T) {
 			So(s.GetState(), ShouldNotEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 		})
 		Convey("UpdateLabstation - Update/Delete pools", func() {
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-6"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-6",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-6", "machine-6")
 			res, err := CreateLabstation(ctx, labstation1)
@@ -229,7 +271,15 @@ func TestUpdateLabstation(t *testing.T) {
 			So(s.GetState(), ShouldNotEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 		})
 		Convey("UpdateLabstation - Update/Delete tags", func() {
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-7"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-7",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-7", "machine-7")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"labstation_main"}
@@ -289,7 +339,15 @@ func TestUpdateLabstation(t *testing.T) {
 			So(s.GetState(), ShouldNotEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 		})
 		Convey("UpdateLabstation - Update/Delete description", func() {
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-8"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-8",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-8", "machine-8")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"labstation_main"}
@@ -335,7 +393,15 @@ func TestUpdateLabstation(t *testing.T) {
 			So(s.GetState(), ShouldNotEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 		})
 		Convey("UpdateLabstation - Update/Delete deploymentTicket", func() {
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-9"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-9",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-9", "machine-9")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"labstation_main"}
@@ -381,7 +447,15 @@ func TestUpdateLabstation(t *testing.T) {
 			So(s.GetState(), ShouldNotEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 		})
 		Convey("UpdateLabstation - Update labstation state", func() {
-			_, err := registration.CreateMachine(ctx, &ufspb.Machine{Name: "machine-10"})
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			})
 			So(err, ShouldBeNil)
 			labstation1 := mockLabstation("labstation-10", "machine-10")
 			labstation1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"labstation_main"}
