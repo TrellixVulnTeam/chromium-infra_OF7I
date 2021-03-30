@@ -17,6 +17,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	apibq "infra/unifiedfleet/api/v1/models/bigquery"
 	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/model/caching"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
@@ -37,9 +38,10 @@ var registrationDumpToolkit = map[string]getAllFunc{
 }
 
 var inventoryDumpToolkit = map[string]getAllFunc{
-	"machine_lses": getAllMachineLSEsMsgs,
-	"rack_lses":    getAllRackLSEMsgs,
-	"vms":          getAllVMMsgs,
+	"machine_lses":     getAllMachineLSEsMsgs,
+	"rack_lses":        getAllRackLSEMsgs,
+	"vms":              getAllVMMsgs,
+	"caching_services": getAllCachingServiceMsgs,
 }
 
 var stateDumpToolkit = map[string]getAllFunc{
@@ -434,6 +436,21 @@ func getAllDutStateRecordMsgs(ctx context.Context) ([]proto.Message, error) {
 		msgs[idx] = &apibq.DUTStateRecordRow{
 			State: state,
 		}
+	}
+	return msgs, nil
+}
+
+func getAllCachingServiceMsgs(ctx context.Context) ([]proto.Message, error) {
+	cachingServices, err := caching.ListAllCachingServices(ctx, false)
+	if err != nil {
+		return nil, errors.Annotate(err, "get all caching services").Err()
+	}
+	msgs := make([]proto.Message, 0)
+	for _, p := range cachingServices {
+		msg := &apibq.CachingServiceRow{
+			CachingService: p,
+		}
+		msgs = append(msgs, msg)
 	}
 	return msgs, nil
 }

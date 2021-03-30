@@ -388,3 +388,20 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+echo "- Populate the BigQuery schema:"
+echo ""
+echo "  Warning: On first 'bqschemaupdater' invocation, it'll request default"
+echo "    credentials which is stored independently than 'bq'."
+if ! (bqschemaupdater -force \
+    -message unifiedfleet.api.v1.models.bigquery.CachingServiceRow  \
+    -table "${APPID}".ufs.caching_services); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:ufs.caching_services"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi

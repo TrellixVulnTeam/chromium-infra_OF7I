@@ -187,6 +187,16 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			msgs["dutstates"] = append(msgs["dutstates"], &apibq.DUTStateRecordRow{
 				State: &data,
 			})
+		case util.CachingServiceCollection:
+			var data ufspb.CachingService
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["caching_services"] = append(msgs["caching_services"], &apibq.CachingServiceRow{
+				CachingService: &data,
+				Delete:         s.Delete,
+			})
 		}
 	}
 	logging.Debugf(ctx, "Uploading all %d snapshots...", len(snapshots))

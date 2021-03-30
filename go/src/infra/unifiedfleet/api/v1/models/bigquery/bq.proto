@@ -11,6 +11,7 @@ option go_package = "infra/unifiedfleet/api/v1/models/bigquery;apibq";
 import "infra/unifiedfleet/api/v1/models/asset.proto";
 import "infra/unifiedfleet/api/v1/models/change_event.proto";
 import "infra/unifiedfleet/api/v1/models/chrome_platform.proto";
+import "infra/unifiedfleet/api/v1/models/caching_service.proto";
 import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
@@ -117,4 +118,9 @@ message IPRow {
 
 message DUTStateRecordRow {
     models.chromeos.lab.DutState state = 1;
+}
+
+message CachingServiceRow {
+    models.CachingService caching_service = 1;
+    bool delete = 2;
 }

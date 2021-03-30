@@ -153,6 +153,31 @@ func ListCachingServices(ctx context.Context, pageSize int32, pageToken string, 
 	return
 }
 
+// ListAllCachingServices returns all caching services in datastore.
+func ListAllCachingServices(ctx context.Context, keysOnly bool) (res []*ufspb.CachingService, err error) {
+	var entities []*CSEntity
+	q := datastore.NewQuery(CachingServiceKind).KeysOnly(keysOnly).FirestoreMode(true)
+	if err = datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	for _, ent := range entities {
+		if keysOnly {
+			res = append(res, &ufspb.CachingService{
+				Name: ent.ID,
+			})
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil, err
+			}
+			cachingService := pm.(*ufspb.CachingService)
+			res = append(res, cachingService)
+		}
+	}
+	return
+}
+
 func putCachingService(ctx context.Context, cs *ufspb.CachingService, update bool) (*ufspb.CachingService, error) {
 	cs.UpdateTime = ptypes.TimestampNow()
 	pm, err := ufsds.Put(ctx, cs, newCSEntity, update)
