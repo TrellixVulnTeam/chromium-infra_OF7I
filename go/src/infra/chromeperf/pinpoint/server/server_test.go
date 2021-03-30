@@ -232,7 +232,7 @@ func TestCancelJob(t *testing.T) {
 
 	ctx := context.Background()
 	authorizedCtx := metadata.NewOutgoingContext(ctx, metadata.MD{
-		endpointsHeader: []string{
+		EndpointsHeader: []string{
 			base64.RawURLEncoding.EncodeToString([]byte(`{"email": "anonymous-user@example.com"}`)),
 		},
 	})
@@ -326,7 +326,7 @@ func TestScheduleJob(t *testing.T) {
 
 	ctx := context.Background()
 	authorizedCtx := metadata.NewOutgoingContext(ctx, metadata.MD{
-		endpointsHeader: []string{
+		EndpointsHeader: []string{
 			base64.RawURLEncoding.EncodeToString([]byte(`{"email": "user@example.com"}`)),
 		},
 	})

@@ -43,9 +43,11 @@ func NewServer(templateDir string, jobData map[string]*Job) (*Server, error) {
 
 // Server implements a fake Legacy Pinpoint service. Use NewServer to make one.
 type Server struct {
-	mu        sync.Mutex
-	jobData   map[string]*Job
 	templates *Templates
+
+	mu       sync.Mutex
+	jobData  map[string]*Job
+	nextUUID uint64
 }
 
 // A Job represents some fake legacy pinpoint job.
@@ -88,6 +90,7 @@ func (s *Server) Handler() http.Handler {
 	mux := new(http.ServeMux)
 	mux.Handle("/api/job/", legacyHandler(s.getJob))
 	mux.Handle("/api/jobs", legacyHandler(s.listJobs))
+	mux.Handle("/api/new", legacyHandler(s.newJob))
 	return mux
 }
 
@@ -130,4 +133,43 @@ func (s *Server) listJobs(req *http.Request) (*legacyResult, int, error) {
 		s.templates.List,
 		list,
 	}, 0, nil
+}
+
+// newJob implements creating new (fake) pinpoint jobs.
+// As of now it ignores all parameters other than 'user'.
+func (s *Server) newJob(req *http.Request) (*legacyResult, int, error) {
+	if req.Method != "POST" {
+		return nil, 400, errors.Reason("only POST supported").Err()
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, 400, errors.Annotate(err, "error parsing HTTP request").Err()
+	}
+	q := req.Form
+
+	user := q.Get("user")
+	if user == "" {
+		return nil, 400, errors.Reason("must set user").Err()
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	id := formatUUID(s.nextUUID)
+	s.nextUUID++
+	j := &Job{
+		ID:        id,
+		Status:    QueuedStatus,
+		UserEmail: user,
+	}
+	s.jobData[id] = j
+
+	return &legacyResult{
+		s.templates.New,
+		*j,
+	}, 0, nil
+}
+
+// formatUUID formats the provided integral uuid as a legacy hex ID.
+func formatUUID(uuid uint64) string {
+	return fmt.Sprintf("%014x", uuid)
 }

@@ -28,6 +28,7 @@ import (
 type Templates struct {
 	Job  Template
 	List Template
+	New  Template
 }
 
 // Template represents a single API response template.
@@ -53,5 +54,6 @@ func loadTemplates(dir string) (*Templates, error) {
 	return &Templates{
 		Job:  Template{tmpls, "job.tmpl"},
 		List: Template{tmpls, "list.tmpl"},
+		New:  Template{tmpls, "new.tmpl"},
 	}, nil
 }

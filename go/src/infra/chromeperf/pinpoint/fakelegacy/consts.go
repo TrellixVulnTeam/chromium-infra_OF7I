@@ -21,5 +21,9 @@ package fakelegacy
 type Status string
 
 const (
-	CompletedStatus Status = "COMPLETED"
+	QueuedStatus    Status = "Queued"
+	RunningStatus   Status = "Running"
+	CancelledStatus Status = "Cancelled"
+	FailedStatus    Status = "Failed"
+	CompletedStatus Status = "Completed"
 )

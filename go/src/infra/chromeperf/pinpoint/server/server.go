@@ -51,8 +51,10 @@ type pinpointServer struct {
 }
 
 const (
-	port            = ":60800"
-	endpointsHeader = "x-endpoint-api-userinfo"
+	port = ":60800"
+	// EndpointsHeader is the metadata header used to obtain user information.
+	// https://cloud.google.com/endpoints/docs/openapi/authenticating-users-custom#receiving_authenticated_results_in_your_api
+	EndpointsHeader = "x-endpoint-api-userinfo"
 )
 
 // Scopes to use for OAuth2.0 credentials.
@@ -68,19 +70,19 @@ func getRequestingUserEmail(ctx context.Context) (string, error) {
 	if !ok {
 		return "", status.Error(codes.InvalidArgument, "missing metadata from request context")
 	}
-	auth, ok := md[endpointsHeader]
+	auth, ok := md[EndpointsHeader]
 	if !ok || len(auth) == 0 {
-		return "", status.Errorf(codes.PermissionDenied, "missing required auth header '%s'", endpointsHeader)
+		return "", status.Errorf(codes.PermissionDenied, "missing required auth header '%s'", EndpointsHeader)
 	}
 	// Decode the auto header from base64encoded json, into a map we can inspect.
 	decoded, err := base64.RawURLEncoding.DecodeString(auth[0])
 	if err != nil {
 		grpclog.Errorf("Failed decoding auth = '%v'; error = %s", auth, err)
-		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
+		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", EndpointsHeader, err)
 	}
 	userInfo := make(map[string]interface{})
 	if json.Unmarshal(decoded, &userInfo) != nil {
-		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", endpointsHeader, err)
+		return "", status.Errorf(codes.InvalidArgument, "malformed %s: %v", EndpointsHeader, err)
 	}
 	email, ok := userInfo["email"].(string)
 	if !ok || len(email) == 0 {
