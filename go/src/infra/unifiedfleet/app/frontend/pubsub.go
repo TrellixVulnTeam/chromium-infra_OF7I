@@ -107,14 +107,14 @@ func updateAssetInfoFromHart(ufsAssetInfo, hartAssetInfo *ufspb.AssetInfo) *ufsp
 		// Update GoogleCodeName if it's changed
 		ufsAssetInfo.GoogleCodeName = hartAssetInfo.GetGoogleCodeName()
 	}
-	if ufsAssetInfo.GetModel() != hartAssetInfo.GetModel() {
+	if ufsAssetInfo.GetModel() == "" {
 		updated = true
-		// Update Model if it's changed
+		//  Update Model if we don't have it
 		ufsAssetInfo.Model = hartAssetInfo.GetModel()
 	}
-	if ufsAssetInfo.GetBuildTarget() != hartAssetInfo.GetBuildTarget() {
+	if ufsAssetInfo.GetBuildTarget() == "" {
 		updated = true
-		// Update BuildTarget if it's changed
+		// Update BuildTarget if we don't have it
 		ufsAssetInfo.BuildTarget = hartAssetInfo.GetBuildTarget()
 	}
 	if ufsAssetInfo.GetReferenceBoard() != hartAssetInfo.GetReferenceBoard() {

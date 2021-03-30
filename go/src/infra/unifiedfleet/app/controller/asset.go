@@ -47,13 +47,14 @@ func AssetRegistration(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, e
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "AddAsset - unable to update asset %s", asset.GetName()).Err()
 	}
-	//TODO(anushruth): Restart once the outage is resolved
-	/*// On successful update to datastore, make an asset info request.
-	herr := util.PublishHaRTAssetInfoRequest(ctx, []string{asset.GetName()})
-	if herr != nil {
-		// Don't return this error. Cron job will eventually get to update this.
-		logging.Warningf(ctx, "AssetRegistration - Faild to publish request for asset info to HaRT. %v", herr)
-	}*/
+	if asset.GetType() == ufspb.AssetType_DUT {
+		// On successful update to datastore, make an asset info request.
+		herr := util.PublishHaRTAssetInfoRequest(ctx, []string{asset.GetName()})
+		if herr != nil {
+			// Don't return this error. Cron job will eventually get to update this.
+			logging.Warningf(ctx, "AssetRegistration - Faild to publish request for asset info to HaRT. %v", herr)
+		}
+	}
 	return asset, nil
 }
 
