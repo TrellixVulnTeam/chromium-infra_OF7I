@@ -73,7 +73,7 @@ func innerMain() error {
 		return nil
 	}
 	vip := nodeVirtualIP(service)
-	var n = nginxConfData{
+	n := nginxConfData{
 		// TODO(sanikak): Define types to make the unit clearer.
 		// E.g.  type gigabyte int.
 		CacheSizeInGB:  int(*cacheSizeInGB),
@@ -81,7 +81,7 @@ func innerMain() error {
 		GSAInitialPort: int(*gsaInitialPort),
 		VirtualIP:      vip,
 	}
-	var k = keepalivedConfData{
+	k := keepalivedConfData{
 		VirtualIP: vip,
 	}
 	switch {
