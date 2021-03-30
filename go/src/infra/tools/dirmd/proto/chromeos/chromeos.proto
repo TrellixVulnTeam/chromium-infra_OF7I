@@ -1,0 +1,22 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.dir_metadata.chromeos;
+
+option go_package = "infra/tools/dirmd/proto/chromeos";
+
+import "go.chromium.org/chromiumos/config/proto/chromiumos/test/plan/source_test_plan.proto";
+
+// ChromeOS specific metadata.
+message ChromeOS {
+  // CQ specific metadata.
+  message CQ {
+    // SourceTestPlans to configure testing specific to source paths.
+    repeated chromiumos.test.plan.SourceTestPlan source_test_plans = 1;
+  }
+
+  CQ cq = 1;
+}

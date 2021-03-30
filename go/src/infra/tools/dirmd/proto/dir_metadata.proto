@@ -8,6 +8,8 @@ package chrome.dir_metadata;
 
 option go_package = "infra/tools/dirmd/proto;dirmdpb";
 
+import "infra/tools/dirmd/proto/chromeos/chromeos.proto";
+
 // Metadata information for a directory.
 //
 // Individual fields/subfields are inherited by subdirectories, unless
@@ -67,6 +69,9 @@ message Metadata {
   // https://opensource.google/docs/thirdparty/metadata/
   reserved 13;
   reserved "third_party";
+
+  // ChromeOS specific metadata.
+  chrome.dir_metadata.chromeos.ChromeOS chromeos = 9;
 }
 
 // WPT is WebPlatformTest-specific metadata.
