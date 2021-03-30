@@ -65,6 +65,7 @@ func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeploym
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateMachineLSEDeployment").Err()
 	}
+	logging.Infof(ctx, "Successfully update deployment record serial number %q (%q)", dr.GetSerialNumber(), dr.GetDeploymentIdentifier())
 	return dr, nil
 }
 
