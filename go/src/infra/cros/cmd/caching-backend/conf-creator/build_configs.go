@@ -25,6 +25,7 @@ const (
 // create the nginx.conf file.
 type nginxConfData struct {
 	UpstreamHost   string
+	VirtualIP      string
 	CacheSizeInGB  int
 	GSAServerCount int
 	GSAInitialPort int

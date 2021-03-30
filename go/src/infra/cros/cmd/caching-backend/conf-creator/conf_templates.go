@@ -82,7 +82,7 @@ http {
       proxy_redirect        off;
       proxy_http_version    1.1;
       proxy_set_header      Connection "";
-      proxy_set_header      X-Forwarded-Host $host:$server_port;
+      proxy_set_header      X-Forwarded-Host {{ .VirtualIP }}:$server_port;
       proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_cache           google-storage;
       proxy_cache_valid     200 720h;

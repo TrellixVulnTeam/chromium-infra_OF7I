@@ -72,25 +72,27 @@ func innerMain() error {
 		}
 		return nil
 	}
+	vip := nodeVirtualIP(service)
 	var n = nginxConfData{
 		// TODO(sanikak): Define types to make the unit clearer.
 		// E.g.  type gigabyte int.
 		CacheSizeInGB:  int(*cacheSizeInGB),
 		GSAServerCount: int(*gsaServerCount),
 		GSAInitialPort: int(*gsaInitialPort),
+		VirtualIP:      vip,
 	}
-	var k = keepalivedConfData{}
+	var k = keepalivedConfData{
+		VirtualIP: vip,
+	}
 	switch {
 	case nodeIP == service.GetPrimaryNode() || nodeName == service.GetPrimaryNode():
 		n.UpstreamHost = net.JoinHostPort(service.GetSecondaryNode(), strconv.Itoa(int(service.GetPort())))
 		k.UnicastPeer = service.GetSecondaryNode()
-		k.VirtualIP = nodeVirtualIP(service)
 		// Keepalived configuration uses the following non-inclusive language.
 		k.State = "MASTER"
 		k.Priority = 150
 	case nodeIP == service.GetSecondaryNode() || nodeName == service.GetSecondaryNode():
 		k.UnicastPeer = service.GetPrimaryNode()
-		k.VirtualIP = nodeVirtualIP(service)
 		k.State = "BACKUP"
 		k.Priority = 99
 	default:
