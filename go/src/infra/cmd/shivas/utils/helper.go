@@ -403,3 +403,57 @@ func GetStringSlice(msg string) []string {
 	}
 	return strings.Split(strings.Replace(msg, " ", "", -1), ",")
 }
+
+// GenerateAssetUpdate generates an AssetUpdate request for location, model and board updates
+func GenerateAssetUpdate(hostname, machine, model, board, zone, rack string) (*ufspb.Asset, []string, error) {
+	loc, err := GetLocation(hostname)
+	if err != nil {
+		return nil, nil, err
+	}
+	asset := &ufspb.Asset{
+		Name:     UfleetUtil.AddPrefix(UfleetUtil.AssetCollection, machine),
+		Location: loc,
+		Info:     &ufspb.AssetInfo{},
+	}
+	// Create the update field mask.
+	var paths []string
+	// Override zone info with user provided option.
+	if zone != "" {
+		asset.GetLocation().Zone = UfleetUtil.ToUFSZone(zone)
+	}
+	// Override rack info with user provided option.
+	if rack != "" {
+		asset.GetLocation().Rack = rack
+	}
+	// Override model with user provided option.
+	if model != "" {
+		asset.Model = model
+		asset.GetInfo().Model = model
+		paths = append(paths, "model")
+	}
+	// Override board with user provided option
+	if board != "" {
+		asset.GetInfo().BuildTarget = board
+		paths = append(paths, "info.build_target")
+	}
+	if asset.GetLocation().GetZone() != ufspb.Zone_ZONE_UNSPECIFIED {
+		paths = append(paths, "location.zone")
+		asset.Realm = UfleetUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
+	}
+	if asset.GetLocation().GetRack() != "" {
+		paths = append(paths, "location.rack")
+	}
+	if asset.GetLocation().GetRackNumber() != "" {
+		paths = append(paths, "location.rack_number")
+	}
+	if asset.GetLocation().GetRow() != "" {
+		paths = append(paths, "location.row")
+	}
+	if asset.GetLocation().GetPosition() != "" {
+		paths = append(paths, "location.position")
+	}
+	if asset.GetLocation().GetBarcodeName() != "" {
+		paths = append(paths, "location.barcode_name")
+	}
+	return asset, paths, nil
+}

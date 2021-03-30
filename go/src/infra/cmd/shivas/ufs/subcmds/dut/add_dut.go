@@ -349,7 +349,7 @@ func (c *addDUT) parseArgs() ([]*dutDeployUFSParams, error) {
 		if err := utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return nil, err
 		}
-		asset, paths, err := c.initializeAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "")
+		asset, paths, err := utils.GenerateAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "", "", "")
 		if err != nil {
 			return nil, err
 		}
@@ -570,7 +570,7 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 	peripherals.Chaos = c.chaos
 	peripherals.SmartUsbhub = c.smartUSBHub
 	// Get the updated asset and update paths
-	asset, paths, err := c.initializeAssetUpdate(lse.GetName(), machines[0], model, board)
+	asset, paths, err := utils.GenerateAssetUpdate(lse.GetName(), machines[0], model, board, c.zone, c.rack)
 	if err != nil {
 		return nil, err
 	}
@@ -579,61 +579,6 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 		Asset: asset,
 		Paths: paths,
 	}, nil
-}
-
-// initializeAssetUpdate initializes asset proto and update mask for updating the asset
-func (c *addDUT) initializeAssetUpdate(hostname, machine, model, board string) (*ufspb.Asset, []string, error) {
-	loc, err := utils.GetLocation(hostname)
-	if err != nil {
-		fmt.Printf("Failed to update asset location for DUT %s in UFS.\n", hostname)
-		return nil, nil, err
-	}
-	asset := &ufspb.Asset{
-		Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, machine),
-		Location: loc,
-		Info:     &ufspb.AssetInfo{},
-	}
-	// Create the update field mask.
-	var paths []string
-	// Override zone info with user provided option.
-	if c.zone != "" {
-		asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
-	}
-	// Override rack info with user provided option.
-	if c.rack != "" {
-		asset.GetLocation().Rack = c.rack
-	}
-	// Override model with user provided option.
-	if model != "" {
-		asset.Model = model
-		asset.GetInfo().Model = model
-		paths = append(paths, "model")
-	}
-	// Override board with user provided option
-	if board != "" {
-		asset.GetInfo().BuildTarget = board
-		paths = append(paths, "info.build_target")
-	}
-	if asset.GetLocation().GetZone() != ufspb.Zone_ZONE_UNSPECIFIED {
-		paths = append(paths, "location.zone")
-		asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
-	}
-	if asset.GetLocation().GetRack() != "" {
-		paths = append(paths, "location.rack")
-	}
-	if asset.GetLocation().GetRackNumber() != "" {
-		paths = append(paths, "location.rack_number")
-	}
-	if asset.GetLocation().GetRow() != "" {
-		paths = append(paths, "location.row")
-	}
-	if asset.GetLocation().GetPosition() != "" {
-		paths = append(paths, "location.position")
-	}
-	if asset.GetLocation().GetBarcodeName() != "" {
-		paths = append(paths, "location.barcode_name")
-	}
-	return asset, paths, nil
 }
 
 func parseServoHostnamePort(servo string) (string, int32, error) {

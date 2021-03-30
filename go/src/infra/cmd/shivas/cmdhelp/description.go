@@ -383,13 +383,13 @@ The protobuf definition of Labstation is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
 
 The file may have multiple or one labstation csv record.
-The header format and sequence should be: [name,asset,rpm_host,rpm_outlet,pools]
+The header format and sequence should be: [name,asset,model,board,rpm_host,rpm_outlet,pools]
 
 Example mcsv format:
-name,asset,rpm_host,rpm_outlet,pools
-labstation-1,asset-1,rpm-1,A2,labstation_main
-labstation-2,asset-2,rpm-2,A2,"labstation_main labstation_tryjob"
-labstation-3,asset-3,rpm-3,A2,labstation_main
+name,asset,model,board,rpm_host,rpm_outlet,pools
+labstation-1,asset-1,wukong,fizz_labstation,rpm-1,A2,labstation_main
+labstation-2,asset-2,wukong,fizz_labstation,rpm-2,A2,"labstation_main labstation_tryjob"
+labstation-3,asset-3,wukong,fizz_labstation,rpm-3,A2,labstation_main
 
 `
 	// LabstationUpdateFileText description for json file input

@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
@@ -67,6 +68,9 @@ var AddLabstationCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine.")
 		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags for the Labstation.")
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine.")
+		c.Flags.StringVar(&c.model, "model", "", "model name of the device")
+		c.Flags.StringVar(&c.board, "board", "", "board the device is based on")
+		c.Flags.StringVar(&c.rack, "rack", "", "rack that the labstation is on")
 		return c
 	},
 }
@@ -91,14 +95,30 @@ type addLabstation struct {
 	tags              []string
 	state             string
 	description       string
+
+	// Asset related params
+	model string
+	board string
+	rack  string
 }
 
 var mcsvFields = []string{
 	"name",
 	"asset",
+	"model",
+	"board",
 	"rpm_host",
 	"rpm_outlet",
 	"pools",
+}
+
+// labstationDeployUFSParams contains all the data that are needed for deployment of a single labstation
+// Asset and its update paths are required here to update location, model and board for the labstation
+// See: crbug.com/1188488 for why model and board need to be updated.
+type labstationDeployUFSParams struct {
+	Labstation *ufspb.MachineLSE // MachineLSE of the labstation to be updated
+	Asset      *ufspb.Asset      // Asset underlying the labstation being updated
+	Paths      []string          // Update paths for the Asset being updated
 }
 
 func (c *addLabstation) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -132,7 +152,7 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 	}
 	tc.LogdogService = e.LogdogService
 	tc.SwarmingServiceAccount = e.SwarmingServiceAccount
-	machineLSEs, err := c.parseArgs()
+	deployParams, err := c.parseArgs()
 	if err != nil {
 		return err
 	}
@@ -145,19 +165,19 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 		Options: site.DefaultPRPCOptions,
 	})
 
-	for _, lse := range machineLSEs {
-		if len(lse.GetMachines()) == 0 {
-			fmt.Printf("Failed to add Labstation %s to UFS. It is not linked to any Asset(Machine).\n", lse.GetName())
+	for _, params := range deployParams {
+		if len(params.Labstation.GetMachines()) == 0 {
+			fmt.Printf("Failed to add Labstation %s to UFS. It is not linked to any Asset(Machine).\n", params.Labstation.GetName())
 			continue
 		}
-		err := c.addLabstationToUFS(ctx, ic, lse)
-		resTable.RecordResult(ufsOp, lse.GetHostname(), err)
+		err := c.addLabstationToUFS(ctx, ic, params)
+		resTable.RecordResult(ufsOp, params.Labstation.GetHostname(), err)
 		if err == nil {
 			// Deploy and record result.
-			resTable.RecordResult(swarmingOp, lse.GetHostname(), c.deployLabstationToSwarming(ctx, tc, lse))
+			resTable.RecordResult(swarmingOp, params.Labstation.GetHostname(), c.deployLabstationToSwarming(ctx, tc, params.Labstation))
 		} else {
 			// Record deploy task skip.
-			resTable.RecordSkip(swarmingOp, lse.GetHostname(), "")
+			resTable.RecordSkip(swarmingOp, params.Labstation.GetHostname(), "")
 		}
 	}
 	// Print session URL if atleast one of the tasks was deployed.
@@ -183,6 +203,12 @@ func (c addLabstation) validateArgs() error {
 		}
 		if c.rpm != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-rpm' cannot be specified at the same time.")
+		}
+		if c.model != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-model' cannot be specified at the same time.")
+		}
+		if c.board != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-board' cannot be specified at the same time.")
 		}
 		if c.rpmOutlet != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-rpm-outlet' cannot be specified at the same time.")
@@ -215,7 +241,7 @@ func (c addLabstation) validateArgs() error {
 }
 
 // parseArgs reads the input and generates machineLSE.
-func (c *addLabstation) parseArgs() ([]*ufspb.MachineLSE, error) {
+func (c *addLabstation) parseArgs() ([]*labstationDeployUFSParams, error) {
 	if c.newSpecsFile != "" {
 		if utils.IsCSVFile(c.newSpecsFile) {
 			return c.parseMCSV()
@@ -225,23 +251,36 @@ func (c *addLabstation) parseArgs() ([]*ufspb.MachineLSE, error) {
 			return nil, err
 		}
 		machinelse.Hostname = machinelse.Name
-		return []*ufspb.MachineLSE{machinelse}, nil
+		if len(machinelse.GetMachines()) == 0 {
+			return nil, cmdlib.NewQuietUsageError(c.Flags, "Need asset tag to create Labstation. Use Machines field in %s", c.newSpecsFile)
+		}
+		// Get the updated asset and update paths. Note that deployment fails if model/board not already assigned to asset.
+		asset, paths, err := utils.GenerateAssetUpdate(machinelse.GetName(), machinelse.GetMachines()[0], "", "", "", "")
+		if err != nil {
+			return nil, err
+		}
+
+		return []*labstationDeployUFSParams{{
+			Labstation: machinelse,
+			Asset:      asset,
+			Paths:      paths,
+		}}, nil
 	}
 	// command line parameters
-	lse, err := c.initializeLSE(nil)
+	deployParams, err := c.initializeLSEAndAsset(nil)
 	if err != nil {
 		return nil, err
 	}
-	return []*ufspb.MachineLSE{lse}, nil
+	return []*labstationDeployUFSParams{deployParams}, nil
 }
 
 // parseMCSV parses the MCSV file and returns MachineLSEs
-func (c *addLabstation) parseMCSV() ([]*ufspb.MachineLSE, error) {
+func (c *addLabstation) parseMCSV() ([]*labstationDeployUFSParams, error) {
 	records, err := utils.ParseMCSVFile(c.newSpecsFile)
 	if err != nil {
 		return nil, err
 	}
-	var lses []*ufspb.MachineLSE
+	var deployParams []*labstationDeployUFSParams
 	for i, rec := range records {
 		// if i is 1, determine whether this is a header
 		if i == 0 && utils.LooksLikeHeader(rec) {
@@ -254,23 +293,26 @@ func (c *addLabstation) parseMCSV() ([]*ufspb.MachineLSE, error) {
 		for j, title := range mcsvFields {
 			recMap[title] = rec[j]
 		}
-		lse, err := c.initializeLSE(recMap)
+		params, err := c.initializeLSEAndAsset(recMap)
 		if err != nil {
 			return nil, err
 		}
-		lses = append(lses, lse)
+		deployParams = append(deployParams, params)
 	}
-	return lses, nil
+	return deployParams, nil
 }
 
 // addLabstationToUFS attempts to create a machineLSE object in UFS.
-func (c *addLabstation) addLabstationToUFS(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
+func (c *addLabstation) addLabstationToUFS(ctx context.Context, ic ufsAPI.FleetClient, params *labstationDeployUFSParams) error {
+	if err := c.updateAssetToUFS(ctx, ic, params.Asset, params.Paths); err != nil {
+		return err
+	}
 	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
-		MachineLSE:   lse,
-		MachineLSEId: lse.GetName(),
+		MachineLSE:   params.Labstation,
+		MachineLSEId: params.Labstation.GetName(),
 	})
 	if err != nil {
-		fmt.Printf("Failed to add Labstation %s to UFS. UFS add failed %s\n", lse.GetName(), err)
+		fmt.Printf("Failed to add Labstation %s to UFS. UFS add failed %s\n", params.Labstation.GetName(), err)
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
@@ -288,7 +330,7 @@ func (c *addLabstation) deployLabstationToSwarming(ctx context.Context, tc *swar
 	return nil
 }
 
-func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineLSE, error) {
+func (c *addLabstation) initializeLSEAndAsset(recMap map[string]string) (*labstationDeployUFSParams, error) {
 	lse := &ufspb.MachineLSE{
 		Lse: &ufspb.MachineLSE_ChromeosMachineLse{
 			ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
@@ -304,13 +346,16 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 			},
 		},
 	}
-	var name, rpmHost, rpmOutlet string
-	var pools, machines []string
+	var name, rpmHost, rpmOutlet, model, board string
+	var asset *ufspb.Asset
+	var pools, machines, paths []string
 	if recMap != nil {
 		// CSV map
 		name = recMap["name"]
 		rpmHost = recMap["rpm_host"]
 		rpmOutlet = recMap["rpm_outlet"]
+		model = recMap["model"]
+		board = recMap["board"]
 		machines = []string{recMap["asset"]}
 		pools = strings.Fields(recMap["pools"])
 	} else {
@@ -318,6 +363,8 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 		name = c.hostname
 		rpmHost = c.rpm
 		rpmOutlet = c.rpmOutlet
+		model = c.model
+		board = c.board
 		machines = []string{c.machine}
 		pools = c.pools
 	}
@@ -348,5 +395,30 @@ func (c *addLabstation) initializeLSE(recMap map[string]string) (*ufspb.MachineL
 	} else {
 		lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = pools
 	}
-	return lse, nil
+	// Get the updated asset and update paths
+	asset, paths, err := utils.GenerateAssetUpdate(lse.GetName(), machines[0], model, board, "", c.rack)
+	if err != nil {
+		return nil, err
+	}
+	return &labstationDeployUFSParams{
+		Labstation: lse,
+		Asset:      asset,
+		Paths:      paths,
+	}, nil
+}
+
+// updateAssetToUFS calls UpdateAsset API in UFS with asset and partial paths
+func (c *addLabstation) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetClient, asset *ufspb.Asset, paths []string) error {
+	if len(paths) == 0 {
+		// If no update is available. Skip doing anything
+		return nil
+	}
+	mask := &field_mask.FieldMask{
+		Paths: paths,
+	}
+	_, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{
+		Asset:      asset,
+		UpdateMask: mask,
+	})
+	return err
 }
