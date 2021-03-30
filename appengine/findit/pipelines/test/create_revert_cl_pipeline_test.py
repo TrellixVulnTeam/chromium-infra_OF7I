@@ -95,6 +95,10 @@ class CreateRevertCLPipelineTest(wf_testcase.WaterfallTestCase):
     self.assertIsNotNone(culprit.revert_cl)
 
     reason = textwrap.dedent("""
+        Note: It is reported that sheriffs cannot submit CL created by Findit
+        (crbug.com/1187426). A workaround in the mean time is to abandon this
+        CL and create another revert CL.
+
         Findit (https://goo.gl/kROfz5) identified CL at revision %s as the
         culprit for failures in the build cycles as shown on:
         https://analysis.chromium.org/waterfall/culprit?key=%s\n
