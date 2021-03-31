@@ -80,13 +80,10 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	default:
 	}
 	// Get the current builder path.
+	// If the builder path is missing or fails to be retrieved, continue to provision.
 	builderPath, err := getBuilderPath(p.c)
 	if err != nil {
-		setError(newOperationError(
-			codes.Aborted,
-			fmt.Sprintf("provision: failed to get the builder path from DUT, %s", err),
-			tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
-		return
+		log.Printf("provision: failed to get pre-provision builder path, %s", err)
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
 	if builderPath != p.targetBuilderPath {
