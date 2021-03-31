@@ -93,7 +93,7 @@ def builder(
         executable = executable,
         properties = properties,
         dimensions = {
-            "os": os or "Ubuntu-16.04",
+            "os": os or "Ubuntu-18.04",
             "cpu": "x86-64",
             "cores": cpu_cores or "8",
             "pool": "luci.infra.codesearch",
