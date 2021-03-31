@@ -57,6 +57,9 @@ var (
 		// The full list of modified files is not available, and the
 		// graph does not include DEPSed file changes anyway.
 		"//DEPS",
+
+		// MB CLs change the way tests run or their configurations.
+		"//tools/mb/.+",
 	}
 	requireAllTestsRegexp = regexp.MustCompile(fmt.Sprintf("^(%s)$", strings.Join(requireAllTests, "|")))
 
