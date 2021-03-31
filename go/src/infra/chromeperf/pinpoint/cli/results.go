@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -105,6 +106,11 @@ func (drm *downloadResultsMixin) doDownloadResults(ctx context.Context, job *pin
 
 	gcs, err := storage.NewClient(ctx)
 	if err != nil {
+		// The error for not finding credentials is not structured in any way,
+		// so, we have to guess based on error text.
+		if strings.Contains(err.Error(), "could not find default credentials") {
+			return errors.Reason("failed to initialize Google Cloud Storage connection, error was: %v\n\nConsider running this command:\n\n\tgcloud auth application-default login\n", err).Err()
+		}
 		return errors.Annotate(err, "couldn't connect to Google Cloud Storage (GCS)").Err()
 	}
 	defer gcs.Close()
