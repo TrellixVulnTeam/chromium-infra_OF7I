@@ -5,9 +5,12 @@
 package main
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
-	"infra/tricium/api/v1"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+
+	tricium "infra/tricium/api/v1"
 )
 
 // These tests read from files on the filesystem, so modifying the tests may
@@ -44,7 +47,7 @@ func TestHTTPSChecker(t *testing.T) {
 		results := &tricium.Data_Results{}
 		checkHTTPS(httpURL, results)
 		So(results.Comments, ShouldNotBeNil)
-		So(results.Comments[0], ShouldResemble, &tricium.Data_Comment{
+		So(results.Comments[0], ShouldResembleProto, &tricium.Data_Comment{
 			Category:  "HttpsCheck/Warning",
 			Message:   ("Nit: Replace http:// URLs with https://"),
 			Path:      httpURL,
@@ -59,7 +62,7 @@ func TestHTTPSChecker(t *testing.T) {
 		results := &tricium.Data_Results{}
 		checkHTTPS(multipleHTTPURLs, results)
 		So(len(results.Comments), ShouldEqual, 2)
-		So(results.Comments[1], ShouldResemble, &tricium.Data_Comment{
+		So(results.Comments[1], ShouldResembleProto, &tricium.Data_Comment{
 			Category:  "HttpsCheck/Warning",
 			Message:   ("Nit: Replace http:// URLs with https://"),
 			Path:      multipleHTTPURLs,

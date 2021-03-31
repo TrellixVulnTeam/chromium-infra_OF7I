@@ -363,9 +363,8 @@ func createAnalysisResults(wres *track.WorkerRunResult, areq *track.AnalyzeReque
 	}
 
 	files := make([]*tricium.Data_File, len(areq.Files))
-	for i, f := range areq.Files {
-		fc := tricium.Data_File(f)
-		files[i] = &fc
+	for i := range areq.Files {
+		files[i] = proto.Clone(&areq.Files[i]).(*tricium.Data_File)
 	}
 
 	gcomments := make([]*apibq.AnalysisRun_GerritComment, len(comments))

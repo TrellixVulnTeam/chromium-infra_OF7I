@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"infra/tricium/api/v1"
+	. "go.chromium.org/luci/common/testing/assertions"
+
+	tricium "infra/tricium/api/v1"
 )
 
 // These tests read from files on the filesystem, so modifying the tests may
@@ -39,7 +41,7 @@ func TestGetPrefix(t *testing.T) {
 	Convey("Flags strong delegates", t, func() {
 		c := checkSourceFile("", badDelegate)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, []*tricium.Data_Comment{
+		So(c, ShouldResembleProto, []*tricium.Data_Comment{
 
 			{
 				Category:  "ObjectiveCStyle/StrongDelegate",
@@ -167,7 +169,7 @@ func TestGetPrefix(t *testing.T) {
 	Convey("Flags properties without explicit ownership", t, func() {
 		c := checkSourceFile("", badProperty)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, []*tricium.Data_Comment{
+		So(c, ShouldResembleProto, []*tricium.Data_Comment{
 
 			{
 				Category:  "ObjectiveCStyle/ExplicitOwnership",
@@ -219,7 +221,7 @@ func TestGetPrefix(t *testing.T) {
 	Convey("Flags functions have unnecessary get prefixes", t, func() {
 		c := checkSourceFile("", badGet)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, []*tricium.Data_Comment{
+		So(c, ShouldResembleProto, []*tricium.Data_Comment{
 			{
 				Category:  "ObjectiveCStyle/Get",
 				Message:   "The use of \"get\" is unnecessary, unless one or more values are returned indirectly. See: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CodingGuidelines/Articles/NamingMethods.html#:~:text=The%20use%20of%20%22get%22%20is%20unnecessary,%20unless%20one%20or%20more%20values%20are%20returned%20indirectly.",

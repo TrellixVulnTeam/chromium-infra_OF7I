@@ -7,6 +7,8 @@ import (
 
 	tricium "infra/tricium/api/v1"
 
+	. "go.chromium.org/luci/common/testing/assertions"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -31,7 +33,7 @@ func TestInclusiveLanguageChecker(t *testing.T) {
 		results := &tricium.Data_Results{}
 		checkInclusiveLanguage(filepath.Join(buildDir, okPathNotOkSource), okPathNotOkSource, results)
 		So(results.Comments, ShouldNotBeNil)
-		So(results.Comments[0], ShouldResemble, &tricium.Data_Comment{
+		So(results.Comments[0], ShouldResembleProto, &tricium.Data_Comment{
 			Category:  "InclusiveLanguageCheck/Warning",
 			Message:   commentText["blacklist"],
 			Path:      okPathNotOkSource,
@@ -57,7 +59,7 @@ func TestInclusiveLanguageChecker(t *testing.T) {
 		results := &tricium.Data_Results{}
 		checkInclusiveLanguage(filepath.Join(buildDir, notOkPath), notOkPath, results)
 		So(results.Comments, ShouldNotBeNil)
-		So(results.Comments[0], ShouldResemble, &tricium.Data_Comment{
+		So(results.Comments[0], ShouldResembleProto, &tricium.Data_Comment{
 			Category:  "InclusiveLanguageCheck/Warning",
 			Message:   commentText["blacklist"],
 			Path:      notOkPath,
@@ -77,7 +79,7 @@ func TestInclusiveLanguageChecker(t *testing.T) {
 				}},
 			}},
 		})
-		So(results.Comments[1], ShouldResemble, &tricium.Data_Comment{
+		So(results.Comments[1], ShouldResembleProto, &tricium.Data_Comment{
 			Category:  "InclusiveLanguageCheck/Warning",
 			Message:   commentText["blacklist"],
 			Path:      notOkPath,

@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"infra/tricium/api/v1"
+	. "go.chromium.org/luci/common/testing/assertions"
+
+	tricium "infra/tricium/api/v1"
 )
 
 // These tests read from files on the filesystem, so modifying the tests may
@@ -34,7 +36,7 @@ func TestCopyrightChecker(t *testing.T) {
 	Convey("Finds an issue when copyright doesn't match expected pattern", t, func() {
 		c := checkCopyright(badBsd)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, &tricium.Data_Comment{
+		So(c, ShouldResembleProto, &tricium.Data_Comment{
 			Category: "Copyright/Incorrect",
 			Message: ("Incorrect copyright statement.\n" +
 				"Use the following for BSD:\n" +
@@ -57,7 +59,7 @@ func TestCopyrightChecker(t *testing.T) {
 	Convey("Makes a comment when there appears to be no copyright header", t, func() {
 		c := checkCopyright(missing)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, &tricium.Data_Comment{
+		So(c, ShouldResembleProto, &tricium.Data_Comment{
 			Category: "Copyright/Missing",
 			Message: ("Missing copyright statement.\n" +
 				"Use the following for BSD:\n" +
@@ -80,7 +82,7 @@ func TestCopyrightChecker(t *testing.T) {
 	Convey("Makes a comment when there is a copyright statement but the old style is used", t, func() {
 		c := checkCopyright(old)
 		So(c, ShouldNotBeNil)
-		So(c, ShouldResemble, &tricium.Data_Comment{
+		So(c, ShouldResembleProto, &tricium.Data_Comment{
 			Category: "Copyright/OutOfDate",
 			Message: "Out of date copyright statement (omit the (c) to update).\n\n" +
 				"See: https://chromium.googlesource.com/chromium/src/+/master/styleguide/c++/c++.md#file-headers",

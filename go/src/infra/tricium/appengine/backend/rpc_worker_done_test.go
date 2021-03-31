@@ -486,7 +486,7 @@ func TestCreateAnalysisResults(t *testing.T) {
 		So(tutils.Timestamp(result.RequestedTime), ShouldEqual, areq.Received)
 		So(len(result.Files), ShouldEqual, len(areq.Files))
 		for i := 0; i < len(result.Files); i++ {
-			So(result.Files[i], ShouldResemble, &areq.Files[i])
+			So(result.Files[i], ShouldResembleProto, &areq.Files[i])
 		}
 		So(len(result.Comments), ShouldEqual, len(comments))
 		for i, gcomment := range result.Comments {
