@@ -64,7 +64,12 @@ func pathHandler(w http.ResponseWriter, req *http.Request) {
 	attrs, err := fetchAttrs(ctx, obj)
 	if err != nil {
 		log.Printf("failed to fetch attributes for %s: %v", path, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errString := err.Error()
+		if err == storage.ErrObjectNotExist {
+			http.Error(w, errString, http.StatusNotFound)
+		} else {
+			http.Error(w, errString, http.StatusInternalServerError)
+		}
 		return
 	}
 
