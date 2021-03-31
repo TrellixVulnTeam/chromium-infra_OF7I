@@ -62,10 +62,10 @@ For example, here are some of the additional functions (not comprehensive):
 
 ## Code/Development Setup
 
-For initial setup, follow the [Chrome Infra Go procedures](https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/README.md)
+For initial setup, follow the [Chrome Infra Go procedures](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/README.md)
 
 For environment setup, follow the [Bootstrap
-procedures](https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/README.md#Bootstrap)
+procedures](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/README.md#Bootstrap)
 
 ## Application Environments
 

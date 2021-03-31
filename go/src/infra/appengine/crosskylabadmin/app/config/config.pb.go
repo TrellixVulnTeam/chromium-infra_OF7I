@@ -956,7 +956,7 @@ type StableVersionConfig struct {
 	// example: "chromeos/infra/config"
 	Project string `protobuf:"bytes,3,opt,name=project,proto3" json:"project,omitempty"`
 	// The branch that the stable version data file is on
-	// example: "master"
+	// example: "main"
 	Branch string `protobuf:"bytes,4,opt,name=branch,proto3" json:"branch,omitempty"`
 	// The path, relative to the repo root, of the stable version data file
 	// example: "lab_platform/stable_version_data/stable_versions.cfg"
