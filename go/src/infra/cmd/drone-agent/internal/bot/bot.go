@@ -84,7 +84,7 @@ func (s Starter) Start(c Config) (b Bot, err error) {
 			_ = f.Close()
 		}
 	}()
-	cmd := exec.Command("python2", c.botZipPath(), "start_bot")
+	cmd := exec.Command("python3.8", c.botZipPath(), "start_bot")
 	cmd.Stdout = f
 	cmd.Stderr = f
 	cmd.Env = append(c.env(), os.Environ()...)
