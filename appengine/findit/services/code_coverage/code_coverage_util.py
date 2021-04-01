@@ -528,6 +528,8 @@ def MergeFilesCoverageDataForPerCL(a, b):
   Returns:
     A list of File in coverage proto.
   """
+  a = a or []
+  b = b or []
   merged = []
   a_dict = {i['path']: i for i in a}
   b_dict = {i['path']: i for i in b}

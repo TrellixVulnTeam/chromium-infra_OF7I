@@ -499,6 +499,27 @@ class CodeCoverageUtilTest(WaterfallTestCase):
     self.assertListEqual(
         expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
 
+  def testMergeFilesCoverageDataNoneInput(self):
+    a = None
+    b = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 2,
+            'last': 4,
+            'count': 1,
+        }]
+    }]
+    expected = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 2,
+            'last': 4,
+            'count': 1,
+        }]
+    }]
+    self.assertListEqual(
+        expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
+
   def testMergeFilesCoverageDataNoOverlap(self):
     a = [{
         'path': '//test.cc',
