@@ -35,9 +35,6 @@ func (*driverServer) Trigger(c context.Context, req *admin.TriggerRequest) (*adm
 	if req.Worker == "" {
 		return nil, errors.New("missing worker name", grpcutil.InvalidArgumentTag)
 	}
-	if req.IsolatedInputHash != "" {
-		return nil, errors.New("isolated input hash in trigger request", grpcutil.InvalidArgumentTag)
-	}
 	if err := trigger(c, req, config.WorkflowCache, common.BuildbucketServer); err != nil {
 		return nil, errors.Annotate(err, "failed to trigger worker").
 			Tag(grpcutil.InternalTag).Err()

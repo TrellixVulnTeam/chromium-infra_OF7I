@@ -18,7 +18,7 @@ service Driver {
 // TriggerRequest contains the details for launching a build for a worker.
 message TriggerRequest {
   int64 run_id = 1;
-  string isolated_input_hash = 2;
+  reserved 2;
   string worker = 3;
 }
 
