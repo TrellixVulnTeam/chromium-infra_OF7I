@@ -1,0 +1,10 @@
+package: chromiumos/infra/labpack/${platform}
+description: Labpack command line tool.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/labpack
+root: ../../go/bin
+data:
+  - file: labpack${exe_suffix}
+  - version_file: .versions/labpack${exe_suffix}.cipd_version
