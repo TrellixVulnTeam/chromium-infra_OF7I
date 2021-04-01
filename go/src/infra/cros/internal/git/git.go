@@ -310,6 +310,15 @@ func Clone(remote, dir string) error {
 	return nil
 }
 
+// Fetch fetches refspec in gitRepo.
+func Fetch(gitRepo, remote, refspec string) error {
+	output, err := RunGit(gitRepo, []string{"fetch", remote, refspec})
+	if err != nil {
+		return fmt.Errorf(output.Stderr)
+	}
+	return nil
+}
+
 // RemoteBranches returns a list of branches on the specified remote.
 func RemoteBranches(gitRepo, remote string) ([]string, error) {
 	output, err := RunGit(gitRepo, []string{"ls-remote", remote})

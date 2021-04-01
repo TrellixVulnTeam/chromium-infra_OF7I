@@ -444,6 +444,18 @@ func TestClone(t *testing.T) {
 	assert.NilError(t, Clone(remote, dest))
 }
 
+func TestFetch(t *testing.T) {
+	remote := "origin"
+	refspec := "refs/changes/56/123456/2"
+	gitRepo := "foo"
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "fetch", remote, refspec},
+	}
+	assert.NilError(t, Fetch(gitRepo, remote, refspec))
+}
+
 func TestRemoteBranches(t *testing.T) {
 	CommandRunnerImpl = cmd.RealCommandRunner{}
 
