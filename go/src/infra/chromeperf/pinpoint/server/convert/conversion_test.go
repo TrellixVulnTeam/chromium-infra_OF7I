@@ -634,7 +634,8 @@ func TestSimpleConversions(t *testing.T) {
 							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
 								StorySelection: &pinpoint.TelemetryBenchmark_Story{
-									Story: "some-story"},
+									Story: "some-story",
+								},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
 								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
@@ -666,6 +667,30 @@ func TestSimpleConversions(t *testing.T) {
 					"base_git_hash": "c0dec0de",
 					"patch":         "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
 
+			})
+
+			Convey("We support having both the base commit and experiment commit", func() {
+				job.GetExperiment().ExperimentCommit = &pinpoint.GitilesCommit{
+					Host:    "some-gitiles-host",
+					Project: "some-gitiles-project",
+					GitHash: "60061ec0de",
+				}
+				telemetryJob := &pinpoint.JobSpec{
+					Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
+						TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+							Benchmark: "some-benchmark",
+							StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								Story: "some-story",
+							},
+							Measurement:   "some-metric",
+							GroupingLabel: "some-grouping-label",
+							Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+				proto.Merge(telemetryJob, job)
+				v, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeNil)
+				So(v, shouldContainMap, map[string]interface{}{
+					"end_git_hash": "60061ec0de",
+				})
 			})
 
 			Convey("We support Telemetry specifying story tags", func() {

@@ -123,9 +123,9 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 		}
 		v.Set("patch", experimentPatchURL)
 
-		// Even if these are ignored, we add them anyway.
 		if jk.Experiment.ExperimentCommit != nil {
-			v.Set("experiment_git_hash", jk.Experiment.ExperimentCommit.GitHash)
+			// Note the naming difference -- the legacy service supports "end_git_hash".
+			v.Set("end_git_hash", jk.Experiment.ExperimentCommit.GitHash)
 		}
 		if jk.Experiment.BasePatch != nil {
 			basePatchURL, err := gerritChangeToURL(jk.Experiment.BasePatch)
@@ -146,10 +146,8 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 		switch s := tb.StorySelection.(type) {
 		case *pinpoint.TelemetryBenchmark_Story:
 			v.Set("story", s.Story)
-			break
 		case *pinpoint.TelemetryBenchmark_StoryTags:
 			v.Set("story_tags", strings.Join(s.StoryTags.StoryTags, ","))
-			break
 		default:
 			return nil, errors.Reason("Unsupported story_selection in TelemetryBenchmark").
 				InternalReason("story_selection is %v", s).Err()
