@@ -95,8 +95,9 @@ func (c *fetchCrashesRun) innerRun(ctx context.Context, args []string, env subco
 		return err
 	}
 
-	if d := r.Deadline.AsTime(); !d.IsZero() {
+	if r.Deadline.IsValid() {
 		var c context.CancelFunc
+		d := r.Deadline.AsTime()
 		logging.Infof(ctx, "Running with deadline %s (current time: %s)", d, time.Now().UTC())
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()

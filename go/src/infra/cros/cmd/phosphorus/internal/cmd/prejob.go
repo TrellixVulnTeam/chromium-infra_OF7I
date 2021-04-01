@@ -80,8 +80,9 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		return err
 	}
 
-	if d := r.Deadline.AsTime(); !d.IsZero() {
+	if r.Deadline.IsValid() {
 		var c context.CancelFunc
+		d := r.Deadline.AsTime()
 		log.Printf("Running with deadline %s (current time: %s)", d, time.Now().UTC())
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
