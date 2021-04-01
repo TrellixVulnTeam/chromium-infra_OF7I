@@ -48,6 +48,9 @@ type pinpointServer struct {
 
 	// Provide an HTTP Client to be used by the server, to the Pinpoint Legacy API.
 	LegacyClient *http.Client
+
+	// If set, this will be returned by getRequestingUserEmail for all requests.
+	hardcodedUserEmail string
 }
 
 const (
@@ -65,7 +68,10 @@ var (
 	}
 )
 
-func getRequestingUserEmail(ctx context.Context) (string, error) {
+func (s *pinpointServer) getRequestingUserEmail(ctx context.Context) (string, error) {
+	if email := s.hardcodedUserEmail; email != "" {
+		return email, nil
+	}
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", status.Error(codes.InvalidArgument, "missing metadata from request context")
@@ -103,7 +109,7 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 	if s.LegacyClient == nil {
 		return nil, status.Error(codes.Internal, "misconfigured service, please try again later")
 	}
-	userEmail, err := getRequestingUserEmail(ctx)
+	userEmail, err := s.getRequestingUserEmail(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +261,7 @@ func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsReque
 }
 
 func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobRequest) (*pinpoint.Job, error) {
-	userEmail, err := getRequestingUserEmail(ctx)
+	userEmail, err := s.getRequestingUserEmail(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +317,7 @@ func Main() {
 	)
 	serviceAccountEmail := flag.String("service_account", "", "If specified, this email address is used as the identity of the service")
 	privateKey := flag.String("private_key", "", "Required if -service_account is set; contents of the service account credentials PEM file.")
+	hardcodedUserEmailFlag := flag.String("hardcoded_user_email", "", "TESTING ONLY; if set, request auth headers will be ignored and this email address will be used for all incoming requests. It also causes all outgoing RPCs to not use any authentication.")
 
 	// TODO(crbug/1059667): Wire up a cloud logging implementation (Stackdriver).
 	flag.Parse()
@@ -337,6 +344,8 @@ func Main() {
 			TokenURL:   google.JWTTokenURL,
 		}
 		client = conf.Client(oauth2.NoContext)
+	} else if *hardcodedUserEmailFlag != "" {
+		client = http.DefaultClient
 	} else {
 		client, err = google.DefaultClient(oauth2.NoContext, scopesForLegacy...)
 		if err != nil {
@@ -344,7 +353,9 @@ func Main() {
 		}
 	}
 
-	pinpoint.RegisterPinpointServer(s, New(*legacyPinpointServiceFlag, client))
+	server := New(*legacyPinpointServiceFlag, client)
+	server.hardcodedUserEmail = *hardcodedUserEmailFlag
+	pinpoint.RegisterPinpointServer(s, server)
 	h.SetServingStatus("pinpoint", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)

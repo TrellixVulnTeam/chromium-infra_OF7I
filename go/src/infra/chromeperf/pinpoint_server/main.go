@@ -14,8 +14,21 @@
 
 package main
 
-import "infra/chromeperf/pinpoint/server"
+import (
+	"infra/chromeperf/pinpoint/server"
+	"log"
+	"os"
+	"os/signal"
+)
 
 func main() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+	go func() {
+		<-ch
+		log.Printf("Interrupt detected, exiting gracefully")
+		os.Exit(0)
+	}()
+
 	server.Main()
 }

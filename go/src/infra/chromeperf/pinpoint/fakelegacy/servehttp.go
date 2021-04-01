@@ -170,6 +170,8 @@ func (s *Server) newJob(req *http.Request) (*legacyResult, int, error) {
 }
 
 // formatUUID formats the provided integral uuid as a legacy hex ID.
+// Specifically, it produces a 14 digit hex number with the first
+// digit hard-coded to 1.
 func formatUUID(uuid uint64) string {
-	return fmt.Sprintf("%014x", uuid)
+	return fmt.Sprintf("1%013x", uuid)
 }
