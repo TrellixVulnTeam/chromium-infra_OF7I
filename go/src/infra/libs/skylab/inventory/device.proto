@@ -295,7 +295,7 @@ message HardwareCapabilities {
   optional bool atrus = 17;
   optional bool bluetooth = 7;
 
-  // NEXT TAG: 7
+  // NEXT TAG: 8
   enum Carrier {
     CARRIER_INVALID = 0;
     CARRIER_ATT = 1;
@@ -304,6 +304,7 @@ message HardwareCapabilities {
     CARRIER_SPRINT = 4;
     CARRIER_TESTESIM = 5;
     CARRIER_ESIM = 6;
+    CARRIER_MULTISIM = 7;
   }
   optional Carrier carrier = 16;
 
