@@ -1,0 +1,10 @@
+package: chromiumos/infra/mallet/${platform}
+description: Mallet command line tool.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cmd/mallet
+root: ../../go/bin
+data:
+  - file: mallet${exe_suffix}
+  - version_file: .versions/mallet${exe_suffix}.cipd_version
