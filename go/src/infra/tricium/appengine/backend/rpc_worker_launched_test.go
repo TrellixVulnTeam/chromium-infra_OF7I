@@ -86,23 +86,6 @@ func TestWorkerLaunchedRequest(t *testing.T) {
 			})
 			So(err.Error(), ShouldEqual, "rpc error: code = InvalidArgument desc = missing worker")
 
-			// IsolatedInputHash is a deprecated field.
-			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
-				RunId:             request.ID,
-				Worker:            helloUbuntu,
-				IsolatedInputHash: "hash",
-			})
-			So(err, ShouldNotBeNil)
-
-			// SwarmingTaskId is a deprecated field.
-			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
-				RunId:             request.ID,
-				Worker:            helloUbuntu,
-				IsolatedInputHash: "hash",
-				SwarmingTaskId:    "id",
-			})
-			So(err, ShouldNotBeNil)
-
 			// Validate buildbucket.
 			_, err = s.WorkerLaunched(ctx, &admin.WorkerLaunchedRequest{
 				RunId:              request.ID,

@@ -41,12 +41,7 @@ message WorkflowLaunchedResponse {
 message WorkerLaunchedRequest {
   int64 run_id = 1;
   string worker = 2;
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string isolated_input_hash = 3;
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string swarming_task_id = 4;
+  reserved 3, 4;
   int64 buildbucket_build_id = 5;
 }
 
@@ -57,12 +52,7 @@ message WorkerLaunchedResponse {}
 message WorkerDoneRequest {
   int64 run_id = 1;
   string worker = 2;
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string isolated_namespace = 7;
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string isolated_output_hash = 3;
+  reserved 3, 7;
   tricium.Data.Type provides = 4;
   tricium.State state = 5;
   string buildbucket_output = 6;

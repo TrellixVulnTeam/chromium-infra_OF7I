@@ -28,16 +28,12 @@ message TriggerResponse {}
 message CollectRequest {
   int64 run_id = 1;
 
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string isolated_input_hash = 2;
+  reserved 2;
 
   // Worker name of the worker to collect results for.
   string worker = 3;
 
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string task_id = 4;
+  reserved 4;
 
   // The Buildbucket build ID.
   //

@@ -300,14 +300,6 @@ func TestValidateWorkerDoneRequestRequest(t *testing.T) {
 			BuildbucketOutput: `{"comments": []}`,
 		}), ShouldBeNil)
 	})
-
-	Convey("Providing deprecated field isolated output is not OK", t, func() {
-		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
-			RunId:              1234,
-			Worker:             "MyLint_Ubuntu",
-			IsolatedOutputHash: "12ab34cd",
-		}), ShouldNotBeNil)
-	})
 }
 
 func TestCreateCommentSelection(t *testing.T) {

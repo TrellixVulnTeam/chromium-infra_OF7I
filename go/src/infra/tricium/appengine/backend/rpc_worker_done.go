@@ -55,9 +55,6 @@ func validateWorkerDoneRequest(req *admin.WorkerDoneRequest) error {
 	if req.Worker == "" {
 		return errors.New("missing worker")
 	}
-	if req.IsolatedOutputHash != "" {
-		return errors.New("deprecated field IsolatedOutputHash")
-	}
 	return nil
 }
 

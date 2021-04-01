@@ -29,13 +29,6 @@ func (*trackerServer) WorkerLaunched(c context.Context, req *admin.WorkerLaunche
 	if req.Worker == "" {
 		return nil, errors.New("missing worker", grpcutil.InvalidArgumentTag)
 	}
-	if req.IsolatedInputHash != "" {
-		return nil, errors.New("deprecated field isolated input hash", grpcutil.InvalidArgumentTag)
-	}
-	if req.SwarmingTaskId != "" {
-		return nil, errors.New("deprecated field swarming task ID", grpcutil.InvalidArgumentTag)
-
-	}
 	if req.BuildbucketBuildId == 0 {
 		return nil, errors.New("missing buildbucket ID", grpcutil.InvalidArgumentTag)
 	}
