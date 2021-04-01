@@ -42,6 +42,14 @@ su -c "/usr/bin/curl -sSLOJ $SWARM_URL" chrome-bot
 echo "Starting $SWARM_ZIP"
 # Run the swarming bot in the background, and immediately wait for it. This
 # allows the signal trapping to actually work.
-su -c "/usr/bin/python $SWARM_ZIP start_bot" chrome-bot &
+# Test out python3 on a single host on dev.
+# TODO(crbug.com/1012230): Move all bots to python3.
+if [ "$(hostname -s)" = "build1-h9" ]; then
+  py_bin="/usr/bin/python3"
+else
+  py_bin="/usr/bin/python"
+fi
+
+su -c "${py_bin} $SWARM_ZIP start_bot" chrome-bot &
 wait %1
 exit $?
