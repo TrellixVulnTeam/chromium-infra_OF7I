@@ -372,82 +372,11 @@ func TestValidateImpl(t *testing.T) {
 		IsPlatformSpecific: false,
 	}
 
-	Convey("Example of a valid non-platform-specific Impl", t, func() {
-		impl := &Impl{
-			RuntimePlatform: Platform_UBUNTU,
-			Impl:            &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline:        60,
-		}
-		So(validateImpl(impl, sc, anyType, anyType), ShouldBeNil)
-	})
-
-	Convey("Runtime platform of Impl must exist in service config", t, func() {
-		impl := &Impl{
-			RuntimePlatform: Platform_IOS,
-			Impl:            &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline:        60,
-		}
-		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
-	})
-
-	Convey("Runtime platform of Impl must have a runtime", t, func() {
-		impl := &Impl{
-			RuntimePlatform: Platform_ANDROID,
-			Impl:            &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline:        60,
-		}
-		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
-	})
-
-	Convey("Runtime platform must be included in Impl", t, func() {
-		impl := &Impl{
-			Impl:     &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline: 60,
-		}
-		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
-	})
-
 	Convey("Impl must have cmd or recipe specified", t, func() {
 		impl := &Impl{
 			RuntimePlatform: Platform_UBUNTU,
 			Deadline:        60,
 		}
 		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
-	})
-
-	Convey("Example of a valid platform-specific Impl", t, func() {
-		impl := &Impl{
-			RuntimePlatform:     Platform_UBUNTU,
-			NeedsForPlatform:    Platform_ANDROID,
-			ProvidesForPlatform: Platform_ANDROID,
-			Impl:                &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline:            60,
-		}
-		needsType := &Data_TypeDetails{
-			Type:               Data_CLANG_DETAILS,
-			IsPlatformSpecific: true,
-		}
-		providesType := &Data_TypeDetails{
-			Type:               Data_RESULTS,
-			IsPlatformSpecific: true,
-		}
-		So(validateImpl(impl, sc, needsType, providesType), ShouldBeNil)
-	})
-
-	Convey("If type is platform-specific, platforms must be specified", t, func() {
-		impl := &Impl{
-			RuntimePlatform: Platform_UBUNTU,
-			Impl:            &Impl_Cmd{Cmd: &Cmd{Exec: "hello"}},
-			Deadline:        60,
-		}
-		needsType := &Data_TypeDetails{
-			Type:               Data_CLANG_DETAILS,
-			IsPlatformSpecific: true,
-		}
-		providesType := &Data_TypeDetails{
-			Type:               Data_RESULTS,
-			IsPlatformSpecific: true,
-		}
-		So(validateImpl(impl, sc, needsType, providesType), ShouldNotBeNil)
 	})
 }

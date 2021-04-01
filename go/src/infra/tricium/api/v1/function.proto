@@ -128,12 +128,9 @@ message Impl {
   oneof impl {
     // Recipe for recipe-based implementation.
     Recipe recipe = 5;
-
-    // Command for binary-based implementation.
-    // DEPRECATED, any analyzers with Cmd will be not be triggered.
-    // TODO(crbug/1146109): Remove.
-    Cmd cmd = 6 [deprecated=true];
   }
+
+  reserved 6;
 
   // Deadline for execution of corresponding workers.
   //
@@ -169,18 +166,6 @@ message Recipe {
 
   // Builder name, e.g. "linux-rel".
   string builder = 7;
-}
-
-// Specification of a command.
-//
-// DEPRECATED, should not be used.
-// TODO(crbug/1146109): Remove.
-message Cmd {
-  // Executable binary.
-  string exec = 1;
-
-  // Arguments in order.
-  repeated string args = 2;
 }
 
 // Specification of a CIPD package that is installed as a dependency of an

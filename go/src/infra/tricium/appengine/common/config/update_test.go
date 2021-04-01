@@ -11,7 +11,7 @@ import (
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/impl/memory"
 
-	"infra/tricium/api/v1"
+	tricium "infra/tricium/api/v1"
 	"infra/tricium/appengine/common"
 	"infra/tricium/appengine/common/triciumtest"
 )
@@ -175,9 +175,7 @@ func TestUpdateConfigs(t *testing.T) {
 			So(setProjectConfig(ctx, "infra", "old-version", &tricium.ProjectConfig{
 				ServiceAccount: "foo@appspot.gserviceaccount.com",
 			}), ShouldBeNil)
-			So(setServiceConfig(ctx, "old-version-service-config", &tricium.ServiceConfig{
-				SwarmingServer: "https://foo.appspot.com",
-			}), ShouldBeNil)
+			So(setServiceConfig(ctx, "old-version-service-config", &tricium.ServiceConfig{}), ShouldBeNil)
 
 			revs, err := getStoredProjectConfigRevisions(ctx)
 			So(err, ShouldBeNil)

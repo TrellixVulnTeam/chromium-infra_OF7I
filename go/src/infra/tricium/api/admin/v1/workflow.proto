@@ -60,11 +60,11 @@ message Worker {
   repeated tricium.CipdPackage cipd_packages = 9;
 
   oneof impl {
-    // Command for binary-based implementation.
-    tricium.Cmd cmd = 10;
     // Recipe for recipe-based implementation.
     tricium.Recipe recipe = 12;
   }
+
+  reserved 10;
 
   // Deadline for execution of the worker in minutes. Note that this time
   // should include the overhead of triggering the corresponding swarming task

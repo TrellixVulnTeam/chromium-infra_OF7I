@@ -217,7 +217,7 @@ func validateImpl(i *Impl, sc *ServiceConfig, needs *Data_TypeDetails, provides 
 	if provides.GetIsPlatformSpecific() && i.GetProvidesForPlatform() == Platform_ANY {
 		return errors.New("must specify platform for provided platform-specific data type")
 	}
-	if i.GetCmd() == nil && i.GetRecipe() == nil {
+	if i.GetRecipe() == nil {
 		return errors.New("must include either command or recipe in impl")
 	}
 	return nil

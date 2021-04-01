@@ -24,11 +24,7 @@ message ServiceConfig {
   // List of shared functions.
   repeated Function functions = 3;
 
-  // Base recipe command used for workers implemented as recipes.
-  //
-  // Specific recipe details for the worker will be added as flags at the
-  // end of the argument list.
-  Cmd recipe_cmd = 5;
+  reserved 5;
 
   // Base recipe packages used for workers implemented as recipes.
   //
@@ -36,13 +32,7 @@ message ServiceConfig {
   // platform name details to the end of the package name.
   repeated CipdPackage recipe_packages = 6;
 
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string swarming_server = 7;
-
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string isolate_server = 8;
+  reserved 7, 8;
 
   // Buildbucket server to use for this service instance.
   //
@@ -74,9 +64,7 @@ message ProjectConfig {
   // General service account for this project.
   string service_account = 6;
 
-  // DEPRECATED, ignored.
-  // TODO(crbug/1146109): Remove.
-  string swarming_service_account = 7;
+  reserved 7;
 }
 
 // Repository details for one repository.

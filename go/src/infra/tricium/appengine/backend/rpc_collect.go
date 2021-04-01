@@ -73,8 +73,6 @@ func collect(c context.Context, req *admin.CollectRequest, wp config.WorkflowCac
 		if err != nil {
 			return errors.Annotate(err, "failed to collect task").Err()
 		}
-	case *admin.Worker_Cmd:
-		return errors.Reason("deprecated Impl Cmd in config").Err()
 	case nil:
 		return errors.Reason("missing Impl when isolating worker %s", w.Name).Err()
 	default:

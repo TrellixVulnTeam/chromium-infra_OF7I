@@ -81,8 +81,6 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 		if err != nil {
 			return errors.Annotate(err, "failed to call trigger on buildbucket API").Err()
 		}
-	case *admin.Worker_Cmd:
-		return errors.Reason("deprecated field Cmd").Err()
 	case nil:
 		return errors.Reason("missing Impl when isolating worker %s", worker.Name).Err()
 	default:

@@ -117,8 +117,6 @@ func createWorker(s *tricium.Selection, sc *tricium.ServiceConfig, f *tricium.Fu
 	switch ii := i.Impl.(type) {
 	case *tricium.Impl_Recipe:
 		w.Impl = &admin.Worker_Recipe{Recipe: ii.Recipe}
-	case *tricium.Impl_Cmd:
-		return nil, errors.New("impl Cmd is deprecated")
 	case nil:
 		return nil, errors.Reason("missing Impl when constructing worker %s", w.Name).Err()
 	default:
