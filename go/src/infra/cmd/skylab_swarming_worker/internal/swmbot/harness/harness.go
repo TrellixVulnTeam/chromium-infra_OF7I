@@ -200,9 +200,9 @@ func (u labelUpdater) update(ctx context.Context, dutID string, old *inventory.D
 		return errors.Annotate(err, "update inventory labels").Err()
 	}
 
-	log.Printf("Calling inventory v2 to update state")
-	if err := u.updateV2(ctx, dutID, old, new); err != nil {
-		return errors.Annotate(err, "fail to update to inventory V2").Err()
+	log.Printf("Calling UFS to update dutstate")
+	if err := u.updateUFS(ctx, dutID, old, new); err != nil {
+		return errors.Annotate(err, "fail to update to DutState in UFS").Err()
 	}
 	return nil
 }
@@ -386,60 +386,24 @@ func convertServoTopology(st *inventory.ServoTopology) *lab.ServoTopology {
 	return t
 }
 
-func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
-	// Duplicating updating dut state to UFS for testing without reporting failures
-	if u.botInfo.UFSService == "" {
-		log.Printf("Skipping label update since no UFS service was provided")
-	} else {
-		ufsDutMeta := getUFSDutMetaFromSpecs(dutID, new.GetCommon())
-		ufsLabMeta := getUFSLabMetaFromSpecs(dutID, new.GetCommon())
-		ufsDutComponentState := getUFSDutComponentStateFromSpecs(dutID, new.GetCommon())
-		ufsClient, err := swmbot.UFSClient(ctx, u.botInfo)
-		if err != nil {
-			log.Printf("fail to create ufs client: %s", err.Error())
-		}
-		osCtx := swmbot.SetupContext(ctx, ufsUtil.OSNamespace)
-		ufsResp, err := ufsClient.UpdateDutState(osCtx, &ufsAPI.UpdateDutStateRequest{
-			DutState: ufsDutComponentState,
-			DutMeta:  ufsDutMeta,
-			LabMeta:  ufsLabMeta,
-		})
-		log.Printf("resp for UFS update: %#v", ufsResp)
-		if err != nil {
-			log.Printf("fail to update UFS meta & component states: %s", err.Error())
-		}
-	}
-
-	// Updating dut state to inventory V2 (Real update)
-	if u.botInfo.InventoryService == "" {
-		log.Printf("Skipping label update since no inventory service was provided")
-		return nil
-	}
-	oldState := getStatesFromLabel(dutID, old.GetCommon().GetLabels())
-	newState := getStatesFromLabel(dutID, new.GetCommon().GetLabels())
-	oldMeta := getMetaFromSpecs(dutID, old.GetCommon())
-	newMeta := getMetaFromSpecs(dutID, new.GetCommon())
-	oldLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
-	newLabMeta := getLabMetaFromLabel(dutID, new.GetCommon().GetLabels())
-	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) && proto.Equal(oldLabMeta, newLabMeta) {
-		log.Printf("Skipping dut state update since there are no changes")
-		return nil
-	}
-
-	req := invV2.UpdateDutsStatusRequest{
-		States:   []*lab.DutState{newState},
-		Reason:   "state update from ssw",
-		DutMetas: []*invV2.DutMeta{newMeta},
-		LabMetas: []*invV2.LabMeta{newLabMeta},
-	}
-	client, err := swmbot.InventoryV2Client(ctx, u.botInfo)
+func (u labelUpdater) updateUFS(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
+	// Updating dutmeta, labmeta and dutstate to UFS
+	ufsDutMeta := getUFSDutMetaFromSpecs(dutID, new.GetCommon())
+	ufsLabMeta := getUFSLabMetaFromSpecs(dutID, new.GetCommon())
+	ufsDutComponentState := getUFSDutComponentStateFromSpecs(dutID, new.GetCommon())
+	ufsClient, err := swmbot.UFSClient(ctx, u.botInfo)
 	if err != nil {
-		return errors.Annotate(err, "update inventory V2 labels").Err()
+		return errors.Annotate(err, "fail to create ufs client").Err()
 	}
-	resp, err := client.UpdateDutsStatus(ctx, &req)
-	log.Printf("resp for inventory V2 update: %#v", resp)
+	osCtx := swmbot.SetupContext(ctx, ufsUtil.OSNamespace)
+	ufsResp, err := ufsClient.UpdateDutState(osCtx, &ufsAPI.UpdateDutStateRequest{
+		DutState: ufsDutComponentState,
+		DutMeta:  ufsDutMeta,
+		LabMeta:  ufsLabMeta,
+	})
+	log.Printf("resp for UFS update: %#v", ufsResp)
 	if err != nil {
-		return errors.Annotate(err, "update inventory V2 labels").Err()
+		return errors.Annotate(err, "fail to update UFS meta & component states").Err()
 	}
 	return nil
 }
