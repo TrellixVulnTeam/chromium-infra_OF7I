@@ -94,12 +94,25 @@ func validRepo(r *Repo) bool {
 	return r != nil && r.Name != "" && r.ConfigPath != ""
 }
 
+func skuLessDeviceConfigKey(board, model string) string {
+	return fmt.Sprintf("sku-less-%s-%s", board, model)
+}
+
 func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 	designs := configBundle.GetDesignList()
 	dcs := make(map[string]*device.Config, 0)
 	for _, d := range designs {
 		board := d.GetProgramId().GetValue()
 		model := d.GetName()
+
+		// Add a sku-less device config to unblock deployment
+		dcs[skuLessDeviceConfigKey(board, model)] = &device.Config{
+			Id: &device.ConfigId{
+				PlatformId: &device.PlatformId{Value: board},
+				ModelId:    &device.ModelId{Value: model},
+			},
+		}
+
 		for _, c := range d.GetConfigs() {
 			dcs[c.GetId().GetValue()] = &device.Config{
 				Id: &device.ConfigId{

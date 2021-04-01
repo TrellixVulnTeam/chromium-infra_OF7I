@@ -319,12 +319,13 @@ func TestUpdateDatastoreFromBoxter(t *testing.T) {
 			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, "generated/configs.jsonproto", nil, "", "", "")
 			So(err, ShouldBeNil)
 			// There should be 6 entities created in datastore as
-			// test_device_config_v2.jsonproto contains 6 device configs.
+			// test_device_config_v2.jsonproto contains 11 device configs:
+			// 5 sku-less device configs & 6 real device configs.
 			var cfgs []*devcfgEntity
 			datastore.GetTestable(ctx).Consistent(true)
 			err = datastore.GetAll(ctx, datastore.NewQuery(entityKind), &cfgs)
 			So(err, ShouldBeNil)
-			So(cfgs, ShouldHaveLength, 6)
+			So(cfgs, ShouldHaveLength, 11)
 		})
 	})
 }

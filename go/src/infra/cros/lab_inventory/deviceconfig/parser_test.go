@@ -31,11 +31,21 @@ func TestParseConfigBundle(t *testing.T) {
 		Convey("Happy path", func() {
 			So(payloads.GetValues(), ShouldHaveLength, 1)
 			dcs := parseConfigBundle(payloads.GetValues()[0])
-			So(dcs, ShouldHaveLength, 6)
+			// 5 sku-less device configs & 6 real device configs
+			So(dcs, ShouldHaveLength, 11)
 			for _, dc := range dcs {
 				So(dc.GetId().GetPlatformId().GetValue(), ShouldEqual, "FAKE_PROGRAM")
 				modelWithSku := fmt.Sprintf("%s:%s", dc.GetId().GetModelId().GetValue(), dc.GetId().GetVariantId().GetValue())
 				switch modelWithSku {
+				case "FAKE-REF-DESIGN:", "PROJECT-A:", "PROJECT-B:", "PROJECT-C:", "PROJECT-WL:":
+					// These are sku-less device config, every config entry is nil by default
+					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_UNSPECIFIED)
+					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_UNSPECIFIED)
+					So(dc.GetHardwareFeatures(), ShouldBeNil)
+					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_UNSPECIFIED)
+					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
+					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
+					So(dc.GetVideoAccelerationSupports(), ShouldBeNil)
 				case "FAKE-REF-DESIGN:2147483647":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
 					So(dc.GetPower(), ShouldEqual, device.Config_POWER_SUPPLY_BATTERY)
