@@ -22,6 +22,7 @@ func init() {
 		ID:        "change-review-task",
 		Prototype: (*taskspb.ChangeReviewTask)(nil),
 		Queue:     "change-review-queue",
+		Kind:      tq.NonTransactional,
 		Handler: func(ctx context.Context, payload proto.Message) error {
 			t := payload.(*taskspb.ChangeReviewTask)
 
