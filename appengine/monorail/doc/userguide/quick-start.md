@@ -168,8 +168,8 @@ There are several ways to get notifications:
    line at the bottom of the change description.
 1. When you upload the CL for review, consider posting a comment to
    the issue with the URL of the pending CL.
-1. Most projects have set up the Bugdroid tool to post a comment to
-   the issue when the CL lands.
+1. Most projects have set up the Git Watcher, formerly Bugdroid, to post a
+   comment to the issue when the CL lands.
 
 
 ## How to ask for help and report problems with Monorail itself

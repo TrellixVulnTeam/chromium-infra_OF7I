@@ -147,11 +147,11 @@ convert some parts of the text into HTML links. The following are supported:
 
 ## Commit-log message integration
 
-Most projects are configured to allow the bugdroid tool to post comments to
-issues. Including `Bug: <bug_id...>` in a commit message will cause bugdroid to
+Most projects are configured to allow the Git Watcher tool to post comments to
+issues. Including `Bug: <bug_id...>` in a commit message triggers Git Watcher to
 post a comment mentioning the commit on the issue when the commit's CL is
-submitted. Including `Fixed: <bug_id...>` in a commit message will cause
-bugdroid to set the referenced bugs' status to "Fixed".
+submitted. Including `Fixed: <bug_id...>` in a commit message triggers Git
+Watcher to set the referenced bugs' status to "Fixed".
 
 Both the `Bug:` and the `Fixed:` automations accept bug IDs in multiple formats:
 *   `Fixed: n`
