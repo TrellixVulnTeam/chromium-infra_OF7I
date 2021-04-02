@@ -54,4 +54,25 @@ func TestPlistReading(t *testing.T) {
 			So(err, ShouldNotBeNil)
 		})
 	})
+
+	Convey("getSimulatorVersionInfo works", t, func() {
+		Convey("for valid plist", func() {
+			name, id, err := getSimulatorVersion("testdata/simulatorInfo.plist")
+			So(err, ShouldBeNil)
+			So(name, ShouldEqual, "iOS 14.4")
+			So(id, ShouldEqual, "ios-14-4")
+		})
+		Convey("when simulator version keys are missing", func() {
+			_, _, err := getSimulatorVersion("testdata/badKeys.plist")
+			So(err, ShouldNotBeNil)
+		})
+		Convey("when simulator version file is broken", func() {
+			_, _, err := getSimulatorVersion("testdata/broken.plist")
+			So(err, ShouldNotBeNil)
+		})
+		Convey("when simulator version file is missing", func() {
+			_, _, err := getSimulatorVersion("testdata/nonexistent")
+			So(err, ShouldNotBeNil)
+		})
+	})
 }

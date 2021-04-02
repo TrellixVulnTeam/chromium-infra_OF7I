@@ -6,6 +6,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"howett.net/plist"
 
@@ -90,5 +91,42 @@ func getXcodeAcceptedLicense(plistFile, licenseType string) (licenseID string, e
 	} else {
 		licenseID = acceptedLicenses.IDELastBetaLicenseAgreedTo
 	}
+	return
+}
+
+type simulatorVersionPlist struct {
+	BundleName       string `plist:"CFBundleName"`
+	BundleIdentifier string `plist:"CFBundleIdentifier"`
+}
+
+// getSimulatorVersion takes the path to the `Info.plist` in simulator. e.g.
+// Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer
+// /CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Info.plist
+// and extracts the simulator runtime bundleName and identifier.
+func getSimulatorVersion(plistFile string) (bundleName string, simRuntimeIdentifier string, err error) {
+	var simulatorVersion simulatorVersionPlist
+	r, err := os.Open(plistFile)
+	if err != nil {
+		err = errors.Annotate(err, "failed to open %s", plistFile).Err()
+		return
+	}
+	defer r.Close()
+	decoder := plist.NewDecoder(r)
+	if err = decoder.Decode(&simulatorVersion); err != nil {
+		err = errors.Annotate(err, "failed to decode %s", plistFile).Err()
+		return
+	}
+
+	if simulatorVersion.BundleName == "" || simulatorVersion.BundleIdentifier == "" {
+		err = errors.Reason("Simulator Info.plist is missing Bundle name or Bundle identifier").Err()
+		return
+	}
+
+	// BundleName is a string of format like "iOS 14.4".
+	bundleName = simulatorVersion.BundleName
+	// BundleIdentifier is a string like
+	// "com.apple.CoreSimulator.SimRuntime.iOS-14-4". "ios-14-4" is returned as
+	// |simRuntimeIdentifier|.
+	simRuntimeIdentifier = strings.ToLower(simulatorVersion.BundleIdentifier[strings.LastIndex(simulatorVersion.BundleIdentifier, ".")+1:])
 	return
 }
