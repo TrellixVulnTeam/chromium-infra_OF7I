@@ -53,7 +53,11 @@ func innerMain() error {
 		return err
 	}
 
-	tlw := newTLWServer(ce, proxySSHSigner)
+	tlw, err := newTLWServer(ce, proxySSHSigner)
+	if err != nil {
+		return err
+	}
+
 	tlw.registerWith(s)
 	defer tlw.Close()
 

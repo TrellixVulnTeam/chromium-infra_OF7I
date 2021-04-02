@@ -96,7 +96,11 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw := newTLWServer(s.env, s.proxySSHSigner)
+	tlw, err := newTLWServer(s.env, s.proxySSHSigner)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+	}
+
 	tlw.registerWith(gs)
 	// This goroutine is stopped by the session cancellation that
 	// is set up below.

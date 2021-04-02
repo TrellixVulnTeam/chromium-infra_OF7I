@@ -16,6 +16,7 @@ import (
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
+	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -26,6 +27,7 @@ import (
 	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/libs/lro"
 	"infra/libs/sshpool"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
 type tlwServer struct {
@@ -35,17 +37,27 @@ type tlwServer struct {
 	dutPool   *sshpool.Pool
 	proxyPool *sshpool.Pool
 	cFrontend *cache.Frontend
+	ufsClient ufsapi.FleetClient
 }
 
-func newTLWServer(e cache.Environment, proxySSHSigner ssh.Signer) *tlwServer {
+func newTLWServer(e cache.Environment, proxySSHSigner ssh.Signer) (*tlwServer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	ufsClient, err := ufsapi.NewClient(ctx, ufsapi.ServiceAccountJSONPath("/creds/service_accounts/skylab-drone.json"), ufsapi.UserAgent("fleet-tlw/6.0.0"))
+	if err != nil {
+		return nil, errors.Reason("newTLWServer: %s", err).Err()
+	}
+
 	s := &tlwServer{
 		lroMgr:    lro.New(),
 		dutPool:   sshpool.New(getSSHClientConfig()),
 		proxyPool: sshpool.New(getSSHClientConfigForProxy(proxySSHSigner)),
 		tMgr:      newTunnelManager(),
 		cFrontend: cache.NewFrontend(e),
+		ufsClient: ufsClient,
 	}
-	return s
+	return s, nil
 }
 
 func (s *tlwServer) registerWith(g *grpc.Server) {
@@ -242,4 +254,21 @@ func getSSHClientConfigForProxy(sshSigner ssh.Signer) *ssh.ClientConfig {
 		Timeout:         5 * time.Second,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(sshSigner)},
 	}
+}
+
+func (s *tlwServer) GetDut(ctx context.Context, req *tls.GetDutRequest) (*tls.Dut, error) {
+	name := req.GetName()
+	if name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "GetDut: empty name in request")
+	}
+
+	licenses, err := getUFSDeviceLicenses(ctx, s.ufsClient, name)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "GetDut: %s", err.Error())
+	}
+
+	return &tls.Dut{
+		Name:     name,
+		Licenses: licenses,
+	}, nil
 }

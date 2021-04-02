@@ -64,7 +64,7 @@ func TestSessionServer(t *testing.T) {
 		defer conn.Close()
 		c := tls.NewWiringClient(conn)
 		_, err = c.GetDut(ctx, &tls.GetDutRequest{Name: "placeholder"})
-		if c := status.Code(err); c != codes.Unimplemented && c != codes.NotFound {
+		if c := status.Code(err); c != codes.Unimplemented && c != codes.NotFound && c != codes.OK && c != codes.FailedPrecondition {
 			t.Errorf("Unexpected error when calling TLW API: %s", err)
 		}
 	})
