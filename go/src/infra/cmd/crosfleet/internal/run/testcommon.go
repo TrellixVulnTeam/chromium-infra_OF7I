@@ -42,6 +42,11 @@ const (
 	// cros_test_platform Buildbucket build. This step is not started until
 	// all request-validation and setup steps are passed.
 	ctpExecuteStepName = "execute"
+	// How long build tags are allowed to be before we trigger a Swarming API
+	// error due to how they store tags in a datastore. Most tags shouldn't be
+	// anywhere close to this limit, but tags that could potentially be very
+	// long we should crop them to this limit.
+	maxSwarmingTagLength = 300
 )
 
 // testCommonFlags contains parameters common to the "run
@@ -397,6 +402,9 @@ func testOrSuiteNamesLabel(names []string) string {
 		label = fmt.Sprintf("%v", names)
 	} else {
 		label = names[0]
+	}
+	if len(label) > maxSwarmingTagLength {
+		return label[:maxSwarmingTagLength]
 	}
 	return label
 }

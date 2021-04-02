@@ -288,6 +288,14 @@ func TestRetryParams(t *testing.T) {
 	}
 }
 
+func stringOfLength(length int) string {
+	letters := make([]rune, length)
+	for i := 0; i < length; i++ {
+		letters[i] = 'a'
+	}
+	return string(letters)
+}
+
 var testTestOrSuiteNamesLabelData = []struct {
 	names     []string
 	wantLabel string
@@ -299,6 +307,10 @@ var testTestOrSuiteNamesLabelData = []struct {
 	{
 		[]string{"foo"},
 		"foo",
+	},
+	{
+		[]string{stringOfLength(301)},
+		stringOfLength(300),
 	},
 }
 
