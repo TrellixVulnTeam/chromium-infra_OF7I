@@ -84,31 +84,41 @@ func TestFakeOmahaIntegration(t *testing.T) {
 	t.Cleanup(func() { conn.Close() })
 	c := tls.NewCommonClient(conn)
 
-	var rsp *tls.FakeOmaha
-	t.Run("CreateFakeOmaha", func(t *testing.T) {
-		rsp, err = c.CreateFakeOmaha(timeoutCtx(t, 20*time.Second), &tls.CreateFakeOmahaRequest{
-			FakeOmaha: &tls.FakeOmaha{
-				Dut: *dutName,
-				TargetBuild: &tls.ChromeOsImage{
-					PathOneof: &tls.ChromeOsImage_GsPathPrefix{
-						// It doesn't matter whether the board in below URL match
-						// with the DUT board.
-						GsPathPrefix: fmt.Sprintf("gs://chromeos-image-archive/%s", *build),
+	tests := []struct {
+		name     string
+		viaProxy bool
+	}{
+		{"Expose fake Omaha service via a proxy", true},
+		{"Expose fake Omaha service directly to a DUT", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var rsp *tls.FakeOmaha
+			t.Run("CreateFakeOmaha", func(t *testing.T) {
+				rsp, err = c.CreateFakeOmaha(timeoutCtx(t, 20*time.Second), &tls.CreateFakeOmahaRequest{
+					FakeOmaha: &tls.FakeOmaha{
+						Dut: *dutName,
+						TargetBuild: &tls.ChromeOsImage{
+							PathOneof: &tls.ChromeOsImage_GsPathPrefix{
+								// It doesn't matter whether the board in below URL match
+								// with the DUT board.
+								GsPathPrefix: fmt.Sprintf("gs://chromeos-image-archive/%s", *build),
+							},
+						},
+						Payloads:        []*tls.FakeOmaha_Payload{{Type: tls.FakeOmaha_Payload_FULL}},
+						ExposedViaProxy: tc.viaProxy,
 					},
-				},
-				Payloads: []*tls.FakeOmaha_Payload{{Type: tls.FakeOmaha_Payload_FULL}},
-			},
-		})
-		if err != nil {
-			t.Fatalf("CreateFakeOmaha() error: %s", err)
-		}
+				})
+				if err != nil {
+					t.Fatalf("CreateFakeOmaha() error: %s", err)
+				}
 
-		if prefix := "fakeOmaha/"; !strings.HasPrefix(rsp.Name, prefix) {
-			t.Errorf("CreateFakeOmaha() error: resource name %q not start with %q", rsp.Name, prefix)
-		}
-		t.Logf("The Omaha URL is %q", rsp.OmahaUrl)
+				if prefix := "fakeOmaha/"; !strings.HasPrefix(rsp.Name, prefix) {
+					t.Errorf("CreateFakeOmaha() error: resource name %q not start with %q", rsp.Name, prefix)
+				}
+				t.Logf("The Omaha URL is %q", rsp.OmahaUrl)
 
-		const fakeAURequest = `<?xml version="1.0" encoding="UTF-8"?>
+				const fakeAURequest = `<?xml version="1.0" encoding="UTF-8"?>
 <request requestid="1bcea19b-8ecf-4599-b37a-47018b7b8ecb" sessionid="710055d0-f9ec-4efd-aa8b-3ab153e4e0e9" protocol="3.0" updater="ChromeOSUpdateEngine" updaterversion="0.1.0.0" installsource="ondemandupdate" ismachine="1">
     <os version="Indy" platform="Chrome OS" sp="13336.0.0_x86_64"></os>
     <app appid="{3A837630-D749-4B7A-86C1-DB0ECC07A08B}" version="13336.0.0" track="stable-channel" board="banjo" hardware_class="BANJO C7A-C6I-A4O" delta_okay="true" installdate="4935" lang="en-US" fw_version="" ec_version="" >
@@ -116,41 +126,43 @@ func TestFakeOmahaIntegration(t *testing.T) {
     </app>
 </request>
 `
-		stream, err := c.ExecDutCommand(timeoutCtx(t, 2*time.Second), &tls.ExecDutCommandRequest{
-			Name:    *dutName,
-			Command: "curl",
-			Args:    []string{"-X", "POST", "-d", "@-", "-H", "content-type:application/xml", rsp.OmahaUrl},
-			Stdin:   []byte(fakeAURequest),
+				stream, err := c.ExecDutCommand(timeoutCtx(t, 2*time.Second), &tls.ExecDutCommandRequest{
+					Name:    *dutName,
+					Command: "curl",
+					Args:    []string{"-X", "POST", "-d", "@-", "-H", "content-type:application/xml", rsp.OmahaUrl},
+					Stdin:   []byte(fakeAURequest),
+				})
+				if err != nil {
+					t.Fatalf("exec dut command error: %s", err)
+				}
+				var stdout bytes.Buffer
+			readStream:
+				for {
+					rsp, err := stream.Recv()
+					switch err {
+					case nil:
+						stdout.Write(rsp.Stdout)
+					case io.EOF:
+						break readStream
+					default:
+						t.Fatalf("ExecDutCommand RPC error: %s", err)
+					}
+				}
+				// We think the test is good as long as receiving a valid xml response.
+				if err := xml.Unmarshal(stdout.Bytes(), new(interface{})); err != nil {
+					t.Errorf("TestFakeOmahaIntegration: failed to unmarshal response: %s. Want a valid xml, got %q", err, stdout.String())
+				} else {
+					t.Logf("receive output: %s", stdout.String())
+				}
+			})
+			t.Run("DeleteFakeOmaha", func(t *testing.T) {
+				_, err = s.DeleteFakeOmaha(timeoutCtx(t, 2*time.Second), &tls.DeleteFakeOmahaRequest{Name: rsp.GetName()})
+				if err != nil {
+					t.Errorf("DeleteFakeOmaha(%q) error: %q", rsp.GetName(), err)
+				}
+			})
 		})
-		if err != nil {
-			t.Fatalf("exec dut command error: %s", err)
-		}
-		var stdout bytes.Buffer
-	readStream:
-		for {
-			rsp, err := stream.Recv()
-			switch err {
-			case nil:
-				stdout.Write(rsp.Stdout)
-			case io.EOF:
-				break readStream
-			default:
-				t.Fatalf("ExecDutCommand RPC error: %s", err)
-			}
-		}
-		// We think the test is good as long as receiving a valid xml response.
-		if err := xml.Unmarshal(stdout.Bytes(), new(interface{})); err != nil {
-			t.Errorf("TestFakeOmahaIntegration: failed to unmarshal response: %s. Want a valid xml, got %q", err, stdout.String())
-		} else {
-			t.Logf("receive output: %s", stdout.String())
-		}
-	})
-	t.Run("DeleteFakeOmaha", func(t *testing.T) {
-		_, err = s.DeleteFakeOmaha(timeoutCtx(t, 2*time.Second), &tls.DeleteFakeOmahaRequest{Name: rsp.GetName()})
-		if err != nil {
-			t.Errorf("DeleteFakeOmaha(%q) error: %q", rsp.GetName(), err)
-		}
-	})
+	}
 }
 
 func TestCreateFakeOmahaErrors(t *testing.T) {
