@@ -24,6 +24,7 @@ github.com/golang/mock/gomock
 github.com/golang/protobuf/
 github.com/google/cel-go
 github.com/google/shlex
+github.com/google/tink
 github.com/google/uuid
 github.com/googleapis/gax-go
 github.com/pkg/errors
