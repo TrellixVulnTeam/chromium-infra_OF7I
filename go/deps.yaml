@@ -573,3 +573,8 @@ import:
 - package: github.com/otiai10/copy
   repo: https://chromium.googlesource.com/external/github.com/otiai10/copy.git
   version: upstream/main
+- package: github.com/google/tink/go
+  version: upstream/master
+  repo: https://chromium.googlesource.com/external/github.com/google/tink.git
+  subpackages:
+  - go
