@@ -47,8 +47,8 @@ type AccountConfig struct {
 	// utilization by this account is measured. Very bursty clients will need to
 	// use a wider window, whereas very consistent clients will use a narrow one.
 	MaxChargeSeconds float32
-	// MaxFanout is the maximum number of concurrent paid jobs for a single
-	// provisionable label that this account will pay for (0 = no limit).
+	// MaxFanout is the maximum number of concurrent paid jobs for each combination
+	// of all task labels that this account will pay for (0 = no limit).
 	//
 	// Additional jobs beyond this may run if there is idle capacity, but they
 	// will run in the FreeBucket priority level (except if DisableFreeTasks
