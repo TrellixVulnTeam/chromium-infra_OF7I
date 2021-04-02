@@ -130,9 +130,11 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 				return err
 			}
 		} else {
-			if err := utils.ParseJSONFile(c.newSpecsFile, &createAssetRequest); err != nil {
+			var asset ufspb.Asset
+			if err := utils.ParseJSONFile(c.newSpecsFile, &asset); err != nil {
 				return err
 			}
+			createAssetRequest.Asset = &asset
 			ufsZone := createAssetRequest.GetAsset().GetLocation().GetZone()
 			createAssetRequest.GetAsset().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 			createAssetRequest.Asset.Name = ufsUtil.AddPrefix(ufsUtil.AssetCollection, createAssetRequest.Asset.Name)
