@@ -62,7 +62,7 @@ var UpdateLabstationCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the Labstation.")
 		c.Flags.StringVar(&c.machine, "asset", "", "asset tag of the Labstation.")
-		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the Labstation.")
+		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the Labstation. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the Labstation. Clearing this field will delete rpm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the Labstation.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
@@ -381,7 +381,12 @@ func (c *updateLabstation) initializeLSEAndMask(recMap map[string]string) (*ufsp
 	// Check and update pools if required.
 	if len(pools) > 0 && pools[0] != "" {
 		mask.Paths = append(mask.Paths, poolsPath)
-		lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = pools
+		// Check if user is clearing the pool
+		if ufsUtil.ContainsAnyStrings(pools, utils.ClearFieldValue) {
+			lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = nil
+		} else {
+			lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = pools
+		}
 	}
 
 	// Create and assign rpm and corresponding masks.
