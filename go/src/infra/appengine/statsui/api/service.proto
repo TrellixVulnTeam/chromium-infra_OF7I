@@ -1,0 +1,63 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package statsui;
+
+option go_package = "infra/appengine/statsui/api";
+
+service Stats {
+  // FetchMetrics is called by the frontend to fetch metrics from the database.
+  rpc FetchMetrics(FetchMetricsRequest) returns (FetchMetricsResponse);
+}
+
+// Enumeration to specify the time period to fetch
+enum Period {
+  UNSPECIFIED = 0;
+  WEEK = 1;
+  DAY = 2;
+}
+
+message FetchMetricsRequest {
+  // Data source to pull the metrics from.
+  // See datasources.yaml for valid values.
+  string data_source = 1;
+  // Time period to fetch.
+  Period period = 2;
+  // Dates to fetch.  This should align to the period.
+  // Dates should be specified in YYYY-MM-DD format.
+  repeated string dates = 3;
+  // Metrics to fetch.  These are specific to th datasource.
+  // This is required.  If no metrics are specified an error is returned.
+  repeated string metrics = 4;
+}
+
+message FetchMetricsResponse {
+  // The various sections fetched for the given metrics.
+  repeated Section sections = 1;
+}
+
+message Section {
+  // Name, or grouping label for the metrics.
+  string name = 1;
+  // Metrics fetched.
+  repeated Metric metrics = 2;
+}
+
+message DataSet {
+  // A set of data.  This is a map of dates (in YYYY-MM-DD format) to numbers.
+  map<string, float> data = 1;
+}
+
+message Metric {
+  // Name of the metric.
+  string name = 1;
+  // Either data or sections should be defined, but not both.
+  // Set of data for the metric.
+  DataSet data = 2;
+  // Sections if the data is grouped by label.
+  map<string, DataSet> sections = 3;
+}
+

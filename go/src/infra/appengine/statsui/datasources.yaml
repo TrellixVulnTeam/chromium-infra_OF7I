@@ -1,0 +1,13 @@
+sources:
+  cq_builders:
+    queries:
+      DAY:
+        SELECT date, metric, builder as section, value, value_agg as aggregate
+        FROM `chrome-trooper-analytics.metrics.cq_builder_metrics_day`
+        WHERE date IN UNNEST(@dates) AND metric IN UNNEST(@metrics)
+        ORDER BY metric
+      WEEK:
+        SELECT date, metric, builder as section, value, value_agg as aggregate
+        FROM `chrome-trooper-analytics.metrics.cq_builder_metrics_week`
+        WHERE date IN UNNEST(@dates) AND metric IN UNNEST(@metrics)
+        ORDER BY metric
