@@ -161,7 +161,7 @@ class BuildRequest(_BuildRequestBase):
     if sbr.critical != common_pb2.UNSET:
       bp.critical = sbr.critical
     bp.exe.cipd_version = sbr.exe.cipd_version or bp.exe.cipd_version
-    bp.canary = experiments.get(config.EXPERIMENT_CANARY, False)
+    bp.canary = experiments[config.EXPERIMENT_CANARY]
 
     # Populate input.
     # Override properties from the config with values in the request.
@@ -169,7 +169,7 @@ class BuildRequest(_BuildRequestBase):
     if sbr.HasField('gitiles_commit'):
       bp.input.gitiles_commit.CopyFrom(sbr.gitiles_commit)
     bp.input.gerrit_changes.extend(sbr.gerrit_changes)
-    bp.input.experimental = experiments.get(config.EXPERIMENT_NON_PROD, False)
+    bp.input.experimental = experiments[config.EXPERIMENT_NON_PROD]
     bp.input.experiments.extend(
         exp for exp, enabled in experiments.iteritems() if enabled
     )
@@ -234,7 +234,13 @@ class BuildRequest(_BuildRequestBase):
   @staticmethod
   def compute_experiments(sbr, builder_cfg):
     """Returns a Dict[str, bool] of enabled/disabled experiments."""
-    experiments = {}
+    # Well-known experiments are always set, and default to off.
+    experiments = {
+        config.EXPERIMENT_CANARY: False,
+        config.EXPERIMENT_NON_PROD: False,
+        config.EXPERIMENT_USE_BBAGENT: False,
+        config.EXPERIMENT_USE_REALMS: False,
+    }
 
     if builder_cfg:
       for exp, percentage in builder_cfg.experiments.iteritems():

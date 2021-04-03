@@ -35,6 +35,8 @@ ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 # Names of well-known experiments
 EXPERIMENT_CANARY = 'luci.buildbucket.canary_software'
 EXPERIMENT_NON_PROD = 'luci.non_production'
+EXPERIMENT_USE_BBAGENT = 'luci.buildbucket.use_bbagent'
+EXPERIMENT_USE_REALMS = 'luci.use_realms'
 
 # The default percentage of builds that are marked as canary.
 # This number is relatively high so we treat canary seriously and that we have
@@ -295,7 +297,7 @@ class Builder(ndb.Model):
   @staticmethod
   def compute_hash(cfg):
     """Computes a hash for a builder config."""
-    return hashlib.sha256(cfg.SerializeToString()).hexdigest()
+    return hashlib.sha256(cfg.SerializeToString(deterministic=True)).hexdigest()
 
   def _pre_put_hook(self):
     assert self.config.name == self.key.id()
@@ -458,10 +460,17 @@ def _backfill_experiments(builder_cfg):
         if builder_cfg.HasField('task_template_canary_percentage') else
         _DEFAULT_CANARY_PERCENTAGE
     )
+
   if EXPERIMENT_NON_PROD not in builder_cfg.experiments:
     builder_cfg.experiments[EXPERIMENT_NON_PROD] = (
         100 if builder_cfg.experimental == project_config_pb2.YES else 0
     )
+
+  if EXPERIMENT_USE_BBAGENT not in builder_cfg.experiments:
+    builder_cfg.experiments[EXPERIMENT_USE_BBAGENT] = 0
+
+  if EXPERIMENT_USE_REALMS not in builder_cfg.experiments:
+    builder_cfg.experiments[EXPERIMENT_USE_REALMS] = 0
 
 
 def put_bucket(project_id, revision, bucket_cfg):
@@ -522,7 +531,7 @@ def cron_update_buckets():
 
     # revision is None in file-system mode. Use SHA1 of the config as revision.
     revision = revision or 'sha1:%s' % hashlib.sha1(
-        project_cfg.SerializeToString()
+        project_cfg.SerializeToString(deterministic=True)
     ).hexdigest()
     acl_sets_by_name = {a.name: a for a in project_cfg.acl_sets}
     builder_mixins_by_name = {m.name: m for m in project_cfg.builder_mixins}

@@ -385,9 +385,15 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertFalse(build.proto.input.experiments)
-    self.assertEqual(build.experiments, [
-        '-chromium.exp_foo',
-    ])
+    self.assertEqual(
+        build.experiments, [
+            '-chromium.exp_foo',
+            '-' + config.EXPERIMENT_CANARY,
+            '-' + config.EXPERIMENT_USE_BBAGENT,
+            '-' + config.EXPERIMENT_NON_PROD,
+            '-' + config.EXPERIMENT_USE_REALMS,
+        ]
+    )
 
   def test_schedule_build_request_experiments(self):
     builder_id = builder_pb2.BuilderID(
@@ -407,6 +413,10 @@ class CreationTest(testing.AppengineTestCase):
         build.experiments, [
             '+chromium.exp_foo',
             '-chromium.exp_bar',
+            '-' + config.EXPERIMENT_CANARY,
+            '-' + config.EXPERIMENT_USE_BBAGENT,
+            '-' + config.EXPERIMENT_NON_PROD,
+            '-' + config.EXPERIMENT_USE_REALMS,
         ]
     )
 

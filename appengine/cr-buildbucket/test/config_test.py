@@ -67,7 +67,15 @@ LUCI_CHROMIUM_TRY = test_util.parse_bucket_cfg(
           value: 10
         }
         experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.use_realms"
           value: 0
         }
         dimensions: "os:Linux"
@@ -94,7 +102,15 @@ LUCI_DART_TRY = test_util.parse_bucket_cfg(
           value: 10
         }
         experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.use_realms"
           value: 0
         }
         recipe {
@@ -441,7 +457,9 @@ class ConfigTest(testing.AppengineTestCase):
             id='linux',
             config=LUCI_CHROMIUM_TRY.swarming.builders[0],
             config_hash=hashlib.sha256(
-                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString()
+                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString(
+                    deterministic=True
+                )
             ).hexdigest(),
         ),
         config.Builder(
@@ -449,7 +467,9 @@ class ConfigTest(testing.AppengineTestCase):
             id='linux',
             config=LUCI_DART_TRY.swarming.builders[0],
             config_hash=hashlib.sha256(
-                LUCI_DART_TRY.swarming.builders[0].SerializeToString()
+                LUCI_DART_TRY.swarming.builders[0].SerializeToString(
+                    deterministic=True
+                )
             ).hexdigest(),
         ),
     ]
@@ -625,7 +645,9 @@ class ConfigTest(testing.AppengineTestCase):
             id='linux',
             config=LUCI_CHROMIUM_TRY.swarming.builders[0],
             config_hash=hashlib.sha256(
-                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString()
+                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString(
+                    deterministic=True
+                )
             ).hexdigest(),
         ),
         config.Builder(
@@ -633,7 +655,9 @@ class ConfigTest(testing.AppengineTestCase):
             id='linux',
             config=LUCI_DART_TRY.swarming.builders[0],
             config_hash=hashlib.sha256(
-                LUCI_DART_TRY.swarming.builders[0].SerializeToString()
+                LUCI_DART_TRY.swarming.builders[0].SerializeToString(
+                    deterministic=True
+                )
             ).hexdigest(),
         ),
     ]
@@ -724,7 +748,15 @@ class ConfigTest(testing.AppengineTestCase):
           value: 10
         }
         experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.use_realms"
           value: 0
         }
         ''', project_config_pb2.Builder()
@@ -770,7 +802,15 @@ class ConfigTest(testing.AppengineTestCase):
           value: 10
         }
         experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.use_realms"
           value: 0
         }
         ''', project_config_pb2.Builder()
@@ -792,6 +832,25 @@ class ConfigTest(testing.AppengineTestCase):
               name: "backfill"
               experimental: YES
               task_template_canary_percentage { value: 30 }
+            }
+            builders {
+              name: "all-well-known"
+              experiments {
+                key: "luci.buildbucket.canary_software"
+                value: 1
+              }
+              experiments {
+                key: "luci.buildbucket.use_bbagent"
+                value: 1
+              }
+              experiments {
+                key: "luci.non_production"
+                value: 1
+              }
+              experiments {
+                key: "luci.use_realms"
+                value: 1
+              }
             }
             builders {
               name: "exists"
@@ -826,12 +885,20 @@ class ConfigTest(testing.AppengineTestCase):
         dimensions: "pool:luci.infra-exp.try"
         swarming_host: "swarming.example.com"
         experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
           value: 0
         }
         experiments {
-          key: "luci.buildbucket.canary_software"
-          value: 10
+          key: "luci.use_realms"
+          value: 0
         }
         ''', project_config_pb2.Builder()
     )
@@ -843,12 +910,43 @@ class ConfigTest(testing.AppengineTestCase):
         experimental: YES
         task_template_canary_percentage { value: 30 }
         experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 30
+        }
+        experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
           value: 100
         }
         experiments {
+          key: "luci.use_realms"
+          value: 0
+        }
+        ''', project_config_pb2.Builder()
+    )
+    expected_all_well_known = text_format.Parse(
+        '''
+        name: "all-well-known"
+        dimensions: "pool:luci.infra-exp.try"
+        swarming_host: "swarming.example.com"
+        experiments {
           key: "luci.buildbucket.canary_software"
-          value: 30
+          value: 1
+        }
+        experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 1
+        }
+        experiments {
+          key: "luci.non_production"
+          value: 1
+        }
+        experiments {
+          key: "luci.use_realms"
+          value: 1
         }
         ''', project_config_pb2.Builder()
     )
@@ -860,36 +958,55 @@ class ConfigTest(testing.AppengineTestCase):
         experimental: YES
         task_template_canary_percentage { value: 30 }
         experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 50
+        }
+        experiments {
+          key: "luci.buildbucket.use_bbagent"
+          value: 0
+        }
+        experiments {
           key: "luci.non_production"
           value: 0
         }
         experiments {
-          key: "luci.buildbucket.canary_software"
-          value: 50
+          key: "luci.use_realms"
+          value: 0
         }
         ''', project_config_pb2.Builder()
     )
     expected = [
         config.Builder(
             parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
+            id='all-well-known',
+            config=expected_all_well_known,
+            config_hash=hashlib.sha256(
+                expected_all_well_known.SerializeToString(deterministic=True)
+            ).hexdigest(),
+        ),
+        config.Builder(
+            parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
             id='backfill',
             config=expected_backfill,
-            config_hash=hashlib.sha256(expected_backfill.SerializeToString()
-                                      ).hexdigest(),
+            config_hash=hashlib.sha256(
+                expected_backfill.SerializeToString(deterministic=True)
+            ).hexdigest(),
         ),
         config.Builder(
             parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
             id='empty',
             config=expected_empty,
-            config_hash=hashlib.sha256(expected_empty.SerializeToString()
-                                      ).hexdigest(),
+            config_hash=hashlib.sha256(
+                expected_empty.SerializeToString(deterministic=True)
+            ).hexdigest(),
         ),
         config.Builder(
             parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
             id='exists',
             config=expected_exists,
-            config_hash=hashlib.sha256(expected_exists.SerializeToString()
-                                      ).hexdigest(),
+            config_hash=hashlib.sha256(
+                expected_exists.SerializeToString(deterministic=True)
+            ).hexdigest(),
         ),
     ]
     self.assertEqual(actual, expected)
