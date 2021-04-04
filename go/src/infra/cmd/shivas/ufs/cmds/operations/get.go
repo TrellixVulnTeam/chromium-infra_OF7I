@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/dut"
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
+	"infra/cmd/shivas/ufs/subcmds/lsedeployment"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/ufs/subcmds/nic"
@@ -40,7 +41,7 @@ var GetCmd = &subcommands.Command{
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm/vm-slots
 	asset/dut/cachingservice
-	machine-prototype/rack-prototype/platform/vlan`,
+	machine-prototype/rack-prototype/platform/vlan/host-deployment`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
 		return c
@@ -81,6 +82,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		stableversion.GetStableVersionCmd,
 		static.GetStatesCmd,
 		static.GetZonesCmd,
+		lsedeployment.GetMachineLSEDeploymentCmd,
 	}
 }
 

@@ -112,6 +112,11 @@ func PrintTSVMachineLSEs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineLSEOutputStrs)
 }
 
+// PrintTSVHostFull prints the full related msg for host in tsv mode
+func PrintTSVMachineLSEDeployments(msgs []proto.Message, keysOnly bool) {
+	printTSVs(msgs, keysOnly, machineLSEDeploymentFullOutputStrs)
+}
+
 // PrintTSVVMs prints the tsv format of vms
 func PrintTSVVMs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, vmOutputStrs)

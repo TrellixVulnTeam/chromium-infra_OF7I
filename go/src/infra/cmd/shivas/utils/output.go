@@ -49,29 +49,30 @@ const (
 
 // Titles for printing table format list
 var (
-	SwitchTitle              = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	KvmTitle                 = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	KvmFullTitle             = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
-	RpmTitle                 = []string{"RPM Name", "MAC Address", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	DracTitle                = []string{"Drac Name", "Display name", "MAC Address", "Switch", "Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
-	DracFullTitle            = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
-	NicTitle                 = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
-	BrowserMachineTitle      = []string{"Machine Name", "Serial Number", "Zone", "Rack", "KVM", "KVM Port", "ChromePlatform", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
-	OSMachineTitle           = []string{"Machine Name", "Zone", "Rack", "Barcode", "Hardware ID", "Model", "DeviceType", "MacAddress", "SKU", "Phase", "Build Target", "State", "Realm", "UpdateTime"}
-	MachinelseprototypeTitle = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
-	RacklseprototypeTitle    = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
-	ChromePlatformTitle      = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
-	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
-	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
-	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
-	MachineLSEFullTitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
-	VMFreeSlotTitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "Free slots", "DeploymentTicket", "Description", "UpdateTime"}
-	VMFreeSlotFullTitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
-	ZoneTitle                = []string{"Name", "EnumName", "Department"}
-	StateTitle               = []string{"Name", "EnumName", "Description"}
-	AssetTitle               = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
-	CachingServiceTitle      = []string{"CachingService Name", "Port", "Subnet", "Primary", "Secondary", "State", "Description", "UpdateTime"}
+	SwitchTitle               = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	KvmTitle                  = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	KvmFullTitle              = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
+	RpmTitle                  = []string{"RPM Name", "MAC Address", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	DracTitle                 = []string{"Drac Name", "Display name", "MAC Address", "Switch", "Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
+	DracFullTitle             = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
+	NicTitle                  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
+	BrowserMachineTitle       = []string{"Machine Name", "Serial Number", "Zone", "Rack", "KVM", "KVM Port", "ChromePlatform", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
+	OSMachineTitle            = []string{"Machine Name", "Zone", "Rack", "Barcode", "Hardware ID", "Model", "DeviceType", "MacAddress", "SKU", "Phase", "Build Target", "State", "Realm", "UpdateTime"}
+	MachinelseprototypeTitle  = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
+	RacklseprototypeTitle     = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
+	ChromePlatformTitle       = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
+	VlanTitle                 = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
+	VMTitle                   = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
+	RackTitle                 = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
+	MachineLSETitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
+	MachineLSEFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	MachineLSEDeploymentTitle = []string{"Serial Number", "Hostname", "Deployment Identifier", "UpdateTime"}
+	VMFreeSlotTitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "Free slots", "DeploymentTicket", "Description", "UpdateTime"}
+	VMFreeSlotFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
+	ZoneTitle                 = []string{"Name", "EnumName", "Department"}
+	StateTitle                = []string{"Name", "EnumName", "Description"}
+	AssetTitle                = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
+	CachingServiceTitle       = []string{"CachingService Name", "Port", "Subnet", "Primary", "Secondary", "State", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -1637,6 +1638,62 @@ func PrintCachingServicesJSON(res []proto.Message, emit bool) {
 		}
 	}
 	fmt.Println("]")
+}
+
+// PrintMachineLSEDeploymentsJSON prints the machine lse deployment records details in json format.
+func PrintMachineLSEDeploymentsJSON(res []proto.Message, emit bool) {
+	drs := make([]*ufspb.MachineLSEDeployment, len(res))
+	for i, r := range res {
+		drs[i] = r.(*ufspb.MachineLSEDeployment)
+	}
+	fmt.Print("[")
+	for i, m := range drs {
+		m.SerialNumber = ufsUtil.RemovePrefix(m.SerialNumber)
+		PrintProtoJSON(m, emit)
+		if i < len(drs)-1 {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
+
+// PrintMachineLSEDeployments prints a list of machine lse deployment records
+func PrintMachineLSEDeployments(res []proto.Message, keysOnly bool) {
+	entities := make([]*ufspb.MachineLSEDeployment, len(res))
+	for i, r := range res {
+		entities[i] = r.(*ufspb.MachineLSEDeployment)
+	}
+	defer tw.Flush()
+	for _, e := range entities {
+		printMachineLSEDeployment(e, keysOnly)
+	}
+}
+
+func printMachineLSEDeployment(m *ufspb.MachineLSEDeployment, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.SerialNumber))
+		return
+	}
+	var out string
+	for _, s := range machineLSEDeploymentFullOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
+	}
+	fmt.Fprintln(tw, out)
+}
+
+func machineLSEDeploymentFullOutputStrs(res proto.Message) []string {
+	dr := res.(*ufspb.MachineLSEDeployment)
+	var ts string
+	if t, err := ptypes.Timestamp(dr.GetUpdateTime()); err == nil {
+		ts = t.Local().Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(dr.GetSerialNumber()),
+		dr.GetHostname(),
+		dr.GetDeploymentIdentifier(),
+		ts,
+	}
 }
 
 func strSlicesToStr(slices []string) string {
