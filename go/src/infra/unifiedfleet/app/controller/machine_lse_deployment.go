@@ -29,6 +29,19 @@ func BatchGetMachineLSEDeployments(ctx context.Context, ids []string) ([]*ufspb.
 	return inventory.BatchGetMachineLSEDeployments(ctx, ids)
 }
 
+// ListMachineLSEDeployments returns a batch of deployment records by filters
+func ListMachineLSEDeployments(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSEDeployment, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, inventory.GetDeploymentIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing deployment records").Err()
+		}
+	}
+	return inventory.ListMachineLSEDeployments(ctx, pageSize, pageToken, filterMap, keysOnly)
+}
+
 // UpdateMachineLSEDeployment updates a machine lse deployment to datastore
 func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeployment, mask *field_mask.FieldMask) (*ufspb.MachineLSEDeployment, error) {
 	f := func(ctx context.Context) error {

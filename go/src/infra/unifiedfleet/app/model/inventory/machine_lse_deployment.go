@@ -6,13 +6,19 @@ package inventory
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // MachineLSEDeploymentKind is the datastore entity kind for host deployment info.
@@ -100,7 +106,64 @@ func BatchGetMachineLSEDeployments(ctx context.Context, ids []string) ([]*ufspb.
 	return res, nil
 }
 
+// ListMachineLSEDeployments lists the deployment records
+//
+// Does a query over MachineLSEDeploymentEntity. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListMachineLSEDeployments(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.MachineLSEDeployment, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, MachineLSEDeploymentKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *MachineLSEDeploymentEntity, cb datastore.CursorCB) error {
+		if keysOnly {
+			dr := &ufspb.MachineLSEDeployment{
+				SerialNumber: ent.ID,
+			}
+			res = append(res, dr)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.MachineLSEDeployment))
+		}
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to list deployment records %s", err)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
 // DeleteDeployment deletes a deployment record
 func DeleteDeployment(ctx context.Context, id string) error {
 	return ufsds.Delete(ctx, &ufspb.MachineLSEDeployment{SerialNumber: id}, newMachineLSEDeploymentEntity)
+}
+
+// GetDeploymentIndexedFieldName returns the index name
+func GetDeploymentIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.HostFilterName:
+		field = "hostname"
+	case util.DeploymentIdentifierFilterName:
+		field = "deployment_identifier"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine lse deployments are host/deploymentidentifier", input)
+	}
+	return field, nil
 }

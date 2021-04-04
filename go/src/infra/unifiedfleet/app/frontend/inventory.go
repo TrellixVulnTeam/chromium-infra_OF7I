@@ -585,5 +585,23 @@ func (fs *FleetServerImpl) BatchGetMachineLSEDeployments(ctx context.Context, re
 
 // ListMachineLSEDeployments retrieves a list of deployment records
 func (fs *FleetServerImpl) ListMachineLSEDeployments(ctx context.Context, req *ufsAPI.ListMachineLSEDeploymentsRequest) (resp *ufsAPI.ListMachineLSEDeploymentsResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListMachineLSEDeployments(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, res := range result {
+		res.SerialNumber = util.AddPrefix(util.MachineLSEDeploymentCollection, res.GetSerialNumber())
+	}
+	return &ufsAPI.ListMachineLSEDeploymentsResponse{
+		MachineLseDeployments: result,
+		NextPageToken:         nextPageToken,
+	}, nil
 }

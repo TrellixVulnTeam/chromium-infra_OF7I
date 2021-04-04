@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -71,6 +72,45 @@ func TestUpdateMachineLSEDeployment(t *testing.T) {
 			dr3.DeploymentIdentifier = ""
 			So(resGet.GetHostname(), ShouldEqual, "hostname-3")
 			So(resGet.GetDeploymentIdentifier(), ShouldBeEmpty)
+		})
+	})
+}
+
+func TestListMachineLSEDeployments(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	drs := make([]*ufspb.MachineLSEDeployment, 0, 4)
+	for i := 0; i < 4; i++ {
+		dr := mockMachineLSEDeployment(fmt.Sprintf("list-dr-%d", i))
+		if i%2 == 0 {
+			dr.Hostname = fmt.Sprintf("host-%d", i)
+		}
+		drs = append(drs, dr)
+	}
+	updatedDrs, _ := inventory.UpdateMachineLSEDeployments(ctx, drs)
+	Convey("ListMachineLSEDeployments", t, func() {
+		Convey("List MachineLSEDeployments - filter invalid - error", func() {
+			_, _, err := ListMachineLSEDeployments(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List MachineLSEDeployment - filter host - happy path", func() {
+			resp, _, err := ListMachineLSEDeployments(ctx, 5, "", "host=host-0", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 1)
+			So(resp[0], ShouldResembleProto, updatedDrs[0])
+
+			resp, _, err = ListMachineLSEDeployments(ctx, 5, "", "host=host-2", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 1)
+			So(resp[0], ShouldResembleProto, updatedDrs[2])
+		})
+
+		Convey("List MachineLSEDeployment - Full listing - happy path", func() {
+			resp, _, _ := ListMachineLSEDeployments(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, updatedDrs)
 		})
 	})
 }

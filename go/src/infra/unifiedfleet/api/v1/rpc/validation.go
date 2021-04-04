@@ -1169,6 +1169,14 @@ func (r *UpdateMachineLSEDeploymentRequest) Validate() error {
 	return nil
 }
 
+// Validate validates ListMachineLSEDeploymentsRequest.
+func (r *ListMachineLSEDeploymentsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
 // Validate validates input requests of CreateCachingService.
 func (r *CreateCachingServiceRequest) Validate() error {
 	if r.CachingService == nil {

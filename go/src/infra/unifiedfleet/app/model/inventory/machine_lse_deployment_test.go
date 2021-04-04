@@ -11,6 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	. "infra/unifiedfleet/app/model/datastore"
@@ -118,6 +119,47 @@ func TestBatchGetMachineLSEDeployments(t *testing.T) {
 			resp, err = BatchGetMachineLSEDeployments(ctx, input)
 			So(err, ShouldBeNil)
 			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}
+
+func TestListMachineLSEDeployments(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	drs := make([]*ufspb.MachineLSEDeployment, 4)
+	for i := 0; i < 4; i++ {
+		drs[i] = mockMachineLSEDeployment(fmt.Sprintf("dr-List-%d", i))
+	}
+	updatedDrs, _ := UpdateMachineLSEDeployments(ctx, drs)
+	Convey("ListMachineLSEDeployments", t, func() {
+		Convey("List machine lse deployment records - page_token invalid", func() {
+			resp, nextPageToken, err := ListMachineLSEDeployments(ctx, 5, "abc", nil, false)
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List machine lse deployment records - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListMachineLSEDeployments(ctx, 4, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, updatedDrs)
+		})
+
+		Convey("List machine lse deployment records - listing with pagination", func() {
+			resp, nextPageToken, err := ListMachineLSEDeployments(ctx, 3, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, updatedDrs[:3])
+
+			resp, _, err = ListMachineLSEDeployments(ctx, 2, nextPageToken, nil, false)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, updatedDrs[3:])
 		})
 	})
 }
