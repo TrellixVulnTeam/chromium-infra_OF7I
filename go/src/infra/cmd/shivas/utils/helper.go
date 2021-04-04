@@ -20,7 +20,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/genproto/protobuf/field_mask"
 
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
@@ -392,7 +392,16 @@ func GetUpdateMask(set *flag.FlagSet, paths map[string]string) *field_mask.Field
 			m.Paths = append(m.Paths, path)
 		}
 	})
-	sort.Strings(m.Paths)
+	pathMap := make(map[string]bool)
+	for _, p := range m.Paths {
+		pathMap[p] = true
+	}
+	var deduplicatedPaths []string
+	for k := range pathMap {
+		deduplicatedPaths = append(deduplicatedPaths, k)
+	}
+	sort.Strings(deduplicatedPaths)
+	m.Paths = deduplicatedPaths
 	return m
 }
 

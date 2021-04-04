@@ -16,6 +16,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/labstation"
+	"infra/cmd/shivas/ufs/subcmds/lsedeployment"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/ufs/subcmds/nic"
@@ -39,7 +40,7 @@ var UpdateCmd = &subcommands.Command{
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
 	asset/dut/labstation/cachingservice
-	machine-prototype/rack-prototype/chromeplatform/vlan`,
+	machine-prototype/rack-prototype/chromeplatform/vlan/host-deployment`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &update{}
 		return c
@@ -77,6 +78,7 @@ func (c updateApp) GetCommands() []*subcommands.Command {
 		rackprototype.UpdateRackLSEPrototypeCmd,
 		chromeplatform.UpdateChromePlatformCmd,
 		vlan.UpdateVlanCmd,
+		lsedeployment.UpdateMachineLSEDeploymentCmd,
 	}
 }
 
