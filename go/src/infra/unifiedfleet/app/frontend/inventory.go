@@ -605,3 +605,28 @@ func (fs *FleetServerImpl) ListMachineLSEDeployments(ctx context.Context, req *u
 		NextPageToken:         nextPageToken,
 	}, nil
 }
+
+// CreateSchedulingUnit creates SchedulingUnit entry in database.
+func (fs *FleetServerImpl) CreateSchedulingUnit(ctx context.Context, req *ufsAPI.CreateSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
+	return nil, nil
+}
+
+// UpdateSchedulingUnit updates the SchedulingUnit information in database.
+func (fs *FleetServerImpl) UpdateSchedulingUnit(ctx context.Context, req *ufsAPI.UpdateSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
+	return nil, nil
+}
+
+// GetSchedulingUnit gets the SchedulingUnit information from database.
+func (fs *FleetServerImpl) GetSchedulingUnit(ctx context.Context, req *ufsAPI.GetSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
+	return nil, nil
+}
+
+// ListSchedulingUnits list the SchedulingUnits information from database.
+func (fs *FleetServerImpl) ListSchedulingUnits(ctx context.Context, req *ufsAPI.ListSchedulingUnitsRequest) (rsp *ufsAPI.ListSchedulingUnitsResponse, err error) {
+	return nil, nil
+}
+
+// DeleteSchedulingUnit deletes the SchedulingUnit from database.
+func (fs *FleetServerImpl) DeleteSchedulingUnit(ctx context.Context, req *ufsAPI.DeleteSchedulingUnitRequest) (rsp *empty.Empty, err error) {
+	return nil, nil
+}

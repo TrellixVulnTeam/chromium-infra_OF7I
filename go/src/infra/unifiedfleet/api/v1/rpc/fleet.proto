@@ -26,6 +26,7 @@ import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse_deployment.proto";
+import "infra/unifiedfleet/api/v1/models/scheduling_unit.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
@@ -392,6 +393,21 @@ service Fleet {
 
   // ListMachineLSEDeployments lists all deployment records which fulfill the requirements
   rpc ListMachineLSEDeployments(ListMachineLSEDeploymentsRequest) returns (ListMachineLSEDeploymentsResponse);
+
+  // CreateSchedulingUnit creates a new SchedulingUnit.
+  rpc CreateSchedulingUnit(CreateSchedulingUnitRequest) returns (models.SchedulingUnit);
+
+  // Update updates the SchedulingUnit.
+  rpc UpdateSchedulingUnit(UpdateSchedulingUnitRequest) returns (models.SchedulingUnit);
+
+  // Get retrieves the details of the SchedulingUnit.
+  rpc GetSchedulingUnit(GetSchedulingUnitRequest) returns (models.SchedulingUnit);
+
+  // List gets all the SchedulingUnits.
+  rpc ListSchedulingUnits(ListSchedulingUnitsRequest) returns (ListSchedulingUnitsResponse);
+
+  // Delete delete the SchedulingUnit.
+  rpc DeleteSchedulingUnit(DeleteSchedulingUnitRequest) returns (google.protobuf.Empty);
 }
 
 message UpdateMachineLSEDeploymentRequest {
@@ -2073,5 +2089,76 @@ message DeleteCachingServiceRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/CachingService" }
+  ];
+}
+
+// Contains the required information for creating a SchedulingUnit represented in
+// the database.
+message CreateSchedulingUnitRequest {
+  // The SchedulingUnit to create.
+  models.SchedulingUnit scheduling_unit = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the SchedulingUnit, which will become the final component of
+  // the SchedulingUnit's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string scheduling_unit_id = 2;
+}
+
+message UpdateSchedulingUnitRequest {
+  // The SchedulingUnit to update.
+  models.SchedulingUnit scheduling_unit = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetSchedulingUnitRequest {
+  // The name of the SchedulingUnit to retrieve.
+  // Pattern is 'schedulingunits/{ipv4}'
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/SchedulingUnit" }
+  ];
+}
+
+message ListSchedulingUnitsRequest {
+  // The maximum number of SchedulingUnits to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 SchedulingUnits will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListSchedulingUnits` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListSchedulingUnits` must match
+  // the call that provided the page token.
+  string page_token = 2;
+
+  // filter takes the filtering condition.
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keys_only = 4;
+}
+
+message ListSchedulingUnitsResponse {
+  // The SchedulingUnits from datastore.
+  repeated models.SchedulingUnit scheduling_units = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteSchedulingUnitRequest {
+  // The name of the SchedulingUnit to delete.
+  // Pattern is 'schedulingunits/{schedulingunit}'
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/SchedulingUnit" }
   ];
 }

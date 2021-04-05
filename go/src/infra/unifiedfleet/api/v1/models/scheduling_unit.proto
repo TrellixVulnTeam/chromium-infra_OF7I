@@ -1,0 +1,49 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models;
+
+option go_package = "infra/unifiedfleet/api/v1/models;ufspb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/resource.proto";
+import "google/api/field_behavior.proto";
+
+// SchedulingUnit is used for supporting multi-DUT setup in ChromeOS lab.
+//
+// A SchedulingUnit will have one or more DUTs associated with it.
+message SchedulingUnit {
+  option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/SchedulingUnit"
+        pattern: "schedulingunits/{schedulingunit}"
+  };
+  string name = 1;
+  // name of DUT/MachineLSE
+  repeated string machineLSEs = 2 [
+      (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/MachineLSE"
+      }
+  ];
+  // swarming pools to which this SchedulingUnit belongs to.
+  repeated string pools = 3;
+  // indicate how dut_state dimension of a scheduling unit should be calculated.
+  SchedulingUnitType type = 4;
+  // description of the SchedulingUnit.
+  string description = 5;
+  // record the last update timestamp of this SchedulingUnit (In UTC timezone)
+  google.protobuf.Timestamp update_time = 6 [
+        (google.api.field_behavior) = OUTPUT_ONLY];
+  // tags user can attach for easy querying/searching
+  repeated string tags = 7;
+}
+
+enum SchedulingUnitType {
+    SCHEDULING_UNIT_TYPE_INVALID = 0;
+    // which means the SchedulingUnit only considers as ready when all of the associated DUT's/MachineLSE's resourceState is ready.
+    SCHEDULING_UNIT_TYPE_ALL = 1;
+    // which means the SchedulingUnit is considered as ready if at least one of the associated DUT's/MachineLSE's resourceState is ready.
+    SCHEDULING_UNIT_TYPE_INDIVIDUAL = 2;
+}

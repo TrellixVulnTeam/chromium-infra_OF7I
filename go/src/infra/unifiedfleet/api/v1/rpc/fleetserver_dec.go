@@ -2067,3 +2067,88 @@ func (s *DecoratedFleet) ListMachineLSEDeployments(ctx context.Context, req *Lis
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateSchedulingUnit(ctx context.Context, req *CreateSchedulingUnitRequest) (rsp *models.SchedulingUnit, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateSchedulingUnit", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateSchedulingUnit(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateSchedulingUnit", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateSchedulingUnit(ctx context.Context, req *UpdateSchedulingUnitRequest) (rsp *models.SchedulingUnit, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateSchedulingUnit", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateSchedulingUnit(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateSchedulingUnit", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetSchedulingUnit(ctx context.Context, req *GetSchedulingUnitRequest) (rsp *models.SchedulingUnit, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetSchedulingUnit", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetSchedulingUnit(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetSchedulingUnit", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListSchedulingUnits(ctx context.Context, req *ListSchedulingUnitsRequest) (rsp *ListSchedulingUnitsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListSchedulingUnits", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListSchedulingUnits(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListSchedulingUnits", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteSchedulingUnit(ctx context.Context, req *DeleteSchedulingUnitRequest) (rsp *emptypb.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteSchedulingUnit", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteSchedulingUnit(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteSchedulingUnit", rsp, err)
+	}
+	return
+}
