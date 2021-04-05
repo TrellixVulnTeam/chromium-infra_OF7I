@@ -142,7 +142,7 @@
 <script type="text/javascript" nonce="[nonce]">
 runOnLoad(function() {
   function checkSubmit() {
-    _checkLeafName('[projectname]', '[component_def.parent_path]', '[component_def.leaf_name]', CS_env.token);
+    _checkLeafName('[format "js"][projectname][end]', '[format "js"][component_def.parent_path][end]', '[format "js"][component_def.leaf_name][end]', CS_env.token);
   }
   setInterval(checkSubmit, 700);
 
