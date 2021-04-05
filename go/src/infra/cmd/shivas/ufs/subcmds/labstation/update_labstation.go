@@ -62,7 +62,7 @@ var UpdateLabstationCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.hostname, "name", "", "hostname of the Labstation.")
 		c.Flags.StringVar(&c.machine, "asset", "", "asset tag of the Labstation.")
-		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools assigned to the Labstation. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools. These will be appended to existing pools. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the Labstation. Clearing this field will delete rpm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the Labstation.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
