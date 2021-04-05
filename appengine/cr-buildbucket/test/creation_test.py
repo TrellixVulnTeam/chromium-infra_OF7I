@@ -77,6 +77,19 @@ class CreationTest(testing.AppengineTestCase):
             }
           }
           builders {
+            name: "linux_bbagent_opt_in"
+            swarming_host: "chromium-swarm.appspot.com"
+            recipe {
+              name: "recipe"
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+            }
+            experiments {
+              key: "luci.buildbucket.use_bbagent"
+              value: 100
+            }
+          }
+          builders {
             name: "linux_wait"
             wait_for_capacity: YES
             swarming_host: "chromium-swarm.appspot.com"
@@ -153,9 +166,10 @@ class CreationTest(testing.AppengineTestCase):
         swarming=dict(global_caches=[dict(path='git')]),
         logdog=dict(hostname='logs.example.com'),
     )
-    self.settings.swarming.bbagent_package.builders.regex_exclude.append(
+    self.settings.swarming.bbagent_package.builders.regex_exclude.extend([
         'chromium/try/linux_legacy',
-    )
+        'chromium/try/linux_bbagent_opt_in',
+    ])
     self.patch(
         'config.get_settings_async',
         autospec=True,
@@ -232,6 +246,15 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['recipes'])
+
+  def test_add_linux_bbagent_opt_in(self):
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='linux_bbagent_opt_in',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertEqual(build.proto.exe.cmd, ['luciexe'])
 
   def test_add_wait(self):
     builder_id = builder_pb2.BuilderID(

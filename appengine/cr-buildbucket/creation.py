@@ -153,7 +153,7 @@ class BuildRequest(_BuildRequestBase):
 
     _apply_global_settings(settings, bp)
     if builder_cfg:  # pragma: no branch
-      yield _apply_builder_config_async(builder_cfg, bp, settings)
+      yield _apply_builder_config_async(builder_cfg, bp, settings, experiments)
 
     bp.status = common_pb2.SCHEDULED
     bp.created_by = created_by.to_bytes()
@@ -612,7 +612,9 @@ def _apply_global_settings(settings, build_proto):
 
 
 @ndb.tasklet
-def _apply_builder_config_async(builder_cfg, build_proto, settings):
+def _apply_builder_config_async(
+    builder_cfg, build_proto, settings, experiments
+):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
   # Populate timeouts.
   build_proto.scheduling_timeout.seconds = builder_cfg.expiration_secs
@@ -653,8 +655,10 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
 
   # If the user specified exe.cmd, we do nothing.
   if not build_proto.exe.cmd:
-    uses_bbagent = config.builder_matches(
-        build_proto.builder, settings.swarming.bbagent_package.builders
+    uses_bbagent = (
+        experiments[config.EXPERIMENT_USE_BBAGENT] or config.builder_matches(
+            build_proto.builder, settings.swarming.bbagent_package.builders
+        )
     )
     build_proto.exe.cmd.append('luciexe' if uses_bbagent else 'recipes')
 
