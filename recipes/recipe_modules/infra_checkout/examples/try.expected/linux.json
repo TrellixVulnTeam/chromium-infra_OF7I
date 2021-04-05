@@ -218,9 +218,7 @@
       "--upstream",
       "5e03a58dc0850e5137a8ebbce29610670c756aed",
       "--skip_canned",
-      "CheckTreeIsOpen",
-      "--skip_canned",
-      "CheckBuildbotPendingBuilds"
+      "CheckTreeIsOpen"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
