@@ -889,11 +889,26 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
             'last': 2,
         }],
     }]
+    data_unit = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 3,
+        }],
+    }]
     PresubmitCoverageData.Create(
-        server_host=host, change=change, patchset=patchset_src,
-        data=data).put()
+        server_host=host,
+        change=change,
+        patchset=patchset_src,
+        data=data,
+        data_unit=data_unit).put()
     mid_data = PresubmitCoverageData.Create(
-        server_host=host, change=change, patchset=patchset_mid, data=data)
+        server_host=host,
+        change=change,
+        patchset=patchset_mid,
+        data=data,
+        data_unit=data_unit)
     mid_data.based_on = patchset_src
     mid_data.put()
 
@@ -906,8 +921,19 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
 
+    rebased_coverage_data_unit = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 2,
+            'last': 4,
+        }],
+    }]
+
     mock_get_equivalent_ps.return_value = [patchset_src, patchset_mid]
-    mock_rebase_data.return_value = rebased_coverage_data
+    mock_rebase_data.side_effect = [
+        rebased_coverage_data, rebased_coverage_data_unit
+    ]
 
     request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
                    '&patchset=%d&concise=1') % (host, project, change,
@@ -930,9 +956,19 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         },
     })
     self.assertEqual(expected_response_body, response.body)
-    self.assertEqual(
-        patchset_src,
-        PresubmitCoverageData.Get(host, change, patchset_dest).based_on)
+    src_entity = PresubmitCoverageData.Get(host, change, patchset_src)
+    dest_entity = PresubmitCoverageData.Get(host, change, patchset_dest)
+    self.assertEqual(patchset_src, dest_entity.based_on)
+    self.assertEqual(src_entity.absolute_percentages,
+                     dest_entity.absolute_percentages)
+    self.assertEqual(src_entity.incremental_percentages,
+                     dest_entity.incremental_percentages)
+    self.assertEqual(src_entity.absolute_percentages_unit,
+                     dest_entity.absolute_percentages_unit)
+    self.assertEqual(src_entity.incremental_percentages_unit,
+                     dest_entity.incremental_percentages_unit)
+    self.assertEqual(rebased_coverage_data, dest_entity.data)
+    self.assertEqual(rebased_coverage_data_unit, dest_entity.data_unit)
 
   def testServeCLPatchPercentagesData(self):
     host = 'chromium-review.googlesource.com'

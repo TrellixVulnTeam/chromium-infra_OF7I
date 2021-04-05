@@ -1166,6 +1166,7 @@ class ServeCodeCoverageData(BaseHandler):
 
     def _ServeLines(lines_data):
       """Serves lines coverage data."""
+      lines_data = lines_data or []
       formatted_data = {'files': []}
       for file_data in lines_data:
         formatted_data['files'].append({
@@ -1308,6 +1309,14 @@ class ServeCodeCoverageData(BaseHandler):
               patchset_src=latest_entity.cl_patchset.patchset,
               patchset_dest=patchset,
               coverage_data_src=latest_entity.data))
+      rebased_coverage_data_unit = (
+          code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
+              host=host,
+              project=project,
+              change=change,
+              patchset_src=latest_entity.cl_patchset.patchset,
+              patchset_dest=patchset,
+              coverage_data_src=latest_entity.data_unit))
     except code_coverage_util.MissingChangeDataException as mcde:
       return BaseHandler.CreateError(
           'Requested coverage data is not found. %s' % mcde.message,
@@ -1318,9 +1327,13 @@ class ServeCodeCoverageData(BaseHandler):
         server_host=host,
         change=change,
         patchset=patchset,
-        data=rebased_coverage_data)
+        data=rebased_coverage_data,
+        data_unit=rebased_coverage_data_unit)
     entity.absolute_percentages = latest_entity.absolute_percentages
     entity.incremental_percentages = latest_entity.incremental_percentages
+    entity.absolute_percentages_unit = latest_entity.absolute_percentages_unit
+    entity.incremental_percentages_unit = \
+      latest_entity.incremental_percentages_unit
     entity.based_on = latest_entity.cl_patchset.patchset
     entity.put()
     return _ServeLines(entity.data)
