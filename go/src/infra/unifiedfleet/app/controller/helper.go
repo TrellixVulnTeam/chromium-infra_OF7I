@@ -205,6 +205,17 @@ func GetCachingServiceResource(cachingServiceID string) *Resource {
 	}
 }
 
+// GetSchedulingUnitResource returns a Resource with SchedulingUnitEntity.
+func GetSchedulingUnitResource(schedulingUnitID string) *Resource {
+	return &Resource{
+		Kind: inventory.SchedulingUnitKind,
+		ID:   schedulingUnitID,
+		Entity: &inventory.SchedulingUnitEntity{
+			ID: schedulingUnitID,
+		},
+	}
+}
+
 // ResourceExist checks if the given resources exists in the datastore
 //
 // Returns error if any one resource does not exist in the system.

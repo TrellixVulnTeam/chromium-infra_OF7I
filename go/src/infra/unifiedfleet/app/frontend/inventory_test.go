@@ -40,6 +40,12 @@ func mockRackLSE(id string) *ufspb.RackLSE {
 	}
 }
 
+func mockSchedulingUnit(name string) *ufspb.SchedulingUnit {
+	return &ufspb.SchedulingUnit{
+		Name: name,
+	}
+}
+
 func TestUpdateNetworkOpt(t *testing.T) {
 	input := &ufsAPI.NetworkOption{
 		Vlan: "vlan1",
@@ -1466,6 +1472,45 @@ func TestGetMachineLSEDeployment(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("CreateSchedulingUnit", t, func() {
+		Convey("Create new SchedulingUnit with schedulingUnitId - happy path", func() {
+			su := mockSchedulingUnit("")
+			req := &ufsAPI.CreateSchedulingUnitRequest{
+				SchedulingUnit:   su,
+				SchedulingUnitId: "su-1",
+			}
+			resp, err := tf.Fleet.CreateSchedulingUnit(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, su)
+		})
+
+		Convey("Create new SchedulingUnit with nil entity", func() {
+			req := &ufsAPI.CreateSchedulingUnitRequest{
+				SchedulingUnit:   nil,
+				SchedulingUnitId: "su-2",
+			}
+			_, err := tf.Fleet.CreateSchedulingUnit(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Create new SchedulingUnit without schedulingUnitId", func() {
+			su := mockSchedulingUnit("")
+			req := &ufsAPI.CreateSchedulingUnitRequest{
+				SchedulingUnit: su,
+			}
+			_, err := tf.Fleet.CreateSchedulingUnit(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 	})
 }

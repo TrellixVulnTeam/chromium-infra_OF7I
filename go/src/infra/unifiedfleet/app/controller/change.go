@@ -815,6 +815,34 @@ func (hc *HistoryClient) logCachingServiceChanges(oldData, newData *ufspb.Cachin
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
+// logSchedulingUnitChanges logs the change of the given SchedulingUnit.
+func (hc *HistoryClient) logSchedulingUnitChanges(oldData, newData *ufspb.SchedulingUnit) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	resourceName := util.AddPrefix(util.SchedulingUnitCollection, newData.GetName())
+	if newData == nil {
+		resourceName = util.AddPrefix(util.SchedulingUnitCollection, oldData.GetName())
+	}
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "schedulingunit", LifeCycleRegistration)...)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "schedulingunit", LifeCycleRetire)...)
+		oldData.UpdateTime = ptypes.TimestampNow()
+		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(resourceName, "schedulingunit.pools", oldData.GetPools(), newData.GetPools())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "schedulingunit.type", oldData.GetType().String(), newData.GetType().String())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "schedulingunit.machinelses", oldData.GetMachineLSEs(), newData.GetMachineLSEs())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "schedulingunit.tags", oldData.GetTags(), newData.GetTags())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "schedulingunit.description", oldData.GetDescription(), newData.GetDescription())...)
+	hc.logMsgEntity(resourceName, false, newData)
+}
+
 func logCommon(resourceName, label string, oldValue interface{}, newValue interface{}) []*ufspb.ChangeEvent {
 	oldValueStr := fmt.Sprintf("%v", oldValue)
 	newValueStr := fmt.Sprintf("%v", newValue)
