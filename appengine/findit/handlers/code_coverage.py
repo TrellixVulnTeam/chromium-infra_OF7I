@@ -1301,22 +1301,23 @@ class ServeCodeCoverageData(BaseHandler):
                                latest_entity.incremental_percentages_unit)
 
     try:
-      rebased_coverage_data = (
-          code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
-              host=host,
-              project=project,
-              change=change,
-              patchset_src=latest_entity.cl_patchset.patchset,
-              patchset_dest=patchset,
-              coverage_data_src=latest_entity.data))
-      rebased_coverage_data_unit = (
-          code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
-              host=host,
-              project=project,
-              change=change,
-              patchset_src=latest_entity.cl_patchset.patchset,
-              patchset_dest=patchset,
-              coverage_data_src=latest_entity.data_unit))
+      rebased_coverage_data = \
+        code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
+          host=host,
+          project=project,
+          change=change,
+          patchset_src=latest_entity.cl_patchset.patchset,
+          patchset_dest=patchset,
+          coverage_data_src=latest_entity.data) if latest_entity.data else None
+      rebased_coverage_data_unit = \
+        code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
+          host=host,
+          project=project,
+          change=change,
+          patchset_src=latest_entity.cl_patchset.patchset,
+          patchset_dest=patchset,
+          coverage_data_src=latest_entity.data_unit
+      ) if latest_entity.data_unit else None
     except code_coverage_util.MissingChangeDataException as mcde:
       return BaseHandler.CreateError(
           'Requested coverage data is not found. %s' % mcde.message,
