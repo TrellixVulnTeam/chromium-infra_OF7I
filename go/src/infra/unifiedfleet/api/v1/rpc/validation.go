@@ -44,6 +44,7 @@ var (
 	RPMNameFormat                  string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
 	DracNameFormat                 string = "Invalid input - Entity Name pattern should be dracs/{drac}."
 	SwitchNameFormat               string = "Invalid input - Entity Name pattern should be switches/{switch}."
+	SchedulingUnitNameFormat       string = "Invalid input - Entity Name pattern should be schedulingunits/{schedulingunit}."
 	VlanNameFormat                 string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
 	MachineLSEPrototypeNameFormat  string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
 	RackLSEPrototypeNameFormat     string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
@@ -81,6 +82,7 @@ var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 var assetRegex = regexp.MustCompile(`assets\.*`)
 var machineLSEDeploymentRegex = regexp.MustCompile(`machineLSEDeployments\.*`)
+var schedulingUnitRegex = regexp.MustCompile(`schedulingunits\.*`)
 
 // matches "cachingservices/{ipv4}"
 var cachingServiceRegex = regexp.MustCompile(`cachingservices/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`)
@@ -1249,6 +1251,53 @@ func (r *DeleteCachingServiceRequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
 	}
 	return nil
+}
+
+// Validate validates input requests of CreateSchedulingUnit.
+func (r *CreateSchedulingUnitRequest) Validate() error {
+	if r.SchedulingUnit == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.SchedulingUnitId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !IDRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	if !util.ValidateTags(r.SchedulingUnit.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateSchedulingUnit.
+func (r *UpdateSchedulingUnitRequest) Validate() error {
+	if r.SchedulingUnit == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !util.ValidateTags(r.SchedulingUnit.GetTags()) {
+		return status.Errorf(codes.InvalidArgument, InvalidTags)
+	}
+	return validateResourceName(schedulingUnitRegex, SchedulingUnitNameFormat, r.SchedulingUnit.GetName())
+}
+
+// Validate validates input requests of GetSchedulingUnit.
+func (r *GetSchedulingUnitRequest) Validate() error {
+	return validateResourceName(schedulingUnitRegex, SchedulingUnitNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListSchedulingUnits.
+func (r *ListSchedulingUnitsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteSchedulingUnit.
+func (r *DeleteSchedulingUnitRequest) Validate() error {
+	return validateResourceName(schedulingUnitRegex, SchedulingUnitNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

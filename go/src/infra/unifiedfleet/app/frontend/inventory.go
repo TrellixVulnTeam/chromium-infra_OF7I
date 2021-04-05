@@ -608,25 +608,90 @@ func (fs *FleetServerImpl) ListMachineLSEDeployments(ctx context.Context, req *u
 
 // CreateSchedulingUnit creates SchedulingUnit entry in database.
 func (fs *FleetServerImpl) CreateSchedulingUnit(ctx context.Context, req *ufsAPI.CreateSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.SchedulingUnit.Name = req.SchedulingUnitId
+	cs, err := controller.CreateSchedulingUnit(ctx, req.SchedulingUnit)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.SchedulingUnitCollection, cs.Name)
+	return cs, err
 }
 
 // UpdateSchedulingUnit updates the SchedulingUnit information in database.
 func (fs *FleetServerImpl) UpdateSchedulingUnit(ctx context.Context, req *ufsAPI.UpdateSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.SchedulingUnit.Name = util.RemovePrefix(req.SchedulingUnit.Name)
+	cs, err := controller.UpdateSchedulingUnit(ctx, req.SchedulingUnit, req.UpdateMask)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.SchedulingUnitCollection, cs.Name)
+	return cs, err
 }
 
 // GetSchedulingUnit gets the SchedulingUnit information from database.
 func (fs *FleetServerImpl) GetSchedulingUnit(ctx context.Context, req *ufsAPI.GetSchedulingUnitRequest) (rsp *ufspb.SchedulingUnit, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	cs, err := controller.GetSchedulingUnit(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	cs.Name = util.AddPrefix(util.SchedulingUnitCollection, cs.Name)
+	return cs, err
 }
 
 // ListSchedulingUnits list the SchedulingUnits information from database.
 func (fs *FleetServerImpl) ListSchedulingUnits(ctx context.Context, req *ufsAPI.ListSchedulingUnitsRequest) (rsp *ufsAPI.ListSchedulingUnitsResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListSchedulingUnits(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline.
+	for _, cs := range result {
+		cs.Name = util.AddPrefix(util.SchedulingUnitCollection, cs.Name)
+	}
+	return &ufsAPI.ListSchedulingUnitsResponse{
+		SchedulingUnits: result,
+		NextPageToken:   nextPageToken,
+	}, nil
 }
 
 // DeleteSchedulingUnit deletes the SchedulingUnit from database.
 func (fs *FleetServerImpl) DeleteSchedulingUnit(ctx context.Context, req *ufsAPI.DeleteSchedulingUnitRequest) (rsp *empty.Empty, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = controller.DeleteSchedulingUnit(ctx, name)
+	return &empty.Empty{}, err
 }
