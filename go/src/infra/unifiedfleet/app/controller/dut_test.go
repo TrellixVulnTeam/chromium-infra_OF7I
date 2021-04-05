@@ -553,7 +553,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-pools", "machine-60-pools", "labstation-3-pools", "machine-50-pools")
 			// Update with dut pools mask and valid pools.
-			dut1 := mockDUT("dut-3-pools", "machine-60-pools", "labstation-3-pools", "serial-1", "dut-3-pools-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA", "DUT_POOL_CQ"})
+			dut1 := mockDUT("dut-3-pools", "machine-60-pools", "labstation-3-pools", "serial-1", "dut-3-pools-power-1", ".A1", int32(9999), []string{"DUT_POOL_CQ", "DUT_POOL_QUOTA"})
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.pools"))
 			So(err, ShouldBeNil)
 			// Clear update time to compare the protos
@@ -568,7 +568,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 2)
 			So(changes[1].OldValue, ShouldEqual, "[DUT_POOL_QUOTA]")
-			So(changes[1].NewValue, ShouldEqual, "[DUT_POOL_QUOTA DUT_POOL_CQ]")
+			So(changes[1].NewValue, ShouldEqual, "[DUT_POOL_CQ DUT_POOL_QUOTA]")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-3-pools")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 2)

@@ -19,3 +19,13 @@ func TestGetHiveForDut(t *testing.T) {
 		So(GetHiveForDut("cros-mtv1950-144-rack204-host2"), ShouldEqual, "cros-mtv1950-144")
 	})
 }
+
+func TestAppendUnique(t *testing.T) {
+	Convey("Test AppendUnique", t, func() {
+		So(AppendUniqueStrings([]string{"eeny", "meeny", "miny", "moe"}, "catch", "a", "tiger", "by", "the", "toe"), ShouldHaveLength, 10)
+		So(AppendUniqueStrings([]string{"london", "bridge", "is", "falling", "down"}, "falling", "down", "falling", "down"), ShouldHaveLength, 5)
+		So(AppendUniqueStrings([]string{}, "twinkle", "twinkle", "little", "star"), ShouldHaveLength, 3)
+		So(AppendUniqueStrings([]string{"humpty", "dumpty", "sat", "on", "a", "wall"}), ShouldHaveLength, 6)
+		So(AppendUniqueStrings([]string{"row", "row", "row", "your", "boat"}), ShouldHaveLength, 3)
+	})
+}

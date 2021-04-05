@@ -7,6 +7,7 @@ package util
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -182,4 +183,20 @@ func GetHiveForDut(hostname string) string {
 	}
 	// Main lab DUTs.
 	return ""
+}
+
+// AppendUniqueStrings returns a slice with unique elements such that all the des elements are appended to src.
+func AppendUniqueStrings(des []string, src ...string) []string {
+	sliceWithDups := sort.StringSlice(append(des, src...))
+	sliceWithDups.Sort()
+	var uniqueSlice []string
+	var prev string
+	// Filter the sorted array for duplicates linearly.
+	for _, elem := range sliceWithDups {
+		if elem != prev {
+			uniqueSlice = append(uniqueSlice, elem)
+		}
+		prev = elem
+	}
+	return uniqueSlice
 }

@@ -604,11 +604,12 @@ func processUpdateMachineLSEUpdateMask(ctx context.Context, oldMachineLse, newMa
 func processUpdateMachineLSEDUTMask(oldDut, newDut *chromeosLab.DeviceUnderTest, path string) {
 	switch path {
 	case "dut.pools":
-		if pools := newDut.GetPools(); pools != nil && len(pools) > 0 {
-			oldDut.Pools = newDut.GetPools()
+		// Append/Clear the pools given.
+		if len(newDut.GetPools()) > 0 {
+			oldDut.Pools = util.AppendUniqueStrings(oldDut.GetPools(), newDut.GetPools()...)
 		} else {
-			// Assign default pools if nothing is given.
-			oldDut.Pools = defaultPools
+			// Clear all the pools assigned if nothing is given.
+			oldDut.Pools = nil
 		}
 	case "dut.licenses":
 		// Clean up all licenses if new input licenses are empty

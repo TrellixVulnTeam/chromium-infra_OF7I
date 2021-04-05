@@ -242,7 +242,13 @@ func processUpdateLabstationMask(ctx context.Context, oldMachineLSE, newMachineL
 		case "deploymentTicket":
 			oldMachineLSE.DeploymentTicket = newMachineLSE.GetDeploymentTicket()
 		case "labstation.pools":
-			oldLabstation.Pools = newLabstation.GetPools()
+			// Append/Clear the pools given.
+			if len(newLabstation.GetPools()) > 0 {
+				oldLabstation.Pools = util.AppendUniqueStrings(oldLabstation.GetPools(), newLabstation.GetPools()...)
+			} else {
+				// Clear all the pools assigned if nothing is given.
+				oldLabstation.Pools = nil
+			}
 		case "labstation.rpm.host":
 			if newLabstation.GetRpm() == nil || newLabstation.GetRpm().GetPowerunitName() == "" {
 				// Ensure that outlet is not being updated when deleting RPM.
