@@ -1,0 +1,7 @@
+chromeos {
+    cq {
+        source_test_plans {
+            enabled_test_environments: HARDWARE
+        }
+    }
+}
