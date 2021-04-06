@@ -61,7 +61,6 @@ from tracker import tracker_constants
 from tracker import tracker_helpers
 
 from infra_libs import ts_mon
-from infra_libs.ts_mon.common import http_metrics
 
 
 ENDPOINTS_API_NAME = 'monorail'
@@ -150,38 +149,46 @@ def monorail_api_method(
         if mar:
           mar.CleanUp()
         now = time_fn()
-        elapsed_ms = int((now - start_time) * 1000)
         if c_id and c_email:
           self.ratelimiter.CheckEnd(c_id, c_email, now, start_time)
-
-        method_identifier = (ENDPOINTS_API_NAME + '.endpoints.' +
-                           (method_name or func.__name__)
-                           + '/' + (method_path or func.__name__))
-        fields = {
-            # Endpoints APIs don't return the full set of http status values.
-            'status': approximate_http_status,
-            # Use the api name, not the request path, to prevent an
-            # explosion in possible field values.
-            'name': method_identifier,
-            'is_robot': False,
-        }
-
-        http_metrics.server_durations.add(
-            elapsed_ms, fields=fields)
-        http_metrics.server_response_status.increment(
-            fields=fields)
-        http_metrics.server_request_bytes.add(
-            len(protojson.encode_message(request)), fields=fields)
-        response_size = 0
-        if ret:
-          response_size = len(protojson.encode_message(ret))
-        http_metrics.server_response_bytes.add(
-            response_size, fields=fields)
+        _RecordMonitoringStats(
+            start_time, request, ret, (method_name or func.__name__),
+            (method_path or func.__name__), approximate_http_status, now)
 
       return ret
 
     return wrapper
   return new_decorator
+
+
+def _RecordMonitoringStats(
+    start_time,
+    request,
+    response,
+    method_name,
+    method_path,
+    approximate_http_status,
+    now=None):
+  now = now or time.time()
+  elapsed_ms = int((now - start_time) * 1000)
+  # Use the api name, not the request path, to prevent an explosion in
+  # possible field values.
+  method_identifier = (
+      ENDPOINTS_API_NAME + '.endpoints.' + method_name + '/' + method_path)
+
+  # Endpoints APIs don't return the full set of http status values.
+  fields = monitoring.GetCommonFields(
+      approximate_http_status, method_identifier)
+
+  monitoring.AddServerDurations(elapsed_ms, fields)
+  monitoring.IncrementServerResponseStatusCount(fields)
+  request_length = len(protojson.encode_message(request))
+  monitoring.AddServerRequesteBytes(request_length, fields)
+  response_length = 0
+  if response:
+    response_length = len(protojson.encode_message(response))
+  monitoring.AddServerResponseBytes(response_length, fields)
+
 
 def _is_requester_in_allowed_domains(requester):
   if requester.email().endswith(settings.api_allowed_email_domains):

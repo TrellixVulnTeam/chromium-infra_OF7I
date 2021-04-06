@@ -2,10 +2,20 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-"""Monitoring metrics custom to monorail."""
+"""Monitoring ts_mon custom to monorail."""
 
 from infra_libs import ts_mon
 from framework import framework_helpers
+
+
+def GetCommonFields(status, name, is_robot=False):
+  # type: (int, str, bool=False) -> Dict[str, Union[int, str, bool]]
+  return {
+      'status': status,
+      'name': name,
+      'is_robot': is_robot,
+  }
+
 
 API_REQUESTS_COUNT = ts_mon.CounterMetric(
     'monorail/api_requests',
@@ -23,7 +33,77 @@ def IncrementAPIRequestsCount(version, client_id, client_email=None):
     # Avoid value explosion and protect PII info
     client_email = 'user@email.com'
 
-  fields = {'client_id': client_id,
-            'client_email': client_email,
-            'version': version}
+  fields = {
+      'client_id': client_id,
+      'client_email': client_email,
+      'version': version
+  }
   API_REQUESTS_COUNT.increment_by(1, fields)
+
+
+# 90% of durations are in the range 11-1873ms.  Growth factor 10^0.06 puts that
+# range into 37 buckets.  Max finite bucket value is 12 minutes.
+DURATION_BUCKETER = ts_mon.GeometricBucketer(10**0.06)
+
+# 90% of sizes are in the range 0.17-217014 bytes.  Growth factor 10^0.1 puts
+# that range into 54 buckets.  Max finite bucket value is 6.3GB.
+SIZE_BUCKETER = ts_mon.GeometricBucketer(10**0.1)
+
+# TODO(https://crbug.com/monorail/9281): Differentiate internal/external calls.
+SERVER_DURATIONS = ts_mon.CumulativeDistributionMetric(
+    'monorail/server_durations',
+    'Time elapsed between receiving a request and sending a'
+    ' response (including parsing) in milliseconds.', [
+        ts_mon.IntegerField('status'),
+        ts_mon.StringField('name'),
+        ts_mon.BooleanField('is_robot'),
+    ],
+    bucketer=DURATION_BUCKETER)
+
+
+def AddServerDurations(elapsed_ms, fields):
+  # type: (int, Dict[str, Union[int, bool]]) -> None
+  SERVER_DURATIONS.add(elapsed_ms, fields=fields)
+
+
+SERVER_RESPONSE_STATUS = ts_mon.CounterMetric(
+    'monorail/server_response_status',
+    'Number of responses sent by HTTP status code.', [
+        ts_mon.IntegerField('status'),
+        ts_mon.StringField('name'),
+        ts_mon.BooleanField('is_robot'),
+    ])
+
+
+def IncrementServerResponseStatusCount(fields):
+  # type: (Dict[str, Union[int, bool]]) -> None
+  SERVER_RESPONSE_STATUS.increment(fields=fields)
+
+
+SERVER_REQUEST_BYTES = ts_mon.CumulativeDistributionMetric(
+    'monorail/server_request_bytes',
+    'Bytes received per http request (body only).', [
+        ts_mon.IntegerField('status'),
+        ts_mon.StringField('name'),
+        ts_mon.BooleanField('is_robot'),
+    ],
+    bucketer=SIZE_BUCKETER)
+
+
+def AddServerRequesteBytes(request_length, fields):
+  # type: (int, Dict[str, Union[int, bool]]) -> None
+  SERVER_REQUEST_BYTES.add(request_length, fields=fields)
+
+
+SERVER_RESPONSE_BYTES = ts_mon.CumulativeDistributionMetric(
+    'monorail/server_response_bytes',
+    'Bytes sent per http request (content only).', [
+        ts_mon.IntegerField('status'),
+        ts_mon.StringField('name'),
+        ts_mon.BooleanField('is_robot'),
+    ],
+    bucketer=SIZE_BUCKETER)
+
+
+def AddServerResponseBytes(response_length, fields):
+  SERVER_RESPONSE_BYTES.add(response_length, fields=fields)

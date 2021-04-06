@@ -23,7 +23,7 @@ from google.protobuf import json_format
 from components.prpc import codes
 from components.prpc import server
 
-from infra_libs.ts_mon.common import http_metrics
+from framework import monitoring
 
 import settings
 from api.v3 import converters
@@ -417,20 +417,18 @@ class MonorailServicer(object):
     method_name = request.__class__.__name__
     if method_name.endswith('Request'):
       method_name = method_name[:-len('Request')]
-    method_identifier = 'monorail.v3.' + method_name
-    fields = {
+
+    fields = monitoring.GetCommonFields(
         # pRPC uses its own statuses, but we report HTTP status codes.
-        'status': ConvertPRPCStatusToHTTPStatus(prpc_context),
-        # Use the api name, not the request path, to prevent an
-        # explosion in possible field values.
-        'name': method_identifier,
-        'is_robot': False,
-        }
-    http_metrics.server_durations.add(elapsed_ms, fields=fields)
-    http_metrics.server_response_status.increment(fields=fields)
-    http_metrics.server_request_bytes.add(
-        len(json_format.MessageToJson(request)), fields=fields)
-    response_size = 0
+        ConvertPRPCStatusToHTTPStatus(prpc_context),
+        # Use the API name, not the request path, to prevent an explosion in
+        # possible field values.
+        'monorail.v3.' + method_name)
+    monitoring.AddServerDurations(elapsed_ms, fields)
+    monitoring.IncrementServerResponseStatusCount(fields)
+    monitoring.AddServerRequesteBytes(
+        len(json_format.MessageToJson(request)), fields)
+    response_length = 0
     if response:
-      response_size = len(json_format.MessageToJson(response))
-      http_metrics.server_response_bytes.add(response_size, fields=fields)
+      response_length = len(json_format.MessageToJson(response))
+      monitoring.AddServerResponseBytes(response_length, fields)
