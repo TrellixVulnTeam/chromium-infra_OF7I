@@ -1347,6 +1347,16 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		}
 	}
 
+	if oldMachinelse.GetChromeosMachineLse() != nil {
+		schedulingUnits, err := inventory.QuerySchedulingUnitByPropertyNames(ctx, map[string]string{"machinelses": oldMachinelse.GetName()}, true)
+		if err != nil {
+			return errors.Annotate(err, "failed to query SchedulingUnit for machinelses %s", oldMachinelse.GetName()).Err()
+		}
+		if len(schedulingUnits) > 0 {
+			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("DUT is associated with SchedulingUnit. Run `shivas update schedulingunit -name %s -removeduts %s` to remove association before updating the DUT.", schedulingUnits[0].GetName(), oldMachinelse.GetName()))
+		}
+	}
+
 	// validate update mask
 	return validateMachineLSEUpdateMask(machinelse, mask)
 }
@@ -1403,6 +1413,15 @@ func validateDeleteMachineLSE(ctx context.Context, existingMachinelse *ufspb.Mac
 	// Check permission
 	if err := util.CheckPermission(ctx, util.InventoriesDelete, machine.GetRealm()); err != nil {
 		return err
+	}
+	if existingMachinelse.GetChromeosMachineLse() != nil {
+		schedulingUnits, err := inventory.QuerySchedulingUnitByPropertyNames(ctx, map[string]string{"machinelses": existingMachinelse.GetName()}, true)
+		if err != nil {
+			return errors.Annotate(err, "failed to query SchedulingUnit for machinelses %s", existingMachinelse.GetName()).Err()
+		}
+		if len(schedulingUnits) > 0 {
+			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("DUT is associated with SchedulingUnit. Run `shivas update schedulingunit -name %s -removeduts %s` to remove association before deleting the DUT.", schedulingUnits[0].GetName(), existingMachinelse.GetName()))
+		}
 	}
 	if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		existingServos := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()

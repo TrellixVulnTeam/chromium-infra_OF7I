@@ -614,6 +614,29 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
+
+		Convey("Update machineLSE DUT associated with a SchedulingUnit", func() {
+			machine := &ufspb.Machine{
+				Name: "m-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			dutMachinelse := mockDutMachineLSE("dut-1")
+			dutMachinelse.Machines = []string{"m-1"}
+			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+				Name:        "su-1",
+				MachineLSEs: []string{"dut-1"},
+			})
+			So(err, ShouldBeNil)
+
+			_, err = UpdateMachineLSE(ctx, dutMachinelse, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "DUT is associated with SchedulingUnit.")
+		})
 	})
 }
 
@@ -1467,6 +1490,29 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/RedLabstation-93")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 0)
+		})
+
+		Convey("Delete machineLSE DUT associated with a SchedulingUnit", func() {
+			machine := &ufspb.Machine{
+				Name: "m-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			dutMachinelse := mockDutMachineLSE("dut-1")
+			dutMachinelse.Machines = []string{"m-1"}
+			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+				Name:        "su-1",
+				MachineLSEs: []string{"dut-1"},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteMachineLSE(ctx, "dut-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "DUT is associated with SchedulingUnit.")
 		})
 	})
 }
