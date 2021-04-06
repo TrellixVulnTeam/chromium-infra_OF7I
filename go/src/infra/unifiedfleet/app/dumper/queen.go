@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	dronequeenapi "infra/appengine/drone-queen/api"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
@@ -44,11 +45,29 @@ func pushToDroneQueen(ctx context.Context) (err error) {
 			logging.Errorf(ctx, err.Error())
 			return err
 		}
-		availableDuts := make([]*dronequeenapi.DeclareDutsRequest_Dut, len(lses))
-		for i, lse := range lses {
-			availableDuts[i] = &dronequeenapi.DeclareDutsRequest_Dut{
-				Name: lse.GetName(),
-				Hive: util.GetHiveForDut(lse.GetName()),
+		sUnits, err := getAllSchedulingUnits(ctx, false)
+		if err != nil {
+			return err
+		}
+		var availableDuts []*dronequeenapi.DeclareDutsRequest_Dut
+		// Map for MachineLSEs associated with SchedulingUnit for easy search.
+		lseInSUnitMap := make(map[string]bool)
+		for _, su := range sUnits {
+			if len(su.GetMachineLSEs()) > 0 {
+				availableDuts = append(availableDuts, &dronequeenapi.DeclareDutsRequest_Dut{
+					Name: su.GetName(),
+				})
+				for _, lseName := range su.GetMachineLSEs() {
+					lseInSUnitMap[lseName] = true
+				}
+			}
+		}
+		for _, lse := range lses {
+			if !lseInSUnitMap[lse.GetName()] {
+				availableDuts = append(availableDuts, &dronequeenapi.DeclareDutsRequest_Dut{
+					Name: lse.GetName(),
+					Hive: util.GetHiveForDut(lse.GetName()),
+				})
 			}
 		}
 		logging.Debugf(ctx, "DUTs to declare(%d): %+v", len(availableDuts), availableDuts)
@@ -75,4 +94,20 @@ func getDroneQueenClient(ctx context.Context) (dronequeenapi.InventoryProviderCl
 		C:    h,
 		Host: queenHostname,
 	}), nil
+}
+
+func getAllSchedulingUnits(ctx context.Context, keysOnly bool) ([]*ufspb.SchedulingUnit, error) {
+	var sUnits []*ufspb.SchedulingUnit
+	for startToken := ""; ; {
+		res, nextToken, err := inventory.ListSchedulingUnits(ctx, pageSize, startToken, nil, keysOnly)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all SchedulingUnits").Err()
+		}
+		sUnits = append(sUnits, res...)
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
+	}
+	return sUnits, nil
 }
