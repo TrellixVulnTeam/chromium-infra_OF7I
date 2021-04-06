@@ -118,6 +118,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 		// Add/Update machine lse deployment
 		if machine.GetSerialNumber() != "" {
 			lseDr, err := inventory.GetMachineLSEDeployment(ctx, machine.GetSerialNumber())
+			lseDrCopy := proto.Clone(lseDr).(*ufspb.MachineLSEDeployment)
 			if util.IsNotFoundError(err) {
 				lseDr = util.FormatDeploymentRecord(lse.GetName(), machine.GetSerialNumber())
 			} else {
@@ -131,6 +132,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 			if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{lseDr}); err != nil {
 				return errors.Annotate(err, "unable to update deployment record").Err()
 			}
+			hc.LogMachineLSEDeploymentChanges(lseDrCopy, lseDr)
 		}
 
 		if err := hc.stUdt.addLseStateHelper(ctx, lse, machine); err != nil {
@@ -550,6 +552,7 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 			if err != nil && !util.IsNotFoundError(err) {
 				return errors.Annotate(err, "fails to delete deployment record for %s", machine.GetSerialNumber()).Err()
 			}
+			hc.LogMachineLSEDeploymentChanges(&ufspb.MachineLSEDeployment{SerialNumber: machine.GetSerialNumber()}, nil)
 		}
 
 		hc.LogMachineLSEChanges(existingMachinelse, nil)

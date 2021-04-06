@@ -257,6 +257,16 @@ func TestMachineRegistration(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/machine-browser-3-serial-number")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/machine-browser-3-serial-number")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Register OS machine happy path", func() {
@@ -493,6 +503,28 @@ func TestUpdateMachine(t *testing.T) {
 			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix("serial-full-update"))
 			_, err = inventory.GetMachineLSEDeployment(ctx, "old-serial-full-update")
 			So(err, ShouldNotBeNil)
+
+			// Verify the change events of deployment records
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/serial-full-update")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/old-serial-full-update")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/serial-full-update")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/old-serial-full-update")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
 		})
 
 		Convey("Partial Update machine", func() {
@@ -564,6 +596,18 @@ func TestUpdateMachine(t *testing.T) {
 			dr, err := inventory.GetMachineLSEDeployment(ctx, "serial-update")
 			So(err, ShouldBeNil)
 			So(dr.GetHostname(), ShouldEqual, util.GetHostnameWithNoHostPrefix("serial-update"))
+
+			// Verify the change events of deployment records
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/serial-update")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/serial-update")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Partial Update machine - update serial number, machine has a corresponding lse", func() {
@@ -600,6 +644,18 @@ func TestUpdateMachine(t *testing.T) {
 			dr, err := inventory.GetMachineLSEDeployment(ctx, "serial-update-with-lse")
 			So(err, ShouldBeNil)
 			So(dr.GetHostname(), ShouldEqual, "machinelse-update-serial-with-lse")
+
+			// Verify the change events of deployment records
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/serial-update-with-lse")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/serial-update-with-lse")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Partial Update machine - duplicated kvm", func() {

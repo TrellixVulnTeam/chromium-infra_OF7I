@@ -199,6 +199,70 @@ func (hc *HistoryClient) LogMachineChanges(oldData *ufspb.Machine, newData *ufsp
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
+// LogMachineLSEDeploymentChanges logs the change of a given machine lse deployment record.
+func (hc *HistoryClient) LogMachineLSEDeploymentChanges(oldData, newData *ufspb.MachineLSEDeployment) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	resourceName := util.AddPrefix(util.MachineLSEDeploymentCollection, newData.GetSerialNumber())
+	if newData == nil {
+		resourceName = util.AddPrefix(util.MachineLSEDeploymentCollection, oldData.GetSerialNumber())
+	}
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "machine_lse_deployment", LifeCycleRegistration)...)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "machine_lse_deployment", LifeCycleRetire)...)
+		oldData.UpdateTime = ptypes.TimestampNow()
+		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse_deployment.hostname", oldData.GetHostname(), newData.GetHostname())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse_deployment.deployment_identifier", oldData.GetDeploymentIdentifier(), newData.GetDeploymentIdentifier())...)
+	if newData.GetConfigsToPush() != nil {
+		hc.changes = append(hc.changes, logDeploymentConfigs(resourceName, oldData.GetConfigsToPush(), newData.GetConfigsToPush())...)
+	}
+	hc.logMsgEntity(resourceName, false, newData)
+}
+
+func logDeploymentConfigs(resourceName string, oldData, newData []*ufspb.Payload) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+
+	oldMap := make(map[string]*ufspb.Payload)
+	newMap := make(map[string]*ufspb.Payload)
+	for _, r := range oldData {
+		oldMap[r.GetName()] = r
+	}
+	for _, r := range newData {
+		newMap[r.GetName()] = r
+		if old, ok := oldMap[r.GetName()]; !ok {
+			changes = append(changes, logCommon(resourceName, "machine_lse_deployment.configs_to_push", "", r.GetName())...)
+		} else {
+			changes = append(changes, logCommon(resourceName, "machine_lse_deployment.configs_to_push.config", combinePayloadConfig(old), combinePayloadConfig(r))...)
+			changes = append(changes, logCommon(resourceName, "machine_lse_deployment.configs_to_push.path", combinePayloadPath(old), combinePayloadPath(r))...)
+		}
+	}
+	for _, r := range oldData {
+		if _, ok := newMap[r.GetName()]; !ok {
+			changes = append(changes, logCommon(resourceName, "machine_lse_deployment.configs_to_push", r.GetName(), "")...)
+		}
+	}
+	return changes
+}
+
+func combinePayloadConfig(p *ufspb.Payload) string {
+	return fmt.Sprintf("%s:%s", p.GetName(), p.GetConfig().String())
+}
+
+func combinePayloadPath(p *ufspb.Payload) string {
+	return fmt.Sprintf("%s:%s", p.GetName(), p.GetPath())
+}
+
 // LogMachineLSEChanges logs the change of the given machine lse.
 func (hc *HistoryClient) LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData *ufspb.MachineLSE) {
 	if oldData == nil && newData == nil {

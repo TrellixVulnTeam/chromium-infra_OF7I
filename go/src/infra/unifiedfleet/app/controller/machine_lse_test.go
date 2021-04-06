@@ -310,13 +310,23 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(dr.GetHostname(), ShouldEqual, "machinelse-3")
 
-			// No changes are recorded as the creation fails
+			// Verify the change events
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/machine-3-serial")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/machine-3-serial")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new machineLSE with existing machines & existing deployment record", func() {
@@ -343,6 +353,18 @@ func TestCreateMachineLSE(t *testing.T) {
 			dr, err = inventory.GetMachineLSEDeployment(ctx, "machine-dr-3-serial")
 			So(err, ShouldBeNil)
 			So(dr.GetHostname(), ShouldEqual, "machinelse-dr-3")
+
+			// Verify the change events
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/machine-dr-3-serial")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "no-host-yet-machine-dr-3-serial")
+			So(changes[0].GetNewValue(), ShouldEqual, "machinelse-dr-3")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment.hostname")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/machine-dr-3-serial")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new machineLSE with a machine already attached to a different machinelse - error", func() {
@@ -1349,6 +1371,21 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(msgs, ShouldHaveLength, 2)
 			So(msgs[0].Delete, ShouldBeFalse)
 			So(msgs[1].Delete, ShouldBeFalse)
+
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/machine-delete-1-serial")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			So(changes[1].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/machine-delete-1-serial")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[0].Delete, ShouldBeFalse)
+			So(msgs[1].Delete, ShouldBeTrue)
 		})
 
 		Convey("Delete machineLSE with existing deployment record - happy path", func() {
@@ -1370,8 +1407,6 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			_, err = CreateMachineLSE(ctx, machineLSE1, nil)
 			So(err, ShouldBeNil)
-			_, err = inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{util.FormatDeploymentRecord("machinelse-delete-2", "machine-delete-2-serial")})
-			So(err, ShouldBeNil)
 			_, err = inventory.GetMachineLSEDeployment(ctx, "machine-delete-2-serial")
 			So(err, ShouldBeNil)
 
@@ -1380,6 +1415,22 @@ func TestDeleteMachineLSE(t *testing.T) {
 			_, err = inventory.GetMachineLSEDeployment(ctx, "machine-delete-2-serial")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			// Verify change events
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEDeployments/machine-delete-2-serial")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			So(changes[1].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse_deployment")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machineLSEDeployments/machine-delete-2-serial")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[0].Delete, ShouldBeFalse)
+			So(msgs[1].Delete, ShouldBeTrue)
 		})
 	})
 }

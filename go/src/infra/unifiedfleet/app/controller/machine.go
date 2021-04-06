@@ -83,6 +83,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 					if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 						return errors.Annotate(err, "unable to update deployment record").Err()
 					}
+					hc.LogMachineLSEDeploymentChanges(nil, dr)
 				}
 			}
 			// We fill the machine object with newly created nics/drac from nic/drac table
@@ -198,6 +199,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 				if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 					return errors.Annotate(err, "unable to update deployment record").Err()
 				}
+				hc.LogMachineLSEDeploymentChanges(nil, dr)
 			}
 			if oldMachineCopy.GetSerialNumber() != "" {
 				if err := inventory.DeleteDeployment(ctx, oldMachineCopy.GetSerialNumber()); err != nil {
@@ -207,6 +209,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 						return errors.Annotate(err, "unable to delete deployment record").Err()
 					}
 				}
+				hc.LogMachineLSEDeploymentChanges(&ufspb.MachineLSEDeployment{SerialNumber: oldMachineCopy.GetSerialNumber()}, nil)
 			}
 		}
 
