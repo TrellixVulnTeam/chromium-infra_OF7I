@@ -71,7 +71,8 @@ func IsInBrowserZone(name string) bool {
 		"ZONE_IAD97",
 		"ZONE_MTV96",
 		"ZONE_MTV97",
-		"ZONE_FUCHSIA":
+		"ZONE_FUCHSIA",
+		"ZONE_BROWSER_GOOGLER_DESK":
 		return true
 	default:
 		return false

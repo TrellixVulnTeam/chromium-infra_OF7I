@@ -105,27 +105,29 @@ func (Lab) EnumDescriptor() ([]byte, []int) {
 }
 
 // Zone refers to the different network zones under chrome org
+// Next tag: 20
 type Zone int32
 
 const (
-	Zone_ZONE_UNSPECIFIED       Zone = 0
-	Zone_ZONE_ATLANTA           Zone = 1  // "atl" Building ? Room ?
-	Zone_ZONE_CHROMEOS1         Zone = 2  // "chromeos1" // US-MTV-1600 // Santiam
-	Zone_ZONE_CHROMEOS2         Zone = 3  // "chromeos2" // US-MTV-2081 // Atlantis
-	Zone_ZONE_CHROMEOS3         Zone = 4  // "chromeos3" // US-MTV-946 // Lindavista
-	Zone_ZONE_CHROMEOS4         Zone = 5  // "chromeos4" // US-MTV-2081 // Destiny
-	Zone_ZONE_CHROMEOS5         Zone = 6  // "chromeos5" // US-MTV-946 // Lindavista
-	Zone_ZONE_CHROMEOS6         Zone = 7  // "chromeos6" // US-MTV-2081 // Prometheus
-	Zone_ZONE_CHROMEOS7         Zone = 8  // "chromeos7" // US-MTV-946 // Lindavista
-	Zone_ZONE_CHROMEOS15        Zone = 10 // "chromeos15" // US-MTV-946 // Lindavista
-	Zone_ZONE_ATL97             Zone = 11 // "atl97" //  US-ATL-MET1 // Room ?
-	Zone_ZONE_IAD97             Zone = 12 // "iad97" // Building ? Room ?
-	Zone_ZONE_MTV96             Zone = 13 // "mtv96" // US-MTV-41 // 1-1M0
-	Zone_ZONE_MTV97             Zone = 14 // "mtv97" // US-MTV-1950 // 1-144
-	Zone_ZONE_FUCHSIA           Zone = 15 // "lab01" // Building ? Room ?
-	Zone_ZONE_CROS_GOOGLER_DESK Zone = 16 // "desk" // For cros assets given to googlers
-	Zone_ZONE_MTV1950_TESTING   Zone = 17 // "mtv1950" // temporary zone for testing cros assets in gTransit
-	Zone_ZONE_SATLAB            Zone = 18 // "satlab" // zone for satlab duts
+	Zone_ZONE_UNSPECIFIED          Zone = 0
+	Zone_ZONE_ATLANTA              Zone = 1  // "atl" Building ? Room ?
+	Zone_ZONE_CHROMEOS1            Zone = 2  // "chromeos1" // US-MTV-1600 // Santiam
+	Zone_ZONE_CHROMEOS2            Zone = 3  // "chromeos2" // US-MTV-2081 // Atlantis
+	Zone_ZONE_CHROMEOS3            Zone = 4  // "chromeos3" // US-MTV-946 // Lindavista
+	Zone_ZONE_CHROMEOS4            Zone = 5  // "chromeos4" // US-MTV-2081 // Destiny
+	Zone_ZONE_CHROMEOS5            Zone = 6  // "chromeos5" // US-MTV-946 // Lindavista
+	Zone_ZONE_CHROMEOS6            Zone = 7  // "chromeos6" // US-MTV-2081 // Prometheus
+	Zone_ZONE_CHROMEOS7            Zone = 8  // "chromeos7" // US-MTV-946 // Lindavista
+	Zone_ZONE_CHROMEOS15           Zone = 10 // "chromeos15" // US-MTV-946 // Lindavista
+	Zone_ZONE_ATL97                Zone = 11 // "atl97" //  US-ATL-MET1 // Room ?
+	Zone_ZONE_IAD97                Zone = 12 // "iad97" // Building ? Room ?
+	Zone_ZONE_MTV96                Zone = 13 // "mtv96" // US-MTV-41 // 1-1M0
+	Zone_ZONE_MTV97                Zone = 14 // "mtv97" // US-MTV-1950 // 1-144
+	Zone_ZONE_FUCHSIA              Zone = 15 // "lab01" // Building ? Room ?
+	Zone_ZONE_CROS_GOOGLER_DESK    Zone = 16 // "desk" // For cros assets given to googlers
+	Zone_ZONE_MTV1950_TESTING      Zone = 17 // "mtv1950" // temporary zone for testing cros assets in gTransit
+	Zone_ZONE_SATLAB               Zone = 18 // "satlab" // zone for satlab duts
+	Zone_ZONE_BROWSER_GOOGLER_DESK Zone = 19 // "desk" // for browser assets given to googlers
 )
 
 // Enum value maps for Zone.
@@ -149,26 +151,28 @@ var (
 		16: "ZONE_CROS_GOOGLER_DESK",
 		17: "ZONE_MTV1950_TESTING",
 		18: "ZONE_SATLAB",
+		19: "ZONE_BROWSER_GOOGLER_DESK",
 	}
 	Zone_value = map[string]int32{
-		"ZONE_UNSPECIFIED":       0,
-		"ZONE_ATLANTA":           1,
-		"ZONE_CHROMEOS1":         2,
-		"ZONE_CHROMEOS2":         3,
-		"ZONE_CHROMEOS3":         4,
-		"ZONE_CHROMEOS4":         5,
-		"ZONE_CHROMEOS5":         6,
-		"ZONE_CHROMEOS6":         7,
-		"ZONE_CHROMEOS7":         8,
-		"ZONE_CHROMEOS15":        10,
-		"ZONE_ATL97":             11,
-		"ZONE_IAD97":             12,
-		"ZONE_MTV96":             13,
-		"ZONE_MTV97":             14,
-		"ZONE_FUCHSIA":           15,
-		"ZONE_CROS_GOOGLER_DESK": 16,
-		"ZONE_MTV1950_TESTING":   17,
-		"ZONE_SATLAB":            18,
+		"ZONE_UNSPECIFIED":          0,
+		"ZONE_ATLANTA":              1,
+		"ZONE_CHROMEOS1":            2,
+		"ZONE_CHROMEOS2":            3,
+		"ZONE_CHROMEOS3":            4,
+		"ZONE_CHROMEOS4":            5,
+		"ZONE_CHROMEOS5":            6,
+		"ZONE_CHROMEOS6":            7,
+		"ZONE_CHROMEOS7":            8,
+		"ZONE_CHROMEOS15":           10,
+		"ZONE_ATL97":                11,
+		"ZONE_IAD97":                12,
+		"ZONE_MTV96":                13,
+		"ZONE_MTV97":                14,
+		"ZONE_FUCHSIA":              15,
+		"ZONE_CROS_GOOGLER_DESK":    16,
+		"ZONE_MTV1950_TESTING":      17,
+		"ZONE_SATLAB":               18,
+		"ZONE_BROWSER_GOOGLER_DESK": 19,
 	}
 )
 
@@ -367,7 +371,7 @@ var file_infra_unifiedfleet_api_v1_models_location_proto_rawDesc = []byte{
 	0x12, 0x18, 0x0a, 0x14, 0x4c, 0x41, 0x42, 0x5f, 0x44, 0x41, 0x54, 0x41, 0x43, 0x45, 0x4e, 0x54,
 	0x45, 0x52, 0x5f, 0x4d, 0x54, 0x56, 0x39, 0x37, 0x10, 0x0a, 0x12, 0x1a, 0x0a, 0x16, 0x4c, 0x41,
 	0x42, 0x5f, 0x44, 0x41, 0x54, 0x41, 0x43, 0x45, 0x4e, 0x54, 0x45, 0x52, 0x5f, 0x46, 0x55, 0x43,
-	0x48, 0x53, 0x49, 0x41, 0x10, 0x0b, 0x2a, 0xe8, 0x02, 0x0a, 0x04, 0x5a, 0x6f, 0x6e, 0x65, 0x12,
+	0x48, 0x53, 0x49, 0x41, 0x10, 0x0b, 0x2a, 0x87, 0x03, 0x0a, 0x04, 0x5a, 0x6f, 0x6e, 0x65, 0x12,
 	0x14, 0x0a, 0x10, 0x5a, 0x4f, 0x4e, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
 	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x10, 0x0a, 0x0c, 0x5a, 0x4f, 0x4e, 0x45, 0x5f, 0x41, 0x54,
 	0x4c, 0x41, 0x4e, 0x54, 0x41, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x5a, 0x4f, 0x4e, 0x45, 0x5f,
@@ -390,10 +394,12 @@ var file_infra_unifiedfleet_api_v1_models_location_proto_rawDesc = []byte{
 	0x44, 0x45, 0x53, 0x4b, 0x10, 0x10, 0x12, 0x18, 0x0a, 0x14, 0x5a, 0x4f, 0x4e, 0x45, 0x5f, 0x4d,
 	0x54, 0x56, 0x31, 0x39, 0x35, 0x30, 0x5f, 0x54, 0x45, 0x53, 0x54, 0x49, 0x4e, 0x47, 0x10, 0x11,
 	0x12, 0x0f, 0x0a, 0x0b, 0x5a, 0x4f, 0x4e, 0x45, 0x5f, 0x53, 0x41, 0x54, 0x4c, 0x41, 0x42, 0x10,
-	0x12, 0x42, 0x28, 0x5a, 0x26, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69,
-	0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6d,
-	0x6f, 0x64, 0x65, 0x6c, 0x73, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x12, 0x12, 0x1d, 0x0a, 0x19, 0x5a, 0x4f, 0x4e, 0x45, 0x5f, 0x42, 0x52, 0x4f, 0x57, 0x53, 0x45,
+	0x52, 0x5f, 0x47, 0x4f, 0x4f, 0x47, 0x4c, 0x45, 0x52, 0x5f, 0x44, 0x45, 0x53, 0x4b, 0x10, 0x13,
+	0x42, 0x28, 0x5a, 0x26, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65,
+	0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f,
+	0x64, 0x65, 0x6c, 0x73, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
