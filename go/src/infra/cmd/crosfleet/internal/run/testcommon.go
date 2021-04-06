@@ -66,6 +66,7 @@ type testCommonFlags struct {
 	keyvals         map[string]string
 	exitEarly       bool
 	json            bool
+	lacrosPath      string
 }
 
 // Registers run command-specific flags
@@ -91,6 +92,7 @@ If a Quota Scheduler account is specified via -qs-account, this value is not use
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyvals", "Comma-separated Autotest keyvals in same format as -keyval.")
 	f.BoolVar(&c.exitEarly, "exit-early", false, "Exit command as soon as test is scheduled. crosfleet will not notify on test validation failure.")
 	f.BoolVar(&c.json, "json", false, "Format output as JSON.")
+	f.StringVar(&c.lacrosPath, "lacros-path", "", "Optional GCS path pointing to a lacros artifact.")
 }
 
 // validateAndAutocompleteFlags returns any errors after validating the CLI
@@ -312,6 +314,12 @@ func (c *testCommonFlags) softwareDependencies() ([]*test_platform.Request_Param
 	if c.image != "" {
 		deps = append(deps, &test_platform.Request_Params_SoftwareDependency{
 			Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: c.image},
+		})
+	}
+	// Add lacros path dependency.
+	if c.lacrosPath != "" {
+		deps = append(deps, &test_platform.Request_Params_SoftwareDependency{
+			Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: c.lacrosPath},
 		})
 	}
 	return deps, nil

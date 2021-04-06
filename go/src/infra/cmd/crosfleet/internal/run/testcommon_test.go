@@ -175,9 +175,10 @@ var testSoftwareDependenciesData = []struct {
 		nil,
 		"",
 	},
-	{ // One label and one image
+	{ // Image, Lacros path, and one label
 		testCommonFlags{
-			image: "sample-image",
+			image:      "sample-image",
+			lacrosPath: "sample-lacros-path",
 			provisionLabels: map[string]string{
 				"fwrw-version": "foo-rw",
 			},
@@ -185,6 +186,7 @@ var testSoftwareDependenciesData = []struct {
 		[]*test_platform.Request_Params_SoftwareDependency{
 			{Dep: &test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild{RwFirmwareBuild: "foo-rw"}},
 			{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "sample-image"}},
+			{Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: "sample-lacros-path"}},
 		},
 		"",
 	},
