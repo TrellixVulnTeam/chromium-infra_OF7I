@@ -32,8 +32,11 @@ func (cik ChangeRevKey) String() string {
 type ChangeRev struct {
 	ChangeRevKey
 	Project string
-	Branch  string
-	Files   []string
+	// Ref that this change targets, e.g.: "refs/heads/main"
+	Branch string
+	// The Git reference for the patch set, e.g. "refs/changes/23/123/5"
+	Ref   string
+	Files []string
 }
 
 var (
@@ -95,6 +98,7 @@ func GetChangeRev(ctx context.Context, authedClient *http.Client, changeNum int6
 					Revision:  v.Number,
 				},
 				Branch:  change.Ref,
+				Ref:     v.Ref,
 				Project: change.Project,
 				Files:   getKeys(files),
 			}, nil
