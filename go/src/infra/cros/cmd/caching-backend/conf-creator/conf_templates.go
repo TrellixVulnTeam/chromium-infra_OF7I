@@ -8,7 +8,7 @@ const keepalivedTemplate = `# This file is generated. DO NOT EDIT.
 
 vrrp_instance CacheServer {
   state {{ .State }}
-  interface bond0
+  interface {{ .Interface }}
   virtual_router_id 51
   priority {{ .Priority }}
   advert_int 1

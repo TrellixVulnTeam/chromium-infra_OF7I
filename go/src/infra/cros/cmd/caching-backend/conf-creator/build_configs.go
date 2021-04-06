@@ -44,6 +44,7 @@ func (n nginxConfData) Ports() []int {
 // keepalivedConfData contains information about the node which is necessary to
 // create the keepalived.conf file.
 type keepalivedConfData struct {
+	Interface   string
 	UnicastPeer string
 	VirtualIP   string
 	State       string

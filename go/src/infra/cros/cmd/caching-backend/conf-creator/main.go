@@ -33,6 +33,7 @@ var (
 	cacheSizeInGB            = flag.Uint("nginx-cache-size", 750, "The size of nginx cache in GB.")
 	gsaServerCount           = flag.Uint("gsa-server-count", 1, "The number of upstream gs_archive_server instances to be added in nginx-conf.")
 	gsaInitialPort           = flag.Uint("gsa-initial-port", 18000, "The port number for the first instance of the gs_archive_server in nginx.conf. Port number will increase by 1 for all subsequent entries.")
+	keepalivedInterface      = flag.String("keepalived-interface", "bond0", "The interface keepalived listens on.")
 )
 
 var (
@@ -80,6 +81,7 @@ func innerMain() error {
 	}
 	k := keepalivedConfData{
 		VirtualIP: vip,
+		Interface: *keepalivedInterface,
 	}
 	switch {
 	case nodeIP == service.GetPrimaryNode() || nodeName == service.GetPrimaryNode():
