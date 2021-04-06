@@ -76,6 +76,7 @@ type Args struct {
 	Tags                       []string
 	ProvisionLabels            []string
 	UploadCrashes              bool
+	LacrosPath                 string
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -101,6 +102,11 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 	if a.Image != "" {
 		deps = append(deps, &test_platform.Request_Params_SoftwareDependency{
 			Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: a.Image},
+		})
+	}
+	if a.LacrosPath != "" {
+		deps = append(deps, &test_platform.Request_Params_SoftwareDependency{
+			Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: a.LacrosPath},
 		})
 	}
 	for _, label := range a.ProvisionLabels {

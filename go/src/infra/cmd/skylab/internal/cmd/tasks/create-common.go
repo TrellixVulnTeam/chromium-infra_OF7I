@@ -35,6 +35,7 @@ type createRunCommon struct {
 	tags            []string
 	keyvals         []string
 	qsAccount       string
+	lacrosPath      string
 	buildBucket     bool
 	uploadCrashes   bool
 }
@@ -67,6 +68,7 @@ suite. No retry if it is 0.`)
 		`Autotest keyval for test. Key may not contain : character. May be
 specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
+	fl.StringVar(&c.lacrosPath, "lacros-gcs-path", "", "GCS path pointing to a lacros artifact.  Optional.")
 	fl.Var(luciflag.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.uploadCrashes, "upload-crashes", false,
 		`Report crashes from DUTs to pre-configured crash servers.
@@ -122,6 +124,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
 		UploadCrashes:              c.uploadCrashes,
+		LacrosPath:                 c.lacrosPath,
 	}, nil
 }
 
