@@ -15,9 +15,10 @@ https://gerrit.googlesource.com/gitiles/+/master/Documentation/markdown.md#Navig
 * [Home](/doc/index.md)
 * [Users](/doc/users/index.md)
 * [Developers](/doc/developers.md)
+* Internal:
 * [Troopers](http://go/trooper)
 * [Glossary](http://go/chops-glossary)
-* [Internal Doc](http://go/chrome-infra-docs-internal)
+* [Documentation](http://go/chrome-infra-docs-internal)
 
 [home]: /doc/index.md
 [logo]: /doc/images/chrome-infra-logo-32x32.png
