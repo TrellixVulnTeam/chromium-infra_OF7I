@@ -594,6 +594,17 @@ func resetAssetTypeFilter(filterMap map[string][]interface{}) map[string][]inter
 	return filterMap
 }
 
+func resetSchedulingUnitTypeFilter(filterMap map[string][]interface{}) map[string][]interface{} {
+	if v, ok := filterMap["type"]; ok {
+		for i, vt := range v {
+			v[i] = util.ToSchedulingUnitType(fmt.Sprintf("%s", vt)).String()
+			fmt.Println(v[i])
+		}
+		filterMap["type"] = v
+	}
+	return filterMap
+}
+
 func resetDeviceTypeFilter(filterMap map[string][]interface{}) map[string][]interface{} {
 	if v, ok := filterMap[util.DeviceTypeFilterName]; ok {
 		for i, vz := range v {

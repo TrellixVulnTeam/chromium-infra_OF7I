@@ -5,6 +5,7 @@
 package inventory
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -139,6 +140,77 @@ func TestGetSchedulingUnit(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestDeleteSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	su1 := mockSchedulingUnit("su-1")
+	CreateSchedulingUnit(ctx, su1)
+	Convey("DeleteSchedulingUnit", t, func() {
+		Convey("Delete SchedulingUnit successfully by existing ID", func() {
+			err := DeleteSchedulingUnit(ctx, "su-1")
+			So(err, ShouldBeNil)
+
+			resp, err := GetSchedulingUnit(ctx, "su-1")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete SchedulingUnit by non-existing ID", func() {
+			err := DeleteSchedulingUnit(ctx, "su-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete SchedulingUnit - invalid ID", func() {
+			err := DeleteSchedulingUnit(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListSchedulingUnits(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	SchedulingUnits := make([]*ufspb.SchedulingUnit, 0, 4)
+	for i := 0; i < 4; i++ {
+		su := mockSchedulingUnit(fmt.Sprintf("su-%d", i))
+		resp, _ := CreateSchedulingUnit(ctx, su)
+		SchedulingUnits = append(SchedulingUnits, resp)
+	}
+	Convey("ListSchedulingUnits", t, func() {
+		Convey("List SchedulingUnits - page_token invalid", func() {
+			resp, nextPageToken, err := ListSchedulingUnits(ctx, 5, "abc", nil, false)
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List SchedulingUnits - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListSchedulingUnits(ctx, 4, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, SchedulingUnits)
+		})
+
+		Convey("List SchedulingUnits - listing with pagination", func() {
+			resp, nextPageToken, err := ListSchedulingUnits(ctx, 3, "", nil, false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, SchedulingUnits[:3])
+
+			resp, _, err = ListSchedulingUnits(ctx, 2, nextPageToken, nil, false)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, SchedulingUnits[3:])
 		})
 	})
 }

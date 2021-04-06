@@ -1570,3 +1570,131 @@ func TestUpdateSchedulingUnit(t *testing.T) {
 		})
 	})
 }
+
+func TestGetSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	su, _ := inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+		Name: "su-1",
+	})
+	Convey("GetSchedulingUnit", t, func() {
+		Convey("Get SchedulingUnit by existing ID - happy path", func() {
+			req := &ufsAPI.GetSchedulingUnitRequest{
+				Name: util.AddPrefix(util.SchedulingUnitCollection, "su-1"),
+			}
+			resp, _ := tf.Fleet.GetSchedulingUnit(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			resp.Name = util.RemovePrefix(resp.Name)
+			So(resp, ShouldResembleProto, su)
+		})
+
+		Convey("Get SchedulingUnit - Invalid input empty name", func() {
+			req := &ufsAPI.GetSchedulingUnitRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Get SchedulingUnit - Invalid input invalid characters", func() {
+			req := &ufsAPI.GetSchedulingUnitRequest{
+				Name: util.AddPrefix(util.SchedulingUnitCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
+func TestDeleteSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+		Name: "su-1",
+	})
+	Convey("DeleteSchedulingUnit", t, func() {
+		Convey("Delete SchedulingUnit by existing ID - happy path", func() {
+			req := &ufsAPI.DeleteSchedulingUnitRequest{
+				Name: util.AddPrefix(util.SchedulingUnitCollection, "su-1"),
+			}
+			_, err := tf.Fleet.DeleteSchedulingUnit(tf.C, req)
+			So(err, ShouldBeNil)
+
+			res, err := inventory.GetSchedulingUnit(tf.C, "su-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete SchedulingUnit - Invalid input empty name", func() {
+			req := &ufsAPI.DeleteSchedulingUnitRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Delete SchedulingUnit - Invalid input invalid characters", func() {
+			req := &ufsAPI.DeleteSchedulingUnitRequest{
+				Name: util.AddPrefix(util.SchedulingUnitCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
+func TestListSchedulingUnits(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	schedulingUnits := make([]*ufspb.SchedulingUnit, 0, 4)
+	for i := 0; i < 4; i++ {
+		su := mockSchedulingUnit("")
+		su.Name = fmt.Sprintf("su-%d", i)
+		resp, _ := inventory.CreateSchedulingUnit(tf.C, su)
+		resp.Name = util.AddPrefix(util.SchedulingUnitCollection, resp.Name)
+		schedulingUnits = append(schedulingUnits, resp)
+	}
+	Convey("ListSchedulingUnits", t, func() {
+		Convey("ListSchedulingUnits - page_size negative - error", func() {
+			req := &ufsAPI.ListSchedulingUnitsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListSchedulingUnits(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
+		})
+
+		Convey("ListSchedulingUnits - Full listing with no pagination - happy path", func() {
+			req := &ufsAPI.ListSchedulingUnitsRequest{}
+			resp, err := tf.Fleet.ListSchedulingUnits(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.SchedulingUnits, ShouldResembleProto, schedulingUnits)
+		})
+
+		Convey("ListSchedulingUnits - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListSchedulingUnitsRequest{
+				Filter: "state=x|state=y",
+			}
+			_, err := tf.Fleet.ListSchedulingUnits(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
+		})
+	})
+}

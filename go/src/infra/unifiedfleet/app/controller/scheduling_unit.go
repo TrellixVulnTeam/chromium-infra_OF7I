@@ -82,17 +82,42 @@ func UpdateSchedulingUnit(ctx context.Context, su *ufspb.SchedulingUnit, mask *f
 
 // GetSchedulingUnit returns SchedulingUnit for the given id from datastore.
 func GetSchedulingUnit(ctx context.Context, id string) (*ufspb.SchedulingUnit, error) {
-	return nil, nil
+	return inventory.GetSchedulingUnit(ctx, id)
 }
 
 // DeleteSchedulingUnit deletes the given SchedulingUnit in datastore.
 func DeleteSchedulingUnit(ctx context.Context, id string) error {
+	f := func(ctx context.Context) error {
+		// Get the SchedulingUnit for logging.
+		su, err := inventory.GetSchedulingUnit(ctx, id)
+		if err != nil {
+			return err
+		}
+		if err := inventory.DeleteSchedulingUnit(ctx, id); err != nil {
+			return err
+		}
+		hc := &HistoryClient{}
+		hc.logSchedulingUnitChanges(su, nil)
+		return hc.SaveChangeEvents(ctx)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return errors.Annotate(err, "failed to delete SchedulingUnit %s in datastore", id).Err()
+	}
 	return nil
 }
 
-// ListSchedulingUnits lists the SchedulingUnit in datastore.
+// ListSchedulingUnits lists the SchedulingUnits in datastore.
 func ListSchedulingUnits(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.SchedulingUnit, string, error) {
-	return nil, "", nil
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, inventory.GetSchedulingUnitIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "failed to read filter for listing SchedulingUnits").Err()
+		}
+	}
+	filterMap = resetSchedulingUnitTypeFilter(filterMap)
+	return inventory.ListSchedulingUnits(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // validateCreateSchedulingUnit validates if a SchedulingUnit can be created.

@@ -6,6 +6,7 @@ package inventory
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // SchedulingUnitKind is the datastore entity kind for SchedulingUnit.
@@ -135,4 +137,70 @@ func GetSchedulingUnit(ctx context.Context, name string) (*ufspb.SchedulingUnit,
 		return pm.(*ufspb.SchedulingUnit), err
 	}
 	return nil, err
+}
+
+// DeleteSchedulingUnit deletes the SchedulingUnit in datastore.
+func DeleteSchedulingUnit(ctx context.Context, name string) error {
+	return ufsds.Delete(ctx, &ufspb.SchedulingUnit{Name: name}, newSchedulingUnitEntity)
+}
+
+// ListSchedulingUnits lists the SchedulingUnits.
+//
+// Does a query over SchedulingUnit entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListSchedulingUnits(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.SchedulingUnit, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, SchedulingUnitKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *SchedulingUnitEntity, cb datastore.CursorCB) error {
+		if keysOnly {
+			SchedulingUnit := &ufspb.SchedulingUnit{
+				Name: ent.ID,
+			}
+			res = append(res, SchedulingUnit)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.SchedulingUnit))
+		}
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to list SchedulingUnits %s", err)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
+// GetSchedulingUnitIndexedFieldName returns the index name
+func GetSchedulingUnitIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.MachineLSEsFilterName:
+		field = "machinelses"
+	case util.TagFilterName:
+		field = "tags"
+	case util.PoolsFilterName:
+		field = "pools"
+	case util.TypeFilterName:
+		field = "type"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for SchedulingUnit are duts/type/tag/pools", input)
+	}
+	return field, nil
 }

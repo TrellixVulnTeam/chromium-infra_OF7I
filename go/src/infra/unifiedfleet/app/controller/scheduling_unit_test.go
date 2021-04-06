@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -270,6 +271,101 @@ func TestUpdateSchedulingUnit(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
+		})
+	})
+}
+
+func TestGetSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	su, _ := inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+		Name: "su-1",
+	})
+	Convey("GetSchedulingUnit", t, func() {
+		Convey("Get SchedulingUnit by existing ID - happy path", func() {
+			resp, _ := GetSchedulingUnit(ctx, "su-1")
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, su)
+		})
+
+		Convey("Get SchedulingUnit by non-existing ID", func() {
+			_, err := GetSchedulingUnit(ctx, "su-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestDeleteSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+		Name: "su-1",
+	})
+	Convey("DeleteSchedulingUnit", t, func() {
+		Convey("Delete SchedulingUnit by existing ID - happy path", func() {
+			err := DeleteSchedulingUnit(ctx, "su-1")
+			So(err, ShouldBeNil)
+
+			res, err := inventory.GetSchedulingUnit(ctx, "su-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "schedulingunits/su-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "schedulingunit")
+
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "schedulingunits/su-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+		})
+
+		Convey("Delete SchedulingUnit by non-existing ID", func() {
+			err := DeleteSchedulingUnit(ctx, "su-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestListSchedulingUnits(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	schedulingUnitsWithPools := make([]*ufspb.SchedulingUnit, 0, 2)
+	schedulingUnits := make([]*ufspb.SchedulingUnit, 0, 4)
+	for i := 0; i < 4; i++ {
+		su := mockSchedulingUnit(fmt.Sprintf("su-%d", i))
+		if i%2 == 0 {
+			su.Pools = []string{"DUT_QUOTA"}
+		}
+		resp, _ := inventory.CreateSchedulingUnit(ctx, su)
+		if i%2 == 0 {
+			schedulingUnitsWithPools = append(schedulingUnitsWithPools, resp)
+		}
+		schedulingUnits = append(schedulingUnits, resp)
+	}
+	Convey("ListSchedulingUnits", t, func() {
+		Convey("List SchedulingUnits - filter invalid - error", func() {
+			_, _, err := ListSchedulingUnits(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List SchedulingUnits - filter switch - happy path", func() {
+			resp, _, _ := ListSchedulingUnits(ctx, 5, "", "pools=DUT_QUOTA", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, schedulingUnitsWithPools)
+		})
+
+		Convey("ListSchedulingUnits - Full listing - happy path", func() {
+			resp, _, _ := ListSchedulingUnits(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, schedulingUnits)
 		})
 	})
 }

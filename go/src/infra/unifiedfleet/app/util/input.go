@@ -121,6 +121,8 @@ var (
 	SubnetFilterName               string = "subnet"
 	PoolsFilterName                string = "pools"
 	DeploymentIdentifierFilterName string = "deploymentidentifier"
+	MachineLSEsFilterName          string = "duts"
+	TypeFilterName                 string = "type"
 )
 
 const separator string = "/"
@@ -724,6 +726,23 @@ func ToLicenseType(licenseType string) chromeosLab.LicenseType {
 		return chromeosLab.LicenseType_LICENSE_TYPE_UNSPECIFIED
 	}
 	return chromeosLab.LicenseType(chromeosLab.LicenseType_value[v])
+}
+
+// StrToSchedulingUnitType refers a map between a string to a UFS defined map.
+var StrToSchedulingUnitType = map[string]string{
+	"invalid":    "SCHEDULING_UNIT_TYPE_INVALID",
+	"all":        "SCHEDULING_UNIT_TYPE_ALL",
+	"individual": "SCHEDULING_UNIT_TYPE_INDIVIDUAL",
+}
+
+// ToSchedulingUnitType converts SchedulingUnitType string to a UFS SchedulingUnitType enum.
+func ToSchedulingUnitType(schedulingUnitType string) ufspb.SchedulingUnitType {
+	schedulingUnitType = RemoveGivenPrefix(schedulingUnitType, "scheduling_unit_type_")
+	v, ok := StrToSchedulingUnitType[schedulingUnitType]
+	if !ok {
+		return ufspb.SchedulingUnitType_SCHEDULING_UNIT_TYPE_INVALID
+	}
+	return ufspb.SchedulingUnitType(ufspb.SchedulingUnitType_value[v])
 }
 
 // List of regexps for recognizing assets stored with googlers or out of lab.
