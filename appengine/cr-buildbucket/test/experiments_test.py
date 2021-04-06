@@ -15,6 +15,7 @@ class CheckInvalidExperimentNames(testing.AppengineTestCase):
       ('cool.experiment'),
       ('single'),
       ('luci.use_realms'),
+      ('luci.swarming.use_rbe_cas'),  # TODO(iannucci): remove
   ])
   def test_valid(self, exp_name):
     self.assertIsNone(experiments.check_invalid_name(exp_name))
