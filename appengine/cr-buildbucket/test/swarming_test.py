@@ -38,6 +38,7 @@ from test import test_util
 from test.test_util import future, future_exception
 import bbutil
 import errors
+import experiments
 import model
 import swarming
 import tq
@@ -804,7 +805,7 @@ class SyncBuildTest(BaseTest):
     )
 
   def test_create_task_with_realms(self):
-    self.build.experiments.append('+%s' % (model.EXPERIMENT_REALMS,))
+    self.build.experiments.append('+%s' % (experiments.USE_REALMS,))
     self.build.put()
 
     net.json_request_async.return_value = future({'task_id': 'x'})
@@ -904,7 +905,7 @@ class SyncBuildTest(BaseTest):
           'status': common_pb2.SCHEDULED,
       },),
       ({
-          'experiments': [model.EXPERIMENT_REALMS],
+          'experiments': [experiments.USE_REALMS],
           'task_result': {'state': 'PENDING'},
           'status': common_pb2.SCHEDULED,
           'project_id': test_util.BUILD_DEFAULTS.builder.project,

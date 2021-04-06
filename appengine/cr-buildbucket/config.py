@@ -28,15 +28,10 @@ from components.config import validation
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
+import experiments
 
 CURRENT_BUCKET_SCHEMA_VERSION = 10
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
-
-# Names of well-known experiments
-EXPERIMENT_CANARY = 'luci.buildbucket.canary_software'
-EXPERIMENT_NON_PROD = 'luci.non_production'
-EXPERIMENT_USE_BBAGENT = 'luci.buildbucket.use_bbagent'
-EXPERIMENT_USE_REALMS = 'luci.use_realms'
 
 # The default percentage of builds that are marked as canary.
 # This number is relatively high so we treat canary seriously and that we have
@@ -454,23 +449,23 @@ def _backfill_experiments(builder_cfg):
   If the well-known experiment is already set in the Builder's `experiments`
   map, this function won't update it.
   """
-  if EXPERIMENT_CANARY not in builder_cfg.experiments:
-    builder_cfg.experiments[EXPERIMENT_CANARY] = (
+  if experiments.CANARY not in builder_cfg.experiments:
+    builder_cfg.experiments[experiments.CANARY] = (
         builder_cfg.task_template_canary_percentage.value
         if builder_cfg.HasField('task_template_canary_percentage') else
         _DEFAULT_CANARY_PERCENTAGE
     )
 
-  if EXPERIMENT_NON_PROD not in builder_cfg.experiments:
-    builder_cfg.experiments[EXPERIMENT_NON_PROD] = (
-        100 if builder_cfg.experimental == project_config_pb2.YES else 0
-    )
+  if experiments.NON_PROD not in builder_cfg.experiments:
+    builder_cfg.experiments[
+        experiments.NON_PROD
+    ] = (100 if builder_cfg.experimental == project_config_pb2.YES else 0)
 
-  if EXPERIMENT_USE_BBAGENT not in builder_cfg.experiments:
-    builder_cfg.experiments[EXPERIMENT_USE_BBAGENT] = 0
+  if experiments.USE_BBAGENT not in builder_cfg.experiments:
+    builder_cfg.experiments[experiments.USE_BBAGENT] = 0
 
-  if EXPERIMENT_USE_REALMS not in builder_cfg.experiments:
-    builder_cfg.experiments[EXPERIMENT_USE_REALMS] = 0
+  if experiments.USE_REALMS not in builder_cfg.experiments:
+    builder_cfg.experiments[experiments.USE_REALMS] = 0
 
 
 def put_bucket(project_id, revision, bucket_cfg):

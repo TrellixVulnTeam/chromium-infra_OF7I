@@ -355,6 +355,18 @@ class ProjectCfgTest(testing.AppengineTestCase):
             caches { name: "c" path: "a/.." }
             caches { name: "d" path: "/a" }
             priority: 300
+            experiments {
+              key: "bad!"
+              value: 105
+            }
+            experiments {
+              key: "negative"
+              value: -10
+            }
+            experiments {
+              key: "my.cool.experiment"
+              value: 10
+            }
           }
         ''',
         '',
@@ -380,6 +392,12 @@ class ProjectCfgTest(testing.AppengineTestCase):
             'builder b2: cache #4: path: cannot contain ".."',
             'builder b2: cache #5: path: cannot start with "/"',
             'builder b2: priority: must be in [20, 255] range; got 300',
+            (
+                'builder b2: experiments: "bad!": '
+                'does not match \'^[a-z][a-z0-9_]*(?:\\\\.[a-z][a-z0-9_]*)*$\''
+            ),
+            'builder b2: experiments: "bad!": value must be in [0, 100]',
+            'builder b2: experiments: "negative": value must be in [0, 100]',
         ],
     )
 

@@ -21,6 +21,7 @@ from go.chromium.org.luci.buildbucket.proto import common_pb2
 import buildtags
 import config
 import errors
+import experiments
 import model
 
 
@@ -238,6 +239,10 @@ def validate_schedule_build_request(req, legacy=False):
   if req.HasField('notify'):  # pragma: no branch
     with _enter('notify'):
       validate_notification_config(req.notify)
+
+  for exp_name in req.experiments:
+    with _enter('experiment "%s"' % (exp_name,)):
+      _maybe_err(experiments.check_invalid_name(exp_name))
 
 
 def validate_cancel_build_request(req):
@@ -526,6 +531,12 @@ def _enter(*names):
     yield
   finally:
     _field_stack()[-len(names):] = []
+
+
+def _maybe_err(err):
+  if not err:
+    return
+  _err('%s', err)
 
 
 def _err(fmt, *args):

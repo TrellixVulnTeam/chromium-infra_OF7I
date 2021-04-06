@@ -278,6 +278,10 @@ class ScheduleBuildRequestTests(BaseTestCase):
             dict(key='d2', value='dv3'),
         ],
         priority=100,
+        experiments={
+            "some.experiment": True,
+            "luci.use_realms": False,
+        },
         notify=dict(
             pubsub_topic='projects/project_id/topics/topic_id',
             user_data='blob',
@@ -373,6 +377,19 @@ class ScheduleBuildRequestTests(BaseTestCase):
         priority=256,
     )
     self.assert_invalid(msg, r'priority: must be in \[0, 255\]')
+
+  def test_experiments(self):
+    msg = rpc_pb2.ScheduleBuildRequest(
+        builder=builder_pb2.BuilderID(
+            project='chromium', bucket='try', builder='linux-rel'
+        ),
+        experiments={"bad!": True},
+    )
+    self.assert_invalid(msg, r'does not match')
+
+    msg.experiments.clear()
+    msg.experiments['luci.use_ralms'] = True
+    self.assert_invalid(msg, r'unknown experiment has reserved prefix')
 
   def test_notify_pubsub_topic(self):
     msg = rpc_pb2.ScheduleBuildRequest(

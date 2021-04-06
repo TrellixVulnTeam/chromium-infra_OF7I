@@ -12,8 +12,9 @@ import re
 from components.config import validation
 
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
-import flatten_swarmingcfg
 import errors
+import experiments
+import flatten_swarmingcfg
 
 _DIMENSION_KEY_RGX = re.compile(r'^[a-zA-Z\_\-]+$')
 # Copied from
@@ -310,6 +311,16 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
   if builder.service_account:
     with ctx.prefix('service_account: '):
       _validate_service_account(builder.service_account, ctx)
+
+  with ctx.prefix('experiments: '):
+    for exp_name, percent in sorted(builder.experiments.items()):
+      with ctx.prefix('"%s": ' % (exp_name)):
+        err = experiments.check_invalid_name(exp_name)
+        if err:
+          ctx.error(err)
+
+        if percent < 0 or percent > 100:
+          ctx.error('value must be in [0, 100]')
 
   for m in builder.mixins:
     if not m:

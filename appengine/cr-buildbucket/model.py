@@ -22,6 +22,7 @@ from go.chromium.org.luci.buildbucket.proto import build_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 import buildtags
 import config
+import experiments
 
 BEGINING_OF_THE_WORLD = datetime.datetime(2010, 1, 1, 0, 0, 0, 0)
 BUILD_TIMEOUT = datetime.timedelta(days=2)
@@ -32,9 +33,6 @@ BUILD_STORAGE_DURATION = datetime.timedelta(days=30 * 18)  # ~18mo
 # If builds weren't scheduled for this duration on a given builder, the
 # Builder entity is deleted.
 BUILDER_EXPIRATION_DURATION = datetime.timedelta(weeks=4)
-
-# Name of a builder experiment that enables LUCI Realms mode.
-EXPERIMENT_REALMS = 'luci.use_realms'
 
 
 class BuildStatus(messages.Enum):
@@ -413,7 +411,7 @@ class Build(ndb.Model):
   @property
   def uses_realms(self):  # pragma: no cover
     """True if the build opted-in into using LUCI Realms."""
-    return '+%s' % (EXPERIMENT_REALMS,) in self.experiments
+    return '+%s' % (experiments.USE_REALMS,) in self.experiments
 
 
 class BuildDetailEntity(ndb.Model):

@@ -23,6 +23,7 @@ import bbutil
 import config
 import creation
 import errors
+import experiments
 import model
 import search
 import user
@@ -312,36 +313,34 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add(req)
     if is_canary:
       self.assertTrue(build.proto.canary)
-      self.assertIn(config.EXPERIMENT_CANARY, build.proto.input.experiments)
-      self.assertIn('+%s' % config.EXPERIMENT_CANARY, build.experiments)
+      self.assertIn(experiments.CANARY, build.proto.input.experiments)
+      self.assertIn('+%s' % experiments.CANARY, build.experiments)
     else:
       self.assertFalse(build.proto.canary)
-      self.assertNotIn(config.EXPERIMENT_CANARY, build.proto.input.experiments)
-      self.assertIn('-%s' % config.EXPERIMENT_CANARY, build.experiments)
+      self.assertNotIn(experiments.CANARY, build.proto.input.experiments)
+      self.assertIn('-%s' % experiments.CANARY, build.experiments)
 
   def test_canary_in_request_deprecated(self):
     self._test_canary(dict(canary=common_pb2.NO), False)
     self._test_canary(dict(canary=common_pb2.YES), True)
 
   def test_canary_in_request(self):
-    self._test_canary(
-        dict(experiments={config.EXPERIMENT_CANARY: False}), False
-    )
-    self._test_canary(dict(experiments={config.EXPERIMENT_CANARY: True}), True)
+    self._test_canary(dict(experiments={experiments.CANARY: False}), False)
+    self._test_canary(dict(experiments={experiments.CANARY: True}), True)
 
   def test_canary_in_request_conflict(self):
     req = {
         'canary': common_pb2.YES,
-        'experiments': {config.EXPERIMENT_CANARY: False},
+        'experiments': {experiments.CANARY: False},
     }
     self._test_canary(req, False)
 
   def test_canary_in_builder(self):
     with self.mutate_builder_cfg() as cfg:
-      cfg.experiments[config.EXPERIMENT_CANARY] = 10
+      cfg.experiments[experiments.CANARY] = 10
     self._test_canary({}, False)
     with self.mutate_builder_cfg() as cfg:
-      cfg.experiments[config.EXPERIMENT_CANARY] = 100
+      cfg.experiments[experiments.CANARY] = 100
     self._test_canary({}, True)
 
   def test_properties(self):
@@ -362,15 +361,13 @@ class CreationTest(testing.AppengineTestCase):
     infra = model.BuildInfra.key_for(build.key).get().parse()
     if is_experimental:
       self.assertTrue(build.proto.input.experimental)
-      self.assertIn(config.EXPERIMENT_NON_PROD, build.proto.input.experiments)
-      self.assertIn('+%s' % config.EXPERIMENT_NON_PROD, build.experiments)
+      self.assertIn(experiments.NON_PROD, build.proto.input.experiments)
+      self.assertIn('+%s' % experiments.NON_PROD, build.experiments)
       self.assertEqual(infra.swarming.priority, 60)
     else:
       self.assertFalse(build.proto.input.experimental)
-      self.assertNotIn(
-          config.EXPERIMENT_NON_PROD, build.proto.input.experiments
-      )
-      self.assertIn('-%s' % config.EXPERIMENT_NON_PROD, build.experiments)
+      self.assertNotIn(experiments.NON_PROD, build.proto.input.experiments)
+      self.assertIn('-%s' % experiments.NON_PROD, build.experiments)
       self.assertEqual(infra.swarming.priority, 30)
 
   def test_experimental_in_request_deprecated(self):
@@ -379,25 +376,25 @@ class CreationTest(testing.AppengineTestCase):
 
   def test_experimental_in_request(self):
     self._test_experimental(
-        dict(experiments={config.EXPERIMENT_NON_PROD: False}), False
+        dict(experiments={experiments.NON_PROD: False}), False
     )
     self._test_experimental(
-        dict(experiments={config.EXPERIMENT_NON_PROD: True}), True
+        dict(experiments={experiments.NON_PROD: True}), True
     )
 
   def test_experimental_in_request_conflict(self):
     req = {
         'experimental': common_pb2.YES,
-        'experiments': {config.EXPERIMENT_NON_PROD: False},
+        'experiments': {experiments.NON_PROD: False},
     }
     self._test_experimental(req, False)
 
   def test_experimental_in_builder(self):
     with self.mutate_builder_cfg() as cfg:
-      cfg.experiments[config.EXPERIMENT_NON_PROD] = 10
+      cfg.experiments[experiments.NON_PROD] = 10
     self._test_experimental({}, False)
     with self.mutate_builder_cfg() as cfg:
-      cfg.experiments[config.EXPERIMENT_NON_PROD] = 100
+      cfg.experiments[experiments.NON_PROD] = 100
     self._test_experimental({}, True)
 
   def test_builder_config_experiments(self):
@@ -411,10 +408,10 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(
         build.experiments, [
             '-chromium.exp_foo',
-            '-' + config.EXPERIMENT_CANARY,
-            '-' + config.EXPERIMENT_USE_BBAGENT,
-            '-' + config.EXPERIMENT_NON_PROD,
-            '-' + config.EXPERIMENT_USE_REALMS,
+            '-' + experiments.CANARY,
+            '-' + experiments.USE_BBAGENT,
+            '-' + experiments.NON_PROD,
+            '-' + experiments.USE_REALMS,
         ]
     )
 
@@ -436,10 +433,10 @@ class CreationTest(testing.AppengineTestCase):
         build.experiments, [
             '+chromium.exp_foo',
             '-chromium.exp_bar',
-            '-' + config.EXPERIMENT_CANARY,
-            '-' + config.EXPERIMENT_USE_BBAGENT,
-            '-' + config.EXPERIMENT_NON_PROD,
-            '-' + config.EXPERIMENT_USE_REALMS,
+            '-' + experiments.CANARY,
+            '-' + experiments.USE_BBAGENT,
+            '-' + experiments.NON_PROD,
+            '-' + experiments.USE_REALMS,
         ]
     )
 

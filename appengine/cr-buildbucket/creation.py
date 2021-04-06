@@ -27,6 +27,7 @@ from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import bbutil
 import buildtags
 import config
+import experiments
 import flatten_swarmingcfg
 import errors
 import events
@@ -141,7 +142,7 @@ class BuildRequest(_BuildRequestBase):
 
   @ndb.tasklet
   def create_build_proto_async(
-      self, build_id, settings, builder_cfg, created_by, experiments, now
+      self, build_id, settings, builder_cfg, created_by, exps, now
   ):
     """Converts the request to a build_pb2.Build.
 
@@ -153,7 +154,7 @@ class BuildRequest(_BuildRequestBase):
 
     _apply_global_settings(settings, bp)
     if builder_cfg:  # pragma: no branch
-      yield _apply_builder_config_async(builder_cfg, bp, settings, experiments)
+      yield _apply_builder_config_async(builder_cfg, bp, settings, exps)
 
     bp.status = common_pb2.SCHEDULED
     bp.created_by = created_by.to_bytes()
@@ -161,7 +162,7 @@ class BuildRequest(_BuildRequestBase):
     if sbr.critical != common_pb2.UNSET:
       bp.critical = sbr.critical
     bp.exe.cipd_version = sbr.exe.cipd_version or bp.exe.cipd_version
-    bp.canary = experiments[config.EXPERIMENT_CANARY]
+    bp.canary = exps[experiments.CANARY]
 
     # Populate input.
     # Override properties from the config with values in the request.
@@ -169,9 +170,9 @@ class BuildRequest(_BuildRequestBase):
     if sbr.HasField('gitiles_commit'):
       bp.input.gitiles_commit.CopyFrom(sbr.gitiles_commit)
     bp.input.gerrit_changes.extend(sbr.gerrit_changes)
-    bp.input.experimental = experiments[config.EXPERIMENT_NON_PROD]
+    bp.input.experimental = exps[experiments.NON_PROD]
     bp.input.experiments.extend(
-        exp for exp, enabled in experiments.iteritems() if enabled
+        exp for exp, enabled in exps.iteritems() if enabled
     )
     bp.input.experiments.sort()
 
@@ -235,30 +236,23 @@ class BuildRequest(_BuildRequestBase):
   def compute_experiments(sbr, builder_cfg):
     """Returns a Dict[str, bool] of enabled/disabled experiments."""
     # Well-known experiments are always set, and default to off.
-    experiments = {
-        config.EXPERIMENT_CANARY: False,
-        config.EXPERIMENT_NON_PROD: False,
-        config.EXPERIMENT_USE_BBAGENT: False,
-        config.EXPERIMENT_USE_REALMS: False,
-    }
+    exps = {exp_name: False for exp_name in experiments.WELL_KNOWN}
 
     if builder_cfg:
       for exp, percentage in builder_cfg.experiments.iteritems():
-        experiments[exp] = _should_enable_experiment(percentage)
+        exps[exp] = _should_enable_experiment(percentage)
 
     # Check if the well-known experiments are set via deprecated fields.
     if sbr.canary != common_pb2.UNSET:
-      experiments[config.EXPERIMENT_CANARY] = sbr.canary == common_pb2.YES
+      exps[experiments.CANARY] = sbr.canary == common_pb2.YES
 
     if sbr.experimental != common_pb2.UNSET:
-      experiments[config.EXPERIMENT_NON_PROD] = (
-          sbr.experimental == common_pb2.YES
-      )
+      exps[experiments.NON_PROD] = (sbr.experimental == common_pb2.YES)
 
     # overrides the result from Builder config or deprecated fields in SBR
-    experiments.update(sbr.experiments)
+    exps.update(sbr.experiments)
 
-    return experiments
+    return exps
 
   @ndb.tasklet
   def create_build_async(
@@ -269,10 +263,10 @@ class BuildRequest(_BuildRequestBase):
     Assumes self is valid.
     """
     sbr = self.schedule_build_request
-    experiments = self.compute_experiments(sbr, builder_cfg)
+    exps = self.compute_experiments(sbr, builder_cfg)
 
     build_proto = yield self.create_build_proto_async(
-        build_id, settings, builder_cfg, created_by, experiments, now
+        build_id, settings, builder_cfg, created_by, exps, now
     )
     build = model.Build(
         id=build_id,
@@ -281,8 +275,9 @@ class BuildRequest(_BuildRequestBase):
             buildtags.unparse(k, v)
             for k, v in sorted(self.compute_tag_set(sbr))
         ],
-        experiments=sorted([('+' if enabled else '-') + exp
-                            for exp, enabled in experiments.iteritems()]),
+        experiments=sorted([
+            ('+' if enabled else '-') + exp for exp, enabled in exps.iteritems()
+        ]),
         parameters=copy.deepcopy(self.parameters or {}),
         created_by=created_by,
         create_time=now,
@@ -612,9 +607,7 @@ def _apply_global_settings(settings, build_proto):
 
 
 @ndb.tasklet
-def _apply_builder_config_async(
-    builder_cfg, build_proto, settings, experiments
-):
+def _apply_builder_config_async(builder_cfg, build_proto, settings, exps):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
   # Populate timeouts.
   build_proto.scheduling_timeout.seconds = builder_cfg.expiration_secs
@@ -656,7 +649,7 @@ def _apply_builder_config_async(
   # If the user specified exe.cmd, we do nothing.
   if not build_proto.exe.cmd:
     uses_bbagent = (
-        experiments[config.EXPERIMENT_USE_BBAGENT] or config.builder_matches(
+        exps[experiments.USE_BBAGENT] or config.builder_matches(
             build_proto.builder, settings.swarming.bbagent_package.builders
         )
     )
