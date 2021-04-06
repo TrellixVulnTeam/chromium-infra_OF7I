@@ -17,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cmd/skylab/internal/cmd/internalcmds"
-	"infra/cmd/skylab/internal/cmd/inventory"
 	"infra/cmd/skylab/internal/cmd/meta"
 	"infra/cmd/skylab/internal/cmd/tasks"
 	"infra/cmd/skylab/internal/site"
@@ -41,17 +40,6 @@ Full documentation http://go/skylab-cli`,
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
-			subcommands.Section("Inventory Queries"),
-			inventory.DutInfo,
-			inventory.DutList,
-			subcommands.Section("Inventory Operations"),
-			inventory.AddDut,
-			inventory.AddLabstation,
-			inventory.ValidateNewDutJSON,
-			inventory.RemoveDuts,
-			inventory.UpdateDut,
-			inventory.BatchUpdateDuts,
-			inventory.UpdateLabstation,
 			subcommands.Section("Tasks"),
 			tasks.BackfillRequest,
 			tasks.CreateTest,
@@ -64,7 +52,6 @@ Full documentation http://go/skylab-cli`,
 			tasks.Audit,
 			tasks.RerunTasks,
 			subcommands.Section("Internal use"),
-			internalcmds.PrintBotInfo,
 			internalcmds.WaitTask,
 			internalcmds.DutStableVersion,
 		},
