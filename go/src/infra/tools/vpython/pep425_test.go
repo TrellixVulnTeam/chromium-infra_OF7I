@@ -175,6 +175,36 @@ func TestPEP425TagSelector(t *testing.T) {
 				"vpython_platform": "linux-amd64_cp38_cp38",
 			},
 		},
+
+		{
+			[]*vpython.PEP425Tag{
+				{Python: "cp38", Abi: "cp38m", Platform: "win_amd64"},
+				{Python: "cp38", Abi: "none", Platform: "win_amd64"},
+				{Python: "py3", Abi: "none", Platform: "win_amd64"},
+				{Python: "cp38", Abi: "none", Platform: "any"},
+				{Python: "cp3", Abi: "none", Platform: "any"},
+				{Python: "py38", Abi: "none", Platform: "any"},
+				{Python: "py3", Abi: "none", Platform: "any"},
+				{Python: "py37", Abi: "none", Platform: "any"},
+				{Python: "py36", Abi: "none", Platform: "any"},
+				{Python: "py35", Abi: "none", Platform: "any"},
+				{Python: "py34", Abi: "none", Platform: "any"},
+				{Python: "py33", Abi: "none", Platform: "any"},
+				{Python: "py32", Abi: "none", Platform: "any"},
+				{Python: "py31", Abi: "none", Platform: "any"},
+				{Python: "py30", Abi: "none", Platform: "any"},
+			},
+			map[string]string{
+				"platform":         "windows-amd64",
+				"py_tag":           "cp38-cp38-win_amd64",
+				"py_python":        "cp38",
+				"py_version":       "cp38",
+				"py_abi":           "cp38",
+				"py_platform":      "win_amd64",
+				"py_arch":          "win_amd64",
+				"vpython_platform": "windows-amd64_cp38_cp38",
+			},
+		},
 	}
 
 	Convey(`Testing PEP425 tag selection`, t, func() {

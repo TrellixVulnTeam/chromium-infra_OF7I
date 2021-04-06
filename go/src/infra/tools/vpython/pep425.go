@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/vpython/api/vpython"
 	"go.chromium.org/luci/vpython/cipd"
@@ -207,8 +209,18 @@ func pep425TagSelector(tags []*vpython.PEP425Tag) *vpython.PEP425Tag {
 	}
 
 	for _, t := range tags {
-		if isBetter(t) {
-			best = t
+		tag := proto.Clone(t).(*vpython.PEP425Tag)
+
+		// pip has a bug, fixed in 19.2.3 where it adds the "m" ABI tag on 3.8
+		// for some platforms, despite this flag being removed in 3.8. We work
+		// around it here by stripping it from the ABI string.
+		//
+		// TODO: Remove this workaround when we've updated to pip >= 19.2.3.
+		if strings.HasPrefix(tag.Python, "cp3") {
+			tag.Abi = strings.TrimSuffix(tag.Abi, "m")
+		}
+		if isBetter(tag) {
+			best = tag
 		}
 	}
 	return best
