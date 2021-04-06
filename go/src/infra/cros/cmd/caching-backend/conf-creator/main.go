@@ -15,6 +15,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/grpc/prpc"
@@ -28,10 +29,10 @@ var (
 	keepalivedConfigFilePath = flag.String("keepalived-conf", "/mnt/conf/keepalived/keepalived.conf", "Path to where keepalived.conf should be created.")
 	nginxConfigFilePath      = flag.String("nginx-conf", "/mnt/conf/nginx/nginx.conf", "Path to where nginx.conf should be created.")
 	serviceAccountJSONPath   = flag.String("service-account", "/creds/service_accounts/artifacts-downloader-service-account.json", "Path to the service account JSON key file.")
-	ufsService               = flag.String("ufs-host", "ufs.api.cr.dev", "Host of the UFS service. By default, the prod service host will be used.")
-	cacheSizeInGB            = flag.Uint("nginx-cache-size", 750, "The size of nginx cache in GB. By default, it will be set to 750.")
-	gsaServerCount           = flag.Uint("gsa-server-count", 1, "The number of upstream gs_archive_server instances to be added in nginx-conf. Default is 1.")
-	gsaInitialPort           = flag.Uint("gsa-initial-port", 8000, "The port number for the first instance of the gs_archive_server in nginx.conf. Port number will increase by 1 for all subsequent entries. Default is 8000.")
+	ufsService               = flag.String("ufs-host", "ufs.api.cr.dev", "Host of the UFS service.")
+	cacheSizeInGB            = flag.Uint("nginx-cache-size", 750, "The size of nginx cache in GB.")
+	gsaServerCount           = flag.Uint("gsa-server-count", 1, "The number of upstream gs_archive_server instances to be added in nginx-conf.")
+	gsaInitialPort           = flag.Uint("gsa-initial-port", 18000, "The port number for the first instance of the gs_archive_server in nginx.conf. Port number will increase by 1 for all subsequent entries.")
 )
 
 var (
@@ -59,18 +60,14 @@ func innerMain() error {
 	if err != nil {
 		return err
 	}
-	service, ok := findService(services, nodeIP, nodeName)
-	if !ok {
-		log.Println("Could not find caching service for this node in UFS")
-		log.Println("Creating non-operational nginx.conf...")
-		if err := ioutil.WriteFile(*nginxConfigFilePath, []byte(noOpNginxTemplate), 0644); err != nil {
-			return err
+	var service *models.CachingService
+	for {
+		var ok bool
+		if service, ok = findService(services, nodeIP, nodeName); ok {
+			break
 		}
-		log.Println("Creating non-operational keepalived.conf...")
-		if err := ioutil.WriteFile(*keepalivedConfigFilePath, []byte(noOpKeepalivedTemplate), 0644); err != nil {
-			return err
-		}
-		return nil
+		log.Println("The node is not configured in UFS yet. Will retry in 5 min.")
+		time.Sleep(5 * time.Minute)
 	}
 	vip := nodeVirtualIP(service)
 	n := nginxConfData{

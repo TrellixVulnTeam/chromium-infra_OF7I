@@ -35,7 +35,7 @@ type nginxConfData struct {
 // list.
 func (n nginxConfData) Ports() []int {
 	var ports []int
-	for i := 0; i < n.GSAServerCount; i += 1 {
+	for i := 0; i < n.GSAServerCount; i++ {
 		ports = append(ports, n.GSAInitialPort+i)
 	}
 	return ports
