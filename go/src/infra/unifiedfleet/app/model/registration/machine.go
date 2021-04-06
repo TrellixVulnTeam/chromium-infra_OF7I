@@ -29,6 +29,7 @@ type MachineEntity struct {
 	_kind string `gae:"$kind,Machine"`
 	// ufspb.Machine.Name
 	ID               string   `gae:"$id"`
+	SerialNumber     string   `gae:"serial_number"`
 	KVMID            string   `gae:"kvm_id"`
 	KVMPort          string   `gae:"kvm_port"`
 	RPMID            string   `gae:"rpm_id"`
@@ -68,6 +69,7 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 	}
 	return &MachineEntity{
 		ID:               p.GetName(),
+		SerialNumber:     p.GetSerialNumber(),
 		KVMID:            p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
 		KVMPort:          p.GetChromeBrowserMachine().GetKvmInterface().GetPortName(),
 		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
@@ -305,6 +307,8 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 	var field string
 	input = strings.TrimSpace(input)
 	switch strings.ToLower(input) {
+	case util.SerialNumberFilterName:
+		field = "serial_number"
 	case util.KVMFilterName:
 		field = "kvm_id"
 	case util.RPMFilterName:
@@ -330,7 +334,7 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 	case util.PhaseFilterName:
 		field = "phase"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/kvmport/rpm/zone/rack/platform/tag/state/model/buildtarget(target)/devicetype/phase", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are serialnumber/kvm/kvmport/rpm/zone/rack/platform/tag/state/model/buildtarget(target)/devicetype/phase", input)
 	}
 	return field, nil
 }

@@ -839,6 +839,10 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 	var nics []*ufspb.Nic
 	var drac *ufspb.Drac
 	if machine.GetChromeBrowserMachine() != nil {
+		// Only check serial number for browser machines. OS machines' serial number is auto-detected.
+		if err := validateUniqueSerial(ctx, machine.GetSerialNumber()); err != nil {
+			return err
+		}
 		nics = machine.GetChromeBrowserMachine().GetNicObjects()
 		drac = machine.GetChromeBrowserMachine().GetDracObject()
 	}
@@ -928,6 +932,13 @@ func validateUpdateMachine(ctx context.Context, oldMachine *ufspb.Machine, machi
 			return err
 		}
 	}
+	// Only check serial number for browser machines. OS machines' serial number is auto-detected.
+	if machine.GetChromeBrowserMachine() != nil && oldMachine.GetSerialNumber() != machine.GetSerialNumber() {
+		if err := validateUniqueSerial(ctx, machine.GetSerialNumber()); err != nil {
+			return err
+		}
+	}
+
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot update machine %s:\n", machine.Name))
 	var resourcesNotFound []*Resource
@@ -1106,4 +1117,22 @@ func getDeleteDracID(ctx context.Context, machineName string) (string, error) {
 		return dracs[0].GetName(), nil
 	}
 	return "", nil
+}
+
+func validateUniqueSerial(ctx context.Context, serialNumber string) error {
+	if serialNumber == "" {
+		return nil
+	}
+	if serialNumber != "" {
+		res, _, err := registration.ListMachines(ctx, 1, "", map[string][]interface{}{
+			"serial_number": {serialNumber},
+		}, true)
+		if err != nil {
+			return err
+		}
+		if len(res) > 0 {
+			return fmt.Errorf("machine %q contains the same serial number %q", res[0].Name, serialNumber)
+		}
+	}
+	return nil
 }

@@ -80,6 +80,38 @@ func TestMachineRegistration(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
+		Convey("Register browser machine with duplicated serial number", func() {
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
+			existingMachine := &ufspb.Machine{
+				Name:         "machine-with-duplicated-serial",
+				SerialNumber: "duplicated_serial",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := MachineRegistration(ctx, existingMachine)
+			So(err, ShouldBeNil)
+
+			machine := &ufspb.Machine{
+				Name:         "machine-3",
+				SerialNumber: "duplicated_serial",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err = MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "contains the same serial number")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
 		Convey("Register machine with invalid machine(referencing non existing resources)", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-3",
@@ -360,6 +392,43 @@ func TestUpdateMachine(t *testing.T) {
 			_, err = UpdateMachine(ctx, machine, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot update machine machine-1")
+		})
+
+		Convey("Update machine with existing resources, but duplicated serial", func() {
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			machine1 := &ufspb.Machine{
+				Name:         "machine-update-with-duplicated-serial-1",
+				SerialNumber: "update-duplicated-serial-1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+
+			machine2 := &ufspb.Machine{
+				Name:         "machine-update-with-duplicated-serial-2",
+				SerialNumber: "update-duplicated-serial-2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err = registration.CreateMachine(ctx, machine2)
+			So(err, ShouldBeNil)
+
+			machineToUpdate := &ufspb.Machine{
+				Name:         "machine-update-with-duplicated-serial-1",
+				SerialNumber: "update-duplicated-serial-2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err = UpdateMachine(ctx, machineToUpdate, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "contains the same serial number")
 		})
 
 		Convey("Update machine with existing resources", func() {

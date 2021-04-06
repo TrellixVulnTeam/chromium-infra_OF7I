@@ -123,6 +123,7 @@ var (
 	DeploymentIdentifierFilterName string = "deploymentidentifier"
 	MachineLSEsFilterName          string = "duts"
 	TypeFilterName                 string = "type"
+	SerialNumberFilterName         string = "serialnumber"
 )
 
 const separator string = "/"
