@@ -24,7 +24,9 @@ import "google/protobuf/timestamp.proto";
 // devices or not.
 service Inventory {
   // AddCrosDevices adds new Chrome OS devices to the inventory.
-  rpc AddCrosDevices(AddCrosDevicesRequest) returns (AddCrosDevicesResponse);
+  rpc AddCrosDevices(AddCrosDevicesRequest) returns (AddCrosDevicesResponse) {
+     option deprecated = true;
+  };
 
   // GetCrosDevices retrieves requested Chrome OS devices from the inventory.
   rpc GetCrosDevices(GetCrosDevicesRequest) returns (GetCrosDevicesResponse);
@@ -34,28 +36,44 @@ service Inventory {
 
   // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data
   // in the inventory.
-  rpc UpdateCrosDevicesSetup(UpdateCrosDevicesSetupRequest) returns (UpdateCrosDevicesSetupResponse);
+  rpc UpdateCrosDevicesSetup(UpdateCrosDevicesSetupRequest) returns (UpdateCrosDevicesSetupResponse) {
+     option deprecated = true;
+  };
 
   // UpdateLabstations updates a selected ChromeOS labstations in lab.
-  rpc UpdateLabstations(UpdateLabstationsRequest) returns (UpdateLabstationsResponse);
+  rpc UpdateLabstations(UpdateLabstationsRequest) returns (UpdateLabstationsResponse) {
+     option deprecated = true;
+  };
 
   // DeleteCrosDevices delete the selelcted devices from the inventory.
-  rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
+  rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse) {
+     option deprecated = true;
+  };
 
   // BatchUpdateDevices updates some specific device properties in batch.
-  rpc BatchUpdateDevices(BatchUpdateDevicesRequest) returns (BatchUpdateDevicesResponse);
+  rpc BatchUpdateDevices(BatchUpdateDevicesRequest) returns (BatchUpdateDevicesResponse) {
+     option deprecated = true;
+  };
 
   // Add asset information
-  rpc AddAssets(AssetList) returns (AssetResponse);
+  rpc AddAssets(AssetList) returns (AssetResponse) {
+     option deprecated = true;
+  };
 
   // Get asset information
-  rpc GetAssets(AssetIDList) returns (AssetResponse);
+  rpc GetAssets(AssetIDList) returns (AssetResponse) {
+     option deprecated = true;
+  };
 
   // Delete asset information
-  rpc DeleteAssets(AssetIDList) returns (AssetIDResponse);
+  rpc DeleteAssets(AssetIDList) returns (AssetIDResponse) {
+     option deprecated = true;
+  };
 
   // Update asset information
-  rpc UpdateAssets(AssetList) returns (AssetResponse);
+  rpc UpdateAssets(AssetList) returns (AssetResponse) {
+     option deprecated = true;
+  };
 
   // DeviceConfigsExists checks if the device_configs exists in the datastore
   rpc DeviceConfigsExists(DeviceConfigsExistsRequest) returns (DeviceConfigsExistsResponse);
