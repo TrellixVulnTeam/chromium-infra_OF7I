@@ -114,3 +114,31 @@ func TestQuerySchedulingUnitByPropertyNames(t *testing.T) {
 		})
 	})
 }
+
+func TestGetSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	su1 := mockSchedulingUnit("su-1")
+	Convey("GetSchedulingUnit", t, func() {
+		Convey("Get SchedulingUnit by existing name/ID", func() {
+			resp, err := CreateSchedulingUnit(ctx, su1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, su1)
+			resp, err = GetSchedulingUnit(ctx, "su-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, su1)
+		})
+		Convey("Get SchedulingUnit by non-existing name/ID", func() {
+			resp, err := GetSchedulingUnit(ctx, "su-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get SchedulingUnit - invalid name/ID", func() {
+			resp, err := GetSchedulingUnit(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

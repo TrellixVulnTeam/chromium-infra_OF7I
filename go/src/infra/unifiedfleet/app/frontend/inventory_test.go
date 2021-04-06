@@ -42,7 +42,7 @@ func mockRackLSE(id string) *ufspb.RackLSE {
 
 func mockSchedulingUnit(name string) *ufspb.SchedulingUnit {
 	return &ufspb.SchedulingUnit{
-		Name: name,
+		Name: util.AddPrefix(util.SchedulingUnitCollection, name),
 	}
 }
 
@@ -1511,6 +1511,62 @@ func TestCreateSchedulingUnit(t *testing.T) {
 			_, err := tf.Fleet.CreateSchedulingUnit(tf.C, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
+		})
+	})
+}
+
+func TestUpdateSchedulingUnit(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("UpdateSchedulingUnit", t, func() {
+		Convey("Update existing SchedulingUnit - happy path", func() {
+			inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+				Name: "su-1",
+			})
+
+			su1 := mockSchedulingUnit("su-1")
+			su1.Description = "Updatedesc"
+			ureq := &ufsAPI.UpdateSchedulingUnitRequest{
+				SchedulingUnit: su1,
+			}
+			resp, err := tf.Fleet.UpdateSchedulingUnit(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, su1)
+		})
+
+		Convey("Update SchedulingUnit - Invalid input nil", func() {
+			req := &ufsAPI.UpdateSchedulingUnitRequest{
+				SchedulingUnit: nil,
+			}
+			resp, err := tf.Fleet.UpdateSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update SchedulingUnit - Invalid input empty name", func() {
+			su := mockSchedulingUnit("")
+			su.Name = ""
+			req := &ufsAPI.UpdateSchedulingUnitRequest{
+				SchedulingUnit: su,
+			}
+			resp, err := tf.Fleet.UpdateSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Update SchedulingUnit - Invalid input invalid name", func() {
+			su := mockSchedulingUnit("a.b)7&")
+			req := &ufsAPI.UpdateSchedulingUnitRequest{
+				SchedulingUnit: su,
+			}
+			resp, err := tf.Fleet.UpdateSchedulingUnit(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }

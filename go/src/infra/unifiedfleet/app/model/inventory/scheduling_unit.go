@@ -127,3 +127,12 @@ func putSchedulingUnit(ctx context.Context, su *ufspb.SchedulingUnit, update boo
 	}
 	return nil, err
 }
+
+// GetSchedulingUnit returns SchedulingUnit for the given name from datastore.
+func GetSchedulingUnit(ctx context.Context, name string) (*ufspb.SchedulingUnit, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.SchedulingUnit{Name: name}, newSchedulingUnitEntity)
+	if err == nil {
+		return pm.(*ufspb.SchedulingUnit), err
+	}
+	return nil, err
+}
