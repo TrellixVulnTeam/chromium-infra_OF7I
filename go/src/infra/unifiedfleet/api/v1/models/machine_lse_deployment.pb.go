@@ -30,34 +30,36 @@ const (
 
 // MachineLSEDeployment includes all info related to deployment of a machine LSE (host).
 //
+// This deployment record will be updated in 3 ways:
+//
+// 1. `shivas add machine`, a deployment record will be added to this machine even if it's
+//    not deployed yet. It usually happens when users add DHCP records for this machine to
+//    verify if it's physically set up well before adding the same hostname into UFS.
+//          hostname: "no-host-yet-<serial_number>"
+//          serial_number: from `shivas add machine`
+//          deployment_identifier: ""
+//          configs_to_push: nil
+//
+// 2. StartActivation phase in Chrome MDM service. When Chrome MDM gots a request from a mac
+//    to activate itself, it will always update back this deployment record no matter whether
+//    there's already a record existing or not. It usually happens when a mac automatically
+//    connects to Google Guest WiFi network in the DC before anyone touches it yet. In this case,
+//    the record here would be:
+//          hostname: "no-host-yet-<serial_number>"
+//          serial_number: from Chrome MDM
+//          deployment_identifier: from Chrome MDM
+//          configs_to_push: from Chrome MDM
+//
+// 3. `shivas add host`, a deployment record will be updated to reflect the real hostname given
+//    by users.
+//
 // Next tag: 6
 type MachineLSEDeployment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// This deployment record will be updated in 3 ways:
-	//
-	// 1. `shivas add machine`, a deployment record will be added to this machine even if it's
-	//    not deployed yet. It usually happens when users add DHCP records for this machine to
-	//    verify if it's physically set up well before adding the same hostname into UFS.
-	//          hostname: "no-host-yet-<serial_number>"
-	//          serial_number: from `shivas add machine`
-	//          deployment_identifier: ""
-	//          configs_to_push: nil
-	//
-	// 2. StartActivation phase in Chrome MDM service. When Chrome MDM gots a request from a mac
-	//    to activate itself, it will always update back this deployment record no matter whether
-	//    there's already a record existing or not. It usually happens when a mac automatically
-	//    connects to Google Guest WiFi network in the DC before anyone touches it yet. In this case,
-	//    the record here would be:
-	//          hostname: "no-host-yet-<serial_number>"
-	//          serial_number: from Chrome MDM
-	//          deployment_identifier: from Chrome MDM
-	//          configs_to_push: from Chrome MDM
-	//
-	// 3. `shivas add host`, a deployment record will be updated to reflect the real hostname given
-	//    by users.
+	// The name of the host which contains this deployment record.
 	Hostname string `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	// Refer to Machine.serial_number in machine.proto
 	SerialNumber string `protobuf:"bytes,2,opt,name=serial_number,json=serialNumber,proto3" json:"serial_number,omitempty"`

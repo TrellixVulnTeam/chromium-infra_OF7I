@@ -38,10 +38,11 @@ var registrationDumpToolkit = map[string]getAllFunc{
 }
 
 var inventoryDumpToolkit = map[string]getAllFunc{
-	"machine_lses":     getAllMachineLSEsMsgs,
-	"rack_lses":        getAllRackLSEMsgs,
-	"vms":              getAllVMMsgs,
-	"caching_services": getAllCachingServiceMsgs,
+	"machine_lses":            getAllMachineLSEsMsgs,
+	"rack_lses":               getAllRackLSEMsgs,
+	"vms":                     getAllVMMsgs,
+	"caching_services":        getAllCachingServiceMsgs,
+	"machine_lse_deployments": getAllMachineLSEDeploymentsMsgs,
 }
 
 var stateDumpToolkit = map[string]getAllFunc{
@@ -376,6 +377,26 @@ func getAllMachineLSEsMsgs(ctx context.Context) ([]proto.Message, error) {
 		for _, r := range res {
 			msgs = append(msgs, &apibq.MachineLSERow{
 				MachineLse: r,
+			})
+		}
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
+	}
+	return msgs, nil
+}
+
+func getAllMachineLSEDeploymentsMsgs(ctx context.Context) ([]proto.Message, error) {
+	msgs := make([]proto.Message, 0)
+	for startToken := ""; ; {
+		res, nextToken, err := inventory.ListMachineLSEDeployments(ctx, pageSize, startToken, nil, false)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all machine lse deployments").Err()
+		}
+		for _, r := range res {
+			msgs = append(msgs, &apibq.MachineLSEDeploymentRow{
+				MachineLseDeployment: r,
 			})
 		}
 		if nextToken == "" {

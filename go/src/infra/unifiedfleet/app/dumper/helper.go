@@ -197,6 +197,16 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 				CachingService: &data,
 				Delete:         s.Delete,
 			})
+		case util.MachineLSEDeploymentCollection:
+			var data ufspb.MachineLSEDeployment
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["machine_lse_deployments"] = append(msgs["machine_lse_deployments"], &apibq.MachineLSEDeploymentRow{
+				MachineLseDeployment: &data,
+				Delete:               s.Delete,
+			})
 		}
 	}
 	logging.Debugf(ctx, "Uploading all %d snapshots...", len(snapshots))

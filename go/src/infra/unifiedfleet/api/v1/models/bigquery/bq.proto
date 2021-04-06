@@ -15,6 +15,7 @@ import "infra/unifiedfleet/api/v1/models/caching_service.proto";
 import "infra/unifiedfleet/api/v1/models/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/models/machine.proto";
 import "infra/unifiedfleet/api/v1/models/machine_lse.proto";
+import "infra/unifiedfleet/api/v1/models/machine_lse_deployment.proto";
 import "infra/unifiedfleet/api/v1/models/network.proto";
 import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/rack.proto";
@@ -122,5 +123,10 @@ message DUTStateRecordRow {
 
 message CachingServiceRow {
     models.CachingService caching_service = 1;
+    bool delete = 2;
+}
+
+message MachineLSEDeploymentRow {
+    models.MachineLSEDeployment machine_lse_deployment = 1;
     bool delete = 2;
 }
