@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
@@ -42,11 +43,12 @@ func reportUFSInventoryCronHandler(ctx context.Context) (err error) {
 		return err
 	}
 	// Get all the MachineLSEs
-	lses, err := inventory.ListAllMachineLSEs(ctx, false)
+	lses, err := getAllMachineLSEs(ctx, false)
 	if err != nil {
 		return err
 	}
-	machines, err := registration.ListAllMachines(ctx, false)
+	// Get all Machines
+	machines, err := getAllMachines(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -54,8 +56,26 @@ func reportUFSInventoryCronHandler(ctx context.Context) (err error) {
 	for _, machine := range machines {
 		idTomachineMap[machine.GetName()] = machine
 	}
+	sUnits, err := getAllSchedulingUnits(ctx, false)
+	if err != nil {
+		return err
+	}
 	c := make(inventoryCounter)
+	// Map for MachineLSEs associated with SchedulingUnit for easy search.
+	lseInSUnitMap := make(map[string]bool)
+	for _, su := range sUnits {
+		if len(su.GetMachineLSEs()) > 0 {
+			b := getBucketForDevice(nil, nil, env)
+			c[b]++
+			for _, lseName := range su.GetMachineLSEs() {
+				lseInSUnitMap[lseName] = true
+			}
+		}
+	}
 	for _, lse := range lses {
+		if lseInSUnitMap[lse.GetName()] {
+			continue
+		}
 		if len(lse.GetMachines()) < 0 {
 			continue
 		}
@@ -132,4 +152,36 @@ func getReportPool(pools []string) string {
 		return fmt.Sprintf("managed:%s", p)
 	}
 	return p
+}
+
+func getAllMachineLSEs(ctx context.Context, keysOnly bool) ([]*ufspb.MachineLSE, error) {
+	var lses []*ufspb.MachineLSE
+	for startToken := ""; ; {
+		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, startToken, nil, keysOnly)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all MachineLSEs").Err()
+		}
+		lses = append(lses, res...)
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
+	}
+	return lses, nil
+}
+
+func getAllMachines(ctx context.Context, keysOnly bool) ([]*ufspb.Machine, error) {
+	var machines []*ufspb.Machine
+	for startToken := ""; ; {
+		res, nextToken, err := registration.ListMachines(ctx, pageSize, startToken, nil, keysOnly)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all Machines").Err()
+		}
+		machines = append(machines, res...)
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
+	}
+	return machines, nil
 }
