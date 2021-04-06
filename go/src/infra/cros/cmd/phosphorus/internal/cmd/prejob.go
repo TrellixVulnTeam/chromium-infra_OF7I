@@ -364,8 +364,8 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 		ctx,
 		&tlsapi.ProvisionDutRequest{
 			Name: r.DutHostname,
-			Image: &tlsapi.ProvisionDutRequest_ChromeOSImage{
-				PathOneof: &tlsapi.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
+			TargetBuild: &tlsapi.ChromeOsImage{
+				PathOneof: &tlsapi.ChromeOsImage_GsPathPrefix{
 					GsPathPrefix: fmt.Sprintf("%s/%s", gsImageArchivePrefix, desired),
 				},
 			},

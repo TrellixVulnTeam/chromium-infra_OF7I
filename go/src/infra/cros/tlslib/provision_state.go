@@ -33,11 +33,11 @@ func newProvisionState(s *Server, req *tls.ProvisionDutRequest) (*provisionState
 	}
 
 	// Verify the incoming request path oneof is valid.
-	switch t := req.GetImage().GetPathOneof().(type) {
+	switch t := req.GetTargetBuild().GetPathOneof().(type) {
 	// Requests with gs_path_prefix should be in the format:
 	// gs://chromeos-image-archive/eve-release/R86-13388.0.0
-	case *tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix:
-		p.imagePath = req.GetImage().GetGsPathPrefix()
+	case *tls.ChromeOsImage_GsPathPrefix:
+		p.imagePath = req.GetTargetBuild().GetGsPathPrefix()
 	default:
 		return nil, fmt.Errorf("newProvisionState: unsupported ImagePathOneof in ProvisionDutRequest, %T", t)
 	}
