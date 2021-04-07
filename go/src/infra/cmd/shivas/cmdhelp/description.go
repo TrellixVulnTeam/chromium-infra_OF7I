@@ -203,7 +203,7 @@ Example DUT with peripherals:
 }
 
 The protobuf definition of machineLSE is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 
 [MCSV Mode]
 The file may have multiple or one dut csv record.
@@ -326,9 +326,9 @@ clear servoType by setting it to '-'. For example:
 		}
 
 The protobuf definition of machine lse is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 The protobuf definition of DeviceUnderTest is a part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
 
 The file may have multiple or one dut csv record.
 The header format and sequence should be: [name,asset,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
@@ -377,10 +377,10 @@ Example Labstation:
 }
 
 The protobuf definition of machine lse is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 
 The protobuf definition of Labstation is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
 
 The file may have multiple or one labstation csv record.
 The header format and sequence should be: [name,asset,model,board,rpm_host,rpm_outlet,pools]
@@ -422,10 +422,10 @@ Example Labstation:
 }
 
 The protobuf definition of machine lse is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto
 
 The protobuf definition of Labstation is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/chromeos/lab/device.proto
 
 The file may have multiple or one labstation csv record.
 The header format and sequence should be: [name,asset,rpm_host,rpm_outlet,pools]
@@ -528,7 +528,7 @@ switch-2,rack-2,hello-1,Dell Power
 switch-3,rack-2,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition of switch is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// VMFileText description for VM file input
 	VMFileText string = `Path to a file containing VM specification in JSON format.
@@ -548,7 +548,7 @@ Example VM:
 }
 
 The protobuf definition of VM is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
 
 	// ListVMLongDesc long description for ListVMCmd
 	ListVMLongDesc string = `List all vms for a host
@@ -735,13 +735,13 @@ Example OS machine creation request:
 
 The protobuf definition can be found here:
 Machine:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto
 
 Drac:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto
 
 Nic:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/network.proto`
 
 	// AddAssetFileText description for asset file input for add asset cmd
 	AddAssetFileText string = `[JSON/MCSV Mode] Path to a file containing asset specification..
@@ -790,7 +790,7 @@ asset-1,chromeos2,rack23,garg,octopus,dut,testasset
 asset-2,chromeos4,rack23,lazor,trogdor,labstation,testlab
 
 The protobuf definition of asset is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
 
 	// AssetFileText description for asset file input
 	AssetFileText string = `Path to a file containing asset specification in JSON format.
@@ -829,7 +829,7 @@ Example OS asset:
 }
 
 The protobuf definition of asset is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/asset.proto`
 
 	// MachineFileText description for machine file input
 	MachineFileText string = `Path to a file containing machine specification in JSON format.
@@ -877,7 +877,7 @@ Example OS machine:
 }
 
 The protobuf definition of machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 
 	// AddHostLongDesc long description for AddHostCmd
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, VM Server, Host OS...) on a machine
@@ -1073,7 +1073,7 @@ Example host(Dev server/VM server) for an OS machine:
 }
 
 The protobuf definition of a deployed machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine_lse.proto`
 
 	// ListHostLongDesc long description for ListHostCmd
 	ListHostLongDesc string = `List all hosts
@@ -1144,7 +1144,7 @@ Example prototype for machine deployment:
 }
 
 The protobuf definition of prototype for machine deployment is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto#29`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto#29`
 
 	// AddRackLSEPrototypeLongDesc long description for AddRackLSEPrototypeCmd
 	AddRackLSEPrototypeLongDesc string = `Add prototype for rack deployment.
@@ -1196,7 +1196,7 @@ Example prototype for rack deployment:
 }
 
 The protobuf definition of prototype for rack deployment is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/lse_prototype.proto`
 
 	// AddChromePlatformLongDesc long description for AddChromePlatformCmd
 	AddChromePlatformLongDesc string = `Add platform configuration for browser machine.
@@ -1287,7 +1287,7 @@ Example platform configuration:
 }
 
 The protobuf definition of platform configuration for browser machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/chrome_platform.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/chrome_platform.proto`
 
 	// AddNicLongDesc long description for AddNicCmd
 	AddNicLongDesc string = `Add a nic to UFS.
@@ -1334,7 +1334,7 @@ Example nic:
 }
 
 The protobuf definition of nic is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/network.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/network.proto`
 
 	// AddDracLongDesc long description for AddDracCmd
 	AddDracLongDesc string = `Add a drac to UFS.
@@ -1390,7 +1390,7 @@ Example drac:
 }
 
 The protobuf definition of drac is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// AddKVMLongDesc long description for AddKVMCmd
 	AddKVMLongDesc string = `Add a kvm to UFS.
@@ -1436,7 +1436,7 @@ Example kvm:
 }
 
 The protobuf definition of kvm is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// AddRackLongDesc long description for AddRackCmd
 	AddRackLongDesc string = `Create a rack to UFS.
@@ -1534,10 +1534,10 @@ rack-3,chromeos2,13,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition can be found here:
 Rack:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/rack.proto
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/rack.proto
 
 Switch, KVM and RPM:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// RackFileText description for rack file input
 	RackFileText string = `Path to a file containing rack specification in JSON format.
@@ -1568,7 +1568,7 @@ Example OS rack:
 }
 
 The protobuf definition of rack is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/rack.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/rack.proto`
 
 	// ZoneFilterHelpText help text for zone filters for list command
 	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(ufsUtil.ValidZoneStr(), ", "))
@@ -1683,7 +1683,7 @@ rpm-2,chromeos2,11:11:11:11:11:11,12,hello-1,Dell Power
 rpm-3,chromeos2,22:22:22:22:22:22,13,"hello,world, this is ufs",Apple Pro Power
 
 The protobuf definition of rpm is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/peripherals.proto`
 
 	// GetStableVersionText description for GetStableVersionCmd
 	GetStableVersionText string = `Get stable version details for DUT/labstation/model.
@@ -1743,7 +1743,7 @@ name,port,subnet,primary,secondary,state,desc
 45.23.21.22,6666,45.23.21.22/56,1.1.1.1,2.2.2.2,serving,cas2
 
 The protobuf definition of CachingService is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
 
 	// CachingServiceUpdateFileText description for CachingService file input
 	CachingServiceUpdateFileText string = `[JSON Mode] Path to a file(.json) containing CachingService specification.
@@ -1762,7 +1762,7 @@ Example CachingService:
 }
 
 The protobuf definition of CachingService is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
 )
 
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
