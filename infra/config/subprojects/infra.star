@@ -21,7 +21,8 @@ def ci_builder(
         extra_dimensions = None,
         schedule = None,
         infra_triggered = True,
-        tree_closing = False):
+        tree_closing = False,
+        bbagent_percent = None):
     infra.builder(
         name = name,
         bucket = "ci",
@@ -33,6 +34,7 @@ def ci_builder(
         properties = properties,
         extra_dimensions = extra_dimensions,
         notifies = infra.tree_closing_notifiers() if tree_closing else None,
+        bbagent_percent = bbagent_percent,
     )
     luci.console_view_entry(
         builder = name,
@@ -47,7 +49,8 @@ def try_builder(
         recipe = None,
         experiment_percentage = None,
         properties = None,
-        in_cq = True):
+        in_cq = True,
+        bbagent_percent = None):
     infra.builder(
         name = name,
         bucket = "try",
@@ -55,6 +58,7 @@ def try_builder(
         os = os,
         cpu = cpu,
         properties = properties,
+        bbagent_percent = bbagent_percent,
     )
     if in_cq:
         luci.cq_tryjob_verifier(
@@ -105,6 +109,7 @@ ci_builder(
         "infra": "ci",
         "manifests": ["infra/build/images/deterministic"],
     },
+    bbagent_percent = 100,
 )
 
 # Builds arm64-flavored docker images for swarm_docker.
@@ -167,6 +172,7 @@ try_builder(
         "infra": "try",
         "manifests": ["infra/build/images/deterministic"],
     },
+    bbagent_percent = 100,
 )
 
 # Presubmit trybot.

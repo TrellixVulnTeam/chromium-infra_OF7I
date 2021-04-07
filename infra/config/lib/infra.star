@@ -89,6 +89,7 @@ def builder(
         schedule = None,
         extra_dimensions = None,
         use_realms = False,
+        bbagent_percent = None,
 
         # Triggering relations.
         triggered_by = None,
@@ -114,6 +115,7 @@ def builder(
       schedule: a string with builder schedule for cron-like builders.
       extra_dimensions: a dict with additional Swarming dimensions.
       use_realms: True to launch realms-aware builds.
+      bbagent_percent: A percentage (0-100) of whether to use bbagent.
       triggered_by: builders that trigger this one.
       notifies: what luci.notifier(...) to notify when its done.
     """
@@ -142,6 +144,8 @@ def builder(
     experiments = {}
     if use_realms:
         experiments["luci.use_realms"] = 100
+    if bbagent_percent:
+        experiments["luci.buildbucket.use_bbagent"] = bbagent_percent
 
     luci.builder(
         name = name,
