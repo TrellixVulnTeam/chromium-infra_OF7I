@@ -449,30 +449,41 @@ func getAllStateRecordMsgs(ctx context.Context) ([]proto.Message, error) {
 }
 
 func getAllDutStateRecordMsgs(ctx context.Context) ([]proto.Message, error) {
-	states, err := state.ListAllDutStates(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	msgs := make([]proto.Message, len(states))
-	for idx, state := range states {
-		msgs[idx] = &apibq.DUTStateRecordRow{
-			State: state,
+	msgs := make([]proto.Message, 0)
+	for startToken := ""; ; {
+		res, nextToken, err := state.ListDutStates(ctx, pageSize, startToken, nil, false)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all DutStates").Err()
 		}
+		for _, r := range res {
+			msgs = append(msgs, &apibq.DUTStateRecordRow{
+				State: r,
+			})
+		}
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
 	}
 	return msgs, nil
 }
 
 func getAllCachingServiceMsgs(ctx context.Context) ([]proto.Message, error) {
-	cachingServices, err := caching.ListAllCachingServices(ctx, false)
-	if err != nil {
-		return nil, errors.Annotate(err, "get all caching services").Err()
-	}
 	msgs := make([]proto.Message, 0)
-	for _, p := range cachingServices {
-		msg := &apibq.CachingServiceRow{
-			CachingService: p,
+	for startToken := ""; ; {
+		res, nextToken, err := caching.ListCachingServices(ctx, pageSize, startToken, nil, false)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all CachingServices").Err()
 		}
-		msgs = append(msgs, msg)
+		for _, r := range res {
+			msgs = append(msgs, &apibq.CachingServiceRow{
+				CachingService: r,
+			})
+		}
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
 	}
 	return msgs, nil
 }
