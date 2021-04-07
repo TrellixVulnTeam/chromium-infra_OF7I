@@ -53,7 +53,8 @@ func innerMain() error {
 		return err
 	}
 
-	tlw, err := newTLWServer(ce, proxySSHSigner)
+	b := fleetTLWBuilder{env: ce, proxySSHSigner: proxySSHSigner}
+	tlw, err := b.build()
 	if err != nil {
 		return err
 	}
@@ -61,12 +62,7 @@ func innerMain() error {
 	tlw.registerWith(s)
 	defer tlw.Close()
 
-	// TODO(sanikak): Every time a new parameter is added to the tlw server,
-	// it needs to be added to the session server. This is not ideal. A better
-	// way to accomplish the same objective will be to add a "TLW config" that
-	// configures the TLWServer, and sessionServer has a copy to use for new
-	// TLW servers.
-	ss := newSessionServer(ce, proxySSHSigner)
+	ss := newSessionServer(b)
 	ss.registerWith(s)
 	defer ss.Close()
 

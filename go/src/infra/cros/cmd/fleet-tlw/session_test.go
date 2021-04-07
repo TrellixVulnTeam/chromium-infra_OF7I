@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,6 +22,18 @@ import (
 	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/cros/fleet/access"
 )
+
+type fakeTLWServer struct{}
+
+func (t fakeTLWServer) Close() {}
+
+func (t fakeTLWServer) registerWith(*grpc.Server) {}
+
+type fakeTLWBuilder struct{}
+
+func (b fakeTLWBuilder) build() (wiringServer, error) {
+	return fakeTLWServer{}, nil
+}
 
 // TestSessionServer does a basic test of the session RPCs by using
 // them how a simple client might.
@@ -37,8 +48,7 @@ func TestSessionServer(t *testing.T) {
 	ctx, cf := context.WithTimeout(context.Background(), limit)
 	t.Cleanup(cf)
 
-	fakeSigner, _ := ssh.ParsePrivateKey([]byte("fake_key"))
-	s := newSessionServer(fakeEnv{}, fakeSigner)
+	s := newSessionServer(fakeTLWBuilder{})
 	expire := tsAfter(time.Minute)
 
 	got, err := s.CreateSession(ctx, &access.CreateSessionRequest{

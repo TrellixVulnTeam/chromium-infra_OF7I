@@ -36,7 +36,7 @@ type sessionContext struct {
 type session struct {
 	listener   net.Listener
 	grpcServer *grpc.Server
-	tlwServer  *tlwServer
+	tlwServer  wiringServer
 	expire     time.Time
 }
 
@@ -50,13 +50,31 @@ func (s session) toProto(name string) *access.Session {
 	}
 }
 
+// wiringServer is the interface for a wiring server (TLW) that is created for a
+// session.
+type wiringServer interface {
+	registerWith(*grpc.Server)
+	Close()
+}
+
+type wiringBuilder interface {
+	build() (wiringServer, error)
+}
+
+type fleetTLWBuilder struct {
+	// Unsafe to set concurrently, only set on init
+	env            cache.Environment
+	proxySSHSigner ssh.Signer
+}
+
+func (b fleetTLWBuilder) build() (wiringServer, error) {
+	return newTLWServer(b.env, b.proxySSHSigner)
+}
+
 type sessionServer struct {
 	access.UnimplementedFleetServer
-	wg             sync.WaitGroup
-	proxySSHSigner ssh.Signer
-
-	// Unsafe to set concurrently, only set on init
-	env cache.Environment
+	wg            sync.WaitGroup
+	wiringBuilder wiringBuilder
 
 	muSessions sync.Mutex
 	// sessions intentionally doesn't use pointers to make
@@ -67,10 +85,10 @@ type sessionServer struct {
 // newSessionServer creates a new sessionServer.
 // It should be closed after use.
 // The gRPC server should be stopped first to ensure there are no new requests.
-func newSessionServer(e cache.Environment, proxySSHSigner ssh.Signer) *sessionServer {
+func newSessionServer(b wiringBuilder) *sessionServer {
 	return &sessionServer{
-		proxySSHSigner: proxySSHSigner,
-		sessions:       make(map[string]sessionContext),
+		wiringBuilder: b,
+		sessions:      make(map[string]sessionContext),
 	}
 }
 
@@ -96,7 +114,7 @@ func (s *sessionServer) CreateSession(ctx context.Context, req *access.CreateSes
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 	gs := grpc.NewServer()
-	tlw, err := newTLWServer(s.env, s.proxySSHSigner)
+	tlw, err := s.wiringBuilder.build()
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
