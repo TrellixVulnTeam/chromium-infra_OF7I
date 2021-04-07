@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.12" }
+  source { patch_version: "chromium.13" }
   package { version_file: ".versions/cpython3.cipd_version" }
 }
 
