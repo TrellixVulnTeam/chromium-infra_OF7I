@@ -18,7 +18,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"infra/cros/cmd/fleet-tlw/internal/cache"
 	"infra/cros/fleet/access"
 )
 
@@ -62,13 +61,12 @@ type wiringBuilder interface {
 }
 
 type fleetTLWBuilder struct {
-	// Unsafe to set concurrently, only set on init
-	env            cache.Environment
-	proxySSHSigner ssh.Signer
+	proxySSHSigner  ssh.Signer
+	serviceAcctJSON string
 }
 
 func (b fleetTLWBuilder) build() (wiringServer, error) {
-	return newTLWServer(b.env, b.proxySSHSigner)
+	return newTLWServer(b.proxySSHSigner, b.serviceAcctJSON)
 }
 
 type sessionServer struct {

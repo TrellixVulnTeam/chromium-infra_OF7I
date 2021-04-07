@@ -40,11 +40,15 @@ type tlwServer struct {
 	ufsClient ufsapi.FleetClient
 }
 
-func newTLWServer(e cache.Environment, proxySSHSigner ssh.Signer) (*tlwServer, error) {
+func newTLWServer(proxySSHSigner ssh.Signer, serviceAcctJSON string) (*tlwServer, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	ufsClient, err := ufsapi.NewClient(ctx, ufsapi.ServiceAccountJSONPath("/creds/service_accounts/skylab-drone.json"), ufsapi.UserAgent("fleet-tlw/6.0.0"))
+	ufsClient, err := ufsapi.NewClient(ctx, ufsapi.ServiceAccountJSONPath(serviceAcctJSON), ufsapi.UserAgent("fleet-tlw/6.0.0"))
+	if err != nil {
+		return nil, errors.Reason("newTLWServer: %s", err).Err()
+	}
+	ce, err := cache.NewUFSEnv(ufsClient)
 	if err != nil {
 		return nil, errors.Reason("newTLWServer: %s", err).Err()
 	}
@@ -54,7 +58,7 @@ func newTLWServer(e cache.Environment, proxySSHSigner ssh.Signer) (*tlwServer, e
 		dutPool:   sshpool.New(getSSHClientConfig()),
 		proxyPool: sshpool.New(getSSHClientConfigForProxy(proxySSHSigner)),
 		tMgr:      newTunnelManager(),
-		cFrontend: cache.NewFrontend(e),
+		cFrontend: cache.NewFrontend(ce),
 		ufsClient: ufsClient,
 	}
 	return s, nil

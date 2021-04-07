@@ -6,17 +6,12 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"sync"
-	"time"
-
-	"infra/cros/cmd/fleet-tlw/internal/cache"
-	ufsapi "infra/unifiedfleet/api/v1/rpc"
 
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
@@ -43,17 +38,12 @@ func innerMain() error {
 	}
 	s := grpc.NewServer()
 
-	ce, err := cacheEnv()
-	if err != nil {
-		return err
-	}
-
 	proxySSHSigner, err := authMethodFromKey(*proxySSHKey)
 	if err != nil {
 		return err
 	}
 
-	b := fleetTLWBuilder{env: ce, proxySSHSigner: proxySSHSigner}
+	b := fleetTLWBuilder{proxySSHSigner: proxySSHSigner, serviceAcctJSON: *svcAcctJSONPath}
 	tlw, err := b.build()
 	if err != nil {
 		return err
@@ -79,29 +69,14 @@ func innerMain() error {
 	return s.Serve(l)
 }
 
-func cacheEnv() (cache.Environment, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	uc, err := ufsapi.NewClient(ctx, ufsapi.ServiceName(*ufsService), ufsapi.ServiceAccountJSONPath(*svcAcctJSONPath), ufsapi.UserAgent("fleet-tlw/3.0.0"))
-	if err != nil {
-		return nil, err
-	}
-	ce, err := cache.NewUFSEnv(uc)
-	if err != nil {
-		return nil, err
-	}
-
-	return ce, nil
-}
-
 func authMethodFromKey(keyfile string) (ssh.Signer, error) {
 	key, err := ioutil.ReadFile(keyfile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("auth ssh from key: %s", err)
 	}
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("auth ssh from key: %s", err)
 	}
 	return signer, nil
 }
