@@ -41,6 +41,10 @@ const QUERY_PARAMS_THAT_RESET_SCROLL = ['q', 'mode', 'id'];
 export class MrApp extends connectStore(LitElement) {
   /** @override */
   render() {
+    if (this.page === 'wizard') {
+      return html`<div id="reactMount"></div>`;
+    }
+
     return html`
       <style>
         ${SHARED_STYLES}
@@ -292,6 +296,8 @@ export class MrApp extends connectStore(LitElement) {
         postRouteHandler);
     page('/p/:project/issues/entry_new', this._loadEntryPage.bind(this),
         postRouteHandler);
+    page('/p/:project/issues/wizard', this._loadWizardPage.bind(this),
+        postRouteHandler);
 
     // Redirects from old hotlist pages to SPA hotlist pages.
     const hotlistRedirect = (pageName) => async (ctx) => {
@@ -491,6 +497,25 @@ export class MrApp extends connectStore(LitElement) {
   _loadEntryPage(ctx, next) {
     this.page = 'entry';
     next();
+  }
+
+  /**
+   * Load the issue wizard
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  async _loadWizardPage(ctx, next) {
+    const {renderWizard} = await import(
+        /* webpackChunkName: "IssueWizard" */ '../../react/IssueWizard.tsx');
+
+    this.page = 'wizard';
+    next();
+
+    await this.updateComplete;
+
+    const mount = document.getElementById('reactMount');
+
+    renderWizard(mount);
   }
 
   /**

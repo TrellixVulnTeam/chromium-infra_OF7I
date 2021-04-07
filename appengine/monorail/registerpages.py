@@ -253,6 +253,8 @@ class ServletRegistry(object):
             urls.ISSUE_DETAIL_LEGACY:
                 registerpages_helpers.MakeRedirectInScope(
                     urls.ISSUE_DETAIL, 'p', keep_qs=True),
+            urls.ISSUE_WIZARD:
+                webcomponentspage.WebComponentsPage,
             urls.ISSUE_ENTRY:
                 issueentry.IssueEntry,
             urls.ISSUE_ENTRY_NEW:
