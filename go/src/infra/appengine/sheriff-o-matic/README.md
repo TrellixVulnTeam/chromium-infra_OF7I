@@ -140,7 +140,7 @@ There is a difference because other trees (aside from ChromeOS and Fuchsia)
 reads data from memcache (instead of querying BigQuery directly) in order to
 save cost.
 
-The purpose of the cronjob is to process data from SoM's BigQuery view and
+The purpose of the cronjobs is to process data from SoM's BigQuery view and
 populate Datastore with alerts.
 
 ## Deployment
@@ -239,6 +239,37 @@ run `./create_view.sh` again for staging and prod.
 Note: As there is no record of the deployment of BigQuery views, it is important
 that you only deploy to prod once your CL is landed, so it will be easier to
 debug later if something go wrong.
+
+## Dataflow
+A (simplified) dataflow in SoM is in this [diagram](https://docs.google.com/presentation/d/1onUTH9QSE5Y65Vlp7pm6UPM7LRIwWHvwc_yJoEXyfDg).
+
+
+## Troubleshooting common problems
+### SoM is showing incorrect/missing/stale data
+Firstly we should check if the [cron jobs](https://pantheon.corp.google.com/cloudscheduler?folder=&organizationId=&src=ac&project=sheriff-o-matic)
+are running or not, and if the latest runs were successful. Maybe it also helps
+to look at recent cron logs to verify that there are no unexpected error logs.
+
+If the cronjobs are successful, we should check if the alerts are configured to
+be shown in SoM or not. The conditions for each trees are in [bigquery_analyzer.go](https://source.chromium.org/chromium/infra/infra/+/HEAD:go/src/infra/appengine/sheriff-o-matic/som/analyzer/bigquery_analyzer.go;l=65).
+The alerts will then go through a filter in [config.json](https://source.chromium.org/chromium/infra/infra/+/HEAD:go/src/infra/appengine/sheriff-o-matic/config/config.json).
+
+If the alerts are supposed to show, but do not get shown in SoM, the next step
+is to look at Datastore (AlertJSONNonGrouping table) to see if we can find the
+alert there. If not, go to BigQuery, sheriffable_failures table to see if we
+can find the failure there. If the failure is in BigQuery, but not in
+DataStore, there may be a bug in the analyzer cron job, which will require
+further investigation.
+
+If the failure cannot be found in SoM's BQ table, check if the build can be
+found in buildbucket table (e.g. cr-buildbucket.raw.completed_builds_prod). If
+it can be found, then maybe there is a problem with the create_views.sh script,
+and will require further investigation.
+
+### Make SoM monitor additional builders
+Most of the time, those requests can be fulfilled by modifying the bigquery_analyzer.go
+file. We need to make sure those builders/steps are not filtered out in [config.json](https://source.chromium.org/chromium/infra/infra/+/HEAD:go/src/infra/appengine/sheriff-o-matic/config/config.json).
+
 
 ## Contributors
 
