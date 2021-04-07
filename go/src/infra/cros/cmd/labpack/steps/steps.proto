@@ -1,0 +1,23 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package steps;
+
+option go_package = "infra/cros/cmd/labpack/steps;stepspb";
+
+// LabpackInput represent list of input parameters receiving by CLI.
+//
+// Next Tag: 5
+message LabpackInput {
+    string unit_name = 1;
+    string task_name = 2;
+    string actions = 3;
+    string exclude_actions = 4;
+};
+
+message LabpackResponse {
+    string state = 1;
+}
