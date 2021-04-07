@@ -61,11 +61,12 @@ class CreationTest(testing.AppengineTestCase):
             name: "linux"
             build_numbers: YES
             swarming_host: "chromium-swarm.appspot.com"
-            recipe {
-              name: "recipe"
+            exe {
               cipd_package: "infra/recipe_bundle"
               cipd_version: "refs/heads/master"
+              cmd: "luciexe"
             }
+            properties: "{\\"recipe\\": \\"recipe\\"}"
           }
           builders {
             name: "linux_legacy"
@@ -274,6 +275,7 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['luciexe', '-custom', '-flags'])
+    self.assertIn(experiments.USE_BBAGENT, build.proto.input.experiments)
 
     in_props = model.BuildInputProperties.key_for(build.key).get()
     actual = in_props.parse()

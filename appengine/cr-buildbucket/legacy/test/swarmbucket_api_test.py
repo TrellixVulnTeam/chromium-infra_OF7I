@@ -62,6 +62,11 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
               dimensions: "baz:baz"
               auto_builder_dimension: YES
 
+              experiments: {
+                key:   "luci.buildbucket.use_bbagent"
+                value: 100
+              }
+
               # Override builder cache without timeout to make tests
               # simpler.
               caches {

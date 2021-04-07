@@ -154,7 +154,7 @@ class BuildRequest(_BuildRequestBase):
 
     _apply_global_settings(settings, bp)
     if builder_cfg:  # pragma: no branch
-      yield _apply_builder_config_async(builder_cfg, bp, settings, exps)
+      yield _apply_builder_config_async(builder_cfg, bp, exps)
 
     bp.status = common_pb2.SCHEDULED
     bp.created_by = created_by.to_bytes()
@@ -607,7 +607,7 @@ def _apply_global_settings(settings, build_proto):
 
 
 @ndb.tasklet
-def _apply_builder_config_async(builder_cfg, build_proto, settings, exps):
+def _apply_builder_config_async(builder_cfg, build_proto, exps):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
   # Populate timeouts.
   build_proto.scheduling_timeout.seconds = builder_cfg.expiration_secs
@@ -648,11 +648,7 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings, exps):
 
   # If the user specified exe.cmd, we do nothing.
   if not build_proto.exe.cmd:
-    uses_bbagent = (
-        exps[experiments.USE_BBAGENT] or config.builder_matches(
-            build_proto.builder, settings.swarming.bbagent_package.builders
-        )
-    )
+    uses_bbagent = exps[experiments.USE_BBAGENT]
     build_proto.exe.cmd.append('luciexe' if uses_bbagent else 'recipes')
 
   # At this point, build_proto.exe.cmd will be set.
@@ -661,6 +657,10 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings, exps):
   # use bbagent.
   #
   # All recipe bundles already support both 'recipes' and 'luciexe' entrypoints.
+
+  # update exps to reflect if we're using bbagent or not, regardless of the
+  # mechanism.
+  exps[experiments.USE_BBAGENT] = build_proto.exe.cmd[0] != 'recipes'
 
   # Populate swarming fields.
   sw = build_proto.infra.swarming

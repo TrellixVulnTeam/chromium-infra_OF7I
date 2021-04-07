@@ -1176,7 +1176,4 @@ def _end_build(build_id, status, summary_markdown='', end_time=None):
 
 
 def _using_kitchen(build_proto):
-  # cmd can be empty when ScheduleBuild was called on an older version of
-  # buildbucket. After we're transitioned to exe.cmd, we shouldn't need this
-  # function.
-  return not build_proto.exe.cmd or build_proto.exe.cmd[0] == 'recipes'
+  return build_proto.exe.cmd[0] == 'recipes'
