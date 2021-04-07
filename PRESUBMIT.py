@@ -494,7 +494,7 @@ _NON_INCLUSIVE_TERMS = (
         # less matchy for now.
         r'/\b(?i)((black|white)list|master|slave)\b',  # nocheck
         (
-            'Please don\'t use blacklist, whitelist,'  # nocheck
+            'Please don\'t use blacklist, whitelist, '  # nocheck
             'master, or slave in your',  # nocheck
             'code and make every effort to use other terms. Using "// nocheck"',
             'at the end of the offending line will bypass this PRESUBMIT error',
