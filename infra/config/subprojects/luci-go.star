@@ -44,8 +44,7 @@ def try_builder(
         recipe = None,
         experiment_percentage = None,
         properties = None,
-        in_cq = True,
-        bbagent_percent = None):
+        in_cq = True):
     infra.builder(
         name = name,
         bucket = "try",
@@ -53,7 +52,6 @@ def try_builder(
         os = os,
         use_realms = True,
         properties = properties,
-        bbagent_percent = bbagent_percent,
     )
     if in_cq:
         luci.cq_tryjob_verifier(
@@ -114,7 +112,6 @@ try_builder(
         "infra": "try",
         "manifests": ["infra/build/images/deterministic/luci"],
     },
-    bbagent_percent = 100,
 )
 
 try_builder(
