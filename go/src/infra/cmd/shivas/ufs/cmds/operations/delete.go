@@ -21,6 +21,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
+	"infra/cmd/shivas/ufs/subcmds/schedulingunit"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
@@ -37,7 +38,7 @@ var DeleteCmd = &subcommands.Command{
 	LongDesc: `Delete a
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
-	asset/dut/cachingservice
+	asset/dut/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &delete{}
@@ -61,6 +62,7 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		asset.DeleteAssetCmd,
 		dut.DeleteDUTCmd,
+		schedulingunit.DeleteSchedulingUnitCmd,
 		machine.DeleteMachineCmd,
 		host.DeleteHostCmd,
 		kvm.DeleteKVMCmd,

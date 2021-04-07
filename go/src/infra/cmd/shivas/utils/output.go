@@ -73,6 +73,7 @@ var (
 	StateTitle                = []string{"Name", "EnumName", "Description"}
 	AssetTitle                = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
 	CachingServiceTitle       = []string{"CachingService Name", "Port", "Subnet", "Primary", "Secondary", "State", "Description", "UpdateTime"}
+	SchedulingUnitTitle       = []string{"SchedulingUnit Name", "DUTs", "Pools", "Type", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -1633,6 +1634,64 @@ func PrintCachingServicesJSON(res []proto.Message, emit bool) {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
 		if i < len(cs)-1 {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
+
+// PrintSchedulingUnits prints the all SchedulingUnits in table form.
+func PrintSchedulingUnits(res []proto.Message, keysOnly bool) {
+	su := make([]*ufspb.SchedulingUnit, len(res))
+	for i, r := range res {
+		su[i] = r.(*ufspb.SchedulingUnit)
+	}
+	defer tw.Flush()
+	for _, c := range su {
+		printSchedulingUnit(c, keysOnly)
+	}
+}
+
+func schedulingUnitOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.SchedulingUnit)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Local().Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.Name),
+		strSlicesToStr(m.GetMachineLSEs()),
+		strSlicesToStr(m.GetPools()),
+		m.GetType().String(),
+		m.GetDescription(),
+		ts,
+	}
+}
+
+func printSchedulingUnit(su *ufspb.SchedulingUnit, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(su.Name))
+		return
+	}
+	var out string
+	for _, s := range schedulingUnitOutputStrs(su) {
+		out += fmt.Sprintf("%s\t", s)
+	}
+	fmt.Fprintln(tw, out)
+}
+
+// PrintSchedulingUnitsJSON prints the SchedulingUnit details in json format.
+func PrintSchedulingUnitsJSON(res []proto.Message, emit bool) {
+	su := make([]*ufspb.SchedulingUnit, len(res))
+	for i, r := range res {
+		su[i] = r.(*ufspb.SchedulingUnit)
+	}
+	fmt.Print("[")
+	for i, s := range su {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s, emit)
+		if i < len(su)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}

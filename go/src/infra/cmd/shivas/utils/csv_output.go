@@ -146,3 +146,8 @@ func PrintTSVPlatforms(msgs []proto.Message, keysOnly bool) {
 func PrintTSVCachingServices(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, cachingServiceOutputStrs)
 }
+
+// PrintTSVSchedulingUnits prints the tsv format of SchedulingUnits
+func PrintTSVSchedulingUnits(msgs []proto.Message, keysOnly bool) {
+	printTSVs(msgs, keysOnly, schedulingUnitOutputStrs)
+}
