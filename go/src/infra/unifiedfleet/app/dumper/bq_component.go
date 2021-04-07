@@ -43,6 +43,7 @@ var inventoryDumpToolkit = map[string]getAllFunc{
 	"vms":                     getAllVMMsgs,
 	"caching_services":        getAllCachingServiceMsgs,
 	"machine_lse_deployments": getAllMachineLSEDeploymentsMsgs,
+	"scheduling_units":        getAllSchedulingUnitMsgs,
 }
 
 var stateDumpToolkit = map[string]getAllFunc{
@@ -472,6 +473,26 @@ func getAllCachingServiceMsgs(ctx context.Context) ([]proto.Message, error) {
 			CachingService: p,
 		}
 		msgs = append(msgs, msg)
+	}
+	return msgs, nil
+}
+
+func getAllSchedulingUnitMsgs(ctx context.Context) ([]proto.Message, error) {
+	msgs := make([]proto.Message, 0)
+	for startToken := ""; ; {
+		res, nextToken, err := inventory.ListSchedulingUnits(ctx, pageSize, startToken, nil, false)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all SchedulingUnits").Err()
+		}
+		for _, r := range res {
+			msgs = append(msgs, &apibq.SchedulingUnitRow{
+				SchedulingUnit: r,
+			})
+		}
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
 	}
 	return msgs, nil
 }

@@ -21,6 +21,7 @@ import "infra/unifiedfleet/api/v1/models/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/rack.proto";
 import "infra/unifiedfleet/api/v1/models/rack_lse.proto";
 import "infra/unifiedfleet/api/v1/models/state.proto";
+import "infra/unifiedfleet/api/v1/models/scheduling_unit.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 
 message ChangeEventRow {
@@ -128,5 +129,10 @@ message CachingServiceRow {
 
 message MachineLSEDeploymentRow {
     models.MachineLSEDeployment machine_lse_deployment = 1;
+    bool delete = 2;
+}
+
+message SchedulingUnitRow {
+    models.SchedulingUnit scheduling_unit = 1;
     bool delete = 2;
 }

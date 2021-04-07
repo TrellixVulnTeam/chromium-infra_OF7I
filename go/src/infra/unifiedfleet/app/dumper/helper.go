@@ -207,6 +207,16 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 				MachineLseDeployment: &data,
 				Delete:               s.Delete,
 			})
+		case util.SchedulingUnitCollection:
+			var data ufspb.SchedulingUnit
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["scheduling_units"] = append(msgs["scheduling_units"], &apibq.SchedulingUnitRow{
+				SchedulingUnit: &data,
+				Delete:         s.Delete,
+			})
 		}
 	}
 	logging.Debugf(ctx, "Uploading all %d snapshots...", len(snapshots))
