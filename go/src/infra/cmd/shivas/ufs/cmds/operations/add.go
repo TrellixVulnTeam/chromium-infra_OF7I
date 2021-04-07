@@ -22,6 +22,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
+	"infra/cmd/shivas/ufs/subcmds/schedulingunit"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
@@ -38,7 +39,7 @@ var AddCmd = &subcommands.Command{
 	LongDesc: `Add details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
-	asset/dut/labstation/cachingservice
+	asset/dut/labstation/cachingservice/schedulingunit
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
@@ -64,6 +65,7 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		dut.AddDUTCmd,
 		labstation.AddLabstationCmd,
 		cachingservice.AddCachingServiceCmd,
+		schedulingunit.AddSchedulingUnitCmd,
 		machine.AddMachineCmd,
 		host.AddHostCmd,
 		kvm.AddKVMCmd,

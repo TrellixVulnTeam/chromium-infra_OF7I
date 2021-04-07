@@ -736,6 +736,21 @@ var StrToSchedulingUnitType = map[string]string{
 	"individual": "SCHEDULING_UNIT_TYPE_INDIVIDUAL",
 }
 
+// ValidSchedulingUnitTypeStr returns a valid str list for SchedulingUnitType strings.
+func ValidSchedulingUnitTypeStr() []string {
+	ks := make([]string, 0, len(StrToSchedulingUnitType))
+	for k := range StrToSchedulingUnitType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// IsSchedulingUnitType checks if a string refers to a valid SchedulingUnitType.
+func IsSchedulingUnitType(schedulingUnitType string) bool {
+	_, ok := StrToSchedulingUnitType[schedulingUnitType]
+	return ok
+}
+
 // ToSchedulingUnitType converts SchedulingUnitType string to a UFS SchedulingUnitType enum.
 func ToSchedulingUnitType(schedulingUnitType string) ufspb.SchedulingUnitType {
 	schedulingUnitType = RemoveGivenPrefix(schedulingUnitType, "scheduling_unit_type_")

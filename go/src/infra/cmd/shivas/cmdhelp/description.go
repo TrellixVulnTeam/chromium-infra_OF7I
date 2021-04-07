@@ -1631,6 +1631,9 @@ Operation will be faster as only name/id will be retrieved from the service.`
 	CableTypeHelpText string = fmt.Sprintf("the name of the cabletype. Can specify multiple comma separated values. "+
 		"Valid CableType strings: [%s]", strings.Join(ufsUtil.ValidCableTypeStr(), ", "))
 
+	// SchedulingUnitTypesHelpText help text for asset type filters
+	SchedulingUnitTypesHelpText string = fmt.Sprintf("\nValid type filters [%s]", strings.Join(ufsUtil.ValidSchedulingUnitTypeStr(), ", "))
+
 	// AddRPMLongDesc long description for AddRPMCmd
 	AddRPMLongDesc string = `Add a rpm to UFS.
 
@@ -1763,6 +1766,54 @@ Example CachingService:
 
 The protobuf definition of CachingService is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
+
+	//AddSchedulingUnitLongDesc long description for AddSchedulingUnitCmd
+	AddSchedulingUnitLongDesc string = `Create a SchedulingUnit in UFS.
+
+Examples:
+shivas add schedulingunit -f SchedulingUnit.json
+Adds a SchedulingUnit by reading a JSON file input.
+
+shivas add schedulingunit -f SchedulingUnit.csv
+Adds a SchedulingUnit by reading a MCSV file input.
+
+shivas add schedulingunit -name {name} -duts "dut1,dut2" -pools "ppol1,pool2"" -type all
+Adds a SchedulingUnit by specifying several attributes directly.`
+
+	// SchedulingUnitFileText description for SchedulingUnit file input
+	SchedulingUnitFileText string = `[JSON/MCSV Mode] Path to a file(.json/.csv) containing SchedulingUnit specification.
+
+[JSON Mode]
+This file must contain one SchedulingUnit JSON message
+Example SchedulingUnit:
+{
+	"name":  "su-1",
+	"machineLSEs":  [
+		"dut-1",
+		"dut-2"
+	],
+	"pools":  [
+		"pool1",
+		"pool2"
+	],
+	"type":  "SCHEDULING_UNIT_TYPE_ALL",
+	"description":  "desc",
+	"updateTime":  "2021-04-03T00:10:42.722023307Z",
+	"tags":  [
+		"tag1"
+	]
+}
+
+
+[MCSV Mode]
+The file may have multiple or one SchedulingUnit csv record
+The header format and sequence should be: [name,duts,pools,type,tags,desc]
+Example mcsv format:
+name,duts,pools,type,tags,desc
+sch-1,"dut-1,dut-2",pool1,all,,
+
+The protobuf definition of SchedulingUnit is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/scheduling_unit.proto`
 )
 
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
