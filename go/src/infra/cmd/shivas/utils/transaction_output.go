@@ -299,3 +299,20 @@ func PrintExistingCachingService(ctx context.Context, ic ufsAPI.FleetClient, nam
 	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
+
+// PrintExistingSchedulingUnit prints the old SchedulingUnit in update/delete operations
+func PrintExistingSchedulingUnit(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+	res, err := ic.GetSchedulingUnit(ctx, &ufsAPI.GetSchedulingUnitRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get SchedulingUnit").Err()
+	}
+	if res == nil {
+		return errors.Reason("The returned resp is empty").Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The SchedulingUnit before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return nil
+}

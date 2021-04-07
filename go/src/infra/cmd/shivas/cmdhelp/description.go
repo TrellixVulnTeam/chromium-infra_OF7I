@@ -1777,7 +1777,7 @@ Adds a SchedulingUnit by reading a JSON file input.
 shivas add schedulingunit -f SchedulingUnit.csv
 Adds a SchedulingUnit by reading a MCSV file input.
 
-shivas add schedulingunit -name {name} -duts "dut1,dut2" -pools "ppol1,pool2"" -type all
+shivas add schedulingunit -name {name} -duts "dut1,dut2" -pools "pool1,pool2" -type all
 Adds a SchedulingUnit by specifying several attributes directly.`
 
 	// SchedulingUnitFileText description for SchedulingUnit file input
@@ -1811,6 +1811,43 @@ The header format and sequence should be: [name,duts,pools,type,tags,desc]
 Example mcsv format:
 name,duts,pools,type,tags,desc
 sch-1,"dut-1,dut-2",pool1,all,,
+
+The protobuf definition of SchedulingUnit is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/scheduling_unit.proto`
+
+	// UpdateSchedulingUnitLongDesc long description for UpdateSchedulingUnitCmd
+	UpdateSchedulingUnitLongDesc string = `Update a SchedulingUnit by name.
+
+Examples:
+shivas update schedulingunit -f su.json
+Update a SchedulingUnit by reading a JSON file input.
+
+shivas update schedulingunit -name {schedulingunit name} -duts "dut1,dut2" -pools-to-remove "pool1,pool2" -description {description}
+Partial updates a SchedulingUnit by parameters. Only specified parameters will be udpated in the SchedulingUnit.`
+
+	// SchedulingUnitUpdateFileText description for SchedulingUnit file input
+	SchedulingUnitUpdateFileText string = `[JSON Mode] Path to a file(.json) containing SchedulingUnit specification.
+
+[JSON Mode]
+This file must contain one SchedulingUnit JSON message
+Example SchedulingUnit:
+{
+	"name":  "su-1",
+	"machineLSEs":  [
+		"dut-1",
+		"dut-2"
+	],
+	"pools":  [
+		"pool1",
+		"pool2"
+	],
+	"type":  "SCHEDULING_UNIT_TYPE_ALL",
+	"description":  "desc",
+	"updateTime":  "2021-04-03T00:10:42.722023307Z",
+	"tags":  [
+		"tag1"
+	]
+}
 
 The protobuf definition of SchedulingUnit is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/scheduling_unit.proto`
