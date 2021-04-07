@@ -17,7 +17,7 @@ type projectConfig struct {
 	Name          string  `gae:"$id"`
 	Parent        *ds.Key `gae:"$parent"`
 	Revision      string
-	ProjectConfig *tricium.ProjectConfig
+	ProjectConfig tricium.ProjectConfig
 }
 
 // serviceConfig is the single service config for this Tricium instance.
@@ -25,7 +25,7 @@ type serviceConfig struct {
 	ID            int64   `gae:"$id"`
 	Parent        *ds.Key `gae:"$parent"`
 	Revision      string
-	ServiceConfig *tricium.ServiceConfig
+	ServiceConfig tricium.ServiceConfig
 }
 
 // By putting all config entities under one common parent, this makes it so
@@ -44,7 +44,7 @@ func getAllProjectConfigs(c context.Context) (map[string]*tricium.ProjectConfig,
 	}
 	configs := map[string]*tricium.ProjectConfig{}
 	for _, stored := range storedConfigs {
-		configs[stored.Name] = stored.ProjectConfig
+		configs[stored.Name] = &stored.ProjectConfig
 	}
 	return configs, nil
 }
@@ -71,7 +71,7 @@ func getProjectConfig(c context.Context, name string) (*tricium.ProjectConfig, e
 	if err := ds.Get(c, stored); err != nil {
 		return nil, err
 	}
-	return stored.ProjectConfig, nil
+	return &stored.ProjectConfig, nil
 }
 
 // getServiceConfig retrieves the stored service config.
@@ -80,7 +80,7 @@ func getServiceConfig(c context.Context) (*tricium.ServiceConfig, error) {
 	if err := ds.Get(c, stored); err != nil {
 		return nil, err
 	}
-	return stored.ServiceConfig, nil
+	return &stored.ServiceConfig, nil
 }
 
 // getStoredServiceConfigRevision retrieves the current service config revision.
@@ -104,7 +104,7 @@ func setProjectConfig(c context.Context, name string, revision string, pc *trici
 		Name:          name,
 		Parent:        rootKey(c),
 		Revision:      revision,
-		ProjectConfig: pc,
+		ProjectConfig: *pc,
 	})
 }
 
@@ -114,7 +114,7 @@ func setServiceConfig(c context.Context, revision string, sc *tricium.ServiceCon
 		ID:            1,
 		Parent:        rootKey(c),
 		Revision:      revision,
-		ServiceConfig: sc,
+		ServiceConfig: *sc,
 	})
 }
 
