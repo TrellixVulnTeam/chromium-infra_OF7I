@@ -10,10 +10,14 @@ import (
 	"fmt"
 	"infra/cros/internal/shared"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/errors"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 )
 
@@ -43,6 +47,57 @@ var (
 	// Override this to use a mock GerritClient rather than the real one.
 	mockGerrit gerritpb.GerritClient
 )
+
+// Regex matching the path of a CL URL.
+//
+// The path must be of the form:
+// "/c/<project>/+/<change number>/<patchset>".
+var clURLPathRegex = regexp.MustCompile(`^\/c\/[^\+]+\/\+\/(\d+)\/(\d+)$`)
+
+// ParseCLURL parses a url for a CL into a ChangeRevKey.
+//
+// The url must be of the form:
+// "https://<host>-review.googlesource.com/c/<project>/+/<change number>/<patchset>".
+func ParseCLURL(rawurl string) (*ChangeRevKey, error) {
+	parsedURL, err := url.Parse(rawurl)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsedURL.Host == "" {
+		return nil, fmt.Errorf("could not parse host from URL (scheme must be specified): %s", rawurl)
+	}
+
+	if !strings.HasSuffix(parsedURL.Host, "-review.googlesource.com") {
+		return nil, fmt.Errorf(`host must end with "-review.googlesource.com: %s`, rawurl)
+	}
+
+	pathMatches := clURLPathRegex.FindStringSubmatch(parsedURL.Path)
+	if pathMatches == nil {
+		return nil, fmt.Errorf(
+			`could not parse CL information from URL path, expected path format "/c/<project>/+/<change number>/<patchset>": %s`,
+			rawurl,
+		)
+	}
+
+	changeNum, err := strconv.ParseInt(pathMatches[1], 10, 64)
+	if err != nil {
+		return nil, errors.Annotate(err, "could not parse change num from URL: %s", rawurl).Err()
+	}
+
+	patchset, err := strconv.ParseInt(pathMatches[2], 10, 32)
+	if err != nil {
+		return nil, errors.Annotate(err, "could not parse patchset from URL: %s", rawurl).Err()
+	}
+
+	key := &ChangeRevKey{
+		Host:      parsedURL.Host,
+		ChangeNum: changeNum,
+		Revision:  int32(patchset),
+	}
+
+	return key, nil
+}
 
 // GetChangeRev gets details from Gerrit about a change,revision pair.
 func GetChangeRev(ctx context.Context, authedClient *http.Client, changeNum int64, revision int32, host string) (*ChangeRev, error) {
