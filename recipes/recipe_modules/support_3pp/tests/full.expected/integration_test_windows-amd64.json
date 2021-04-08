@@ -55,6 +55,7 @@
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\already_uploaded\\3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\pkg\\3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\pkg_checkout\\3pp.pb@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\pkg_override_and_no_latest\\3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\posix_tool\\3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\dir_tools\\windows_experiment\\3pp.pb@@@",
       "@@@STEP_LOG_LINE@glob@[CACHE]\\builder\\package_repo\\unsupported\\3pp.pb@@@",
@@ -715,6 +716,62 @@
     },
     "infra_step": true,
     "name": "load package specs.Compute hash for 'tools/pkg_checkout'",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CACHE]\\builder\\package_repo\\dir_tools\\pkg_override_and_no_latest\\3pp.pb",
+      "/path/to/tmp/"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.read 'dir_tools\\\\pkg_override_and_no_latest\\\\3pp.pb'",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    source { url {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        version: \"1.1.2\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    build {}@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    package { disable_latest_ref: true }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  upload {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    pkg_prefix: \"tools\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    pkg_name_override: \"pkg\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "..\\[CACHE]\\builder\\package_repo\\dir_tools\\pkg_override_and_no_latest"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.Compute hash for 'tools/pkg_override_and_no_latest'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
@@ -1904,7 +1961,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -2678,7 +2735,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -3140,7 +3197,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -3804,7 +3861,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -3834,6 +3891,778 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/fetch_and_package@https://chrome-infra-packages.appspot.com/p/3pp/tools/fetch_and_package/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest"
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "describe",
+      "3pp/tools/pkg/windows-amd64",
+      "-version",
+      "version:2@1.1.2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64"
+    },
+    "name": "building tools/pkg_override_and_no_latest.cipd describe 3pp/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.1.2' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.mkdir -p [workdir]",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest.fetch sources",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.mkdir -p [workdir]/checkout/",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "describe",
+      "3pp/sources/url/tools/pkg/windows-amd64",
+      "-version",
+      "version:2@1.1.2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.cipd describe 3pp/sources/url/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.1.2' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]\\resources\\pycurl.py",
+      "--url",
+      "https://some.internet.example.com",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout\\raw_source_0.tar.gz"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.GET https://some.internet.example.com",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/url/tools/pkg/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_override_and_no_latest\\\\windows-amd64\\\\1.1.2\\\\checkout\"}",
+      "-out",
+      "[CLEANUP]\\tmp_tmp_14",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.build 3pp/sources/url/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/url/tools/pkg/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\3pp_cipd\\3pp\\sources\\url\\tools\\pkg\\windows-amd64"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.ensure cipd pkg cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]\\tmp_tmp_14",
+      "[CACHE]\\3pp_cipd\\3pp\\sources\\url\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.mv built cipd pkg to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.upload source to cipd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "describe",
+      "3pp/sources/url/tools/pkg/windows-amd64",
+      "-version",
+      "version:2@1.1.2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.1.2' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-register",
+      "[CACHE]\\3pp_cipd\\3pp\\sources\\url\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id",
+      "-tag",
+      "build_id:8945511751514863184",
+      "-tag",
+      "version:2@1.1.2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.upload source to cipd.register 3pp/sources/url/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/url/tools/pkg/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/sources/url/tools/pkg/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/sources/url/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "[CACHE]\\builder\\package_repo\\dir_tools\\pkg_override_and_no_latest",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout\\.3pp\\tools\\pkg_override_and_no_latest"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.fetch sources.copy package definition tools/pkg_override_and_no_latest",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest.run installation",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\out"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.run installation.make output dir",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "ensure",
+      "-root",
+      "[CACHE]\\windows_sdk",
+      "-ensure-file",
+      "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix\\bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.run installation.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-uploaded:2018-06\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"chrome_internal/third_party/sdk/windows\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
+      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix\\bin"
+      ]
+    },
+    "name": "building tools/pkg_override_and_no_latest.run installation.read SetEnv.x64.json",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      [@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"win_sdk\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"bin\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"x64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"VSINSTALLDIR\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      [@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"..\\\\\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      ]@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "bash",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout\\.3pp\\tools\\pkg_override_and_no_latest\\install.sh",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\out",
+      "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\deps_prefix"
+    ],
+    "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "VSINSTALLDIR": "[CACHE]\\windows_sdk",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "RECIPE_MODULE[infra::support_3pp]\\resources\\win_support",
+        "[CACHE]\\windows_sdk\\win_sdk\\bin\\x64",
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix\\bin"
+      ]
+    },
+    "name": "building tools/pkg_override_and_no_latest.run installation.install.sh [START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\out [START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\deps_prefix",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "taskkill.exe",
+      "/f",
+      "/t",
+      "/im",
+      "mspdbsrv.exe"
+    ],
+    "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\tools_prefix\\bin"
+      ]
+    },
+    "name": "building tools/pkg_override_and_no_latest.run installation.taskkill mspdbsrv",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_override_and_no_latest\\\\windows-amd64\\\\1.1.2\\\\out\"}",
+      "-out",
+      "[CLEANUP]\\tmp_tmp_15",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.build 3pp/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/pkg/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.ensure cipd pkg cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]\\tmp_tmp_15",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.mv built cipd pkg to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest.attach provenance",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.attach provenance.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "[CLEANUP]\\tmp_tmp_16\\manifest.json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "name": "building tools/pkg_override_and_no_latest.attach provenance.Provenance manifest",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_END@manifest.json@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]\\provenance\\provenance",
+      "generate",
+      "-input",
+      "[CLEANUP]\\tmp_tmp_16\\manifest.json",
+      "-output",
+      "[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
+      "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.attach provenance.generate",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building tools/pkg_override_and_no_latest.do upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LINK@40-chars-fake-of-the-package-instance_id@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "describe",
+      "3pp/tools/pkg/windows-amd64",
+      "-version",
+      "version:2@1.1.2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.do upload.cipd describe 3pp/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.1.2' not found@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "pkg-register",
+      "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id",
+      "-tag",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
+      "-tag",
+      "build_id:8945511751514863184",
+      "-tag",
+      "version:2@1.1.2",
+      "-metadata-from-file",
+      "provenance:[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "windows",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "windows-amd64",
+      "_3PP_TOOL_PLATFORM": "windows-amd64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "name": "building tools/pkg_override_and_no_latest.do upload.register 3pp/tools/pkg/windows-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/pkg/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/tools/pkg/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -4045,7 +4874,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/sources/script/tools/windows_experiment/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_17",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4107,7 +4936,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_14",
+      "[CLEANUP]\\tmp_tmp_17",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\sources\\script\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4418,7 +5247,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_18",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -4480,7 +5309,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_15",
+      "[CLEANUP]\\tmp_tmp_18",
       "[CACHE]\\3pp_cipd\\experimental\\3pp\\tools\\windows_experiment\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -4540,7 +5369,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_16\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_19\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -4564,9 +5393,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_16\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_19\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_19\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -4629,7 +5458,7 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -4637,7 +5466,7 @@
       "-tag",
       "version:2@2.0.0",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_16\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_19\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4771,7 +5600,7 @@
       "-version",
       "version:2@0.9.0.chops.1",
       "-out",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_20",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4834,7 +5663,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_17",
+      "[CLEANUP]\\tmp_tmp_20",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\resolved-instance_id-of-version:2@0.9.0."
     ],
     "env": {
@@ -5224,7 +6053,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/git_tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_21",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5288,7 +6117,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_18",
+      "[CLEANUP]\\tmp_tmp_21",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\git_tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -5717,7 +6546,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/git_tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\git_tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_19",
+      "[CLEANUP]\\tmp_tmp_22",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -5781,7 +6610,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_19",
+      "[CLEANUP]\\tmp_tmp_22",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\git_tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -6044,7 +6873,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_20\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_23\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -6069,9 +6898,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_20\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_23\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_20\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -6136,13 +6965,13 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.5.0-rc1.chops.1",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_20\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -6586,7 +7415,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/git/go.repo/tool\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\checkout\\\\src\\\\go.repo\\\\tool\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_21",
+      "[CLEANUP]\\tmp_tmp_24",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -6650,7 +7479,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_21",
+      "[CLEANUP]\\tmp_tmp_24",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\git\\go.repo\\tool\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7077,7 +7906,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\build_tools\\\\tool\\\\windows-amd64\\\\1.5.0-rc1\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_22",
+      "[CLEANUP]\\tmp_tmp_25",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -7141,7 +7970,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_22",
+      "[CLEANUP]\\tmp_tmp_25",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -7404,7 +8233,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_23\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_26\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -7429,9 +8258,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_23\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_26\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -7494,13 +8323,13 @@
       "pkg-register",
       "[CACHE]\\3pp_cipd\\3pp\\build_tools\\tool\\windows-amd64\\40-chars-fake-of-the-package-instance_id",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.5.0-rc1.chops.1",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_23\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7733,7 +8562,7 @@
       "-version",
       "version:2@1.0.0",
       "-out",
-      "[CLEANUP]\\tmp_tmp_24",
+      "[CLEANUP]\\tmp_tmp_27",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -7794,7 +8623,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_24",
+      "[CLEANUP]\\tmp_tmp_27",
       "[CACHE]\\3pp_cipd\\source\\dep\\resolved-instance_id-of-version:2@1.0.0-"
     ],
     "env": {
@@ -8170,7 +8999,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/dep/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\deps\\\\dep\\\\windows-amd64\\\\1.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_25",
+      "[CLEANUP]\\tmp_tmp_28",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8232,7 +9061,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_25",
+      "[CLEANUP]\\tmp_tmp_28",
       "[CACHE]\\3pp_cipd\\3pp\\deps\\dep\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -8292,7 +9121,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_26\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_29\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -8316,9 +9145,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_26\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_29\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -8381,13 +9210,13 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:2@1.0.0",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_26\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -8729,7 +9558,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_27",
+      "[CLEANUP]\\tmp_tmp_30",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -8791,7 +9620,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_27",
+      "[CLEANUP]\\tmp_tmp_30",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -9233,7 +10062,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg\\\\windows-amd64\\\\2.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_28",
+      "[CLEANUP]\\tmp_tmp_31",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -9295,7 +10124,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_28",
+      "[CLEANUP]\\tmp_tmp_31",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -9355,7 +10184,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_29\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_32\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -9379,9 +10208,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_29\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_32\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -9444,13 +10273,13 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:2@2.0.0",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_29\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -9757,7 +10586,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/sources/script/tools/pkg_checkout/windows-amd64\", \"preserve_writable\": true, \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_checkout\\\\windows-amd64\\\\2.0.0\\\\checkout\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_30",
+      "[CLEANUP]\\tmp_tmp_33",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -9819,7 +10648,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_30",
+      "[CLEANUP]\\tmp_tmp_33",
       "[CACHE]\\3pp_cipd\\3pp\\sources\\script\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -10261,7 +11090,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg_checkout/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\tools\\\\pkg_checkout\\\\windows-amd64\\\\2.0.0\\\\out\"}",
       "-out",
-      "[CLEANUP]\\tmp_tmp_31",
+      "[CLEANUP]\\tmp_tmp_34",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -10323,7 +11152,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]\\tmp_tmp_31",
+      "[CLEANUP]\\tmp_tmp_34",
       "[CACHE]\\3pp_cipd\\3pp\\tools\\pkg_checkout\\windows-amd64\\40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -10383,7 +11212,7 @@
       "/path/to/tmp/json",
       "copy",
       "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
-      "[CLEANUP]\\tmp_tmp_32\\manifest.json"
+      "[CLEANUP]\\tmp_tmp_35\\manifest.json"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1",
@@ -10407,9 +11236,9 @@
       "[START_DIR]\\provenance\\provenance",
       "generate",
       "-input",
-      "[CLEANUP]\\tmp_tmp_32\\manifest.json",
+      "[CLEANUP]\\tmp_tmp_35\\manifest.json",
       "-output",
-      "[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
+      "[CLEANUP]\\tmp_tmp_35\\provenance.attestation",
       "projects/chops-kms/locations/global/keyRings/chrome-official/cryptoKeys/infra-signing-key/cryptoKeyVersions/1"
     ],
     "env": {
@@ -10472,13 +11301,13 @@
       "-ref",
       "latest",
       "-tag",
-      "3pp_ecosystem_hash:e7ab990ab919fb02c42374f1e90b11103cf0806dd7c4b58158801745a84acfb7",
+      "3pp_ecosystem_hash:2393a4a4151c4933f7b07a7037bf824a0092acc8cf9a8c99f39b126f3b078b3b",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:2@2.0.0",
       "-metadata-from-file",
-      "provenance:[CLEANUP]\\tmp_tmp_32\\provenance.attestation",
+      "provenance:[CLEANUP]\\tmp_tmp_35\\provenance.attestation",
       "-json-output",
       "/path/to/tmp/json"
     ],

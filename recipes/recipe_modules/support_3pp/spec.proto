@@ -225,6 +225,11 @@ message Spec {
       // `version` before transformation.
       string alter_version_re = 3;
       string alter_version_replace = 4;
+
+      // If set, skip updating the 'latest' ref to point to newly-built
+      // packages using this spec. This may be useful if a spec is maintained
+      // to continue building an older release track for a package.
+      bool disable_latest_ref = 5;
     }
 
     message Verify {
@@ -307,6 +312,15 @@ message Spec {
     // `${platform}` suffix. This will also cause the build for this package to
     // ALWAYS run under the `linux-amd64` docker container (for consistency).
     bool universal = 2;
+
+    // Ordinarily the package name is automatically computed using the spec
+    // file path. pkg_name_override can be set to force a specific package name
+    // in CIPD.
+    //
+    // The override is used only at upload time, so when specifying
+    // dependencies or the packages passed to ensure_upload(), use the standard
+    // package name.
+    string pkg_name_override = 3;
   }
   // (required) Upload describes how the built package should be uploaded to
   // CIPD.

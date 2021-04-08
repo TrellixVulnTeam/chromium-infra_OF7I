@@ -368,6 +368,21 @@ def GenTests(api):
     universal: true
   }
   '''
+
+  pkgs_dict['dir_tools/pkg_override_and_no_latest'] = '''
+  create {
+    source { url {
+        download_url: "https://some.internet.example.com"
+        version: "1.1.2"
+    } }
+    build {}
+    package { disable_latest_ref: true }
+  }
+  upload {
+    pkg_prefix: "tools"
+    pkg_name_override: "pkg"
+  }
+  '''
   pkgs = sorted(pkgs_dict.items())
 
   def mk_name(*parts):

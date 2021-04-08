@@ -153,7 +153,8 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
                 'key_path') else []
         if spec.create_pb.package.alter_version_re:
           extra_tags['real_version'] = version
-        cipd_spec.ensure_uploaded(is_latest, extra_tags, metadata=provenance_md)
+        cipd_spec.ensure_uploaded(is_latest and not spec.disable_latest_ref,
+                                  extra_tags, metadata=provenance_md)
 
         # the active_result could be from cipd.describe or cipd.register
         upload_step_result = api.step.active_result

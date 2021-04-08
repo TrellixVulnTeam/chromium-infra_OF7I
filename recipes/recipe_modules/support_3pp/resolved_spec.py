@@ -129,7 +129,7 @@ class ResolvedSpec(object):
     elif method == 'script' or method == 'url':
       _source_cache = get_cipd_pkg_name([
           self._package_prefix, self._source_cache_prefix, method,
-          self._cipd_pkg_name, self._platform])
+          self._cipd_pkg_name_with_override, self._platform])
     else:
       _source_cache = None  # pragma: no cover
     return _source_cache
@@ -225,6 +225,10 @@ class ResolvedSpec(object):
     """
     return self._all_deps_and_tools
 
+  @property
+  def disable_latest_ref(self):
+    return self.create_pb.package.disable_latest_ref
+
   def cipd_spec(self, version):
     """Returns a CIPDSpec object for the result of building this ResolvedSpec's
     package/platform/version.
@@ -232,7 +236,7 @@ class ResolvedSpec(object):
     Args:
       * version (str) - The symver of this package to get the CIPDSpec for.
     """
-    cipd_pieces = [self._package_prefix, self._cipd_pkg_name]
+    cipd_pieces = [self._package_prefix, self._cipd_pkg_name_with_override]
     if not self._spec_pb.upload.universal:
       cipd_pieces.append(self.platform)
     full_cipd_pkg_name = get_cipd_pkg_name(cipd_pieces)
@@ -260,6 +264,14 @@ class ResolvedSpec(object):
 
     return self._cipd_spec_pool.get(pkg_name,
                                     source_version) if pkg_name else None
+
+  @property
+  def _cipd_pkg_name_with_override(self):
+    """Computes the true CIPD package name using any supplied override."""
+    if not self._spec_pb.upload.pkg_name_override:
+      return self._cipd_pkg_name
+    return '/'.join(self._cipd_pkg_name.split('/')[:-1] +
+                    [self._spec_pb.upload.pkg_name_override])
 
   @property
   def _sort_tuple(self):
