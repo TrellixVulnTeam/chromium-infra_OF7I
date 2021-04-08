@@ -267,6 +267,8 @@ def prepare_schedule_build_request_async(req):
   # Then apply the overrides specified in req.
   # Clear composite fields if they are specified in req.
   for f, _ in req.ListFields():
+    if f.name == 'experiments':  # MergeFrom applies this correctly
+      continue
     new_req.ClearField(f.name)
   new_req.MergeFrom(req)
 

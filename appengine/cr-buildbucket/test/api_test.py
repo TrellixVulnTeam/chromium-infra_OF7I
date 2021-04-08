@@ -676,6 +676,7 @@ class ScheduleBuildTests(BaseTestCase):
             "experiment.baz": True,
             "experiment.foo": False,
             experiments.CANARY: True,
+            experiments.NON_PROD: True,
         },
         properties=test_util.create_struct({
             'property_key': 'property_value_from_req',
