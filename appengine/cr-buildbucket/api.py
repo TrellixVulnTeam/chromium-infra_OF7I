@@ -29,6 +29,7 @@ import creation
 import default_field_masks
 import errors
 import events
+import experiments
 import model
 import search
 import service
@@ -246,8 +247,7 @@ def prepare_schedule_build_request_async(req):
   # First initialize the new request based on the build.
   new_req = rpc_pb2.ScheduleBuildRequest(
       builder=bp.builder,
-      canary=bp.canary,
-      experimental=bp.input.experimental,
+      experiments={exp: True for exp in bp.input.experiments},
       properties=non_empty_or_none(bp.input.properties),
       gitiles_commit=non_empty_or_none(bp.input.gitiles_commit),
       gerrit_changes=bp.input.gerrit_changes,
@@ -260,6 +260,9 @@ def prepare_schedule_build_request_async(req):
       # Don't copy swarming or we are likely to create a dead-born build
       # due to completed parent.
   )
+
+  new_req.experiments[experiments.CANARY] = bp.canary
+  new_req.experiments[experiments.NON_PROD] = bp.input.experimental
 
   # Then apply the overrides specified in req.
   # Clear composite fields if they are specified in req.

@@ -26,6 +26,7 @@ import api
 import bbutil
 import creation
 import errors
+import experiments
 import model
 import search
 import user
@@ -589,6 +590,11 @@ class ScheduleBuildTests(BaseTestCase):
             canary=common_pb2.YES,
             input=build_pb2.Build.Input(
                 experimental=common_pb2.NO,
+                experiments=[
+                    "experiment.foo",
+                    "experiment.bar",
+                    experiments.CANARY,
+                ],
                 properties=test_util.create_struct({
                     'property_key': 'property_value_from_build',
                     'another_property_key': 'another_property_value',
@@ -629,6 +635,11 @@ class ScheduleBuildTests(BaseTestCase):
             canary=common_pb2.NO,
             input=build_pb2.Build.Input(
                 experimental=common_pb2.YES,
+                experiments=[
+                    "experiment.bar",
+                    "experiment.baz",
+                    experiments.NON_PROD,
+                ],
                 properties=test_util.create_struct({
                     'property_key': 'property_value_from_req',
                 }),
@@ -660,6 +671,12 @@ class ScheduleBuildTests(BaseTestCase):
         builder=dict(project='chromium', bucket='try', builder='linux'),
         canary=common_pb2.NO,
         experimental=common_pb2.YES,
+        experiments={
+            "experiment.bar": True,
+            "experiment.baz": True,
+            "experiment.foo": False,
+            experiments.CANARY: True,
+        },
         properties=test_util.create_struct({
             'property_key': 'property_value_from_req',
         }),
@@ -760,10 +777,16 @@ class ScheduleBuildTests(BaseTestCase):
     add_async.assert_called_once_with(mock.ANY)
     actual_req = add_async.mock_calls[0][1][0].schedule_build_request
     self.assertEqual(actual_req.builder, template_build.proto.builder)
-    self.assertEqual(actual_req.canary, template_build.proto.canary)
+
+    self.assertEqual(actual_req.canary, common_pb2.UNSET)
+    self.assertEqual(actual_req.experimental, common_pb2.UNSET)
     self.assertEqual(
-        actual_req.experimental, template_build.proto.input.experimental
+        actual_req.experiments, {
+            experiments.CANARY: True,
+            experiments.NON_PROD: True,
+        }
     )
+
     self.assertEqual(
         actual_req.properties, template_build.proto.input.properties
     )
