@@ -31,7 +31,6 @@ func cmdLocationTags() *subcommands.Command {
 			The output format is JSON form of luci.resultsink.v1.LocationTags protobuf
 			message.
 		`),
-		Advanced: true,
 		CommandRun: func() subcommands.CommandRun {
 			r := &tagRun{}
 			r.RegisterOutputFlag()
