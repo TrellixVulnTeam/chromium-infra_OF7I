@@ -664,8 +664,8 @@ func TestSimpleConversions(t *testing.T) {
 				})
 
 				So(v, shouldContainMap, map[string]interface{}{
-					"base_git_hash": "c0dec0de",
-					"patch":         "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"base_git_hash":    "c0dec0de",
+					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
 
 			})
 
@@ -731,8 +731,8 @@ func TestSimpleConversions(t *testing.T) {
 				})
 
 				So(v, shouldContainMap, map[string]interface{}{
-					"base_git_hash": "c0dec0de",
-					"patch":         "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"base_git_hash":    "c0dec0de",
+					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
 
 			})
 
@@ -766,8 +766,8 @@ func TestSimpleConversions(t *testing.T) {
 				})
 
 				So(v, shouldContainMap, map[string]interface{}{
-					"base_git_hash": "c0dec0de",
-					"patch":         "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"base_git_hash":    "c0dec0de",
+					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
 			})
 
 		})

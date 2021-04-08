@@ -121,7 +121,7 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 		if err != nil {
 			return nil, errors.Annotate(err, "invalid experiment patch").Err()
 		}
-		v.Set("patch", experimentPatchURL)
+		v.Set("experiment_patch", experimentPatchURL)
 
 		if jk.Experiment.ExperimentCommit != nil {
 			// Note the naming difference -- the legacy service supports "end_git_hash".
