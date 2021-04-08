@@ -232,6 +232,7 @@ func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
 	if l.exitEarly {
 		return nil
 	}
+	fmt.Fprintf(l.cliApp.GetErr(), "Waiting to confirm %s run request validation...\n(To skip this step, pass the -exit-early flag on future %s run commands)\n", l.cmdName, l.cmdName)
 	_, err = l.bbClient.WaitForBuildStepStart(ctx, buildID, ctpExecuteStepName)
 	if err != nil {
 		return err

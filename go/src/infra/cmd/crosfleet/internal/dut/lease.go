@@ -94,6 +94,7 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	if c.exitEarly {
 		return nil
 	}
+	fmt.Fprintf(a.GetErr(), "Waiting to confirm DUT %s request validation and print leased DUT details...\n(To skip this step, pass the -exit-early flag on future DUT %s commands)\n", leaseCmdName, leaseCmdName)
 	build, err := leasesBBClient.WaitForBuildStepStart(ctx, buildID, c.leaseStartStepName())
 	if err != nil {
 		return err
