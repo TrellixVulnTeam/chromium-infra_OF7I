@@ -165,8 +165,11 @@ func NewClient(opts ClientOptions) (Client, error) {
 			},
 		}
 		client.labels = map[string]string{
-			"compute.googleapis.com/resource_id":   opts.ResourceID,
+			"compute.googleapis.com/resource_name": opts.ResourceID,
 			"compute.googleapis.com/resource_type": "instance",
+
+			// DEPRECATED.
+			"compute.googleapis.com/resource_id": opts.ResourceID,
 		}
 	} else {
 		// For all other resource types just put stuff in "global" resource, but
