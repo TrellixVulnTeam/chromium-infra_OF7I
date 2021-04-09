@@ -45,8 +45,8 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-gardeners',
     },
     {
-      name: 'Shadow Gardener',
-      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-shadow-gardeners',
+      name: 'Gardener (APAC)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-apac-gardeners',
     },
     {
       name: 'ARC Constable (PST)',
