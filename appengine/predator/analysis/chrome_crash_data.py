@@ -118,7 +118,7 @@ class ChromeCrashData(CrashData):
     stacktrace = self.StacktraceParser().Parse(
         self._raw_stacktrace,
         self._dependency_analyzer.regression_version_deps,
-        signature=self.signature, top_n_frames=self._top_n_frames)
+        top_n_frames=self._top_n_frames)
     if not stacktrace:
       logging.warning('Failed to parse the stacktrace %s',
                       self._raw_stacktrace)
