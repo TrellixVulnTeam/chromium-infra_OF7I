@@ -49,8 +49,7 @@ func makeBuildbucketBuild(buildTarget string, builderName string, status bbproto
 	b := &bbproto.Build{
 		Builder:  &bbproto.BuilderID{Builder: builderName},
 		Critical: criticalVal,
-		Input:    &bbproto.Build_Input{},
-		Output: &bbproto.Build_Output{
+		Input: &bbproto.Build_Input{
 			Properties: &_struct.Struct{
 				Fields: map[string]*_struct.Value{
 					"build_target": {
@@ -60,6 +59,11 @@ func makeBuildbucketBuild(buildTarget string, builderName string, status bbproto
 							},
 						}},
 					},
+				},
+			}},
+		Output: &bbproto.Build_Output{
+			Properties: &_struct.Struct{
+				Fields: map[string]*_struct.Value{
 					"artifacts": {
 						Kind: &_struct.Value_StructValue{StructValue: &_struct.Struct{
 							Fields: map[string]*_struct.Value{

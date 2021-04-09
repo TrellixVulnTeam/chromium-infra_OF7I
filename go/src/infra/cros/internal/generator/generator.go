@@ -210,7 +210,7 @@ func hasTestArtifacts(b *bbproto.Build) bool {
 
 // getBuildTarget returns the build target from the given build, or empty string if none is found.
 func getBuildTarget(bb *bbproto.Build) string {
-	btStruct, ok := bb.Output.Properties.Fields["build_target"]
+	btStruct, ok := bb.Input.Properties.Fields["build_target"]
 	if !ok {
 		return ""
 	}
