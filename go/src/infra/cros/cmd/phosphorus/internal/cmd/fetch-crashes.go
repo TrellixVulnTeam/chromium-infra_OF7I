@@ -466,7 +466,6 @@ func findRTDCrashes(ctx context.Context, rootDir string) (map[string]bool, error
 		"autoserv_test/*/sysinfo/var/log/chrome/Crash Reports/",
 		"autoserv_test/tast/results/crashes/", // no .meta files typically found here
 		"autoserv_test/debug/",
-		"provision_*/crashinfo.*/",
 	}
 
 	// Create a set of basenames w/out extensions
