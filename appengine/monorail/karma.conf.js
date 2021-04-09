@@ -113,6 +113,11 @@ module.exports = function(config) {
       module: {
         rules: [
           {
+            test: /\.(ts|tsx)$/,
+            exclude: /node_modules/,
+            use: ['babel-loader'],
+          },
+          {
             test: /\.js$/,
             loader: 'istanbul-instrumenter-loader',
             include: path.resolve('static_src/'),
