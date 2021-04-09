@@ -17,6 +17,10 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-infra-triage',
     },
     {
+      name: 'Infra Triage (East)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:cros-infra-triage-apac',
+    },
+    {
       name: 'Sheriff (West)',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-sheriffs-west',
     },
@@ -27,10 +31,6 @@ const ROTATIONS = {
     {
       name: 'CI Bobby',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-eng',
-    },
-    {
-      name: 'CI Bobby (APAC)',
-      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-apac',
     },
     {
       name: 'Fleet Datacenter',
