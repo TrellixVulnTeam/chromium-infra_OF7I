@@ -8,10 +8,13 @@
 package nebraska
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -72,6 +75,35 @@ func NewServer(ctx context.Context, env Environment, gsPathPrefix string, payloa
 		return nil, fmt.Errorf("new Nebraska: %s", err)
 	}
 	return n, nil
+}
+
+// Config is the Nebraska configurations.
+type Config struct {
+	CriticalUpdate         bool `json:"critical_update"`
+	ReturnNoupdateStarting int  `json:"return_noupdate_starting"`
+}
+
+// UpdateConfig configures the started Nebraska.
+func (n *Server) UpdateConfig(c Config) error {
+	j, err := json.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("update Nebraska config: %s", err)
+	}
+	url := fmt.Sprintf("http://127.0.0.1:%d/update_config", n.port)
+	rsp, err := http.Post(url, "application/json", bytes.NewReader(j))
+	if err != nil {
+		return fmt.Errorf("update Nebraska config: %s", err)
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		msg, err := ioutil.ReadAll(rsp.Body)
+		if err != nil {
+			return fmt.Errorf("update Nebraska config: %s", err)
+		}
+		return fmt.Errorf("update Nebraska config: %s", msg)
+	}
+	log.Printf("Nebrasak is configured with %q", j)
+	return nil
 }
 
 // Script is the path of nebraska.py.

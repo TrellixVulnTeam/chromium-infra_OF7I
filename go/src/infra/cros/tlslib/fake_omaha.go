@@ -59,6 +59,14 @@ func (s *Server) CreateFakeOmaha(ctx context.Context, req *tls.CreateFakeOmahaRe
 			}
 		}
 	}()
+
+	c := nebraska.Config{
+		CriticalUpdate:         fo.GetCriticalUpdate(),
+		ReturnNoupdateStarting: int(fo.GetReturnNoupdateStarting()),
+	}
+	if err := n.UpdateConfig(c); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to config fake Omaha: %s", err)
+	}
 	u, err := s.exposePort(ctx, dutName, n.Port(), fo.GetExposedViaProxy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to expose fake Omaha: %s", err)
@@ -68,15 +76,7 @@ func (s *Server) CreateFakeOmaha(ctx context.Context, req *tls.CreateFakeOmahaRe
 	// "session" of the test.
 
 	fo.Name = fmt.Sprintf("fakeOmaha/%s", uuid.New().String())
-	q := url.Values{}
-	if fo.GetCriticalUpdate() {
-		q.Set("critical_update", "True")
-	}
-	// TODO(guocb) handle the case of 'return_noupdate_starting' > 1.
-	if fo.GetReturnNoupdateStarting() == 1 {
-		q.Set("no_update", "True")
-	}
-	exposedURL := url.URL{Scheme: "http", Host: u, Path: "/update", RawQuery: q.Encode()}
+	exposedURL := url.URL{Scheme: "http", Host: u, Path: "/update"}
 	fo.OmahaUrl = exposedURL.String()
 
 	if err := s.resMgr.Add(fo.Name, n); err != nil {
