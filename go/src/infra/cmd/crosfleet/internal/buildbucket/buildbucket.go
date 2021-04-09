@@ -27,7 +27,6 @@ import (
 
 var maxServiceVersion = &test_platform.ServiceVersion{
 	CrosfleetTool: site.VersionNumber,
-	SkylabTool:    site.VersionNumber,
 }
 
 // addServiceVersion marshals the max service version proto to a JSON-encoded

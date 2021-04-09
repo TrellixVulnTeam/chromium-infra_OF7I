@@ -22,7 +22,6 @@ func TestAddServiceVersion(t *testing.T) {
 			// Convert to protoreflect.ProtoMessage for easier type comparison.
 			"version": (&test_platform.ServiceVersion{
 				CrosfleetTool: 3,
-				SkylabTool:    3,
 			}).ProtoReflect().Interface(),
 		},
 	}
