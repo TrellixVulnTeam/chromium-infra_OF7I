@@ -821,6 +821,7 @@ SPECS.update({
         Universal('mozprocess', '0.26'),
         Universal('mozprocess', '1.2.1'),
         Universal('mozterm', '1.0.0'),
+        Universal('multiprocessing-logging', '0.3.1'),
         Universal('networkx', '2.5', pyversions=['py3']),
         Universal('nose', '1.3.7'),
         Universal('nose2', '0.9.1'),

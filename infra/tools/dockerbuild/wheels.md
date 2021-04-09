@@ -2793,6 +2793,20 @@ wheel: <
 
 * *universal*
 
+## **multiprocessing-logging**
+
+### 0.3.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/multiprocessing-logging-py2_py3"
+  version: "version:0.3.1"
+>
+```
+
+
+* *universal*
+
 ## **netifaces**
 
 ### 0.10.9
