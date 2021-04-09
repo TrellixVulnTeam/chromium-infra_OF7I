@@ -97,6 +97,7 @@ class ChromeCrashData(CrashData):
     self._channel = crash_data['customized_data']['channel']
     self._historical_metadata = crash_data['customized_data'][
         'historical_metadata']
+    self._identifiers = crash_data['crash_identifiers']
 
     self._top_n_frames = top_n_frames
     self._dependency_analyzer = DependencyAnalyzer(self._platform,
@@ -150,11 +151,7 @@ class ChromeCrashData(CrashData):
 
   @property
   def identifiers(self):
-    return {'signature': self.signature,
-            'platform': self.platform,
-            'version': self.crashed_version,
-            'regression_range': self.regression_range,
-            'channel': self.channel}
+    return self._identifiers
 
   @classmethod
   def StacktraceParser(cls):
