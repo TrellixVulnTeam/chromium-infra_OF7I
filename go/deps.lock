@@ -1,8 +1,8 @@
 hash: d2f26279cb9c4b0af4b3d1c28adccf2742a0fdedd14ee91c50551ddc01d81731
-updated: 2021-04-08T12:05:57.777873635+09:00
+updated: 2021-04-09T12:14:54.881731003+09:00
 imports:
 - name: cloud.google.com/go
-  version: 2e6b8c2a6d44a49ae1ca02a0b1e0fef79c8017b9
+  version: 5391a31976121e0b7575deca73539d63d57c21e8
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -18,7 +18,7 @@ imports:
   version: 46815e48bfe0107e4b791f12e9ea50f5b4a875b0
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
 - name: github.com/antlr/antlr4
-  version: 4dfacf63e228d616232df90e4273e608d69a7f44
+  version: b71f6894c7cbfb7aeacf64fe792bcae77cb64cc4
   repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
   subpackages:
   - runtime/Go/antlr
@@ -26,13 +26,13 @@ imports:
   version: 1edb62f3185db2bf621d84de5fcfbd12fdc8796f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/bazelbuild/buildtools
-  version: 50d1694bd2e8f449dde65a830d595ca5edb3306d
+  version: 2b0a1af1a898f92183b9a30872525d9f8332a805
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
   version: 0943dc4e70e1414735a85a3167557392c177ff45
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 3b59f2158bbc007c1aaf86bc735de4642f6cbbe5
+  version: 40d1266c08bdd688d691a2e4090a01d498318030
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -228,7 +228,7 @@ imports:
   version: e6f2d537f900a90b015c8931d6d3971a48dd7b95
   repo: https://chromium.googlesource.com/external/github.com/jcgregorio/slog.git
 - name: github.com/jmoiron/sqlx
-  version: 1723f86cf23caef47bf9140aea16acfd2f7c4542
+  version: 1810e7a2e72d238318d8ed392c3d04350cbcc9dc
   repo: https://chromium.googlesource.com/external/github.com/jmoiron/sqlx.git
 - name: github.com/jtolds/gls
   version: b4936e06046bbecbb94cae9c18127ebe510a2cb9
@@ -249,7 +249,7 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: 0fa83e4a5de76cb2586a079d43ce8f94afd5ccd4
+  version: baa1f1e42d738c71ea4a18b673ebacee0ce520b8
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
@@ -445,7 +445,7 @@ imports:
   version: 7a1108eaa0124ea025e567d9feb4e41aab4bb024
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: c77133fe43d1bc886d29f75d56722b6a621e3216
+  version: 2bdcdb77748cdc9ffa7aa3e6ab7acf49c674f091
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -469,7 +469,7 @@ imports:
   subpackages:
   - cmd/gomobile
 - name: golang.org/x/mod
-  version: 1cc8812c174051b683218263abf0229b3b105e75
+  version: 244d49f99a8174899cdd6f1ae89b42fb2a0d24ab
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
   version: a5a99cb37ef4b68617775ab669177656090ab396
@@ -503,7 +503,7 @@ imports:
   version: f8bda1e9f3badef837c98cbaf4f7c335de90f266
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: b261fe96097f8db197a1033090651783e8eb8350
+  version: 0243799cfe6bc4ac1239f2811fcd1ad19bdd4d27
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -555,7 +555,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 493d388ad24c7a3e957f552a1a15dccdd1c9124b
+  version: 1d1bbb55b381f39fbe93edbb1d0fd96a6b1ecaef
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
