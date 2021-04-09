@@ -25,9 +25,6 @@ type LoadOptions struct {
 
 	// Ref is the git ref to load the graph for.
 	// Defaults to refs/heads/main.
-	//
-	// If it is refs/heads/main, but it does not exist, then falls back to
-	// refs/heads/master.
 	Ref string
 }
 
@@ -57,17 +54,6 @@ func Load(ctx context.Context, repoDir string, opt LoadOptions) (*Graph, error) 
 		return nil, err
 	}
 
-	// Fallback from main to master if needed.
-	tillRev := opt.Ref
-	if tillRev == "refs/heads/main" {
-		switch exists, err := gitutil.RefExists(repoDir, tillRev); {
-		case err != nil:
-			return nil, err
-		case !exists:
-			tillRev = "refs/heads/master"
-		}
-	}
-
 	// Sync the graph with new commits.
 	processed := 0
 	dirty := false
@@ -89,7 +75,7 @@ func Load(ctx context.Context, repoDir string, opt LoadOptions) (*Graph, error) 
 		}
 		return nil
 	}
-	switch err := g.Update(ctx, repoDir, tillRev, uopt); {
+	switch err := g.Update(ctx, repoDir, opt.Ref, uopt); {
 	case err != nil:
 		return nil, errors.Annotate(err, "failed to update the graph").Err()
 	case dirty:

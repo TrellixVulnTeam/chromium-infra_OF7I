@@ -48,7 +48,7 @@ func cmdSelect() *subcommands.Command {
 			r.Flags.StringVar(&r.out, "out", "", text.Doc(`
 				Path to a directory where to write test filter files.
 				A file per test target is written, e.g. browser_tests.filter.
-				The file format is described in https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/filters/README.md.
+				The file format is described in https://chromium.googlesource.com/chromium/src/+/main/testing/buildbot/filters/README.md.
 				Before writing, all .filter files in the directory are deleted.
 
 				The out directory may be empty. It may happen if the selection strategy
@@ -76,7 +76,7 @@ type selectRun struct {
 	// Indirect input.
 
 	testFiles    map[string]*TestFile // indexed by source-absolute test file name
-	changedFiles stringset.Set        // files different between origin/master and the working tree
+	changedFiles stringset.Set        // files different between origin/main and the working tree
 	strategy     git.SelectionStrategy
 }
 
@@ -277,7 +277,7 @@ func (r *selectRun) loadTestFileSet(fileName string) error {
 // loadChangedFiles initializes r.changedFiles.
 func (r *selectRun) loadChangedFiles() error {
 	// TODO(nodir): switch to "main" branch when it exists.
-	changedFiles, err := gitutil.ChangedFiles(r.checkout, "origin/master")
+	changedFiles, err := gitutil.ChangedFiles(r.checkout, "origin/main")
 	if err != nil {
 		return err
 	}

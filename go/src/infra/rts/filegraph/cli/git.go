@@ -29,7 +29,6 @@ type gitGraph struct {
 func (g *gitGraph) RegisterFlags(fs *flag.FlagSet) {
 	fs.StringVar(&g.opt.Ref, "ref", "refs/heads/main", text.Doc(`
 		Load the file graph for this git ref.
-		For refs/heads/main, refs/heads/master is read if main doesn't exist.
 	`))
 	fs.IntVar(&g.opt.MaxCommitSize, "max-commit-size", 100, text.Doc(`
 		Maximum number of files touched by a commit.
