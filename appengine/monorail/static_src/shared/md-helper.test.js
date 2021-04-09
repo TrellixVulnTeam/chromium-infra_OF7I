@@ -43,4 +43,12 @@ describe('renderMarkdown', () => {
     assert.equal(actual.toString(),
         '<p><a href="http://google.com">clickme</a></p>\n');
   });
+
+  it('preserves bolding from description templates', () => {
+    const input = `<b>What's the problem?</b>\n<b>1.</b> A\n<b>2.</b> B`;
+    const actual = renderMarkdown(input);
+    const expected = `<p><strong>What's the problem?</strong>\n<strong>1.` +
+        `</strong> A\n<strong>2.</strong> B</p>\n`;
+    assert.equal(actual.toString(), expected);
+  });
 });

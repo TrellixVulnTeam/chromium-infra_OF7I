@@ -27,6 +27,15 @@ export const shouldRenderMarkdown = ({
   return false;
 };
 
+/**
+ * Replaces bold HTML tags in comment with Markdown equivalent.
+ * @param {string} raw Comment string as stored in database.
+ * @return {string} Comment string after b tags are placed by Markdown bolding.
+ */
+const replaceBoldTag = (raw) => {
+  return raw.replace(/<b>/g, '**').replace(/<\/b>/g, '**');
+};
+
 /** @const {Object} Options for DOMPurify sanitizer */
 const SANITIZE_OPTIONS = Object.freeze({
   RETURN_TRUSTED_TYPE: true,
@@ -38,7 +47,7 @@ const SANITIZE_OPTIONS = Object.freeze({
 marked.use({headerIds: false});
 
 /**
- * Render Markdown content into HTML.
+ * Renders Markdown content into HTML.
  * @param {string} raw Content to be intepretted as Markdown.
  * @return {TrustedHTML} Rendered content in HTML format.
  */
@@ -46,10 +55,10 @@ export const renderMarkdown = (raw) => {
   // TODO: May have to also have inputs: commentReferences, projectName,
   // and revisionUrlFormat to use in conjunction with Marked's lexer for
   // autolinking.
-  // TODO: Preprocess bolded html from description templates
+  const preprocessed = replaceBoldTag(raw);
   // TODO: Escape source HTML
   // TODO: Use autolink
-  const converted = marked(raw);
+  const converted = marked(preprocessed);
   const sanitized = DOMPurify.sanitize(converted, SANITIZE_OPTIONS);
   return sanitized;
 };
