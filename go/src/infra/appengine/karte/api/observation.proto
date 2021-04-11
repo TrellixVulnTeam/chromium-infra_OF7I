@@ -1,0 +1,30 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package karte;
+
+option go_package = "infra/appengine/karte/api;kartepb";
+
+import "google/api/resource.proto";
+
+// An Observation describes a measurement during an action.
+//
+// Examples:
+//      battery_level:70 - battery level on device is 70%
+//      rrd:present      - rrd metric is present on device
+//      disk_usage:35    - 35% internal storage used
+//
+// Next Tag : 2
+message Observation {
+    option (google.api.resource) = {
+        type: "karte.appspot.com/Observation"
+        pattern: "observations/{observation}"
+    };
+
+    // A unique identifier for the observation. Names will fit the UUID format and
+    // will be generated automatically when a new observation is created.
+    string name = 1;
+};
