@@ -16,12 +16,12 @@ describe('shouldRenderMarkdown', () => {
 describe('renderMarkdown', () => {
   it('can render empty string', () => {
     const actual = renderMarkdown('');
-    assert.equal(actual.toString(), '');
+    assert.equal(actual, '');
   });
 
   it('can render basic string', () => {
     const actual = renderMarkdown('hello world');
-    assert.equal(actual.toString(), '<p>hello world</p>\n');
+    assert.equal(actual, '<p>hello world</p>\n');
   });
 
   it('can render lists', () => {
@@ -29,18 +29,18 @@ describe('renderMarkdown', () => {
     const actual = renderMarkdown(input);
     const expected = '<ul>\n<li>First item</li>\n<li>Second item</li>\n' +
         '<li>Third item</li>\n<li>Fourth item</li>\n</ul>\n';
-    assert.equal(actual.toString(), expected);
+    assert.equal(actual, expected);
   });
 
   it('can render headings', () => {
     const actual = renderMarkdown('# Heading level 1\n\n## Heading level 2');
-    assert.equal(actual.toString(),
+    assert.equal(actual,
         '<h1>Heading level 1</h1>\n<h2>Heading level 2</h2>\n');
   });
 
   it('can render links', () => {
     const actual = renderMarkdown('[clickme](http://google.com)');
-    assert.equal(actual.toString(),
+    assert.equal(actual,
         '<p><a href="http://google.com">clickme</a></p>\n');
   });
 
@@ -49,6 +49,15 @@ describe('renderMarkdown', () => {
     const actual = renderMarkdown(input);
     const expected = `<p><strong>What's the problem?</strong>\n<strong>1.` +
         `</strong> A\n<strong>2.</strong> B</p>\n`;
-    assert.equal(actual.toString(), expected);
+    assert.equal(actual, expected);
+  });
+
+  it('escapes HTML content', () => {
+    let actual = renderMarkdown('<input></input>');
+    assert.equal(actual, '<p>&lt;input&gt;&lt;/input&gt;</p>\n');
+
+    actual = renderMarkdown('<a href="https://google.com">clickme</a>');
+    assert.equal(actual,
+        '<p>&lt;a href="https://google.com"&gt;clickme&lt;/a&gt;</p>\n');
   });
 });
