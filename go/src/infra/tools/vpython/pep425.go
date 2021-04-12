@@ -164,6 +164,16 @@ func preferredPlatformFuncForTagSet(tags []*vpython.PEP425Tag) func(cur, candida
 	return func(cur, candidate string) bool { return false }
 }
 
+// isNewerPy3Abi returns true if the candidate string identifies a new, unstable
+// ABI that should be preferred over the long-term stable "abi3", which we don't
+// build wheels against.
+func isNewerPy3Abi(cur, candidate string) bool {
+	// We don't bother finding the latest ABI (e.g. preferring "cp39" over
+	// "cp38"). Each release only has one supported unstable ABI, so we should
+	// never encounter more than one anyway.
+	return (cur == "abi3" || cur == "none") && strings.HasPrefix(candidate, "cp3")
+}
+
 // pep425TagSelector chooses the "best" PEP425 tag from a set of potential tags.
 // This "best" tag will be used to resolve our CIPD templates and allow for
 // Python implementation-specific CIPD template parameters.
@@ -186,16 +196,12 @@ func pep425TagSelector(tags []*vpython.PEP425Tag) *vpython.PEP425Tag {
 		case !best.HasABI() && t.HasABI():
 			// More specific ABI is preferred.
 			return true
-		case best.Abi != "cp38" && t.Abi == "cp38":
-			// cp38 is preferred over other ABIs. This is a hack to work around
-			// the lack of compatible ABI detection. Without this we'd just
-			// blindly select the first ABI tag our interpreter supports, and
-			// then if there isn't a package built for that specific ABI, fail.
-			//
-			// TODO: Better would be to check which packages are actually
-			// available and select the ABI tag based on that. Until then, we
-			// work around it by just preferring cp38, as that's currently the
-			// only ABI that dockerbuild builds against for Python 3.
+		case isNewerPy3Abi(best.Abi, t.Abi):
+			// Prefer the newest supported ABI tag. In theory this can break if
+			// we have wheels built against a long-term stable ABI like abi3, as
+			// we'll only look for packages built against the newest, unstable
+			// ABI. But in practice that doesn't happen, as dockerbuild
+			// produces packages tagged with the unstable ABIs.
 			return true
 		case isPreferredOSPlatform(best.Platform, t.Platform):
 			return true
