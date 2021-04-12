@@ -602,6 +602,12 @@ SPECS.update({
             ['windows-x86', 'windows-x64'],
         ),
         Prebuilt(
+            'pywin32',
+            '300',
+            ['windows-x86-py3', 'windows-x64-py3'],
+            pyversions=['py3'],
+        ),
+        Prebuilt(
             'scipy',
             '0.19.0',
             ['mac-x64', 'manylinux-x86', 'manylinux-x64'],

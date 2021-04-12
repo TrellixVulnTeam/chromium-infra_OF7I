@@ -4368,6 +4368,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 300
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pywin32/${vpython_platform}"
+  version: "version:300"
+>
+```
+
+
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **pywinauto**
 
 ### 0.6.8
