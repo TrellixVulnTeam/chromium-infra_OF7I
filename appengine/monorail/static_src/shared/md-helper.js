@@ -56,7 +56,9 @@ const HTML_ESCAPE_MAP = Object.freeze({
 });
 
 /**
- * Escapes HTML characters, used to render HTML blocks in Markdown.
+ * Escapes HTML characters, used to render HTML blocks in Markdown. This
+ * alleviates security flaws but is not the primary security barrier, that is
+ * handled by DOMPurify.
  * @param {string} text Content that looks to Marked parser to contain HTML.
  * @return {string} Same text content after escaping HTML characters.
  */
@@ -66,7 +68,11 @@ const escapeHtml = (text) => {
   });
 };
 
-/** @type {Object} Renderer option for Marked */
+/**
+ * Renderer option for Marked.
+ * See https://marked.js.org/using_pro#renderer on how to use renderer.
+ * @type {Object}
+ */
 const renderer = {
   html(text) {
     // Do not render HTML, instead escape HTML and render as plaintext.
