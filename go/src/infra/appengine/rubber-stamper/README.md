@@ -15,6 +15,13 @@ Currently, our expected CL patterns can be generally divided into two types:
 directories that contain no code)
 - Clean reverts/cherry-picks
 
+Rubber Stamper never provides OWNERS approval, by design. It's intended to be
+used by those who have owners in the directory modified or who are sheriffs. If
+it provided both code review and OWNERS approval, that would be an abuse vector:
+that would allow anyone who can create a revert or cherry-pick to land it
+without any other person being involved and that would allow the insertion of
+nonsense into benign files. E.g. the silent revert of security patches.
+
 If you need to add/change pattern configs, go to the first section "Configure
 your patterns"; if a pattern is already configured, and you need to use
 Rubber-Stamper as a reviewer for CLs, go to the second section "Have
