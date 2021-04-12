@@ -94,6 +94,7 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 								EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 									plan.SourceTestPlan_HARDWARE,
 								},
+								KernelVersions: &plan.SourceTestPlan_KernelVersions{},
 							},
 						},
 					},
