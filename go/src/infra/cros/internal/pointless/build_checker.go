@@ -42,6 +42,17 @@ func CheckBuilder(
 		}, nil
 	}
 
+	// If the build affects forced relevantPaths we must consider it relevant.
+	hasAlwaysRelevantPaths := checkAlwaysRelevantPaths(affectedFiles, cfg)
+	log.Printf("After considering the always relevant file paths, is the build pointless yet?: %t", hasAlwaysRelevantPaths)
+	if hasAlwaysRelevantPaths {
+		log.Printf("Since we know the build isn't pointless, we can return early")
+		return &testplans_pb.PointlessBuildCheckResponse{
+			PointlessBuildReason: testplans_pb.PointlessBuildCheckResponse_RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES,
+			BuildIsPointless:     &wrappers.BoolValue{Value: false},
+		}, nil
+	}
+
 	// Filter out files that are irrelevant to Portage because of the config.
 	affectedFiles = filterByBuildIrrelevantPaths(affectedFiles, cfg)
 	if len(affectedFiles) == 0 {
@@ -151,4 +162,20 @@ affectedFile:
 		log.Printf("Ignoring file %s because no prefix of it is referenced in the relevant paths", f)
 	}
 	return portageFilteredFiles
+}
+
+func checkAlwaysRelevantPaths(files []string, cfg *testplans_pb.BuildIrrelevanceCfg) bool {
+	for _, f := range files {
+		for _, pattern := range cfg.RelevantFilePatterns {
+			match, err := match.FilePatternMatches(pattern, f)
+			if err != nil {
+				log.Fatalf("Failed to match pattern %s against file %s: %v", pattern, f, err)
+			}
+			if match {
+				log.Printf("File %s matches %s, therefore we are not pointless", f, pattern.Pattern)
+				return true
+			}
+		}
+	}
+	return false
 }

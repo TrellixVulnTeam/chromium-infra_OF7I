@@ -48,6 +48,52 @@ func TestCheckBuilder_irrelevantToRelevantPaths(t *testing.T) {
 	}
 }
 
+func TestCheckBuilder_relevantToForcedRelevantPaths(t *testing.T) {
+	// In this test, there's a CL that is relevant to the forced relevant paths, so the build isn't pointless.
+	proj := "chromiumos/chromite"
+	main := "refs/heads/main"
+
+	changes := []*bbproto.GerritChange{
+		{Host: "test-review.googlesource.com", Change: 123, Patchset: 2, Project: proj}}
+	chRevData := gerrit.GetChangeRevsForTest([]*gerrit.ChangeRev{
+		{
+			ChangeRevKey: gerrit.ChangeRevKey{
+				Host:      "test-review.googlesource.com",
+				ChangeNum: 123,
+				Revision:  2,
+			},
+			Branch:  main,
+			Project: proj,
+			Files:   []string{"api/service/thing.py", "README.md"},
+		},
+	})
+	relevantPaths := []*testplans_pb.PointlessBuildCheckRequest_Path{{Path: "chromite/api/**"}}
+	repoToBranchToSrcRoot := map[string]map[string]string{
+		proj: {main: "chromite"},
+	}
+
+	cfg := testplans_pb.BuildIrrelevanceCfg{
+		RelevantFilePatterns: []*testplans_pb.FilePattern{
+			{Pattern: "chromite/api/**"},
+		},
+		// This irrelevant config which overlaps the relevant config ensures that we test the forced relevance first.
+		IrrelevantFilePatterns: []*testplans_pb.FilePattern{
+			{Pattern: "chromite/**"},
+		},
+	}
+
+	res, err := CheckBuilder(changes, chRevData, relevantPaths, repoToBranchToSrcRoot, &cfg)
+	if err != nil {
+		t.Error(err)
+	}
+	if res.BuildIsPointless.Value {
+		t.Errorf("expected build_is_pointless == false, instead got result %v", res)
+	}
+	if res.PointlessBuildReason != testplans_pb.PointlessBuildCheckResponse_RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES {
+		t.Errorf("expected RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES, instead got result %v", res)
+	}
+}
+
 func TestCheckBuilder_relevantToRelevantPaths(t *testing.T) {
 	// In this test, there are two CLs, with one of them being related to the relevant paths. The
 	// build thus is necessary.
