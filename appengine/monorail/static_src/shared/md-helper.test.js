@@ -38,10 +38,24 @@ describe('renderMarkdown', () => {
         '<h1>Heading level 1</h1>\n<h2>Heading level 2</h2>\n');
   });
 
-  it('can render links', () => {
-    const actual = renderMarkdown('[clickme](http://google.com)');
-    assert.equal(actual,
-        '<p><a href="http://google.com">clickme</a></p>\n');
+  describe('can render links', () => {
+    it('for simple links', () => {
+      const actual = renderMarkdown('[clickme](http://google.com)');
+      const expected = `<p><span class="annotated-link"><a title="" ` +
+          `href="http://google.com"><span class="material-icons link">` +
+          `link</span>clickme</a><span class="tooltip">Link destination: ` +
+          `http://google.com</span></span></p>\n`;
+      assert.equal(actual, expected);
+    });
+
+    it('and indicates malformed link', () => {
+      const actual = renderMarkdown('[clickme](google.com)');
+      const expected = `<p><span class="annotated-link"><a title="" ` +
+          `href="google.com"><span class="material-icons link_off">link_off` +
+          `</span>clickme</a><span class="tooltip">Link may be malformed: ` +
+          `google.com</span></span></p>\n`;
+      assert.equal(actual, expected);
+    });
   });
 
   it('preserves bolding from description templates', () => {

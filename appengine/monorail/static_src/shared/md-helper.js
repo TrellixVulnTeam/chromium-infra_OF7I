@@ -69,6 +69,23 @@ const escapeHtml = (text) => {
 };
 
 /**
+* Checks to see if input string is a valid HTTP link.
+ * @param {string} string
+ * @return {boolean} Whether input string is a valid HTTP(s) link.
+ */
+const isValidHttpUrl = (string) => {
+  let url;
+
+  try {
+    url = new URL(string);
+  } catch (_exception) {
+    return false;
+  }
+
+  return url.protocol === 'http:' || url.protocol === 'https:';
+};
+
+/**
  * Renderer option for Marked.
  * See https://marked.js.org/using_pro#renderer on how to use renderer.
  * @type {Object}
@@ -78,7 +95,23 @@ const renderer = {
     // Do not render HTML, instead escape HTML and render as plaintext.
     return escapeHtml(text);
   },
-  // TODO(crbug.com/monorail/9316): Add link renderer,
+  link(href, title, text) {
+    // Overrides default link rendering by adding icon and destination on hover.
+    // TODO(crbug.com/monorail/9316): Add shared-styles/MD_STYLES to all
+    // components that consume the markdown renderer.
+    let linkIcon;
+    let tooltipText;
+    if (isValidHttpUrl(href)) {
+      linkIcon = `<span class="material-icons link">link</span>`;
+      tooltipText = `Link destination: ${href}`;
+    } else {
+      linkIcon = `<span class="material-icons link_off">link_off</span>`;
+      tooltipText = `Link may be malformed: ${href}`;
+    }
+    const tooltip = `<span class="tooltip">${tooltipText}</span>`;
+    return `<span class="annotated-link"><a href=${href} ` +
+        `title=${title ? title : ''}>${linkIcon}${text}</a>${tooltip}</span>`;
+  },
 };
 
 marked.use({renderer, headerIds: false});

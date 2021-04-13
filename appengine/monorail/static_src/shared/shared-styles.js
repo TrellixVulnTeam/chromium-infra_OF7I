@@ -111,3 +111,41 @@ export const SHARED_STYLES = css`
     }
   }
 `;
+
+/**
+ * Markdown specific styling:
+ * * render link destination on hover as a tooltip
+ * @type {CSSResult}
+ */
+export const MD_STYLES = css`
+  .annotated-link {
+    position: relative;
+  }
+  .annotated-link:hover .tooltip {
+    display: block
+  }
+  .tooltip {
+    display: none;
+    position: absolute;
+    width: auto;
+    white-space: nowrap;
+    box-shadow: rgb(170 170 170) 1px 1px 5px;
+    box-shadow: 0 4px 8px 3px rgb(0 0 0 / 10%);
+    border-radius: 8px;
+    background-color: rgb(255, 255, 255);
+    top: -32px;
+    left: 0px;
+    border: 1px solid #dadce0;
+    padding: 6px 10px;
+  }
+  .material-icons {
+    font-size: 18px;
+    vertical-align: middle;
+  }
+  .material-icons.link {
+    color: var(--chops-link-color);
+  }
+  .material-icons.link_off {
+    color: var(--chops-field-error-color);
+  }
+`;
