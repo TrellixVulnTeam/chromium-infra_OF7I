@@ -15,7 +15,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/grpc/prpc"
@@ -61,14 +60,18 @@ func innerMain() error {
 	if err != nil {
 		return err
 	}
-	var service *models.CachingService
-	for {
-		var ok bool
-		if service, ok = findService(services, nodeIP, nodeName); ok {
-			break
+	service, ok := findService(services, nodeIP, nodeName)
+	if !ok {
+		log.Println("Could not find caching service for this node in UFS")
+		log.Println("Creating non-operational nginx.conf...")
+		if err := ioutil.WriteFile(*nginxConfigFilePath, []byte(noOpNginxTemplate), 0644); err != nil {
+			return err
 		}
-		log.Println("The node is not configured in UFS yet. Will retry in 5 min.")
-		time.Sleep(5 * time.Minute)
+		log.Println("Creating non-operational keepalived.conf...")
+		if err := ioutil.WriteFile(*keepalivedConfigFilePath, []byte(noOpKeepalivedTemplate), 0644); err != nil {
+			return err
+		}
+		return nil
 	}
 	vip := nodeVirtualIP(service)
 	n := nginxConfData{

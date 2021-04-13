@@ -130,3 +130,14 @@ http {
   }
 }
 `
+
+// Non operational config templates.
+
+const noOpKeepalivedTemplate = `# This file is generated. DO NOT EDIT.
+# This file is intentionally empty.
+`
+
+const noOpNginxTemplate = `# This file is generated. DO NOT EDIT.
+
+events {}
+`
