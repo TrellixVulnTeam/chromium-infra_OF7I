@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"fmt"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
 )
 
 // projectMappingInfo groups a computed Mapping and affected files for a set
@@ -30,7 +32,7 @@ var (
 // checkoutChangeRevs checkouts changeRevs to dir.
 //
 // changeRevs must all have the same project.
-func checkoutChangeRevs(dir string, changeRevs []*gerrit.ChangeRev) error {
+func checkoutChangeRevs(ctx context.Context, dir string, changeRevs []*gerrit.ChangeRev) error {
 	for i, changeRev := range changeRevs {
 		if i > 0 && changeRev.Project != changeRevs[0].Project {
 			// Change revs are sorted by project in the callers.
@@ -55,10 +57,12 @@ func checkoutChangeRevs(dir string, changeRevs []*gerrit.ChangeRev) error {
 	googlesourceHost := strings.Replace(changeRev.Host, "-review", "", 1)
 	remote := fmt.Sprintf("https://%s/%s", googlesourceHost, changeRev.Project)
 
+	logging.Debugf(ctx, "cloning repo %q", remote)
 	if err := git.Clone(remote, dir); err != nil {
 		return err
 	}
 
+	logging.Debugf(ctx, "fetching ref %q from repo %q", changeRev.Ref, remote)
 	if err := git.Fetch(dir, remote, changeRev.Ref); err != nil {
 		return err
 	}
@@ -70,7 +74,7 @@ func checkoutChangeRevs(dir string, changeRevs []*gerrit.ChangeRev) error {
 // computes the Mapping.
 //
 // changeRevs must all have the same project.
-func computeMappingForChangeRevs(changeRevs []*gerrit.ChangeRev) (*dirmd.Mapping, error) {
+func computeMappingForChangeRevs(ctx context.Context, changeRevs []*gerrit.ChangeRev) (*dirmd.Mapping, error) {
 	workdir, err := workdirFn("", "")
 	if err != nil {
 		return nil, err
@@ -78,7 +82,7 @@ func computeMappingForChangeRevs(changeRevs []*gerrit.ChangeRev) (*dirmd.Mapping
 
 	defer workdirCleanupFn(workdir)
 
-	if err := checkoutChangeRevs(workdir, changeRevs); err != nil {
+	if err := checkoutChangeRevs(ctx, workdir, changeRevs); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +91,7 @@ func computeMappingForChangeRevs(changeRevs []*gerrit.ChangeRev) (*dirmd.Mapping
 
 // computeProjectMappingInfos calculates a projectMappingInfo for each project
 // in changeRevs.
-func computeProjectMappingInfos(changeRevs []*gerrit.ChangeRev) ([]*projectMappingInfo, error) {
+func computeProjectMappingInfos(ctx context.Context, changeRevs []*gerrit.ChangeRev) ([]*projectMappingInfo, error) {
 	projectToChangeRevs := make(map[string][]*gerrit.ChangeRev)
 	projectToAffectedFiles := make(map[string]stringset.Set)
 
@@ -121,7 +125,9 @@ func computeProjectMappingInfos(changeRevs []*gerrit.ChangeRev) ([]*projectMappi
 	for _, project := range keys {
 		changeRevs := projectToChangeRevs[project]
 
-		mapping, err := computeMappingForChangeRevs(changeRevs)
+		logging.Infof(ctx, "computing metadata for project %q", project)
+
+		mapping, err := computeMappingForChangeRevs(ctx, changeRevs)
 		if err != nil {
 			return nil, err
 		}

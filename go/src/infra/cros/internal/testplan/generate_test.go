@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
@@ -12,6 +13,7 @@ import (
 )
 
 func TestGenerate(t *testing.T) {
+	ctx := context.Background()
 	changeRevs := []*gerrit.ChangeRev{
 		{
 			ChangeRevKey: gerrit.ChangeRevKey{
@@ -50,7 +52,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	outputs, err := Generate(changeRevs, buildSummaryList)
+	outputs, err := Generate(ctx, changeRevs, buildSummaryList)
 
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)

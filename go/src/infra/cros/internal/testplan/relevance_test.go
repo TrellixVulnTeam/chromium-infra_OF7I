@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
@@ -28,6 +29,7 @@ func buildMapping(dirToSourceTestPlans map[string][]*plan.SourceTestPlan) *dirmd
 }
 
 func TestRelevantSourceTestPlans(t *testing.T) {
+	ctx := context.Background()
 	// Define example SourceTestPlans for use in test cases.
 	// Make each a fn. so each SourceTestPlan in a mapping is unique.
 	hwKernelPlan := func() *plan.SourceTestPlan {
@@ -151,7 +153,7 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			plans, err := relevantSourceTestPlans(test.mapping, test.affectedFiles)
+			plans, err := relevantSourceTestPlans(ctx, test.mapping, test.affectedFiles)
 			if err != nil {
 				t.Fatalf("relevantSourceTestPlans(%v, %v) failed: %s", test.mapping, test.affectedFiles, err)
 			}
@@ -176,6 +178,7 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 }
 
 func TestRelevantSourceTestPlansErrors(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name          string
 		mapping       *dirmd.Mapping
@@ -207,7 +210,7 @@ func TestRelevantSourceTestPlansErrors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := relevantSourceTestPlans(test.mapping, test.affectedFiles); err == nil {
+			if _, err := relevantSourceTestPlans(ctx, test.mapping, test.affectedFiles); err == nil {
 				t.Errorf("relevantSourceTestPlans(%v, %v) succeeded for bad input, want err", test.mapping, test.affectedFiles)
 			}
 		})

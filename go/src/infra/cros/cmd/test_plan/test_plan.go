@@ -21,10 +21,16 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	luciflag "go.chromium.org/luci/common/flag"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 )
+
+var logCfg = gologger.LoggerConfig{
+	Out: os.Stderr,
+}
 
 func errToCode(a subcommands.Application, err error) int {
 	if err != nil {
@@ -36,8 +42,9 @@ func errToCode(a subcommands.Application, err error) int {
 
 func app(authOpts auth.Options) *cli.Application {
 	return &cli.Application{
-		Name:  "test_plan",
-		Title: "A tool to generate ChromeOS test plans from config in DIR_METADATA files.",
+		Name:    "test_plan",
+		Title:   "A tool to generate ChromeOS test plans from config in DIR_METADATA files.",
+		Context: logCfg.Use,
 		Commands: []*subcommands.Command{
 			cmdGenerate(authOpts),
 			cmdValidate,
@@ -72,6 +79,11 @@ func cmdGenerate(authOpts auth.Options) *subcommands.Command {
 		`))
 			r.Flags.StringVar(&r.out, "out", "", "Path to the output test plan")
 
+			r.logLevel = logging.Info
+			r.Flags.Var(&r.logLevel, "loglevel", text.Doc(`
+			Log level, valid options are "debug", "info", "warning", "error". Default is "info".
+			`))
+
 			return r
 		},
 	}
@@ -82,6 +94,7 @@ type generateRun struct {
 	authFlags authcli.Flags
 	cls       []string
 	out       string
+	logLevel  logging.Level
 }
 
 func (r *generateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -172,6 +185,8 @@ func (r *generateRun) run(ctx context.Context) error {
 		return errors.New("-out is required")
 	}
 
+	ctx = logging.SetLevel(ctx, r.logLevel)
+
 	authOpts, err := r.authFlags.Options()
 	if err != nil {
 		return err
@@ -182,17 +197,21 @@ func (r *generateRun) run(ctx context.Context) error {
 		return err
 	}
 
+	logging.Infof(ctx, "fetching metadata for CLs")
+
 	changeRevs, err := getChangeRevs(ctx, authedClient, r.cls)
 	if err != nil {
 		return err
 	}
+
+	logging.Infof(ctx, "fetching build metadata")
 
 	buildSummaryList, err := getBuildSummaryList(ctx, authedClient)
 	if err != nil {
 		return err
 	}
 
-	outputs, err := testplan.Generate(changeRevs, buildSummaryList)
+	outputs, err := testplan.Generate(ctx, changeRevs, buildSummaryList)
 	if err != nil {
 		return err
 	}

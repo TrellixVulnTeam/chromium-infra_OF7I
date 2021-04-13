@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
@@ -17,6 +18,7 @@ import (
 )
 
 func TestComputeProjectMappingInfos(t *testing.T) {
+	ctx := context.Background()
 	// Two changes from testprojectA, one from testprojectB.
 	changeRevs := []*gerrit.ChangeRev{
 		{
@@ -77,7 +79,7 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 	workdirFn = func(_, _ string) (string, error) { return "./testdata", nil }
 	workdirCleanupFn = func(_ string) error { return nil }
 
-	projectMappingInfos, err := computeProjectMappingInfos(changeRevs)
+	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
 	if err != nil {
 		t.Fatalf("computeProjectMappingInfos(%v) failed: %s", changeRevs, err)
 	}
