@@ -168,11 +168,13 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 			}
 			project.Revision = git.NormalizeRef(branchName)
 		case repo.Tot:
-			// TODO(juahurta): When TOT is changed from `master` -> `main` change this
-			project.Revision = git.NormalizeRef("master")
+			// Correct default would have already been found in ResolveImplicitLinks,
+			// so if the revision is blank we have an invalid manifest (no revision + branch_mode ToT).
+			// See b/184966242 for context.
+			if project.Revision == "" {
+				return nil, fmt.Errorf("project %s tracking ToT but has no revision/default revision", project.Path)
+			}
 		case repo.Pinned:
-			// TODO(@jackneus): all this does is convert the current revision to a SHA.
-			// Is this really necessary?
 			revision, err := m.gitRevision(*workingProject)
 			if err != nil {
 				return nil, errors.Annotate(err, "error repairing manifest").Err()

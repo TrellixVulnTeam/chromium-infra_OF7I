@@ -78,15 +78,19 @@ func canBranchProject(manifest repo.Manifest, project repo.Project) bool {
 
 // projectBranchName determines the git branch name for the Project.
 func projectBranchName(br string, project repo.Project, original string) string {
-	// If the Project has only one checkout, then the base branch name is fine.
-	var checkouts []string
+	// If the Project has only one checkout that requires creating a new branch,
+	// then the base branch name is fine.
+	numBranchCreates := 0
 	for _, proj := range WorkingManifest.Projects {
 		if proj.Name == project.Name {
-			checkouts = append(checkouts, proj.Name)
+			branchMode := WorkingManifest.ProjectBranchMode(proj)
+			if branchMode != repo.Tot && branchMode != repo.Pinned {
+				numBranchCreates++
+			}
 		}
 	}
 
-	if len(checkouts) == 1 {
+	if numBranchCreates == 1 {
 		return br
 	}
 

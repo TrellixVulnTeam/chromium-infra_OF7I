@@ -36,7 +36,7 @@ func TestRepairManifest_success(t *testing.T) {
 	 <manifest>
 	 	<!---Comment 1-->
 	 	<default remote="cros" revision="test" />
-	 	<remote name="cros" revision="123"></remote>
+	 	<remote name="cros" revision="refs/heads/default"></remote>
 	 	<remote revision="124" name="remote2" />
 	 	<remote name="remote3" revision="125" />
 
@@ -49,7 +49,10 @@ func TestRepairManifest_success(t *testing.T) {
 	 		<!---Comment 2-->
 	 		<annotation name="branch-mode" value="pin" />
 	 	</project>
-	 	<project name="tot" path="tot/" upstream="">
+	 	<project name="tot" path="tot1/">
+	 		<annotation name="branch-mode" value="tot" />
+	 	</project>
+	 	<project name="tot" path="tot2/" revision="refs/heads/tot">
 	 		<annotation name="branch-mode" value="tot" />
 	 	</project>
 	 </manifest>
@@ -85,7 +88,8 @@ func TestRepairManifest_success(t *testing.T) {
 	// repairManifest properly sets revision on pinned projects.
 	assert.StringsEqual(t, manifest.Projects[2].Revision, "123")
 	// repairManifest properly sets revision on ToT projects.
-	assert.StringsEqual(t, manifest.Projects[3].Revision, "refs/heads/master")
+	assert.StringsEqual(t, manifest.Projects[3].Revision, "refs/heads/default")
+	assert.StringsEqual(t, manifest.Projects[4].Revision, "refs/heads/tot")
 
 	// Check that manifest is otherwise unmodified.
 	expectedManifest := `
@@ -106,7 +110,10 @@ func TestRepairManifest_success(t *testing.T) {
 	 		<!---Comment 2-->
 	 		<annotation name="branch-mode" value="pin" />
 	 	</project>
-	 	<project name="tot" path="tot/" revision="refs/heads/master">
+	 	<project name="tot" path="tot1/" revision="refs/heads/default">
+	 		<annotation name="branch-mode" value="tot" />
+	 	</project>
+	 	<project name="tot" path="tot2/" revision="refs/heads/tot">
 	 		<annotation name="branch-mode" value="tot" />
 	 	</project>
 	 </manifest>
