@@ -1,16 +1,29 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	igerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/testplan"
 	"infra/tools/dirmd"
+	"net/http"
+	"strings"
 
 	"os"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	luciflag "go.chromium.org/luci/common/flag"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
+
+	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 )
 
 func errToCode(a subcommands.Application, err error) int {
@@ -21,55 +34,136 @@ func errToCode(a subcommands.Application, err error) int {
 	return 0
 }
 
-var app = &subcommands.DefaultApplication{
-	Name:  "test_plan",
-	Title: "A tool to generate ChromeOS test plans from config in DIR_METADATA files.",
-	Commands: []*subcommands.Command{
-		cmdGenerate,
-		cmdValidate,
-		subcommands.CmdHelp,
-	},
+func app(authOpts auth.Options) *cli.Application {
+	return &cli.Application{
+		Name:  "test_plan",
+		Title: "A tool to generate ChromeOS test plans from config in DIR_METADATA files.",
+		Commands: []*subcommands.Command{
+			cmdGenerate(authOpts),
+			cmdValidate,
+
+			authcli.SubcommandInfo(authOpts, "auth-info", false),
+			authcli.SubcommandLogin(authOpts, "auth-login", false),
+			authcli.SubcommandLogout(authOpts, "auth-logout", false),
+
+			subcommands.CmdHelp,
+		},
+	}
 }
 
-var cmdGenerate = &subcommands.Command{
-	UsageLine: "generate -root ROOT -cl CL1 [-cl CL2] -out OUTPUT",
-	ShortDesc: "generate a test plan",
-	LongDesc: text.Doc(`
+func cmdGenerate(authOpts auth.Options) *subcommands.Command {
+	return &subcommands.Command{
+		UsageLine: "generate -cl CL1 [-cl CL2] -out OUTPUT",
+		ShortDesc: "generate a test plan",
+		LongDesc: text.Doc(`
 		Generate a test plan.
 
 		Computes test config from "DIR_METADATA" files and generates a test plan
 		based on the files the patchsets are touching.
 	`),
-	CommandRun: func() subcommands.CommandRun {
-		r := &generateRun{}
-		r.Flags.StringVar(&r.root, "root", "", "Path to the root directory")
-		r.Flags.Var(luciflag.StringSlice(&r.cls), "cl", text.Doc(`
+		CommandRun: func() subcommands.CommandRun {
+			r := &generateRun{}
+			r.authFlags = authcli.Flags{}
+			r.authFlags.Register(r.GetFlags(), authOpts)
+			r.Flags.Var(luciflag.StringSlice(&r.cls), "cl", text.Doc(`
 			CL URL for the patchsets being tested. Must be specified at least once.
 
 			Example: https://chromium-review.googlesource.com/c/chromiumos/platform2/+/123456
 		`))
-		r.Flags.StringVar(&r.out, "out", "", "Path to the output test plan")
+			r.Flags.StringVar(&r.out, "out", "", "Path to the output test plan")
 
-		return r
-	},
+			return r
+		},
+	}
 }
 
 type generateRun struct {
 	subcommands.CommandRunBase
-	root string
-	cls  []string
-	out  string
+	authFlags authcli.Flags
+	cls       []string
+	out       string
 }
 
 func (r *generateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	return errToCode(a, r.run(a, args, env))
+	ctx := cli.GetContext(a, r, env)
+	return errToCode(a, r.run(ctx))
 }
 
-func (r *generateRun) run(a subcommands.Application, args []string, env subcommands.Env) error {
-	if r.root == "" {
-		return errors.New("-root is required")
+// getChangeRevs parses each of rawCLURLs and returns a ChangeRev.
+func getChangeRevs(ctx context.Context, authedClient *http.Client, rawCLURLs []string) ([]*igerrit.ChangeRev, error) {
+	changeRevs := make([]*igerrit.ChangeRev, len(rawCLURLs))
+
+	for i, cl := range rawCLURLs {
+		changeRevKey, err := igerrit.ParseCLURL(cl)
+		if err != nil {
+			return nil, err
+		}
+
+		changeRev, err := igerrit.GetChangeRev(
+			ctx, authedClient, changeRevKey.ChangeNum, changeRevKey.Revision, changeRevKey.Host,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		changeRevs[i] = changeRev
 	}
 
+	return changeRevs, nil
+}
+
+// getBuildSummaryList reads the HEAD BuildSummaryList from
+// chromeos/config-internal.
+//
+// TODO(b/182898188): Return BuildSummaryList specific to given builds, once it
+// is available.
+func getBuildSummaryList(
+	ctx context.Context, authedClient *http.Client,
+) (*buildpb.SystemImage_BuildSummaryList, error) {
+	buildSummaryListStr, err := igerrit.DownloadFileFromGitiles(
+		ctx, authedClient,
+		"chrome-internal.googlesource.com",
+		"chromeos/config-internal",
+		"HEAD",
+		"build/generated/build_summary.jsonproto",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	buildSummaryList := &buildpb.SystemImage_BuildSummaryList{}
+	if err = jsonpb.Unmarshal(strings.NewReader(buildSummaryListStr), buildSummaryList); err != nil {
+		return nil, err
+	}
+
+	return buildSummaryList, nil
+}
+
+// writeOutputs writes a newline-delimited json file containing outputs to outPath.
+func writeOutputs(outputs []*testplan.Output, outPath string) error {
+	outFile, err := os.Create(outPath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	for _, output := range outputs {
+		jsonBytes, err := json.Marshal(output)
+		if err != nil {
+			return err
+		}
+
+		jsonBytes = append(jsonBytes, '\n')
+
+		if _, err = outFile.Write(jsonBytes); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *generateRun) run(ctx context.Context) error {
 	if len(r.cls) == 0 {
 		return errors.New("-cl must be specified at least once")
 	}
@@ -78,7 +172,32 @@ func (r *generateRun) run(a subcommands.Application, args []string, env subcomma
 		return errors.New("-out is required")
 	}
 
-	return fmt.Errorf("generate not implemented")
+	authOpts, err := r.authFlags.Options()
+	if err != nil {
+		return err
+	}
+
+	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
+	if err != nil {
+		return err
+	}
+
+	changeRevs, err := getChangeRevs(ctx, authedClient, r.cls)
+	if err != nil {
+		return err
+	}
+
+	buildSummaryList, err := getBuildSummaryList(ctx, authedClient)
+	if err != nil {
+		return err
+	}
+
+	outputs, err := testplan.Generate(changeRevs, buildSummaryList)
+	if err != nil {
+		return err
+	}
+
+	return writeOutputs(outputs, r.out)
 }
 
 var cmdValidate = &subcommands.Command{
@@ -131,5 +250,7 @@ func (r *validateRun) run(a subcommands.Application, args []string, env subcomma
 }
 
 func main() {
-	os.Exit(subcommands.Run(app, nil))
+	opts := chromeinfra.DefaultAuthOptions()
+	opts.Scopes = append(opts.Scopes, gerrit.OAuthScope)
+	os.Exit(subcommands.Run(app(opts), nil))
 }
