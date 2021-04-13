@@ -564,6 +564,9 @@ class GerritTest(testing.AppengineTestCase):
     })
     url = 'https://%s/a/changes/%s/revert' % (self.server_hostname, change_id)
     self.http_client.SetResponse(url, (200, response))
+    set_review_url = 'https://%s/a/changes/%s/revisions/current/review' % (
+        self.server_hostname, reverting_change_id)
+    self.http_client.SetResponse(set_review_url, (200, response))
 
     with mock.patch.object(
         self.gerrit, '_GenerateRevertCLDescription', return_value='Reason'):

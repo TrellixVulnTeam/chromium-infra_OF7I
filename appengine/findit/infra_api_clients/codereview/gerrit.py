@@ -182,7 +182,21 @@ class Gerrit(codereview.CodeReview):
     reverting_change = self._Post(parts, body=body)
     if not reverting_change or 'change_id' not in reverting_change:
       return None
+
+    if not self.SetBotCommitLabel(reverting_change['change_id']):
+      return None
     return reverting_change
+
+  def SetBotCommitLabel(self, change_id):
+    """Add Bot-Commit + 1 label to a change_id.
+
+    Returns:
+      A dict containing the response of the Set-Review api, described by:
+      https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review
+    """
+    parts = ['changes', change_id, 'revisions', 'current', 'review']
+    body = {'labels': {'Bot-Commit': 1}}
+    return self._Post(parts, body=body)
 
   def SubmitRevert(self, change_id):
     logging.info("Submitting revert for %s", change_id)
