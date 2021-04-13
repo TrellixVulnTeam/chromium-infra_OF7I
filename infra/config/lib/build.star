@@ -42,7 +42,7 @@ def presubmit(
         *,
         name,
         cq_group,
-        repo_name,  # e.g. 'infra' or 'luci_py', as expected by the recipe
+        repo_name = None,  # e.g. 'infra' or 'luci_py', as expected by the recipe
         run_hooks = True,
         timeout_s = 480,
         os = None,

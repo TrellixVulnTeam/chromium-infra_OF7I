@@ -14,6 +14,5 @@ infra.cq_group(
 build.presubmit(
     name = "python-adb-presubmit",
     cq_group = "python-adb",
-    repo_name = "python-adb",
     os = "Ubuntu",
 )
