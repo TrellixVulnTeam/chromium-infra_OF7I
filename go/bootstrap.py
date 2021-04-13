@@ -55,9 +55,9 @@ GIT_EXE = 'git.bat' if sys.platform == 'win32' else 'git'
 #
 # Some builders use "legacy" and "bleeding_edge" variants.
 TOOLSET_VERSIONS = {
-    'default': '1.15.10',  # used on dev workstations and most try builders
-    'legacy': '1.15.10',  # used on OSX amd64 CI and prod builders
-    'bleeding_edge': '1.16.2',  # used on most CI and prod and some try builders
+    'default': '1.15.11',  # used on dev workstations and most try builders
+    'legacy': '1.15.11',  # used on OSX amd64 CI and prod builders
+    'bleeding_edge': '1.16.3',  # used on most CI and prod and some try builders
 }
 
 # Describes how to fetch 'glide'.
@@ -196,7 +196,7 @@ def install_toolset(toolset_root, version):
     stdin=subprocess.PIPE)
   cmd.communicate(
     '@Subdir go\n'
-    'infra/3pp/tools/go/${platform} version:%s\n' % version
+    'infra/3pp/tools/go/${platform} version:2@%s\n' % version
   )
   if cmd.returncode:
     raise Failure('CIPD call failed, exit code %d' % cmd.returncode)
