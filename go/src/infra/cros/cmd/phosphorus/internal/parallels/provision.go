@@ -15,7 +15,7 @@ import (
 	"infra/libs/lro"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	bpipb "go.chromium.org/chromiumos/infra/proto/go/uprev/build_parallels_image"
 	"go.chromium.org/luci/common/cli"
@@ -116,16 +116,16 @@ func runTLSProvision(ctx context.Context, dutName, imageGSPath string) error {
 	}
 	defer conn.Close()
 
-	cc := tls.NewCommonClient(conn)
+	cc := tlsapi.NewCommonClient(conn)
 
-	op, err := cc.ProvisionDut(ctx, &tls.ProvisionDutRequest{
+	op, err := cc.ProvisionDut(ctx, &tlsapi.ProvisionDutRequest{
 		Name: dutName,
-		Image: &tls.ProvisionDutRequest_ChromeOSImage{
-			PathOneof: &tls.ProvisionDutRequest_ChromeOSImage_GsPathPrefix{
+		TargetBuild: &tlsapi.ChromeOsImage{
+			PathOneof: &tlsapi.ChromeOsImage_GsPathPrefix{
 				GsPathPrefix: imageGSPath,
 			},
 		},
-		DlcSpecs: []*tls.ProvisionDutRequest_DLCSpec{
+		DlcSpecs: []*tlsapi.ProvisionDutRequest_DLCSpec{
 			{Id: parallelsDLCID},
 		},
 	})
