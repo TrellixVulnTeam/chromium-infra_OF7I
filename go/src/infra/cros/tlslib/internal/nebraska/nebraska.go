@@ -165,6 +165,12 @@ func (n *Server) Close() error {
 	if err := os.RemoveAll(n.metadataDir); err != nil {
 		errs = append(errs, fmt.Sprintf("remove Nebraska metadata dir: %s", err))
 	}
+	nLog, err := ioutil.ReadFile(n.logfile())
+	if err != nil {
+		log.Printf("Cannot read Nebraska log (pid: %d): %s", n.proc.Pid(), err)
+	} else {
+		log.Printf("Nebraska log (pid: %d): %s", n.proc.Pid(), nLog)
+	}
 	if err := os.RemoveAll(n.runtimeRoot); err != nil {
 		errs = append(errs, fmt.Sprintf("remove Nebraska runtime root: %s", err))
 	}
@@ -185,7 +191,7 @@ func (n *Server) Port() int {
 func (n *Server) checkPort(ctx context.Context) error {
 	const portFile = "port"
 	filepath := path.Join(n.runtimeRoot, portFile)
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	sPort, err := readFileOrTimeout(ctx, filepath)
 	if err != nil {
@@ -245,7 +251,7 @@ func (e env) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads
 
 func (e env) StartNebraska(cmdline []string) (Process, error) {
 	log.Printf("Nebraska command line: %v", cmdline)
-	cmd := exec.Command("python3", cmdline...)
+	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start Nebraska: %s", err)
 	}
