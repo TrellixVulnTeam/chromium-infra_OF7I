@@ -218,6 +218,12 @@ class Build(ndb.Model):
 
   # A list of experiments enabled or disabled on this build.
   # Each entry should look like "[-+]$experiment_name".
+  #
+  # Special case:
+  #   "-luci.non_production" is not kept here as a storage/index
+  #   optimization. Notably, all search/query implementations on the
+  #   Build model apply this filter in post by checking that
+  #   `"+luci.non_production" not in b.experiments`.
   experiments = ndb.StringProperty(repeated=True)
 
   # Value of proto.created_by.

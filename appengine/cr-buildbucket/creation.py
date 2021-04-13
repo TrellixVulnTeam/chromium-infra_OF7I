@@ -276,7 +276,11 @@ class BuildRequest(_BuildRequestBase):
             for k, v in sorted(self.compute_tag_set(sbr))
         ],
         experiments=sorted([
-            ('+' if enabled else '-') + exp for exp, enabled in exps.iteritems()
+            ('+' if enabled else '-') + exp
+            for exp, enabled in exps.iteritems()
+            # Specifically skip "-luci.non_production"
+            # See model.Build.experiments
+            if not (exp == experiments.NON_PROD and not enabled)
         ]),
         parameters=copy.deepcopy(self.parameters or {}),
         created_by=created_by,

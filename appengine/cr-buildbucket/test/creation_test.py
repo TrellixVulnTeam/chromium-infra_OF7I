@@ -369,7 +369,8 @@ class CreationTest(testing.AppengineTestCase):
     else:
       self.assertFalse(build.proto.input.experimental)
       self.assertNotIn(experiments.NON_PROD, build.proto.input.experiments)
-      self.assertIn('-%s' % experiments.NON_PROD, build.experiments)
+      # Note: special case; see model.Build.experiments
+      self.assertNotIn('+%s' % experiments.NON_PROD, build.experiments)
       self.assertEqual(infra.swarming.priority, 30)
 
   def test_experimental_in_request_deprecated(self):
@@ -412,7 +413,6 @@ class CreationTest(testing.AppengineTestCase):
             '-chromium.exp_foo',
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
-            '-' + experiments.NON_PROD,
             '-' + experiments.USE_REALMS,
         ]
     )
@@ -437,7 +437,6 @@ class CreationTest(testing.AppengineTestCase):
             '-chromium.exp_bar',
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
-            '-' + experiments.NON_PROD,
             '-' + experiments.USE_REALMS,
         ]
     )
