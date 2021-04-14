@@ -6,9 +6,9 @@ syntax = "proto3";
 
 package karte;
 
-option go_package = "infra/appengine/karte/api;kartepb";
-
 import "google/api/resource.proto";
+
+option go_package = "infra/appengine/karte/api;kartepb";
 
 // An Observation describes a measurement during an action.
 //
@@ -17,14 +17,14 @@ import "google/api/resource.proto";
 //      rrd:present      - rrd metric is present on device
 //      disk_usage:35    - 35% internal storage used
 //
-// Next Tag : 2
+// Next Tag: 2
 message Observation {
-    option (google.api.resource) = {
-        type: "karte.appspot.com/Observation"
-        pattern: "observations/{observation}"
-    };
+  option (google.api.resource) = {
+    type: "karte.appspot.com/Observation"
+    pattern: "observations/{observation}"
+  };
 
-    // A unique identifier for the observation. Names will fit the UUID format and
-    // will be generated automatically when a new observation is created.
-    string name = 1;
+  // The resource name of the observation. Names are generated
+  // automatically when a new observation is created.
+  string name = 1;
 };

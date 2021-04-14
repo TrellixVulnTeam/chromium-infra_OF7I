@@ -32,14 +32,14 @@ const (
 //      rrd:present      - rrd metric is present on device
 //      disk_usage:35    - 35% internal storage used
 //
-// Next Tag : 2
+// Next Tag: 2
 type Observation struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// A unique identifier for the observation. Names will fit the UUID format and
-	// will be generated automatically when a new observation is created.
+	// The resource name of the observation. Names are generated
+	// automatically when a new observation is created.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 

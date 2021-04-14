@@ -10,19 +10,18 @@ option go_package = "infra/appengine/karte/api;kartepb";
 
 import "google/api/resource.proto";
 
-// An action is a representation of an event performed on a DUT
-// that is initiated from the outside. Examples of events include
-// running a command on a DUT or resetting the servo associated with
-// a DUT.
+// An action represents an event performed on a DUT. Examples include
+// running a command on a DUT or resetting the servo attached to a
+// DUT.
 //
 // Next Tag: 2
 message Action {
-        option (google.api.resource) = {
-                type: "karte.appspot.com"
-                pattern: "actions/{action}"
-        };
+  option (google.api.resource) = {
+    type: "karte.appspot.com/Action"
+    pattern: "actions/{action}"
+  };
 
-        // A unique identifier for the action. Names will fit the UUID format and will be
-        // generated automatically when a new action is created.
-        string name = 1;
+  // The resource name of the action. Names are generated
+  // automatically when a new action is created.
+  string name = 1;
 };
