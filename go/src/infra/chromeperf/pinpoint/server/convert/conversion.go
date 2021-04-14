@@ -57,12 +57,21 @@ func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 // HTTP form-encoded for the legacy Pinpoint API.
 func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 	v := url.Values{}
+	if len(userEmail) == 0 {
+		return nil, errors.Reason("user email is required").Err()
+	}
 	v.Set("user", userEmail)
 
 	// Lift the configuration into a key.
+	if len(job.Config) == 0 {
+		return nil, errors.Reason("configuration is required").Err()
+	}
 	v.Set("configuration", job.Config)
 
 	// Always set the target into a key.
+	if len(job.Target) == 0 {
+		return nil, errors.Reason("target is required").Err()
+	}
 	v.Set("target", job.Target)
 
 	// We're turning a floating point comparison magnitude to a string.

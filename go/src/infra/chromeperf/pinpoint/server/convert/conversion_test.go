@@ -666,6 +666,16 @@ func TestSimpleConversions(t *testing.T) {
 				_, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeError)
 			})
+			Convey("No user configuration", func() {
+				telemetryJob.Config = ""
+				_, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeError)
+			})
+			Convey("No target", func() {
+				telemetryJob.Target = ""
+				_, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeError)
+			})
 		})
 	})
 

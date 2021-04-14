@@ -353,6 +353,8 @@ func TestScheduleJob(t *testing.T) {
 			Convey("with correct GTestBenchmark arguments, ScheduleJob succeeds", func() {
 				j, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
 					Job: &pinpoint.JobSpec{
+						Config: "some-config",
+						Target: "some-target",
 						Arguments: &pinpoint.JobSpec_GtestBenchmark{
 							GtestBenchmark: &pinpoint.GTestBenchmark{
 								Benchmark:   "benchmark",

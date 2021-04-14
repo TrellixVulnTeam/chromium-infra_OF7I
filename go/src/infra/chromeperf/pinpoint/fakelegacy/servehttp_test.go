@@ -116,6 +116,8 @@ func TestAddJob(t *testing.T) {
 		Convey("Users can schedule a gtest benchmark", func() {
 			job, err := grpcPinpoint.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
 				Job: &pinpoint.JobSpec{
+					Config: "some-config",
+					Target: "some-target",
 					Arguments: &pinpoint.JobSpec_GtestBenchmark{
 						GtestBenchmark: &pinpoint.GTestBenchmark{
 							Benchmark:   "benchmark",
