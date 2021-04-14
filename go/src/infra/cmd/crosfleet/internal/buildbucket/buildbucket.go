@@ -25,6 +25,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	userAgentTagKey    = "user_agent"
+	crosfleetUserAgent = "crosfleet"
+)
+
 var maxServiceVersion = &test_platform.ServiceVersion{
 	CrosfleetTool: site.VersionNumber,
 }
@@ -86,6 +91,9 @@ func NewClientForTesting(builder *buildbucketpb.BuilderID) *Client {
 func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}, dims map[string]string, tags map[string]string, priority int32) (int64, error) {
 	props = addServiceVersion(props)
 	propStruct, err := common.MapToStruct(props)
+
+	tags[userAgentTagKey] = crosfleetUserAgent
+
 	if err != nil {
 		return 0, err
 	}
