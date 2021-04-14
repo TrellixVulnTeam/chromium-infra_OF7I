@@ -293,7 +293,7 @@ func TestValidateWorkerDoneRequestRequest(t *testing.T) {
 		}), ShouldBeNil)
 	})
 
-	Convey("Providing buildbucket output and not isolated output is OK", t, func() {
+	Convey("Providing just buildbucket output is OK", t, func() {
 		So(validateWorkerDoneRequest(&admin.WorkerDoneRequest{
 			RunId:             1234,
 			Worker:            "MyLint_Ubuntu",

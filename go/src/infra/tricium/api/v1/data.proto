@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package tricium;
 
+option go_package = "infra/tricium/api/v1;tricium";
+
 // Tricium data types.
 //
 // Any data type provided or needed by a Tricium function.
@@ -15,9 +17,9 @@ message Data {
   // see GitFileDetails for field details.
   enum Type {
     NONE = 0;
-    GIT_FILE_DETAILS = 1;  // deprecated
+    GIT_FILE_DETAILS = 1;
     FILES = 2;
-    CLANG_DETAILS = 3;  // deprecated
+    reserved 3;
     RESULTS = 4;
   }
 
@@ -50,7 +52,7 @@ message Data {
   // In practice this was only used as an input to GitFileDetails,
   // and is now DEPRECATED.
   //
-  // ISOLATED PATH: tricium/data/git_file_details.json
+  // PATH: tricium/data/git_file_details.json
   message GitFileDetails {
     // The platforms this data is tied to encoded as a bitmap.
     //
@@ -69,24 +71,19 @@ message Data {
   }
 
 
-  // List of paths included in the isolated input.
+  // List of paths included in the analyzer input.
   //
-  // Files in the isolate should be laid out with the same file system
-  // structure as in the repository, with the root of the isolate input mapped
-  // to the root of the repository.
-  //
-  // ISOLATED PATH: tricium/data/files.json
+  // PATH: tricium/data/files.json
   message Files {
     int64 platforms = 1;
 
-    // Files from the root of the isolated input.
     repeated File files = 3;
 
     string commit_message = 4;
   }
 
   message File {
-    // Path to the file from the root of the isolated input.
+    // Relative file path.
     //
     // The path is relative to the root of the repository being analyzed,
     // and the path separator character is "/".
@@ -99,28 +96,12 @@ message Data {
     Status status = 3;
   }
 
-  // Details needed to replay a clang compilation.
-  //
-  // Note: This was never used in practice, and is DEPRECATED.
-  //
-  // ISOLATED PATH: tricium/data/clang_details.json
-  message ClangDetails {
-    int64 platforms = 1;
-
-    // Path to the compilation database. Typically, in the build root.
-    string compilation_db = 2;
-
-    // Paths to files needed to compile cpp files to analyze.
-    repeated string comp_dep_paths = 3;
-  }
-
-
   // Results from running a Tricium analyzer.
   //
   // Results are returned to the Tricium service from Buildbucket
   // properties on executed Tricium recipes.
   //
-  // ISOLATED PATH: tricium/data/results.json
+  // PATH: tricium/data/results.json
   // BUILDBUCKET PROPERTIES: output.properties.comments
   //                         output.properties.num_comments
   message Results {

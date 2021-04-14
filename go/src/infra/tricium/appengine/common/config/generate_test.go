@@ -59,7 +59,6 @@ func TestGenerate(t *testing.T) {
 									Builder: "analysis",
 								},
 							},
-							Deadline: 199,
 						},
 					},
 				},
@@ -128,25 +127,11 @@ func TestIncludeFunction(t *testing.T) {
 func TestCreateWorker(t *testing.T) {
 	Convey("Test Environment", t, func() {
 		analyzer := "wrapper"
-		config := "enable"
-		configValue := "all"
-		configJSON := "json"
-		configValueJSON := "[\"one\",\"two\"]"
 		gitRef := "refs/1234/2"
 		gitURL := "https://chromium-review.googlesource.com/infra"
 		selection := &tricium.Selection{
 			Function: analyzer,
 			Platform: platform,
-			Configs: []*tricium.Config{
-				{
-					Name:      config,
-					ValueType: &tricium.Config_Value{Value: configValue},
-				},
-				{
-					Name:      configJSON,
-					ValueType: &tricium.Config_ValueJ{ValueJ: configValueJSON},
-				},
-			},
 		}
 		dimension := "pool:Default"
 		sc := &tricium.ServiceConfig{
@@ -160,10 +145,9 @@ func TestCreateWorker(t *testing.T) {
 
 		Convey("Correctly creates recipe-based worker", func() {
 			f := &tricium.Function{
-				Name:       analyzer,
-				Needs:      tricium.Data_GIT_FILE_DETAILS,
-				Provides:   tricium.Data_RESULTS,
-				ConfigDefs: []*tricium.ConfigDef{{Name: config}, {Name: configJSON}},
+				Name:     analyzer,
+				Needs:    tricium.Data_GIT_FILE_DETAILS,
+				Provides: tricium.Data_RESULTS,
 				Impls: []*tricium.Impl{
 					{
 						ProvidesForPlatform: platform,
@@ -184,8 +168,6 @@ func TestCreateWorker(t *testing.T) {
 			So(w.Needs, ShouldEqual, f.Needs)
 			So(w.Provides, ShouldEqual, f.Provides)
 			So(w.ProvidesForPlatform, ShouldEqual, platform)
-			So(len(w.Dimensions), ShouldEqual, 1)
-			So(w.Dimensions[0], ShouldEqual, dimension)
 			wi := w.Impl.(*admin.Worker_Recipe)
 			if wi == nil {
 				fail("Incorrect worker type")

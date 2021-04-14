@@ -168,30 +168,6 @@ func TestSupportsPlatform(t *testing.T) {
 	})
 }
 
-func TestSupportsConfig(t *testing.T) {
-	configName := "enable"
-	analyzer := &Function{
-		Type: Function_ANALYZER,
-		Name: "PyLint",
-		ConfigDefs: []*ConfigDef{
-			{
-				Name:    configName,
-				Default: "all",
-			},
-		},
-	}
-
-	Convey("Supported config is supported", t, func() {
-		ok := SupportsConfig(analyzer, &Config{Name: configName})
-		So(ok, ShouldBeTrue)
-	})
-
-	Convey("Unsupported config is not supported", t, func() {
-		ok := SupportsConfig(analyzer, &Config{Name: "blabla"})
-		So(ok, ShouldBeFalse)
-	})
-}
-
 func TestLookupImplForPlatform(t *testing.T) {
 	implForLinux := &Impl{ProvidesForPlatform: Platform_LINUX}
 	implForMac := &Impl{ProvidesForPlatform: Platform_MAC}
@@ -322,22 +298,10 @@ func TestValidateFunction(t *testing.T) {
 			Type:     Function_ANALYZER,
 			Name:     "ConfusedAnalyzer",
 			Needs:    Data_FILES,
-			Provides: Data_CLANG_DETAILS,
+			Provides: Data_GIT_FILE_DETAILS,
 		}
 		So(ValidateFunction(f, sc), ShouldNotBeNil)
 		f.Provides = Data_RESULTS
-		So(ValidateFunction(f, sc), ShouldBeNil)
-	})
-
-	Convey("Isolator functions must not return results", t, func() {
-		f := &Function{
-			Type:     Function_ISOLATOR,
-			Name:     "ConfusedIsolator",
-			Needs:    Data_FILES,
-			Provides: Data_RESULTS,
-		}
-		So(ValidateFunction(f, sc), ShouldNotBeNil)
-		f.Provides = Data_CLANG_DETAILS
 		So(ValidateFunction(f, sc), ShouldBeNil)
 	})
 
@@ -349,7 +313,6 @@ func TestValidateFunction(t *testing.T) {
 		}
 		So(ValidateFunction(f, sc), ShouldNotBeNil)
 	})
-
 }
 
 func TestValidateImpl(t *testing.T) {
@@ -372,10 +335,9 @@ func TestValidateImpl(t *testing.T) {
 		IsPlatformSpecific: false,
 	}
 
-	Convey("Impl must have cmd or recipe specified", t, func() {
+	Convey("Impl must have a recipe specified", t, func() {
 		impl := &Impl{
 			RuntimePlatform: Platform_UBUNTU,
-			Deadline:        60,
 		}
 		So(validateImpl(impl, sc, anyType, anyType), ShouldNotBeNil)
 	})

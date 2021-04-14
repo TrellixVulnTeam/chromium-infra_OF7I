@@ -52,6 +52,7 @@ var exampleConfig = map[config.Set]memory.Files{
 	},
 }
 
+// This is invalid because it includes now-unsupported fields.
 var invalidConfig = map[config.Set]memory.Files{
 	"services/app": {
 		"service.cfg": `
@@ -87,8 +88,6 @@ var invalidConfig = map[config.Set]memory.Files{
 			  }
 			}
 			buildbucket_server_host: "cr-buildbucket-dev.appspot.com"
-			swarming_server: "https://chromium-swarm.appspot.com"
-			isolate_server: "https://isolateserver.appspot.com"
 		`,
 	},
 	"projects/infra": {
@@ -98,7 +97,6 @@ var invalidConfig = map[config.Set]memory.Files{
 			  group: "tricium-infra-requesters"
 			}
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
-			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
 	},
 	"projects/playground": {
@@ -112,7 +110,6 @@ var invalidConfig = map[config.Set]memory.Files{
 			  platform: UBUNTU
 			}
 			service_account: "tricium-dev@appspot.gserviceaccount.com"
-			swarming_service_account: "swarming@tricium-dev.iam.gserviceaccount.com"
 		`,
 	},
 }

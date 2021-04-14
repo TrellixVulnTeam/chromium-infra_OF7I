@@ -41,11 +41,6 @@ func Validate(sc *tricium.ServiceConfig, pc *tricium.ProjectConfig) error {
 		if !tricium.SupportsPlatform(f, s.Platform) {
 			return errors.Reason("no support for platform %s by function %s", s.Platform, name).Err()
 		}
-		for _, c := range s.Configs {
-			if !tricium.SupportsConfig(f, c) {
-				return errors.Reason("no support for config %s by function %s", c.Name, name).Err()
-			}
-		}
 	}
 	return nil
 }
@@ -99,7 +94,6 @@ func mergeFunction(function string, sc *tricium.ServiceConfig, sf, pf *tricium.F
 		res.PathFilters = sf.PathFilters
 		res.Owner = sf.Owner
 		res.MonorailComponent = sf.MonorailComponent
-		res.ConfigDefs = sf.ConfigDefs
 		res.Impls = sf.Impls
 	}
 	if pf != nil {
@@ -142,33 +136,12 @@ func mergeFunction(function string, sc *tricium.ServiceConfig, sf, pf *tricium.F
 			res.MonorailComponent = pf.MonorailComponent
 		}
 		if sf != nil {
-			res.ConfigDefs = mergeConfigDefs(sf.ConfigDefs, pf.ConfigDefs)
 			res.Impls = mergeImpls(sf.Impls, pf.Impls)
 		} else {
-			res.ConfigDefs = pf.ConfigDefs
 			res.Impls = pf.Impls
 		}
 	}
 	return res, nil
-}
-
-// mergeConfigDefs merges the service function config defs with the project
-// function config defs.
-//
-// The project config defs can override service config defs with the same name.
-func mergeConfigDefs(scd []*tricium.ConfigDef, pcd []*tricium.ConfigDef) []*tricium.ConfigDef {
-	configs := map[string]*tricium.ConfigDef{}
-	for _, cd := range scd {
-		configs[cd.Name] = cd
-	}
-	for _, cd := range pcd {
-		configs[cd.Name] = cd
-	}
-	res := []*tricium.ConfigDef{}
-	for _, v := range configs {
-		res = append(res, v)
-	}
-	return res
 }
 
 // mergeImpls merges the service function implementations with the project

@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package tricium;
 
+option go_package = "infra/tricium/api/v1;tricium";
+
 import "google/protobuf/timestamp.proto";
 import "infra/tricium/api/v1/data.proto";
 import "infra/tricium/api/v1/platform.proto";
@@ -164,11 +166,7 @@ message FunctionProgress {
   // of the worker, else it is the aggregated state of all workers for the function.
   State state = 3;
 
-  // URL to the swarming server running tasks for the workers of the function.
-  string swarming_url = 4;
-
-  // The ID of the swarming task triggered for the function worker.
-  string swarming_task_id = 5;
+  reserved 4, 5;
 
   // Number of comments.
   //
@@ -225,7 +223,6 @@ message ResultsRequest {
 }
 
 message ResultsResponse {
-  // TODO(qyearsley): Support paging of results to deal with large number of results.
   Data.Results results = 1;
 
   // Whether the returned results are merged.
@@ -240,7 +237,8 @@ message ResultsResponse {
 message FeedbackRequest {
   // Name of the project in luci-config to provide feedback for.
   //
-  // TODO(crbug.com/905885): Use this field and make it required.
+  // In practice this was never required, although we had intended
+  // to make it required. See crbug.com/905885.
   string project = 4;
 
   // Analyzer category to provide aggregated feedback for.
@@ -319,13 +317,7 @@ enum State {
   // and workers, where any occurrence of failure means failure is aggregated.
   FAILURE = 3;
 
-  // Canceled is for user canceled workflows, functions, and workers.
-  // NB! Not supported yet.
-  CANCELED = 4;
-
-  // Timed out is for workers where the triggered swarming task timed out.
-  // NB! Not supported yet.
-  TIMED_OUT = 5;
+  reserved 4, 5;
 
   // Aborted is for workers aborted due to a failing worker dependency.
   //

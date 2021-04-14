@@ -4,9 +4,11 @@
 
 syntax = "proto3";
 
-import "infra/tricium/api/v1/data.proto";
-
 package admin;
+
+option go_package = "infra/tricium/api/admin/v1;admin";
+
+import "infra/tricium/api/v1/data.proto";
 
 // Launcher implements the internal launcher API of the Tricium service.
 service Launcher {

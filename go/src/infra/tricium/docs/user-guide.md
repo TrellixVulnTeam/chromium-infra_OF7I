@@ -15,10 +15,7 @@ analyzer.
 
 ## Setting up a project to use Tricium
 
-Tricium supports projects that use Gerrit for code review and LUCI. Tricium
-previously supported only public projects because analysis for most jobs was run
-on public swarming instances; but now, only recipe-based analyzers are
-supported, and so internal projects should theoretically be supported.
+Tricium supports projects that use LUCI and Gerrit code review.
 
 ### Adding a recipe and builder
 

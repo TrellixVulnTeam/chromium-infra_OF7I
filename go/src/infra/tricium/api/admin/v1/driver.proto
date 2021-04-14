@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package admin;
 
+option go_package = "infra/tricium/api/admin/v1;admin";
+
 // Driver implements the internal driver API of the Tricium service.
 service Driver {
   // Trigger triggers a build for a Tricium worker.

@@ -38,8 +38,7 @@ type PubSubAPI interface {
 	//   '/projects/tricium-dev/topics/worker-completion[-HOSTNAME]'
 	// The hostname suffix should only be added for local dev server instances.
 	//
-	// This topic should already have been added before workflow launch, and should
-	// have chromium-swarming[-dev] as owner.
+	// This topic should already have been added before workflow launch.
 	Setup(c context.Context) error
 
 	// Pull pulls one pubsub message.

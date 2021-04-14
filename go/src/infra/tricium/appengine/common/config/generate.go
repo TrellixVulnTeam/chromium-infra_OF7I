@@ -71,7 +71,7 @@ func Generate(sc *tricium.ServiceConfig, pc *tricium.ProjectConfig,
 // Also, path filters are only provided for analyzers; analyzer functions are
 // always included regardless of path matching.
 func includeFunction(f *tricium.Function, files []*tricium.Data_File) (bool, error) {
-	if f.Type == tricium.Function_ISOLATOR || len(files) == 0 || len(f.PathFilters) == 0 {
+	if len(files) == 0 || len(f.PathFilters) == 0 {
 		return true, nil
 	}
 	for _, file := range files {
@@ -96,7 +96,6 @@ func includeFunction(f *tricium.Function, files []*tricium.Data_File) (bool, err
 func createWorker(s *tricium.Selection, sc *tricium.ServiceConfig, f *tricium.Function,
 	gitRef, gitURL string) (*admin.Worker, error) {
 	i := tricium.LookupImplForPlatform(f, s.Platform) // If verified, there should be an Impl.
-	p := tricium.LookupPlatform(sc, s.Platform)       // If verified, the platform should be known.
 	// The separator character for worker names is underscore, so this
 	// character shouldn't appear in function or platform names. This
 	// is also checked in config validation.
@@ -111,8 +110,6 @@ func createWorker(s *tricium.Selection, sc *tricium.ServiceConfig, f *tricium.Fu
 		NeedsForPlatform:    i.NeedsForPlatform,
 		ProvidesForPlatform: i.ProvidesForPlatform,
 		RuntimePlatform:     i.RuntimePlatform,
-		Dimensions:          p.Dimensions,
-		CipdPackages:        i.CipdPackages,
 	}
 	switch ii := i.Impl.(type) {
 	case *tricium.Impl_Recipe:

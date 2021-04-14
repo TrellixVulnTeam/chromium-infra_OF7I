@@ -129,16 +129,6 @@ func SupportsPlatform(f *Function, platform Platform_Name) bool {
 	return false
 }
 
-// SupportsConfig checks if the function has a config def matching the provided config.
-func SupportsConfig(f *Function, config *Config) bool {
-	for _, c := range f.ConfigDefs {
-		if c.Name == config.Name {
-			return true
-		}
-	}
-	return false
-}
-
 var nameRegexp = regexp.MustCompile("^[A-Z][0-9A-Za-z]+$")
 
 // ValidateFunction checks if the function config entry is valid.

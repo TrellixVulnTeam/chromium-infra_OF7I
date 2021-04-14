@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package admin;
 
+option go_package = "infra/tricium/api/admin/v1;admin";
+
 // Reporter implements the internal reporter API.
 service Reporter {
 

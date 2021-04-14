@@ -16,7 +16,6 @@ func TestValidate(t *testing.T) {
 	Convey("Test Environment", t, func() {
 		functionName := "FunctionName"
 		platform := tricium.Platform_UBUNTU
-		config := "enable"
 		sd := &tricium.ServiceConfig{
 			BuildbucketServerHost: "cr-buildbucket-dev.appspot.com",
 			Platforms: []*tricium.Platform_Details{
@@ -55,11 +54,6 @@ func TestValidate(t *testing.T) {
 						},
 					},
 				},
-				ConfigDefs: []*tricium.ConfigDef{
-					{
-						Name: config,
-					},
-				},
 			},
 		}
 
@@ -83,44 +77,6 @@ func TestValidate(t *testing.T) {
 					{
 						Function: functionName,
 						Platform: tricium.Platform_WINDOWS,
-					},
-				},
-			})
-			So(err, ShouldNotBeNil)
-		})
-
-		Convey("Supported function config OK", func() {
-			err := Validate(sd, &tricium.ProjectConfig{
-				Functions: functions,
-				Selections: []*tricium.Selection{
-					{
-						Function: functionName,
-						Platform: platform,
-						Configs: []*tricium.Config{
-							{
-								Name:      config,
-								ValueType: &tricium.Config_Value{Value: "all"},
-							},
-						},
-					},
-				},
-			})
-			So(err, ShouldBeNil)
-		})
-
-		Convey("Non-supported function config causes error", func() {
-			err := Validate(sd, &tricium.ProjectConfig{
-				Functions: functions,
-				Selections: []*tricium.Selection{
-					{
-						Function: functionName,
-						Platform: platform,
-						Configs: []*tricium.Config{
-							{
-								Name:      "blabla",
-								ValueType: &tricium.Config_Value{Value: "all"},
-							},
-						},
 					},
 				},
 			})
@@ -197,7 +153,7 @@ func TestMergeFunctions(t *testing.T) {
 			}, &tricium.Function{
 				Type:     tricium.Function_ISOLATOR,
 				Name:     functionName,
-				Provides: tricium.Data_CLANG_DETAILS,
+				Provides: tricium.Data_FILES,
 			})
 			So(err, ShouldNotBeNil)
 		})
@@ -257,31 +213,6 @@ func TestMergeFunctions(t *testing.T) {
 			So(a.MonorailComponent, ShouldEqual, comp)
 			So(len(a.PathFilters), ShouldEqual, 1)
 			So(len(a.Impls), ShouldEqual, 1)
-		})
-	})
-}
-
-func TestMergeConfigDefs(t *testing.T) {
-	Convey("Test Environment", t, func() {
-		scd := []*tricium.ConfigDef{
-			{
-				Name: "optA",
-			},
-			{
-				Name: "optB",
-			},
-		}
-		pcd := []*tricium.ConfigDef{
-			{
-				Name: "optB",
-			},
-			{
-				Name: "optC",
-			},
-		}
-		Convey("Merges config def with override", func() {
-			mcd := mergeConfigDefs(scd, pcd)
-			So(len(mcd), ShouldEqual, 3)
 		})
 	})
 }

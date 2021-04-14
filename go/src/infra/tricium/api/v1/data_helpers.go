@@ -16,28 +16,22 @@ import (
 )
 
 const (
-	// ResultsPath stores the path to the RESULTS data type file.
-	ResultsPath = "tricium/data/results.json"
-
-	// ClangDetailsPath stores the path to the CLANG_DETAILS data type file.
-	ClangDetailsPath = "tricium/data/clang_details.json"
-
-	// FilesPath stores the path to the FILES data type file.
-	FilesPath = "tricium/data/files.json"
-
 	// GitFileDetailsPath stores the path to the GIT_FILE_DETAILS data type file.
 	GitFileDetailsPath = "tricium/data/git_file_details.json"
+	// FilesPath stores the path to the FILES data type file.
+	FilesPath = "tricium/data/files.json"
+	// ResultsPath stores the path to the RESULTS data type file.
+	ResultsPath = "tricium/data/results.json"
 )
 
-// GetPathForDataType returns the file path to use for the provided Tricium data type.
+// GetPathForDataType returns the file path to use for the provided Tricium
+// data type.
 func GetPathForDataType(t interface{}) (string, error) {
 	switch t := t.(type) {
 	case *Data_GitFileDetails:
 		return GitFileDetailsPath, nil
 	case *Data_Files:
 		return FilesPath, nil
-	case *Data_ClangDetails:
-		return ClangDetailsPath, nil
 	case *Data_Results:
 		return ResultsPath, nil
 	default:
@@ -48,12 +42,13 @@ func GetPathForDataType(t interface{}) (string, error) {
 // WriteDataType writes a Tricium data type to the file path assigned to the type.
 func WriteDataType(prefix string, t proto.Message) (string, error) {
 	// The jsonpb marshaler produces a different output than the standard
-	// "encoding/json" package would. The JSON marshaler used must be
-	// consistent with the one used to create the initial isolated data.
+	// "encoding/json" package would.
 	//
 	// Specifically, the jsonpb marshaler uses camelCase field names for
 	// proto structs, whereas the encoding/json marshaler uses lowercase
 	// with underscores.
+	//
+	// In Tricium we try to use jsonpb whenever working with protos.
 	json, err := (&jsonpb.Marshaler{}).MarshalToString(t)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal: %v", err)

@@ -6,58 +6,57 @@ syntax = "proto3";
 
 package tricium;
 
+option go_package = "infra/tricium/api/v1;tricium";
+
 import "infra/tricium/api/v1/data.proto";
 import "infra/tricium/api/v1/platform.proto";
 
-// Tricium function.
-//
-// Originally, there were two types of functions; isolators and analyzers.
-// For analyzer functions, the output must be of type Data.Results. After
-// transition to recipe-based analyzers only, all functions should be analyzers
-// and input type is ignored.
+// Tricium analyzer definition.
 message Function {
-  // Tricium functions; isolators and analyzers.
-  // After transition to recipe-based analyzers, all functions are analyzers.
+  // Originally, there were two types of functions; isolators and analyzers.
+  // For analyzer functions, the output must be of type Data.Results. After
+  // transition to recipe-based analyzers only, all functions should be analyzers
+  // and input type is ignored.
   enum Type {
     NONE     = 0;
-    ISOLATOR = 1;
+    ISOLATOR = 1 [deprecated=true];
     ANALYZER = 2;
   }
 
   // The type of this function.
   //
-  // This field is required.
+  // This field is required, but should always be ANALYZER.
   Type type = 1;
 
-  // The name of the function.
+  // The name of the analyzer.
   //
-  // This name is used for selection, customization and reporting of
-  // progress/results. The name must be unique among Tricium functions within a
-  // Tricium instance.
-  //
+  // The name must be unique among Tricium functions within a Tricium instance.
   // The name is expected to be CamelCase; no spaces, underscores or dashes are
   // allowed.
   //
   // This field is required.
   string name = 2;
 
-  // Data needed by this function.
+  // Data needed by this analyzer.
   //
-  // This field is required.
+  // After migration to recipe-based analyzers, this should always be
+  // GIT_FILE_DETAILS.
   Data.Type needs = 3;
 
-  // Data provided by this function.
+  // Data provided by this analyzer.
   //
   // This field is required.
+  // After migration to recipe-based analyzers, this should always be
+  // RESULTS.
   Data.Type provides = 4;
 
-  // Path filters for this function.
+  // Path filters for this analyzer.
   //
-  // Applicable when this function is an analyzer. Defined as a glob.
-  // The path filters only apply to the last part of the path.
+  // Defined as a glob. The path filters only apply to the last part of the
+  // path.
   repeated string path_filters = 5; // Default: "*"
 
-  // Email address of the owner of this function.
+  // Email address of the owner of this analyzer. Used for bug filing.
   //
   // This field is required.
   string owner = 6;
@@ -67,96 +66,48 @@ message Function {
   // This field is required.
   string monorail_component = 7;
 
-  // Function configuration options.
-  //
-  // These options enable projects to configure how a function behaves without
-  // customization via a new implementation. For instance, an analyzer function
-  // may expose the list of possible checks as configuration options.
-  repeated ConfigDef config_defs = 8;
+  reserved 8;
 
   // Function implementations.
   //
-  // A function may run on many platforms and the implementation per platform
-  // may differ. When possible, an implementation may be shared between several
-  // platforms.
+  // Originally the idea was that an analyzer may run on many different platforms
+  // and the comments from different platforms may be merged.
+  //
+  // This was not done in practice, so the number of impls should always be one.
   repeated Impl impls = 9;
 }
 
-// Definition of a function configuration.
+// Analyzer implementation.
 //
-// An analyzer may expose flags as configuration options, e.g. ClangTidy
-// is configured with a 'checks' flag.
-message ConfigDef {
-  // Name of configuration option.
-  string name = 1;
-
-  // Default value for the config, e.g., checks="all".
-  string default = 2;
-}
-
-// Function implementation.
-//
-// Implementation can be either command-based or recipe-based.
-// NB! Recipe-based implementations are not supported yet.
-//
-// If platform-specific data is needed or provided, the specific platform
-// details should be provided in the implementation. Note that the runtime
-// platform of the implementation may be different then the platform(s)
-// used to refine the data-dependency.
+// Implementation must be recipe-based; command-based (legacy) analyzers
+// are no longer supported.
 message Impl {
   // Data-dependency details specific to this implementation.
   //
-  // For instance, if the needed data must be parameterized with a
-  // specific platform then the 'needs_for_platform' field should be set to
-  // that platform. Likewise for any provided data type that must be
-  // parameterized with a specific platform, this should be indicated with
-  // the 'provides_for_platform' field. Either if these fields can be left
-  // out for implementations of functions not needing or providing
-  // platform-specific data.
+  // This particular value of this field isn't significant, because
+  // the platform is determined by the builder.
   Platform.Name needs_for_platform = 1;
   Platform.Name provides_for_platform = 2;
 
   // The platform to run this implementation on.
   //
-  // This may be different from the platforms used to refine data-dependencies,
-  // as long as the data consumed/produced follows the specification.
+  // This particular value of this field isn't significant, because
+  // the platform is determined by the builder.
   Platform.Name runtime_platform = 3;
 
-  // CIPD packages needed by this implementation.
-  repeated CipdPackage cipd_packages = 4;
+  reserved 4;
 
   oneof impl {
     // Recipe for recipe-based implementation.
     Recipe recipe = 5;
   }
 
-  reserved 6;
-
-  // Deadline for execution of corresponding workers.
-  //
-  // Note that this deadline includes the launch of a swarming task for the
-  // corresponding worker, and collection of results from that worker.
-  // Deadline should be given in seconds.
-  int32 deadline = 7;
+  reserved 6, 7;
 }
 
 // Specification of a recipe for a recipe-based analyzer.
 message Recipe {
-  // Recipe CIPD package. Deprecated because CIPD package will be determined
-  // by the builder config.
-  string cipd_package = 1 [deprecated=true];
-
-  // CIPD package version. Deprecated because CIPD package version will be
-  // determined by the builder config.
-  string cipd_version = 2 [deprecated=true];
-
-  // Extra recipe properties to add, as a JSON mapping of keys to values.
-  // Deprecated because properties will be determined by the builder config.
-  string properties = 3 [deprecated=true];
-
-  // Name of the recipe to run. Deprecated because recipe will be determined by
-  // the builder config.
-  string name = 4 [deprecated=true];
+  reserved 1, 2, 3, 4;
 
   // Project ID, e.g. "chromium".
   string project = 5;
@@ -166,18 +117,4 @@ message Recipe {
 
   // Builder name, e.g. "linux-rel".
   string builder = 7;
-}
-
-// Specification of a CIPD package that is installed as a dependency of an
-// analyzer.
-message CipdPackage {
-  // CIPD package name.
-  string package_name = 1;
-
-  // Relative path from the working directory where the package shall be
-  // installed. Cannot be empty or start with a slash.
-  string path = 2;
-
-  // CIPD package version.
-  string version = 3;
 }
