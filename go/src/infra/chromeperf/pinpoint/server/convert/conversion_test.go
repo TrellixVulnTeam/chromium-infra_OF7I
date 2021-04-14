@@ -43,7 +43,7 @@ func shouldContainMap(actual interface{}, expected ...interface{}) string {
 }
 
 func TestSimpleConversions(t *testing.T) {
-
+	t.Parallel()
 	job := &pinpoint.JobSpec{
 		Config: "some-config",
 		Target: "some-build-target",
@@ -625,6 +625,48 @@ func TestSimpleConversions(t *testing.T) {
 					Change:   23456,
 					Patchset: 1,
 				}}}
+	})
+
+	Convey("We fail on experiments with missing inputs", t, func() {
+		job.JobKind = &pinpoint.JobSpec_Experiment{
+			Experiment: &pinpoint.Experiment{
+				BaseCommit: &pinpoint.GitilesCommit{
+					Host:    "some-gitiles-host",
+					Project: "some-gitiles-project",
+					GitHash: "c0dec0de",
+				},
+				ExperimentPatch: &pinpoint.GerritChange{
+					Host:     "some-gerrit-host",
+					Project:  "some-gerrit-project",
+					Change:   12345,
+					Patchset: 0,
+				},
+			}}
+		Convey("Creating a performance mode job", func() {
+			job.ComparisonMode = pinpoint.JobSpec_PERFORMANCE
+			telemetryJob :=
+				&pinpoint.JobSpec{
+					Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
+						TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+							Benchmark: "some-benchmark",
+							StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								Story: "some-story",
+							},
+							Measurement:   "some-metric",
+							GroupingLabel: "some-grouping-label",
+							Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+			proto.Merge(telemetryJob, job)
+			Convey("No base commit", func() {
+				telemetryJob.GetExperiment().BaseCommit = nil
+				_, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeError)
+			})
+			Convey("No experiment commit", func() {
+				telemetryJob.GetExperiment().ExperimentPatch = nil
+				_, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeError)
+			})
+		})
 	})
 
 	Convey("We support experiments with base commit and experiment patch", t, func() {

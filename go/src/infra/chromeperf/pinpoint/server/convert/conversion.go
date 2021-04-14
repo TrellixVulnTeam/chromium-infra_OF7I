@@ -116,7 +116,13 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 
 		// The legacy Pinpoint API doesn't support specifying the Gitiles host/project as it assumes the only
 		// the Chromium codebase is being worked on.
+		if jk.Experiment.BaseCommit == nil {
+			return nil, errors.Reason("a base commit is required").Err()
+		}
 		v.Set("base_git_hash", jk.Experiment.BaseCommit.GitHash)
+		if jk.Experiment.ExperimentPatch == nil {
+			return nil, errors.Reason("an experiment patch is required").Err()
+		}
 		experimentPatchURL, err := gerritChangeToURL(jk.Experiment.ExperimentPatch)
 		if err != nil {
 			return nil, errors.Annotate(err, "invalid experiment patch").Err()
