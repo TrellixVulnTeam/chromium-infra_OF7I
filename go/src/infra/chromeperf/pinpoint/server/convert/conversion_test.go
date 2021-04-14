@@ -5,7 +5,9 @@ package convert
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
+	"strings"
 	"testing"
 
 	"infra/chromeperf/pinpoint"
@@ -609,6 +611,22 @@ func TestSimpleConversions(t *testing.T) {
 
 	})
 
+	Convey("We translate all the URLs for results at each change", t, func() {
+		job.JobKind = &pinpoint.JobSpec_Experiment{
+			Experiment: &pinpoint.Experiment{
+				BaseCommit: &pinpoint.GitilesCommit{
+					Host:    "some-gitiles-host",
+					Project: "some-gitiles-project",
+					GitHash: "c0dec0de",
+				},
+				ExperimentPatch: &pinpoint.GerritChange{
+					Host:     "some-gerrit-host",
+					Project:  "some-gerrit-project",
+					Change:   23456,
+					Patchset: 1,
+				}}}
+	})
+
 	Convey("We support experiments with base commit and experiment patch", t, func() {
 		job.JobKind = &pinpoint.JobSpec_Experiment{
 			Experiment: &pinpoint.Experiment{
@@ -865,6 +883,34 @@ func TestGerritChangeToURL(t *testing.T) {
 				_, err := gerritChangeToURL(c)
 				So(err, ShouldBeError)
 				So(err.Error(), ShouldContainSubstring, "change")
+			})
+		})
+	})
+}
+
+func TestJobToProto(t *testing.T) {
+	t.Parallel()
+	Convey("Given a defined experiment", t, func() {
+		lj, err := ioutil.ReadFile("../testdata/defined-job-experiment.json")
+		So(err, ShouldBeNil)
+		Convey("When we convert the legacy JSON", func() {
+			p, err := JobToProto(strings.NewReader(string(lj)))
+			So(err, ShouldBeNil)
+			So(p, ShouldNotBeNil)
+			Convey("Then we find the experiment URLs", func() {
+				results := p.GetAbExperimentResults()
+				So(results, ShouldNotBeNil)
+				So(results.AChangeResult.Attempts, ShouldHaveLength, 10)
+				So(results.BChangeResult.Attempts, ShouldHaveLength, 10)
+
+				// We know that legacy jobs have 2-3 executions per attempt. This corresponds with the Build, Test,
+				// Value quest executions, which is defined for most Pinpoint A/B experiments.
+				for _, a := range results.AChangeResult.Attempts {
+					So(len(a.Executions), ShouldBeBetweenOrEqual, 2, 3)
+				}
+				for _, a := range results.BChangeResult.Attempts {
+					So(len(a.Executions), ShouldBeBetweenOrEqual, 2, 3)
+				}
 			})
 		})
 	})

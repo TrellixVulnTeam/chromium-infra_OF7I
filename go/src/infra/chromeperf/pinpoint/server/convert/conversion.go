@@ -306,54 +306,9 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 		switch l.ComparisonMode {
 		case "try":
 			// Then we've got an experiment.
-			if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
-				errs = append(errs, errors.Reason("invalid state count in legacy response: want %d got %d", expectedStates, foundStates).Err())
-				break
-			}
-
-			// By convention we use the first state's change to be the
-			// "base" while the second state is the "experiment".
-			c0 := &l.State[0].Change
-			c1 := &l.State[1].Change
-
-			experiment := &pinpoint.Experiment{
-				BaseCommit: &pinpoint.GitilesCommit{
-					Host:    c0.Commits[0].URL,
-					Project: c0.Commits[0].Repo,
-					GitHash: c0.Commits[0].GitHash,
-				},
-				// FIXME: Fill out these details.
-				BasePatch: &pinpoint.GerritChange{
-					Host:     "",
-					Project:  "",
-					Change:   0,
-					Patchset: 0,
-				},
-				ExperimentCommit: &pinpoint.GitilesCommit{
-					Host:    c1.Commits[0].URL,
-					Project: c1.Commits[0].Repo,
-					GitHash: c1.Commits[0].GitHash,
-				},
-			}
-
-			j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
-				Experiment: experiment,
-			}
-
-			// FIXME: Find a better way to expose this data from the legacy
-			// service's JSON response instead of parsing URLs.
-			if p, err := parseGerritURL(c1.Patch.URL); err != nil {
-				errs = append(errs, err)
-			} else {
-				experiment.ExperimentPatch = &pinpoint.GerritChange{
-					// FIXME: We have two URLs in the result JSON, we
-					// need to extract the relevant details for the
-					// proto response.
-					Host:     c1.Patch.Server,
-					Project:  p.project,
-					Change:   p.cl,
-					Patchset: p.patchSet,
-				}
+			newErrs := addExperimentDetails(l, j)
+			if len(newErrs) > 0 {
+				errs = append(errs, newErrs)
 			}
 		case "performance":
 			// FIXME: When we're ready to support bisection results, fill this out.
@@ -375,6 +330,111 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 		return j, errors.Annotate(errs, "%d error(s) parsing %q", len(errs), j.Name).Err()
 	}
 	return j, nil
+}
+
+func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
+	var errs errors.MultiError
+	if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
+		errs = append(errs, errors.Reason("invalid state count in legacy response: want %d got %d", expectedStates, foundStates).Err())
+		return errs
+	}
+
+	// By convention we use the first state's change to be the
+	// "base" while the second state is the "experiment".
+	baseChange := &l.State[0].Change
+	expChange := &l.State[1].Change
+
+	experiment := &pinpoint.Experiment{
+		BaseCommit: &pinpoint.GitilesCommit{
+			Host:    baseChange.Commits[0].URL,
+			Project: baseChange.Commits[0].Repo,
+			GitHash: baseChange.Commits[0].GitHash,
+		},
+		ExperimentCommit: &pinpoint.GitilesCommit{
+			Host:    expChange.Commits[0].URL,
+			Project: expChange.Commits[0].Repo,
+			GitHash: expChange.Commits[0].GitHash,
+		},
+	}
+
+	j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
+		Experiment: experiment,
+	}
+
+	// FIXME: Find a better way to expose this data from the legacy
+	// service's JSON response instead of parsing URLs.
+	// Parse the base patch, if there's any.
+	if baseChange.Patch.URL != "" {
+		if p, err := parseGerritURL(baseChange.Patch.URL); err != nil {
+			errs = append(errs, err)
+		} else {
+			experiment.BasePatch = &pinpoint.GerritChange{
+				Host:     baseChange.Patch.Server,
+				Project:  p.project,
+				Change:   p.cl,
+				Patchset: p.patchSet,
+			}
+		}
+	}
+
+	if p, err := parseGerritURL(expChange.Patch.URL); err != nil {
+		errs = append(errs, err)
+	} else {
+		experiment.ExperimentPatch = &pinpoint.GerritChange{
+			Host:     expChange.Patch.Server,
+			Project:  p.project,
+			Change:   p.cl,
+			Patchset: p.patchSet,
+		}
+	}
+
+	// Now we go through the state objects, and convert those one by one to the
+	// proto results.
+	j.Results = &pinpoint.Job_AbExperimentResults{
+		AbExperimentResults: &pinpoint.ABExperimentResults{
+			AChangeResult: &pinpoint.ChangeResult{},
+			BChangeResult: &pinpoint.ChangeResult{},
+		},
+	}
+	for _, attempt := range l.State[0].Attempts {
+		a := &pinpoint.Attempt{}
+		for _, ex := range attempt.Executions {
+			x := &pinpoint.Execution{
+				Completed: ex.Completed,
+			}
+			for _, ed := range ex.Details {
+				d := &pinpoint.ExecutionDetails{
+					Key:   ed.Key,
+					Value: ed.Value,
+					Url:   ed.URL,
+				}
+				x.Details = append(x.Details, d)
+			}
+			a.Executions = append(a.Executions, x)
+		}
+		j.GetAbExperimentResults().AChangeResult.Attempts =
+			append(j.GetAbExperimentResults().AChangeResult.Attempts, a)
+	}
+	for _, attempt := range l.State[1].Attempts {
+		a := &pinpoint.Attempt{}
+		for _, ex := range attempt.Executions {
+			x := &pinpoint.Execution{
+				Completed: ex.Completed,
+			}
+			for _, ed := range ex.Details {
+				d := &pinpoint.ExecutionDetails{
+					Key:   ed.Key,
+					Value: ed.Value,
+					Url:   ed.URL,
+				}
+				x.Details = append(x.Details, d)
+			}
+			a.Executions = append(a.Executions, x)
+		}
+		j.GetAbExperimentResults().BChangeResult.Attempts =
+			append(j.GetAbExperimentResults().BChangeResult.Attempts, a)
+	}
+	return errs
 }
 
 func jsonStatusToProto(status string) pinpoint.Job_State {
