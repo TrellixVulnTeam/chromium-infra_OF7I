@@ -286,7 +286,7 @@ class Gerrit(codereview.CodeReview):
   def GetClDetails(self,
                    change_id,
                    project='chromium/src',
-                   branch='master',
+                   branch='main',
                    query_options=None):
     assert project, 'project name is required'
     assert branch, 'branch name is required'
