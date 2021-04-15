@@ -40,6 +40,13 @@ class SwarmingTaskRequestTest(TestCase):
                     package_name=None,
                 ),
                 server=None),
+            cas_input_root=swarming_task_request.CASInputRoot(
+                cas_instance=None,
+                digest=swarming_task_request.CASInputRootDigest(
+                    size_bytes=None,
+                    hash=None,
+                ),
+            ),
         ),
         pubsub_auth_token=None,
         pubsub_topic=None,
@@ -108,6 +115,13 @@ class SwarmingTaskRequestTest(TestCase):
                 },
                 'server': 'server',
             },
+            'cas_input_root': {
+                'cas_instance': 'projects/chromium-swarm/instances/default',
+                'digest': {
+                    'size_bytes': '1135',
+                    'hash': 'bec400ea1f34229085710fcc7ff174147f4f4af4db',
+                }
+            }
         },
     }
 
@@ -151,7 +165,14 @@ class SwarmingTaskRequestTest(TestCase):
                     cipd_packages),
                 client_package=swarming_task_request.CIPDClientPackage(
                     version='version', package_name='package_name'),
-                server='server')),
+                server='server'),
+            cas_input_root=swarming_task_request.CASInputRoot(
+                cas_instance='projects/chromium-swarm/instances/default',
+                digest=swarming_task_request.CASInputRootDigest(
+                    size_bytes='1135',
+                    hash='bec400ea1f34229085710fcc7ff174147f4f4af4db',
+                ),
+            )),
         pubsub_auth_token='token',
         pubsub_topic='topic',
         pubsub_userdata='data',

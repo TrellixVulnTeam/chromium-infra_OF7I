@@ -51,6 +51,17 @@ class SwarmingTaskInputsRef(StructuredObject):
   namespace = basestring
 
 
+class CASInputRootDigest(StructuredObject):
+  size_bytes = basestring
+  hash = basestring
+
+
+class CASInputRoot(StructuredObject):
+  """RBE-CAS input"""
+  cas_instance = basestring
+  digest = CASInputRootDigest
+
+
 class SwarmingTaskProperties(StructuredObject):
   """Fields populated in swarming task requests."""
   caches = list
@@ -59,6 +70,7 @@ class SwarmingTaskProperties(StructuredObject):
   env_prefixes = list
   dimensions = list
   env = list
+  cas_input_root = CASInputRoot
 
   # The maximum amount of time the swarming task is allowed to run before being
   # terminated returned as a string representation of an int.
@@ -150,6 +162,13 @@ class SwarmingTaskRequest(StructuredObject):
                     package_name=None,
                 ),
                 server=None),
+            cas_input_root=CASInputRoot(
+                cas_instance=None,
+                digest=CASInputRootDigest(
+                    size_bytes=None,
+                    hash=None,
+                ),
+            ),
         ),
         pubsub_auth_token=None,
         pubsub_topic=None,
@@ -178,6 +197,7 @@ class SwarmingTaskRequest(StructuredObject):
     properties = data.get('properties', {})
     inputs_ref = properties.get('inputs_ref', {})
     cipd_input = properties.get('cipd_input', {})
+    cas_input_root = properties.get('cas_input_root', {})
 
     return SwarmingTaskRequest(
         created_ts=data.get('created_ts'),
@@ -213,6 +233,14 @@ class SwarmingTaskRequest(StructuredObject):
                                                 {}).get('package_name'),
                 ),
                 server=cipd_input.get('server'),
+            ),
+            cas_input_root=CASInputRoot(
+                cas_instance=cas_input_root.get('cas_instance'),
+                digest=CASInputRootDigest(
+                    size_bytes=cas_input_root.get('digest',
+                                                  {}).get('size_bytes'),
+                    hash=cas_input_root.get('digest', {}).get('hash'),
+                ),
             ),
         ),
         pubsub_auth_token=data.get('pubsub_auth_token'),

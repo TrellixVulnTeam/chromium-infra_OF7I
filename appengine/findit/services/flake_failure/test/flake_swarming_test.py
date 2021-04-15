@@ -54,6 +54,13 @@ _SAMPLE_REQUEST_JSON = {
             'isolated': 'sha'
         },
         'io_timeout_secs': '1200',
+        'cas_input_root': {
+            'cas_instance': 'projects/chromium-swarm/instances/default',
+            'digest': {
+                'size_bytes': '1135',
+                'hash': 'bec400ea1f34229085710fcc7ff174147f4f4af4db',
+            }
+        },
     },
     'tags': [
         'ref_master:m',
@@ -450,7 +457,14 @@ class FlakeSwarmingTest(wf_testcase.WaterfallTestCase):
                     version=None,
                     package_name=None,
                 ),
-                server=None)),
+                server=None),
+            cas_input_root=swarming_task_request.CASInputRoot(
+                cas_instance='projects/chromium-swarm/instances/default',
+                digest=swarming_task_request.CASInputRootDigest(
+                    size_bytes='1135',
+                    hash='bec400ea1f34229085710fcc7ff174147f4f4af4db',
+                ),
+            )),
         priority='25',
         parent_task_id='',
         user='',
