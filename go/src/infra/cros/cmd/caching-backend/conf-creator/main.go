@@ -100,21 +100,24 @@ func innerMain() error {
 	default:
 		return fmt.Errorf("node is neither the primary nor the secondary")
 	}
-	log.Println("Creating nginx.conf...")
-	nData, err := buildConfig(nginxTemplate, n)
+	if err := buildAndWriteConfig("nginx", nginxTemplate, n, *nginxConfigFilePath); err != nil {
+		return err
+	}
+	if s := service.GetState(); s != models.State_STATE_SERVING {
+		log.Printf("Didn't config keepalived since the service state in UFS isn't STATE_SERVING (%s instead)", s)
+		return ioutil.WriteFile(*keepalivedConfigFilePath, []byte(noOpKeepalivedTemplate), 0644)
+	}
+	return buildAndWriteConfig("keepalived", keepalivedTemplate, k, *keepalivedConfigFilePath)
+}
+
+func buildAndWriteConfig(name string, templ string, data interface{}, path string) error {
+	log.Printf("Configuring %q and writing to %q ...", name, path)
+	d, err := buildConfig(templ, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("build and write config of %q: %s", name, err)
 	}
-	if err := ioutil.WriteFile(*nginxConfigFilePath, []byte(nData), 0644); err != nil {
-		return err
-	}
-	log.Println("Creating keepalived.conf...")
-	kData, err := buildConfig(keepalivedTemplate, k)
-	if err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(*keepalivedConfigFilePath, []byte(kData), 0644); err != nil {
-		return err
+	if err := ioutil.WriteFile(path, []byte(d), 0644); err != nil {
+		return fmt.Errorf("build and write config of %q: %s", name, err)
 	}
 	return nil
 }
