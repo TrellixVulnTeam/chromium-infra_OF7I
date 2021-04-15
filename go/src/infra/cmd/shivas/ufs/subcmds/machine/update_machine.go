@@ -6,6 +6,7 @@ package machine
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -85,6 +86,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
+
 	ctx := cli.GetContext(a, c, env)
 	ns, err := c.envFlags.Namespace()
 	if err != nil {
@@ -117,8 +119,19 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			c.parseArgs(&machine)
 		}
 	}
-	if err := utils.PrintExistingMachine(ctx, ic, machine.Name); err != nil {
+	existingMachine, err := utils.PrintExistingMachine(ctx, ic, machine.Name)
+	if err != nil {
 		return err
+	}
+	if existingMachine.GetChromeosMachine() != nil && existingMachine.GetChromeosMachine().GetHwid() != machine.GetChromeosMachine().GetHwid() {
+		newHWID := machine.GetChromeosMachine().GetHwid()
+		if newHWID == "" {
+			return fmt.Errorf("users cannot update hwid to empty string manually")
+		}
+		prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+		if prompt != nil && !prompt(fmt.Sprintf("HWID can only be used by Fleet Admins. Are you sure you want to modify the HWID to %s?", newHWID)) {
+			return nil
+		}
 	}
 	machine.Name = ufsUtil.AddPrefix(ufsUtil.MachineCollection, machine.Name)
 	if !ufsUtil.ValidateTags(machine.Tags) {

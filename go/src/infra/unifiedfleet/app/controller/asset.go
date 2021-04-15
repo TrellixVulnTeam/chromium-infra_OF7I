@@ -81,7 +81,12 @@ func UpdateAsset(ctx context.Context, asset *ufspb.Asset, mask *field_mask.Field
 			asset.Info = &ufspb.AssetInfo{}
 		}
 		asset.GetInfo().SerialNumber = oldAsset.GetInfo().GetSerialNumber()
-		asset.GetInfo().Hwid = oldAsset.GetInfo().GetHwid()
+
+		// Allow users to modify hwid before we can get authoritative source from HaRT
+		// Don't allow users to modify it to empty
+		if asset.GetInfo().GetHwid() == "" {
+			asset.GetInfo().Hwid = oldAsset.GetInfo().GetHwid()
+		}
 		asset.GetInfo().Sku = oldAsset.GetInfo().GetSku()
 
 		// updatableAsset will be used to update the asset
@@ -569,6 +574,7 @@ func updateMachineFromAsset(ctx context.Context, machine *ufspb.Machine, asset *
 	// Serial number of UFS machine is updated by SSW in
 	// UpdateDutMeta https://source.corp.google.com/chromium_infra/go/src/infra/unifiedfleet/app/controller/machine.go;l=182
 	// Dont rely on Asset(user provided) for Serial number, Hwid, Sku.
+	// Especially for HWID, HaRT doesn't contain 100% trustable data. See b/185404595 for context.
 	// Leave them with original values and dont update them.
 	machine.Location = asset.GetLocation()
 	machine.Realm = asset.GetRealm()

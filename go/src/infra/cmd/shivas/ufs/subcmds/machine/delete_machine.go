@@ -76,7 +76,7 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if err := utils.PrintExistingMachine(ctx, ic, args[0]); err != nil {
+	if _, err := utils.PrintExistingMachine(ctx, ic, args[0]); err != nil {
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)

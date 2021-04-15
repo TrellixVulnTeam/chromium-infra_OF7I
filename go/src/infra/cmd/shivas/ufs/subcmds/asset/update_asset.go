@@ -6,6 +6,7 @@ package asset
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -122,8 +123,19 @@ func (c *updateAsset) innerRun(a subcommands.Application, args []string, env sub
 			return err
 		}
 	}
-	if err := utils.PrintExistingAsset(ctx, ic, asset.Name); err != nil {
+	existingAsset, err := utils.PrintExistingAsset(ctx, ic, asset.Name)
+	if err != nil {
 		return err
+	}
+	if existingAsset.GetInfo().GetHwid() != asset.GetInfo().GetHwid() {
+		newHWID := asset.GetInfo().GetHwid()
+		if newHWID == "" {
+			return fmt.Errorf("users cannot update hwid to empty string manually")
+		}
+		prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+		if prompt != nil && !prompt(fmt.Sprintf("HWID can only be used by Fleet Admins. Are you sure you want to modify the HWID to %s?", newHWID)) {
+			return nil
+		}
 	}
 	asset.Name = ufsUtil.AddPrefix(ufsUtil.AssetCollection, asset.Name)
 	res, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{

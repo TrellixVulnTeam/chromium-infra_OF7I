@@ -143,7 +143,12 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			// copy back original values.
 			machine.SerialNumber = oldMachine.GetSerialNumber()
 			machine.GetChromeosMachine().Sku = oldMachine.GetChromeosMachine().GetSku()
-			machine.GetChromeosMachine().Hwid = oldMachine.GetChromeosMachine().GetHwid()
+
+			// Allow users to modify hwid before we can get authoritative source from HaRT
+			// Don't allow users to modify it to empty
+			if machine.GetChromeosMachine().Hwid == "" {
+				machine.GetChromeosMachine().Hwid = oldMachine.GetChromeosMachine().GetHwid()
+			}
 		}
 
 		// Do not let updating from browser to os or vice versa change for machine.

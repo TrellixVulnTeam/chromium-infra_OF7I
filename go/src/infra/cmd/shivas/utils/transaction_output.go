@@ -10,42 +10,43 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // PrintExistingAsset prints the old asset in update/delete operations.
-func PrintExistingAsset(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+func PrintExistingAsset(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.Asset, error) {
 	res, err := ic.GetAsset(ctx, &ufsAPI.GetAssetRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.AssetCollection, name),
 	})
 	if err != nil {
-		return errors.Annotate(err, "Failed to get asset").Err()
+		return nil, errors.Annotate(err, "Failed to get asset").Err()
 	}
 	if res == nil {
-		return errors.Reason("The returned resp is empty").Err()
+		return nil, errors.Reason("The returned resp is empty").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The asset before delete/update:")
 	PrintProtoJSON(res, !NoEmitMode(false))
-	return nil
+	return res, nil
 }
 
 // PrintExistingMachine prints the old machine in update/delete operations.
-func PrintExistingMachine(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
+func PrintExistingMachine(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.Machine, error) {
 	res, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, name),
 	})
 	if err != nil {
-		return errors.Annotate(err, "Failed to get machine").Err()
+		return nil, errors.Annotate(err, "Failed to get machine").Err()
 	}
 	if res == nil {
-		return errors.Reason("The returned resp is empty").Err()
+		return nil, errors.Reason("The returned resp is empty").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The machine before delete/update:")
 	PrintProtoJSON(res, !NoEmitMode(false))
-	return nil
+	return res, nil
 }
 
 // PrintExistingDrac prints the old drac in update/delete operations

@@ -85,7 +85,7 @@ func (c *renameMachine) innerRun(a subcommands.Application, args []string, env s
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if err := utils.PrintExistingMachine(ctx, ic, c.name); err != nil {
+	if _, err := utils.PrintExistingMachine(ctx, ic, c.name); err != nil {
 		return err
 	}
 	res, err := ic.RenameMachine(ctx, &ufsAPI.RenameMachineRequest{
