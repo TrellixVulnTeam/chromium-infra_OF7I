@@ -5023,6 +5023,20 @@ wheel: <
 
 * *universal*
 
+## **wand**
+
+### 0.6.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/wand-py2_py3"
+  version: "version:0.6.6"
+>
+```
+
+
+* *universal*
+
 ## **webencodings**
 
 ### 0.5.1

@@ -919,6 +919,7 @@ SPECS.update({
         Universal('virtualenv', '20.0.20'),
         Universal('virtualenv-clone', '0.5.4'),
         Universal('waitress', '1.4.3'),
+        Universal('wand', '0.6.6'),
         Universal('webencodings', '0.5.1'),
         Universal('wheel', '0.33.1'),
         Universal('yapf', '0.22.0'),
