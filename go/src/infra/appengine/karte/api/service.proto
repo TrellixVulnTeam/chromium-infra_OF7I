@@ -1,0 +1,94 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package karte;
+
+import "google/api/annotations.proto";
+import "infra/appengine/karte/api/action.proto";
+import "infra/appengine/karte/api/observation.proto";
+
+option go_package = "infra/appengine/karte/api;kartepb";
+
+// The Karte service is responsible for storing events and observations
+// related to DUTs and querying them.
+service Karte {
+  // ListActions lists all the actions that Karte knows about.
+  // The order in which the actions are returned is undefined.
+  rpc ListActions(ListActionsRequest) returns (ListActionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/actions"
+    };
+  }
+
+  // ListObservations lists all the observations that Karte knows about.
+  // The order in which the observations are returned is undefined.
+  rpc ListObservations(ListObservationsRequest)
+      returns (ListObservationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/options"
+    };
+  }
+}
+
+// ListActionsRequest takes a page size and a token indicating where to start.
+message ListActionsRequest {
+  // The maximum number of actions to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 50 actions will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListActions` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListActions` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+// ListActionsResponse returns the actions in question and returns a page token
+// indicating where to start looking in the next search.
+// The page token will be empty if and only if we have reached the end of the
+// results.
+message ListActionsResponse {
+  // These are all the actions fitting the criteria specified. Currently, no
+  // criteria can be provided, so every action matches.
+  repeated Action actions = 1;
+
+  // This is the page token that is needed for pagination. This token
+  // must be supplied verbatim to subsequent calls to ListActions.
+  string next_page_token = 2;
+}
+
+// ListObservationsRequest take a page size and a token indicating where to
+// start.
+message ListObservationsRequest {
+  // The maximum number of observations to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 50 observations will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListObservations` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListObservations` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+// ListObservationsResponse returns the observations in quetoin and returns a
+// page token indicating where to start looking in the next search. The page
+// token will be empty if and only if we have reached the end of the results.
+message ListObservationsResponse {
+  // These are all the actions fitting the criteria specified. Currently, no
+  // criteria can be provided, so every action matches.
+  repeated Observation observations = 1;
+
+  // This is the page token that is needed for pagination. This token
+  // must be supplied verbatim to subsequent calls to ListActions.
+  string next_page_token = 2;
+}
