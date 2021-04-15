@@ -6,9 +6,9 @@ syntax = "proto3";
 
 package karte;
 
-option go_package = "infra/appengine/karte/api;kartepb";
-
 import "google/api/resource.proto";
+
+option go_package = "infra/appengine/karte/api;kartepb";
 
 // An action represents an event performed on a DUT. Examples include
 // running a command on a DUT or resetting the servo attached to a
