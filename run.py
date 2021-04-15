@@ -1,8 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# [VPYTHON:BEGIN]
+# python_version: "2.7"
+# [VPYTHON:END]
 """Wrapper for `python -m` to make running tools simpler.
 
 A tool is defined as a python module with a __main__.py file. This latter file
