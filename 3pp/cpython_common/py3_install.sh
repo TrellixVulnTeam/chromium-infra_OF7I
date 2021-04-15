@@ -92,13 +92,12 @@ else
   BASEMODLIBS="-lpthread"
 
   # Linux requires -lrt.
-  WITH_LIBS="$WITH_LIBS -lrt"
+  WITH_LIBS+=" -lrt"
 
-  # The "crypt" module needs to link against glibc's "crypt" function.
-  #
-  # TODO: Maybe consider implementing a static version using OpenSSL and
-  # linking that in instead?
-  SETUP_LOCAL_ATTACH+=('_crypt::-lcrypt')
+  # The "crypt" module needs to link against glibc's "crypt" function. We link
+  # it statically because our docker environment uses libcrypt.so.2, which isn't
+  # available where we run the resulting binary.
+  WITH_LIBS+=" -l:libcrypt.a"
 
   # On Linux, we will statically compile OpenSSL into the binary, since we
   # want to be generally system/library agnostic.
