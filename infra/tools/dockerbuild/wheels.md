@@ -1079,6 +1079,22 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 5.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/coverage/${vpython_platform}"
+  version: "version:5.5"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **crcmod**
 
 ### 1.7
@@ -2202,6 +2218,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/httplib2-py2_py3"
   version: "version:0.13.1"
+>
+```
+
+
+* *universal*
+
+## **hypothesis-py3**
+
+### 6.9.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/hypothesis-py3"
+  version: "version:6.9.1"
 >
 ```
 
@@ -4126,6 +4156,18 @@ wheel: <
 
 * *universal*
 
+### 2.4.7
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyparsing-py2_py3"
+  version: "version:2.4.7"
+>
+```
+
+
+* *universal*
+
 ## **pyperclip**
 
 ### 1.8.0
@@ -4247,6 +4289,18 @@ wheel: <
 
 ## **pytest-py3**
 
+### 5.4.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-py3"
+  version: "version:5.4.3"
+>
+```
+
+
+* *universal*
+
 ### 6.2.2
 
 ```protobuf
@@ -4275,6 +4329,18 @@ wheel: <
 
 ## **pytest-cov**
 
+### 2.11.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-cov-py2_py3"
+  version: "version:2.11.1"
+>
+```
+
+
+* *universal*
+
 ### 2.5.1
 
 ```protobuf
@@ -4299,6 +4365,60 @@ wheel: <
 
 * *universal*
 
+### 2.8.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-cov-py2_py3"
+  version: "version:2.8.1"
+>
+```
+
+
+* *universal*
+
+## **pytest-forked**
+
+### 1.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-forked-py2_py3"
+  version: "version:1.3.0"
+>
+```
+
+
+* *universal*
+
+## **pytest-reportlog-py3**
+
+### 0.1.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-reportlog-py3"
+  version: "version:0.1.2"
+>
+```
+
+
+* *universal*
+
+## **pytest-xdist**
+
+### 1.31.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytest-xdist-py2_py3"
+  version: "version:1.31.0"
+>
+```
+
+
+* *universal*
+
 ## **python-dateutil**
 
 ### 2.7.3
@@ -4307,6 +4427,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/python-dateutil-py2_py3"
   version: "version:2.7.3"
+>
+```
+
+
+* *universal*
+
+### 2.8.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/python-dateutil-py2_py3"
+  version: "version:2.8.1"
 >
 ```
 
@@ -4335,6 +4467,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pytz-py2_py3"
   version: "version:2018.4"
+>
+```
+
+
+* *universal*
+
+### 2021.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pytz-py2_py3"
+  version: "version:2021.1"
 >
 ```
 
