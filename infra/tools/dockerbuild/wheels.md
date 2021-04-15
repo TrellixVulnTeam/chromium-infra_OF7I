@@ -3799,6 +3799,20 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 
+## **pycryptodome**
+
+### 3.10.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pycryptodome/${vpython_platform}"
+  version: "version:3.10.1"
+>
+```
+
+
+* *manylinux-x64-py3*
+
 ## **pyfakefs**
 
 ### 3.7.2

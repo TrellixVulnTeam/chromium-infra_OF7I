@@ -415,6 +415,13 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'pycryptodome',
+            '3.10.1',
+            packaged=(),
+            only_plat=['manylinux-x64-py3'],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'pynacl',
             '1.2.1',
             packaged=(),
