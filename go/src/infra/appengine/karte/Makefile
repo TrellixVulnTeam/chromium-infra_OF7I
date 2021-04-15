@@ -14,3 +14,11 @@ test:
 
 gen:
 	go generate ./...
+
+# Add a target for removing the generated files.
+# It is easier to keep the generated files in sync if there's
+# a straightforward way to remove them.
+.PHONY: realclean
+realclean:
+	find . -name '*.pb.go' -delete
+	$(RM) ./api/pb.discovery.go
