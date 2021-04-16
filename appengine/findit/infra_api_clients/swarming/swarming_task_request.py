@@ -195,9 +195,21 @@ class SwarmingTaskRequest(StructuredObject):
       An instance of the given class with attributes set to the given data.
     """
     properties = data.get('properties', {})
-    inputs_ref = properties.get('inputs_ref', {})
     cipd_input = properties.get('cipd_input', {})
+
+    inputs_ref = properties.get('inputs_ref', {})
+    inputs_ref_deserialized = SwarmingTaskInputsRef(
+        isolated=inputs_ref.get('isolated'),
+        isolatedserver=inputs_ref.get('isolatedserver'),
+        namespace=inputs_ref.get('namespace')) if inputs_ref else None
+
     cas_input_root = properties.get('cas_input_root', {})
+    cas_input_deserialized = CASInputRoot(
+        cas_instance=cas_input_root.get('cas_instance'),
+        digest=CASInputRootDigest(
+            size_bytes=cas_input_root.get('digest', {}).get('size_bytes'),
+            hash=cas_input_root.get('digest', {}).get('hash'),
+        )) if cas_input_root else None
 
     return SwarmingTaskRequest(
         created_ts=data.get('created_ts'),
@@ -220,10 +232,7 @@ class SwarmingTaskRequest(StructuredObject):
             grace_period_secs=str(properties.get('grace_period_secs')),
             io_timeout_secs=str(properties.get('io_timeout_secs')),
             idempotent=properties.get('idempotent'),
-            inputs_ref=SwarmingTaskInputsRef(
-                isolated=inputs_ref.get('isolated'),
-                isolatedserver=inputs_ref.get('isolatedserver'),
-                namespace=inputs_ref.get('namespace')),
+            inputs_ref=inputs_ref_deserialized,
             cipd_input=CIPDInput(
                 packages=CIPDPackages.FromSerializable(
                     cipd_input.get('packages')),
@@ -234,14 +243,7 @@ class SwarmingTaskRequest(StructuredObject):
                 ),
                 server=cipd_input.get('server'),
             ),
-            cas_input_root=CASInputRoot(
-                cas_instance=cas_input_root.get('cas_instance'),
-                digest=CASInputRootDigest(
-                    size_bytes=cas_input_root.get('digest',
-                                                  {}).get('size_bytes'),
-                    hash=cas_input_root.get('digest', {}).get('hash'),
-                ),
-            ),
+            cas_input_root=cas_input_deserialized,
         ),
         pubsub_auth_token=data.get('pubsub_auth_token'),
         pubsub_topic=data.get('pubsub_topic'),

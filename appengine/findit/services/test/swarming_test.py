@@ -91,7 +91,8 @@ _REF_REQUEST_WITH_COMMAND = {
         'grace_period_secs': '30',
         'idempotent': True,
         'inputs_ref': {
-            'isolatedserver': 'isolatedserver'
+            'isolatedserver': 'isolatedserver',
+            'isolated': 'isolatedsha',
         },
         'io_timeout_secs': '1200',
     },
@@ -165,8 +166,12 @@ _REF_REQUEST_WITH_EXTRA_ARGS = {
         ],
         'grace_period_secs': '30',
         'idempotent': True,
-        'inputs_ref': {
-            'isolatedserver': 'isolatedserver'
+        'cas_input_root': {
+            'cas_instance': 'cas_instance',
+            'digest': {
+                'size_bytes': '100',
+                'hash': 'hash',
+            },
         },
         'io_timeout_secs': '1200',
         'cipd_input': {
@@ -492,6 +497,7 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
             'idempotent': False,
             'inputs_ref': {
                 'isolatedserver': 'isolatedserver',
+                'isolated': 'isolatedsha',
             },
             'io_timeout_secs': '1200',
         },
@@ -560,8 +566,12 @@ class SwarmingTest(wf_testcase.WaterfallTestCase):
             ],
             'grace_period_secs': '30',
             'idempotent': False,
-            'inputs_ref': {
-                'isolatedserver': 'isolatedserver',
+            'cas_input_root': {
+                'cas_instance': 'cas_instance',
+                'digest': {
+                    'size_bytes': '100',
+                    'hash': 'hash',
+                },
             },
             'io_timeout_secs': '1200',
             'cipd_input': {
