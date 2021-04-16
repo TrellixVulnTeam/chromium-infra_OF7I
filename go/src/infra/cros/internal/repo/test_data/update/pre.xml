@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!-- Comment -->
+  <include name="bar.xml" />
+  <default remote="chromeos" revision="123"/>
+  <remote fetch="https://chromium.org/remote" name="chromium" alias="chromeos1"/>
+  <remote fetch="https://google.com/remote" name="google" revision="125"/>
+
+  <project name="baz" path="baz/" remote="chromium"/>
+  <project name="fiz" path="fiz/" revision="124" />
+  <project name="buz1" path="buz/" bogus="true" remote="google">
+    <annotation name="branch-mode" value="pin"/>
+  </project>
+</manifest>
