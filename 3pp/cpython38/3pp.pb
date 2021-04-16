@@ -75,7 +75,7 @@ create {
     tool: "tools/binutils"
     tool: "tools/sed"            # Used by python's makefiles
 
-    tool: "tools/cpython3"
+    tool: "tools/cpython38@3.8.9"
   }
 }
 
