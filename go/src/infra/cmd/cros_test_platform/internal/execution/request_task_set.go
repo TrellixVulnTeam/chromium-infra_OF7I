@@ -190,7 +190,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c trservice.Cli
 		}
 		newTasks[iid] = nt
 		ts.NotifyTask(nt)
-		r.getInvocationStep(iid).NotifyNewTask(task)
+		r.getInvocationStep(iid).NotifyNewTask(nt)
 		r.retryCounter.NotifyRetry(iid)
 	}
 

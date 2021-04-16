@@ -8,6 +8,8 @@ package testrunner
 import (
 	"context"
 
+	"infra/cmd/cros_test_platform/internal/execution/types"
+
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
@@ -15,7 +17,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"infra/cmd/cros_test_platform/internal/execution/types"
 
 	trservice "infra/cmd/cros_test_platform/internal/execution/testrunner/service"
 	"infra/libs/skylab/request"
@@ -90,6 +91,12 @@ func NewBuild(ctx context.Context, c trservice.Client, argsGenerator ArgsGenerat
 	t.url = c.URL(ref)
 	logging.Infof(ctx, "Launched attempt for %s as task %s", t.name(), t.url)
 	return t, nil
+}
+
+// NewBuildForTesting allows other packages to create builds objects with
+// arbitrary fields for testing.
+func NewBuildForTesting(swarmingTaskID, url string) *Build {
+	return &Build{swarmingTaskID: swarmingTaskID, url: url}
 }
 
 // name is the build name as it is displayed in the UI.
