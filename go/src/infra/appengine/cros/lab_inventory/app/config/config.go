@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/secrets"
+
 	"infra/appengine/cros/lab_inventory/app/external"
 )
 
@@ -65,10 +66,8 @@ func Middleware(c *router.Context, next router.Handler) {
 
 	// We store HWID server secret in datastore in production. The fallback to
 	// config file is only for local development.
-	ctx := gaesecrets.Use(c.Context, &gaesecrets.Config{
-		NoAutogenerate: true,
-	})
-	secret, err := secrets.GetSecret(ctx, secretInDatastore)
+	ctx := gaesecrets.Use(c.Context, &gaesecrets.Config{})
+	secret, err := secrets.StoredSecret(ctx, secretInDatastore)
 	if err == nil {
 		// The HWID must be a valid plain text string. No control characters.
 		s := string(secret.Current)

@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/router"
+	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/secrets/testsecrets"
 	"go.chromium.org/luci/server/templates"
 
@@ -42,7 +43,7 @@ func makeParams(items ...string) httprouter.Params {
 
 func testContext() context.Context {
 	c := util.CreateTestContext()
-	c = testsecrets.Use(c)
+	c = secrets.Use(c, &testsecrets.Store{})
 	c = templates.Use(
 		c, prepareTemplates("../appengine/templates"), &templates.Extra{
 			Request: &http.Request{
