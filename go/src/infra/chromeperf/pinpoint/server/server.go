@@ -229,7 +229,6 @@ func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsReque
 	}
 
 	query := url.Values{
-		"o":      {"STATE"},
 		"filter": {r.Filter},
 	}.Encode()
 	u := fmt.Sprintf("%s/api/jobs?%s", s.legacyPinpointService, query)
