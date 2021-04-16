@@ -54,10 +54,8 @@ class StatusError(errors.Error):
     super(StatusError, self).__init__(details)
 
 
+unimplemented = lambda *args: StatusError(prpc.StatusCode.UNIMPLEMENTED, *args)
 not_found = lambda *args: StatusError(prpc.StatusCode.NOT_FOUND, *args)
-failed_precondition = (
-    lambda *args: StatusError(prpc.StatusCode.FAILED_PRECONDITION, *args)
-)
 invalid_argument = (
     lambda *args: StatusError(prpc.StatusCode.INVALID_ARGUMENT, *args)
 )
@@ -118,7 +116,7 @@ def rpc_impl_async(rpc_name):
           raise ndb.Return(res)
         except auth.AuthorizationError:
           raise not_found()
-        except validation.Error as ex:
+        except validation.Error as ex:  # pragma: no cover
           raise invalid_argument('%s', ex.message)
 
       except errors.Error as ex:
@@ -277,214 +275,23 @@ def prepare_schedule_build_request_async(req):
 
 @rpc_impl_async('GetBuild')
 @ndb.tasklet
-def get_build_async(req, res, _ctx, mask):
+def get_build_async(_req, _res, _ctx, _mask):
   """Retrieves a build by id or number."""
-  validation.validate_get_build_request(req)
-
-  if req.id:
-    logging.info('Build id: %s', req.id)
-    build = yield service.get_async(req.id)
-  else:
-    logging.info(
-        'Build id: %s/%d',
-        config.builder_id_string(req.builder),
-        req.build_number,
-    )
-    tag = buildtags.build_address_tag(req.builder, req.build_number)
-    q = search.Query(
-        bucket_ids=[bucket_id_string(req.builder)],
-        tags=[tag],
-        include_experimental=True,
-    )
-    found, _ = yield search.search_async(q)
-    build = found[0] if found else None
-
-  if not build:
-    raise not_found()
-  yield build_to_proto_async(build, res, mask)
+  raise unimplemented()
 
 
 @rpc_impl_async('SearchBuilds')
 @ndb.tasklet
-def search_builds_async(req, res, _ctx, mask):
+def search_builds_async(_req, _res, _ctx, _mask):  # pragma: no cover
   """Searches for builds."""
-  validation.validate_search_builds_request(req)
-  logging.info('Predicate: %s', req.predicate)
-  q = build_predicate_to_search_query(req.predicate)
-  q.max_builds = req.page_size or None
-  q.start_cursor = req.page_token
-
-  builds, next_page_token = yield search.search_async(q)
-  res.next_page_token = next_page_token or ''
-  yield builds_to_protos_async(
-      [(b, res.builds.add()) for b in builds],
-      mask.submask('builds.*'),
-  )
-
-
-def validate_build_token(build, ctx):
-  """Validates build token stored in RPC metadata."""
-  metadata = dict(ctx.invocation_metadata())
-  token = metadata.get(BUILD_TOKEN_HEADER)
-  if not token:
-    raise StatusError(
-        prpc.StatusCode.UNAUTHENTICATED,
-        'missing token in build update request',
-    )
-
-  # TODO(crbug.com/943467): return error code UNAVAILABLE if
-  # build.swarming_task_key is None.
-
-  try:
-    # TODO(crbug.com/1110990): if build.update_token is set and matched with
-    # the token from the request, skip validation on the MAC tag,
-    # but validate the version, timestamp, and expiration of the token.
-    tokens.validate_build_token(token, build.key.id())
-  except auth.InvalidTokenError as e:
-    raise StatusError(prpc.StatusCode.UNAUTHENTICATED, '%s', e.message)
+  raise unimplemented()
 
 
 @rpc_impl_async('UpdateBuild')
 @ndb.tasklet
-def update_build_async(req, _res, ctx, _mask):
-  """Update build as in given request.
-
-  For allowed fields, please refer to UPDATE_BUILD_FIELD_PATHS in validation.py.
-
-  Does not mutate res.
-  In practice, clients do not need the response, they just want to provide
-  the data.
-  """
-  now = utils.utcnow()
-  logging.debug('updating build %d', req.build.id)
-
-  # Validate the request. This requires serializing BuildSteps to check their
-  # size, so keep serialized BuildSteps to avoid re-doing the work later.
-  # Note that creating BuildSteps needs validated req.build first.
-  build_steps_holder = []
-
-  def _make_build_steps():
-    build_steps_holder.append(model.BuildSteps.make(req.build))
-    return build_steps_holder[0]
-
-  validation.validate_update_build_request(req, _make_build_steps)
-  build_steps = build_steps_holder[0] if build_steps_holder else None
-
-  update_paths = set(req.update_mask.paths)
-
-  if not (yield user.can_update_build_async()):
-    raise StatusError(
-        prpc.StatusCode.PERMISSION_DENIED, '%s not permitted to update build' %
-        auth.get_current_identity().to_bytes()
-    )
-
-  @ndb.tasklet
-  def get_async():
-    build = yield model.Build.get_by_id_async(req.build.id)
-    if not build:
-      raise not_found(
-          'Cannot update nonexisting build with id %s', req.build.id
-      )
-    if build.is_ended:
-      raise failed_precondition('Cannot update an ended build')
-
-    # Ensure a SCHEDULED build does not have steps or output.
-    final_status = (
-        req.build.status
-        if 'build.status' in update_paths else build.proto.status
-    )
-    if final_status == common_pb2.SCHEDULED:
-      if 'build.steps' in update_paths:
-        raise invalid_argument(
-            'cannot update steps of a SCHEDULED build; '
-            'either set status to non-SCHEDULED or do not update steps'
-        )
-      if any(p.startswith('build.output.') for p in update_paths):
-        raise invalid_argument(
-            'cannot update build output fields of a SCHEDULED build; '
-            'either set status to non-SCHEDULED or do not update build output'
-        )
-
-    raise ndb.Return(build)
-
-  build = yield get_async()
-  validate_build_token(build, ctx)
-
-  # Prepare a field mask to merge req.build into model.Build.proto.
-  build_mask = protoutil.Mask.from_field_mask(
-      field_mask_pb2.FieldMask(paths=list(update_paths)),
-      rpc_pb2.UpdateBuildRequest.DESCRIPTOR,
-      update_mask=True,
-  ).submask('build')
-
-  out_prop_bytes = req.build.output.properties.SerializeToString()
-
-  @ndb.transactional_tasklet
-  def txn_async():
-    build = yield get_async()
-
-    orig_status = build.status
-
-    futures = []
-
-    if build_mask.includes('output.properties') == protoutil.INCLUDE_ENTIRELY:
-      futures.append(
-          model.BuildOutputProperties(
-              key=model.BuildOutputProperties.key_for(build.key),
-              properties=out_prop_bytes,
-          ).put_async()
-      )
-
-    if 'build.tags' in update_paths:
-      tags = set(build.tags)
-      tags.update(buildtags.unparse(t.key, t.value) for t in req.build.tags)
-      build.tags = sorted(tags)
-
-    # Clear fields stored in other entities.
-    req.build.output.ClearField('properties')
-    req.build.ClearField('steps')
-    req.build.ClearField('tags')
-    build_mask.merge(req.build, build.proto)
-
-    # If we are updating build status, update some other dependent fields
-    # and schedule notifications.
-    status_changed = orig_status != build.proto.status
-    if status_changed:
-      if build.proto.status == common_pb2.STARTED:
-        if not build.proto.HasField('start_time'):  # pragma: no branch
-          build.proto.start_time.FromDatetime(now)
-        futures.append(events.on_build_starting_async(build))
-      else:
-        assert model.is_terminal_status(build.proto.status), build.proto.status
-        build.clear_lease()
-        if not build.proto.HasField('end_time'):  # pragma: no branch
-          build.proto.end_time.FromDatetime(now)
-        futures.append(events.on_build_completing_async(build))
-
-    if 'build.steps' in update_paths:
-      # TODO(crbug.com/936892): reject requests with a terminal build status
-      # and incomplete steps, when
-      # https://chromium-review.googlesource.com/c/infra/infra/+/1553291
-      # is deployed.
-      futures.append(build_steps.put_async())
-    elif build.is_ended:
-      futures.append(
-          model.BuildSteps.cancel_incomplete_steps_async(
-              req.build.id, build.proto.end_time
-          )
-      )
-
-    futures.append(build.put_async())
-    yield futures
-    raise ndb.Return(build, status_changed)
-
-  build, status_changed = yield txn_async()
-  if status_changed:
-    if build.proto.status == common_pb2.STARTED:
-      events.on_build_started(build)
-    else:
-      assert model.is_terminal_status(build.proto.status), build.proto.status
-      events.on_build_completed(build)
+def update_build_async(_req, _res, _ctx, _mask):  # pragma: no cover
+  """Update build as in given request."""
+  raise unimplemented()
 
 
 @rpc_impl_async('ScheduleBuild')
@@ -601,12 +408,8 @@ def schedule_build_multi(batch):
 
 @rpc_impl_async('CancelBuild')
 @ndb.tasklet
-def cancel_build_async(req, res, _ctx, mask):
-  validation.validate_cancel_build_request(req)
-  build = yield service.cancel_async(
-      req.id, summary_markdown=req.summary_markdown
-  )
-  yield build_to_proto_async(build, res, mask)
+def cancel_build_async(_req, _res, _ctx, _mask):  # pragma: no cover
+  raise unimplemented()
 
 
 # Maps an rpc_pb2.BatchRequest.Request field name to an async function
@@ -637,12 +440,12 @@ class BuildsApi(object):
     get_build_async(req, res, ctx).get_result()
     return self._res_if_ok(res, ctx)
 
-  def SearchBuilds(self, req, ctx):
+  def SearchBuilds(self, req, ctx):  # pragma: no cover
     res = rpc_pb2.SearchBuildsResponse()
     search_builds_async(req, res, ctx).get_result()
     return self._res_if_ok(res, ctx)
 
-  def UpdateBuild(self, req, ctx):
+  def UpdateBuild(self, req, ctx):  # pragma: no cover
     res = build_pb2.Build()
     update_build_async(req, res, ctx).get_result()
     return self._res_if_ok(res, ctx)
@@ -652,7 +455,7 @@ class BuildsApi(object):
     schedule_build_async(req, res, ctx).get_result()
     return self._res_if_ok(res, ctx)
 
-  def CancelBuild(self, req, ctx):
+  def CancelBuild(self, req, ctx):  # pragma: no cover
     res = build_pb2.Build()
     cancel_build_async(req, res, ctx).get_result()
     return self._res_if_ok(res, ctx)
@@ -696,7 +499,7 @@ class BuildsApi(object):
           getattr(rr.response, request_type),
           sub_ctx,
       )
-      if sub_ctx.code != prpc.StatusCode.OK:
+      if sub_ctx.code != prpc.StatusCode.OK:  # pragma: no cover
         rr.response.ClearField(request_type)
         rr.response.error.code = sub_ctx.code.value
         rr.response.error.message = sub_ctx.details

@@ -155,17 +155,6 @@ def validate_builder_id(builder_id, require_bucket=True, require_builder=True):
 # The order of functions must match the order of messages in rpc.proto.
 
 
-def validate_get_build_request(req):
-  """Validates rpc_pb2.GetBuildRequest."""
-  if req.id:
-    if req.HasField('builder') or req.build_number:
-      _err('id is mutually exclusive with builder and build_number')
-  elif req.HasField('builder') and req.build_number:
-    validate_builder_id(req.builder)
-  else:
-    _err('id or (builder and build_number) are required')
-
-
 def validate_search_builds_request(req):
   """Validates rpc_pb2.SearchBuildRequest."""
   with _enter('predicate'):
@@ -245,12 +234,6 @@ def validate_schedule_build_request(req, legacy=False):
       _maybe_err(experiments.check_invalid_name(exp_name))
 
 
-def validate_cancel_build_request(req):
-  _check_truth(req, 'id', 'summary_markdown')
-  with _enter('summary_markdown'):
-    validate_build_summary_markdown(req.summary_markdown)
-
-
 def validate_struct(struct):
   for name, value in struct.fields.iteritems():
     if not value.WhichOneof('kind'):
@@ -283,66 +266,6 @@ UPDATE_BUILD_STATUSES = {
     common_pb2.FAILURE,
     common_pb2.INFRA_FAILURE,
 }
-
-
-def validate_update_build_request(req, make_build_steps_func=None):
-  """Validates rpc_pb2.UpdateBuildRequest.
-
-  If make_build_steps_func is given, it will be called at the end to validate
-  the size of the its serialized representation. This allows the callee to save
-  the BuildStep locally and thus avoid re-doing the work later.
-  """
-  update_paths = set(req.update_mask.paths)
-  with _enter('update_mask', 'paths'):
-    unsupported = update_paths - UPDATE_BUILD_FIELD_PATHS
-    if unsupported:
-      _err('unsupported path(s) %r', sorted(unsupported))
-
-  # Check build values, if present in the mask.
-  with _enter('build'):
-    _check_truth(req.build, 'id')
-
-    if 'build.status' in update_paths:
-      if req.build.status not in UPDATE_BUILD_STATUSES:
-        _enter_err(
-            'status', 'invalid status %s for UpdateBuild',
-            common_pb2.Status.Name(req.build.status)
-        )
-
-    if 'build.output.gitiles_commit' in update_paths:
-      with _enter('output', 'gitiles_commit'):
-        validate_gitiles_commit(req.build.output.gitiles_commit)
-
-    if 'build.summary_markdown' in update_paths:
-      with _enter('summary_markdown'):
-        validate_build_summary_markdown(req.build.summary_markdown)
-
-    if 'build.output.properties' in update_paths:
-      with _enter('output', 'properties'):
-        validate_struct(req.build.output.properties)
-
-    if 'build.tags' in update_paths:
-      with _enter('tags'):
-        validate_tags(req.build.tags, 'append')
-
-    if 'build.steps' in update_paths:  # pragma: no branch
-      with _enter('steps'):
-        build_steps = (
-            make_build_steps_func()
-            if make_build_steps_func else model.BuildSteps.make(req.build)
-        )
-        limit = model.BuildSteps.MAX_STEPS_LEN
-        if len(build_steps.step_container_bytes) > limit:
-          _err('too big to accept')
-
-        validate_steps(req.build.steps)
-
-
-def validate_build_summary_markdown(summary_markdown):
-  size = len(summary_markdown)
-  limit = MAX_BUILD_SUMMARY_MARKDOWN_SIZE
-  if size > limit:
-    _err('too big to accept (%d > %d bytes)', size, limit)
 
 
 def validate_steps(steps):
