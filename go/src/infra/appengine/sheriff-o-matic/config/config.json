@@ -51,7 +51,8 @@
     },
     "chromium.linux": {
       "excluded_builders": [
-        "Leak Detection Linux"
+        "Leak Detection Linux",
+        "linux-bionic-rel"
       ]
     },
     "chromium.mac": {
