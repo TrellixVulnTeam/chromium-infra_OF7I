@@ -401,19 +401,6 @@
           },
           "programId": {
             "value": "FAKE_PROGRAM"
-          },
-          "platform": {
-            "name": "COMET_LAKE",
-            "videoAcceleration": [
-              "H264_DECODE",
-              "H264_ENCODE",
-              "VP8_DECODE",
-              "VP8_ENCODE",
-              "VP9_DECODE",
-              "VP9_2_DECODE",
-              "MJPG_DECODE",
-              "MJPG_ENCODE"
-            ]
           }
         },
         {

@@ -124,16 +124,18 @@ func parseConfigBundle(configBundle *payload.ConfigBundle) []*device.Config {
 				// Note: no STORAGE_SSD, STORAGE_HDD, STORAGE_UFS storage
 				// label-storage is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/B8spRMj22aUWkbb
 				Storage: parseStorage(c.GetHardwareTopology(), configBundle.GetComponents()),
-				Soc:     parseSoc(d.GetPlatform().GetName()),
-				Cpu:     parseArchitecture(configBundle.GetComponents()),
-				Ec:      parseEcType(c.GetHardwareFeatures()),
+
+				Cpu: parseArchitecture(configBundle.GetComponents()),
+				Ec:  parseEcType(c.GetHardwareFeatures()),
 
 				// TODO(xixuan): GpuFamily, gpu_family in Component.Soc hasn't been set
 				Power: parsePowerSupply(c.GetHardwareFeatures().GetFormFactor().GetFormFactor()),
 				// Graphics: removed from boxster for now
-				// TODO(xixuan): VideoAccelerationSupports, a new video acceleration topology hasn't been set
+
+				// Remove platform's usage due to http://crrev.com/c/2832476
 				// label-video_acceleration is not used for scheduling tests for at least 3 months: https://screenshot.googleplex.com/86h2scqNsStwoiW
-				VideoAccelerationSupports: parseVideoAccelerations(d.GetPlatform().GetVideoAcceleration()),
+				// VideoAccelerationSupports: parseVideoAccelerations(d.GetPlatform().GetVideoAcceleration()),
+				// Soc:                       parseSoc(d.GetPlatform().GetName()),
 			}
 		}
 	}
