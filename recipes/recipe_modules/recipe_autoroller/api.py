@@ -152,16 +152,13 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
                  'https://chromium.googlesource.com/infra/luci/recipes-py',
                  recipes_dir, name='clone recipe engine')
 
-    results = []
-    with recipe_api.defer_results():
-      for project_id, project_url in projects:
-        with self.m.step.nest(str(project_id)):
-          results.append(
-              self._roll_project(project_id, project_url, recipes_dir,
-                                 db_gcs_bucket))
+    futures = []
+    for project_id, project_url in projects:
+      futures.append(
+          self.m.futures.spawn(self._roll_project, project_id, project_url,
+                               recipes_dir, db_gcs_bucket))
 
-    # We need to unwrap |DeferredResult|s.
-    results = [r.get_result() for r in results]
+    results = [f.result() for f in futures]
 
     # Failures to roll are OK as long as at least one of the repos is moving
     # forward. For example, with repos with following dependencies:
@@ -247,49 +244,50 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     ).get('disable_reason')
 
   def _roll_project(self, project_id, project_url, recipes_dir, db_gcs_bucket):
-    # Keep persistent checkout. Speeds up the roller for large repos
-    # like chromium/src.
-    workdir = self._prepare_checkout(project_id, project_url)
+    with self.m.step.nest(str(project_id)):
+      # Keep persistent checkout. Speeds up the roller for large repos
+      # like chromium/src.
+      workdir = self._prepare_checkout(project_id, project_url)
 
-    recipes_cfg_path = workdir.join('infra', 'config', 'recipes.cfg')
+      recipes_cfg_path = workdir.join('infra', 'config', 'recipes.cfg')
 
-    disable_reason = self._get_disable_reason(recipes_cfg_path)
-    if disable_reason:
-      rslt = self.m.python.succeeding_step('disabled', disable_reason)
-      rslt.presentation.status = self.m.step.WARNING
-      return ROLL_SKIP
+      disable_reason = self._get_disable_reason(recipes_cfg_path)
+      if disable_reason:
+        rslt = self.m.python.succeeding_step('disabled', disable_reason)
+        rslt.presentation.status = self.m.step.WARNING
+        return ROLL_SKIP
 
-    status = self._check_previous_roll(project_url, workdir, db_gcs_bucket)
-    if status is not None:
-      # This means that the previous roll is still going, or similar. In this
-      # situation we're done with this repo, for now.
-      return status
+      status = self._check_previous_roll(project_url, workdir, db_gcs_bucket)
+      if status is not None:
+        # This means that the previous roll is still going, or similar. In this
+        # situation we're done with this repo, for now.
+        return status
 
-    roll_step = self.m.python(
-        'roll',
-        recipes_dir.join('recipes.py'), [
-          '--package', recipes_cfg_path,
-          'autoroll',
-          '--output-json', self.m.json.output()],
-        venv=True)
-    roll_result = roll_step.json.output
+      roll_step = self.m.python(
+          'roll',
+          recipes_dir.join('recipes.py'), [
+              '--package', recipes_cfg_path, 'autoroll', '--output-json',
+              self.m.json.output()
+          ],
+          venv=True)
+      roll_result = roll_step.json.output
 
-    if roll_result['success'] and roll_result['picked_roll_details']:
-      self._process_successful_roll(project_url, roll_step, workdir,
-                                    recipes_dir, recipes_cfg_path,
-                                    db_gcs_bucket)
-      return ROLL_SUCCESS
+      if roll_result['success'] and roll_result['picked_roll_details']:
+        self._process_successful_roll(project_url, roll_step, workdir,
+                                      recipes_dir, recipes_cfg_path,
+                                      db_gcs_bucket)
+        return ROLL_SUCCESS
 
-    num_rejected = roll_result['rejected_candidates_count']
-    if not roll_result['roll_details'] and num_rejected == 0:
-      roll_step.presentation.step_text += ' (already at latest revisions)'
-      return ROLL_EMPTY
+      num_rejected = roll_result['rejected_candidates_count']
+      if not roll_result['roll_details'] and num_rejected == 0:
+        roll_step.presentation.step_text += ' (already at latest revisions)'
+        return ROLL_EMPTY
 
-    for i, roll_candidate in enumerate(roll_result['roll_details']):
-      roll_step.presentation.logs['candidate #%d' % (i+1)] = (
-        self.m.json.dumps(roll_candidate['spec']).splitlines())
+      for i, roll_candidate in enumerate(roll_result['roll_details']):
+        roll_step.presentation.logs['candidate #%d' % (i + 1)] = (
+            self.m.json.dumps(roll_candidate['spec']).splitlines())
 
-    return ROLL_FAILURE
+      return ROLL_FAILURE
 
   def _process_successful_roll(self, project_url, roll_step, workdir,
                                recipes_dir, recipes_cfg_path, db_gcs_bucket):

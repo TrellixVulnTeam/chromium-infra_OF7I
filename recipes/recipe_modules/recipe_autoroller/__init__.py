@@ -9,6 +9,7 @@ DEPS = [
     'depot_tools/gsutil',
     'recipe_engine/context',
     'recipe_engine/file',
+    'recipe_engine/futures',
     'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/proto',
