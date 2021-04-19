@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import logging
-import datetime
 import apache_beam as beam
 
 from apache_beam.io.gcp.datastore.v1new import datastoreio
@@ -12,7 +11,9 @@ from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
-def make_signal_quality_entities(project, now, p):
+def make_signal_quality_entities(project, p):
+    import datetime
+
     from apache_beam.io.gcp.datastore.v1new.types import Entity
     from apache_beam.io.gcp.datastore.v1new.types import Key
 
@@ -32,7 +33,7 @@ def make_signal_quality_entities(project, now, p):
         entity = Entity(key)
         entity.set_properties({
             'score': score,
-            'updated_time': now,
+            'updated_time': datetime.datetime.now(),
         })
         return entity
 
@@ -73,7 +74,6 @@ def main():
     )
     entities = make_signal_quality_entities(
         project,
-        datetime.datetime.now(),
         bisections,
     )
     entities | 'WriteToDatastore' >> datastoreio.WriteToDatastore(project)
