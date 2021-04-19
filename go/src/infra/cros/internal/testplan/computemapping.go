@@ -58,12 +58,12 @@ func checkoutChangeRevs(ctx context.Context, dir string, changeRevs []*gerrit.Ch
 	remote := fmt.Sprintf("https://%s/%s", googlesourceHost, changeRev.Project)
 
 	logging.Debugf(ctx, "cloning repo %q", remote)
-	if err := git.Clone(remote, dir); err != nil {
+	if err := git.Clone(remote, dir, git.Depth(1), git.NoTags()); err != nil {
 		return err
 	}
 
 	logging.Debugf(ctx, "fetching ref %q from repo %q", changeRev.Ref, remote)
-	if err := git.Fetch(dir, remote, changeRev.Ref); err != nil {
+	if err := git.Fetch(dir, remote, changeRev.Ref, git.Depth(1), git.NoTags()); err != nil {
 		return err
 	}
 

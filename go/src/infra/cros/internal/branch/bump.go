@@ -54,13 +54,10 @@ func bumpVersion(
 	}
 
 	_, err = git.CommitAll(versionProjectCheckout, commitMsg)
-	gitOpts := git.Opts{
-		DryRun: dryRun,
-		Force:  false,
-	}
+
 	errs := []error{
 		err,
-		git.PushRef(versionProjectCheckout, "HEAD", remoteRef, gitOpts),
+		git.PushRef(versionProjectCheckout, "HEAD", remoteRef, git.DryRunIf(dryRun)),
 	}
 	for _, err := range errs {
 		if err != nil {

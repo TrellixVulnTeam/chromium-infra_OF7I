@@ -258,7 +258,7 @@ func (r *RepoHarness) CreateRemoteRef(project RemoteProject, ref string, commit 
 		return fmt.Errorf("remote ref %s already exists", ref)
 	}
 
-	if err := git.PushRef(repoPath, commit, remoteRef, git.Opts{}); err != nil {
+	if err := git.PushRef(repoPath, commit, remoteRef); err != nil {
 		return errors.Annotate(err, "failed to add remote ref %s %s:%s", projectLabel, commit, remoteRef.Ref).Err()
 	}
 	return nil
@@ -315,7 +315,7 @@ func (r *RepoHarness) AddFiles(project RemoteProject, branch string, files []Fil
 	}
 
 	commit, err := git.CommitAll(tmpRepo, "add files")
-	errs = append(errs, err, git.PushRef(tmpRepo, "tmp", remoteRef, git.Opts{}))
+	errs = append(errs, err, git.PushRef(tmpRepo, "tmp", remoteRef))
 
 	for _, err = range errs {
 		if err != nil {

@@ -36,12 +36,6 @@ type RemoteRef struct {
 	Ref    string
 }
 
-// Opts contains commons git options.
-type Opts struct {
-	DryRun bool
-	Force  bool
-}
-
 // RunGit the specified git command in the specified repo. It returns
 // stdout and stderr.
 func RunGit(gitRepo string, cmd []string) (CommandOutput, error) {
@@ -236,14 +230,11 @@ func CommitEmpty(gitRepo, commitMsg string) (string, error) {
 }
 
 // PushRef pushes the specified local ref to the specified remote ref.
-func PushRef(gitRepo, localRef string, pushTo RemoteRef, opts Opts) error {
+func PushRef(gitRepo, localRef string, pushTo RemoteRef, opts ...pushRefOpt) error {
 	ref := fmt.Sprintf("%s:%s", localRef, pushTo.Ref)
 	cmd := []string{"push", pushTo.Remote, ref}
-	if opts.DryRun {
-		cmd = append(cmd, "--dry-run")
-	}
-	if opts.Force {
-		cmd = append(cmd, "--force")
+	for _, opt := range opts {
+		cmd = append(cmd, opt.pushRefOptArgs()...)
 	}
 	_, err := RunGit(gitRepo, cmd)
 	return err
@@ -302,8 +293,14 @@ func DeleteBranch(gitRepo, branch string, force bool) error {
 }
 
 // Clone clones the remote into the specified dir.
-func Clone(remote, dir string) error {
-	output, err := RunGit(filepath.Dir(dir), []string{"clone", remote, filepath.Base(dir)})
+func Clone(remote, dir string, opts ...cloneOpt) error {
+	cmd := []string{"clone", remote, filepath.Base(dir)}
+
+	for _, opt := range opts {
+		cmd = append(cmd, opt.cloneOptArgs()...)
+	}
+
+	output, err := RunGit(filepath.Dir(dir), cmd)
 	if err != nil {
 		return fmt.Errorf(output.Stderr)
 	}
@@ -311,8 +308,14 @@ func Clone(remote, dir string) error {
 }
 
 // Fetch fetches refspec in gitRepo.
-func Fetch(gitRepo, remote, refspec string) error {
-	output, err := RunGit(gitRepo, []string{"fetch", remote, refspec})
+func Fetch(gitRepo, remote, refspec string, opts ...fetchOpt) error {
+	cmd := []string{"fetch", remote, refspec}
+
+	for _, opt := range opts {
+		cmd = append(cmd, opt.fetchOptArgs()...)
+	}
+
+	output, err := RunGit(gitRepo, cmd)
 	if err != nil {
 		return fmt.Errorf(output.Stderr)
 	}

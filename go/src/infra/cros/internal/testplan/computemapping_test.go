@@ -54,19 +54,35 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 	git.CommandRunnerImpl = &cmd.FakeCommandRunnerMulti{
 		CommandRunners: []cmd.FakeCommandRunner{
 			{
-				ExpectedCmd: []string{"git", "clone", "https://chromium.googlesource.com/chromium/testprojectA", "testdata"},
+				ExpectedCmd: []string{
+					"git", "clone",
+					"https://chromium.googlesource.com/chromium/testprojectA", "testdata",
+					"--depth", "1", "--no-tags",
+				},
 			},
 			{
-				ExpectedCmd: []string{"git", "fetch", "https://chromium.googlesource.com/chromium/testprojectA", "refs/changes/45/456/2"},
+				ExpectedCmd: []string{
+					"git", "fetch",
+					"https://chromium.googlesource.com/chromium/testprojectA", "refs/changes/45/456/2",
+					"--depth", "1", "--no-tags",
+				},
 			},
 			{
 				ExpectedCmd: []string{"git", "checkout", "FETCH_HEAD"},
 			},
 			{
-				ExpectedCmd: []string{"git", "clone", "https://chromium.googlesource.com/chromium/testprojectB", "testdata"},
+				ExpectedCmd: []string{
+					"git", "clone",
+					"https://chromium.googlesource.com/chromium/testprojectB", "testdata",
+					"--depth", "1", "--no-tags",
+				},
 			},
 			{
-				ExpectedCmd: []string{"git", "fetch", "https://chromium.googlesource.com/chromium/testprojectB", "refs/changes/78/789/5"},
+				ExpectedCmd: []string{
+					"git", "fetch",
+					"https://chromium.googlesource.com/chromium/testprojectB", "refs/changes/78/789/5",
+					"--depth", "1", "--no-tags",
+				},
 			},
 			{
 				ExpectedCmd: []string{"git", "checkout", "FETCH_HEAD"},

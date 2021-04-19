@@ -298,11 +298,7 @@ func TestPushRef(t *testing.T) {
 		ExpectedCmd: []string{"git", "push", remoteRef.Remote, pushStr, "--dry-run", "--force"},
 	}
 
-	opts := Opts{
-		DryRun: true,
-		Force:  true,
-	}
-	err := PushRef(fakeGitRepo, localRef, remoteRef, opts)
+	err := PushRef(fakeGitRepo, localRef, remoteRef, DryRun(), Force())
 	assert.NilError(t, err)
 }
 
@@ -442,6 +438,12 @@ func TestClone(t *testing.T) {
 		ExpectedCmd: []string{"git", "clone", remote, "bar"},
 	}
 	assert.NilError(t, Clone(remote, dest))
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "clone", remote, "bar", "--depth", "10"},
+	}
+	assert.NilError(t, Clone(remote, dest, Depth(10)))
 }
 
 func TestFetch(t *testing.T) {
@@ -454,6 +456,12 @@ func TestFetch(t *testing.T) {
 		ExpectedCmd: []string{"git", "fetch", remote, refspec},
 	}
 	assert.NilError(t, Fetch(gitRepo, remote, refspec))
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "fetch", remote, refspec, "--depth", "10"},
+	}
+	assert.NilError(t, Fetch(gitRepo, remote, refspec, Depth(10)))
 }
 
 func TestRemoteBranches(t *testing.T) {
@@ -482,13 +490,10 @@ func TestRemoteBranches(t *testing.T) {
 		Remote: "remote",
 		Ref:    "foo",
 	}
-	opts := Opts{
-		DryRun: false,
-		Force:  true,
-	}
-	assert.NilError(t, PushRef(local, "HEAD", remoteRef, opts))
+
+	assert.NilError(t, PushRef(local, "HEAD", remoteRef, Force()))
 	remoteRef.Ref = "bar"
-	assert.NilError(t, PushRef(local, "HEAD", remoteRef, opts))
+	assert.NilError(t, PushRef(local, "HEAD", remoteRef, Force()))
 
 	branches, err := RemoteBranches(local, "remote")
 	assert.NilError(t, err)
@@ -512,4 +517,74 @@ func TestResolveRemoteSymbolicRef(t *testing.T) {
 	ref, err := ResolveRemoteSymbolicRef("foo", remote, "HEAD")
 	assert.NilError(t, err)
 	assert.StringsEqual(t, ref, "refs/heads/main")
+}
+
+func TestForceOpt(t *testing.T) {
+	fakeGitRepo := "repo"
+	localRef := "commitId"
+
+	remoteRef := RemoteRef{
+		Remote: "remote",
+		Ref:    "ref",
+	}
+
+	pushStr := fmt.Sprintf("%s:%s", localRef, remoteRef.Ref)
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: fakeGitRepo,
+		ExpectedCmd: []string{"git", "push", remoteRef.Remote, pushStr, "--force"},
+	}
+
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef, Force()))
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: fakeGitRepo,
+		ExpectedCmd: []string{"git", "push", remoteRef.Remote, pushStr},
+	}
+
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef, ForceIf(false)))
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef))
+}
+
+func TestDryRunOpt(t *testing.T) {
+	fakeGitRepo := "repo"
+	localRef := "commitId"
+
+	remoteRef := RemoteRef{
+		Remote: "remote",
+		Ref:    "ref",
+	}
+
+	pushStr := fmt.Sprintf("%s:%s", localRef, remoteRef.Ref)
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: fakeGitRepo,
+		ExpectedCmd: []string{"git", "push", remoteRef.Remote, pushStr, "--dry-run"},
+	}
+
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef, DryRun()))
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: fakeGitRepo,
+		ExpectedCmd: []string{"git", "push", remoteRef.Remote, pushStr},
+	}
+
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef, DryRunIf(false)))
+	assert.NilError(t, PushRef(fakeGitRepo, localRef, remoteRef))
+}
+
+func TestNoTagsOpts(t *testing.T) {
+	remote := "origin"
+	refspec := "refs/changes/56/123456/2"
+	gitRepo := "foo"
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "fetch", remote, refspec},
+	}
+	assert.NilError(t, Fetch(gitRepo, remote, refspec, NoTagsIf(false)))
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "fetch", remote, refspec, "--no-tags"},
+	}
+	assert.NilError(t, Fetch(gitRepo, remote, refspec, NoTags()))
 }

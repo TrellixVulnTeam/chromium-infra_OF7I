@@ -364,11 +364,8 @@ func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) er
 			Remote: "origin",
 			Ref:    git.NormalizeRef(manifestBranchNames[manifestProject.Name]),
 		}
-		gitOpts := git.Opts{
-			DryRun: dryRun,
-			Force:  force,
-		}
-		if err := git.PushRef(manifestCheckout, "HEAD", remoteRef, gitOpts); err != nil {
+
+		if err := git.PushRef(manifestCheckout, "HEAD", remoteRef, git.DryRunIf(dryRun), git.ForceIf(force)); err != nil {
 			return errors.Annotate(err, "could not push branches to remote").Err()
 		}
 	}
