@@ -15,7 +15,7 @@ repository.
 
 The only thing you need to do is to just run the generic bootstrapping that is
 needed for the Go infra directory, as noted by [these other
-docs](https://chromium.googlesource.com/infra/ijfra//+/HEAD/go/README.md#get-the-code).
+docs](https://chromium.googlesource.com/infra/infra//+/HEAD/go/README.md#get-the-code).
 
 To verify that things are set up correctly, execute `make` from this directory:
 
