@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"infra/cros/cmd/phosphorus/internal/cmd"
+	"infra/cros/cmd/phosphorus/internal/tls"
 	"infra/libs/lro"
 
 	"github.com/maruel/subcommands"
@@ -20,15 +21,11 @@ import (
 	bpipb "go.chromium.org/chromiumos/infra/proto/go/uprev/build_parallels_image"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"google.golang.org/grpc"
 )
 
 const (
 	// parallelsDLCID is the ID of the DLC containing Parallels.
 	parallelsDLCID = "pita"
-
-	// tlsPort is the port to use for connecting to TLS.
-	tlsPort = 7152
 )
 
 // Provision subcommand: Provision a DUT, including with Parallels DLC.
@@ -110,14 +107,13 @@ func runTLSProvision(ctx context.Context, dutName, imageGSPath string) error {
 		defer cancel()
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", tlsPort), grpc.WithInsecure())
+	bt, err := tls.NewBackgroundTLS()
 	if err != nil {
-		return errors.Annotate(err, "dial TLS").Err()
+		return err
 	}
-	defer conn.Close()
+	defer bt.Close()
 
-	cc := tlsapi.NewCommonClient(conn)
-
+	cc := tlsapi.NewCommonClient(bt.Client)
 	op, err := cc.ProvisionDut(ctx, &tlsapi.ProvisionDutRequest{
 		Name: dutName,
 		TargetBuild: &tlsapi.ChromeOsImage{
@@ -135,7 +131,7 @@ func runTLSProvision(ctx context.Context, dutName, imageGSPath string) error {
 		return errors.Annotate(err, "start TLS Provision").Err()
 	}
 
-	oc := longrunning.NewOperationsClient(conn)
+	oc := longrunning.NewOperationsClient(bt.Client)
 	op, err = lro.Wait(ctx, oc, op.GetName())
 	if err != nil {
 		werr := errors.Annotate(err, "run TLS Provision").Err()

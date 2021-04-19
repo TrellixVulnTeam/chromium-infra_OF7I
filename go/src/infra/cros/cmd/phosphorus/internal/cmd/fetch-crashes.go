@@ -28,7 +28,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -144,20 +143,13 @@ func runTLSFetchCrashes(ctx context.Context, r *phosphorus.FetchCrashesRequest) 
 	}
 
 	logging.Infof(ctx, "Starting TLS")
-	tlsServer, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
+	bt, err := tls.NewBackgroundTLS()
 	if err != nil {
-		return nil, errors.Annotate(err, "run TLS Provision").Err()
+		return nil, err
 	}
-	defer tlsServer.Stop()
+	defer bt.Close()
 
-	logging.Infof(ctx, "Connecting to TLS")
-	conn, err := grpc.Dial(tlsServer.Address(), grpc.WithInsecure())
-	if err != nil {
-		return nil, errors.Annotate(err, "connect to TLS").Err()
-	}
-	defer conn.Close()
-
-	cl := tlsapi.NewCommonClient(conn)
+	cl := tlsapi.NewCommonClient(bt.Client)
 
 	fetchResp := &phosphorus.FetchCrashesResponse{State: phosphorus.FetchCrashesResponse_SUCCEEDED}
 

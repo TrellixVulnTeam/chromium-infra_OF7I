@@ -21,7 +21,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -67,10 +66,6 @@ func (c *prejobRun) Run(a subcommands.Application, args []string, env subcommand
 	return 0
 }
 
-const (
-	droneTLWPort = 7151
-)
-
 func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var r phosphorus.PrejobRequest
 	if err := ReadJSONPB(c.InputPath, &r); err != nil {
@@ -96,7 +91,7 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 }
 
 func runProvisionSteps(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	bt, err := newBackgroundTLS()
+	bt, err := tls.NewBackgroundTLS()
 	if err != nil {
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_ABORTED}, err
 	}
@@ -121,7 +116,7 @@ func prejobSucceeded(r *phosphorus.PrejobResponse, err error) bool {
 	return err == nil && r.GetState() == phosphorus.PrejobResponse_SUCCEEDED
 }
 
-func provisionChromeOSBuild(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuild(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	if shouldProvisionChromeOSViaTLS(r) {
 		return provisionChromeOSBuildViaTLS(ctx, bt, r)
 	}
@@ -331,7 +326,7 @@ func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil
 // Errors returned from the actual provision operation are interpreted into
 // the response. An error is returned for failure modes that can not be mapped
 // to a response.
-func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
 	if desired == "" {
@@ -390,7 +385,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *backgroundTLS, r *pho
 	return resp, nil
 }
 
-func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation) (*phosphorus.PrejobResponse, error) {
+func waitForOp(ctx context.Context, bt *tls.BackgroundTLS, op *longrunning.Operation) (*phosphorus.PrejobResponse, error) {
 	op, err := lro.Wait(ctx, longrunning.NewOperationsClient(bt.Client), op.GetName())
 	if err != nil {
 		// TODO(pprabhu) Cancel operation.
@@ -414,7 +409,7 @@ func waitForOp(ctx context.Context, bt *backgroundTLS, op *longrunning.Operation
 	return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 }
 
-func provisionLacros(ctx context.Context, bt *backgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
+func provisionLacros(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
 	desired := lacrosGCSPathOrEmpty(r.SoftwareDependencies)
 	if desired == "" {
@@ -499,39 +494,4 @@ func botCache(r *phosphorus.PrejobRequest) *botcache.Store {
 		CacheDir: r.GetConfig().GetBot().GetAutotestDir(),
 		Name:     r.GetDutHostname(),
 	}
-}
-
-type backgroundTLS struct {
-	server *tls.Server
-	Client *grpc.ClientConn
-}
-
-func (b *backgroundTLS) Close() error {
-	// Make it safe to Close() more than once.
-	if b.server == nil {
-		return nil
-	}
-	err := b.Client.Close()
-	b.server.Stop()
-	b.server = nil
-	return err
-}
-
-// Run a TLS server in the background and crate a gRPC client to it.
-//
-// On success, the caller must call backgroundTLS.Close() to clean up resources.
-func newBackgroundTLS() (*backgroundTLS, error) {
-	s, err := tls.StartBackground(fmt.Sprintf("0.0.0.0:%d", droneTLWPort))
-	if err != nil {
-		return nil, errors.Annotate(err, "start background TLS").Err()
-	}
-	c, err := grpc.Dial(s.Address(), grpc.WithInsecure())
-	if err != nil {
-		s.Stop()
-		return nil, errors.Annotate(err, "start background TLS").Err()
-	}
-	return &backgroundTLS{
-		server: s,
-		Client: c,
-	}, nil
 }
