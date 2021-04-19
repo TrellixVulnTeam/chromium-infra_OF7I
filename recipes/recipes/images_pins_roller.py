@@ -32,7 +32,8 @@ def RunSteps(api, properties):
 
   # Checkout the repo with the file to be updated.
   root = api.path['cache'].join('builder', 'checkout')
-  api.git.checkout(properties.repo_url, dir_path=root, submodules=False)
+  api.git.checkout(
+      properties.repo_url, ref='main', dir_path=root, submodules=False)
 
   with co.go_env():
     # Use 'cloudbuildhelper' which is in PATH now.

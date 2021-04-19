@@ -120,7 +120,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/checkout",
