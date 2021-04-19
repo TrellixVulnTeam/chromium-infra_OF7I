@@ -37,6 +37,8 @@ type Manifest struct {
 	Notice    string      `xml:"notice,omitempty"`
 	RepoHooks []RepoHooks `xml:"repo-hooks"`
 	Projects  []Project   `xml:"project"`
+	// Map to optimize GetProjectByPath. Lazily updated.
+	projectPathMap map[string]*Project
 }
 
 // Project is an element of a manifest containing a Gerrit project to source path definition.
@@ -121,15 +123,30 @@ func (m *Manifest) GetProjectByName(name string) (*Project, error) {
 	return nil, fmt.Errorf("project %s does not exist in manifest", name)
 }
 
+func (m *Manifest) refreshProjectPathMap() {
+	if m.projectPathMap == nil {
+		m.projectPathMap = make(map[string]*Project)
+	}
+	for i := range m.Projects {
+		m.projectPathMap[m.Projects[i].Path] = &m.Projects[i]
+	}
+}
+
 // GetProjectByPath returns a pointer to the remote with
 // the given path in the given manifest.
 func (m *Manifest) GetProjectByPath(path string) (*Project, error) {
-	for i, project := range m.Projects {
-		if project.Path == path {
-			return &m.Projects[i], nil
-		}
+	if m.projectPathMap == nil {
+		m.refreshProjectPathMap()
 	}
-	return nil, fmt.Errorf("project %s does not exist in manifest", path)
+	project, ok := m.projectPathMap[path]
+	if !ok {
+		m.refreshProjectPathMap()
+		project, ok = m.projectPathMap[path]
+	}
+	if !ok {
+		return nil, fmt.Errorf("project %s does not exist in manifest", path)
+	}
+	return project, nil
 }
 
 type projectType string

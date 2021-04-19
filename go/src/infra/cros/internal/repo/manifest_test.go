@@ -240,13 +240,19 @@ func TestGetProjectByPath(t *testing.T) {
 		Projects: []Project{
 			{Path: "a/", Name: "a"},
 			{Path: "b/", Name: "b"},
-			{Path: "c/", Name: "c"},
 		},
 	}
 
 	project, err := m.GetProjectByPath("b/")
 	assert2.NilError(t, err)
 	assert2.Assert(t, reflect.DeepEqual(*project, m.Projects[1]))
+
+	// Add a project after the fact to test the internal mapping.
+	m.Projects = append(m.Projects, Project{Path: "c/", Name: "c"})
+	project, err = m.GetProjectByPath("c/")
+	assert2.NilError(t, err)
+	assert2.Assert(t, reflect.DeepEqual(*project, m.Projects[2]))
+
 	project, err = m.GetProjectByPath("d/")
 	assert2.Assert(t, err != nil)
 }
