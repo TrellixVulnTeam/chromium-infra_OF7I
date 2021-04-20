@@ -35,7 +35,7 @@ deps = {
   # version of python-coverage.
   "infra/recipes-py":
      "{chromium_git}/infra/luci/recipes-py@" +
-     "origin/master",
+     "refs/heads/main",
 
   "infra/go/src/go.chromium.org/luci":
      "{chromium_git}/infra/luci/luci-go@" +
