@@ -22,8 +22,15 @@ const (
 )
 
 var (
-	inclusiveRegexp = regexp.MustCompile(`\b((black|white)list|master|slave)\b`)
-	replacements    = map[string]string{
+	termsRegexp = regexp.MustCompile(`\b((black|white)list|master|slave)\b`)
+
+	nocheckRegexp   = regexp.MustCompile(`\b\s*(nocheck)$`)
+	pyCommentRegexp = regexp.MustCompile(`#.*$`)
+	cCommentRegexp  = regexp.MustCompile(`//.*$`)
+	javaDocRegexp   = regexp.MustCompile(`^\s*\*`)
+	gitPathRegexp   = regexp.MustCompile(`(\+|/)master(/|\:)`)
+
+	replacements = map[string]string{
 		"blacklist": "blocklist",
 		"whitelist": "allowlist",
 		"master":    "main",
@@ -74,9 +81,33 @@ type match struct {
 }
 
 func findMatches(s string) (ret []match) {
-	inclusiveIdx := inclusiveRegexp.FindAllStringIndex(s, -1)
-	if inclusiveIdx != nil {
-		for _, idx := range inclusiveIdx {
+	if nocheckRegexp.MatchString(s) {
+		return ret
+	}
+	if javaDocRegexp.MatchString(s) {
+		return ret
+	}
+	if cCommentRegexp.MatchString(s) {
+		// Ignore everything after `//'.
+		s = cCommentRegexp.ReplaceAllLiteralString(s, "")
+	}
+	if pyCommentRegexp.MatchString(s) {
+		// Ignore everything after `#'.
+		s = pyCommentRegexp.ReplaceAllLiteralString(s, "")
+	}
+	// Ignore git branch references
+	if gitPathRegexp.MatchString(s) {
+		// Simply removing "master" from the middle of a line will remove the
+		// false positive, but will break any true positives that occur
+		// on the line after it since the reported character positions will be wrong.
+		// So, blank it out with whitespace instead:
+		s = string(gitPathRegexp.ReplaceAllFunc([]byte(s), func(b []byte) []byte {
+			return []byte(strings.Repeat(" ", len(string(b))))
+		}))
+	}
+	matchIdx := termsRegexp.FindAllStringIndex(s, -1)
+	if matchIdx != nil {
+		for _, idx := range matchIdx {
 			startIdx := int32(idx[0])
 			endIdx := int32(idx[1])
 			ret = append(ret, match{startIdx, endIdx})

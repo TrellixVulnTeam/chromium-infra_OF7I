@@ -16,6 +16,7 @@ const (
 	okSource          = "test/src/ok.md"
 	notOkPath         = "test/src/blacklist.txt"
 	okPathNotOkSource = "test/src/list.txt"
+	nocheckSource     = "test/src/nocheck.txt"
 )
 
 func TestInclusiveLanguageChecker(t *testing.T) {
@@ -98,6 +99,133 @@ func TestInclusiveLanguageChecker(t *testing.T) {
 					EndChar:     17,
 				}},
 			}},
+		})
+	})
+
+	Convey("Ingores nocheck lines", t, func() {
+		results := &tricium.Data_Results{}
+		checkInclusiveLanguage(filepath.Join(buildDir, nocheckSource), nocheckSource, results)
+		So(results.Comments, ShouldNotBeNil)
+		So(results.Comments, ShouldResembleProto, []*tricium.Data_Comment{
+			{
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["master"],
+				Path:      nocheckSource,
+				StartLine: 1,
+				EndLine:   1,
+				StartChar: 0,
+				EndChar:   6,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["master"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "main",
+						Path:        nocheckSource,
+						StartLine:   1,
+						EndLine:     1,
+						StartChar:   0,
+						EndChar:     6,
+					}},
+				}},
+			},
+			{
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["blacklist"],
+				Path:      nocheckSource,
+				StartLine: 3,
+				EndLine:   3,
+				StartChar: 0,
+				EndChar:   9,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["blacklist"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "blocklist",
+						Path:        nocheckSource,
+						StartLine:   3,
+						EndLine:     3,
+						StartChar:   0,
+						EndChar:     9,
+					}},
+				}},
+			},
+			{
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["whitelist"],
+				Path:      nocheckSource,
+				StartLine: 4,
+				EndLine:   4,
+				StartChar: 0,
+				EndChar:   9,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["whitelist"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "allowlist",
+						Path:        nocheckSource,
+						StartLine:   4,
+						EndLine:     4,
+						StartChar:   0,
+						EndChar:     9,
+					}},
+				}},
+			},
+			{
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["slave"],
+				Path:      nocheckSource,
+				StartLine: 16,
+				EndLine:   16,
+				StartChar: 16,
+				EndChar:   21,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["slave"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "replica",
+						Path:        nocheckSource,
+						StartLine:   16,
+						EndLine:     16,
+						StartChar:   16,
+						EndChar:     21,
+					}},
+				}},
+			},
+			{
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["master"],
+				Path:      nocheckSource,
+				StartLine: 18,
+				EndLine:   18,
+				StartChar: 16,
+				EndChar:   22,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["master"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "main",
+						Path:        nocheckSource,
+						StartLine:   18,
+						EndLine:     18,
+						StartChar:   16,
+						EndChar:     22,
+					}},
+				}},
+			}, {
+				Category:  "InclusiveLanguageCheck/Warning",
+				Message:   commentText["master"],
+				Path:      nocheckSource,
+				StartLine: 21,
+				EndLine:   21,
+				StartChar: 93,
+				EndChar:   99,
+				Suggestions: []*tricium.Data_Suggestion{{
+					Description: commentText["master"],
+					Replacements: []*tricium.Data_Replacement{{
+						Replacement: "main",
+						Path:        nocheckSource,
+						StartLine:   21,
+						EndLine:     21,
+						StartChar:   93,
+						EndChar:     99,
+					}},
+				}},
+			},
 		})
 	})
 }

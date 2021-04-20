@@ -1,0 +1,33 @@
+master
+slave // nocheck
+blacklist
+whitelist
+
+/**
+ * This class has the word master in it and in the
+ * javadoc, but we should ignore the javadoc and
+ * instances where it's commented with nocheck.
+ */
+public class SomeClass {
+	private int foo;
+	private string master; // nocheck
+    // Paths with git 'master' references should be ignored:
+	private string uri = "infra/infra/+/master:go/src/infra/tricium/functions/inclusive/inclusive.go";
+	private string slave;
+	// This line should still match
+	private string master = "infra/infra/+/master:go/src/infra/tricium/functions/inclusive/inclusive.go";
+	private void test() {
+		// This line should also still match even though it contains an ignored git branch reference
+		callSomeFunc("infra/infra/+/master:go/src/infra/tricium/functions/inclusive/inclusive.go", master);
+	}
+}
+
+
+def some_func():
+  call_something()
+  do_something_with(master) # nocheck
+
+void main() {
+	callSomething(master); // nocheck
+}
+
