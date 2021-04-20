@@ -42,7 +42,7 @@ func getApplication() *cli.Application {
 			inventory.DutList,
 			subcommands.Section("Experiments"),
 			tasks.Recovery,
-			run.RepairCmd,
+			run.LabpackCmd,
 		},
 	}
 }

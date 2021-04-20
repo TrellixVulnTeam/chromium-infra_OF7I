@@ -30,12 +30,12 @@ const defaultAutoservPath = "./server/autoserv"
 const defaultControlDir = "/tr"
 const filePermissions = 0o644
 
-// RepairCmd is a local repair job that writes its results to
+// LabpackCmd is a local repair job that writes its results to
 // a user-specified directory organized under a control directory.
-var RepairCmd = &subcommands.Command{
-	UsageLine: "repair",
-	ShortDesc: "Run repair locally",
-	LongDesc:  "Run repair locally",
+var LabpackCmd = &subcommands.Command{
+	UsageLine: "labpack",
+	ShortDesc: "Run labpack locally",
+	LongDesc:  "Run labpack locally",
 	CommandRun: func() subcommands.CommandRun {
 		c := &repair{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)

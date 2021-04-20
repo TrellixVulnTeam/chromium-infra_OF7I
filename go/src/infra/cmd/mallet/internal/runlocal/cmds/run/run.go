@@ -45,7 +45,7 @@ func (c *run) Run(a subcommands.Application, args []string, env subcommands.Env)
 func (c runApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
-		RepairCmd,
+		LabpackCmd,
 	}
 }
 
