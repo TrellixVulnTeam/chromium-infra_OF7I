@@ -17,7 +17,6 @@ import (
 
 	"infra/cmd/shivas/meta"
 	queen_cmds "infra/cmd/shivas/queen/cmds"
-	"infra/cmd/shivas/runlocal/cmds/run"
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
 	bot_cmds "infra/cmd/shivas/ufs/cmds/bot"
@@ -62,7 +61,6 @@ Full documentation http://go/shivas-cli`,
 			queen_cmds.PushDuts,
 			subcommands.Section("Internal use"),
 			bot_cmds.PrintBotInfo,
-			run.RunCmd,
 		},
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"infra/cmd/mallet/internal/cmd/inventory"
 	"infra/cmd/mallet/internal/cmd/meta"
 	"infra/cmd/mallet/internal/cmd/tasks"
+	"infra/cmd/mallet/internal/runlocal/cmds/run"
 	"infra/cmd/mallet/internal/site"
 )
 
@@ -41,6 +42,7 @@ func getApplication() *cli.Application {
 			inventory.DutList,
 			subcommands.Section("Experiments"),
 			tasks.Recovery,
+			run.RepairCmd,
 		},
 	}
 }
