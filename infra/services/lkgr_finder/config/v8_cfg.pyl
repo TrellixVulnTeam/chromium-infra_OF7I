@@ -68,14 +68,6 @@
         # 'V8 Blink Linux Debug',
         'V8 Blink Linux Future',
         'V8 Linux GN',
-
-        # client.v8.perf
-        'V8 Linux - builder - perf',
-        'V8 Linux64 - builder - perf',
-        'V8 Arm - builder - perf',
-        'V8 Android Arm - builder - perf',
-        'V8 Arm64 - builder - perf',
-        'V8 Android Arm64 - builder - perf',
       ],
     },
   },
