@@ -75,6 +75,23 @@ def GenTests(api):
           api.json.output({'issue': None, 'issue_url': None}))
   )
 
+  yield (test('multiple_failures') + api.properties(projects=[
+      ('build', 'https://example.com/build.git'),
+      ('depot_tools', 'https://example.com/depot_tools.git'),
+  ]) + api.recipe_autoroller.roll_data('build') +
+         api.recipe_autoroller.roll_data('depot_tools') +
+         api.override_step_data(
+             'build.git cl issue',
+             api.json.output({
+                 'issue': None,
+                 'issue_url': None
+             })) + api.override_step_data(
+                 'depot_tools.git cl issue',
+                 api.json.output({
+                     'issue': None,
+                     'issue_url': None
+                 })))
+
   yield (
       test('repo_data_trivial_cq') +
       api.recipe_autoroller.recipe_cfg('build') +

@@ -154,11 +154,21 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     futures = []
     for project_id, project_url in projects:
-      futures.append(
-          self.m.futures.spawn(self._roll_project, project_id, project_url,
-                               recipes_dir, db_gcs_bucket))
+      future = self.m.futures.spawn(self._roll_project, project_id, project_url,
+                                    recipes_dir, db_gcs_bucket)
+      futures.append((project_id, future))
 
-    results = [f.result() for f in futures]
+    failed_rolls = []
+    for project_id, future in futures:
+      if future.exception() is not None:
+        failed_rolls.append(project_id)
+
+    if failed_rolls:
+      raise self.m.step.StepFailure(
+          'Rolls failed for the following projects: {}'.format(
+              ', '.join(failed_rolls)))
+
+    results = [f.result() for _, f in futures]
 
     # Failures to roll are OK as long as at least one of the repos is moving
     # forward. For example, with repos with following dependencies:
