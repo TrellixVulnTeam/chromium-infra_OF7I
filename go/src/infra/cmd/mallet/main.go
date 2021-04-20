@@ -18,6 +18,7 @@ import (
 
 	"infra/cmd/mallet/internal/cmd/inventory"
 	"infra/cmd/mallet/internal/cmd/meta"
+	"infra/cmd/mallet/internal/cmd/tasks"
 	"infra/cmd/mallet/internal/site"
 )
 
@@ -38,6 +39,8 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			subcommands.Section("Readonly"),
 			inventory.DutList,
+			subcommands.Section("Experiments"),
+			tasks.Recovery,
 		},
 	}
 }
