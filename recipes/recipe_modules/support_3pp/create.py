@@ -12,6 +12,7 @@ import re
 
 from . import source
 from . import build
+from . import resolved_spec
 from . import verify
 
 from .workdir import Workdir
@@ -63,7 +64,27 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       'GOARCH': spec.platform.split('-')[1].replace('armv6l', 'arm'),
     }
     if spec.platform.startswith('mac-'):
-      env['MACOSX_DEPLOYMENT_TARGET'] = '10.10'
+      if spec.platform == 'mac-arm64':
+        # ARM64 support is added in macOS 11.
+        env['MACOSX_DEPLOYMENT_TARGET'] = '11.0'
+
+        # Mac builds don't use Docker/Dockcross, so we handle cross-build
+        # setup here. Setting CCC_OVERRIDE_OPTIONS passes the target to
+        # Clang globally, so we don't need to plumb it through each individual
+        # install script. We use '^' to indicate this option is inserted at
+        # the beginning of the compiler options list -- this gives the ability
+        # to override it later if needed.
+        if resolved_spec.platform_for_host(api) != spec.platform:
+          env['CROSS_TRIPLE'] = 'aarch64-apple-darwin'
+          env['CCC_OVERRIDE_OPTIONS'] = '^--target=arm64-apple-macos'
+        else:
+          # Make sure to clear these options if not cross-compiling, since
+          # we may be switching back and forth between building host tools
+          # and target-platform binaries.
+          env.pop('CROSS_TRIPLE', None)
+          env.pop('CCC_OVERRIDE_OPTIONS', None)
+      else:
+        env['MACOSX_DEPLOYMENT_TARGET'] = '10.10'
     if spec.create_pb.source.patch_version:
       env['_3PP_PATCH_VERSION'] = spec.create_pb.source.patch_version
 

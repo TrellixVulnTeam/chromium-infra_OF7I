@@ -15,6 +15,13 @@ if ! which realpath; then
   }
 fi > /dev/null
 
+. $(dirname $0)/cross_util.sh
+
+if [[ $_3PP_TOOL_PLATFORM == mac-amd64 ]]; then
+  # Undo global CCC_OVERRIDE_OPTIONS when building for native.
+  export BUILD_CC="cc -arch x86_64"
+fi
+
 # The "ncurses" package, by default, uses a fixed-path location for terminal
 # information. This is not relocatable, so we need to disable it. Instead, we
 # will compile ncurses with a set of hand-picked custom terminal information
@@ -32,20 +39,7 @@ tic_prefix=$(realpath ../tic_prefix)
 
 # Make tic for host
 (
-  if [[ "$_3PP_PLATFORM" != "$_3PP_TOOL_PLATFORM" ]]; then
-    . /install-util.sh
-    toggle_host
-
-    # TODO(iannucci): fix toggle_host to correctly export the 'host' compiler.
-    # This is because the docker images currently set an alternative for `cc`
-    # and `gcc` in /usr/bin to be the xcompile gcc. None of the other tools in
-    # /usr/bin are switched though...
-    if command -v gcc-6 > /dev/null; then
-      export CC=gcc-6
-    elif command -v gcc-4.9 > /dev/null; then
-      export CC=gcc-4.9
-    fi
-  fi
+  3pp_toggle_host
 
   src=$(realpath .)
   mkdir -p $tic_build

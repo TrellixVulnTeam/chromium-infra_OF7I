@@ -1,0 +1,76 @@
+From 418695b0da6c40af423bc405dd51b7a10563ddef Mon Sep 17 00:00:00 2001
+From: Brian Ryner <bryner@google.com>
+Date: Tue, 6 Apr 2021 11:35:09 +1000
+Subject: [PATCH 3/3] Support cross-compiling to Mac ARM64.
+
+Incorporates a previous patch to allow 'readelf' to be the host
+readelf tool.
+---
+ configure    | 14 ++++++++++++--
+ configure.ac | 16 +++++++++++++---
+ setup.py     |  2 +-
+ 3 files changed, 26 insertions(+), 6 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 624ce1f08e..24d9acf303 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -382,12 +382,19 @@ then
+ 	*-*-vxworks*)
+ 	    ac_sys_system=VxWorks
+ 	    ;;
++	*-*-darwin*)
++	    ac_sys_system=Darwin
++	    ;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+ 		AC_MSG_ERROR([cross build not supported for $host])
+ 	esac
+-	ac_sys_release=
++	if test "$ac_sys_system" = "Darwin"; then
++	    ac_sys_release=`uname -r`  # Needed for some tests below.
++	else
++	    ac_sys_release=
++	fi
+     else
+ 	ac_sys_system=`uname -s`
+ 	if test "$ac_sys_system" = "AIX" \
+@@ -431,6 +438,9 @@ if test "$cross_compiling" = yes; then
+ 	*-*-vxworks*)
+ 		_host_cpu=$host_cpu
+ 		;;
++	*-*-darwin*)
++		_host_cpu=$host_cpu
++		;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+@@ -1185,9 +1195,9 @@ then
+ fi
+ 
+ AC_CHECK_TOOLS([READELF], [readelf], [:])
+-if test "$cross_compiling" = yes; then
++if test "$cross_compiling" = yes -a "$ac_sys_system" != "Darwin"; then
+     case "$READELF" in
+-	readelf|:)
++	:)
+ 	AC_MSG_ERROR([readelf for the host is required for cross builds])
+ 	;;
+     esac
+diff --git a/setup.py b/setup.py
+index 33a7e307c9..644f8eeb39 100644
+--- a/setup.py
++++ b/setup.py
+@@ -893,7 +893,7 @@ class PyBuildExt(build_ext):
+             os.makedirs(self.build_temp)
+         # Determine if readline is already linked against curses or tinfo.
+         if do_readline:
+-            if CROSS_COMPILING:
++            if CROSS_COMPILING and not MACOS:
+                 ret = os.system("%s -d %s | grep '(NEEDED)' > %s" \
+                                 % (sysconfig.get_config_var('READELF'),
+                                    do_readline, tmpfile))
+-- 
+2.31.0.208.g409f899ff0-goog
+

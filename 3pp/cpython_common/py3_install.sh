@@ -72,6 +72,13 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   # Our builder system is missing X11 headers, so this module does not build.
   SETUP_LOCAL_SKIP+=(_tkinter)
 
+  # For use with cross-compiling.
+  if [[ $_3PP_TOOL_PLATFORM == mac-arm64 ]]; then
+      host_cpu="aarch64"
+  else
+      host_cpu="x86_64"
+  fi
+  EXTRA_CONFIGURE_ARGS="$EXTRA_CONFIGURE_ARGS --build=${host_cpu}-apple-darwin"
 else
   PYTHONEXE=python
 
@@ -113,13 +120,13 @@ else
   # This set of symbols was determined by trial, see:
   # - crbug.com/763792
   LDFLAGS="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
-
-  # Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
-  # This is likely to be true, since all linuxes that we know of have this
-  # configuration.
-  export ac_cv_file__dev_ptmx=y
-  export ac_cv_file__dev_ptc=n
 fi
+
+# Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
+# This is likely to be true, since Mac and all linuxes that we know of have this
+# configuration.
+export ac_cv_file__dev_ptmx=y
+export ac_cv_file__dev_ptc=n
 
 # Python tends to hard-code /usr/include and /usr/local/include in its setup.py
 # file which can end up picking up headers and stuff from wherever.

@@ -30,16 +30,16 @@ def platform_for_host(api):
   `platform` recipe_module.
   """
   return '%s-%s' % (
-    {
-      'win': 'windows',
-      'linux': 'linux',  # not actually used, but for completeness
-      'mac': 'mac',
-    }[api.platform.name],
-    {
-      ('intel', 32): '386',
-      ('intel', 64): 'amd64',
-    }[api.platform.arch, api.platform.bits]
-  )
+      {
+          'win': 'windows',
+          'linux': 'linux',  # not actually used, but for completeness
+          'mac': 'mac',
+      }[api.platform.name],
+      {
+          ('intel', 32): '386',
+          ('intel', 64): 'amd64',
+          ('arm', 64): 'arm64',
+      }[api.platform.arch, api.platform.bits])
 
 
 def tool_platform(api, platform, _spec_pb):

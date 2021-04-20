@@ -388,30 +388,36 @@ def GenTests(api):
   def mk_name(*parts):
     return '.'.join(parts)
 
-  for goos, goarch in (('linux', 'amd64'),
-                       ('linux', 'armv6l'),
-                       ('windows', 'amd64'),
-                       ('mac', 'amd64')):
+  for goos, goarch, host_arch in (('linux', 'amd64',
+                                   'intel'), ('linux', 'armv6l', 'intel'),
+                                  ('windows', 'amd64',
+                                   'intel'), ('mac', 'amd64', 'intel'),
+                                  ('mac', 'arm64', 'intel'), ('mac', 'arm64',
+                                                              'arm')):
     plat_name = 'win' if goos == 'windows' else goos
 
     sep = '\\' if goos == 'windows' else '/'
     pkg_repo_path = sep.join(['%s', '3pp.pb'])
     plat = '%s-%s' % (goos, goarch)
 
-    test = (api.test('integration_test_%s-%s' % (goos, goarch))
-      + api.platform(plat_name, 64)  # assume all hosts are 64 bits.
-      + api.properties(GOOS=goos, GOARCH=goarch)
-      + api.properties(key_path=KEY_PATH)
-      + api.buildbucket.ci_build()
-      + api.step_data('find package specs', api.file.glob_paths([
-          pkg_repo_path % sep.join(pkg_dir.split('/')) for pkg_dir, _ in pkgs]))
-      + api.override_step_data(mk_name(
-        'building tools/already_uploaded',
-        'cipd describe 3pp/tools/already_uploaded/%s' % plat
-      ), api.cipd.example_describe(
-        '3pp/tools/already_uploaded/%s' % plat,
-        version='version:1.5.0-rc1', test_data_tags=['version:1.5.0-rc1']))
-    )
+    test = (
+        api.test('integration_test_%s-%s-%s' % (goos, goarch, host_arch))
+        # Assume all hosts are 64 bits.
+        + api.platform(plat_name, 64, arch=host_arch) +
+        api.properties(GOOS=goos, GOARCH=goarch) +
+        api.properties(key_path=KEY_PATH) + api.buildbucket.ci_build() +
+        api.step_data(
+            'find package specs',
+            api.file.glob_paths([
+                pkg_repo_path % sep.join(pkg_dir.split('/'))
+                for pkg_dir, _ in pkgs
+            ])) + api.override_step_data(
+                mk_name('building tools/already_uploaded',
+                        'cipd describe 3pp/tools/already_uploaded/%s' % plat),
+                api.cipd.example_describe(
+                    '3pp/tools/already_uploaded/%s' % plat,
+                    version='version:1.5.0-rc1',
+                    test_data_tags=['version:1.5.0-rc1'])))
 
     if plat_name != 'win':
       # posix_tool says it needs an archive unpacking.
