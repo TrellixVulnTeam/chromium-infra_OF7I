@@ -121,7 +121,7 @@ module.exports = function(config) {
             test: /\.js$/,
             loader: 'istanbul-instrumenter-loader',
             include: path.resolve('static_src/'),
-            exclude: [/\.test.js$/],
+            exclude: [/\.test.(js|ts|tsx)$/],
             query: {esModules: true},
           },
         ],
