@@ -24,9 +24,6 @@ func makeBuilderConfig(name string, idType cros_pb.BuilderConfig_Id_Type, rwMode
 				Mode:         rwMode,
 				FilePatterns: rwPatterns,
 			},
-			// TODO(crbug.com/1094321) Only schedule slim builds in staging
-			// until 16-Sept-2020 as a part of go/cros-slim-rollout.
-			Environment: cros_pb.BuilderConfig_General_STAGING,
 		},
 		Artifacts: &cros_pb.BuilderConfig_Artifacts{},
 	}
@@ -448,97 +445,6 @@ func TestCheckBuilders_slimBuildersEligiblePaths(t *testing.T) {
 	}
 }
 
-// TODO(crbug.com/1094321) Only schedule slim builds in staging until 16-Sept-2020 as a part of go/cros-slim-rollout.
-// Remove test case after rollout.
-func TestCheckBuilders_slimBuildersNotStaging(t *testing.T) {
-	changes := []*bbproto.GerritChange{
-		{Host: "test-review.googlesource.com", Change: 124, Patchset: 1, Project: "chromiumos/third_party/kernel"},
-	}
-	chRevData := gerrit.GetChangeRevsForTest([]*gerrit.ChangeRev{
-		{
-			ChangeRevKey: gerrit.ChangeRevKey{
-				Host:      "test-review.googlesource.com",
-				ChangeNum: 124,
-				Revision:  1,
-			},
-			Branch:  "refs/heads/main",
-			Project: "chromiumos/third_party/kernel",
-			Files: []string{
-				"v4.14/someotherdir/example.txt",
-			},
-		},
-	})
-
-	repoToBranchToSrcRoot := map[string]map[string]string{
-		"chromiumos/third_party/kernel": {"refs/heads/main": "src/third_party/kernel"},
-	}
-	buildIrrelevanceCfg := &testplans_pb.BuildIrrelevanceCfg{}
-
-	slimBuildCfg := &testplans_pb.SlimBuildCfg{
-		SlimEligibleFilePatterns: []*testplans_pb.FilePattern{
-			{Pattern: "src/third_party/kernel/**"},
-		},
-	}
-
-	testReqsCfg := &testplans_pb.TargetTestRequirementsCfg{
-		PerTargetTestRequirements: []*testplans_pb.PerTargetTestRequirements{
-			{
-				TargetCriteria: &testplans_pb.TargetCriteria{
-					BuilderName: "testable-builder-cq",
-					TargetType: &testplans_pb.TargetCriteria_BuildTarget{
-						BuildTarget: "testable-builder",
-					},
-				},
-			},
-		},
-	}
-
-	bConfig := makeBuilderConfig("non-testable-builder-with-slim-variant-cq", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{})
-	bConfig.General.Environment = cros_pb.BuilderConfig_General_PRODUCTION
-	builderConfigs := &cros_pb.BuilderConfigs{
-		BuilderConfigs: []*cros_pb.BuilderConfig{
-			bConfig,
-			makeBuilderConfig("non-testable-builder-with-slim-variant-slim-cq", cros_pb.BuilderConfig_Id_CQ, cros_pb.BuilderConfig_General_RunWhen_ALWAYS_RUN, []string{}),
-		},
-	}
-
-	b := []*cros_pb.BuilderConfig{
-		bConfig,
-	}
-
-	checkBuildersInput := &CheckBuildersInput{
-		Builders:              b,
-		Changes:               changes,
-		ChangeRevs:            chRevData,
-		RepoToBranchToSrcRoot: repoToBranchToSrcRoot,
-		BuildIrrelevanceCfg:   buildIrrelevanceCfg,
-		SlimBuildCfg:          slimBuildCfg,
-		TestReqsCfg:           testReqsCfg,
-		BuilderConfigs:        builderConfigs,
-	}
-
-	res, err := checkBuildersInput.CheckBuilders()
-	if err != nil {
-		t.Error(err)
-	}
-	if len(res.BuildsToRun) != 1 {
-		t.Errorf("Expected BuildsToRun to have 1 elements. Instead, %v", res.BuildsToRun)
-	}
-	expectedBuilderNames := []string{"non-testable-builder-with-slim-variant-cq"}
-	actualBuilderNames := make([]string, 0)
-	for _, b := range res.BuildsToRun {
-		actualBuilderNames = append(actualBuilderNames, b.GetName())
-	}
-	if len(sliceDiff(expectedBuilderNames, actualBuilderNames)) != 0 {
-		t.Errorf("Expected res.BuildsToRun to contain builder names %v. Instead, %v", expectedBuilderNames, actualBuilderNames)
-	}
-	if len(res.SkipForGlobalBuildIrrelevance) != 0 {
-		t.Errorf("Expected SkipForGlobalBuildIrrelevance to be empty. Instead, %v", res.SkipForGlobalBuildIrrelevance)
-	}
-	if len(res.SkipForRunWhenRules) != 0 {
-		t.Errorf("Expected SkipForRunWhenRules to be empty. Instead, %v", res.SkipForRunWhenRules)
-	}
-}
 func TestCheckBuilders_slimBuildersIneligiblePaths(t *testing.T) {
 	changes := []*bbproto.GerritChange{
 		{Host: "test-review.googlesource.com", Change: 123, Patchset: 2, Project: "chromiumos/platform2"},
