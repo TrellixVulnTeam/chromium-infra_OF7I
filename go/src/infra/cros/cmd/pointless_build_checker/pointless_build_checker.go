@@ -110,7 +110,7 @@ func (c *checkBuild) Run(a subcommands.Application, args []string, env subcomman
 		repoToSrcRoot = &repoToSrcRootMap
 	}
 
-	resp, err := pointless.CheckBuilder(changes, changeRevs, req.RelevantPaths, *repoToSrcRoot, cfg)
+	resp, err := pointless.CheckBuilder(changes, changeRevs, req.RelevantPaths, *repoToSrcRoot, req.IgnoreKnownNonPortageDirectories, cfg)
 	if err != nil {
 		log.Printf("Error checking if build is pointless:\n%v", err)
 		return 7

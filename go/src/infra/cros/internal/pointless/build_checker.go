@@ -27,6 +27,7 @@ func CheckBuilder(
 	changeRevs *gerrit.ChangeRevData,
 	relevantPaths []*testplans_pb.PointlessBuildCheckRequest_Path,
 	repoToBranchToSrcRoot map[string]map[string]string,
+	ignoreKnownNonPortageDirectories bool,
 	cfg *testplans_pb.BuildIrrelevanceCfg) (*testplans_pb.PointlessBuildCheckResponse, error) {
 
 	// Get all of the files referenced by each GerritCommit in the Build.
@@ -42,17 +43,20 @@ func CheckBuilder(
 		}, nil
 	}
 
-	// If the build affects forced relevantPaths we must consider it relevant.
-	hasAlwaysRelevantPaths := checkAlwaysRelevantPaths(affectedFiles, cfg)
-	log.Printf("After considering the always relevant file paths, is the build pointless yet?: %t", hasAlwaysRelevantPaths)
-	if hasAlwaysRelevantPaths {
-		log.Printf("Since we know the build isn't pointless, we can return early")
-		return &testplans_pb.PointlessBuildCheckResponse{
-			PointlessBuildReason: testplans_pb.PointlessBuildCheckResponse_RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES,
-			BuildIsPointless:     &wrappers.BoolValue{Value: false},
-		}, nil
+	// If the build affects forced relevantPaths we must consider it relevant (unless flagged not to).
+	if ignoreKnownNonPortageDirectories {
+		log.Printf("Ignoring RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES check as requested by ignore_known_non_portage_directories option.")
+	} else {
+		hasAlwaysRelevantPaths := checkAlwaysRelevantPaths(affectedFiles, cfg)
+		log.Printf("After considering the always relevant file paths, is the build pointless yet?: %t", hasAlwaysRelevantPaths)
+		if hasAlwaysRelevantPaths {
+			log.Printf("Since we know the build isn't pointless, we can return early")
+			return &testplans_pb.PointlessBuildCheckResponse{
+				PointlessBuildReason: testplans_pb.PointlessBuildCheckResponse_RELEVANT_TO_KNOWN_NON_PORTAGE_DIRECTORIES,
+				BuildIsPointless:     &wrappers.BoolValue{Value: false},
+			}, nil
+		}
 	}
-
 	// Filter out files that are irrelevant to Portage because of the config.
 	affectedFiles = filterByBuildIrrelevantPaths(affectedFiles, cfg)
 	if len(affectedFiles) == 0 {
