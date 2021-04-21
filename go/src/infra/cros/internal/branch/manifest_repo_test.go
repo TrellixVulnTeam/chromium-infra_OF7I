@@ -44,7 +44,7 @@ func TestRepairManifest_success(t *testing.T) {
 			groups="minilayout,firmware,buildtools,labtools,crosvm" />
 		<repo-hooks in-project="chromiumos/repohooks" enabled-list="pre-upload" />
 
-	 	<project name="chromiumos/foo" path="foo/" upstream="" remote="cros" />
+	 	<project name="chromiumos/foo" path="foo/" upstream="" />
 	 	<project upstream="" name="pinned" revision="456" path="pinned/">
 	 		<!---Comment 2-->
 	 		<annotation name="branch-mode" value="pin" />
@@ -105,7 +105,7 @@ func TestRepairManifest_success(t *testing.T) {
 			groups="minilayout,firmware,buildtools,labtools,crosvm" revision="refs/heads/branch" />
 		<repo-hooks in-project="chromiumos/repohooks" enabled-list="pre-upload" />
 
-	 	<project name="chromiumos/foo" path="foo/" remote="cros" revision="refs/heads/branch" />
+	 	<project name="chromiumos/foo" path="foo/" revision="refs/heads/branch" />
 	 	<project name="pinned" revision="123" path="pinned/">
 	 		<!---Comment 2-->
 	 		<annotation name="branch-mode" value="pin" />

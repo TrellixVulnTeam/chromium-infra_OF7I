@@ -120,32 +120,24 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 	if err != nil {
 		return nil, errors.Annotate(err, "error loading manifest").Err()
 	}
-	manifest := string(manifestData)
 
-	// We use xml.Unmarshal to avoid the complexities of a
-	// truly exhaustive regex, which would need to include logic for <annotation> tags nested
-	// within a <project> tag (which are needed to determine the project type).
-	parsedManifest := repo.Manifest{}
-	err = xml.Unmarshal(manifestData, &parsedManifest)
+	manifest := repo.Manifest{}
+	err = xml.Unmarshal(manifestData, &manifest)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to unmarshal manifest").Err()
 	}
-	parsedManifest.ResolveImplicitLinks()
+	manifest.ResolveImplicitLinks()
 
 	// Delete the default revision.
-	defaultRegexp := regexp.MustCompile(fmt.Sprintf(tagRegexpTempate, "default"))
-	defaultTag := defaultRegexp.FindString(manifest)
-	manifest = strings.ReplaceAll(manifest, defaultTag, delAttr(defaultTag, "revision"))
+	manifest.Default.Revision = ""
 
 	// Delete remote revisions.
-	remoteRegexp := regexp.MustCompile(fmt.Sprintf(tagRegexpTempate, "remote"))
-	remoteTags := remoteRegexp.FindAllString(manifest, -1)
-	for _, remoteTag := range remoteTags {
-		manifest = strings.ReplaceAll(manifest, remoteTag, delAttr(remoteTag, "revision"))
+	for i := range manifest.Remotes {
+		manifest.Remotes[i].Revision = ""
 	}
 
 	// Update all project revisions.
-	for _, project := range parsedManifest.Projects {
+	for i, project := range manifest.Projects {
 		// Path defaults to name.
 		if project.Path == "" {
 			project.Path = project.Name
@@ -183,20 +175,17 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 		default:
 			return nil, fmt.Errorf("project %s branch mode unspecifed", project.Path)
 		}
-
-		projectTag := findProjectTag(&project, manifest)
-
+		// UpdateManifestElement will write all attributes to the file, so
+		// clear the remote if it matches the default.
+		if project.RemoteName == manifest.Default.RemoteName {
+			project.RemoteName = ""
+		}
 		// Clear upstream.
-		newProjectTag := delAttr(string(projectTag), "upstream")
-		// Set new revision.
-		newProjectTag = setRevisionAttr(newProjectTag, project.Revision)
-		// Update manifest.
-		manifest = strings.ReplaceAll(manifest, projectTag, newProjectTag)
+		project.Upstream = ""
+		manifest.Projects[i] = project
 	}
-	// Remove trailing space in start tags.
-	manifest = regexp.MustCompile(`\s+>`).ReplaceAllString(manifest, ">")
 
-	return []byte(manifest), nil
+	return repo.UpdateManifestElements(&manifest, manifestData)
 }
 
 // listManifests finds all manifests included directly or indirectly by root

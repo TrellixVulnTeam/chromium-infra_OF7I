@@ -94,4 +94,15 @@ func TestUpdateManifestElements_extraneous(t *testing.T) {
 	_, err = UpdateManifestElements(referenceManifest, input)
 	assert.ErrorContains(t, err, "contained project(s)")
 
+	input, err = ioutil.ReadFile("test_data/update/no_default.xml")
+	assert.NilError(t, err)
+	referenceManifest = &Manifest{
+		Default: Default{
+			RemoteName: "foo",
+			Revision:   "bar",
+		},
+	}
+
+	_, err = UpdateManifestElements(referenceManifest, input)
+	assert.ErrorContains(t, err, "contained default")
 }

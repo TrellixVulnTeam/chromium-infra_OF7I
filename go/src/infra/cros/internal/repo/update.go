@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -112,7 +113,15 @@ func (e *Project) attrMap() map[string]string {
 
 func updateElement(manifest, elt string, attrs map[string]string) string {
 	var newElt string
-	for k, v := range attrs {
+	// Sort the keys so that this function is deterministic (for testing).
+	ks := []string{}
+	for k := range attrs {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+
+	for _, k := range ks {
+		v := attrs[k]
 		// If the attribute is empty, delete it from the element.
 		if v == "" {
 			newElt = delAttr(elt, k)
@@ -160,8 +169,13 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 	defaultTags := defaultRegexp.FindAllString(manifest, -1)
 	if len(defaultTags) > 1 {
 		return nil, fmt.Errorf("manifest has more than one <default> tag")
+	} else if len(defaultTags) == 1 {
+		manifest = updateElement(manifest, defaultTags[0], reference.Default.attrMap())
+	} else {
+		if reference.Default.RemoteName != "" || reference.Default.Revision != "" || reference.Default.SyncJ != "" {
+			return nil, fmt.Errorf("reference contained default(s), manifest did not")
+		}
 	}
-	manifest = updateElement(manifest, defaultTags[0], reference.Default.attrMap())
 
 	// Sync <remote> tag(s) to reference.
 	remoteRegexp := regexp.MustCompile(fmt.Sprintf(tagRegexpTempate, "remote"))
