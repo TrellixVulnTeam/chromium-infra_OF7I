@@ -61,19 +61,32 @@ func reportNotUseful(c context.Context, commentID string) (*tricium.ReportNotUse
 		return nil, err
 	}
 
-	// The ancestor FunctionRun should contain an owner and component.
-	f, err := getFunctionRun(c, comment)
-	if err != nil {
-		// Even if we fail to get the functionRun, we have still
-		// successfully incremented the not useful count already.
-		logging.WithError(err).Warningf(c, "Failed to get FunctionRun.")
-		return &tricium.ReportNotUsefulResponse{}, nil
-	}
+	return responseForComment(comment), nil
+}
 
-	return &tricium.ReportNotUsefulResponse{
-		Owner:             f.Owner,
-		MonorailComponent: f.MonorailComponent,
-	}, nil
+// responseForComment returns bug-filing information for a comment.
+//
+// Looks up hard-coded bug owner and component information. This is intended to
+// be a temporary hack until there is another way to specify bug filing
+// information; see crbug.com/1201312.
+func responseForComment(comment *track.Comment) *tricium.ReportNotUsefulResponse {
+	comp := "Infra>Platform>Tricium>Analyzer"
+	switch comment.Analyzer {
+	case "Analyze":
+		return &tricium.ReportNotUsefulResponse{Owner: "maruel@google.com", MonorailComponent: comp}
+	case "ClangTidy":
+		return &tricium.ReportNotUsefulResponse{Owner: "gbiv@chromium.org", MonorailComponent: comp}
+	case "ChromiumosWrapper":
+		return &tricium.ReportNotUsefulResponse{Owner: "bmgordon@google.com", MonorailComponent: comp}
+	case "Metrics":
+		return &tricium.ReportNotUsefulResponse{Owner: "isherman@chromium.org", MonorailComponent: "Internals>Metrics>Tricium"}
+	case "OilpanAnalyzer":
+		return &tricium.ReportNotUsefulResponse{Owner: "yukiy@chromium.org", MonorailComponent: comp}
+	case "PDFiumWrapper":
+		return &tricium.ReportNotUsefulResponse{Owner: "nigi@chromium.org", MonorailComponent: comp}
+	default:
+		return &tricium.ReportNotUsefulResponse{Owner: "qyearsley@chromium.org", MonorailComponent: comp}
+	}
 }
 
 func getCommentByID(c context.Context, id string) (*track.Comment, error) {

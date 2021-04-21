@@ -33,10 +33,8 @@ func TestReportNotUseful(t *testing.T) {
 		run := &track.WorkflowRun{ID: 1, Parent: ds.KeyForObj(ctx, request)}
 		So(ds.Put(ctx, run), ShouldBeNil)
 		function := &track.FunctionRun{
-			ID:                functionName,
-			Parent:            ds.KeyForObj(ctx, run),
-			Owner:             "qyearsley@chromium.org",
-			MonorailComponent: "Infra>Platform>Tricium",
+			ID:     functionName,
+			Parent: ds.KeyForObj(ctx, run),
 		}
 		So(ds.Put(ctx, function), ShouldBeNil)
 		worker := &track.WorkerRun{
@@ -52,6 +50,7 @@ func TestReportNotUseful(t *testing.T) {
 		So(err, ShouldBeNil)
 		comment := &track.Comment{
 			UUID:      commentID,
+			Analyzer:  "Spacey",
 			Comment:   []byte(json),
 			Parent:    ds.KeyForObj(ctx, worker),
 			Platforms: 1,
@@ -66,7 +65,7 @@ func TestReportNotUseful(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium",
+				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
 			})
 			So(ds.Get(ctx, feedback), ShouldBeNil)
 			So(feedback.NotUsefulReports, ShouldEqual, 1)
@@ -104,16 +103,37 @@ func TestReportNotUseful(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium",
+				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
 			})
 			response, err = server.ReportNotUseful(ctx, request)
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium",
+				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
 			})
 			So(ds.Get(ctx, feedback), ShouldBeNil)
 			So(feedback.NotUsefulReports, ShouldEqual, 2)
+		})
+
+		Convey("Hardcoded owner lookup table is used", func() {
+			commentID := "12345cda-abcd-48b3-8343-d9036a7f1419"
+			comment := &track.Comment{
+				UUID:      commentID,
+				Analyzer:  "ClangTidy",
+				Comment:   []byte(json),
+				Parent:    ds.KeyForObj(ctx, worker),
+				Platforms: 1,
+			}
+			So(ds.Put(ctx, comment), ShouldBeNil)
+			feedback := &track.CommentFeedback{ID: 1, Parent: ds.KeyForObj(ctx, comment)}
+			So(ds.Put(ctx, feedback), ShouldBeNil)
+
+			response, err := server.ReportNotUseful(ctx, &tricium.ReportNotUsefulRequest{CommentId: commentID})
+			So(err, ShouldBeNil)
+			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
+				Owner:             "gbiv@chromium.org",
+				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
+			})
 		})
 	})
 }

@@ -108,10 +108,6 @@ func workflowLaunched(c context.Context, req *admin.WorkflowLaunchedRequest, wp 
 				entities := make([]interface{}, 0, len(fw))
 				for _, v := range fw {
 					v.Function.Parent = runKey
-					if fd := tricium.LookupFunction(wf.Functions, v.Function.ID); fd != nil {
-						v.Function.Owner = fd.Owner
-						v.Function.MonorailComponent = fd.MonorailComponent
-					}
 					functionKey := ds.KeyForObj(c, v.Function)
 					entities = append(entities, []interface{}{
 						v.Function,
