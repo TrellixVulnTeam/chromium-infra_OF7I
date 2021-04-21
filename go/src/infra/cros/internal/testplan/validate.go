@@ -3,6 +3,8 @@ package testplan
 import (
 	"fmt"
 	"infra/tools/dirmd"
+	"regexp"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	planpb "go.chromium.org/chromiumos/config/go/test/plan"
@@ -12,15 +14,16 @@ import (
 
 // ValidateMapping validates ChromeOS test config in mapping.
 func ValidateMapping(mapping *dirmd.Mapping) error {
-	validationFns := []func(*planpb.SourceTestPlan) error{
+	validationFns := []func(string, *planpb.SourceTestPlan) error{
 		validateEnabledTestEnvironments,
 		validateAtLeastOneRequirement,
+		validatePathRegexps,
 	}
 
 	for dir, metadata := range mapping.Dirs {
 		for _, sourceTestPlan := range metadata.GetChromeos().GetCq().GetSourceTestPlans() {
 			for _, fn := range validationFns {
-				if err := fn(sourceTestPlan); err != nil {
+				if err := fn(dir, sourceTestPlan); err != nil {
 					return errors.Annotate(err, "validation failed for %s", dir).Err()
 				}
 			}
@@ -30,7 +33,7 @@ func ValidateMapping(mapping *dirmd.Mapping) error {
 	return nil
 }
 
-func validateEnabledTestEnvironments(plan *planpb.SourceTestPlan) error {
+func validateEnabledTestEnvironments(_ string, plan *planpb.SourceTestPlan) error {
 	for _, env := range plan.GetEnabledTestEnvironments() {
 		if env == planpb.SourceTestPlan_TEST_ENVIRONMENT_UNSPECIFIED {
 			return fmt.Errorf("TEST_ENVIRONMENT_UNSPECIFIED cannot be used in enabled_test_environments")
@@ -44,7 +47,7 @@ func validateEnabledTestEnvironments(plan *planpb.SourceTestPlan) error {
 	return nil
 }
 
-func validateAtLeastOneRequirement(plan *planpb.SourceTestPlan) error {
+func validateAtLeastOneRequirement(_ string, plan *planpb.SourceTestPlan) error {
 	requirementFields := []string{
 		"kernel_versions",
 		"soc_families",
@@ -79,4 +82,23 @@ func validateAtLeastOneRequirement(plan *planpb.SourceTestPlan) error {
 	}
 
 	return fmt.Errorf("at least one requirement must be specified")
+}
+
+func validatePathRegexps(dir string, plan *planpb.SourceTestPlan) error {
+	for _, re := range append(plan.PathRegexps, plan.PathRegexpExcludes...) {
+		if _, err := regexp.Compile(re); err != nil {
+			return errors.Annotate(err, "failed to compile path regexp %q", re).Err()
+		}
+
+		if dir != "." && !strings.HasPrefix(re, dir) {
+			return fmt.Errorf(
+				"path_regexp(_exclude)s defined in a directory that is not "+
+					"the root of the repo must have the sub-directory as a prefix. "+
+					"Invalid regexp %q in directory %q",
+				re, dir,
+			)
+		}
+	}
+
+	return nil
 }

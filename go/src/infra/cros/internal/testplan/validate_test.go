@@ -70,6 +70,54 @@ func TestValidateMapping(t *testing.T) {
 				},
 			},
 		},
+		{
+			"valid regexps",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/c": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+										KernelVersions:     &plan.SourceTestPlan_KernelVersions{},
+										PathRegexps:        []string{"a/b/c/d/.*"},
+										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"root directory",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					".": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+										KernelVersions:     &plan.SourceTestPlan_KernelVersions{},
+										PathRegexps:        []string{"a/b/c/d/.*"},
+										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -150,6 +198,54 @@ func TestValidateMappingErrors(t *testing.T) {
 				},
 			},
 			"at least one requirement must be specified",
+		},
+		{
+			"invalid regexp",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/c": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
+										PathRegexps:    []string{"a/b/c/d/["},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"failed to compile path regexp",
+		},
+		{
+			"invalid regexp prefix",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/c": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
+										PathRegexps:    []string{`a/b/e/.*\.txt`},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"path_regexp(_exclude)s defined in a directory that is not the root of the repo must have the sub-directory as a prefix",
 		},
 	}
 
