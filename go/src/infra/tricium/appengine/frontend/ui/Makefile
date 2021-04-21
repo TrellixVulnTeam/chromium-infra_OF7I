@@ -6,12 +6,6 @@
 POLYMER = node_modules/.bin/polymer
 ESLINT = node_modules/.bin/eslint
 
-# TODO(qyearsley): Investigate making this work with
-# the Go WCT runner and allowing tests to be run on CI.
-# See the Monorail Makefile. This may require resolving
-# "bare paths" that are used here, and this might have
-# to be done by "building" the tests first.
-
 default: help
 
 help:

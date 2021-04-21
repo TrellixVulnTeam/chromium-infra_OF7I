@@ -67,9 +67,6 @@ func templateArgs(c context.Context, r *http.Request) (map[string]interface{}, e
 //
 // This queue is intended as a service extension point for modules
 // running within the Tricium GAE app, such as the Gerrit poller.
-// TODO(qyearsley): Figure out whether this queue is needed; if
-// the Gerrit poller can directly add RPC requests to the queue
-// then this would be unnecessary.
 func analyzeHandler(ctx *router.Context) {
 	c, r, w := ctx.Context, ctx.Request, ctx.Writer
 	defer r.Body.Close()

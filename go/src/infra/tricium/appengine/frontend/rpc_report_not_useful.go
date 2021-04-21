@@ -95,7 +95,6 @@ func incrementCount(c context.Context, comment *track.Comment) error {
 	if err := ds.Get(c, feedback); err != nil {
 		return errors.Annotate(err, "failed to get CommentFeedback").Err()
 	}
-	// TODO(qyearsley): Add protection against multiple clicks by one user.
 	feedback.NotUsefulReports++
 	if err := ds.Put(c, feedback); err != nil {
 		return errors.Annotate(err, "failed to store CommentFeedback").Err()

@@ -4,9 +4,6 @@
 
 'use script';
 
-// TODO(qyearsley):
-// Consider replacing this with prpc-client.js in chopsui.
-
 /**
  * Makes a JSON pRPC request to the server.
  *

@@ -141,16 +141,11 @@ func workerDone(c context.Context, req *admin.WorkerDoneRequest) error {
 		}
 	}
 
-	// If the function is done, then we should merge results if needed.
 	if tricium.IsDone(functionState) {
 		logging.Fields{
 			"analyzer":     functionName,
 			"num comments": functionNumComments,
 		}.Infof(c, "Analyzer completed.")
-		// TODO(crbug.com/869177): Merge results.
-		// Review comments in this invocation and stored comments from sibling
-		// workers. Comments are included by default. For conflicting comments,
-		// select which comments to include.
 	}
 
 	// Compute the overall worflow run state; this is based on the states of

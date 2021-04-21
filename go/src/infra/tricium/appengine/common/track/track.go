@@ -324,8 +324,10 @@ type CommentFeedback struct {
 	ID     int64   `gae:"$id"`
 	Parent *ds.Key `gae:"$parent"`
 	// Number of 'not useful' clicks.
-	// TODO(qyearsley): Store information to prevent multiple clicks by the
-	// same user.
+	// Note that this doesn't store reporter information, so multiple clicks by
+	// the same user would all be counted. In practice the Tricium plugin
+	// disables the report button after one click so this usually isn't an
+	// issue.
 	NotUsefulReports int
 }
 

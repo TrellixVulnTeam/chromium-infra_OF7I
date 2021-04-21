@@ -114,9 +114,8 @@ func analyzeFile(scanner *bufio.Scanner, path string) []*tricium.Data_Comment {
 	return comments
 }
 
-// checkSpaceMix looks for a mix of white space characters in the start of the provided line.
-//
-// TODO(qyearsley): Check for space mix in the middle of the line too.
+// checkSpaceMix looks for a mix of white space characters in the start of the
+// provided line.
 func checkSpaceMix(path, line string, pos int) *tricium.Data_Comment {
 	if isInIgnorelist(path, mixedWhitespaceIgnorelist) {
 		log.Printf("Not emitting comments for file: %s", path)

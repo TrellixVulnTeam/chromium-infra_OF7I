@@ -206,8 +206,6 @@ func pollGerritProject(c context.Context, luciProject string, repo *tricium.Repo
 	// pagination, we only make one request for a list of changes to avoid using
 	// too much memory and time. During super-busy times, this may occasionally
 	// mean that some revisions are skipped.
-	// TODO(crbug.com/915842): We could add another task to the task queue to poll
-	// for the next page, to avoid skipping revisions.
 	changes, more, err := gerrit.QueryChanges(c, p.Instance, p.Project, p.LastPoll)
 	if err != nil {
 		return errors.Annotate(err, "failed to query for change").Err()

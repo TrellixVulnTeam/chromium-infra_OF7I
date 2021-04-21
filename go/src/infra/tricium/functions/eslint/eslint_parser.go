@@ -43,13 +43,9 @@ type FileErrors struct {
 	WarningCount int32
 }
 
-// TODO(crbug/873202): This parser is almost identical to the Pylint parser;
-// some common parts might be extracted.
 func main() {
 	inputDir := flag.String("input", "", "Path to root of Tricium input")
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
-	// TODO(qyearsley): Add flags for disabling/enabling warnings; this
-	// would enable specifying warnings in project configs.
 	flag.Parse()
 	if flag.NArg() != 0 {
 		log.Panicf("Unexpected argument")

@@ -27,8 +27,6 @@ const (
 // Format: {path}:{line}: {msg}  [{category}/{symbol}] [{confidence}]
 var msgRegex = regexp.MustCompile(`^(.+):([0-9]+):  (.+)  \[(.+)/(.+)\] \[([1-5])\]`)
 
-// TODO(crbug/873202): This parser is almost identical to the pylint parser,
-// some common parts might be extracted.
 func main() {
 	inputDir := flag.String("input", "", "Path to root of Tricium input")
 	outputDir := flag.String("output", "", "Path to root of Tricium output")

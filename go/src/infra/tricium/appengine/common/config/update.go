@@ -21,8 +21,6 @@ import (
 //
 // This includes updating and removing project configs when necessary and
 // updating the service config if necessary.
-//
-// TODO(crbug.com/915375) Check for overlapping repos specified between projects.
 func UpdateAllConfigs(c context.Context) error {
 	// Update service config first which is needed for project config validation.
 	if err := updateServiceConfig(c); err != nil {

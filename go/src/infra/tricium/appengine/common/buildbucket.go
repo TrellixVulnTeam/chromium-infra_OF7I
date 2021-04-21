@@ -21,7 +21,6 @@ import (
 )
 
 // BuildbucketServer implements the ServerAPI for the buildbucket service.
-// TODO: Replace this with a more usable interface.
 var BuildbucketServer buildbucketServer
 
 type buildbucketServer struct {
