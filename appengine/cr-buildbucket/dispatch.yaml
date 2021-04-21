@@ -41,6 +41,10 @@ dispatch:
   - url: "*/prpc/buildbucket.v2.Builds/CancelBuild"
     service: default-go
 
+  # ScheduleBuild is implemented in Go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builds/ScheduleBuild"
+    service: default-go
+
   # Only serve it on default service.
   - url: "*/build/*"
     service: default
