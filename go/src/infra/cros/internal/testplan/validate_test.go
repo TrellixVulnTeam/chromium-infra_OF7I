@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"infra/cros/internal/assert"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
@@ -37,6 +38,7 @@ func TestValidateMapping(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
+										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
 									},
 								},
 							},
@@ -59,6 +61,7 @@ func TestValidateMapping(t *testing.T) {
 											plan.SourceTestPlan_HARDWARE,
 											plan.SourceTestPlan_VIRTUAL,
 										},
+										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
 									},
 								},
 							},
@@ -71,17 +74,16 @@ func TestValidateMapping(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := ValidateMapping(test.mapping); err != nil {
-				t.Errorf("ValidateMapping(%v) failed: %s", test.mapping, err)
-			}
+			assert.NilError(t, ValidateMapping(test.mapping))
 		})
 	}
 }
 
 func TestValidateMappingErrors(t *testing.T) {
 	tests := []struct {
-		name    string
-		mapping *dirmd.Mapping
+		name           string
+		mapping        *dirmd.Mapping
+		errorSubstring string
 	}{
 		{
 			"enabled_test_environments empty",
@@ -101,6 +103,7 @@ func TestValidateMappingErrors(t *testing.T) {
 					},
 				},
 			},
+			"enabled_test_environments must not be empty",
 		},
 		{
 			"enabled_test_environments has TEST_ENVIRONMENT_UNSPECIFIED",
@@ -124,14 +127,36 @@ func TestValidateMappingErrors(t *testing.T) {
 					},
 				},
 			},
+			"TEST_ENVIRONMENT_UNSPECIFIED cannot be used in enabled_test_environments",
+		},
+		{
+			"no requirements specified",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/c": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"at least one requirement must be specified",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := ValidateMapping(test.mapping); err == nil {
-				t.Errorf("ValidateMapping(%v) succeeded with bad Mapping, want err", test.mapping)
-			}
+			err := ValidateMapping(test.mapping)
+			assert.ErrorContains(t, err, test.errorSubstring)
 		})
 	}
 }

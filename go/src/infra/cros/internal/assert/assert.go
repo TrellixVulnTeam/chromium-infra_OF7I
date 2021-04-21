@@ -28,6 +28,12 @@ func NilError(t *testing.T, err error) {
 
 // ErrorContains checks that the given string exists in an error.
 func ErrorContains(t *testing.T, err error, s string) {
+	t.Helper()
+
+	if err == nil {
+		t.Fatalf("assert failed: nil error")
+	}
+
 	if !strings.Contains(err.Error(), s) {
 		t.Fatalf("assert failed: %v does not contain \"%s\"", err, s)
 	}
