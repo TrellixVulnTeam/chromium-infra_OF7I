@@ -62,6 +62,7 @@
     },
     "chromium.memory": {
       "excluded_builders": [
+        "android-asan",
         "Android CFI",
         "Linux ASan LSan (bionic)"
       ]
