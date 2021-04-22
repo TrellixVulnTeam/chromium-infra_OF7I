@@ -62,3 +62,16 @@ func StringsEqual(t *testing.T, a, b string) {
 		t.Fatalf("assert failed: \"%s\" != \"%s\"", a, b)
 	}
 }
+
+// StringArrsEqual checks that the two string arrays are equal.
+func StringArrsEqual(t *testing.T, a, b []string) {
+	t.Helper()
+	if len(a) != len(b) {
+		t.Fatalf("assert failed: \"%s\" != \"%s\"", a, b)
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("assert failed: \"%s\" != \"%s\"", a, b)
+		}
+	}
+}
