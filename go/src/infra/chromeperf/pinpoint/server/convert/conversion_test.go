@@ -955,13 +955,22 @@ func TestJobToProto(t *testing.T) {
 				So(results.AChangeResult.Attempts, ShouldHaveLength, 10)
 				So(results.BChangeResult.Attempts, ShouldHaveLength, 10)
 
+				// These are typical 3 steps for a legacy job
+				quests := []string{"Build", "Test", "Get values"}
+
 				// We know that legacy jobs have 2-3 executions per attempt. This corresponds with the Build, Test,
 				// Value quest executions, which is defined for most Pinpoint A/B experiments.
 				for _, a := range results.AChangeResult.Attempts {
 					So(len(a.Executions), ShouldBeBetweenOrEqual, 2, 3)
+					for i, e := range a.Executions {
+						So(e.Label, ShouldEqual, quests[i])
+					}
 				}
 				for _, a := range results.BChangeResult.Attempts {
 					So(len(a.Executions), ShouldBeBetweenOrEqual, 2, 3)
+					for i, e := range a.Executions {
+						So(e.Label, ShouldEqual, quests[i])
+					}
 				}
 			})
 		})

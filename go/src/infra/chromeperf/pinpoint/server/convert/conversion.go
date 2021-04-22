@@ -209,7 +209,7 @@ type jsonJob struct {
 	Metric              string                  `json:"metric,omitempty"`
 	Name                string                  `json:"name,omitempty"`
 	Project             *string                 `json:"project,omitempty"`
-	StepLabels          []string                `json:"quests,omitempty"`
+	Quests              []string                `json:"quests,omitempty"`
 	ResultsURL          string                  `json:"results_url,omitempty"`
 	StartedTime         microTime               `json:"started_time,omitempty"`
 	State               []struct {
@@ -413,9 +413,10 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 	}
 	for _, attempt := range l.State[0].Attempts {
 		a := &pinpoint.Attempt{}
-		for _, ex := range attempt.Executions {
+		for i, ex := range attempt.Executions {
 			x := &pinpoint.Execution{
 				Completed: ex.Completed,
+				Label:     l.Quests[i],
 			}
 			for _, ed := range ex.Details {
 				d := &pinpoint.ExecutionDetails{
@@ -432,9 +433,10 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 	}
 	for _, attempt := range l.State[1].Attempts {
 		a := &pinpoint.Attempt{}
-		for _, ex := range attempt.Executions {
+		for i, ex := range attempt.Executions {
 			x := &pinpoint.Execution{
 				Completed: ex.Completed,
+				Label:     l.Quests[i],
 			}
 			for _, ed := range ex.Details {
 				d := &pinpoint.ExecutionDetails{

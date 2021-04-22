@@ -298,6 +298,7 @@ message ExecutionDetails {
 
 message Execution {
   bool completed = 1;
+  string label = 4;
   repeated ExecutionDetails details = 2;
   google.protobuf.Struct exception = 3;
 }
