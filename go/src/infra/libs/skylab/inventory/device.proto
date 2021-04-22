@@ -439,7 +439,7 @@ enum ServoFwChannel {
 }
 
 // copy of enum from dut_state.proto
-// Next Tag: 18
+// Next Tag: 20
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -479,6 +479,10 @@ enum PeripheralState {
   SBU_LOW_VOLTAGE = 16;
   // CR50 SBU voltage detected but device was not enumerated.
   CR50_NOT_ENUMERATED = 17;
+  // Servo serial mismatch, when servo not detected and another serial detected on previous used port.
+  SERVO_SERIAL_MISMATCH = 18;
+  // Issue to connect to servod by XMLRPC proxy.
+  SERVOD_PROXY_ISSUE = 19;
 }
 
 // copy of enum from dut_state.proto
