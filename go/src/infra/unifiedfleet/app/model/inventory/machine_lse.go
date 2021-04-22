@@ -147,6 +147,67 @@ func QueryMachineLSEByPropertyNames(ctx context.Context, propertyMap map[string]
 	return machineLSEs, nil
 }
 
+// RangedQueryMachineLSEByPropertyName queries MachineLSE entity in the datastore. The query run here is given by
+// `SELECT * FROM MachineLSE WHERE propertyName >= gtVal AND propertyName <= ltVal`
+func RangedQueryMachineLSEByPropertyName(ctx context.Context, propertyName string, gtVal, ltVal interface{}, keysOnly bool) ([]*ufspb.MachineLSE, error) {
+	return RangedQueryMachineLSEByPropertyNames(ctx, map[string][]interface{}{propertyName: {gtVal, ltVal}}, keysOnly)
+}
+
+// RangedQueryMachineLSEByPropertyNames queries MachineLSE Entity in the datastore
+// The propertyMap contains a slice of size 2 containing [greaterthanval, lesserthanval],
+// if slice has only one string it's used as greaterthanval, use ["", lesserthanval] for
+// less than queries. For any other size of propertyMap error is thrown.
+// If keysOnly is true, then only key field is populated in returned machinelses
+// The query run here is given by:
+// `SELECT * FROM MachineLSE WHERE (propertyKey >= propertyVal[0] AND propertyKey <= propertyVal[1]) AND (pr...)`
+
+func RangedQueryMachineLSEByPropertyNames(ctx context.Context, propertyMap map[string][]interface{}, keysOnly bool) ([]*ufspb.MachineLSE, error) {
+	q := datastore.NewQuery(MachineLSEKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*MachineLSEEntity
+	for propertyName, val := range propertyMap {
+		var gt, lt interface{}
+		if len(val) == 0 || len(val) > 2 {
+			return nil, status.Errorf(codes.Internal, "Cannot determine range for %s [%v]", propertyName, val)
+		}
+		gt = val[0]
+		if len(val) == 2 {
+			lt = val[1]
+		}
+
+		if gt != nil {
+			q = q.Gte(propertyName, gt)
+		}
+		if lt != nil {
+			q = q.Lte(propertyName, lt)
+		}
+	}
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No machineLSEs found for the query: %s", q.String())
+		return nil, nil
+	}
+	machineLSEs := make([]*ufspb.MachineLSE, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			machineLSE := &ufspb.MachineLSE{
+				Name: entity.ID,
+			}
+			machineLSEs = append(machineLSEs, machineLSE)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			machineLSEs = append(machineLSEs, pm.(*ufspb.MachineLSE))
+		}
+	}
+	return machineLSEs, nil
+}
+
 // CreateMachineLSE creates a new machineLSE in datastore.
 func CreateMachineLSE(ctx context.Context, machineLSE *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
 	return putMachineLSE(ctx, machineLSE, false)

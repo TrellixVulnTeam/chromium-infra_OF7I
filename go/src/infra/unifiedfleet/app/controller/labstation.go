@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -304,4 +305,95 @@ func validateUpdateLabstation(ctx context.Context, oldLabstation, labstation *uf
 		return nil
 	}
 	return status.Errorf(codes.FailedPrecondition, "Not a valid labstation")
+}
+
+// renameLabstation renames the labstation with the given name. Use inside a transaction
+func renameLabstation(ctx context.Context, oldName, newName string, lse *ufspb.MachineLSE, machine *ufspb.Machine) (*ufspb.MachineLSE, error) {
+	//Get all the duts referencing the old labstation
+	dutMachinelses, err := inventory.RangedQueryMachineLSEByPropertyName(ctx, "servo_id", oldName, nil, false)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateRenameLabstation(ctx, lse, dutMachinelses); err != nil {
+		return nil, err
+	}
+	oldLse := proto.Clone(lse).(*ufspb.MachineLSE)
+	hc := getHostHistoryClient(lse)
+	// Delete the old host record
+	if err := inventory.DeleteMachineLSE(ctx, oldName); err != nil {
+		return nil, err
+	}
+	// Delete old state record for host. Avoid deleting machine state.
+	if err := hc.stUdt.deleteLseStateHelper(ctx, lse, nil); err != nil {
+		return nil, errors.Annotate(err, "Fail to delete lse-related states").Err()
+	}
+	// Update the host name in all labstation refs
+	lse.Name = newName
+	lse.Hostname = newName
+	lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = newName
+	for _, servo := range lse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos() {
+		servo.ServoHostname = newName
+	}
+	// Update the duts connected to the servos
+	if err := updateServoHostForDUTs(ctx, lse, dutMachinelses); err != nil {
+		return nil, err
+	}
+	// Update states
+	if err := hc.stUdt.addLseStateHelper(ctx, lse, machine); err != nil {
+		return nil, err
+	}
+	hc.LogMachineLSEChanges(oldLse, lse)
+	// Update all the MLSEs affected.
+	_, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse})
+	if err != nil {
+		return nil, errors.Annotate(err, "Failed to add MachineLSE").Err()
+	}
+	// Save all changes to history
+	if err := hc.SaveChangeEvents(ctx); err != nil {
+		return nil, errors.Annotate(err, "Failed to save history").Err()
+	}
+	return lse, nil
+}
+
+// validateRenameLabstation checks if we have the correct permissions to update the duts connected to the labstation.
+func validateRenameLabstation(ctx context.Context, labstation *ufspb.MachineLSE, duts []*ufspb.MachineLSE) error {
+	for _, dut := range duts {
+		machine, err := registration.GetMachine(ctx, dut.GetMachines()[0])
+		if err != nil {
+			return errors.Annotate(err, "unable to get machine %s. Misconfigured host?", dut.GetMachines()[0]).Err()
+		}
+		if err := util.CheckPermission(ctx, util.InventoriesUpdate, machine.GetRealm()); err != nil {
+			return status.Errorf(codes.PermissionDenied, fmt.Sprintf("Need update permission for %s. It's connected to %s", dut.GetName(), labstation.GetName()))
+		}
+	}
+	return nil
+}
+
+// updateServohostForDUTs changes the DUTs servoHostname to the given labstation. Run inside a transaction
+func updateServoHostForDUTs(ctx context.Context, labstation *ufspb.MachineLSE, duts []*ufspb.MachineLSE) error {
+	// Write to all the associated duts history.
+	var hcs []*HistoryClient
+	// Update the servo hostname for connected duts
+	for _, dut := range duts {
+		dutHc := getHostHistoryClient(dut)
+		// Make a copy of the dut for logging
+		dutCpy := proto.Clone(dut).(*ufspb.MachineLSE)
+		// Update the servo host for the connected hosts.
+		dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoHostname = labstation.GetName()
+		// Validate the update to dut
+		if err := validateUpdateMachineLSE(ctx, dutCpy, dut, nil); err != nil {
+			return errors.Annotate(err, "Failed to rename labstation").Err()
+		}
+		dutHc.LogMachineLSEChanges(dutCpy, dut)
+		hcs = append(hcs, dutHc)
+	}
+	if _, err := inventory.BatchUpdateMachineLSEs(ctx, duts); err != nil {
+		return errors.Annotate(err, "Failed to update duts.").Err()
+	}
+	for _, hhc := range hcs {
+		if err := hhc.SaveChangeEvents(ctx); err != nil {
+			return errors.Annotate(err, "Failed to save history").Err()
+		}
+	}
+	return nil
 }
