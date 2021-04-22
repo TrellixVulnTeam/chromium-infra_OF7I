@@ -5,50 +5,45 @@
 package repo
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"testing"
+
+	"infra/cros/internal/assert"
+	"infra/cros/internal/cmd"
 
 	"github.com/google/go-cmp/cmp"
 )
 
-type fakeCommandRunner struct {
-	stdout             string
-	stderr             string
-	expectedWorkingDir string
-	failCommand        bool
+func TestInit(t *testing.T) {
+	args := InitArgs{
+		ManifestURL:    "foo",
+		ManifestBranch: "bar",
+		ManifestFile:   "baz",
+	}
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedCmd: []string{"repo", "init",
+			"-u", "foo", "-b", "bar", "-m", "baz"},
+		ExpectedDir: "pwd",
+	}
+	assert.NilError(t, Init(context.Background(), "pwd", "repo", args))
 }
-
-func (c fakeCommandRunner) runCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, name string, args ...string) error {
-	stdoutBuf.WriteString(c.stdout)
-	stderrBuf.WriteString(c.stderr)
-	if c.expectedWorkingDir != "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		if wd != c.expectedWorkingDir {
-			return fmt.Errorf("wrong working directory; expected %s got %s", c.expectedWorkingDir, wd)
-		}
+func TestSync(t *testing.T) {
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedCmd: []string{"repo", "sync"},
+		ExpectedDir: "pwd",
 	}
-	if c.failCommand {
-		return &exec.ExitError{}
-	}
-	return nil
+	assert.NilError(t, Sync(context.Background(), "pwd", "repo"))
 }
 
 func TestGetRepoToSourceRoot_success(t *testing.T) {
 	f, err := ioutil.TempDir("", "repotest_tmp_dir")
-	commandRunnerImpl = fakeCommandRunner{
+	CommandRunnerImpl = cmd.FakeCommandRunner{
 		// This is a sample of `repo list` output.
-		stdout: `chromeos-admin : chromeos/chromeos-admin
+		Stdout: `chromeos-admin : chromeos/chromeos-admin
 chromite : chromiumos/chromite
 `,
-		expectedWorkingDir: f,
+		ExpectedDir: f,
 	}
 	if err != nil {
 		t.Error(err)
@@ -68,10 +63,10 @@ chromite : chromiumos/chromite
 
 func TestGetRepoToSourceRoot_repoToolFails(t *testing.T) {
 	f, err := ioutil.TempDir("", "repotest_tmp_dir")
-	commandRunnerImpl = fakeCommandRunner{
-		expectedWorkingDir: f,
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: f,
 		// Simulate the `repo list` command returning a nonzero exit code.
-		failCommand: true,
+		FailCommand: true,
 	}
 	if err != nil {
 		t.Error(err)
@@ -79,9 +74,5 @@ func TestGetRepoToSourceRoot_repoToolFails(t *testing.T) {
 	_, err = GetRepoToSourceRoot(f, "repo")
 	if err == nil {
 		t.Error("expected an error")
-	}
-	_, ok := err.(*exec.ExitError)
-	if !ok {
-		t.Errorf("expected err to be an instance of ExitError, instead got %v", err.Error())
 	}
 }

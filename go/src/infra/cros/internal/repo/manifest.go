@@ -514,11 +514,20 @@ func (m *Manifest) GetUniqueProject(name string) (Project, error) {
 	return project, nil
 }
 
-// Write writes the manifest to the given path.
-func (m *Manifest) Write(path string) error {
+// ToBytes marshals the manifest into a raw byte array.
+func (m *Manifest) ToBytes() ([]byte, error) {
 	data, err := xml.MarshalIndent(m, "", "  ")
 	if err != nil {
-		return errors.Annotate(err, "failed to write manifest").Err()
+		return nil, errors.Annotate(err, "failed to write manifest").Err()
+	}
+	return data, nil
+}
+
+// Write writes the manifest to the given path.
+func (m *Manifest) Write(path string) error {
+	data, err := m.ToBytes()
+	if err != nil {
+		return err
 	}
 	err = ioutil.WriteFile(path, []byte(xml.Header+string(data)), 0644)
 	if err != nil {

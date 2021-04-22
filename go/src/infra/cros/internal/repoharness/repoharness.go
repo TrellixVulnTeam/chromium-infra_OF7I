@@ -74,8 +74,8 @@ type RepoHarness struct {
 	manifest repo.Manifest
 	// Root directory of the whole harness setup.
 	harnessRoot string
-	// Git repo that manifest (from config) is stored in.
-	manifestRepo string
+	// Path of local checkout, or empty (if does not exist).
+	localCheckout string
 }
 
 // Manifest returns the manifest associated with the harness.
@@ -357,6 +357,45 @@ func (r *RepoHarness) ReadFile(project RemoteProject, branch, filePath string) (
 	}
 
 	return contents, nil
+}
+
+// Checkout creates a local checkout of the project using the specified manifest
+// project/branch/file, if one does not already exist.
+// Returns a path to the local checkout, and a potential error.
+func (r *RepoHarness) Checkout(manifestProject RemoteProject, branch, manifestFile string) (string, error) {
+	if r.localCheckout != "" {
+		return r.localCheckout, nil
+	}
+
+	checkoutPath := filepath.Join(r.harnessRoot, "my_checkout")
+	if err := os.Mkdir(checkoutPath, dirPerms); err != nil {
+		return "", errors.Annotate(err, "failed to create dir %s", checkoutPath).Err()
+	}
+
+	// Create local checkout of manifest repo so that we can sync to a manifest using `repo init`.
+	manifestRepoCheckout := filepath.Join(r.harnessRoot, "manifest-repo")
+	if err := os.Mkdir(manifestRepoCheckout, dirPerms); err != nil {
+		return "", errors.Annotate(err, "failed to create dir %s", manifestRepoCheckout).Err()
+	}
+	if err := git.Clone(r.GetRemotePath(manifestProject), manifestRepoCheckout, git.SingleBranch(), git.Branch(branch)); err != nil {
+		return "", errors.Annotate(err, "failed to clone remote manifest project").Err()
+	}
+
+	initArgs := repo.InitArgs{
+		ManifestURL:    manifestRepoCheckout,
+		ManifestBranch: branch,
+		ManifestFile:   manifestFile,
+	}
+	ctx := context.Background()
+	if err := repo.Init(ctx, checkoutPath, "repo", initArgs); err != nil {
+		return "", errors.Annotate(err, "failed to repo init").Err()
+	}
+	if err := repo.Sync(ctx, checkoutPath, "repo"); err != nil {
+		return "", errors.Annotate(err, "failed to repo sync").Err()
+	}
+
+	r.localCheckout = checkoutPath
+	return checkoutPath, nil
 }
 
 // Snapshot recursively copies a directory's contents to a temp dir.

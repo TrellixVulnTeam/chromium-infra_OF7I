@@ -37,6 +37,7 @@ var simpleHarnessConfig = Config{
 			{Path: "foo2/", Name: "foo", Revision: "refs/heads/foo2"},
 			{Path: "bar/", Name: "bar"},
 			{Path: "baz/", Name: "baz", RemoteName: "cros-internal"},
+			{Path: "manifest/", Name: "manifest"},
 		},
 	},
 }
@@ -304,6 +305,53 @@ func TestAddFile(t *testing.T) {
 	fileContents, err := ioutil.ReadFile(filePath)
 	assert.NilError(t, err)
 	assert.Assert(t, reflect.DeepEqual(file.Contents, fileContents))
+}
+
+func TestCheckout(t *testing.T) {
+	harnessConfig := simpleHarnessConfig
+	harness := &RepoHarness{}
+	defer harness.Teardown()
+	assert.NilError(t, harness.Initialize(&harnessConfig))
+
+	// Write manifest file to appropriate ref/path.
+	proj, err := harnessConfig.Manifest.GetProjectByName("manifest")
+	assert.NilError(t, err)
+	manifestProject := GetRemoteProject(*proj)
+
+	manifestData, err := harnessConfig.Manifest.ToBytes()
+	assert.NilError(t, err)
+
+	file := File{Name: "default.xml", Contents: manifestData}
+	remoteRef := git.RemoteRef{
+		Remote: manifestProject.RemoteName,
+		Ref:    "main",
+	}
+	_, err = harness.AddFile(manifestProject, remoteRef.Ref, file)
+	assert.NilError(t, err)
+
+	expectedDir := filepath.Join(harness.HarnessRoot(), "my_checkout")
+	repo.CommandRunnerImpl = &cmd.FakeCommandRunnerMulti{
+		CommandRunners: []cmd.FakeCommandRunner{
+			{
+				ExpectedDir: expectedDir,
+				ExpectedCmd: []string{"repo", "init",
+					"-u", filepath.Join(harness.HarnessRoot(), "manifest-repo"),
+					"-b", "main", "-m", "default.xml"},
+			},
+			{
+				ExpectedDir: expectedDir,
+				ExpectedCmd: []string{"repo", "sync"},
+			},
+		},
+	}
+
+	checkout1, err := harness.Checkout(manifestProject, "main", "default.xml")
+	assert.NilError(t, err)
+
+	// Make sure that Checkout is idempotent.
+	checkout2, err := harness.Checkout(manifestProject, "main", "default.xml")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, checkout1, checkout2)
 }
 
 func TestReadFile(t *testing.T) {

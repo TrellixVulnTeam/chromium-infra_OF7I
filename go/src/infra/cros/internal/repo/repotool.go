@@ -12,26 +12,46 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
+
+	"infra/cros/internal/cmd"
 )
 
 var (
-	commandRunnerImpl commandRunner = realCommandRunner{}
+	// CommandRunnerImpl exists for testing purposes.
+	CommandRunnerImpl cmd.CommandRunner = cmd.RealCommandRunner{}
 )
 
-type commandRunner interface {
-	runCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, name string, args ...string) error
+type InitArgs struct {
+	// --manifest-url/-u value, if any.
+	ManifestURL string
+	// --manifest-branch/-b value, if any.
+	ManifestBranch string
+	// --manifest-name/-m value, if any.
+	ManifestFile string
 }
 
-type realCommandRunner struct{}
+// Init runs `repo init`.
+func Init(ctx context.Context, path, repoToolPath string, initArgs InitArgs) error {
+	cmd := []string{"init"}
+	if initArgs.ManifestURL != "" {
+		cmd = append(cmd, []string{"-u", initArgs.ManifestURL}...)
+	}
+	if initArgs.ManifestBranch != "" {
+		cmd = append(cmd, []string{"-b", initArgs.ManifestBranch}...)
+	}
+	if initArgs.ManifestFile != "" {
+		cmd = append(cmd, []string{"-m", initArgs.ManifestFile}...)
+	}
+	var stdoutBuf, stderrBuf bytes.Buffer
+	return CommandRunnerImpl.RunCommand(ctx, &stdoutBuf, &stderrBuf, path, repoToolPath, cmd...)
+}
 
-func (c realCommandRunner) runCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, name string, args ...string) error {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Stdout = stdoutBuf
-	cmd.Stderr = stderrBuf
-	return cmd.Run()
+// Sync runs `repo sync`.
+func Sync(ctx context.Context, path, repoToolPath string) error {
+	var stdoutBuf, stderrBuf bytes.Buffer
+	return CommandRunnerImpl.RunCommand(ctx, &stdoutBuf, &stderrBuf, path, repoToolPath, "sync")
 }
 
 // GetRepoToSourceRoot gets the mapping of Gerrit project to Chromium OS source tree path.
@@ -52,7 +72,7 @@ func GetRepoToSourceRoot(chromiumosCheckout, repoToolPath string) (map[string]st
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	var stdoutBuf, stderrBuf bytes.Buffer
-	if err := commandRunnerImpl.runCommand(ctx, &stdoutBuf, &stderrBuf, repoToolPath, "list"); err != nil {
+	if err := CommandRunnerImpl.RunCommand(ctx, &stdoutBuf, &stderrBuf, chromiumosCheckout, repoToolPath, "list"); err != nil {
 		log.Printf("Error from repo.\nstdout =\n%s\n\nstderr=\n%s", stdoutBuf.String(), stderrBuf.String())
 		return repoToSrcRoot, err
 	}
