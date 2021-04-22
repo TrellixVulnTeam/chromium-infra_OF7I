@@ -137,6 +137,9 @@ service Fleet {
   // Delete delete the machineLSE
   rpc DeleteMachineLSE(DeleteMachineLSERequest) returns (google.protobuf.Empty);
 
+  // Rename the machine lse
+  rpc RenameMachineLSE(RenameMachineLSERequest) returns (models.MachineLSE);
+
   // ImportMachineLSEs imports machine LSEs & all related infos.
   rpc ImportMachineLSEs(ImportMachineLSEsRequest) returns (google.rpc.Status);
 
@@ -1081,6 +1084,20 @@ message ListMachineLSEsResponse {
 message DeleteMachineLSERequest {
   // The name of the MachineLSE to delete
   string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
+  ];
+}
+
+message RenameMachineLSERequest {
+  // The name of the MachineLSE to rename
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
+  ];
+
+  // The new name of the MachineLSE
+  string new_name = 2 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
   ];

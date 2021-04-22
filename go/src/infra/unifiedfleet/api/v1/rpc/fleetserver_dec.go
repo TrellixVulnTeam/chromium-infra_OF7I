@@ -623,6 +623,23 @@ func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachin
 	return
 }
 
+func (s *DecoratedFleet) RenameMachineLSE(ctx context.Context, req *RenameMachineLSERequest) (rsp *models.MachineLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RenameMachineLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RenameMachineLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RenameMachineLSE", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ImportMachineLSEs(ctx context.Context, req *ImportMachineLSEsRequest) (rsp *status.Status, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

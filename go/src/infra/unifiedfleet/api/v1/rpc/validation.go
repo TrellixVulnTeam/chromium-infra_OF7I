@@ -1295,6 +1295,17 @@ func (r *ListSchedulingUnitsRequest) Validate() error {
 	return validatePageSize(r.PageSize)
 }
 
+// Validate the MachineLSE rename request.
+func (r *RenameMachineLSERequest) Validate() error {
+	if r.Name == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	if r.NewName == "" {
+		return status.Errorf(codes.InvalidArgument, "Missing new name to rename")
+	}
+	return nil
+}
+
 // Validate validates input requests of DeleteSchedulingUnit.
 func (r *DeleteSchedulingUnitRequest) Validate() error {
 	return validateResourceName(schedulingUnitRegex, SchedulingUnitNameFormat, r.Name)
