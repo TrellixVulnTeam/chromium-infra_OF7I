@@ -12,6 +12,7 @@ Includes CI configs for the following subprojects:
   * Codesearch.
   * Gsubtreed crons.
   * WPT autoroller crons.
+  * Chromium Gerrit plugins.
   * Chromium tarball publisher.
   * Chromium LKGR finder cron.
   * CrOS DUT flashing cron job.
@@ -179,6 +180,7 @@ exec("//subprojects/build.star")
 exec("//subprojects/codesearch.star")
 exec("//subprojects/depot_tools.star")
 exec("//subprojects/expect_tests.star")
+exec("//subprojects/gerrit-plugins.star")
 exec("//subprojects/infra.star")
 exec("//subprojects/lkgr.star")
 exec("//subprojects/luci-go.star")
