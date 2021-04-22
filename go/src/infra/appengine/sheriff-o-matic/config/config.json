@@ -64,7 +64,8 @@
       "excluded_builders": [
         "android-asan",
         "Android CFI",
-        "Linux ASan LSan (bionic)"
+        "Linux ASan LSan (bionic)",
+        "Linux TSan (bionic)"
       ]
     },
     "chromium.win": {
