@@ -283,6 +283,16 @@ func (hc *HistoryClient) LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData
 		hc.logMsgEntity(resourceName, true, oldData)
 		return
 	}
+	if oldData.GetName() != newData.GetName() {
+		oldResourceName := util.AddPrefix(util.HostCollection, oldData.GetName())
+		hc.changes = append(hc.changes, logLifeCycle(oldResourceName, "machine_lse", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(oldResourceName, "machine_lse.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "machine_lse", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.name", oldData.GetName(), newData.GetName())...)
+		hc.logMsgEntity(oldResourceName, true, oldData)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.machine_lse_prototype", oldData.GetMachineLsePrototype(), newData.GetMachineLsePrototype())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.hostname", oldData.GetHostname(), newData.GetHostname())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.machines", oldData.GetMachines(), newData.GetMachines())...)

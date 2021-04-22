@@ -910,3 +910,54 @@ func getRPMNamePortForOSMachineLSE(lse *ufspb.MachineLSE) (string, string) {
 	}
 	return "", ""
 }
+
+// renameDUT deletes the dut with oldName and creates one with newName. Use inside a transaction.
+func renameDUT(ctx context.Context, oldName, newName string, lse *ufspb.MachineLSE, machine *ufspb.Machine) (*ufspb.MachineLSE, error) {
+	// Check if we can rename the host
+	if err := validateRenameDUT(ctx, oldName, newName, lse); err != nil {
+		return nil, err
+	}
+	hc := getHostHistoryClient(lse)
+	newLse := proto.Clone(lse).(*ufspb.MachineLSE)
+	// Delete the old host record
+	if err := inventory.DeleteMachineLSE(ctx, oldName); err != nil {
+		return nil, errors.Annotate(err, "Failed to remove machineLSE").Err()
+	}
+	// Delete old state record for host. Avoid deleting machine state.
+	if err := hc.stUdt.deleteLseStateHelper(ctx, lse, nil); err != nil {
+		return nil, errors.Annotate(err, "Fail to delete lse-related states").Err()
+	}
+	if err := hc.SaveChangeEvents(ctx); err != nil {
+		return nil, errors.Annotate(err, "Failed to log changes").Err()
+	}
+	// Update the host name
+	newLse.Name = newName
+	newLse.Hostname = newName
+	newLse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = newName
+
+	if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{newLse}); err != nil {
+		return nil, errors.Annotate(err, "Failed to add MachineLSE").Err()
+	}
+	// Update states
+	if err := hc.stUdt.addLseStateHelper(ctx, newLse, machine); err != nil {
+		return nil, err
+	}
+
+	hc.LogMachineLSEChanges(lse, newLse)
+	if err := hc.SaveChangeEvents(ctx); err != nil {
+		return nil, errors.Annotate(err, "Failed to save history").Err()
+	}
+	return newLse, nil
+}
+
+func validateRenameDUT(ctx context.Context, oldName, newName string, lse *ufspb.MachineLSE) error {
+	// Check if it's part of scheduling unit. It might be possible to rename these in future.
+	schedulingUnits, err := inventory.QuerySchedulingUnitByPropertyNames(ctx, map[string]string{"machinelses": oldName}, true)
+	if err != nil {
+		return errors.Annotate(err, "failed to query SchedulingUnit for machinelses %s", oldName).Err()
+	}
+	if len(schedulingUnits) > 0 {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("DUT %s is associated with SchedulingUnit %s. It's not possible to rename this at the moment", oldName, schedulingUnits[0].GetName()))
+	}
+	return nil
+}

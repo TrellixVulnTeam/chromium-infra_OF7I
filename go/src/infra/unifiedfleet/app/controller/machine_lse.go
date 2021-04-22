@@ -1636,3 +1636,51 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 	}
 	return nil
 }
+
+// RenameMachineLSE renames the machineLSE to the new hostname.
+func RenameMachineLSE(ctx context.Context, oldName, newName string) (*ufspb.MachineLSE, error) {
+	var newLSE *ufspb.MachineLSE
+	f := func(ctx context.Context) error {
+		// Check if the host exists
+		lse, err := inventory.GetMachineLSE(ctx, oldName)
+		if err != nil {
+			return err
+		}
+		if lse.GetChromeBrowserMachineLse() != nil {
+			return status.Errorf(codes.Unimplemented, fmt.Sprintf("Renaming %s [browser host] is not supported yet", oldName))
+		}
+		machine, err := registration.GetMachine(ctx, lse.GetMachines()[0])
+		if err != nil {
+			return errors.Annotate(err, "unable to get machine %s. Misconfigured host?", lse.GetMachines()[0]).Err()
+		}
+		if err := validateRenameMachineLSE(ctx, oldName, newName, lse, machine); err != nil {
+			return err
+		}
+		if lse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			if newLSE, err = renameDUT(ctx, oldName, newName, lse, machine); err != nil {
+				return err
+			}
+			return nil
+		}
+		return status.Errorf(codes.Unimplemented, fmt.Sprintf("Renaming %s is not supported yet", oldName))
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "RenameMachineLSE [%s -> %s] failed. %s", oldName, newName, err.Error())
+		return nil, err
+	}
+	return newLSE, nil
+}
+
+func validateRenameMachineLSE(ctx context.Context, oldName, newName string, lse *ufspb.MachineLSE, machine *ufspb.Machine) error {
+	if err := resourceAlreadyExists(ctx, []*Resource{GetMachineLSEResource(newName)}, nil); err != nil {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("Failed to rename %s. %s already exists", oldName, newName))
+	}
+	// You need both delete and create permissions to do anything here
+	if err := util.CheckPermission(ctx, util.InventoriesDelete, machine.GetRealm()); err != nil {
+		return status.Errorf(codes.PermissionDenied, fmt.Sprintf("Need delete permission to rename %s. %s", oldName, err.Error()))
+	}
+	if err := util.CheckPermission(ctx, util.InventoriesCreate, machine.GetRealm()); err != nil {
+		return status.Errorf(codes.PermissionDenied, fmt.Sprintf("Need create permission to rename %s. %s", oldName, err.Error()))
+	}
+	return nil
+}

@@ -8,6 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	device "infra/unifiedfleet/api/v1/models/chromeos/device"
@@ -2545,6 +2546,63 @@ func TestValidateDeviceconfig(t *testing.T) {
 				},
 			}
 			So(err.Error(), ShouldContainSubstring, fmt.Sprintf("Device config doesn't exist for %s", devConfigID.String()))
+		})
+	})
+}
+
+func TestRenameDUT(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
+	Convey("renameDUT", t, func() {
+		Convey("renameDUT - Rename a dut in scheduling unit", func() {
+			createValidDUTWithLabstation(ctx, "dut-1", "machine-1d", "labstation-1", "machine-1l")
+			_, err := inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+				Name:        "su-1",
+				MachineLSEs: []string{"dut-1"},
+			})
+			So(err, ShouldBeNil)
+			_, err = RenameMachineLSE(ctx, "dut-1", "dut-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.FailedPrecondition.String())
+		})
+		Convey("renameDUT - Happy path", func() {
+			createValidDUTWithLabstation(ctx, "dut-2", "machine-2d", "labstation-2", "machine-2l")
+			_, err := RenameMachineLSE(ctx, "dut-2", "dut-3")
+			So(err, ShouldBeNil)
+			// Two snapshots, one at registration one at rename
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			// One snapshot at registration
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "REGISTRATION")
+			So(changes[0].NewValue, ShouldEqual, "REGISTRATION")
+			So(changes[1].OldValue, ShouldEqual, "RENAME")
+			So(changes[1].NewValue, ShouldEqual, "RENAME")
+			So(changes[2].OldValue, ShouldEqual, "dut-2")
+			So(changes[2].NewValue, ShouldEqual, "dut-3")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "RENAME")
+			So(changes[0].NewValue, ShouldEqual, "RENAME")
+			So(changes[1].OldValue, ShouldEqual, "dut-2")
+			So(changes[1].NewValue, ShouldEqual, "dut-3")
+			// State record for old dut should be deleted
+			_, err = state.GetStateRecord(ctx, "hosts/dut-2")
+			So(err, ShouldNotBeNil)
+			// State record for new dut should be same as old dut
+			s, err := state.GetStateRecord(ctx, "hosts/dut-3")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 		})
 	})
 }

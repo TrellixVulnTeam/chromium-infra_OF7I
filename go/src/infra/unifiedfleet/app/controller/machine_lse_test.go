@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -2103,5 +2104,245 @@ func TestRealmPermissionForMachineLSE(t *testing.T) {
 			So(resp.Machines, ShouldResemble, []string{"machine-14.1"})
 		})
 
+	})
+}
+
+func TestRenameMachineLSE(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("RenameMachineLSE", t, func() {
+		Convey("Rename non-existent machineLSE", func() {
+			_, err := RenameMachineLSE(ctx, "existingMLSE", "non-existentMLSE")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Rename to existing machineLSE", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-15",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-16",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-15",
+				Machines: []string{"machine-15"},
+				Hostname: "machinelse-15",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &chromeosLab.DeviceUnderTest{
+										Hostname: "machinelse-15",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-16",
+				Machines: []string{"machine-16"},
+				Hostname: "machinelse-16",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &chromeosLab.DeviceUnderTest{
+										Hostname: "machinelse-16",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			// Should not be possible to assign machinelse-15 to machinelse-16
+			_, err = RenameMachineLSE(ctx, "machinelse-15", "machinelse-16")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.FailedPrecondition.String())
+		})
+		Convey("Rename non os machineLSE", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-21",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-21",
+				Machines: []string{"machine-21"},
+				Hostname: "machinelse-21",
+				// Not a os machine as there is not ChromeosMachineLSE
+			})
+			So(err, ShouldBeNil)
+
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesDelete),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesCreate),
+				),
+			})
+
+			_, err = RenameMachineLSE(ctx, "machinelse-21", "machinelse-22")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.Unimplemented.String())
+		})
+		Convey("Rename machineLSE with out create permission", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-17",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-17",
+				Machines: []string{"machine-17"},
+				Hostname: "machinelse-17",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &chromeosLab.DeviceUnderTest{
+										Hostname: "machinelse-17",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesDelete),
+					// Missing create permission
+				),
+			})
+
+			_, err = RenameMachineLSE(ctx, "machinelse-17", "machinelse-18")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.PermissionDenied.String())
+		})
+		Convey("Rename machineLSE with out delete permission", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-18",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-18",
+				Machines: []string{"machine-18"},
+				Hostname: "machinelse-18",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &chromeosLab.DeviceUnderTest{
+										Hostname: "machinelse-18",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesCreate),
+				),
+			})
+
+			_, err = RenameMachineLSE(ctx, "machinelse-18", "machinelse-19")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.PermissionDenied.String())
+		})
+		Convey("Rename machineLSE happy path", func() {
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name:  "machine-19",
+				Realm: util.AtlLabAdminRealm,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machinelse-19",
+				Machines: []string{"machine-19"},
+				Hostname: "machinelse-19",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &chromeosLab.DeviceUnderTest{
+										Hostname: "machinelse-19",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+
+			ctx := auth.WithState(ctx, &authtest.FakeState{
+				Identity: "user:user@example.com",
+				FakeDB: authtest.NewFakeDB(
+					authtest.MockMembership("user:user@example.com", "user"),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesUpdate),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesCreate),
+					authtest.MockPermission("user:user@example.com", util.AtlLabAdminRealm, util.InventoriesDelete),
+				),
+			})
+
+			_, err = RenameMachineLSE(ctx, "machinelse-19", "machinelse-20")
+			So(err, ShouldBeNil)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-19")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-19")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "machinelse-19")
+			So(changes[1].NewValue, ShouldEqual, "machinelse-20")
+			So(changes[0].OldValue, ShouldEqual, "RENAME")
+			So(changes[0].NewValue, ShouldEqual, "RENAME")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "machinelse-19")
+			So(changes[1].NewValue, ShouldEqual, "machinelse-20")
+			So(changes[0].OldValue, ShouldEqual, "RENAME")
+			So(changes[0].NewValue, ShouldEqual, "RENAME")
+		})
 	})
 }
