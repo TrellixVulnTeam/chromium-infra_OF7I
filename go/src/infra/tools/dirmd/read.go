@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -106,7 +107,7 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 
 	ctx := context.Background()
 	eg, ctx := errgroup.WithContext(ctx)
-	sem := semaphore.NewWeighted(100) // make up to 100 IO syscalls concurrently.
+	sem := semaphore.NewWeighted(int64(runtime.NumCPU()))
 	var mu sync.Mutex
 
 	var visit func(dir, key string) error
