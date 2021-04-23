@@ -8,7 +8,7 @@ package karte;
 
 import "google/api/resource.proto";
 
-option go_package = "infra/appengine/karte/api;kartepb";
+option go_package = "infra/cros/karte/api;kartepb";
 
 // An Observation describes a measurement during an action.
 //

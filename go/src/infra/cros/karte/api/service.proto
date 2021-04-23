@@ -7,10 +7,10 @@ syntax = "proto3";
 package karte;
 
 import "google/api/annotations.proto";
-import "infra/appengine/karte/api/action.proto";
-import "infra/appengine/karte/api/observation.proto";
+import "infra/cros/karte/api/action.proto";
+import "infra/cros/karte/api/observation.proto";
 
-option go_package = "infra/appengine/karte/api;kartepb";
+option go_package = "infra/cros/karte/api;kartepb";
 
 // The Karte service is responsible for storing events and observations
 // related to DUTs and querying them.

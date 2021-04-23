@@ -2,16 +2,20 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+.PHONY: default
 default: check
 
+.PHONY: check
 check:
 	golint ./...
 	go vet ./...
 	go test ./...
 
+.PHONY: test
 test:
 	go test ./...
 
+.PHONY: gen
 gen:
 	go generate ./...
 
