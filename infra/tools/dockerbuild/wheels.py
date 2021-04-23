@@ -749,6 +749,7 @@ SPECS.update({
         Universal('astroid', '2.2.5', pyversions=['py3']),
         Universal('astroid', '2.3.3', pyversions=['py3']),
         Universal('astroid', '2.4.2', pyversions=['py3']),
+        Universal('astroid', '2.5.3', pyversions=['py3']),
         Universal('astunparse', '1.5.0'),
         Universal('atomicwrites', '1.3.0'),
         Universal('attrs', '17.4.0'),
@@ -824,6 +825,7 @@ SPECS.update({
         Universal('ipaddress', '1.0.18', pyversions=['py2']),
         Universal('iso8601', '0.1.12'),
         Universal('isort', '4.3.4'),
+        Universal('isort', '5.8.0', pyversions=['py3']),
         Universal('json5', '0.6.0'),
         Universal('jsonlines', '1.2.0'),
         Universal('jsonschema', '3.2.0'),  # py2 + py3
@@ -889,6 +891,7 @@ SPECS.update({
         Universal('pylint', '2.3.1', pyversions=['py3']),
         Universal('pylint', '2.4.4', pyversions=['py3']),
         Universal('pylint', '2.6.0', pyversions=['py3']),
+        Universal('pylint', '2.7.4', pyversions=['py3']),
         Universal('pylint-quotes', '0.2.1', pyversions=['py3']),
         Universal('pyopenssl', '17.2.0'),
         Universal('pyopenssl', '19.0.0'),
@@ -954,6 +957,7 @@ SPECS.update({
         Universal('yapf', '0.24.0'),
         Universal('yapf', '0.27.0'),
         Universal('yapf', '0.30.0'),
+        Universal('yapf', '0.31.0'),
         Universal('zipp', '1.2.0'),
         Universal('zipp', '3.1.0', pyversions=['py3']),
     )

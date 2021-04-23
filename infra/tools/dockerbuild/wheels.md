@@ -606,6 +606,18 @@ wheel: <
 
 * *universal*
 
+### 2.5.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.5.3"
+>
+```
+
+
+* *universal*
+
 ## **astunparse**
 
 ### 1.5.0
@@ -2444,6 +2456,20 @@ wheel: <
 
 * *universal*
 
+## **isort-py3**
+
+### 5.8.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/isort-py3"
+  version: "version:5.8.0"
+>
+```
+
+
+* *universal*
+
 ## **itsdangerous**
 
 ### 1.1.0
@@ -4088,6 +4114,18 @@ wheel: <
 
 * *universal*
 
+### 2.7.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.7.4"
+>
+```
+
+
+* *universal*
+
 ## **pylint-quotes**
 
 ### 0.1.8
@@ -5377,6 +5415,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/yapf-py2_py3"
   version: "version:0.30.0"
+>
+```
+
+
+* *universal*
+
+### 0.31.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/yapf-py2_py3"
+  version: "version:0.31.0"
 >
 ```
 
