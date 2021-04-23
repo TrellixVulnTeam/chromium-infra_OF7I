@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -108,14 +109,12 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	sem := semaphore.NewWeighted(100) // make up to 100 IO syscalls concurrently.
 	var mu sync.Mutex
 
-	var visit func(dir string) error
-	visit = func(dir string) error {
+	var visit func(dir, key string) error
+	visit = func(dir, key string) error {
 		if err := sem.Acquire(ctx, 1); err != nil {
 			return err
 		}
 		defer sem.Release(1)
-
-		key := r.mustDirKey(dir)
 
 		f, err := os.Open(dir)
 		if err != nil {
@@ -125,6 +124,7 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 
 		hasMeta := false
 		for {
+			// TODO(nodir): switch to f.ReadDir after switching to Go 1.16
 			names, err := f.Readdirnames(128)
 			if err == io.EOF {
 				break // We have exhausted all entries in the directory.
@@ -134,13 +134,14 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 			}
 
 			for _, name := range names {
+				name := name
 				fullName := filepath.Join(dir, name)
 				switch fileInfo, err := os.Lstat(fullName); {
 				case err != nil:
 					return err
 				case fileInfo.IsDir():
 					eg.Go(func() error {
-						return visit(fullName)
+						return visit(fullName, path.Join(key, name))
 					})
 				case name == Filename || name == OwnersFilename:
 					hasMeta = true
@@ -173,7 +174,7 @@ func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	}
 
 	eg.Go(func() error {
-		return visit(r.Root)
+		return visit(r.Root, ".")
 	})
 	if err := eg.Wait(); err != nil {
 		return err
@@ -261,13 +262,4 @@ func (r *mappingReader) DirKey(dir string) (string, error) {
 	}
 
 	return key, nil
-}
-
-// mustDirKey is like DirKey, but panics on failure.
-func (r *mappingReader) mustDirKey(dir string) string {
-	key, err := r.DirKey(dir)
-	if err != nil {
-		panic(err)
-	}
-	return key
 }
