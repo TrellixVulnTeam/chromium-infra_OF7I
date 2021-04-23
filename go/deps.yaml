@@ -561,6 +561,10 @@ import:
 - package: github.com/DataDog/zstd
   repo: https://chromium.googlesource.com/external/github.com/DataDog/zstd.git
 - package: github.com/cespare/xxhash
+  version: v1.1.0
+  repo: https://chromium.googlesource.com/external/github.com/cespare/xxhash.git
+- package: github.com/cespare/xxhash/v2
+  version: v2
   repo: https://chromium.googlesource.com/external/github.com/cespare/xxhash.git
 - package: github.com/dgraph-io/ristretto
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/ristretto.git
