@@ -16,6 +16,8 @@ import (
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	status "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
@@ -1180,4 +1182,15 @@ func (fs *FleetServerImpl) DeleteAsset(ctx context.Context, req *ufsAPI.DeleteAs
 	name := util.RemovePrefix(req.Name)
 	err = controller.DeleteAsset(ctx, name)
 	return &empty.Empty{}, err
+}
+
+// RenameAsset renames the asset from database.
+func (fs *FleetServerImpl) RenameAsset(ctx context.Context, req *ufsAPI.RenameAssetRequest) (rsp *ufspb.Asset, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, grpcStatus.Errorf(codes.Unimplemented, "Not yet implememnted")
 }

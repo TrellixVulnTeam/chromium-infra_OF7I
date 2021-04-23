@@ -1306,6 +1306,17 @@ func (r *RenameMachineLSERequest) Validate() error {
 	return nil
 }
 
+// Validate the Asset rename request.
+func (r *RenameAssetRequest) Validate() error {
+	if r.Name == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	if r.NewName == "" {
+		return status.Errorf(codes.InvalidArgument, "Missing new name to rename")
+	}
+	return nil
+}
+
 // Validate validates input requests of DeleteSchedulingUnit.
 func (r *DeleteSchedulingUnitRequest) Validate() error {
 	return validateResourceName(schedulingUnitRegex, SchedulingUnitNameFormat, r.Name)

@@ -322,6 +322,9 @@ service Fleet {
   // Delete delete the asset
   rpc DeleteAsset(DeleteAssetRequest) returns (google.protobuf.Empty);
 
+  // Rename the asset
+  rpc RenameAsset(RenameAssetRequest) returns (models.asset);
+
   // BatchGetKVMs retrieves a batch of kvms
   rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
 
@@ -1845,6 +1848,20 @@ message ListAssetsResponse {
 message DeleteAssetRequest {
   // The name of the asset to delete
   string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Asset" }
+  ];
+}
+
+message RenameAssetRequest {
+  // The name of the Asset to rename
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Asset" }
+  ];
+
+  // The new name of the Asset.
+  string new_name = 2 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Asset" }
   ];

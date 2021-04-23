@@ -1660,6 +1660,23 @@ func (s *DecoratedFleet) DeleteAsset(ctx context.Context, req *DeleteAssetReques
 	return
 }
 
+func (s *DecoratedFleet) RenameAsset(ctx context.Context, req *RenameAssetRequest) (rsp *models.Asset, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RenameAsset", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RenameAsset(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RenameAsset", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
