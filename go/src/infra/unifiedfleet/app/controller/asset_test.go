@@ -11,6 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
@@ -18,6 +19,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -635,6 +637,107 @@ func TestUpdateAssetMeta(t *testing.T) {
 			So(asset.GetInfo().GetSerialNumber(), ShouldEqual, "fake-serial")
 			So(asset.GetInfo().GetHwid(), ShouldEqual, "fake-hwid")
 			So(asset.GetInfo().GetSku(), ShouldEqual, "fake-devicesku")
+		})
+	})
+}
+
+func TestRenameAsset(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("Testing RenameAsset", t, func() {
+		Convey("Rename non-existing asset", func() {
+			_, err := RenameAsset(ctx, "test-asset-1", "test-asset-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.FailedPrecondition.String())
+		})
+		Convey("Rename asset to an existing asset", func() {
+			r := mockRack("chromeos6-row3-rack3", "3", ufspb.Zone_ZONE_CHROMEOS2)
+			RackRegistration(ctx, r)
+			// Create EVE6000 and EVE6001 assets
+			assets := createArrayOfMockAssets(2, "EVE6", "chromeos6", "dut", "eve")
+			for _, asset := range assets {
+				_, err := AssetRegistration(ctx, asset)
+				So(err, ShouldBeNil)
+			}
+			_, err := RenameAsset(ctx, "EVE6000", "EVE6001")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, codes.FailedPrecondition.String())
+		})
+		Convey("Rename asset - happy path", func() {
+			r := mockRack("chromeos6-row3-rack3", "3", ufspb.Zone_ZONE_CHROMEOS2)
+			RackRegistration(ctx, r)
+			// Create EVE6000 and EVE6001 assets
+			assets := createArrayOfMockAssets(1, "EVE7", "chromeos6", "dut", "eve")
+			for _, asset := range assets {
+				_, err := AssetRegistration(ctx, asset)
+				So(err, ShouldBeNil)
+			}
+			rsp, err := RenameAsset(ctx, "EVE7000", "EVE7001")
+			So(err, ShouldBeNil)
+			So(rsp, ShouldNotBeNil)
+			So(rsp.GetName(), ShouldContainSubstring, "EVE7001")
+			// Validate asset changes record in history
+			// Two snapshots. One at registration and another at retirement
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "assets/EVE7000")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "assets/EVE7000")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "REGISTRATION")
+			So(changes[0].NewValue, ShouldEqual, "REGISTRATION")
+			So(changes[1].OldValue, ShouldEqual, "RENAME")
+			So(changes[1].NewValue, ShouldEqual, "RENAME")
+			So(changes[2].OldValue, ShouldEqual, "EVE7000")
+			So(changes[2].NewValue, ShouldEqual, "EVE7001")
+			// One snapshot at registration.
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "assets/EVE7001")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "assets/EVE7001")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "RENAME")
+			So(changes[0].NewValue, ShouldEqual, "RENAME")
+			So(changes[1].OldValue, ShouldEqual, "EVE7000")
+			So(changes[1].NewValue, ShouldEqual, "EVE7001")
+			// Validate machine changes record in history
+			// Two snapshots. One at registration and another at retirement
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/EVE7000")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/EVE7000")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "REGISTRATION")
+			So(changes[0].NewValue, ShouldEqual, "REGISTRATION")
+			So(changes[1].OldValue, ShouldEqual, "RENAME")
+			So(changes[1].NewValue, ShouldEqual, "RENAME")
+			So(changes[2].OldValue, ShouldEqual, "EVE7000")
+			So(changes[2].NewValue, ShouldEqual, "EVE7001")
+			// One snapshot at registration.
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/EVE7001")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/EVE7001")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify all changes recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "RENAME")
+			So(changes[0].NewValue, ShouldEqual, "RENAME")
+			So(changes[1].OldValue, ShouldEqual, "EVE7000")
+			So(changes[1].NewValue, ShouldEqual, "EVE7001")
+			// State record for old machine should be deleted
+			s, err := state.GetStateRecord(ctx, "machines/EVE7000")
+			So(err, ShouldNotBeNil)
+			// State record for the renamed machine should be same as old one
+			s, err = state.GetStateRecord(ctx, "machines/EVE7001")
+			So(err, ShouldBeNil)
+			// State should be set to registered. No change.
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 		})
 	})
 }

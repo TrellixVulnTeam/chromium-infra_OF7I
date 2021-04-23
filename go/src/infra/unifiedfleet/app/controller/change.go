@@ -112,27 +112,39 @@ func (hc *HistoryClient) LogAssetChanges(oldData, newData *ufspb.Asset) {
 	if oldData == nil && newData == nil {
 		return
 	}
-	var resName string
+	var oldResName, newResName string
 	if oldData != nil {
-		prefix, _ := util.GetResourcePrefix(newData)
-		resName = util.AddPrefix(prefix, oldData.GetName())
-	} else if newData != nil {
-		prefix, _ := util.GetResourcePrefix(newData)
-		resName = util.AddPrefix(prefix, newData.GetName())
+		prefix, _ := util.GetResourcePrefix(oldData)
+		oldResName = util.AddPrefix(prefix, oldData.GetName())
 	}
-	if oldData == nil {
-		hc.changes = append(hc.changes, logLifeCycle(resName, "asset", LifeCycleRegistration)...)
-		hc.logMsgEntity(resName, false, newData)
-		return
+	if newData != nil {
+		prefix, _ := util.GetResourcePrefix(newData)
+		newResName = util.AddPrefix(prefix, newData.GetName())
 	}
 	if newData == nil {
-		hc.changes = append(hc.changes, logLifeCycle(resName, "asset", LifeCycleRetire)...)
-		hc.logMsgEntity(resName, true, oldData)
+		// Asset is being deleted
+		hc.changes = append(hc.changes, logLifeCycle(oldResName, "asset", LifeCycleRetire)...)
+		hc.logMsgEntity(oldResName, true, oldData)
 		return
 	}
-	hc.changes = append(hc.changes, logCommon(resName, "asset.type", oldData.GetType(), newData.GetType())...)
-	hc.changes = append(hc.changes, logCommon(resName, "asset.model", oldData.GetModel(), newData.GetModel())...)
-	hc.changes = append(hc.changes, logCommon(resName, "asset.location", oldData.GetLocation(), newData.GetLocation())...)
+	if oldData == nil {
+		// Asset is being registered
+		hc.changes = append(hc.changes, logLifeCycle(newResName, "asset", LifeCycleRegistration)...)
+		hc.logMsgEntity(newResName, false, newData)
+		return
+	}
+	if oldData.GetName() != newData.GetName() {
+		hc.changes = append(hc.changes, logLifeCycle(oldResName, "asset", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(oldResName, "asset.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logLifeCycle(newResName, "asset", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(newResName, "asset.name", oldData.GetName(), newData.GetName())...)
+		hc.logMsgEntity(oldResName, true, oldData)
+		hc.logMsgEntity(newResName, false, newData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(newResName, "asset.type", oldData.GetType(), newData.GetType())...)
+	hc.changes = append(hc.changes, logCommon(newResName, "asset.model", oldData.GetModel(), newData.GetModel())...)
+	hc.changes = append(hc.changes, logCommon(newResName, "asset.location", oldData.GetLocation(), newData.GetLocation())...)
 	var oldInfo, newInfo *ufspb.AssetInfo
 	// Assign blank infos to avoid panic in the following code.
 	if oldInfo = oldData.GetInfo(); oldInfo == nil {
@@ -141,8 +153,8 @@ func (hc *HistoryClient) LogAssetChanges(oldData, newData *ufspb.Asset) {
 	if newInfo = newData.GetInfo(); newInfo == nil {
 		newInfo = &ufspb.AssetInfo{}
 	}
-	hc.LogAssetInfoChanges(resName, oldInfo, newInfo)
-	hc.logMsgEntity(resName, false, newData)
+	hc.LogAssetInfoChanges(newResName, oldInfo, newInfo)
+	hc.logMsgEntity(newResName, false, newData)
 }
 
 // LogAssetInfoChanges logs the change of a give asset info
