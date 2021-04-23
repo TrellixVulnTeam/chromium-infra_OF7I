@@ -8,6 +8,8 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
+	"infra/cmd/shivas/ufs/subcmds/dut"
+	"infra/cmd/shivas/ufs/subcmds/labstation"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/nic"
 	"infra/cmd/shivas/ufs/subcmds/switches"
@@ -42,6 +44,8 @@ func (c *rename) Run(a subcommands.Application, args []string, env subcommands.E
 func (c renameApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
+		dut.RenameDUTCmd,
+		labstation.RenameLabstationCmd,
 		machine.RenameMachineCmd,
 		nic.RenameNicCmd,
 		switches.RenameSwitchCmd,
