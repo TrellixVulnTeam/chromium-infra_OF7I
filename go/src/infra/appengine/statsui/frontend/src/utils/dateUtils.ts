@@ -60,7 +60,7 @@ export function calculateValidDates(
 
   const dates: string[] = [];
   for (let i = periodsBefore; i > 0; i--) {
-    const date = addPeriodsToDate(periodDate, period, -i)
+    const date = addPeriodsToDate(periodDate, period, -i);
     if (date.getTime() < now) {
       dates.push(date.toISOString().slice(0, 10));
     }
@@ -69,7 +69,7 @@ export function calculateValidDates(
     dates.push(periodDate.toISOString().slice(0, 10));
   }
   for (let i = 1; i <= periodsAfter; i++) {
-    const date = addPeriodsToDate(periodDate, period, i)
+    const date = addPeriodsToDate(periodDate, period, i);
     if (date.getTime() < now) {
       dates.push(date.toISOString().slice(0, 10));
     }
@@ -92,5 +92,5 @@ function addPeriodsToDate(date: Date, period: Period, num: number): Date {
       ret.setUTCMonth(date.getUTCMonth() + num);
       break;
   }
-  return ret
+  return ret;
 }
