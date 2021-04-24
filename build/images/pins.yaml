@@ -20,19 +20,19 @@ pins:
   digest: sha256:4a8a6fa8810a3e01352981b35165b0b28403fe2a4e2535e315b23b4a69cd130a
 - image: docker.io/library/ubuntu
   tag: "16.04"
-  digest: sha256:bb84bbf2ff36d46acaf0bb0c6bcb33dae64cd93cba8652d74c9aaf438fada438
+  digest: sha256:eed7e1076bbc1f342c4474c718e5438af4784f59a4e88ad687dbb98483b59ee4
 - image: docker.io/library/ubuntu
   tag: "18.04"
-  digest: sha256:122f506735a26c0a1aff2363335412cfc4f84de38326356d31ee00c2cbe52171
+  digest: sha256:538529c9d229fb55f50e6746b119e899775205d62c0fc1b7e679b30d02ecb6e8
 - image: docker.io/library/ubuntu
   tag: "20.04"
-  digest: sha256:3c9c713e0979e9bd6061ed52ac1e9e1f246c9495aa063619d9d695fb8039aa1f
+  digest: sha256:cf31af331f38d1d7158470e095b132acd126a7180a54f263d386da88eb681d93
 - image: docker.io/library/ubuntu
   tag: focal
-  digest: sha256:3c9c713e0979e9bd6061ed52ac1e9e1f246c9495aa063619d9d695fb8039aa1f
+  digest: sha256:cf31af331f38d1d7158470e095b132acd126a7180a54f263d386da88eb681d93
 - image: docker.io/library/ubuntu
   tag: xenial
-  digest: sha256:bb84bbf2ff36d46acaf0bb0c6bcb33dae64cd93cba8652d74c9aaf438fada438
+  digest: sha256:eed7e1076bbc1f342c4474c718e5438af4784f59a4e88ad687dbb98483b59ee4
 - image: gcr.io/distroless/static
   tag: latest
   digest: sha256:60a7d0c45932b6152b2f7ba561db2f91f58ab14aa90b895c58f72062c768fd77
