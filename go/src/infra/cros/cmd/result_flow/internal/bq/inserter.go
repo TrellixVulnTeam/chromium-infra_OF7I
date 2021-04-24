@@ -83,8 +83,8 @@ func NewInserter(ctx context.Context, op Options) (Inserter, error) {
 		&dispatcher.Options{
 			QPSLimit: rate.NewLimiter(qps, burst),
 			Buffer: buffer.Options{
-				MaxLeases: maxLeases,
-				BatchSize: batchSize,
+				MaxLeases:     maxLeases,
+				BatchItemsMax: batchSize,
 				FullBehavior: &buffer.BlockNewItems{
 					MaxItems: maxLiveItems,
 				},

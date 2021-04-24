@@ -71,8 +71,8 @@ func NewRAMBufferedBQInserter(ctx context.Context, projectID, datasetID, tableID
 				15, // Burst
 			),
 			Buffer: buffer.Options{
-				MaxLeases: 10,
-				BatchSize: 100, // 100 BQ rows sent at once.
+				MaxLeases:     10,
+				BatchItemsMax: 100, // 100 BQ rows sent at once.
 				FullBehavior: &buffer.DropOldestBatch{
 					MaxLiveItems: 1000, // At most these many items not yet currently leased for sending.
 				},
