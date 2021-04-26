@@ -1,10 +1,10 @@
-From bca6e054261b4dba0889117e9520d478988bba17 Mon Sep 17 00:00:00 2001
+From 98d80fce1086fc5c3d38e7f8a075c5fc5466d8c4 Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Thu, 27 Aug 2020 11:42:01 +1000
-Subject: [PATCH 3/3] For MacOS, use the code path that counts file descriptors
- under /dev/fd rather than trying to dup() all possible FDs. The latter method
- does not work reliably under MacOS 11.
+Date: Mon, 26 Apr 2021 10:36:55 +1000
+Subject: [PATCH 5/6] Fix test.support.fd_count() on macOS 11.
 
+Trying to dup() all possible FDs causes the process to be killed by the
+system. Instead, use the code path that counts file descriptors under /dev/fd.
 ---
  Lib/test/support/__init__.py | 9 +++++----
  1 file changed, 5 insertions(+), 4 deletions(-)
@@ -31,5 +31,5 @@ index ccc11c1b4b..ffc252a6f6 100644
          except OSError as exc:
              if exc.errno != errno.ENOENT:
 -- 
-2.28.0.297.g1956fa8f8d-goog
+2.31.1.498.g6c1eba8ee3d-goog
 

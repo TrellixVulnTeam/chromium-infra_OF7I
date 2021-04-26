@@ -1,0 +1,805 @@
+From accceb942dd48ae2e6fc308b840cad82bc63ab97 Mon Sep 17 00:00:00 2001
+From: Brian Ryner <bryner@google.com>
+Date: Mon, 26 Apr 2021 10:28:35 +1000
+Subject: [PATCH 4/6] Backport support for Mac ARM64.
+
+Original patch from https://github.com/python/cpython/commit/41761933c1c30bb6003b65eef1ba23a83db4eae4
+
+This does _not_ include the changes related to weak linking, as
+ 1) These are much more involved to backport, and
+ 2) We don't need this functionality at the moment, since we don't create any
+    x86-64 builds on macOS 11 that need to run on 10.x.
+
+Tested with native builds on x86-64 and arm64 with 'make test'.
+---
+ Lib/_osx_support.py                   |  45 ++++++++--
+ Lib/ctypes/macholib/dyld.py           |  13 +++
+ Lib/ctypes/test/test_macholib.py      |  15 ++--
+ Lib/distutils/tests/test_build_ext.py |   2 +-
+ Lib/test/test_platform.py             |   2 +-
+ Lib/test/test_str.py                  |   1 +
+ Lib/test/test_unicode.py              |   2 +
+ Modules/_ctypes/callbacks.c           |  39 +++++++--
+ Modules/_ctypes/callproc.c            | 115 +++++++++++++++++++++++---
+ Modules/_ctypes/ctypes.h              |   8 ++
+ Modules/_ctypes/malloc_closure.c      |  15 +++-
+ Modules/getpath.c                     |   4 -
+ configure.ac                          |  25 ++++--
+ pyconfig.h.in                         |   3 +
+ setup.py                              | 106 ++++++++++++------------
+ 15 files changed, 296 insertions(+), 99 deletions(-)
+
+diff --git a/Lib/_osx_support.py b/Lib/_osx_support.py
+index d2aaae7986..3b707e67d0 100644
+--- a/Lib/_osx_support.py
++++ b/Lib/_osx_support.py
+@@ -110,6 +110,26 @@ def _get_system_version():
+ 
+     return _SYSTEM_VERSION
+ 
++_SYSTEM_VERSION_TUPLE = None
++def _get_system_version_tuple():
++    """
++    Return the macOS system version as a tuple
++
++    The return value is safe to use to compare
++    two version numbers.
++    """
++    global _SYSTEM_VERSION_TUPLE
++    if _SYSTEM_VERSION_TUPLE is None:
++        osx_version = _get_system_version()
++        if osx_version:
++            try:
++                _SYSTEM_VERSION_TUPLE = tuple(int(i) for i in osx_version.split('.'))
++            except ValueError:
++                _SYSTEM_VERSION_TUPLE = ()
++
++    return _SYSTEM_VERSION_TUPLE
++
++
+ def _remove_original_values(_config_vars):
+     """Remove original unmodified values for testing"""
+     # This is needed for higher-level cross-platform tests of get_platform.
+@@ -132,15 +152,20 @@ def _supports_universal_builds():
+     # builds, in particular -isysroot and -arch arguments to the compiler. This
+     # is in support of allowing 10.4 universal builds to run on 10.3.x systems.
+ 
+-    osx_version = _get_system_version()
+-    if osx_version:
+-        try:
+-            osx_version = tuple(int(i) for i in osx_version.split('.'))
+-        except ValueError:
+-            osx_version = ''
++    osx_version = _get_system_version_tuple()
+     return bool(osx_version >= (10, 4)) if osx_version else False
+ 
+ 
++def _supports_arm64_builds():
++    """Returns True if arm64 builds are supported on this system"""
++    # There are two sets of systems supporting macOS/arm64 builds:
++    # 1. macOS 11 and later, unconditionally
++    # 2. macOS 10.15 with Xcode 12.2 or later
++    # For now the second category is ignored.
++    osx_version = _get_system_version_tuple()
++    return osx_version >= (11, 0) if osx_version else False
++
++
+ def _find_appropriate_compiler(_config_vars):
+     """Find appropriate C compiler for extension module builds"""
+ 
+@@ -331,6 +356,12 @@ def compiler_fixup(compiler_so, cc_args):
+             except ValueError:
+                 break
+ 
++    elif not _supports_arm64_builds():
++        # Look for "-arch arm64" and drop that
++        for idx in range(len(compiler_so)):
++            if compiler_so[idx] == '-arch' and compiler_so[idx+1] == "arm64":
++                del compiler_so[idx:idx+2]
++
+     if 'ARCHFLAGS' in os.environ and not stripArch:
+         # User specified different -arch flags in the environ,
+         # see also distutils.sysconfig
+@@ -470,6 +501,8 @@ def get_platform_osx(_config_vars, osname, release, machine):
+ 
+             if len(archs) == 1:
+                 machine = archs[0]
++            elif archs == ('arm64', 'x86_64'):
++                machine = 'universal2'
+             elif archs == ('i386', 'ppc'):
+                 machine = 'fat'
+             elif archs == ('i386', 'x86_64'):
+diff --git a/Lib/ctypes/macholib/dyld.py b/Lib/ctypes/macholib/dyld.py
+index 1fdf8d648f..b25a78941a 100644
+--- a/Lib/ctypes/macholib/dyld.py
++++ b/Lib/ctypes/macholib/dyld.py
+@@ -6,6 +6,11 @@ import os
+ from framework import framework_info
+ from dylib import dylib_info
+ from itertools import *
++try:
++    from _ctypes import _dyld_shared_cache_contains_path
++except ImportError:
++    def _dyld_shared_cache_contains_path(*args):
++        raise NotImplementedError
+ 
+ __all__ = [
+     'dyld_find', 'framework_find',
+@@ -130,8 +135,16 @@ def dyld_find(name, executable_path=None, env=None):
+                 dyld_executable_path_search(name, executable_path),
+                 dyld_default_search(name, env),
+             ), env):
++
++
+         if os.path.isfile(path):
+             return path
++        try:
++            if _dyld_shared_cache_contains_path(path):
++                return path
++        except NotImplementedError:
++            pass
++
+     raise ValueError("dylib %s could not be found" % (name,))
+ 
+ def framework_find(fn, executable_path=None, env=None):
+diff --git a/Lib/ctypes/test/test_macholib.py b/Lib/ctypes/test/test_macholib.py
+index 9779b2f3f4..3ba4dced79 100644
+--- a/Lib/ctypes/test/test_macholib.py
++++ b/Lib/ctypes/test/test_macholib.py
+@@ -47,19 +47,22 @@ def find_lib(name):
+ class MachOTest(unittest.TestCase):
+     @unittest.skipUnless(sys.platform == "darwin", 'OSX-specific test')
+     def test_find(self):
+-
+-        self.assertEqual(find_lib('pthread'),
+-                             '/usr/lib/libSystem.B.dylib')
++        # On Mac OS 11, system dylibs are only present in the shared cache,
++        # so symlinks like libpthread.dylib -> libSystem.B.dylib will not
++        # be resolved by dyld_find
++        self.assertIn(find_lib('pthread'),
++                              ('/usr/lib/libSystem.B.dylib', '/usr/lib/libpthread.dylib'))
+ 
+         result = find_lib('z')
+         # Issue #21093: dyld default search path includes $HOME/lib and
+         # /usr/local/lib before /usr/lib, which caused test failures if
+         # a local copy of libz exists in one of them. Now ignore the head
+         # of the path.
+-        self.assertRegexpMatches(result, r".*/lib/libz\..*.*\.dylib")
++        self.assertRegexpMatches(result, r".*/lib/libz.*\.dylib")
+ 
+-        self.assertEqual(find_lib('IOKit'),
+-                             '/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit')
++        self.assertIn(find_lib('IOKit'),
++                              ('/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit',
++                              '/System/Library/Frameworks/IOKit.framework/IOKit'))
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/Lib/distutils/tests/test_build_ext.py b/Lib/distutils/tests/test_build_ext.py
+index a6d2d2eb15..d5ba1cb63d 100644
+--- a/Lib/distutils/tests/test_build_ext.py
++++ b/Lib/distutils/tests/test_build_ext.py
+@@ -491,7 +491,7 @@ class BuildExtTestCase(support.TempdirManager,
+         # format the target value as defined in the Apple
+         # Availability Macros.  We can't use the macro names since
+         # at least one value we test with will not exist yet.
+-        if target[1] < 10:
++        if target[:2] < (10, 10):
+             # for 10.1 through 10.9.x -> "10n0"
+             target = '%02d%01d0' % target
+         else:
+diff --git a/Lib/test/test_platform.py b/Lib/test/test_platform.py
+index 542763d46d..74eda70e47 100644
+--- a/Lib/test/test_platform.py
++++ b/Lib/test/test_platform.py
+@@ -220,7 +220,7 @@ class PlatformTest(unittest.TestCase):
+             self.assertEqual(res[1], ('', '', ''))
+ 
+             if sys.byteorder == 'little':
+-                self.assertIn(res[2], ('i386', 'x86_64'))
++                self.assertIn(res[2], ('i386', 'x86_64', 'arm64'))
+             else:
+                 self.assertEqual(res[2], 'PowerPC')
+ 
+diff --git a/Lib/test/test_str.py b/Lib/test/test_str.py
+index 73ed542a51..16324245b4 100644
+--- a/Lib/test/test_str.py
++++ b/Lib/test/test_str.py
+@@ -489,6 +489,7 @@ class CAPITest(unittest.TestCase):
+             c_char_p)
+ 
+         PyString_FromFormat = pythonapi.PyString_FromFormat
++        PyString_FromFormat.argtypes = (c_char_p,)
+         PyString_FromFormat.restype = py_object
+ 
+         # basic tests
+diff --git a/Lib/test/test_unicode.py b/Lib/test/test_unicode.py
+index 92476f68a5..adbf4f5f98 100644
+--- a/Lib/test/test_unicode.py
++++ b/Lib/test/test_unicode.py
+@@ -1676,6 +1676,7 @@ class CAPITest(unittest.TestCase):
+     def test_from_format(self):
+         test_support.import_module('ctypes')
+         from ctypes import (
++            c_char_p,
+             pythonapi, py_object, sizeof,
+             c_int, c_long, c_longlong, c_ssize_t,
+             c_uint, c_ulong, c_ulonglong, c_size_t, c_void_p)
+@@ -1684,6 +1685,7 @@ class CAPITest(unittest.TestCase):
+         else:
+             name = "PyUnicodeUCS4_FromFormat"
+         _PyUnicode_FromFormat = getattr(pythonapi, name)
++        _PyUnicode_FromFormat.argtypes = (c_char_p,)
+         _PyUnicode_FromFormat.restype = py_object
+ 
+         def PyUnicode_FromFormat(format, *args):
+diff --git a/Modules/_ctypes/callbacks.c b/Modules/_ctypes/callbacks.c
+index ef1f0019db..317a2c2e15 100644
+--- a/Modules/_ctypes/callbacks.c
++++ b/Modules/_ctypes/callbacks.c
+@@ -7,6 +7,8 @@
+ #include "compile.h" /* required only for 2.3, as it seems */
+ #include "frameobject.h"
+ 
++#include <stdbool.h>
++
+ #include <ffi.h>
+ #ifdef MS_WIN32
+ #include <windows.h>
+@@ -24,7 +26,7 @@ CThunkObject_dealloc(PyObject *_self)
+     Py_XDECREF(self->callable);
+     Py_XDECREF(self->restype);
+     if (self->pcl_write)
+-        ffi_closure_free(self->pcl_write);
++        Py_ffi_closure_free(self->pcl_write);
+     PyObject_GC_Del(self);
+ }
+ 
+@@ -426,8 +428,7 @@ CThunkObject *_ctypes_alloc_callback(PyObject *callable,
+ 
+     assert(CThunk_CheckExact(p));
+ 
+-    p->pcl_write = ffi_closure_alloc(sizeof(ffi_closure),
+-				     &p->pcl_exec);
++    p->pcl_write = Py_ffi_closure_alloc(sizeof(ffi_closure), &p->pcl_exec);
+     if (p->pcl_write == NULL) {
+         PyErr_NoMemory();
+         goto error;
+@@ -473,13 +474,35 @@ CThunkObject *_ctypes_alloc_callback(PyObject *callable,
+                      "ffi_prep_cif failed with %d", result);
+         goto error;
+     }
+-#if defined(X86_DARWIN) || defined(POWERPC_DARWIN)
+-    result = ffi_prep_closure(p->pcl_write, &p->cif, closure_fcn, p);
++#if HAVE_FFI_PREP_CLOSURE_LOC
++#   if USING_APPLE_OS_LIBFFI
++#      define HAVE_FFI_PREP_CLOSURE_LOC_RUNTIME __builtin_available(macos 10.15, ios 13, watchos 6, tvos 13, *)
++#   else
++#      define HAVE_FFI_PREP_CLOSURE_LOC_RUNTIME 1
++#   endif
++    if (HAVE_FFI_PREP_CLOSURE_LOC_RUNTIME) {
++        result = ffi_prep_closure_loc(p->pcl_write, &p->cif, closure_fcn,
++                                    p,
++                                    p->pcl_exec);
++    } else
++#endif
++    {
++#if USING_APPLE_OS_LIBFFI && defined(__arm64__)
++        PyErr_Format(PyExc_NotImplementedError, "ffi_prep_closure_loc() is missing");
++        goto error;
+ #else
+-    result = ffi_prep_closure_loc(p->pcl_write, &p->cif, closure_fcn,
+-				  p,
+-				  p->pcl_exec);
++#ifdef MACOSX
++        #pragma clang diagnostic push
++        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+ #endif
++        result = ffi_prep_closure(p->pcl_write, &p->cif, closure_fcn, p);
++
++#ifdef MACOSX
++        #pragma clang diagnostic pop
++#endif
++
++#endif
++    }
+     if (result != FFI_OK) {
+         PyErr_Format(PyExc_RuntimeError,
+                      "ffi_prep_closure failed with %d", result);
+diff --git a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
+index 066fefc0cc..ee5605c94d 100644
+--- a/Modules/_ctypes/callproc.c
++++ b/Modules/_ctypes/callproc.c
+@@ -63,6 +63,8 @@
+ #include "Python.h"
+ #include "structmember.h"
+ 
++#include <stdbool.h>
++
+ #ifdef MS_WIN32
+ #include <windows.h>
+ #include <tchar.h>
+@@ -70,6 +72,10 @@
+ #include "ctypes_dlfcn.h"
+ #endif
+ 
++#ifdef __APPLE__
++#include <mach-o/dyld.h>
++#endif
++
+ #ifdef MS_WIN32
+ #include <malloc.h>
+ #endif
+@@ -773,7 +779,8 @@ static int _call_function_pointer(int flags,
+                                   ffi_type **atypes,
+                                   ffi_type *restype,
+                                   void *resmem,
+-                                  int argcount)
++                                  int argcount,
++                                  int argtypecount)
+ {
+ #ifdef WITH_THREAD
+     PyThreadState *_save = NULL; /* For Py_BLOCK_THREADS and Py_UNBLOCK_THREADS */
+@@ -801,14 +808,70 @@ static int _call_function_pointer(int flags,
+     if ((flags & FUNCFLAG_CDECL) == 0)
+         cc = FFI_STDCALL;
+ #endif
+-    if (FFI_OK != ffi_prep_cif(&cif,
+-                               cc,
+-                               argcount,
+-                               restype,
+-                               atypes)) {
+-        PyErr_SetString(PyExc_RuntimeError,
+-                        "ffi_prep_cif failed");
+-        return -1;
++
++#   if USING_APPLE_OS_LIBFFI
++#      define HAVE_FFI_PREP_CIF_VAR_RUNTIME __builtin_available(macos 10.15, ios 13, watchos 6, tvos 13, *)
++#   elif HAVE_FFI_PREP_CIF_VAR
++#      define HAVE_FFI_PREP_CIF_VAR_RUNTIME true
++#   else
++#      define HAVE_FFI_PREP_CIF_VAR_RUNTIME false
++#   endif
++
++    /* Even on Apple-arm64 the calling convention for variadic functions conincides
++     * with the standard calling convention in the case that the function called
++     * only with its fixed arguments.   Thus, we do not need a special flag to be
++     * set on variadic functions.   We treat a function as variadic if it is called
++     * with a nonzero number of variadic arguments */
++    bool is_variadic = (argtypecount != 0 && argcount > argtypecount);
++    (void) is_variadic;
++
++#if defined(__APPLE__) && defined(__arm64__)
++    if (is_variadic) {
++        if (HAVE_FFI_PREP_CIF_VAR_RUNTIME) {
++        } else {
++            PyErr_SetString(PyExc_NotImplementedError, "ffi_prep_cif_var() is missing");
++            return -1;
++        }
++    }
++#endif
++
++#if HAVE_FFI_PREP_CIF_VAR
++    if (is_variadic) {
++        if (HAVE_FFI_PREP_CIF_VAR_RUNTIME) {
++            if (FFI_OK != ffi_prep_cif_var(&cif,
++                                        cc,
++                                        argtypecount,
++                                        argcount,
++                                        restype,
++                                        atypes)) {
++                PyErr_SetString(PyExc_RuntimeError,
++                                "ffi_prep_cif_var failed");
++                return -1;
++            }
++        } else {
++            if (FFI_OK != ffi_prep_cif(&cif,
++                                       cc,
++                                       argcount,
++                                       restype,
++                                       atypes)) {
++                PyErr_SetString(PyExc_RuntimeError,
++                                "ffi_prep_cif failed");
++                return -1;
++            }
++        }
++    } else
++#endif
++
++    {
++        if (FFI_OK != ffi_prep_cif(&cif,
++                                   cc,
++                                   argcount,
++                                   restype,
++                                   atypes)) {
++            PyErr_SetString(PyExc_RuntimeError,
++                            "ffi_prep_cif failed");
++            return -1;
++        }
+     }
+ 
+     if (flags & (FUNCFLAG_USE_ERRNO | FUNCFLAG_USE_LASTERROR)) {
+@@ -1181,9 +1244,8 @@ PyObject *_ctypes_callproc(PPROC pProc,
+ 
+     if (-1 == _call_function_pointer(flags, pProc, avalues, atypes,
+                                      rtype, resbuf,
+-                                     Py_SAFE_DOWNCAST(argcount,
+-                                                      Py_ssize_t,
+-                                                      int)))
++                                     Py_SAFE_DOWNCAST(argcount, Py_ssize_t, int),
++                                     Py_SAFE_DOWNCAST(argtype_count, Py_ssize_t, int)))
+         goto cleanup;
+ 
+ #ifdef WORDS_BIGENDIAN
+@@ -1416,6 +1478,30 @@ copy_com_pointer(PyObject *self, PyObject *args)
+ }
+ #else
+ 
++#ifdef HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
++static PyObject *py_dyld_shared_cache_contains_path(PyObject *self, PyObject *args)
++{
++     char *name;
++
++     if (__builtin_available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)) {
++         if (!PyArg_ParseTuple(args, "z", &name))
++             return NULL;
++    
++         if (name == NULL)
++             Py_RETURN_FALSE;
++    
++         if (_dyld_shared_cache_contains_path(name))
++             Py_RETURN_TRUE;
++         else
++             Py_RETURN_FALSE;
++     } else {
++         PyErr_SetString(PyExc_NotImplementedError, "_dyld_shared_cache_contains_path symbol is missing");
++         return NULL;
++     }
++
++ }
++#endif
++
+ static PyObject *py_dl_open(PyObject *self, PyObject *args)
+ {
+     char *name;
+@@ -1914,6 +2000,8 @@ buffer_info(PyObject *self, PyObject *arg)
+     return Py_BuildValue("siN", dict->format, dict->ndim, shape);
+ }
+ 
++
++
+ PyMethodDef _ctypes_module_methods[] = {
+     {"get_errno", get_errno, METH_NOARGS},
+     {"set_errno", set_errno, METH_VARARGS},
+@@ -1940,6 +2028,9 @@ PyMethodDef _ctypes_module_methods[] = {
+      "dlopen(name, flag={RTLD_GLOBAL|RTLD_LOCAL}) open a shared library"},
+     {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
+     {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
++#endif
++#ifdef HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
++     {"_dyld_shared_cache_contains_path", py_dyld_shared_cache_contains_path, METH_VARARGS, "check if path is in the shared cache"},
+ #endif
+     {"alignment", align_func, METH_O, alignment_doc},
+     {"sizeof", sizeof_func, METH_O, sizeof_doc},
+diff --git a/Modules/_ctypes/ctypes.h b/Modules/_ctypes/ctypes.h
+index 12b56c4342..99491eb7a5 100644
+--- a/Modules/_ctypes/ctypes.h
++++ b/Modules/_ctypes/ctypes.h
+@@ -448,6 +448,14 @@ PyObject *_ctypes_get_errobj(int **pspace);
+ extern PyObject *ComError;
+ #endif
+ 
++#if USING_MALLOC_CLOSURE_DOT_C
++void Py_ffi_closure_free(void *p);
++void *Py_ffi_closure_alloc(size_t size, void** codeloc);
++#else
++#define Py_ffi_closure_free ffi_closure_free
++#define Py_ffi_closure_alloc ffi_closure_alloc
++#endif
++
+ #if PY_VERSION_HEX >= 0x020700A4
+ /* Use PyCapsule for 2.7 */
+ 
+diff --git a/Modules/_ctypes/malloc_closure.c b/Modules/_ctypes/malloc_closure.c
+index 248c6a6702..9ae7e563c8 100644
+--- a/Modules/_ctypes/malloc_closure.c
++++ b/Modules/_ctypes/malloc_closure.c
+@@ -89,16 +89,27 @@ static void more_core(void)
+ /******************************************************************/
+ 
+ /* put the item back into the free list */
+-void ffi_closure_free(void *p)
++void Py_ffi_closure_free(void *p)
+ {
++#if USING_APPLE_OS_LIBFFI && HAVE_FFI_CLOSURE_ALLOC
++    if (__builtin_available(macos 10.15, ios 13, watchos 6, tvos 13, *)) {
++        ffi_closure_free(p);
++        return;
++    }
++#endif
+     ITEM *item = (ITEM *)p;
+     item->next = free_list;
+     free_list = item;
+ }
+ 
+ /* return one item from the free list, allocating more if needed */
+-void *ffi_closure_alloc(size_t ignored, void** codeloc)
++void *Py_ffi_closure_alloc(size_t size, void** codeloc)
+ {
++#if USING_APPLE_OS_LIBFFI && HAVE_FFI_CLOSURE_ALLOC
++    if (__builtin_available(macos 10.15, ios 13, watchos 6, tvos 13, *)) {
++        return ffi_closure_alloc(size, codeloc);
++    }
++#endif
+     ITEM *item;
+     if (!free_list)
+         more_core();
+diff --git a/Modules/getpath.c b/Modules/getpath.c
+index 092ccc712f..9f60df7ea1 100644
+--- a/Modules/getpath.c
++++ b/Modules/getpath.c
+@@ -382,11 +382,7 @@ calculate_path(void)
+     NSModule pythonModule;
+ #endif
+ #ifdef __APPLE__
+-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+     uint32_t nsexeclength = MAXPATHLEN;
+-#else
+-    unsigned long nsexeclength = MAXPATHLEN;
+-#endif
+ #endif
+ 
+         /* If there is no slash in the argv0 path, then we have to
+diff --git a/configure.ac b/configure.ac
+index b752b7b254..b0dfe0636c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -176,7 +176,7 @@ fi
+ AC_SUBST(LIPO_32BIT_FLAGS)
+ AC_MSG_CHECKING(for --with-universal-archs)
+ AC_ARG_WITH(universal-archs,
+-    AS_HELP_STRING([--with-universal-archs=ARCH], [select architectures for universal build ("32-bit", "64-bit", "3-way", "intel", "intel-32", "intel-64", or "all")]),
++    AS_HELP_STRING([--with-universal-archs=ARCH], [select architectures for universal build ("universal2", "32-bit", "64-bit", "3-way", "intel", "intel-32", "intel-64", or "all")]),
+ [
+ 	UNIVERSAL_ARCHS="$withval"
+ ],
+@@ -1113,7 +1113,7 @@ fi
+ 
+ AC_SUBST(BASECFLAGS)
+ 
+-# The -arch flags for universal builds on OSX
++# The -arch flags for universal builds on macOS
+ UNIVERSAL_ARCH_FLAGS=
+ AC_SUBST(UNIVERSAL_ARCH_FLAGS)
+ 
+@@ -1188,6 +1188,11 @@ yes)
+                LIPO_32BIT_FLAGS="-extract ppc7400 -extract i386"
+                ARCH_RUN_32BIT="/usr/bin/arch -i386 -ppc"
+                ;;
++            universal2)
++               UNIVERSAL_ARCH_FLAGS="-arch arm64 -arch x86_64"
++               LIPO_32BIT_FLAGS=""
++               ARCH_RUN_32BIT="true"
++               ;;
+             intel)
+                UNIVERSAL_ARCH_FLAGS="-arch i386 -arch x86_64"
+                LIPO_32BIT_FLAGS="-extract i386"
+@@ -1209,7 +1214,7 @@ yes)
+                ARCH_RUN_32BIT="/usr/bin/arch -i386 -ppc"
+                ;;
+             *)
+-               AC_MSG_ERROR([proper usage is --with-universal-arch=32-bit|64-bit|all|intel|3-way])
++               AC_MSG_ERROR([proper usage is --with-universal-arch=universal2|32-bit|64-bit|all|intel|3-way])
+                ;;
+             esac
+ 
+@@ -2055,7 +2060,7 @@ case $ac_sys_system/$ac_sys_release in
+     		MACOSX_DEFAULT_ARCH="ppc" 
+     		;;
+     	*)
+-    		AC_MSG_ERROR([Unexpected output of 'arch' on OSX])
++    		AC_MSG_ERROR([Unexpected output of 'arch' on macOS])
+     		;;
+     	esac
+     else
+@@ -2066,8 +2071,11 @@ case $ac_sys_system/$ac_sys_release in
+     	ppc) 
+     		MACOSX_DEFAULT_ARCH="ppc64" 
+     		;;
++        arm64)
++                MACOSX_DEFAULT_ARCH="arm64"
++                ;;
+     	*)
+-    		AC_MSG_ERROR([Unexpected output of 'arch' on OSX])
++    		AC_MSG_ERROR([Unexpected output of 'arch' on macOS])
+     		;;
+     	esac
+ 
+@@ -3212,6 +3220,13 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    AC_MSG_RESULT(yes)],
+   [AC_MSG_RESULT(no)
+ ])
++AC_MSG_CHECKING(for _dyld_shared_cache_contains_path)
++AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]], [[void *x=_dyld_shared_cache_contains_path]])],
++  [AC_DEFINE(HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH, 1, Define if you have the '_dyld_shared_cache_contains_path' function.)
++   AC_MSG_RESULT(yes)],
++  [AC_MSG_RESULT(no)
++])
++
+ # On some systems (eg. FreeBSD 5), we would find a definition of the
+ # functions ctermid_r, setgroups in the library, but no prototype
+ # (e.g. because we use _XOPEN_SOURCE). See whether we can take their
+diff --git a/pyconfig.h.in b/pyconfig.h.in
+index 890cce455d..c193182b81 100644
+--- a/pyconfig.h.in
++++ b/pyconfig.h.in
+@@ -547,6 +547,9 @@
+ /* Define to 1 if you have the <poll.h> header file. */
+ #undef HAVE_POLL_H
+ 
++/* Define if you have the '_dyld_shared_cache_contains_path' function. */
++#undef HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
++
+ /* Define to 1 if you have the <process.h> header file. */
+ #undef HAVE_PROCESS_H
+ 
+diff --git a/setup.py b/setup.py
+index f764223d06..ce8b8c3a5f 100644
+--- a/setup.py
++++ b/setup.py
+@@ -109,6 +109,13 @@ def is_macosx_sdk_path(path):
+                 or path.startswith('/System/')
+                 or path.startswith('/Library/') )
+ 
++def grep_headers_for(function, headers):
++    for header in headers:
++        with open(header, 'r') as f:
++            if function in f.read():
++                return True
++    return False
++
+ def find_file(filename, std_dirs, paths):
+     """Searches for the directory where a given file is located,
+     and returns a possibly-empty list of additional directories, or None
+@@ -2035,37 +2042,10 @@ class PyBuildExt(build_ext):
+         # *** Uncomment these for TOGL extension only:
+         #       -lGL -lGLU -lXext -lXmu \
+ 
+-    def configure_ctypes_darwin(self, ext):
+-        # Darwin (OS X) uses preconfigured files, in
+-        # the Modules/_ctypes/libffi_osx directory.
+-        srcdir = sysconfig.get_config_var('srcdir')
+-        ffi_srcdir = os.path.abspath(os.path.join(srcdir, 'Modules',
+-                                                  '_ctypes', 'libffi_osx'))
+-        sources = [os.path.join(ffi_srcdir, p)
+-                   for p in ['ffi.c',
+-                             'x86/darwin64.S',
+-                             'x86/x86-darwin.S',
+-                             'x86/x86-ffi_darwin.c',
+-                             'x86/x86-ffi64.c',
+-                             'powerpc/ppc-darwin.S',
+-                             'powerpc/ppc-darwin_closure.S',
+-                             'powerpc/ppc-ffi_darwin.c',
+-                             'powerpc/ppc64-darwin_closure.S',
+-                             ]]
+-
+-        # Add .S (preprocessed assembly) to C compiler source extensions.
+-        self.compiler.src_extensions.append('.S')
+-
+-        include_dirs = [os.path.join(ffi_srcdir, 'include'),
+-                        os.path.join(ffi_srcdir, 'powerpc')]
+-        ext.include_dirs.extend(include_dirs)
+-        ext.sources.extend(sources)
+-        return True
+-
+     def configure_ctypes(self, ext):
+         if not self.use_system_libffi:
+             if host_platform == 'darwin':
+-                return self.configure_ctypes_darwin(ext)
++                return False
+ 
+             srcdir = sysconfig.get_config_var('srcdir')
+             ffi_builddir = os.path.join(self.build_temp, 'libffi')
+@@ -2116,7 +2096,13 @@ class PyBuildExt(build_ext):
+         return True
+ 
+     def detect_ctypes(self, inc_dirs, lib_dirs):
+-        self.use_system_libffi = False
++
++        if (not sysconfig.get_config_var("LIBFFI_INCLUDEDIR") and
++            host_platform == 'darwin'):
++            self.use_system_libffi = True
++        else:
++            self.use_system_libffi = '--with-system-ffi' in sysconfig.get_config_var("CONFIG_ARGS")
++
+         include_dirs = []
+         extra_compile_args = []
+         extra_link_args = []
+@@ -2129,11 +2115,9 @@ class PyBuildExt(build_ext):
+ 
+         if host_platform == 'darwin':
+             sources.append('_ctypes/malloc_closure.c')
+-            sources.append('_ctypes/darwin/dlfcn_simple.c')
++            extra_compile_args.append('-DUSING_MALLOC_CLOSURE_DOT_C=1')
+             extra_compile_args.append('-DMACOSX')
+             include_dirs.append('_ctypes/darwin')
+-# XXX Is this still needed?
+-##            extra_link_args.extend(['-read_only_relocs', 'warning'])
+ 
+         elif host_platform == 'sunos5':
+             # XXX This shouldn't be necessary; it appears that some
+@@ -2163,35 +2147,49 @@ class PyBuildExt(build_ext):
+         if not '--with-system-ffi' in sysconfig.get_config_var("CONFIG_ARGS"):
+             return
+ 
++        ffi_inc = sysconfig.get_config_var("LIBFFI_INCLUDEDIR")
++        ffi_lib = None
++
++        ffi_inc_dirs = list(inc_dirs)
++
+         if host_platform == 'darwin':
+-            # OS X 10.5 comes with libffi.dylib; the include files are
+-            # in /usr/include/ffi
+-            inc_dirs.append('/usr/include/ffi')
+-
+-        ffi_inc = [sysconfig.get_config_var("LIBFFI_INCLUDEDIR")]
+-        if not ffi_inc or ffi_inc[0] == '':
+-            ffi_inc = find_file('ffi.h', [], inc_dirs)
+-        if ffi_inc is not None:
+-            ffi_h = ffi_inc[0] + '/ffi.h'
+-            with open(ffi_h) as f:
+-                for line in f:
+-                    line = line.strip()
+-                    if line.startswith(('#define LIBFFI_H',
+-                                        '#define ffi_wrapper_h')):
+-                        break
++            ffi_in_sdk = os.path.join(macosx_sdk_root(), "usr/include/ffi")
++
++            if not ffi_inc:
++                if os.path.exists(ffi_in_sdk):
++                    ext.extra_compile_args.append("-DUSING_APPLE_OS_LIBFFI=1")
++                    ffi_inc = ffi_in_sdk
++                    ffi_lib = 'ffi'
+                 else:
+-                    ffi_inc = None
+-                    print('Header file {} does not define LIBFFI_H or '
+-                          'ffi_wrapper_h'.format(ffi_h))
+-        ffi_lib = None
+-        if ffi_inc is not None:
+-            for lib_name in ('ffi_convenience', 'ffi_pic', 'ffi'):
++                    # OS X 10.5 comes with libffi.dylib; the include files are
++                    # in /usr/include/ffi
++                    ffi_inc_dirs.append('/usr/include/ffi')
++
++        if not ffi_inc:
++            found = find_file('ffi.h', [], ffi_inc_dirs)
++            if found:
++                ffi_inc = found[0]
++        if ffi_inc:
++            ffi_h = ffi_inc + '/ffi.h'
++            if not os.path.exists(ffi_h):
++                ffi_inc = None
++                print('Header file {} does not exist'.format(ffi_h))
++        if ffi_lib is None and ffi_inc:
++            for lib_name in ('ffi', 'ffi_pic'):
+                 if (self.compiler.find_library_file(lib_dirs, lib_name)):
+                     ffi_lib = lib_name
+                     break
+ 
+         if ffi_inc and ffi_lib:
+-            ext.include_dirs.extend(ffi_inc)
++            ffi_headers = glob(os.path.join(ffi_inc, '*.h'))
++            if grep_headers_for('ffi_prep_cif_var', ffi_headers):
++                ext.extra_compile_args.append("-DHAVE_FFI_PREP_CIF_VAR=1")
++            if grep_headers_for('ffi_prep_closure_loc', ffi_headers):
++                ext.extra_compile_args.append("-DHAVE_FFI_PREP_CLOSURE_LOC=1")
++            if grep_headers_for('ffi_closure_alloc', ffi_headers):
++                ext.extra_compile_args.append("-DHAVE_FFI_CLOSURE_ALLOC=1")
++
++            ext.include_dirs.append(ffi_inc)
+             ext.libraries.append(ffi_lib)
+             self.use_system_libffi = True
+ 
+-- 
+2.31.1.498.g6c1eba8ee3d-goog
+

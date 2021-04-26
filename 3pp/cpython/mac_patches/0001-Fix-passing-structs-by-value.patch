@@ -1,13 +1,13 @@
-From 7d030dd3b69638d410dbd6305edbf227e3ec8e09 Mon Sep 17 00:00:00 2001
+From 36ec408cf814b309dcbe6cc5a7921bd9e8cdb79d Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Wed, 26 Aug 2020 11:17:04 +1000
-Subject: [PATCH 1/2] Fix passing structs by value. This is a merge and
- backport of the following commits, restricted to only the files affecting
- Mac:
+Date: Thu, 22 Apr 2021 11:52:13 +1000
+Subject: [PATCH 3/6] Fix passing structs by value.
 
-https://github.com/python/cpython/pull/11797
-https://github.com/python/cpython/pull/12629
-https://github.com/python/cpython/pull/15612
+This is a merge and backport of the following commits, restricted to only
+the files affecting Mac:
+https://github.com/python/cpython/commit/32119e10b792ad7ee4e5f951a2d89ddbaf111cc5
+https://github.com/python/cpython/commit/48600c72c1afe1096c2412a135a43f8cdd895195
+https://github.com/python/cpython/commit/96b4087ce784ee7434dffdf69c475f5b40543982
 ---
  Lib/ctypes/test/test_structures.py | 48 ++++++++++++++++++--
  Modules/_ctypes/_ctypes.c          | 71 ++++++++++++++++++++++++++----
@@ -203,5 +203,5 @@ index bef251ef04..9aa817949c 100644
      if (create_comerror() < 0)
          return;
 -- 
-2.28.0.297.g1956fa8f8d-goog
+2.31.1.498.g6c1eba8ee3d-goog
 

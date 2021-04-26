@@ -1,0 +1,49 @@
+From 5453092ec6415a467414dfda476ab64c59c3f652 Mon Sep 17 00:00:00 2001
+From: Brian Ryner <bryner@google.com>
+Date: Mon, 26 Apr 2021 13:17:57 +1000
+Subject: [PATCH 6/6] Support cross-compiling to Mac ARM64.
+
+---
+ configure.ac | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index b0dfe0636c..2c6bc4fd71 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -340,12 +340,19 @@ then
+ 	*-*-cygwin*)
+ 		ac_sys_system=Cygwin
+ 		;;
++	*-*-darwin*)
++		ac_sys_system=Darwin
++		;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+ 		AC_MSG_ERROR([cross build not supported for $host])
+ 	esac
+-	ac_sys_release=
++	if test "$ac_sys_system" = "Darwin"; then
++		ac_sys_release=`uname -r`  # Needed for some tests below.
++	else
++		ac_sys_release=
++	fi
+     else
+ 	ac_sys_system=`uname -s`
+ 	if test "$ac_sys_system" = "AIX" \
+@@ -386,6 +393,11 @@ if test "$cross_compiling" = yes; then
+ 	*-*-cygwin*)
+ 		_host_cpu=
+ 		;;
++	*-*-darwin*)
++		# The rest of the build system expects _PYTHON_HOST_PLATFORM
++		# to be set to "darwin", not "darwin-{cpu}".
++		_host_cpu=
++		;;
+ 	*)
+ 		# for now, limit cross builds to known configurations
+ 		MACHDEP="unknown"
+-- 
+2.31.1.498.g6c1eba8ee3d-goog
+

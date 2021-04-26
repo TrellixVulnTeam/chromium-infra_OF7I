@@ -106,6 +106,14 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   SETUP_LOCAL_SKIP+=(_tkinter)
   # QuickTime.framework is no longer present on macOS 10.15
   SETUP_LOCAL_SKIP+=(_Qt)
+
+  # For use with cross-compiling.
+  if [[ $_3PP_TOOL_PLATFORM == mac-arm64 ]]; then
+      host_cpu="aarch64"
+  else
+      host_cpu="x86_64"
+  fi
+  EXTRA_CONFIGURE_ARGS="$EXTRA_CONFIGURE_ARGS --build=${host_cpu}-apple-darwin"
 else
   # Linux Python (Ubuntu) installations use 4-byte Unicode.
   UNICODE_TYPE=ucs4
@@ -144,13 +152,13 @@ else
   # linking that in instead?
   SETUP_LOCAL_ATTACH+=('crypt::-lcrypt')
   SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libnsl.a")
-
-  # Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
-  # This is likely to be true, since all linuxes that we know of have this
-  # configuration.
-  export ac_cv_file__dev_ptmx=y
-  export ac_cv_file__dev_ptc=n
 fi
+
+# Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
+# This is likely to be true, since all linuxes that we know of have this
+# configuration.
+export ac_cv_file__dev_ptmx=y
+export ac_cv_file__dev_ptc=n
 
 # Generate our configure script.
 autoconf
