@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"strings"
@@ -89,9 +90,7 @@ func TestGTestConversions(t *testing.T) {
 				}
 			}`
 
-		results := &GTestResults{
-			buf: &strings.Builder{},
-		}
+		results := &GTestResults{}
 		err := results.ConvertFromJSON(strings.NewReader(str))
 		So(err, ShouldBeNil)
 		So(results.AllTests, ShouldResemble, []string{"FooTest.TestDoBar", "FooTest.TestDoBaz"})
@@ -146,20 +145,18 @@ func TestGTestConversions(t *testing.T) {
 				"test_locations": {}
 			}`
 
-		results := &GTestResults{
-			buf: &strings.Builder{},
-		}
+		results := &GTestResults{}
 		err := results.ConvertFromJSON(strings.NewReader(str))
 		So(err, ShouldBeNil)
 		So(len(results.AllTests), ShouldEqual, 0)
 	})
 
 	Convey("convertTestResult", t, func() {
+		var buf bytes.Buffer
 		convert := func(result *GTestRunResult) *sinkpb.TestResult {
-			r := &GTestResults{
-				buf: &strings.Builder{},
-			}
-			tr, err := r.convertTestResult(ctx, "testId", "TestName", result)
+			r := &GTestResults{}
+			buf := &bytes.Buffer{}
+			tr, err := r.convertTestResult(ctx, buf, "testId", "TestName", result)
 			So(err, ShouldBeNil)
 			return tr
 		}
@@ -237,9 +234,8 @@ func TestGTestConversions(t *testing.T) {
 							Line: 54,
 						},
 					},
-					buf: &strings.Builder{},
 				}
-				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
+				tr, err := results.convertTestResult(ctx, &buf, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
 				So(tr.TestMetadata, ShouldResembleProto, &pb.TestMetadata{
 					Name: "TestName",
@@ -258,9 +254,8 @@ func TestGTestConversions(t *testing.T) {
 							Line: 54,
 						},
 					},
-					buf: &strings.Builder{},
 				}
-				tr, err := results.convertTestResult(ctx, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
+				tr, err := results.convertTestResult(ctx, &buf, "testId", "TestName", &GTestRunResult{Status: "SUCCESS"})
 				So(err, ShouldBeNil)
 				So(tr.TestMetadata.Location, ShouldResembleProto, &pb.TestLocation{
 					Repo:     chromiumSrcRepo,
@@ -398,7 +393,6 @@ func TestGTestConversions(t *testing.T) {
 						},
 					},
 				},
-				buf: &strings.Builder{},
 			}
 
 			testResults, err := results.ToProtos(ctx)

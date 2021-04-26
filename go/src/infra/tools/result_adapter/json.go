@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -148,10 +149,10 @@ func (r *JSONTestResults) ToProtos(ctx context.Context, normPathToFullPath map[s
 	}
 
 	ret := make([]*sinkpb.TestResult, 0, len(r.Tests))
-	buf := &strings.Builder{}
+	buf := &bytes.Buffer{}
 	for _, name := range testNames {
 		// Populate protos.
-		if err := r.Tests[name].toProtos(ctx, &ret, name, buf, globalTags, normPathToFullPath, testLocations); err != nil {
+		if err := r.Tests[name].toProtos(ctx, &ret, buf, name, globalTags, normPathToFullPath, testLocations); err != nil {
 			return nil, errors.Annotate(err, "test %q failed to convert run fields", name).Err()
 		}
 	}
@@ -296,7 +297,7 @@ func fromJSONStatus(s string) (pb.TestStatus, error) {
 // appends them to dest.
 //
 // Logs unresolved artifacts.
-func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, testName string, buf *strings.Builder, globalTags []*pb.StringPair, normPathToFullPath map[string]string, testLocations bool) error {
+func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, buf *bytes.Buffer, testName string, globalTags []*pb.StringPair, normPathToFullPath map[string]string, testLocations bool) error {
 	// Process statuses.
 	actualStatuses := strings.Split(f.Actual, " ")
 

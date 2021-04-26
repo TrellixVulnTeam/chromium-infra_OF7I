@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -79,7 +80,6 @@ type GTestResults struct {
 
 	// TestLocations maps test names to their location in code.
 	TestLocations map[string]*Location `json:"test_locations"`
-	buf           *strings.Builder
 }
 
 // GTestRunResult represents the per_iteration_data as described in
@@ -113,9 +113,7 @@ type Link struct {
 //
 // The receiver is cleared and its fields overwritten.
 func (r *GTestResults) ConvertFromJSON(reader io.Reader) error {
-	*r = GTestResults{
-		buf: &strings.Builder{},
-	}
+	*r = GTestResults{}
 	if err := json.NewDecoder(reader).Decode(r); err != nil {
 		return err
 	}
@@ -159,6 +157,7 @@ func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, erro
 		ret = append(ret, tr)
 	}
 
+	var buf bytes.Buffer
 	for _, data := range r.PerIterationData {
 		// Sort the test name to make the output deterministic.
 		testNames = testNames[:0]
@@ -179,7 +178,7 @@ func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, erro
 
 			for i, result := range data[name] {
 				// Store the processed test result into the correct part of the overall map.
-				rpb, err := r.convertTestResult(ctx, testID, name, result)
+				rpb, err := r.convertTestResult(ctx, &buf, testID, name, result)
 				if err != nil {
 					return nil, errors.Annotate(err,
 						"iteration %d of test %s failed to convert run result", i, name).Err()
@@ -273,7 +272,7 @@ func extractGTestParameters(testID string) (baseID string, err error) {
 	return
 }
 
-func (r *GTestResults) convertTestResult(ctx context.Context, testID, name string, result *GTestRunResult) (*sinkpb.TestResult, error) {
+func (r *GTestResults) convertTestResult(ctx context.Context, buf *bytes.Buffer, testID, name string, result *GTestRunResult) (*sinkpb.TestResult, error) {
 	status, expected, err := fromGTestStatus(result.Status)
 	if err != nil {
 		return nil, err
@@ -338,11 +337,11 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 
 	// Write the summary html
 	if len(summaryData) > 0 {
-		r.buf.Reset()
-		if err := summaryTmpl.ExecuteTemplate(r.buf, "gtest", summaryData); err != nil {
+		buf.Reset()
+		if err := summaryTmpl.ExecuteTemplate(buf, "gtest", summaryData); err != nil {
 			return nil, err
 		}
-		tr.SummaryHtml = r.buf.String()
+		tr.SummaryHtml = buf.String()
 	}
 
 	// Store the test code location.
