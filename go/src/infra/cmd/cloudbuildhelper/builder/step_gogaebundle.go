@@ -140,28 +140,32 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return err
 	}
 
+	// Packages for different go versions may have different files in them due to
+	// filtering based on build tags. For each Go runtime we keep a separate map
+	// of visited packages in this runtime. In practice it means if the GAE app
+	// uses more than one runtime, all packages will be visited more than once.
+	// Each separate visit may add more files to the output (or just revisit
+	// already added ones, which is a noop).
+	goStdlib := inv.State.goStdlib(runtime)
+	goDeps := inv.State.goDeps(runtime)
+
 	// Find all packages that mainPkg transitively depends on.
-	if inv.State.goStdlib == nil {
+	if len(goStdlib) == 0 {
 		logging.Infof(ctx, "Enumerating stdlib packages to know when to skip them...")
-		inv.State.goStdlib, err = findStdlib(bc.GOROOT)
-		if err != nil {
+		if err = findStdlib(bc.GOROOT, goStdlib); err != nil {
 			return err
 		}
 	}
 	logging.Infof(ctx, "Discovering transitive dependencies...")
-	deps, err := findDeps(&bc, mainPkg, inv.State.goStdlib)
+	deps, err := findDeps(&bc, mainPkg, goStdlib)
 	if err != nil {
 		return err
-	}
-
-	if inv.State.goDeps == nil {
-		inv.State.goDeps = stringset.New(len(deps))
 	}
 
 	// Add them all to the tarball.
 	logging.Infof(ctx, "Found %d dependencies. Copying them to the output...", len(deps))
 	for _, pkg := range deps {
-		if !inv.State.goDeps.Add(pkg.ImportPath) {
+		if !goDeps.Add(pkg.ImportPath) {
 			continue // added it already in some previous build step
 		}
 
@@ -179,7 +183,7 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		names = append(names, pkg.FFiles...)
 		names = append(names, pkg.SFiles...)
 
-		// Add them all to the tarball.
+		// Add them all to the tarball if not already there.
 		for _, name := range names {
 			err := inv.Output.AddFromDisk(filepath.Join(srcDir, name), filepath.Join(dstDir, name), nil)
 			if err != nil {
@@ -234,9 +238,9 @@ func isGoSourceFile(rel string) bool {
 }
 
 // findStdlib examines GOROOT to find names of most of stdlib packages.
-func findStdlib(goRoot string) (s stringset.Set, err error) {
-	s = stringset.New(100)
-
+//
+// Puts them into the given string set.
+func findStdlib(goRoot string, s stringset.Set) (err error) {
 	dir := filepath.Join(goRoot, "src")
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || !info.IsDir() {

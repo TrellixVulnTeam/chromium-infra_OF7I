@@ -130,8 +130,34 @@ type stepRunnerInv struct {
 //
 // They can mutate it if they want.
 type builderState struct {
-	goStdlib stringset.Set // names of stdlib packaged discovered in GOROOT
-	goDeps   stringset.Set // import paths of packages copied to the _gopath already
+	goStdlibPerVersion map[string]stringset.Set // names of stdlib packaged discovered in GOROOT
+	goDepsPerVersion   map[string]stringset.Set // import paths of packages copied to the _gopath already
+}
+
+// goStdlib is a set of stdlib packaged in GOROOT.
+func (s *builderState) goStdlib(goVer string) stringset.Set {
+	if s.goStdlibPerVersion == nil {
+		s.goStdlibPerVersion = make(map[string]stringset.Set, 1)
+	}
+	ss := s.goStdlibPerVersion[goVer]
+	if ss == nil {
+		ss = stringset.New(0)
+		s.goStdlibPerVersion[goVer] = ss
+	}
+	return ss
+}
+
+// goDeps is a set of imported packages copied to the _gopath already.
+func (s *builderState) goDeps(goVer string) stringset.Set {
+	if s.goDepsPerVersion == nil {
+		s.goDepsPerVersion = make(map[string]stringset.Set, 1)
+	}
+	ss := s.goDepsPerVersion[goVer]
+	if ss == nil {
+		ss = stringset.New(0)
+		s.goDepsPerVersion[goVer] = ss
+	}
+	return ss
 }
 
 // addFilesToOutput adds `src` (which is an existing file or directory on disk)
