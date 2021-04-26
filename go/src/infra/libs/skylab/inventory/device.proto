@@ -439,7 +439,7 @@ enum ServoFwChannel {
 }
 
 // copy of enum from dut_state.proto
-// Next Tag: 20
+// Next Tag: 21
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -483,6 +483,8 @@ enum PeripheralState {
   SERVO_SERIAL_MISMATCH = 18;
   // Issue to connect to servod by XMLRPC proxy.
   SERVOD_PROXY_ISSUE = 19;
+  // Issue related to servo-host. Timeout to start servod or issue with detecting devices.
+  SERVO_HOST_ISSUE = 20;
 }
 
 // copy of enum from dut_state.proto
