@@ -272,6 +272,7 @@ SPECS.update({
             ],
         ),
         SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
+        SourceOrPrebuilt('grpcio', '1.32.0', pyversions=['py3']),
         SourceOrPrebuilt(
             'lazy-object-proxy',
             '1.3.1',
@@ -345,6 +346,13 @@ SPECS.update({
             '1.19.2',
             skip_plat=['mac-x64-cp38', 'windows-x86-py3', 'windows-x64-py3'],
             packaged=[],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
+            'numpy',
+            '1.19.5',
+            packaged=[],
+            only_plat=['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -504,6 +512,12 @@ SPECS.update({
             packaged=(),
             only_plat=['manylinux-x86', 'manylinux-x64', 'manylinux-x64-py3'],
             pyversions=['py2', 'py3']),
+        SourceOrPrebuilt(
+            'wrapt',
+            '1.12.1',
+            packaged=(),
+            only_plat=['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            pyversions=['py3']),
     )
 })
 
@@ -522,6 +536,15 @@ SPECS.update({
                 'windows-x64'
             ],
         ),
+        # We can't build this ourselves as the build depends on Bazel.
+        Prebuilt(
+            'dm-tree',
+            '0.1.6',
+            # TODO: The prebuilt Mac wheel is built against 10.14, but we
+            # require 10.11 or earlier. We'll need to do something else to get
+            # it working.
+            ['manylinux-x64-py3', 'windows-x64-py3'],
+        ),
         Prebuilt(
             'freetype-py',
             '2.1.0.post1',
@@ -537,6 +560,12 @@ SPECS.update({
                 'windows-x64-py3',
             ],
             pyversions=['py2', 'py3'],
+        ),
+        # We can't build this ourselves as the build depends on libhdf5.
+        Prebuilt(
+            'h5py',
+            '2.10.0',
+            ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
         ),
         Prebuilt(
             'lxml',
@@ -592,6 +621,11 @@ SPECS.update({
             '8.1.2',
             ['manylinux-x64-py3', 'windows-x64-py3'],
         ),
+        Prebuilt(
+            'pillow',
+            '8.2.0',
+            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+        ),
         Prebuilt('pynacl', '1.2.1', ['manylinux-x64', 'mac-x64']),
         Prebuilt(
             'pypiwin32',
@@ -632,6 +666,12 @@ SPECS.update({
             pyversions=['py3'],
         ),
         Prebuilt(
+            'scipy',
+            '1.6.2',
+            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            pyversions=['py3'],
+        ),
+        Prebuilt(
             'tensorflow',
             '2.4.1',
             ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
@@ -663,6 +703,7 @@ SPECS.update({
         UniversalSource('distlib', '0.3.0', pyversions=['py2']),
         UniversalSource('distlib', '0.3.0', pyversions=['py3']),
         UniversalSource('future', '0.16.0'),
+        UniversalSource('future', '0.18.2'),
         UniversalSource('gin', '0.1.006', pyversions=['py3']),
         UniversalSource('glob2', '0.7'),
         UniversalSource('google-cloud-trace', '0.16.0'),
@@ -709,6 +750,7 @@ SPECS.update({
         UniversalSource('requests-unixsocket', '0.1.5'),
         UniversalSource('retrying', '1.3.3'),
         UniversalSource('selenium', '2.29.0'),
+        UniversalSource('termcolor', '1.1.0'),
         UniversalSource('tlslite', '0.4.9'),
         UniversalSource('websocket_client', '0.40.0'),
     )
@@ -718,19 +760,21 @@ SPECS.update({
 # and are available from PyPi in wheel form (.whl) already.
 from .wheel_wheel import Universal
 SPECS.update({
-    s.spec.tag: s for s in assert_sorted(
-        'Universal',
+    s.spec.tag: s for s in assert_sorted('Universal', *[
         Universal('CherryPy', '14.2.0'),
         Universal('Click', '7.0'),
         Universal('Django', '1.9'),
         Universal('GitPython', '2.1.9'),
         Universal('Jinja2', '2.10'),
         Universal('Jinja2', '2.10.1'),
+        Universal('Keras-Preprocessing', '1.1.2'),
         Universal('Markdown', '3.0.1'),
+        Universal('Markdown', '3.3.4', pyversions=['py3']),
         Universal('SecretStorage', '3.1.2', pyversions=['py3']),
         Universal('WebOb', '1.8.6'),
         Universal('WebTest', '2.0.35'),
         Universal('Werkzeug', '0.15.2'),
+        Universal('Werkzeug', '1.0.1'),
         Universal('absl-py', '0.11.0', pyversions=['py3']),
         Universal('aenum', '2.1.2'),
         Universal('altgraph', '0.16.1'),
@@ -751,6 +795,7 @@ SPECS.update({
         Universal('astroid', '2.4.2', pyversions=['py3']),
         Universal('astroid', '2.5.3', pyversions=['py3']),
         Universal('astunparse', '1.5.0'),
+        Universal('astunparse', '1.6.3'),
         Universal('atomicwrites', '1.3.0'),
         Universal('attrs', '17.4.0'),
         Universal('attrs', '18.2.0'),
@@ -762,15 +807,20 @@ SPECS.update({
         Universal('blessings', '1.7'),
         Universal('boto', '2.48.0'),
         Universal('cachetools', '2.0.1'),
+        Universal('cachetools', '4.2.1', pyversions=['py3']),
         Universal('certifi', '2018.11.29'),
         Universal('certifi', '2019.3.9'),
         Universal('certifi', '2020.4.5.1'),
         Universal('certifi', '2020.11.8'),
+        Universal('certifi', '2020.12.5'),
         Universal('chardet', '3.0.4'),
+        Universal('chardet', '4.0.0'),
         Universal('cheroot', '6.2.4'),
+        Universal('cloudpickle', '1.6.0', pyversions=['py3']),
         Universal('colorama', '0.4.1'),
         Universal('contextlib2', '0.5.5'),
         Universal('decorator', '4.4.2', pyversions=['py3']),
+        Universal('decorator', '5.0.7', pyversions=['py3']),
         Universal('docker', '2.7.0'),
         Universal('docker-pycreds', '0.2.1'),
         Universal('enum34', '1.1.6', pyversions=['py2']),
@@ -780,8 +830,11 @@ SPECS.update({
         Universal('fasteners', '0.14.1'),
         Universal('filelock', '3.0.12', pyversions=['py3']),
         Universal('flask', '1.0.2'),
+        Universal('flatbuffers', '1.12'),
         Universal('funcsigs', '1.0.2'),
         Universal('futures', '3.1.1'),
+        Universal('gast', '0.3.3'),
+        Universal('gin-config', '0.4.0'),
         Universal('gitdb2', '2.0.3'),
         Universal('google-api-core', '0.1.1'),
         Universal('google-api-core', '1.25.1'),
@@ -792,8 +845,10 @@ SPECS.update({
         Universal('google-auth', '1.2.1'),
         Universal('google-auth', '1.20.1'),
         Universal('google-auth', '1.25.0'),
+        Universal('google-auth', '1.29.0'),
         Universal('google-auth-httplib2', '0.0.3'),
         Universal('google-auth-oauthlib', '0.3.0'),
+        Universal('google-auth-oauthlib', '0.4.4', pyversions=['py3']),
         Universal('google-cloud-bigquery', '0.28.0'),
         Universal('google-cloud-bigquery', '2.7.0', pyversions=['py3']),
         Universal('google-cloud-bigtable', '0.28.1'),
@@ -813,6 +868,7 @@ SPECS.update({
         Universal('google-cloud-storage', '1.6.0'),
         Universal('google-cloud-translate', '1.3.0'),
         Universal('google-cloud-videointelligence', '0.28.0'),
+        Universal('google-pasta', '0.2.0', pyversions=['py3']),
         Universal('google-resumable-media', '0.3.1'),
         Universal('google-resumable-media', '1.2.0'),
         Universal('googleapis-common-protos', '1.52.0'),
@@ -820,6 +876,7 @@ SPECS.update({
         Universal('hypothesis', '6.9.1', pyversions=['py3']),
         Universal('idna', '2.5'),
         Universal('idna', '2.8'),
+        Universal('idna', '2.10'),
         Universal('importlib-metadata', '1.6.0'),
         Universal('iniconfig', '1.1.1', pyversions=['py3']),
         Universal('ipaddress', '1.0.18', pyversions=['py2']),
@@ -855,6 +912,8 @@ SPECS.update({
         Universal('oauth2client', '4.1.2'),
         Universal('oauth2client', '4.1.3'),
         Universal('oauthlib', '3.0.1'),
+        Universal('oauthlib', '3.1.0'),
+        Universal('opt-einsum', '3.3.0', pyversions=['py3']),
         Universal('packaging', '16.8'),
         Universal('parameterized', '0.7.0'),
         Universal('parameterized', '0.7.1'),
@@ -877,12 +936,16 @@ SPECS.update({
         Universal('protobuf', '3.10.0'),
         Universal('protobuf', '3.12.2'),
         Universal('protobuf', '3.13.0'),
+        Universal('protobuf', '3.15.8'),
         Universal('py', '1.5.3'),
         Universal('pyasn1', '0.2.3'),
         Universal('pyasn1', '0.4.5'),
+        Universal('pyasn1', '0.4.8'),
         Universal('pyasn1_modules', '0.0.8'),
         Universal('pyasn1_modules', '0.2.4'),
+        Universal('pyasn1_modules', '0.2.8'),
         Universal('pyfakefs', '3.7.2'),
+        Universal('pyglet', '1.5.0'),
         Universal('pylint', '1.6.5'),
         Universal('pylint', '1.7.6'),
         Universal('pylint', '2.0.1', pyversions=['py3']),
@@ -920,10 +983,12 @@ SPECS.update({
         Universal('pywinauto', '0.6.8'),
         Universal('requests', '2.13.0'),
         Universal('requests', '2.21.0'),
+        Universal('requests', '2.25.1'),
         Universal('requests-oauthlib', '1.2.0'),
         Universal('requests-oauthlib', '1.3.0'),
         Universal('rsa', '3.4.2'),
         Universal('rsa', '4.0'),
+        Universal('rsa', '4.7.2', pyversions=['py3']),
         Universal('selenium', '3.4.1'),
         Universal('selenium', '3.14.0'),
         Universal('setuptools', '34.3.2'),
@@ -938,13 +1003,20 @@ SPECS.update({
         Universal('smmap2', '2.0.3'),
         Universal('soupsieve', '1.9.5'),
         Universal('tempora', '1.11'),
+        Universal('tensorboard', '2.5.0', pyversions=['py3']),
+        Universal('tensorboard-data-server', '0.6.0', pyversions=['py3']),
+        Universal('tensorboard-plugin-wit', '1.8.0', pyversions=['py3']),
+        Universal('tensorflow-estimator', '2.4.0'),
+        Universal('tensorflow-probability', '0.12.2'),
         Universal('tf-agents', '0.7.1', pyversions=['py3']),
         Universal('toml', '0.10.1', pyversions=['py3']),
         Universal('typing', '3.6.4'),
+        Universal('typing-extensions', '3.7.4.3', pyversions=['py3']),
         Universal('uritemplate', '3.0.0'),
         Universal('urllib3', '1.22'),
         Universal('urllib3', '1.24.1'),
         Universal('urllib3', '1.24.3'),
+        Universal('urllib3', '1.26.4'),
         Universal('virtualenv', '20.0.20'),
         Universal('virtualenv-clone', '0.5.4'),
         Universal('vulture', '2.3', pyversions=['py3']),
@@ -954,6 +1026,7 @@ SPECS.update({
         Universal('wcwidth', '0.2.5'),
         Universal('webencodings', '0.5.1'),
         Universal('wheel', '0.33.1'),
+        Universal('wheel', '0.36.2'),
         Universal('yapf', '0.22.0'),
         Universal('yapf', '0.24.0'),
         Universal('yapf', '0.27.0'),
@@ -961,7 +1034,7 @@ SPECS.update({
         Universal('yapf', '0.31.0'),
         Universal('zipp', '1.2.0'),
         Universal('zipp', '3.1.0', pyversions=['py3']),
-    )
+    ])
 })
 
 # Special packages.
