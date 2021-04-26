@@ -1138,10 +1138,16 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	}
 
 	// 6. Check for device config if its an OS MachineLSE
-	if machinelse.GetChromeosMachineLse().GetDeviceLse() != nil {
-		// Validate device config
-		if err := validateDeviceConfig(ctx, machine); err != nil {
-			return errors.Annotate(err, "Validation error - Missing device config").Err()
+	if dlse := machinelse.GetChromeosMachineLse().GetDeviceLse(); dlse != nil {
+		crosMachine := machine.GetChromeosMachine()
+		if crosMachine.GetModel() == "" || crosMachine.GetBuildTarget() == "" {
+			return errors.Reason("Validation error - Missing model/board [%s/%s] info for %s", crosMachine.GetModel(), crosMachine.GetBuildTarget(), machine.GetName()).Err()
+		}
+		if dlse.GetDut() != nil {
+			// Validate device config
+			if err := validateDeviceConfig(ctx, machine); err != nil {
+				return errors.Annotate(err, "Validation error - Missing device config").Err()
+			}
 		}
 	}
 
