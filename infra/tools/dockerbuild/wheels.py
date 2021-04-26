@@ -429,8 +429,8 @@ SPECS.update({
             'pycrypto',
             '2.6.1',
             packaged=(),
-            only_plat=['manylinux-x64', 'mac-x64'],
-            pyversions=['py2'],
+            only_plat=['manylinux-x64', 'manylinux-x64-py3', 'mac-x64'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'pycryptodome',
