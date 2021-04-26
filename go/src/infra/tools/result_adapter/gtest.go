@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -300,8 +299,9 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 		tr.Duration = msToDuration(result.ElapsedTimeMs)
 	}
 
-	// Write the summary.
-	var snippet string
+	summaryData := map[string]interface{}{}
+
+	// snippet
 	if result.OutputSnippetBase64 != "" {
 		outputBytes, err := base64.StdEncoding.DecodeString(result.OutputSnippetBase64)
 		if err != nil {
@@ -309,46 +309,40 @@ func (r *GTestResults) convertTestResult(ctx context.Context, testID, name strin
 			// convert a summary.
 			logging.Warningf(ctx, "Failed to convert OutputSnippetBase64 %q", result.OutputSnippetBase64)
 		} else {
-			snippet = string(outputBytes)
-		}
-	}
-	r.buf.Reset()
-	links := make(map[string]string, len(result.Links))
-	l := new(Link)
-	s := new(string)
-	for lName, link := range result.Links {
-		switch {
-		case json.Unmarshal(link, l) == nil:
-			links[lName] = l.Content
-		case json.Unmarshal(link, s) == nil:
-			links[lName] = *s
-		default:
-			fmt.Println(json.Unmarshal(link, s))
-			return nil, errors.Reason("unsupported data format for a link: %q", string(link)).Err()
+			tr.Artifacts = map[string]*sinkpb.Artifact{"snippet": {
+				Body:        &sinkpb.Artifact_Contents{Contents: outputBytes},
+				ContentType: "text/plain",
+			}}
+			summaryData["text_artifacts"] = []string{"snippet"}
 		}
 	}
 
-	err = summaryTmpl.ExecuteTemplate(r.buf, "gtest", map[string]interface{}{
-		"snippet": strings.ToValidUTF8(snippet, string(unicode.ReplacementChar)),
-		"links":   links,
-	})
-	if err != nil {
-		return nil, err
-	}
-	stackTrace := r.buf.String()
+	// links
+	if len(result.Links) > 0 {
+		links := make(map[string]string, len(result.Links))
+		l := new(Link)
+		s := new(string)
 
-	if tr.Expected && len(stackTrace) <= maxSummaryLength {
-		// Expected results usually have a short snippet, so just keep it in summaryHtml.
-		tr.SummaryHtml = stackTrace
-	} else if len(stackTrace) > 0 {
-		a := &sinkpb.Artifact{
-			Body:        &sinkpb.Artifact_Contents{Contents: []byte(stackTrace)},
-			ContentType: "text/plain",
+		for lName, link := range result.Links {
+			switch {
+			case json.Unmarshal(link, l) == nil:
+				links[lName] = l.Content
+			case json.Unmarshal(link, s) == nil:
+				links[lName] = *s
+			default:
+				return nil, errors.Reason("unsupported data format for a link: %q", string(link)).Err()
+			}
 		}
+		summaryData["links"] = links
+	}
 
-		// TODO(crbug.com/1099606): Remove this summaryHtml when artifact embedding is done.
-		tr.SummaryHtml = `<p><text-artifact artifact-id="stack_trace" /></p>`
-		tr.Artifacts = map[string]*sinkpb.Artifact{"stack_trace": a}
+	// Write the summary html
+	if len(summaryData) > 0 {
+		r.buf.Reset()
+		if err := summaryTmpl.ExecuteTemplate(r.buf, "gtest", summaryData); err != nil {
+			return nil, err
+		}
+		tr.SummaryHtml = r.buf.String()
 	}
 
 	// Store the test code location.

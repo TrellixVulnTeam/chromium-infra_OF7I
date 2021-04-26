@@ -18,9 +18,19 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
+const snippetInSummaryHtml = `<p><text-artifact artifact-id="snippet" /></p>`
+
 func TestGTestConversions(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+
+	textArt := func(s string) *sinkpb.Artifact {
+		a := &sinkpb.Artifact{
+			Body:        &sinkpb.Artifact_Contents{Contents: []byte(s)},
+			ContentType: "text/plain",
+		}
+		return a
+	}
 
 	Convey(`From JSON works`, t, func() {
 		str := `{
@@ -189,7 +199,10 @@ func TestGTestConversions(t *testing.T) {
 					LosslessSnippet:     true,
 					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
 				})
-				So(tr.SummaryHtml, ShouldEqual, "<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>")
+				So(tr.SummaryHtml, ShouldEqual, snippetInSummaryHtml)
+				So(tr.Artifacts["snippet"], ShouldResembleProto, textArt(
+					"[ RUN      ] FooTest.TestDoBar\n(10 ms)",
+				))
 			})
 
 			Convey("invalid does not cause a fatal error", func() {
@@ -207,10 +220,11 @@ func TestGTestConversions(t *testing.T) {
 					LosslessSnippet:     true,
 					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
 				})
-				So(tr.SummaryHtml, ShouldEqual, `<p><text-artifact artifact-id="stack_trace" /></p>`)
+				So(tr.SummaryHtml, ShouldEqual, snippetInSummaryHtml)
 				So(tr.Artifacts, ShouldHaveLength, 1)
-				So(tr.Artifacts["stack_trace"].ContentType, ShouldEqual, "text/plain")
-				So(tr.Artifacts["stack_trace"].GetContents(), ShouldResemble, []byte("<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>"))
+				So(tr.Artifacts["snippet"], ShouldResemble, textArt(
+					"[ RUN      ] FooTest.TestDoBar\n(10 ms)",
+				))
 			})
 		})
 
@@ -265,8 +279,7 @@ func TestGTestConversions(t *testing.T) {
 					"logcat": json.RawMessage(`{"content": "https://luci-logdog.appspot.com/v/?s=logcat"}`),
 				},
 			})
-			So(tr.SummaryHtml, ShouldContainSubstring,
-				`<a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a>`)
+			So(tr.SummaryHtml, ShouldEqual, `<ul><li><a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a></li></ul>`)
 		})
 	})
 
