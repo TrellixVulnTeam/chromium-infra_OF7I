@@ -1939,6 +1939,18 @@ wheel: <
 
 * *universal*
 
+### 0.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-auth-httplib2-py2_py3"
+  version: "version:0.1.0"
+>
+```
+
+
+* *universal*
+
 ## **google-auth-oauthlib**
 
 ### 0.3.0
@@ -2541,6 +2553,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/httplib2-py2_py3"
   version: "version:0.13.1"
+>
+```
+
+
+* *universal*
+
+## **httplib2-py3**
+
+### 0.19.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/httplib2-py3"
+  version: "version:0.19.1"
 >
 ```
 
