@@ -272,7 +272,12 @@ SPECS.update({
             ],
         ),
         SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
-        SourceOrPrebuilt('grpcio', '1.32.0', pyversions=['py3']),
+        SourceOrPrebuilt(
+            'grpcio',
+            '1.32.0',
+            skip_plat=['linux-arm64-py3'],
+            pyversions=['py3']
+        ),
         SourceOrPrebuilt(
             'lazy-object-proxy',
             '1.3.1',
