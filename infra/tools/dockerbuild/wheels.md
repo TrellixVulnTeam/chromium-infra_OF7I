@@ -5259,6 +5259,20 @@ wheel: <
 
 * *universal*
 
+## **vulture-py3**
+
+### 2.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/vulture-py3"
+  version: "version:2.3"
+>
+```
+
+
+* *universal*
+
 ## **waitress**
 
 ### 1.4.3

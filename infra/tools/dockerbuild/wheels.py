@@ -947,6 +947,7 @@ SPECS.update({
         Universal('urllib3', '1.24.3'),
         Universal('virtualenv', '20.0.20'),
         Universal('virtualenv-clone', '0.5.4'),
+        Universal('vulture', '2.3', pyversions=['py3']),
         Universal('waitress', '1.4.3'),
         Universal('wand', '0.6.6'),
         Universal('wcwidth', '0.1.8'),
