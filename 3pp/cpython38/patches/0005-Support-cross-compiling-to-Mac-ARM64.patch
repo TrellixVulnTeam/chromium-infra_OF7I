@@ -1,21 +1,20 @@
-From 418695b0da6c40af423bc405dd51b7a10563ddef Mon Sep 17 00:00:00 2001
+From 98406d82a598091098523570b308fc2619bf664e Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Tue, 6 Apr 2021 11:35:09 +1000
-Subject: [PATCH 3/3] Support cross-compiling to Mac ARM64.
+Date: Mon, 26 Apr 2021 13:38:02 +1000
+Subject: [PATCH 5/5] Support cross-compiling to Mac ARM64.
 
 Incorporates a previous patch to allow 'readelf' to be the host
 readelf tool.
 ---
- configure    | 14 ++++++++++++--
- configure.ac | 16 +++++++++++++---
+ configure.ac | 18 +++++++++++++++---
  setup.py     |  2 +-
- 3 files changed, 26 insertions(+), 6 deletions(-)
+ 2 files changed, 16 insertions(+), 4 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 624ce1f08e..24d9acf303 100644
+index c5376a72e5..355c987cbe 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -382,12 +382,19 @@ then
+@@ -389,12 +389,19 @@ then
  	*-*-vxworks*)
  	    ac_sys_system=VxWorks
  	    ;;
@@ -36,17 +35,19 @@ index 624ce1f08e..24d9acf303 100644
      else
  	ac_sys_system=`uname -s`
  	if test "$ac_sys_system" = "AIX" \
-@@ -431,6 +438,9 @@ if test "$cross_compiling" = yes; then
+@@ -438,6 +445,11 @@ if test "$cross_compiling" = yes; then
  	*-*-vxworks*)
  		_host_cpu=$host_cpu
  		;;
 +	*-*-darwin*)
-+		_host_cpu=$host_cpu
++		# The rest of the build system does not expect
++		# _PYTHON_HOST_PLATFORM to include the host cpu on Mac.
++		_host_cpu=
 +		;;
  	*)
  		# for now, limit cross builds to known configurations
  		MACHDEP="unknown"
-@@ -1185,9 +1195,9 @@ then
+@@ -1192,9 +1204,9 @@ then
  fi
  
  AC_CHECK_TOOLS([READELF], [readelf], [:])
@@ -72,5 +73,5 @@ index 33a7e307c9..644f8eeb39 100644
                                  % (sysconfig.get_config_var('READELF'),
                                     do_readline, tmpfile))
 -- 
-2.31.0.208.g409f899ff0-goog
+2.31.1.498.g6c1eba8ee3d-goog
 
