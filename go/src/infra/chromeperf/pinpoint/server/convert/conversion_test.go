@@ -806,6 +806,53 @@ func TestSimpleConversions(t *testing.T) {
 
 			})
 
+			Convey("We support Telemetry specifying story tags and extra args", func() {
+				telemetryJob :=
+					&pinpoint.JobSpec{
+						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+								Benchmark: "some-benchmark",
+								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+										StoryTags: []string{"some-tag", "some-other-tag"},
+									}},
+								Measurement:   "some-metric",
+								GroupingLabel: "some-grouping-label",
+								Statistic:     pinpoint.TelemetryBenchmark_NONE,
+								ExtraArgs:     []string{"--browser", "some-browser"},
+							}}}
+				proto.Merge(telemetryJob, job)
+				v, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+				})
+
+				// Check that we have the required Telemetry fields in the JSON.
+				So(v, shouldContainMap, map[string]interface{}{
+					"benchmark":      "some-benchmark",
+					"metric":         "some-metric",
+					"story_tags":     "some-tag,some-other-tag",
+					"grouping_label": "some-grouping-label"})
+
+				// Check that we have base job configurations are set.
+				So(v, shouldContainMap, map[string]interface{}{
+					"configuration": "some-config",
+					// In legacy Pinpoint, an experiment is a "try" comparison mode.
+					"comparison_mode": "try",
+				})
+
+				So(v, shouldContainMap, map[string]interface{}{
+					"base_git_hash":    "c0dec0de",
+					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1",
+					"extra_test_args":  `["--browser","some-browser"]`,
+				})
+
+			})
+
 			Convey("We support GTest", func() {
 				gtestJob := &pinpoint.JobSpec{
 					Arguments: &pinpoint.JobSpec_GtestBenchmark{

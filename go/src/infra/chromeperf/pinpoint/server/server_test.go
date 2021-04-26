@@ -367,6 +367,27 @@ func TestScheduleJob(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(j.Name, ShouldEqual, jobName)
 			})
+
+			Convey("with extra args for a Telemetry job, ScheduleJob succeeds", func() {
+				j, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
+					Job: &pinpoint.JobSpec{
+						Config: "some-config",
+						Target: "some-target",
+						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+								Benchmark: "benchmark",
+								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+									Story: "some-story",
+								},
+								Measurement: "measurement",
+								ExtraArgs:   []string{"--browser", "some-browser"},
+							},
+						},
+					},
+				})
+				So(err, ShouldBeNil)
+				So(j.Name, ShouldEqual, jobName)
+			})
 		})
 	})
 }

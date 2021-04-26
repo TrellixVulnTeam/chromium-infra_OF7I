@@ -167,6 +167,14 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 			return nil, errors.Reason("Unsupported story_selection in TelemetryBenchmark").
 				InternalReason("story_selection is %v", s).Err()
 		}
+		if tb.ExtraArgs != nil {
+			e, err := json.Marshal(tb.ExtraArgs)
+			if err != nil {
+				return nil, errors.Reason("failed to marshal extra args").
+					InternalReason("extra args is %v", tb.ExtraArgs).Err()
+			}
+			v.Set("extra_test_args", string(e))
+		}
 	case *pinpoint.JobSpec_GtestBenchmark:
 		gb := args.GtestBenchmark
 		v.Set("benchmark", gb.Benchmark)
