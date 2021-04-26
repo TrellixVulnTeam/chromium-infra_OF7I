@@ -176,8 +176,8 @@ func (c *leaseFlags) register(f *flag.FlagSet) {
 	f.StringVar(&c.model, "model", "", "Model of DUT to lease. If leasing by model, the first available DUT of the given model will be leased.")
 	f.StringVar(&c.host, "host", "", `Hostname of an individual DUT to lease. If leasing by hostname and the host DUT is running another task,
 the lease won't start until that task completes.`)
-	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional DUT dimension in format key=val or key:val; may be specified multiple times.")
-	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional DUT dimensions in same format as -dim.")
+	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional DUT scheduling dimension in format key=val or key:val; may be specified multiple times.")
+	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional DUT scheduling dimensions in same format as -dim.")
 	f.BoolVar(&c.exitEarly, "exit-early", false, `Exit command as soon as lease is scheduled. crosfleet will not notify on lease validation failure,
 or print the hostname of the leased DUT.`)
 }
