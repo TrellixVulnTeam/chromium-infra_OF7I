@@ -52,7 +52,7 @@ func TestGitilesRedirect(t *testing.T) {
 			So(
 				url,
 				ShouldEqual,
-				"https://foo.googlesource.com/bar/baz/+/1234567890123456789012345678901234567890...0000000000000000000000000000000000000000",
+				"https://foo.googlesource.com/bar/baz/+/1234567890123456789012345678901234567890..0000000000000000000000000000000000000000",
 			)
 		})
 

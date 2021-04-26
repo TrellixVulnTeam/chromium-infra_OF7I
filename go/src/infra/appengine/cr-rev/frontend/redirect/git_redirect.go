@@ -55,7 +55,7 @@ func (r *gitilesRedirect) Diff(c1, c2 models.Commit) (string, error) {
 		return "", errNotIdenticalRepositories
 	}
 	url := fmt.Sprintf(
-		"https://%s.googlesource.com/%s/+/%s...%s",
+		"https://%s.googlesource.com/%s/+/%s..%s",
 		c1.Host, c1.Repository, c1.CommitHash, c2.CommitHash)
 	return url, nil
 }

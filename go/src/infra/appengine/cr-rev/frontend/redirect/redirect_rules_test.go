@@ -183,13 +183,13 @@ func TestRedirects(t *testing.T) {
 
 		Convey("full diff", func() {
 			Convey("existing commits", func() {
-				url, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560...0000000000000000000000000000000000291562")
+				url, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560..0000000000000000000000000000000000291562")
 				So(err, ShouldBeNil)
-				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560...0000000000000000000000000000000000291562")
+				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560..0000000000000000000000000000000000291562")
 			})
 
 			Convey("commit missing", func() {
-				_, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560...0000000000000000000000000000000000291561")
+				_, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560..0000000000000000000000000000000000291561")
 				So(err, ShouldEqual, ErrNoMatch)
 			})
 		})
@@ -323,7 +323,7 @@ func TestRedirects(t *testing.T) {
 			url, _, err := r.FindRedirectURL(
 				ctx, "/000000..000001")
 			So(err, ShouldBeNil)
-			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000...000001")
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000..000001")
 		})
 	})
 
