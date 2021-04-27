@@ -1,0 +1,384 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/infra_gclient_with_go"
+    ],
+    "infra_step": true,
+    "name": "ensure builder dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gerrit_client.py",
+      "changes",
+      "--host",
+      "https://chromium-review.googlesource.com",
+      "--json_file",
+      "/path/to/tmp/json",
+      "--limit",
+      "1",
+      "-p",
+      "change=607472",
+      "-o",
+      "ALL_REVISIONS",
+      "-o",
+      "DOWNLOAD_COMMANDS"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
+    "infra_step": true,
+    "name": "gerrit fetch current CL info",
+    "timeout": 60,
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"owner\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"name\": \"John Doe\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"revisions\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"184ebe53805e102605d11f6b143486d15c23a09c\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"_number\": \"2\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"refs/changes/72/607472/2\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
+      "--spec-path",
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "--patch_root",
+      "infra/go/src/go.chromium.org/luci",
+      "--revision_mapping_file",
+      "{\"got_revision\": \"infra/go/src/go.chromium.org/luci\"}",
+      "--git-cache-dir",
+      "[CACHE]/git",
+      "--cleanup-dir",
+      "[CLEANUP]/bot_update",
+      "--output_json",
+      "/path/to/tmp/json",
+      "--patch_ref",
+      "https://chromium.googlesource.com/infra@refs/heads/master:refs/changes/72/607472/2",
+      "--revision",
+      "infra@refs/heads/master",
+      "--revision",
+      "infra/go/src/go.chromium.org/luci@refs/heads/master",
+      "--refs",
+      "refs/heads/master"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
+      "GIT_HTTP_LOW_SPEED_TIME": "1800"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "bot_update",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Some step text@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"refs/heads/master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": \"refs/heads/master\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"d902a4fdd0bda35a65868a3d7364307081869b87\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra/go/src/go.chromium.org/luci.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"cf2eff3b5b54c1409c761ebca6e27fc14a14aa38\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_failure\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra/go/src/go.chromium.org/luci\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"cf2eff3b5b54c1409c761ebca6e27fc14a14aa38\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#37652}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"root\": \"infra\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"directories\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/infra.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"d902a4fdd0bda35a65868a3d7364307081869b87\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"infra/go/src/go.chromium.org/luci\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/infra/go/src/go.chromium.org/luci.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"cf2eff3b5b54c1409c761ebca6e27fc14a14aa38\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"version\": 0@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"step_text\": \"Some step text\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision@\"cf2eff3b5b54c1409c761ebca6e27fc14a14aa38\"@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#37652}\"@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "-c",
+      "user.email=commit-bot@chromium.org",
+      "-c",
+      "user.name=The Commit Bot",
+      "commit",
+      "-a",
+      "-m",
+      "Committed patch"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
+    "infra_step": true,
+    "name": "commit git patch"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "runhooks"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "gclient runhooks"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_gclient_with_go/infra/go/bootstrap.py",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "infra_step": true,
+    "name": "init infra go env",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Using go 1.66.6@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"GOPATH\": \"[CACHE]/infra_gclient_with_go/infra/go\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"env_prefixes\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"env_suffixes\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/infra/go/bin\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"go_version\": \"1.66.6\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "HEAD",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
+    "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "get change list",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@change list@client/cmd/isolate/lib/batch_archive.go@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "install tools/golangci-lint"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/cipd/tools/golangci-lint/version%3A2%401.39.0"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "install tools/golangci-lint.ensure package directory",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/cipd/tools/golangci-lint/version%3A2%401.39.0",
+      "-ensure-file",
+      "tools/golangci-lint/${platform} version:2@1.39.0",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "install tools/golangci-lint.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@1.39.0\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"tools/golangci-lint/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/cipd/tools/golangci-lint/version%3A2%401.39.0/golangci-lint",
+      "run",
+      "--out-format=json",
+      "--issues-exit-code=0",
+      "client/cmd/isolate/lib/batch_archive.go"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/golang/go"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+      ]
+    },
+    "name": "run golangci-lint",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"Issues\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"ExpectedNoLintLinter\": \"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"FromLinter\": \"deadcode\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"HunkPos\": 4, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"Pos\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"Column\": 6, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"Filename\": \"client/cmd/isolate/lib/batch_archive.go\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"Line\": 250, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"Offset\": 7960@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"Severity\": \"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"SourceLines\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"func foo() {}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      ], @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"Text\": \"`foo` is unused\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "write results",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@tricium@\"{\\n\\\"comments\\\": [\\n{\\n\\\"category\\\": \\\"golangci-lint (deadcode)\\\", \\n\\\"startChar\\\": 5, \\n\\\"startLine\\\": 250, \\n\\\"path\\\": \\\"client/cmd/isolate/lib/batch_archive.go\\\", \\n\\\"message\\\": \\\"`foo` is unused\\\", \\n\\\"endLine\\\": 251\\n}\\n]\\n}\"@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -5,41 +5,86 @@
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'depot_tools/osx_sdk',
-  'infra_checkout',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/json',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/step',
+    'depot_tools/osx_sdk',
+    'infra_checkout',
+    'recipe_engine/buildbucket',
+    'recipe_engine/cipd',
+    'recipe_engine/context',
+    'recipe_engine/json',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/raw_io',
+    'recipe_engine/step',
+    'recipe_engine/tricium',
 ]
 
 PROPERTIES = {
-  'GOARCH': Property(
-    default=None,
-    kind=str,
-    help='Set GOARCH environment variable for go build+test'),
-  'go_version_variant': Property(
-    default=None,
-    kind=str,
-    help='A go version variant to bootstrap, see bootstrap.py'),
-  'run_integration_tests': Property(
-    default=False,
-    kind=bool,
-    help='Whether to run integration tests'),
+    'GOARCH':
+        Property(
+            default=None,
+            kind=str,
+            help='Set GOARCH environment variable for go build+test'),
+    'go_version_variant':
+        Property(
+            default=None,
+            kind=str,
+            help='A go version variant to bootstrap, see bootstrap.py'),
+    'run_integration_tests':
+        Property(
+            default=False, kind=bool, help='Whether to run integration tests'),
+    'run_lint':
+        Property(default=False, kind=bool, help='Whether to run linter'),
 }
 
 LUCI_GO_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/luci'
 
 
-def RunSteps(api, GOARCH, go_version_variant, run_integration_tests):
+def apply_golangci_lint(api, co):
+  go_files = sorted([f for f in co.get_changed_files() if f.endswith('.go')])
+
+  if not go_files:
+    return  # pragma: no cover
+
+  linter = api.cipd.ensure_tool('tools/golangci-lint/${platform}',
+                                'version:2@1.39.0')
+  result = api.step(
+      'run golangci-lint',
+      [linter, 'run', '--out-format=json', '--issues-exit-code=0'] + go_files,
+      step_test_data=lambda: api.json.test_api.output_stream({
+          "Issues": [{
+              "FromLinter": "deadcode",
+              "Text": "`foo` is unused",
+              "Severity": "",
+              "SourceLines": ["func foo() {}"],
+              "Pos": {
+                  "Filename": "client/cmd/isolate/lib/batch_archive.go",
+                  "Offset": 7960,
+                  "Line": 250,
+                  "Column": 6
+              },
+              "HunkPos": 4,
+              "ExpectedNoLintLinter": ""
+          }],
+      }),
+      stdout=api.json.output())
+
+  for issue in result.stdout.get("Issues", []):
+    pos = issue["Pos"]
+    line = pos["Line"]
+    api.tricium.add_comment("golangci-lint (%s)" % issue["FromLinter"],
+                            issue["Text"], pos["Filename"], line, line + 1,
+                            pos["Column"] - 1, 0)
+
+  api.tricium.write_comments()
+
+
+def RunSteps(api, GOARCH, go_version_variant, run_integration_tests, run_lint):
   co = api.infra_checkout.checkout(
       'luci_go',
       patch_root=LUCI_GO_PATH_IN_INFRA,
       go_version_variant=go_version_variant)
   is_presubmit = 'presubmit' in api.buildbucket.builder_name.lower()
-  if is_presubmit:
+  if is_presubmit or run_lint:
     co.commit_change()
   co.gclient_runhooks()
 
@@ -56,6 +101,8 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests):
   with api.context(env=env), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
       co.run_presubmit()
+    elif run_lint:
+      apply_golangci_lint(api, co)
     else:
       api.step('go build', ['go', 'build', 'go.chromium.org/luci/...'])
       api.step('go test', ['go', 'test', 'go.chromium.org/luci/...'])
@@ -80,12 +127,23 @@ def GenTests(api):
       api.properties(revision='1'*40)
     )
 
-  yield (
-    api.test('presubmit_try_job') +
-    api.buildbucket.try_build(
-        'infra', 'try', 'Luci-go Presubmit', change_number=607472, patch_set=2,
-    ) + api.step_data('presubmit', api.json.output([[]]))
-  )
+  yield (api.test('presubmit_try_job') + api.buildbucket.try_build(
+      'infra',
+      'try',
+      'Luci-go Presubmit',
+      change_number=607472,
+      patch_set=2,
+  ) + api.step_data('presubmit', api.json.output([[]])))
+
+  yield (api.test('lint_try_job') + api.buildbucket.try_build(
+      'infra',
+      'try',
+      'luci-go lint',
+      change_number=607472,
+      patch_set=2,
+  ) + api.properties(run_lint=True) + api.step_data(
+      'get change list',
+      stdout=api.raw_io.output('client/cmd/isolate/lib/batch_archive.go\n')))
 
   yield (
     api.test('override_GOARCH') +
