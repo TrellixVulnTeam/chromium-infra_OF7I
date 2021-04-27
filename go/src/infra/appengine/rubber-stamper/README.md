@@ -29,6 +29,7 @@ Rubber-Stamper review your CLs".
 
 ### Configure your patterns
 1. Add a config for your patterns in [config.cfg](https://chrome-internal.googlesource.com/infradata/config/+/refs/heads/master/configs/rubber-stamper/config.cfg).
+To edit this config file, clone the [service configurations for LUCI](https://chrome-internal.googlesource.com/infradata/config/) repo.
 Config definitions can be found in [config.proto](https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/appengine/rubber-stamper/config/config.proto).
 2. Send a review request to xinyuoffline@ and yulanlin@. Once the config change
 is submitted, the config will be pushed to Rubber-Stamper via luci-config.
