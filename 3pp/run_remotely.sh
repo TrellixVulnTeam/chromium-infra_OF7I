@@ -82,11 +82,14 @@ CIPD_EMAIL=$(sed 's/@/_at_/' <<<"$LOGIN_EMAIL")
 
 # scan for platforms
 TARG_OS=Windows
+DOCKER_ROLE=
+
 for arg in "$@"; do
   if [[ $arg == platform* ]]; then
     case $arg in
       *linux*)
         TARG_OS=Ubuntu-14.04
+        DOCKER_ROLE="-d role=docker"
         ;;
       *mac*)
         TARG_OS=Mac
@@ -118,7 +121,7 @@ set -x
 # pick a super-vanilla builder
 led get-builder -canary 'luci.infra-internal.try:infra-internal-presubmit' | \
   # Tweak dimensions
-  led edit -d builder= -d caches= -d os=$TARG_OS -d role=docker | \
+  led edit -d builder= -d caches= -d os=$TARG_OS ${DOCKER_ROLE} | \
   # Remove LUCI global properties
   led edit -p buildbucket= -p buildername= -p buildnumber= | \
   # Remove 'infra-try-presubmit' properties
