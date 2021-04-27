@@ -45,7 +45,7 @@ http {
   default_type  application/octet-stream;
   log_format main '$remote_addr - $remote_user [$time_local] "$request" '
                   '$status $body_bytes_sent "$http_referer" '
-                  '"$http_user_agent" "$http_x_forwarded_for"';
+                  '"$http_user_agent" "$http_x_forwarded_for" $sent_http_x_cache';
   proxy_cache_path  /var/cache/nginx levels=1:2 keys_zone=google-storage:80m
                     max_size={{ .CacheSizeInGB }}g inactive=720h;
   # gs_cache upstream definition.
@@ -88,6 +88,27 @@ http {
       proxy_cache_valid     200 720h;
       proxy_cache_key       $request_method$uri$is_args$args;
     }
+	# CQ build cache configuration.
+	# The configuration is exactly same with the "location /" except
+	# "proxy_cache_valid" which is much shorter than a release build.
+	# A CQ build URL is like "/download/chromeos-image-archive/coral-cq/R92-13913.0.0-46943-8850024658050820208/...".
+	location ~ ^/[^/]+/[^/]+/\S+-cq/ {
+      proxy_cache_lock on;
+      proxy_cache_lock_timeout 900s;
+      proxy_cache_bypass $http_x_no_cache;
+      expires max;
+      proxy_pass            http://gs_archive_servers$uri$is_args$args;
+      proxy_read_timeout    900;
+      proxy_connect_timeout 90;
+      proxy_redirect        off;
+      proxy_http_version    1.1;
+      proxy_set_header      Connection "";
+      proxy_set_header      X-Forwarded-Host {{ .VirtualIP }}:$server_port;
+      proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_cache           google-storage;
+      proxy_cache_valid     200 48h;
+      proxy_cache_key       $request_method$uri$is_args$args;
+	}
     # Rewrite rules converting devserver client requests to gs_cache.
     location @gs_cache {
       if ($arg_gs_bucket != "") {
