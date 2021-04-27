@@ -12,8 +12,7 @@ from analysis.constants import CHROMIUM_ROOT_PATH
 GENERATED_CODE_FILE_PATH_PATTERN = re.compile(r'.*out/[^/]+/gen/')
 THIRD_PARTY_FILE_PATH_MARKER = 'third_party'
 
-JAVA_CHROMIUM_FUNCTION_MARKER = 'org.chromium.chrome.browser'
-JAVA_CHROMIUM_CODE_REPOSITORY_PATH = 'src/chrome/android/java/src'
+CHROMIUM_PACKAGE_PATTERN = re.compile(r'org\.chromium\.([^.]*)')
 
 
 def GetFullPathForJavaFrame(function):
@@ -26,8 +25,13 @@ def GetFullPathForJavaFrame(function):
     A string of normalized full path, for example, org/chromium/CrAct.java
   """
   file_path = '%s.java' % '/'.join(function.split('.')[:-1])
-  if JAVA_CHROMIUM_FUNCTION_MARKER in function:
-    file_path = '%s/%s' % (JAVA_CHROMIUM_CODE_REPOSITORY_PATH, file_path)
+  chromium_package = CHROMIUM_PACKAGE_PATTERN.match(function)
+  if chromium_package:
+    package = chromium_package.group(1)
+    if package == "content":
+      package = "content/public"
+    repository_path = 'src/' + package + '/android/java/src/'
+    file_path = repository_path + file_path
 
   return file_path
 

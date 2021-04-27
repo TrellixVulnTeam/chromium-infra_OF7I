@@ -18,6 +18,14 @@ class ParseUtilTest(testing.AppengineTestCase):
         parse_util.GetFullPathForJavaFrame(
             'org.chromium.chrome.browser.file.function'),
         'src/chrome/android/java/src/org/chromium/chrome/browser/file.java')
+    self.assertEqual(
+        parse_util.GetFullPathForJavaFrame(
+            'org.chromium.content.browser.file.function'),
+        'src/content/public/android/java/' +
+        'src/org/chromium/content/browser/file.java')
+    self.assertEqual(
+        parse_util.GetFullPathForJavaFrame('org.chromium.base.file.function'),
+        'src/base/android/java/src/org/chromium/base/file.java')
 
   def testGetCrashedLineRange(self):
     self.assertEqual(parse_util.GetCrashedLineRange('23'),
