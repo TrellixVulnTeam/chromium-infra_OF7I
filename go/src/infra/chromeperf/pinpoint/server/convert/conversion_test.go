@@ -12,8 +12,8 @@ import (
 
 	"infra/chromeperf/pinpoint"
 
-	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/protobuf/proto"
 )
 
 func shouldContainMap(actual interface{}, expected ...interface{}) string {

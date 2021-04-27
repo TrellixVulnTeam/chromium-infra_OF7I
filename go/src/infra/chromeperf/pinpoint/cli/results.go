@@ -78,13 +78,14 @@ type downloadResultsMixin struct {
 
 // TODO(chowski): if we are actually going to use mixins a lot, probably should
 // add some support in the pinpointCommand wrapper type somehow.
-func (drm *downloadResultsMixin) RegisterFlags(flags *flag.FlagSet) {
-	flags.BoolVar(&drm.downloadResults, "download-results", false, text.Doc(`
+func (drm *downloadResultsMixin) RegisterFlags(flags *flag.FlagSet, userCfg userConfig) {
+	flags.BoolVar(&drm.downloadResults, "download-results", userCfg.DownloadResults, text.Doc(`
 		If set, results are downloaded to the -results-dir.
 		Note that files will NOT be overwritten if they exist already (an error
 		will be printed).
+		Override default from user configuration file.
 	`))
-	flags.StringVar(&drm.resultsDir, "results-dir", os.TempDir(), text.Doc(`
+	flags.StringVar(&drm.resultsDir, "results-dir", userCfg.TempDir, text.Doc(`
 		Ignored unless -download-results is set;
 		the directory to store results in.
 	`))
@@ -145,11 +146,11 @@ type waitForJobMixin struct {
 	quiet bool
 }
 
-func (wjm *waitForJobMixin) RegisterFlags(flags *flag.FlagSet) {
-	flags.BoolVar(&wjm.wait, "wait", false, text.Doc(`
+func (wjm *waitForJobMixin) RegisterFlags(flags *flag.FlagSet, uc userConfig) {
+	flags.BoolVar(&wjm.wait, "wait", uc.Wait, text.Doc(`
 		When enabled, will wait for a job to complete.
 	`))
-	flags.BoolVar(&wjm.quiet, "quiet", false, text.Doc(`
+	flags.BoolVar(&wjm.quiet, "quiet", uc.Quiet, text.Doc(`
 		Suppress progress output when waiting.
 	`))
 }

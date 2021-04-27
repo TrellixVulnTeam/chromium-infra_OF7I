@@ -41,10 +41,12 @@ type baseCommandRun struct {
 	initClientFactoryErr  error
 }
 
-func (r *baseCommandRun) RegisterFlags(p Param) {
-	r.Flags.StringVar(&r.endpoint, "endpoint", p.DefaultServiceDomain, text.Doc(`
+func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
+	uc := getUserConfig(context.Background(), getUserConfigFilename(), p)
+	r.Flags.StringVar(&r.endpoint, "endpoint", uc.Endpoint, text.Doc(`
 		Pinpoint API service endpoint.
 	`))
+	return uc
 }
 
 func getFactorySettings(ctx context.Context, serviceDomain string) (

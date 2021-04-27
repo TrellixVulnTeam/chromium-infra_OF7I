@@ -94,8 +94,8 @@ func cmdGetJob(p Param) *subcommands.Command {
 }
 
 func (gj *getJob) RegisterFlags(p Param) {
-	gj.baseCommandRun.RegisterFlags(p)
-	gj.downloadResultsMixin.RegisterFlags(&gj.Flags)
+	uc := gj.baseCommandRun.RegisterFlags(p)
+	gj.downloadResultsMixin.RegisterFlags(&gj.Flags, uc)
 
 	gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
 		Required; the name of the job to get information about.
@@ -154,8 +154,8 @@ func cmdWaitJob(p Param) *subcommands.Command {
 }
 
 func (wj *waitJob) RegisterFlags(p Param) {
-	wj.baseCommandRun.RegisterFlags(p)
-	wj.downloadResultsMixin.RegisterFlags(&wj.Flags)
+	uc := wj.baseCommandRun.RegisterFlags(p)
+	wj.downloadResultsMixin.RegisterFlags(&wj.Flags, uc)
 	wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
 		Required; the name of the job to poll.
 		Example: "-name=XXXXXXXXXXXXXX"

@@ -106,9 +106,9 @@ func (c *clValue) Set(i string) error {
 }
 
 func (e *experimentBaseRun) RegisterFlags(p Param) {
-	e.baseCommandRun.RegisterFlags(p)
-	e.waitForJobMixin.RegisterFlags(&e.Flags)
-	e.downloadResultsMixin.RegisterFlags(&e.Flags)
+	uc := e.baseCommandRun.RegisterFlags(p)
+	e.waitForJobMixin.RegisterFlags(&e.Flags, uc)
+	e.downloadResultsMixin.RegisterFlags(&e.Flags, uc)
 	e.Flags.Var(&e.issue, "bug", text.Doc(`
 		Monorail issue id in the form <project>:<issue id>.
 	`))
