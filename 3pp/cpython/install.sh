@@ -209,6 +209,11 @@ for x in "${SETUP_LOCAL_ATTACH[@]}"; do
   SETUP_LOCAL_FLAGS+=(--attach "$x")
 done
 
+# TODO(bryner): Remove this debugging once Mac ARM64 cross build is working.
+echo Using `which $INTERP`
+echo PYTHONPATH=$PYTHONPATH
+$INTERP -s -S -c "import sys; print sys.path"
+
 $INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   --pybuilddir $(cat pybuilddir.txt) \
   --output ./Modules/Setup.local \
