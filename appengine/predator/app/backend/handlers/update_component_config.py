@@ -34,7 +34,7 @@ def GetComponentClassifierConfig(config, http_client=HttpClientAppengine()):
     """
   component_dict = defaultdict(dict)
   # Mappings from OWNERS files.
-  status_code, owner_mappings = http_client.Get(config['owner_mapping_url'])
+  status_code, owner_mappings, _ = http_client.Get(config['owner_mapping_url'])
   if status_code != 200:
     return None
 

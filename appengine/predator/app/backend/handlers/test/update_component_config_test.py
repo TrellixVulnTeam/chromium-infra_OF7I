@@ -68,9 +68,9 @@ class DummyHttpClient(HttpClientAppengine):  # pragma: no cover.
 
   def Get(self, *_):  # pylint: disable=W
     if 'owner_mapping_url' in self.mock_owners_mappings:
-      return 200, self.response
+      return 200, self.response, {}
     else:
-      return 500, {}
+      return 500, {}, {}
 
 
 class UpdateComponentConfigTest(TestCase):
