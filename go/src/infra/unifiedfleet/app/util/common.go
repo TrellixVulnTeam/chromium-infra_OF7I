@@ -33,7 +33,7 @@ const (
 var satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
 
 // gtransitRegex regular expression to identify a gTransit DUT hostname.
-var gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+-host[\d]+`)
+var gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+`)
 
 // gtransitHive hive value for a gTransit DUT.
 const gtransitHive string = "cros-mtv1950-144"
