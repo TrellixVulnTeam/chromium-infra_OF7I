@@ -206,16 +206,16 @@ func GetAssetIndexedFieldName(input string) (string, error) {
 		field = "rack"
 	case util.ModelFilterName:
 		field = "model"
-	case util.BuildTargetFilterName:
+	case util.BoardFilterName:
 		field = "build_target"
-	case util.DeviceTypeFilterName:
+	case util.AssetTypeFilterName:
 		field = "type"
 	case util.PhaseFilterName:
 		field = "phase"
 	case util.TagFilterName:
 		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for asset are zone/rack/model/buildtarget(target)/assettype/phase/tags", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for asset are zone/rack/model/buildtarget(board)/assettype/phase/tags", input)
 	}
 	return field, nil
 }

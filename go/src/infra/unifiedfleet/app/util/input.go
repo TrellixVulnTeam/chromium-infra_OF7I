@@ -115,6 +115,7 @@ var (
 	VirtualDatacenterFilterName    string = "vdc"
 	ModelFilterName                string = "model"
 	BuildTargetFilterName          string = "target"
+	BoardFilterName                string = "board"
 	DeviceTypeFilterName           string = "devicetype"
 	PhaseFilterName                string = "phase"
 	AssetTypeFilterName            string = "assettype"

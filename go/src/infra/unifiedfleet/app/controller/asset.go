@@ -134,7 +134,7 @@ func ListAssets(ctx context.Context, pageSize int32, pageToken, filter string, k
 	var filterMap map[string][]interface{}
 	var err error
 	if filter != "" {
-		filterMap, err = getFilterMap(filter, getAssetIndexedFieldName)
+		filterMap, err = getFilterMap(filter, registration.GetAssetIndexedFieldName)
 		if err != nil {
 			return nil, "", errors.Annotate(err, "ListAssets - failed to read filter for listing assets").Err()
 		}
@@ -295,11 +295,6 @@ func deleteMachineHelper(ctx context.Context, id string) error {
 	hc.stUdt.deleteStateHelper(ctx)
 	hc.LogMachineChanges(machine, nil)
 	return hc.SaveChangeEvents(ctx)
-}
-
-// getAssetIndexedFieldName returns the same string as the mapping is 1:1
-func getAssetIndexedFieldName(name string) (string, error) {
-	return name, nil
 }
 
 func validateUpdateAsset(ctx context.Context, oldAsset *ufspb.Asset, asset *ufspb.Asset, mask *field_mask.FieldMask) error {

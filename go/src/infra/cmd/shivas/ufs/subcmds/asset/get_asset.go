@@ -50,7 +50,7 @@ Gets the asset and prints the output in the user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.assettypes), "assettype", "Name(s) of a assettype to filter by. Can be specified multiple times."+cmdhelp.AssetTypesHelpText)
 		c.Flags.Var(flag.StringSlice(&c.models), "model", "Name(s) of a model to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.buildTargets), "target", "Name(s) of a build target to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.buildTargets), "board", "Name(s) of a build target/board to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.phases), "phase", "Name(s) of a phase to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		return c
@@ -128,7 +128,7 @@ func (c *getAsset) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.RackFilterName, c.racks)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.AssetTypeFilterName, c.assettypes)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ModelFilterName, c.models)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BuildTargetFilterName, c.buildTargets)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BoardFilterName, c.buildTargets)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.PhaseFilterName, c.phases)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	return filters
