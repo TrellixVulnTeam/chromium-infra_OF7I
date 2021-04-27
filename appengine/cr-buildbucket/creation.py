@@ -37,7 +37,6 @@ import search
 import sequence
 import swarming
 import swarmingcfg
-import tokens
 import tq
 
 # Default value of Build.infra.swarming.priority.
@@ -287,7 +286,6 @@ class BuildRequest(_BuildRequestBase):
         create_time=now,
         never_leased=self.lease_expiration_date is None,
         retry_of=self.retry_of,
-        update_token=tokens.generate_build_token(build_id),
     )
 
     if sbr.HasField('notify'):

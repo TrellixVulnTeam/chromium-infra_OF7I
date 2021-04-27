@@ -560,8 +560,7 @@ def _create_swarming_task(build):
   task_def['request_uuid'] = str(uuid.UUID(int=build_id))
 
   # Insert secret bytes.
-  # TODO(crbug/1110990): raise an exception if build.update_token is empty.
-  build_token = build.update_token or tokens.generate_build_token(build_id)
+  build_token = tokens.generate_build_token(build_id)
   secrets = launcher_pb2.BuildSecrets(
       build_token=build_token,
       resultdb_invocation_update_token=build.resultdb_update_token,
@@ -652,10 +651,7 @@ def _create_swarming_task(build):
 
       sw.task_id = new_task_id
 
-    if bundle.build.update_token == None:
-      logging.warning('build %d was created without the build token', build_id)
-      bundle.build.update_token = build_token
-
+    bundle.build.update_token = build_token
     bundle.put()
     return True
 

@@ -45,11 +45,6 @@ class CreationTest(testing.AppengineTestCase):
     self.now = datetime.datetime(2015, 1, 1)
     self.patch('components.utils.utcnow', side_effect=lambda: self.now)
 
-    self.patch(
-        'tokens.generate_build_token',
-        side_effect=lambda build_id: 'token-for-%d' % build_id
-    )
-
     perms = test_util.mock_permissions(self)
     perms['chromium/try'] = [user.PERM_BUILDS_ADD]
 
@@ -213,7 +208,6 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add(dict(builder=builder_id))
     self.assertIsNotNone(build.key)
     self.assertIsNotNone(build.key.id())
-    self.assertIsNotNone(build.update_token)
 
     build = build.key.get()
     self.assertEqual(build.proto.id, build.key.id())
