@@ -30,7 +30,6 @@ import (
 // Process represents an OS process.
 // It is mainly for unit tests.
 type Process interface {
-	Pid() int
 	Args() []string
 	Stop() error
 }
@@ -125,7 +124,7 @@ func (n *Server) cmdline() []string {
 
 func (n *Server) start(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload) error {
 	if n.proc != nil {
-		panic(fmt.Sprintf("Nebraska already started: (%d) %#v", n.proc.Pid(), n.proc.Args()))
+		panic(fmt.Sprintf("%s already started: %#v", n.proc, n.proc.Args()))
 	}
 	var err error
 	n.metadataDir, err = n.env.DownloadMetadata(ctx, gsPathPrefix, payloads)
@@ -141,7 +140,7 @@ func (n *Server) start(ctx context.Context, gsPathPrefix string, payloads []*tls
 	if err != nil {
 		return fmt.Errorf("start Nebraska: %s", err)
 	}
-	log.Printf("Nebraska started (pid: %d)", n.proc.Pid())
+	log.Printf("%s started", n.proc)
 	if err := n.checkPort(ctx); err != nil {
 		n.Close()
 		return fmt.Errorf("start Nebraska: %s", err)
@@ -157,7 +156,7 @@ func (n *Server) Close() error {
 	if n.proc == nil {
 		return fmt.Errorf("close Nebraska: process has been terminated")
 	}
-	log.Printf("Closing Nebraska (pid: %d) %q", n.proc.Pid(), n.cmdline())
+	log.Printf("Closing %s: %q", n.proc, n.cmdline())
 	errs := []string{}
 	if err := n.proc.Stop(); err != nil {
 		errs = append(errs, fmt.Sprintf("stop process: %s", err))
@@ -167,9 +166,9 @@ func (n *Server) Close() error {
 	}
 	nLog, err := ioutil.ReadFile(n.logfile())
 	if err != nil {
-		log.Printf("Cannot read Nebraska log (pid: %d): %s", n.proc.Pid(), err)
+		log.Printf("Cannot read %s log: %s", n.proc, err)
 	} else {
-		log.Printf("Nebraska log (pid: %d): %s", n.proc.Pid(), nLog)
+		log.Printf("%s log: %s", n.proc, nLog)
 	}
 	if err := os.RemoveAll(n.runtimeRoot); err != nil {
 		errs = append(errs, fmt.Sprintf("remove Nebraska runtime root: %s", err))
@@ -271,25 +270,26 @@ type proc struct {
 func (p proc) Stop() error {
 	pid := p.cmd.Process.Pid
 	if err := unix.Kill(pid, syscall.SIGTERM); err != nil {
-		return fmt.Errorf("stop Nebraska (pid: %d): %s", pid, err)
+		return fmt.Errorf("stop %s: %s", p, err)
 	}
 	select {
 	case <-p.terminated:
-		log.Printf("Nebraska (pid: %d) was exited", pid)
+		log.Printf("%s was exited", p)
 	case <-time.After(2 * time.Second):
 		if err := p.cmd.Process.Kill(); err != nil {
-			return fmt.Errorf("kill Nebraska (pid: %d): %s", pid, err)
+			return fmt.Errorf("kill %s: %s", p, err)
 		}
-		log.Printf("Nebraska (pid: %d) was killed", pid)
+		log.Printf("%s was killed", p)
 	}
 	return nil
-}
-func (p proc) Pid() int {
-	return p.cmd.Process.Pid
 }
 
 func (p proc) Args() []string {
 	return p.cmd.Args
+}
+
+func (p proc) String() string {
+	return fmt.Sprintf("Nebraska (pid: %d)", p.cmd.Process.Pid)
 }
 
 const (
