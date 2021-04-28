@@ -4,21 +4,33 @@
 
 """Definitions of CQ for the infra/gerrit-plugins repos."""
 
-load("//lib/build.star", "build")
+load("//lib/infra.star", "infra")
 
 BASE_REPO_URL = "https://chromium.googlesource.com/infra/gerrit-plugins/"
+BUILDER_NAME = "Gerrit Plugins Tester"
 
 luci.cq_group(
     name = "gerrit-plugins",
     watch = cq.refset(
         # TODO(gavinmak): Include other plugins.
         repo = BASE_REPO_URL + "tricium",
-        refs = ["refs/heads/main", "refs/heads/master"],
+        refs = ["refs/heads/main"],
     ),
 )
 
-build.presubmit(
-    name = "Gerrit Plugins Presubmit",
+luci.builder(
+    name = BUILDER_NAME,
+    bucket = "try",
+    executable = infra.recipe("gerrit_plugins"),
+    dimensions = {
+        "os": "Ubuntu-16.04",
+        "cpu": "x86-64",
+        "pool": "luci.flex.try",
+    },
+    service_account = infra.SERVICE_ACCOUNT_TRY,
+)
+
+luci.cq_tryjob_verifier(
+    builder = BUILDER_NAME,
     cq_group = "gerrit-plugins",
-    repo_name = "gerrit_plugins",
 )
