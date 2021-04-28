@@ -29,18 +29,21 @@ const (
 	dutLeaserBuildPriority = 15
 	// leaseCmdName is the name of the `crosfleet dut lease` command.
 	leaseCmdName = "lease"
-	// DUT pool available for leasing from.
-	leasesPool               = "DUT_POOL_QUOTA"
+	// Default DUT pool available for leasing from.
+	defaultLeasesPool        = "DUT_POOL_QUOTA"
 	maxLeaseReasonCharacters = 30
 )
 
 var lease = &subcommands.Command{
-	UsageLine: fmt.Sprintf("%s {-board BOARD/-model MODEL/-host HOST}", leaseCmdName),
+	UsageLine: fmt.Sprintf("%s [FLAGS...]", leaseCmdName),
 	ShortDesc: "lease DUT for debugging",
 	LongDesc: `Lease DUT for debugging.
 
-DUTs can be leased by board, model, or individual DUT hostname.
-Leasing by board or model is fastest, since the first available DUT of the given board or model is reserved. 
+DUTs can be leased by Swarming dimensions or by individual DUT hostname.
+Leasing by dimensions is fastest, since the first available DUT matching the
+requested dimensions is reserved. 'label-board' and 'label-model' dimensions can
+be specified via the -board and -model flags, respectively; other Swarming
+dimensions can be specified via the freeform -dim/-dims flags.
 
 This command's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,
@@ -123,16 +126,8 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 func botDimsAndBuildTags(ctx context.Context, swarmingService *swarmingapi.Service, leaseFlags leaseFlags) (dims, tags map[string]string, err error) {
 	dims = map[string]string{}
 	tags = map[string]string{}
-	// Add user-added dimensions to both bot dimensions and build tags.
-	for key, val := range leaseFlags.addedDims {
-		dims[key] = val
-		tags[key] = val
-	}
-	tags["crosfleet-tool"] = leaseCmdName
-	tags["lease-reason"] = leaseFlags.reason
-	tags["qs_account"] = "leases"
-
 	if leaseFlags.host != "" {
+		// Hostname-based lease.
 		correctedHostname := correctedHostname(leaseFlags.host)
 		id, err := hostnameToBotID(ctx, swarmingService, correctedHostname)
 		if err != nil {
@@ -141,19 +136,34 @@ func botDimsAndBuildTags(ctx context.Context, swarmingService *swarmingapi.Servi
 		tags["lease-by"] = "host"
 		tags["id"] = id
 		dims["id"] = id
-	} else if model := leaseFlags.model; model != "" {
-		tags["lease-by"] = "model"
-		tags["label-model"] = model
-		dims["label-model"] = model
-		dims["label-pool"] = leasesPool
+	} else {
+		// Swarming dimension-based lease.
 		dims["dut_state"] = "ready"
-	} else if board := leaseFlags.board; board != "" {
-		tags["lease-by"] = "board"
-		tags["label-board"] = board
-		dims["label-board"] = board
-		dims["label-pool"] = leasesPool
-		dims["dut_state"] = "ready"
+		userSpecifiedPool := false
+		// Add user-added dimensions to both bot dimensions and build tags.
+		for key, val := range leaseFlags.freeformDims {
+			if key == "label-pool" {
+				userSpecifiedPool = true
+			}
+			dims[key] = val
+			tags[key] = val
+		}
+		if !userSpecifiedPool {
+			dims["label-pool"] = defaultLeasesPool
+		}
+		if board := leaseFlags.board; board != "" {
+			tags["label-board"] = board
+			dims["label-board"] = board
+		}
+		if model := leaseFlags.model; model != "" {
+			tags["label-model"] = model
+			dims["label-model"] = model
+		}
 	}
+	// Add these metadata tags last to avoid being overwritten by freeform dims.
+	tags["crosfleet-tool"] = leaseCmdName
+	tags["lease-reason"] = leaseFlags.reason
+	tags["qs_account"] = "leases"
 	return
 }
 
@@ -164,7 +174,7 @@ type leaseFlags struct {
 	host         string
 	model        string
 	board        string
-	addedDims    map[string]string
+	freeformDims map[string]string
 	exitEarly    bool
 }
 
@@ -172,20 +182,21 @@ type leaseFlags struct {
 func (c *leaseFlags) register(f *flag.FlagSet) {
 	f.Int64Var(&c.durationMins, "minutes", 60, "Duration of lease in minutes.")
 	f.StringVar(&c.reason, "reason", "", fmt.Sprintf("Optional reason for leasing (limit %d characters).", maxLeaseReasonCharacters))
-	f.StringVar(&c.board, "board", "", "Board of DUT to lease. If leasing by board, the first available DUT of the given board will be leased.")
-	f.StringVar(&c.model, "model", "", "Model of DUT to lease. If leasing by model, the first available DUT of the given model will be leased.")
-	f.StringVar(&c.host, "host", "", `Hostname of an individual DUT to lease. If leasing by hostname and the host DUT is running another task,
-the lease won't start until that task completes.`)
-	f.Var(flagx.KeyVals(&c.addedDims), "dim", "Additional DUT scheduling dimension in format key=val or key:val; may be specified multiple times.")
-	f.Var(flagx.KeyVals(&c.addedDims), "dims", "Comma-separated additional DUT scheduling dimensions in same format as -dim.")
+	f.StringVar(&c.board, "board", "", "'label-board' Swarming dimension to lease DUT by.")
+	f.StringVar(&c.model, "model", "", "'label-model' Swarming dimension to lease DUT by.")
+	f.StringVar(&c.host, "host", "", `Hostname of an individual DUT to lease. If leasing by hostname instead of other Swarming dimensions,
+and the host DUT is running another task, the lease won't start until that task completes.
+Mutually exclusive with -board/-model/-dim(s).`)
+	f.Var(flagx.KeyVals(&c.freeformDims), "dim", "Freeform Swarming dimension to lease DUT by, in format key=val or key:val; may be specified multiple times.")
+	f.Var(flagx.KeyVals(&c.freeformDims), "dims", "Comma-separated Swarming dimensions, in same format as -dim.")
 	f.BoolVar(&c.exitEarly, "exit-early", false, `Exit command as soon as lease is scheduled. crosfleet will not notify on lease validation failure,
 or print the hostname of the leased DUT.`)
 }
 
 func (c *leaseFlags) validate(f *flag.FlagSet) error {
 	var errors []string
-	if !c.hasOnePrimaryDim() {
-		errors = append(errors, "exactly one of board, model, or host should be specified")
+	if !c.hasEitherHostnameOrSwarmingDims() {
+		errors = append(errors, "must specify DUT dimensions (-board/-model/-dim(s)) or DUT hostname (-host), but not both")
 	}
 	if c.durationMins <= 0 {
 		errors = append(errors, "duration should be greater than 0")
@@ -203,17 +214,12 @@ func (c *leaseFlags) validate(f *flag.FlagSet) error {
 	return nil
 }
 
-// hasOnePrimaryDim verifies that exactly one of -board, -model, and -host were
-// passed in through the command line.
-func (c *leaseFlags) hasOnePrimaryDim() bool {
-	count := 0
-	primaryDimFields := []string{c.board, c.model, c.host}
-	for _, field := range primaryDimFields {
-		if field != "" {
-			count++
-		}
-	}
-	return count == 1
+// hasOnePrimaryDim verifies that the lease flags contain either a DUT hostname
+// or swarming dimensions (via -board/-model/-dim(s)), but not both.
+func (c *leaseFlags) hasEitherHostnameOrSwarmingDims() bool {
+	hasHostname := c.host != ""
+	hasSwarmingDims := c.board != "" || c.model != "" || len(c.freeformDims) > 0
+	return hasHostname != hasSwarmingDims
 }
 
 func (c *leaseRun) leaseStartStepName() string {

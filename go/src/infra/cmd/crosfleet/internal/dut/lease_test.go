@@ -26,7 +26,7 @@ var testValidateData = []struct {
 			model:        "",
 			board:        "",
 		},
-		`exactly one of board, model, or host should be specified
+		`must specify DUT dimensions (-board/-model/-dim(s)) or DUT hostname (-host), but not both
 duration should be greater than 0
 reason cannot exceed 30 characters`,
 	},
@@ -38,7 +38,7 @@ reason cannot exceed 30 characters`,
 			model:        "sample-model",
 			board:        "sample-board",
 		},
-		`exactly one of board, model, or host should be specified
+		`must specify DUT dimensions (-board/-model/-dim(s)) or DUT hostname (-host), but not both
 duration cannot exceed 1440 minutes (24 hours)`,
 	},
 	{ // No flags raise errors
@@ -47,6 +47,8 @@ duration cannot exceed 1440 minutes (24 hours)`,
 			reason:       "this desc is just short enough",
 			host:         "",
 			model:        "sample-model",
+			board:        "sample-board",
+			freeformDims: map[string]string{"foo": "bar"},
 		},
 		"",
 	},
@@ -75,9 +77,9 @@ var testBotDimsAndBuildTagsData = []struct {
 }{
 	{ // Model-based lease with added dims
 		leaseFlags{
-			model:     "sample-model",
-			reason:    "sample reason",
-			addedDims: map[string]string{"added-key": "added-val"},
+			model:        "sample-model",
+			reason:       "sample reason",
+			freeformDims: map[string]string{"added-key": "added-val"},
 		},
 		map[string]string{
 			"added-key":   "added-val",
@@ -88,7 +90,6 @@ var testBotDimsAndBuildTagsData = []struct {
 		map[string]string{
 			"added-key":      "added-val",
 			"crosfleet-tool": "lease",
-			"lease-by":       "model",
 			"lease-reason":   "sample reason",
 			"label-model":    "sample-model",
 			"qs_account":     "leases",
@@ -96,9 +97,9 @@ var testBotDimsAndBuildTagsData = []struct {
 	},
 	{ // Board-based lease without added dims
 		leaseFlags{
-			board:     "sample-board",
-			reason:    "sample reason",
-			addedDims: nil,
+			board:        "sample-board",
+			reason:       "sample reason",
+			freeformDims: nil,
 		},
 		map[string]string{
 			"dut_state":   "ready",
@@ -107,7 +108,6 @@ var testBotDimsAndBuildTagsData = []struct {
 		},
 		map[string]string{
 			"crosfleet-tool": "lease",
-			"lease-by":       "board",
 			"lease-reason":   "sample reason",
 			"label-board":    "sample-board",
 			"qs_account":     "leases",
