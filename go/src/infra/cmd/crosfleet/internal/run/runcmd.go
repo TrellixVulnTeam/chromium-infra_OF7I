@@ -15,6 +15,7 @@ var testApplication = &cli.Application{
 	Name:  "crosfleet run",
 	Title: "Run tests.",
 	Commands: []*subcommands.Command{
+		backfill,
 		test,
 		suite,
 		testplan,

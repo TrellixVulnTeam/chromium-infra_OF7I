@@ -11,6 +11,7 @@ import (
 
 // CmpOpts enables comparisons of the listed protos with unexported fields.
 var CmpOpts = cmpopts.IgnoreUnexported(
+	buildbucketpb.Build{},
 	buildbucketpb.RequestedDimension{},
 	buildbucketpb.StringPair{},
 	chromiumos.BuildTarget{},

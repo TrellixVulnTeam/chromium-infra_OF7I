@@ -189,6 +189,48 @@ func (c *Client) GetAllBuildsByUser(ctx context.Context, user string, searchBuil
 	return buildsByUser, nil
 }
 
+// GetAllBuildsWithTags returns all builds with the given tags matching the
+// given SearchBuildsRequest. (Technically, the SearchBuildsRequest could
+// include tags in the form []*buildbucketpb.StringPair; this function simply
+// allows passing tags in the simpler map[string]string form.)
+func (c *Client) GetAllBuildsWithTags(ctx context.Context, tags map[string]string, searchBuildsRequest *buildbucketpb.SearchBuildsRequest) ([]*buildbucketpb.Build, error) {
+	// Convert tags to []*buildbucketpb.StringPair and add to search request.
+	searchPredicate := searchBuildsRequest.Predicate
+	if searchPredicate == nil {
+		searchPredicate = &buildbucketpb.BuildPredicate{}
+	}
+	searchPredicate.Tags = bbTags(tags)
+
+	return c.getAllBuilds(ctx, searchBuildsRequest)
+}
+
+// AnyIncompleteBuildsWithTags returns a bool indicating whether there are any
+// scheduled or started builds matching the given tags. If any builds are found,
+// the first ID is returned.
+func (c *Client) AnyIncompleteBuildsWithTags(ctx context.Context, tags map[string]string) (bool, int64, error) {
+	// Search for started builds first.
+	builds, err := c.GetAllBuildsWithTags(ctx, tags, &buildbucketpb.SearchBuildsRequest{
+		Predicate: &buildbucketpb.BuildPredicate{
+			Status: buildbucketpb.Status_STARTED,
+		},
+	})
+	// If no started builds are found, search for scheduled ones.
+	if err == nil && len(builds) == 0 {
+		builds, err = c.GetAllBuildsWithTags(ctx, tags, &buildbucketpb.SearchBuildsRequest{
+			Predicate: &buildbucketpb.BuildPredicate{
+				Status: buildbucketpb.Status_SCHEDULED,
+			},
+		})
+	}
+	if err != nil {
+		return false, 0, err
+	}
+	if len(builds) > 0 {
+		return true, builds[0].Id, nil
+	}
+	return false, 0, nil
+}
+
 // CancelBuildsByUser cancels any pending or active build created after the
 // given timestamp that was launched by the given user. An optional bot ID list
 // can be given, which restricts cancellations to builds running on bots on the
@@ -343,6 +385,9 @@ func bbTags(tags map[string]string) []*buildbucketpb.StringPair {
 
 // FindDimValInRequestedDims finds the given dimension value in the build's
 // requested dimensions, which are of type []*buildbucketpb.RequestedDimension.
+//
+// Since the dimensions looped through are not of type
+// []*buildbucketpb.StringPair, some duplicate code is unfortunately required.
 func FindDimValInRequestedDims(dim string, build *buildbucketpb.Build) string {
 	requestedDims := build.GetInfra().GetBuildbucket().GetRequestedDimensions()
 	for _, d := range requestedDims {
@@ -354,15 +399,22 @@ func FindDimValInRequestedDims(dim string, build *buildbucketpb.Build) string {
 }
 
 // FindDimValInFinalDims finds the given dimension value in the build's
-// requested dimensions, which are of type []*buildbucketpb.StringPair.
-//
-// Since the dimensions looped through are of different type here than in
-// FindDimValInRequestedDims, some duplicate code is unfortunately required.
+// requested dimensions.
 func FindDimValInFinalDims(dim string, build *buildbucketpb.Build) string {
 	provisionedDims := build.GetInfra().GetSwarming().GetBotDimensions()
-	for _, d := range provisionedDims {
-		if d.GetKey() == dim {
-			return d.GetValue()
+	return findKeyValInStringPairs(dim, provisionedDims)
+}
+
+// FindTagVal finds the given tag value in the build's tags.
+func FindTagVal(tag string, build *buildbucketpb.Build) string {
+	return findKeyValInStringPairs(tag, build.Tags)
+}
+
+// findKeyValInStringPairs finds the given key's value in the given StringPairs.
+func findKeyValInStringPairs(key string, pairs []*buildbucketpb.StringPair) string {
+	for _, p := range pairs {
+		if p.GetKey() == key {
+			return p.GetValue()
 		}
 	}
 	return ""
