@@ -975,11 +975,11 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
 ### *recipes* / [build\_wheels](/recipes/recipes/build_wheels.py)
 
-[DEPS](/recipes/recipes/build_wheels.py#5): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [depot\_tools/windows\_sdk][depot_tools/recipe_modules/windows_sdk], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+[DEPS](/recipes/recipes/build_wheels.py#10): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [depot\_tools/windows\_sdk][depot_tools/recipe_modules/windows_sdk], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python]
 
-&emsp; **@contextmanager**<br>&mdash; **def [PlatformSdk](/recipes/recipes/build_wheels.py#49)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [PlatformSdk](/recipes/recipes/build_wheels.py#67)(api):**
 
-&mdash; **def [RunSteps](/recipes/recipes/build_wheels.py#19)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/build_wheels.py#33)(api, platforms):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]

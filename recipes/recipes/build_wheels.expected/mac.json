@@ -195,7 +195,11 @@
       "[CLEANUP]/.dockerbuild_tmp_1",
       "--upload-sources",
       "wheel-build",
-      "--upload"
+      "--upload",
+      "--platform",
+      "mac-x64",
+      "--platform",
+      "mac-x64-cp38"
     ],
     "cwd": "[CACHE]/builder/build_wheels/infra",
     "env": {

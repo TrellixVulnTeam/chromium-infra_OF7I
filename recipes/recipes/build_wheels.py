@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from contextlib import contextmanager
+
+from recipe_engine.recipe_api import Property
+from recipe_engine.config import List
+
 DEPS = [
     'depot_tools/gclient',
     'depot_tools/windows_sdk',
@@ -10,13 +15,22 @@ DEPS = [
     'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/platform',
+    'recipe_engine/properties',
     'recipe_engine/python',
 ]
 
-from contextlib import contextmanager
+PROPERTIES = {
+    'platforms':
+        Property(
+            help=('The platforms to build wheels for. If empty, builds for all '
+                  'platforms which are supported on this host.'),
+            kind=List(str),
+            default=(),
+        ),
+}
 
 
-def RunSteps(api):
+def RunSteps(api, platforms):
   solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
   with api.context(cwd=solution_path):
@@ -26,6 +40,10 @@ def RunSteps(api):
     api.gclient.runhooks()
 
   temp_path = api.path.mkdtemp('.dockerbuild')
+
+  platform_args = []
+  for p in platforms:
+    platform_args.extend(['--platform', p])
 
   # DISTUTILS_USE_SDK and MSSdk are necessary for distutils to correctly locate
   # MSVC on Windows. They do nothing on other platforms, so we just set them
@@ -43,7 +61,7 @@ def RunSteps(api):
         '--upload-sources',
         'wheel-build',
         '--upload',
-    ])
+    ] + platform_args)
 
 
 @contextmanager
@@ -64,4 +82,5 @@ def PlatformSdk(api):
 def GenTests(api):
   yield api.test('success')
   yield api.test('win', api.platform('win', 64))
-  yield api.test('mac', api.platform('mac', 64))
+  yield api.test('mac', api.platform(
+      'mac', 64)) + api.properties(platforms=['mac-x64', 'mac-x64-cp38'])
