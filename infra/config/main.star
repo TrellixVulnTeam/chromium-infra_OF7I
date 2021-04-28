@@ -46,6 +46,7 @@ lucicfg.config(
         "luci-scheduler.cfg",
         "project.cfg",
         "realms.cfg",
+        "tricium-prod.cfg",
     ],
     fail_on_warnings = True,
     lint_checks = ["default"],
@@ -99,6 +100,10 @@ luci.milo(
 )
 luci.cq(status_host = "chromium-cq-status.appspot.com")
 luci.notify(tree_closing_enabled = True)
+lucicfg.emit(
+    dest = "tricium-prod.cfg",
+    data = io.read_file("tricium-prod.cfg"),
+)
 
 # Global builder defaults.
 luci.builder.defaults.execution_timeout.set(45 * time.minute)
