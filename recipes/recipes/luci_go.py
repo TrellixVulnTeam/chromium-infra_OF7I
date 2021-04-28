@@ -11,6 +11,7 @@ DEPS = [
     'recipe_engine/cipd',
     'recipe_engine/context',
     'recipe_engine/json',
+    'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/raw_io',
@@ -98,7 +99,8 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests, run_lint):
     # always running spanner tests using the emulator.
     env['SPANNER_EMULATOR'] = '1'
 
-  with api.context(env=env), api.osx_sdk('mac'), co.go_env():
+  luci_go = api.path['checkout'].join('go', 'src', 'go.chromium.org', 'luci')
+  with api.context(env=env, cwd=luci_go), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
       co.run_presubmit()
     elif run_lint:
