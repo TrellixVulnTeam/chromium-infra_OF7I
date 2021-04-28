@@ -237,7 +237,9 @@
     "infra_step": true,
     "name": "get change list",
     "~followup_annotations": [
+      "@@@STEP_LOG_LINE@change list@client/cmd/isolate/lib/archive.go@@@",
       "@@@STEP_LOG_LINE@change list@client/cmd/isolate/lib/batch_archive.go@@@",
+      "@@@STEP_LOG_LINE@change list@client/cmd/isolated/lib/archive.go@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
@@ -329,7 +331,8 @@
       "run",
       "--out-format=json",
       "--issues-exit-code=0",
-      "client/cmd/isolate/lib/batch_archive.go"
+      "client/cmd/isolate/lib/...",
+      "client/cmd/isolated/lib/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {

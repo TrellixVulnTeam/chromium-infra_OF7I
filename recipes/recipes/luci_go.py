@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import textwrap
+
 from recipe_engine.recipe_api import Property
 
 DEPS = [
@@ -41,7 +43,12 @@ LUCI_GO_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/luci'
 
 
 def apply_golangci_lint(api, co):
-  go_files = sorted([f for f in co.get_changed_files() if f.endswith('.go')])
+  go_files = sorted(
+      set([
+          api.path.dirname(f) + "/..."
+          for f in co.get_changed_files()
+          if f.endswith('.go')
+      ]))
 
   if not go_files:
     return  # pragma: no cover
@@ -147,7 +154,11 @@ def GenTests(api):
       patch_set=2,
   ) + api.properties(run_lint=True) + api.step_data(
       'get change list',
-      stdout=api.raw_io.output('client/cmd/isolate/lib/batch_archive.go\n')))
+      stdout=api.raw_io.output(textwrap.dedent("""\
+      client/cmd/isolate/lib/batch_archive.go
+      client/cmd/isolate/lib/archive.go
+      client/cmd/isolated/lib/archive.go
+      """))))
 
   yield (
     api.test('override_GOARCH') +
