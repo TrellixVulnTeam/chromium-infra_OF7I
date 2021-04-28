@@ -93,6 +93,9 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 		return err
 	}
 	buildID, err := leasesBBClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
+	if err != nil {
+		return err
+	}
 	fmt.Fprintf(a.GetErr(), "Requesting %d minute lease at %s\n", c.durationMins, leasesBBClient.BuildURL(buildID))
 	if c.exitEarly {
 		return nil
