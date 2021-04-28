@@ -43,7 +43,6 @@ else
 fi
 
 # First see if we have to build a runnable python; we'll need it later.
-INTERP=python2
 if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
   # we need to make all the rest of the stuff like _struct and _functools in
   # order to use this interpreter. If we're cross compiling then we're using
@@ -74,6 +73,16 @@ if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
   make install < /dev/null
 
   INTERP=$(pwd)/host_interp/bin/python
+elif [[ $_3PP_PLATFORM == mac* ]]; then
+  # When cross-compiling on Mac, explicitly force the system python2, so
+  # we don't pick up vpython-native's python2 from $PATH. Running vpython
+  # with "-s -S" below causes problems where built-in modules such as argparse
+  # can't be loaded.
+  INTERP=/usr/bin/python2
+else
+  # When cross-compiling on Linux, use the host python2 in the docker
+  # container.
+  INTERP=python2
 fi
 
 # OpenSSL 1.1.1 depends on pthread, so it needs to come LAST. Python's
@@ -208,11 +217,6 @@ done
 for x in "${SETUP_LOCAL_ATTACH[@]}"; do
   SETUP_LOCAL_FLAGS+=(--attach "$x")
 done
-
-# TODO(bryner): Remove this debugging once Mac ARM64 cross build is working.
-echo Using `which $INTERP`
-echo PYTHONPATH=$PYTHONPATH
-$INTERP -s -S -c "import sys; print sys.path"
 
 $INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   --pybuilddir $(cat pybuilddir.txt) \
