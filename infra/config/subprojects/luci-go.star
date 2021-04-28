@@ -132,5 +132,5 @@ try_builder(
     properties = {
         "run_lint": True,
     },
-    in_cq = False,
+    experiment_percentage = 100,
 )
