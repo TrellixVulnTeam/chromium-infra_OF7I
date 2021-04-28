@@ -25,7 +25,7 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/infra/testing/expect_tests
 """
 
-lucicfg.check_version("1.23.1", "Please update depot_tools")
+lucicfg.check_version("1.24.1", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
@@ -60,6 +60,7 @@ luci.project(
     notify = "luci-notify.appspot.com",
     scheduler = "luci-scheduler.appspot.com",
     swarming = "chromium-swarm.appspot.com",
+    tricium = "tricium-prod.appspot.com",
     acls = [
         # Publicly readable.
         acl.entry(
@@ -100,10 +101,6 @@ luci.milo(
 )
 luci.cq(status_host = "chromium-cq-status.appspot.com")
 luci.notify(tree_closing_enabled = True)
-lucicfg.emit(
-    dest = "tricium-prod.cfg",
-    data = io.read_file("tricium-prod.cfg"),
-)
 
 # Global builder defaults.
 luci.builder.defaults.execution_timeout.set(45 * time.minute)

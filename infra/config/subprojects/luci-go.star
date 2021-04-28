@@ -42,9 +42,11 @@ def try_builder(
         name,
         os,
         recipe = None,
-        experiment_percentage = None,
         properties = None,
-        in_cq = True):
+        in_cq = True,
+        experiment_percentage = None,
+        owner_whitelist = None,
+        mode_allowlist = None):
     infra.builder(
         name = name,
         bucket = "try",
@@ -59,6 +61,8 @@ def try_builder(
             cq_group = "luci-go",
             experiment_percentage = experiment_percentage,
             disable_reuse = (properties or {}).get("presubmit"),
+            owner_whitelist = owner_whitelist,
+            mode_allowlist = mode_allowlist,
         )
 
 # Linux Xenial as the main platform to test for go1.16 (aka "bleeding_edge").
@@ -123,7 +127,8 @@ try_builder(
         "patch_root": "infra/go/src/go.chromium.org/luci",
         "analyzers": ["Gosec", "Spellchecker"],
     },
-    in_cq = False,
+    owner_whitelist = ["project-infra-tryjob-access"],
+    mode_allowlist = [cq.MODE_ANALYZER_RUN],
 )
 
 try_builder(
