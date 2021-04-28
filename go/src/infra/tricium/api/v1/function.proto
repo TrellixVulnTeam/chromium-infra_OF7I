@@ -102,7 +102,14 @@ message Impl {
     Recipe recipe = 5;
   }
 
-  reserved 6, 7;
+  reserved 6;
+
+  // Deadline for execution of corresponding workers.
+  //
+  // Note that this deadline includes the launch of a swarming task for the
+  // corresponding worker, and collection of results from that worker.
+  // Deadline should be given in seconds.
+  int32 deadline = 7;
 }
 
 // Specification of a recipe for a recipe-based analyzer.
