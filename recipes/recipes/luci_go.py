@@ -46,7 +46,7 @@ def apply_golangci_lint(api, co):
   if not go_files:
     return  # pragma: no cover
 
-  linter = api.cipd.ensure_tool('tools/golangci-lint/${platform}',
+  linter = api.cipd.ensure_tool('infra/3pp/tools/golangci-lint/${platform}',
                                 'version:2@1.39.0')
   result = api.step(
       'run golangci-lint',
@@ -99,12 +99,14 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests, run_lint):
     # always running spanner tests using the emulator.
     env['SPANNER_EMULATOR'] = '1'
 
-  luci_go = api.path['checkout'].join('go', 'src', 'go.chromium.org', 'luci')
-  with api.context(env=env, cwd=luci_go), api.osx_sdk('mac'), co.go_env():
+  with api.context(env=env), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
       co.run_presubmit()
     elif run_lint:
-      apply_golangci_lint(api, co)
+      luci_go = api.path['checkout'].join('go', 'src', 'go.chromium.org',
+                                          'luci')
+      with api.context(cwd=luci_go):
+        apply_golangci_lint(api, co)
     else:
       api.step('go build', ['go', 'build', 'go.chromium.org/luci/...'])
       api.step('go test', ['go', 'test', 'go.chromium.org/luci/...'])

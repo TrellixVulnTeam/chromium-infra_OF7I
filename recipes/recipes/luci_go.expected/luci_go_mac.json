@@ -132,7 +132,6 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "infra_step": true,
     "name": "ensure_installed",
     "~followup_annotations": [
@@ -160,7 +159,6 @@
       "-output-dir",
       "[CACHE]/osx_sdk/XCode.app"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "infra_step": true,
     "name": "install xcode"
   },
@@ -171,7 +169,6 @@
       "--switch",
       "[CACHE]/osx_sdk/XCode.app"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "infra_step": true,
     "name": "select XCode"
   },
@@ -283,7 +280,6 @@
       "xcode-select",
       "--reset"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "infra_step": true,
     "name": "reset XCode"
   },
