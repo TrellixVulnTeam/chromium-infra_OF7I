@@ -61,7 +61,8 @@ message ProjectConfig {
   // General service account for this project.
   string service_account = 6;
 
-  reserved 7;
+  // Ignored. Kept because some Tricium configs still define this field.
+  string swarming_service_account = 7 [deprecated=true];
 }
 
 // Repository details for one repository.
