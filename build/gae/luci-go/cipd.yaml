@@ -10,5 +10,3 @@ build:
     dest: ${contextdir}/frontend
   - go_gae_bundle: ${inputsdir}/backend/service-backend.yaml
     dest: ${contextdir}/backend
-  - go_gae_bundle: ${inputsdir}/backend-old/service-backend-old.yaml
-    dest: ${contextdir}/backend-old
