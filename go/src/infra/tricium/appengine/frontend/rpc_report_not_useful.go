@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
@@ -70,19 +71,19 @@ func reportNotUseful(c context.Context, commentID string) (*tricium.ReportNotUse
 // be a temporary hack until there is another way to specify bug filing
 // information; see crbug.com/1201312.
 func responseForComment(comment *track.Comment) *tricium.ReportNotUsefulResponse {
-	comp := "Infra>Platform>Tricium>Analyzer"
-	switch comment.Analyzer {
-	case "Analyze":
+	const comp = "Infra>Platform>Tricium>Analyzer"
+	switch name := comment.Analyzer; {
+	case name == "Analyze" || strings.HasPrefix(name, "FuchsiaTricium"):
 		return &tricium.ReportNotUsefulResponse{Owner: "maruel@google.com", MonorailComponent: comp}
-	case "ClangTidy":
+	case name == "ClangTidy" || name == "ChromiumTryLinuxClangTidyRel":
 		return &tricium.ReportNotUsefulResponse{Owner: "gbiv@chromium.org", MonorailComponent: comp}
-	case "ChromiumosWrapper":
+	case name == "ChromiumosWrapper" || name == "ChromeosInfraTricium":
 		return &tricium.ReportNotUsefulResponse{Owner: "bmgordon@google.com", MonorailComponent: comp}
-	case "Metrics":
+	case name == "Metrics" || name == "ChromiumTryTriciumMetricsAnalysis":
 		return &tricium.ReportNotUsefulResponse{Owner: "isherman@chromium.org", MonorailComponent: "Internals>Metrics>Tricium"}
-	case "OilpanAnalyzer":
+	case name == "OilpanAnalyzer" || name == "ChromiumTryTriciumOilpanAnalysis":
 		return &tricium.ReportNotUsefulResponse{Owner: "yukiy@chromium.org", MonorailComponent: comp}
-	case "PDFiumWrapper":
+	case name == "PDFiumWrapper" || name == "PdfiumTryPdfiumAnalysis":
 		return &tricium.ReportNotUsefulResponse{Owner: "nigi@chromium.org", MonorailComponent: comp}
 	default:
 		return &tricium.ReportNotUsefulResponse{Owner: "qyearsley@chromium.org", MonorailComponent: comp}
