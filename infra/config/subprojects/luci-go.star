@@ -125,3 +125,12 @@ try_builder(
     },
     in_cq = False,
 )
+
+try_builder(
+    name = "luci-go-lint",
+    os = "Ubuntu-16.04",
+    properties = {
+        "run_lint": True,
+    },
+    in_cq = False,
+)
