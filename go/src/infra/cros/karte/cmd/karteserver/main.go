@@ -9,29 +9,24 @@ package main
 // application starts.
 
 import (
-	"context"
-	"os"
+	"fmt"
 
-	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/data/rand/mathrand"
-	"go.chromium.org/luci/common/logging/gologger"
+	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/gaeemulation"
+	"go.chromium.org/luci/server/module"
 )
 
-// newApplication returns an application object for the karte entrypoint that's
-// intended to be run inside the container.
-func newApplication() *cli.Application {
-	return &cli.Application{
-		Name:  "karteserver",
-		Title: "The karte server application",
-		Context: func(ctx context.Context) context.Context {
-			return gologger.StdConfig.Use(ctx)
-		},
-		Commands: []*subcommands.Command{},
-	}
+// Entrypoint is the server entrypoint. It installs services
+// and sets up background processes.
+func entrypoint(srv *server.Server) error {
+	return fmt.Errorf("not implemented")
 }
 
+// Transfer control to the LUCI server
 func main() {
-	mathrand.SeedRandomly()
-	os.Exit(subcommands.Run(newApplication(), nil))
+	modules := []module.Module{
+		gaeemulation.NewModuleFromFlags(),
+	}
+
+	server.Main(nil, modules, entrypoint)
 }
