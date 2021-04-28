@@ -251,12 +251,16 @@ func (e env) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads
 func (e env) StartNebraska(cmdline []string) (Process, error) {
 	log.Printf("Nebraska command line: %v", cmdline)
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
+	var buf bytes.Buffer
+	cmd.Stderr = &buf
+	cmd.Stdout = &buf
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start Nebraska: %s", err)
 	}
 	p := &proc{cmd: cmd, terminated: make(chan struct{})}
 	go func() {
 		p.cmd.Wait()
+		log.Printf("%s output: %q", p, &buf)
 		close(p.terminated)
 	}()
 	return p, nil
