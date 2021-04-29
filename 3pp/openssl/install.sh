@@ -37,6 +37,9 @@ case $_3PP_PLATFORM in
   mac-arm64)
     TARGET=darwin64-arm64-cc
     ;;
+  linux-armv6l)
+    TARGET=linux-armv4
+    ;;
   linux-*)
     TARGET="linux-${CROSS_TRIPLE%%-*}"
     ;;
