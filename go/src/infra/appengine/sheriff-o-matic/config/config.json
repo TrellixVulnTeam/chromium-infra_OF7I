@@ -57,6 +57,7 @@
     },
     "chromium.mac": {
       "excluded_builders": [
+        "Mac10.15 Tests (dbg)",
         "mac-osxbeta-rel"
       ]
     },
