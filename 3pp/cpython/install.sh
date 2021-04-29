@@ -155,11 +155,10 @@ else
   # - crbug.com/763792
   LDFLAGS="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
 
-  # The "crypt" module needs to link against glibc's "crypt" function.
-  #
-  # TODO: Maybe consider implementing a static version using OpenSSL and
-  # linking that in instead?
-  SETUP_LOCAL_ATTACH+=('crypt::-lcrypt')
+  # The "crypt" module needs to link against glibc's "crypt" function. We link
+  # it statically because our docker environment uses libcrypt.so.2, which isn't
+  # available where we run the resulting binary.
+  SETUP_LOCAL_ATTACH+=('crypt::-l:libcrypt.a')
   SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libnsl.a")
 fi
 
