@@ -327,7 +327,7 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 	switch cMode {
 	case pinpoint.JobSpec_PERFORMANCE:
 		switch l.ComparisonMode {
-		case "try":
+		case "try", "":
 			// Then we've got an experiment.
 			newErrs := addExperimentDetails(l, j)
 			if len(newErrs) > 0 {
