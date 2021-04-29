@@ -35,7 +35,7 @@ gen:
 # clean just the binary artifacts
 .PHONY: clean
 clean:
-	$(IENV) $(RM) -f ./cmd/karte/karte ./cmd/karteserver/karteserver
+	$(IENV) $(RM) ./cmd/karte/karte ./cmd/karteserver/karteserver
 
 # Add a target for removing the generated files.
 # It is easier to keep the generated files in sync if there's
