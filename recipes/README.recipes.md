@@ -893,7 +893,7 @@ Raises:
 
 Provides steps to zip and unzip files.
 
-&mdash; **def [directory](/recipes/recipe_modules/zip/api.py#30)(self, step_name, directory, output):**
+&mdash; **def [directory](/recipes/recipe_modules/zip/api.py#50)(self, step_name, directory, output):**
 
 Step to compress a single directory.
 
@@ -922,7 +922,7 @@ Args:
 Returns:
   ZipPackage object.
 
-&mdash; **def [unzip](/recipes/recipe_modules/zip/api.py#44)(self, step_name, zip_file, output, quiet=False):**
+&mdash; **def [unzip](/recipes/recipe_modules/zip/api.py#64)(self, step_name, zip_file, output, quiet=False):**
 
 Step to uncompress |zip_file| into |output| directory.
 
@@ -937,6 +937,25 @@ Args:
   output: path to a directory to unpack to, it should NOT exist.
   quiet (bool): If True, print terse output instead of the name
       of each unzipped file.
+
+&mdash; **def [update\_package](/recipes/recipe_modules/zip/api.py#30)(self, root, output):**
+
+Returns ZipPackage object that can be used to update an existing package.
+
+Usage:
+  pkg = api.zip.update_package(root, output)
+  pkg.add_file(root.join('file'))
+  pkg.add_directory(root.join('directory'))
+  yield pkg.zip('updating zip step')
+
+Args:
+  root: the root directory for adding new files/dirs to the package; all
+      files/dirs added to an archive will have archive paths relative to
+      this directory.
+  output: path to a zip file to update.
+
+Returns:
+  ZipPackage object.
 ## Recipes
 
 ### *recipes* / [3pp](/recipes/recipes/3pp.py)

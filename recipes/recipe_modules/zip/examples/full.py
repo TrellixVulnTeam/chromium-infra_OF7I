@@ -30,6 +30,12 @@ def RunSteps(api):
   package.add_directory(package.root.join('sub'))
   package.zip('zipping more')
 
+  # Update a zip using ZipPackage api.
+  package = api.zip.update_package(temp, temp.join('more.zip'))
+  package.add_file(temp.join('update_a'), 'renamed_a')
+  package.add_file(temp.join('update_b'), 'renamed_b')
+  package.zip('zipping more updates')
+
   # Coverage for 'output' property.
   api.step('report', ['echo', package.output])
 

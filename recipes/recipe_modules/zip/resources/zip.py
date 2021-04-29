@@ -12,7 +12,7 @@ import sys
 import zipfile
 
 
-def zip_with_subprocess(root, output, entries):
+def zip_with_subprocess(root, output, entries, mode):
   """Zips set of files and directories using 'zip' utility.
 
   Works only on Linux and Mac, uses system 'zip' program.
@@ -21,6 +21,8 @@ def zip_with_subprocess(root, output, entries):
     root: absolute path to a directory that will become a root of the archive.
     output: absolute path to a destination archive.
     entries: list of dicts, describing what to zip, see zip/api.py.
+    mode: 'w' to create/overwrite output file, or 'a' to append to output file.
+        Note, if output file doesn't exist, this always creates a new file.
 
   Returns:
     Exit code (0 on success).
@@ -45,6 +47,10 @@ def zip_with_subprocess(root, output, entries):
     else:
       raise AssertionError('Invalid entry type: %s' % (tp,))
 
+  # zip defaults to adding/updating files, so explicitly remove any existing
+  # file in 'write' mode.
+  if mode == 'w' and os.path.exists(output):
+    os.unlink(output)
   # Invoke 'zip' in |root| directory, passing all relative paths via stdin.
   proc = subprocess.Popen(
       args=['zip', '-1', '--recurse-paths', '--symlinks', '-@', output],
@@ -54,7 +60,7 @@ def zip_with_subprocess(root, output, entries):
   return proc.returncode
 
 
-def zip_with_python(root, output, entries):
+def zip_with_python(root, output, entries, mode):
   """Zips set of files and directories using 'zipfile' python module.
 
   Works everywhere where python works (Windows and Posix).
@@ -63,12 +69,14 @@ def zip_with_python(root, output, entries):
     root: absolute path to a directory that will become a root of the archive.
     output: absolute path to a destination archive.
     entries: list of dicts, describing what to zip, see zip/api.py.
+    mode: 'w' to create/overwrite output file, or 'a' to append to output file.
+        Note, if output file doesn't exist, this always creates a new file.
 
   Returns:
     Exit code (0 on success).
   """
   with zipfile.ZipFile(
-      output, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zip_file:
+      output, mode, zipfile.ZIP_DEFLATED, allowZip64=True) as zip_file:
 
     def add(path, archive_name):
       assert path.startswith(root), path
@@ -109,6 +117,7 @@ def main():
   entries = data['entries']
   output = data['output']
   root = data['root'].rstrip(os.path.sep) + os.path.sep
+  mode = data['mode']
 
   # Archive root directory should exist and be an absolute path.
   assert os.path.exists(root), root
@@ -124,10 +133,10 @@ def main():
       # Used on Windows, since there's no builtin 'zip' utility there, and when
       # an explicit archive_name is set, since there's no way to do that with
       # the native zip utility without filesystem shenanigans
-      exit_code = zip_with_python(root, output, entries)
+      exit_code = zip_with_python(root, output, entries, mode)
     else:
       # On mac and linux 'zip' utility handles symlink and file modes.
-      exit_code = zip_with_subprocess(root, output, entries)
+      exit_code = zip_with_subprocess(root, output, entries, mode)
   finally:
     # On non-zero exit code or on unexpected exception, clean up.
     if exit_code:

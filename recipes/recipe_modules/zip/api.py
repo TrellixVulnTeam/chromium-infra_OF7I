@@ -27,6 +27,26 @@ class ZipApi(recipe_api.RecipeApi):
     """
     return ZipPackage(self, root, output)
 
+  def update_package(self, root, output):
+    """Returns ZipPackage object that can be used to update an existing package.
+
+    Usage:
+      pkg = api.zip.update_package(root, output)
+      pkg.add_file(root.join('file'))
+      pkg.add_directory(root.join('directory'))
+      yield pkg.zip('updating zip step')
+
+    Args:
+      root: the root directory for adding new files/dirs to the package; all
+          files/dirs added to an archive will have archive paths relative to
+          this directory.
+      output: path to a zip file to update.
+
+    Returns:
+      ZipPackage object.
+    """
+    return ZipPackage(self, root, output, mode='a')
+
   def directory(self, step_name, directory, output):
     """Step to compress a single directory.
 
@@ -71,10 +91,11 @@ class ZipApi(recipe_api.RecipeApi):
 class ZipPackage(object):
   """Used to gather a list of files to zip."""
 
-  def __init__(self, module, root, output):
+  def __init__(self, module, root, output, mode='w'):
     self._module = module
     self._root = root
     self._output = output
+    self._mode = mode
     self._entries = []
 
   @property
@@ -118,6 +139,7 @@ class ZipPackage(object):
         'entries': self._entries,
         'output': str(self._output),
         'root': str(self._root),
+        'mode': str(self._mode),
     }
     step_result = self._module.m.python(
         name=step_name,
