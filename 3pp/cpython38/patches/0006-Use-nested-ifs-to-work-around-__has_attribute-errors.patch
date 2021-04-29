@@ -1,0 +1,56 @@
+From 7b207e14588902a5ea5516e5c40df788f1b20f91 Mon Sep 17 00:00:00 2001
+From: Brian Ryner <bryner@google.com>
+Date: Thu, 29 Apr 2021 14:53:11 +1000
+Subject: [PATCH 6/6] Use nested #ifs to work around __has_attribute errors on
+ some GCC versions.
+
+---
+ Modules/timemodule.c    | 4 +++-
+ Python/bootstrap_hash.c | 4 +++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/Modules/timemodule.c b/Modules/timemodule.c
+index 93420ba0c8..51b01d9984 100644
+--- a/Modules/timemodule.c
++++ b/Modules/timemodule.c
+@@ -1392,13 +1392,15 @@ _PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info)
+ #elif defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_PROCESS_CPUTIME_ID)
+ #define HAVE_THREAD_TIME
+ 
+-#if defined(__APPLE__) && defined(__has_attribute) && __has_attribute(availability)
++#if defined(__APPLE__) && defined(__has_attribute)
++#  if __has_attribute(availability)
+ static int
+ _PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info) 
+      __attribute__((availability(macos, introduced=10.12)))
+      __attribute__((availability(ios, introduced=10.0)))
+      __attribute__((availability(tvos, introduced=10.0)))
+      __attribute__((availability(watchos, introduced=3.0)));
++#  endif
+ #endif
+ 
+ static int
+diff --git a/Python/bootstrap_hash.c b/Python/bootstrap_hash.c
+index d8803a9401..2429591b73 100644
+--- a/Python/bootstrap_hash.c
++++ b/Python/bootstrap_hash.c
+@@ -219,13 +219,15 @@ py_getrandom(void *buffer, Py_ssize_t size, int blocking, int raise)
+ 
+    getentropy() is retried if it failed with EINTR: interrupted by a signal. */
+ 
+-#if defined(__APPLE__) && defined(__has_attribute) && __has_attribute(availability)
++#if defined(__APPLE__) && defined(__has_attribute)
++#  if __has_attribute(availability)
+ static int
+ py_getentropy(char *buffer, Py_ssize_t size, int raise) 
+         __attribute__((availability(macos,introduced=10.12)))
+         __attribute__((availability(ios,introduced=10.0)))
+         __attribute__((availability(tvos,introduced=10.0)))
+         __attribute__((availability(watchos,introduced=3.0)));
++#  endif
+ #endif
+ 
+ static int
+-- 
+2.31.1.527.g47e6f16901-goog
+
