@@ -44,7 +44,8 @@ http {
   include       /etc/nginx/mime.types;
   default_type  application/octet-stream;
   log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                  '$status $body_bytes_sent "$http_referer" '
+                  '$status $body_bytes_sent "$upstream_http_content_length" '
+                  '$request_time "$http_referer" '
                   '"$http_user_agent" "$http_x_forwarded_for" $sent_http_x_cache';
   proxy_cache_path  /var/cache/nginx levels=1:2 keys_zone=google-storage:80m
                     max_size={{ .CacheSizeInGB }}g inactive=720h;
