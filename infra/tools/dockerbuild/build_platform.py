@@ -180,33 +180,7 @@ ALL = {
             cipd_platform='linux-amd64',
             env={},
         ),
-        Platform(
-            name='manylinux-x86',
-            manylinux_name='cp27-cp27mu',
-            cross_triple='i686-linux-gnu',
-            wheel_abi='cp27mu',
-            wheel_plat=('manylinux2014_i686',),
-            dockcross_base='manylinux2014-x86',
-            openssl_target='linux-x86',
-            packaged=True,
-            cipd_platform='linux-386',
-            env={},
-        ),
 
-        # Atypical but possible Python configuration using "2-byte UCS", with
-        # ABI "cp27m".
-        Platform(
-            name='manylinux-x86-ucs2',
-            manylinux_name='cp27-cp27m',
-            cross_triple='i686-linux-gnu',
-            wheel_abi='cp27m',
-            wheel_plat=('manylinux2014_i686',),
-            dockcross_base='manylinux2014-x86',
-            openssl_target='linux-x86',
-            packaged=True,
-            cipd_platform='linux-386',
-            env={},
-        ),
         Platform(
             name='mac-x64',
             manylinux_name=None,

@@ -119,7 +119,6 @@ SPECS.update({
             '1.1.1',
             packaged=(
                 'mac-x64',
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -139,7 +138,7 @@ SPECS.update({
             'SQLAlchemy',
             '1.2.5',
             packaged=(),
-            only_plat=['manylinux-x86', 'manylinux-x64'],
+            only_plat=['manylinux-x64'],
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
@@ -147,7 +146,6 @@ SPECS.update({
             '3.1.4',
             packaged=[
                 'mac-x64',
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -181,7 +179,6 @@ SPECS.update({
             'coverage',
             '4.3.4',
             packaged=[
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -192,7 +189,6 @@ SPECS.update({
             'coverage',
             '4.5.1',
             packaged=[
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -203,7 +199,6 @@ SPECS.update({
             'coverage',
             '4.5.3',
             packaged=[
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -282,7 +277,6 @@ SPECS.update({
             'lazy-object-proxy',
             '1.3.1',
             packaged=[
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
@@ -307,10 +301,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'netifaces',
             '0.10.9',
-            packaged=[
-                'manylinux-x86',
-                'manylinux-x64',
-            ],
+            packaged=['manylinux-x64'],
             skip_plat=[
                 'mac-x64',
                 'windows-x86',
@@ -515,7 +506,7 @@ SPECS.update({
             'wrapt',
             '1.10.11',
             packaged=(),
-            only_plat=['manylinux-x86', 'manylinux-x64', 'manylinux-x64-py3'],
+            only_plat=['manylinux-x64', 'manylinux-x64-py3'],
             pyversions=['py2', 'py3']),
         SourceOrPrebuilt(
             'wrapt',
@@ -536,10 +527,7 @@ SPECS.update({
         Prebuilt(
             'debugpy',
             '1.0.0rc2',
-            [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
         ),
         # We can't build this ourselves as the build depends on Bazel.
         Prebuilt(
@@ -556,7 +544,6 @@ SPECS.update({
             [
                 'mac-x64',
                 'mac-x64-cp38',
-                'manylinux-x86',
                 'manylinux-x64',
                 'manylinux-x64-py3',
                 'windows-x86',
@@ -575,10 +562,7 @@ SPECS.update({
         Prebuilt(
             'lxml',
             '4.2.5',
-            [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
         ),
         Prebuilt(
             'lxml',
@@ -588,37 +572,25 @@ SPECS.update({
         Prebuilt(
             'pandas',
             '0.23.4',
-            [
-                'manylinux-x86', 'manylinux-x64', 'mac-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['manylinux-x64', 'mac-x64', 'windows-x86', 'windows-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
         Prebuilt(
             'pillow',
             '5.2.0',
-            [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
         Prebuilt(
             'pillow',
             '5.4.1',
-            [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
         Prebuilt(
             'pillow',
             '6.0.0',
-            [
-                'mac-x64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
         Prebuilt(
@@ -661,7 +633,7 @@ SPECS.update({
         Prebuilt(
             'scipy',
             '0.19.0',
-            ['mac-x64', 'manylinux-x86', 'manylinux-x64'],
+            ['mac-x64', 'manylinux-x64'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
         Prebuilt(
@@ -1057,30 +1029,25 @@ SPECS.update({
             'opencv_python',
             '2.4.13.2',
             '1.11.3',
-            only_plat=['manylinux-x86', 'manylinux-x64']),
+            only_plat=['manylinux-x64']),
         OpenCV(
             'opencv_python',
             '3.2.0.7',
             '1.12.1',
             packaged=[
                 'mac-x64',
-                'manylinux-x86',
                 'manylinux-x64',
                 'windows-x86',
                 'windows-x64',
             ],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
-            only_plat=[
-                'mac-64', 'manylinux-x86', 'manylinux-x64', 'windows-x86',
-                'windows-x64'
-            ],
+            only_plat=['mac-64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
         ),
     )
 })
 
 from .wheel_cryptography import CryptographyPyPI
 _OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS = [
-    'manylinux-x86',
     'manylinux-x64',
     'mac-x64',
     'windows-x86',
@@ -1169,8 +1136,6 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
-                'manylinux-x86',
-                'manylinux-x86-ucs2',
             ],
         ),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of
@@ -1478,7 +1443,6 @@ SPECS.update({
         MySQLPython(
             '1.2.5',
             only_plat=[
-                'manylinux-x86',
                 'manylinux-x64',
                 'linux-arm64',
                 'linux-armv6',

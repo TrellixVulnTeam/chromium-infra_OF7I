@@ -186,8 +186,6 @@ wheel: <
 * *linux-mipsel*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 
 ### 1.1.1
 
@@ -207,8 +205,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -228,7 +224,6 @@ wheel: <
 * *linux-armv6*
 * *linux-mips64*
 * *manylinux-x64*
-* *manylinux-x86*
 
 ## **PeakUtils**
 
@@ -278,8 +273,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -324,7 +317,6 @@ wheel: <
 
 
 * *manylinux-x64*
-* *manylinux-x86*
 
 ## **SecretStorage-py3**
 
@@ -826,8 +818,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -999,8 +989,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1022,8 +1010,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1158,8 +1144,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1181,8 +1165,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1204,8 +1186,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1245,8 +1225,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1284,8 +1262,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1308,8 +1284,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -1334,8 +1308,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -1362,8 +1334,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -1383,7 +1353,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -1626,7 +1595,6 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -1720,8 +1688,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -2374,8 +2340,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86-py3*
@@ -2401,8 +2365,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -2471,8 +2433,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -2855,8 +2815,6 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -2917,7 +2875,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -3230,8 +3187,6 @@ wheel: <
 * *linux-mipsel*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 
 ## **networkx-py3**
 
@@ -3321,8 +3276,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -3343,8 +3296,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -3478,7 +3429,6 @@ wheel: <
 
 
 * *manylinux-x64*
-* *manylinux-x86*
 
 ### 3.2.0.7
 
@@ -3491,7 +3441,6 @@ wheel: <
 
 
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -3537,7 +3486,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -3712,7 +3660,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -3728,7 +3675,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -3744,7 +3690,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 * *windows-x64*
 * *windows-x86*
 
@@ -4043,8 +3988,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 
 ### 5.2.2
 
@@ -4064,8 +4007,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -4087,8 +4028,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -4111,8 +4050,6 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -5195,8 +5132,6 @@ wheel: <
 * *linux-mipsel*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 
 ## **scandir**
 
@@ -5218,8 +5153,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -5241,8 +5174,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -5260,7 +5191,6 @@ wheel: <
 
 * *mac-x64*
 * *manylinux-x64*
-* *manylinux-x86*
 
 ### 1.6.0
 
@@ -5386,8 +5316,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
 
@@ -5515,8 +5443,6 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
-* *manylinux-x86*
-* *manylinux-x86-ucs2*
 
 ## **tempora**
 
@@ -5944,7 +5870,6 @@ wheel: <
 
 * *manylinux-x64*
 * *manylinux-x64-py3*
-* *manylinux-x86*
 
 ### 1.12.1
 
