@@ -1,0 +1,18 @@
+# Sample test data for presets
+presets:
+  basic: &basic
+    telemetry_experiment:
+      config: linux-perf
+      story_selection:
+        story_tags:
+          - all
+      benchmark: some-benchmark
+      measurement: some-measurement
+      extra_args:
+        - "--extra_args"
+        - "something"
+  complex:
+    <<: *basic
+    telemetry_experiment:
+      extra_args:
+        - "--extra_complex_args"

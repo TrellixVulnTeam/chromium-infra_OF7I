@@ -1,0 +1,9 @@
+# Sample presets for testing
+presets:
+  sample:
+    telemetry_experiment:
+      config: linux-perf
+      story_selection:
+        story_tags:
+          - all
+      benchmark: some-benchmark

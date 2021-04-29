@@ -202,6 +202,15 @@ func waitForServices(ctx context.Context, grpcEndpoint string) error {
 	}
 }
 
+func extractJobID(t *testing.T, out string) string {
+	lastSlash := strings.LastIndexByte(out, '/')
+	if lastSlash == -1 {
+		t.Fatalf("couldn't find URL-like path in CLI output:\n\n%s", out)
+	}
+	return strings.TrimSpace(out[lastSlash+1:])
+
+}
+
 func TestScheduleJobFlow(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		// We rely on sending an interrupt to other processes, which is not
@@ -210,6 +219,11 @@ func TestScheduleJobFlow(t *testing.T) {
 	}
 	paths, err := setup(t)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Fix the user config to a relative path.
+	if err := os.Setenv("PINPOINT_USER_CONFIG", "testdata/sample-user-config.yaml"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -237,12 +251,7 @@ func TestScheduleJobFlow(t *testing.T) {
 				"-cfg", "linux-perf",
 			)
 			So(err, ShouldBeNil)
-
-			lastSlash := strings.LastIndexByte(out, '/')
-			if lastSlash == -1 {
-				t.Fatalf("couldn't find URL-like path in CLI output:\n\n%s", out)
-			}
-			jobID := strings.TrimSpace(out[lastSlash+1:])
+			jobID := extractJobID(t, out)
 
 			Convey("get-job shows the new job", func() {
 				out, err = execCLI("get-job", "-name", jobID)
@@ -253,6 +262,29 @@ func TestScheduleJobFlow(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(out, ShouldContainSubstring, pinpoint.LegacyJobName(jobID))
 			})
+		})
+
+		Convey("creating a new telemetry experiment with presets works", func() {
+			out, err := execCLI(
+				"experiment-telemetry-start",
+				"-presets-file", "testdata/sample-presets.yaml",
+				"-base-commit", "abcdef",
+				"-exp-cl", "1234/5",
+				"-preset", "sample",
+			)
+			So(err, ShouldBeNil)
+			jobID := extractJobID(t, out)
+
+			Convey("get-job shows the new job", func() {
+				out, err = execCLI("get-job", "-name", jobID)
+				So(err, ShouldBeNil)
+			})
+		})
+
+		Convey("config shows the expected flags for a user config", func() {
+			out, err := exec.Command(paths.pinpointCLI, "config").CombinedOutput()
+			So(err, ShouldBeNil)
+			So(string(out), ShouldContainSubstring, "testdata/sample-presets.yaml")
 		})
 	})
 }

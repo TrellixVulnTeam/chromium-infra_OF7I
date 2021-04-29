@@ -80,19 +80,18 @@ type downloadResultsMixin struct {
 // add some support in the pinpointCommand wrapper type somehow.
 func (drm *downloadResultsMixin) RegisterFlags(flags *flag.FlagSet, userCfg userConfig) {
 	flags.BoolVar(&drm.downloadResults, "download-results", userCfg.DownloadResults, text.Doc(`
-		If set, results are downloaded to the -results-dir.
-		Note that files will NOT be overwritten if they exist already (an error
-		will be printed).
-		Override default from user configuration file.
+		If set, results are downloaded to the -results-dir.  Note that files
+		will NOT be overwritten if they exist already (an error will be
+		printed).  Override default from user configuration file.
 	`))
-	flags.StringVar(&drm.resultsDir, "results-dir", userCfg.TempDir, text.Doc(`
-		Ignored unless -download-results is set;
-		the directory to store results in.
+	flags.StringVar(&drm.resultsDir, "results-dir", userCfg.ResultsDir, text.Doc(`
+		Ignored unless -download-results is set; the directory to store
+		results in.
 	`))
 	flags.BoolVar(&drm.openResults, "open-results", false, text.Doc(`
-		Ignored unless -download-results is set;
-		if set, the results will automatically be opened in a browser.
-		Requires xdg-open to be installed.
+		Ignored unless -download-results is set; if set, the results will
+		automatically be opened in a browser.  Requires xdg-open to be
+		installed.
 	`))
 }
 

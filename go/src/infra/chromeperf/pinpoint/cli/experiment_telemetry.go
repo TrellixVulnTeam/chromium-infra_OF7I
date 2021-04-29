@@ -39,10 +39,11 @@ func cmdTelemetryExperiment(p Param) *subcommands.Command {
 		UsageLine: "experiment-telemetry-start <-flag...> -- <extra telemetry args>",
 		ShortDesc: "starts a telemetry a/b experiment",
 		LongDesc: text.Doc(`
-		experiment-telemetry-start schedules an A/B experiment between two builds (a
-		base and experiment) generating results. The extra telemetry arguments are
-		passed to the invocation of the benchmark runner as-is. To differentiate
-		flags for the subcommand, you can use '--':
+		experiment-telemetry-start schedules an A/B experiment between two
+		builds (a base and experiment) generating results.  The extra
+		telemetry arguments are passed to the invocation of the benchmark
+		runner as-is.  To differentiate flags for the subcommand, you can use
+		'--':
 		
 		experiment-telemetry-start -benchmark=... -- --enable_features ...
 		
@@ -56,6 +57,35 @@ func cmdTelemetryExperiment(p Param) *subcommands.Command {
 			
 		Waiting for and downloading results:
 			experiment-telemetry-start -benchmark=... -wait -download-results
+
+		PRESETS
+
+		You can define pre-set configuration options in a YAML file which
+		follows the given structure:
+
+			presets:
+			  <name>:
+			    telemetry_experiment:
+					config: ...
+					story_selection:
+						story: ...  # or story_tags: [ ... ]
+					benchmark: ...
+					measurement: ...
+					extra_args:
+						- "..."
+			  ...
+
+		Pinpoint will look for the presets file in the following order:
+
+			- Provided as a flag -presets-file=<filename>
+			- The PINPOINT_PRESETS environment variable (containing a file name)
+			- The "presets_file" setting in the user-specific config ( run
+			'pinpoint config --help' for details)
+			- A file in the current directory named '.pinpoint-presets.yaml'
+
+		To select a preset, use the -preset flag to fill out the defaults for
+		the kind of job to run.  Note that you can still override options
+		that can be modified through flags provided to the command.
 		`),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &experimentTelemetryRun{}
@@ -104,13 +134,44 @@ func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extr
 }
 
 func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Application, args []string) error {
-	if (len(e.story) == 0 && len(e.storyTags) == 0) || (len(e.story) > 0 && len(e.storyTags) > 0) {
+	p, err := e.getPreset(ctx)
+	if err != nil {
+		logging.Warningf(ctx, "unable to load preset: %s", err)
+	}
+	// Try loading from the preset if both -story and -story_tags are empty.
+	if len(e.story) == 0 && len(e.storyTags) == 0 {
+		if p.TelemetryExperiment.StorySelection.Story != "" {
+			e.story = p.TelemetryExperiment.StorySelection.Story
+		} else if len(p.TelemetryExperiment.StorySelection.StoryTags) > 0 {
+			e.storyTags = p.TelemetryExperiment.StorySelection.StoryTags
+		} else {
+			// This means we don't have either defined even after we check the
+			// preset.
+			e.GetFlags().Usage()
+			return errors.Reason("pick one of -story or -story-tags").Err()
+		}
+	}
+
+	if len(e.story) > 0 && len(e.storyTags) > 0 {
 		e.GetFlags().Usage()
 		return errors.Reason("pick one of -story or -story-tags").Err()
 	}
+
 	c, err := e.pinpointClient(ctx)
 	if err != nil {
 		return errors.Annotate(err, "failed to create a Pinpoint client").Err()
+	}
+
+	// Use the presets if any of the Telemetry-specific flags aren't set.
+	if e.benchmark == "" {
+		e.benchmark = p.TelemetryExperiment.Benchmark
+	}
+	if e.configuration == "" {
+		e.configuration = p.TelemetryExperiment.Config
+	}
+	extraArgs := e.Flags.Args()
+	if len(extraArgs) == 0 {
+		extraArgs = p.TelemetryExperiment.ExtraArgs
 	}
 
 	js := &pinpoint.JobSpec{
@@ -135,7 +196,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		},
 		Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
 			TelemetryBenchmark: newTelemetryBenchmark(
-				e.benchmark, e.measurement, e.story, e.storyTags, e.Flags.Args()),
+				e.benchmark, e.measurement, e.story, e.storyTags, extraArgs),
 		},
 	}
 	exp := js.GetExperiment()
