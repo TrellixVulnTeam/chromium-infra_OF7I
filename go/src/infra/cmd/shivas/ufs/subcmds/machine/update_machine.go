@@ -123,7 +123,9 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 	if err != nil {
 		return err
 	}
-	if existingMachine.GetChromeosMachine() != nil && existingMachine.GetChromeosMachine().GetHwid() != machine.GetChromeosMachine().GetHwid() {
+	// Check HWID for non-partial update
+	// TODO(anushruth): Check for file type when implementing mcsv support.
+	if c.newSpecsFile != "" && existingMachine.GetChromeosMachine() != nil && existingMachine.GetChromeosMachine().GetHwid() != machine.GetChromeosMachine().GetHwid() {
 		newHWID := machine.GetChromeosMachine().GetHwid()
 		if newHWID == "" {
 			return fmt.Errorf("users cannot update hwid to empty string manually")

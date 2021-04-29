@@ -127,7 +127,9 @@ func (c *updateAsset) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return err
 	}
-	if existingAsset.GetInfo().GetHwid() != asset.GetInfo().GetHwid() {
+	// Check HWID for non-partial update
+	// TODO(anushruth): Check for file type when implementing mcsv support.
+	if c.newSpecsFile != "" && existingAsset.GetInfo().GetHwid() != asset.GetInfo().GetHwid() {
 		newHWID := asset.GetInfo().GetHwid()
 		if newHWID == "" {
 			return fmt.Errorf("users cannot update hwid to empty string manually")
