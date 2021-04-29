@@ -9,7 +9,9 @@ set -o pipefail
 
 PREFIX="$1"
 
-./configure --enable-static --disable-shared \
+# Don't have libtool hardcode the path to 'grep', since it varies across
+# some of our docker images. Instead, just trust grep from $PATH.
+GREP=grep ./configure --enable-static --disable-shared \
   --prefix "$PREFIX" \
   --host "$CROSS_TRIPLE"
 make install -j $(nproc)

@@ -11,6 +11,7 @@
     tool: "tools/autoconf"
     tool: "tools/automake"
     tool: "tools/libtool"
+    tool: "tools/sed"
    }
  }
 

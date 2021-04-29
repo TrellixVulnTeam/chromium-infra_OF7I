@@ -13,6 +13,7 @@ create {
     tool: "tools/automake"
     tool: "tools/libtool"
     tool: "tools/texinfo"
+    tool: "tools/sed"
   }
 }
 

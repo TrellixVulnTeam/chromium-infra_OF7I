@@ -7,9 +7,11 @@ create {
     }
     unpack_archive: true
     patch_dir: "patches"
+    patch_version: "chromium.2"
   }
   build {
     tool: "tools/help2man"
+    tool: "tools/sed"
   }
 }
 
