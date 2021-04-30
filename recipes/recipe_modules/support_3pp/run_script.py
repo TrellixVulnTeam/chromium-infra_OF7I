@@ -37,7 +37,6 @@ _DOCKERBUILD_PLATFORM = {
   'linux-mipsle': 'linux-mipsel',
   'linux-mips64': 'linux-mips64',
   'linux-amd64': 'manylinux-x64',
-  'linux-386': 'manylinux-x86',
 }
 
 def run_script(api, *args, **kwargs):

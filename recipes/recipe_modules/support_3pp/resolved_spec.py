@@ -44,9 +44,9 @@ def platform_for_host(api):
 
 def tool_platform(api, platform, _spec_pb):
   """Returns the target platform for tools needed to build the provided
-  `platform`. E.g. if we're targeting `linux-x86` the toolchain might be
+  `platform`. E.g. if we're targeting `linux-arm64` the toolchain might be
   `linux-amd64`, regardless of the host platform (because we use docker to build
-  for linux-x86, and so the tools need to run in the docker container).
+  for linux-arm64, and so the tools need to run in the docker container).
 
   When not cross-compiling, this returns a cipd platform name for the current
   host, derived from the `platform` recipe_module.

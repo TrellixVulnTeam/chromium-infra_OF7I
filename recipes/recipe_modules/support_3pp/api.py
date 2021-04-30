@@ -266,7 +266,6 @@ including:
   * linux-armv6l
   * linux-mips32
   * linux-mips64
-  * linux-386
   * linux-amd64
 
 [dockcross]: https://github.com/dockcross/dockcross
