@@ -137,5 +137,6 @@ try_builder(
     properties = {
         "run_lint": True,
     },
-    in_cq = False,
+    owner_whitelist = ["project-infra-tryjob-access"],
+    mode_allowlist = [cq.MODE_ANALYZER_RUN],
 )
