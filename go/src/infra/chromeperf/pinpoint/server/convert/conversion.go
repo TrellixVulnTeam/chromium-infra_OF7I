@@ -291,6 +291,12 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 
 	// FIXME(dberris): Interpret the results better, differentiating experiments from bisections, etc.
 	cMode := jsonModeToProto(l.ComparisonMode)
+
+	ua, found := l.Arguments["user_agent"]
+	if !found {
+		ua = "(unknown)"
+	}
+
 	j := &pinpoint.Job{
 		Name:           fmt.Sprintf("jobs/legacy-%s", l.JobID),
 		State:          jsonStatusToProto(l.Status),
@@ -302,6 +308,7 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 			ComparisonMagnitude: l.ComparisonMagnitude,
 			Config:              l.Cfg,
 			Target:              l.Arguments["target"],
+			UserAgent:           ua,
 			MonorailIssue: func() *pinpoint.MonorailIssue {
 				if l.Project == nil || l.BugID == 0 {
 					return nil

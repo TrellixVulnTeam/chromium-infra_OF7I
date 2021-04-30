@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/cli/identify"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -177,6 +178,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	js := &pinpoint.JobSpec{
 		ComparisonMode: pinpoint.JobSpec_PERFORMANCE,
 		Config:         e.configuration,
+		UserAgent:      identify.UserAgent,
 
 		// This is hard-coded for Chromium Telemetry.
 		Target: "performance_test_suite",
