@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/server/identify"
 
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -77,6 +78,13 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 	// We're turning a floating point comparison magnitude to a string.
 	if job.ComparisonMagnitude != 0.0 {
 		v.Set("comparison_magnitude", fmt.Sprintf("%f", job.ComparisonMagnitude))
+	}
+
+	// Set the user agent, the default would be the gRPC service with a (git) version.
+	if job.UserAgent == "" {
+		v.Set("user_agent", identify.UserAgent)
+	} else {
+		v.Set("user_agent", job.UserAgent)
 	}
 
 	// Handle the spec for git hashes.

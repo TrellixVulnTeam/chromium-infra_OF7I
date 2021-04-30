@@ -45,8 +45,9 @@ func shouldContainMap(actual interface{}, expected ...interface{}) string {
 func TestSimpleConversions(t *testing.T) {
 	t.Parallel()
 	job := &pinpoint.JobSpec{
-		Config: "some-config",
-		Target: "some-build-target",
+		Config:    "some-config",
+		Target:    "some-build-target",
+		UserAgent: "pinpoint/unittest",
 	}
 
 	Convey("We support Bisections without a Patch", t, func() {
@@ -77,6 +78,11 @@ func TestSimpleConversions(t *testing.T) {
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
+
+				// Check that we have the user agent.
+				So(v, shouldContainMap, map[string]interface{}{
+					"user_agent": "pinpoint/unittest",
+				})
 
 				// Check that we support the required fields for all Pinpoint jobs.
 				So(v, shouldContainMap, map[string]interface{}{

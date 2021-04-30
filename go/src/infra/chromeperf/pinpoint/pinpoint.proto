@@ -271,6 +271,10 @@ message JobSpec {
   // The associated Monorail issue.
   MonorailIssue monorail_issue = 9;
 
+  // A client can associate an agent identifier (similar to an HTTP User Agent).
+  // This is purely metadata.
+  string user_agent = 10;
+
   // TODO(crbug/1059667): Fill this out with more details like priority, other
   // constraints, when relevant.
 }
