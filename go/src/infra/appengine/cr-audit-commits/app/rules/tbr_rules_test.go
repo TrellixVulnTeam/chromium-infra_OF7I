@@ -6,6 +6,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ func TestTBRRules(t *testing.T) {
 			RepoCfg:           cfg,
 		}
 
-		reviewedcl := &gerrit.Change{
+		reviewedCL := &gerrit.Change{
 			ChangeID:        "tbrchangeid1",
 			ChangeNumber:    4321,
 			CurrentRevision: "7b12c0de1",
@@ -75,7 +76,7 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		selfReviewedCl := &gerrit.Change{
+		selfReviewedCL := &gerrit.Change{
 			ChangeID:        "tbrchangeid2",
 			ChangeNumber:    4322,
 			CurrentRevision: "7b12c0de2",
@@ -107,7 +108,7 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		botCommitCl := &gerrit.Change{
+		botCommitCL := &gerrit.Change{
 			ChangeID:        "botcommit123",
 			ChangeNumber:    4323,
 			CurrentRevision: "7b12c0de3",
@@ -139,7 +140,7 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		botCommitAndSelfCl := &gerrit.Change{
+		botCommitAndSelfCL := &gerrit.Change{
 			ChangeID:        "botcommit456",
 			ChangeNumber:    4324,
 			CurrentRevision: "7b12c0de4",
@@ -179,7 +180,7 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		selfReviewedOsCl := &gerrit.Change{
+		selfReviewedPlus2CL := &gerrit.Change{
 			ChangeID:        "tbrchangeid3",
 			ChangeNumber:    4325,
 			CurrentRevision: "7b12c0de5",
@@ -212,7 +213,7 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		reviewedOsCl := &gerrit.Change{
+		reviewedPlus2CL := &gerrit.Change{
 			ChangeID:        "tbrchangeid4",
 			ChangeNumber:    4326,
 			CurrentRevision: "7b12c0de6",
@@ -245,13 +246,18 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
-		q := map[string][]*gerrit.Change{
-			"commit:7b12c0de1": {reviewedcl},
-			"commit:7b12c0de2": {selfReviewedCl},
-			"commit:7b12c0de3": {botCommitCl},
-			"commit:7b12c0de4": {botCommitAndSelfCl},
-			"commit:7b12c0de5": {selfReviewedOsCl},
-			"commit:7b12c0de6": {reviewedOsCl},
+		allCLs := []*gerrit.Change{
+			reviewedCL,
+			selfReviewedCL,
+			botCommitCL,
+			botCommitAndSelfCL,
+			selfReviewedPlus2CL,
+			reviewedPlus2CL,
+		}
+		q := map[string][]*gerrit.Change{}
+		for _, cl := range allCLs {
+			key := fmt.Sprintf("commit:%s", cl.CurrentRevision)
+			q[key] = []*gerrit.Change{cl}
 		}
 
 		testClients := &Clients{}
@@ -272,7 +278,7 @@ func TestTBRRules(t *testing.T) {
 		})
 
 		Convey("Non-Pass", func() {
-			rc.CommitHash = "7b12c0de2"
+			rc.CommitHash = selfReviewedCL.CurrentRevision
 			expectedStatus = RuleFailed
 			msg = msgFail
 			Convey("Fail", func() {
@@ -302,28 +308,28 @@ func TestTBRRules(t *testing.T) {
 		})
 
 		Convey("Bot-Commit", func() {
-			rc.CommitHash = "7b12c0de3"
+			rc.CommitHash = botCommitCL.CurrentRevision
 			expectedStatus = RulePassed
 		})
 
 		Convey("Bot-Commit and self CR", func() {
-			rc.CommitHash = "7b12c0de4"
+			rc.CommitHash = botCommitAndSelfCL.CurrentRevision
 			expectedStatus = RulePassed
 		})
 
-		Convey("Self-reviewed OS CL fail", func() {
-			rc.CommitHash = "7b12c0de5"
+		Convey("Self-reviewed +2 CL fail", func() {
+			rc.CommitHash = selfReviewedCL.CurrentRevision
 			expectedStatus = RuleFailed
 			msg = msgFail
 		})
 
-		Convey("Reviewed OS CL pass", func() {
-			rc.CommitHash = "7b12c0de6"
+		Convey("Reviewed +2 CL pass", func() {
+			rc.CommitHash = reviewedPlus2CL.CurrentRevision
 			expectedStatus = RulePassed
 		})
 
 		rr, _ := c.Run(ctx, ap, rc, testClients)
-		So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
+		So(rr.RuleResultStatus.ToString(), ShouldEqual, expectedStatus.ToString())
 		So(rr.Message, ShouldEqual, msg)
 		So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, []string(nil))
 	})
