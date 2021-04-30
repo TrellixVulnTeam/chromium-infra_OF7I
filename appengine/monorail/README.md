@@ -9,6 +9,8 @@ We also discuss development of Monorail at `infra-dev@chromium.org`.
 
 # Getting started with Monorail development
 
+*For Googlers:* Monorail's codebase is open source and can be installed locally on your workstation of choice.
+
 Here's how to run Monorail locally for development on MacOS and Debian stretch/buster or its derivatives.
 
 1.  You need to [get the Chrome Infra depot_tools commands](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) to check out the source code and all its related dependencies and to be able to send changes for review.
@@ -21,6 +23,9 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
 1.  Spin up dependent services.
     1. We use docker and docker-compose to orchestrate. So install [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) first. For glinux users see [go/docker](http://go/docker)
+    1.  Make sure to authenticate with the App Engine SDK and configure Docker. This is needed to install Cloud Tasks Emulator.
+        1.  `gcloud auth login`
+        1.  `gcloud auth configure-docker`
     1. Run `docker-compose -f dev-services.yml up -d`. This should spin up:
         1. MySQL v5.6
         1. Redis
@@ -126,6 +131,12 @@ describe.only(() => {
 Just remember to remove them before you upload your CL.
 
 ## Troubleshooting
+
+*   `BindError: Unable to bind localhost:8080`
+
+This error occurs when port 8080 is already being used by an existing process. Oftentimes,
+this is a leftover Monorail devserver process from a past run. To quit whatever process is
+on port 8080, you can run `kill $(lsof -ti:8080)`.
 
 *   `TypeError: connect() got an unexpected keyword argument 'charset'`
 
