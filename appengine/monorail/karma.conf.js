@@ -51,6 +51,7 @@ module.exports = function(config) {
           'IframeWindow',
           '__gapi_jstiming__',
         ],
+        timeout: 5000,
       },
     },
 

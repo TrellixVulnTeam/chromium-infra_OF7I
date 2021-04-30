@@ -158,7 +158,7 @@ describe('mr-attachment', () => {
       element.attachment = {};
       await element.updateComplete;
       downloadLink = element.shadowRoot.querySelector('.attachment-download');
-      // Prevent Karma from poening up new tabs because of simulated link
+      // Prevent Karma from opening up new tabs because of simulated link
       // clicks.
       downloadLink.removeAttribute('target');
     });
