@@ -76,7 +76,7 @@ def apply_golangci_lint(api, co):
       }),
       stdout=api.json.output())
 
-  for issue in result.stdout.get("Issues", []):
+  for issue in result.stdout.get("Issues") or ():
     pos = issue["Pos"]
     line = pos["Line"]
     api.tricium.add_comment("golangci-lint (%s)" % issue["FromLinter"],
