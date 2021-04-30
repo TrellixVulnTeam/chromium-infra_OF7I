@@ -418,6 +418,9 @@ class TaskDefTest(BaseTest):
             cipd_package='infra/recipe_bundle',
             cipd_version='refs/heads/master',
         ),
+        tags=[
+            common_pb2.StringPair(key='custom', value='tag'),
+        ],
         input=dict(
             properties=bbutil.dict_to_struct({
                 'a': 'b',
@@ -463,8 +466,11 @@ class TaskDefTest(BaseTest):
         payload_path=swarming._KITCHEN_CHECKOUT,
         cache_dir=swarming._CACHE_DIR,
         known_public_gerrit_hosts=['chromium-review.googlesource.com'],
-        build=build.proto,
+        build=copy.deepcopy(build.proto),
     )
+    # build.proto doesn't have tags in storage.
+    build.tags_to_protos(expected_args.build.tags)
+
     expected_swarming_props_def = {
         'env': [{
             'key': 'BUILDBUCKET_EXPERIMENTAL',
@@ -541,6 +547,7 @@ class TaskDefTest(BaseTest):
             'buildbucket_template_canary:0',
             'builder:linux',
             'buildset:1',
+            'custom:tag',
             'luci_project:chromium',
         ],
         'task_slices': [{

@@ -428,6 +428,8 @@ def _cli_encode_proto(message):
 
 def _compute_bbagent(build, settings):
   """Returns the command for bbagent."""
+  proto = copy.deepcopy(build.proto)
+  build.tags_to_protos(proto.tags)
   return [
       u'bbagent${EXECUTABLE_SUFFIX}',
       _cli_encode_proto(
@@ -435,7 +437,7 @@ def _compute_bbagent(build, settings):
               payload_path=_KITCHEN_CHECKOUT,
               cache_dir=_CACHE_DIR,
               known_public_gerrit_hosts=settings.known_public_gerrit_hosts,
-              build=build.proto,
+              build=proto,
           )
       ),
   ]
