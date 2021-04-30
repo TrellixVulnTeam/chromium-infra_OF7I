@@ -1,18 +1,6 @@
 [
   {
     "cmd": [
-      "git",
-      "config",
-      "--global",
-      "core.symlinks",
-      "true"
-    ],
-    "cwd": "None",
-    "infra_step": true,
-    "name": "set symlinks"
-  },
-  {
-    "cmd": [
       "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",

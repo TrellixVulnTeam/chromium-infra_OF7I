@@ -22,9 +22,6 @@ ASSETS_DIFF_FAILURE_MESSAGE = '''
 
 
 def RunSteps(api):
-  if api.platform.is_win:
-    # Need to enable support for symlinks on Windows for unittest in luci-py
-    api.git('config', '--global', 'core.symlinks', 'true', name='set symlinks')
   co = api.infra_checkout.checkout('luci_py', patch_root='infra/luci')
   co.gclient_runhooks()
 
