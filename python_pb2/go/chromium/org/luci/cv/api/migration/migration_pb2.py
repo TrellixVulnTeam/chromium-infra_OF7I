@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x35go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"1\n\x11ReportRunsRequest\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"7\n\x18ReportFinishedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\"\xfa\x01\n\x18ReportVerifiedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\x12:\n\x06\x61\x63tion\x18\x0b \x01(\x0e\x32*.migration.ReportVerifiedRunRequest.Action\x12\x15\n\rfinal_message\x18\x0c \x01(\t\x12\x11\n\ttest_mode\x18\x15 \x01(\x08\"[\n\x06\x41\x63tion\x12\x16\n\x12\x41\x43TION_UNSPECIFIED\x10\x00\x12\x11\n\rACTION_SUBMIT\x10\x01\x12\x15\n\x11\x41\x43TION_DRY_RUN_OK\x10\x02\x12\x0f\n\x0b\x41\x43TION_FAIL\x10\x03\"\x93\x01\n\x18PostGerritMessageRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\x12\x0c\n\x04host\x18\x0b \x01(\t\x12\x0e\n\x06\x63hange\x18\x0c \x01(\x03\x12\x0f\n\x07\x63omment\x18\r \x01(\t\x12\x12\n\nsend_email\x18\x0e \x01(\x08\"S\n\x19PostGerritMessageResponse\x12\x36\n\x12gerrit_update_time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"7\n\x17\x46\x65tchActiveRunsResponse\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"T\n\x03Run\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\x12\n\n\x02id\x18\x02 \x01(\t\x12\x1d\n\x03\x63ls\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\"\xb0\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12 \n\x04info\x18\x03 \x01(\x0b\x32\x12.gerrit.ChangeInfo\x12\r\n\x05\x66iles\x18\x04 \x03(\t\x12)\n\x07trigger\x18\x05 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x06 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1aV\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\x32\xfb\x03\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportVerifiedRun\x12#.migration.ReportVerifiedRunRequest\x1a\x16.google.protobuf.Empty\x12^\n\x11PostGerritMessage\x12#.migration.PostGerritMessageRequest\x1a$.migration.PostGerritMessageResponse\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.Empty\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponseB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/cv/api/migration/migration.proto\x12\tmigration\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x35go.chromium.org/luci/common/proto/gerrit/gerrit.proto\x1a\x35go.chromium.org/luci/cv/api/bigquery/v1/attempt.proto\"1\n\x11ReportRunsRequest\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"7\n\x18ReportFinishedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\"\xfa\x01\n\x18ReportVerifiedRunRequest\x12\x1b\n\x03run\x18\x01 \x01(\x0b\x32\x0e.migration.Run\x12:\n\x06\x61\x63tion\x18\x0b \x01(\x0e\x32*.migration.ReportVerifiedRunRequest.Action\x12\x15\n\rfinal_message\x18\x0c \x01(\t\x12\x11\n\ttest_mode\x18\x15 \x01(\x08\"[\n\x06\x41\x63tion\x12\x16\n\x12\x41\x43TION_UNSPECIFIED\x10\x00\x12\x11\n\rACTION_SUBMIT\x10\x01\x12\x15\n\x11\x41\x43TION_DRY_RUN_OK\x10\x02\x12\x0f\n\x0b\x41\x43TION_FAIL\x10\x03\"\x93\x01\n\x18PostGerritMessageRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\x12\x0c\n\x04host\x18\x0b \x01(\t\x12\x0e\n\x06\x63hange\x18\x0c \x01(\x03\x12\x0f\n\x07\x63omment\x18\r \x01(\t\x12\x12\n\nsend_email\x18\x0e \x01(\x08\"S\n\x19PostGerritMessageResponse\x12\x36\n\x12gerrit_update_time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"C\n\x16ReportUsedNetrcRequest\x12\x13\n\x0bgerrit_host\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\".\n\x16\x46\x65tchActiveRunsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"7\n\x17\x46\x65tchActiveRunsResponse\x12\x1c\n\x04runs\x18\x01 \x03(\x0b\x32\x0e.migration.Run\"Q\n\x15\x46\x65tchRunStatusRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\x12\r\n\x05\x63v_id\x18\x02 \x01(\t\x12\x13\n\x0b\x61ttempt_key\x18\x03 \x01(\t\"6\n\x16\x46\x65tchRunStatusResponse\x12\r\n\x05\x65vent\x18\x01 \x01(\t\x12\r\n\x05\x65xtra\x18\x02 \x01(\t\"/\n\x17\x46\x65tchExcludedCLsRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\"?\n\x18\x46\x65tchExcludedCLsResponse\x12#\n\x03\x63ls\x18\x01 \x03(\x0b\x32\x16.bigquery.GerritChange\"T\n\x03Run\x12\"\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x11.bigquery.Attempt\x12\n\n\x02id\x18\x02 \x01(\t\x12\x1d\n\x03\x63ls\x18\x03 \x03(\x0b\x32\x10.migration.RunCL\"\xb0\x02\n\x05RunCL\x12\n\n\x02id\x18\x01 \x01(\x03\x12\"\n\x02gc\x18\x02 \x01(\x0b\x32\x16.bigquery.GerritChange\x12 \n\x04info\x18\x03 \x01(\x0b\x32\x12.gerrit.ChangeInfo\x12\r\n\x05\x66iles\x18\x04 \x03(\t\x12)\n\x07trigger\x18\x05 \x01(\x0b\x32\x18.migration.RunCL.Trigger\x12\"\n\x04\x64\x65ps\x18\x06 \x03(\x0b\x32\x14.migration.RunCL.Dep\x1aV\n\x07Trigger\x12(\n\x04time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x12\n\naccount_id\x18\x03 \x01(\x03\x12\r\n\x05\x65mail\x18\x04 \x01(\t\x1a\x1f\n\x03\x44\x65p\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04hard\x18\x02 \x01(\x08\x32\xaf\x05\n\tMigration\x12\x42\n\nReportRuns\x12\x1c.migration.ReportRunsRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportFinishedRun\x12#.migration.ReportFinishedRunRequest\x1a\x16.google.protobuf.Empty\x12P\n\x11ReportVerifiedRun\x12#.migration.ReportVerifiedRunRequest\x1a\x16.google.protobuf.Empty\x12U\n\x0e\x46\x65tchRunStatus\x12 .migration.FetchRunStatusRequest\x1a!.migration.FetchRunStatusResponse\x12^\n\x11PostGerritMessage\x12#.migration.PostGerritMessageRequest\x1a$.migration.PostGerritMessageResponse\x12X\n\x0f\x46\x65tchActiveRuns\x12!.migration.FetchActiveRunsRequest\x1a\".migration.FetchActiveRunsResponse\x12[\n\x10\x46\x65tchExcludedCLs\x12\".migration.FetchExcludedCLsRequest\x1a#.migration.FetchExcludedCLsResponse\x12L\n\x0fReportUsedNetrc\x12!.migration.ReportUsedNetrcRequest\x1a\x16.google.protobuf.EmptyB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_gerrit_dot_gerrit__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2.DESCRIPTOR,])
 
@@ -392,6 +392,155 @@ _FETCHACTIVERUNSRESPONSE = _descriptor.Descriptor(
 )
 
 
+_FETCHRUNSTATUSREQUEST = _descriptor.Descriptor(
+  name='FetchRunStatusRequest',
+  full_name='migration.FetchRunStatusRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='luci_project', full_name='migration.FetchRunStatusRequest.luci_project', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='cv_id', full_name='migration.FetchRunStatusRequest.cv_id', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='attempt_key', full_name='migration.FetchRunStatusRequest.attempt_key', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1010,
+  serialized_end=1091,
+)
+
+
+_FETCHRUNSTATUSRESPONSE = _descriptor.Descriptor(
+  name='FetchRunStatusResponse',
+  full_name='migration.FetchRunStatusResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='event', full_name='migration.FetchRunStatusResponse.event', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='extra', full_name='migration.FetchRunStatusResponse.extra', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1093,
+  serialized_end=1147,
+)
+
+
+_FETCHEXCLUDEDCLSREQUEST = _descriptor.Descriptor(
+  name='FetchExcludedCLsRequest',
+  full_name='migration.FetchExcludedCLsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='luci_project', full_name='migration.FetchExcludedCLsRequest.luci_project', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1149,
+  serialized_end=1196,
+)
+
+
+_FETCHEXCLUDEDCLSRESPONSE = _descriptor.Descriptor(
+  name='FetchExcludedCLsResponse',
+  full_name='migration.FetchExcludedCLsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='cls', full_name='migration.FetchExcludedCLsResponse.cls', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1198,
+  serialized_end=1261,
+)
+
+
 _RUN = _descriptor.Descriptor(
   name='Run',
   full_name='migration.Run',
@@ -433,8 +582,8 @@ _RUN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1010,
-  serialized_end=1094,
+  serialized_start=1263,
+  serialized_end=1347,
 )
 
 
@@ -479,8 +628,8 @@ _RUNCL_TRIGGER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1282,
-  serialized_end=1368,
+  serialized_start=1535,
+  serialized_end=1621,
 )
 
 _RUNCL_DEP = _descriptor.Descriptor(
@@ -517,8 +666,8 @@ _RUNCL_DEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1370,
-  serialized_end=1401,
+  serialized_start=1623,
+  serialized_end=1654,
 )
 
 _RUNCL = _descriptor.Descriptor(
@@ -583,8 +732,8 @@ _RUNCL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1097,
-  serialized_end=1401,
+  serialized_start=1350,
+  serialized_end=1654,
 )
 
 _REPORTRUNSREQUEST.fields_by_name['runs'].message_type = _RUN
@@ -594,6 +743,7 @@ _REPORTVERIFIEDRUNREQUEST.fields_by_name['action'].enum_type = _REPORTVERIFIEDRU
 _REPORTVERIFIEDRUNREQUEST_ACTION.containing_type = _REPORTVERIFIEDRUNREQUEST
 _POSTGERRITMESSAGERESPONSE.fields_by_name['gerrit_update_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _FETCHACTIVERUNSRESPONSE.fields_by_name['runs'].message_type = _RUN
+_FETCHEXCLUDEDCLSRESPONSE.fields_by_name['cls'].message_type = go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2._GERRITCHANGE
 _RUN.fields_by_name['attempt'].message_type = go_dot_chromium_dot_org_dot_luci_dot_cv_dot_api_dot_bigquery_dot_v1_dot_attempt__pb2._ATTEMPT
 _RUN.fields_by_name['cls'].message_type = _RUNCL
 _RUNCL_TRIGGER.fields_by_name['time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
@@ -611,6 +761,10 @@ DESCRIPTOR.message_types_by_name['PostGerritMessageResponse'] = _POSTGERRITMESSA
 DESCRIPTOR.message_types_by_name['ReportUsedNetrcRequest'] = _REPORTUSEDNETRCREQUEST
 DESCRIPTOR.message_types_by_name['FetchActiveRunsRequest'] = _FETCHACTIVERUNSREQUEST
 DESCRIPTOR.message_types_by_name['FetchActiveRunsResponse'] = _FETCHACTIVERUNSRESPONSE
+DESCRIPTOR.message_types_by_name['FetchRunStatusRequest'] = _FETCHRUNSTATUSREQUEST
+DESCRIPTOR.message_types_by_name['FetchRunStatusResponse'] = _FETCHRUNSTATUSRESPONSE
+DESCRIPTOR.message_types_by_name['FetchExcludedCLsRequest'] = _FETCHEXCLUDEDCLSREQUEST
+DESCRIPTOR.message_types_by_name['FetchExcludedCLsResponse'] = _FETCHEXCLUDEDCLSRESPONSE
 DESCRIPTOR.message_types_by_name['Run'] = _RUN
 DESCRIPTOR.message_types_by_name['RunCL'] = _RUNCL
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -671,6 +825,34 @@ FetchActiveRunsResponse = _reflection.GeneratedProtocolMessageType('FetchActiveR
   })
 _sym_db.RegisterMessage(FetchActiveRunsResponse)
 
+FetchRunStatusRequest = _reflection.GeneratedProtocolMessageType('FetchRunStatusRequest', (_message.Message,), {
+  'DESCRIPTOR' : _FETCHRUNSTATUSREQUEST,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
+  # @@protoc_insertion_point(class_scope:migration.FetchRunStatusRequest)
+  })
+_sym_db.RegisterMessage(FetchRunStatusRequest)
+
+FetchRunStatusResponse = _reflection.GeneratedProtocolMessageType('FetchRunStatusResponse', (_message.Message,), {
+  'DESCRIPTOR' : _FETCHRUNSTATUSRESPONSE,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
+  # @@protoc_insertion_point(class_scope:migration.FetchRunStatusResponse)
+  })
+_sym_db.RegisterMessage(FetchRunStatusResponse)
+
+FetchExcludedCLsRequest = _reflection.GeneratedProtocolMessageType('FetchExcludedCLsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _FETCHEXCLUDEDCLSREQUEST,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
+  # @@protoc_insertion_point(class_scope:migration.FetchExcludedCLsRequest)
+  })
+_sym_db.RegisterMessage(FetchExcludedCLsRequest)
+
+FetchExcludedCLsResponse = _reflection.GeneratedProtocolMessageType('FetchExcludedCLsResponse', (_message.Message,), {
+  'DESCRIPTOR' : _FETCHEXCLUDEDCLSRESPONSE,
+  '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
+  # @@protoc_insertion_point(class_scope:migration.FetchExcludedCLsResponse)
+  })
+_sym_db.RegisterMessage(FetchExcludedCLsResponse)
+
 Run = _reflection.GeneratedProtocolMessageType('Run', (_message.Message,), {
   'DESCRIPTOR' : _RUN,
   '__module__' : 'go.chromium.org.luci.cv.api.migration.migration_pb2'
@@ -711,8 +893,8 @@ _MIGRATION = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1404,
-  serialized_end=1911,
+  serialized_start=1657,
+  serialized_end=2344,
   methods=[
   _descriptor.MethodDescriptor(
     name='ReportRuns',
@@ -745,22 +927,22 @@ _MIGRATION = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='PostGerritMessage',
-    full_name='migration.Migration.PostGerritMessage',
+    name='FetchRunStatus',
+    full_name='migration.Migration.FetchRunStatus',
     index=3,
     containing_service=None,
-    input_type=_POSTGERRITMESSAGEREQUEST,
-    output_type=_POSTGERRITMESSAGERESPONSE,
+    input_type=_FETCHRUNSTATUSREQUEST,
+    output_type=_FETCHRUNSTATUSRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='ReportUsedNetrc',
-    full_name='migration.Migration.ReportUsedNetrc',
+    name='PostGerritMessage',
+    full_name='migration.Migration.PostGerritMessage',
     index=4,
     containing_service=None,
-    input_type=_REPORTUSEDNETRCREQUEST,
-    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    input_type=_POSTGERRITMESSAGEREQUEST,
+    output_type=_POSTGERRITMESSAGERESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
@@ -771,6 +953,26 @@ _MIGRATION = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_FETCHACTIVERUNSREQUEST,
     output_type=_FETCHACTIVERUNSRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='FetchExcludedCLs',
+    full_name='migration.Migration.FetchExcludedCLs',
+    index=6,
+    containing_service=None,
+    input_type=_FETCHEXCLUDEDCLSREQUEST,
+    output_type=_FETCHEXCLUDEDCLSRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='ReportUsedNetrc',
+    full_name='migration.Migration.ReportUsedNetrc',
+    index=7,
+    containing_service=None,
+    input_type=_REPORTUSEDNETRCREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
