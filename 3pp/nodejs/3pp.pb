@@ -1,4 +1,9 @@
 create {
+  platform_re: "linux-armv6l|linux-mips.*"
+  unsupported: true
+}
+
+create {
   # mac, windows, linux 64bit, linux arm 32/64
   platform_re: ".*amd64|.*arm.*"
   source {
