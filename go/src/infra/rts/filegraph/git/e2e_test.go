@@ -38,7 +38,7 @@ func BenchmarkE2E(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			g = &Graph{}
-			if err := g.Update(ctx, repoDir, "refs/heads/main", UpdateOptions{}); err != nil {
+			if err := g.Update(ctx, repoDir, "refs/heads/master", UpdateOptions{}); err != nil {
 				b.Fatal(err)
 			}
 		}
@@ -93,11 +93,11 @@ func TestE2E(t *testing.T) {
 
 		// Build the graph from scratch.
 		g := &Graph{}
-		err := g.Update(ctx, repoDir, "refs/remotes/origin/main", UpdateOptions{})
+		err := g.Update(ctx, repoDir, "refs/remotes/origin/master", UpdateOptions{})
 		So(err, ShouldBeNil)
 
 		// Ensure each file in the repo is also present in the graph.
-		gitListFiles(ctx, repoDir, "origin/main", func(file string) {
+		gitListFiles(ctx, repoDir, "origin/master", func(file string) {
 			n := g.node("//" + file)
 			t.Log(file)
 			So(n, ShouldNotBeNil)

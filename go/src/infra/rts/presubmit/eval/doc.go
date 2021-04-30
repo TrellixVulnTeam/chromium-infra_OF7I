@@ -5,8 +5,8 @@
 // Package eval implements a framework for selection strategy evaluation.
 //
 // For evaluation, see
-// https://chromium.googlesource.com/infra/infra/+/main/go/src/infra/rts/README.md
+// https://chromium.googlesource.com/infra/luci/luci-go/+/master/rts/doc/eval.md
 //
 // For an example using this framework, see
-// https://chromium.googlesource.com/infra/infra/+/main/go/src/infra/rts/cmd/rts-random/main.go
+// https://source.chromium.org/chromium/infra/infra/+/master:go/src/infra/rts/cmd/rts-random/main.go
 package eval
