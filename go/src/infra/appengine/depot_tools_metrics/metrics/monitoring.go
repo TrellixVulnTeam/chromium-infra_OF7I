@@ -65,7 +65,7 @@ var (
 )
 
 // reportDepotToolsMetrics reports metrics to ts_mon.
-func reportDepotToolsMetrics(ctx context.Context, m schema.Metrics) {
+func reportDepotToolsMetrics(ctx context.Context, m *schema.Metrics) {
 	if len(m.ProjectUrls) == 0 {
 		return
 	}

@@ -6,6 +6,10 @@ syntax = "proto3";
 
 package schema;
 
+option go_package = "infra/appengine/depot_tools_metrics/schema;schema";
+
+import "go.chromium.org/luci/buildbucket/proto/builder.proto";
+
 // HttpRequest stores information on the HTTP requests made by the command.
 message HttpRequest {
   // The host the request was made to. Must be one of the |knownHTTPHosts| in
@@ -57,6 +61,15 @@ message SubCommand {
 
   // The exit code of the sub-command.
   int64 exit_code = 4;
+}
+
+// BotMetrics stores information about the bot environment from which the
+// command was executed.
+message BotMetrics {
+  // The build from which this command was executed.
+  int64 build_id = 1;
+  // The builder corresponding to the build.
+  buildbucket.v2.BuilderID builder = 2;
 }
 
 // Metrics stores information for a depot_tools command's execution.
@@ -115,4 +128,6 @@ message Metrics {
   // The git version the command used. Must match the |gitVersionRegex| defined
   // in metrics/constants.go.
   string git_version = 14;
+
+  BotMetrics bot_metrics = 15;
 }

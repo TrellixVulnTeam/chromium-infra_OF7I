@@ -9,6 +9,8 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"infra/appengine/depot_tools_metrics/schema"
+
+	"go.chromium.org/luci/auth/identity"
 )
 
 func TestExtractsMetrics(t *testing.T) {
@@ -38,7 +40,15 @@ func TestExtractsMetrics(t *testing.T) {
 		 "host_arch": "x86",
 		 "host_os": "linux",
 		 "python_version": "2.7.13",
-		 "git_version": "2.18.1"}`
+		 "git_version": "2.18.1",
+		 "bot_metrics": {
+			 "build_id": 1234567,
+			 "builder": {
+				 "project": "chromium",
+				 "bucket": "try",
+				 "builder": "linux-rel"
+			 }
+		 }}`
 
 	var metrics schema.Metrics
 	err := jsonpb.UnmarshalString(jsonInput, &metrics)
@@ -46,7 +56,7 @@ func TestExtractsMetrics(t *testing.T) {
 		t.Fatalf("failed unexpectedly with %v\n", err)
 	}
 
-	err = checkConstraints(metrics)
+	err = checkConstraints(&metrics)
 	if err != nil {
 		t.Fatalf("failed unexpectedly with %v\n", err)
 	}
@@ -69,7 +79,7 @@ func TestDealsWithUnsetFields(t *testing.T) {
 		t.Fatalf("failed unexpectedly with %v\n", err)
 	}
 
-	err = checkConstraints(metrics)
+	err = checkConstraints(&metrics)
 	if err != nil {
 		t.Fatalf("failed unexpectedly with %v\n", err)
 	}
@@ -186,11 +196,29 @@ func TestRejectsBadReports(t *testing.T) {
 		var metrics schema.Metrics
 		err := jsonpb.UnmarshalString(testCase[0], &metrics)
 		if err == nil {
-			err = checkConstraints(metrics)
+			err = checkConstraints(&metrics)
 			if err == nil {
 				t.Errorf("Expected constraints for %v to fail because of %v. metrics:\n%v",
-					testCase[1], testCase[0], metrics)
+					testCase[1], testCase[0], &metrics)
 			}
 		}
+	}
+}
+
+func TestIsServiceAccount(t *testing.T) {
+	id, err := identity.MakeIdentity("user:foo@example.com")
+	if err != nil {
+		t.Errorf("Unexpected error making identity: %v", err)
+	}
+	if isServiceAccount(id) {
+		t.Errorf("Expected identity to NOT be service account: %v", id)
+	}
+
+	id, err = identity.MakeIdentity("user:service-account" + serviceAccountSuffix)
+	if err != nil {
+		t.Errorf("Unexpected error making identity: %v", err)
+	}
+	if !isServiceAccount(id) {
+		t.Errorf("Expected identity to be service account: %v", id)
 	}
 }

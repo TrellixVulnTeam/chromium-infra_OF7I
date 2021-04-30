@@ -24,7 +24,7 @@ This app exposes two endpoints:
 
 ## Deployment
 To deploy the app, run:
-- `protoc -I schema --go_out=schema schema/schema.proto`
+- `go generate schema/gen.go`
 - `bqschemaupdater -table cit-cli-metrics.metrics.depot_tools -message-dir
   schema -message schema.Metrics`
 - `gae.py upload`

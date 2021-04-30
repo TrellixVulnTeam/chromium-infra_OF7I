@@ -11,14 +11,14 @@ import (
 	"infra/appengine/depot_tools_metrics/schema"
 )
 
-func checkConstraints(m schema.Metrics) error {
+func checkConstraints(m *schema.Metrics) error {
 	for _, httpRequest := range m.HttpRequests {
-		if err := checkHTTPRequestConstraints(*httpRequest); err != nil {
+		if err := checkHTTPRequestConstraints(httpRequest); err != nil {
 			return err
 		}
 	}
 	for _, subCommand := range m.SubCommands {
-		if err := checkSubCommandConstraints(*subCommand); err != nil {
+		if err := checkSubCommandConstraints(subCommand); err != nil {
 			return err
 		}
 	}
@@ -52,7 +52,7 @@ func checkConstraints(m schema.Metrics) error {
 	}
 }
 
-func checkSubCommandConstraints(c schema.SubCommand) error {
+func checkSubCommandConstraints(c *schema.SubCommand) error {
 	unknownArguments := unknownStrings(knownSubCommandArguments, c.Arguments)
 	switch {
 	case c.Command != "" && !knownSubCommands.Has(c.Command):
@@ -66,7 +66,7 @@ func checkSubCommandConstraints(c schema.SubCommand) error {
 	}
 }
 
-func checkHTTPRequestConstraints(r schema.HttpRequest) error {
+func checkHTTPRequestConstraints(r *schema.HttpRequest) error {
 	unknownArguments := unknownStrings(knownHTTPArguments, r.Arguments)
 	switch {
 	case r.Host != "" && !knownHTTPHosts.Has(r.Host):
