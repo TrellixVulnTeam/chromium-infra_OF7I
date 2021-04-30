@@ -246,6 +246,34 @@ func TestTBRRules(t *testing.T) {
 			},
 		}
 
+		botOwnedCL := &gerrit.Change{
+			ChangeID:        "tbrchangeid5",
+			ChangeNumber:    4327,
+			CurrentRevision: "7b12c0de7",
+			Owner: gerrit.AccountInfo{
+				AccountID: 567,
+				Email:     "robot1@example.com",
+			},
+			Labels: map[string]gerrit.LabelInfo{
+				"Code-Review": {
+					All: []gerrit.VoteInfo{
+						{
+							AccountInfo: gerrit.AccountInfo{
+								AccountID: 4001,
+							},
+							Value: 2,
+						},
+					},
+					Values: map[string]string{
+						"-1": "No",
+						" 0": "Whatever",
+						"+1": "Yes",
+						"+2": "Super Yes",
+					},
+				},
+			},
+		}
+
 		allCLs := []*gerrit.Change{
 			reviewedCL,
 			selfReviewedCL,
@@ -253,6 +281,7 @@ func TestTBRRules(t *testing.T) {
 			botCommitAndSelfCL,
 			selfReviewedPlus2CL,
 			reviewedPlus2CL,
+			botOwnedCL,
 		}
 		q := map[string][]*gerrit.Change{}
 		for _, cl := range allCLs {
@@ -326,6 +355,11 @@ func TestTBRRules(t *testing.T) {
 		Convey("Reviewed +2 CL pass", func() {
 			rc.CommitHash = reviewedPlus2CL.CurrentRevision
 			expectedStatus = RulePassed
+		})
+
+		Convey("Bot-owned CL skip", func() {
+			rc.CommitHash = botOwnedCL.CurrentRevision
+			expectedStatus = RuleSkipped
 		})
 
 		rr, _ := c.Run(ctx, ap, rc, testClients)

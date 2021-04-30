@@ -66,12 +66,13 @@ func (r ChangeReviewed) GetName() string {
 	return "ChangeReviewed"
 }
 
-// shouldSkip decides if a given commit shouldn't be audited with this rule.
+// shouldSkip decides if a given commit shouldn't be audited with this rule,
+// based on an author or owner email associated with the commit.
 //
 // E.g. if it's authored by an authorized automated account.
-func (r ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
+func (r ChangeReviewed) shouldSkip(email string) bool {
 	for _, rob := range r.Robots {
-		if rc.AuthorAccount == rob {
+		if email == rob {
 			return true
 		}
 	}
@@ -79,7 +80,7 @@ func (r ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
 }
 
 // Run executes the rule.
-func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+func (r ChangeReviewed) Run(ctx context.Context, _ *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	logging.Debugf(ctx, "Applying the ChangeReviewed rule to RelevantCommit: %+v", rc.RepoStateKey)
 	result := &RuleResult{}
 	result.RuleName = r.GetName()
@@ -92,14 +93,21 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 		// Preserve any metadata from the previous execution of the rule.
 		result.MetaData = prevResult.MetaData
 	}
-	if r.shouldSkip(rc) {
+	if r.shouldSkip(rc.AuthorAccount) {
 		result.RuleResultStatus = RuleSkipped
 		return result, nil
 	}
 	rc.LastExternalPoll = time.Now()
-	change, err := getChangeWithLabelDetails(ctx, ap, rc, cs)
+	change, err := getChangeWithLabelDetails(ctx, rc, cs)
 	if err != nil {
 		return nil, err
+	}
+	// Also skip auditing a commit if the owner of the Gerrit change is a robot
+	// account, to allow robots to fake author emails when e.g. mirroring
+	// changes from other repositories.
+	if r.shouldSkip(change.Owner.Email) {
+		result.RuleResultStatus = RuleSkipped
+		return result, nil
 	}
 	owner := change.Owner.AccountID
 	logging.Debugf(ctx, "Gerrit change owner is: %d", owner)
@@ -156,7 +164,7 @@ func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCo
 	return result, nil
 }
 
-func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*gerrit.Change, error) {
+func getChangeWithLabelDetails(ctx context.Context, rc *RelevantCommit, cs *Clients) (*gerrit.Change, error) {
 	cls, _, err := cs.gerrit.ChangeQuery(ctx, gerrit.ChangeQueryParams{
 		Query: fmt.Sprintf("commit:%s", rc.CommitHash),
 		Options: []string{
