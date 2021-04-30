@@ -173,7 +173,7 @@ SPECS.update({
             'cffi',
             '1.14.3',
             pyversions=['py3'],
-            skip_plat=['mac-x64-cp38'],
+            skip_plat=['mac-x64-cp38', 'mac-arm64-cp38-cross'],
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -270,9 +270,8 @@ SPECS.update({
         SourceOrPrebuilt(
             'grpcio',
             '1.32.0',
-            skip_plat=['linux-arm64-py3'],
-            pyversions=['py3']
-        ),
+            skip_plat=['linux-arm64-py3', 'mac-arm64-cp38-cross'],
+            pyversions=['py3']),
         SourceOrPrebuilt(
             'lazy-object-proxy',
             '1.3.1',
@@ -435,8 +434,8 @@ SPECS.update({
             '1.2.1',
             packaged=(),
             skip_plat=[
-                'mac-x64-cp38', 'linux-arm64-py3', 'windows-x86-py3',
-                'windows-x64-py3'
+                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'linux-arm64-py3',
+                'windows-x86-py3', 'windows-x64-py3'
             ],
             pyversions=['py3'],
         ),
@@ -1067,8 +1066,8 @@ SPECS.update({
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
             skip_plat=[
-                'mac-x64-cp38', 'linux-arm64-py3', 'windows-x86-py3',
-                'windows-x64-py3'
+                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'linux-arm64-py3',
+                'windows-x86-py3', 'windows-x64-py3'
             ],
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
@@ -1080,6 +1079,9 @@ SPECS.update({
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
+            # TODO(bryner): Consider updating this to build against 1.1.1i,
+            # to get support for Mac ARM64.
+            skip_plat=['mac-arm64-cp38-cross'],
         ),
         CryptographyPyPI(
             'cryptography',
@@ -1136,6 +1138,7 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
+                'mac-arm64-cp38-cross',
             ],
         ),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of

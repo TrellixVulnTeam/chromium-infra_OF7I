@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import collections
+import platform
 import sys
 
 
@@ -180,7 +181,6 @@ ALL = {
             cipd_platform='linux-amd64',
             env={},
         ),
-
         Platform(
             name='mac-x64',
             manylinux_name=None,
@@ -206,11 +206,36 @@ ALL = {
             openssl_target='darwin64-x86_64-cc',
             packaged=True,
             cipd_platform='mac-amd64',
-            # Necessary for some wheels to build. See for instance:
-            # https://github.com/giampaolo/psutil/issues/1832
             env={
+                # Necessary for some wheels to build. See for instance:
+                # https://github.com/giampaolo/psutil/issues/1832
                 'ARCHFLAGS': '-arch x86_64',
                 'MACOSX_DEPLOYMENT_TARGET': '10.11'
+            },
+        ),
+        Platform(
+            # TODO: Remove once we have bootstrapped native builders.
+            name='mac-arm64-cp38-cross',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp38',
+            wheel_plat=('macosx_11_0_arm64',),
+            dockcross_base=None,
+            openssl_target='darwin64-arm64-cc',
+            # We've done our own backport of ARM64 support to python 3.8, so
+            # there won't be any pre-packaged wheels available.
+            packaged=False,
+            cipd_platform='mac-arm64',
+            env={
+                # Necessary for some wheels to build. See for instance:
+                # https://github.com/giampaolo/psutil/issues/1832
+                'ARCHFLAGS': '-arch arm64',
+                # Setting CCC_OVERRIDE_OPTIONS in this way makes clang work
+                # similar to a dockcross cross-compiler, and is the most robust
+                # mechanism to deal with wheels' varying setup.py
+                # implementations.
+                'CCC_OVERRIDE_OPTIONS': '+--target=arm64-apple-macos',
+                'MACOSX_DEPLOYMENT_TARGET': '11.0'
             },
         ),
         Platform(
@@ -271,7 +296,9 @@ ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
 def NativePlatforms():
   # Identify our native platforms.
   if sys.platform == 'darwin':
-    return [ALL['mac-x64'], ALL['mac-x64-cp38']]
+    if platform.machine() == 'x86_64':
+      return [ALL['mac-x64'], ALL['mac-x64-cp38'], ALL['mac-arm64-cp38-cross']]
+    # TODO: Native ARM64 platform.
   elif sys.platform == 'win32':
     return [
         ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
@@ -281,8 +308,8 @@ def NativePlatforms():
     # Linux platforms are built with docker, so Linux doesn't support any
     # platforms natively.
     return []
-  else:
-    raise ValueError('Cannot identify native image for %r.' % (sys.platform,))
+  raise ValueError('Cannot identify native image for %r-%r.' %
+                   (sys.platform, platform.machine()))
 
 
 # Represents the "universal package" platform.
