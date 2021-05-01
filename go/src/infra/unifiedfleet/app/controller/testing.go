@@ -42,3 +42,16 @@ func initializeFakeAuthDB(ctx context.Context, id identity.Identity, permission 
 		),
 	})
 }
+
+// TODO: replace initializeFakeAuthDB with initializeMockAuthDB for all callers
+func initializeMockAuthDB(ctx context.Context, id identity.Identity, realm string, permissions ...realms.Permission) context.Context {
+	mocks := make([]authtest.MockedDatum, len(permissions)+1)
+	mocks[0] = authtest.MockMembership(id, "user")
+	for i, p := range permissions {
+		mocks[i+1] = authtest.MockPermission(id, realm, p)
+	}
+	return auth.WithState(ctx, &authtest.FakeState{
+		Identity: id,
+		FakeDB:   authtest.NewFakeDB(mocks...),
+	})
+}

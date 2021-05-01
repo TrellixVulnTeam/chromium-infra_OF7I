@@ -124,6 +124,49 @@ func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
 	return ips[0], nil
 }
 
+// Update a dhcp change
+//
+// Can be used in a transaction
+func (nu *networkUpdater) updateDHCPWithMac(ctx context.Context, macAddress string) (*ufspb.DHCPConfig, error) {
+	oldDhcp, _ := configuration.GetDHCPConfig(ctx, nu.Hostname)
+	dhcp := proto.Clone(oldDhcp).(*ufspb.DHCPConfig)
+	if oldDhcp != nil && oldDhcp.GetMacAddress() != macAddress {
+		dhcp.MacAddress = macAddress
+		if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
+			return nil, errors.Annotate(err, "updateDHCPWithMac - Failed to update dhcp for host %s (mac %s)", nu.Hostname, macAddress).Tag(grpcutil.FailedPreconditionTag).Err()
+		}
+		nu.logChanges(LogDHCPChanges(oldDhcp, dhcp))
+	}
+	return dhcp, nil
+}
+
+// Rename a dhcp change
+//
+// Can be used in a transaction
+func (nu *networkUpdater) renameDHCP(ctx context.Context, oldHost, newHost, newMacAddress string) (*ufspb.DHCPConfig, error) {
+	var oldDhcp *ufspb.DHCPConfig
+	if oldHost != "" {
+		oldDhcp, _ = configuration.GetDHCPConfig(ctx, oldHost)
+	}
+	if oldDhcp == nil {
+		return nil, nil
+	}
+	dhcp := proto.Clone(oldDhcp).(*ufspb.DHCPConfig)
+	dhcp.Hostname = newHost
+	if newMacAddress != "" {
+		dhcp.MacAddress = newMacAddress
+	}
+	if err := configuration.DeleteDHCP(ctx, oldHost); err != nil {
+		return nil, err
+	}
+	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
+		return nil, errors.Annotate(err, "renameDHCP - Failed to update dhcp from host %q to host %q", oldHost, newHost).Tag(grpcutil.FailedPreconditionTag).Err()
+	}
+	nu.logChanges(LogDHCPChanges(oldDhcp, nil))
+	nu.logChanges(LogDHCPChanges(nil, dhcp))
+	return dhcp, nil
+}
+
 // Find free ip and update ip-related configs
 //
 // Can be used in a transaction

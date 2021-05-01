@@ -15,6 +15,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
@@ -422,6 +423,26 @@ func TestUpdateNic(t *testing.T) {
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
+			lse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "lse-partial-update-mac",
+				Hostname: "lse-partial-update-mac",
+				Machines: []string{"machine-8"},
+				Nic:      "nic-8",
+			})
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "lse-partial-update-mac2",
+				Hostname: "lse-partial-update-mac2",
+				Machines: []string{"machine-8-8"},
+			})
+			dhcp := &ufspb.DHCPConfig{
+				Hostname:   lse.GetName(),
+				Ip:         "fake_ip",
+				Vlan:       "fake_vlan",
+				MacAddress: nic.GetMacAddress(),
+			}
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp})
+			So(err, ShouldBeNil)
+
 			machine1 = &ufspb.Machine{
 				Name: "machine-8-8",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
@@ -436,10 +457,50 @@ func TestUpdateNic(t *testing.T) {
 				Machine:    "machine-8-8",
 				MacAddress: "nic-8-address",
 			}
-			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsUpdate, util.BrowserLabAdminRealm)
+			ctx := initializeMockAuthDB(ctx, "user:user@example.com", util.BrowserLabAdminRealm, util.RegistrationsUpdate, util.InventoriesUpdate)
 			nic, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress", "machine"}})
 			So(err, ShouldBeNil)
 			So(nic.GetMacAddress(), ShouldEqual, "nic-8-address")
+			// new machine's corresponding host has new dhcp record, new nic
+			lse, err = inventory.GetMachineLSE(ctx, "lse-partial-update-mac2")
+			So(err, ShouldBeNil)
+			So(lse.GetNic(), ShouldEqual, "nic-8")
+			dhcp, err = configuration.GetDHCPConfig(ctx, "lse-partial-update-mac2")
+			So(err, ShouldBeNil)
+			So(dhcp.GetMacAddress(), ShouldEqual, "nic-8-address")
+			// old machine's corresponding host has empty dhcp record, empty nic
+			dhcp, err = configuration.GetDHCPConfig(ctx, "lse-partial-update-mac")
+			So(err, ShouldNotBeNil)
+			So(dhcp, ShouldBeNil)
+			lse, err = inventory.GetMachineLSE(ctx, "lse-partial-update-mac")
+			So(err, ShouldBeNil)
+			So(lse.GetNic(), ShouldBeEmpty)
+
+			// verify change events
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/lse-partial-update-mac")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "nic-8")
+			So(changes[0].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/lse-partial-update-mac2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "nic-8")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/lse-partial-update-mac")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "fake_ip")
+			So(changes[0].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/lse-partial-update-mac2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "fake_ip")
 		})
 
 		Convey("Partial Update nic mac address - duplicated mac address", func() {
@@ -556,10 +617,27 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic := &ufspb.Nic{
-				Name:    "nic-10",
-				Machine: "machine-7",
+				Name:       "nic-10",
+				Machine:    "machine-7",
+				MacAddress: "nic-10-address-old",
 			}
 			_, err = registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			lse, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "lse-update-mac",
+				Hostname: "lse-update-mac",
+				Machines: []string{"machine-7"},
+				Nic:      "nic-10",
+			})
+			So(err, ShouldBeNil)
+			dhcp := &ufspb.DHCPConfig{
+				Hostname:   lse.GetName(),
+				Ip:         "fake_ip",
+				Vlan:       "fake_vlan",
+				MacAddress: nic.GetMacAddress(),
+			}
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp})
 			So(err, ShouldBeNil)
 
 			nic1 := &ufspb.Nic{
@@ -570,6 +648,22 @@ func TestUpdateNic(t *testing.T) {
 			res, _ := UpdateNic(ctx, nic1, nil)
 			So(res, ShouldNotBeNil)
 			So(res, ShouldResembleProto, nic1)
+
+			// new machine's corresponding host has new dhcp record
+			dhcp, err = configuration.GetDHCPConfig(ctx, "lse-update-mac")
+			So(err, ShouldBeNil)
+			So(dhcp.GetMacAddress(), ShouldEqual, "nic-10-address")
+			// no change event for lse as nic name is not changed
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/lse-update-mac")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			// verify dhcp change events
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/lse-update-mac")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.mac_address")
+			So(changes[0].GetOldValue(), ShouldEqual, "nic-10-address-old")
+			So(changes[0].GetNewValue(), ShouldEqual, "nic-10-address")
 		})
 
 		Convey("Update nic - permission denied: same realm and no update permission", func() {

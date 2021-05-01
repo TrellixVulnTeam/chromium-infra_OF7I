@@ -99,20 +99,34 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) 
 			if nic.GetMachine() == "" {
 				return status.Error(codes.InvalidArgument, "Machine cannot be empty for updating a drac")
 			}
-			// Check if user provided new machine to associate the nic
-			if nic.GetMachine() != oldNic.GetMachine() {
-				// Get browser machine to associate the nic
-				machine, err := getBrowserMachine(ctx, nic.GetMachine())
-				if err != nil {
-					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", nic.GetMachine()).Err()
-				}
-				// check permission for the new machine realm
-				if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		}
+
+		// Check if user provided new machine to associate the nic
+		if nic.GetMachine() != oldNicCopy.GetMachine() {
+			newMachine, err := verifyNewMachine(ctx, nic.GetMachine())
+			if err != nil {
+				return err
+			}
+			// Fill the rack/zone to nic OUTPUT only fields
+			nic.Rack = newMachine.GetLocation().GetRack()
+			nic.Zone = newMachine.GetLocation().GetZone().String()
+
+			// Update corresponding lses/dhcps/mac address
+			if err := updateForMachineChange(ctx, nic, oldNicCopy.GetMachine(), nic.GetMachine(), newMachine.GetRealm(), hc); err != nil {
+				return err
+			}
+		} else if nic.GetMacAddress() != oldNicCopy.GetMacAddress() {
+			lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", nic.GetMachine(), false)
+			if err != nil {
+				return err
+			}
+			if len(lses) > 0 {
+				logging.Infof(ctx, "updating corresponding dhcp record for host %q", lses[0].GetName())
+				// Set the correct hostname for the nic's corresponding dhcp configs
+				hc.netUdt.Hostname = lses[0].GetName()
+				if _, err := hc.netUdt.updateDHCPWithMac(ctx, nic.GetMacAddress()); err != nil {
 					return err
 				}
-				// Fill the rack/zone to nic OUTPUT only fields
-				nic.Rack = machine.GetLocation().GetRack()
-				nic.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
@@ -130,6 +144,67 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) 
 	return nic, nil
 }
 
+func verifyNewMachine(ctx context.Context, newMachineName string) (*ufspb.Machine, error) {
+	// Get browser machine to associate the nic
+	machine, err := getBrowserMachine(ctx, newMachineName)
+	if err != nil {
+		return nil, errors.Annotate(err, "UpdateNic - failed to get browser machine %s", newMachineName).Err()
+	}
+	// check permission for the new machine realm
+	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
+		return nil, err
+	}
+	return machine, nil
+}
+
+func updateForMachineChange(ctx context.Context, nic *ufspb.Nic, oldMachineName, newMachineName, realm string, hc *HistoryClient) error {
+	logging.Infof(ctx, "updating corresponding machine lses")
+	lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", newMachineName, false)
+	if err != nil {
+		return err
+	}
+	oldLses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachineName, false)
+	if err != nil {
+		return err
+	}
+	var newLseName string
+	var lsesToUpdate []*ufspb.MachineLSE
+	var lsesBeforeUpdate []*ufspb.MachineLSE
+	if len(lses) > 0 {
+		newLseName = lses[0].GetName()
+		lsesBeforeUpdate = append(lsesBeforeUpdate, proto.Clone(lses[0]).(*ufspb.MachineLSE))
+		lses[0].Nic = nic.GetName()
+		lsesToUpdate = append(lsesToUpdate, lses[0])
+	}
+	var oldLseName string
+	if len(oldLses) > 0 {
+		oldLseName = oldLses[0].GetName()
+		lsesBeforeUpdate = append(lsesBeforeUpdate, proto.Clone(oldLses[0]).(*ufspb.MachineLSE))
+		oldLses[0].Nic = ""
+		lsesToUpdate = append(lsesToUpdate, oldLses[0])
+	}
+	if len(lsesToUpdate) > 0 {
+		// check permission for potential updating LSE/dhcp
+		if err := ufsUtil.CheckPermission(ctx, ufsUtil.InventoriesUpdate, realm); err != nil {
+			return err
+		}
+		if _, err := inventory.BatchUpdateMachineLSEs(ctx, lsesToUpdate); err != nil {
+			return err
+		}
+		// log lse change event
+		for i, old := range lsesBeforeUpdate {
+			hc.LogMachineLSEChanges(old, lsesToUpdate[i])
+		}
+	}
+
+	// Update corresponding dhcp records
+	logging.Infof(ctx, "Updating dhcp record from %q to %q", oldLseName, newLseName)
+	if _, err := hc.netUdt.renameDHCP(ctx, oldLseName, newLseName, nic.GetMacAddress()); err != nil {
+		return err
+	}
+	return nil
+}
+
 // processNicUpdateMask process update field mask to get only specific update
 // fields and return a complete nic object with updated and existing fields
 func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
@@ -137,18 +212,7 @@ func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic
 	for _, path := range mask.Paths {
 		switch path {
 		case "machine":
-			machine, err := getBrowserMachine(ctx, nic.GetMachine())
-			if err != nil {
-				return oldNic, errors.Annotate(err, "failed to get browser machine %s", nic.GetMachine()).Err()
-			}
-			// check permission for the new machine realm
-			if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsUpdate, machine.GetRealm()); err != nil {
-				return oldNic, err
-			}
 			oldNic.Machine = nic.GetMachine()
-			// Fill the rack/zone to nic OUTPUT only fields
-			oldNic.Rack = machine.GetLocation().GetRack()
-			oldNic.Zone = machine.GetLocation().GetZone().String()
 		case "macAddress":
 			oldNic.MacAddress = nic.GetMacAddress()
 		case "switch":
