@@ -17,7 +17,7 @@ import:
   - proto
   - protoc-gen-go
 - package: google.golang.org/protobuf
-  version: 711224230b573a3b2df57391319e80e606bccddc
+  version: v1.26.0
   repo: https://go.googlesource.com/protobuf.git
 - package: github.com/gorhill/cronexpr
   version: master
@@ -554,7 +554,8 @@ import:
   repo: https://chromium.googlesource.com/external/github.com/square/go-jose.git
 - package: github.com/bmatcuk/doublestar
   repo: https://chromium.googlesource.com/external/github.com/bmatcuk/doublestar.git
-  version: upstream/master
+  # The next revision uses io/fs which breaks our OSX builds running on go1.15.
+  version: 1e1bcf73ccd3edeb5de9fb61925a0d79fcc5d9df
 - package: github.com/dgraph-io/badger/v3
   version: master
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
