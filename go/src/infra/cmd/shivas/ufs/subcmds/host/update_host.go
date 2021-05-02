@@ -133,7 +133,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	}
 
 	var networkOptions map[string]*ufsAPI.NetworkOption
-	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
+	if c.deleteVlan || c.vlanName != "" || c.ip != "" || c.nicName != "" {
 		networkOptions = map[string]*ufsAPI.NetworkOption{
 			machinelse.Name: {
 				Delete: c.deleteVlan,
@@ -281,7 +281,7 @@ func (c *updateHost) validateArgs() error {
 		if c.hostName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
+		if c.nicName == "" && c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
 			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 && c.description == "" && c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}

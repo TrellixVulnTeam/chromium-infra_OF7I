@@ -1112,6 +1112,80 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 
+		Convey("Update machineLSE nic for host with existing dhcp record", func() {
+			nic0, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:       "eth0-nic-user",
+				Machine:    "machine-update-host-nic-user",
+				MacAddress: "eth0-nic-macaddress",
+			})
+			So(err, ShouldBeNil)
+			_, err = registration.CreateNic(ctx, &ufspb.Nic{
+				Name:       "eth1-nic-user",
+				Machine:    "machine-update-host-nic-user",
+				MacAddress: "eth1-nic-macaddress",
+			})
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name: "machine-update-host-nic-user",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-update-host-nic-user",
+				Hostname: "machinelse-update-host-nic-user",
+				Machines: []string{"machine-update-host-nic-user"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				},
+				Nic: "eth0-nic-user",
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			dhcp := &ufspb.DHCPConfig{
+				Hostname:   machineLSE1.GetName(),
+				Ip:         "fake_ip",
+				Vlan:       "fake_vlan",
+				MacAddress: nic0.GetMacAddress(),
+			}
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp})
+			So(err, ShouldBeNil)
+			ip := &ufspb.IP{
+				Id:       "test_ip_id",
+				Ipv4:     12345,
+				Ipv4Str:  dhcp.GetIp(),
+				Vlan:     dhcp.GetVlan(),
+				Occupied: true,
+			}
+			_, err = configuration.BatchUpdateIPs(ctx, []*ufspb.IP{ip})
+			So(err, ShouldBeNil)
+
+			_, err = UpdateMachineLSEHost(ctx, machineLSE1.Name, &ufsAPI.NetworkOption{
+				Nic: "eth1-nic-user",
+			})
+			So(err, ShouldBeNil)
+
+			// Verify nic change & dhcp change
+			dhcp, err = configuration.GetDHCPConfig(ctx, "machinelse-update-host-nic-user")
+			So(err, ShouldBeNil)
+			So(dhcp.GetMacAddress(), ShouldEqual, "eth1-nic-macaddress")
+			lse, err := inventory.GetMachineLSE(ctx, "machinelse-update-host-nic-user")
+			So(lse.GetNic(), ShouldEqual, "eth1-nic-user")
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "fake_ip"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeTrue)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host-nic-user")
+			So(err, ShouldBeNil)
+			// nic is changed
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "eth0-nic-user")
+			So(changes[0].GetNewValue(), ShouldEqual, "eth1-nic-user")
+		})
+
 		Convey("Update machineLSE Labstation without Servo Info", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-4x",

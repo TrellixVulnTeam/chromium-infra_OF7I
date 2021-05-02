@@ -100,7 +100,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 			if err != nil {
 				return nil, err
 			}
-		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
+		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" || nwOpt.GetNic() != "" {
 			machinelse, err = controller.UpdateMachineLSEHost(ctx, req.MachineLSE.Name, nwOpt)
 			if err != nil {
 				return nil, err

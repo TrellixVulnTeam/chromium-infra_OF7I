@@ -227,8 +227,18 @@ func (nu *networkUpdater) addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.Ne
 	if nwOpt.GetNic() == "" {
 		return status.Errorf(codes.InvalidArgument, "nic is required for adding a host for a machine")
 	}
+	var onlyUpdateNic bool
 	if nwOpt.GetVlan() == "" && nwOpt.GetIp() == "" {
-		return status.Errorf(codes.InvalidArgument, "one of vlan and ip is required for adding a host for a machine")
+		dhcp, err := configuration.GetDHCPConfig(ctx, lse.GetHostname())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "fail to get existing dhcp record for host %s when only updating nic: %s", lse.GetHostname(), err)
+		}
+		if dhcp == nil {
+			return status.Errorf(codes.InvalidArgument, "one of vlan and ip is required for adding a host for a machine")
+		}
+		nwOpt.Vlan = dhcp.GetVlan()
+		nwOpt.Ip = dhcp.GetIp()
+		onlyUpdateNic = true
 	}
 	nicName := nwOpt.GetNic()
 	// Assigning IP to this host.
@@ -247,15 +257,23 @@ func (nu *networkUpdater) addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.Ne
 	}
 
 	nu.Hostname = lse.GetHostname()
-	// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
-	if err := nu.deleteDHCPHelper(ctx); err != nil {
-		return err
-	}
+	var dhcp *ufspb.DHCPConfig
+	if onlyUpdateNic {
+		dhcp, err = nu.updateDHCPWithMac(ctx, nic.GetMacAddress())
+		if err != nil {
+			return err
+		}
+	} else {
+		// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
 
-	// 4. Get free ip, update the dhcp config and ip.occupied to true
-	dhcp, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), nic.GetMacAddress())
-	if err != nil {
-		return err
+		// 4. Get free ip, update the dhcp config and ip.occupied to true
+		dhcp, err = nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), nic.GetMacAddress())
+		if err != nil {
+			return err
+		}
 	}
 
 	// 5. Update lse to contain the nic which is used to map to the ip and vlan.
