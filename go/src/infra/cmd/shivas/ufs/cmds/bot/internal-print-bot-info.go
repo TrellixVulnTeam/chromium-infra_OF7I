@@ -24,6 +24,7 @@ import (
 	"infra/cros/dutstate"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/swarming"
+	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -139,14 +140,14 @@ func botInfoForDUT(ctx context.Context, c ufsAPI.FleetClient, id string, byHostn
 	if err != nil {
 		return nil, err
 	}
-	dut := data.GetDutV1()
 	return &botInfo{
-		Dimensions: botDimensionsForDUT(dut, dutstate.Read(ctx, c, data.GetLabConfig().GetName()), r),
-		State:      botStateForDUT(dut),
+		Dimensions: botDimensionsForDUT(data.GetDutV1(), dutstate.Read(ctx, c, data.GetLabConfig().GetName()), r),
+		State:      botStateForDUT(data),
 	}, nil
 }
 
-func botStateForDUT(d *inventory.DeviceUnderTest) botState {
+func botStateForDUT(data *ufspb.ChromeOSDeviceData) botState {
+	d := data.GetDutV1()
 	s := make(botState)
 	for _, kv := range d.GetCommon().GetAttributes() {
 		k, v := kv.GetKey(), kv.GetValue()
@@ -156,6 +157,8 @@ func botStateForDUT(d *inventory.DeviceUnderTest) botState {
 	s["servo_usb_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetServoUsbState().String()[len("HARDWARE_"):]}
 	s["battery_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetBatteryState().String()[len("HARDWARE_"):]}
 	s["rpm_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetRpmState().String()}
+	s["lab_config_version_index"] = []string{data.GetLabConfig().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
+	s["dut_state_version_index"] = []string{data.GetDutState().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
 	return s
 }
 

@@ -27,6 +27,9 @@ const (
 	CrOS           string = "cros"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	OperationPageSize int = 500
+
+	// Version Key format of inventory
+	TimestampBasedVersionKeyFormat string = "2006-01-02 15:04:05.000 UTC"
 )
 
 // satlabRegex regular expression to get the hive value from a DUT hostname.
