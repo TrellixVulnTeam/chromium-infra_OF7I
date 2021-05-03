@@ -10,7 +10,6 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
@@ -73,7 +72,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 	}
 
 	msgs := make(map[string][]proto.Message, 0)
-	updateUTime := ptypes.TimestampNow()
 	for _, s := range snapshots {
 		resourceType := util.GetPrefix(s.ResourceName)
 		logging.Debugf(ctx, "handling %s", s.ResourceName)
@@ -83,7 +81,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["machines"] = append(msgs["machines"], &apibq.MachineRow{
 				Machine: &data,
 				Delete:  s.Delete,
@@ -93,7 +90,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["nics"] = append(msgs["nics"], &apibq.NicRow{
 				Nic:    &data,
 				Delete: s.Delete,
@@ -103,7 +99,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["dracs"] = append(msgs["dracs"], &apibq.DracRow{
 				Drac:   &data,
 				Delete: s.Delete,
@@ -113,7 +108,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["racks"] = append(msgs["racks"], &apibq.RackRow{
 				Rack:   &data,
 				Delete: s.Delete,
@@ -123,7 +117,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["kvms"] = append(msgs["kvms"], &apibq.KVMRow{
 				Kvm:    &data,
 				Delete: s.Delete,
@@ -133,7 +126,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["switches"] = append(msgs["switches"], &apibq.SwitchRow{
 				Switch: &data,
 				Delete: s.Delete,
@@ -143,7 +135,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["machine_lses"] = append(msgs["machine_lses"], &apibq.MachineLSERow{
 				MachineLse: &data,
 				Delete:     s.Delete,
@@ -153,7 +144,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["vms"] = append(msgs["vms"], &apibq.VMRow{
 				Vm:     &data,
 				Delete: s.Delete,
@@ -163,7 +153,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["dhcps"] = append(msgs["dhcps"], &apibq.DHCPConfigRow{
 				DhcpConfig: &data,
 				Delete:     s.Delete,
@@ -173,7 +162,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["state_records"] = append(msgs["state_records"], &apibq.StateRecordRow{
 				StateRecord: &data,
 				Delete:      s.Delete,
@@ -183,7 +171,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["dutstates"] = append(msgs["dutstates"], &apibq.DUTStateRecordRow{
 				State: &data,
 			})
@@ -192,7 +179,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["caching_services"] = append(msgs["caching_services"], &apibq.CachingServiceRow{
 				CachingService: &data,
 				Delete:         s.Delete,
@@ -202,7 +188,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["machine_lse_deployments"] = append(msgs["machine_lse_deployments"], &apibq.MachineLSEDeploymentRow{
 				MachineLseDeployment: &data,
 				Delete:               s.Delete,
@@ -212,7 +197,6 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 			if err := s.GetProto(&data); err != nil {
 				continue
 			}
-			data.UpdateTime = updateUTime
 			msgs["scheduling_units"] = append(msgs["scheduling_units"], &apibq.SchedulingUnitRow{
 				SchedulingUnit: &data,
 				Delete:         s.Delete,
