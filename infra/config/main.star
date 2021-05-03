@@ -25,7 +25,7 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/infra/testing/expect_tests
 """
 
-lucicfg.check_version("1.24.1", "Please update depot_tools")
+lucicfg.check_version("1.24.2", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
@@ -109,6 +109,7 @@ luci.builder.defaults.properties.set({"$kitchen": {"emulate_gce": True}})
 
 # Global recipe defaults
 luci.recipe.defaults.cipd_version.set("refs/heads/main")
+luci.recipe.defaults.use_bbagent.set(True)
 
 # Resources shared by all subprojects.
 

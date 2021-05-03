@@ -85,6 +85,7 @@ luci.logdog(gs_bucket = "chromium-luci-logdog")
 
 luci.bucket(name = "ci")
 
+luci.builder.defaults.experiments.set({"luci.buildbucket.use_bbagent": 50})
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
 def ci_builder(
@@ -146,7 +147,7 @@ def adhoc_builder(
 adhoc_builder(
     name = "gerrit-hello-world-xenial-64",
     os = "Ubuntu-16.04",
-    executable = infra.recipe("gerrit_hello_world", use_bbagent = True),
+    executable = infra.recipe("gerrit_hello_world"),
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
@@ -175,7 +176,7 @@ adhoc_builder(
     triggered_by = [infra.poller()],
 )
 adhoc_builder(
-    name = "build-proto-experiment-linux",
+    name = "build-proto-linux",
     os = "Ubuntu",
     executable = luci.recipe(
         name = "futures:examples/background_helper",
@@ -185,7 +186,7 @@ adhoc_builder(
     schedule = "with 10m interval",
 )
 adhoc_builder(
-    name = "build-proto-experiment-win",
+    name = "build-proto-win",
     os = "Windows-10",
     executable = luci.recipe(
         name = "futures:examples/background_helper",

@@ -14,28 +14,20 @@ def poller():
         repo = "https://chromium.googlesource.com/chromium/tools/build",
     )
 
-def recipe(name, use_bbagent = True):
+def recipe(name):
     """Defines a recipe hosted in the build.git recipe bundle.
 
     Args:
       name: name of the recipe.
-      use_bbagent: if True, execute it through bbagent.
 
     Returns:
       A luci.recipe(...) object.
     """
-    recipe = name
-    if use_bbagent:
-        name += "-bbagent"
-    else:
-        name += "-kitchen"
-
     return luci.recipe(
         name = name,
-        recipe = recipe,
+        recipe = name,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromium/tools/build",
         cipd_version = "refs/heads/master",
-        use_bbagent = use_bbagent,
     )
 
 def presubmit(

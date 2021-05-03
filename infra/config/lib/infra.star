@@ -12,27 +12,19 @@ def poller():
         repo = infra.REPO_URL,
     )
 
-def recipe(name, use_bbagent = True):
+def recipe(name):
     """Defines a recipe hosted in the infra.git recipe bundle.
 
     Args:
       name: name of the recipe.
-      use_bbagent: if True, execute it through bbagent.
 
     Returns:
       A luci.recipe(...) object.
     """
-    recipe = name
-    if use_bbagent:
-        name += "-bbagent"
-    else:
-        name += "-kitchen"
-
     return luci.recipe(
         name = name,
-        recipe = recipe,
+        recipe = name,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/infra",
-        use_bbagent = use_bbagent,
     )
 
 def console_view(name, title, repo = None):
