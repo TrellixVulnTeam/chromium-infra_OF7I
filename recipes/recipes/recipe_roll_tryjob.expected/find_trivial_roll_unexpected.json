@@ -453,11 +453,7 @@
     "name": "post-train diff at upstream CL"
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
+    "cmd": [],
     "name": "UNEXPECTED FOOTER IN CL MESSAGE",
     "~followup_annotations": [
       "@@@STEP_TEXT@Change is trivial, but found 'Recipe-Manual-Change' footer@@@",
@@ -467,7 +463,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('UNEXPECTED FOOTER IN CL MESSAGE') (retcode: 1)"
+      "humanReason": "Change is trivial, but found 'Recipe-Manual-Change' footer"
     },
     "name": "$result"
   }

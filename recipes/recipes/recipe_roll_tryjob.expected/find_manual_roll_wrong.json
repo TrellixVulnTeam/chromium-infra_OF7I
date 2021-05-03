@@ -446,21 +446,17 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
+    "cmd": [],
     "name": "WRONG FOOTER IN CL MESSAGE",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Change reqires 'Recipe-Manual-Change', but found 'Recipe-Nontrivial-Roll' footer@@@",
+      "@@@STEP_TEXT@Change requires 'Recipe-Manual-Change', but found 'Recipe-Nontrivial-Roll' footer@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('WRONG FOOTER IN CL MESSAGE') (retcode: 1)"
+      "humanReason": "Change requires 'Recipe-Manual-Change', but found 'Recipe-Nontrivial-Roll' footer"
     },
     "name": "$result"
   }

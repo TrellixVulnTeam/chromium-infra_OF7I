@@ -442,11 +442,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
+    "cmd": [],
     "name": "MISSING FOOTER IN CL MESSAGE",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/><br/>Add<br/><br/>    Recipe-Manual-Change: depot_tools<br/><br/>To your CL message.<br/><br/>This means that your upstream CL (this one) will require MANUAL CODE CHANGES<br/>in the downstream repo 'depot_tools'. Best practice is to prepare all downstream<br/>changes before landing the upstream CL, using:<br/><br/>    depot_tools/some/path/recipes.py -O recipe_engine=/path/to/local/recipe_engine test train<br/><br/>When that CL has been reviewed, you can land this upstream change. Once the<br/>upstream change lands, roll it into your downstream CL:<br/><br/>    depot_tools/recipes.py manual_roll   # may require running multiple times.<br/><br/>Re-train expectations and upload the expectations plus the roll to your<br/>downstream CL. It's customary to copy the outputs of manual_roll to create<br/>a changelog to attach to the downstream CL as well to help reviewers understand<br/>what the roll contains.@@@",
@@ -456,7 +452,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('MISSING FOOTER IN CL MESSAGE') (retcode: 1)"
+      "humanReason": "\n\nAdd\n\n    Recipe-Manual-Change: depot_tools\n\nTo your CL message.\n\nThis means that your upstream CL (this one) will require MANUAL CODE CHANGES\nin the downstream repo 'depot_tools'. Best practice is to prepare all downstream\nchanges before landing the upstream CL, using:\n\n    depot_tools/some/path/recipes.py -O recipe_engine=/path/to/local/recipe_engine test train\n\nWhen that CL has been reviewed, you can land this upstream change. Once the\nupstream change lands, roll it into your downstream CL:\n\n    depot_tools/recipes.py manual_roll   # may require running multiple times.\n\nRe-train expectations and upload the expectations plus the roll to your\ndownstream CL. It's customary to copy the outputs of manual_roll to create\na changelog to attach to the downstream CL as well to help reviewers understand\nwhat the roll contains."
     },
     "name": "$result"
   }

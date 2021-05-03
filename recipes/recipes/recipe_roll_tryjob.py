@@ -6,7 +6,9 @@ from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
-from PB.go.chromium.org.luci.buildbucket.proto.common import GerritChange
+from PB.go.chromium.org.luci.buildbucket.proto.common import (FAILURE,
+                                                              GerritChange)
+from PB.recipe_engine.result import RawResult
 
 DEPS = [
   'recipe_engine/buildbucket',
@@ -378,6 +380,18 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
   return NONTRIVIAL_ROLL_FOOTER if not trivial else None
 
 
+def _failing_step(api, name, message):
+  result = api.step(name, [])
+  result.presentation.status = api.step.FAILURE
+  result.presentation.step_text = message
+
+  raw_result = RawResult()
+  raw_result.status = FAILURE
+  raw_result.summary_markdown = message
+
+  return raw_result
+
+
 def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
   # NOTE: this recipe is only useful as a tryjob with patch applied against
   # upstream repo, which means upstream_url must at least match a change from
@@ -418,21 +432,23 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
 
   # trivial roll, but user has footer in CL message.
   if expected_footer is None and actual_footer is not None:
-    api.python.failing_step(
-        'UNEXPECTED FOOTER IN CL MESSAGE',
+    return _failing_step(
+        api, 'UNEXPECTED FOOTER IN CL MESSAGE',
         'Change is trivial, but found %r footer' % (actual_footer,))
 
   # nontrivial/manual roll, but user has wrong footer in CL message.
   if expected_footer is not None and actual_footer is not None:
-    api.python.failing_step(
-        'WRONG FOOTER IN CL MESSAGE',
-        'Change reqires %r, but found %r footer' % (
-          expected_footer, actual_footer,))
+    return _failing_step(
+        api, 'WRONG FOOTER IN CL MESSAGE',
+        'Change requires %r, but found %r footer' % (
+            expected_footer,
+            actual_footer,
+        ))
 
   # expected != None at this point, so actual_footer must be None
   msg = FOOTER_ADD_TEMPLATE + EXTRA_MSG[expected_footer]
-  api.python.failing_step(
-      'MISSING FOOTER IN CL MESSAGE',
+  return _failing_step(
+      api, 'MISSING FOOTER IN CL MESSAGE',
       msg.format(
           footer=expected_footer,
           up_id=upstream_id,

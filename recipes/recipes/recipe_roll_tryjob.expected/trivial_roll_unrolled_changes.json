@@ -452,11 +452,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
+    "cmd": [],
     "name": "MISSING FOOTER IN CL MESSAGE",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/><br/>Add<br/><br/>    Recipe-Nontrivial-Roll: depot_tools<br/><br/>To your CL message.<br/><br/><br/>This means that your upstream CL (this one) will change the EXPECTATION FILES<br/>in the downstream repo 'depot_tools'.<br/><br/>The recipe roller will automatically prepare the non-trivial CL and will upload<br/>it with `git cl upload --r-owners` to the downstream repo. Best practice is to<br/>review this non-trivial roll CL to ensure that the expectations you see there<br/>are expected.<br/>@@@",
@@ -466,7 +462,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('MISSING FOOTER IN CL MESSAGE') (retcode: 1)"
+      "humanReason": "\n\nAdd\n\n    Recipe-Nontrivial-Roll: depot_tools\n\nTo your CL message.\n\n\nThis means that your upstream CL (this one) will change the EXPECTATION FILES\nin the downstream repo 'depot_tools'.\n\nThe recipe roller will automatically prepare the non-trivial CL and will upload\nit with `git cl upload --r-owners` to the downstream repo. Best practice is to\nreview this non-trivial roll CL to ensure that the expectations you see there\nare expected.\n"
     },
     "name": "$result"
   }
