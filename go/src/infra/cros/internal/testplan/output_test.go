@@ -47,7 +47,9 @@ func TestGenerateOutputs(t *testing.T) {
 		{
 			name: "kernel versions",
 			input: &plan.SourceTestPlan{
-				KernelVersions: &plan.SourceTestPlan_KernelVersions{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+				},
 			},
 			expected: []*Output{
 				{
@@ -67,7 +69,9 @@ func TestGenerateOutputs(t *testing.T) {
 		{
 			name: "soc families",
 			input: &plan.SourceTestPlan{
-				SocFamilies: &plan.SourceTestPlan_SocFamilies{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+				},
 			},
 			expected: []*Output{
 				{
@@ -87,8 +91,10 @@ func TestGenerateOutputs(t *testing.T) {
 		{
 			name: "multiple requirements",
 			input: &plan.SourceTestPlan{
-				KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-				SocFamilies:    &plan.SourceTestPlan_SocFamilies{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					SocFamilies:    &plan.SourceTestPlan_Requirements_SocFamilies{},
+				},
 			},
 			expected: []*Output{
 				{
@@ -112,7 +118,9 @@ func TestGenerateOutputs(t *testing.T) {
 		{
 			name: "with test tags",
 			input: &plan.SourceTestPlan{
-				SocFamilies:     &plan.SourceTestPlan_SocFamilies{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+				},
 				TestTags:        []string{"componentA"},
 				TestTagExcludes: []string{"flaky"},
 			},

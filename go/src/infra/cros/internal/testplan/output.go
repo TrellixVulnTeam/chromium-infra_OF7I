@@ -128,16 +128,16 @@ func generateOutputs(
 ) ([]*Output, error) {
 	outputs := []*Output{}
 
-	if sourceTestPlan.KernelVersions == nil &&
-		sourceTestPlan.SocFamilies == nil {
+	if sourceTestPlan.GetRequirements().GetKernelVersions() == nil &&
+		sourceTestPlan.GetRequirements().GetSocFamilies() == nil {
 		return nil, fmt.Errorf("at least one requirement must be set in SourceTestPlan: %v", sourceTestPlan)
 	}
 
-	if sourceTestPlan.KernelVersions != nil {
+	if sourceTestPlan.GetRequirements().GetKernelVersions() != nil {
 		outputs = expandOutputs(outputs, kernelVersionOutputs(sourceTestPlan, buildSummaryList))
 	}
 
-	if sourceTestPlan.SocFamilies != nil {
+	if sourceTestPlan.GetRequirements().GetSocFamilies() != nil {
 		outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
 	}
 

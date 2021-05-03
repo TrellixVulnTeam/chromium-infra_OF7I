@@ -37,7 +37,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_HARDWARE,
 			},
-			KernelVersions: &plan.SourceTestPlan_KernelVersions{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			},
 		}
 	}
 
@@ -46,7 +48,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_VIRTUAL,
 			},
-			KernelVersions: &plan.SourceTestPlan_KernelVersions{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			},
 		}
 	}
 
@@ -55,7 +59,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_VIRTUAL,
 			},
-			SocFamilies: &plan.SourceTestPlan_SocFamilies{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			},
 		}
 	}
 
@@ -64,7 +70,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_VIRTUAL,
 			},
-			SocFamilies: &plan.SourceTestPlan_SocFamilies{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			},
 			PathRegexps: []string{`.*\.c`, `.*\.h`},
 		}
 	}
@@ -74,7 +82,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_HARDWARE,
 			},
-			SocFamilies: &plan.SourceTestPlan_SocFamilies{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			},
 			PathRegexps: []string{`.*\.py`},
 		}
 	}
@@ -84,7 +94,9 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 				plan.SourceTestPlan_VIRTUAL,
 			},
-			SocFamilies:        &plan.SourceTestPlan_SocFamilies{},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			},
 			PathRegexpExcludes: []string{`.*\.md`, `.*/README`},
 		}
 	}

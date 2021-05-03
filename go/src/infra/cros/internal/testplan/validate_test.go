@@ -38,8 +38,9 @@ func TestValidateMapping(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-									},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										}},
 								},
 							},
 						},
@@ -61,8 +62,9 @@ func TestValidateMapping(t *testing.T) {
 											plan.SourceTestPlan_HARDWARE,
 											plan.SourceTestPlan_VIRTUAL,
 										},
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-									},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										}},
 								},
 							},
 						},
@@ -83,7 +85,9 @@ func TestValidateMapping(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
-										KernelVersions:     &plan.SourceTestPlan_KernelVersions{},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
 										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
 									},
@@ -107,7 +111,9 @@ func TestValidateMapping(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
-										KernelVersions:     &plan.SourceTestPlan_KernelVersions{},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
 										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
 									},
@@ -143,8 +149,9 @@ func TestValidateMappingErrors(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-									},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										}},
 								},
 							},
 						},
@@ -167,8 +174,9 @@ func TestValidateMappingErrors(t *testing.T) {
 											plan.SourceTestPlan_HARDWARE,
 											plan.SourceTestPlan_TEST_ENVIRONMENT_UNSPECIFIED,
 										},
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-									},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										}},
 								},
 							},
 						},
@@ -178,7 +186,7 @@ func TestValidateMappingErrors(t *testing.T) {
 			"TEST_ENVIRONMENT_UNSPECIFIED cannot be used in enabled_test_environments",
 		},
 		{
-			"no requirements specified",
+			"no requirements message",
 			&dirmd.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					"a/b/c": {
@@ -190,6 +198,29 @@ func TestValidateMappingErrors(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"at least one requirement must be specified",
+		},
+		{
+			"empty requirements message",
+			&dirmd.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					"a/b/c": {
+						TeamEmail: "exampleteam@google.com",
+						Chromeos: &chromeos.ChromeOS{
+							Cq: &chromeos.ChromeOS_CQ{
+								SourceTestPlans: []*plan.SourceTestPlan{
+									{
+										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+											plan.SourceTestPlan_HARDWARE,
+										},
+										Requirements: &plan.SourceTestPlan_Requirements{},
 									},
 								},
 							},
@@ -212,8 +243,10 @@ func TestValidateMappingErrors(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-										PathRegexps:    []string{"a/b/c/d/["},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										},
+										PathRegexps: []string{"a/b/c/d/["},
 									},
 								},
 							},
@@ -236,8 +269,9 @@ func TestValidateMappingErrors(t *testing.T) {
 										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 											plan.SourceTestPlan_HARDWARE,
 										},
-										KernelVersions: &plan.SourceTestPlan_KernelVersions{},
-										PathRegexps:    []string{`a/b/e/.*\.txt`},
+										Requirements: &plan.SourceTestPlan_Requirements{
+											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										}, PathRegexps: []string{`a/b/e/.*\.txt`},
 									},
 								},
 							},

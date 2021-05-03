@@ -23,15 +23,18 @@ func TestMergeSourceTestPlans(t *testing.T) {
 					},
 					PathRegexps:        []string{`a/b/.*\.c`},
 					PathRegexpExcludes: []string{`.*\.md`},
-					KernelVersions:     &plan.SourceTestPlan_KernelVersions{},
-				},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					}},
 				{
 					EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
 						plan.SourceTestPlan_HARDWARE,
 					},
 					TestTags:        []string{"componentA", "componentB"},
 					TestTagExcludes: []string{"componentC", "flaky"},
-					KernelVersions:  &plan.SourceTestPlan_KernelVersions{},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					},
 				},
 				{
 					EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
@@ -40,7 +43,9 @@ func TestMergeSourceTestPlans(t *testing.T) {
 					TestTags:           []string{"componentC"},
 					TestTagExcludes:    []string{"flaky"},
 					PathRegexpExcludes: []string{`.*README`},
-					SocFamilies:        &plan.SourceTestPlan_SocFamilies{},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+					},
 				},
 			},
 			expected: &plan.SourceTestPlan{
@@ -50,8 +55,10 @@ func TestMergeSourceTestPlans(t *testing.T) {
 				},
 				TestTags:        []string{"componentA", "componentB", "componentC"},
 				TestTagExcludes: []string{"flaky"},
-				KernelVersions:  &plan.SourceTestPlan_KernelVersions{},
-				SocFamilies:     &plan.SourceTestPlan_SocFamilies{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					SocFamilies:    &plan.SourceTestPlan_Requirements_SocFamilies{},
+				},
 			},
 		},
 		{
@@ -64,7 +71,9 @@ func TestMergeSourceTestPlans(t *testing.T) {
 					TestTags:           []string{"componentC"},
 					TestTagExcludes:    []string{"flaky"},
 					PathRegexpExcludes: []string{`.*README`},
-					SocFamilies:        &plan.SourceTestPlan_SocFamilies{},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+					},
 				},
 			},
 			expected: &plan.SourceTestPlan{
@@ -73,7 +82,9 @@ func TestMergeSourceTestPlans(t *testing.T) {
 				},
 				TestTags:        []string{"componentC"},
 				TestTagExcludes: []string{"flaky"},
-				SocFamilies:     &plan.SourceTestPlan_SocFamilies{},
+				Requirements: &plan.SourceTestPlan_Requirements{
+					SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+				},
 			},
 		},
 		{

@@ -48,19 +48,11 @@ func validateEnabledTestEnvironments(_ string, plan *planpb.SourceTestPlan) erro
 }
 
 func validateAtLeastOneRequirement(_ string, plan *planpb.SourceTestPlan) error {
-	requirementFields := []string{
-		"kernel_versions",
-		"soc_families",
-	}
+	messageReflect := proto.MessageReflect(plan.Requirements)
 
-	messageReflect := proto.MessageReflect(plan)
+	hasRequirement := false
 
-	for _, field := range requirementFields {
-		fd := messageReflect.Descriptor().Fields().ByName(protoreflect.Name(field))
-		if fd == nil {
-			panic(fmt.Sprintf("Could not find field descriptor for %q", field))
-		}
-
+	messageReflect.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
 		// Requirements must be explicitly set, even if they are an empty
 		// message. For singular message fields, it is possible to distinguish
 		// between the default value (empty message) and whether the field was
@@ -69,19 +61,22 @@ func validateAtLeastOneRequirement(_ string, plan *planpb.SourceTestPlan) error 
 		//
 		// Check that the requirement is a singular message field, and then call
 		// Has. Note that this condition is only determined by the fields
-		// in requirementFields and the SourceTestPlan schema, not by the actual
-		// input proto; thus, panic if true, since it should be impossible for
-		// code that passes unit tests.
+		// in the SourceTestPlan schema, not by the actual input proto; thus,
+		// panic if true, since it should be impossible for code that passes
+		// unit tests.
 		if !(fd.Cardinality() == protoreflect.Optional && fd.Kind() == protoreflect.MessageKind) {
-			panic(fmt.Sprintf("Requirements must be singular message fields. Invalid requirement: %q", field))
+			panic(fmt.Sprintf("Requirements must be singular message fields. Invalid requirement: %q", fd.FullName()))
 		}
 
-		if messageReflect.Has(fd) {
-			return nil
-		}
+		hasRequirement = true
+		return false
+	})
+
+	if !hasRequirement {
+		return fmt.Errorf("at least one requirement must be specified")
 	}
 
-	return fmt.Errorf("at least one requirement must be specified")
+	return nil
 }
 
 func validatePathRegexps(dir string, plan *planpb.SourceTestPlan) error {
