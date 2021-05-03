@@ -1269,6 +1269,10 @@ func PrintDutsFull(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machin
 		if !ok {
 			continue
 		}
+		var ts string
+		if t, err := ptypes.Timestamp(dut.GetUpdateTime()); err == nil {
+			ts = t.Local().Format(timeFormat)
+		}
 		fmt.Fprintf(tw, "\nHostname:\t%s\n", dut.GetName())
 		fmt.Fprintf(tw, "Inventory Id:\t%s\n", dut.GetMachines()[0])
 		fmt.Fprintf(tw, "Serial number:\t%s\n", m.GetSerialNumber())
@@ -1278,6 +1282,7 @@ func PrintDutsFull(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machin
 		fmt.Fprintf(tw, "Variant:\t%s\n", m.GetChromeosMachine().GetSku())
 		fmt.Fprintf(tw, "HWID:\t%s\n", m.GetChromeosMachine().GetHwid())
 		fmt.Fprintf(tw, "State:\t%s\n", m.GetResourceState().String())
+		fmt.Fprintf(tw, "Last Updated: \t%s\n", ts)
 
 		servo := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if servo != nil {
