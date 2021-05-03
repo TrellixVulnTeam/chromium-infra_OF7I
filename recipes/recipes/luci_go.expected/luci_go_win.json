@@ -42,6 +42,7 @@
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
     "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/luci-gae-trusty-64/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
       "GIT_HTTP_LOW_SPEED_TIME": "1800"
     },
