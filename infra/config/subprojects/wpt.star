@@ -30,4 +30,4 @@ def cron(name, recipe, execution_timeout = None):
     )
 
 cron(name = "wpt-exporter", recipe = "wpt_export")
-cron(name = "wpt-importer", recipe = "wpt_import", execution_timeout = 5 * time.hour)
+cron(name = "wpt-importer", recipe = "wpt_import", execution_timeout = 6 * time.hour)
