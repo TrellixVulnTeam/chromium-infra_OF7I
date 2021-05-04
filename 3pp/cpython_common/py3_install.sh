@@ -119,7 +119,11 @@ else
   #
   # This set of symbols was determined by trial, see:
   # - crbug.com/763792
-  LDFLAGS="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
+  #
+  # We use LDFLAGS_NODIST instead of LDFLAGS so that distutils doesn't use this
+  # for building extensions. It would break the build, as gnu_version_script.txt
+  # isn't available when we build wheels. It's not necessary there anyway.
+  LDFLAGS_NODIST="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
 fi
 
 # Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
