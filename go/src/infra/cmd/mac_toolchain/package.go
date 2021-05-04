@@ -31,9 +31,9 @@ var defaultExcludePrefixes = []string{
 	"Contents/Developer/Platforms/WatchSimulator.platform",
 }
 
-// macExcludePrefixes excludes parts of Xcode.app not required for building
-// Chrome on Mac OS.
-var macExcludePrefixes = []string{
+// iosPrefixes excludes parts of Xcode.app not required for building
+// Chrome on Mac OS, but is useful for iOS.
+var iosPrefixes = []string{
 	"Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator",
 	"Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs",
 }
@@ -48,7 +48,7 @@ type PackageSpec struct {
 	YamlPath string
 }
 
-func isExcluded(path string, prefixes []string) bool {
+func isUnderPrefix(path string, prefixes []string) bool {
 	for _, prefix := range prefixes {
 		p := filepath.Join(strings.Split(prefix, "/")...)
 		if strings.HasPrefix(path, p) {
@@ -58,50 +58,102 @@ func isExcluded(path string, prefixes []string) bool {
 	return false
 }
 
-func makePackages(xcodeAppPath string, cipdPackagePrefix string, excludeAll, excludeMac []string) (p Packages, err error) {
+// MakePackageArgs are the parameters for makePackage() to keep them manageable.
+type MakePackageArgs struct {
+	cipdPackageName   string
+	cipdPackagePrefix string
+	rootPath          string
+	includePrefixes   []string
+	excludePrefixes   []string
+}
+
+// Makes a CIPD PackageDef using |MakePackageArgs|. Only files in |rootPath|,
+// and meanwhile under any of |includePrefixes| relative path prefixes (if
+// provided), and not under any of |excludePrefixes| will be included. All paths
+// in |rootPath| are first filtered by |includePrefixes| (if provided), then
+// tested to ensure it's not in |excludePrefixes|, to be included in the
+// package.
+func makePackage(args MakePackageArgs) (packageDef cipd.PackageDef, err error) {
+	absRootPath, err := filepath.Abs(args.rootPath)
+	if err != nil {
+		err = errors.Annotate(err, "failed to create an absolute root path from %s", args.rootPath).Err()
+		return
+	}
+	packageDef = cipd.PackageDef{
+		Root:             absRootPath,
+		InstallMode:      "copy",
+		PreserveModTime:  true,
+		PreserveWritable: true,
+		Package:          args.cipdPackagePrefix + "/" + args.cipdPackageName,
+		Data: []cipd.PackageChunkDef{
+			{VersionFile: ".xcode_versions/" + args.cipdPackageName + ".cipd_version"},
+		},
+	}
+
+	err = filepath.Walk(absRootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsDir() {
+			if !strings.HasPrefix(path, absRootPath+string(os.PathSeparator)) {
+				return errors.Reason("file is not in the source folder: %s", path).Err()
+			}
+			relPath := path[len(absRootPath)+1:]
+
+			if len(args.includePrefixes) > 0 && !isUnderPrefix(relPath, args.includePrefixes) {
+				return nil
+			}
+			if len(args.excludePrefixes) > 0 && isUnderPrefix(relPath, args.excludePrefixes) {
+				return nil
+			}
+
+			packageDef.Data = append(packageDef.Data, cipd.PackageChunkDef{File: relPath})
+		}
+		return nil
+	})
+	return packageDef, err
+}
+
+// Makes Xcode's CIPD package definitions, including "mac" and "ios" package
+// types.
+func makeXcodePackages(xcodeAppPath string, cipdPackagePrefix string) (p Packages, err error) {
 	absXcodeAppPath, err := filepath.Abs(xcodeAppPath)
 	if err != nil {
 		err = errors.Annotate(err, "failed to create an absolute path from %s", xcodeAppPath).Err()
 		return
 	}
-	packageDef := cipd.PackageDef{
-		Root:             absXcodeAppPath,
-		InstallMode:      "copy",
-		PreserveModTime:  true,
-		PreserveWritable: true,
+
+	// Mac package exclude prefixes include prefixes in |defaultExcludePrefixes|
+	// and |iosPrefixes|. Use |make|, |copy| and |append| functions to ensure
+	// slices won't be accidentally changed.
+	excludePrefixesForMacPackage := make([]string, len(defaultExcludePrefixes))
+	copy(excludePrefixesForMacPackage, defaultExcludePrefixes)
+	excludePrefixesForMacPackage = append(excludePrefixesForMacPackage, iosPrefixes...)
+
+	macMakePackageArgs := MakePackageArgs{
+		cipdPackageName:   "mac",
+		cipdPackagePrefix: cipdPackagePrefix,
+		rootPath:          absXcodeAppPath,
+		includePrefixes:   []string{},
+		excludePrefixes:   excludePrefixesForMacPackage,
 	}
-	mac := packageDef
-	mac.Package = cipdPackagePrefix + "/mac"
-	mac.Data = []cipd.PackageChunkDef{
-		{VersionFile: ".xcode_versions/mac.cipd_version"},
+	mac, err := makePackage(macMakePackageArgs)
+	if err != nil {
+		err = errors.Annotate(err, "failed to create mac cipd pakcage").Err()
 	}
 
-	ios := packageDef
-	ios.Package = cipdPackagePrefix + "/ios"
-	ios.Data = []cipd.PackageChunkDef{
-		{VersionFile: ".xcode_versions/ios.cipd_version"},
+	iosMakePackageArgs := MakePackageArgs{
+		cipdPackageName:   "ios",
+		cipdPackagePrefix: cipdPackagePrefix,
+		rootPath:          absXcodeAppPath,
+		includePrefixes:   iosPrefixes,
+		excludePrefixes:   defaultExcludePrefixes,
+	}
+	ios, err := makePackage(iosMakePackageArgs)
+	if err != nil {
+		err = errors.Annotate(err, "failed to create ios cipd pakcage").Err()
 	}
 
-	err = filepath.Walk(absXcodeAppPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.Mode().IsDir() {
-			if !strings.HasPrefix(path, absXcodeAppPath+string(os.PathSeparator)) {
-				return errors.Reason("file is not in the source folder: %s", path).Err()
-			}
-			relPath := path[len(absXcodeAppPath)+1:]
-			if isExcluded(relPath, excludeAll) {
-				return nil
-			}
-			if isExcluded(relPath, excludeMac) {
-				ios.Data = append(ios.Data, cipd.PackageChunkDef{File: relPath})
-			} else {
-				mac.Data = append(mac.Data, cipd.PackageChunkDef{File: relPath})
-			}
-		}
-		return nil
-	})
 	p = Packages{"mac": mac, "ios": ios}
 	return
 }
@@ -140,7 +192,7 @@ func buildCipdPackages(packages Packages, buildFn func(PackageSpec) error) error
 	return nil
 }
 
-func createBuilder(ctx context.Context, xcodeVersion, buildVersion, serviceAccountJSON, outputDir string) func(PackageSpec) error {
+func createBuilder(ctx context.Context, tags []string, refs []string, serviceAccountJSON, outputDir string) func(PackageSpec) error {
 	builder := func(p PackageSpec) error {
 		args := []string{}
 		if outputDir != "" {
@@ -156,11 +208,13 @@ func createBuilder(ctx context.Context, xcodeVersion, buildVersion, serviceAccou
 		} else {
 			args = append(args,
 				"create", "-verification-timeout", "60m",
-				"-tag", "xcode_version:"+xcodeVersion,
-				"-tag", "build_version:"+buildVersion,
-				"-ref", strings.ToLower(buildVersion), // Refs must match [a-z0-9_-]*
-				"-ref", "latest",
 			)
+			for _, tag := range tags {
+				args = append(args, "-tag", tag)
+			}
+			for _, ref := range refs {
+				args = append(args, "-ref", strings.ToLower(ref))
+			}
 		}
 		args = append(args, "-pkg-def", p.YamlPath)
 		if serviceAccountJSON != "" {
@@ -183,13 +237,19 @@ func packageXcode(ctx context.Context, xcodeAppPath string, cipdPackagePrefix, s
 		return errors.Annotate(err, "this doesn't look like a valid Xcode.app folder: %s", xcodeAppPath).Err()
 	}
 
-	packages, err := makePackages(xcodeAppPath, cipdPackagePrefix,
-		defaultExcludePrefixes, macExcludePrefixes)
+	packages, err := makeXcodePackages(xcodeAppPath, cipdPackagePrefix)
 	if err != nil {
 		return err
 	}
-
-	buildFn := createBuilder(ctx, xcodeVersion, buildVersion, serviceAccountJSON, outputDir)
+	tags := []string{
+		"xcode_version:" + xcodeVersion,
+		"build_version:" + buildVersion,
+	}
+	refs := []string{
+		strings.ToLower(buildVersion), // Refs must match [a-z0-9_-]*
+		"latest",
+	}
+	buildFn := createBuilder(ctx, tags, refs, serviceAccountJSON, outputDir)
 
 	if err = buildCipdPackages(packages, buildFn); err != nil {
 		return err

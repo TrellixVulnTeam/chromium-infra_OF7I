@@ -25,9 +25,77 @@ func TestMakePackages(t *testing.T) {
 		return filepath.Join(strings.Split(p, "/")...)
 	}
 
-	Convey("makePackages works", t, func() {
-		Convey("for a valid directory without exclusions", func() {
-			packages, err := makePackages("testdata/WalkDir", "test/prefix", nil, nil)
+	Convey("makePackage works", t, func() {
+		baseMakePackageArgs := MakePackageArgs{
+			cipdPackageName:   "cipdPackage",
+			cipdPackagePrefix: "cipd/package/prefix",
+			rootPath:          "testdata/WalkDir",
+			includePrefixes:   nil,
+			excludePrefixes:   nil,
+		}
+		Convey("makePackage works without include / exclude args", func() {
+			makePackageArgs := baseMakePackageArgs
+			pkg, err := makePackage(makePackageArgs)
+			So(err, ShouldBeNil)
+			So(pkg.Package, ShouldEqual, "cipd/package/prefix/cipdPackage")
+			So(pkg.Data, ShouldResemble, []cipd.PackageChunkDef{
+				{VersionFile: ".xcode_versions/cipdPackage.cipd_version"},
+				{File: path("A/B/b")},
+				{File: path("A/B/b2")},
+				{File: path("A/a")},
+				{File: path("C/c")},
+				{File: path("C/c2")},
+				{File: path("symlink")},
+			})
+		})
+		Convey("makePackage works with include prefixes", func() {
+			includes := []string{"A/B", "C/c"}
+			makePackageArgs := baseMakePackageArgs
+			makePackageArgs.includePrefixes = includes
+			pkg, err := makePackage(makePackageArgs)
+			So(err, ShouldBeNil)
+			So(pkg.Package, ShouldEqual, "cipd/package/prefix/cipdPackage")
+			So(pkg.Data, ShouldResemble, []cipd.PackageChunkDef{
+				{VersionFile: ".xcode_versions/cipdPackage.cipd_version"},
+				{File: path("A/B/b")},
+				{File: path("A/B/b2")},
+				{File: path("C/c")},
+				{File: path("C/c2")},
+			})
+		})
+		Convey("makePackage works with exclude prefixes", func() {
+			excludes := []string{"A/B", "C/c"}
+			makePackageArgs := baseMakePackageArgs
+			makePackageArgs.excludePrefixes = excludes
+			pkg, err := makePackage(makePackageArgs)
+			So(err, ShouldBeNil)
+			So(pkg.Package, ShouldEqual, "cipd/package/prefix/cipdPackage")
+			So(pkg.Data, ShouldResemble, []cipd.PackageChunkDef{
+				{VersionFile: ".xcode_versions/cipdPackage.cipd_version"},
+				{File: path("A/a")},
+				{File: path("symlink")},
+			})
+		})
+		Convey("makePackage works with include & exclude prefixes", func() {
+			includes := []string{"A", "B", "C/c"}
+			excludes := []string{"A/B", "C/c2"}
+			makePackageArgs := baseMakePackageArgs
+			makePackageArgs.includePrefixes = includes
+			makePackageArgs.excludePrefixes = excludes
+			pkg, err := makePackage(makePackageArgs)
+			So(err, ShouldBeNil)
+			So(pkg.Package, ShouldEqual, "cipd/package/prefix/cipdPackage")
+			So(pkg.Data, ShouldResemble, []cipd.PackageChunkDef{
+				{VersionFile: ".xcode_versions/cipdPackage.cipd_version"},
+				{File: path("A/a")},
+				{File: path("C/c")},
+			})
+		})
+	})
+
+	Convey("makeXcodePackages works", t, func() {
+		Convey("for a valid directory", func() {
+			packages, err := makeXcodePackages("testdata/WalkDir", "test/prefix")
 			So(err, ShouldBeNil)
 			So(packages["mac"].Package, ShouldEqual, "test/prefix/mac")
 			So(packages["ios"].Package, ShouldEqual, "test/prefix/ios")
@@ -46,27 +114,8 @@ func TestMakePackages(t *testing.T) {
 			})
 		})
 
-		Convey("for a valid directory with exclusions", func() {
-			excludeAll := []string{"C/", "nonexistent"}
-			excludeMac := []string{"A/B/b2", "C/c2"}
-			packages, err := makePackages("testdata/WalkDir", "test/exclusions", excludeAll, excludeMac)
-			So(err, ShouldBeNil)
-			So(packages["mac"].Package, ShouldEqual, "test/exclusions/mac")
-			So(packages["mac"].Data, ShouldResemble, []cipd.PackageChunkDef{
-				{VersionFile: ".xcode_versions/mac.cipd_version"},
-				{File: path("A/B/b")},
-				{File: path("A/a")},
-				{File: path("symlink")},
-			})
-			So(packages["ios"].Package, ShouldEqual, "test/exclusions/ios")
-			So(packages["ios"].Data, ShouldResemble, []cipd.PackageChunkDef{
-				{VersionFile: ".xcode_versions/ios.cipd_version"},
-				{File: path("A/B/b2")},
-			})
-		})
-
 		Convey("for a nonexistent directory", func() {
-			_, err := makePackages("testdata/nonexistent", "", nil, nil)
+			_, err := makeXcodePackages("testdata/nonexistent", "")
 			So(err, ShouldNotBeNil)
 		})
 	})
