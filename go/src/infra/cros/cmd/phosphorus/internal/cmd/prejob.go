@@ -117,15 +117,10 @@ func prejobSucceeded(r *phosphorus.PrejobResponse, err error) bool {
 }
 
 func provisionChromeOSBuild(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
-	// TODO(b/182416536): Should only provision once.
-	response, err := provisionChromeOSBuildLegacy(ctx, r)
-	if err != nil {
-		return nil, err
-	}
 	if shouldProvisionChromeOSViaTLS(r) {
-		response, err = provisionChromeOSBuildViaTLS(ctx, bt, r)
+		return provisionChromeOSBuildViaTLS(ctx, bt, r)
 	}
-	return response, err
+	return provisionChromeOSBuildLegacy(ctx, r)
 }
 
 func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
