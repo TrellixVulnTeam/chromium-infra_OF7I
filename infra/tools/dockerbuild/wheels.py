@@ -160,6 +160,7 @@ SPECS.update({
                 'mac-x64': ['macosx_10_6_intel'],
             },
             pyversions=['py2'],
+            skip_plat=['mac-arm64-cross'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -168,6 +169,7 @@ SPECS.update({
                 'mac-x64': ['macosx_10_6_intel'],
             },
             pyversions=['py2'],
+            skip_plat=['mac-arm64-cross'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -228,6 +230,7 @@ SPECS.update({
                 'GEVENT_NO_LIBUV_BUILD': '1',
             },
             pyversions=['py2'],
+            skip_plat=['mac-arm64-cross'],
         ),
         SourceOrPrebuilt(
             'gevent',
@@ -266,7 +269,11 @@ SPECS.update({
                 'windows-x64-py3',
             ],
         ),
-        SourceOrPrebuilt('grpcio', '1.4.0', pyversions=['py2']),
+        SourceOrPrebuilt(
+            'grpcio',
+            '1.4.0',
+            pyversions=['py2'],
+            skip_plat=['mac-arm64-cross']),
         SourceOrPrebuilt(
             'grpcio',
             '1.32.0',
@@ -1059,15 +1066,16 @@ SPECS.update({
             'cryptography',
             '2.0.3',
             openssl='1.1.0f',
-            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
+            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS,
+            skip_plat=['mac-arm64-cross']),
         CryptographyPyPI(
             'cryptography',
             '2.6.1',
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
             skip_plat=[
-                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'linux-arm64-py3',
-                'windows-x86-py3', 'windows-x64-py3'
+                'mac-arm64-cross', 'mac-x64-cp38', 'mac-arm64-cp38-cross',
+                'linux-arm64-py3', 'windows-x86-py3', 'windows-x64-py3'
             ],
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
@@ -1081,7 +1089,7 @@ SPECS.update({
             ],
             # TODO(bryner): Consider updating this to build against 1.1.1i,
             # to get support for Mac ARM64.
-            skip_plat=['mac-arm64-cp38-cross'],
+            skip_plat=['mac-arm64-cross', 'mac-arm64-cp38-cross'],
         ),
         CryptographyPyPI(
             'cryptography',
@@ -1092,6 +1100,7 @@ SPECS.update({
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
+            skip_plat=['mac-arm64-cross'],
         ),
     )
 })
@@ -1138,6 +1147,7 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
+                'mac-arm64-cross',
                 'mac-arm64-cp38-cross',
             ],
         ),
