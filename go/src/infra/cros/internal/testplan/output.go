@@ -3,9 +3,11 @@ package testplan
 import (
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/data/stringset"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // Output contains lists of build targets and test tags to run, computed from
@@ -213,6 +215,11 @@ func arcVersionOutputs(
 	return outputs
 }
 
+// typeName is a convenience function for the FullName of m.
+func typeName(m proto.Message) protoreflect.FullName {
+	return proto.MessageReflect(m).Descriptor().FullName()
+}
+
 // generateOutputs computes a list of Outputs, based on sourceTestPlan and
 // buildSummaryList.
 func generateOutputs(
@@ -220,23 +227,45 @@ func generateOutputs(
 ) ([]*Output, error) {
 	outputs := []*Output{}
 
-	if sourceTestPlan.GetRequirements().GetKernelVersions() == nil &&
-		sourceTestPlan.GetRequirements().GetSocFamilies() == nil &&
-		sourceTestPlan.GetRequirements().GetArcVersions() == nil {
+	// For each requirement set in sourceTestPlan, switch on the type of the
+	// requirement and call the corresponding <requirement>Outputs function.
+	//
+	// Return an error if no requirements are set, or a requirement is
+	// unimplemented.
+	var unimplementedReq protoreflect.FieldDescriptor
+
+	hasRequirement := false
+
+	proto.MessageReflect(sourceTestPlan.Requirements).Range(
+		func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
+			hasRequirement = true
+
+			// It is not possible to do a type switch on the FieldDescriptor or
+			// Value, so switch on the full type name.
+			switch fd.Message().FullName() {
+			case typeName(&plan.SourceTestPlan_Requirements_ArcVersions{}):
+				outputs = expandOutputs(outputs, arcVersionOutputs(sourceTestPlan, buildSummaryList))
+
+			case typeName(&plan.SourceTestPlan_Requirements_KernelVersions{}):
+				outputs = expandOutputs(outputs, kernelVersionOutputs(sourceTestPlan, buildSummaryList))
+
+			case typeName(&plan.SourceTestPlan_Requirements_SocFamilies{}):
+				outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
+
+			default:
+				unimplementedReq = fd
+				return false
+			}
+			return true
+		},
+	)
+
+	if !hasRequirement {
 		return nil, fmt.Errorf("at least one requirement must be set in SourceTestPlan: %v", sourceTestPlan)
 	}
 
-	if sourceTestPlan.GetRequirements().GetKernelVersions() != nil {
-		outputs = expandOutputs(outputs, kernelVersionOutputs(sourceTestPlan, buildSummaryList))
-	}
-
-	if sourceTestPlan.GetRequirements().GetSocFamilies() != nil {
-		outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
-	}
-
-	if sourceTestPlan.GetRequirements().GetArcVersions() != nil {
-		outputs = expandOutputs(outputs, arcVersionOutputs(sourceTestPlan, buildSummaryList))
-
+	if unimplementedReq != nil {
+		return nil, fmt.Errorf("unimplemented requirement %q", unimplementedReq.Name())
 	}
 
 	return outputs, nil
