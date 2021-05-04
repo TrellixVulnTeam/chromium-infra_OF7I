@@ -1,7 +1,7 @@
-From 98406d82a598091098523570b308fc2619bf664e Mon Sep 17 00:00:00 2001
+From 1dd808948873f42fbe224f313dcd5ba0ddae58cf Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Mon, 26 Apr 2021 13:38:02 +1000
-Subject: [PATCH 5/5] Support cross-compiling to Mac ARM64.
+Date: Tue, 4 May 2021 14:27:37 +1000
+Subject: [PATCH 3/3] Support cross-compiling to Mac ARM64.
 
 Incorporates a previous patch to allow 'readelf' to be the host
 readelf tool.
@@ -11,10 +11,10 @@ readelf tool.
  2 files changed, 16 insertions(+), 4 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index c5376a72e5..355c987cbe 100644
+index 5ec781affe..9eea1af301 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -389,12 +389,19 @@ then
+@@ -395,12 +395,19 @@ then
  	*-*-vxworks*)
  	    ac_sys_system=VxWorks
  	    ;;
@@ -35,7 +35,7 @@ index c5376a72e5..355c987cbe 100644
      else
  	ac_sys_system=`uname -s`
  	if test "$ac_sys_system" = "AIX" \
-@@ -438,6 +445,11 @@ if test "$cross_compiling" = yes; then
+@@ -444,6 +451,11 @@ if test "$cross_compiling" = yes; then
  	*-*-vxworks*)
  		_host_cpu=$host_cpu
  		;;
@@ -47,7 +47,7 @@ index c5376a72e5..355c987cbe 100644
  	*)
  		# for now, limit cross builds to known configurations
  		MACHDEP="unknown"
-@@ -1192,9 +1204,9 @@ then
+@@ -1198,9 +1210,9 @@ then
  fi
  
  AC_CHECK_TOOLS([READELF], [readelf], [:])
@@ -60,10 +60,10 @@ index c5376a72e5..355c987cbe 100644
  	;;
      esac
 diff --git a/setup.py b/setup.py
-index 33a7e307c9..644f8eeb39 100644
+index 0a2a435c60..7fb486fd87 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -893,7 +893,7 @@ class PyBuildExt(build_ext):
+@@ -871,7 +871,7 @@ class PyBuildExt(build_ext):
              os.makedirs(self.build_temp)
          # Determine if readline is already linked against curses or tinfo.
          if do_readline:
@@ -73,5 +73,5 @@ index 33a7e307c9..644f8eeb39 100644
                                  % (sysconfig.get_config_var('READELF'),
                                     do_readline, tmpfile))
 -- 
-2.31.1.498.g6c1eba8ee3d-goog
+2.31.1.527.g47e6f16901-goog
 
