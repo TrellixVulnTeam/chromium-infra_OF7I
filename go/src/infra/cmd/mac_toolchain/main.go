@@ -155,6 +155,8 @@ func (c *installRun) Run(a subcommands.Application, args []string, env subcomman
 	return 0
 }
 
+// Entrance function to upload an Xcode for "upload" cmd line switch. Also uploads
+// the iOS runtime package within the Xcode.
 func (c *uploadRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 	if c.xcodePath == "" {
@@ -162,13 +164,21 @@ func (c *uploadRun) Run(a subcommands.Application, args []string, env subcommand
 		return 1
 	}
 	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
-	if err := packageXcode(ctx, c.xcodePath, c.cipdPackagePrefix, c.serviceAccountJSON, ""); err != nil {
+	packageRuntimeAndXcodeArgs := PackageRuntimeAndXcodeArgs{
+		xcodeAppPath:       c.xcodePath,
+		cipdPackagePrefix:  c.cipdPackagePrefix,
+		serviceAccountJSON: c.serviceAccountJSON,
+		outputDir:          "",
+	}
+	if err := packageRuntimeAndXcode(ctx, packageRuntimeAndXcodeArgs); err != nil {
 		errors.Log(ctx, err)
 		return 1
 	}
 	return 0
 }
 
+// Entrance function to locally package an Xcode for "package" cmd line switch.
+// Also packages the iOS runtime package within the Xcode.
 func (c *packageRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 	if c.xcodePath == "" {
@@ -180,7 +190,13 @@ func (c *packageRun) Run(a subcommands.Application, args []string, env subcomman
 		return 1
 	}
 	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
-	if err := packageXcode(ctx, c.xcodePath, c.cipdPackagePrefix, "", c.outputDir); err != nil {
+	packageRuntimeAndXcodeArgs := PackageRuntimeAndXcodeArgs{
+		xcodeAppPath:       c.xcodePath,
+		cipdPackagePrefix:  c.cipdPackagePrefix,
+		serviceAccountJSON: "",
+		outputDir:          c.outputDir,
+	}
+	if err := packageRuntimeAndXcode(ctx, packageRuntimeAndXcodeArgs); err != nil {
 		errors.Log(ctx, err)
 		return 1
 	}

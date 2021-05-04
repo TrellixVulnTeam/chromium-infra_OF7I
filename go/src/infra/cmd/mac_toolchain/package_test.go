@@ -217,6 +217,51 @@ func TestPackageXcode(t *testing.T) {
 	})
 }
 
+func TestPackageRuntimeAndXcode(t *testing.T) {
+	t.Parallel()
+
+	Convey("packageRuntimeAndXcode works", t, func() {
+		var s MockSession
+		ctx := useMockCmd(context.Background(), &s)
+
+		Convey("package an Xcode and runtime within it", func() {
+			packageRuntimeAndXcodeArgs := PackageRuntimeAndXcodeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+			}
+			err := packageRuntimeAndXcode(ctx, packageRuntimeAndXcodeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 3)
+
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldContain, "create")
+			So(s.Calls[0].Args, ShouldContain, "-verification-timeout")
+			So(s.Calls[0].Args, ShouldContain, "60m")
+			So(s.Calls[0].Args, ShouldContain, "ios_runtime_version:iOS 14.4")
+			So(s.Calls[0].Args, ShouldContain, "xcode_build_version:testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "type:xcode_default")
+			So(s.Calls[0].Args, ShouldContain, "testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "ios-14-4_testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "ios-14-4_latest")
+			So(s.Calls[0].Args, ShouldNotContain, "-service-account-json")
+
+			for i := 1; i < 3; i++ {
+				So(s.Calls[i].Executable, ShouldEqual, "cipd")
+				So(s.Calls[i].Args, ShouldContain, "create")
+				So(s.Calls[i].Args, ShouldContain, "-verification-timeout")
+				So(s.Calls[i].Args, ShouldContain, "60m")
+				So(s.Calls[i].Args, ShouldContain, "xcode_version:TESTXCODEVERSION")
+				So(s.Calls[i].Args, ShouldContain, "build_version:TESTBUILDVERSION")
+				So(s.Calls[i].Args, ShouldContain, "testbuildversion")
+
+				So(s.Calls[i].Args, ShouldNotContain, "-service-account-json")
+			}
+		})
+	})
+}
+
 func TestPackageRuntime(t *testing.T) {
 	t.Parallel()
 

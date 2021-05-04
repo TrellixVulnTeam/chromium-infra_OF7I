@@ -265,6 +265,34 @@ func packageXcode(ctx context.Context, xcodeAppPath string, cipdPackagePrefix, s
 	return nil
 }
 
+// PackageRuntimeAndXcodeArgs are the parameters for packageRuntimeAndXcode() to
+// keep them manageable.
+type PackageRuntimeAndXcodeArgs struct {
+	xcodeAppPath       string
+	cipdPackagePrefix  string
+	serviceAccountJSON string
+	outputDir          string
+}
+
+// Packages runtime & rest of Xcode.
+func packageRuntimeAndXcode(ctx context.Context, args PackageRuntimeAndXcodeArgs) error {
+	runtimePath := filepath.Join(args.xcodeAppPath, XcodeIOSSimulatorRuntimeRelPath, XcodeIOSSimulatorRuntimeFilename)
+	packageRuntimeArgs := PackageRuntimeArgs{
+		xcodeAppPath:       args.xcodeAppPath,
+		runtimePath:        runtimePath,
+		cipdPackagePrefix:  args.cipdPackagePrefix,
+		serviceAccountJSON: args.serviceAccountJSON,
+		outputDir:          args.outputDir,
+	}
+	if err := packageRuntime(ctx, packageRuntimeArgs); err != nil {
+		return errors.Annotate(err, "Error when packaging runtime.").Err()
+	}
+	if err := packageXcode(ctx, args.xcodeAppPath, args.cipdPackagePrefix, args.serviceAccountJSON, args.outputDir); err != nil {
+		return errors.Annotate(err, "Error when packaging rest of Xcode.").Err()
+	}
+	return nil
+}
+
 // PackageRuntimeArgs are the parameters for packageRuntime() to keep them
 // manageable.
 type PackageRuntimeArgs struct {
