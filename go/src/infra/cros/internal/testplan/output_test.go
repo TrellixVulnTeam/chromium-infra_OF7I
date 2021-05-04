@@ -11,7 +11,7 @@ import (
 
 // buildSummary is a convenience to reduce boilerplate when creating
 // SystemImage_BuildSummary in test cases.
-func buildSummary(overlay, kernelVersion, chipsetOverlay string) *buildpb.SystemImage_BuildSummary {
+func buildSummary(overlay, kernelVersion, chipsetOverlay, arcVersion string) *buildpb.SystemImage_BuildSummary {
 	return &buildpb.SystemImage_BuildSummary{
 		BuildTarget: &buildpb.SystemImage_BuildTarget{
 			PortageBuildTarget: &buildpb.Portage_BuildTarget{
@@ -24,16 +24,20 @@ func buildSummary(overlay, kernelVersion, chipsetOverlay string) *buildpb.System
 		Chipset: &buildpb.SystemImage_BuildSummary_Chipset{
 			Overlay: chipsetOverlay,
 		},
+		Arc: &buildpb.SystemImage_BuildSummary_Arc{
+			Version: arcVersion,
+		},
 	}
 }
 
 var buildSummaryList = &buildpb.SystemImage_BuildSummaryList{
 	Values: []*buildpb.SystemImage_BuildSummary{
-		buildSummary("project1", "4.14", "chipsetA"),
-		buildSummary("project2", "4.14", "chipsetB"),
-		buildSummary("project3", "5.4", "chipsetA"),
-		buildSummary("project4", "3.18", "chipsetC"),
-		buildSummary("project5", "4.14", "chipsetA"),
+		buildSummary("project1", "4.14", "chipsetA", ""),
+		buildSummary("project2", "4.14", "chipsetB", ""),
+		buildSummary("project3", "5.4", "chipsetA", ""),
+		buildSummary("project4", "3.18", "chipsetC", "R"),
+		buildSummary("project5", "4.14", "chipsetA", ""),
+		buildSummary("project6", "4.14", "chipsetB", "P"),
 	},
 }
 
@@ -58,7 +62,7 @@ func TestGenerateOutputs(t *testing.T) {
 				},
 				{
 					Name:         "kernel-4.14",
-					BuildTargets: []string{"project1", "project2", "project5"},
+					BuildTargets: []string{"project1", "project2", "project5", "project6"},
 				},
 				{
 					Name:         "kernel-5.4",
@@ -80,7 +84,7 @@ func TestGenerateOutputs(t *testing.T) {
 				},
 				{
 					Name:         "soc-chipsetB",
-					BuildTargets: []string{"project2"},
+					BuildTargets: []string{"project2", "project6"},
 				},
 				{
 					Name:         "soc-chipsetC",
@@ -94,6 +98,7 @@ func TestGenerateOutputs(t *testing.T) {
 				Requirements: &plan.SourceTestPlan_Requirements{
 					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
 					SocFamilies:    &plan.SourceTestPlan_Requirements_SocFamilies{},
+					ArcVersions:    &plan.SourceTestPlan_Requirements_ArcVersions{},
 				},
 			},
 			expected: []*Output{
@@ -102,15 +107,15 @@ func TestGenerateOutputs(t *testing.T) {
 					BuildTargets: []string{"project1", "project5"},
 				},
 				{
-					Name:         "kernel-4.14:soc-chipsetB",
-					BuildTargets: []string{"project2"},
+					Name:         "kernel-4.14:soc-chipsetB:arc-P",
+					BuildTargets: []string{"project6"},
 				},
 				{
 					Name:         "kernel-5.4:soc-chipsetA",
 					BuildTargets: []string{"project3"},
 				},
 				{
-					Name:         "kernel-3.18:soc-chipsetC",
+					Name:         "kernel-3.18:soc-chipsetC:arc-R",
 					BuildTargets: []string{"project4"},
 				},
 			},
@@ -133,7 +138,7 @@ func TestGenerateOutputs(t *testing.T) {
 				},
 				{
 					Name:            "soc-chipsetB",
-					BuildTargets:    []string{"project2"},
+					BuildTargets:    []string{"project2", "project6"},
 					TestTags:        []string{"componentA"},
 					TestTagExcludes: []string{"flaky"},
 				},

@@ -25,8 +25,47 @@ type Output struct {
 //
 // For each combination of Outputs (a, b), where a is in curOutputs, and b is in
 // newOutputs, a new Output is added to the result, with BuildTargets that are
-// the intersection of a.BuildTargets and b.BuildTargets. If this intersection
-// is empty, no Output is added to the result.
+// the intersection of a.BuildTargets and b.BuildTargets.
+//
+// All Outputs in either newOutputs or curOutputs that don't have any
+// intersection of BuildTargets are added to the result as is.
+//
+// For example, if curOutputs is
+// {
+// 	  {
+// 		  Name: "A", BuildTargets: []string{"1"},
+// 	  },
+// 	  {
+// 		  Name: "B", BuildTargets: []string{"2"},
+// 	  },
+// }
+//
+// and newOutputs is
+//
+// {
+// 	  {
+// 		  Name: "C", BuildTargets: []string{"1", "3"},
+// 	  },
+// 	  {
+// 		  Name: "D", BuildTargets: []string{"4"},
+// 	  },
+// }
+//
+// the result is
+//
+// {
+// 	  {
+// 		  Name: "A:C", BuildTargets: []string{"1"},
+// 	  },
+// 	  {
+// 		  Name: "B", BuildTargets: []string{"2"},
+// 	  },
+// 	  {
+// 		  Name: "D", BuildTargets: []string{"4"},
+// 	  },
+// }
+//
+// because "A" and "C" are joined, "B" and "D" are passed through as is.
 //
 // If curOutputs is empty, newOutputs is returned (this function is intended to
 // be called multiple times to build up a result, curOutputs is empty in the
@@ -34,6 +73,14 @@ type Output struct {
 func expandOutputs(curOutputs, newOutputs []*Output) []*Output {
 	if len(curOutputs) == 0 {
 		return newOutputs
+	}
+
+	// Make a map from name to Output for all outputs in curOutputs and
+	// newOutputs. If an Output is involved in an intersection, it is removed
+	// from unjoinedOutputs.
+	unjoinedOutputs := make(map[string]*Output)
+	for _, output := range append(curOutputs, newOutputs...) {
+		unjoinedOutputs[output.Name] = output
 	}
 
 	expandedOutputs := make([]*Output, 0)
@@ -46,6 +93,9 @@ func expandOutputs(curOutputs, newOutputs []*Output) []*Output {
 				stringset.NewFromSlice(new.BuildTargets...),
 			)
 			if len(buildTargetIntersection) > 0 {
+				delete(unjoinedOutputs, cur.Name)
+				delete(unjoinedOutputs, new.Name)
+
 				expandedOutputs = append(expandedOutputs, &Output{
 					Name:            fmt.Sprintf("%s:%s", cur.Name, new.Name),
 					BuildTargets:    buildTargetIntersection.ToSlice(),
@@ -56,26 +106,52 @@ func expandOutputs(curOutputs, newOutputs []*Output) []*Output {
 		}
 	}
 
+	// Return all unjoined outputs as is.
+	for _, output := range unjoinedOutputs {
+		expandedOutputs = append(expandedOutputs, output)
+	}
+
 	return expandedOutputs
+}
+
+// partitionBuildTargets groups BuildTarget overlay names in buildSummaryList.
+//
+// For each BuildSummary in buildSummaryList, keyFn is called to get a string
+// key. The result groups all overlay names that share the same string key. If
+// keyFn returns the empty string, that BuildSummary is skipped.
+func partitionBuildTargets(
+	keyFn func(*buildpb.SystemImage_BuildSummary) string, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+) map[string][]string {
+	keyToBuildTargets := make(map[string][]string)
+
+	for _, value := range buildSummaryList.GetValues() {
+		key := keyFn(value)
+		if key == "" {
+			continue
+		}
+
+		if _, found := keyToBuildTargets[key]; !found {
+			keyToBuildTargets[key] = []string{}
+		}
+
+		keyToBuildTargets[key] = append(
+			keyToBuildTargets[key], value.GetBuildTarget().GetPortageBuildTarget().GetOverlayName(),
+		)
+	}
+
+	return keyToBuildTargets
 }
 
 // kernelVersionOutputs returns a output for each kernel version.
 func kernelVersionOutputs(
 	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
 ) []*Output {
-	kernelVersionToBuildTargets := make(map[string][]string)
-
-	for _, value := range buildSummaryList.GetValues() {
-		version := value.Kernel.Version
-		if _, found := kernelVersionToBuildTargets[version]; !found {
-			kernelVersionToBuildTargets[version] = []string{}
-		}
-
-		kernelVersionToBuildTargets[version] = append(
-			kernelVersionToBuildTargets[version],
-			value.GetBuildTarget().GetPortageBuildTarget().GetOverlayName(),
-		)
-	}
+	kernelVersionToBuildTargets := partitionBuildTargets(
+		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
+			return buildSummary.GetKernel().GetVersion()
+		},
+		buildSummaryList,
+	)
 
 	outputs := make([]*Output, 0, len(kernelVersionToBuildTargets))
 	for version, buildTargets := range kernelVersionToBuildTargets {
@@ -94,24 +170,40 @@ func kernelVersionOutputs(
 func socFamilyOutputs(
 	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
 ) []*Output {
-	socFamilyToBuildTargets := make(map[string][]string)
-
-	for _, value := range buildSummaryList.GetValues() {
-		socFamily := value.GetChipset().GetOverlay()
-		if _, found := socFamilyToBuildTargets[socFamily]; !found {
-			socFamilyToBuildTargets[socFamily] = []string{}
-		}
-
-		socFamilyToBuildTargets[socFamily] = append(
-			socFamilyToBuildTargets[socFamily],
-			value.GetBuildTarget().GetPortageBuildTarget().GetOverlayName(),
-		)
-	}
+	socFamilyToBuildTargets := partitionBuildTargets(
+		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
+			return buildSummary.GetChipset().GetOverlay()
+		},
+		buildSummaryList,
+	)
 
 	outputs := make([]*Output, 0, len(socFamilyToBuildTargets))
 	for socFamily, buildTargets := range socFamilyToBuildTargets {
 		outputs = append(outputs, &Output{
 			Name:            fmt.Sprintf("soc-%s", socFamily),
+			BuildTargets:    buildTargets,
+			TestTags:        sourceTestPlan.TestTags,
+			TestTagExcludes: sourceTestPlan.TestTagExcludes,
+		})
+	}
+
+	return outputs
+}
+
+func arcVersionOutputs(
+	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+) []*Output {
+	arcVersionToBuildTargets := partitionBuildTargets(
+		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
+			return buildSummary.GetArc().GetVersion()
+		},
+		buildSummaryList,
+	)
+
+	outputs := make([]*Output, 0, len(arcVersionToBuildTargets))
+	for arcVersion, buildTargets := range arcVersionToBuildTargets {
+		outputs = append(outputs, &Output{
+			Name:            fmt.Sprintf("arc-%s", arcVersion),
 			BuildTargets:    buildTargets,
 			TestTags:        sourceTestPlan.TestTags,
 			TestTagExcludes: sourceTestPlan.TestTagExcludes,
@@ -129,7 +221,8 @@ func generateOutputs(
 	outputs := []*Output{}
 
 	if sourceTestPlan.GetRequirements().GetKernelVersions() == nil &&
-		sourceTestPlan.GetRequirements().GetSocFamilies() == nil {
+		sourceTestPlan.GetRequirements().GetSocFamilies() == nil &&
+		sourceTestPlan.GetRequirements().GetArcVersions() == nil {
 		return nil, fmt.Errorf("at least one requirement must be set in SourceTestPlan: %v", sourceTestPlan)
 	}
 
@@ -139,6 +232,11 @@ func generateOutputs(
 
 	if sourceTestPlan.GetRequirements().GetSocFamilies() != nil {
 		outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
+	}
+
+	if sourceTestPlan.GetRequirements().GetArcVersions() != nil {
+		outputs = expandOutputs(outputs, arcVersionOutputs(sourceTestPlan, buildSummaryList))
+
 	}
 
 	return outputs, nil

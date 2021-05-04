@@ -53,9 +53,9 @@ func TestGenerate(t *testing.T) {
 
 	buildSummaryList := &buildpb.SystemImage_BuildSummaryList{
 		Values: []*buildpb.SystemImage_BuildSummary{
-			buildSummary("project1", "4.14", "chipsetA"),
-			buildSummary("project2", "4.14", "chipsetB"),
-			buildSummary("project3", "5.4", "chipsetA"),
+			buildSummary("project1", "4.14", "chipsetA", "P"),
+			buildSummary("project2", "4.14", "chipsetB", "R"),
+			buildSummary("project3", "5.4", "chipsetA", ""),
 		},
 	}
 
