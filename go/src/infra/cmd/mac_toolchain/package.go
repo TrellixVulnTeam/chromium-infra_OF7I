@@ -20,15 +20,17 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// defaultExcludePrefixes excludes parts of Xcode.app that are not necessary for
-// any of our purposes. Specifically, it excludes unused platforms like
-// AppleTVOS and WatchOS, documentation.
+// defaultExcludePrefixes excludes parts of Xcode.app that are not necessary
+// when uploading Xcode contents. Specifically, it excludes unused platforms like
+// AppleTVOS and WatchOS, documentation. It also excludes iOS simulator runtime
+// which will be packaged separately.
 var defaultExcludePrefixes = []string{
 	"Contents/Applications",
 	"Contents/Developer/Platforms/AppleTVOS.platform",
 	"Contents/Developer/Platforms/AppleTVSimulator.platform",
 	"Contents/Developer/Platforms/WatchOS.platform",
 	"Contents/Developer/Platforms/WatchSimulator.platform",
+	XcodeIOSSimulatorRuntimeRelPath,
 }
 
 // iosPrefixes excludes parts of Xcode.app not required for building
@@ -131,7 +133,7 @@ func makeXcodePackages(xcodeAppPath string, cipdPackagePrefix string) (p Package
 	excludePrefixesForMacPackage = append(excludePrefixesForMacPackage, iosPrefixes...)
 
 	macMakePackageArgs := MakePackageArgs{
-		cipdPackageName:   "mac",
+		cipdPackageName:   MacPackageName,
 		cipdPackagePrefix: cipdPackagePrefix,
 		rootPath:          absXcodeAppPath,
 		includePrefixes:   []string{},
@@ -143,7 +145,7 @@ func makeXcodePackages(xcodeAppPath string, cipdPackagePrefix string) (p Package
 	}
 
 	iosMakePackageArgs := MakePackageArgs{
-		cipdPackageName:   "ios",
+		cipdPackageName:   IosPackageName,
 		cipdPackagePrefix: cipdPackagePrefix,
 		rootPath:          absXcodeAppPath,
 		includePrefixes:   iosPrefixes,
@@ -259,6 +261,89 @@ func packageXcode(ctx context.Context, xcodeAppPath string, cipdPackagePrefix, s
 	for _, p := range packages {
 		fmt.Printf("  %s  %s\n", p.Package, strings.ToLower(buildVersion))
 	}
+
+	return nil
+}
+
+// PackageRuntimeArgs are the parameters for packageRuntime() to keep them
+// manageable.
+type PackageRuntimeArgs struct {
+	xcodeAppPath       string
+	runtimePath        string
+	cipdPackagePrefix  string
+	serviceAccountJSON string
+	outputDir          string
+}
+
+// Packages the iOS runtime named |runtimeFileName|(e.g. iOS.simruntime) under
+// |runtimeDir|. |xcodeAppPath| is required when packaging a runtime that comes
+// within Xcode package to properly set CIPD refs & tags.
+func packageRuntime(ctx context.Context, args PackageRuntimeArgs) error {
+	runtimeDir := filepath.Dir(args.runtimePath)
+	runtimeFileName := args.runtimePath[strings.LastIndex(args.runtimePath, string(os.PathSeparator))+1:]
+
+	xcodeBuildVersion := ""
+	if args.xcodeAppPath != "" {
+		var err error
+		_, xcodeBuildVersion, err = getXcodeVersion(filepath.Join(args.xcodeAppPath, "Contents", "version.plist"))
+		if err != nil {
+			return errors.Annotate(err, "this doesn't look like a valid Xcode.app folder: %s", args.xcodeAppPath).Err()
+		}
+	}
+
+	runtimeMakePackageArgs := MakePackageArgs{
+		cipdPackageName:   IosRuntimePackageName,
+		cipdPackagePrefix: args.cipdPackagePrefix,
+		rootPath:          runtimeDir,
+		includePrefixes:   []string{runtimeFileName},
+		excludePrefixes:   []string{},
+	}
+	pkg, err := makePackage(runtimeMakePackageArgs)
+	if err != nil {
+		return errors.Annotate(err, "failed to create cipd package definition for %s/%s", runtimeDir, runtimeFileName).Err()
+	}
+
+	runtimeName, runtimeID, err := getSimulatorVersion(filepath.Join(runtimeDir, runtimeFileName, "Contents", "Info.plist"))
+	if err != nil {
+		return errors.Annotate(err, "failed to get simulator info from %s/%s/Contents/Info.plist", runtimeDir, runtimeFileName).Err()
+	}
+
+	tags := []string{
+		"ios_runtime_version:" + runtimeName,
+	}
+	refs := []string{
+		runtimeID + "_latest",
+	}
+
+	// Sets CIPD refs & tags according to whether the runtime is a default one
+	// within Xcode package.
+	if xcodeBuildVersion == "" {
+		tags = append(tags,
+			"type:manually_uploaded",
+		)
+		refs = append(refs,
+			runtimeID,
+		)
+	} else {
+		xcodeBuildVersion = strings.ToLower(xcodeBuildVersion)
+		tags = append(tags,
+			"xcode_build_version:"+xcodeBuildVersion,
+			"type:xcode_default",
+		)
+		refs = append(refs,
+			xcodeBuildVersion,
+			runtimeID+"_"+xcodeBuildVersion,
+		)
+	}
+
+	buildFn := createBuilder(ctx, tags, refs, args.serviceAccountJSON, args.outputDir)
+
+	if err = buildCipdPackages(Packages{runtimeID: pkg}, buildFn); err != nil {
+		return err
+	}
+
+	fmt.Printf("\nCIPD package for simulator runtime:\n")
+	fmt.Printf("  %s  %s %s\n", pkg.Package, runtimeID, xcodeBuildVersion)
 
 	return nil
 }

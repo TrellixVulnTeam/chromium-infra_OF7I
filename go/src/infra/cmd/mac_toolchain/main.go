@@ -28,22 +28,39 @@ const AcceptedLicensesFile = "/Library/Preferences/com.apple.dt.Xcode.plist"
 // on bots.
 const PackageInstallerOnBots = "/usr/local/bin/xcode_install_wrapper.py"
 
+// Relative path from Xcode.app where simulator runtimes are stored.
+const XcodeIOSSimulatorRuntimeRelPath = "Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes"
+
+// Filename of default simulator runtime in Xcode package.
+const XcodeIOSSimulatorRuntimeFilename = "iOS.simruntime"
+
+// Package name of iOS runtime in CIPD.
+const IosRuntimePackageName = "ios_runtime"
+
+// Package name of Mac package in CIPD. The package contains Xcode contents that
+// are both useful in Mac & iOS.
+const MacPackageName = "mac"
+
+// Package name of iOS package in CIPD. The package contains iOS SDK.
+const IosPackageName = "ios"
+
 // KindType is the type for enum values for the -kind argument.
 type KindType string
 
 var _ flag.Value = (*KindType)(nil)
 
 const (
-	macKind = KindType("mac")
-	iosKind = KindType("ios")
+	macKind        = KindType(MacPackageName)
+	iosKind        = KindType(IosPackageName)
+	iosRuntimeKind = KindType(IosRuntimePackageName)
 	// DefaultKind is the default value for the -kind flag.
 	DefaultKind = macKind
 )
 
 // KindTypeEnum is the corresponding Enum type for the -kind argument.
 var KindTypeEnum = flagenum.Enum{
-	"mac": macKind,
-	"ios": iosKind,
+	MacPackageName: macKind,
+	IosPackageName: iosKind,
 }
 
 // String implements flag.Value
@@ -82,7 +99,19 @@ type packageRun struct {
 	outputDir string
 }
 
-func normalizeCipdPrefix(prefix string) string {
+type uploadRuntimeRun struct {
+	commonFlags
+	runtimePath        string
+	serviceAccountJSON string
+}
+
+type packageRuntimeRun struct {
+	commonFlags
+	runtimePath string
+	outputDir   string
+}
+
+func stripLastTrailingSlash(prefix string) string {
 	// Strip the trailing /.
 	for strings.HasSuffix(prefix, "/") {
 		prefix = prefix[:len(prefix)-1]
@@ -109,7 +138,7 @@ func (c *installRun) Run(a subcommands.Application, args []string, env subcomman
 	}
 	logging.Infof(ctx, "About to install Xcode %s in %s for %s", c.xcodeVersion, c.outputDir, c.kind.String())
 
-	c.cipdPackagePrefix = normalizeCipdPrefix(c.cipdPackagePrefix)
+	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
 	installArgs := InstallArgs{
 		xcodeVersion:           c.xcodeVersion,
 		xcodeAppPath:           c.outputDir,
@@ -132,7 +161,7 @@ func (c *uploadRun) Run(a subcommands.Application, args []string, env subcommand
 		errors.Log(ctx, errors.Reason("path to Xcode.app is not specified (-xcode-path)").Err())
 		return 1
 	}
-	c.cipdPackagePrefix = normalizeCipdPrefix(c.cipdPackagePrefix)
+	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
 	if err := packageXcode(ctx, c.xcodePath, c.cipdPackagePrefix, c.serviceAccountJSON, ""); err != nil {
 		errors.Log(ctx, err)
 		return 1
@@ -150,8 +179,57 @@ func (c *packageRun) Run(a subcommands.Application, args []string, env subcomman
 		errors.Log(ctx, errors.Reason("output directory is not specified (-output-dir)").Err())
 		return 1
 	}
-	c.cipdPackagePrefix = normalizeCipdPrefix(c.cipdPackagePrefix)
+	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
 	if err := packageXcode(ctx, c.xcodePath, c.cipdPackagePrefix, "", c.outputDir); err != nil {
+		errors.Log(ctx, err)
+		return 1
+	}
+	return 0
+}
+
+// Entrance function to upload a runtime for upload-runtime cmd line switch.
+func (c *uploadRuntimeRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	ctx := cli.GetContext(a, c, env)
+	if c.runtimePath == "" {
+		errors.Log(ctx, errors.Reason("path to iOS runtime is not specified (-runtime-path)").Err())
+		return 1
+	}
+
+	packageRuntimeArgs := PackageRuntimeArgs{
+		xcodeAppPath:       "",
+		runtimePath:        stripLastTrailingSlash(c.runtimePath),
+		cipdPackagePrefix:  stripLastTrailingSlash(c.cipdPackagePrefix),
+		serviceAccountJSON: c.serviceAccountJSON,
+		outputDir:          "",
+	}
+	if err := packageRuntime(ctx, packageRuntimeArgs); err != nil {
+		errors.Log(ctx, err)
+		return 1
+	}
+	return 0
+}
+
+// Entrance function to package a runtime locally for package-runtime cmd line
+// switch.
+func (c *packageRuntimeRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	ctx := cli.GetContext(a, c, env)
+	if c.runtimePath == "" {
+		errors.Log(ctx, errors.Reason("path to iOS runtime is not specified (-runtime-path)").Err())
+		return 1
+	}
+	if c.outputDir == "" {
+		errors.Log(ctx, errors.Reason("output directory is not specified (-output-dir)").Err())
+		return 1
+	}
+
+	packageRuntimeArgs := PackageRuntimeArgs{
+		xcodeAppPath:       "",
+		runtimePath:        stripLastTrailingSlash(c.runtimePath),
+		cipdPackagePrefix:  stripLastTrailingSlash(c.cipdPackagePrefix),
+		serviceAccountJSON: "",
+		outputDir:          c.outputDir,
+	}
+	if err := packageRuntime(ctx, packageRuntimeArgs); err != nil {
 		errors.Log(ctx, err)
 		return 1
 	}
@@ -181,6 +259,18 @@ func uploadFlagVars(c *uploadRun) {
 func packageFlagVars(c *packageRun) {
 	commonFlagVars(&c.commonFlags)
 	c.Flags.StringVar(&c.xcodePath, "xcode-path", "", "Path to Xcode.app to be uploaded. (required)")
+	c.Flags.StringVar(&c.outputDir, "output-dir", "", "Path to drop created CIPD packages. (required)")
+}
+
+func uploadRuntimeFlagVars(c *uploadRuntimeRun) {
+	commonFlagVars(&c.commonFlags)
+	c.Flags.StringVar(&c.serviceAccountJSON, "service-account-json", "", "Service account to use for authentication.")
+	c.Flags.StringVar(&c.runtimePath, "runtime-path", "", "Path to iOS.simruntime to be uploaded. (required)")
+}
+
+func packageRuntimeFlagVars(c *packageRuntimeRun) {
+	commonFlagVars(&c.commonFlags)
+	c.Flags.StringVar(&c.runtimePath, "runtime-path", "", "Path to iOS.simruntime to be uploaded. (required)")
 	c.Flags.StringVar(&c.outputDir, "output-dir", "", "Path to drop created CIPD packages. (required)")
 }
 
@@ -222,6 +312,28 @@ by the -output-dir. If you want an actual app that Finder can launch, specify
 			return c
 		},
 	}
+
+	cmdUploadRuntime = &subcommands.Command{
+		UsageLine: "upload-runtime <options>",
+		ShortDesc: "Uploads iOS runtime package.",
+		LongDesc:  "Creates and uploads iOS runtime CIPD package.",
+		CommandRun: func() subcommands.CommandRun {
+			c := &uploadRuntimeRun{}
+			uploadRuntimeFlagVars(c)
+			return c
+		},
+	}
+
+	cmdPackageRuntime = &subcommands.Command{
+		UsageLine: "package-runtime <options>",
+		ShortDesc: "Creates iOS runtime CIPD package locally.",
+		LongDesc:  "Packages iOS runtime CIPD package locally (won't upload).",
+		CommandRun: func() subcommands.CommandRun {
+			c := &packageRuntimeRun{}
+			packageRuntimeFlagVars(c)
+			return c
+		},
+	}
 )
 
 func main() {
@@ -242,6 +354,8 @@ func main() {
 			cmdInstall,
 			cmdUpload,
 			cmdPackage,
+			cmdUploadRuntime,
+			cmdPackageRuntime,
 		},
 	}
 	os.Exit(subcommands.Run(application, nil))

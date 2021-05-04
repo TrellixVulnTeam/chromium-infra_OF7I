@@ -216,3 +216,87 @@ func TestPackageXcode(t *testing.T) {
 		})
 	})
 }
+
+func TestPackageRuntime(t *testing.T) {
+	t.Parallel()
+
+	Convey("packageRuntime works", t, func() {
+		var s MockSession
+		ctx := useMockCmd(context.Background(), &s)
+
+		Convey("package an Xcode default runtime", func() {
+			packageRuntimeArgs := PackageRuntimeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				runtimePath:        filepath.Join("testdata", "Xcode-new.app", XcodeIOSSimulatorRuntimeRelPath, "iOS.simruntime"),
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+			}
+			err := packageRuntime(ctx, packageRuntimeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldContain, "create")
+			So(s.Calls[0].Args, ShouldContain, "-verification-timeout")
+			So(s.Calls[0].Args, ShouldContain, "60m")
+			So(s.Calls[0].Args, ShouldContain, "ios_runtime_version:iOS 14.4")
+			So(s.Calls[0].Args, ShouldContain, "xcode_build_version:testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "type:xcode_default")
+			So(s.Calls[0].Args, ShouldContain, "testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "ios-14-4_testbuildversion")
+			So(s.Calls[0].Args, ShouldContain, "ios-14-4_latest")
+
+			So(s.Calls[0].Args, ShouldNotContain, "-service-account-json")
+		})
+
+		Convey("package a runtime in cutomized path", func() {
+			packageRuntimeArgs := PackageRuntimeArgs{
+				xcodeAppPath:       "",
+				runtimePath:        filepath.FromSlash("testdata/runtimes/iOS 12.4.simruntime"),
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+			}
+			err := packageRuntime(ctx, packageRuntimeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldContain, "create")
+			So(s.Calls[0].Args, ShouldContain, "-verification-timeout")
+			So(s.Calls[0].Args, ShouldContain, "60m")
+			So(s.Calls[0].Args, ShouldContain, "ios_runtime_version:iOS 12.4")
+			So(s.Calls[0].Args, ShouldContain, "type:manually_uploaded")
+			So(s.Calls[0].Args, ShouldContain, "ios-12-4")
+			So(s.Calls[0].Args, ShouldContain, "ios-12-4_latest")
+
+		})
+
+		Convey("for local package creating", func() {
+			// Make sure `outputDir` actually exists in testdata; otherwise the test
+			// will needlessly create a directory and leave it behind.
+			packageRuntimeArgs := PackageRuntimeArgs{
+				xcodeAppPath:       "",
+				runtimePath:        filepath.FromSlash("testdata/runtimes/iOS 12.4.simruntime"),
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "testdata/outdir",
+			}
+			err := packageRuntime(ctx, packageRuntimeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+
+			So(s.Calls[0].Args, ShouldContain, filepath.Join("testdata/outdir", "ios_runtime.cipd"))
+
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldContain, "pkg-build")
+
+			So(s.Calls[0].Args, ShouldNotContain, "-service-account-json")
+			So(s.Calls[0].Args, ShouldNotContain, "-verification-timeout")
+			So(s.Calls[0].Args, ShouldNotContain, "60m")
+			So(s.Calls[0].Args, ShouldNotContain, "-tag")
+			So(s.Calls[0].Args, ShouldNotContain, "-ref")
+		})
+	})
+}
