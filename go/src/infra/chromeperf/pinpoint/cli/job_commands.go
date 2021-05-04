@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/cli/render"
 	"os"
 	"strings"
 
@@ -67,8 +68,9 @@ func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []s
 	if err != nil {
 		return errors.Annotate(err, "failed during ListJobs").Err()
 	}
-	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
-	fmt.Println(out)
+	if err = render.JobListText(a.GetOut(), resp.Jobs); err != nil {
+		return errors.Annotate(err, "failed rendering jobs").Err()
+	}
 	return nil
 }
 
@@ -243,15 +245,13 @@ func (cj *cancelJob) Run(ctx context.Context, a subcommands.Application, args []
 
 	legacyName := pinpoint.LegacyJobName(cj.name)
 
-	{
-		job, err := c.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName})
-		if err != nil {
-			return errors.Annotate(err, "failed during GetJob").Err()
-		}
-		out := prototext.MarshalOptions{Multiline: true}.Format(job)
-		fmt.Println(out)
-		fmt.Println("-----------------------------------------")
+	job, err := c.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName})
+	if err != nil {
+		return errors.Annotate(err, "failed during GetJob").Err()
 	}
+	out := prototext.MarshalOptions{Multiline: true}.Format(job)
+	fmt.Println(out)
+	fmt.Println("-----------------------------------------")
 
 	if !cj.force {
 		fmt.Print("Are you sure you want to cancel the above job? (y/N) ")
@@ -270,8 +270,12 @@ func (cj *cancelJob) Run(ctx context.Context, a subcommands.Application, args []
 	if err != nil {
 		return errors.Annotate(err, "failed during CancelJob").Err()
 	}
-	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
+	out = prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
-	fmt.Printf("\nJob cancelled, see %s\n", legacyURL(cj.name))
+	if ju, err := render.JobURL(job); err != nil {
+		fmt.Printf("\nJob cancelled, see %s\n", ju)
+	} else {
+		fmt.Printf("\nJob cancelled.\n")
+	}
 	return nil
 }

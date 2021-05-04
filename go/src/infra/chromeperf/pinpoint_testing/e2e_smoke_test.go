@@ -260,7 +260,7 @@ func TestScheduleJobFlow(t *testing.T) {
 			Convey("list-jobs shows the new job", func() {
 				out, err = execCLI("list-jobs")
 				So(err, ShouldBeNil)
-				So(out, ShouldContainSubstring, pinpoint.LegacyJobName(jobID))
+				So(out, ShouldContainSubstring, jobID)
 			})
 		})
 

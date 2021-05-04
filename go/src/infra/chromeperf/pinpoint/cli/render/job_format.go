@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cli
+package render
 
 import (
 	"fmt"
@@ -26,6 +26,11 @@ var (
 	legacyJobRe    = regexp.MustCompile(`^jobs/legacy-(?P<legacy_id>[a-fA-F1-9][a-fA-F0-9]*)$`)
 	legacyJobIDIdx = legacyJobRe.SubexpIndex("legacy_id")
 )
+
+func JobURL(j *pinpoint.Job) (string, error) {
+	// FIXME: Handle new URL formats when they're ready.
+	return legacyJobURL(j)
+}
 
 func legacyJobURL(j *pinpoint.Job) (string, error) {
 	// Require that j has a Name.

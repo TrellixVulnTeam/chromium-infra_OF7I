@@ -20,6 +20,7 @@ import (
 
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/identify"
+	"infra/chromeperf/pinpoint/cli/render"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -229,7 +230,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	if err != nil {
 		return errors.Annotate(err, "failed to ScheduleJob").Err()
 	}
-	jobURL, err := legacyJobURL(j)
+	jobURL, err := render.JobURL(j)
 	var out string
 	if err != nil {
 		logging.Errorf(ctx, "ERROR: %s", err)
