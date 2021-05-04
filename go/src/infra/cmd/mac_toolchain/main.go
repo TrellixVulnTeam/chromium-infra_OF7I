@@ -111,6 +111,14 @@ type packageRuntimeRun struct {
 	outputDir   string
 }
 
+type installRuntimeRun struct {
+	commonFlags
+	runtimeVersion     string
+	xcodeVersion       string
+	outputDir          string
+	serviceAccountJSON string
+}
+
 func stripLastTrailingSlash(prefix string) string {
 	// Strip the trailing /.
 	for strings.HasSuffix(prefix, "/") {
@@ -252,6 +260,35 @@ func (c *packageRuntimeRun) Run(a subcommands.Application, args []string, env su
 	return 0
 }
 
+// Entrance function to install a runtime for install-runtime cmd line switch.
+func (c *installRuntimeRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	ctx := cli.GetContext(a, c, env)
+	if c.runtimeVersion == "" && c.xcodeVersion == "" {
+		errors.Log(ctx, errors.Reason("no runtime or xcode version specified").Err())
+		return 1
+	}
+	if c.outputDir == "" {
+		errors.Log(ctx, errors.Reason("no output folder specified (-output-dir)").Err())
+		return 1
+	}
+	logging.Infof(ctx, "About to install runtime %s %s to %s", c.runtimeVersion, c.xcodeVersion, c.outputDir)
+
+	c.cipdPackagePrefix = stripLastTrailingSlash(c.cipdPackagePrefix)
+
+	runtimeInstallArgs := RuntimeInstallArgs{
+		runtimeVersion:     c.runtimeVersion,
+		xcodeVersion:       c.xcodeVersion,
+		installPath:        c.outputDir,
+		cipdPackagePrefix:  c.cipdPackagePrefix,
+		serviceAccountJSON: c.serviceAccountJSON,
+	}
+	if err := installRuntime(ctx, runtimeInstallArgs); err != nil {
+		errors.Log(ctx, err)
+		return 1
+	}
+	return 0
+}
+
 func commonFlagVars(c *commonFlags) {
 	c.Flags.BoolVar(&c.verbose, "verbose", false, "Log more.")
 	c.Flags.StringVar(&c.cipdPackagePrefix, "cipd-package-prefix", DefaultCipdPackagePrefix, "CIPD package prefix.")
@@ -288,6 +325,14 @@ func packageRuntimeFlagVars(c *packageRuntimeRun) {
 	commonFlagVars(&c.commonFlags)
 	c.Flags.StringVar(&c.runtimePath, "runtime-path", "", "Path to iOS.simruntime to be uploaded. (required)")
 	c.Flags.StringVar(&c.outputDir, "output-dir", "", "Path to drop created CIPD packages. (required)")
+}
+
+func installRuntimeFlagVars(c *installRuntimeRun) {
+	commonFlagVars(&c.commonFlags)
+	c.Flags.StringVar(&c.runtimeVersion, "runtime-version", "", "iOS runtime version. Format e.g. \"ios-14-4\"")
+	c.Flags.StringVar(&c.xcodeVersion, "xcode-version", "", "Xcode version code.")
+	c.Flags.StringVar(&c.outputDir, "output-dir", "", "Path where to install the runtime (required).")
+	c.Flags.StringVar(&c.serviceAccountJSON, "service-account-json", "", "Service account to use for authentication.")
 }
 
 var (
@@ -350,6 +395,26 @@ by the -output-dir. If you want an actual app that Finder can launch, specify
 			return c
 		},
 	}
+
+	cmdInstallRuntime = &subcommands.Command{
+		UsageLine: "install-runtime <options>",
+		ShortDesc: "Installs Runtime.",
+		LongDesc: `Installs the requested iOS runtime package to -output-dir.
+
+If only "runtime-version" is specified, installs the runtime mannually uploaded.
+If only "xcode-version" is specified, installs the default runtime came with the
+Xcode version.
+If both "runtime-version" and "xcode-version" are specified, the command finds
+and installs the package by the following priority:
+  1) The default runtime of input Xcode, if the runtime version matches.
+  2) Manually uploaded runtime of the version specified.
+  3) Any latest runtime of the version specified in CIPD.`,
+		CommandRun: func() subcommands.CommandRun {
+			c := &installRuntimeRun{}
+			installRuntimeFlagVars(c)
+			return c
+		},
+	}
 )
 
 func main() {
@@ -372,6 +437,7 @@ func main() {
 			cmdPackage,
 			cmdUploadRuntime,
 			cmdPackageRuntime,
+			cmdInstallRuntime,
 		},
 	}
 	os.Exit(subcommands.Run(application, nil))

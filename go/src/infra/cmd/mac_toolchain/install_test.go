@@ -248,4 +248,221 @@ func TestInstallXcode(t *testing.T) {
 		})
 
 	})
+
+	Convey("resolveRef works", t, func() {
+		var s MockSession
+		ctx := useMockCmd(context.Background(), &s)
+		Convey("ref exists", func() {
+			err := resolveRef(ctx, "test/prefix/ios_runtime", "testXcodeVersion", "")
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testXcodeVersion",
+			})
+		})
+		Convey("ref doesn't exist", func() {
+			s.ReturnError = []error{errors.Reason("input ref doesn't exist").Err()}
+			err := resolveRef(ctx, "test/prefix/ios_runtime", "testNonExistRef", "")
+			So(s.Calls, ShouldHaveLength, 1)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testNonExistRef",
+			})
+			So(err.Error(), ShouldContainSubstring, "Error when resolving package path test/prefix/ios_runtime with ref testNonExistRef.")
+		})
+	})
+
+	Convey("resolveRuntimeRef works", t, func() {
+		var s MockSession
+		ctx := useMockCmd(context.Background(), &s)
+		Convey("only input xcode version", func() {
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "",
+				xcodeVersion:       "testXcodeVersion",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testXcodeVersion",
+			})
+			So(ver, ShouldEqual, "testXcodeVersion")
+		})
+		Convey("only input sim runtime version", func() {
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion",
+			})
+			So(ver, ShouldEqual, "testSimVersion")
+		})
+		Convey("input both Xcode and sim version: default runtime exists", func() {
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "testXcodeVersion",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_testXcodeVersion",
+			})
+			So(ver, ShouldEqual, "testSimVersion_testXcodeVersion")
+		})
+		Convey("input both Xcode and sim version: fallback to uploaded runtime", func() {
+			s.ReturnError = []error{errors.Reason("default runtime doesn't exist").Err()}
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "testXcodeVersion",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 2)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_testXcodeVersion",
+			})
+			So(s.Calls[1].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion",
+			})
+			So(ver, ShouldEqual, "testSimVersion")
+		})
+		Convey("input both Xcode and sim version: fallback to any latest runtime", func() {
+			s.ReturnError = []error{
+				errors.Reason("default runtime doesn't exist").Err(),
+				errors.Reason("uploaded runtime doesn't exist").Err(),
+			}
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "testXcodeVersion",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 3)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_testXcodeVersion",
+			})
+			So(s.Calls[1].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion",
+			})
+			So(s.Calls[2].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_latest",
+			})
+			So(ver, ShouldEqual, "testSimVersion_latest")
+		})
+		Convey("input both Xcode and sim version: raise when all fallbacks fail", func() {
+			s.ReturnError = []error{
+				errors.Reason("default runtime doesn't exist").Err(),
+				errors.Reason("uploaded runtime doesn't exist").Err(),
+				errors.Reason("any latest runtime doesn't exist").Err(),
+			}
+			resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "testXcodeVersion",
+				packagePath:        "test/prefix/ios_runtime",
+				serviceAccountJSON: "",
+			}
+			ver, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+			So(s.Calls, ShouldHaveLength, 3)
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_testXcodeVersion",
+			})
+			So(s.Calls[1].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion",
+			})
+			So(s.Calls[2].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion_latest",
+			})
+			So(err.Error(), ShouldContainSubstring, "Failed to resolve runtime ref given runtime version: testSimVersion, xcode version: testXcodeVersion.")
+			So(ver, ShouldEqual, "")
+		})
+
+	})
+
+	Convey("installRuntime works", t, func() {
+		var s MockSession
+		ctx := useMockCmd(context.Background(), &s)
+
+		Convey("install an Xcode default runtime", func() {
+			runtimeInstallArgs := RuntimeInstallArgs{
+				runtimeVersion:     "",
+				xcodeVersion:       "testVersion",
+				installPath:        "test/path/to/install/runtimes",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+			}
+			err := installRuntime(ctx, runtimeInstallArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 4)
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testVersion",
+			})
+
+			So(s.Calls[1].Executable, ShouldEqual, "cipd")
+			So(s.Calls[1].Args, ShouldResemble, []string{
+				"puppet-check-updates", "-ensure-file", "-", "-root", "test/path/to/install/runtimes",
+			})
+			So(s.Calls[1].ConsumedStdin, ShouldEqual, "test/prefix/ios_runtime testVersion\n")
+
+			So(s.Calls[2].Executable, ShouldEqual, "cipd")
+			So(s.Calls[2].Args, ShouldResemble, []string{
+				"ensure", "-ensure-file", "-", "-root", "test/path/to/install/runtimes",
+			})
+			So(s.Calls[2].ConsumedStdin, ShouldEqual, "test/prefix/ios_runtime testVersion\n")
+
+			So(s.Calls[3].Executable, ShouldEqual, "chmod")
+			So(s.Calls[3].Args, ShouldResemble, []string{
+				"-R", "u+w", "test/path/to/install/runtimes",
+			})
+		})
+
+		Convey("install an uploaded runtime", func() {
+			runtimeInstallArgs := RuntimeInstallArgs{
+				runtimeVersion:     "testSimVersion",
+				xcodeVersion:       "",
+				installPath:        "test/path/to/install/runtimes",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+			}
+			err := installRuntime(ctx, runtimeInstallArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 4)
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldResemble, []string{
+				"resolve", "test/prefix/ios_runtime", "-version", "testSimVersion",
+			})
+
+			So(s.Calls[1].Executable, ShouldEqual, "cipd")
+			So(s.Calls[1].Args, ShouldResemble, []string{
+				"puppet-check-updates", "-ensure-file", "-", "-root", "test/path/to/install/runtimes",
+			})
+			So(s.Calls[1].ConsumedStdin, ShouldEqual, "test/prefix/ios_runtime testSimVersion\n")
+
+			So(s.Calls[2].Executable, ShouldEqual, "cipd")
+			So(s.Calls[2].Args, ShouldResemble, []string{
+				"ensure", "-ensure-file", "-", "-root", "test/path/to/install/runtimes",
+			})
+			So(s.Calls[2].ConsumedStdin, ShouldEqual, "test/prefix/ios_runtime testSimVersion\n")
+
+			So(s.Calls[3].Executable, ShouldEqual, "chmod")
+			So(s.Calls[3].Args, ShouldResemble, []string{
+				"-R", "u+w", "test/path/to/install/runtimes",
+			})
+		})
+	})
+
 }

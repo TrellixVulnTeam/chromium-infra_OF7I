@@ -222,3 +222,105 @@ func installXcode(ctx context.Context, args InstallArgs) error {
 	}
 	return enableDeveloperMode(ctx)
 }
+
+// Tests whether the input |ref| exists as a ref in CIPD |packagePath|.
+func resolveRef(ctx context.Context, packagePath, ref, serviceAccountJSON string) error {
+	resolveArgs := []string{"resolve", packagePath, "-version", ref}
+	if serviceAccountJSON != "" {
+		resolveArgs = append(resolveArgs, "-service-account-json", serviceAccountJSON)
+	}
+	err := RunCommand(ctx, "cipd", resolveArgs...)
+	if err != nil {
+		err = errors.Annotate(err, "Error when resolving package path %s with ref %s.", packagePath, ref).Err()
+		return err
+	}
+	return nil
+}
+
+// ResolveRuntimeRefArgs are the parameters for resolveRuntimeRef() to keep them manageable.
+type ResolveRuntimeRefArgs struct {
+	runtimeVersion     string
+	xcodeVersion       string
+	packagePath        string
+	serviceAccountJSON string
+}
+
+// Returns the best simulator runtime in CIPD with |runtimeVersion| and
+// |xcodeVersion| as input. Args are passed in within |ResolveRuntimeRefArgs|:
+//   * If only |xcodeVersion| is provided, only finds the default runtime coming
+//     with the Xcode.
+//   * If only |runtimeVersion| is provided, only finds the manually uploaded
+//     runtime of the version.
+//   * If both are provided, find a runtime using the following priority:
+//     1. Satisfying both Xcode and runtime version,
+//     2. A manually uploaded runtime of the version,
+//     3. The latest uploaded runtime of the version, regardless of whether it's
+//        from another Xcode or manually uploaded.
+// Details: go/ios-runtime-cipd
+func resolveRuntimeRef(ctx context.Context, args ResolveRuntimeRefArgs) (string, error) {
+	if args.xcodeVersion == "" && args.runtimeVersion == "" {
+		err := errors.Reason("Empty Xcode and runtime version to resolve runtime ref.").Err()
+		return "", err
+	}
+	searchRefs := []string{}
+	if args.xcodeVersion != "" && args.runtimeVersion == "" {
+		searchRefs = append(searchRefs, args.xcodeVersion)
+	}
+	if args.xcodeVersion == "" && args.runtimeVersion != "" {
+		searchRefs = append(searchRefs, args.runtimeVersion)
+	}
+	if args.xcodeVersion != "" && args.runtimeVersion != "" {
+		searchRefs = append(searchRefs,
+			args.runtimeVersion+"_"+args.xcodeVersion, // Xcode default runtime.
+			args.runtimeVersion,                       // Uploaded runtime.
+			args.runtimeVersion+"_latest")             // Latest uploaded runtime.
+	}
+	for _, searchRef := range searchRefs {
+		if err := resolveRef(ctx, args.packagePath, searchRef, args.serviceAccountJSON); err == nil { // if NO error
+			return searchRef, nil
+		} else {
+			logging.Warningf(ctx, "Failed to resolve ref: %s. Error: %s", searchRef, err.Error())
+		}
+	}
+	err := errors.Reason("Failed to resolve runtime ref given runtime version: %s, xcode version: %s.", args.runtimeVersion, args.xcodeVersion).Err()
+	return "", err
+}
+
+// RuntimeInstallArgs are the parameters for installRuntime() to keep them manageable.
+type RuntimeInstallArgs struct {
+	runtimeVersion     string
+	xcodeVersion       string
+	installPath        string
+	cipdPackagePrefix  string
+	serviceAccountJSON string
+}
+
+// Resolves and installs the suitable runtime.
+func installRuntime(ctx context.Context, args RuntimeInstallArgs) error {
+	if err := os.MkdirAll(args.installPath, 0700); err != nil {
+		return errors.Annotate(err, "failed to create a folder %s", args.installPath).Err()
+	}
+
+	packagePath := args.cipdPackagePrefix + "/" + IosRuntimePackageName
+	resolveRuntimeRefArgs := ResolveRuntimeRefArgs{
+		runtimeVersion:     args.runtimeVersion,
+		xcodeVersion:       args.xcodeVersion,
+		packagePath:        packagePath,
+		serviceAccountJSON: args.serviceAccountJSON,
+	}
+	ref, err := resolveRuntimeRef(ctx, resolveRuntimeRefArgs)
+	if err != nil {
+		return errors.Annotate(err, "failed to resolve runtime cipd ref. Xcode version: %s, runtime version: %s", args.xcodeVersion, args.runtimeVersion).Err()
+	}
+	installPackagesArgs := InstallPackagesArgs{
+		ref:                ref,
+		rootPath:           args.installPath,
+		cipdPackagePrefix:  args.cipdPackagePrefix,
+		kind:               iosRuntimeKind,
+		serviceAccountJSON: args.serviceAccountJSON,
+	}
+	if err := installPackages(ctx, installPackagesArgs); err != nil {
+		return err
+	}
+	return nil
+}
