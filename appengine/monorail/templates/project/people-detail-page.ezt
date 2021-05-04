@@ -56,7 +56,7 @@
       each member's duties in the notes.</p>
 
       <div style="margin-top:.5em">
-        <a href="http://code.google.com/p/monorail/wiki/Permissions" target="new">Learn more</a>
+        <a href="https://chromium.googlesource.com/infra/infra/+/main/appengine/monorail/doc/userguide/working-with-issues.md#Who-can-view-an-issue" target="new">Learn more</a>
         <a href="http://code.google.com/p/monorail/wiki/Permissions" target="new"><img src="/static/images/tearoff_icon.gif" width="16" height="16"></a>
       </div>
    </div>
