@@ -10,6 +10,21 @@ See go/chops-rubber-stamp-bot-design for design plans.
 
 ## Rubber Stamper User Guide
 
+### Have Rubber-Stamper review your CLs
+For every CL that requires Rubber-Stamper's review, add `Rubber Stamper (rubber-stamper@appspot.gserviceaccount.com)`
+as a reviewer. Rubber-Stamper will respond in ~1 min. It will either add a
+`Bot-Commit +1` label or leave a comment providing the reason why this CL does
+not meet the configured rules and also remove itself as reviewer. The `Bot-Commit +1`
+label is not sticky, which means additional patchsets will need to be reviewed.
+
+If you set the Auto-Submit label, Rubber Stamper will also set `Commit-Queue +2`
+if it approves the CL.
+
+If a CL does not pass, you can upload a new patchset that addresses the
+comments and re-add Rubber-Stamper as a reviewer.
+
+### Expected CL types & intended usage
+
 Currently, our expected CL patterns can be generally divided into two types:
 - Changes to benign files (translation, whitespace, test expectation files,
 directories that contain no code)
@@ -153,19 +168,6 @@ will not be approved.
       time_window: "3h"
       excluded_paths: "*.md"
     }
-
-### Have Rubber-Stamper review your CLs
-For every CL that requires Rubber-Stamper's review, add `Rubber Stamper (rubber-stamper@appspot.gserviceaccount.com)`
-as a reviewer. Rubber-Stamper will respond in ~1 min. It will either add a
-`Bot-Commit +1` label or leave a comment providing the reason why this CL does
-not meet the configured rules and also remove itself as reviewer. The `Bot-Commit +1`
-label is not sticky, which means additional patchsets will need to be reviewed.
-
-If you set the Auto-Submit label, Rubber Stamper will also set `Commit-Queue +2`
-if it approves the CL.
-
-If a CL does not pass, you can upload a new patchset that addresses the
-comments and re-add Rubber-Stamper as a reviewer.
 
 ## Found a bug?
 
