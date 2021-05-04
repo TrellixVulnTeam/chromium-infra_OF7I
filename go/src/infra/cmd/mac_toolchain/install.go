@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,25 +16,52 @@ import (
 	"go.chromium.org/luci/common/system/filesystem"
 )
 
-func installPackages(ctx context.Context, xcodeVersion, xcodeAppPath, cipdPackagePrefix string, kind KindType, serviceAccountJSON string) error {
+// InstallPackagesArgs are the parameters for installPackages() to keep them manageable.
+type InstallPackagesArgs struct {
+	ref                string
+	rootPath           string
+	cipdPackagePrefix  string
+	kind               KindType
+	serviceAccountJSON string
+}
+
+// Installs the cpid package to |rootPath| of specified |kind|, find package
+// as input |cipdPackagePrefix| & |ref|. These args are passed within
+// |InstallPackagesArgs| struct.
+func installPackages(ctx context.Context, args InstallPackagesArgs) error {
 	cipdArgs := []string{
 		"-ensure-file", "-",
-		"-root", xcodeAppPath,
+		"-root", args.rootPath,
 	}
-	if serviceAccountJSON != "" {
-		cipdArgs = append(cipdArgs, "-service-account-json", serviceAccountJSON)
+	if args.serviceAccountJSON != "" {
+		cipdArgs = append(cipdArgs, "-service-account-json", args.serviceAccountJSON)
 	}
 	cipdCheckArgs := append([]string{"puppet-check-updates"}, cipdArgs...)
 	cipdEnsureArgs := append([]string{"ensure"}, cipdArgs...)
-	ensureSpec := cipdPackagePrefix + "/mac " + xcodeVersion + "\n"
-	if kind == iosKind {
-		ensureSpec += cipdPackagePrefix + "/ios " + xcodeVersion + "\n"
+
+	ensureSpec := ""
+	switch args.kind {
+	case macKind:
+		ensureSpec += fmt.Sprintf("%s/%s %s\n", args.cipdPackagePrefix, MacPackageName, args.ref)
+	case iosKind:
+		ensureSpec += fmt.Sprintf("%s/%s %s\n%s/%s %s\n", args.cipdPackagePrefix, MacPackageName, args.ref, args.cipdPackagePrefix, IosPackageName, args.ref)
+	case iosRuntimeKind:
+		ensureSpec += fmt.Sprintf("%s/%s %s\n", args.cipdPackagePrefix, IosRuntimePackageName, args.ref)
+	default:
+		return errors.Reason("unknown package kind: %s", args.kind).Err()
 	}
+
 	// Check if `cipd ensure` will do something. Note: `cipd puppet-check-updates`
 	// returns code 0 when `cipd ensure` has work to do, and "fails" otherwise.
 	// TODO(sergeyberezin): replace this with a better option when
 	// https://crbug.com/788032 is fixed.
 	if err := RunWithStdin(ctx, ensureSpec, "cipd", cipdCheckArgs...); err != nil {
+		// The rest logic ensures the Xcode is intact so it only applies to
+		// iosKind or macKind.
+		if args.kind != macKind && args.kind != iosKind {
+			return nil
+		}
+		xcodeAppPath := args.rootPath
 		// Sometimes Xcode cache in bots loses Contents/Developer/usr and CIPD
 		// doesn't check if the package is intact. Add an additional check and
 		// only return when the directory exists.
@@ -61,8 +89,8 @@ func installPackages(ctx context.Context, xcodeVersion, xcodeAppPath, cipdPackag
 	//
 	// TODO(sergeyberezin): remove this once crbug.com/803158 is resolved and all
 	// currently used Xcode versions are re-uploaded.
-	if err := RunCommand(ctx, "chmod", "-R", "u+w", xcodeAppPath); err != nil {
-		return errors.Annotate(err, "failed to update Xcode.app permissions in %s", xcodeAppPath).Err()
+	if err := RunCommand(ctx, "chmod", "-R", "u+w", args.rootPath); err != nil {
+		return errors.Annotate(err, "failed to update package permissions in %s for %s", args.rootPath, args.kind).Err()
 	}
 	return nil
 }
@@ -174,7 +202,14 @@ func installXcode(ctx context.Context, args InstallArgs) error {
 	if err := os.MkdirAll(args.xcodeAppPath, 0700); err != nil {
 		return errors.Annotate(err, "failed to create a folder %s", args.xcodeAppPath).Err()
 	}
-	if err := installPackages(ctx, args.xcodeVersion, args.xcodeAppPath, args.cipdPackagePrefix, args.kind, args.serviceAccountJSON); err != nil {
+	installPackagesArgs := InstallPackagesArgs{
+		ref:                args.xcodeVersion,
+		rootPath:           args.xcodeAppPath,
+		cipdPackagePrefix:  args.cipdPackagePrefix,
+		kind:               args.kind,
+		serviceAccountJSON: args.serviceAccountJSON,
+	}
+	if err := installPackages(ctx, installPackagesArgs); err != nil {
 		return err
 	}
 	if needToAcceptLicense(ctx, args.xcodeAppPath, args.acceptedLicensesFile) {
