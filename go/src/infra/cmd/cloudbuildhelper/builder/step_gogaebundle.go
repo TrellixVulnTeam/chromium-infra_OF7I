@@ -35,7 +35,8 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 
 	// Read go runtime version from the YAML to know what Go build flags to use.
 	//
-	// It is either e.g. "go113" for GAE Standard or just "go" for GAE Flex.
+	// It is either e.g. "go113" for GAE Standard or "go1.13" or just "go" for
+	// GAE Flex.
 	runtime, err := readRuntime(yamlPath)
 	if err != nil {
 		return err
@@ -45,7 +46,8 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return errors.Reason("%q is not a supported go runtime", runtime).Err()
 	}
 	var goMinorVer int64
-	if runtime != "go" {
+	if strings.HasPrefix(runtime, "go1") {
+		runtime = strings.ReplaceAll(runtime, ".", "")
 		if goMinorVer, err = strconv.ParseInt(runtime[3:], 10, 32); err != nil {
 			return errors.Annotate(err, "can't parse %q", runtime).Err()
 		}
