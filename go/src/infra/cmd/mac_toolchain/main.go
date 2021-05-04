@@ -85,6 +85,7 @@ type installRun struct {
 	outputDir          string
 	kind               KindType
 	serviceAccountJSON string
+	withRuntime        bool
 }
 
 type uploadRun struct {
@@ -134,6 +135,9 @@ func (c *commonFlags) ModifyContext(ctx context.Context) context.Context {
 	return ctx
 }
 
+// Entrance function to install an Xcode for install cmd line switch. The
+// default runtime of the Xcode version will be installed unless
+// "-with-runtime=False" is passed in explicitly.
 func (c *installRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 	if c.xcodeVersion == "" {
@@ -155,6 +159,7 @@ func (c *installRun) Run(a subcommands.Application, args []string, env subcomman
 		kind:                   c.kind,
 		serviceAccountJSON:     c.serviceAccountJSON,
 		packageInstallerOnBots: PackageInstallerOnBots,
+		withRuntime:            c.withRuntime && c.kind == iosKind,
 	}
 	if err := installXcode(ctx, installArgs); err != nil {
 		errors.Log(ctx, err)
@@ -300,6 +305,7 @@ func installFlagVars(c *installRun) {
 	c.Flags.StringVar(&c.outputDir, "output-dir", "", "Path where to install contents of Xcode.app (required).")
 	c.Flags.StringVar(&c.serviceAccountJSON, "service-account-json", "", "Service account to use for authentication.")
 	c.Flags.Var(&c.kind, "kind", "Installation kind: "+KindTypeEnum.Choices()+". (default: \""+string(DefaultKind)+"\")")
+	c.Flags.BoolVar(&c.withRuntime, "with-runtime", true, "Whether to install the default iOS runtime to Xcode. Only works in ios kind.")
 	c.kind = DefaultKind
 }
 
@@ -344,7 +350,10 @@ var (
 Note: the "Xcode.app" part of the path is not created.
 Instead, "Contents" folder is placed directly in the folder specified
 by the -output-dir. If you want an actual app that Finder can launch, specify
--output-dir "<path>/Xcode.app".`,
+-output-dir "<path>/Xcode.app".
+
+-with-runtime switch will only work in ios kind, and when the Xcode version
+requested is uploaded with it's runtime separated from Xcode package.`,
 		CommandRun: func() subcommands.CommandRun {
 			c := &installRun{}
 			installFlagVars(c)

@@ -167,7 +167,12 @@ func finalizeInstall(ctx context.Context, xcodeAppPath, xcodeVersion, packageIns
 	return RunWithXcodeSelect(ctx, xcodeAppPath, func() error {
 		err := RunCommand(ctx, "sudo", "/usr/bin/xcodebuild", "-runFirstLaunch")
 		if err != nil {
-			return errors.Annotate(err, "failed to install Xcode packages").Err()
+			return errors.Annotate(err, "failed when invoking xcodebuild -runFirstLaunch").Err()
+		}
+		// This command is needed to avoid a potential compile time issue.
+		_, err = RunOutput(ctx, "xcrun", "simctl", "list")
+		if err != nil {
+			return errors.Annotate(err, "failed when invoking `xcrun simctl list`").Err()
 		}
 		return nil
 	})
@@ -196,8 +201,11 @@ type InstallArgs struct {
 	kind                   KindType
 	serviceAccountJSON     string
 	packageInstallerOnBots string
+	withRuntime            bool
 }
 
+// Installs Xcode. The default runtime of the Xcode version will be installed
+// unless |args.withRuntime| is False.
 func installXcode(ctx context.Context, args InstallArgs) error {
 	if err := os.MkdirAll(args.xcodeAppPath, 0700); err != nil {
 		return errors.Annotate(err, "failed to create a folder %s", args.xcodeAppPath).Err()
@@ -211,6 +219,23 @@ func installXcode(ctx context.Context, args InstallArgs) error {
 	}
 	if err := installPackages(ctx, installPackagesArgs); err != nil {
 		return err
+	}
+	simulatorDirPath := filepath.Join(args.xcodeAppPath, XcodeIOSSimulatorRuntimeRelPath)
+	_, statErr := os.Stat(simulatorDirPath)
+	// Only install the default runtime when |withRuntime| arg is true and the
+	// Xcode package installed doesn't have runtime folder (backwards
+	// compatibility for former Xcode packages).
+	if args.withRuntime && os.IsNotExist(statErr) {
+		runtimeInstallArgs := RuntimeInstallArgs{
+			runtimeVersion:     "",
+			xcodeVersion:       args.xcodeVersion,
+			installPath:        simulatorDirPath,
+			cipdPackagePrefix:  args.cipdPackagePrefix,
+			serviceAccountJSON: args.serviceAccountJSON,
+		}
+		if err := installRuntime(ctx, runtimeInstallArgs); err != nil {
+			return err
+		}
 	}
 	if needToAcceptLicense(ctx, args.xcodeAppPath, args.acceptedLicensesFile) {
 		if err := acceptLicense(ctx, args.xcodeAppPath); err != nil {
