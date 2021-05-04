@@ -27,4 +27,4 @@ infra/tools/cloud_sql_proxy/linux-amd64  downloaded:2017_07_25
 infra/machine-db/crimson/linux-amd64 stable
 
 # Helper for building Docker images and GAE tarballs.
-infra/tools/cloudbuildhelper/linux-amd64 git_revision:845fa815d2fa7d9ad115c64150ecb0850f20dcfc
+infra/tools/cloudbuildhelper/linux-amd64 git_revision:3e4d8e583b070f2b8f878f8747c2503cb5caa9c8
