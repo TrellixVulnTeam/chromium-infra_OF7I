@@ -126,7 +126,7 @@ func (r *RAMBufferedBQInserter) CloseAndDrain(ctx context.Context) {
 func (r *RAMBufferedBQInserter) send(ctx context.Context, batch *buffer.Batch) error {
 	rows := make([]*bqapi.TableDataInsertAllRequestRows, 0, len(batch.Data))
 	for _, d := range batch.Data {
-		rows = append(rows, d.(*bqapi.TableDataInsertAllRequestRows)) // despite '...Rows', it's just 1 row.
+		rows = append(rows, d.Item.(*bqapi.TableDataInsertAllRequestRows)) // despite '...Rows', it's just 1 row.
 	}
 	ctx = logging.SetField(ctx, "rows", len(rows))
 	ctx = logging.SetField(ctx, "first-iid", rows[0].InsertId)

@@ -18,7 +18,6 @@ github.com/GoogleCloudPlatform/
 github.com/bazelbuild/buildtools
 github.com/bazelbuild/remote-apis
 github.com/bazelbuild/remote-apis-sdks
-github.com/bradfitz/gomemcache/memcache
 github.com/docker/
 github.com/golang/mock/gomock
 github.com/golang/protobuf/
