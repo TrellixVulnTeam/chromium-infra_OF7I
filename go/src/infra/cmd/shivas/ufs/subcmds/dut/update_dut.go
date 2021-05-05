@@ -747,7 +747,7 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	}
 
 	// Camerabox Facing
-	if c.flagInputs["facing"] && c.router != "" {
+	if c.flagInputs["facing"] && c.facing != "" {
 		mask.Paths = append(mask.Paths, cameraFacingPath)
 		peripherals.GetCameraboxInfo().Facing = ufsUtil.ToFacing(c.facing)
 	}
