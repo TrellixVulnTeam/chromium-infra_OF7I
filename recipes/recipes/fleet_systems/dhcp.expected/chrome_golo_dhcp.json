@@ -132,6 +132,9 @@
       "runhooks"
     ],
     "cwd": "[START_DIR]/chrome_golo",
+    "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "project/try/builder/8945511751514863184"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"

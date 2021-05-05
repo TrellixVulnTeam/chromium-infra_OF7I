@@ -125,6 +125,9 @@
       "runhooks"
     ],
     "cwd": "[START_DIR]/infra_internal",
+    "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/infra_internal/try/builder/8945511751514863184"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"

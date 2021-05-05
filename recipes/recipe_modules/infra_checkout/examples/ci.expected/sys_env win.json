@@ -98,6 +98,9 @@
       "runhooks"
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
+    "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/builder/8945511751514863184"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"

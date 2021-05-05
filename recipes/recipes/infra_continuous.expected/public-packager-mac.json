@@ -97,6 +97,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/prod/infra-packager-mac-64/8945511751514863184",
       "INFRA_GO_VERSION_VARIANT": "legacy"
     },
     "env_suffixes": {

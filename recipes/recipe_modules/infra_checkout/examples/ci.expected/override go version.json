@@ -99,6 +99,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/builder/8945511751514863184",
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_suffixes": {
