@@ -5,14 +5,17 @@
 package run
 
 import (
+	"fmt"
 	"infra/cmd/crosfleet/internal/common"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 )
 
+const runCmdName = "run"
+
 var testApplication = &cli.Application{
-	Name:  "crosfleet run",
+	Name:  fmt.Sprintf("crosfleet %s", runCmdName),
 	Title: "Run tests.",
 	Commands: []*subcommands.Command{
 		backfill,
@@ -25,11 +28,11 @@ var testApplication = &cli.Application{
 
 // CmdRun is the parent command for all `crosfleet run <subcommand>` commands.
 var CmdRun = &subcommands.Command{
-	UsageLine: "run <subcommand>",
+	UsageLine: fmt.Sprintf("%s <subcommand>", runCmdName),
 	ShortDesc: "runs tests and other executable tasks on DUTs in ChromeOS hardware labs",
-	LongDesc: `Runs individual tests, test suites, or custom test plan files, depending on the subcommand given.
+	LongDesc: fmt.Sprintf(`Runs individual tests, test suites, or custom test plan files, depending on the subcommand given.
 
-Run 'crosfleet run' to see list of all subcommands.`,
+Run 'crosfleet %s' to see list of all subcommands.`, runCmdName),
 	CommandRun: func() subcommands.CommandRun {
 		c := &runCmd{}
 		c.Init()

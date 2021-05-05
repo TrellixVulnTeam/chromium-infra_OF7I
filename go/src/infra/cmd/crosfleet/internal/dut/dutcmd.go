@@ -5,14 +5,17 @@
 package dut
 
 import (
+	"fmt"
 	"infra/cmd/crosfleet/internal/common"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 )
 
+const dutCmdName = "dut"
+
 var dutApplication = &cli.Application{
-	Name:  "crosfleet dut",
+	Name:  fmt.Sprintf("crosfleet %s", dutCmdName),
 	Title: "Interact with DUTs.",
 	Commands: []*subcommands.Command{
 		info,
@@ -25,11 +28,11 @@ var dutApplication = &cli.Application{
 
 // CmdDut is the parent command for all `crosfleet dut <subcommand>` commands.
 var CmdDut = &subcommands.Command{
-	UsageLine: "dut <subcommand>",
+	UsageLine: fmt.Sprintf("%s <subcommand>", dutCmdName),
 	ShortDesc: "interacts directly with DUTs in ChromeOS hardware labs",
-	LongDesc: `Issues subcommands directly to DUTs.
+	LongDesc: fmt.Sprintf(`Issues subcommands directly to DUTs.
 
-Run 'crosfleet dut' to see list of all subcommands.`,
+Run 'crosfleet %s' to see list of all subcommands.`, dutCmdName),
 	CommandRun: func() subcommands.CommandRun {
 		c := &dutCmdRun{}
 		c.Init()

@@ -21,8 +21,10 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
+const leasesCmd = "leases"
+
 var leases = &subcommands.Command{
-	UsageLine: "leases [FLAGS...]",
+	UsageLine: fmt.Sprintf("%s [FLAGS...]", leasesCmd),
 	ShortDesc: "print information on the current user's leases",
 	LongDesc: `Print information on the current user's leases.
 

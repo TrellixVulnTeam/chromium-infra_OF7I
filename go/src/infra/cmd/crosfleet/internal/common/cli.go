@@ -17,6 +17,10 @@ import (
 	"go.chromium.org/luci/common/gcloud/googleoauth"
 )
 
+// Tag to add to Buildbucket builds to indicate which crosfleet subcommand was
+// used to launch the build.
+const CrosfleetToolTag = "crosfleet-tool"
+
 // PrintCrosfleetUIPrompt prints a prompt for users to visit the go/my-crosfleet PLX
 // to track their crosfleet-launched tasks.
 func PrintCrosfleetUIPrompt(a subcommands.Application) {

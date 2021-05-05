@@ -164,7 +164,7 @@ func botDimsAndBuildTags(ctx context.Context, swarmingService *swarmingapi.Servi
 		}
 	}
 	// Add these metadata tags last to avoid being overwritten by freeform dims.
-	tags["crosfleet-tool"] = leaseCmdName
+	tags[common.CrosfleetToolTag] = leaseCmdName
 	tags["lease-reason"] = leaseFlags.reason
 	tags["qs_account"] = "leases"
 	return

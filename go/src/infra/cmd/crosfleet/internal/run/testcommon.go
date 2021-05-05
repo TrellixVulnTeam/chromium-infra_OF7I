@@ -172,9 +172,9 @@ func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[st
 
 	// Add crosfleet-tool tag.
 	if crosfleetTool == "" {
-		panic(errors.Reason("must provide crosfleet-tool tag").Err())
+		panic(fmt.Errorf("must provide %s tag", common.CrosfleetToolTag))
 	}
-	tags["crosfleet-tool"] = crosfleetTool
+	tags[common.CrosfleetToolTag] = crosfleetTool
 	if mainArg != "" {
 		// Intended for `run test` and `run suite` commands. This label takes
 		// the form "label-suite:SUITE_NAME" for a `run suite` command.

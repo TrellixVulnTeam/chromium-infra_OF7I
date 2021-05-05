@@ -156,7 +156,7 @@ func (args *backfillRun) findOriginalBuilds(ctx context.Context, bbClient *build
 func removeBackfills(builds []*buildbucketpb.Build) []*buildbucketpb.Build {
 	var filtered []*buildbucketpb.Build
 	for _, build := range builds {
-		isBackfill := buildbucket.FindTagVal("crosfleet-tool", build) == backfillCmd
+		isBackfill := buildbucket.FindTagVal(common.CrosfleetToolTag, build) == backfillCmd
 		if !isBackfill {
 			filtered = append(filtered, build)
 		}
@@ -171,7 +171,7 @@ func backfillTags(build *buildbucketpb.Build) map[string]string {
 	for _, originalTag := range build.Tags {
 		tags[originalTag.Key] = originalTag.Value
 	}
-	tags["crosfleet-tool"] = backfillCmd
+	tags[common.CrosfleetToolTag] = backfillCmd
 	tags["backfill"] = strconv.FormatInt(build.Id, 10)
 	return tags
 }

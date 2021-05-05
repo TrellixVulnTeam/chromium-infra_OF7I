@@ -5,6 +5,7 @@
 package dut
 
 import (
+	"fmt"
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/site"
@@ -15,8 +16,10 @@ import (
 	"go.chromium.org/luci/common/cli"
 )
 
+const abandonCmd = "abandon"
+
 var abandon = &subcommands.Command{
-	UsageLine: "abandon [HOST...]",
+	UsageLine: fmt.Sprintf("%s [HOST...]", abandonCmd),
 	ShortDesc: "abandon DUTs which were previously leased via 'dut lease'",
 	LongDesc: `Abandon DUTs which were previously leased via 'dut lease'.
 
