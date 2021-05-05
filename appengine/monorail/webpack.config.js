@@ -90,7 +90,7 @@ const config = {
     ],
   },
   resolve: {
-    extensions: ['.js', '.ts'],
+    extensions: ['.js', '.ts', '.tsx'],
     modules: ['node_modules', 'static_src'],
   },
   output: {

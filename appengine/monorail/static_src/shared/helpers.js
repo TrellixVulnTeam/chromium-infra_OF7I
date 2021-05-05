@@ -10,10 +10,10 @@ import qs from 'qs';
  * result = a - b
  * @param {Array} listA
  * @param {Array} listB
- * @param {function} equals
+ * @param {function?} equals
  * @return {Array}
  */
-export function arrayDifference(listA, listB, equals) {
+export function arrayDifference(listA, listB, equals = undefined) {
   if (!equals) {
     equals = (a, b) => (a === b);
   }
