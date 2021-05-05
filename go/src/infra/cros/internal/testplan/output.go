@@ -4,21 +4,25 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
+	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
+	"go.chromium.org/chromiumos/config/go/payload"
+
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/data/stringset"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Output contains lists of build targets and test tags to run, computed from
-// SourceTestPlans. This is a placeholder, representing the information test
-// platform would expect.
+// Output contains lists of build targets or DesignConfigIds and test tags to
+// run, computed from SourceTestPlans. This is a placeholder, representing the
+// information test platform would expect.
 //
 // TODO(b/182898188): Replace this with the actual interface to CTP v2 once it
 // is defined.
 type Output struct {
 	Name            string   `json:"name"`
 	BuildTargets    []string `json:"build_targets"`
+	DesignConfigIds []string `json:"design_config_ids"`
 	TestTags        []string `json:"test_tags"`
 	TestTagExcludes []string `json:"test_tag_excludes"`
 }
@@ -215,6 +219,36 @@ func arcVersionOutputs(
 	return outputs
 }
 
+// fingerprintOutputs returns an Output containing all DesignConfigIds with a
+// fingerprint sensor.
+func fingerprintOutputs(
+	sourceTestPlan *plan.SourceTestPlan, flatConfigList *payload.FlatConfigList,
+) []*Output {
+	var designConfigIds []string
+
+	for _, value := range flatConfigList.Values {
+		loc := value.GetHwDesignConfig().GetHardwareFeatures().GetFingerprint().GetLocation()
+		if loc == configpb.HardwareFeatures_Fingerprint_LOCATION_UNKNOWN ||
+			loc == configpb.HardwareFeatures_Fingerprint_NOT_PRESENT {
+			continue
+		}
+
+		designConfigIds = append(
+			designConfigIds,
+			value.GetHwDesignConfig().GetId().GetValue(),
+		)
+	}
+
+	return []*Output{
+		{
+			Name:            "fp-present",
+			DesignConfigIds: designConfigIds,
+			TestTags:        sourceTestPlan.TestTags,
+			TestTagExcludes: sourceTestPlan.TestTagExcludes,
+		},
+	}
+}
+
 // typeName is a convenience function for the FullName of m.
 func typeName(m proto.Message) protoreflect.FullName {
 	return proto.MessageReflect(m).Descriptor().FullName()
@@ -223,7 +257,9 @@ func typeName(m proto.Message) protoreflect.FullName {
 // generateOutputs computes a list of Outputs, based on sourceTestPlan and
 // buildSummaryList.
 func generateOutputs(
-	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	sourceTestPlan *plan.SourceTestPlan,
+	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	flatConfigList *payload.FlatConfigList,
 ) ([]*Output, error) {
 	outputs := []*Output{}
 
@@ -251,6 +287,9 @@ func generateOutputs(
 
 			case typeName(&plan.SourceTestPlan_Requirements_SocFamilies{}):
 				outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
+
+			case typeName(&plan.SourceTestPlan_Requirements_Fingerprint{}):
+				outputs = expandOutputs(outputs, fingerprintOutputs(sourceTestPlan, flatConfigList))
 
 			default:
 				unimplementedReq = fd

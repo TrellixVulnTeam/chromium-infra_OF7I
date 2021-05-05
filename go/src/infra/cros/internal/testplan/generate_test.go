@@ -9,7 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
+	"go.chromium.org/chromiumos/config/go/payload"
 )
 
 func TestGenerate(t *testing.T) {
@@ -59,7 +61,14 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	outputs, err := Generate(ctx, changeRevs, buildSummaryList)
+	flatConfigList := &payload.FlatConfigList{
+		Values: []*payload.FlatConfig{
+			flatConfig("config1", "project1", configpb.HardwareFeatures_Fingerprint_KEYBOARD_BOTTOM_LEFT),
+			flatConfig("config2", "project2", configpb.HardwareFeatures_Fingerprint_NOT_PRESENT),
+		},
+	}
+
+	outputs, err := Generate(ctx, changeRevs, buildSummaryList, flatConfigList)
 
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)

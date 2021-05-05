@@ -5,12 +5,16 @@ import (
 	"infra/cros/internal/gerrit"
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
+	"go.chromium.org/chromiumos/config/go/payload"
+
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/logging"
 )
 
 func Generate(
-	ctx context.Context, changeRevs []*gerrit.ChangeRev, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	ctx context.Context, changeRevs []*gerrit.ChangeRev,
+	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	flatConfigList *payload.FlatConfigList,
 ) ([]*Output, error) {
 	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
 	if err != nil {
@@ -39,7 +43,7 @@ func Generate(
 	logging.Infof(ctx, "generating outputs from merged SourceTestPlan")
 	logging.Debugf(ctx, "merged SourceTestPlan: %q", mergedSourceTestPlan)
 
-	outputs, err := generateOutputs(mergedSourceTestPlan, buildSummaryList)
+	outputs, err := generateOutputs(mergedSourceTestPlan, buildSummaryList, flatConfigList)
 	if err != nil {
 		return nil, err
 	}

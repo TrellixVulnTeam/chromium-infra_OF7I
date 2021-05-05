@@ -9,12 +9,12 @@ import (
 	"infra/cros/internal/testplan"
 	"infra/tools/dirmd"
 	"net/http"
-	"strings"
-
 	"os"
 
-	"github.com/golang/protobuf/jsonpb"
+	protov1 "github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
+	buildpb "go.chromium.org/chromiumos/config/go/build/api"
+	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
@@ -24,8 +24,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
-
-	buildpb "go.chromium.org/chromiumos/config/go/build/api"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var logCfg = gologger.LoggerConfig{
@@ -125,6 +124,18 @@ func getChangeRevs(ctx context.Context, authedClient *http.Client, rawCLURLs []s
 	return changeRevs, nil
 }
 
+// unmarshalProtojson wraps protojson.Unmarshal for v1 protos.
+//
+// The jsonpb package directly unmarshals v1 protos, but has known issues that
+// cause errors when unmarshaling data needed by test_plan (specifically, no
+// support for FieldMask, https://github.com/golang/protobuf/issues/745).
+//
+// Use the protojson package to unmarshal, which fixes this issue. This function
+// is a convinience to convert the v1 proto to v2 so it can use protojson.
+func unmarshalProtojson(b []byte, m protov1.Message) error {
+	return protojson.Unmarshal(b, protov1.MessageV2(m))
+}
+
 // getBuildSummaryList reads the HEAD BuildSummaryList from
 // chromeos/config-internal.
 //
@@ -145,11 +156,35 @@ func getBuildSummaryList(
 	}
 
 	buildSummaryList := &buildpb.SystemImage_BuildSummaryList{}
-	if err = jsonpb.Unmarshal(strings.NewReader(buildSummaryListStr), buildSummaryList); err != nil {
+	if err = unmarshalProtojson([]byte(buildSummaryListStr), buildSummaryList); err != nil {
 		return nil, err
 	}
 
 	return buildSummaryList, nil
+}
+
+// getBuildSummaryList reads the HEAD FlatConfigList from
+// chromeos/config-internal.
+func getFlatConfigList(
+	ctx context.Context, authedClient *http.Client,
+) (*payload.FlatConfigList, error) {
+	flatConfigListStr, err := igerrit.DownloadFileFromGitiles(
+		ctx, authedClient,
+		"chrome-internal.googlesource.com",
+		"chromeos/config-internal",
+		"HEAD",
+		"hw_design/generated/flattened.jsonproto",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	flatConfigList := &payload.FlatConfigList{}
+	if err = unmarshalProtojson([]byte(flatConfigListStr), flatConfigList); err != nil {
+		return nil, err
+	}
+
+	return flatConfigList, nil
 }
 
 // writeOutputs writes a newline-delimited json file containing outputs to outPath.
@@ -211,7 +246,18 @@ func (r *generateRun) run(ctx context.Context) error {
 		return err
 	}
 
-	outputs, err := testplan.Generate(ctx, changeRevs, buildSummaryList)
+	logging.Debugf(ctx, "fetched %d BuildSummaries", len(buildSummaryList.Values))
+
+	logging.Infof(ctx, "fetching HW design data")
+
+	flatConfigList, err := getFlatConfigList(ctx, authedClient)
+	if err != nil {
+		return err
+	}
+
+	logging.Debugf(ctx, "fetched %d FlatConfigs", len(flatConfigList.Values))
+
+	outputs, err := testplan.Generate(ctx, changeRevs, buildSummaryList, flatConfigList)
 	if err != nil {
 		return err
 	}
