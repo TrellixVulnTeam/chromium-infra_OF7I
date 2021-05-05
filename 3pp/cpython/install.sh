@@ -187,6 +187,7 @@ export LDLAST
   --disable-shared ${CONFIGURE_FFI} --enable-ipv6 \
   --enable-py-version-override="$PY_VERSION" \
   --enable-unicode=$UNICODE_TYPE \
+  --without-ensurepip \
   $EXTRA_CONFIGURE_ARGS
 
 # Generate our "pybuilddir.txt" file. This also generates
