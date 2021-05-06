@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
@@ -45,14 +46,18 @@ func ListMachineLSEDeployments(ctx context.Context, pageSize int32, pageToken, f
 // UpdateMachineLSEDeployment updates a machine lse deployment to datastore
 func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeployment, mask *field_mask.FieldMask) (*ufspb.MachineLSEDeployment, error) {
 	f := func(ctx context.Context) error {
+		hc := &HistoryClient{}
+
 		// Get old/existing deployment record for logging and partial update.
 		resp, err := inventory.GetMachineLSEDeployment(ctx, dr.GetSerialNumber())
 		if err != nil {
 			logging.Infof(ctx, "no existing deployment record for serial number %s, continue update", dr.GetSerialNumber())
 		}
 		var oldDr *ufspb.MachineLSEDeployment
+		var oldDrCopy *ufspb.MachineLSEDeployment
 		if resp != nil {
 			oldDr = resp
+			oldDrCopy = proto.Clone(oldDr).(*ufspb.MachineLSEDeployment)
 		}
 
 		// Partial update by field mask.
@@ -73,7 +78,8 @@ func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeploym
 		if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 			return errors.Annotate(err, "unable to update new deployment record: %s (%s)", dr.GetHostname(), dr.GetSerialNumber()).Err()
 		}
-		return nil
+		hc.LogMachineLSEDeploymentChanges(oldDrCopy, dr)
+		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateMachineLSEDeployment").Err()
@@ -91,6 +97,8 @@ func processDeploymentUpdateMask(ctx context.Context, oldCs *ufspb.MachineLSEDep
 			oldCs.Hostname = cs.Hostname
 		case "deployment_identifier":
 			oldCs.DeploymentIdentifier = cs.GetDeploymentIdentifier()
+		case "deployment_env":
+			oldCs.DeploymentEnv = cs.GetDeploymentEnv()
 		case "configs_to_push":
 			oldCs.ConfigsToPush = cs.GetConfigsToPush()
 		}
@@ -109,6 +117,7 @@ func validateDeploymentUpdateMask(mask *field_mask.FieldMask) error {
 				return status.Error(codes.InvalidArgument, "serial number cannot be updated")
 			case "hostname":
 			case "deployment_identifier":
+			case "deployment_env":
 			case "configs_to_push":
 				// Valid fields, nothing to validate.
 			default:

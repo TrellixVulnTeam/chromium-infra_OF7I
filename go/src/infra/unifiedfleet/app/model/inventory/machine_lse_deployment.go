@@ -164,8 +164,10 @@ func GetDeploymentIndexedFieldName(input string) (string, error) {
 		field = "hostname"
 	case util.DeploymentIdentifierFilterName:
 		field = "deployment_identifier"
+	case util.DeploymentEnvFilterName:
+		field = "deployment_env"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine lse deployments are host/deploymentidentifier", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine lse deployments are host/deploymentidentifier/deployment_env", input)
 	}
 	return field, nil
 }

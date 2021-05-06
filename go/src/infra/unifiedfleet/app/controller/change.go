@@ -233,6 +233,7 @@ func (hc *HistoryClient) LogMachineLSEDeploymentChanges(oldData, newData *ufspb.
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse_deployment.hostname", oldData.GetHostname(), newData.GetHostname())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse_deployment.deployment_identifier", oldData.GetDeploymentIdentifier(), newData.GetDeploymentIdentifier())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse_deployment.deployment_env", oldData.GetDeploymentEnv(), newData.GetDeploymentEnv())...)
 	if newData.GetConfigsToPush() != nil {
 		hc.changes = append(hc.changes, logDeploymentConfigs(resourceName, oldData.GetConfigsToPush(), newData.GetConfigsToPush())...)
 	}

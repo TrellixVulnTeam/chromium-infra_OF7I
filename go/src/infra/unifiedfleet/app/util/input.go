@@ -122,6 +122,7 @@ var (
 	SubnetFilterName               string = "subnet"
 	PoolsFilterName                string = "pools"
 	DeploymentIdentifierFilterName string = "deploymentidentifier"
+	DeploymentEnvFilterName        string = "deploymentenv"
 	MachineLSEsFilterName          string = "duts"
 	TypeFilterName                 string = "type"
 	SerialNumberFilterName         string = "serialnumber"
