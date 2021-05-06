@@ -178,6 +178,11 @@ SPECS.update({
             skip_plat=['mac-x64-cp38', 'mac-arm64-cp38-cross'],
         ),
         SourceOrPrebuilt(
+            'cffi',
+            '1.14.5',
+            pyversions=['py2', 'py3'],
+        ),
+        SourceOrPrebuilt(
             'coverage',
             '4.3.4',
             packaged=[
