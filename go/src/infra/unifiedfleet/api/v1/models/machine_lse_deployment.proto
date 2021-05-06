@@ -39,7 +39,7 @@ import "infra/unifiedfleet/api/v1/models/deployment.proto";
 // 3. `shivas add host`, a deployment record will be updated to reflect the real hostname given
 //    by users.
 //
-// Next tag: 6
+// Next tag: 7
 message MachineLSEDeployment {
     // The name of the host which contains this deployment record.
     string hostname = 1;
@@ -53,4 +53,15 @@ message MachineLSEDeployment {
      // Record the last update timestamp of this host deployment (In UTC timezone)
     google.protobuf.Timestamp update_time = 5 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // Specify the deployment environment of the MegaMDM service which enrolls this host.
+    DeploymentEnv deployment_env = 6;
+}
+
+enum DeploymentEnv {
+    // Only add DeploymentEnv prefix to undefined as there're still discussions about whether to add
+    // prefix to all enums to reduce the code readability.
+    DEPLOYMENTENV_UNDEFINED = 0;
+    PROD = 1;
+    AUTOPUSH = 2;
 }

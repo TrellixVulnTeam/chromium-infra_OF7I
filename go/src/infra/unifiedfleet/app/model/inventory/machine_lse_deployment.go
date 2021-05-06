@@ -30,6 +30,7 @@ type MachineLSEDeploymentEntity struct {
 	ID                   string `gae:"$id"`
 	Hostname             string `gae:"hostname"`
 	DeploymentIdentifier string `gae:"deployment_identifier"`
+	DeploymentEnv        string `gae:"deployment_env"`
 	// Follow others entities, store ufspb.MachineLSEDeployment bytes.
 	DeploymentInfo []byte `gae:",noindex"`
 }
@@ -56,6 +57,7 @@ func newMachineLSEDeploymentEntity(ctx context.Context, pm proto.Message) (ufsds
 		ID:                   p.GetSerialNumber(),
 		Hostname:             p.GetHostname(),
 		DeploymentIdentifier: p.GetDeploymentIdentifier(),
+		DeploymentEnv:        p.GetDeploymentEnv().String(),
 		DeploymentInfo:       deploymentInfo,
 	}, nil
 }

@@ -28,6 +28,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DeploymentEnv int32
+
+const (
+	// Only add DeploymentEnv prefix to undefined as there're still discussions about whether to add
+	// prefix to all enums to reduce the code readability.
+	DeploymentEnv_DEPLOYMENTENV_UNDEFINED DeploymentEnv = 0
+	DeploymentEnv_PROD                    DeploymentEnv = 1
+	DeploymentEnv_AUTOPUSH                DeploymentEnv = 2
+)
+
+// Enum value maps for DeploymentEnv.
+var (
+	DeploymentEnv_name = map[int32]string{
+		0: "DEPLOYMENTENV_UNDEFINED",
+		1: "PROD",
+		2: "AUTOPUSH",
+	}
+	DeploymentEnv_value = map[string]int32{
+		"DEPLOYMENTENV_UNDEFINED": 0,
+		"PROD":                    1,
+		"AUTOPUSH":                2,
+	}
+)
+
+func (x DeploymentEnv) Enum() *DeploymentEnv {
+	p := new(DeploymentEnv)
+	*p = x
+	return p
+}
+
+func (x DeploymentEnv) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeploymentEnv) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_enumTypes[0].Descriptor()
+}
+
+func (DeploymentEnv) Type() protoreflect.EnumType {
+	return &file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_enumTypes[0]
+}
+
+func (x DeploymentEnv) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeploymentEnv.Descriptor instead.
+func (DeploymentEnv) EnumDescriptor() ([]byte, []int) {
+	return file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDescGZIP(), []int{0}
+}
+
 // MachineLSEDeployment includes all info related to deployment of a machine LSE (host).
 //
 // This deployment record will be updated in 3 ways:
@@ -53,7 +104,7 @@ const (
 // 3. `shivas add host`, a deployment record will be updated to reflect the real hostname given
 //    by users.
 //
-// Next tag: 6
+// Next tag: 7
 type MachineLSEDeployment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -70,6 +121,8 @@ type MachineLSEDeployment struct {
 	ConfigsToPush []*Payload `protobuf:"bytes,4,rep,name=configs_to_push,json=configsToPush,proto3" json:"configs_to_push,omitempty"`
 	// Record the last update timestamp of this host deployment (In UTC timezone)
 	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	// Specify the deployment environment of the MegaMDM service which enrolls this host.
+	DeploymentEnv DeploymentEnv `protobuf:"varint,6,opt,name=deployment_env,json=deploymentEnv,proto3,enum=unifiedfleet.api.v1.models.DeploymentEnv" json:"deployment_env,omitempty"`
 }
 
 func (x *MachineLSEDeployment) Reset() {
@@ -139,6 +192,13 @@ func (x *MachineLSEDeployment) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *MachineLSEDeployment) GetDeploymentEnv() DeploymentEnv {
+	if x != nil {
+		return x.DeploymentEnv
+	}
+	return DeploymentEnv_DEPLOYMENTENV_UNDEFINED
+}
+
 var File_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto protoreflect.FileDescriptor
 
 var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDesc = []byte{
@@ -155,7 +215,7 @@ var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDesc =
 	0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65,
 	0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2f,
 	0x64, 0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x22, 0x9b, 0x02, 0x0a, 0x14, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x44,
+	0x22, 0xed, 0x02, 0x0a, 0x14, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x4c, 0x53, 0x45, 0x44,
 	0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x68, 0x6f, 0x73,
 	0x74, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x68, 0x6f, 0x73,
 	0x74, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x73, 0x65, 0x72, 0x69, 0x61, 0x6c, 0x5f,
@@ -172,10 +232,20 @@ var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDesc =
 	0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x42, 0x03, 0xe0,
-	0x41, 0x03, 0x52, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6d, 0x65, 0x42, 0x28,
-	0x5a, 0x26, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x65,
-	0x6c, 0x73, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x41, 0x03, 0x52, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x50,
+	0x0a, 0x0e, 0x64, 0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x65, 0x6e, 0x76,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x29, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64,
+	0x65, 0x6c, 0x73, 0x2e, 0x44, 0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x6e,
+	0x76, 0x52, 0x0d, 0x64, 0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x6e, 0x76,
+	0x2a, 0x44, 0x0a, 0x0d, 0x44, 0x65, 0x70, 0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x6e,
+	0x76, 0x12, 0x1b, 0x0a, 0x17, 0x44, 0x45, 0x50, 0x4c, 0x4f, 0x59, 0x4d, 0x45, 0x4e, 0x54, 0x45,
+	0x4e, 0x56, 0x5f, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49, 0x4e, 0x45, 0x44, 0x10, 0x00, 0x12, 0x08,
+	0x0a, 0x04, 0x50, 0x52, 0x4f, 0x44, 0x10, 0x01, 0x12, 0x0c, 0x0a, 0x08, 0x41, 0x55, 0x54, 0x4f,
+	0x50, 0x55, 0x53, 0x48, 0x10, 0x02, 0x42, 0x28, 0x5a, 0x26, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x61, 0x70, 0x69,
+	0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x3b, 0x75, 0x66, 0x73, 0x70, 0x62,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -190,20 +260,23 @@ func file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDescG
 	return file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDescData
 }
 
+var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_goTypes = []interface{}{
-	(*MachineLSEDeployment)(nil),  // 0: unifiedfleet.api.v1.models.MachineLSEDeployment
-	(*Payload)(nil),               // 1: unifiedfleet.api.v1.models.Payload
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(DeploymentEnv)(0),            // 0: unifiedfleet.api.v1.models.DeploymentEnv
+	(*MachineLSEDeployment)(nil),  // 1: unifiedfleet.api.v1.models.MachineLSEDeployment
+	(*Payload)(nil),               // 2: unifiedfleet.api.v1.models.Payload
+	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_depIdxs = []int32{
-	1, // 0: unifiedfleet.api.v1.models.MachineLSEDeployment.configs_to_push:type_name -> unifiedfleet.api.v1.models.Payload
-	2, // 1: unifiedfleet.api.v1.models.MachineLSEDeployment.update_time:type_name -> google.protobuf.Timestamp
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 0: unifiedfleet.api.v1.models.MachineLSEDeployment.configs_to_push:type_name -> unifiedfleet.api.v1.models.Payload
+	3, // 1: unifiedfleet.api.v1.models.MachineLSEDeployment.update_time:type_name -> google.protobuf.Timestamp
+	0, // 2: unifiedfleet.api.v1.models.MachineLSEDeployment.deployment_env:type_name -> unifiedfleet.api.v1.models.DeploymentEnv
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_init() }
@@ -231,13 +304,14 @@ func file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_goTypes,
 		DependencyIndexes: file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_depIdxs,
+		EnumInfos:         file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_enumTypes,
 		MessageInfos:      file_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto_msgTypes,
 	}.Build()
 	File_infra_unifiedfleet_api_v1_models_machine_lse_deployment_proto = out.File
