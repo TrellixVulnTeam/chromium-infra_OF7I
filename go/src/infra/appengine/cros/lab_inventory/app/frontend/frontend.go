@@ -9,12 +9,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/grpc/discovery"
-	"go.chromium.org/luci/grpc/grpcmon"
-	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
-	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -22,21 +18,14 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 )
 
-// InstallHandlers installs the handlers implemented by the frontend package.
-func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
-	s := prpc.Server{
-		UnaryServerInterceptor: grpcutil.ChainUnaryServerInterceptors(
-			grpcmon.UnaryServerInterceptor,
-			grpcutil.UnaryServerPanicCatcherInterceptor,
-		),
-	}
-	s.AccessControl = prpc.AllowOriginAll
-	api.RegisterInventoryServer(&s, &api.DecoratedInventory{
+// InstallServices install the prpc handlers in the server
+func InstallServices(srv *prpc.Server) {
+	srv.UnaryServerInterceptor = config.Interceptor
+	srv.AccessControl = prpc.AllowOriginAll
+	api.RegisterInventoryServer(srv, &api.DecoratedInventory{
 		Service: &InventoryServerImpl{},
 		Prelude: checkAccess,
 	})
-	discovery.Enable(&s)
-	s.InstallHandlers(r, mwBase)
 }
 
 // checkAccess verifies that the request is from an authorized user.

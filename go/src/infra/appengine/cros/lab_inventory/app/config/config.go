@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/appengine/gaesecrets"
@@ -31,10 +32,14 @@ var (
 	secretInDatastore = "hwid"
 )
 
-var cachedCfg = cfgcache.Register(&cfgcache.Entry{
-	Path: configFile,
-	Type: (*Config)(nil),
-})
+var cachedCfg *cfgcache.Entry
+
+func init() {
+	cachedCfg = cfgcache.Register(&cfgcache.Entry{
+		Path: configFile,
+		Type: (*Config)(nil),
+	})
+}
 
 // Import fetches the most recent config and stores it in the datastore.
 //
@@ -51,13 +56,32 @@ func Get(c context.Context) *Config {
 	return c.Value(contextKey).(*Config)
 }
 
-// Middleware loads the service config and installs it into the context.
-func Middleware(c *router.Context, next router.Handler) {
-	msg, err := cachedCfg.Get(c.Context, nil)
+// Interceptor is to be used to append config to context in grpc handlers.
+func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	ctx, err := appendConfigToContext(ctx)
 	if err != nil {
-		logging.WithError(err).Errorf(c.Context, "could not load application config")
+		return nil, err
+	}
+	return handler(ctx, req)
+}
+
+// Middleware is to be used to append config to context in cron handlers.
+func Middleware(c *router.Context, next router.Handler) {
+	ctx, err := appendConfigToContext(c.Context)
+	if err != nil {
 		http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		return
+	}
+	c.Context = ctx
+	next(c)
+}
+
+// appendConfigToContext appends a copy of the config to the context and returns the updated context.
+func appendConfigToContext(ctx context.Context) (context.Context, error) {
+	msg, err := cachedCfg.Get(ctx, nil)
+	if err != nil {
+		logging.WithError(err).Errorf(ctx, "could not load application config")
+		return nil, err
 	}
 
 	// Make a copy, since we are going to mutate it below.
@@ -66,24 +90,24 @@ func Middleware(c *router.Context, next router.Handler) {
 
 	// We store HWID server secret in datastore in production. The fallback to
 	// config file is only for local development.
-	ctx := gaesecrets.Use(c.Context, &gaesecrets.Config{})
+	ctx = gaesecrets.Use(ctx, &gaesecrets.Config{})
 	secret, err := secrets.StoredSecret(ctx, secretInDatastore)
 	if err == nil {
 		// The HWID must be a valid plain text string. No control characters.
 		s := string(secret.Current)
 		if s != url.QueryEscape(s) {
-			logging.WithError(err).Errorf(c.Context, "wrong hwid secret configured: '%v'", url.QueryEscape(s))
-			http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
-			return
+			logging.WithError(err).Errorf(ctx, "wrong hwid secret configured: '%v'", url.QueryEscape(s))
+			return nil, err
 		}
 		cfg.HwidSecret = string(secret.Current)
 	} else {
-		logging.Infof(c.Context, "Cannot get HWID server secret from datastore: %s", err.Error())
+		logging.Infof(ctx, "Cannot get HWID server secret from datastore: %s", err.Error())
 	}
 
-	c.Context = Use(c.Context, &cfg)
-	c.Context = external.WithServerInterface(c.Context)
-	next(c)
+	ctx = Use(ctx, &cfg)
+	ctx = external.WithServerInterface(ctx)
+
+	return ctx, nil
 }
 
 // Use installs cfg into c.

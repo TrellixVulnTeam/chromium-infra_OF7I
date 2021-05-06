@@ -49,7 +49,7 @@ import (
 // All handlers serve paths under /internal/cron/*
 // These handlers can only be called by appengine's cron service.
 func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
-	mwCron := mwBase.Extend(gaemiddleware.RequireCron)
+	mwCron := mwBase.Extend(gaemiddleware.RequireCron, config.Middleware)
 
 	r.GET("/internal/cron/import-service-config", mwCron, logAndSetHTTPErr(importServiceConfig))
 
