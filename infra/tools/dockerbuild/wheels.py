@@ -180,6 +180,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'cffi',
             '1.14.5',
+            packaged=(),
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
