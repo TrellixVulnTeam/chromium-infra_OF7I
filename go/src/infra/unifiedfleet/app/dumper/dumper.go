@@ -48,11 +48,11 @@ func InitServer(srv *server.Server, opts Options) {
 		cron.Run(ctx, 60*time.Minute, cron.EVERY, dumpCrosNetwork)
 	})
 	/*srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, SyncMachinesFromAssets)
-	})
-	srv.RunInBackground("ufs.sync_devices.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, SyncAssetInfoFromHaRT)
+		cron.Run(ctx, 60*time.Minute, cron.HOURLY, SyncMachinesFromAssets)
 	})*/
+	srv.RunInBackground("ufs.sync_devices.sync", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, cron.HOURLY, SyncAssetInfoFromHaRT)
+	})
 	srv.RunInBackground("ufs.sync_assets.sync", func(ctx context.Context) {
 		cron.Run(ctx, 5*time.Minute, cron.HOURLY, SyncAssetsFromIV2)
 	})
