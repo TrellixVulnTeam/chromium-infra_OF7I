@@ -6,6 +6,10 @@ luci_gae_vars:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
     CONFIG_SERVICE_HOST: luci-config.appspot.com
     TS_MON_ACCOUNT: app-engine-metric-publishers@prodx-mon-chrome-infra.google.com.iam.gserviceaccount.com
+  cros-lab-inventory:
+    AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
+    CONFIG_SERVICE_HOST: luci-config.appspot.com
+    TS_MON_ACCOUNT: app-engine-metric-publishers@prodx-mon-chrome-infra.google.com.iam.gserviceaccount.com
 
 entrypoint: >
   main
