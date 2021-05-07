@@ -1,0 +1,49 @@
+// Copyright 2021 The Chromium Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package alert_groups;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+
+service AlertGroups {
+    // Merges multiple alert groups into a single destination alert group.
+    // Returns the updated destination alert group.
+    // Side-effects: This is as-if the following happened in a single operation:
+    //   * for each source AlertGroup:
+    //     * update the destination to include the grouped Anomaly instances
+    //     * delete the source AlertGroup
+    rpc MergeAlertGroups (MergeAlertGroupsRequest) returns (AlertGroup) {
+        option (google.api.http) = {
+            post: "/v1/merge_anomalies"
+            body: "*"
+        };
+    }
+}
+
+message AlertGroup {
+    // AlertGroup id in Datastore.
+    string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message MergeAlertGroupsRequest {
+    // List of groups that will be merged into the destination_group.
+    // The source groups will be deleted after merge is complete.
+    repeated AlertGroup source_groups = 1 [(google.api.field_behavior) = REQUIRED];
+
+    // Group that will contain all the anomalies from the source groups.
+    AlertGroup destination_group = 2 [(google.api.field_behavior) = REQUIRED];
+}
