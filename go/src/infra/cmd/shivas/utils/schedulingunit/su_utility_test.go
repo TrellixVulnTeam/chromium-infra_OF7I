@@ -6,9 +6,11 @@ package schedulingunit
 
 import (
 	"testing"
+	"time"
+
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/libs/skylab/inventory/swarming"
-
 	ufspb "infra/unifiedfleet/api/v1/models"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -151,5 +153,19 @@ func TestSchedulingUnitDimensions(t *testing.T) {
 			"dut_state":       {"unknown"},
 		}
 		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
+	})
+}
+
+func TestSchedulingUnitBotState(t *testing.T) {
+	Convey("Test scheduling unit bot state.", t, func() {
+		t, _ := time.Parse(time.RFC3339, "2021-05-07T11:54:36.225Z")
+		su := &ufspb.SchedulingUnit{
+			Name:       "schedulingunit/test-unit1",
+			UpdateTime: timestamppb.New(t),
+		}
+		expectedResult := map[string][]string{
+			"scheduling_unit_version_index": {"2021-05-07 11:54:36.225 UTC"},
+		}
+		So(SchedulingUnitBotState(su), ShouldResemble, expectedResult)
 	})
 }

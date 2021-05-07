@@ -126,7 +126,10 @@ func botInfoForSU(ctx context.Context, c ufsAPI.FleetClient, id string, r swarmi
 		}
 		dutsDims = append(dutsDims, dbi.Dimensions)
 	}
-	return &botInfo{Dimensions: suUtil.SchedulingUnitDimensions(su, dutsDims)}, nil
+	return &botInfo{
+		Dimensions: suUtil.SchedulingUnitDimensions(su, dutsDims),
+		State:      suUtil.SchedulingUnitBotState(su),
+	}, nil
 }
 
 func botInfoForDUT(ctx context.Context, c ufsAPI.FleetClient, id string, byHostname bool, r swarming.ReportFunc) (*botInfo, error) {

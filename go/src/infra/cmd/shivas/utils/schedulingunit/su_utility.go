@@ -90,3 +90,9 @@ func SchedulingUnitDimensions(su *ufspb.SchedulingUnit, dutsDims []swarming.Dime
 	}
 	return suDims
 }
+
+func SchedulingUnitBotState(su *ufspb.SchedulingUnit) map[string][]string {
+	return map[string][]string{
+		"scheduling_unit_version_index": {su.GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)},
+	}
+}
