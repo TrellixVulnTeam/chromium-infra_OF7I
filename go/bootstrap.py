@@ -188,12 +188,16 @@ def install_toolset(toolset_root, version):
 
   GOROOT would be <toolset_root>/go/.
   """
-  cmd = subprocess.Popen(
-    [
+  cmd = subprocess.Popen([
       'cipd.bat' if sys.platform == 'win32' else 'cipd',
-      'ensure', '-ensure-file', '-', '-root', toolset_root,
-    ],
-    stdin=subprocess.PIPE)
+      'ensure',
+      '-ensure-file',
+      '-',
+      '-root',
+      toolset_root,
+  ],
+                         stdin=subprocess.PIPE,
+                         universal_newlines=True)
   cmd.communicate(
     '@Subdir go\n'
     'infra/3pp/tools/go/${platform} version:2@%s\n' % version
@@ -251,7 +255,8 @@ def call_bare_go(toolset_root, workspace, args):
       env=env,
       cwd=workspace,
       stdout=subprocess.PIPE,
-      stderr=subprocess.STDOUT)
+      stderr=subprocess.STDOUT,
+      universal_newlines=True)
   out, _ = proc.communicate()
   if proc.returncode:
     LOGGER.error('Failed to run %s: exit code %d', cmd, proc.returncode)
@@ -328,7 +333,8 @@ def fetch_glide_code(workspace, spec):
   """Fetches glide source code."""
   def git(cmd, cwd):
     subprocess.check_call([GIT_EXE] + cmd, cwd=cwd, stdout=sys.stderr)
-  for path, repo in sorted(spec.iteritems()):
+
+  for path, repo in sorted(spec.items()):
     path = os.path.join(workspace, path.replace('/', os.sep))
     os.makedirs(path)
     git(['clone', repo['url'], '.'], cwd=path)
