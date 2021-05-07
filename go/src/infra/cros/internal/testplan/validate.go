@@ -2,14 +2,15 @@ package testplan
 
 import (
 	"fmt"
-	"infra/tools/dirmd"
 	"regexp"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	planpb "go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/errors"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"infra/tools/dirmd"
 )
 
 // ValidateMapping validates ChromeOS test config in mapping.

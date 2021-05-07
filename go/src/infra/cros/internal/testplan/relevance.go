@@ -2,13 +2,13 @@ package testplan
 
 import (
 	"context"
-	"infra/tools/dirmd"
-	dirmdpb "infra/tools/dirmd/proto"
 	"regexp"
 	"strings"
 
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/logging"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // matchesAnyPattern returns true if s matches any pattern in patterns.

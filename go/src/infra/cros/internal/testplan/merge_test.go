@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"go.chromium.org/chromiumos/config/go/test/plan"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
 )
 
 func TestMergeSourceTestPlans(t *testing.T) {

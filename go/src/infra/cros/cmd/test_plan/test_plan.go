@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	igerrit "infra/cros/internal/gerrit"
-	"infra/cros/internal/testplan"
-	"infra/tools/dirmd"
 	"net/http"
 	"os"
 
 	protov1 "github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/luci/auth"
@@ -24,7 +23,9 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
-	"google.golang.org/protobuf/encoding/protojson"
+	igerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/testplan"
+	"infra/tools/dirmd"
 )
 
 var logCfg = gologger.LoggerConfig{

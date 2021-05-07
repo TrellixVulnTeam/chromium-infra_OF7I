@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/payload"
-
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/data/stringset"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // Output contains lists of build targets or DesignConfigIds and test tags to

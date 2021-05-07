@@ -2,13 +2,12 @@ package testplan
 
 import (
 	"context"
-	"infra/cros/internal/gerrit"
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/payload"
-
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/logging"
+	"infra/cros/internal/gerrit"
 )
 
 func Generate(

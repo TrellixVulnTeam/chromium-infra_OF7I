@@ -1,13 +1,13 @@
 package testplan
 
 import (
+	"testing"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
 	"infra/cros/internal/assert"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
-	"testing"
-
-	"go.chromium.org/chromiumos/config/go/test/plan"
 )
 
 func TestValidateMapping(t *testing.T) {

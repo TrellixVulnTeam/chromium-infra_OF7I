@@ -3,10 +3,6 @@ package testplan
 import (
 	"context"
 	"fmt"
-	"infra/cros/internal/gerrit"
-	"infra/cros/internal/git"
-	"infra/tools/dirmd"
-	dirmdpb "infra/tools/dirmd/proto"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -14,6 +10,10 @@ import (
 
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
+	"infra/cros/internal/gerrit"
+	"infra/cros/internal/git"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // projectMappingInfo groups a computed Mapping and affected files for a set

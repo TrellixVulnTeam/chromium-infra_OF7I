@@ -2,16 +2,17 @@ package testplan
 
 import (
 	"context"
-	"infra/cros/internal/cmd"
-	"infra/cros/internal/gerrit"
-	"infra/cros/internal/git"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
 	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/payload"
+	"infra/cros/internal/cmd"
+	"infra/cros/internal/gerrit"
+	"infra/cros/internal/git"
 )
 
 func TestGenerate(t *testing.T) {

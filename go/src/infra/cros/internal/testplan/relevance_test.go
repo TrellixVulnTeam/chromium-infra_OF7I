@@ -2,14 +2,15 @@ package testplan
 
 import (
 	"context"
-	"infra/tools/dirmd"
-	dirmdpb "infra/tools/dirmd/proto"
-	"infra/tools/dirmd/proto/chromeos"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"go.chromium.org/chromiumos/config/go/test/plan"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
+	"infra/tools/dirmd/proto/chromeos"
 )
 
 // buildMapping is a convenience to reduce boilerplate building Mappings.

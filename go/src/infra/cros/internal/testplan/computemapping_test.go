@@ -2,19 +2,20 @@ package testplan
 
 import (
 	"context"
+	"reflect"
+	"sort"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
-	"reflect"
-	"sort"
-	"testing"
-
-	"github.com/google/go-cmp/cmp"
-	"go.chromium.org/chromiumos/config/go/test/plan"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestComputeProjectMappingInfos(t *testing.T) {
