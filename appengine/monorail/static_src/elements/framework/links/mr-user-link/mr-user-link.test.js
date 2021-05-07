@@ -130,4 +130,27 @@ describe('mr-user-link', () => {
     assert.isFalse(userLink.hidden);
     assert.isTrue(userText.hidden);
   });
+
+  it('show availability user never visited', async () => {
+    element.userRef = {userId: '1234', displayName: 'test@example.com'};
+    element.referencedUsers = new Map(
+        [['test@example.com', {last_visit_timestamp: undefined}]]);
+
+    await element.updateComplete;
+    getElements();
+
+    assert.isTrue(availabilityIcon.classList.contains("inline-icon-unseen"));
+  });
+
+  it('show availability user visited', async () => {
+    element.userRef = {userId: '1234', displayName: 'test@example.com'};
+    element.referencedUsers = new Map(
+        [['test@example.com', {last_visit_timestamp: "35"}]]);
+
+    await element.updateComplete;
+    getElements();
+
+    assert.isTrue(availabilityIcon.classList.contains("inline-icon"));
+    assert.isFalse(availabilityIcon.classList.contains("inline-icon-unseen"));
+  });
 });

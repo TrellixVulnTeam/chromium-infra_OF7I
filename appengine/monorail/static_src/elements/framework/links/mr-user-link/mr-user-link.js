@@ -34,6 +34,9 @@ export class MrUserLink extends connectStore(LitElement) {
           vertical-align: bottom;
           cursor: pointer;
         }
+        i.inline-icon-unseen {
+          color: var(--chops-purple-700);
+        }
         i.material-icons[hidden] {
           display: none;
         }
@@ -82,12 +85,13 @@ export class MrUserLink extends connectStore(LitElement) {
   render() {
     const availability = this._getAvailability();
     const userLink = this._getUserLink();
+    const user = this.referencedUsers.get(this.userRef.displayName) || {};
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
       <i
         id="availability-icon"
-        class="material-icons inline-icon"
+        class="material-icons inline-icon ${user.last_visit_timestamp ? "" : "inline-icon-unseen"}"
         title="${availability}"
         ?hidden="${!(this.showAvailabilityIcon && availability)}"
       >schedule</i>
