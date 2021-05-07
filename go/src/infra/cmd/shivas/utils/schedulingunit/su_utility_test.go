@@ -67,21 +67,25 @@ func TestDutLabelValues(t *testing.T) {
 	Convey("Test get DUT's label values.", t, func() {
 		dims := []swarming.Dimensions{
 			{
+				"dut_name":    {"host1"},
 				"label-board": {"coral"},
 				"label-model": {"babytiger"},
 				"dut_state":   {"ready"},
 			},
 			{
+				"dut_name":    {"host2"},
 				"label-board": {"nami"},
 				"label-model": {"bard"},
 				"dut_state":   {"repair_failed"},
 			},
 			{
+				"dut_name":    {"host3"},
 				"label-board": {"eve"},
 				"label-model": {"eve"},
 				"dut_state":   {"ready"},
 			},
 		}
+		So(dutLabelValues("dut_name", dims), ShouldResemble, []string{"host1", "host2", "host3"})
 		So(dutLabelValues("label-board", dims), ShouldResemble, []string{"coral", "nami", "eve"})
 		So(dutLabelValues("label-model", dims), ShouldResemble, []string{"babytiger", "bard", "eve"})
 		So(dutLabelValues("dut_state", dims), ShouldResemble, []string{"ready", "repair_failed", "ready"})
@@ -97,18 +101,21 @@ func TestSchedulingUnitDimensions(t *testing.T) {
 		}
 		dims := []swarming.Dimensions{
 			{
+				"dut_name":      {"host1"},
 				"label-board":   {"coral"},
 				"label-model":   {"babytiger"},
 				"dut_state":     {"ready"},
 				"random-label1": {"123"},
 			},
 			{
+				"dut_name":      {"host2"},
 				"label-board":   {"nami"},
 				"label-model":   {"bard"},
 				"dut_state":     {"repair_failed"},
 				"random-label2": {"abc"},
 			},
 			{
+				"dut_name":      {"host3"},
 				"label-board":   {"eve"},
 				"label-model":   {"eve"},
 				"dut_state":     {"ready"},
@@ -116,14 +123,15 @@ func TestSchedulingUnitDimensions(t *testing.T) {
 			},
 		}
 		expectedResult := map[string][]string{
-			"dut_name":        {"test-unit1"},
-			"dut_id":          {"test-unit1"},
-			"label-pool":      {"nearby_sharing"},
-			"label-dut_count": {"3"},
-			"label-multiduts": {"True"},
-			"dut_state":       {"repair_failed"},
-			"label-board":     {"coral", "nami", "eve"},
-			"label-model":     {"babytiger", "bard", "eve"},
+			"dut_name":          {"test-unit1"},
+			"dut_id":            {"test-unit1"},
+			"label-pool":        {"nearby_sharing"},
+			"label-dut_count":   {"3"},
+			"label-multiduts":   {"True"},
+			"label-managed_dut": {"host1", "host2", "host3"},
+			"dut_state":         {"repair_failed"},
+			"label-board":       {"coral", "nami", "eve"},
+			"label-model":       {"babytiger", "bard", "eve"},
 		}
 		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
 	})

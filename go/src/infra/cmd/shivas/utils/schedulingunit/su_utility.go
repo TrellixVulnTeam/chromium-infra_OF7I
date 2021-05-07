@@ -77,11 +77,15 @@ func SchedulingUnitDimensions(su *ufspb.SchedulingUnit, dutsDims []swarming.Dime
 		"label-multiduts": {"True"},
 		"dut_state":       {schedulingUnitDutState(dutLabelValues("dut_state", dutsDims))},
 	}
-	singleValueLabels := []string{"label-board", "label-model"}
-	for _, l := range singleValueLabels {
-		joinedLabels := joinSingleValueLabel(dutLabelValues(l, dutsDims))
+	singleValueLabels := map[string]string{
+		"label-board": "label-board",
+		"label-model": "label-model",
+		"dut_name":    "label-managed_dut",
+	}
+	for dutLabelName, suLabelName := range singleValueLabels {
+		joinedLabels := joinSingleValueLabel(dutLabelValues(dutLabelName, dutsDims))
 		if len(joinedLabels) > 0 {
-			suDims[l] = joinedLabels
+			suDims[suLabelName] = joinedLabels
 		}
 	}
 	return suDims
