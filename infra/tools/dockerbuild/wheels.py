@@ -1106,7 +1106,6 @@ SPECS.update({
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
-            skip_plat=['mac-arm64-cross'],
         ),
     )
 })

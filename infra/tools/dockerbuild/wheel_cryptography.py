@@ -90,16 +90,33 @@ class Cryptography(Builder):
           cwd=openssl_dir,
       )
 
+      # Dockcross containers already contain cffi installed on the system.
+      # For other platforms, we run the setup.py script under vpython, so
+      # we can pre-install this wheel and its dependencies.
+      use_vpython = wheel.plat.dockcross_base is None
+
       # TODO: Use the version from the platform rather than hardcoding this?
       if wheel.plat.pyversion == 'py2':
-        py_binary = 'python2.7'
+        py_binary = 'vpython' if use_vpython else 'python2.7'
+        vpython_spec = '.vpython'
       else:
-        py_binary = 'python3.8'
+        py_binary = 'vpython3' if use_vpython else 'python3.8'
+        vpython_spec = '.vpython3'
 
       # Build "cryptography".
       d = {
         'prefix': prefix,
       }
+
+      if use_vpython:
+        with open(os.path.join(crypt_dir, vpython_spec), 'w') as spec:
+          for name, version in [('cffi/${vpython_platform}', '1.14.5'),
+                                ('pycparser-py2_py3', '2.17')]:
+            spec.write('wheel: <\n')
+            spec.write('  name: "infra/python/wheels/%s"\n' % name)
+            spec.write('  version: "version:%s"\n' % version)
+            spec.write('>\n')
+
       util.check_run_script(
           system,
           dx,
