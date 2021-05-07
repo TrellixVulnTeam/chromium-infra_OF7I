@@ -143,6 +143,8 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
           name='git commit')
       api.git(
           'push',
+          '-o',
+          'nokeycheck',
           target_repo,
           'HEAD:' + ref,
           # skip-validation is necessary as without it we cannot push >=10k
@@ -154,10 +156,8 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
           '--force',
           name='git push ' + ref)
 
-  api.git(
-      'push',
-      target_repo,
-      'refs/remotes/origin/master:refs/heads/master-original')
+  api.git('push', '-o', 'nokeycheck', target_repo,
+          'refs/remotes/origin/master:refs/heads/master-original')
 
   # You can't use --all and --tags at the same time for some reason.
   # --mirror pushes both, but it also pushes remotes, which we don't want.

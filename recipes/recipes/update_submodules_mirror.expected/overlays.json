@@ -203,6 +203,8 @@
     "cmd": [
       "git",
       "push",
+      "-o",
+      "nokeycheck",
       "https://chromium.googlesource.com/codesearch/src_mirror",
       "HEAD:refs/heads/master",
       "--push-option=skip-validation",
@@ -219,6 +221,8 @@
     "cmd": [
       "git",
       "push",
+      "-o",
+      "nokeycheck",
       "https://chromium.googlesource.com/codesearch/src_mirror",
       "refs/remotes/origin/master:refs/heads/master-original"
     ],
