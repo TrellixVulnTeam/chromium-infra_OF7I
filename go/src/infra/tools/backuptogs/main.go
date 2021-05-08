@@ -11,6 +11,9 @@ import (
 	"go.chromium.org/luci/common/tsmon"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/common/tsmon/types"
+
+	// Replace clock_gettime for OSX 10.11.
+	_ "go.chromium.org/luci/hacks/osx_clock_gettime_fix"
 )
 
 type gitMode int
