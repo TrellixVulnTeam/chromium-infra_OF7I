@@ -6,8 +6,8 @@ import React, {ReactElement} from 'react';
 import ReactDOM from 'react-dom';
 
 /**
- * Base component for the issue filzing wizard, wrapper for other components.
- * @return {ReactElement}
+ * Base component for the issue filing wizard, wrapper for other components.
+ * @return Issue wizard JSX.
  */
 export function IssueWizard(): ReactElement {
   return (
@@ -16,8 +16,8 @@ export function IssueWizard(): ReactElement {
 }
 
 /**
- * Function to render the issue filzing wizard page.
- * @param {HTMLElement} mount HTMLElement that the React component should be
+ * Renders the issue filing wizard page.
+ * @param mount HTMLElement that the React component should be
  *   added to.
  */
 export function renderWizard(mount: HTMLElement): void {

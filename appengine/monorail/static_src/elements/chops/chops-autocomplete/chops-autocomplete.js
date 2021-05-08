@@ -12,7 +12,7 @@ import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 const DELIMITER_REGEX = /[^a-z0-9]+/i;
 
 /**
- * A function to specify what happens to the input element an autocomplete
+ * Specifies what happens to the input element an autocomplete
  * instance is attached to when a user selects an autocomplete option. This
  * constant specifies the default behavior where a form's entire value is
  * replaced with the selected value.

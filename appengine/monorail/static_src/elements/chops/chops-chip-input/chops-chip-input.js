@@ -264,7 +264,7 @@ export class ChopsChipInput extends LitElement {
   }
 
   /**
-   * Helper function to handle updating the chip input's internal value store.
+   * Updates the chip input's internal value store.
    * @param {Array<string>} values Values to save.
    * @private
    */

@@ -224,7 +224,7 @@ function _renderTags<T>(
 }
 
 /**
- * Function to generate a RegExp to match autocomplete values.
+ * Generates a RegExp to match autocomplete values.
  * @param needle The string the user is searching for.
  * @return A RegExp to find matching values.
  */

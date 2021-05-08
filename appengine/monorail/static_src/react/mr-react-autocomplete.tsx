@@ -118,7 +118,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   }
 
   /**
-   * Function to compute the set of options used by the autocomplete instance.
+   * Computes the set of options used by the autocomplete instance.
    * @return Array of strings that the user can try to match.
    */
   _options(): string[] {
