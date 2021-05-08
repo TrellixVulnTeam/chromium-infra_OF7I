@@ -37,6 +37,7 @@ interface AutocompleteProps<T> {
  * - Option descriptions that render alongside the option labels.
  * - Matching on word boundaries in both the labels and descriptions.
  * - Highlighting of the matching substrings.
+ * @return Autocomplete instance with Monorail-specific properties set.
  */
 export function ReactAutocomplete<T>(
   {
@@ -67,7 +68,8 @@ export function ReactAutocomplete<T>(
 /**
  * Modifies the default option matching behavior to match on all Regex word
  * boundaries and to match on both label and description.
- * @param getOptionDescription
+ * @param getOptionDescription Function to get the description for an option.
+ * @return The text for a given option.
  */
 function _filterOptions<T>(getOptionDescription: (option: T) => string) {
   return (
@@ -84,12 +86,15 @@ function _filterOptions<T>(getOptionDescription: (option: T) => string) {
 }
 
 /**
- *
- * @param fixedValues
- * @param multiple
- * @param onChange
- * @param setValue
- * @returns
+ * Computes an onChange handler for Autocomplete. Adds logic to make sure
+ * fixedValues are preserved and wraps whatever onChange handler the parent
+ * passed in.
+ * @param fixedValues Values that display in the edit field but can't be
+ *   edited by the user. Usually set by filter rules in Monorail.
+ * @param multiple Whether this input takes multiple values or not.
+ * @param onChange onChange property passed in by parent, used to sync value
+ *   changes to parent.
+ * @return Function that's run on Autocomplete changes.
  */
 function _onChange<T, Multiple, DisableClearable, FreeSolo>(
   fixedValues: T[],
@@ -120,15 +125,27 @@ function _onChange<T, Multiple, DisableClearable, FreeSolo>(
   }
 }
 
-function _renderInput() {
+/**
+ * @return A function that renders the input element used by
+ *   ReactAutocomplete.
+ */
+function _renderInput():
+    (params: AutocompleteRenderInputParams) => React.ReactNode {
   return (params: AutocompleteRenderInputParams): React.ReactNode =>
     <TextField {...params} variant="standard" size="small" />;
 }
 
+/**
+ * Renders a single instance of an option for Autocomplete.
+ * @param getOptionDescription Function to get the description text shown.
+ * @param getOptionLabel Function to get the name of the option shown to the
+ *   user.
+ * @return ReactNode containing the JSX to be rendered.
+ */
 function _renderOption<T>(
   getOptionDescription: (option: T) => string,
   getOptionLabel: (option: T) => string
-) {
+): React.ReactNode {
   return (
     props: React.HTMLAttributes<HTMLLIElement>,
     option: T,
@@ -179,11 +196,12 @@ function _renderOption<T>(
 }
 
 /**
- * Ensures that fixedValues are disabled.
+ * Helper to render the Chips elements used by Autocomplete. Ensures that
+ * fixedValues are disabled.
  * @param fixedValues Undeleteable values in an issue usually set by filter
  *   rules.
- * @param getOptionLabel
- * @returns
+ * @param getOptionLabel Function to compute text for the option.
+ * @return Function to render the ReactNode for all the chips.
  */
 function _renderTags<T>(
   fixedValues: T[], getOptionLabel: (option: T) => string
@@ -192,15 +210,24 @@ function _renderTags<T>(
     value: T[],
     getTagProps: AutocompleteRenderGetTagProps
   ): React.ReactNode => {
-    return value.map((option, index) => <Chip
-      {...getTagProps({index})}
-      label={getOptionLabel(option)}
-      disabled={fixedValues.includes(option)}
-      size="small"
-    />);
+    return value.map((option, index) => {
+      const label = getOptionLabel(option);
+      return <Chip
+        {...getTagProps({index})}
+        key={label}
+        label={label}
+        disabled={fixedValues.includes(option)}
+        size="small"
+      />;
+    });
   }
 }
 
+/**
+ * Function to generate a RegExp to match autocomplete values.
+ * @param needle The string the user is searching for.
+ * @return A RegExp to find matching values.
+ */
 function _matchRegex(needle: string): RegExp {
   // This code copied from ac.js.
   // Since we use needle to build a regular expression, we need to escape RE

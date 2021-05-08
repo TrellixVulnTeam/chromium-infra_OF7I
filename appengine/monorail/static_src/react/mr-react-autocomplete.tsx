@@ -60,11 +60,13 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   @internalProperty() protected _projects:
     {contributorTo?: string[], memberOf?: string[], ownerOf?: string[]} = {};
 
-  createRenderRoot() {
+  /** @override */
+  createRenderRoot(): LitElement {
     return this;
   }
 
-  updated(changedProperties: Map<string | number | symbol, unknown>) {
+  /** @override */
+  updated(changedProperties: Map<string | number | symbol, unknown>): void {
     super.updated(changedProperties);
 
     const options = this._options();
@@ -85,7 +87,8 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
     ReactDOM.render(element, this);
   }
 
-  stateChanged(state: any) {
+  /** @override */
+  stateChanged(state: any): void {
     super.stateChanged(state);
 
     this._components = projectV0.componentsMap(state);
@@ -94,41 +97,53 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
     this._projects = userV0.projects(state);
   }
 
+  /**
+   * Computes which description belongs to given autocomplete option.
+   * Different data is shown depending on the autocomplete vocabulary.
+   * @param option The option to find a description for.
+   * @return The description for the option.
+   */
   _getOptionDescription(option: string): string {
     switch (this.vocabularyName) {
-      case 'component':
+      case 'component': {
         const component = this._components.get(option);
         return component && component.docstring || '';
-      case 'label':
+      } case 'label': {
         const label = this._labels.get(option);
         return label && label.docstring || '';
-      default:
+      } default: {
         return '';
+      }
     }
   }
 
+  /**
+   * Function to compute the set of options used by the autocomplete instance.
+   * @return Array of strings that the user can try to match.
+   */
   _options(): string[] {
     switch (this.vocabularyName) {
-      case 'component':
+      case 'component': {
         return [...this._components.keys()];
-      case 'label':
+      } case 'label': {
         // The label map keys are lowercase. Use the LabelDef label name instead.
         return [...this._labels.values()].map((labelDef: LabelDef) => labelDef.label);
-      case 'member':
-        var {userRefs = []} = this._members;
-        var users = userRefsToDisplayNames(userRefs);
+      } case 'member': {
+        const {userRefs = []} = this._members;
+        const users = userRefsToDisplayNames(userRefs);
         return users;
-      case 'owner':
-        var {userRefs = [], groupRefs = []} = this._members;
-        var users = userRefsToDisplayNames(userRefs);
+      } case 'owner': {
+        const {userRefs = [], groupRefs = []} = this._members;
+        const users = userRefsToDisplayNames(userRefs);
         const groups = userRefsToDisplayNames(groupRefs);
         // Remove groups from the list of all members.
         return arrayDifference(users, groups);
-      case 'project':
+      } case 'project': {
         const {ownerOf = [], memberOf = [], contributorTo = []} = this._projects;
         return [...ownerOf, ...memberOf, ...contributorTo];
-      default:
+      } default: {
         throw new Error(`Unknown vocabulary name: ${this.vocabularyName}`);
+      }
     }
   }
 }

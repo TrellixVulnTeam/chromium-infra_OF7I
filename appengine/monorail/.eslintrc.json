@@ -1,14 +1,42 @@
 {
     "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended",
         "google",
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
         "plugin:css-modules/recommended"
     ],
-    "plugins": ["css-modules", "jsx-a11y"],
+    "plugins": ["react", "css-modules", "jsx-a11y", "@typescript-eslint"],
     "env": {
         "es6": true
     },
-    "parser": "babel-eslint",
+    "parser": "@typescript-eslint/parser",
     "parserOptions": {
+        "ecmaFeatures": {
+        "jsx": true
+        },
+        "ecmaVersion": 12,
         "sourceType": "module"
-    }
+    },
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
+    },
+    "rules": {
+        "react/display-name": "off"
+    },
+    "overrides": [
+        {
+          "files": ["*.ts", "*.tsx"],
+          "rules": {
+            "valid-jsdoc": ["error", {
+                "requireReturnType": false,
+                "requireParamType": false,
+                "requireReturn": false
+            }]
+          }
+        }
+    ]
 }
