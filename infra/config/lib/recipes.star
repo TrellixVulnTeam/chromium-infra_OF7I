@@ -68,7 +68,7 @@ def simulation_tester(
             category = console_category,
         )
 
-def roll_trybots(upstream, downstream, cq_group, os = "Ubuntu-16.04"):
+def roll_trybots(upstream, downstream, cq_group, os = "Ubuntu"):
     """Defines a bunch of recipe roller trybots, one per downstream project.
 
     Args:

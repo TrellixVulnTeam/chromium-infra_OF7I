@@ -66,8 +66,6 @@ recipes.roll_trybots(
         #'skiabuildbot',
     ],
     cq_group = "recipes-py",
-    # TODO(tandrii): make this default for rollers and remove from here.
-    os = "Ubuntu-16.04",
 )
 
 # External testers (defined in another projects) for recipe rolls.
