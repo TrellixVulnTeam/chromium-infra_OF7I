@@ -70,7 +70,6 @@ def try_builder(
 # the fact that we have only go1.15 OSX amd64 binaries.
 
 # CI Linux.
-ci_builder(name = "infra-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
 ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
     "go_version_variant": "bleeding_edge",
 })
@@ -135,7 +134,6 @@ try_builder(
     experiment_percentage = 100,
     properties = {"go_version_variant": "bleeding_edge"},
 )
-try_builder(name = "infra-try-trusty-64", os = "Ubuntu-14.04")
 
 try_builder(name = "infra-try-mac", os = "Mac-10.15", properties = {
     "go_version_variant": "legacy",

@@ -71,7 +71,6 @@ def try_builder(
 # All OSX builders are testing specifically for go1.15 (aka "legacy") to reflect
 # the fact that we have only go1.15 OSX amd64 binaries.
 
-ci_builder(name = "luci-go-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
     "go_version_variant": "bleeding_edge",
 })
@@ -87,7 +86,6 @@ ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_clos
 })
 ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
-try_builder(name = "luci-go-try-trusty-64", os = "Ubuntu-14.04")
 try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
     "run_integration_tests": True,
     "go_version_variant": "bleeding_edge",
