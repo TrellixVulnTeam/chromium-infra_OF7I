@@ -53,6 +53,7 @@ type testCommonFlags struct {
 	model           string
 	pool            string
 	image           string
+	release         string
 	qsAccount       string
 	maxRetries      int
 	priority        int64
@@ -68,7 +69,9 @@ type testCommonFlags struct {
 // Registers run command-specific flags
 func (c *testCommonFlags) register(f *flag.FlagSet) {
 	f.StringVar(&c.image, "image", "", `Optional fully specified image name to run test against, e.g. octopus-release/R89-13609.0.0.
-If no value is passed, test will run against the latest green build for the given board.`)
+If no value for image or release is passed, test will run against the latest green postsubmit build for the given board.`)
+	f.StringVar(&c.release, "release", "", `Optional ChromeOS release branch to run test against, e.g. R89-13609.0.0.
+If no value for image or release is passed, test will run against the latest green postsubmit build for the given board.`)
 	f.StringVar(&c.board, "board", "", "Board to run tests on.")
 	f.StringVar(&c.model, "model", "", "Model to run tests on.")
 	f.StringVar(&c.pool, "pool", "", "Device pool to run tests on.")
@@ -96,9 +99,15 @@ func (c *testCommonFlags) validateAndAutocompleteFlags(ctx context.Context, f *f
 	if err := c.validateArgs(f, mainArgType); err != nil {
 		return err
 	}
-	// If no image was specified, determine the latest green image for the
-	// given board.
-	if c.image == "" {
+	if c.release != "" {
+		// Users can specify the ChromeOS release branch via the -release flag,
+		// rather than specifying a full image name. In this case, we infer the
+		// full image name from the release branch.
+		c.image = releaseImage(c.board, c.release)
+	} else if c.image == "" {
+		// If no release or image was specified, determine the latest green
+		// postsubmit
+		// image for the given board.
 		latestImage, err := latestImage(ctx, c.board, bbService, authFlags)
 		if err != nil {
 			return fmt.Errorf("error determining the latest image for board %s: %v", c.board, err)
@@ -117,6 +126,9 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 	if c.pool == "" {
 		errors = append(errors, "missing pool flag")
 	}
+	if c.image != "" && c.release != "" {
+		errors = append(errors, "cannot specify both image and release branch")
+	}
 	if c.priority < MinSwarmingPriority || c.priority > MaxSwarmingPriority {
 		errors = append(errors, fmt.Sprintf("priority flag should be in [%d, %d]", MinSwarmingPriority, MaxSwarmingPriority))
 	}
@@ -128,6 +140,12 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 		return cmdlib.NewUsageError(*f, strings.Join(errors, "\n"))
 	}
 	return nil
+}
+
+// releaseImage constructs a build image name from the release builder for the
+// given board and ChromeOS release branch.
+func releaseImage(board, release string) string {
+	return fmt.Sprintf("%s-release/%s", board, release)
 }
 
 // latestImage gets the build image from the latest green postsubmit build for

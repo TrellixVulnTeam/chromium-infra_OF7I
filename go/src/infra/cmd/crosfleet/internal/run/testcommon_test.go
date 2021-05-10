@@ -27,12 +27,14 @@ var testValidateArgsData = []struct {
 		testCommonFlags{
 			board:    "",
 			pool:     "",
-			image:    "",
+			image:    "sample-image",
+			release:  "sample-release",
 			priority: 256,
 		},
 		[]string{},
 		`missing board flag
 missing pool flag
+cannot specify both image and release branch
 priority flag should be in [50, 255]
 missing suite-name arg`,
 	},
@@ -50,7 +52,7 @@ missing suite-name arg`,
 		testCommonFlags{
 			board:    "sample-board",
 			pool:     "sample-pool",
-			image:    "sample-image",
+			release:  "sample-release",
 			priority: 255,
 		},
 		[]string{"sample-suite-name"},
