@@ -21,8 +21,11 @@ import "infra/tools/dirmd/proto/chromeos/chromeos.proto";
 // inheritance.
 message Metadata {
   // Paths to Metadata files to import into this file.
+  //
   // A metadata file is imported AS IS, without inheritance from its
-  // ancestors.
+  // ancestors. To prevent confusion, the imported file's base name may not be
+  // DIR_METADATA. Instead, the file name must entail its scope, e.g.
+  // the software component that it is describing.
   //
   // Imports can be useful to reduce duplication of metadata across the repo.
   // For example in Java, implementation and tests of the same feature live in
