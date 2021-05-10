@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -70,7 +70,7 @@ def main():
 
   new = bootstrap.prepare_go_environ()
   if not args:
-    for key, value in sorted(new.iteritems()):
+    for key, value in sorted(new.items()):
       if old.get(key) != value:
         emit_env_var(key, value)
     # VIRTUAL_ENV is added by the vpython wrapper. It usually *does not* exist
