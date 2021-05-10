@@ -35,16 +35,16 @@ Do not build automation around this subcommand.`,
 		c := &infoRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.BoolVar(&c.json, "json", false, "Format output as JSON.")
+		c.printer.Register(&c.Flags)
 		return c
 	},
 }
 
 type infoRun struct {
 	subcommands.CommandRunBase
-	json      bool
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
+	printer   common.CLIPrinter
 }
 
 func (c *infoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -74,15 +74,10 @@ func (c *infoRun) innerRun(a subcommands.Application, args []string, env subcomm
 		// If outputting the command as JSON, collect all DUT info in a proto
 		// message first, then print together as one JSON object.
 		// Otherwise, just print each separately from this loop.
-		if c.json {
-			infoList.DUTs = append(infoList.DUTs, info)
-		} else {
-			fmt.Fprintf(a.GetOut(), "%s\n\n", dutInfoAsBashVariables(info))
-		}
+		infoList.DUTs = append(infoList.DUTs, info)
+		c.printer.WriteTextStdout("%s\n", dutInfoAsBashVariables(info))
 	}
-	if c.json {
-		fmt.Fprintf(a.GetOut(), "%s\n", protoJSON(&infoList))
-	}
+	c.printer.WriteJSONStdout(&infoList)
 	return nil
 }
 

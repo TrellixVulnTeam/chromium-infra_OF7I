@@ -58,7 +58,6 @@ type backfillRun struct {
 	envFlags  common.EnvFlags
 	buildID   int64
 	buildTags map[string]string
-	exitEarly bool
 }
 
 func (args *backfillRun) Run(a subcommands.Application, _ []string, env subcommands.Env) int {
@@ -86,7 +85,7 @@ func (args *backfillRun) innerRun(a subcommands.Application, env subcommands.Env
 	}
 	if backfillCount > 1 {
 		userPromptReason := fmt.Sprintf("Found %d builds to backfill", backfillCount)
-		confirmMultipleBackfills, err := common.CLIPrompt(a.GetOut(), os.Stdin, userPromptReason, false)
+		confirmMultipleBackfills, err := common.CLIPrompt(userPromptReason, false)
 		if err != nil {
 			return err
 		}
@@ -103,17 +102,17 @@ func (args *backfillRun) innerRun(a subcommands.Application, env subcommands.Env
 		}
 		if backfillAlreadyRunning {
 			runningBackfillURL := ctpBBClient.BuildURL(runningBackfillID)
-			fmt.Fprintf(a.GetOut(), "Backfill already running at %s\nfor original build %d\n", runningBackfillURL, original.Id)
+			fmt.Fprintf(os.Stdout, "Backfill already running at %s\nfor original build %d\n", runningBackfillURL, original.Id)
 			continue
 		}
-		newBackfillID, err := ctpBBClient.ScheduleBuild(ctx, map[string]interface{}{
+		newBackfill, err := ctpBBClient.ScheduleBuild(ctx, map[string]interface{}{
 			"requests": original.Input.Properties.GetFields()["requests"],
 		}, nil, backfillTags, 0)
 		if err != nil {
 			return err
 		}
-		newBackfillURL := ctpBBClient.BuildURL(newBackfillID)
-		fmt.Fprintf(a.GetOut(), "Scheduled backfill at %s\nfor original build %d\n", newBackfillURL, original.Id)
+		newBackfillURL := ctpBBClient.BuildURL(newBackfill.Id)
+		fmt.Fprintf(os.Stdout, "Scheduled backfill at %s\nfor original build %d\n", newBackfillURL, original.Id)
 	}
 	return nil
 }

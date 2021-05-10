@@ -36,6 +36,7 @@ Do not build automation around this subcommand.`,
 		c := &testRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.printer.Register(&c.Flags)
 		c.testCommonFlags.register(&c.Flags)
 		c.Flags.StringVar(&c.testArgs, "test-args", "", "Test arguments string (meaning depends on test).")
 		return c
@@ -47,6 +48,7 @@ type testRun struct {
 	testCommonFlags
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
+	printer   common.CLIPrinter
 	testArgs  string
 }
 
@@ -61,7 +63,7 @@ func (c *testRun) Run(a subcommands.Application, args []string, env subcommands.
 func (c *testRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	bbService := c.envFlags.Env().BuildbucketService
 	ctx := cli.GetContext(a, c, env)
-	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testCmdName, bbService, c.authFlags, a.GetErr()); err != nil {
+	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testCmdName, bbService, c.authFlags, c.printer); err != nil {
 		return err
 	}
 	testPlan := testPlanForTests(c.testArgs, args)
@@ -74,7 +76,7 @@ func (c *testRun) innerRun(a subcommands.Application, args []string, env subcomm
 	}
 
 	testLauncher := ctpRunLauncher{
-		cliApp:    a,
+		printer:   c.printer,
 		cmdName:   testCmdName,
 		bbClient:  ctpBBClient,
 		testPlan:  testPlan,

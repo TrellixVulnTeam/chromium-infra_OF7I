@@ -34,8 +34,8 @@ Do not build automation around this subcommand.`,
 		c := &leasesRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.printer.Register(&c.Flags)
 		c.Flags.BoolVar(&c.full, "full", false, "Output full DUT/servo info for each lease.")
-		c.Flags.BoolVar(&c.json, "json", false, "Format output as JSON.")
 		c.Flags.BoolVar(&c.includeFinished, "include-finished", false, "Include finished builds.")
 		c.Flags.Int64Var(&c.hoursBack, "hours-back", maxLeaseLengthMinutes/60, `Max time since lease finished. Only applies if including finished leases in the search
 via the -include-finished flag.`)
@@ -46,11 +46,11 @@ via the -include-finished flag.`)
 type leasesRun struct {
 	subcommands.CommandRunBase
 	full            bool
-	json            bool
 	includeFinished bool
 	hoursBack       int64
 	authFlags       authcli.Flags
 	envFlags        common.EnvFlags
+	printer         common.CLIPrinter
 }
 
 func (c *leasesRun) Run(a subcommands.Application, _ []string, env subcommands.Env) int {
@@ -139,15 +139,10 @@ func (c *leasesRun) innerRun(a subcommands.Application, env subcommands.Env) err
 		// If outputting the command as JSON, collect all lease info in a proto
 		// message first, then print together as one JSON object.
 		// Otherwise, just print each separately from this loop.
-		if c.json {
-			leaseInfoList.Leases = append(leaseInfoList.Leases, leaseInfo)
-		} else {
-			fmt.Fprintf(a.GetOut(), "%s\n\n", leaseInfoAsBashVariables(leaseInfo, leasesBBClient))
-		}
+		leaseInfoList.Leases = append(leaseInfoList.Leases, leaseInfo)
+		c.printer.WriteTextStdout("%s\n", leaseInfoAsBashVariables(leaseInfo, leasesBBClient))
 	}
-	if c.json {
-		fmt.Fprintf(a.GetOut(), "%s\n", protoJSON(&leaseInfoList))
-	}
+	c.printer.WriteJSONStdout(&leaseInfoList)
 
 	return nil
 }

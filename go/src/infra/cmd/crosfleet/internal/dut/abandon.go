@@ -32,6 +32,7 @@ Do not build automation around this subcommand.`,
 		c := &abandonRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.printer.Register(&c.Flags)
 		c.Flags.StringVar(&c.reason, "reason", "", "Optional reason for abandoning.")
 		return c
 	},
@@ -42,6 +43,7 @@ type abandonRun struct {
 	reason    string
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
+	printer   common.CLIPrinter
 }
 
 func (c *abandonRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -77,7 +79,7 @@ func (c *abandonRun) innerRun(a subcommands.Application, args []string, env subc
 		botIDs = append(botIDs, id)
 	}
 
-	err = leasesBBClient.CancelBuildsByUser(ctx, a.GetOut(), earliestCreateTime, userEmail, botIDs, c.reason)
+	err = leasesBBClient.CancelBuildsByUser(ctx, c.printer, earliestCreateTime, userEmail, botIDs, c.reason)
 	if err != nil {
 		return err
 	}

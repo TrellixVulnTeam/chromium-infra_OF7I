@@ -35,19 +35,18 @@ var CmdDut = &subcommands.Command{
 Run 'crosfleet %s' to see list of all subcommands.`, dutCmdName),
 	CommandRun: func() subcommands.CommandRun {
 		c := &dutCmdRun{}
-		c.Init()
 		return c
 	},
 }
 
 type dutCmdRun struct {
-	common.Flags
+	subcommands.CommandRunBase
 }
 
 func (c *dutCmdRun) Run(a subcommands.Application, args []string, _ subcommands.Env) int {
 	status := subcommands.Run(dutApplication, args)
 	if status == 0 {
-		common.PrintCrosfleetUIPrompt(a)
+		common.WriteCrosfleetUIPromptStderr(args)
 	}
 	return status
 }

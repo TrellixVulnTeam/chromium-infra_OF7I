@@ -11,6 +11,7 @@ import (
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
+	crosfleetpb "infra/cmd/crosfleet/internal/proto"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"strings"
@@ -51,6 +52,7 @@ Do not build automation around this subcommand.`,
 		c := &leaseRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.printer.Register(&c.Flags)
 		c.leaseFlags.register(&c.Flags)
 		return c
 	},
@@ -61,6 +63,7 @@ type leaseRun struct {
 	leaseFlags
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
+	printer   common.CLIPrinter
 }
 
 func (c *leaseRun) Run(a subcommands.Application, _ []string, env subcommands.Env) int {
@@ -92,35 +95,36 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	if err != nil {
 		return err
 	}
-	buildID, err := leasesBBClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
+	var leaseInfo crosfleetpb.LeaseInfo
+	leaseInfo.Build, err = leasesBBClient.ScheduleBuild(ctx, buildProps, botDims, buildTags, dutLeaserBuildPriority)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetErr(), "Requesting %d minute lease at %s\n", c.durationMins, leasesBBClient.BuildURL(buildID))
-	if c.exitEarly {
-		return nil
+	c.printer.WriteTextStderr("Requesting %d minute lease at %s", c.durationMins, leasesBBClient.BuildURL(leaseInfo.Build.Id))
+	if !c.exitEarly {
+		c.printer.WriteTextStderr("Waiting to confirm DUT %s request validation and print leased DUT details...\n(To skip this step, pass the -exit-early flag on future DUT %s commands)", leaseCmdName, leaseCmdName)
+		leaseInfo.Build, err = leasesBBClient.WaitForBuildStepStart(ctx, leaseInfo.Build.Id, c.leaseStartStepName())
+		if err != nil {
+			return err
+		}
+		host := buildbucket.FindDimValInFinalDims("dut_name", leaseInfo.Build)
+		endTime := time.Now().Add(time.Duration(c.durationMins) * time.Minute).Format(time.RFC822)
+		c.printer.WriteTextStdout("Leased %s until %s\n", host, endTime)
+		ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
+		if err != nil {
+			// Don't fail the command here, since the DUT is already leased.
+			c.printer.WriteTextStderr("Unable to contact UFS to print DUT info: %v", err)
+			return nil
+		}
+		leaseInfo.DUT, err = getDutInfo(ctx, ufsClient, host)
+		if err != nil {
+			// Don't fail the command here, since the DUT is already leased.
+			c.printer.WriteTextStderr("Unable to print DUT info: %v", err)
+			return nil
+		}
+		c.printer.WriteTextStderr("%s\n", dutInfoAsBashVariables(leaseInfo.DUT))
 	}
-	fmt.Fprintf(a.GetErr(), "Waiting to confirm DUT %s request validation and print leased DUT details...\n(To skip this step, pass the -exit-early flag on future DUT %s commands)\n", leaseCmdName, leaseCmdName)
-	build, err := leasesBBClient.WaitForBuildStepStart(ctx, buildID, c.leaseStartStepName())
-	if err != nil {
-		return err
-	}
-	host := buildbucket.FindDimValInFinalDims("dut_name", build)
-	endTime := time.Now().Add(time.Duration(c.durationMins) * time.Minute).Format(time.RFC822)
-	fmt.Fprintf(a.GetOut(), "Leased %s until %s\n\n", host, endTime)
-	ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
-	if err != nil {
-		// Don't fail the command here, since the DUT is already leased.
-		fmt.Fprintf(a.GetErr(), "Unable to contact UFS to print DUT info: %v", err)
-		return nil
-	}
-	dutInfo, err := getDutInfo(ctx, ufsClient, host)
-	if err != nil {
-		// Don't fail the command here, since the DUT is already leased.
-		fmt.Fprintf(a.GetErr(), "Unable to print DUT info: %v", err)
-		return nil
-	}
-	fmt.Fprintf(a.GetErr(), "%s\n\n", dutInfoAsBashVariables(dutInfo))
+	c.printer.WriteJSONStdout(&leaseInfo)
 	return nil
 }
 

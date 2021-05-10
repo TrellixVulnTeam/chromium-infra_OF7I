@@ -41,8 +41,9 @@ Do not build automation around this subcommand.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &planRun{}
 		c.envFlags.Register(&c.Flags)
-		c.testCommonFlags.register(&c.Flags)
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
+		c.printer.Register(&c.Flags)
+		c.testCommonFlags.register(&c.Flags)
 		return c
 	},
 }
@@ -52,6 +53,7 @@ type planRun struct {
 	testCommonFlags
 	authFlags authcli.Flags
 	envFlags  common.EnvFlags
+	printer   common.CLIPrinter
 }
 
 func (c *planRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -65,7 +67,7 @@ func (c *planRun) Run(a subcommands.Application, args []string, env subcommands.
 func (c *planRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	bbService := c.envFlags.Env().BuildbucketService
 	ctx := cli.GetContext(a, c, env)
-	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testPlanCmdName, bbService, c.authFlags, a.GetErr()); err != nil {
+	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testPlanCmdName, bbService, c.authFlags, c.printer); err != nil {
 		return err
 	}
 	if len(args) > 1 {
@@ -84,7 +86,7 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 	}
 
 	testLauncher := ctpRunLauncher{
-		cliApp:    a,
+		printer:   c.printer,
 		cmdName:   testPlanCmdName,
 		bbClient:  ctpBBClient,
 		testPlan:  testPlan,

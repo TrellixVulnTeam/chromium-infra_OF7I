@@ -37,3 +37,7 @@ message LeaseInfo {
 message LeaseInfoList {
   repeated LeaseInfo Leases = 1;
 }
+
+message BuildIdList {
+  repeated int64 Ids = 1;
+}

@@ -9,13 +9,10 @@ import (
 	"flag"
 	"fmt"
 	"infra/cmdsupport/cmdlib"
-	"io"
 	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -65,7 +62,6 @@ type testCommonFlags struct {
 	addedTags       map[string]string
 	keyvals         map[string]string
 	exitEarly       bool
-	json            bool
 	lacrosPath      string
 }
 
@@ -91,13 +87,12 @@ If a Quota Scheduler account is specified via -qs-account, this value is not use
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyval", "Autotest keyval in format key=val or key:val; may be specified multiple times.")
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyvals", "Comma-separated Autotest keyvals in same format as -keyval.")
 	f.BoolVar(&c.exitEarly, "exit-early", false, "Exit command as soon as test is scheduled. crosfleet will not notify on test validation failure.")
-	f.BoolVar(&c.json, "json", false, "Format output as JSON.")
 	f.StringVar(&c.lacrosPath, "lacros-path", "", "Optional GCS path pointing to a lacros artifact.")
 }
 
 // validateAndAutocompleteFlags returns any errors after validating the CLI
 // flags, and autocompletes the -image flag unless it was specified by the user.
-func (c *testCommonFlags) validateAndAutocompleteFlags(ctx context.Context, f *flag.FlagSet, mainArgType, bbService string, authFlags authcli.Flags, writer io.Writer) error {
+func (c *testCommonFlags) validateAndAutocompleteFlags(ctx context.Context, f *flag.FlagSet, mainArgType, bbService string, authFlags authcli.Flags, printer common.CLIPrinter) error {
 	if err := c.validateArgs(f, mainArgType); err != nil {
 		return err
 	}
@@ -108,7 +103,7 @@ func (c *testCommonFlags) validateAndAutocompleteFlags(ctx context.Context, f *f
 		if err != nil {
 			return fmt.Errorf("error determining the latest image for board %s: %v", c.board, err)
 		}
-		fmt.Fprintf(writer, "Using latest green build image %s for board %s\n", latestImage, c.board)
+		printer.WriteTextStderr("Using latest green build image %s for board %s", latestImage, c.board)
 		c.image = latestImage
 	}
 	return nil
@@ -210,7 +205,7 @@ func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[st
 // testRunLauncher contains the necessary information to launch and validate a
 // CTP test plan.
 type ctpRunLauncher struct {
-	cliApp    subcommands.Application
+	printer   common.CLIPrinter
 	cmdName   string
 	bbClient  *buildbucket.Client
 	testPlan  *test_platform.Request_TestPlan
@@ -224,30 +219,30 @@ type ctpRunLauncher struct {
 // build. Unless the exitEarly arg is passed as true, the function waits to
 // return until the build passes request-validation and setup steps.
 func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
-	buildID, err := l.launchCTPBuild(ctx)
+	ctpBuild, err := l.launchCTPBuild(ctx)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(l.cliApp.GetErr(), "Requesting %s run at %s\n", l.cmdName, l.bbClient.BuildURL(buildID))
-	if l.exitEarly {
-		return nil
+	l.printer.WriteTextStderr("Requesting %s run at %s", l.cmdName, l.bbClient.BuildURL(ctpBuild.Id))
+	if !l.exitEarly {
+		l.printer.WriteTextStderr("Waiting to confirm %s run request validation...\n(To skip this step, pass the -exit-early flag on future %s run commands)", l.cmdName, l.cmdName)
+		ctpBuild, err = l.bbClient.WaitForBuildStepStart(ctx, ctpBuild.Id, ctpExecuteStepName)
+		if err != nil {
+			return err
+		}
+		l.printer.WriteTextStdout("Successfully started %s run", l.cmdName)
 	}
-	fmt.Fprintf(l.cliApp.GetErr(), "Waiting to confirm %s run request validation...\n(To skip this step, pass the -exit-early flag on future %s run commands)\n", l.cmdName, l.cmdName)
-	_, err = l.bbClient.WaitForBuildStepStart(ctx, buildID, ctpExecuteStepName)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(l.cliApp.GetOut(), "Successfully started %s run\n", l.cmdName)
+	l.printer.WriteJSONStdout(ctpBuild)
 	return nil
 }
 
 // launchCTPBuild uses the given Buildbucket client to launch a
 // cros_test_platform Buildbucket build for the CTP run launcher's test plan,
 // build tags, and command line flags, and returns the ID of the launched build.
-func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context) (int64, error) {
+func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context) (*buildbucketpb.Build, error) {
 	ctpRequest, err := l.testPlatformRequest()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	buildProps := map[string]interface{}{
 		"requests": map[string]interface{}{

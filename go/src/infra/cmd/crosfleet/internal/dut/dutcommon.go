@@ -15,13 +15,11 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/auth/client/authcli"
 	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const swarmingAPISuffix = "_ah/api/swarming/v1/"
@@ -73,19 +71,6 @@ func correctedHostname(hostname string) string {
 	hostname = strings.TrimPrefix(hostname, "crossk-")
 	hostname = strings.TrimSuffix(hostname, ".cros")
 	return hostname
-}
-
-// protoJSON returns the given proto message as pretty-printed JSON.
-func protoJSON(message proto.Message) []byte {
-	marshalOpts := protojson.MarshalOptions{
-		EmitUnpopulated: false,
-		Indent:          "\t",
-	}
-	json, err := marshalOpts.Marshal(proto.MessageV2(message))
-	if err != nil {
-		panic("Failed to marshal JSON")
-	}
-	return json
 }
 
 // contextWithOSNamespace adds an "os" namespace to the given context, which

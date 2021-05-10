@@ -35,19 +35,18 @@ var CmdRun = &subcommands.Command{
 Run 'crosfleet %s' to see list of all subcommands.`, runCmdName),
 	CommandRun: func() subcommands.CommandRun {
 		c := &runCmd{}
-		c.Init()
 		return c
 	},
 }
 
 type runCmd struct {
-	common.Flags
+	subcommands.CommandRunBase
 }
 
 func (c *runCmd) Run(a subcommands.Application, args []string, _ subcommands.Env) int {
 	status := subcommands.Run(testApplication, args)
 	if status == 0 {
-		common.PrintCrosfleetUIPrompt(a)
+		common.WriteCrosfleetUIPromptStderr(args)
 	}
 	return status
 }

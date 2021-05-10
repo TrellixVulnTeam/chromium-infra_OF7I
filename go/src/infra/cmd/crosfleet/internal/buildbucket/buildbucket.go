@@ -10,9 +10,9 @@ import (
 	"context"
 	"fmt"
 	"infra/cmd/crosfleet/internal/common"
+	dutinfopb "infra/cmd/crosfleet/internal/proto"
 	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"io"
 	"strings"
 	"time"
 
@@ -78,7 +78,7 @@ func NewClientForTesting(builder *buildbucketpb.BuilderID) *Client {
 
 // ScheduleBuild schedules a new build (of the client's builder) with the given
 // properties, tags, bot dimensions, and Buildbucket priority, and returns the
-// ID of the scheduled build.
+// scheduled build.
 //
 // Buildbucket requests take properties of type *structpb.Struct. To simplify
 // the conversion from other data structures to Structs, ScheduleBuild accepts
@@ -88,14 +88,14 @@ func NewClientForTesting(builder *buildbucketpb.BuilderID) *Client {
 // that fulfils the same requirements recursively.
 //
 // NOTE: Buildbucket priority is separate from internal swarming priority.
-func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}, dims map[string]string, tags map[string]string, priority int32) (int64, error) {
+func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}, dims map[string]string, tags map[string]string, priority int32) (*buildbucketpb.Build, error) {
 	props = addServiceVersion(props)
 	propStruct, err := common.MapToStruct(props)
 
 	tags[userAgentTagKey] = crosfleetUserAgent
 
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	request := &buildbucketpb.ScheduleBuildRequest{
 		Builder:    c.builderID,
@@ -106,9 +106,9 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 	}
 	build, err := c.client.ScheduleBuild(ctx, request)
 	if err != nil {
-		return 0, errors.Annotate(err, "schedule build").Err()
+		return nil, errors.Annotate(err, "schedule build").Err()
 	}
-	return build.GetId(), nil
+	return build, nil
 }
 
 // WaitForBuildStart polls Buildbucket to check the status of the build with
@@ -235,7 +235,7 @@ func (c *Client) AnyIncompleteBuildsWithTags(ctx context.Context, tags map[strin
 // given timestamp that was launched by the given user. An optional bot ID list
 // can be given, which restricts cancellations to builds running on bots on the
 // given list. The optional cancellation reason is used if not blank.
-func (c *Client) CancelBuildsByUser(ctx context.Context, writer io.Writer, earliestCreateTime *timestamppb.Timestamp, user string, ids []string, reason string) error {
+func (c *Client) CancelBuildsByUser(ctx context.Context, printer common.CLIPrinter, earliestCreateTime *timestamppb.Timestamp, user string, ids []string, reason string) error {
 	if reason == "" {
 		reason = "cancelled from crosfleet CLI"
 	}
@@ -289,19 +289,26 @@ func (c *Client) CancelBuildsByUser(ctx context.Context, writer io.Writer, earli
 		buildsToCancel = append(scheduledBuilds, startedBuilds...)
 	}
 	if len(buildsToCancel) == 0 {
-		fmt.Fprintf(writer, "No scheduled or active builds found that were launched by the current user (%s)\n", user)
+		printer.WriteTextStdout("No scheduled or active builds found that were launched by the current user (%s)", user)
 		return nil
 	}
 
+	var cancelledBuildIdList dutinfopb.BuildIdList
+	var cancellationErr error
 	for _, build := range buildsToCancel {
-		fmt.Fprintf(writer, "Canceling build at %s\n", c.BuildURL(build.Id))
-		_, err := c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
+		printer.WriteTextStdout("Canceling build at %s", c.BuildURL(build.Id))
+		_, cancellationErr = c.client.CancelBuild(ctx, &buildbucketpb.CancelBuildRequest{
 			Id:              build.Id,
 			SummaryMarkdown: reason,
 		})
-		if err != nil {
-			return err
+		if cancellationErr != nil {
+			break
 		}
+		cancelledBuildIdList.Ids = append(cancelledBuildIdList.Ids, build.Id)
+	}
+	printer.WriteJSONStdout(&cancelledBuildIdList)
+	if cancellationErr != nil {
+		return err
 	}
 	return nil
 }
