@@ -77,21 +77,21 @@ ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closin
 ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM", properties = {
     "go_version_variant": "bleeding_edge",
 })
-ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04")
+ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 
 # CI OSX.
 ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True, properties = {
     "go_version_variant": "legacy",
 })
-ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14", properties = {
+ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14", tree_closing = True, properties = {
     "go_version_variant": "legacy",
 })
-ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15", properties = {
+ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15", tree_closing = True, properties = {
     "go_version_variant": "legacy",
 })
 
 # CI Win.
-ci_builder(name = "infra-continuous-win10-64", os = "Windows-10")
+ci_builder(name = "infra-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
 # CI for building docker images.
 ci_builder(
