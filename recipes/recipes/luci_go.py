@@ -54,7 +54,7 @@ def apply_golangci_lint(api, co):
     return  # pragma: no cover
 
   linter = api.cipd.ensure_tool('infra/3pp/tools/golangci-lint/${platform}',
-                                'version:2@1.39.0')
+                                'version:2@1.40.0')
   result = api.step(
       'run golangci-lint',
       [linter, 'run', '--out-format=json', '--issues-exit-code=0'] + go_files,

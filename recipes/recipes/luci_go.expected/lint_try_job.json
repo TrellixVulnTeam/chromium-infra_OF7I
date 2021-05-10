@@ -261,7 +261,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.39.0"
+      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.40.0"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {
@@ -289,9 +289,9 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.39.0",
+      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.40.0",
       "-ensure-file",
-      "infra/3pp/tools/golangci-lint/${platform} version:2@1.39.0",
+      "infra/3pp/tools/golangci-lint/${platform} version:2@1.40.0",
       "-max-threads",
       "0",
       "-json-output",
@@ -320,7 +320,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@1.39.0\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@1.40.0\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/golangci-lint/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -331,7 +331,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.39.0/golangci-lint",
+      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.40.0/golangci-lint",
       "run",
       "--out-format=json",
       "--issues-exit-code=0",
