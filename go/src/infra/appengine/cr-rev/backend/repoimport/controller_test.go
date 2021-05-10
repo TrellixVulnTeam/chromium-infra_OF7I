@@ -25,7 +25,7 @@ func TestController(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		Convey("one repo", func() {
 			repo := common.GitRepository{}
-			mock := NewMockimporter(mockCtrl)
+			mock := NewMockImporter(mockCtrl)
 			mock.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				cancel()
 				return nil
@@ -42,11 +42,11 @@ func TestController(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			repo1 := common.GitRepository{Name: "foo"}
 			repo2 := common.GitRepository{Name: "bar"}
-			mock1 := NewMockimporter(mockCtrl)
+			mock1 := NewMockImporter(mockCtrl)
 			mock1.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				return nil
 			}).Times(1)
-			mock2 := NewMockimporter(mockCtrl)
+			mock2 := NewMockImporter(mockCtrl)
 			mock2.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				cancel()
 				return nil
@@ -65,7 +65,7 @@ func TestController(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		Convey("one repo", func() {
 			repo := common.GitRepository{}
-			mock := NewMockimporter(mockCtrl)
+			mock := NewMockImporter(mockCtrl)
 			mock.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				cancel()
 				return errors.New("Error")
@@ -81,11 +81,11 @@ func TestController(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			repo1 := common.GitRepository{Name: "foo"}
 			repo2 := common.GitRepository{Name: "bar"}
-			mock1 := NewMockimporter(mockCtrl)
+			mock1 := NewMockImporter(mockCtrl)
 			mock1.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				return errors.New("error foo")
 			}).Times(1)
-			mock2 := NewMockimporter(mockCtrl)
+			mock2 := NewMockImporter(mockCtrl)
 			mock2.EXPECT().Run(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 				cancel()
 				return nil

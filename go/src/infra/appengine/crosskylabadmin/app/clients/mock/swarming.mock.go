@@ -6,13 +6,11 @@ package mock
 
 import (
 	context "context"
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	strpair "go.chromium.org/luci/common/data/strpair"
-
 	clients "infra/appengine/crosskylabadmin/app/clients"
+	reflect "reflect"
 )
 
 // MockSwarmingClient is a mock of SwarmingClient interface.

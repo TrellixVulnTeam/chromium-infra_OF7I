@@ -184,7 +184,6 @@ type Metadata struct {
 	// Here the root is specified via -root flag,
 	// so it is not not necessarily the repo root (it is for chromium/src though).
 	//
-	//
 	// Precedence:
 	// * Imported files override values in the parent directory.
 	// * The order of imports is significant: if the same attribute is defined in

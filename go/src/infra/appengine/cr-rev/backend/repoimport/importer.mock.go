@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// Mockimporter is a mock of importer interface.
-type Mockimporter struct {
+// MockImporter is a mock of Importer interface.
+type MockImporter struct {
 	ctrl     *gomock.Controller
-	recorder *MockimporterMockRecorder
+	recorder *MockImporterMockRecorder
 }
 
-// MockimporterMockRecorder is the mock recorder for Mockimporter.
-type MockimporterMockRecorder struct {
-	mock *Mockimporter
+// MockImporterMockRecorder is the mock recorder for MockImporter.
+type MockImporterMockRecorder struct {
+	mock *MockImporter
 }
 
-// NewMockimporter creates a new mock instance.
-func NewMockimporter(ctrl *gomock.Controller) *Mockimporter {
-	mock := &Mockimporter{ctrl: ctrl}
-	mock.recorder = &MockimporterMockRecorder{mock}
+// NewMockImporter creates a new mock instance.
+func NewMockImporter(ctrl *gomock.Controller) *MockImporter {
+	mock := &MockImporter{ctrl: ctrl}
+	mock.recorder = &MockImporterMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *Mockimporter) EXPECT() *MockimporterMockRecorder {
+func (m *MockImporter) EXPECT() *MockImporterMockRecorder {
 	return m.recorder
 }
 
 // Run mocks base method.
-func (m *Mockimporter) Run(arg0 context.Context) error {
+func (m *MockImporter) Run(arg0 context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run", arg0)
 	ret0, _ := ret[0].(error)
@@ -42,7 +42,7 @@ func (m *Mockimporter) Run(arg0 context.Context) error {
 }
 
 // Run indicates an expected call of Run.
-func (mr *MockimporterMockRecorder) Run(arg0 interface{}) *gomock.Call {
+func (mr *MockImporterMockRecorder) Run(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*Mockimporter)(nil).Run), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockImporter)(nil).Run), arg0)
 }
