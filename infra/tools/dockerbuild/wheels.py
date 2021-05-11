@@ -244,7 +244,12 @@ SPECS.update({
             'gevent',
             '1.5.0',
             packaged=(),
-            only_plat=('manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'),
+            only_plat=[
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'windows-x64-py3',
+                'mac-x64-cp38',
+            ],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -252,7 +257,7 @@ SPECS.update({
             '1.1.2',
             packaged=[],
             # Other platforms not yet tested.
-            only_plat=['manylinux-x64-py3'],
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -264,6 +269,9 @@ SPECS.update({
             ),
             skip_plat=[
                 'windows-x86',
+                # greenlet 0.4.15 relies on private Python internals which were
+                # changed in 3.9.
+                'manylinux-x64-py3.9',
             ],
             pyversions=['py2', 'py3'],
         ),
@@ -286,7 +294,10 @@ SPECS.update({
             'grpcio',
             '1.32.0',
             skip_plat=[
-                'linux-arm64-py3', 'mac-arm64-cp38-cross', 'mac-arm64-cp38'
+                'manylinux-x64-py3.9',
+                'linux-arm64-py3',
+                'mac-arm64-cp38-cross',
+                'mac-arm64-cp38',
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
@@ -329,7 +340,7 @@ SPECS.update({
             'ninja',
             '1.10.0.post2',
             packaged=(),
-            only_plat=['manylinux-x64-py3'],
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -364,7 +375,12 @@ SPECS.update({
             'numpy',
             '1.19.5',
             packaged=[],
-            only_plat=['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            only_plat=[
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'mac-x64-cp38',
+                'windows-x64-py3',
+            ],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -412,7 +428,11 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
-            skip_plat=['linux-arm64-py3', 'manylinux-x64-py3'],
+            skip_plat=[
+                'linux-arm64-py3',
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+            ],
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
@@ -436,14 +456,19 @@ SPECS.update({
             'pycrypto',
             '2.6.1',
             packaged=(),
-            only_plat=['manylinux-x64', 'manylinux-x64-py3', 'mac-x64'],
+            only_plat=[
+                'manylinux-x64',
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'mac-x64',
+            ],
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'pycryptodome',
             '3.10.1',
             packaged=(),
-            only_plat=['manylinux-x64-py3'],
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -460,7 +485,7 @@ SPECS.update({
             'pytype',
             '2021.2.9',
             packaged=(),
-            only_plat=['manylinux-x64-py3'],
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -515,20 +540,29 @@ SPECS.update({
             'typed-ast',
             '1.4.2',
             packaged=(),
-            only_plat=['manylinux-x64-py3'],
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
             'wrapt',
             '1.10.11',
             packaged=(),
-            only_plat=['manylinux-x64', 'manylinux-x64-py3'],
+            only_plat=[
+                'manylinux-x64',
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+            ],
             pyversions=['py2', 'py3']),
         SourceOrPrebuilt(
             'wrapt',
             '1.12.1',
             packaged=(),
-            only_plat=['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            only_plat=[
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'mac-x64-cp38',
+                'windows-x64-py3',
+            ],
             pyversions=['py3']),
     )
 })
@@ -552,7 +586,7 @@ SPECS.update({
             # TODO: The prebuilt Mac wheel is built against 10.14, but we
             # require 10.11 or earlier. We'll need to do something else to get
             # it working.
-            ['manylinux-x64-py3', 'windows-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9', 'windows-x64-py3'],
         ),
         Prebuilt(
             'freetype-py',
@@ -562,6 +596,7 @@ SPECS.update({
                 'mac-x64-cp38',
                 'manylinux-x64',
                 'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
                 'windows-x86',
                 'windows-x86-py3',
                 'windows-x64',
@@ -583,7 +618,7 @@ SPECS.update({
         Prebuilt(
             'lxml',
             '4.6.2',
-            ['manylinux-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9'],
         ),
         Prebuilt(
             'pandas',
@@ -612,12 +647,13 @@ SPECS.update({
         Prebuilt(
             'pillow',
             '8.1.2',
-            ['manylinux-x64-py3', 'windows-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9', 'windows-x64-py3'],
         ),
         Prebuilt(
             'pillow',
             '8.2.0',
-            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9',
+             'mac-x64-cp38', 'windows-x64-py3'],
         ),
         Prebuilt('pynacl', '1.2.1', ['manylinux-x64', 'mac-x64']),
         Prebuilt(
@@ -655,13 +691,14 @@ SPECS.update({
         Prebuilt(
             'scipy',
             '1.6.0',
-            ['manylinux-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
         ),
         Prebuilt(
             'scipy',
             '1.6.2',
-            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            ['manylinux-x64-py3', 'manylinux-x64-py3.9',
+             'mac-x64-cp38', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
         Prebuilt(
@@ -819,7 +856,7 @@ SPECS.update({
         Universal('enum34', '1.1.6', pyversions=['py2']),
         Universal('enum34', '1.1.6', pyversions=['py3']),
         Universal('execnet', '1.8.0'),
-        Universal('fabric', '1.14.0'),
+        Universal('fabric', '1.14.0', pyversions=['py2']),
         Universal('fasteners', '0.14.1'),
         Universal('filelock', '3.0.12', pyversions=['py3']),
         Universal('flask', '1.0.2'),
@@ -834,7 +871,7 @@ SPECS.update({
         Universal('google-api-python-client', '1.6.2'),
         Universal('google-api-python-client', '1.12.8'),
         Universal('google-api-python-client', '2.2.0', pyversions=['py3']),
-        Universal('google-apitools', '0.5.27'),
+        Universal('google-apitools', '0.5.27', pyversions=['py2']),
         Universal('google-auth', '1.2.1'),
         Universal('google-auth', '1.20.1'),
         Universal('google-auth', '1.25.0'),
@@ -895,7 +932,7 @@ SPECS.update({
         Universal('mozlog', '4.2.0'),
         Universal('mozlog', '5.0'),
         Universal('mozlog', '7.1.0'),
-        Universal('mozprocess', '0.26'),
+        Universal('mozprocess', '0.26', pyversions=['py2']),
         Universal('mozprocess', '1.2.1'),
         Universal('mozterm', '1.0.0'),
         Universal('multiprocessing-logging', '0.3.1'),

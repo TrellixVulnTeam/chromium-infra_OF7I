@@ -10,7 +10,7 @@ from .builder import Builder
 from . import util
 from . import source
 
-from .builder import StageWheelForPackage
+from .builder import InstallCipdPythonPackage, StageWheelForPackage
 
 
 class MySQLPython(Builder):
@@ -60,7 +60,7 @@ class MySQLPython(Builder):
             f.write(line)
 
       cmd = [
-        'python', '-m', 'pip', 'wheel',
+        InstallCipdPythonPackage(system, wheel, tdir), '-m', 'pip', 'wheel',
         '--no-deps',
         '--only-binary=:all:',
         '--wheel-dir', tdir,

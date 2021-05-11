@@ -4,6 +4,7 @@
 
 import glob
 import os
+import platform
 import shutil
 import subprocess
 
@@ -87,43 +88,22 @@ class Builder(object):
   def wheel(self, system, plat):
     spec = self.spec._replace(version=self.version_fn(system))
 
-    # Non-universal wheels are built against a specific Python ABI. They can
-    # still be compatible with multiple Python versions, but each version needs
-    # to be built separately. So, we need to set the appropriate value for
-    # `pyversions` on the resulting wheel.
-    if not spec.universal:
-      pyversion = plat.pyversion
-      if spec.pyversions and pyversion not in spec.pyversions:
-        # If the declared pyversions doesn't contain the version corresponding
-        # to this platform, then we don't support it.
-        raise PlatformNotSupported(
-            ("Wheel %s specifies platform [%s] which has version [%s], but its "
-             "pyversions '%r' doesn't contain this version") %
-            (spec.name, plat.name, pyversion, spec.pyversions))
-      spec = spec._replace(pyversions=[pyversion])
-
-    # If the wheel is only for python3, make sure to use newer version.
-    if spec.is_py3_only:
-      # "3.8.0" is the oldest version of python supported by chromium.
-      #
-      # The value here a filter for pip; it will only find wheels which support
-      # python of at least this version, as reported by the `python_requires`
-      # line in the wheels' setup.py. Technically the python_requires line
-      # could exclude any combination of versions that it wants, but typically
-      # the lines for multi-version wheels will be something like:
-      #
-      #    ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4"
-      #
-      # Setting this to 3 will fail on a lot of wheels which only support e.g.
-      # >=3.5.
-      pyversion = '38'
-    else:
-      pyversion = '27'
+    # Make sure the Python version of the Wheel matches the platform.
+    pyversion = plat.pyversion
+    if spec.pyversions and pyversion not in spec.pyversions:
+      # If the declared pyversions doesn't contain the version corresponding
+      # to this platform, then we don't support it.
+      raise PlatformNotSupported(
+          ("Wheel %s specifies platform [%s] which has version [%s], but its "
+           "pyversions '%r' doesn't contain this version") %
+          (spec.name, plat.name, pyversion, spec.pyversions))
+    spec = spec._replace(pyversions=[pyversion])
 
     wheel = Wheel(
         spec=spec,
         plat=plat,
-        pyversion=pyversion,
+        # e.g. cp27mu -> 27
+        pyversion=plat.wheel_abi[2:4],
         filename=None,
         md_lines=self.md_data_fn())
 
@@ -207,11 +187,6 @@ def StageWheelForPackage(system, wheel_dir, wheel):
   shutil.copy(source_path, dst)
 
 
-def InterpreterForWheel(wheel):
-  """Returns the Python interpreter to use for building a wheel."""
-  return 'python3' if wheel.spec.is_py3_only else 'python'
-
-
 def EnvForWheel(wheel):
   """Returns any extra environment variables for building a wheel."""
   wheel_env = wheel.plat.env.copy()
@@ -230,7 +205,7 @@ def BuildPackageFromPyPiWheel(system, wheel):
         system,
         None,
         tdir, [
-            InterpreterForWheel(wheel),
+            InstallCipdPythonPackage(system, wheel, tdir),
             '-m',
             'pip',
             'download',
@@ -245,6 +220,60 @@ def BuildPackageFromPyPiWheel(system, wheel):
 
     StageWheelForPackage(system, tdir, wheel)
 
+def HostCipdPlatform():
+  """Return the CIPD platform for the host system.
+
+  We need this to determine which Python CIPD package to download. We can't just
+  use cipd_platform from the platform, because some platforms are
+  cross-compiled.
+  """
+
+  ARM64_MACHINES = {'aarch64_be', 'aarch64', 'armv8b', 'armv8l'}
+  system, machine = platform.system(), platform.machine()
+
+  # Note that we don't need to match all possible values or combinations of
+  # 'system' and 'machine', only the ones we actually have Python interpreters
+  # for in CIPD.
+  if system == 'Linux':
+    if machine == 'x86_64':
+      return 'linux-amd64'
+    if machine in ARM64_MACHINES:
+      return 'linux-arm64'
+  elif system == 'Windows':
+    if machine == 'x86_64':
+      return 'windows-amd64'
+    if machine in {'i386', 'i686'}:
+      return 'windows-386'
+  elif system == 'Darwin':
+    if machine == 'x86_64':
+      return 'mac-amd64'
+    if machine in ARM64_MACHINES:
+      return 'mac-arm64'
+
+  raise Exception("No CIPD platform for %s, %s" % (system, machine))
+
+def InstallCipdPythonPackage(system, wheel, base_dir):
+  PY_CIPD_VERSION_MAP = {
+    '27': 'version:2@2.7.18.chromium.34',
+    '38': 'version:2@3.8.10.chromium.16',
+    '39': 'version:2@3.9.5.chromium.16',
+  }
+
+  pkg_dir = os.path.join(base_dir, 'cipd_python%s_install' % (wheel.pyversion,))
+  system.cipd.init(pkg_dir)
+
+  cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % (
+      '3' if wheel.pyversion[0] == '3' else '', HostCipdPlatform())
+  version = PY_CIPD_VERSION_MAP[wheel.pyversion]
+
+  # Note that this will use the common CIPD instance cache in .dockerbuild, so
+  # it will only download CPython once per run. It does however need to
+  # extract the package, which takes a second or two. It could be worth
+  # extracting to a common location and copying or symlinking into the temporary
+  # workdir to save some time.
+  system.cipd.install(cipd_pkg, version, pkg_dir)
+
+  return os.path.join(pkg_dir, 'bin', 'python' + '.'.join(wheel.pyversion))
 
 def BuildPackageFromSource(system, wheel, src, env=None):
   """Creates Python wheel from src.
@@ -266,7 +295,7 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       subprocess.check_call(cmd, cwd=build_dir)
 
     cmd = [
-        InterpreterForWheel(wheel),
+        InstallCipdPythonPackage(system, wheel, build_dir),
         '-m',
         'pip',
         'wheel',

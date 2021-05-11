@@ -47,6 +47,7 @@ PY_OPENCV_ROOT=$1; shift
 OPENCV_VERSION=$1; shift
 VENV_PKG_PATH=$1; shift
 NUMPY_WHEEL_PATH=$1; shift
+PYTHON_INTERPRETER=$1; shift
 
 # Ensure that our OpenCV source is writable. As a CIPD package clone, it may
 # not have writability.
@@ -63,7 +64,7 @@ VENV_ROOT="${WORKDIR}/venv"
 source "${VENV_ROOT}/bin/activate"
 
 # Install "numpy" into the VirtualEnv.
-python -m pip install "${NUMPY_WHEEL_PATH}"
+$PYTHON_INTERPRETER -m pip install "${NUMPY_WHEEL_PATH}"
 
 # To satisfy (1) and (2), we will use a submodule-recursive "opencv-python"
 # checkout. To select our OpenCV version, we will explicitly check it out in
@@ -71,19 +72,19 @@ python -m pip install "${NUMPY_WHEEL_PATH}"
 #
 # This script is whittled down from "opencv-python"'s
 # //travis/build-wheels.sh
-PYTHON_VERSION_STRING=$(python -c "\
+PYTHON_VERSION_STRING=$($PYTHON_INTERPRETER -c "\
 from platform import python_version; \
 print(python_version()) \
 ")
 PYTHON_INCLUDE_PATH="${PYTHONXCPREFIX}/include/python2.7"
 PYTHON_PACKAGES_PATH=/usr/cross/lib
-PYTHON_NUMPY_INCLUDE_DIRS=$(python -c "\
+PYTHON_NUMPY_INCLUDE_DIRS=$($PYTHON_INTERPRETER -c "\
 import os; \
 os.environ['DISTUTILS_USE_SDK']='1'; \
 import numpy.distutils; \
 print(os.pathsep.join(numpy.distutils.misc_util.get_numpy_include_dirs())) \
 ")
-PYTHON_NUMPY_VERSION=$(python -c "\
+PYTHON_NUMPY_VERSION=$($PYTHON_INTERPRETER -c "\
 import numpy; \
 print(numpy.version.version)\
 ")
@@ -145,7 +146,7 @@ esac
   -DPYTHON_NUMPY_VERSION="$PYTHON_NUMPY_VERSION" \
   -DPYTHON2INTERP_FOUND=ON -DPYTHON2LIBS_FOUND=ON \
   \
-  -DPYTHON2_EXECUTABLE=python \
+  -DPYTHON2_EXECUTABLE="$PYTHON_INTERPRETER" \
   -DPYTHON2_VERSION_STRING="$PYTHON_VERSION_STRING" \
   -DPYTHON2_INCLUDE_PATH="$PYTHON_INCLUDE_PATH" \
   -DPYTHON2_PACKAGES_PATH="$PYTHON_PACKAGES_PATH" \
@@ -171,4 +172,4 @@ cp "${OPENCV_BUILD}/lib/cv2.so" "${WHEEL_STAGING}/cv2/"
 
 # Build wheel
 echo 'Build wheel'
-(cd "${WHEEL_STAGING}"; python setup.py bdist_wheel)
+(cd "${WHEEL_STAGING}"; $PYTHON_INTERPRETER setup.py bdist_wheel)

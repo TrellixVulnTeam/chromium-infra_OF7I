@@ -5,7 +5,8 @@
 import os
 
 from .build_types import Spec
-from .builder import Builder, BuildPackageFromPyPiWheel, StageWheelForPackage
+from .builder import (Builder, BuildPackageFromPyPiWheel, StageWheelForPackage,
+                      InstallCipdPythonPackage)
 
 from . import source
 from . import util
@@ -93,22 +94,14 @@ class Cryptography(Builder):
       # Dockcross containers already contain cffi installed on the system.
       # For other platforms, we run the setup.py script under vpython, so
       # we can pre-install this wheel and its dependencies.
-      use_vpython = wheel.plat.dockcross_base is None
+      if wheel.plat.dockcross_base is None:
+        if wheel.plat.pyversion == 'py2':
+          py_binary = 'vpython'
+          vpython_spec = '.vpython'
+        else:
+          py_binary = 'vpython3'
+          vpython_spec = '.vpython3'
 
-      # TODO: Use the version from the platform rather than hardcoding this?
-      if wheel.plat.pyversion == 'py2':
-        py_binary = 'vpython' if use_vpython else 'python2.7'
-        vpython_spec = '.vpython'
-      else:
-        py_binary = 'vpython3' if use_vpython else 'python3.8'
-        vpython_spec = '.vpython3'
-
-      # Build "cryptography".
-      d = {
-        'prefix': prefix,
-      }
-
-      if use_vpython:
         with open(os.path.join(crypt_dir, vpython_spec), 'w') as spec:
           for name, version in [('cffi/${vpython_platform}', '1.14.5'),
                                 ('pycparser-py2_py3', '2.17')]:
@@ -116,6 +109,15 @@ class Cryptography(Builder):
             spec.write('  name: "infra/python/wheels/%s"\n' % name)
             spec.write('  version: "version:%s"\n' % version)
             spec.write('>\n')
+      else:
+        py_binary = dx.workrel(
+            tdir,
+            InstallCipdPythonPackage(system, wheel, tdir))
+
+      # Build "cryptography".
+      d = {
+        'prefix': prefix,
+      }
 
       util.check_run_script(
           system,

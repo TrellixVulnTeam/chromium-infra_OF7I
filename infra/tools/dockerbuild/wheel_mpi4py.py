@@ -8,7 +8,7 @@ import os
 
 from .build_types import Spec
 from .builder import BuildPackageFromPyPiWheel, StageWheelForPackage
-from .builder import EnvForWheel, InterpreterForWheel
+from .builder import EnvForWheel, InstallCipdPythonPackage
 from .wheel_wheel import SourceOrPrebuilt
 
 from . import source
@@ -85,7 +85,7 @@ class Mpi4py(SourceOrPrebuilt):
         ])
 
       cmd = [
-          InterpreterForWheel(wheel),
+          InstallCipdPythonPackage(system, wheel, tdir),
           '-m',
           'pip',
           'wheel',

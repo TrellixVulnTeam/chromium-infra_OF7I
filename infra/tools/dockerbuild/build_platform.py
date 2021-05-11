@@ -166,6 +166,18 @@ ALL = {
             cipd_platform='linux-amd64',
             env={},
         ),
+        Platform(
+            name='manylinux-x64-py3.9',
+            manylinux_name=None,  # Don't use any built-in Python
+            cross_triple='x86_64-linux-gnu',
+            wheel_abi='cp39',
+            wheel_plat=('manylinux2014_x86_64',),
+            dockcross_base='manylinux2014-x64',
+            openssl_target='linux-x86_64',
+            packaged=True,
+            cipd_platform='linux-amd64',
+            env={},
+        ),
 
         # Atypical but possible Python configuration using "2-byte UCS", with
         # ABI "cp27m".

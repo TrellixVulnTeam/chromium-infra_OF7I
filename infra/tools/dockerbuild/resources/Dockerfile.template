@@ -95,81 +95,11 @@ RUN ARCHIVE_PATH=$$(basename ${mysql_relpath}) \
 
 ENV PATH=/usr/local/mysql/bin:$${PATH}
 
-# Configure cross-compile LDFLAGS.
-
-# Build system and cross-compiled Python.
-WORKDIR $${SETUP_ROOT}/python
-COPY \
-  ${resources_relpath}/install-03-python.sh \
-  ${python27_relpath} \
-  ${resources_relpath}/config.site.xcc_python \
-  ./
-RUN ARCHIVE_PATH=$$(basename ${python27_relpath}) \
-  CROSS_UNICODE=${python27_unicode} \
-  CROSS_CONFIG_SITE=config.site.xcc_python \
-  ./install-03-python.sh \
-&& rm -rf $${SETUP_ROOT}/python
-ENV \
-  PYTHONPATH="$${LOCAL_PREFIX}/lib/python2.7/site-packages" \
-  LDFLAGS="-L${cross_python_prefix}/lib $$LDFLAGS" \
-  CPPFLAGS="-I${cross_python_prefix}/include/python2.7 $$CPPFLAGS" \
-  PYTHONXCPREFIX="${cross_python_prefix}" \
-  XPYTHONPATH="$${CROSS_PREFIX}/lib/python2.7/site-packages"
-
-# Install libffi. Currently this only builds a host version, for python3 below.
-WORKDIR $${SETUP_ROOT}/libffi
-COPY \
-  ${resources_relpath}/install-06-libffi.sh \
-  ${libffi_relpath} \
-  ./
-RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) \
-  ./install-06-libffi.sh \
-&& rm -rf $${SETUP_ROOT}/libffi
-
-# Install python3. Currently this only builds a host version, installed
-# as 'python3', that can be used for running setup.py.
-WORKDIR $${SETUP_ROOT}/python3
-COPY \
-  ${resources_relpath}/install-07-python3.sh \
-  ${python3_relpath} \
-  ${resources_relpath}/config.site.xcc_python \
-  ./
-RUN ARCHIVE_PATH=$$(basename ${python3_relpath}) \
-  CROSS_CONFIG_SITE=config.site.xcc_python \
-  ./install-07-python3.sh \
-&& rm -rf $${SETUP_ROOT}/python3
-
-# Install host "pip", needed to build wheels via "setup.py".
-WORKDIR $${SETUP_ROOT}
-COPY ${get_pip_relpath} ./
-RUN \
-  $${LOCAL_PREFIX}/bin/python \
-    ./$$(basename ${get_pip_relpath}) \
-    --prefix="$$LOCAL_PREFIX"
-
-env PYTHONPATH=""
-RUN \
-  $${LOCAL_PREFIX}/bin/python3 \
-    ./$$(basename ${get_pip_relpath}) \
-    --prefix="$$LOCAL_PREFIX"
-
 # Part of Python's binary distribution directly calls "cc", ignoring the
 # environment variable overrides. We will use the alternatives system to set
 # this to be the cross-compiling CC by default.
 RUN update-alternatives --install /usr/bin/cc cc $$CC 100 && \
     update-alternatives --install /usr/bin/gcc gcc $$CC 100
-
-# Note:
-#
-# libffi_lib_dir will look something like: "libffi-<version>".
-WORKDIR $${SETUP_ROOT}/x-cffi
-COPY \
-  ${resources_relpath}/install-04-cross-cffi.sh \
-  ${cffi_relpath} \
-  ./
-RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) \
-  ./install-04-cross-cffi.sh \
-&& rm -rf $${SETUP_ROOT}/x-cffi
 
 ###
 # CLEANUP
@@ -179,11 +109,6 @@ RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) \
 # Docker layers, so this doesn't save disk space, but it does clean up the
 # final image's filesystem.
 RUN rm -rf "${SETUP_ROOT}"
-
-# Install auxiliary "pip" wheels into default Python environment.
-RUN pip2 install virtualenv cffi distutilscross auditwheel numpy
-
-env PYTHONPATH="$${LOCAL_PREFIX}/lib/python2.7/site-packages"
 
 ### Add helper script, chmod user-accessible scripts.
 COPY ${resources_relpath}/start.sh /
