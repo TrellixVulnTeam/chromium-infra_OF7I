@@ -78,6 +78,7 @@ type getJob struct {
 	baseCommandRun
 	waitForJobMixin
 	downloadResultsMixin
+	downloadArtifactsMixin
 	name string
 }
 
@@ -98,6 +99,7 @@ func cmdGetJob(p Param) *subcommands.Command {
 func (gj *getJob) RegisterFlags(p Param) {
 	uc := gj.baseCommandRun.RegisterFlags(p)
 	gj.downloadResultsMixin.RegisterFlags(&gj.Flags, uc)
+	gj.downloadArtifactsMixin.RegisterFlags(&gj.Flags, uc)
 
 	gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
 		Required; the name of the job to get information about.
@@ -123,17 +125,28 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
 	fmt.Println(out)
 
-	resp, err = gj.waitForJobMixin.waitForJob(ctx, c, resp, a.GetOut())
+	resp, err = gj.waitForJob(ctx, c, resp, a.GetOut())
 	if err != nil {
 		return err
 	}
 
-	return gj.downloadResultsMixin.doDownloadResults(ctx, resp)
+	if err := gj.doDownloadResults(ctx, resp); err != nil {
+		return err
+	}
+	httpClient, err := gj.httpClient(ctx)
+	if err != nil {
+		return err
+	}
+	if err := gj.doDownloadArtifacts(ctx, httpClient, gj.workDir, resp); err != nil {
+		return err
+	}
+	return nil
 }
 
 type waitJob struct {
 	baseCommandRun
 	downloadResultsMixin
+	downloadArtifactsMixin
 	quiet bool
 	name  string
 }
@@ -158,6 +171,7 @@ func cmdWaitJob(p Param) *subcommands.Command {
 func (wj *waitJob) RegisterFlags(p Param) {
 	uc := wj.baseCommandRun.RegisterFlags(p)
 	wj.downloadResultsMixin.RegisterFlags(&wj.Flags, uc)
+	wj.downloadArtifactsMixin.RegisterFlags(&wj.Flags, uc)
 	wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
 		Required; the name of the job to poll.
 		Example: "-name=XXXXXXXXXXXXXX"
@@ -193,7 +207,17 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 		return err
 	}
 
-	return wj.downloadResultsMixin.doDownloadResults(ctx, job)
+	if err := wj.doDownloadResults(ctx, job); err != nil {
+		return err
+	}
+	httpClient, err := wj.httpClient(ctx)
+	if err != nil {
+		return err
+	}
+	if err := wj.doDownloadArtifacts(ctx, httpClient, wj.workDir, job); err != nil {
+		return err
+	}
+	return nil
 }
 
 type cancelJob struct {

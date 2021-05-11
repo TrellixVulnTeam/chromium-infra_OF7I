@@ -30,24 +30,30 @@ import (
 // userConfig defines a type that represents some user-configured defaults for
 // flags that are common to the Pinpoint CLI.
 type userConfig struct {
-	Endpoint        string `yaml:"endpoint,omitempty"`
-	Wait            bool   `yaml:"wait,omitempty"`
-	DownloadResults bool   `yaml:"download_results,omitempty"`
-	OpenResults     bool   `yaml:"open_results,omitempty"`
-	ResultsDir      string `yaml:"results_dir,omitempty"`
-	Quiet           bool   `yaml:"quiet,omitempty"`
-	PresetsFile     string `yaml:"presets_file,omitempty"`
+	Endpoint          string `yaml:"endpoint,omitempty"`
+	Wait              bool   `yaml:"wait,omitempty"`
+	WorkDir           string `yaml:"work_dir,omitempty"`
+	DownloadResults   bool   `yaml:"download_results,omitempty"`
+	OpenResults       bool   `yaml:"open_results,omitempty"`
+	ResultsDir        string `yaml:"results_dir,omitempty"`
+	DownloadArtifacts bool   `yaml:"download_artifacts,omitempty"`
+	SelectArtifacts   string `yaml:"select_artifacts,omitempty"`
+	Quiet             bool   `yaml:"quiet,omitempty"`
+	PresetsFile       string `yaml:"presets_file,omitempty"`
 }
 
 func getUserConfig(ctx context.Context, cfgFile string, p Param) userConfig {
 	uc := userConfig{
-		Endpoint:        p.DefaultServiceDomain,
-		Wait:            false,
-		DownloadResults: false,
-		OpenResults:     false,
-		ResultsDir:      os.TempDir(),
-		Quiet:           false,
-		PresetsFile:     ".pinpoint-presets.yaml",
+		Endpoint:          p.DefaultServiceDomain,
+		Wait:              false,
+		WorkDir:           os.TempDir(),
+		DownloadResults:   false,
+		OpenResults:       false,
+		ResultsDir:        os.TempDir(),
+		DownloadArtifacts: false,
+		SelectArtifacts:   "test",
+		Quiet:             false,
+		PresetsFile:       ".pinpoint-presets.yaml",
 	}
 	if len(cfgFile) == 0 {
 		return uc
@@ -107,13 +113,16 @@ func (cr *configRun) RegisterFlags(p Param) {
 const cfgTempl = `Pinpoint CLI Configuration
 (source: {{.Source}})
 {{with .Cfg}}
---endpoint={{.Endpoint}}
---wait={{.Wait}}
+--download-artifacts={{.DownloadArtifacts}}
 --download-results={{.DownloadResults}}
+--endpoint={{.Endpoint}}
 --open-results={{.OpenResults}}
---results-dir={{.ResultsDir}}
---quiet={{.Quiet}}
 --presets-file={{.PresetsFile}}{{end}}
+--quiet={{.Quiet}}
+--results-dir={{.ResultsDir}}
+--select-artifacts={{.SelectArtifacts}}
+--wait={{.Wait}}
+--work-dir={{.WorkDir}}
 `
 
 func (cr *configRun) Run(ctx context.Context, a subcommands.Application, args []string) error {
@@ -173,6 +182,9 @@ func cmdConfig(p Param) *subcommands.Command {
 			- wait: Controls whether to always wait for scheduled jobs to
 			complete or when getting the state of a job.
 
+			- work_dir: Overrides the default temporary directory used for
+			downloading files.
+
 			- download_results: Controls whether to always download results
 			when getting the state of a job.
 
@@ -181,6 +193,12 @@ func cmdConfig(p Param) *subcommands.Command {
 
 			- results_dir: Overrides the default temporary directory when
 			downloading results.
+
+			- download_artifacts: Controls whether to always download artifacts
+			when getting the state of a job.
+
+			- select_artifacts: Controls which artifacts will be downloaded by
+			default.
 
 			- quiet: When true sets the -quiet flag to default to true for
 			commands that support this option.

@@ -19,26 +19,37 @@ import (
 	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
 	"google.golang.org/grpc/credentials"
 )
 
 type baseCommandRun struct {
 	subcommands.CommandRunBase
 	endpoint string
+	workDir  string
+
+	initTokensOnce sync.Once
+	tCache         *tokenCache
+	tlsCreds       credentials.TransportCredentials
+	initTokensErr  error
+
+	luciAuth *auth.Authenticator
 
 	// Used in method pinpointClient to lazy-init the factory.
-	initClientFactory     sync.Once
-	pinpointClientFactory *pinpointClientFactory
-	initClientFactoryErr  error
+	initPinpointClientFactoryOnce sync.Once
+	pinpointClientFactory         *pinpointClientFactory
+	initClientFactoryErr          error
 }
 
 func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
@@ -46,53 +57,60 @@ func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
 	r.Flags.StringVar(&r.endpoint, "endpoint", uc.Endpoint, text.Doc(`
 		Pinpoint API service endpoint.
 	`))
+	r.Flags.StringVar(&r.workDir, "work-dir", uc.WorkDir, text.Doc(`
+		Working directory for the tool when downloading files.
+	`))
 	return uc
 }
 
-func getFactorySettings(ctx context.Context, serviceDomain string) (
-	*tokenCache, credentials.TransportCredentials, error) {
-
-	// If we are connecting to a local server, heuristically guess that we want
-	// an insecure connection and return nil for all return values (which the
-	// client factory takes that as an indication to use insecure).
-	if strings.HasPrefix(serviceDomain, "localhost:") {
-		return nil, nil, nil
-	}
-
-	cacheDir, found := os.LookupEnv("PINPOINT_CACHE_DIR")
-	if !found {
-		homeEnv, err := os.UserHomeDir()
-		if err != nil {
-			homeEnv = os.TempDir()
+func (r *baseCommandRun) initTokens(ctx context.Context) error {
+	r.initTokensOnce.Do(func() {
+		cacheDir, found := os.LookupEnv("PINPOINT_CACHE_DIR")
+		if !found {
+			homeEnv, err := os.UserHomeDir()
+			if err != nil {
+				homeEnv = os.TempDir()
+			}
+			cacheDir = filepath.Join(homeEnv, ".cache", "pinpoint-cli")
 		}
-		cacheDir = filepath.Join(homeEnv, ".cache", "pinpoint-cli")
-	}
-	tCache, err := newTokenCache(ctx, cacheDir)
-	if err != nil {
-		return nil, nil, errors.Annotate(err, "failed to create token cache").Err()
-	}
-	tlsCreds := credentials.NewTLS(nil)
-	return tCache, tlsCreds, nil
+		if c, err := newTokenCache(ctx, cacheDir); err != nil {
+			r.initTokensErr = errors.Annotate(err, "failed to create token cache").Err()
+			return
+		} else {
+			r.tCache = c
+		}
+		r.tlsCreds = credentials.NewTLS(nil)
+
+		r.luciAuth = auth.NewAuthenticator(ctx, auth.InteractiveLogin, chromeinfra.DefaultAuthOptions())
+	})
+	return r.initTokensErr
 }
 
 func (r *baseCommandRun) pinpointClient(ctx context.Context) (pinpoint.PinpointClient, error) {
-	r.initClientFactory.Do(func() {
+	if err := r.initTokens(ctx); err != nil {
+		return nil, err
+	}
+	r.initPinpointClientFactoryOnce.Do(func() {
 		// We're setting up the client factory here, so that the end commands
 		// do the connection on-demand. If we ever need to support a scripting
 		// interface where we allow multiple requests to be made by the runner
 		// concurrently, then we're good with that scenario too.
-		tCache, tlsCreds, err := getFactorySettings(ctx, r.endpoint)
-		if err != nil {
-			r.initClientFactoryErr = errors.Annotate(err, "failed to initialize connection factory").Err()
-			return
-		}
 		endpoint := r.endpoint
 		if !strings.Contains(endpoint, ":") {
 			// If there is no port specified, assume we want gRPC's default.
 			endpoint = fmt.Sprintf("%s:%d", endpoint, 443)
 		}
-		r.pinpointClientFactory = newPinpointClientFactory(endpoint, tCache, tlsCreds)
+
+		// If we are connecting to a local server, heuristically guess that we want
+		// an insecure connection and return nil for all return values (which the
+		// client factory takes that as an indication to use insecure).
+		if !strings.HasPrefix(r.endpoint, "localhost:") {
+			r.pinpointClientFactory = newPinpointClientFactory(endpoint, r.tCache, r.tlsCreds)
+		} else {
+			r.pinpointClientFactory = newPinpointClientFactory(endpoint, nil, nil)
+		}
 	})
+
 	if r.initClientFactoryErr != nil {
 		return nil, r.initClientFactoryErr
 	}
@@ -101,6 +119,13 @@ func (r *baseCommandRun) pinpointClient(ctx context.Context) (pinpoint.PinpointC
 		return nil, errors.Annotate(err, "failed to create a Pinpoint client").Err()
 	}
 	return c, nil
+}
+
+func (r *baseCommandRun) httpClient(ctx context.Context) (*http.Client, error) {
+	if err := r.initTokens(ctx); err != nil {
+		return nil, err
+	}
+	return r.luciAuth.Client()
 }
 
 type pinpointCommand interface {

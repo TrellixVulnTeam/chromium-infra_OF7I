@@ -239,9 +239,19 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		out = jobURL
 	}
 	fmt.Fprintf(a.GetOut(), "Pinpoint job scheduled: %s\n", out)
-	j, err = e.waitForJobMixin.waitForJob(ctx, c, j, a.GetOut())
+	j, err = e.waitForJob(ctx, c, j, a.GetOut())
 	if err != nil {
 		return err
 	}
-	return e.downloadResultsMixin.doDownloadResults(ctx, j)
+	if err := e.doDownloadResults(ctx, j); err != nil {
+		return err
+	}
+	httpClient, err := e.httpClient(ctx)
+	if err != nil {
+		return err
+	}
+	if err := e.doDownloadArtifacts(ctx, httpClient, e.workDir, j); err != nil {
+		return err
+	}
+	return nil
 }

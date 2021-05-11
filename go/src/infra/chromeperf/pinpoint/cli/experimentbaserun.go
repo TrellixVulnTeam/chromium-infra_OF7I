@@ -33,6 +33,7 @@ type experimentBaseRun struct {
 	baseCommandRun
 	waitForJobMixin
 	downloadResultsMixin
+	downloadArtifactsMixin
 	presetsMixin
 	issue         bugValue
 	configuration string
@@ -110,6 +111,7 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 	uc := e.baseCommandRun.RegisterFlags(p)
 	e.waitForJobMixin.RegisterFlags(&e.Flags, uc)
 	e.downloadResultsMixin.RegisterFlags(&e.Flags, uc)
+	e.downloadArtifactsMixin.RegisterFlags(&e.Flags, uc)
 	e.presetsMixin.RegisterFlags(&e.Flags, uc)
 	e.Flags.Var(&e.issue, "bug", text.Doc(`
 		Monorail issue id in the form <project>:<issue id>.

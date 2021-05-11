@@ -26,6 +26,7 @@ import (
 func TestFactorySettingFallbackCasese(t *testing.T) {
 	Convey("Given a custom PINPOINT_CACHE_DIR", t, func() {
 		ctx := context.Background()
+		baserun := &baseCommandRun{}
 		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
@@ -34,24 +35,8 @@ func TestFactorySettingFallbackCasese(t *testing.T) {
 		tc, err := newTokenCache(ctx, td)
 		So(err, ShouldBeNil)
 		So(tc, ShouldNotBeNil)
-		tc, creds, err := getFactorySettings(ctx, "pinpoint-stable.endpoints.chromeperf.cloud.goog")
-		So(err, ShouldBeNil)
-		So(tc, ShouldNotBeNil)
-		So(err, ShouldBeNil)
-		So(tc.cacheFile, ShouldEqual, filepath.Join(td, "cached-token"))
-		So(creds, ShouldNotBeNil)
-	})
-	Convey("Valid domain provided", t, func() {
-		ctx := context.Background()
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
-		So(err, ShouldBeNil)
-		defer os.RemoveAll(td)
-		os.Setenv("PINPOINT_CACHE_DIR", td)
-		defer os.Unsetenv("PINPOINT_CACHE_DIR")
-		tc, err := newTokenCache(ctx, td)
-		So(err, ShouldBeNil)
-		So(tc, ShouldNotBeNil)
-		tc, creds, err := getFactorySettings(ctx, "undefined")
+		err = baserun.initTokens(ctx)
+		tc, creds := baserun.tCache, baserun.tlsCreds
 		So(err, ShouldBeNil)
 		So(tc, ShouldNotBeNil)
 		So(err, ShouldBeNil)
