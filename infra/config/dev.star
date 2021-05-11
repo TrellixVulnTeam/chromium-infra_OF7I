@@ -120,7 +120,9 @@ luci.notifier_template(
     body = "{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }} from {{ .Build.Output.GitilesCommit.Id }}",
 )
 
+# TODO(tandrii,tikuta): delete this one once bionic works.
 ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
+ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 ci_builder(name = "infra-continuous-win10-64", os = "Windows-10")
 
 def adhoc_builder(
@@ -149,14 +151,14 @@ def adhoc_builder(
     )
 
 adhoc_builder(
-    name = "gerrit-hello-world-xenial-64",
-    os = "Ubuntu-16.04",
+    name = "gerrit-hello-world-bionic-64",
+    os = "Ubuntu-18.04",
     executable = infra.recipe("gerrit_hello_world"),
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
-    name = "gsutil-hello-world-xenial-64",
-    os = "Ubuntu-16.04",
+    name = "gsutil-hello-world-bionic-64",
+    os = "Ubuntu-18.04",
     executable = infra.recipe("gsutil_hello_world"),
     experiments = {"luci.use_realms": 100},
     schedule = "triggered",  # triggered manually via Scheduler UI
