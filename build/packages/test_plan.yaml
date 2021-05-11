@@ -1,0 +1,14 @@
+package: chromiumos/infra/test_plan/${platform}
+description: Used by CI builders to plan tests for CTP v2.
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - infra/cros/cmd/test_plan
+root: ../../go/bin
+data:
+  - file: test_plan${exe_suffix}
+  - version_file: .versions/test_plan${exe_suffix}.cipd_version
