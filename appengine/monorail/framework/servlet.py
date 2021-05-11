@@ -190,7 +190,6 @@ class Servlet(webapp2.RequestHandler):
 
     self.mr = monorailrequest.MonorailRequest(self.services)
 
-    self.ratelimiter.CheckStart(self.request)
     self.response.headers.add('Strict-Transport-Security',
         'max-age=31536000; includeSubDomains')
 
@@ -222,6 +221,8 @@ class Servlet(webapp2.RequestHandler):
         return
 
     try:
+      self.ratelimiter.CheckStart(self.request)
+
       with self.mr.profiler.Phase('parsing request and doing lookups'):
         self.mr.ParseRequest(self.request, self.services)
 
