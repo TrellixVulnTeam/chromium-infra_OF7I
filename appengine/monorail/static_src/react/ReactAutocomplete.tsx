@@ -20,6 +20,7 @@ interface AutocompleteProps<T> {
   value?: Value<T, boolean, false, true>;
   fixedValues?: T[];
   multiple?: boolean;
+  placeholder?: string;
   onChange?: (
     event: React.SyntheticEvent,
     value: Value<T, boolean, false, true>,
@@ -42,7 +43,7 @@ interface AutocompleteProps<T> {
 export function ReactAutocomplete<T>(
   {
     label, options, value = undefined, fixedValues = [], multiple = false,
-    onChange = () => {}, getOptionDescription = () => '',
+    placeholder = '', onChange = () => {}, getOptionDescription = () => '',
     getOptionLabel = (o) => String(o)
   }: AutocompleteProps<T>
 ): React.ReactNode {
@@ -57,7 +58,7 @@ export function ReactAutocomplete<T>(
     multiple={multiple}
     onChange={_onChange(fixedValues, multiple, onChange)}
     options={options}
-    renderInput={_renderInput()}
+    renderInput={_renderInput(placeholder)}
     renderOption={_renderOption(getOptionDescription, getOptionLabel)}
     renderTags={_renderTags(fixedValues, getOptionLabel)}
     style={{width: 'var(--mr-edit-field-width)'}}
@@ -126,13 +127,14 @@ function _onChange<T, Multiple, DisableClearable, FreeSolo>(
 }
 
 /**
+ * @param placeholder Placeholder text for the input.
  * @return A function that renders the input element used by
  *   ReactAutocomplete.
  */
-function _renderInput():
+function _renderInput(placeholder = ''):
     (params: AutocompleteRenderInputParams) => React.ReactNode {
   return (params: AutocompleteRenderInputParams): React.ReactNode =>
-    <TextField {...params} variant="standard" size="small" />;
+    <TextField {...params} variant="standard" size="small" placeholder={placeholder} />;
 }
 
 /**

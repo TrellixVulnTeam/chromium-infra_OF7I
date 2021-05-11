@@ -8,11 +8,24 @@ import {fireEvent, render} from '@testing-library/react';
 
 import {ReactAutocomplete} from './ReactAutocomplete.tsx';
 
-describe('ReactAutocomplete', () => {
+describe.only('ReactAutocomplete', () => {
   it('renders', async () => {
     const {container} = render(<ReactAutocomplete label="cool" options={[]} />);
 
     assert.isNotNull(container.querySelector('input'));
+  });
+
+  it('placeholder renders', async () => {
+    const {container} = render(<ReactAutocomplete
+      placeholder="penguins"
+      options={['']}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    assert.strictEqual(input?.placeholder, 'penguins');
   });
 
   it('filterOptions label matching', async () => {

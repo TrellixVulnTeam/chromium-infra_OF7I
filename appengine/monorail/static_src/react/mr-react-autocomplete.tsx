@@ -43,6 +43,8 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   @property() fixedValues: string[] = [];
   /** True for chip input that takes multiple values, false for single input. */
   @property() multiple: boolean = false;
+  /** Placeholder for the form input. */
+  @property() placeholder?: string = '';
   /** Callback for input value changes. */
   @property() onChange: (
     event: React.SyntheticEvent,
@@ -87,6 +89,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
         value={this.value}
         fixedValues={this.fixedValues}
         multiple={this.multiple}
+        placeholder={this.placeholder}
         onChange={this.onChange}
         getOptionDescription={this._getOptionDescription.bind(this)}
         getOptionLabel={(option: string) => option}
