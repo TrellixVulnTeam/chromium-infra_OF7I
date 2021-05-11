@@ -71,7 +71,15 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
 
     const options = this._options();
 
-    const theme = createMuiTheme({typography: {fontSize: 11.375}});
+    const theme = createMuiTheme({
+      palette: {
+        primary: {
+          // Same as var(--chops-primary-accent-color).
+          main: '#1976d2',
+        },
+      },
+      typography: {fontSize: 11.375},
+    });
     const element = <ThemeProvider theme={theme}>
       <ReactAutocomplete
         label={this.label}
