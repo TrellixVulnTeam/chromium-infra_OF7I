@@ -27,10 +27,16 @@ PROPERTIES = {
             kind=List(str),
             default=(),
         ),
+    'dry_run':
+        Property(
+            help='If true, do not upload wheels or source to CIPD.',
+            kind=bool,
+            default=False,
+        ),
 }
 
 
-def RunSteps(api, platforms):
+def RunSteps(api, platforms, dry_run):
   solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
   with api.context(cwd=solution_path):
@@ -54,14 +60,19 @@ def RunSteps(api, platforms):
           'DISTUTILS_USE_SDK': '1',
           'MSSdk': '1',
       }):
-    api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
+    args = [
         'infra.tools.dockerbuild',
         '--root',
         temp_path,
-        '--upload-sources',
-        'wheel-build',
-        '--upload',
-    ] + platform_args)
+    ]
+    if not dry_run:
+      args.append('--upload-sources')
+    args.append('wheel-build')
+    if not dry_run:
+      args.append('--upload')
+
+    api.python('dockerbuild', solution_path.join('infra', 'run.py'),
+               args + platform_args)
 
 
 @contextmanager
@@ -84,3 +95,4 @@ def GenTests(api):
   yield api.test('win', api.platform('win', 64))
   yield api.test('mac', api.platform(
       'mac', 64)) + api.properties(platforms=['mac-x64', 'mac-x64-cp38'])
+  yield api.test('dry-run', api.properties(dry_run=True))
