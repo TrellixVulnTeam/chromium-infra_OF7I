@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
 
+	"infra/cmd/mallet/internal/cmd/f20"
 	"infra/cmd/mallet/internal/cmd/inventory"
 	"infra/cmd/mallet/internal/cmd/meta"
 	"infra/cmd/mallet/internal/cmd/tasks"
@@ -43,6 +44,7 @@ func getApplication() *cli.Application {
 			subcommands.Section("Experiments"),
 			tasks.Recovery,
 			run.LabpackCmd,
+			f20.Tlw,
 		},
 	}
 }
