@@ -212,6 +212,9 @@ func extractJobID(t *testing.T, out string) string {
 }
 
 func TestScheduleJobFlow(t *testing.T) {
+	// TODO(https://crbug.com/1198061): re-enable this test.
+	t.Skipf("Skiped due to flakiness, see https://crbug.com/1198061")
+
 	if runtime.GOOS == "windows" {
 		// We rely on sending an interrupt to other processes, which is not
 		// supported on Windows (https://golang.org/issue/6720).
