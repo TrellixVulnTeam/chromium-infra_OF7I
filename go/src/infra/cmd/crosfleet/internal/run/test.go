@@ -66,25 +66,21 @@ func (c *testRun) innerRun(a subcommands.Application, args []string, env subcomm
 	if err := c.validateAndAutocompleteFlags(ctx, &c.Flags, testCmdName, bbService, c.authFlags, c.printer); err != nil {
 		return err
 	}
-	testPlan := testPlanForTests(c.testArgs, args)
-	testNamesLabel := testOrSuiteNamesLabel(args)
-	buildTags := c.buildTags(testCmdName, testNamesLabel)
-
 	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, bbService, c.authFlags)
 	if err != nil {
 		return err
 	}
 
 	testLauncher := ctpRunLauncher{
-		printer:   c.printer,
-		cmdName:   testCmdName,
-		bbClient:  ctpBBClient,
-		testPlan:  testPlan,
-		buildTags: buildTags,
-		cliFlags:  &c.testCommonFlags,
-		exitEarly: c.exitEarly,
+		mainArgsTag: testOrSuiteNamesTag(args),
+		printer:     c.printer,
+		cmdName:     testCmdName,
+		bbClient:    ctpBBClient,
+		testPlan:    testPlanForTests(c.testArgs, args),
+		cliFlags:    &c.testCommonFlags,
+		exitEarly:   c.exitEarly,
 	}
-	return testLauncher.launchAndValidateTestPlan(ctx)
+	return testLauncher.launchAndValidateTestPlans(ctx)
 }
 
 // testPlanForTests constructs a Test Platform test plan for the given tests.

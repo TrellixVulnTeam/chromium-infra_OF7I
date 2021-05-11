@@ -148,7 +148,7 @@ func TestBuildTags(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s)", tt.wantTags), func(t *testing.T) {
 			t.Parallel()
-			gotTags := tt.testCommonFlags.buildTags("suite", "sample-suite")
+			gotTags := tt.testCommonFlags.buildTagsForModel("suite", tt.testCommonFlags.model, "sample-suite")
 			if diff := cmp.Diff(tt.wantTags, gotTags); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
@@ -324,7 +324,7 @@ func TestTestOrSuiteNamesLabel(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s)", tt.wantLabel), func(t *testing.T) {
 			t.Parallel()
-			gotLabel := testOrSuiteNamesLabel(tt.names)
+			gotLabel := testOrSuiteNamesTag(tt.names)
 			if tt.wantLabel != gotLabel {
 				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantLabel, gotLabel)
 			}
@@ -387,11 +387,10 @@ func TestTestPlatformRequest(t *testing.T) {
 		},
 	}
 	runLauncher := ctpRunLauncher{
-		testPlan:  &test_platform.Request_TestPlan{},
-		buildTags: buildTags,
-		cliFlags:  cliFlags,
+		testPlan: &test_platform.Request_TestPlan{},
+		cliFlags: cliFlags,
 	}
-	gotRequest, err := runLauncher.testPlatformRequest()
+	gotRequest, err := runLauncher.testPlatformRequest(cliFlags.model, buildTags)
 	if err != nil {
 		t.Fatalf("unexpected error constructing Test Platform request: %v", err)
 	}

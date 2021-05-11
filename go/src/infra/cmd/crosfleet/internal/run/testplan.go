@@ -77,24 +77,22 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 	if err != nil {
 		return err
 	}
-	// Don't create a tag for the user's test plan file.
-	buildTags := c.buildTags(testPlanCmdName, "")
-
 	ctpBBClient, err := buildbucket.NewClient(ctx, c.envFlags.Env().CTPBuilder, c.envFlags.Env().BuildbucketService, c.authFlags)
 	if err != nil {
 		return err
 	}
 
 	testLauncher := ctpRunLauncher{
-		printer:   c.printer,
-		cmdName:   testPlanCmdName,
-		bbClient:  ctpBBClient,
-		testPlan:  testPlan,
-		buildTags: buildTags,
-		cliFlags:  &c.testCommonFlags,
-		exitEarly: c.exitEarly,
+		// Don't create a tag for the user's test plan file.
+		mainArgsTag: "",
+		printer:     c.printer,
+		cmdName:     testPlanCmdName,
+		bbClient:    ctpBBClient,
+		testPlan:    testPlan,
+		cliFlags:    &c.testCommonFlags,
+		exitEarly:   c.exitEarly,
 	}
-	return testLauncher.launchAndValidateTestPlan(ctx)
+	return testLauncher.launchAndValidateTestPlans(ctx)
 }
 
 func readTestPlan(path string) (*test_platform.Request_TestPlan, error) {

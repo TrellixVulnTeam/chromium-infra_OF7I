@@ -174,8 +174,9 @@ func latestImage(ctx context.Context, board, bbService string, authFlags authcli
 	return image, nil
 }
 
-// buildTags combines test metadata tags with user-added tags.
-func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[string]string {
+// buildTagsForModel combines test metadata tags with user-added tags for the
+// given model.
+func (c *testCommonFlags) buildTagsForModel(crosfleetTool string, model string, mainArg string) map[string]string {
 	tags := map[string]string{}
 
 	// Add user-added tags.
@@ -198,8 +199,8 @@ func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[st
 	if c.board != "" {
 		tags["label-board"] = c.board
 	}
-	if c.model != "" {
-		tags["label-model"] = c.model
+	if model != "" {
+		tags["label-model"] = model
 	}
 	if c.pool != "" {
 		tags["label-pool"] = c.pool
@@ -223,21 +224,23 @@ func (c *testCommonFlags) buildTags(crosfleetTool string, mainArg string) map[st
 // testRunLauncher contains the necessary information to launch and validate a
 // CTP test plan.
 type ctpRunLauncher struct {
-	printer   common.CLIPrinter
-	cmdName   string
-	bbClient  *buildbucket.Client
-	testPlan  *test_platform.Request_TestPlan
-	buildTags map[string]string
-	cliFlags  *testCommonFlags
-	exitEarly bool
+	// Tag denoting the tests or suites specified to run; left blank for custom
+	// test plans.
+	mainArgsTag string
+	printer     common.CLIPrinter
+	cmdName     string
+	bbClient    *buildbucket.Client
+	testPlan    *test_platform.Request_TestPlan
+	cliFlags    *testCommonFlags
+	exitEarly   bool
 }
 
-// launchAndValidateTestPlan requests a run of the given CTP run launcher's
+// launchAndValidateTestPlans requests a run of the given CTP run launcher's
 // test plan, and returns the ID of the launched cros_test_platform Buildbucket
 // build. Unless the exitEarly arg is passed as true, the function waits to
 // return until the build passes request-validation and setup steps.
-func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
-	ctpBuild, err := l.launchCTPBuild(ctx)
+func (l *ctpRunLauncher) launchAndValidateTestPlans(ctx context.Context) error {
+	ctpBuild, err := l.launchCTPBuild(ctx, l.cliFlags.model)
 	if err != nil {
 		return err
 	}
@@ -257,8 +260,9 @@ func (l *ctpRunLauncher) launchAndValidateTestPlan(ctx context.Context) error {
 // launchCTPBuild uses the given Buildbucket client to launch a
 // cros_test_platform Buildbucket build for the CTP run launcher's test plan,
 // build tags, and command line flags, and returns the ID of the launched build.
-func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context) (*buildbucketpb.Build, error) {
-	ctpRequest, err := l.testPlatformRequest()
+func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context, model string) (*buildbucketpb.Build, error) {
+	buildTags := l.cliFlags.buildTagsForModel(l.cmdName, model, l.mainArgsTag)
+	ctpRequest, err := l.testPlatformRequest(model, buildTags)
 	if err != nil {
 		return nil, err
 	}
@@ -274,12 +278,12 @@ func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context) (*buildbucketpb.Bui
 	//
 	// buildProps contains separate dimensions and priority values to apply to
 	// the child test_runner builds that will be launched by the parent build.
-	return l.bbClient.ScheduleBuild(ctx, buildProps, nil, l.buildTags, 0)
+	return l.bbClient.ScheduleBuild(ctx, buildProps, nil, buildTags, 0)
 }
 
 // testPlatformRequest constructs a cros_test_platform.Request from the given
 // test plan, build tags, and command line flags.
-func (l *ctpRunLauncher) testPlatformRequest() (*test_platform.Request, error) {
+func (l *ctpRunLauncher) testPlatformRequest(model string, buildTags map[string]string) (*test_platform.Request, error) {
 	softwareDependencies, err := l.cliFlags.softwareDependencies()
 	if err != nil {
 		return nil, err
@@ -292,7 +296,7 @@ func (l *ctpRunLauncher) testPlatformRequest() (*test_platform.Request, error) {
 				SwarmingDimensions: common.ToKeyvalSlice(l.cliFlags.addedDims),
 			},
 			HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
-				Model: l.cliFlags.model,
+				Model: model,
 			},
 			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
 				BuildTarget: &chromiumos.BuildTarget{Name: l.cliFlags.board},
@@ -301,7 +305,7 @@ func (l *ctpRunLauncher) testPlatformRequest() (*test_platform.Request, error) {
 			Scheduling:           l.cliFlags.schedulingParams(),
 			Decorations: &test_platform.Request_Params_Decorations{
 				AutotestKeyvals: l.cliFlags.keyvals,
-				Tags:            common.ToKeyvalSlice(l.buildTags),
+				Tags:            common.ToKeyvalSlice(buildTags),
 			},
 			Retry: l.cliFlags.retryParams(),
 			Metadata: &test_platform.Request_Params_Metadata{
@@ -412,10 +416,10 @@ func (c *testCommonFlags) retryParams() *test_platform.Request_Params_Retry {
 	}
 }
 
-// testOrSuiteNamesLabel formats a label for the given test/suite names, to be
+// testOrSuiteNamesTag formats a label for the given test/suite names, to be
 // added to the build tags of a cros_test_platform build launched for the given
 // tests/suites.
-func testOrSuiteNamesLabel(names []string) string {
+func testOrSuiteNamesTag(names []string) string {
 	if len(names) == 0 {
 		panic("no test/suite names given")
 	}
