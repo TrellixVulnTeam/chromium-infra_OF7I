@@ -86,7 +86,12 @@ ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_clos
 })
 ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
+# TODO(tandrii): delete this builder.
 try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
+    "run_integration_tests": True,
+    "go_version_variant": "bleeding_edge",
+})
+try_builder(name = "luci-go-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "run_integration_tests": True,
     "go_version_variant": "bleeding_edge",
 })

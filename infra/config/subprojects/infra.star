@@ -124,9 +124,13 @@ ci_builder(
 )
 
 # All trybots.
+# TODO(tandrii): delete this builder.
 try_builder(name = "infra-try-xenial-64", os = "Ubuntu-16.04", properties = {
     "go_version_variant": "bleeding_edge",
 })
+try_builder(name = "infra-try-bionic-64", os = "Ubuntu-18.04", properties = {
+    "go_version_variant": "bleeding_edge",
+}, experiment_percentage = 100)
 try_builder(
     name = "infra-try-xenial-arm64",
     os = "Ubuntu-16.04",
