@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
@@ -40,6 +41,7 @@ Create/Update a deployment record.`,
 		c.Flags.StringVar(&c.serial, "serial", "", "the serial of the deployment record to create/update")
 		c.Flags.StringVar(&c.host, "host", "", "the hostname of the deployment record to update")
 		c.Flags.StringVar(&c.deploymentID, "deployment-id", "", "the deployment identifier of the deployment record to update")
+		c.Flags.StringVar(&c.deploymentEnv, "deployment-env", "", "the deployment env of the deployment record to update."+cmdhelp.DeploymentEnvFilterHelpText)
 		c.Flags.BoolVar(&c.noHostYet, "no-host-yet", false, "If true, the host will be reset to no-host-yet-<serial>")
 		return c
 	},
@@ -51,10 +53,11 @@ type updateMachineLSEDeployment struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 
-	serial       string
-	host         string
-	deploymentID string
-	noHostYet    bool
+	serial        string
+	host          string
+	deploymentID  string
+	deploymentEnv string
+	noHostYet     bool
 }
 
 func (c *updateMachineLSEDeployment) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -90,12 +93,14 @@ func (c *updateMachineLSEDeployment) innerRun(a subcommands.Application, args []
 	})
 
 	dr := c.parseArgs()
+	utils.PrintExistingLSEDeploymentRecord(ctx, ic, dr.SerialNumber)
 	res, err := ic.UpdateMachineLSEDeployment(ctx, &ufsAPI.UpdateMachineLSEDeploymentRequest{
 		MachineLseDeployment: dr,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"deployment-id": "deployment_identifier",
-			"host":          "hostname",
-			"no-host-yet":   "hostname",
+			"deployment-id":  "deployment_identifier",
+			"deployment-env": "deployment_env",
+			"host":           "hostname",
+			"no-host-yet":    "hostname",
 		}),
 	})
 	if err != nil {
@@ -118,8 +123,15 @@ func (c *updateMachineLSEDeployment) parseArgs() *ufspb.MachineLSEDeployment {
 			SerialNumber: c.serial,
 		}
 	}
-	if c.deploymentID != "" {
+	if c.deploymentEnv == utils.ClearFieldValue {
+		dr.DeploymentIdentifier = ""
+	} else if c.deploymentID != "" {
 		dr.DeploymentIdentifier = c.deploymentID
+	}
+	if c.deploymentEnv == utils.ClearFieldValue {
+		dr.DeploymentEnv = ufsUtil.ToUFSDeploymentEnv("")
+	} else {
+		dr.DeploymentEnv = ufsUtil.ToUFSDeploymentEnv(c.deploymentEnv)
 	}
 	return dr
 }
@@ -128,8 +140,11 @@ func (c *updateMachineLSEDeployment) validateArgs() error {
 	if c.serial == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-serial' is required.")
 	}
-	if c.host == "" && c.deploymentID == "" && !c.noHostYet {
+	if c.host == "" && c.deploymentID == "" && !c.noHostYet && c.deploymentEnv == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+	}
+	if c.deploymentEnv != "" && c.deploymentEnv != utils.ClearFieldValue && ufsUtil.ToUFSDeploymentEnv(c.deploymentEnv) == ufspb.DeploymentEnv_DEPLOYMENTENV_UNDEFINED {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\ndeployment-env is neither empty nor a valid env. Please check the help msg.")
 	}
 	return nil
 }

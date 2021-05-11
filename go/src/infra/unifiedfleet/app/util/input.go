@@ -408,6 +408,27 @@ func ValidAssetTypeStr() []string {
 	return keys
 }
 
+// ValidDeploymentEnvStr returns a valid str list for DeploymentEnv
+func ValidDeploymentEnvStr() []string {
+	keys := make([]string, 0, len(ufspb.DeploymentEnv_name))
+	for k, v := range ufspb.DeploymentEnv_name {
+		// 0 is UNDEFINED
+		if k != 0 {
+			keys = append(keys, strings.ToLower(v))
+		}
+	}
+	return keys
+}
+
+// ToUFSDeploymentEnv converts string to a UFS DeploymentEnv enum.
+func ToUFSDeploymentEnv(env string) ufspb.DeploymentEnv {
+	v, ok := ufspb.DeploymentEnv_value[strings.ToUpper(env)]
+	if !ok {
+		return ufspb.DeploymentEnv_DEPLOYMENTENV_UNDEFINED
+	}
+	return ufspb.DeploymentEnv(v)
+}
+
 // ValidZoneStr returns a valid str list for zone strings.
 func ValidZoneStr() []string {
 	ks := make([]string, 0, len(StrToUFSZone))

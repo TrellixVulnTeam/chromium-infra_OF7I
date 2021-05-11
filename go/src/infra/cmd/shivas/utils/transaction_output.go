@@ -169,6 +169,19 @@ func PrintExistingHost(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	return nil
 }
 
+// PrintExistingLSEDeploymentRecord prints the old deployment record in update/delete operations
+func PrintExistingLSEDeploymentRecord(ctx context.Context, ic ufsAPI.FleetClient, name string) {
+	res, err := ic.GetMachineLSEDeployment(ctx, &ufsAPI.GetMachineLSEDeploymentRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSEDeploymentCollection, name),
+	})
+	if err != nil || res == nil {
+		fmt.Printf("Failed to get deployment record for %s, it doesn't exist yet or its record is empty.\n", name)
+	}
+	res.SerialNumber = ufsUtil.RemovePrefix(res.SerialNumber)
+	fmt.Println("The deployment record before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+}
+
 // PrintExistingDUT prints the old host in update/delete operations
 func PrintExistingDUT(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
 	res, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{

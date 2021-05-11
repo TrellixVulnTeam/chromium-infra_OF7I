@@ -46,6 +46,7 @@ Gets the deployment records and prints the output in user-specified format.`,
 
 		c.Flags.Var(flag.StringSlice(&c.hosts), "host", "Name(s) of a hostname to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.deploymentIDs), "deploymentID", "Identifier(s) of a unique deployment ID to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.deploymentEnvs), "deploymentEnv", "Deployment env(s) to filter by. Can be specified multiple times."+cmdhelp.DeploymentEnvFilterHelpText)
 		return c
 	},
 }
@@ -57,8 +58,9 @@ type getMachineLSEDeployment struct {
 	outputFlags site.OutputFlags
 
 	// Filters
-	hosts         []string
-	deploymentIDs []string
+	hosts          []string
+	deploymentIDs  []string
+	deploymentEnvs []string
 
 	pageSize int
 	keysOnly bool
@@ -114,6 +116,7 @@ func (c *getMachineLSEDeployment) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.HostFilterName, c.hosts)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.DeploymentIdentifierFilterName, c.deploymentIDs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.DeploymentEnvFilterName, c.deploymentEnvs)...)
 	return filters
 }
 

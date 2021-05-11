@@ -66,7 +66,7 @@ var (
 	RackTitle                 = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSEFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
-	MachineLSEDeploymentTitle = []string{"Serial Number", "Hostname", "Deployment Identifier", "UpdateTime"}
+	MachineLSEDeploymentTitle = []string{"Serial Number", "Hostname", "Deployment Identifier", "Deployment Env", "UpdateTime"}
 	VMFreeSlotTitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "Free slots", "DeploymentTicket", "Description", "UpdateTime"}
 	VMFreeSlotFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
 	ZoneTitle                 = []string{"Name", "EnumName", "Department"}
@@ -1756,6 +1756,7 @@ func machineLSEDeploymentFullOutputStrs(res proto.Message) []string {
 		ufsUtil.RemovePrefix(dr.GetSerialNumber()),
 		dr.GetHostname(),
 		dr.GetDeploymentIdentifier(),
+		dr.GetDeploymentEnv().String(),
 		ts,
 	}
 }

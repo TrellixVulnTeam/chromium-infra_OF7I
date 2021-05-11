@@ -1582,6 +1582,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/uni
 	// StateFilterHelpText help text for state filters for list command
 	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))
 
+	// DeploymentEnvFilterHelpText help text for deployment env filters for list command
+	DeploymentEnvFilterHelpText string = fmt.Sprintf("\nValid deployment env filters: [%s]\n", strings.Join(ufsUtil.ValidDeploymentEnvStr(), ", "))
+
 	// KeysOnlyText help text for keysOnly option
 	KeysOnlyText string = `prints only the keys in table format (without title)
 -keys -json prints the entire JSON object, but only name/id field will be filled, other fields will be empty
