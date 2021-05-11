@@ -240,7 +240,7 @@ def HostCipdPlatform():
     if machine in ARM64_MACHINES:
       return 'linux-arm64'
   elif system == 'Windows':
-    if machine == 'x86_64':
+    if machine == 'AMD64':
       return 'windows-amd64'
     if machine in {'i386', 'i686'}:
       return 'windows-386'
