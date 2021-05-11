@@ -172,7 +172,7 @@ _OS_TO_CATEGORY = {
 }
 
 def category_from_os(os, short = False):
-    """Given e.g. 'Ubuntu-16.10' returns e.g. 'linux|16.10'.
+    """Given e.g. 'Ubuntu-20.10' returns e.g. 'linux|20.10'.
 
     Args:
       os: OS dimension name.

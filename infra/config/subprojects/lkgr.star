@@ -12,7 +12,7 @@ luci.builder(
     executable = build.recipe("lkgr_finder"),
     service_account = "chromium-lkgr-finder-builder@chops-service-accounts.iam.gserviceaccount.com",
     dimensions = {
-        "os": "Ubuntu-16.04",
+        "os": "Ubuntu",
         "cpu": "x86-64",
         "cores": "8",
         "pool": "luci.infra.cron",

@@ -98,14 +98,14 @@ try_builder(name = "luci-go-try-win", os = "Windows-10")
 
 try_builder(
     name = "luci-go-try-presubmit",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu",
     properties = {"presubmit": True},
 )
 
 # Experimental trybot for building docker images out of luci-go.git CLs.
 try_builder(
     name = "luci-go-try-images",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu",
     recipe = "images_builder",
     experiment_percentage = 100,
     properties = {
@@ -118,7 +118,8 @@ try_builder(
 
 try_builder(
     name = "luci-go-analysis",
-    os = "Ubuntu-16.04",
+    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
+    os = "Ubuntu-16.04|Ubuntu-18.04",
     recipe = "tricium_infra",
     properties = {
         "gclient_config_name": "luci_go",
@@ -131,7 +132,8 @@ try_builder(
 
 try_builder(
     name = "luci-go-lint",
-    os = "Ubuntu-16.04",
+    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
+    os = "Ubuntu-16.04|Ubuntu-18.04",
     properties = {
         "run_lint": True,
     },

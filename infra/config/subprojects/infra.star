@@ -95,7 +95,7 @@ ci_builder(name = "infra-continuous-win10-64", os = "Windows-10", tree_closing =
 # CI for building docker images.
 ci_builder(
     name = "infra-continuous-images",
-    os = "Ubuntu-16.04",  # note: exact Linux version doesn't really matter
+    os = "Ubuntu",  # note: exact Linux version doesn't really matter
     recipe = "images_builder",
     console_category = "misc",
     properties = {
@@ -139,11 +139,14 @@ try_builder(name = "infra-try-mac", os = "Mac-10.15", properties = {
     "go_version_variant": "legacy",
 })
 try_builder(name = "infra-try-win", os = "Windows-10")
-try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04", recipe = "infra_frontend_tester")
+
+# TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
+try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04|Ubuntu-18.04", recipe = "infra_frontend_tester")
 
 try_builder(
     name = "infra-analysis",
-    os = "Ubuntu-16.04",
+    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
+    os = "Ubuntu-16.04|Ubuntu-18.04",
     recipe = "tricium_infra",
     properties = {
         "gclient_config_name": "infra",
@@ -156,7 +159,7 @@ try_builder(
 # Experimental trybot for building docker images out of infra.git CLs.
 try_builder(
     name = "infra-try-images",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu",
     recipe = "images_builder",
     experiment_percentage = 100,
     properties = {
