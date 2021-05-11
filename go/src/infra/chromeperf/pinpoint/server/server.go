@@ -54,7 +54,6 @@ type pinpointServer struct {
 }
 
 const (
-	port = ":60800"
 	// EndpointsHeader is the metadata header used to obtain user information.
 	// https://cloud.google.com/endpoints/docs/openapi/authenticating-users-custom#receiving_authenticated_results_in_your_api
 	EndpointsHeader = "x-endpoint-api-userinfo"
@@ -318,6 +317,7 @@ func Main() {
 	serviceAccountEmail := flag.String("service_account", "", "If specified, this email address is used as the identity of the service")
 	privateKey := flag.String("private_key", "", "Required if -service_account is set; contents of the service account credentials PEM file.")
 	hardcodedUserEmailFlag := flag.String("hardcoded_user_email", "", "TESTING ONLY; if set, request auth headers will be ignored and this email address will be used for all incoming requests. It also causes all outgoing RPCs to not use any authentication.")
+	port := flag.Int("port", 60800, "Tcp port that the service should listen.")
 
 	// TODO(crbug/1059667): Wire up a cloud logging implementation (Stackdriver).
 	flag.Parse()
@@ -326,7 +326,7 @@ func Main() {
 			"Invalid URL for -legacy_pinpoint_service: %s",
 			*legacyPinpointServiceFlag)
 	}
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}

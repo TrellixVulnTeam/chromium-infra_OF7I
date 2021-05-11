@@ -26,7 +26,7 @@ func main() {
 	signal.Notify(ch, os.Interrupt)
 	go func() {
 		<-ch
-		log.Printf("Interrupt detected, exiting gracefully")
+		log.Println("Interrupt detected, exiting gracefully")
 		os.Exit(0)
 	}()
 
