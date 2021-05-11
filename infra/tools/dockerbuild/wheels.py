@@ -160,7 +160,7 @@ SPECS.update({
                 'mac-x64': ['macosx_10_6_intel'],
             },
             pyversions=['py2'],
-            skip_plat=['mac-arm64-cross'],
+            skip_plat=['mac-arm64-cross', 'mac-arm64'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -169,13 +169,15 @@ SPECS.update({
                 'mac-x64': ['macosx_10_6_intel'],
             },
             pyversions=['py2'],
-            skip_plat=['mac-arm64-cross'],
+            skip_plat=['mac-arm64-cross', 'mac-arm64'],
         ),
         SourceOrPrebuilt(
             'cffi',
             '1.14.3',
             pyversions=['py3'],
-            skip_plat=['mac-x64-cp38', 'mac-arm64-cp38-cross'],
+            skip_plat=[
+                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'mac-arm64-cp38'
+            ],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -279,11 +281,13 @@ SPECS.update({
             'grpcio',
             '1.4.0',
             pyversions=['py2'],
-            skip_plat=['mac-arm64-cross']),
+            skip_plat=['mac-arm64-cross', 'mac-arm64']),
         SourceOrPrebuilt(
             'grpcio',
             '1.32.0',
-            skip_plat=['linux-arm64-py3', 'mac-arm64-cp38-cross'],
+            skip_plat=[
+                'linux-arm64-py3', 'mac-arm64-cp38-cross', 'mac-arm64-cp38'
+            ],
             pyversions=['py3']),
         SourceOrPrebuilt(
             'lazy-object-proxy',
@@ -447,8 +451,8 @@ SPECS.update({
             '1.2.1',
             packaged=(),
             skip_plat=[
-                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'linux-arm64-py3',
-                'windows-x86-py3', 'windows-x64-py3'
+                'mac-x64-cp38', 'mac-arm64-cp38-cross', 'mac-arm64-cp38',
+                'linux-arm64-py3', 'windows-x86-py3', 'windows-x64-py3'
             ],
             pyversions=['py3'],
         ),
@@ -1073,15 +1077,16 @@ SPECS.update({
             '2.0.3',
             openssl='1.1.0f',
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS,
-            skip_plat=['mac-arm64-cross']),
+            skip_plat=['mac-arm64-cross', 'mac-arm64']),
         CryptographyPyPI(
             'cryptography',
             '2.6.1',
             openssl='1.1.0f',
             pyversions=['py2', 'py3'],
             skip_plat=[
-                'mac-arm64-cross', 'mac-x64-cp38', 'mac-arm64-cp38-cross',
-                'linux-arm64-py3', 'windows-x86-py3', 'windows-x64-py3'
+                'mac-arm64-cross', 'mac-arm64', 'mac-x64-cp38',
+                'mac-arm64-cp38-cross', 'mac-arm64-cp38', 'linux-arm64-py3',
+                'windows-x86-py3', 'windows-x64-py3'
             ],
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
         CryptographyPyPI(
@@ -1095,7 +1100,10 @@ SPECS.update({
             ],
             # TODO(bryner): Consider updating this to build against 1.1.1i,
             # to get support for Mac ARM64.
-            skip_plat=['mac-arm64-cross', 'mac-arm64-cp38-cross'],
+            skip_plat=[
+                'mac-arm64-cross', 'mac-arm64', 'mac-arm64-cp38-cross',
+                'mac-arm64-cp38'
+            ],
         ),
         CryptographyPyPI(
             'cryptography',
@@ -1153,7 +1161,9 @@ SPECS.update({
                 'linux-mips',
                 'linux-mips64',
                 'mac-arm64-cross',
+                'mac-arm64',
                 'mac-arm64-cp38-cross',
+                'mac-arm64-cp38',
             ],
         ),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of

@@ -264,6 +264,44 @@ ALL = {
             },
         ),
         Platform(
+            name='mac-arm64',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp27m',
+            wheel_plat=('macosx_11_0_arm64',),
+            dockcross_base=None,
+            openssl_target='darwin64-arm64-cc',
+            # We've done our own backport of ARM64 support to python 2.7, so
+            # there won't be any pre-packaged wheels available.
+            packaged=False,
+            cipd_platform='mac-arm64',
+            env={
+                # Necessary for some wheels to build. See for instance:
+                # https://github.com/giampaolo/psutil/issues/1832
+                'ARCHFLAGS': '-arch arm64',
+                'MACOSX_DEPLOYMENT_TARGET': '11.0'
+            },
+        ),
+        Platform(
+            name='mac-arm64-cp38',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp38',
+            wheel_plat=('macosx_11_0_arm64',),
+            dockcross_base=None,
+            openssl_target='darwin64-arm64-cc',
+            # We've done our own backport of ARM64 support to python 3.8, so
+            # there won't be any pre-packaged wheels available.
+            packaged=False,
+            cipd_platform='mac-arm64',
+            env={
+                # Necessary for some wheels to build. See for instance:
+                # https://github.com/giampaolo/psutil/issues/1832
+                'ARCHFLAGS': '-arch arm64',
+                'MACOSX_DEPLOYMENT_TARGET': '11.0'
+            },
+        ),
+        Platform(
             name='windows-x86',
             manylinux_name=None,
             cross_triple='',
@@ -326,7 +364,8 @@ def NativePlatforms():
           ALL['mac-x64'], ALL['mac-arm64-cross'], ALL['mac-x64-cp38'],
           ALL['mac-arm64-cp38-cross']
       ]
-    # TODO: Native ARM64 platform.
+    elif platform.machine() == 'arm64':
+      return [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
   elif sys.platform == 'win32':
     return [
         ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
