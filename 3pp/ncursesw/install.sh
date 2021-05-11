@@ -11,7 +11,7 @@ PREFIX="$1"
 
 if ! which realpath; then
   realpath() {
-    python -c "import os, sys; print os.path.realpath(sys.argv[1])" "$@"
+    (cd "$@" && pwd)
   }
 fi > /dev/null
 

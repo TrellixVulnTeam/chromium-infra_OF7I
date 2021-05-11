@@ -9,6 +9,7 @@ create {
   }
   build {
     no_toolchain: true
+    tool: "tools/cpython"
   }
 }
 
