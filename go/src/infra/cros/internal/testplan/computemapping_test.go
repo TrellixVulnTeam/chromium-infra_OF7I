@@ -116,6 +116,7 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 								Requirements: &plan.SourceTestPlan_Requirements{
 									KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
 								},
+								TestTagExcludes: []string{"flaky"},
 							},
 						},
 					},

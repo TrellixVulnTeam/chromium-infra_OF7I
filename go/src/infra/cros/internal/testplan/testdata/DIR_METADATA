@@ -5,6 +5,7 @@ chromeos {
             requirements {
                 kernel_versions {}
             }
+            test_tag_excludes: "flaky"
         }
     }
 }

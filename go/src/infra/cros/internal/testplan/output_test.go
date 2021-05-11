@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,6 +11,7 @@ import (
 	"go.chromium.org/chromiumos/config/go/api/software"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/payload"
+	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/chromiumos/config/go/test/plan"
 )
 
@@ -86,7 +88,7 @@ func TestGenerateOutputs(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    *plan.SourceTestPlan
-		expected []*Output
+		expected []*testpb.CoverageRule
 	}{
 		{
 			name: "kernel versions",
@@ -94,19 +96,66 @@ func TestGenerateOutputs(t *testing.T) {
 				Requirements: &plan.SourceTestPlan_Requirements{
 					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
 				},
+				TestTags:        []string{"kernel"},
+				TestTagExcludes: []string{"flaky"},
 			},
-			expected: []*Output{
+			expected: []*testpb.CoverageRule{
 				{
-					Name:         "kernel-3.18",
-					BuildTargets: []string{"project4"},
+					Name: "kernel:3.18",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project4"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags:        []string{"kernel"},
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-4.14",
-					BuildTargets: []string{"project1", "project2", "project5", "project6"},
+					Name: "kernel:4.14",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project1", "project2", "project5", "project6"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags:        []string{"kernel"},
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-5.4",
-					BuildTargets: []string{"project3"},
+					Name: "kernel:5.4",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project3"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags:        []string{"kernel"},
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -116,19 +165,62 @@ func TestGenerateOutputs(t *testing.T) {
 				Requirements: &plan.SourceTestPlan_Requirements{
 					SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
 				},
+				TestTagExcludes: []string{"flaky"},
 			},
-			expected: []*Output{
+			expected: []*testpb.CoverageRule{
 				{
-					Name:         "soc-chipsetA",
-					BuildTargets: []string{"project1", "project3", "project5"},
+					Name: "soc:chipsetA",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project1", "project3", "project5"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "soc-chipsetB",
-					BuildTargets: []string{"project2", "project6"},
+					Name: "soc:chipsetB",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project2", "project6"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "soc-chipsetC",
-					BuildTargets: []string{"project4"},
+					Name: "soc:chipsetC",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project4"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								TagExcludes: []string{"flaky"},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -139,26 +231,88 @@ func TestGenerateOutputs(t *testing.T) {
 					KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
 					Fingerprint:    &plan.SourceTestPlan_Requirements_Fingerprint{},
 				},
+				TestTags: []string{"kernel", "fingerprint"},
 			},
-			// TODO(b/182898188): Intersect outputs with DesignConfigIds and
-			// outputs with BuildTargets to reduce redundant testing (e.g.
-			// config1 is project1).
-			expected: []*Output{
+			expected: []*testpb.CoverageRule{
 				{
-					Name:            "fp-present",
-					DesignConfigIds: []string{"config1", "config4"},
+					Name: "fp:present",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "fingerprint_location",
+							},
+							Values: []string{
+								"POWER_BUTTON_TOP_LEFT",
+								"KEYBOARD_BOTTOM_LEFT",
+								"KEYBOARD_BOTTOM_RIGHT",
+								"KEYBOARD_TOP_RIGHT",
+								"RIGHT_SIDE",
+								"LEFT_SIDE",
+								"PRESENT",
+							},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "fingerprint"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-3.18",
-					BuildTargets: []string{"project4"},
+					Name: "kernel:3.18",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project4"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "fingerprint"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-4.14",
-					BuildTargets: []string{"project1", "project2", "project5", "project6"},
+					Name: "kernel:4.14",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project1", "project2", "project5", "project6"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "fingerprint"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-5.4",
-					BuildTargets: []string{"project3"},
+					Name: "kernel:5.4",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project3"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "fingerprint"},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -170,53 +324,80 @@ func TestGenerateOutputs(t *testing.T) {
 					SocFamilies:    &plan.SourceTestPlan_Requirements_SocFamilies{},
 					ArcVersions:    &plan.SourceTestPlan_Requirements_ArcVersions{},
 				},
+				TestTags: []string{"kernel", "arc"},
 			},
-			expected: []*Output{
+			expected: []*testpb.CoverageRule{
 				{
-					Name:         "kernel-4.14:soc-chipsetA",
-					BuildTargets: []string{"project1", "project5"},
+					Name: "kernel:4.14_soc:chipsetA",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project1", "project5"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "arc"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-4.14:soc-chipsetB:arc-P",
-					BuildTargets: []string{"project6"},
+					Name: "kernel:4.14_soc:chipsetB_arc:P",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project6"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "arc"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-5.4:soc-chipsetA",
-					BuildTargets: []string{"project3"},
+					Name: "kernel:5.4_soc:chipsetA",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project3"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "arc"},
+							},
+						},
+					},
 				},
 				{
-					Name:         "kernel-3.18:soc-chipsetC:arc-R",
-					BuildTargets: []string{"project4"},
-				},
-			},
-		},
-		{
-			name: "with test tags",
-			input: &plan.SourceTestPlan{
-				Requirements: &plan.SourceTestPlan_Requirements{
-					SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
-				},
-				TestTags:        []string{"componentA"},
-				TestTagExcludes: []string{"flaky"},
-			},
-			expected: []*Output{
-				{
-					Name:            "soc-chipsetA",
-					BuildTargets:    []string{"project1", "project3", "project5"},
-					TestTags:        []string{"componentA"},
-					TestTagExcludes: []string{"flaky"},
-				},
-				{
-					Name:            "soc-chipsetB",
-					BuildTargets:    []string{"project2", "project6"},
-					TestTags:        []string{"componentA"},
-					TestTagExcludes: []string{"flaky"},
-				},
-				{
-					Name:            "soc-chipsetC",
-					BuildTargets:    []string{"project4"},
-					TestTags:        []string{"componentA"},
-					TestTagExcludes: []string{"flaky"},
+					Name: "kernel:3.18_soc:chipsetC_arc:R",
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: &testpb.DutAttribute_Id{
+								Value: "system_build_target",
+							},
+							Values: []string{"project4"},
+						},
+					},
+					TestSuites: []*testpb.TestSuite{
+						{
+							TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+								Tags: []string{"kernel", "arc"},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -224,7 +405,7 @@ func TestGenerateOutputs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			outputs, err := generateOutputs(test.input, buildSummaryList, flatConfigList)
+			outputs, err := generateOutputs(context.Background(), test.input, buildSummaryList)
 
 			if err != nil {
 				t.Fatalf("generateOutputs failed: %s", err)
@@ -233,7 +414,7 @@ func TestGenerateOutputs(t *testing.T) {
 			if diff := cmp.Diff(
 				test.expected,
 				outputs,
-				cmpopts.SortSlices(func(i, j *Output) bool {
+				cmpopts.SortSlices(func(i, j *testpb.CoverageRule) bool {
 					return i.Name < j.Name
 				}),
 				cmpopts.SortSlices(func(i, j string) bool {
@@ -263,7 +444,7 @@ func TestGenerateOutputsErrors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := generateOutputs(test.input, buildSummaryList, flatConfigList); err == nil {
+			if _, err := generateOutputs(context.Background(), test.input, buildSummaryList); err == nil {
 				t.Errorf("Expected error from generateOutputs")
 			}
 		})

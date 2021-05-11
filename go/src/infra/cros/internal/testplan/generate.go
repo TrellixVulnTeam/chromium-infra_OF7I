@@ -4,7 +4,7 @@ import (
 	"context"
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
-	"go.chromium.org/chromiumos/config/go/payload"
+	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/logging"
 	"infra/cros/internal/gerrit"
@@ -13,8 +13,7 @@ import (
 func Generate(
 	ctx context.Context, changeRevs []*gerrit.ChangeRev,
 	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-	flatConfigList *payload.FlatConfigList,
-) ([]*Output, error) {
+) ([]*testpb.CoverageRule, error) {
 	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
 	if err != nil {
 		return nil, err
@@ -42,7 +41,9 @@ func Generate(
 	logging.Infof(ctx, "generating outputs from merged SourceTestPlan")
 	logging.Debugf(ctx, "merged SourceTestPlan: %q", mergedSourceTestPlan)
 
-	outputs, err := generateOutputs(mergedSourceTestPlan, buildSummaryList, flatConfigList)
+	outputs, err := generateOutputs(
+		ctx, mergedSourceTestPlan, buildSummaryList,
+	)
 	if err != nil {
 		return nil, err
 	}

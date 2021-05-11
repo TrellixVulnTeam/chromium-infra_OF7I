@@ -7,9 +7,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
-	"go.chromium.org/chromiumos/config/go/payload"
+	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
@@ -62,34 +61,55 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	flatConfigList := &payload.FlatConfigList{
-		Values: []*payload.FlatConfig{
-			flatConfig("config1", "project1", configpb.HardwareFeatures_Fingerprint_KEYBOARD_BOTTOM_LEFT),
-			flatConfig("config2", "project2", configpb.HardwareFeatures_Fingerprint_NOT_PRESENT),
-		},
-	}
-
-	outputs, err := Generate(ctx, changeRevs, buildSummaryList, flatConfigList)
+	rules, err := Generate(ctx, changeRevs, buildSummaryList)
 
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
 	}
 
-	expectedOutputs := []*Output{
+	expectedRules := []*testpb.CoverageRule{
 		{
-			Name:         "kernel-4.14",
-			BuildTargets: []string{"project1", "project2"},
+			Name: "kernel:4.14",
+			DutCriteria: []*testpb.DutCriterion{
+				{
+					AttributeId: &testpb.DutAttribute_Id{
+						Value: "system_build_target",
+					},
+					Values: []string{"project1", "project2"},
+				},
+			},
+			TestSuites: []*testpb.TestSuite{
+				{
+					TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+						TagExcludes: []string{"flaky"},
+					},
+				},
+			},
 		},
 		{
-			Name:         "kernel-5.4",
-			BuildTargets: []string{"project3"},
+			Name: "kernel:5.4",
+			DutCriteria: []*testpb.DutCriterion{
+				{
+					AttributeId: &testpb.DutAttribute_Id{
+						Value: "system_build_target",
+					},
+					Values: []string{"project3"},
+				},
+			},
+			TestSuites: []*testpb.TestSuite{
+				{
+					TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+						TagExcludes: []string{"flaky"},
+					},
+				},
+			},
 		},
 	}
 
 	if diff := cmp.Diff(
-		expectedOutputs,
-		outputs,
-		cmpopts.SortSlices(func(i, j *Output) bool {
+		expectedRules,
+		rules,
+		cmpopts.SortSlices(func(i, j *testpb.CoverageRule) bool {
 			return i.Name < j.Name
 		}),
 		cmpopts.SortSlices(func(i, j string) bool {

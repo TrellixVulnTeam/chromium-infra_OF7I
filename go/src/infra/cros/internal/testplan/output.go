@@ -1,6 +1,7 @@
 package testplan
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -8,52 +9,58 @@ import (
 
 	configpb "go.chromium.org/chromiumos/config/go/api"
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
-	"go.chromium.org/chromiumos/config/go/payload"
+	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
 )
 
-// Output contains lists of build targets or DesignConfigIds and test tags to
-// run, computed from SourceTestPlans. This is a placeholder, representing the
-// information test platform would expect.
-//
-// TODO(b/182898188): Replace this with the actual interface to CTP v2 once it
-// is defined.
-type Output struct {
-	Name            string   `json:"name"`
-	BuildTargets    []string `json:"build_targets"`
-	DesignConfigIds []string `json:"design_config_ids"`
-	TestTags        []string `json:"test_tags"`
-	TestTagExcludes []string `json:"test_tag_excludes"`
+var (
+	buildTargetAttributeID = &testpb.DutAttribute_Id{Value: "system_build_target"}
+	fingerprintAttributeID = &testpb.DutAttribute_Id{Value: "fingerprint_location"}
+)
+
+func getSingleDutCriterionOrPanic(rule *testpb.CoverageRule) *testpb.DutCriterion {
+	if len(rule.DutCriteria) != 1 {
+		if len(rule.DutCriteria) != 1 {
+			panic(fmt.Sprintf("expected exactly one DutCriterion, got rule %s", rule))
+		}
+	}
+
+	return rule.DutCriteria[0]
 }
 
-// expandOutputs joins newOutputs to curOutputs, by intersecting BuildTargets.
+// expandCoverageRules joins newRules to curRules, by intersecting DutCriteria.
 //
-// For each combination of Outputs (a, b), where a is in curOutputs, and b is in
-// newOutputs, a new Output is added to the result, with BuildTargets that are
-// the intersection of a.BuildTargets and b.BuildTargets.
+// For each combination of CoverageRules (a, b), where a is in curRules, and b
+// is in newRules, a new CoverageRule is added to the result, with
+// DutCriterion.Values that are the intersection of a.DutCriteria[0].Values and
+// b.DutCriteria[0].Values
 //
-// All Outputs in either newOutputs or curOutputs that don't have any
-// intersection of BuildTargets are added to the result as is.
+// It is assumed each CoverageRule has exactly one DutCriterion (this function
+// panics if this is not true).
 //
-// For example, if curOutputs is
+// All CoverageRules in either newRules or curRules that don't have any
+// intersection of DutCriterion.Values are added to the result as is.
+//
+// For example, if curRules is
 // {
 // 	  {
-// 		  Name: "A", BuildTargets: []string{"1"},
+// 		  Name: "A", DutCriteria: {{Values:"1"}},
 // 	  },
 // 	  {
-// 		  Name: "B", BuildTargets: []string{"2"},
+// 		  Name: "B", DutCriteria: {{Values:"2"}},
 // 	  },
 // }
 //
-// and newOutputs is
+// and newRules is
 //
 // {
 // 	  {
-// 		  Name: "C", BuildTargets: []string{"1", "3"},
+// 		  Name: "C", DutCriteria: {{Values:"1", "3"}},
 // 	  },
 // 	  {
-// 		  Name: "D", BuildTargets: []string{"4"},
+// 		  Name: "D", DutCriteria: {{Values:"4"}},
 // 	  },
 // }
 //
@@ -61,73 +68,98 @@ type Output struct {
 //
 // {
 // 	  {
-// 		  Name: "A:C", BuildTargets: []string{"1"},
+// 		  Name: "A_C", DutCriteria: {{Values:"1"}},
 // 	  },
 // 	  {
-// 		  Name: "B", BuildTargets: []string{"2"},
+// 		  Name: "B", DutCriteria: {{Values:"2"}},
 // 	  },
 // 	  {
-// 		  Name: "D", BuildTargets: []string{"4"},
+// 		  Name: "D", DutCriteria: {{Values:"4"}},
 // 	  },
 // }
 //
 // because "A" and "C" are joined, "B" and "D" are passed through as is.
 //
-// If curOutputs is empty, newOutputs is returned (this function is intended to
-// be called multiple times to build up a result, curOutputs is empty in the
+// If curRules is empty, newRules is returned (this function is intended to
+// be called multiple times to build up a result, curRules is empty in the
 // first call).
-func expandOutputs(curOutputs, newOutputs []*Output) []*Output {
-	if len(curOutputs) == 0 {
-		return newOutputs
+func expandCoverageRules(ctx context.Context, curRules, newRules []*testpb.CoverageRule) []*testpb.CoverageRule {
+	if len(curRules) == 0 {
+		return newRules
 	}
 
-	// Make a map from name to Output for all outputs in curOutputs and
-	// newOutputs. If an Output is involved in an intersection, it is removed
-	// from unjoinedOutputs.
-	unjoinedOutputs := make(map[string]*Output)
-	for _, output := range append(curOutputs, newOutputs...) {
-		unjoinedOutputs[output.Name] = output
+	// Make a map from name to CoverageRule for all CoverageRules in curRules
+	// and newRules. If a CoverageRule is involved in an intersection, it is
+	// removed from unjoinedRules.
+	unjoinedRules := make(map[string]*testpb.CoverageRule)
+	for _, rule := range append(curRules, newRules...) {
+		unjoinedRules[rule.Name] = rule
 	}
 
-	expandedOutputs := make([]*Output, 0)
+	expandedRules := make([]*testpb.CoverageRule, 0)
 
-	for _, cur := range curOutputs {
-		for _, new := range newOutputs {
-			buildTargetIntersection := stringset.NewFromSlice(
-				cur.BuildTargets...,
+	for _, cur := range curRules {
+		for _, new := range newRules {
+			curDC := getSingleDutCriterionOrPanic(cur)
+			newDC := getSingleDutCriterionOrPanic(new)
+
+			if curDC.AttributeId.Value != newDC.AttributeId.Value {
+				logging.Debugf(ctx, "Rules have different AttributeIds, skipping: %q, %q", cur.Name, new.Name)
+				continue
+			}
+
+			valueIntersection := stringset.NewFromSlice(
+				curDC.Values...,
 			).Intersect(
-				stringset.NewFromSlice(new.BuildTargets...),
+				stringset.NewFromSlice(newDC.Values...),
 			)
-			if len(buildTargetIntersection) > 0 {
-				delete(unjoinedOutputs, cur.Name)
-				delete(unjoinedOutputs, new.Name)
 
-				expandedOutputs = append(expandedOutputs, &Output{
-					Name:            fmt.Sprintf("%s:%s", cur.Name, new.Name),
-					BuildTargets:    buildTargetIntersection.ToSlice(),
-					TestTags:        cur.TestTags,
-					TestTagExcludes: cur.TestTagExcludes,
+			if len(valueIntersection) > 0 {
+				delete(unjoinedRules, cur.Name)
+				delete(unjoinedRules, new.Name)
+
+				expandedRules = append(expandedRules, &testpb.CoverageRule{
+					Name: fmt.Sprintf("%s_%s", cur.Name, new.Name),
+					DutCriteria: []*testpb.DutCriterion{
+						{
+							AttributeId: curDC.AttributeId,
+							Values:      valueIntersection.ToSlice(),
+						},
+					},
+					TestSuites: cur.TestSuites,
 				})
 			}
 		}
 	}
 
-	// Return all unjoined outputs as is.
-	for _, output := range unjoinedOutputs {
-		expandedOutputs = append(expandedOutputs, output)
+	// Return all unjoined rules as is.
+	for _, rule := range unjoinedRules {
+		expandedRules = append(expandedRules, rule)
 	}
 
-	return expandedOutputs
+	return expandedRules
 }
 
-// partitionBuildTargets groups BuildTarget overlay names in buildSummaryList.
+// buildTargetCoverageRules groups BuildTarget overlay names in
+// buildSummaryList and returns one CoverageRule per group.
 //
 // For each BuildSummary in buildSummaryList, keyFn is called to get a string
-// key. The result groups all overlay names that share the same string key. If
-// keyFn returns the empty string, that BuildSummary is skipped.
-func partitionBuildTargets(
-	keyFn func(*buildpb.SystemImage_BuildSummary) string, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-) map[string][]string {
+// key. All overlay names that share the same string key are used to create a
+// CoverageRule.
+//
+// nameFn converts a key returned by keyFn to a Name for the CoverageRule.
+//
+// For example, to create one CoverageRule for each kernel version, keyFn should
+// return the kernel version found in a BuildSummary, and nameFn could return
+// the string "kernel:<key>".
+//
+// If keyFn returns the empty string, that BuildSummary is skipped.
+func buildTargetCoverageRules(
+	keyFn func(*buildpb.SystemImage_BuildSummary) string,
+	nameFn func(string) string,
+	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	sourceTestPlan *plan.SourceTestPlan,
+) []*testpb.CoverageRule {
 	keyToBuildTargets := make(map[string][]string)
 
 	for _, value := range buildSummaryList.GetValues() {
@@ -145,106 +177,105 @@ func partitionBuildTargets(
 		)
 	}
 
-	return keyToBuildTargets
+	coverageRules := make([]*testpb.CoverageRule, 0, len(keyToBuildTargets))
+	for key, buildTargets := range keyToBuildTargets {
+		coverageRules = append(coverageRules, &testpb.CoverageRule{
+			Name: nameFn(key),
+			TestSuites: []*testpb.TestSuite{
+				{
+					TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+						Tags:        sourceTestPlan.TestTags,
+						TagExcludes: sourceTestPlan.TestTagExcludes,
+					},
+				},
+			},
+			DutCriteria: []*testpb.DutCriterion{
+				{
+					AttributeId: buildTargetAttributeID,
+					Values:      buildTargets,
+				},
+			},
+		})
+	}
+
+	return coverageRules
 }
 
-// kernelVersionOutputs returns a output for each kernel version.
-func kernelVersionOutputs(
+// kernelCoverageRules returns CoverageRules requiring each kernel version.
+func kernelCoverageRules(
 	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-) []*Output {
-	kernelVersionToBuildTargets := partitionBuildTargets(
+) []*testpb.CoverageRule {
+	return buildTargetCoverageRules(
 		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
 			return buildSummary.GetKernel().GetVersion()
 		},
+		func(key string) string {
+			return fmt.Sprintf("kernel:%s", key)
+		},
 		buildSummaryList,
+		sourceTestPlan,
 	)
-
-	outputs := make([]*Output, 0, len(kernelVersionToBuildTargets))
-	for version, buildTargets := range kernelVersionToBuildTargets {
-		outputs = append(outputs, &Output{
-			Name:            fmt.Sprintf("kernel-%s", version),
-			BuildTargets:    buildTargets,
-			TestTags:        sourceTestPlan.TestTags,
-			TestTagExcludes: sourceTestPlan.TestTagExcludes,
-		})
-	}
-
-	return outputs
 }
 
-// socFamilyOutputs returns an Output for each SoC family.
-func socFamilyOutputs(
+// socCoverageRules returns CoverageRules requiring each SoC family.
+func socCoverageRules(
 	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-) []*Output {
-	socFamilyToBuildTargets := partitionBuildTargets(
+) []*testpb.CoverageRule {
+	return buildTargetCoverageRules(
 		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
 			return buildSummary.GetChipset().GetOverlay()
 		},
+		func(key string) string {
+			return fmt.Sprintf("soc:%s", key)
+		},
 		buildSummaryList,
+		sourceTestPlan,
 	)
-
-	outputs := make([]*Output, 0, len(socFamilyToBuildTargets))
-	for socFamily, buildTargets := range socFamilyToBuildTargets {
-		outputs = append(outputs, &Output{
-			Name:            fmt.Sprintf("soc-%s", socFamily),
-			BuildTargets:    buildTargets,
-			TestTags:        sourceTestPlan.TestTags,
-			TestTagExcludes: sourceTestPlan.TestTagExcludes,
-		})
-	}
-
-	return outputs
 }
 
-func arcVersionOutputs(
+// arcCoverageRules returns a CoverageRule requiring each ARC version.
+func arcCoverageRules(
 	sourceTestPlan *plan.SourceTestPlan, buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-) []*Output {
-	arcVersionToBuildTargets := partitionBuildTargets(
+) []*testpb.CoverageRule {
+	return buildTargetCoverageRules(
 		func(buildSummary *buildpb.SystemImage_BuildSummary) string {
 			return buildSummary.GetArc().GetVersion()
 		},
+		func(key string) string {
+			return fmt.Sprintf("arc:%s", key)
+		},
 		buildSummaryList,
+		sourceTestPlan,
 	)
-
-	outputs := make([]*Output, 0, len(arcVersionToBuildTargets))
-	for arcVersion, buildTargets := range arcVersionToBuildTargets {
-		outputs = append(outputs, &Output{
-			Name:            fmt.Sprintf("arc-%s", arcVersion),
-			BuildTargets:    buildTargets,
-			TestTags:        sourceTestPlan.TestTags,
-			TestTagExcludes: sourceTestPlan.TestTagExcludes,
-		})
-	}
-
-	return outputs
 }
 
-// fingerprintOutputs returns an Output containing all DesignConfigIds with a
-// fingerprint sensor.
-func fingerprintOutputs(
-	sourceTestPlan *plan.SourceTestPlan, flatConfigList *payload.FlatConfigList,
-) []*Output {
-	var designConfigIds []string
+// fingerprintCoverageRule returns a CoverageRule requiring a fingerprint
+// sensor.
+func fingerprintCoverageRule(sourceTestPlan *plan.SourceTestPlan) *testpb.CoverageRule {
+	presentEnums := []string{}
 
-	for _, value := range flatConfigList.Values {
-		loc := value.GetHwDesignConfig().GetHardwareFeatures().GetFingerprint().GetLocation()
-		if loc == configpb.HardwareFeatures_Fingerprint_LOCATION_UNKNOWN ||
-			loc == configpb.HardwareFeatures_Fingerprint_NOT_PRESENT {
-			continue
+	for name, value := range configpb.HardwareFeatures_Fingerprint_Location_value {
+		if value != int32(configpb.HardwareFeatures_Fingerprint_LOCATION_UNKNOWN) &&
+			value != int32(configpb.HardwareFeatures_Fingerprint_NOT_PRESENT) {
+			presentEnums = append(presentEnums, name)
 		}
-
-		designConfigIds = append(
-			designConfigIds,
-			value.GetHwDesignConfig().GetId().GetValue(),
-		)
 	}
 
-	return []*Output{
-		{
-			Name:            "fp-present",
-			DesignConfigIds: designConfigIds,
-			TestTags:        sourceTestPlan.TestTags,
-			TestTagExcludes: sourceTestPlan.TestTagExcludes,
+	return &testpb.CoverageRule{
+		Name: "fp:present",
+		TestSuites: []*testpb.TestSuite{
+			{
+				TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+					Tags:        sourceTestPlan.TestTags,
+					TagExcludes: sourceTestPlan.TestTagExcludes,
+				},
+			},
+		},
+		DutCriteria: []*testpb.DutCriterion{
+			{
+				AttributeId: fingerprintAttributeID,
+				Values:      presentEnums,
+			},
 		},
 	}
 }
@@ -257,11 +288,11 @@ func typeName(m proto.Message) protoreflect.FullName {
 // generateOutputs computes a list of Outputs, based on sourceTestPlan and
 // buildSummaryList.
 func generateOutputs(
+	ctx context.Context,
 	sourceTestPlan *plan.SourceTestPlan,
 	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
-	flatConfigList *payload.FlatConfigList,
-) ([]*Output, error) {
-	outputs := []*Output{}
+) ([]*testpb.CoverageRule, error) {
+	coverageRules := []*testpb.CoverageRule{}
 
 	// For each requirement set in sourceTestPlan, switch on the type of the
 	// requirement and call the corresponding <requirement>Outputs function.
@@ -280,16 +311,18 @@ func generateOutputs(
 			// Value, so switch on the full type name.
 			switch fd.Message().FullName() {
 			case typeName(&plan.SourceTestPlan_Requirements_ArcVersions{}):
-				outputs = expandOutputs(outputs, arcVersionOutputs(sourceTestPlan, buildSummaryList))
+				coverageRules = expandCoverageRules(ctx, coverageRules, arcCoverageRules(sourceTestPlan, buildSummaryList))
 
 			case typeName(&plan.SourceTestPlan_Requirements_KernelVersions{}):
-				outputs = expandOutputs(outputs, kernelVersionOutputs(sourceTestPlan, buildSummaryList))
+				coverageRules = expandCoverageRules(ctx, coverageRules, kernelCoverageRules(sourceTestPlan, buildSummaryList))
 
 			case typeName(&plan.SourceTestPlan_Requirements_SocFamilies{}):
-				outputs = expandOutputs(outputs, socFamilyOutputs(sourceTestPlan, buildSummaryList))
+				coverageRules = expandCoverageRules(ctx, coverageRules, socCoverageRules(sourceTestPlan, buildSummaryList))
 
 			case typeName(&plan.SourceTestPlan_Requirements_Fingerprint{}):
-				outputs = expandOutputs(outputs, fingerprintOutputs(sourceTestPlan, flatConfigList))
+				coverageRules = expandCoverageRules(
+					ctx, coverageRules, []*testpb.CoverageRule{fingerprintCoverageRule(sourceTestPlan)},
+				)
 
 			default:
 				unimplementedReq = fd
@@ -307,5 +340,5 @@ func generateOutputs(
 		return nil, fmt.Errorf("unimplemented requirement %q", unimplementedReq.Name())
 	}
 
-	return outputs, nil
+	return coverageRules, nil
 }
