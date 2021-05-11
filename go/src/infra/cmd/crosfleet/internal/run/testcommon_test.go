@@ -26,6 +26,8 @@ var testValidateArgsData = []struct {
 	{ // All errors raised
 		testCommonFlags{
 			board:    "",
+			models:   []string{"model1", "model2"},
+			repeats:  7,
 			pool:     "",
 			image:    "sample-image",
 			release:  "sample-release",
@@ -36,21 +38,26 @@ var testValidateArgsData = []struct {
 missing pool flag
 cannot specify both image and release branch
 priority flag should be in [50, 255]
-missing suite-name arg`,
+total number of CTP runs launched (# models specified * repeats) cannot exceed 12
+missing suite arg`,
 	},
 	{ // One error raised
 		testCommonFlags{
-			board:    "",
+			board:    "sample-board",
+			models:   []string{},
+			repeats:  13,
 			pool:     "sample-pool",
 			image:    "sample-image",
 			priority: 255,
 		},
 		[]string{"sample-suite-name"},
-		"missing board flag",
+		"total number of CTP runs launched (# models specified * repeats) cannot exceed 12",
 	},
 	{ // No errors raised
 		testCommonFlags{
 			board:    "sample-board",
+			models:   []string{"model1", "model2"},
+			repeats:  6,
 			pool:     "sample-pool",
 			release:  "sample-release",
 			priority: 255,
@@ -70,7 +77,7 @@ func TestValidateArgs(t *testing.T) {
 			if err := flagSet.Parse(tt.args); err != nil {
 				t.Fatalf("unexpected error parsing command line args %v for test: %v", tt.args, err)
 			}
-			gotValidationErr := tt.testCommonFlags.validateArgs(&flagSet, "suite-name")
+			gotValidationErr := tt.testCommonFlags.validateArgs(&flagSet, "suite")
 			gotValidationErrString := common.ErrToString(gotValidationErr)
 			if tt.wantValidationErrString != gotValidationErrString {
 				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantValidationErrString, gotValidationErrString)
@@ -86,7 +93,7 @@ var testBuildTagsData = []struct {
 	{ // Missing all values
 		testCommonFlags{
 			board:     "",
-			model:     "",
+			models:    []string{""},
 			pool:      "",
 			image:     "",
 			qsAccount: "",
@@ -101,7 +108,7 @@ var testBuildTagsData = []struct {
 	{ // Missing some values
 		testCommonFlags{
 			board:     "sample-board",
-			model:     "",
+			models:    []string{""},
 			pool:      "sample-pool",
 			image:     "sample-image",
 			qsAccount: "",
@@ -120,7 +127,7 @@ var testBuildTagsData = []struct {
 	{ // Includes all values
 		testCommonFlags{
 			board:     "sample-board",
-			model:     "sample-model",
+			models:    []string{"sample-model"},
 			pool:      "sample-pool",
 			image:     "sample-image",
 			qsAccount: "sample-qs-account",
@@ -148,7 +155,7 @@ func TestBuildTags(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("(%s)", tt.wantTags), func(t *testing.T) {
 			t.Parallel()
-			gotTags := tt.testCommonFlags.buildTagsForModel("suite", tt.testCommonFlags.model, "sample-suite")
+			gotTags := tt.testCommonFlags.buildTagsForModel("suite", tt.testCommonFlags.models[0], "sample-suite")
 			if diff := cmp.Diff(tt.wantTags, gotTags); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
@@ -336,7 +343,6 @@ func TestTestPlatformRequest(t *testing.T) {
 	t.Parallel()
 	cliFlags := &testCommonFlags{
 		board:           "sample-board",
-		model:           "sample-model",
 		image:           "sample-image",
 		pool:            "MANAGED_POOL_SUITES",
 		qsAccount:       "sample-qs-account",
@@ -390,7 +396,7 @@ func TestTestPlatformRequest(t *testing.T) {
 		testPlan: &test_platform.Request_TestPlan{},
 		cliFlags: cliFlags,
 	}
-	gotRequest, err := runLauncher.testPlatformRequest(cliFlags.model, buildTags)
+	gotRequest, err := runLauncher.testPlatformRequest("sample-model", buildTags)
 	if err != nil {
 		t.Fatalf("unexpected error constructing Test Platform request: %v", err)
 	}

@@ -292,6 +292,108 @@ func (x *BuildIdList) GetIds() []int64 {
 	return nil
 }
 
+type BuildLaunchList struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Launches []*BuildLaunch `protobuf:"bytes,1,rep,name=Launches,proto3" json:"Launches,omitempty"`
+}
+
+func (x *BuildLaunchList) Reset() {
+	*x = BuildLaunchList{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BuildLaunchList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildLaunchList) ProtoMessage() {}
+
+func (x *BuildLaunchList) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildLaunchList.ProtoReflect.Descriptor instead.
+func (*BuildLaunchList) Descriptor() ([]byte, []int) {
+	return file_infra_cmd_crosfleet_internal_proto_info_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BuildLaunchList) GetLaunches() []*BuildLaunch {
+	if x != nil {
+		return x.Launches
+	}
+	return nil
+}
+
+type BuildLaunch struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Build      *proto.Build `protobuf:"bytes,1,opt,name=Build,proto3" json:"Build,omitempty"`
+	BuildError string       `protobuf:"bytes,2,opt,name=BuildError,proto3" json:"BuildError,omitempty"`
+}
+
+func (x *BuildLaunch) Reset() {
+	*x = BuildLaunch{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BuildLaunch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildLaunch) ProtoMessage() {}
+
+func (x *BuildLaunch) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildLaunch.ProtoReflect.Descriptor instead.
+func (*BuildLaunch) Descriptor() ([]byte, []int) {
+	return file_infra_cmd_crosfleet_internal_proto_info_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *BuildLaunch) GetBuild() *proto.Build {
+	if x != nil {
+		return x.Build
+	}
+	return nil
+}
+
+func (x *BuildLaunch) GetBuildError() string {
+	if x != nil {
+		return x.BuildError
+	}
+	return ""
+}
+
 var File_infra_cmd_crosfleet_internal_proto_info_proto protoreflect.FileDescriptor
 
 var file_infra_cmd_crosfleet_internal_proto_info_proto_rawDesc = []byte{
@@ -337,10 +439,21 @@ var file_infra_cmd_crosfleet_internal_proto_info_proto_rawDesc = []byte{
 	0x62, 0x2e, 0x4c, 0x65, 0x61, 0x73, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06, 0x4c, 0x65, 0x61,
 	0x73, 0x65, 0x73, 0x22, 0x1f, 0x0a, 0x0b, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x64, 0x4c, 0x69,
 	0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x49, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x03, 0x52,
-	0x03, 0x49, 0x64, 0x73, 0x42, 0x30, 0x5a, 0x2e, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x6d,
-	0x64, 0x2f, 0x63, 0x72, 0x6f, 0x73, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x69, 0x6e, 0x74, 0x65,
-	0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x3b, 0x63, 0x72, 0x6f, 0x73, 0x66,
-	0x6c, 0x65, 0x65, 0x74, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x03, 0x49, 0x64, 0x73, 0x22, 0x51, 0x0a, 0x0f, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x61, 0x75,
+	0x6e, 0x63, 0x68, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x3e, 0x0a, 0x08, 0x4c, 0x61, 0x75, 0x6e, 0x63,
+	0x68, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x63, 0x72, 0x6f, 0x73,
+	0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x63, 0x72, 0x6f, 0x73, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x70,
+	0x62, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x52, 0x08, 0x4c,
+	0x61, 0x75, 0x6e, 0x63, 0x68, 0x65, 0x73, 0x22, 0x5a, 0x0a, 0x0b, 0x42, 0x75, 0x69, 0x6c, 0x64,
+	0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x12, 0x2b, 0x0a, 0x05, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x2e, 0x76, 0x32, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x52, 0x05, 0x42, 0x75,
+	0x69, 0x6c, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72, 0x6f,
+	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72,
+	0x72, 0x6f, 0x72, 0x42, 0x30, 0x5a, 0x2e, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x6d, 0x64,
+	0x2f, 0x63, 0x72, 0x6f, 0x73, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72,
+	0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x3b, 0x63, 0x72, 0x6f, 0x73, 0x66, 0x6c,
+	0x65, 0x65, 0x74, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -355,29 +468,33 @@ func file_infra_cmd_crosfleet_internal_proto_info_proto_rawDescGZIP() []byte {
 	return file_infra_cmd_crosfleet_internal_proto_info_proto_rawDescData
 }
 
-var file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_infra_cmd_crosfleet_internal_proto_info_proto_goTypes = []interface{}{
 	(*DUTInfo)(nil),           // 0: crosfleet.crosfleetpb.DUTInfo
 	(*DUTInfoList)(nil),       // 1: crosfleet.crosfleetpb.DUTInfoList
 	(*LeaseInfo)(nil),         // 2: crosfleet.crosfleetpb.LeaseInfo
 	(*LeaseInfoList)(nil),     // 3: crosfleet.crosfleetpb.LeaseInfoList
 	(*BuildIdList)(nil),       // 4: crosfleet.crosfleetpb.BuildIdList
-	(*models.MachineLSE)(nil), // 5: unifiedfleet.api.v1.models.MachineLSE
-	(*models.Machine)(nil),    // 6: unifiedfleet.api.v1.models.Machine
-	(*proto.Build)(nil),       // 7: buildbucket.v2.Build
+	(*BuildLaunchList)(nil),   // 5: crosfleet.crosfleetpb.BuildLaunchList
+	(*BuildLaunch)(nil),       // 6: crosfleet.crosfleetpb.BuildLaunch
+	(*models.MachineLSE)(nil), // 7: unifiedfleet.api.v1.models.MachineLSE
+	(*models.Machine)(nil),    // 8: unifiedfleet.api.v1.models.Machine
+	(*proto.Build)(nil),       // 9: buildbucket.v2.Build
 }
 var file_infra_cmd_crosfleet_internal_proto_info_proto_depIdxs = []int32{
-	5, // 0: crosfleet.crosfleetpb.DUTInfo.LabSetup:type_name -> unifiedfleet.api.v1.models.MachineLSE
-	6, // 1: crosfleet.crosfleetpb.DUTInfo.Machine:type_name -> unifiedfleet.api.v1.models.Machine
+	7, // 0: crosfleet.crosfleetpb.DUTInfo.LabSetup:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	8, // 1: crosfleet.crosfleetpb.DUTInfo.Machine:type_name -> unifiedfleet.api.v1.models.Machine
 	0, // 2: crosfleet.crosfleetpb.DUTInfoList.DUTs:type_name -> crosfleet.crosfleetpb.DUTInfo
-	7, // 3: crosfleet.crosfleetpb.LeaseInfo.Build:type_name -> buildbucket.v2.Build
+	9, // 3: crosfleet.crosfleetpb.LeaseInfo.Build:type_name -> buildbucket.v2.Build
 	0, // 4: crosfleet.crosfleetpb.LeaseInfo.DUT:type_name -> crosfleet.crosfleetpb.DUTInfo
 	2, // 5: crosfleet.crosfleetpb.LeaseInfoList.Leases:type_name -> crosfleet.crosfleetpb.LeaseInfo
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	6, // 6: crosfleet.crosfleetpb.BuildLaunchList.Launches:type_name -> crosfleet.crosfleetpb.BuildLaunch
+	9, // 7: crosfleet.crosfleetpb.BuildLaunch.Build:type_name -> buildbucket.v2.Build
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_infra_cmd_crosfleet_internal_proto_info_proto_init() }
@@ -446,6 +563,30 @@ func file_infra_cmd_crosfleet_internal_proto_info_proto_init() {
 				return nil
 			}
 		}
+		file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BuildLaunchList); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_cmd_crosfleet_internal_proto_info_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BuildLaunch); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -453,7 +594,7 @@ func file_infra_cmd_crosfleet_internal_proto_info_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_cmd_crosfleet_internal_proto_info_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

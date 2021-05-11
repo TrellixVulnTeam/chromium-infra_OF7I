@@ -8,22 +8,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"infra/cmdsupport/cmdlib"
-	"strings"
-	"time"
-
-	"google.golang.org/protobuf/types/known/durationpb"
-
-	"go.chromium.org/luci/auth/client/authcli"
-	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
-
 	"infra/cmd/crosfleet/internal/buildbucket"
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
+	crosfleetpb "infra/cmd/crosfleet/internal/proto"
+	"infra/cmdsupport/cmdlib"
+	"math"
+	"strings"
+	"sync"
+	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/luci/auth/client/authcli"
+	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
+	luciflag "go.chromium.org/luci/common/flag"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
@@ -44,18 +45,22 @@ const (
 	// anywhere close to this limit, but tags that could potentially be very
 	// long we should crop them to this limit.
 	maxSwarmingTagLength = 300
+	// Maximum number of CTP builds that can be run from one "crosfleet run ..."
+	// command.
+	maxCTPRunsPerCmd = 12
 )
 
 // testCommonFlags contains parameters common to the "run
 // test", "run suite", and "run testplan" subcommands.
 type testCommonFlags struct {
 	board           string
-	model           string
+	models          []string
 	pool            string
 	image           string
 	release         string
 	qsAccount       string
 	maxRetries      int
+	repeats         int
 	priority        int64
 	timeoutMins     int
 	addedDims       map[string]string
@@ -73,7 +78,11 @@ If no value for image or release is passed, test will run against the latest gre
 	f.StringVar(&c.release, "release", "", `Optional ChromeOS release branch to run test against, e.g. R89-13609.0.0.
 If no value for image or release is passed, test will run against the latest green postsubmit build for the given board.`)
 	f.StringVar(&c.board, "board", "", "Board to run tests on.")
-	f.StringVar(&c.model, "model", "", "Model to run tests on.")
+	f.Var(luciflag.StringSlice(&c.models), "model", fmt.Sprintf(`Model to run tests on; may be specified multiple times.
+A maximum of %d tests may be launched per "crosfleet run" command.`, maxCTPRunsPerCmd))
+	f.Var(luciflag.CommaList(&c.models), "models", "Comma-separated list of models to run tests on in same format as -model.")
+	f.IntVar(&c.repeats, "repeats", 1, fmt.Sprintf(`Number of repeat tests to launch (per model specified).
+A maximum of %d tests may be launched per "crosfleet run" command.`, maxCTPRunsPerCmd))
 	f.StringVar(&c.pool, "pool", "", "Device pool to run tests on.")
 	f.StringVar(&c.qsAccount, "qs-account", "", `Optional Quota Scheduler account to use for this task. Overrides -priority flag.
 If no account is set, tests are scheduled using -priority flag.`)
@@ -131,6 +140,12 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 	}
 	if c.priority < MinSwarmingPriority || c.priority > MaxSwarmingPriority {
 		errors = append(errors, fmt.Sprintf("priority flag should be in [%d, %d]", MinSwarmingPriority, MaxSwarmingPriority))
+	}
+	// If no models are specified, we still schedule one test with model label
+	// left blank.
+	numUniqueDUTs := int(math.Max(1, float64(len(c.models))))
+	if numUniqueDUTs*c.repeats > maxCTPRunsPerCmd {
+		errors = append(errors, fmt.Sprintf("total number of CTP runs launched (# models specified * repeats) cannot exceed %d", maxCTPRunsPerCmd))
 	}
 	if f.NArg() == 0 {
 		errors = append(errors, fmt.Sprintf("missing %v arg", mainArgType))
@@ -235,32 +250,56 @@ type ctpRunLauncher struct {
 	exitEarly   bool
 }
 
-// launchAndValidateTestPlans requests a run of the given CTP run launcher's
+// launchAndOutputTests invokes the inner launchTestsAsync() function
+// and handles the CLI output of the buildLaunchList JSON object, which should
+// happen even in case of command failure.
+func (l *ctpRunLauncher) launchAndOutputTests(ctx context.Context) error {
+	buildLaunchList, err := l.launchTestsAsync(ctx)
+	l.printer.WriteJSONStdout(buildLaunchList)
+	return err
+}
+
+// launchTestsAsync requests a run of the given CTP run launcher's
 // test plan, and returns the ID of the launched cros_test_platform Buildbucket
 // build. Unless the exitEarly arg is passed as true, the function waits to
 // return until the build passes request-validation and setup steps.
-func (l *ctpRunLauncher) launchAndValidateTestPlans(ctx context.Context) error {
-	ctpBuild, err := l.launchCTPBuild(ctx, l.cliFlags.model)
-	if err != nil {
-		return err
-	}
-	l.printer.WriteTextStderr("Requesting %s run at %s", l.cmdName, l.bbClient.BuildURL(ctpBuild.Id))
-	if !l.exitEarly {
-		l.printer.WriteTextStderr("Waiting to confirm %s run request validation...\n(To skip this step, pass the -exit-early flag on future %s run commands)", l.cmdName, l.cmdName)
-		ctpBuild, err = l.bbClient.WaitForBuildStepStart(ctx, ctpBuild.Id, ctpExecuteStepName)
-		if err != nil {
-			return err
+func (l *ctpRunLauncher) launchTestsAsync(ctx context.Context) (*crosfleetpb.BuildLaunchList, error) {
+	buildLaunchList, scheduledAnyBuilds, schedulingErrors := l.scheduleCTPBuildsAsync(ctx)
+	if len(schedulingErrors) > 0 {
+		fullErrorMsg := fmt.Sprintf("Encountered the following errors requesting %s run(s):\n%s\n",
+			l.cmdName, strings.Join(schedulingErrors, "\n"))
+		if scheduledAnyBuilds {
+			// Don't fail the command if we were able to request some builds.
+			l.printer.WriteTextStderr(fullErrorMsg)
+		} else {
+			return buildLaunchList, fmt.Errorf(fullErrorMsg)
 		}
-		l.printer.WriteTextStdout("Successfully started %s run", l.cmdName)
 	}
-	l.printer.WriteJSONStdout(ctpBuild)
-	return nil
+	if l.exitEarly {
+		return buildLaunchList, nil
+	}
+	l.printer.WriteTextStderr(`Waiting to confirm %s run request validation...
+(To skip this step, pass the -exit-early flag on future %s run commands)
+`, l.cmdName, l.cmdName)
+	confirmedAnyBuilds, confirmationErrors := l.confirmCTPBuildsAsync(ctx, buildLaunchList)
+	if len(confirmationErrors) > 0 {
+		fullErrorMsg := fmt.Sprintf("Encountered the following errors confirming %s run(s):\n%s\n",
+			l.cmdName, strings.Join(confirmationErrors, "\n"))
+		if confirmedAnyBuilds {
+			// Don't fail the command if we were able to confirm some of the
+			// requested builds as having started.
+			l.printer.WriteTextStderr(fullErrorMsg)
+		} else {
+			return buildLaunchList, fmt.Errorf(fullErrorMsg)
+		}
+	}
+	return buildLaunchList, nil
 }
 
-// launchCTPBuild uses the given Buildbucket client to launch a
+// scheduleCTPBuild uses the given Buildbucket client to request a
 // cros_test_platform Buildbucket build for the CTP run launcher's test plan,
-// build tags, and command line flags, and returns the ID of the launched build.
-func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context, model string) (*buildbucketpb.Build, error) {
+// build tags, and command line flags, and returns the ID of the pending build.
+func (l *ctpRunLauncher) scheduleCTPBuild(ctx context.Context, model string) (*buildbucketpb.Build, error) {
 	buildTags := l.cliFlags.buildTagsForModel(l.cmdName, model, l.mainArgsTag)
 	ctpRequest, err := l.testPlatformRequest(model, buildTags)
 	if err != nil {
@@ -279,6 +318,87 @@ func (l *ctpRunLauncher) launchCTPBuild(ctx context.Context, model string) (*bui
 	// buildProps contains separate dimensions and priority values to apply to
 	// the child test_runner builds that will be launched by the parent build.
 	return l.bbClient.ScheduleBuild(ctx, buildProps, nil, buildTags, 0)
+}
+
+// scheduleCTPBuildsAsync schedules all builds asynchronously and returns a
+// build launch list, a bool indicating whether any builds were successfully
+// scheduled, and a slice of scheduling error strings. Mutex locks are used to
+// avoid race conditions from concurrent writes to the return variables in the
+// async loop.
+func (l *ctpRunLauncher) scheduleCTPBuildsAsync(ctx context.Context) (buildLaunchList *crosfleetpb.BuildLaunchList, scheduledAnyBuilds bool, schedulingErrors []string) {
+	buildLaunchList = &crosfleetpb.BuildLaunchList{}
+	waitGroup := sync.WaitGroup{}
+	mutex := sync.Mutex{}
+	allModels := l.cliFlags.models
+	if len(allModels) == 0 {
+		// If no models are specified, just launch one run with a blank model.
+		allModels = []string{""}
+	}
+	for _, model := range allModels {
+		for i := 0; i < l.cliFlags.repeats; i++ {
+			waitGroup.Add(1)
+			model := model
+			go func() {
+				build, err := l.scheduleCTPBuild(ctx, model)
+				mutex.Lock()
+				errString := ""
+				if err != nil {
+					errString = fmt.Sprintf("Error requesting %s run for model %s: %s", l.cmdName, model, err.Error())
+					schedulingErrors = append(schedulingErrors, errString)
+				} else {
+					scheduledAnyBuilds = true
+					l.printer.WriteTextStderr("Requesting %s run at %s", l.cmdName, l.bbClient.BuildURL(build.Id))
+				}
+				buildLaunchList.Launches = append(buildLaunchList.Launches, &crosfleetpb.BuildLaunch{
+					Build:      build,
+					BuildError: errString,
+				})
+				mutex.Unlock()
+				waitGroup.Done()
+			}()
+		}
+	}
+	waitGroup.Wait()
+	return
+}
+
+// confirmCTPBuildsAsync waits for all builds to start asynchronously, and
+// updates the details for each build it confirms has started in the given build
+// launch list. The function returns a bool indicating whether any builds were
+// confirmed started, and a slice of confirmation error strings. Mutex locks are
+// used to avoid race conditions from concurrent writes to the return variables
+// in the async loop.
+func (l *ctpRunLauncher) confirmCTPBuildsAsync(ctx context.Context, buildLaunchList *crosfleetpb.BuildLaunchList) (confirmedAnyBuilds bool, confirmationErrors []string) {
+	waitGroup := sync.WaitGroup{}
+	mutex := sync.Mutex{}
+	for _, buildLaunch := range buildLaunchList.Launches {
+		buildLaunch := buildLaunch
+		// Only wait for builds that were already scheduled without issues.
+		if buildLaunch.Build == nil || buildLaunch.Build.GetId() == 0 || buildLaunch.BuildError != "" {
+			continue
+		}
+		waitGroup.Add(1)
+		go func() {
+			updatedBuild, err := l.bbClient.WaitForBuildStepStart(ctx, buildLaunch.Build.Id, ctpExecuteStepName)
+			mutex.Lock()
+			if updatedBuild != nil {
+				buildLaunch.Build = updatedBuild
+				if updatedBuild.Status == buildbucketpb.Status_STARTED {
+					confirmedAnyBuilds = true
+					l.printer.WriteTextStdout("Successfully started %s run %d", l.cmdName, updatedBuild.Id)
+				}
+			}
+			if err != nil {
+				errString := fmt.Sprintf("Error waiting for build %d to start: %s", buildLaunch.Build.Id, err.Error())
+				buildLaunch.BuildError = errString
+				confirmationErrors = append(confirmationErrors, errString)
+			}
+			mutex.Unlock()
+			waitGroup.Done()
+		}()
+	}
+	waitGroup.Wait()
+	return
 }
 
 // testPlatformRequest constructs a cros_test_platform.Request from the given

@@ -41,3 +41,12 @@ message LeaseInfoList {
 message BuildIdList {
   repeated int64 Ids = 1;
 }
+
+message BuildLaunchList {
+  repeated BuildLaunch Launches = 1;
+}
+
+message BuildLaunch {
+  buildbucket.v2.Build Build = 1;
+  string BuildError = 2;
+}

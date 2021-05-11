@@ -92,7 +92,7 @@ func (c *planRun) innerRun(a subcommands.Application, args []string, env subcomm
 		cliFlags:    &c.testCommonFlags,
 		exitEarly:   c.exitEarly,
 	}
-	return testLauncher.launchAndValidateTestPlans(ctx)
+	return testLauncher.launchAndOutputTests(ctx)
 }
 
 func readTestPlan(path string) (*test_platform.Request_TestPlan, error) {

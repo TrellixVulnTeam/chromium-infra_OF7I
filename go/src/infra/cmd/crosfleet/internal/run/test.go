@@ -80,7 +80,7 @@ func (c *testRun) innerRun(a subcommands.Application, args []string, env subcomm
 		cliFlags:    &c.testCommonFlags,
 		exitEarly:   c.exitEarly,
 	}
-	return testLauncher.launchAndValidateTestPlans(ctx)
+	return testLauncher.launchAndOutputTests(ctx)
 }
 
 // testPlanForTests constructs a Test Platform test plan for the given tests.

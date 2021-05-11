@@ -113,7 +113,10 @@ func (c *Client) ScheduleBuild(ctx context.Context, props map[string]interface{}
 
 // WaitForBuildStart polls Buildbucket to check the status of the build with
 // the given ID, and returns the build once it has started the given step.
+// If the build has a status other than scheduled/started, both the build and
+// a printable error message are returned.
 func (c *Client) WaitForBuildStepStart(ctx context.Context, id int64, stepName string) (*buildbucketpb.Build, error) {
+	stepStarted := false
 	for {
 		build, err := c.GetBuild(ctx, id)
 		if err != nil {
@@ -128,7 +131,13 @@ func (c *Client) WaitForBuildStepStart(ctx context.Context, id int64, stepName s
 			// step), and ignore the step's current status, since we already
 			// confirmed the build has the overall healthy status "started".
 			if containsStep(build.GetSteps(), stepName) {
-				return build, nil
+				// Use the stepStarted var to add one more polling interval
+				// to rule out edge cases where the step has started starts and
+				// is briefly green for <10 seconds before quickly failing.
+				if stepStarted {
+					return build, nil
+				}
+				stepStarted = true
 			}
 			time.Sleep(10 * time.Second)
 		default:
@@ -137,7 +146,7 @@ func (c *Client) WaitForBuildStepStart(ctx context.Context, id int64, stepName s
 			if build.SummaryMarkdown != "" {
 				buildSummary = fmt.Sprintf("Build summary: %s", build.SummaryMarkdown)
 			}
-			return nil, fmt.Errorf(`build finished in unexpected state %s
+			return build, fmt.Errorf(`build finished in unexpected state %s
 %s
 For more details, please visit the build page at %s`, statusString, buildSummary, c.BuildURL(build.Id))
 		}

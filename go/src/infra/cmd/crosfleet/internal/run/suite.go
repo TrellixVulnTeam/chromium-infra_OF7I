@@ -78,7 +78,7 @@ func (c *suiteRun) innerRun(a subcommands.Application, args []string, env subcom
 		cliFlags:    &c.testCommonFlags,
 		exitEarly:   c.exitEarly,
 	}
-	return testLauncher.launchAndValidateTestPlans(ctx)
+	return testLauncher.launchAndOutputTests(ctx)
 }
 
 // testPlanForSuites constructs a Test Platform test plan for the given tests.
