@@ -6,174 +6,104 @@ package dirmd
 
 import (
 	"path"
-	"strings"
+	"sort"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"go.chromium.org/luci/common/errors"
-
 	dirmdpb "infra/tools/dirmd/proto"
 )
 
-// NoInheritance is a valid value of Metadata.InheritFrom which means metadata
-// must not be inherited from anywhere.
-// This is equivalent to `set noparent` in OWNERS files.
-const NoInheritance = "-"
+// Compute computes metadata for the given directory key.
+func (m *Mapping) Compute(key string) *dirmdpb.Metadata {
+	parent := path.Dir(key)
+	if parent == key {
+		return cloneMD(m.Dirs[key])
+	}
+
+	ret := m.Compute(parent)
+	Merge(ret, m.Dirs[key])
+	return ret
+}
 
 // ComputeAll computes full metadata for each dir.
-//
-// If an inheritance cycle is detected, returns an error.
-func (m *Mapping) ComputeAll() error {
-	return m.computeAll(false)
+func (m *Mapping) ComputeAll() {
+	// Process directories in the shorest-path to longest-path order,
+	// such that, when computing the expanded metadata for a given directory,
+	// we only need to check the nearest ancestor.
+	for _, dir := range m.keysByLength() {
+		meta := cloneMD(m.nearestAncestor(dir))
+		Merge(meta, m.Dirs[dir])
+		m.Dirs[dir] = meta
+	}
 }
 
-// Reduce removes all redundant information.
-// For example, if a child inherits its metadata from its parent, and both
-// define the same attribute value, then it is removed from the child.
-//
-// If an inheritance cycle is detected, returns an error.
-func (m *Mapping) Reduce() error {
-	return m.computeAll(true)
-}
-
-func (m *Mapping) computeAll(reduce bool) error {
-	// Mapping from directory names to fully-computed Metadata messages.
-	// Acts as a cache, and becomes m.Dirs in the end.
-	computed := make(map[string]*dirmdpb.Metadata, len(m.Dirs))
-
-	type edge struct {
-		dir                 string
-		md                  *dirmdpb.Metadata // a value in `computed` map
-		inheritFromComputed *dirmdpb.Metadata // computed metadata of the dir md inherieted from
-	}
-	// topologicalOrder is used for reduction.
-	topologicalOrder := make([]edge, 0, len(m.Dirs))
-
-	// A set of metadata messages currently in the inheritance chain, used for
-	// cycle detection.
-	// Use *Metadata as the map key because comparing pointers is much faster than
-	// strings, especially when strings are long directory paths.
-	currentChain := make(map[*dirmdpb.Metadata]struct{})
-
-	// compute returns computed metadata for the dir.
-	var compute func(dir string, md *dirmdpb.Metadata) (computedMD *dirmdpb.Metadata, err error)
-	compute = func(dir string, md *dirmdpb.Metadata) (mdComputed *dirmdpb.Metadata, err error) {
-		// Do not compute twice.
-		if ret, ok := computed[dir]; ok {
-			return ret, nil
-		}
-		defer func() {
-			if mdComputed != nil {
-				computed[dir] = mdComputed
-			}
-		}()
-
-		// Check for cycles.
-		if md == nil {
-			panic("nil metadata")
-		}
-		if _, ok := currentChain[md]; ok {
-			return nil, errors.Reason("inheritance cycle with dir %q is detected", dir).Err()
-		}
-		currentChain[md] = struct{}{}
-		defer delete(currentChain, md)
-
-		// Retrieve the original (not computed) metadata to inherit from.
-		inheritFrom, inheritFromMD, err := m.findInheritFrom(dir, md)
-		switch {
-		case err != nil:
-			return nil, err
-
-		case inheritFromMD == nil:
-			// Nothing to inherit. Return the original metadata.
-			return md, nil
-		}
-
-		// Compute the full metadata.
-		inheritFromComputed, err := compute(inheritFrom, inheritFromMD)
-		if err != nil {
-			return nil, err
-		}
-
-		mdComputed = cloneMD(inheritFromComputed)
-		merge(mdComputed, md)
-		// Force md's inheritFrom, especially if it is empty.
-		mdComputed.InheritFrom = md.GetInheritFrom()
-		topologicalOrder = append(topologicalOrder, edge{dir: dir, md: mdComputed, inheritFromComputed: inheritFromComputed})
-		return mdComputed, nil
-	}
-
-	for dir, md := range m.Dirs {
-		if _, err := compute(dir, md); err != nil {
-			return err
-		}
-	}
-
-	if reduce {
-		// Drop redundant entries.
-		// Do it only after metadata for all dirs is computed.
-		// Reduce in the reversed topological order because this loop mutates
-		// metadata, i.e. start with leafs and finish with the root.
-		for i := len(topologicalOrder) - 1; i >= 0; i-- {
-			e := topologicalOrder[i]
-			excludeSame(e.md.ProtoReflect(), e.inheritFromComputed.ProtoReflect())
-			if isEmpty(e.md.ProtoReflect()) {
-				delete(computed, e.dir)
-			}
-		}
-	}
-
-	m.Dirs = computed
-	return nil
-}
-
-// findInheritFrom returns the dir to inherit metadata from.
-// May return ("", nil, nil) which means nothing to inherit from.
-func (m *Mapping) findInheritFrom(dir string, md *dirmdpb.Metadata) (inheritFrom string, inheritFromMD *dirmdpb.Metadata, err error) {
-	switch {
-	case md.GetInheritFrom() == "":
-		// Inherit from the parent.
-		if dir == "." {
-			// But this is root!
-			return "", nil, nil
-		}
-		inheritFrom = path.Dir(dir)
-
-	case md.InheritFrom == NoInheritance:
-		return "", nil, nil
-
-	case strings.HasPrefix(md.InheritFrom, "//"):
-		inheritFrom = strings.TrimPrefix(md.InheritFrom, "//")
-
-	default:
-		return "", nil, errors.Reason("unexpected inherit_from value %q in dir %q", md.InheritFrom, dir).Err()
-	}
-
-	// Walk ancestors because `inheritFrom` might not define its own metadata and
-	// the default inheritance is from the parent.
+// nearestAncestor returns metadata of the nearest ancestor.
+func (m *Mapping) nearestAncestor(dir string) *dirmdpb.Metadata {
 	for {
-		if md, ok := m.Dirs[inheritFrom]; ok {
-			return inheritFrom, md, nil
+		parent := path.Dir(dir)
+		if parent == dir {
+			// We have reached the root.
+			return nil
 		}
+		dir = parent
 
-		if inheritFrom == "." {
-			// We have reached the root - cannot go higher.
-			return "", nil, nil
+		if meta, ok := m.Dirs[dir]; ok {
+			return meta
 		}
-		inheritFrom = path.Dir(inheritFrom)
 	}
 }
 
-// merge merges metadata from src to dst, where dst is metadata inherited from
+// keysByLength returns keys sorted by length.
+// Key "." is treated as shortest of all.
+func (m *Mapping) keysByLength() []string {
+	ret := make([]string, 0, len(m.Dirs))
+	for k := range m.Dirs {
+		ret = append(ret, k)
+	}
+
+	sortKey := func(dirKey string) int {
+		// "." is considered shortest of all.
+		if dirKey == "." {
+			return -1
+		}
+		return len(dirKey)
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return sortKey(ret[i]) < sortKey(ret[j])
+	})
+	return ret
+}
+
+// Merge merges metadata from src to dst, where dst is metadata inherited from
 // ancestors and src contains directory-specific metadata.
 // Does nothing is src is nil.
 //
-// The current implementation is just proto.merge, but it may change in the
+// The current implementation is just proto.Merge, but it may change in the
 // future.
-func merge(dst, src *dirmdpb.Metadata) {
+func Merge(dst, src *dirmdpb.Metadata) {
 	if src != nil {
 		proto.Merge(dst, src)
+	}
+}
+
+// Reduce removes all redundant information.
+func (m *Mapping) Reduce() {
+	// First, compute metadata for each node.
+	m.ComputeAll()
+
+	// Then, remove nodes that do not add any new info wrt their nearest ancestor.
+	// Process directories in the shorest-path to longest-path order,
+	// such that, when computing the expanded metadata for a given directory,
+	// we only need to check the nearest ancestor.
+	for _, dir := range m.keysByLength() {
+		meta := m.Dirs[dir]
+		if ancestor := m.nearestAncestor(dir); ancestor != nil {
+			excludeSame(meta.ProtoReflect(), ancestor.ProtoReflect())
+		}
+		if isEmpty(meta.ProtoReflect()) {
+			delete(m.Dirs, dir)
+		}
 	}
 }
 

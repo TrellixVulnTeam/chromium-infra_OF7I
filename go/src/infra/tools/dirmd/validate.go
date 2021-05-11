@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"google.golang.org/protobuf/encoding/prototext"
 
@@ -38,34 +37,9 @@ func ValidateFile(fileName string) error {
 		if err != nil {
 			return err
 		}
-		md := &dirmdpb.Metadata{}
-		if err := prototext.Unmarshal(contents, md); err != nil {
-			return err
-		}
-		return Validate(md)
+		return prototext.Unmarshal(contents, &dirmdpb.Metadata{})
 	}
 
 	_, _, err = parseOwners(f)
 	return err
-}
-
-// Validate returns a non-nil error if md is invalid.
-func Validate(md *dirmdpb.Metadata) error {
-	if err := validateInheritFrom(md.InheritFrom); err != nil {
-		return errors.Annotate(err, "inherit_from").Err()
-	}
-	return nil
-}
-
-func validateInheritFrom(inheritFrom string) error {
-	if strings.Contains(inheritFrom, "\\") {
-		return errors.Reason("contains backslash; must use forward slash").Err()
-	}
-	if inheritFrom != "" && inheritFrom != "-" {
-		// Must be a path.
-		if !strings.HasPrefix(inheritFrom, "//") {
-			return errors.Reason("must start with //").Err()
-		}
-	}
-	return nil
 }
