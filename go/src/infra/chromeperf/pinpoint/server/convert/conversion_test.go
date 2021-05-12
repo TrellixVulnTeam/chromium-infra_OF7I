@@ -617,22 +617,6 @@ func TestSimpleConversions(t *testing.T) {
 
 	})
 
-	Convey("We translate all the URLs for results at each change", t, func() {
-		job.JobKind = &pinpoint_proto.JobSpec_Experiment{
-			Experiment: &pinpoint_proto.Experiment{
-				BaseCommit: &pinpoint_proto.GitilesCommit{
-					Host:    "some-gitiles-host",
-					Project: "some-gitiles-project",
-					GitHash: "c0dec0de",
-				},
-				ExperimentPatch: &pinpoint_proto.GerritChange{
-					Host:     "some-gerrit-host",
-					Project:  "some-gerrit-project",
-					Change:   23456,
-					Patchset: 1,
-				}}}
-	})
-
 	Convey("We fail on experiments with missing inputs", t, func() {
 		job.JobKind = &pinpoint_proto.JobSpec_Experiment{
 			Experiment: &pinpoint_proto.Experiment{
@@ -859,6 +843,55 @@ func TestSimpleConversions(t *testing.T) {
 
 			})
 
+			Convey("We support jobs with a Batch ID", func() {
+				telemetryJob :=
+					&pinpoint_proto.JobSpec{
+						BatchId: "defined-job-id",
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
+								Benchmark: "some-benchmark",
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
+										StoryTags: []string{"some-tag", "some-other-tag"},
+									}},
+								Measurement:   "some-metric",
+								GroupingLabel: "some-grouping-label",
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE,
+								ExtraArgs:     []string{"--browser", "some-browser"},
+							}}}
+				proto.Merge(telemetryJob, job)
+				v, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeNil)
+
+				// Check that we support the required fields for all Pinpoint jobs.
+				So(v, shouldContainMap, map[string]interface{}{
+					"target":        "some-build-target",
+					"configuration": "some-config",
+					"batch_id":      "defined-job-id",
+				})
+
+				// Check that we have the required Telemetry fields in the JSON.
+				So(v, shouldContainMap, map[string]interface{}{
+					"benchmark":      "some-benchmark",
+					"metric":         "some-metric",
+					"story_tags":     "some-tag,some-other-tag",
+					"grouping_label": "some-grouping-label"})
+
+				// Check that we have base job configurations are set.
+				So(v, shouldContainMap, map[string]interface{}{
+					"configuration": "some-config",
+					// In legacy Pinpoint, an experiment is a "try" comparison mode.
+					"comparison_mode": "try",
+				})
+
+				So(v, shouldContainMap, map[string]interface{}{
+					"base_git_hash":    "c0dec0de",
+					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1",
+					"extra_test_args":  `["--browser","some-browser"]`,
+				})
+
+			})
+
 			Convey("We support GTest", func() {
 				gtestJob := &pinpoint_proto.JobSpec{
 					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
@@ -1025,6 +1058,18 @@ func TestJobToProto(t *testing.T) {
 						So(e.Label, ShouldEqual, quests[i])
 					}
 				}
+			})
+		})
+	})
+	Convey("Given an experiment with a batch id", t, func() {
+		lj, err := ioutil.ReadFile("../testdata/defined-job-experiment-with-batch-id.json")
+		So(err, ShouldBeNil)
+		Convey("When we convert the legacy JSON", func() {
+			p, err := JobToProto(strings.NewReader(string(lj)))
+			So(err, ShouldBeNil)
+			So(p, ShouldNotBeNil)
+			Convey("Then we find the batch ID", func() {
+				So(p.JobSpec.BatchId, ShouldEqual, "batch-id-in-file")
 			})
 		})
 	})

@@ -75,6 +75,11 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 	}
 	v.Set("target", job.Target)
 
+	// Always convert the batch ID if it's defined.
+	if job.BatchId != "" {
+		v.Set("batch_id", job.BatchId)
+	}
+
 	// We're turning a floating point comparison magnitude to a string.
 	if job.ComparisonMagnitude != 0.0 {
 		v.Set("comparison_magnitude", fmt.Sprintf("%f", job.ComparisonMagnitude))
@@ -215,6 +220,7 @@ func (t *microTime) UnmarshalJSON(b []byte) error {
 
 type jsonJob struct {
 	Arguments           map[string]string       `json:"arguments"`
+	BatchId             string                  `json:"batch_id"`
 	BugID               int64                   `json:"bug_id"`
 	ComparisonMode      string                  `json:"comparison_mode,omitempty"`
 	ComparisonMagnitude float64                 `json:"comparison_magnitude,omitempty"`
@@ -309,7 +315,7 @@ func jsonJobToProto(l *jsonJob) (*proto.Job, error) {
 			Config:              l.Cfg,
 			Target:              l.Arguments["target"],
 			UserAgent:           ua,
-			BatchId:             "some-batch-id",
+			BatchId:             l.BatchId,
 			MonorailIssue: func() *proto.MonorailIssue {
 				if l.Project == nil || l.BugID == 0 {
 					return nil
