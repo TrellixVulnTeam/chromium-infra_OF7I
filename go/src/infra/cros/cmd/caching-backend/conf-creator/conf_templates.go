@@ -6,6 +6,12 @@ package main
 
 const keepalivedTemplate = `# This file is generated. DO NOT EDIT.
 
+vrrp_script chk_caching_backend_health {
+  script "curl http://localhost:8082/check_health"
+  interval 3  # In second.
+  weight 60
+}
+
 vrrp_instance CacheServer {
   state {{ .State }}
   interface {{ .Interface }}
@@ -19,8 +25,11 @@ vrrp_instance CacheServer {
         auth_type PASS
         auth_pass PASSWORD
   }
+  track_script {
+    chk_caching_backend_health
+  }
   virtual_ipaddress {
-        {{ .VirtualIP }}
+    {{ .VirtualIP }}
   }
 }
 `
@@ -89,11 +98,11 @@ http {
       proxy_cache_valid     200 720h;
       proxy_cache_key       $request_method$uri$is_args$args;
     }
-	# CQ build cache configuration.
-	# The configuration is exactly same with the "location /" except
-	# "proxy_cache_valid" which is much shorter than a release build.
-	# A CQ build URL is like "/download/chromeos-image-archive/coral-cq/R92-13913.0.0-46943-8850024658050820208/...".
-	location ~ ^/[^/]+/[^/]+/\S+-cq/ {
+    # CQ build cache configuration.
+    # The configuration is exactly same with the "location /" except
+    # "proxy_cache_valid" which is much shorter than a release build.
+    # A CQ build URL is like "/download/chromeos-image-archive/coral-cq/R92-13913.0.0-46943-8850024658050820208/...".
+    location ~ ^/[^/]+/[^/]+/\S+-cq/ {
       proxy_cache_lock on;
       proxy_cache_lock_timeout 900s;
       proxy_cache_bypass $http_x_no_cache;
@@ -109,7 +118,7 @@ http {
       proxy_cache           google-storage;
       proxy_cache_valid     200 48h;
       proxy_cache_key       $request_method$uri$is_args$args;
-	}
+    }
     # Rewrite rules converting devserver client requests to gs_cache.
     location @gs_cache {
       if ($arg_gs_bucket != "") {

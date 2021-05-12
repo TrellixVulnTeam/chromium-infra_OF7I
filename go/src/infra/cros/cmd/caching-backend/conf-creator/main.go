@@ -96,7 +96,7 @@ func innerMain() error {
 	case nodeIP == service.GetSecondaryNode() || nodeName == service.GetSecondaryNode():
 		k.UnicastPeer = service.GetPrimaryNode()
 		k.State = "BACKUP"
-		k.Priority = 99
+		k.Priority = 100
 	default:
 		return fmt.Errorf("node is neither the primary nor the secondary")
 	}
