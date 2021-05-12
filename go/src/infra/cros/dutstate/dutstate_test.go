@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ufsProto "infra/unifiedfleet/api/v1/models"
+	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
@@ -26,43 +27,14 @@ type FakeUFSClient struct {
 	updateStateErr error
 }
 
-func (c *FakeUFSClient) GetState(ctx context.Context, req *ufsAPI.GetStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error) {
-	if c.getStateErr == nil {
-		if req.GetResourceName() == "hosts/fail" {
-			return nil, status.Error(codes.Unknown, "Somthing else")
-		}
-		if req.GetResourceName() == "hosts/not_found" {
-			return nil, status.Error(codes.NotFound, "not_found")
-		}
-		return &ufsProto.StateRecord{
-			ResourceName: req.GetResourceName(),
-			State:        c.getStateMap[req.GetResourceName()],
-			UpdateTime:   timestamppb.Now(),
-		}, nil
-	}
-	return nil, c.getStateErr
-}
-
-func (c *FakeUFSClient) UpdateState(ctx context.Context, req *ufsAPI.UpdateStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error) {
-	if c.updateStateErr == nil {
-		c.updateStateMap[req.State.GetResourceName()] = req.State.GetState()
-		return &ufsProto.StateRecord{
-			ResourceName: req.State.GetResourceName(),
-			State:        req.State.GetState(),
-			UpdateTime:   timestamppb.Now(),
-		}, nil
-	}
-	return nil, c.updateStateErr
-}
-
 func TestReadState(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	Convey("Read state from USF", t, func() {
 		c := &FakeUFSClient{
 			getStateMap: map[string]ufsProto.State{
-				"hosts/host1": ufsProto.State_STATE_REPAIR_FAILED,
-				"hosts/host2": ufsProto.State_STATE_DEPLOYED_TESTING,
+				"machineLSEs/host1": ufsProto.State_STATE_REPAIR_FAILED,
+				"machineLSEs/host2": ufsProto.State_STATE_DEPLOYED_TESTING,
 			},
 		}
 		r := Read(ctx, c, "host1")
@@ -95,21 +67,21 @@ func TestUpdateState(t *testing.T) {
 			e := Update(ctx, c, "host1", "repair_failed")
 			So(e, ShouldBeNil)
 			So(c.updateStateMap, ShouldHaveLength, 1)
-			So(c.updateStateMap["hosts/host1"], ShouldEqual, ufsProto.State_STATE_REPAIR_FAILED)
+			So(c.updateStateMap["machineLSEs/host1"], ShouldEqual, ufsProto.State_STATE_REPAIR_FAILED)
 		})
 
 		Convey("set manual_repair and expect DEPLOYED_TESTING", func() {
 			e := Update(ctx, c, "host2", "manual_repair")
 			So(e, ShouldBeNil)
 			So(c.updateStateMap, ShouldHaveLength, 1)
-			So(c.updateStateMap["hosts/host2"], ShouldEqual, ufsProto.State_STATE_DEPLOYED_TESTING)
+			So(c.updateStateMap["machineLSEs/host2"], ShouldEqual, ufsProto.State_STATE_DEPLOYED_TESTING)
 		})
 
 		Convey("set incorrect state and expect UNSPECIFIED for UFS", func() {
 			e := Update(ctx, c, "host2", "wrong_state")
 			So(e, ShouldBeNil)
 			So(c.updateStateMap, ShouldHaveLength, 1)
-			So(c.updateStateMap["hosts/host2"], ShouldEqual, ufsProto.State_STATE_UNSPECIFIED)
+			So(c.updateStateMap["machineLSEs/host2"], ShouldEqual, ufsProto.State_STATE_UNSPECIFIED)
 		})
 	})
 }
@@ -176,37 +148,6 @@ func TestConvertFromUFSState(t *testing.T) {
 	}
 }
 
-func TestUFSResourceName(t *testing.T) {
-	t.Parallel()
-	testcases := []struct {
-		in  string
-		out string
-	}{
-		{
-			"My",
-			"hosts/My",
-		},
-		{
-			"host-/+01",
-			"hosts/host-/+01",
-		},
-		{
-			"chromeos6-row5-rack10-host6",
-			"hosts/chromeos6-row5-rack10-host6",
-		},
-	}
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.in, func(t *testing.T) {
-			t.Parallel()
-			got := makeUFSResourceName(tc.in)
-			if diff := cmp.Diff(tc.out, got); diff != "" {
-				t.Errorf("output mismatch (-want +got): %s\n", diff)
-			}
-		})
-	}
-}
-
 func TestStateString(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
@@ -244,4 +185,95 @@ func TestStateString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func (c *FakeUFSClient) GetMachineLSE(ctx context.Context, req *ufsAPI.GetMachineLSERequest, opts ...grpc.CallOption) (*ufsProto.MachineLSE, error) {
+	if c.getStateErr == nil {
+		if req.GetName() == "machineLSEs/fail" {
+			return nil, status.Error(codes.Unknown, "Somthing else")
+		}
+		if req.GetName() == "machineLSEs/not_found" {
+			return nil, status.Error(codes.NotFound, "not_found")
+		}
+		if req.GetName() == "machineLSEs/host1" {
+			return &ufsProto.MachineLSE{
+				Name:          req.GetName(),
+				ResourceState: c.getStateMap[req.GetName()],
+				UpdateTime:    timestamppb.Now(),
+				Lse: &ufsProto.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufsProto.ChromeOSMachineLSE{
+						ChromeosLse: &ufsProto.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufsProto.ChromeOSDeviceLSE{
+								Device: &ufsProto.ChromeOSDeviceLSE_Dut{
+									Dut: &ufslab.DeviceUnderTest{},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		}
+		if req.GetName() == "machineLSEs/host2" {
+			return &ufsProto.MachineLSE{
+				Name:          req.GetName(),
+				ResourceState: c.getStateMap[req.GetName()],
+				UpdateTime:    timestamppb.Now(),
+				Lse: &ufsProto.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufsProto.ChromeOSMachineLSE{
+						ChromeosLse: &ufsProto.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufsProto.ChromeOSDeviceLSE{
+								Device: &ufsProto.ChromeOSDeviceLSE_Labstation{
+									Labstation: &ufslab.Labstation{},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		}
+	}
+	return nil, c.getStateErr
+}
+
+func (c *FakeUFSClient) UpdateMachineLSE(ctx context.Context, req *ufsAPI.UpdateMachineLSERequest, opts ...grpc.CallOption) (*ufsProto.MachineLSE, error) {
+	if c.updateStateErr == nil {
+		c.updateStateMap[req.GetMachineLSE().GetName()] = req.GetMachineLSE().GetResourceState()
+		if req.GetMachineLSE().GetName() == "machineLSEs/host1" {
+			return &ufsProto.MachineLSE{
+				Name:          req.GetMachineLSE().GetName(),
+				ResourceState: req.GetMachineLSE().GetResourceState(),
+				UpdateTime:    timestamppb.Now(),
+				Lse: &ufsProto.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufsProto.ChromeOSMachineLSE{
+						ChromeosLse: &ufsProto.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufsProto.ChromeOSDeviceLSE{
+								Device: &ufsProto.ChromeOSDeviceLSE_Dut{
+									Dut: &ufslab.DeviceUnderTest{},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		}
+		if req.GetMachineLSE().GetName() == "machineLSEs/host2" {
+			return &ufsProto.MachineLSE{
+				Name:          req.GetMachineLSE().GetName(),
+				ResourceState: req.GetMachineLSE().GetResourceState(),
+				UpdateTime:    timestamppb.Now(),
+				Lse: &ufsProto.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufsProto.ChromeOSMachineLSE{
+						ChromeosLse: &ufsProto.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufsProto.ChromeOSDeviceLSE{
+								Device: &ufsProto.ChromeOSDeviceLSE_Labstation{
+									Labstation: &ufslab.Labstation{},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		}
+	}
+	return nil, c.updateStateErr
 }

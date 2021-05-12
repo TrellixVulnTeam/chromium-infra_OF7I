@@ -11,6 +11,7 @@ import (
 	"log"
 
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -58,8 +59,8 @@ type Info struct {
 
 // UFSClient represents short set of method of ufsAPI.FleetClient.
 type UFSClient interface {
-	GetState(ctx context.Context, req *ufsAPI.GetStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error)
-	UpdateState(ctx context.Context, req *ufsAPI.UpdateStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error)
+	GetMachineLSE(ctx context.Context, req *ufsAPI.GetMachineLSERequest, opts ...grpc.CallOption) (*ufsProto.MachineLSE, error)
+	UpdateMachineLSE(ctx context.Context, req *ufsAPI.UpdateMachineLSERequest, opts ...grpc.CallOption) (*ufsProto.MachineLSE, error)
 }
 
 // String provides string representation of the DUT state.
@@ -72,17 +73,15 @@ func (s State) String() string {
 // If state not exist in the UFS the state will be default and time is 0.
 func Read(ctx context.Context, c UFSClient, host string) Info {
 	ctx = setupContext(ctx, ufsUtil.OSNamespace)
-	resourceName := makeUFSResourceName(host)
-
-	log.Printf("dutstate: Try to read state for %s", host)
-	res, err := c.GetState(ctx, &ufsAPI.GetStateRequest{
-		ResourceName: resourceName,
+	log.Printf("dutstate: Try to read DUT/Labstation state for %s", host)
+	res, err := c.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, host),
 	})
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			log.Printf("dutstate: State not initialized for %s; %s", host, err)
+			log.Printf("dutstate: DUT/Labstation not found for %s; %s", host, err)
 		} else {
-			log.Printf("dutstate: Fail to read state for %s; %s", host, err)
+			log.Printf("dutstate: Fail to get DUT/Labstation for %s; %s", host, err)
 		}
 		// For default state time will not set and equal 0.
 		return Info{
@@ -90,22 +89,31 @@ func Read(ctx context.Context, c UFSClient, host string) Info {
 		}
 	}
 	return Info{
-		State: convertFromUFSState(res.GetState()),
+		State: convertFromUFSState(res.GetResourceState()),
 		Time:  res.GetUpdateTime().Seconds,
 	}
 }
 
-// Update push new DUT state to UFS.
+// Update push new DUT/Labstation state to UFS.
 func Update(ctx context.Context, c UFSClient, host string, state State) error {
 	ctx = setupContext(ctx, ufsUtil.OSNamespace)
 	ufsState := convertToUFSState(state)
-	resourceName := makeUFSResourceName(host)
 
-	log.Printf("dutstate: Try to update state %s: %q (%q)", host, state, ufsState)
-	_, err := c.UpdateState(ctx, &ufsAPI.UpdateStateRequest{
-		State: &ufsProto.StateRecord{
-			ResourceName: resourceName,
-			State:        ufsState,
+	// Get the MachineLSE to determine if its a DUT or a Labstation.
+	log.Printf("dutstate: Try to get MachineLSE for %s", host)
+	res, err := c.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, host),
+	})
+	if err != nil {
+		return errors.Annotate(err, "Failed to get DUT/Labstation for %s", host).Err()
+	}
+
+	log.Printf("dutstate: Try to update DUT/Labstation state %s: %q (%q)", host, state, ufsState)
+	res.ResourceState = ufsState
+	_, err = c.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
+		MachineLSE: res,
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"resourceState"},
 		},
 	})
 	if err != nil {
@@ -126,10 +134,6 @@ func convertFromUFSState(state ufsProto.State) State {
 		return s
 	}
 	return Unknown
-}
-
-func makeUFSResourceName(host string) string {
-	return ufsUtil.AddPrefix(ufsUtil.HostCollection, host)
 }
 
 // setupContext sets up context with namespace
