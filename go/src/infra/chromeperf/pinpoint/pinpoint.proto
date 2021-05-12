@@ -15,6 +15,8 @@
 syntax = "proto3";
 
 package pinpoint;
+option go_package = "infra/chromeperf/pinpoint/proto";
+
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
@@ -274,6 +276,9 @@ message JobSpec {
   // A client can associate an agent identifier (similar to an HTTP User Agent).
   // This is purely metadata.
   string user_agent = 10;
+
+  // A batch identifier links multiple jobs together.
+  string batch_id = 11;
 
   // TODO(crbug/1059667): Fill this out with more details like priority, other
   // constraints, when relevant.

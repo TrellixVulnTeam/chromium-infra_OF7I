@@ -18,13 +18,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"infra/chromeperf/pinpoint"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 
 	"go.chromium.org/luci/client/downloader"
 	"go.chromium.org/luci/common/data/text"
@@ -51,21 +53,21 @@ func (dam *downloadArtifactsMixin) RegisterFlags(flags *flag.FlagSet, userCfg us
 	`))
 }
 
-func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *pinpoint.Job) error {
+func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *proto.Job) error {
 	if !dam.downloadArtifacts || job.GetName() == "" {
 		return nil
 	}
 	switch job.GetJobSpec().GetJobKind().(type) {
-	case *pinpoint.JobSpec_Bisection:
+	case *proto.JobSpec_Bisection:
 		return errors.Reason("Not implemented").Err()
-	case *pinpoint.JobSpec_Experiment:
+	case *proto.JobSpec_Experiment:
 		return dam.downloadExperimentArtifacts(ctx, httpClient, workDir, job)
 	default:
 		return errors.Reason("Unsupported Job Kind").Err()
 	}
 }
 
-func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *pinpoint.Job) error {
+func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *proto.Job) error {
 	urls := make(abExperimentURLs)
 	if err := urls.fromJob(job, dam.selectArtifacts); err != nil {
 		return errors.Annotate(err, "failed filtering urls").Err()
@@ -138,7 +140,7 @@ func (c *isolatedClientsCache) Get(obj *isolatedObject) *isolatedclient.Client {
 
 type abExperimentURLs map[string]string
 
-func (urls abExperimentURLs) fromJob(j *pinpoint.Job, selector string) error {
+func (urls abExperimentURLs) fromJob(j *proto.Job, selector string) error {
 	for _, selector := range strings.Split(selector, ",") {
 		if err := urls.appendResult(
 			selector,
@@ -160,7 +162,7 @@ func (urls abExperimentURLs) fromJob(j *pinpoint.Job, selector string) error {
 	return nil
 }
 
-func (urls abExperimentURLs) appendResult(selector string, c *pinpoint.GitilesCommit, p *pinpoint.GerritChange, r *pinpoint.ChangeResult) error {
+func (urls abExperimentURLs) appendResult(selector string, c *proto.GitilesCommit, p *proto.GerritChange, r *proto.ChangeResult) error {
 	selectors := map[string]struct {
 		label string
 		key   string

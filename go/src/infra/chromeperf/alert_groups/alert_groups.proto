@@ -15,6 +15,7 @@
 syntax = "proto3";
 
 package alert_groups;
+option go_package = "infra/chromeperf/alert_groups/proto";
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";

@@ -16,7 +16,7 @@ package server
 
 import (
 	"flag"
-	"infra/chromeperf/alert_groups"
+	"infra/chromeperf/alert_groups/proto"
 	"log"
 	"net"
 
@@ -26,7 +26,7 @@ import (
 )
 
 type alertGroupsServer struct {
-	alert_groups.UnimplementedAlertGroupsServer
+	proto.UnimplementedAlertGroupsServer
 }
 
 // Main is the actual main body function. It registers flags, parses them, and
@@ -45,7 +45,7 @@ func Main() {
 	h := health.NewServer()
 
 	server := &alertGroupsServer{}
-	alert_groups.RegisterAlertGroupsServer(s, server)
+	proto.RegisterAlertGroupsServer(s, server)
 	h.SetServingStatus("alert_groups", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)

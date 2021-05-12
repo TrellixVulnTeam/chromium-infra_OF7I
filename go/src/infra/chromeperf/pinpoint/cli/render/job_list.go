@@ -14,7 +14,7 @@
 package render
 
 import (
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 	"io"
 	"text/template"
 	"time"
@@ -30,7 +30,7 @@ const (
 `
 )
 
-func renderCreateTime(j *pinpoint.Job) string {
+func renderCreateTime(j *proto.Job) string {
 	ct, err := ptypes.Timestamp(j.CreateTime)
 	if err != nil {
 		return "(invalid date)"
@@ -38,18 +38,18 @@ func renderCreateTime(j *pinpoint.Job) string {
 	return ct.Local().Format(time.RFC3339)
 }
 
-func renderJobKind(j *pinpoint.Job) string {
+func renderJobKind(j *proto.Job) string {
 	switch j.JobSpec.JobKind.(type) {
-	case *pinpoint.JobSpec_Bisection:
+	case *proto.JobSpec_Bisection:
 		return j.JobSpec.ComparisonMode.String() + " BISECTION"
-	case *pinpoint.JobSpec_Experiment:
+	case *proto.JobSpec_Experiment:
 		return j.JobSpec.ComparisonMode.String() + " EXPERIMENT"
 	default:
 		return j.JobSpec.ComparisonMode.String()
 	}
 }
 
-func renderState(j *pinpoint.Job) string {
+func renderState(j *proto.Job) string {
 	return j.State.String()
 }
 
@@ -63,7 +63,7 @@ var listTmpl = template.Must(template.New("Jobs").Funcs(
 ).Parse(jobsTmpl))
 
 // RenderTextJobList takes a slice of jobs and renders a human-readable list of jobs.
-func JobListText(out io.Writer, jobs []*pinpoint.Job) error {
+func JobListText(out io.Writer, jobs []*proto.Job) error {
 	if err := listTmpl.Execute(out, jobs); err != nil {
 		return errors.Annotate(err, "could not render jobs list").Err()
 	}

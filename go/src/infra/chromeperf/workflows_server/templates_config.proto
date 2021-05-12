@@ -16,7 +16,7 @@ syntax = "proto3";
 
 import "infra/chromeperf/workflows/workflow_templates.proto";
 
-option go_package = "main";
+option go_package = "infra/chromeperf/workflows_server/proto";
 
 message WorkflowTemplatesConfig {
   repeated workflows.WorkflowTemplate templates = 1;

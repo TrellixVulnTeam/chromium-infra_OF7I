@@ -18,12 +18,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"infra/chromeperf/pinpoint"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"infra/chromeperf/pinpoint/proto"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -86,7 +87,7 @@ func (r *baseCommandRun) initTokens(ctx context.Context) error {
 	return r.initTokensErr
 }
 
-func (r *baseCommandRun) pinpointClient(ctx context.Context) (pinpoint.PinpointClient, error) {
+func (r *baseCommandRun) pinpointClient(ctx context.Context) (proto.PinpointClient, error) {
 	if err := r.initTokens(ctx); err != nil {
 		return nil, err
 	}

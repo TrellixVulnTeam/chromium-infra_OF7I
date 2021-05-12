@@ -19,4 +19,4 @@ package main
 
 // --- This file is mainly a `go generate` driver.
 //
-//go:generate cproto -verbose
+//go:generate cproto -verbose -use-grpc-plugin

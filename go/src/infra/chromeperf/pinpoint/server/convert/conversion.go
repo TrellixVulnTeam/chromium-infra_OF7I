@@ -26,14 +26,14 @@ import (
 	"strings"
 	"time"
 
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 	"infra/chromeperf/pinpoint/server/identify"
 
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
+func gerritChangeToURL(c *proto.GerritChange) (string, error) {
 	var notFound []string
 	if c.Host == "" {
 		notFound = append(notFound, "host")
@@ -54,9 +54,9 @@ func gerritChangeToURL(c *pinpoint.GerritChange) (string, error) {
 	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
 }
 
-// JobToValues turns a pinpoint.JobSpec into a url.Values which can then be
+// JobToValues turns a proto.JobSpec into a url.Values which can then be
 // HTTP form-encoded for the legacy Pinpoint API.
-func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
+func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 	v := url.Values{}
 	if len(userEmail) == 0 {
 		return nil, errors.Reason("user email is required").Err()
@@ -89,15 +89,15 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 
 	// Handle the spec for git hashes.
 	switch jk := job.JobKind.(type) {
-	case *pinpoint.JobSpec_Bisection:
+	case *proto.JobSpec_Bisection:
 		// Transcode the mode to the ones Pinpoint currently supports.
 		switch job.GetComparisonMode() {
-		case pinpoint.JobSpec_COMPARISON_MODE_UNSPECIFIED:
+		case proto.JobSpec_COMPARISON_MODE_UNSPECIFIED:
 			fallthrough
-		case pinpoint.JobSpec_PERFORMANCE:
+		case proto.JobSpec_PERFORMANCE:
 			// The legacy API uses "performance" for performance bisections, and "try" for experiments
 			v.Set("comparison_mode", "performance")
-		case pinpoint.JobSpec_FUNCTIONAL:
+		case proto.JobSpec_FUNCTIONAL:
 			v.Set("comparison_mode", "functional")
 		default:
 			return nil, errors.Reason("Unknown comparison mode provided: %v", job.GetComparisonMode()).Err()
@@ -115,15 +115,15 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 			}
 			v.Set("patch", patchURL)
 		}
-	case *pinpoint.JobSpec_Experiment:
+	case *proto.JobSpec_Experiment:
 		// Transcode the mode to the ones Pinpoint currently supports.
 		switch job.GetComparisonMode() {
-		case pinpoint.JobSpec_COMPARISON_MODE_UNSPECIFIED:
+		case proto.JobSpec_COMPARISON_MODE_UNSPECIFIED:
 			fallthrough
-		case pinpoint.JobSpec_PERFORMANCE:
+		case proto.JobSpec_PERFORMANCE:
 			// The legacy API uses "performance" for performance bisections, and "try" for experiments
 			v.Set("comparison_mode", "try")
-		case pinpoint.JobSpec_FUNCTIONAL:
+		case proto.JobSpec_FUNCTIONAL:
 			// We're failing gracefully here in cases where we're still proxying to the legacy API.
 			// In the future, we should support functional experiments too.
 			return nil, errors.Reason("functional experiments not supported by legacy API").Err()
@@ -161,15 +161,15 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 
 	// Process the benchmark arguments.
 	switch args := job.Arguments.(type) {
-	case *pinpoint.JobSpec_TelemetryBenchmark:
+	case *proto.JobSpec_TelemetryBenchmark:
 		tb := args.TelemetryBenchmark
 		v.Set("benchmark", tb.Benchmark)
 		v.Set("metric", tb.Measurement)
 		v.Set("grouping_label", tb.GroupingLabel)
 		switch s := tb.StorySelection.(type) {
-		case *pinpoint.TelemetryBenchmark_Story:
+		case *proto.TelemetryBenchmark_Story:
 			v.Set("story", s.Story)
-		case *pinpoint.TelemetryBenchmark_StoryTags:
+		case *proto.TelemetryBenchmark_StoryTags:
 			v.Set("story_tags", strings.Join(s.StoryTags.StoryTags, ","))
 		default:
 			return nil, errors.Reason("Unsupported story_selection in TelemetryBenchmark").
@@ -183,7 +183,7 @@ func JobToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error) {
 			}
 			v.Set("extra_test_args", string(e))
 		}
-	case *pinpoint.JobSpec_GtestBenchmark:
+	case *proto.JobSpec_GtestBenchmark:
 		gb := args.GtestBenchmark
 		v.Set("benchmark", gb.Benchmark)
 		v.Set("trace", gb.Test)
@@ -275,7 +275,7 @@ type jsonJob struct {
 
 // JobToProto converts a stream of JSON representing a Legacy Job into the new
 // proto Job format.
-func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
+func JobToProto(jsonSrc io.Reader) (*proto.Job, error) {
 	l := new(jsonJob)
 	if err := json.NewDecoder(jsonSrc).Decode(l); err != nil {
 		return nil, errors.Annotate(err, "received ill-formed response from legacy service").Err()
@@ -286,7 +286,7 @@ func JobToProto(jsonSrc io.Reader) (*pinpoint.Job, error) {
 
 // jsonJobToProto translates a parsed JSON structure into a protobuf.
 // It may return a partially-translated proto along with an error.
-func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
+func jsonJobToProto(l *jsonJob) (*proto.Job, error) {
 	var errs errors.MultiError
 
 	// FIXME(dberris): Interpret the results better, differentiating experiments from bisections, etc.
@@ -297,23 +297,24 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 		ua = "(unknown)"
 	}
 
-	j := &pinpoint.Job{
+	j := &proto.Job{
 		Name:           fmt.Sprintf("jobs/legacy-%s", l.JobID),
 		State:          jsonStatusToProto(l.Status),
 		CreatedBy:      l.User,
 		CreateTime:     timestamppb.New(time.Time(l.Created)),
 		LastUpdateTime: timestamppb.New(time.Time(l.Updated)),
-		JobSpec: &pinpoint.JobSpec{
+		JobSpec: &proto.JobSpec{
 			ComparisonMode:      cMode,
 			ComparisonMagnitude: l.ComparisonMagnitude,
 			Config:              l.Cfg,
 			Target:              l.Arguments["target"],
 			UserAgent:           ua,
-			MonorailIssue: func() *pinpoint.MonorailIssue {
+			BatchId:             "some-batch-id",
+			MonorailIssue: func() *proto.MonorailIssue {
 				if l.Project == nil || l.BugID == 0 {
 					return nil
 				}
-				return &pinpoint.MonorailIssue{
+				return &proto.MonorailIssue{
 					Project: *l.Project,
 					IssueId: l.BugID,
 				}
@@ -322,11 +323,11 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 	}
 
 	// Only set ResultFiles if the job is finished, as documented in the API.
-	if j.State == pinpoint.Job_SUCCEEDED {
+	if j.State == proto.Job_SUCCEEDED {
 		if resultFile, err := urlToResultFile(l.ResultsURL); err != nil {
 			errs = append(errs, errors.Annotate(err, "invalid results_url from legacy service").Err())
 		} else {
-			j.ResultFiles = []*pinpoint.ResultFile{resultFile}
+			j.ResultFiles = []*proto.ResultFile{resultFile}
 		}
 	}
 
@@ -340,7 +341,7 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 	// In the proto schema, we support functional bisection and experiments
 	// although that functionality is yet to be supported by Pinpoint.
 	switch cMode {
-	case pinpoint.JobSpec_PERFORMANCE:
+	case proto.JobSpec_PERFORMANCE:
 		switch l.ComparisonMode {
 		case "try", "":
 			// Then we've got an experiment.
@@ -350,15 +351,15 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 			}
 		case "performance":
 			// FIXME: When we're ready to support bisection results, fill this out.
-			j.JobSpec.JobKind = &pinpoint.JobSpec_Bisection{
-				Bisection: &pinpoint.Bisection{
-					CommitRange: &pinpoint.GitilesCommitRange{
+			j.JobSpec.JobKind = &proto.JobSpec_Bisection{
+				Bisection: &proto.Bisection{
+					CommitRange: &proto.GitilesCommitRange{
 						Host:         "",
 						Project:      "",
 						StartGitHash: "",
 						EndGitHash:   "",
 					},
-					Patch: &pinpoint.GerritChange{},
+					Patch: &proto.GerritChange{},
 				},
 			}
 		}
@@ -370,7 +371,7 @@ func jsonJobToProto(l *jsonJob) (*pinpoint.Job, error) {
 	return j, nil
 }
 
-func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
+func addExperimentDetails(l *jsonJob, j *proto.Job) errors.MultiError {
 	var errs errors.MultiError
 	if expectedStates, foundStates := 2, len(l.State); expectedStates != foundStates {
 		errs = append(errs, errors.Reason("invalid state count in legacy response: want %d got %d", expectedStates, foundStates).Err())
@@ -382,20 +383,20 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 	baseChange := &l.State[0].Change
 	expChange := &l.State[1].Change
 
-	experiment := &pinpoint.Experiment{
-		BaseCommit: &pinpoint.GitilesCommit{
+	experiment := &proto.Experiment{
+		BaseCommit: &proto.GitilesCommit{
 			Host:    baseChange.Commits[0].URL,
 			Project: baseChange.Commits[0].Repo,
 			GitHash: baseChange.Commits[0].GitHash,
 		},
-		ExperimentCommit: &pinpoint.GitilesCommit{
+		ExperimentCommit: &proto.GitilesCommit{
 			Host:    expChange.Commits[0].URL,
 			Project: expChange.Commits[0].Repo,
 			GitHash: expChange.Commits[0].GitHash,
 		},
 	}
 
-	j.JobSpec.JobKind = &pinpoint.JobSpec_Experiment{
+	j.JobSpec.JobKind = &proto.JobSpec_Experiment{
 		Experiment: experiment,
 	}
 
@@ -406,7 +407,7 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 		if p, err := parseGerritURL(baseChange.Patch.URL); err != nil {
 			errs = append(errs, err)
 		} else {
-			experiment.BasePatch = &pinpoint.GerritChange{
+			experiment.BasePatch = &proto.GerritChange{
 				Host:     baseChange.Patch.Server,
 				Project:  p.project,
 				Change:   p.cl,
@@ -418,7 +419,7 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 	if p, err := parseGerritURL(expChange.Patch.URL); err != nil {
 		errs = append(errs, err)
 	} else {
-		experiment.ExperimentPatch = &pinpoint.GerritChange{
+		experiment.ExperimentPatch = &proto.GerritChange{
 			Host:     expChange.Patch.Server,
 			Project:  p.project,
 			Change:   p.cl,
@@ -428,21 +429,21 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 
 	// Now we go through the state objects, and convert those one by one to the
 	// proto results.
-	j.Results = &pinpoint.Job_AbExperimentResults{
-		AbExperimentResults: &pinpoint.ABExperimentResults{
-			AChangeResult: &pinpoint.ChangeResult{},
-			BChangeResult: &pinpoint.ChangeResult{},
+	j.Results = &proto.Job_AbExperimentResults{
+		AbExperimentResults: &proto.ABExperimentResults{
+			AChangeResult: &proto.ChangeResult{},
+			BChangeResult: &proto.ChangeResult{},
 		},
 	}
 	for _, attempt := range l.State[0].Attempts {
-		a := &pinpoint.Attempt{}
+		a := &proto.Attempt{}
 		for i, ex := range attempt.Executions {
-			x := &pinpoint.Execution{
+			x := &proto.Execution{
 				Completed: ex.Completed,
 				Label:     l.Quests[i],
 			}
 			for _, ed := range ex.Details {
-				d := &pinpoint.ExecutionDetails{
+				d := &proto.ExecutionDetails{
 					Key:   ed.Key,
 					Value: ed.Value,
 					Url:   ed.URL,
@@ -455,14 +456,14 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 			append(j.GetAbExperimentResults().AChangeResult.Attempts, a)
 	}
 	for _, attempt := range l.State[1].Attempts {
-		a := &pinpoint.Attempt{}
+		a := &proto.Attempt{}
 		for i, ex := range attempt.Executions {
-			x := &pinpoint.Execution{
+			x := &proto.Execution{
 				Completed: ex.Completed,
 				Label:     l.Quests[i],
 			}
 			for _, ed := range ex.Details {
-				d := &pinpoint.ExecutionDetails{
+				d := &proto.ExecutionDetails{
 					Key:   ed.Key,
 					Value: ed.Value,
 					Url:   ed.URL,
@@ -477,30 +478,30 @@ func addExperimentDetails(l *jsonJob, j *pinpoint.Job) errors.MultiError {
 	return errs
 }
 
-func jsonStatusToProto(status string) pinpoint.Job_State {
+func jsonStatusToProto(status string) proto.Job_State {
 	switch status {
 	case "Running":
-		return pinpoint.Job_RUNNING
+		return proto.Job_RUNNING
 	case "Queued":
-		return pinpoint.Job_PENDING
+		return proto.Job_PENDING
 	case "Cancelled":
-		return pinpoint.Job_CANCELLED
+		return proto.Job_CANCELLED
 	case "Failed":
-		return pinpoint.Job_FAILED
+		return proto.Job_FAILED
 	case "Completed":
-		return pinpoint.Job_SUCCEEDED
+		return proto.Job_SUCCEEDED
 	}
-	return pinpoint.Job_STATE_UNSPECIFIED
+	return proto.Job_STATE_UNSPECIFIED
 }
 
-func jsonModeToProto(comparisonMode string) pinpoint.JobSpec_ComparisonMode {
+func jsonModeToProto(comparisonMode string) proto.JobSpec_ComparisonMode {
 	switch comparisonMode {
 	case "functional":
-		return pinpoint.JobSpec_FUNCTIONAL
+		return proto.JobSpec_FUNCTIONAL
 	case "try", "performance":
-		return pinpoint.JobSpec_PERFORMANCE
+		return proto.JobSpec_PERFORMANCE
 	}
-	return pinpoint.JobSpec_COMPARISON_MODE_UNSPECIFIED
+	return proto.JobSpec_COMPARISON_MODE_UNSPECIFIED
 }
 
 var (
@@ -546,12 +547,12 @@ func parseGerritURL(s string) (*gerritParts, error) {
 
 var resultsURLRe = regexp.MustCompile(`https://storage.cloud.google.com/([^/]+)/(.*)$`)
 
-func urlToResultFile(url string) (*pinpoint.ResultFile, error) {
+func urlToResultFile(url string) (*proto.ResultFile, error) {
 	m := resultsURLRe.FindStringSubmatch(url)
 	if m == nil {
 		return nil, errors.Reason("unknown ResultFile format %q: must match %q", url, resultsURLRe).Err()
 	}
-	return &pinpoint.ResultFile{
+	return &proto.ResultFile{
 		GcsBucket: m[1],
 		Path:      m[2],
 	}, nil
@@ -560,7 +561,7 @@ func urlToResultFile(url string) (*pinpoint.ResultFile, error) {
 // JobListToProto converts a stream of JSON representing the Legacy jobs list
 // response into a list of proto Jobs. Partial results may be returned along with
 // an error representing failure to parse some jobs.
-func JobListToProto(jsonSrc io.Reader) ([]*pinpoint.Job, error) {
+func JobListToProto(jsonSrc io.Reader) ([]*proto.Job, error) {
 	var l struct {
 		Jobs []*jsonJob `json:"jobs"`
 	}
@@ -568,7 +569,7 @@ func JobListToProto(jsonSrc io.Reader) ([]*pinpoint.Job, error) {
 		return nil, errors.Annotate(err, "received ill-formed response from legacy service").Err()
 	}
 
-	ret := make([]*pinpoint.Job, 0, len(l.Jobs))
+	ret := make([]*proto.Job, 0, len(l.Jobs))
 	var errs errors.MultiError
 	for _, jj := range l.Jobs {
 		if job, err := jsonJobToProto(jj); err != nil {

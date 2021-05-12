@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
@@ -170,7 +170,7 @@ func waitForServices(ctx context.Context, grpcEndpoint string) error {
 		return errors.Annotate(err, "failed to dial gRPC endpoint %v", grpcEndpoint).Err()
 	}
 	defer conn.Close()
-	client := pinpoint.NewPinpointClient(conn)
+	client := proto.NewPinpointClient(conn)
 
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -178,7 +178,7 @@ func waitForServices(ctx context.Context, grpcEndpoint string) error {
 	// non-existent job to give us NotFound to indicate that a request made it
 	// all the way to fakelegacy and back.
 	for {
-		_, err := client.GetJob(ctx, &pinpoint.GetJobRequest{Name: "jobs/legacy-10000000000000"})
+		_, err := client.GetJob(ctx, &proto.GetJobRequest{Name: "jobs/legacy-10000000000000"})
 		status, ok := status.FromError(err)
 		if !ok {
 			return errors.Annotate(err, "unexpected error from GetJob").Err()

@@ -4,7 +4,7 @@
 // - protoc             v3.12.1
 // source: infra/chromeperf/pinpoint/pinpoint.proto
 
-package pinpoint
+package proto
 
 import (
 	context "context"

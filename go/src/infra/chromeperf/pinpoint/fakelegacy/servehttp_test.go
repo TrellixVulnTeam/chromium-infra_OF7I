@@ -24,6 +24,7 @@ import (
 
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/fakelegacy"
+	"infra/chromeperf/pinpoint/proto"
 	"infra/chromeperf/pinpoint/server"
 
 	"google.golang.org/grpc/codes"
@@ -70,17 +71,17 @@ func TestStaticUsage(t *testing.T) {
 
 	ctx := context.Background()
 	Convey("GetJob should return known job", t, func() {
-		j, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName0})
+		j, err := grpcPinpoint.GetJob(ctx, &proto.GetJobRequest{Name: legacyName0})
 		So(err, ShouldBeNil)
 		So(j.Name, ShouldEqual, legacyName0)
-		So(j.State, ShouldEqual, pinpoint.Job_SUCCEEDED)
+		So(j.State, ShouldEqual, proto.Job_SUCCEEDED)
 	})
 	Convey("GetJob should return NotFound for unknown job", t, func() {
-		_, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName("86753098675309")})
+		_, err := grpcPinpoint.GetJob(ctx, &proto.GetJobRequest{Name: pinpoint.LegacyJobName("86753098675309")})
 		So(err, ShouldBeStatusError, codes.NotFound)
 	})
 	Convey("ListJobs should return both known jobs", t, func() {
-		list, err := grpcPinpoint.ListJobs(ctx, &pinpoint.ListJobsRequest{})
+		list, err := grpcPinpoint.ListJobs(ctx, &proto.ListJobsRequest{})
 		So(err, ShouldBeNil)
 		So(list.Jobs, ShouldHaveLength, 2)
 
@@ -114,12 +115,12 @@ func TestAddJob(t *testing.T) {
 			},
 		})
 		Convey("Users can schedule a gtest benchmark", func() {
-			job, err := grpcPinpoint.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
-				Job: &pinpoint.JobSpec{
+			job, err := grpcPinpoint.ScheduleJob(ctx, &proto.ScheduleJobRequest{
+				Job: &proto.JobSpec{
 					Config: "some-config",
 					Target: "some-target",
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+					Arguments: &proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &proto.GTestBenchmark{
 							Benchmark:   "benchmark",
 							Test:        "test",
 							Measurement: "measurement",
@@ -131,15 +132,15 @@ func TestAddJob(t *testing.T) {
 			name := job.Name
 
 			Convey("Users can immediately GetJob", func() {
-				job, err := grpcPinpoint.GetJob(ctx, &pinpoint.GetJobRequest{Name: name})
+				job, err := grpcPinpoint.GetJob(ctx, &proto.GetJobRequest{Name: name})
 				So(err, ShouldBeNil)
 				So(job.Name, ShouldEqual, name)
-				So(job.State, ShouldEqual, pinpoint.Job_PENDING)
+				So(job.State, ShouldEqual, proto.Job_PENDING)
 				So(job.CreatedBy, ShouldEqual, userEmail)
 			})
 
 			Convey("The new job shows up in ListJobs", func() {
-				list, err := grpcPinpoint.ListJobs(ctx, &pinpoint.ListJobsRequest{})
+				list, err := grpcPinpoint.ListJobs(ctx, &proto.ListJobsRequest{})
 				So(err, ShouldBeNil)
 				So(list.Jobs, ShouldHaveLength, 1)
 				So(list.Jobs[0].Name, ShouldEqual, name)

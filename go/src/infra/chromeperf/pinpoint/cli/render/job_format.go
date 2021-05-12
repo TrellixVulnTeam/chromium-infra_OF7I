@@ -16,7 +16,7 @@ package render
 
 import (
 	"fmt"
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 	"regexp"
 
 	"go.chromium.org/luci/common/errors"
@@ -27,12 +27,12 @@ var (
 	legacyJobIDIdx = legacyJobRe.SubexpIndex("legacy_id")
 )
 
-func JobURL(j *pinpoint.Job) (string, error) {
+func JobURL(j *proto.Job) (string, error) {
 	// FIXME: Handle new URL formats when they're ready.
 	return legacyJobURL(j)
 }
 
-func legacyJobURL(j *pinpoint.Job) (string, error) {
+func legacyJobURL(j *proto.Job) (string, error) {
 	// Require that j has a Name.
 	if len(j.Name) == 0 {
 		return "", errors.Reason("invalid job, the Name field is required").Err()

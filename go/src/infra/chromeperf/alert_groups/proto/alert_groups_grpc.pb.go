@@ -4,7 +4,7 @@
 // - protoc             v3.12.1
 // source: infra/chromeperf/alert_groups/alert_groups.proto
 
-package alert_groups
+package proto
 
 import (
 	context "context"

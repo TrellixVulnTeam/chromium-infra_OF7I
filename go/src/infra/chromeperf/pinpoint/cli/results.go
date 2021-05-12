@@ -18,7 +18,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"infra/chromeperf/pinpoint"
 	"io"
 	"io/ioutil"
 	"os"
@@ -26,6 +25,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 
 	"cloud.google.com/go/storage"
 	"go.chromium.org/luci/common/data/text"
@@ -36,7 +38,7 @@ import (
 
 // downloadResultsToDir copies the results associated with the provided job to the dstDir.
 // The file that is written is returned.
-func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir string, result *pinpoint.ResultFile) (string, error) {
+func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir string, result *proto.ResultFile) (string, error) {
 	bucket, path := result.GcsBucket, result.Path
 	dstFile := filepath.Join(dstDir, filepath.Base(path))
 	if _, err := os.Stat(dstFile); !os.IsNotExist(err) {
@@ -95,11 +97,11 @@ func (drm *downloadResultsMixin) RegisterFlags(flags *flag.FlagSet, userCfg user
 	`))
 }
 
-func (drm *downloadResultsMixin) doDownloadResults(ctx context.Context, job *pinpoint.Job) error {
+func (drm *downloadResultsMixin) doDownloadResults(ctx context.Context, job *proto.Job) error {
 	if !drm.downloadResults || job.GetName() == "" {
 		return nil
 	}
-	if job.GetState() != pinpoint.Job_SUCCEEDED {
+	if job.GetState() != proto.Job_SUCCEEDED {
 		logging.Infof(ctx, "Can't download results: must be in state SUCCEEDED, got %s", job.GetState())
 		return nil
 	}
@@ -158,14 +160,14 @@ func (wjm *waitForJobMixin) RegisterFlags(flags *flag.FlagSet, uc userConfig) {
 // pointer to a Job in case there's an error, indicating partial success.
 func (wjm *waitForJobMixin) waitForJob(
 	ctx context.Context,
-	c pinpoint.PinpointClient,
-	j *pinpoint.Job,
+	c proto.PinpointClient,
+	j *proto.Job,
 	o io.Writer,
-) (*pinpoint.Job, error) {
+) (*proto.Job, error) {
 	if !wjm.wait || j == nil {
 		return j, nil
 	}
-	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(j.Name)}
+	req := &proto.GetJobRequest{Name: pinpoint.LegacyJobName(j.Name)}
 	poll := time.NewTicker(10 * time.Second)
 	defer poll.Stop()
 
@@ -181,7 +183,7 @@ func (wjm *waitForJobMixin) waitForJob(
 			fmt.Fprintln(o, "--------------------------------")
 		}
 		lastJob = resp
-		if s := lastJob.State; s != pinpoint.Job_RUNNING && s != pinpoint.Job_PENDING {
+		if s := lastJob.State; s != proto.Job_RUNNING && s != proto.Job_PENDING {
 			if !wjm.quiet {
 				fmt.Fprintf(o, "Final state for job %q: %v\n", lastJob.Name, s)
 			}

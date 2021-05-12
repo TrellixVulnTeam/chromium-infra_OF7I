@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 	"infra/chromeperf/pinpoint/server/convert"
 	"io/ioutil"
 	"log"
@@ -41,7 +42,7 @@ import (
 )
 
 type pinpointServer struct {
-	pinpoint.UnimplementedPinpointServer
+	proto.UnimplementedPinpointServer
 
 	// URL for requests to the legacy service
 	legacyPinpointService string
@@ -96,7 +97,7 @@ func (s *pinpointServer) getRequestingUserEmail(ctx context.Context) (string, er
 	return email, nil
 }
 
-func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJobRequest) (*pinpoint.Job, error) {
+func (s *pinpointServer) ScheduleJob(ctx context.Context, r *proto.ScheduleJobRequest) (*proto.Job, error) {
 	// First, ensure we can set the user from the incoming request, based on their identity provided in the OAuth2
 	// headers, that make it into the context of this request. Because we intend this service to be hosted behind an
 	// Endpoint Service Proxy (ESP), we're going to look for the authentication details in the
@@ -158,14 +159,14 @@ func (s *pinpointServer) ScheduleJob(ctx context.Context, r *pinpoint.ScheduleJo
 
 	// Return with a minimal Job response.
 	// TODO(dberris): Write this data out to Spanner when we're ready to replace the legacy API.
-	return &pinpoint.Job{
+	return &proto.Job{
 		Name:      fmt.Sprintf("jobs/legacy-%s", newResponse.JobID),
 		CreatedBy: userEmail,
 		JobSpec:   r.Job,
 	}, nil
 }
 
-func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) (*pinpoint.Job, error) {
+func (s *pinpointServer) GetJob(ctx context.Context, r *proto.GetJobRequest) (*proto.Job, error) {
 	// This API does not require that the user be signed in, so we'll not need to check the credentials.
 	// TODO(dberris): In the future, support ACL-limiting Pinpoint job results.
 	if s.LegacyClient == nil {
@@ -215,7 +216,7 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *pinpoint.GetJobRequest) 
 	return job, nil
 }
 
-func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsRequest) (*pinpoint.ListJobsResponse, error) {
+func (s *pinpointServer) ListJobs(ctx context.Context, r *proto.ListJobsRequest) (*proto.ListJobsResponse, error) {
 	if r.PageSize != 0 || r.PageToken != "" {
 		// TODO(chowski): Implement this!
 		return nil, status.Error(codes.Unimplemented, "TODO: implement pagination/page size")
@@ -254,12 +255,12 @@ func (s *pinpointServer) ListJobs(ctx context.Context, r *pinpoint.ListJobsReque
 			return nil, status.Errorf(codes.Internal, "failed to list results from legacy service")
 		}
 	}
-	return &pinpoint.ListJobsResponse{
+	return &proto.ListJobsResponse{
 		Jobs: jobs,
 	}, nil
 }
 
-func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobRequest) (*pinpoint.Job, error) {
+func (s *pinpointServer) CancelJob(ctx context.Context, r *proto.CancelJobRequest) (*proto.Job, error) {
 	userEmail, err := s.getRequestingUserEmail(ctx)
 	if err != nil {
 		return nil, err
@@ -294,7 +295,7 @@ func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobReq
 	if res.StatusCode != http.StatusOK {
 		return nil, status.Errorf(codes.Internal, "failed request: %s", res.Status)
 	}
-	return s.GetJob(ctx, &pinpoint.GetJobRequest{Name: r.Name})
+	return s.GetJob(ctx, &proto.GetJobRequest{Name: r.Name})
 }
 
 // New returns a pinpointServer configured to contact the legacy API with the
@@ -355,7 +356,7 @@ func Main() {
 
 	server := New(*legacyPinpointServiceFlag, client)
 	server.hardcodedUserEmail = *hardcodedUserEmailFlag
-	pinpoint.RegisterPinpointServer(s, server)
+	proto.RegisterPinpointServer(s, server)
 	h.SetServingStatus("pinpoint", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)

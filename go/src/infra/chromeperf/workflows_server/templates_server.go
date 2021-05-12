@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"infra/chromeperf/workflows"
+	"infra/chromeperf/workflows_server/proto"
 	"strings"
 
 	configProto "go.chromium.org/luci/common/proto/config"
@@ -29,7 +30,7 @@ type workflowTemplatesServer struct {
 }
 
 func (*workflowTemplatesServer) ValidateConfig(ctx context.Context, req *configProto.ValidationRequestMessage) (*configProto.ValidationResponseMessage, error) {
-	c := WorkflowTemplatesConfig{}
+	c := proto.WorkflowTemplatesConfig{}
 	if err := prototext.Unmarshal(req.Content, &c); err != nil {
 		// TODO(dberris): Provide richer error messages for debuggability.
 		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)
@@ -45,7 +46,7 @@ func (s *workflowTemplatesServer) ListWorkflowTemplates(ctx context.Context, req
 		// TODO(dberris): Provide richer error messages for debuggability.
 		return nil, status.Errorf(codes.Internal, "Failed fetching configuration; err: %v", err)
 	}
-	c := WorkflowTemplatesConfig{}
+	c := proto.WorkflowTemplatesConfig{}
 	if err := prototext.Unmarshal([]byte(configs.Content), &c); err != nil {
 		// TODO(dberris): Provide richer error messages for debuggability.
 		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)
@@ -65,7 +66,7 @@ func (s *workflowTemplatesServer) GetWorkflowTemplate(ctx context.Context, req *
 		// TODO(dberris): Provide richer error messages for debuggability.
 		return nil, status.Errorf(codes.Internal, "Failed fetching configuration; err: %v", err)
 	}
-	c := WorkflowTemplatesConfig{}
+	c := proto.WorkflowTemplatesConfig{}
 	if err := prototext.Unmarshal([]byte(configs.Content), &c); err != nil {
 		// TODO(dberris): Provide richer error messages for debuggability.
 		return nil, status.Errorf(codes.Internal, "Failed unmarshaling config; err: %v", err)

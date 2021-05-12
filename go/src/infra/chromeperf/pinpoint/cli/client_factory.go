@@ -17,7 +17,7 @@ package cli
 import (
 	"context"
 	"fmt"
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 	"sync"
 
 	"github.com/coreos/go-oidc/oidc"
@@ -36,12 +36,12 @@ type pinpointClientFactory struct {
 	Endpoint       string
 	TCache         *tokenCache
 	TLSCredentials credentials.TransportCredentials
-	cachedClient   pinpoint.PinpointClient
+	cachedClient   proto.PinpointClient
 	connection     *grpc.ClientConn
 }
 
 // Client returns a cached PinpointClient or newly dials a Pinpoint backend.
-func (p *pinpointClientFactory) Client(ctx context.Context) (pinpoint.PinpointClient, error) {
+func (p *pinpointClientFactory) Client(ctx context.Context) (proto.PinpointClient, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.cachedClient != nil {
@@ -73,7 +73,7 @@ func (p *pinpointClientFactory) Client(ctx context.Context) (pinpoint.PinpointCl
 	}
 
 	p.connection = conn
-	p.cachedClient = pinpoint.NewPinpointClient(conn)
+	p.cachedClient = proto.NewPinpointClient(conn)
 	return p.cachedClient, nil
 }
 

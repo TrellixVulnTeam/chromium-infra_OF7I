@@ -22,18 +22,18 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/proto"
 )
 
 func TestJobRenderingLegacyURL(t *testing.T) {
 	Convey("Given a Job proto", t, func() {
-		j := &pinpoint.Job{
+		j := &proto.Job{
 			Name:               "",
 			State:              0,
 			CreatedBy:          "",
 			CreateTime:         timestamppb.New(time.Now().Add(-time.Hour)),
 			LastUpdateTime:     timestamppb.Now(),
-			JobSpec:            &pinpoint.JobSpec{},
+			JobSpec:            &proto.JobSpec{},
 			CancellationReason: "",
 			Results:            nil,
 		}

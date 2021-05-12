@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/render"
+	"infra/chromeperf/pinpoint/proto"
 	"os"
 	"strings"
 
@@ -63,7 +64,7 @@ func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []s
 		return err
 	}
 
-	req := &pinpoint.ListJobsRequest{Filter: lj.filter}
+	req := &proto.ListJobsRequest{Filter: lj.filter}
 	resp, err := c.ListJobs(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during ListJobs").Err()
@@ -117,7 +118,7 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 		return err
 	}
 
-	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(gj.name)}
+	req := &proto.GetJobRequest{Name: pinpoint.LegacyJobName(gj.name)}
 	resp, err := c.GetJob(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during GetJob").Err()
@@ -191,7 +192,7 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 		return err
 	}
 
-	req := &pinpoint.GetJobRequest{Name: pinpoint.LegacyJobName(wj.name)}
+	req := &proto.GetJobRequest{Name: pinpoint.LegacyJobName(wj.name)}
 	resp, err := c.GetJob(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during GetJob").Err()
@@ -269,7 +270,7 @@ func (cj *cancelJob) Run(ctx context.Context, a subcommands.Application, args []
 
 	legacyName := pinpoint.LegacyJobName(cj.name)
 
-	job, err := c.GetJob(ctx, &pinpoint.GetJobRequest{Name: legacyName})
+	job, err := c.GetJob(ctx, &proto.GetJobRequest{Name: legacyName})
 	if err != nil {
 		return errors.Annotate(err, "failed during GetJob").Err()
 	}
@@ -286,7 +287,7 @@ func (cj *cancelJob) Run(ctx context.Context, a subcommands.Application, args []
 		}
 	}
 
-	req := &pinpoint.CancelJobRequest{
+	req := &proto.CancelJobRequest{
 		Name:   pinpoint.LegacyJobName(cj.name),
 		Reason: reason,
 	}

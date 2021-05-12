@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"infra/chromeperf/pinpoint"
 	"io/ioutil"
 	"log"
 	"net"
@@ -32,7 +31,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/test/bufconn"
 
+	"infra/chromeperf/pinpoint"
 	. "infra/chromeperf/pinpoint/assertions"
+	"infra/chromeperf/pinpoint/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -49,7 +50,7 @@ func registerPinpointServer(t *testing.T, srv *pinpointServer) func(context.Cont
 	dialer := func(context.Context, string) (net.Conn, error) {
 		return l.Dial()
 	}
-	pinpoint.RegisterPinpointServer(s, srv)
+	proto.RegisterPinpointServer(s, srv)
 	go func() {
 		if err := s.Serve(l); err != nil {
 			log.Fatalf("Server startup failed.")
@@ -110,10 +111,10 @@ func TestServerService(t *testing.T) {
 			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 			So(err, ShouldBeNil)
 			t.Cleanup(func() { conn.Close() })
-			client := pinpoint.NewPinpointClient(conn)
+			client := proto.NewPinpointClient(conn)
 
 			Convey("Then requests to ScheduleJob will fail with 'misconfigured service'", func() {
-				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				_, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldContainSubstring, "misconfigured service")
 			})
@@ -130,9 +131,9 @@ func TestServerService(t *testing.T) {
 			conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 			So(err, ShouldBeNil)
 			defer conn.Close()
-			client := pinpoint.NewPinpointClient(conn)
+			client := proto.NewPinpointClient(conn)
 			Convey("Then requests to ScheduleJob will fail with 'missing required auth header'", func() {
-				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				_, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{})
 				So(err, ShouldBeStatusError, codes.PermissionDenied)
 				So(err.Error(), ShouldContainSubstring, "missing required auth header")
 			})
@@ -164,10 +165,10 @@ func TestGetJob(t *testing.T) {
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 		So(err, ShouldBeNil)
 		defer conn.Close()
-		client := pinpoint.NewPinpointClient(conn)
+		client := proto.NewPinpointClient(conn)
 
 		Convey("When we attempt to get a defined job", func() {
-			j, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+			j, err := client.GetJob(ctx, &proto.GetJobRequest{
 				Name: definedJobName,
 			})
 
@@ -178,7 +179,7 @@ func TestGetJob(t *testing.T) {
 		})
 
 		Convey("When we attempt to get an undefined job", func() {
-			_, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+			_, err := client.GetJob(ctx, &proto.GetJobRequest{
 				Name: "jobs/legacy-02",
 			})
 			Convey("Then we get an error in the gRPC request", func() {
@@ -188,7 +189,7 @@ func TestGetJob(t *testing.T) {
 		})
 
 		Convey("When we attempt to provide an ill-defined legacy id", func() {
-			_, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+			_, err := client.GetJob(ctx, &proto.GetJobRequest{
 				Name: "jobs/legacy-",
 			})
 			Convey("Then we get an error in the gRPC request", func() {
@@ -197,7 +198,7 @@ func TestGetJob(t *testing.T) {
 		})
 
 		Convey("When we attempt go get an experiment job with results", func() {
-			j, err := client.GetJob(ctx, &pinpoint.GetJobRequest{
+			j, err := client.GetJob(ctx, &proto.GetJobRequest{
 				Name: definedJobName,
 			})
 			Convey("Then we find the results in the response", func() {
@@ -242,11 +243,11 @@ func TestCancelJob(t *testing.T) {
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 		So(err, ShouldBeNil)
 		defer conn.Close()
-		client := pinpoint.NewPinpointClient(conn)
+		client := proto.NewPinpointClient(conn)
 
 		Convey("with an un-authenticated connection", func() {
 			Convey("We fail to cancel the job", func() {
-				_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
+				_, err := client.CancelJob(ctx, &proto.CancelJobRequest{Name: definedJobName, Reason: "because"})
 				So(err, ShouldBeStatusError, codes.PermissionDenied)
 			})
 		})
@@ -255,20 +256,20 @@ func TestCancelJob(t *testing.T) {
 			Convey("with an authorized connection", func() {
 				ctx := authorizedCtx
 				Convey("We fail to cancel the Job without a reason", func() {
-					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName})
+					_, err := client.CancelJob(ctx, &proto.CancelJobRequest{Name: definedJobName})
 					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 				Convey("We fail to cancel the Job without a name", func() {
-					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Reason: "because"})
+					_, err := client.CancelJob(ctx, &proto.CancelJobRequest{Reason: "because"})
 					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 				Convey("We can cancel a job with name and reason", func() {
-					j, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: definedJobName, Reason: "because"})
+					j, err := client.CancelJob(ctx, &proto.CancelJobRequest{Name: definedJobName, Reason: "because"})
 					So(err, ShouldBeNil)
 					So(j.Name, ShouldEqual, definedJobName)
 				})
 				Convey("We fail to cancel a missing job", func() {
-					_, err := client.CancelJob(ctx, &pinpoint.CancelJobRequest{Name: "doesnt-exist", Reason: "because"})
+					_, err := client.CancelJob(ctx, &proto.CancelJobRequest{Name: "doesnt-exist", Reason: "because"})
 					So(err, ShouldBeStatusError, codes.InvalidArgument)
 				})
 			})
@@ -295,17 +296,17 @@ func TestListJob(t *testing.T) {
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 		So(err, ShouldBeNil)
 		defer conn.Close()
-		client := pinpoint.NewPinpointClient(conn)
+		client := proto.NewPinpointClient(conn)
 
 		Convey("listing results is successful", func() {
-			_, err := client.ListJobs(ctx, &pinpoint.ListJobsRequest{})
+			_, err := client.ListJobs(ctx, &proto.ListJobsRequest{})
 			So(err, ShouldBeNil)
 		})
 		Convey("filters in the RPC request make it to the legacy service", func() {
 			const filter = "THE FILTER"
 
 			getURLs := ts.startRecord()
-			_, err := client.ListJobs(ctx, &pinpoint.ListJobsRequest{Filter: filter})
+			_, err := client.ListJobs(ctx, &proto.ListJobsRequest{Filter: filter})
 			urls := getURLs()
 			So(err, ShouldBeNil)
 			So(len(urls), ShouldEqual, 1)
@@ -336,27 +337,27 @@ func TestScheduleJob(t *testing.T) {
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer), grpc.WithInsecure())
 		So(err, ShouldBeNil)
 		defer conn.Close()
-		client := pinpoint.NewPinpointClient(conn)
+		client := proto.NewPinpointClient(conn)
 
 		Convey("without authentication, ScheduleJob fails", func() {
-			_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+			_, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{})
 			So(err, ShouldBeStatusError, codes.PermissionDenied)
 		})
 		Convey("with authentication", func() {
 			ctx := authorizedCtx
 
 			Convey("without appropriate arguments, ScheduleJob fails", func() {
-				_, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{})
+				_, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{})
 				So(err, ShouldBeStatusError, codes.InvalidArgument)
 			})
 
 			Convey("with correct GTestBenchmark arguments, ScheduleJob succeeds", func() {
-				j, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
-					Job: &pinpoint.JobSpec{
+				j, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{
+					Job: &proto.JobSpec{
 						Config: "some-config",
 						Target: "some-target",
-						Arguments: &pinpoint.JobSpec_GtestBenchmark{
-							GtestBenchmark: &pinpoint.GTestBenchmark{
+						Arguments: &proto.JobSpec_GtestBenchmark{
+							GtestBenchmark: &proto.GTestBenchmark{
 								Benchmark:   "benchmark",
 								Test:        "test",
 								Measurement: "measurement",
@@ -369,14 +370,14 @@ func TestScheduleJob(t *testing.T) {
 			})
 
 			Convey("with extra args for a Telemetry job, ScheduleJob succeeds", func() {
-				j, err := client.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{
-					Job: &pinpoint.JobSpec{
+				j, err := client.ScheduleJob(ctx, &proto.ScheduleJobRequest{
+					Job: &proto.JobSpec{
 						Config: "some-config",
 						Target: "some-target",
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &proto.TelemetryBenchmark{
 								Benchmark: "benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &proto.TelemetryBenchmark_Story{
 									Story: "some-story",
 								},
 								Measurement: "measurement",

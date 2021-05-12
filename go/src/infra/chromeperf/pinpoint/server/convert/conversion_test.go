@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"infra/chromeperf/pinpoint"
+	pinpoint_proto "infra/chromeperf/pinpoint/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/protobuf/proto"
@@ -44,16 +44,16 @@ func shouldContainMap(actual interface{}, expected ...interface{}) string {
 
 func TestSimpleConversions(t *testing.T) {
 	t.Parallel()
-	job := &pinpoint.JobSpec{
+	job := &pinpoint_proto.JobSpec{
 		Config:    "some-config",
 		Target:    "some-build-target",
 		UserAgent: "pinpoint/unittest",
 	}
 
 	Convey("We support Bisections without a Patch", t, func() {
-		job.JobKind = &pinpoint.JobSpec_Bisection{
-			Bisection: &pinpoint.Bisection{
-				CommitRange: &pinpoint.GitilesCommitRange{
+		job.JobKind = &pinpoint_proto.JobSpec_Bisection{
+			Bisection: &pinpoint_proto.Bisection{
+				CommitRange: &pinpoint_proto.GitilesCommitRange{
 					Host:         "gitiles-host",
 					Project:      "gitiles-project",
 					StartGitHash: "c0dec0de",
@@ -61,20 +61,20 @@ func TestSimpleConversions(t *testing.T) {
 				}}}
 
 		Convey("Creating a Performance mode job", func() {
-			job.ComparisonMode = pinpoint.JobSpec_PERFORMANCE
+			job.ComparisonMode = pinpoint_proto.JobSpec_PERFORMANCE
 
 			Convey("We support Telemetry specifying a story", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 1000.0,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story"},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -112,18 +112,18 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 1000.0,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -156,10 +156,10 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("We support GTest", func() {
-				gtestJob := &pinpoint.JobSpec{
+				gtestJob := &pinpoint_proto.JobSpec{
 					ComparisonMagnitude: 1000.0,
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -195,20 +195,20 @@ func TestSimpleConversions(t *testing.T) {
 		})
 
 		Convey("Creating a Functional Comparison", func() {
-			job.ComparisonMode = pinpoint.JobSpec_FUNCTIONAL
+			job.ComparisonMode = pinpoint_proto.JobSpec_FUNCTIONAL
 
 			Convey("We support Telemetry specifying a story", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 0.2,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story"},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -242,18 +242,18 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 0.2,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -286,10 +286,10 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("We support GTest", func() {
-				gtestJob := &pinpoint.JobSpec{
+				gtestJob := &pinpoint_proto.JobSpec{
 					ComparisonMagnitude: 0.2,
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -327,35 +327,35 @@ func TestSimpleConversions(t *testing.T) {
 	})
 
 	Convey("We support Bisections with a Patch", t, func() {
-		job.JobKind = &pinpoint.JobSpec_Bisection{
-			Bisection: &pinpoint.Bisection{
-				CommitRange: &pinpoint.GitilesCommitRange{
+		job.JobKind = &pinpoint_proto.JobSpec_Bisection{
+			Bisection: &pinpoint_proto.Bisection{
+				CommitRange: &pinpoint_proto.GitilesCommitRange{
 					Host:         "gitiles-host",
 					Project:      "gitiles-project",
 					StartGitHash: "c0dec0de",
 					EndGitHash:   "f00dc0de",
 				},
-				Patch: &pinpoint.GerritChange{
+				Patch: &pinpoint_proto.GerritChange{
 					Host:     "some-gerrit-host",
 					Project:  "some-project",
 					Change:   12345,
 					Patchset: 1}}}
 
 		Convey("Creating a Performance mode job", func() {
-			job.ComparisonMode = pinpoint.JobSpec_PERFORMANCE
+			job.ComparisonMode = pinpoint_proto.JobSpec_PERFORMANCE
 
 			Convey("We support Telemetry specifying a story", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 1000.0,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story"},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -391,18 +391,18 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 1000.0,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -437,10 +437,10 @@ func TestSimpleConversions(t *testing.T) {
 
 			})
 			Convey("We support GTest", func() {
-				gtestJob := &pinpoint.JobSpec{
+				gtestJob := &pinpoint_proto.JobSpec{
 					ComparisonMagnitude: 1000.0,
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -479,20 +479,20 @@ func TestSimpleConversions(t *testing.T) {
 		})
 
 		Convey("Creating a Functional Comparison", func() {
-			job.ComparisonMode = pinpoint.JobSpec_FUNCTIONAL
+			job.ComparisonMode = pinpoint_proto.JobSpec_FUNCTIONAL
 
 			Convey("We support Telemetry specifying a story", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 0.2,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story"},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -529,18 +529,18 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
+					&pinpoint_proto.JobSpec{
 						ComparisonMagnitude: 0.2,
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -577,10 +577,10 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("We support GTest", func() {
-				gtestJob := &pinpoint.JobSpec{
+				gtestJob := &pinpoint_proto.JobSpec{
 					ComparisonMagnitude: 0.2,
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -618,14 +618,14 @@ func TestSimpleConversions(t *testing.T) {
 	})
 
 	Convey("We translate all the URLs for results at each change", t, func() {
-		job.JobKind = &pinpoint.JobSpec_Experiment{
-			Experiment: &pinpoint.Experiment{
-				BaseCommit: &pinpoint.GitilesCommit{
+		job.JobKind = &pinpoint_proto.JobSpec_Experiment{
+			Experiment: &pinpoint_proto.Experiment{
+				BaseCommit: &pinpoint_proto.GitilesCommit{
 					Host:    "some-gitiles-host",
 					Project: "some-gitiles-project",
 					GitHash: "c0dec0de",
 				},
-				ExperimentPatch: &pinpoint.GerritChange{
+				ExperimentPatch: &pinpoint_proto.GerritChange{
 					Host:     "some-gerrit-host",
 					Project:  "some-gerrit-project",
 					Change:   23456,
@@ -634,14 +634,14 @@ func TestSimpleConversions(t *testing.T) {
 	})
 
 	Convey("We fail on experiments with missing inputs", t, func() {
-		job.JobKind = &pinpoint.JobSpec_Experiment{
-			Experiment: &pinpoint.Experiment{
-				BaseCommit: &pinpoint.GitilesCommit{
+		job.JobKind = &pinpoint_proto.JobSpec_Experiment{
+			Experiment: &pinpoint_proto.Experiment{
+				BaseCommit: &pinpoint_proto.GitilesCommit{
 					Host:    "some-gitiles-host",
 					Project: "some-gitiles-project",
 					GitHash: "c0dec0de",
 				},
-				ExperimentPatch: &pinpoint.GerritChange{
+				ExperimentPatch: &pinpoint_proto.GerritChange{
 					Host:     "some-gerrit-host",
 					Project:  "some-gerrit-project",
 					Change:   12345,
@@ -649,18 +649,18 @@ func TestSimpleConversions(t *testing.T) {
 				},
 			}}
 		Convey("Creating a performance mode job", func() {
-			job.ComparisonMode = pinpoint.JobSpec_PERFORMANCE
+			job.ComparisonMode = pinpoint_proto.JobSpec_PERFORMANCE
 			telemetryJob :=
-				&pinpoint.JobSpec{
-					Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-						TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+				&pinpoint_proto.JobSpec{
+					Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+						TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 							Benchmark: "some-benchmark",
-							StorySelection: &pinpoint.TelemetryBenchmark_Story{
+							StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 								Story: "some-story",
 							},
 							Measurement:   "some-metric",
 							GroupingLabel: "some-grouping-label",
-							Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+							Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 			proto.Merge(telemetryJob, job)
 			Convey("No base commit", func() {
 				telemetryJob.GetExperiment().BaseCommit = nil
@@ -686,14 +686,14 @@ func TestSimpleConversions(t *testing.T) {
 	})
 
 	Convey("We support experiments with base commit and experiment patch", t, func() {
-		job.JobKind = &pinpoint.JobSpec_Experiment{
-			Experiment: &pinpoint.Experiment{
-				BaseCommit: &pinpoint.GitilesCommit{
+		job.JobKind = &pinpoint_proto.JobSpec_Experiment{
+			Experiment: &pinpoint_proto.Experiment{
+				BaseCommit: &pinpoint_proto.GitilesCommit{
 					Host:    "some-gitiles-host",
 					Project: "some-gitiles-project",
 					GitHash: "c0dec0de",
 				},
-				ExperimentPatch: &pinpoint.GerritChange{
+				ExperimentPatch: &pinpoint_proto.GerritChange{
 					Host:     "some-gerrit-host",
 					Project:  "some-gerrit-project",
 					Change:   23456,
@@ -701,20 +701,20 @@ func TestSimpleConversions(t *testing.T) {
 				}}}
 
 		Convey("Creating a Performance mode job", func() {
-			job.ComparisonMode = pinpoint.JobSpec_PERFORMANCE
+			job.ComparisonMode = pinpoint_proto.JobSpec_PERFORMANCE
 
 			Convey("We support Telemetry specifying a story", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+					&pinpoint_proto.JobSpec{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story",
 								},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -746,21 +746,21 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("We support having both the base commit and experiment commit", func() {
-				job.GetExperiment().ExperimentCommit = &pinpoint.GitilesCommit{
+				job.GetExperiment().ExperimentCommit = &pinpoint_proto.GitilesCommit{
 					Host:    "some-gitiles-host",
 					Project: "some-gitiles-project",
 					GitHash: "60061ec0de",
 				}
-				telemetryJob := &pinpoint.JobSpec{
-					Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-						TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+				telemetryJob := &pinpoint_proto.JobSpec{
+					Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+						TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 							Benchmark: "some-benchmark",
-							StorySelection: &pinpoint.TelemetryBenchmark_Story{
+							StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 								Story: "some-story",
 							},
 							Measurement:   "some-metric",
 							GroupingLabel: "some-grouping-label",
-							Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+							Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -771,17 +771,17 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+					&pinpoint_proto.JobSpec{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				v, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldBeNil)
@@ -814,17 +814,17 @@ func TestSimpleConversions(t *testing.T) {
 
 			Convey("We support Telemetry specifying story tags and extra args", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+					&pinpoint_proto.JobSpec{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_StoryTags{
-									StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_StoryTags{
+									StoryTags: &pinpoint_proto.TelemetryBenchmark_StoryTagList{
 										StoryTags: []string{"some-tag", "some-other-tag"},
 									}},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE,
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE,
 								ExtraArgs:     []string{"--browser", "some-browser"},
 							}}}
 				proto.Merge(telemetryJob, job)
@@ -860,9 +860,9 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("We support GTest", func() {
-				gtestJob := &pinpoint.JobSpec{
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+				gtestJob := &pinpoint_proto.JobSpec{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -896,19 +896,19 @@ func TestSimpleConversions(t *testing.T) {
 		})
 
 		Convey("Creating a Functional mode job", func() {
-			job.ComparisonMode = pinpoint.JobSpec_FUNCTIONAL
+			job.ComparisonMode = pinpoint_proto.JobSpec_FUNCTIONAL
 
 			Convey("Fails for Telemetry (unsupported)", func() {
 				telemetryJob :=
-					&pinpoint.JobSpec{
-						Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
-							TelemetryBenchmark: &pinpoint.TelemetryBenchmark{
+					&pinpoint_proto.JobSpec{
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
 								Benchmark: "some-benchmark",
-								StorySelection: &pinpoint.TelemetryBenchmark_Story{
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
 									Story: "some-story"},
 								Measurement:   "some-metric",
 								GroupingLabel: "some-grouping-label",
-								Statistic:     pinpoint.TelemetryBenchmark_NONE}}}
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
 				proto.Merge(telemetryJob, job)
 				_, err := JobToValues(telemetryJob, "user@example.com")
 				So(err, ShouldNotBeNil)
@@ -916,9 +916,9 @@ func TestSimpleConversions(t *testing.T) {
 			})
 
 			Convey("Fails for GTest (unsupported)", func() {
-				gtestJob := &pinpoint.JobSpec{
-					Arguments: &pinpoint.JobSpec_GtestBenchmark{
-						GtestBenchmark: &pinpoint.GTestBenchmark{
+				gtestJob := &pinpoint_proto.JobSpec{
+					Arguments: &pinpoint_proto.JobSpec_GtestBenchmark{
+						GtestBenchmark: &pinpoint_proto.GTestBenchmark{
 							Benchmark:   "some-benchmark",
 							Measurement: "some-metric",
 							Test:        "some-test"}}}
@@ -936,7 +936,7 @@ func TestSimpleConversions(t *testing.T) {
 func TestGerritChangeToURL(t *testing.T) {
 	t.Parallel()
 	Convey("Given valid GerritChange", t, func() {
-		c := &pinpoint.GerritChange{
+		c := &pinpoint_proto.GerritChange{
 			Host:    "host",
 			Project: "project",
 			Change:  123456,
@@ -959,7 +959,7 @@ func TestGerritChangeToURL(t *testing.T) {
 		})
 	})
 	Convey("Given an invalidly GerritChange", t, func() {
-		c := &pinpoint.GerritChange{
+		c := &pinpoint_proto.GerritChange{
 			Host:     "host",
 			Project:  "project",
 			Change:   123456,

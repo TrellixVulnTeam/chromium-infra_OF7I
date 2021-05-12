@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/identify"
 	"infra/chromeperf/pinpoint/cli/render"
+	"infra/chromeperf/pinpoint/proto"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -114,19 +114,19 @@ func (e *experimentTelemetryRun) RegisterFlags(p Param) {
 	`))
 }
 
-func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extraArgs []string) *pinpoint.TelemetryBenchmark {
-	tb := &pinpoint.TelemetryBenchmark{
+func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extraArgs []string) *proto.TelemetryBenchmark {
+	tb := &proto.TelemetryBenchmark{
 		Benchmark:   benchmark,
 		Measurement: measurement,
 	}
 	if len(story) > 0 {
-		tb.StorySelection = &pinpoint.TelemetryBenchmark_Story{
+		tb.StorySelection = &proto.TelemetryBenchmark_Story{
 			Story: story,
 		}
 	}
 	if len(storyTags) > 0 {
-		tb.StorySelection = &pinpoint.TelemetryBenchmark_StoryTags{
-			StoryTags: &pinpoint.TelemetryBenchmark_StoryTagList{
+		tb.StorySelection = &proto.TelemetryBenchmark_StoryTags{
+			StoryTags: &proto.TelemetryBenchmark_StoryTagList{
 				StoryTags: storyTags,
 			},
 		}
@@ -176,28 +176,28 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		extraArgs = p.TelemetryExperiment.ExtraArgs
 	}
 
-	js := &pinpoint.JobSpec{
-		ComparisonMode: pinpoint.JobSpec_PERFORMANCE,
+	js := &proto.JobSpec{
+		ComparisonMode: proto.JobSpec_PERFORMANCE,
 		Config:         e.configuration,
 		UserAgent:      identify.UserAgent,
 
 		// This is hard-coded for Chromium Telemetry.
 		Target: "performance_test_suite",
-		JobKind: &pinpoint.JobSpec_Experiment{
-			Experiment: &pinpoint.Experiment{
-				BaseCommit: &pinpoint.GitilesCommit{
+		JobKind: &proto.JobSpec_Experiment{
+			Experiment: &proto.Experiment{
+				BaseCommit: &proto.GitilesCommit{
 					Host:    e.gitilesHost,
 					Project: e.repository,
 					GitHash: e.baseCommit,
 				},
-				ExperimentCommit: &pinpoint.GitilesCommit{
+				ExperimentCommit: &proto.GitilesCommit{
 					Host:    e.gitilesHost,
 					Project: e.repository,
 					GitHash: e.expCommit,
 				},
 			},
 		},
-		Arguments: &pinpoint.JobSpec_TelemetryBenchmark{
+		Arguments: &proto.JobSpec_TelemetryBenchmark{
 			TelemetryBenchmark: newTelemetryBenchmark(
 				e.benchmark, e.measurement, e.story, e.storyTags, extraArgs),
 		},
@@ -205,13 +205,13 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	exp := js.GetExperiment()
 
 	if e.issue.issueID != 0 {
-		js.MonorailIssue = &pinpoint.MonorailIssue{
+		js.MonorailIssue = &proto.MonorailIssue{
 			Project: e.issue.project,
 			IssueId: e.issue.issueID,
 		}
 	}
 	if e.baseCL.clNum > 0 {
-		exp.BasePatch = &pinpoint.GerritChange{
+		exp.BasePatch = &proto.GerritChange{
 			Host:     e.gerritHost,
 			Project:  e.repository,
 			Change:   e.baseCL.clNum,
@@ -219,14 +219,14 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		}
 	}
 	if e.expCL.clNum > 0 {
-		exp.ExperimentPatch = &pinpoint.GerritChange{
+		exp.ExperimentPatch = &proto.GerritChange{
 			Host:     e.gerritHost,
 			Project:  e.repository,
 			Change:   e.expCL.clNum,
 			Patchset: e.expCL.patchSet,
 		}
 	}
-	j, err := c.ScheduleJob(ctx, &pinpoint.ScheduleJobRequest{Job: js})
+	j, err := c.ScheduleJob(ctx, &proto.ScheduleJobRequest{Job: js})
 	if err != nil {
 		return errors.Annotate(err, "failed to ScheduleJob").Err()
 	}
