@@ -226,56 +226,6 @@ ALL = {
             },
         ),
         Platform(
-            # TODO: Remove once we have bootstrapped native builders.
-            name='mac-arm64-cross',
-            manylinux_name=None,
-            cross_triple='',
-            wheel_abi='cp27m',
-            wheel_plat=('macosx_11_0_arm64',),
-            dockcross_base=None,
-            openssl_target='darwin64-arm64-cc',
-            # We've done our own backport of ARM64 support to python 2.7, so
-            # there won't be any pre-packaged wheels available.
-            packaged=False,
-            cipd_platform='mac-arm64',
-            env={
-                # Necessary for some wheels to build. See for instance:
-                # https://github.com/giampaolo/psutil/issues/1832
-                'ARCHFLAGS': '-arch arm64',
-                # Setting CCC_OVERRIDE_OPTIONS in this way makes clang work
-                # similar to a dockcross cross-compiler, and is the most robust
-                # mechanism to deal with wheels' varying setup.py
-                # implementations.
-                'CCC_OVERRIDE_OPTIONS': '+--target=arm64-apple-macos',
-                'MACOSX_DEPLOYMENT_TARGET': '11.0'
-            },
-        ),
-        Platform(
-            # TODO: Remove once we have bootstrapped native builders.
-            name='mac-arm64-cp38-cross',
-            manylinux_name=None,
-            cross_triple='',
-            wheel_abi='cp38',
-            wheel_plat=('macosx_11_0_arm64',),
-            dockcross_base=None,
-            openssl_target='darwin64-arm64-cc',
-            # We've done our own backport of ARM64 support to python 3.8, so
-            # there won't be any pre-packaged wheels available.
-            packaged=False,
-            cipd_platform='mac-arm64',
-            env={
-                # Necessary for some wheels to build. See for instance:
-                # https://github.com/giampaolo/psutil/issues/1832
-                'ARCHFLAGS': '-arch arm64',
-                # Setting CCC_OVERRIDE_OPTIONS in this way makes clang work
-                # similar to a dockcross cross-compiler, and is the most robust
-                # mechanism to deal with wheels' varying setup.py
-                # implementations.
-                'CCC_OVERRIDE_OPTIONS': '+--target=arm64-apple-macos',
-                'MACOSX_DEPLOYMENT_TARGET': '11.0'
-            },
-        ),
-        Platform(
             name='mac-arm64',
             manylinux_name=None,
             cross_triple='',
@@ -302,8 +252,8 @@ ALL = {
             wheel_plat=('macosx_11_0_arm64',),
             dockcross_base=None,
             openssl_target='darwin64-arm64-cc',
-            # We've done our own backport of ARM64 support to python 3.8, so
-            # there won't be any pre-packaged wheels available.
+            # TODO: See whether this can be enabled now that Python 3.8.10
+            # supports mac-arm64.
             packaged=False,
             cipd_platform='mac-arm64',
             env={
@@ -372,10 +322,7 @@ def NativePlatforms():
   # Identify our native platforms.
   if sys.platform == 'darwin':
     if platform.machine() == 'x86_64':
-      return [
-          ALL['mac-x64'], ALL['mac-arm64-cross'], ALL['mac-x64-cp38'],
-          ALL['mac-arm64-cp38-cross']
-      ]
+      return [ALL['mac-x64'], ALL['mac-x64-cp38']]
     elif platform.machine() == 'arm64':
       return [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
   elif sys.platform == 'win32':

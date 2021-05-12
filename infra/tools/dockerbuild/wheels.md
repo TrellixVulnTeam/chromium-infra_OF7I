@@ -203,7 +203,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -273,7 +272,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -820,8 +818,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
@@ -1056,8 +1052,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -1183,7 +1177,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -1206,7 +1199,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -1229,7 +1221,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -1248,7 +1239,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
@@ -1273,7 +1263,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -1357,6 +1346,7 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -1386,8 +1376,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -2403,8 +2391,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -2432,8 +2418,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -2888,8 +2872,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
@@ -2911,7 +2893,6 @@ wheel: <
 
 
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
@@ -3272,7 +3253,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
 
@@ -3363,7 +3343,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -3385,7 +3364,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -3404,7 +3382,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 
@@ -3599,7 +3576,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
 * *manylinux-x64-py3*
 
 ## **parameterized**
@@ -4108,7 +4084,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -4131,7 +4106,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -4155,8 +4129,6 @@ wheel: <
 * *linux-mipsel*
 * *mac-arm64*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
-* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
@@ -4178,7 +4150,6 @@ wheel: <
 
 * *linux-arm64-py3*
 * *mac-arm64-cp38*
-* *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
@@ -5249,7 +5220,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
 
@@ -5271,7 +5241,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -5294,7 +5263,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -5440,7 +5408,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -5569,7 +5536,6 @@ wheel: <
 * *linux-mips64*
 * *linux-mipsel*
 * *mac-arm64*
-* *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
