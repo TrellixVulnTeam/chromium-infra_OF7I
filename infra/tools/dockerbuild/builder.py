@@ -270,7 +270,10 @@ def InstallCipdPythonPackage(system, wheel, base_dir):
   # workdir to save some time.
   system.cipd.install(cipd_pkg, version, pkg_dir)
 
-  return os.path.join(pkg_dir, 'bin', 'python' + '.'.join(wheel.pyversion))
+  interpreter = os.path.join(pkg_dir, 'bin', 'python')
+  if wheel.pyversion[0] == '3':
+    interpreter += '3'
+  return interpreter
 
 def BuildPackageFromSource(system, wheel, src, env=None):
   """Creates Python wheel from src.
