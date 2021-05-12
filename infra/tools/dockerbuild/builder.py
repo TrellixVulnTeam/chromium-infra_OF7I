@@ -97,7 +97,6 @@ class Builder(object):
           ("Wheel %s specifies platform [%s] which has version [%s], but its "
            "pyversions '%r' doesn't contain this version") %
           (spec.name, plat.name, pyversion, spec.pyversions))
-    spec = spec._replace(pyversions=[pyversion])
 
     wheel = Wheel(
         spec=spec,
