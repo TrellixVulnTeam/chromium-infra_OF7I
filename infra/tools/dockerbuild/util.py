@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import shutil
+import stat
 import tempfile
 import urllib
 import urlparse
@@ -43,10 +44,17 @@ def copy_to(src, dest_dir):
 
 
 def removeall(path):
+  # If removal fails, try changing mode and trying again. This is necessary for
+  # deleting readonly files on Windows.
+  # See https://docs.python.org/3.8/library/shutil.html#rmtree-example
+  def remove_readonly(f, path, _):
+    os.chmod(path, stat.S_IWRITE)
+    f(path)
+
   if os.path.isfile(path):
     os.remove(path)
   else:
-    shutil.rmtree(path)
+    shutil.rmtree(path, onerror=remove_readonly)
 
 
 class NamedAnonymousFile(object):
