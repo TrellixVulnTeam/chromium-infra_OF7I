@@ -249,6 +249,7 @@ SPECS.update({
                 'manylinux-x64-py3.9',
                 'windows-x64-py3',
                 'mac-x64-cp38',
+                'mac-arm64-cp38',
             ],
             pyversions=['py3'],
         ),
@@ -379,6 +380,7 @@ SPECS.update({
                 'manylinux-x64-py3',
                 'manylinux-x64-py3.9',
                 'mac-x64-cp38',
+                'mac-arm64-cp38',
                 'windows-x64-py3',
             ],
             pyversions=['py3'],
@@ -1134,17 +1136,14 @@ SPECS.update({
         CryptographyPyPI(
             'cryptography',
             '2.9.2',
-            openssl='1.1.1g',
+            openssl='1.1.1i',
             pyversions=['py2', 'py3'],
             packaged=[
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
-            # TODO(bryner): Consider updating this to build against 1.1.1i,
-            # to get support for Mac ARM64.
             skip_plat=[
-                'mac-arm64-cross', 'mac-arm64', 'mac-arm64-cp38-cross',
-                'mac-arm64-cp38'
+                'mac-arm64-cross', 'mac-arm64-cp38-cross', 'mac-arm64-cp38'
             ],
         ),
         CryptographyPyPI(
