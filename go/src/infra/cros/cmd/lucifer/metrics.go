@@ -14,6 +14,5 @@ import (
 func sendHostStatus(ctx context.Context, ac *api.Client, hosts []string, e event.Event) {
 	for _, host := range hosts {
 		event.SendWithMsg(e, host)
-		ac.BigQuery().HostStatusEvent(ctx, host, e)
 	}
 }

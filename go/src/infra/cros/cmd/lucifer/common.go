@@ -20,7 +20,6 @@ import (
 	"infra/cros/cmd/lucifer/internal/api"
 	"infra/cros/cmd/lucifer/internal/autotest"
 	"infra/cros/cmd/lucifer/internal/logdog"
-	"infra/cros/cmd/lucifer/internal/metrics"
 	"infra/cros/cmd/lucifer/internal/osutil"
 )
 
@@ -108,25 +107,19 @@ func commonSetup(ctx context.Context, c commonOpts) (ctx2 context.Context, res *
 		log.Print("Switching log output to LogDog")
 		log.SetOutput(f)
 	}
-
-	// Set up metrics.
-	ctx, res.metrics = metrics.Setup(ctx, res.Logger(), metrics.Config{
-		GCPProject: c.gcpProject,
-	})
 	return ctx, res, nil
 }
 
 // commonResources wraps common resources that need closing.
 type commonResources struct {
 	// Things to close.
-	metrics   *metrics.Client
 	abortsock *abortsock.AbortSock
 	logdog    io.WriteCloser
 }
 
 // apiClient returns an API client.
 func (c *commonResources) apiClient() *api.Client {
-	return api.NewClient(c.Logger(), c.metrics)
+	return api.NewClient(c.Logger())
 }
 
 // Logger returns a Logger that supports LogDog features.  If LogDog
@@ -142,12 +135,6 @@ func (c *commonResources) Logger() logdog.Logger {
 // Close closes all resources and returns the first error encountered.
 func (c *commonResources) Close() error {
 	var err error
-	if c.metrics != nil {
-		if err2 := c.metrics.Close(); err == nil {
-			err = err2
-		}
-		c.metrics = nil
-	}
 	if c.logdog != nil {
 		log.Print("LogDog logs end here")
 		log.SetOutput(os.Stderr)

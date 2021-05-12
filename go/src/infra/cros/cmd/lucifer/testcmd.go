@@ -17,7 +17,6 @@ import (
 	"infra/cros/cmd/lucifer/internal/autotest/atutil"
 	"infra/cros/cmd/lucifer/internal/event"
 	"infra/cros/cmd/lucifer/internal/flagx"
-	"infra/cros/cmd/lucifer/internal/metrics"
 )
 
 type testCmd struct {
@@ -237,7 +236,6 @@ func (c *testCmd) tkoLevel() int {
 // A job may include tests, pre-test tasks, and post-test tasks.
 // This contains all logic, excluding argument parsing and logging setup.
 func runJob(ctx context.Context, c *testCmd, ac *api.Client) error {
-	metrics.StartCounter.Add(ctx, 1)
 	event.Send(event.Starting)
 	defer event.Send(event.Completed)
 	switch c.level {

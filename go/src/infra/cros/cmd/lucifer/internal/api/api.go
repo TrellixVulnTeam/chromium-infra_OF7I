@@ -11,7 +11,6 @@ package api
 
 import (
 	"infra/cros/cmd/lucifer/internal/logdog"
-	"infra/cros/cmd/lucifer/internal/metrics"
 )
 
 // Client provides the interface that Lucifer uses to talk to the
@@ -23,25 +22,13 @@ import (
 // LogDog is synchronous and cannot handle this anyway.  See the
 // logdog package for details on this behavior.
 type Client struct {
-	logger  logdog.Logger
-	metrics *metrics.Client
-	step    logdog.Step
+	logger logdog.Logger
+	step   logdog.Step
 }
 
 // NewClient returns a new client.
-func NewClient(lg logdog.Logger, mc *metrics.Client) *Client {
+func NewClient(lg logdog.Logger) *Client {
 	return &Client{
-		logger:  lg,
-		metrics: mc,
+		logger: lg,
 	}
-}
-
-// Metrics returns a metrics client.
-func (c *Client) Metrics() *metrics.Client {
-	return c.metrics
-}
-
-// BigQuery returns a BigQuery client.
-func (c *Client) BigQuery() metrics.BQClient {
-	return c.metrics.BigQuery()
 }
