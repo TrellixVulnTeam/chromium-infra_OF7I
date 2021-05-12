@@ -20,6 +20,27 @@ import (
 	dirmdpb "infra/tools/dirmd/proto"
 )
 
+var includedSubRepos = []string{
+	"native_client",
+	"third_party/angle",
+	"third_party/catapult/dashboard/dashboard/pinpoint",
+	"third_party/dawn",
+	"third_party/depot_tools",
+	"third_party/devtools-frontend",
+	"third_party/ffmpeg",
+	"third_party/icu",
+	"third_party/libjpeg_turbo",
+	"third_party/libyuv",
+	"third_party/lss",
+	"third_party/pdfium",
+	"third_party/perfetto",
+	"third_party/skia",
+	"third_party/swiftshader",
+	"third_party/vulkan_memory_allocator",
+	"third_party/vulkan-deps",
+	"v8",
+}
+
 // Updater computed metadata from a Chromium checkout and uploads it to GCS.
 type Updater struct {
 	// ChromiumCheckout is a path to chromium/src.git checkout.
@@ -48,7 +69,7 @@ func (u *Updater) Run(ctx context.Context) error {
 }
 
 func (u *Updater) run(ctx context.Context) error {
-	mapping, err := dirmd.ReadMapping(u.ChromiumCheckout, dirmdpb.MappingForm_COMPUTED)
+	mapping, err := u.readMapping(ctx, dirmdpb.MappingForm_COMPUTED)
 	if err != nil {
 		return err
 	}
@@ -74,12 +95,21 @@ func (u *Updater) run(ctx context.Context) error {
 }
 
 func (u *Updater) runLegacyFull(ctx context.Context) error {
-	mapping, err := dirmd.ReadMapping(u.ChromiumCheckout, dirmdpb.MappingForm_FULL)
+	mapping, err := u.readMapping(ctx, dirmdpb.MappingForm_FULL)
 	if err != nil {
 		return err
 	}
 
 	return u.writeMapping(ctx, "component_map_subdirs.json", mapping, false)
+}
+
+func (u *Updater) readMapping(ctx context.Context, form dirmdpb.MappingForm) (*dirmd.Mapping, error) {
+	dirs := make([]string, 1, 1+len(includedSubRepos))
+	dirs[0] = u.ChromiumCheckout
+	for _, subRepo := range includedSubRepos {
+		dirs = append(dirs, filepath.Join(u.ChromiumCheckout, filepath.FromSlash(subRepo)))
+	}
+	return dirmd.ReadMapping(ctx, form, dirs...)
 }
 
 func (u *Updater) writeMapping(ctx context.Context, name string, mapping *dirmd.Mapping, modernFormat bool) error {

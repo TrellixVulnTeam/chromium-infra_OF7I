@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/system/signals"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
 
 	"infra/tools/dirmd"
@@ -53,6 +54,10 @@ func (r *tagRun) Run(a subcommands.Application, args []string, env subcommands.E
 }
 
 func (r *tagRun) run(ctx context.Context, args []string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	defer signals.HandleInterrupt(cancel)()
+
 	if len(args) != 0 {
 		return errors.Reason("unexpected positional arguments: %q", args).Err()
 	}
@@ -60,7 +65,7 @@ func (r *tagRun) run(ctx context.Context, args []string) error {
 	if err := r.validate(); err != nil {
 		return err
 	}
-	mapping, err := dirmd.ReadMapping(r.root, dirmdpb.MappingForm_REDUCED)
+	mapping, err := dirmd.ReadMapping(ctx, dirmdpb.MappingForm_REDUCED, r.root)
 	if err != nil {
 		return err
 	}

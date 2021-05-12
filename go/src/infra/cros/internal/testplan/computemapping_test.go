@@ -105,7 +105,7 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 	// Mapping.
 	expectedMapping := &dirmd.Mapping{
 		Dirs: map[string]*dirmdpb.Metadata{
-			".": {
+			"go/src/infra/cros/internal/testplan/testdata": {
 				Chromeos: &chromeos.ChromeOS{
 					Cq: &chromeos.ChromeOS_CQ{
 						SourceTestPlans: []*plan.SourceTestPlan{

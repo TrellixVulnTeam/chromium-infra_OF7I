@@ -5,6 +5,8 @@
 package dirmd
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 
 	dirmdpb "infra/tools/dirmd/proto"
@@ -16,17 +18,22 @@ import (
 func TestRead(t *testing.T) {
 	t.Parallel()
 
+	testDataKey := "go/src/infra/tools/dirmd/testdata"
+
 	Convey(`ReadMapping`, t, func() {
+		ctx := context.Background()
+		rootKey := testDataKey + "/root"
+
 		Convey(`Original`, func() {
-			m, err := ReadMapping("testdata/root", dirmdpb.MappingForm_ORIGINAL)
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_ORIGINAL, "testdata/root")
 			So(err, ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
-					".": {
+					rootKey: {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					rootKey + "/subdir": {
 						TeamEmail: "team-email@chromium.org",
 						// OS was not inherited
 						Monorail: &dirmdpb.Monorail{
@@ -40,7 +47,40 @@ func TestRead(t *testing.T) {
 							},
 						},
 					},
-					"subdir_with_owners": {
+					rootKey + "/subdir_with_owners": {
+						TeamEmail: "team-email@chromium.org",
+						// OS was not inherited
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+					},
+					// "subdir_with_owners/empty_subdir" is not present because it has
+					// no metadata.
+				},
+			})
+		})
+
+		Convey(`Original with two dirs`, func() {
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_ORIGINAL, "testdata/root/subdir", "testdata/root/subdir_with_owners")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					rootKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						// OS was not inherited
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+					rootKey + "/subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						// OS was not inherited
 						Monorail: &dirmdpb.Monorail{
@@ -55,15 +95,15 @@ func TestRead(t *testing.T) {
 		})
 
 		Convey(`Full`, func() {
-			m, err := ReadMapping("testdata/root", dirmdpb.MappingForm_FULL)
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_FULL, "testdata/root")
 			So(err, ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
-					".": {
+					rootKey: {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					rootKey + "/subdir": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -77,7 +117,7 @@ func TestRead(t *testing.T) {
 							},
 						},
 					},
-					"subdir_with_owners": {
+					rootKey + "/subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -85,7 +125,7 @@ func TestRead(t *testing.T) {
 							Component: "Some>Component",
 						},
 					},
-					"subdir_with_owners/empty_subdir": {
+					rootKey + "/subdir_with_owners/empty_subdir": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -98,15 +138,15 @@ func TestRead(t *testing.T) {
 		})
 
 		Convey(`Computed`, func() {
-			m, err := ReadMapping("testdata/root", dirmdpb.MappingForm_COMPUTED)
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, "testdata/root")
 			So(err, ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
-					".": {
+					rootKey: {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					rootKey + "/subdir": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -120,7 +160,7 @@ func TestRead(t *testing.T) {
 							},
 						},
 					},
-					"subdir_with_owners": {
+					rootKey + "/subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 						Monorail: &dirmdpb.Monorail{
@@ -133,15 +173,15 @@ func TestRead(t *testing.T) {
 		})
 
 		Convey(`Reduced`, func() {
-			m, err := ReadMapping("testdata/root", dirmdpb.MappingForm_REDUCED)
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_REDUCED, "testdata/root")
 			So(err, ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
-					".": {
+					rootKey: {
 						TeamEmail: "chromium-review@chromium.org",
 						Os:        dirmdpb.OS_LINUX,
 					},
-					"subdir": {
+					rootKey + "/subdir": {
 						TeamEmail: "team-email@chromium.org",
 						Monorail: &dirmdpb.Monorail{
 							Project:   "chromium",
@@ -154,7 +194,7 @@ func TestRead(t *testing.T) {
 							},
 						},
 					},
-					"subdir_with_owners": {
+					rootKey + "/subdir_with_owners": {
 						TeamEmail: "team-email@chromium.org",
 						Monorail: &dirmdpb.Monorail{
 							Project:   "chromium",
@@ -186,6 +226,25 @@ func TestRead(t *testing.T) {
 					},
 				},
 			},
+		})
+	})
+}
+
+func TestRemoveRedundantDirs(t *testing.T) {
+	t.Parallel()
+
+	Convey("TestRemoveRedundantDirs", t, func() {
+		actual := removeRedundantDirs(
+			filepath.FromSlash("x/y2/z"),
+			filepath.FromSlash("a"),
+			filepath.FromSlash("a/b"),
+			filepath.FromSlash("x/y1"),
+			filepath.FromSlash("x/y2"),
+		)
+		So(actual, ShouldResemble, []string{
+			filepath.FromSlash("a"),
+			filepath.FromSlash("x/y1"),
+			filepath.FromSlash("x/y2"),
 		})
 	})
 }

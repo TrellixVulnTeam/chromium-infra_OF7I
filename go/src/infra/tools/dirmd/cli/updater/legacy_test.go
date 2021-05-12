@@ -6,6 +6,7 @@ package updater
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -19,7 +20,8 @@ func TestLegacy(t *testing.T) {
 	t.Parallel()
 
 	Convey(`Legacy`, t, func() {
-		m, err := dirmd.ReadMapping("testdata/root", dirmdpb.MappingForm_FULL)
+		ctx := context.Background()
+		m, err := dirmd.ReadMapping(ctx, dirmdpb.MappingForm_FULL, "testdata/root")
 		So(err, ShouldBeNil)
 		actual := toLegacyFormat(m)
 		So(jsonIndent(actual), ShouldEqual, jsonIndent([]byte(`{
@@ -32,13 +34,13 @@ func TestLegacy(t *testing.T) {
 			],
 			"component-to-team":  {},
 			"dir-to-component": {
-				"subdir_with_owners": "Some\u003eComponent(Linux)",
-				"subdir_with_owners/empty_subdir": "Some\u003eComponent(Linux)"
+				"go/src/infra/tools/dirmd/cli/updater/testdata/root/subdir_with_owners": "Some\u003eComponent(Linux)",
+				"go/src/infra/tools/dirmd/cli/updater/testdata/root/subdir_with_owners/empty_subdir": "Some\u003eComponent(Linux)"
 			},
 			"dir-to-team": {
-				".": "chromium-review@chromium.org",
-				"subdir_with_owners": "team-email@chromium.org",
-				"subdir_with_owners/empty_subdir": "team-email@chromium.org"
+				"go/src/infra/tools/dirmd/cli/updater/testdata/root": "chromium-review@chromium.org",
+				"go/src/infra/tools/dirmd/cli/updater/testdata/root/subdir_with_owners": "team-email@chromium.org",
+				"go/src/infra/tools/dirmd/cli/updater/testdata/root/subdir_with_owners/empty_subdir": "team-email@chromium.org"
 			},
 			"teams-per-component": {}
 		}`)))

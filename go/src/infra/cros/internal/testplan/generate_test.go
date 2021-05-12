@@ -24,7 +24,10 @@ func TestGenerate(t *testing.T) {
 			},
 			Project: "chromium/testprojectA",
 			Ref:     "refs/changes/23/123/5",
-			Files:   []string{"a/b/test1.txt", "a/b/test2.txt"},
+			Files: []string{
+				"go/src/infra/cros/internal/testplan/testdata/a/b/test1.txt",
+				"go/src/infra/cros/internal/testplan/testdata/a/b/test2.txt",
+			},
 		},
 	}
 	git.CommandRunnerImpl = &cmd.FakeCommandRunnerMulti{

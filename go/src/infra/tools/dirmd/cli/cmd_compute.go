@@ -26,13 +26,25 @@ func cmdCompute() *subcommands.Command {
 			message, same as "export" subcommand.
 			The returned mapping contains entries only for the explicitly
 			specified target dirs. Each entry includes inherited metadata.
+
+			Unlike export subcommand, this subcommand reads metadata from only the
+			targets and their ancestors up to the ROOT. This is different from export
+			subcommand which uses git-ls-files:
+			1) compute subcommand normally reads much fewer files.
+			2) compute subcommand does not respect git-ignored files.
+
+			The latter indicates a slightly different semantics, but this should not
+			make any difference in the vast majority of cases because it is confusing to
+			have git-ignored DIR_METADATA in the middle of the ancestry chain, which
+			might indicate that DIR_METADATA files are used incorrectly.
+			This can be fixed, but it would come with a performance penalty.
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &computeRun{}
 			r.RegisterOutputFlag()
 
 			// -root does not have a default intentionally, otherwise it is easy
-			// to run `dirmd compute` from no a repo root and notice the problem.
+			// to run `dirmd compute` from not a repo root and not notice the problem.
 			r.Flags.StringVar(&r.root, "root", "", "Path to the root directory")
 			return r
 		},

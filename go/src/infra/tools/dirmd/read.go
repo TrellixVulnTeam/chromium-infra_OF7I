@@ -5,13 +5,16 @@
 package dirmd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
-	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 
@@ -19,6 +22,7 @@ import (
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/protobuf/encoding/prototext"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 
 	dirmdpb "infra/tools/dirmd/proto"
@@ -27,8 +31,17 @@ import (
 // Filename is the standard name of the metadata file.
 const Filename = "DIR_METADATA"
 
+var gitBinary string
+
+func init() {
+	gitBinary = "git"
+	if runtime.GOOS == "windows" {
+		gitBinary = "git.exe"
+	}
+}
+
 // ReadMetadata reads metadata from a single directory.
-// See also MappingReader.
+// See also ReadMapping.
 //
 // Returns (nil, nil) if the metadata is not defined.
 func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
@@ -51,13 +64,150 @@ func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
 	return &ret, nil
 }
 
-// ReadMapping reads all metadata from the directory tree at root.
-func ReadMapping(root string, form dirmdpb.MappingForm) (*Mapping, error) {
-	r := &mappingReader{Root: root}
-	if err := r.ReadAll(form); err != nil {
+// ReadMapping reads all metadata from files in git in the given directories.
+//
+// Each directory must reside in a git checkout. ReadMapping reads
+// visible-to-git metadata files under the directory.
+// In particular, files outside of the repo are not read, as well as files
+// matched by .gitignore files. The set of considered files is equivalent to
+// `git ls-files <dir>`, see its documentation.
+// Note that a directory does not have to be the root of the git repo, and
+// multiple directories in the same repo are allowed.
+//
+// One of the repos must be the root repo, while other repos must be its
+// sub-repos. In other words, all git repos referred to by the directories must
+// be subdirectories of one of the repos.
+// The root dir of the root repo becomes the metadata root.
+func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) (*Mapping, error) {
+	if len(dirs) == 0 {
+		return nil, nil
+	}
+
+	// Ensure all dir paths are absolute, for simplicity down the road.
+	for i, d := range dirs {
+		var err error
+		if dirs[i], err = filepath.Abs(d); err != nil {
+			return nil, errors.Annotate(err, "%q", d).Err()
+		}
+	}
+
+	// Group all dirs by the repo root.
+	byRepoRoot, err := dirsByRepoRoot(ctx, dirs)
+	if err != nil {
 		return nil, err
 	}
+
+	r := &mappingReader{
+		Mapping:         *NewMapping(0),
+		semReadMetadata: semaphore.NewWeighted(int64(runtime.NumCPU())),
+	}
+	// Find the metadata root, i.e. the root dir of the root repo.
+	if r.Root, err = findMetadataRoot(byRepoRoot); err != nil {
+		return nil, err
+	}
+
+	// Read the metadata files concurrently.
+	eg, ctx := errgroup.WithContext(ctx)
+	defer eg.Wait()
+	for repoRoot, repoDirs := range byRepoRoot {
+		repoRoot := repoRoot
+		for _, dir := range removeRedundantDirs(repoDirs...) {
+			dir := dir
+			eg.Go(func() error {
+				err := r.ReadGitFiles(ctx, repoRoot, dir, form == dirmdpb.MappingForm_FULL)
+				return errors.Annotate(err, "failed to process %q", dir).Err()
+			})
+		}
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+
+	// Finally, bring the mapping to the desired form.
+	switch form {
+	case dirmdpb.MappingForm_REDUCED:
+		r.Mapping.Reduce()
+	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
+		r.Mapping.ComputeAll()
+	}
+
 	return &r.Mapping, nil
+}
+
+// findMetadataRoot returns the root directory of the root repo.
+func findMetadataRoot(byRepoRoot map[string][]string) (string, error) {
+	rootSlice := make([]string, 0, len(byRepoRoot))
+	for rr := range byRepoRoot {
+		rootSlice = append(rootSlice, rr)
+	}
+	sort.Strings(rootSlice)
+
+	// The shortest must be the root.
+	// Verify that all others have it as the prefix.
+	rootNormalized := normalizeDir(rootSlice[0])
+
+	for _, rr := range rootSlice[1:] {
+		if !strings.HasPrefix(normalizeDir(rr), rootNormalized) {
+			return "", errors.Reason("failed to determine the metadata root: expected %q to be a subdir of %q", rr, rootSlice[0]).Err()
+		}
+	}
+	return rootSlice[0], nil
+}
+
+// dirsByRepoRoot groups directories by the root of the git repo they reside in.
+func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string][]string, error) {
+	var mu sync.Mutex
+	// Most likely, dirs are in different repos, so allocate len(dirs) entries.
+	ret := make(map[string][]string, len(dirs))
+	eg, ctx := errgroup.WithContext(ctx)
+	for _, dir := range dirs {
+		dir := dir
+		eg.Go(func() error {
+			cmd := exec.CommandContext(ctx, gitBinary, "-C", dir, "rev-parse", "--show-toplevel")
+			stdout, err := cmd.Output()
+			if err != nil {
+				return err
+			}
+			repoRoot := string(bytes.TrimSpace(stdout))
+
+			mu.Lock()
+			ret[repoRoot] = append(ret[repoRoot], dir)
+			mu.Unlock()
+			return nil
+		})
+	}
+	return ret, eg.Wait()
+}
+
+// removeRedundantDirs removes directories already included in other directories.
+// Mutates dirs in place.
+func removeRedundantDirs(dirs ...string) []string {
+	// Sort directories from shorest-to-longest.
+	// Note that this sorts by byte-length (not rune-length) and there is a small
+	// chance that a directory path contains a 2+ byte rune, but this is OK
+	// because such a rune is very unlikely to be equivalent to another shorter
+	// rune.
+	sort.Slice(dirs, func(i, j int) bool {
+		return len(dirs[i]) < len(dirs[j])
+	})
+
+	ret := dirs[:0] // https://github.com/golang/go/wiki/SliceTricks#filter-in-place
+	acceptedNormalized := make([]string, 0, len(dirs))
+	for _, d := range dirs {
+		dirNormalized := normalizeDir(d)
+		redundant := false
+		for _, shorter := range acceptedNormalized {
+			if strings.HasPrefix(dirNormalized, shorter) {
+				redundant = true
+				break
+			}
+		}
+		if !redundant {
+			acceptedNormalized = append(acceptedNormalized, dirNormalized)
+			ret = append(ret, d)
+		}
+	}
+	return ret
 }
 
 // ReadComputed returns computed metadata for the target directories.
@@ -91,100 +241,95 @@ func ReadComputed(root string, targets ...string) (*Mapping, error) {
 
 // mappingReader reads Mapping from the file system.
 type mappingReader struct {
-	// Root is a path to the root directory.
+	// Root is an absolute path to the metadata root directory.
+	// In the case of multiple repos, it is the root dir of the root repo.
 	Root string
+
 	// Mapping is the result of reading.
 	Mapping
+
+	mu              sync.Mutex
+	semReadMetadata *semaphore.Weighted
 }
 
-// ReadAll reads metadata from the entire directory tree, overwriting
-// r.Mapping.
-func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
-	r.Mapping = *NewMapping(0)
+// ReadGitFiles reads metadata files-in-git under dir and adds them to r.Mapping.
+//
+// It uses "git-ls-files <dir>" to discover the files, so for example it ignores
+// files outside of the repo. See more in `git ls-files -help`.
+func (r *mappingReader) ReadGitFiles(ctx context.Context, absRepoRoot, absTreeRoot string, preserveFileStructure bool) error {
+	// First, determine the key prefix.
+	keyPrefixNative, err := filepath.Rel(r.Root, absRepoRoot)
+	if err != nil {
+		return err
+	}
+	keyPrefix := filepath.ToSlash(keyPrefixNative)
 
-	ctx := context.Background()
 	eg, ctx := errgroup.WithContext(ctx)
-	sem := semaphore.NewWeighted(int64(runtime.NumCPU()))
-	var mu sync.Mutex
+	defer eg.Wait()
 
-	var visit func(dir, key string) error
-	visit = func(dir, key string) error {
-		if err := sem.Acquire(ctx, 1); err != nil {
-			return err
-		}
-		defer sem.Release(1)
+	// Concurrently start `git ls-files`, read its output and read the discovered
+	// metadata files.
 
-		f, err := os.Open(dir)
+	eg.Go(func() error {
+		cmd := exec.CommandContext(ctx, gitBinary, "-C", absRepoRoot, "ls-files", "--full-name", absTreeRoot)
+		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		if err := cmd.Start(); err != nil {
+			return errors.Annotate(err, "failed to start `git ls-files`").Err()
+		}
+		defer cmd.Wait() // do not exit the func until the subprocess exits.
 
-		hasMeta := false
-		for {
-			// TODO(nodir): switch to f.ReadDir after switching to Go 1.16
-			names, err := f.Readdirnames(128)
-			if err == io.EOF {
-				break // We have exhausted all entries in the directory.
-			}
-			if err != nil {
-				return errors.Annotate(err, "failed to read %q", dir).Err()
-			}
+		seen := stringset.New(0)
+		scan := bufio.NewScanner(stdout)
+		for scan.Scan() {
+			relFileName := scan.Text()      // slash-separated, relative to repo root
+			relDir := path.Dir(relFileName) // slash-separated, relative to repo root
+			key := path.Join(keyPrefix, relDir)
 
-			for _, name := range names {
-				name := name
-				fullName := filepath.Join(dir, name)
-				switch fileInfo, err := os.Lstat(fullName); {
-				case err != nil:
-					return err
-				case fileInfo.IsDir():
-					eg.Go(func() error {
-						return visit(fullName, path.Join(key, name))
-					})
-				case name == Filename || name == OwnersFilename:
-					hasMeta = true
+			if preserveFileStructure {
+				// Ensure the existence of the directory is recorded even if there is no metadata.
+				r.mu.Lock()
+				if _, ok := r.Dirs[key]; !ok {
+					r.Dirs[key] = nil
 				}
-			}
-		}
-
-		switch {
-		case hasMeta:
-			switch meta, err := ReadMetadata(dir); {
-			case err != nil:
-				return errors.Annotate(err, "failed to read %q", dir).Err()
-
-			case meta != nil:
-				mu.Lock()
-				r.Dirs[key] = meta
-				mu.Unlock()
+				r.mu.Unlock()
 			}
 
-		case form == dirmdpb.MappingForm_FULL:
-			// Ensure the key is registered in the mapping, so that ComputeAll()
-			// populates it below.
-			mu.Lock()
-			r.Dirs[key] = nil
-			mu.Unlock()
+			if base := path.Base(relFileName); base != Filename && base != OwnersFilename {
+				// Not a metadata file.
+				continue
+			}
+			if !seen.Add(relDir) {
+				// Already seen this dir.
+				continue
+			}
+
+			// Schedule a read.
+			eg.Go(func() error {
+				if err := r.semReadMetadata.Acquire(ctx, 1); err != nil {
+					return err
+				}
+				defer r.semReadMetadata.Release(1)
+
+				absDir := filepath.Join(absRepoRoot, filepath.FromSlash(relDir))
+				switch md, err := ReadMetadata(absDir); {
+				case err != nil:
+					return errors.Annotate(err, "failed to read metadata from %q", absDir).Err()
+				case md != nil:
+					r.mu.Lock()
+					r.Dirs[key] = md
+					r.mu.Unlock()
+				}
+
+				return nil
+			})
 		}
-
-		return nil
-	}
-
-	eg.Go(func() error {
-		return visit(r.Root, ".")
+		return scan.Err()
 	})
-	if err := eg.Wait(); err != nil {
-		return err
-	}
 
-	switch form {
-	case dirmdpb.MappingForm_REDUCED:
-		r.Mapping.Reduce()
-	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
-		r.Mapping.ComputeAll()
-	}
-
-	return nil
+	return eg.Wait()
 }
 
 // readUpMissing reads metadata of directories on the node path from target to
@@ -245,4 +390,22 @@ func (r *mappingReader) DirKey(dir string) (string, error) {
 	}
 
 	return key, nil
+}
+
+var pathSepString = string(os.PathSeparator)
+
+// normalizeDir returns version of the dir suitable for prefix checks.
+// On Windows, returns the path in the lower case.
+// The returned path ends with the path separator.
+func normalizeDir(dir string) string {
+	if runtime.GOOS == "windows" {
+		// Windows is not the only OS with case-insensitive file systems, but that's
+		// the only one we support.
+		dir = strings.ToLower(dir)
+	}
+
+	if !strings.HasSuffix(dir, pathSepString) {
+		dir += pathSepString
+	}
+	return dir
 }

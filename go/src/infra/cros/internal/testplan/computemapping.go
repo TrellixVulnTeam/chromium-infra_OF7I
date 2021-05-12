@@ -86,7 +86,7 @@ func computeMappingForChangeRevs(ctx context.Context, changeRevs []*gerrit.Chang
 		return nil, err
 	}
 
-	return dirmd.ReadMapping(workdir, dirmdpb.MappingForm_COMPUTED)
+	return dirmd.ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, workdir)
 }
 
 // computeProjectMappingInfos calculates a projectMappingInfo for each project
