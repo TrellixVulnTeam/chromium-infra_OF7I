@@ -6,6 +6,7 @@
 package site
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -82,23 +83,6 @@ var Prod = Environment{
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_PROD",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
 
-	CTPBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "testplatform",
-			Builder: "cros_test_platform",
-		},
-	},
-	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "test_runner",
-			Builder: "dut_leaser",
-		},
-	},
-
 	UFSService: "ufs.api.cr.dev",
 }
 
@@ -113,24 +97,25 @@ var Dev = Environment{
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 
-	CTPBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "testplatform",
-			Builder: "cros_test_platform-dev",
-		},
-	},
-	DUTLeaserBuilderInfo: BuildbucketBuilderInfo{
-		Host: "cr-buildbucket.appspot.com",
-		BuilderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "test_runner",
-			Builder: "dut_leaser",
-		},
-	},
-
 	UFSService: "staging.ufs.api.cr.dev",
+}
+
+// EnvFlags controls selection of the environment: either prod (default) or dev.
+type EnvFlags struct {
+	dev bool
+}
+
+// Register sets up the -dev argument.
+func (f *EnvFlags) Register(fl *flag.FlagSet) {
+	fl.BoolVar(&f.dev, "dev", false, "Run in dev environment.")
+}
+
+// Env returns the environment, either dev or prod.
+func (f EnvFlags) Env() Environment {
+	if f.dev {
+		return Dev
+	}
+	return Prod
 }
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
