@@ -202,6 +202,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -271,6 +272,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -816,11 +818,14 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -1029,6 +1034,7 @@ wheel: <
 
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 * *windows-x86-py3*
 
@@ -1048,12 +1054,15 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -1173,6 +1182,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -1195,6 +1205,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -1217,6 +1228,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -1235,9 +1247,11 @@ wheel: <
 
 
 * *linux-arm64-py3*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 * *windows-x86-py3*
 
@@ -1258,6 +1272,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -1320,6 +1335,7 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x86*
@@ -1344,6 +1360,7 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -1366,11 +1383,15 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
+* *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -1461,6 +1482,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **docker**
@@ -1547,13 +1569,13 @@ wheel: <
 
 * *universal*
 
-## **fabric**
+## **fabric-py2**
 
 ### 1.14.0
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/fabric-py2_py3"
+  name: "infra/python/wheels/fabric-py2"
   version: "version:1.14.0"
 >
 ```
@@ -1633,6 +1655,7 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
@@ -1723,6 +1746,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -1741,6 +1765,7 @@ wheel: <
 
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **gin-py3**
@@ -1865,13 +1890,13 @@ wheel: <
 
 * *universal*
 
-## **google-apitools**
+## **google-apitools-py2**
 
 ### 0.5.27
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/google-apitools-py2_py3"
+  name: "infra/python/wheels/google-apitools-py2"
   version: "version:0.5.27"
 >
 ```
@@ -2274,6 +2299,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **google-pasta-py3**
 
@@ -2373,6 +2399,8 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
@@ -2400,12 +2428,15 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -2853,11 +2884,14 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -2874,9 +2908,11 @@ wheel: <
 ```
 
 
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 * *windows-x86-py3*
 
@@ -2934,6 +2970,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **macholib**
 
@@ -3161,24 +3198,26 @@ wheel: <
 
 ## **mozprocess**
 
-### 0.26
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/mozprocess-py2_py3"
-  version: "version:0.26"
->
-```
-
-
-* *universal*
-
 ### 1.2.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/mozprocess-py2_py3"
   version: "version:1.2.1"
+>
+```
+
+
+* *universal*
+
+## **mozprocess-py2**
+
+### 0.26
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mozprocess-py2"
+  version: "version:0.26"
 >
 ```
 
@@ -3230,6 +3269,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -3261,6 +3301,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **nose**
 
@@ -3319,6 +3360,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -3340,6 +3382,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -3358,8 +3401,10 @@ wheel: <
 
 
 * *linux-arm64-py3*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ### 1.19.5
 
@@ -3373,6 +3418,7 @@ wheel: <
 
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **oauth2client**
@@ -3549,8 +3595,10 @@ wheel: <
 
 
 * *linux-arm64-py3*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **parameterized**
 
@@ -3648,6 +3696,7 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
@@ -3754,6 +3803,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ### 8.2.0
@@ -3768,6 +3818,7 @@ wheel: <
 
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **pipenv-py2**
@@ -4054,6 +4105,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -4076,6 +4128,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -4098,6 +4151,8 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-arm64-cross*
 * *mac-x64*
@@ -4120,9 +4175,11 @@ wheel: <
 
 
 * *linux-arm64-py3*
+* *mac-arm64-cp38*
 * *mac-arm64-cp38-cross*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 * *windows-x86-py3*
 
@@ -4285,6 +4342,7 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **pycryptodome**
 
@@ -4299,6 +4357,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **pyfakefs**
 
@@ -4560,6 +4619,7 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **pyobjc**
 
@@ -4941,6 +5001,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **pytz**
 
@@ -5185,6 +5246,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -5206,6 +5268,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -5228,6 +5291,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -5261,6 +5325,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ### 1.6.2
 
@@ -5274,6 +5339,7 @@ wheel: <
 
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **selenium**
@@ -5371,6 +5437,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -5499,6 +5566,7 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
+* *mac-arm64*
 * *mac-arm64-cross*
 * *mac-x64*
 * *manylinux-x64*
@@ -5673,6 +5741,7 @@ wheel: <
 
 
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ## **typing**
 
@@ -5930,6 +5999,7 @@ wheel: <
 
 * *manylinux-x64*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ### 1.12.1
 
@@ -5943,6 +6013,7 @@ wheel: <
 
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
 ## **yapf**

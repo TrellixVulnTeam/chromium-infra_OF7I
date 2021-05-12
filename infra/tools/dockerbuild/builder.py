@@ -126,10 +126,8 @@ class Builder(object):
       return False
     if plat.name in self._skip_plat:
       return False
-    if not self.spec.universal:
-      pyversion = plat.pyversion
-      if self.spec.pyversions and pyversion not in self.spec.pyversions:
-        return False
+    if self.spec.pyversions and plat.pyversion not in self.spec.pyversions:
+      return False
 
     return True
 
