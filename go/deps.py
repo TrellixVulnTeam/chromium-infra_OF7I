@@ -56,7 +56,6 @@ VENDORED_TOOLS = [
   'github.com/kisielk/errcheck',
   'github.com/maruel/panicparse/cmd/pp',
   'github.com/smartystreets/goconvey',
-  'golang.org/x/lint/golint',
   'golang.org/x/mobile/cmd/gomobile',
   'golang.org/x/tools/cmd/callgraph',
   'golang.org/x/tools/cmd/fiximports',
