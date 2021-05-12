@@ -77,7 +77,7 @@ func (c *adminTaskCmd) innerExecute(ctx context.Context, f *flag.FlagSet, _ ...i
 
 	ac := res.apiClient()
 	t := c.adminTask()
-	s := ac.Step(t.Type.String())
+	s := ac.Step(fmt.Sprintf("%s %s", t.Type.String(), c.host))
 	defer s.Close()
 	if err := runTask(ctx, ac, c.mainJob(), t); err != nil {
 		s.Printf("Error running admin task: %s", err)
