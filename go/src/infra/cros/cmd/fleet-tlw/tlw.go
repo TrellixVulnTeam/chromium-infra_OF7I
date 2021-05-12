@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
@@ -28,6 +29,7 @@ import (
 	"infra/libs/lro"
 	"infra/libs/sshpool"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 type tlwServer struct {
@@ -265,7 +267,7 @@ func (s *tlwServer) GetDut(ctx context.Context, req *tls.GetDutRequest) (*tls.Du
 	if name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "GetDut: empty name in request")
 	}
-
+	ctx = setupUFSContext(ctx)
 	licenses, err := getUFSDeviceLicenses(ctx, s.ufsClient, name)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "GetDut: %s", err.Error())
@@ -275,4 +277,9 @@ func (s *tlwServer) GetDut(ctx context.Context, req *tls.GetDutRequest) (*tls.Du
 		Name:     name,
 		Licenses: licenses,
 	}, nil
+}
+
+func setupUFSContext(ctx context.Context) context.Context {
+	md := metadata.Pairs(ufsUtil.Namespace, ufsUtil.OSNamespace)
+	return metadata.NewOutgoingContext(ctx, md)
 }
