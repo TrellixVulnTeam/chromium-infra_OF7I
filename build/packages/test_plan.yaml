@@ -4,7 +4,6 @@ platforms:
   - linux-amd64
   - mac-amd64
   - mac-arm64
-  - windows-386
   - windows-amd64
 go_packages:
   - infra/cros/cmd/test_plan
