@@ -4974,7 +4974,6 @@ wheel: <
 
 
 * *manylinux-x64-py3*
-* *manylinux-x64-py3.9*
 
 ## **pytz**
 

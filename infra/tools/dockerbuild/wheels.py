@@ -487,7 +487,7 @@ SPECS.update({
             'pytype',
             '2021.2.9',
             packaged=(),
-            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
+            only_plat=['manylinux-x64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
