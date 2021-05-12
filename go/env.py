@@ -13,20 +13,24 @@ Or it can be used to wrap a command:
 $ ./env.py go version
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
+# This script *must* be the entry point.
 assert __name__ == '__main__'
 
-import imp
 import os
 import pipes
 import subprocess
 import sys
 
 
-# Do not want to mess with sys.path, load the module directly.
-bootstrap = imp.load_source(
-    'bootstrap', os.path.join(os.path.dirname(__file__), 'bootstrap.py'))
+# This should import ./bootstrap.py.
+import bootstrap
+
+# Make sure we picked up the correct bootstrap file.
+want = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bootstrap.py'))
+if os.path.abspath(bootstrap.__file__) != want:
+  raise AssertionError(
+      'Imported wrong bootstrap.py %s instead of %s' %
+      (bootstrap.__file__, want))
 
 old = os.environ.copy()
 
@@ -104,5 +108,4 @@ def main():
     sys.exit(subprocess.call([exe] + args[1:], env=new))
 
 
-assert __name__ == '__main__'
 main()
