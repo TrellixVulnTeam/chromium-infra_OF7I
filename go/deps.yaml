@@ -82,10 +82,9 @@ import:
   subpackages:
   - encoding/json5
 - package: golang.org/x/net
-  version: master
+  # The next version uses errors.Is(...) and no longer works on GAE go113.
+  version: 7fd8e65b642006927f6cec5cb4241df7f98a2210
   repo: https://go.googlesource.com/net.git
-  subpackages:
-  - context/ctxhttp
 - package: golang.org/x/text
   version: master
   repo: https://go.googlesource.com/text.git

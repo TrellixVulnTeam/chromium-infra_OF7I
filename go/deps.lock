@@ -1,8 +1,8 @@
-hash: b6f3fee5eebd1ad5a220aac9144c1c33938efa9fa9036bc5dc77fc8ae508055a
-updated: 2021-05-12T23:15:50.273860314+09:00
+hash: 62dd660e8a1d39d194e4232595c7bf5dd5cef21ac4b6ddb3316ee1c92521a1cb
+updated: 2021-05-12T13:25:17.302315-07:00
 imports:
 - name: cloud.google.com/go
-  version: aebf043abb07bd88501c649db53c9326a4ad8743
+  version: 7fd2ccd26adec1468e15fe84bf75210255a9dfea
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -32,7 +32,7 @@ imports:
   version: cc2ca9ad14c4c42e231adc8221c245fdc6f2592a
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: b0605647bbe2ff7d046a286c3023e7714376fb83
+  version: 3b602dd48f7f63a76cb1087a10355b3c668d583f
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -179,7 +179,7 @@ imports:
   version: e7afc7fbc51079733e9468cdfd1efcd7d196cd1d
   repo: https://chromium.googlesource.com/external/github.com/google/shlex.git
 - name: github.com/google/tink
-  version: 3993433abb873e8b198d41dc55d21ff4784cee56
+  version: ab8670a9a971cff6834203d9b748dcb3f3c1510e
   repo: https://chromium.googlesource.com/external/github.com/google/tink.git
   subpackages:
   - go
@@ -448,7 +448,7 @@ imports:
   version: cca21e7857d4c5fbbffe742c04f6f9c4e5d126a1
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: e0288b06a79aaa625d1ca483403cc4a100795af8
+  version: 0536f7398f0ea675b219ec14618ca812602e1427
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -472,13 +472,11 @@ imports:
   subpackages:
   - cmd/gomobile
 - name: golang.org/x/mod
-  version: 67f1c1edc27ada9b0cffe84ccdd4db2d4ff56edf
+  version: 6088ed88cecdb6949a45310db6d96d8fcbe88ef6
   repo: https://go.googlesource.com/mod.git
 - name: golang.org/x/net
-  version: 4163338589ed626ba11276b63facaef1f55349d4
+  version: 7fd8e65b642006927f6cec5cb4241df7f98a2210
   repo: https://go.googlesource.com/net.git
-  subpackages:
-  - context/ctxhttp
 - name: golang.org/x/oauth2
   version: 81ed05c6b58c5509b83ac75450e38d97242e7168
   repo: https://go.googlesource.com/oauth2.git
@@ -506,7 +504,7 @@ imports:
   version: f8bda1e9f3badef837c98cbaf4f7c335de90f266
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: be4aaae4cf865bd1e65ae3a22df28c1f47b6ccfd
+  version: 9dfac01ddd86037d8f36e89051430ce31f180597
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -558,7 +556,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 62adda2ece5ec803c824c5009b83cea86de5030d
+  version: 8bf65c69b99ed9e1106c07c1f5d2f42f312b7ec5
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes

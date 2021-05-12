@@ -212,7 +212,7 @@ def compare_deps(before, after):
   rev_after = revisions(after)
 
   bumps = []
-  for pkg, rev in rev_after.iteritems():
+  for pkg, rev in rev_after.items():
     if pkg in rev_before and rev != rev_before[pkg]:
       bumps.append((pkg, rev_before[pkg], rev))
   bumps.sort()
@@ -659,7 +659,7 @@ def install(workspace, force=False, update_out=None, skip_bundle=False):
 
   else:
     with unhack_vendor(workspace):
-      for retry in xrange(GLIDE_INSTALL_RETRIES):
+      for retry in range(GLIDE_INSTALL_RETRIES):
         try:
           call(workspace, 'glide', ['install'])
           break
