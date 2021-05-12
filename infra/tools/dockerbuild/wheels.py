@@ -291,6 +291,8 @@ SPECS.update({
             skip_plat=[
                 'manylinux-x64-py3.9',
                 'linux-arm64-py3',
+                # grpcio does not yet support Mac ARM64, but work is underway.
+                # See https://github.com/grpc/grpc/issues/24002
                 'mac-arm64-cp38',
             ],
             pyversions=['py3']),
