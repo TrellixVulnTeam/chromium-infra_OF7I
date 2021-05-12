@@ -40,7 +40,11 @@ import (
 // The file that is written is returned.
 func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir string, result *proto.ResultFile) (string, error) {
 	bucket, path := result.GcsBucket, result.Path
-	dstFile := filepath.Join(dstDir, filepath.Base(path))
+	filename := filepath.Base(path)
+	dstFile, err := filepath.Abs(filepath.Join(dstDir, filename))
+	if err != nil {
+		return "", errors.Annotate(err, "failed getting absolute file path from %q %q", dstFile, filename).Err()
+	}
 	if _, err := os.Stat(dstFile); !os.IsNotExist(err) {
 		return "", errors.Reason("cannot download result to %v: that file already exists", dstFile).Err()
 	}

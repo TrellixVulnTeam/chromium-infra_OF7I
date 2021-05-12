@@ -86,11 +86,14 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	if err != nil {
 		return errors.Annotate(err, "failed parsing pinpoint job name").Err()
 	}
-	dst := filepath.Join(workDir, id)
+	dst, err := filepath.Abs(filepath.Join(workDir, id))
+	if err != nil {
+		return errors.Annotate(err, "failed getting absolute file path from %q %q", workDir, id).Err()
+	}
 	if err := os.Rename(tmp, dst); err != nil {
 		return errors.Annotate(err, "failed renaming file from %q to %q", tmp, dst).Err()
 	}
-	logging.Infof(ctx, "Downloaded artifacts %v", id)
+	logging.Infof(ctx, "Downloaded artifacts %q", dst)
 	return nil
 }
 
