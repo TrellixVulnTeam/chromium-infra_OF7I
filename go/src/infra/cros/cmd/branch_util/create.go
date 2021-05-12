@@ -155,6 +155,7 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 			return 1
 		}
 		branch.LogOut("Got manifest from filepath %v", c.file)
+		file.ResolveImplicitLinks()
 		branch.WorkingManifest = *file
 	} else {
 		file, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, "chrome-internal.googlesource.com",
@@ -180,6 +181,7 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 			branch.LogErr("%s\n", err.Error())
 			return 1
 		}
+		branch.WorkingManifest.ResolveImplicitLinks()
 		branch.LogOut("Fetched working manifest.\n")
 	}
 

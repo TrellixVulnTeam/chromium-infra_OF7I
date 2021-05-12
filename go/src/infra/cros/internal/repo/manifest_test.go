@@ -14,10 +14,9 @@ import (
 	"reflect"
 	"testing"
 
+	"infra/cros/internal/assert"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/util"
-
-	assert2 "infra/cros/internal/assert"
 
 	"github.com/golang/mock/gomock"
 	bbproto "go.chromium.org/luci/buildbucket/proto"
@@ -127,13 +126,79 @@ func ManifestMapEq(expected, actual map[string]*Manifest) error {
 	return nil
 }
 
-func TestLoadManifestTree_success(t *testing.T) {
-	expectedResults := make(map[string]*Manifest)
-	expectedResults["foo.xml"] = &Manifest{
+func TestResolveImplicitLinks(t *testing.T) {
+	manifest := &Manifest{
+		Default: Default{
+			RemoteName: "chromeos",
+			Revision:   "123",
+		},
+		Remotes: []Remote{
+			{
+				Fetch: "https://chromium.org/remote",
+				Name:  "chromium",
+				Alias: "chromeos",
+			},
+			{
+				Fetch:    "https://google.com/remote",
+				Name:     "google",
+				Revision: "125",
+			},
+		},
+		Projects: []Project{
+			{Path: "baz/", Name: "baz", RemoteName: "chromium"},
+			{Path: "fiz/", Name: "fiz", Revision: "124"},
+			{Name: "buz", RemoteName: "google",
+				Annotations: []Annotation{
+					{Name: "branch-mode", Value: "pin"},
+				},
+			},
+		},
+		Includes: []Include{
+			{"bar.xml"},
+		},
+	}
+
+	expected := &Manifest{
 		Projects: []Project{
 			{Path: "baz/", Name: "baz", Revision: "123", RemoteName: "chromium"},
 			{Path: "fiz/", Name: "fiz", Revision: "124", RemoteName: "chromeos"},
 			{Path: "buz", Name: "buz", Revision: "125", RemoteName: "google",
+				Annotations: []Annotation{
+					{Name: "branch-mode", Value: "pin"},
+				},
+			},
+		},
+		Includes: []Include{
+			{"bar.xml"},
+		},
+	}
+
+	manifest.ResolveImplicitLinks()
+	assert.Assert(t, ManifestEq(manifest, expected))
+}
+func TestLoadManifestTree_success(t *testing.T) {
+	expectedResults := make(map[string]*Manifest)
+	expectedResults["foo.xml"] = &Manifest{
+		Default: Default{
+			RemoteName: "chromeos",
+			Revision:   "123",
+		},
+		Remotes: []Remote{
+			{
+				Fetch: "https://chromium.org/remote",
+				Name:  "chromium",
+				Alias: "chromeos",
+			},
+			{
+				Fetch:    "https://google.com/remote",
+				Name:     "google",
+				Revision: "125",
+			},
+		},
+		Projects: []Project{
+			{Path: "baz/", Name: "baz", RemoteName: "chromium"},
+			{Path: "fiz/", Name: "fiz", Revision: "124"},
+			{Name: "buz", RemoteName: "google",
 				Annotations: []Annotation{
 					{Name: "branch-mode", Value: "pin"},
 				},
@@ -151,7 +216,7 @@ func TestLoadManifestTree_success(t *testing.T) {
 	}
 
 	res, err := LoadManifestTree("test_data/foo.xml")
-	assert2.NilError(t, err)
+	assert.NilError(t, err)
 	if err = ManifestMapEq(expectedResults, res); err != nil {
 		t.Errorf(err.Error())
 	}
@@ -159,12 +224,12 @@ func TestLoadManifestTree_success(t *testing.T) {
 
 func TestLoadManifestTree_bad_include(t *testing.T) {
 	_, err := LoadManifestTree("test_data/bogus.xml")
-	assert2.ErrorContains(t, err, "bad-include.xml")
+	assert.ErrorContains(t, err, "bad-include.xml")
 }
 
 func TestLoadManifestTree_bad_xml(t *testing.T) {
 	_, err := LoadManifestTree("test_data/invalid.xml")
-	assert2.ErrorContains(t, err, "unmarshal")
+	assert.ErrorContains(t, err, "unmarshal")
 }
 
 func TestGetUniqueProject(t *testing.T) {
@@ -177,18 +242,18 @@ func TestGetUniqueProject(t *testing.T) {
 	}
 
 	_, err := manifest.GetUniqueProject("foo")
-	assert2.ErrorContains(t, err, "multiple projects")
+	assert.ErrorContains(t, err, "multiple projects")
 
 	project, err := manifest.GetUniqueProject("bar")
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(&project, &manifest.Projects[2]))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(&project, &manifest.Projects[2]))
 }
 
 func TestWrite(t *testing.T) {
 	tmpDir := "repotest_tmp_dir"
 	tmpDir, err := ioutil.TempDir("", tmpDir)
 	defer os.RemoveAll(tmpDir)
-	assert2.NilError(t, err)
+	assert.NilError(t, err)
 	tmpPath := filepath.Join(tmpDir, "foo.xml")
 
 	manifest := &Manifest{
@@ -201,11 +266,11 @@ func TestWrite(t *testing.T) {
 	manifest.Write(tmpPath)
 	// Make sure file was written successfully.
 	_, err = os.Stat(tmpPath)
-	assert2.NilError(t, err)
+	assert.NilError(t, err)
 	// Make sure manifest was marshalled and written correctly.
 	manifestMap, err := LoadManifestTree(tmpPath)
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(manifest, manifestMap["foo.xml"]))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(manifest, manifestMap["foo.xml"]))
 }
 
 func TestGitName(t *testing.T) {
@@ -213,11 +278,11 @@ func TestGitName(t *testing.T) {
 		Alias: "batman",
 		Name:  "bruce wayne",
 	}
-	assert2.StringsEqual(t, remote.GitName(), "batman")
+	assert.StringsEqual(t, remote.GitName(), "batman")
 	remote = Remote{
 		Name: "robin",
 	}
-	assert2.StringsEqual(t, remote.GitName(), "robin")
+	assert.StringsEqual(t, remote.GitName(), "robin")
 }
 
 func TestGetProjectByName(t *testing.T) {
@@ -230,10 +295,10 @@ func TestGetProjectByName(t *testing.T) {
 	}
 
 	project, err := m.GetProjectByName("b")
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(*project, m.Projects[1]))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(*project, m.Projects[1]))
 	project, err = m.GetProjectByName("d")
-	assert2.Assert(t, err != nil)
+	assert.Assert(t, err != nil)
 }
 func TestGetProjectByPath(t *testing.T) {
 	m := Manifest{
@@ -244,17 +309,17 @@ func TestGetProjectByPath(t *testing.T) {
 	}
 
 	project, err := m.GetProjectByPath("b/")
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(*project, m.Projects[1]))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(*project, m.Projects[1]))
 
 	// Add a project after the fact to test the internal mapping.
 	m.Projects = append(m.Projects, Project{Path: "c/", Name: "c"})
 	project, err = m.GetProjectByPath("c/")
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(*project, m.Projects[2]))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(*project, m.Projects[2]))
 
 	project, err = m.GetProjectByPath("d/")
-	assert2.Assert(t, err != nil)
+	assert.Assert(t, err != nil)
 }
 
 func deref(projects []*Project) []Project {
@@ -282,15 +347,14 @@ func TestGetProjects(t *testing.T) {
 			RemoteName: "cros",
 		},
 	}
-	m = *m.ResolveImplicitLinks()
 	singleProjects := deref(m.GetSingleCheckoutProjects())
-	assert2.Assert(t, reflect.DeepEqual(singleProjects, m.Projects[4:6]))
+	assert.Assert(t, reflect.DeepEqual(singleProjects, m.Projects[4:6]))
 	multiProjects := deref(m.GetMultiCheckoutProjects())
-	assert2.Assert(t, reflect.DeepEqual(multiProjects, m.Projects[:2]))
+	assert.Assert(t, reflect.DeepEqual(multiProjects, m.Projects[:2]))
 	pinnedProjects := deref(m.GetPinnedProjects())
-	assert2.Assert(t, reflect.DeepEqual(pinnedProjects, m.Projects[1:3]))
+	assert.Assert(t, reflect.DeepEqual(pinnedProjects, m.Projects[1:3]))
 	totProjects := deref(m.GetTotProjects())
-	assert2.Assert(t, reflect.DeepEqual(totProjects, m.Projects[3:4]))
+	assert.Assert(t, reflect.DeepEqual(totProjects, m.Projects[3:4]))
 }
 
 var canBranchTestManifestAnnotation = Manifest{
@@ -341,7 +405,7 @@ var canBranchTestManifestRemote = Manifest{
 }
 
 func assertBranchModesEqual(t *testing.T, a, b BranchMode) {
-	assert2.StringsEqual(t, string(a), string(b))
+	assert.StringsEqual(t, string(a), string(b))
 }
 
 func TestProjectBranchMode_annotation(t *testing.T) {
@@ -462,19 +526,19 @@ func TestMergeManifests(t *testing.T) {
 		Includes: []Include{},
 	}
 	mergedManifest, err := MergeManifests("a.xml", &manifestDict)
-	assert2.NilError(t, err)
-	assert2.Assert(t, reflect.DeepEqual(expected, *mergedManifest))
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(expected, *mergedManifest))
 }
 
 func TestLoadManifestFromFileWithIncludes(t *testing.T) {
 	expectedProjectNames := []string{"baz", "fiz", "buz", "project"}
 
 	res, err := LoadManifestFromFileWithIncludes("test_data/foo.xml")
-	assert2.NilError(t, err)
+	assert.NilError(t, err)
 
 	projectNames := make([]string, len(res.Projects))
 	for i, project := range res.Projects {
 		projectNames[i] = project.Name
 	}
-	assert2.Assert(t, util.UnorderedEqual(expectedProjectNames, projectNames))
+	assert.Assert(t, util.UnorderedEqual(expectedProjectNames, projectNames))
 }

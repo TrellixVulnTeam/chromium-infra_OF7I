@@ -533,6 +533,9 @@ func (r *CrosRepoHarness) AssertManifestProjectRepaired(
 		if err != nil {
 			return errors.Annotate(err, "failed to load manifest file %s", file).Err()
 		}
+		// Have to resolve implicit links to set the appropriate remote for each
+		// project so that the asserts work.
+		manifest.ResolveImplicitLinks()
 		if err = AssertNoDefaultRevisions(manifest); err != nil {
 			return errors.Annotate(err, "manifest %s has error", file).Err()
 		}

@@ -130,7 +130,8 @@ func (r *RepoHarness) Initialize(config *Config) error {
 
 	// Resolve implicit links in the manifest. We do this so that each project has
 	// an explicit remote listed.
-	r.manifest = *config.Manifest.ResolveImplicitLinks()
+	config.Manifest.ResolveImplicitLinks()
+	r.manifest = config.Manifest
 
 	// Initialize remote repositories.
 	for _, remote := range r.manifest.Remotes {

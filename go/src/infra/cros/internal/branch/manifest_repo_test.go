@@ -154,9 +154,9 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 		},
 		Projects: []repo.Project{
 			{Name: "chromiumos/foo",
-				Path:       "foo/",
-				Revision:   "refs/heads/newbranch",
-				RemoteName: "cros"},
+				Path:     "foo/",
+				Revision: "refs/heads/newbranch",
+			},
 		},
 		Remotes: []repo.Remote{
 			{Name: "cros", Revision: ""},

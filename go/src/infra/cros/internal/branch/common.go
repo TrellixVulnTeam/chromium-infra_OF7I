@@ -161,6 +161,7 @@ func InitWorkingManifest(manifestURL, br string) error {
 	if err != nil {
 		return errors.Annotate(err, "failed to load manifests").Err()
 	}
+	manifest.ResolveImplicitLinks()
 	WorkingManifest = *manifest
 	return nil
 }

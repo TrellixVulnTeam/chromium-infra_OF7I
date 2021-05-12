@@ -354,8 +354,7 @@ func LoadManifestFromFileWithIncludes(file string) (*Manifest, error) {
 
 // ResolveImplicitLinks explicitly sets remote/revision information
 // for each project in the manifest.
-func (m *Manifest) ResolveImplicitLinks() *Manifest {
-	newManifest := *m
+func (m *Manifest) ResolveImplicitLinks() {
 	for i, project := range m.Projects {
 		// Set default remote on projects without an explicit remote
 		if project.RemoteName == "" {
@@ -374,9 +373,8 @@ func (m *Manifest) ResolveImplicitLinks() *Manifest {
 		if project.Path == "" {
 			project.Path = project.Name
 		}
-		newManifest.Projects[i] = project
+		m.Projects[i] = project
 	}
-	return &newManifest
 }
 
 // LoadManifestTree loads the manifest at the given file path into
@@ -394,7 +392,6 @@ func LoadManifestTree(file string) (map[string]*Manifest, error) {
 		return nil, errors.Annotate(err, "failed to unmarshal %s", file).Err()
 	}
 	manifest.XMLName = xml.Name{}
-	manifest = manifest.ResolveImplicitLinks()
 	results[filepath.Base(file)] = manifest
 
 	// Recursively fetch manifests listed in "include" elements.
@@ -589,6 +586,6 @@ func MergeManifests(root string, manifests *map[string]*Manifest) (*Manifest, er
 
 	// Clear includes.
 	baseManifest.Includes = []Include{}
-	baseManifest = baseManifest.ResolveImplicitLinks()
+	baseManifest.ResolveImplicitLinks()
 	return baseManifest, nil
 }

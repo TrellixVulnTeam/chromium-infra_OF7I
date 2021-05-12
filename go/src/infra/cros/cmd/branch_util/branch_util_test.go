@@ -395,7 +395,7 @@ func setUp(t *testing.T) *test.CrosRepoHarness {
 	// Create existing branch on remote.
 	var branchManifest *repo.Manifest
 	assert.NilError(t, xml.Unmarshal([]byte(fullBranchedXML), &branchManifest))
-	branchManifest = branchManifest.ResolveImplicitLinks()
+	branchManifest.ResolveImplicitLinks()
 	// Write full branched manifest to file so that it can be passed to cros branch in
 	// *Nonmain tests.
 	assert.NilError(t, ioutil.WriteFile(fullBranchedManifestPath(&r), []byte(fullBranchedXML), 0777))
@@ -644,7 +644,7 @@ func TestCreate(t *testing.T) {
 	// Set exported var with working manifest
 	branch.WorkingManifest, err = repo.LoadManifestFromFile(workingManifest.Name())
 	if err != nil {
-		t.Error("Error: Failed to set brach.WorkingManifest")
+		t.Error("Error: Failed to set branch.WorkingManifest")
 		return
 	}
 
@@ -758,7 +758,7 @@ func TestRename(t *testing.T) {
 	_, _, fullBranchedXML := getExistingBranchManifestFiles(crosFetchVal, crosInternalFetchVal)
 	var branchManifest *repo.Manifest
 	assert.NilError(t, xml.Unmarshal([]byte(fullBranchedXML), &branchManifest))
-	branchManifest = branchManifest.ResolveImplicitLinks()
+	branchManifest.ResolveImplicitLinks()
 
 	assert.NilError(t, r.AssertCrosBranchFromManifest(*branchManifest, newBranch, oldBranch))
 	assertManifestsRepaired(t, r, newBranch)
@@ -847,7 +847,7 @@ func TestRenameOverwrite(t *testing.T) {
 	_, _, fullBranchedXML := getExistingBranchManifestFiles(crosFetchVal, crosInternalFetchVal)
 	var branchManifest *repo.Manifest
 	assert.NilError(t, xml.Unmarshal([]byte(fullBranchedXML), &branchManifest))
-	branchManifest = branchManifest.ResolveImplicitLinks()
+	branchManifest.ResolveImplicitLinks()
 
 	assert.NilError(t, r.AssertCrosBranchFromManifest(*branchManifest, newBranch, oldBranch))
 	assertManifestsRepaired(t, r, newBranch)
