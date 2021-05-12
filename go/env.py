@@ -27,7 +27,8 @@ import bootstrap
 
 # Make sure we picked up the correct bootstrap file.
 want = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bootstrap.py'))
-if os.path.abspath(bootstrap.__file__) != want:
+# allow `bootstrap.__file__` to be a .py or .pyc file
+if os.path.abspath(bootstrap.__file__) in (want, want + 'c'):
   raise AssertionError(
       'Imported wrong bootstrap.py %s instead of %s' %
       (bootstrap.__file__, want))
