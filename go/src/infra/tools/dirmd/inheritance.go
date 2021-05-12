@@ -31,7 +31,7 @@ func (m *Mapping) ComputeAll() {
 	// Process directories in the shorest-path to longest-path order,
 	// such that, when computing the expanded metadata for a given directory,
 	// we only need to check the nearest ancestor.
-	for _, dir := range m.keysByLength() {
+	for _, dir := range m.keysByLength(true) {
 		meta := cloneMD(m.nearestAncestor(dir))
 		Merge(meta, m.Dirs[dir])
 		m.Dirs[dir] = meta
@@ -56,7 +56,7 @@ func (m *Mapping) nearestAncestor(dir string) *dirmdpb.Metadata {
 
 // keysByLength returns keys sorted by length.
 // Key "." is treated as shortest of all.
-func (m *Mapping) keysByLength() []string {
+func (m *Mapping) keysByLength(asc bool) []string {
 	ret := make([]string, 0, len(m.Dirs))
 	for k := range m.Dirs {
 		ret = append(ret, k)
@@ -69,9 +69,15 @@ func (m *Mapping) keysByLength() []string {
 		}
 		return len(dirKey)
 	}
-	sort.Slice(ret, func(i, j int) bool {
-		return sortKey(ret[i]) < sortKey(ret[j])
-	})
+	if asc {
+		sort.Slice(ret, func(i, j int) bool {
+			return sortKey(ret[i]) < sortKey(ret[j])
+		})
+	} else {
+		sort.Slice(ret, func(i, j int) bool {
+			return sortKey(ret[i]) > sortKey(ret[j])
+		})
+	}
 	return ret
 }
 
@@ -93,10 +99,13 @@ func (m *Mapping) Reduce() {
 	m.ComputeAll()
 
 	// Then, remove nodes that do not add any new info wrt their nearest ancestor.
-	// Process directories in the shorest-path to longest-path order,
+	// Process directories in the longest-path to shortest-path order,
 	// such that, when computing the expanded metadata for a given directory,
 	// we only need to check the nearest ancestor.
-	for _, dir := range m.keysByLength() {
+	// The shortest-to-longest order doesn't work because we need a complete ancestor
+	// to decide which parts of the descendant are redundant, so remove data in
+	// the bottom-to-top order.
+	for _, dir := range m.keysByLength(false) {
 		meta := m.Dirs[dir]
 		if ancestor := m.nearestAncestor(dir); ancestor != nil {
 			excludeSame(meta.ProtoReflect(), ancestor.ProtoReflect())

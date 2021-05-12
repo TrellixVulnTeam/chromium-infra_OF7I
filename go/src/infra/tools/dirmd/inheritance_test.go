@@ -55,13 +55,18 @@ func TestReduce(t *testing.T) {
 		Convey(`Deep nesting`, func() {
 			m := &Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
-					".":   {TeamEmail: "team@example.com"},
-					"a":   {TeamEmail: "team@example.com"},
+					".": {TeamEmail: "team@example.com"},
+					"a": {
+						TeamEmail: "team@example.com",
+						// One more additional field, to avoid "a" being removed completely.
+						Os: dirmdpb.OS_ANDROID,
+					},
 					"a/b": {TeamEmail: "team@example.com"},
 				},
 			}
 			m.Reduce()
-			So(m.Dirs, ShouldNotContainKey, "a")
+			So(m.Dirs["a"].GetTeamEmail(), ShouldEqual, "")
+			So(m.Dirs["a"].GetOs(), ShouldEqual, dirmdpb.OS_ANDROID)
 			So(m.Dirs, ShouldNotContainKey, "a/b")
 		})
 
