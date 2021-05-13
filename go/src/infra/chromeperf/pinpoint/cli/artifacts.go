@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/proto"
@@ -97,23 +98,53 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	return nil
 }
 
-func downloadIsolatedURLs(ctx context.Context, clients *isolatedClientsCache, base string, urls map[string]string) error {
-	for path, u := range urls {
+func downloadIsolatedURLs(ctx context.Context, clients *isolatedClientsCache, base string, urls map[string]string) errors.MultiError {
+	g := sync.WaitGroup{}
+	errs := make(chan error)
+	// Extract a downloader function which we'll run in a goroutine.
+	downloader := func(path, u string, errs chan error, g *sync.WaitGroup) {
+		logging.Debugf(ctx, "Downloading %q", u)
+		defer logging.Debugf(ctx, "Done: %q", u)
+		defer g.Done()
 		obj, err := fromIsolatedURL(u)
 		if err != nil {
-			return errors.Annotate(err, "failed parsing isolated url: %s", u).Err()
+			errs <- errors.Annotate(err, "failed parsing isolated url: %s", u).Err()
+			return
 		}
 		dst := filepath.Join(base, path)
 		if err := os.MkdirAll(dst, 0700); err != nil {
-			return errors.Annotate(err, "failed creating directory: %s", dst).Err()
+			errs <- errors.Annotate(err, "failed creating directory: %s", dst).Err()
+			return
 		}
 		d := downloader.New(ctx, clients.Get(obj), isolated.HexDigest(obj.digest), dst, nil)
 		d.Start()
 		if err := d.Wait(); err != nil {
-			return errors.Annotate(err, "failed downloading artifacts from isolated: %s", u).Err()
+			errs <- errors.Annotate(err, "failed downloading artifacts from isolated: %s", u).Err()
+			return
 		}
+		return
 	}
-	return nil
+	for path, u := range urls {
+		g.Add(1)
+		go downloader(path, u, errs, &g)
+	}
+
+	// Wait for all the downloader goroutines to finish, then close the errors channel.
+	go func() {
+		g.Wait()
+		close(errs)
+	}()
+
+	// Handle all the errors from the channel until it's closed.
+	res := errors.MultiError{}
+	for err := range errs {
+		res = append(res, err)
+	}
+
+	if len(res) == 0 {
+		return nil
+	}
+	return res
 }
 
 type isolatedClientsCache struct {
