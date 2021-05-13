@@ -39,8 +39,18 @@ type telemetryExperimentJobSpec struct {
 	ExtraArgs     []string `yaml:"extra_args"`
 }
 
+type telemetryBatchExperiment struct {
+	Benchmark   string   `yaml:"benchmark"`
+	Configs     []string `yaml:"configs"`
+	Measurement string   `yaml:"measurement,omitempty"`
+	Stories     []string `yaml:"stories,omitempty"`
+	StoryTags   []string `yaml:"story_tags,omitempty"`
+	ExtraArgs   []string `yaml:"extra_args"`
+}
+
 type preset struct {
-	TelemetryExperiment telemetryExperimentJobSpec `yaml:"telemetry_experiment,omitempty"`
+	TelemetryBatchExperiment *[]telemetryBatchExperiment `yaml:"telemetry_batch_experiment,omitempty"`
+	TelemetryExperiment      *telemetryExperimentJobSpec `yaml:"telemetry_experiment,omitempty"`
 }
 
 type presetDb struct {
@@ -67,20 +77,34 @@ func (pdb *presetDb) GetPreset(pName string) (preset, error) {
 
 	// We need to validate that the preset is well-formed.  We're doing this
 	// late because we don't want to stop forward progress at loading time.
-	if (len(p.TelemetryExperiment.StorySelection.Story) > 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) > 0) || (len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0) {
-		return p, fmt.Errorf(text.Doc(`
-			telemetry experiments must only have exactly one of story or
-			story_tags in story_selection
-		`))
+	if (p.TelemetryExperiment == nil && p.TelemetryBatchExperiment == nil) || (p.TelemetryExperiment != nil && p.TelemetryBatchExperiment != nil) {
+		return p, fmt.Errorf("exactly one experiment type should be defined")
+	} else if p.TelemetryExperiment != nil {
+		if (len(p.TelemetryExperiment.StorySelection.Story) > 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) > 0) || (len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0) {
+			return p, fmt.Errorf(text.Doc(`
+				telemetry experiments must only have exactly one of story or
+				story_tags in story_selection
+			`))
+		}
+		if len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0 {
+			return p, fmt.Errorf("telemetry experiments must have exactly one of ")
+		}
+		if len(p.TelemetryExperiment.Config) == 0 {
+			return p, fmt.Errorf(text.Doc(`
+				telemetry experiments must have a non-empty config
+			`))
+		}
+	} else if p.TelemetryBatchExperiment != nil {
+		for i := range *p.TelemetryBatchExperiment {
+			if len((*p.TelemetryBatchExperiment)[i].Stories) == 0 && len((*p.TelemetryBatchExperiment)[i].StoryTags) == 0 {
+				return p, fmt.Errorf("at least one story or story tag should be defined for each benchmark")
+			}
+			if len((*p.TelemetryBatchExperiment)[i].Configs) == 0 {
+				return p, fmt.Errorf("at least one config should be defined for each benchmark")
+			}
+		}
 	}
-	if len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0 {
-		return p, fmt.Errorf("telemetry experiments must have exactly one of ")
-	}
-	if len(p.TelemetryExperiment.Config) == 0 {
-		return p, fmt.Errorf(text.Doc(`
-			telemetry experiments must have a non-empty config
-		`))
-	}
+
 	return p, nil
 }
 

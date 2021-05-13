@@ -36,6 +36,19 @@ The YAML file must have a top-level map named `presets`, where keys map to the f
 | `story` | `string` | A specific story to run within the Telemetry benchmark. |
 | `story_tags` | `[string]` | A list of story tags to run. |
 
+### telemetry-experiments
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `configs` | `[string]` | A list of configurations (bots) to run the job in. |
+| `stories` | `[string]` | A list of stories to run within the Telemetry benchmark. |
+| `story_tags` | `[string]` | A list of story tags to run. |
+| `benchmarks` | `[string]` | A list of Telemetry benchmarks to run. |
+| `measurement` | `string` | The measurement to select for in the A/B experiment (empty to select all). |
+| `extra_args` | `[string]` | A list of flags provided to the Telemetry benchmark runner. |
+
+The cross product is taken of each benchmark + config + (story or story tags) combination.
+
 ## Using presets
 
 To use a named preset in commands that start jobs, use the `--preset` flag to
@@ -62,6 +75,23 @@ presets:
           - --extra_tracing_categories
           - some-category
           - --additional-flag
+  batch:
+    telemetry_batch_experiment:
+      - benchmark: loading.desktop
+        configs:
+          - linux-perf
+          - Win 7 Perf
+        stories:
+          - AirBnB_warm
+          - ArsTechnica_warm
+      - benchmark: system_health.common_mobile
+        configs:
+          - android-pixel2-perf
+        stories:
+          - browse:news:cnn:2020
+        story_tags:
+          - tag_a
+          - tag_b
 ```
 
 When we invoke the `pinpoint` tool the following way in a git repository that
@@ -112,6 +142,35 @@ With the above configuration, you can then run the `pinpoint` tool selecting eit
 $ pinpoint experiment-telemetry-start --preset=basic
 ...
 $ pinpoint experiment-telemetry-start --preset=basic-mobile
+```
+
+You can do something similar for batch experiments:
+
+```yaml
+# .pinpoint-presets.yaml
+batch:
+    telemetry_batch_experiment:
+      - benchmark: loading.desktop
+        configs:
+          - linux-perf
+          - Win 7 Perf
+        stories:
+          - AirBnB_warm
+          - ArsTechnica_warm
+      - &batch_anchor_example
+        benchmark: system_health
+        configs:
+          - linux-perf
+        stories:
+          - browse:news:cnn:2020
+        story_tags:
+          - tag_a
+          - tag_b
+  batch_mobile:
+    telemetry_batch_experiment:
+      - <<: *batch_anchor_example
+        configs:
+          - android-pixel2-perf
 ```
 
 ### Using different preset files

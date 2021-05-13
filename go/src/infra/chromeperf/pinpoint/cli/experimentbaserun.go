@@ -27,6 +27,7 @@ import (
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 )
 
 type experimentBaseRun struct {
@@ -35,8 +36,8 @@ type experimentBaseRun struct {
 	downloadResultsMixin
 	downloadArtifactsMixin
 	presetsMixin
-	issue         bugValue
-	configuration string
+	issue          bugValue
+	configurations []string
 
 	// Git and Gerrit specific configuration flags for specifying CLs we're
 	// running experiments with.
@@ -117,9 +118,13 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 		Monorail issue id in the form <project>:<issue id>.
 	`))
 	// TODO(crbug.com/1172875): Provide a command to query the list of supported configs.
-	e.Flags.StringVar(&e.configuration, "cfg", "", text.Doc(`
-		Configuration name supported by Pinpoint (AKA bot).
-		`))
+	e.Flags.Var(flag.CommaList(&e.configurations), "cfgs", text.Doc(`
+		See "cfg".
+	`))
+	e.Flags.Var(e.Flags.Lookup("cfgs").Value, "cfg", text.Doc(`
+		Configuration name (or comma-separated list of names)
+		supported by Pinpoint (AKA bot).
+	`))
 	e.Flags.StringVar(&e.baseCommit, "base-commit", "HEAD", text.Doc(`
 		git commit hash (symbolic like HEAD, short-form, or long-form)
 		for the base build.

@@ -166,8 +166,7 @@ func (wjm *waitForJobMixin) waitForJob(
 	ctx context.Context,
 	c proto.PinpointClient,
 	j *proto.Job,
-	o io.Writer,
-) (*proto.Job, error) {
+	o io.Writer) (*proto.Job, error) {
 	if !wjm.wait || j == nil {
 		return j, nil
 	}

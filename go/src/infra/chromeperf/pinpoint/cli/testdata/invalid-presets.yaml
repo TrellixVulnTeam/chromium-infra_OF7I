@@ -26,3 +26,30 @@ presets:
     <<: *base
     telemetry_experiment:
       story_selection:
+  batch-empty-configs:
+      telemetry_batch_experiment:
+        - benchmark: loading.desktop
+          configs:
+            - linux-perf
+            - Win 7 Perf
+          stories:
+            - AirBnB_warm
+            - ArsTechnica_warm
+        - benchmark: system_health.common_mobile
+          stories:
+            - browse:news:cnn:2020
+          story_tags:
+            - tag_a
+            - tag_b
+  batch-empty-stories-and-story-tags:
+    telemetry_batch_experiment:
+      - benchmark: loading.desktop
+        configs:
+          - linux-perf
+          - Win 7 Perf
+        stories:
+          - AirBnB_warm
+          - ArsTechnica_warm
+      - benchmark: system_health.common_mobile
+        configs:
+          - android-pixel2-perf
