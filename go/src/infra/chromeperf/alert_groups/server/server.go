@@ -16,6 +16,7 @@ package server
 
 import (
 	"flag"
+	"fmt"
 	"infra/chromeperf/alert_groups/proto"
 	"log"
 	"net"
@@ -32,12 +33,12 @@ type alertGroupsServer struct {
 // Main is the actual main body function. It registers flags, parses them, and
 // kicks off a gRPC service to host
 func Main() {
-	port := flag.String("port", ":60800", "Tcp port that the service should listen.")
+	port := flag.Int("port", 60800, "Tcp port that the service should listen.")
 
 	// TODO(crbug/1059667): Wire up a cloud logging implementation (Stackdriver).
 	flag.Parse()
 
-	lis, err := net.Listen("tcp", *port)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
