@@ -1,0 +1,9 @@
+name: luci/resultdb/deadlineenforcer
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/deadlineenforcer/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/resultdb/cmd/deadlineenforcer
+    dest: ${contextdir}/bin/deadlineenforcer
