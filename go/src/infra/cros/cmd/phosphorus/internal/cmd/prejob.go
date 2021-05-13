@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"infra/cros/cmd/phosphorus/internal/gs"
 	"log"
 	"os"
 	"path/filepath"
@@ -258,8 +259,6 @@ const (
 	roFirmwareBuildKey = "fwro-version"
 	rwFirmwareBuildKey = "fwrw-version"
 	lacrosPathKey      = "lacros-gcs-path"
-
-	gsImageArchivePrefix = "gs://chromeos-image-archive"
 )
 
 func validatePrejobRequest(r *phosphorus.PrejobRequest) error {
@@ -335,9 +334,8 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 	}
 
 	logging.Infof(ctx, "Adding chromeos-version label to host file")
-	resultsDir := r.Config.GetTask().GetResultsDir()
-	err := atutil.AddCrosVersionLabelToHostInfoFile(
-		atutil.HostInfoFilePath(resultsDir, r.DutHostname), desired)
+	hostInfoFileDir := r.Config.GetTask().GetResultsDir()
+	err := atutil.AddProvisionDetailsToHostInfoFile(hostInfoFileDir, r.DutHostname, desired)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
@@ -345,7 +343,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 	logging.Infof(ctx, "Copying host file")
 	hostSubDir := fmt.Sprintf("provision_%s_os", r.DutHostname)
 	fullHostPath := filepath.Join(r.Config.Task.ResultsDir, hostSubDir)
-	if err := atutil.LinkHostInfoFile(resultsDir, fullHostPath, r.DutHostname); err != nil {
+	if err := atutil.LinkHostInfoFile(hostInfoFileDir, fullHostPath, r.DutHostname); err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
 
@@ -361,7 +359,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 			Name: r.DutHostname,
 			TargetBuild: &tlsapi.ChromeOsImage{
 				PathOneof: &tlsapi.ChromeOsImage_GsPathPrefix{
-					GsPathPrefix: fmt.Sprintf("%s/%s", gsImageArchivePrefix, desired),
+					GsPathPrefix: fmt.Sprintf("%s/%s", gs.ImageArchivePrefix, desired),
 				},
 			},
 		},

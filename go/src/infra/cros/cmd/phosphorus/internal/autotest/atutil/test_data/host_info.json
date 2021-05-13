@@ -1,0 +1,14 @@
+{
+    "attributes": {
+        "HWID": "sample-hwid",
+        "job_repo_url": "foo://bar.baz",
+        "serial_number": "sample-servo-number"
+    },
+    "labels": [
+        "wifi_chip:wireless_cc8d134f",
+        "cros-version:foo",
+        "pool:quota"
+    ],
+    "serializer_version": 1,
+    "stable_versions": {}
+}

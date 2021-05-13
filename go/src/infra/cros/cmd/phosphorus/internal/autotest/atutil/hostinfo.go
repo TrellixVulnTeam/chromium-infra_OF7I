@@ -15,6 +15,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	crosVersionLabel = "cros-version"
+	imageCacheLabel  = "job_repo_url"
+)
+
 // HostInfo is a struct providing a mapping
 // to an autotest host_info file.
 type HostInfo struct {
@@ -29,38 +34,56 @@ func HostInfoFilePath(rootDir, host string) string {
 	return filepath.Join(rootDir, hostInfoSubDir, f)
 }
 
-func AddCrosVersionLabelToHostInfoFile(filePath, value string) error {
-	data, err := ioutil.ReadFile(filePath)
+func AddProvisionDetailsToHostInfoFile(infoFileDir, dutName, crosVersion string) error {
+	infoFilePath := HostInfoFilePath(infoFileDir, dutName)
+	hostInfo, err := readHostInfoFile(infoFilePath)
 	if err != nil {
-		return errors.Wrap(err, "add label to host info file")
-	}
-	hostInfo := HostInfo{}
-	if err := json.Unmarshal([]byte(data), &hostInfo); err != nil {
 		return errors.Wrap(err, "add label to host info file")
 	}
 
 	if hostInfo.StableVersions == nil {
 		hostInfo.StableVersions = make(map[string]string)
 	}
+	delete(hostInfo.Attributes, imageCacheLabel)
+	hostInfo.setCrosVersion(crosVersion)
 
-	// Clear existing job_repo_url attribute and cros-version label.
-	delete(hostInfo.Attributes, "job_repo_url")
-	for i, label := range hostInfo.Labels {
-		if strings.HasPrefix(label, "cros-version:") {
-			hostInfo.Labels = append(hostInfo.Labels[:i], hostInfo.Labels[i+1:]...)
-			break
-		}
-	}
-	hostInfo.Labels = append(hostInfo.Labels, fmt.Sprintf("cros-version:%s", value))
-	data, err = json.MarshalIndent(hostInfo, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "add label to host info file")
-	}
-
-	if err := ioutil.WriteFile(filePath, data, 0); err != nil {
+	if err := writeHostInfoFile(infoFilePath, hostInfo); err != nil {
 		return errors.Wrap(err, "add label to host info file")
 	}
 	return nil
+}
+
+func (hi *HostInfo) setCrosVersion(crosVersion string) {
+	// Clear existing cros-version label.
+	for i, label := range hi.Labels {
+		if strings.HasPrefix(label, crosVersionLabel+":") {
+			hi.Labels = append(hi.Labels[:i], hi.Labels[i+1:]...)
+			break
+		}
+	}
+	newLabel := fmt.Sprintf("%s:%s", crosVersionLabel, crosVersion)
+	hi.Labels = append(hi.Labels, newLabel)
+}
+
+func readHostInfoFile(infoFilePath string) (*HostInfo, error) {
+	data, err := ioutil.ReadFile(infoFilePath)
+	if err != nil {
+		return nil, err
+	}
+	hostInfo := &HostInfo{}
+	if err := json.Unmarshal([]byte(data), hostInfo); err != nil {
+		return nil, err
+	}
+	return hostInfo, nil
+}
+
+func writeHostInfoFile(infoFilePath string, hostInfo *HostInfo) error {
+	updatedData, err := json.MarshalIndent(hostInfo, "", "    ")
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(infoFilePath, updatedData, 0)
+
 }
 
 // LinkHostInfoFile prepares the host info store by linking the host

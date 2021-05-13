@@ -24,6 +24,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// ImageArchivePrefix is the base URL for the Google Storage bucket for
+// ChromeOS image archives.
+const ImageArchivePrefix = "gs://chromeos-image-archive"
+
 // DirWriter exposes methods to write a local directory to Google Storage.
 type DirWriter struct {
 	client               gsClient
