@@ -210,6 +210,14 @@ func (r *RepoHarness) Teardown() error {
 // Otherwise, a temporary local checkout will be created and an empty commit
 // will be used to create the remote ref.
 func (r *RepoHarness) CreateRemoteRef(project RemoteProject, ref string, commit string) error {
+	return r.createRemoteRefHelper(project, ref, commit, false)
+}
+
+func (r *RepoHarness) CreateRemoteRefForce(project RemoteProject, ref string, commit string) error {
+	return r.createRemoteRefHelper(project, ref, commit, true)
+}
+
+func (r *RepoHarness) createRemoteRefHelper(project RemoteProject, ref string, commit string, force bool) error {
 	projectLabel := fmt.Sprintf("%s/%s", project.RemoteName, project.ProjectName)
 	remoteProjectPath := r.GetRemotePath(project)
 
@@ -251,15 +259,17 @@ func (r *RepoHarness) CreateRemoteRef(project RemoteProject, ref string, commit 
 		remoteRef.Remote = remoteProjectPath
 	}
 
-	remoteExists, err := git.RemoteHasBranch(repoPath, remoteRef.Remote, remoteRef.Ref)
-	if err != nil {
-		return errors.Annotate(err, "failed to ls-remote remote %s", remoteRef.Remote).Err()
-	}
-	if remoteExists {
-		return fmt.Errorf("remote ref %s already exists", ref)
+	if !force {
+		remoteExists, err := git.RemoteHasBranch(repoPath, remoteRef.Remote, remoteRef.Ref)
+		if err != nil {
+			return errors.Annotate(err, "failed to ls-remote remote %s", remoteRef.Remote).Err()
+		}
+		if remoteExists {
+			return fmt.Errorf("remote ref %s already exists", ref)
+		}
 	}
 
-	if err := git.PushRef(repoPath, commit, remoteRef); err != nil {
+	if err := git.PushRef(repoPath, commit, remoteRef, git.ForceIf(force)); err != nil {
 		return errors.Annotate(err, "failed to add remote ref %s %s:%s", projectLabel, commit, remoteRef.Ref).Err()
 	}
 	return nil

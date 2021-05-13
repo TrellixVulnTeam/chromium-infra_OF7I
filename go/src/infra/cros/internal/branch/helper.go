@@ -155,8 +155,7 @@ func BranchExists(branchPattern *regexp.Regexp, buildNumber string, branchType s
 		switch {
 		case branchPattern.Match([]byte(branch)):
 			return true, nil
-		case strings.Contains(branch, buildNumber):
-
+		case buildNumber != "" && strings.Contains(branch, buildNumber):
 			// Check that major version collision is on other branch type
 			if !strings.Contains(branch, branchType) {
 				err := errors.New("ERROR: Major version collision on branch " + branch)
@@ -527,7 +526,7 @@ func NewBranchName(vinfo mv.VersionInfo, custom, descriptor string, release, fac
 
 // CheckIfAlreadyBranched checks if there's already a branch for the desired new
 // branch to create on the manifest-internal repo.
-func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project, force bool, branchType string) error {
+func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project, force bool, branchType, branchName string) error {
 	// Check that we did not already branch from this version.
 	// manifest-internal serves as the sentinel project.
 	pattern := regexp.MustCompile(fmt.Sprintf(`.*-%s.B$`, vinfo.StrippedVersionString()))
@@ -546,19 +545,41 @@ func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project,
 	if err != nil {
 		err = errors.Annotate(err, "failed to list remote branches for %s", remoteURL).Err()
 	}
-
-	exists, err := BranchExists(pattern, majorMinor, branchType, remoteBranches)
+	fmt.Printf("Remote branches for %+v: %v\n", manifestInternal, remoteBranches)
+	branchForVersionExists, err := BranchExists(pattern, majorMinor, branchType, remoteBranches)
 	if err != nil {
 		return err
 	}
-	if exists {
+
+	if branchForVersionExists {
 		if !force {
 			return fmt.Errorf("already branched %s. Please rerun with --force if you "+
 				"would like to proceed", vinfo.VersionString())
 		}
 		LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
 	} else {
-		LogOut("No branch exists for version %s. Continuing...\n", vinfo.VersionString())
+		// If the branch type is custom, we also need to check that the named branch
+		// does not already exist.
+		var branchNameExists bool
+		if branchType == "custom" {
+			customPattern, err := regexp.Compile(regexp.QuoteMeta(branchName))
+			if err != nil {
+				return errors.Annotate(err, "bad branch name %s", branchName).Err()
+			}
+			branchNameExists, err = BranchExists(customPattern, "", branchType, remoteBranches)
+			if err != nil {
+				return err
+			}
+		}
+		if branchNameExists {
+			if !force {
+				return fmt.Errorf("already have branch %s. Please rerun with --force if you "+
+					"would like to proceed", branchName)
+			}
+			LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
+		} else {
+			LogOut("No branch exists for version %s. Continuing...\n", vinfo.VersionString())
+		}
 	}
 	return nil
 }

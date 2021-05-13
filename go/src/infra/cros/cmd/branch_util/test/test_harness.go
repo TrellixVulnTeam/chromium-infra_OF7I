@@ -45,7 +45,7 @@ var (
 	}
 	// DefaultVersionProject is the default project that contains version information.
 	DefaultVersionProject = repo.Project{
-		Name:       "chromiumos-overlay/overlays/chromiumos-overlay",
+		Name:       "chromiumos/overlays/chromiumos-overlay",
 		Path:       "src/third_party/chromiumos-overlay",
 		RemoteName: RemoteCros,
 	}

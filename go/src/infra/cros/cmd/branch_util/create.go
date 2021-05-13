@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	"infra/cros/internal/branch"
@@ -21,6 +22,12 @@ import (
 
 const (
 	branchCreatorGroup = "mdb/chromeos-branch-creators"
+)
+
+type createRemoteBranchesAPIType func(authedClient *http.Client, branches []branch.GerritProjectBranch, dryRun bool, gerritQPS float64) error
+
+var (
+	CreateRemoteBranchesAPI createRemoteBranchesAPIType = branch.CreateRemoteBranchesAPI
 )
 
 func getCmdCreateBranch(opts auth.Options) *subcommands.Command {
@@ -255,15 +262,15 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 
 	}
 
-	if err = branch.CheckIfAlreadyBranched(vinfo, manifestInternal, c.Force, branchType); err != nil {
-		branch.LogErr("%v", err)
-		return 1
-	}
-
 	branchName := branch.NewBranchName(vinfo, c.custom, c.descriptor, c.release, c.factory, c.firmware, c.stabilize)
 	componentToBump, err := branch.WhichVersionShouldBump(vinfo)
 	if err != nil {
 		branch.LogErr(err.Error())
+		return 1
+	}
+
+	if err = branch.CheckIfAlreadyBranched(vinfo, manifestInternal, c.Force, branchType, branchName); err != nil {
+		branch.LogErr("%v", err)
 		return 1
 	}
 
@@ -285,7 +292,7 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	}
 
 	// Create git branches for new branch. Exclude the ManifestProjects, which we just updated.
-	if err = branch.CreateRemoteBranchesAPI(authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
+	if err = CreateRemoteBranchesAPI(authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
 		branch.LogErr(err.Error())
 		return 1
 	}

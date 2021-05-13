@@ -226,6 +226,7 @@ func TestCreateRemoteRef(t *testing.T) {
 
 	// Test that an error is thrown if we try to create a remote that already exists.
 	assert.ErrorContains(t, harness.CreateRemoteRef(GetRemoteProject(project), "ref2", ""), "already exists")
+	assert.NilError(t, harness.CreateRemoteRefForce(GetRemoteProject(project), "ref2", ""))
 }
 
 func TestAddFiles_simple(t *testing.T) {

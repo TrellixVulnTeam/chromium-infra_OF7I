@@ -7,11 +7,11 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -187,13 +187,6 @@ const (
 `
 )
 
-const chromeVersionMock = `
-	CHROMEOS_BUILD=13324
-	CHROMEOS_BRANCH=10
-	CHROMEOS_PATCH=0
-	CHROME_BRANCH=86
-`
-
 var (
 	manifestProject = rh.RemoteProject{
 		RemoteName:  "cros",
@@ -204,13 +197,6 @@ var (
 		ProjectName: "chromeos/manifest-internal",
 	}
 	application = getApplication(chromeinfra.DefaultAuthOptions())
-
-	expectedBranchVersion = mv.VersionInfo{
-		ChromeBranch:      86,
-		BuildNumber:       13324,
-		BranchBuildNumber: 10,
-		PatchNumber:       0,
-	}
 )
 
 func getManifestFiles(crosFetch, crosInternalFetch string) (
@@ -470,262 +456,348 @@ func assertNoRemoteDiff(t *testing.T, r *test.CrosRepoHarness) {
 	}
 }
 
-// createSetUp creates the neccessary mocks we need to test the create-v2 function
-func createSetUp(t *testing.T) (gitilespb.GitilesClient, error) {
+type fakeCreateRemoteBranchesAPI struct {
+	t      *testing.T
+	r      *test.CrosRepoHarness
+	dryRun bool
+	force  bool
+}
+
+func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
+	_ *http.Client, branches []branch.GerritProjectBranch, dryRun bool, _ float64) error {
+	if f.dryRun {
+		return nil
+	}
+	// Create the appropriate branches on the appropriate remote projects.
+	for _, projectBranch := range branches {
+		manifest := f.r.Harness.Manifest()
+		project, err := manifest.GetProjectByName(projectBranch.Project)
+		assert.NilError(f.t, err)
+
+		remoteProject := rh.GetRemoteProject(*project)
+		if f.force {
+			err = f.r.Harness.CreateRemoteRefForce(remoteProject, projectBranch.Branch, projectBranch.SrcRef)
+		} else {
+			err = f.r.Harness.CreateRemoteRef(remoteProject, projectBranch.Branch, projectBranch.SrcRef)
+		}
+		assert.NilError(f.t, err)
+	}
+	return nil
+}
+
+// Native gomock.Eq does not work on protos.
+type DownloadFileRequestMatcher struct {
+	req *gitilespb.DownloadFileRequest
+}
+
+func (m DownloadFileRequestMatcher) Matches(x interface{}) bool {
+	req, ok := x.(*gitilespb.DownloadFileRequest)
+	if !ok {
+		return false
+	}
+	return m.req.GetProject() == req.GetProject() &&
+		m.req.GetPath() == req.GetPath() &&
+		m.req.GetCommittish() == req.GetCommittish()
+}
+
+func (m DownloadFileRequestMatcher) String() string {
+	return fmt.Sprintf("project: %s, path: %s, committish: %s",
+		m.req.GetProject(), m.req.GetPath(), m.req.GetCommittish())
+}
+
+func RequestEq(req *gitilespb.DownloadFileRequest) gomock.Matcher {
+	return DownloadFileRequestMatcher{req}
+}
+
+// setUpCreate creates the neccessary mocks we need to test the create-v2 function
+func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, error) {
 	r := setUp(t)
-	defer r.Teardown()
 
 	// Get manifest contents for return
 	manifestPath := fullManifestPath(r)
+	buildspecName := "buildspecs/12/3.0.0.xml"
+	if useBranch {
+		manifestPath = fullBranchedManifestPath(r)
+		buildspecName = "buildspecs/12/2.1.0.xml"
+	}
 	manifestFile, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return nil, err
 	}
 	manifest := string(manifestFile)
 
+	// Get version file contents for return
+	versionProject := rh.GetRemoteProject(test.DefaultVersionProject)
+	versionBranch := "main"
+	if useBranch {
+		versionBranch = existingBranchName
+	}
+	crosVersionFile, err := r.Harness.ReadFile(versionProject, versionBranch, mv.VersionFileProjectPath)
+	assert.NilError(t, err)
+
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
 
-	// TODO(crbug/1185285): Fix these tests -- the second
-	// param on the expectations should not be gomock.Any().
-	/*
-		// Mock manifest request
-		reqManifest := &gitilespb.DownloadFileRequest{
-			Project:    "manifest",
-			Path:       "01/1234.2.0.xml",
-			Committish: "main",
-			Format:     gitilespb.DownloadFileRequest_TEXT,
-		}
+	// Mock manifest request
+	reqManifest := &gitilespb.DownloadFileRequest{
+		Project:    "chromeos/manifest-versions",
+		Path:       buildspecName,
+		Committish: "HEAD",
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
 
-		// Mock version file request
-		reqVersionFile := &gitilespb.DownloadFileRequest{
-			Project:    "version",
-			Path:       "chromeos_version.sh",
-			Committish: "main",
-			Format:     gitilespb.DownloadFileRequest_TEXT,
-		}
-	*/
+	// Mock version file request
+	reqVersionFile := &gitilespb.DownloadFileRequest{
+		Project:    "chromiumos/overlays/chromiumos-overlay",
+		Path:       "chromeos/config/chromeos_version.sh",
+		Committish: "refs/heads/" + versionBranch,
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
 
-	// Mock download response
+	// Mock out calls to gerrit.DownloadFileFromGitiles.
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), RequestEq(reqManifest)).Return(
 		&gitilespb.DownloadFileResponse{
 			Contents: manifest,
 		},
 		nil,
 	)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), RequestEq(reqVersionFile)).Return(
 		&gitilespb.DownloadFileResponse{
-			Contents: chromeVersionMock,
+			Contents: string(crosVersionFile),
 		},
 		nil,
 	)
+	gerrit.MockGitiles = gitilesMock
 
-	return gitilesMock, nil
+	// Mock out call to CreateRemoteBranchesAPI.
+	f := &fakeCreateRemoteBranchesAPI{t: t, r: r, dryRun: dryRun, force: force}
+	CreateRemoteBranchesAPI = f.CreateRemoteBranchesAPI
+
+	return r, nil
 }
 
-// branchCreationTester recreates the branching process as seen in create@
-func branchCreationTester(manifestInternal repo.Project, vinfo mv.VersionInfo,
-	expectedBranchName, customBranchName, descriptor string, release, factory, firmware, stabilize bool) error {
-
-	sourceRevision := manifestInternal.Revision
-	sourceUpstream := git.StripRefs(manifestInternal.Upstream)
-
-	branchType := ""
-	switch {
-	case release:
-		branchType = "release"
-	case factory:
-		branchType = "factory"
-	case firmware:
-		branchType = "firmware"
-	case stabilize:
-		branchType = "stabilize"
-	default:
-		branchType = "custom"
-
-	}
-
-	// Check if branched
-	if err := branch.CheckIfAlreadyBranched(vinfo, manifestInternal, false, branchType); err != nil {
-		return fmt.Errorf("Error: %s", err.Error())
-	}
-
-	branchName := branch.NewBranchName(vinfo, customBranchName, descriptor, release, factory, firmware, stabilize)
-	if branchName != expectedBranchName {
-		return fmt.Errorf("%s does not match expected branch name %s", branchName, expectedBranchName)
-	}
-
-	componentToBump, err := branch.WhichVersionShouldBump(vinfo)
-
-	if componentToBump != mv.Patch {
-		return fmt.Errorf("incorrect VersionComponent selected to be bumped")
-	}
-
-	// Get project branches
-	branches := branch.ProjectBranches(branchName, git.StripRefs(sourceRevision))
-
-	// Check branch name creation
-	for _, branchProject := range branches {
-		if !strings.Contains(branchProject.BranchName, branchName) {
-			return fmt.Errorf("incorrect branch name created")
-		}
-
-	}
-
-	// Gerrit remote branch creation
-	projectBranches, err := branch.GerritProjectBranches(branches)
-
-	for _, project := range projectBranches {
-		if !strings.Contains(project.Branch, branchName) {
-			return fmt.Errorf("incorrect branch name created")
-		}
-	}
-
-	if projectBranches == nil || err != nil {
-		return fmt.Errorf("gerrit branch creation error")
-
-	}
-
-	// Bump version number
-	if err = branch.BumpForCreate(componentToBump, release, false, branchName, sourceUpstream); err != nil {
-		return fmt.Errorf("Failed to bump version reason: %s", err.Error())
-	}
-
-	return nil
-}
-
-// TestCreate performs unit tests on the components of create-v2
 func TestCreate(t *testing.T) {
-	// Get Mock for gitiles download
-	mockGitiles, err := createSetUp(t)
-	if err != nil {
-		t.Error("Error: Create setup failed. reason: " + err.Error())
-		return
+	r, err := setUpCreate(t, false, false, false)
+	defer r.Teardown()
+	assert.NilError(t, err)
+
+	branch := "new-branch"
+	s := &branchApplication{application, nil, nil}
+	ret := subcommands.Run(s, []string{
+		"create", "--push",
+		"--custom", branch,
+		"--buildspec-manifest", "12/3.0.0.xml",
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+		// Test with two workers for kicks.
+		"-j", "2",
+	})
+	assert.Assert(t, ret == 0)
+
+	manifest := r.Harness.Manifest()
+	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
+	assert.NilError(t, r.AssertCrosBranchFromManifest(manifest, branch, ""))
+	assertManifestsRepaired(t, r, branch)
+	newBranchVersion := mv.VersionInfo{
+		ChromeBranch:      12,
+		BuildNumber:       3,
+		BranchBuildNumber: 1,
+		PatchNumber:       0,
 	}
-
-	ctx := context.Background()
-	gerrit.MockGitiles = mockGitiles
-
-	// Expected branch names by type
-	descriptor := "test"
-	customBranchName := "new-branch"
-	releaseBranchName := fmt.Sprintf("release-R%v-%v-%v.%v.B", expectedBranchVersion.ChromeBranch,
-		descriptor, expectedBranchVersion.BuildNumber, expectedBranchVersion.BranchBuildNumber)
-	factoryBranchName := fmt.Sprintf("factory-%v-%v.%v.B", descriptor, expectedBranchVersion.BuildNumber,
-		expectedBranchVersion.BranchBuildNumber)
-	firmwareBranchName := fmt.Sprintf("firmware-%v-%v.%v.B", descriptor, expectedBranchVersion.BuildNumber,
-		expectedBranchVersion.BranchBuildNumber)
-	stabilizeBranchName := fmt.Sprintf("stabilize-%v-%v.%v.B", descriptor, expectedBranchVersion.BuildNumber,
-		expectedBranchVersion.BranchBuildNumber)
-
-	// Mock Download
-	manifestFile, err := gerrit.DownloadFileFromGitiles(ctx, nil, "", "manifest", "main", "01/1234.2.0.xml")
-
-	if err != nil {
-		t.Error("Error: Failed to download manifest from mock")
-		return
+	assert.NilError(t, r.AssertCrosVersion(branch, newBranchVersion))
+	mainVersion := mv.VersionInfo{
+		ChromeBranch:      12,
+		BuildNumber:       4,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
 	}
+	assert.NilError(t, r.AssertCrosVersion("main", mainVersion))
 
-	// Create working manifest
-	workingManifest, err := ioutil.TempFile("", "working-manifest.xml")
-	if err != nil {
-		t.Error("Error: working manifest file creation failed")
-		return
-	}
+	assertCommentsPersist(t, r, getManifestFiles, branch)
+	// Check that manifests were minmally changed (e.g. element ordering preserved).
+	// This check is meaningful because the manifests are created using the branch_util
+	// tool which reads in, unmarshals, and modifies the manifests from getManifestFiles.
+	// The expected manifests (which the branched manifests are being compared to)
+	// are simply strings produced by getBranchedManifestFiles.
+	assertMinimalManifestChanges(t, r, branch)
+}
 
-	// Fill manifest
-	_, err = workingManifest.WriteString(manifestFile)
-	if err != nil {
-		t.Error("Error: Failed write to working manifest")
-		return
-	}
+// Branch off of old-branch to make sure that the source version is being
+// bumped in the correct branch.
+// Covers crbug.com/1744928.
+func TestCreateReleaseNonmain(t *testing.T) {
+	r, err := setUpCreate(t, false, false, true)
+	defer r.Teardown()
+	assert.NilError(t, err)
 
-	// Set exported var with working manifest
-	branch.WorkingManifest, err = repo.LoadManifestFromFile(workingManifest.Name())
-	if err != nil {
-		t.Error("Error: Failed to set branch.WorkingManifest")
-		return
-	}
+	manifest := r.Harness.Manifest()
+	branch := "release-R12-2.1.B"
 
-	manifestInternal, err := branch.WorkingManifest.GetUniqueProject("chromeos/manifest-internal")
-	if err != nil {
-		t.Error("Error: Failed to get internal manifest")
-		return
-	}
+	s := &branchApplication{application, nil, nil}
+	ret := subcommands.Run(s, []string{
+		"create", "--push",
+		"--buildspec-manifest", "12/2.1.0.xml",
+		"--release",
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+	})
+	assert.Assert(t, ret == 0)
 
-	// Validate version
-	versionProject, err := branch.WorkingManifest.GetProjectByPath(branch.VersionFileProjectPath)
-	if err != nil {
-		t.Error("Error: Failed to validate version")
-		return
-	}
+	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
 
-	if versionProject.Path != "src/third_party/chromiumos-overlay" ||
-		versionProject.Name != "chromiumos/overlays/chromiumos-overlay" {
-		t.Error("Error: version information is incorrect")
-		return
-	}
+	crosFetchVal := manifest.GetRemoteByName("cros").Fetch
+	crosInternalFetchVal := manifest.GetRemoteByName("cros-internal").Fetch
+	_, _, fullBranchedXML := getBranchedManifestFiles(existingBranchName, crosFetchVal, crosInternalFetchVal)
+	var branchManifest *repo.Manifest
+	assert.NilError(t, xml.Unmarshal([]byte(fullBranchedXML), &branchManifest))
+	branchManifest.ResolveImplicitLinks()
 
-	// get chromeos_version.sh mock
-	versionFile, err := gerrit.DownloadFileFromGitiles(ctx, nil, "", "version", "main", "chromeos_version.sh")
-	if err != nil {
-		t.Error("Error: Failed to download chromeos_version.sh from mock")
-		return
+	assert.NilError(t, r.AssertCrosBranchFromManifest(*branchManifest, branch, "old-branch"))
+	assertManifestsRepaired(t, r, branch)
+	newBranchVersion := mv.VersionInfo{
+		ChromeBranch:      12,
+		BuildNumber:       2,
+		BranchBuildNumber: 1,
+		PatchNumber:       1,
 	}
-	if versionFile != chromeVersionMock {
-		t.Error("Error: Downloaded chromeos_version.sh does not match expected")
-		return
+	assert.NilError(t, r.AssertCrosVersion(branch, newBranchVersion))
+	sourceVersion := mv.VersionInfo{
+		ChromeBranch:      13,
+		BuildNumber:       3,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
 	}
+	assert.NilError(t, r.AssertCrosVersion("old-branch", sourceVersion))
 
-	// Get parsed version info
-	vinfo, err := mv.ParseVersionInfo([]byte(versionFile))
+	assertCommentsPersist(t, r, getExistingBranchManifestFiles, branch)
+}
+func TestCreateDryRun(t *testing.T) {
+	r, err := setUpCreate(t, true, false, false)
+	defer r.Teardown()
+	assert.NilError(t, err)
 
-	if err != nil {
-		t.Error("Error: Failed to get version info")
-		return
-	}
+	branch := "new-branch"
+	s := &branchApplication{application, nil, nil}
+	ret := subcommands.Run(s, []string{
+		"create",
+		"--buildspec-manifest", "12/3.0.0.xml",
+		"--custom", branch,
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+	})
+	assert.Assert(t, ret == 0)
+	assertNoRemoteDiff(t, r)
+}
 
-	if !mv.VersionsEqual(vinfo, expectedBranchVersion) {
-		t.Error("Error: version info does not match expected value")
-		return
-	}
+// Test create overwrites existing branches when --force is set.
+func TestCreateOverwrite(t *testing.T) {
+	r, err := setUpCreate(t, false, true, false)
+	defer r.Teardown()
+	assert.NilError(t, err)
 
-	// Custom branch type testing (Dry run)
-	err = branchCreationTester(manifestInternal, vinfo, customBranchName,
-		customBranchName, descriptor, false, false, false, false)
-	if err != nil {
-		t.Error(err)
-	}
+	manifest := r.Harness.Manifest()
 
-	// Release branch type testing (Dry run)
-	err = branchCreationTester(manifestInternal, vinfo, releaseBranchName,
-		"", descriptor, true, false, false, false)
-	if err != nil {
-		t.Error(err)
-	}
+	branch := "old-branch"
+	s := &branchApplication{application, nil, nil}
+	ret := subcommands.Run(s, []string{
+		"create", "--push",
+		"--force",
+		"--buildspec-manifest", "12/3.0.0.xml",
+		"--custom", branch,
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+	})
+	assert.Assert(t, ret == 0)
 
-	// Factory branch type testing (Dry run)
-	err = branchCreationTester(manifestInternal, vinfo, factoryBranchName,
-		"", descriptor, false, true, false, false)
-	if err != nil {
-		t.Error(err)
+	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
+	assert.NilError(t, r.AssertCrosBranchFromManifest(manifest, branch, ""))
+	assertManifestsRepaired(t, r, branch)
+	newBranchVersion := mv.VersionInfo{
+		ChromeBranch:      12,
+		BuildNumber:       3,
+		BranchBuildNumber: 1,
+		PatchNumber:       0,
 	}
+	assert.NilError(t, r.AssertCrosVersion(branch, newBranchVersion))
+	mainVersion := mv.VersionInfo{
+		ChromeBranch:      12,
+		BuildNumber:       4,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
+	}
+	assert.NilError(t, r.AssertCrosVersion("main", mainVersion))
 
-	// Firmware branch type testing (Dry run)
-	err = branchCreationTester(manifestInternal, vinfo, firmwareBranchName,
-		"", descriptor, false, false, true, false)
-	if err != nil {
-		t.Error(err)
-	}
+	assertCommentsPersist(t, r, getManifestFiles, branch)
+}
 
-	// Stabilize branch type testing (Dry run)
-	err = branchCreationTester(manifestInternal, vinfo, stabilizeBranchName,
-		"", descriptor, false, false, false, true)
-	if err != nil {
-		t.Error(err)
+// Test create dies when it tries to overwrite without --force.
+func TestCreateOverwriteMissingForce(t *testing.T) {
+	r, err := setUpCreate(t, false, false, false)
+	defer r.Teardown()
+	assert.NilError(t, err)
+
+	manifest := r.Harness.Manifest()
+
+	branch := "old-branch"
+	var stderrBuf bytes.Buffer
+	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
+	s := &branchApplication{application, nil, stderrLog}
+	ret := subcommands.Run(s, []string{
+		"create", "--push",
+		"--buildspec-manifest", "12/3.0.0.xml",
+		"--custom", branch,
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+	})
+	assert.Assert(t, ret != 0)
+	assert.Assert(t, strings.Contains(stderrBuf.String(), "rerun with --force"))
+
+	// Check that no remotes change.
+	for _, remote := range manifest.Remotes {
+		remotePath := filepath.Join(r.Harness.HarnessRoot(), remote.Name)
+		remoteSnapshot, err := r.GetRecentRemoteSnapshot(remote.Name)
+		assert.NilError(t, err)
+		assert.NilError(t, testutil.AssertContentsEqual(remoteSnapshot, remotePath))
 	}
-	return
+}
+
+// Test create dies when given a version that was already branched.
+func TestCreatExistingVersion(t *testing.T) {
+	r, err := setUpCreate(t, false, false, false)
+	defer r.Teardown()
+	assert.NilError(t, err)
+
+	// Our set up uses branch 12.3.0.0. A branch created from this version must
+	// end in 12-3.B. We create a branch with that suffix so that the tool
+	// will think 12.3.0.0 has already been branched.
+	// We just need to add a branch to the manifest internal repo because
+	// the tool checks if a branch exists for a version by looking at
+	// branches in the manifest internal repo.
+	assert.NilError(t,
+		r.Harness.CreateRemoteRef(manifestInternalProject, "release-R12-3.B", ""))
+	// Snapshot of manifestInternalProject is stale -- need to update.
+	assert.NilError(t, r.TakeSnapshot())
+
+	var stderrBuf bytes.Buffer
+	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
+	s := &branchApplication{application, nil, stderrLog}
+	ret := subcommands.Run(s, []string{
+		"create-v1", "--push",
+		"--buildspec-manifest", "12/3.0.0.xml",
+		"--stabilize",
+		// We don't really care about this check as ACLs are still enforced
+		// (just a less elegant failure), and it's one less thing to mock.
+		"--skip-group-check",
+	})
+	assert.Assert(t, ret != 0)
+	assert.Assert(t, strings.Contains(stderrBuf.String(), "already branched 3.0.0"))
+	assertNoRemoteDiff(t, r)
 }
 
 func TestRename(t *testing.T) {
@@ -927,7 +999,6 @@ func TestDeleteDryRun(t *testing.T) {
 		"--manifest-url", manifestDir,
 		branchToDelete,
 	})
-	fmt.Printf("%v\n", outputBuf.String())
 	assert.Assert(t, ret == 0)
 	assertNoRemoteDiff(t, r)
 }
