@@ -181,8 +181,8 @@ type Metadata struct {
 	// DIR_METADATA files in both directories can import from that file.
 	//
 	// A path must be source-absolute, e.g. "//components/autofill/COMMON_METADATA"
-	// Here the root is specified via -root flag,
-	// so it is not not necessarily the repo root (it is for chromium/src though).
+	// Here the root is the root of the repository which contains the current
+	// file.
 	//
 	// Precedence:
 	// * Imported files override values in the parent directory.
