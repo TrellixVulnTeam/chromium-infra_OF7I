@@ -34,10 +34,19 @@ const Filename = "DIR_METADATA"
 var gitBinary string
 
 func init() {
-	gitBinary = "git"
-	if runtime.GOOS == "windows" {
-		gitBinary = "git.exe"
+	if runtime.GOOS != "windows" {
+		gitBinary = "git"
+		return
 	}
+
+	gitBinary = "git.exe"
+	if _, err := exec.LookPath("git.bat"); err == nil {
+		// git.bat is available. Prefer git.bat instead.
+		gitBinary = "git.bat"
+	}
+	// Note that this function does not raise errors (by panicking).
+	// Instead, if code execution needs git indeed, then it will fail with a nice
+	// error message (as opposed to a stack trace from panic).
 }
 
 // ReadMetadata reads metadata from a single directory.
