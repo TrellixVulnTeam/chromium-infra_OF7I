@@ -12,14 +12,16 @@ import "infra/tools/dirmd/proto/chromeos/chromeos.proto";
 
 // Metadata information for a directory.
 //
-// Individual fields/subfields are inherited by subdirectories, unless
-// overridden by inherit_from.
+// Individual fields/subfields are inherited by subdirectories.
 // For example, if a/DIR_METADATA specifies `monorail.project="chromium"` and
 // a/b/DIR_METADATA file exists and does not specify `monorail.project`, then
 // `a/b`'s Monorail project is "chromium".
 // Note: this semantics can be extended to opt-out individual fields from
 // inheritance.
 message Metadata {
+  reserved 8;
+  reserved "inherit_from";
+
   // Paths to Metadata files to import into this file.
   //
   // A metadata file is imported AS IS, without inheritance from its
@@ -42,30 +44,6 @@ message Metadata {
   //   two imported files, then the later one wins.
   // * Values defined in the importee override values in the imported files.
   repeated string imports = 10;
-
-  // TODO(crbug.com/1179786): remove this. This approach didn't work.
-  //
-  // The directory to inherit results from. Valid values:
-  // *   empty string, which means the parent directory. This is the default.
-  // *   a source-absolute path. The root is specified via -root flag, so it is
-  //     not necessarily the repo root (it is for chromium/src though).
-  //     Example: "//components/autofill" for
-  //     https://source.chromium.org/chromium/chromium/src/+/HEAD:components/autofill/
-  //     Note: paths relative to DIR_METADATA file are not supported.
-  // *   "-" means do not inherit from anything.
-  //     This is equivalent to "set noparent" in OWNERS files.
-  //
-  // This field is useful when very related code is scattered in different
-  // directories, for example in Java, implementation and tests of the same
-  // feature live in different directories. This field can be used to
-  // 1) In the impl directory: define the feature-specific metadata.
-  // 2) In the test directory: refer to the impl directory.
-  //
-  // Note that if bar/DIR_METADATA has inherit_from="foo", then bar's metadata
-  // is inherited only from foo, and bar's parent is ignored (i.e. no
-  // multi-inheritence). However, given that foo and bar actually have the same
-  // parent, bar inherits the root metadata indirectly via foo.
-  string inherit_from = 8;
 
   // Monorail metadata. Its component field should always map to the same
   // team_email field (see below) for every directory that it is listed in.
