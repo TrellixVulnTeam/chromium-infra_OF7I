@@ -5,8 +5,13 @@
 package tls
 
 import (
+	"context"
 	"fmt"
+	"infra/libs/lro"
 
+	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 )
@@ -50,4 +55,42 @@ func NewBackgroundTLS() (*BackgroundTLS, error) {
 		server: s,
 		Client: c,
 	}, nil
+}
+
+// CacheForDut queries the underlying TLW server to find a healthy devserver
+// with a cached version of the given chromeOS image, and returns the URL
+// of the cached image on the devserver.
+func (b *BackgroundTLS) CacheForDut(ctx context.Context, imageURL, dutName string) (string, error) {
+	s := b.server
+	c := tls.NewWiringClient(s.tlwConn)
+	op, err := c.CacheForDut(ctx, &tls.CacheForDutRequest{
+		Url:     imageURL,
+		DutName: dutName,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	op, err = lro.Wait(ctx, longrunning.NewOperationsClient(s.tlwConn), op.Name)
+	if err != nil {
+	}
+	if err != nil {
+		return "", fmt.Errorf("cacheForDut: failed to wait for CacheForDut, %s", err)
+	}
+
+	if s := op.GetError(); s != nil {
+		return "", fmt.Errorf("cacheForDut: failed to get CacheForDut, %s", s)
+	}
+
+	a := op.GetResponse()
+	if a == nil {
+		return "", fmt.Errorf("cacheForDut: failed to get CacheForDut response for URL=%s and Name=%s", imageURL, dutName)
+	}
+
+	resp := &tls.CacheForDutResponse{}
+	if err := ptypes.UnmarshalAny(a, resp); err != nil {
+		return "", fmt.Errorf("cacheForDut: unexpected response from CacheForDut, %v", a)
+	}
+
+	return resp.GetUrl(), nil
 }

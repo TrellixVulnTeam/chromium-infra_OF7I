@@ -335,7 +335,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 
 	logging.Infof(ctx, "Adding chromeos-version label to host file")
 	hostInfoFileDir := r.Config.GetTask().GetResultsDir()
-	err := atutil.AddProvisionDetailsToHostInfoFile(hostInfoFileDir, r.DutHostname, desired)
+	err := atutil.AddProvisionDetailsToHostInfoFile(ctx, bt, hostInfoFileDir, r.DutHostname, desired)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}

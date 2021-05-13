@@ -5,8 +5,11 @@
 package atutil
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"infra/cros/cmd/phosphorus/internal/gs"
+	"infra/cros/cmd/phosphorus/internal/tls"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,22 +37,35 @@ func HostInfoFilePath(rootDir, host string) string {
 	return filepath.Join(rootDir, hostInfoSubDir, f)
 }
 
-func AddProvisionDetailsToHostInfoFile(infoFileDir, dutName, crosVersion string) error {
+func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTLS, infoFileDir, dutName, crosVersion string) error {
+	errWrap := fmt.Sprintf("add %s and %s labels to host info file", imageCacheLabel, crosVersionLabel)
 	infoFilePath := HostInfoFilePath(infoFileDir, dutName)
 	hostInfo, err := readHostInfoFile(infoFilePath)
 	if err != nil {
-		return errors.Wrap(err, "add label to host info file")
+		return errors.Wrap(err, errWrap)
 	}
 
 	if hostInfo.StableVersions == nil {
 		hostInfo.StableVersions = make(map[string]string)
 	}
-	delete(hostInfo.Attributes, imageCacheLabel)
+	if err := hostInfo.setImageCacheURL(ctx, bt, dutName, crosVersion); err != nil {
+		return errors.Wrap(err, errWrap)
+	}
 	hostInfo.setCrosVersion(crosVersion)
 
 	if err := writeHostInfoFile(infoFilePath, hostInfo); err != nil {
-		return errors.Wrap(err, "add label to host info file")
+		return errors.Wrap(err, errWrap)
 	}
+	return nil
+}
+
+func (hi *HostInfo) setImageCacheURL(ctx context.Context, bt *tls.BackgroundTLS, dutName, crosVersion string) error {
+	gsImagePath := fmt.Sprintf("%s/%s", gs.ImageArchivePrefix, crosVersion)
+	repoURL, err := bt.CacheForDut(ctx, gsImagePath, dutName)
+	if err != nil {
+		return err
+	}
+	hi.Attributes[imageCacheLabel] = repoURL
 	return nil
 }
 
