@@ -35,6 +35,7 @@
   * [fleet_systems/dhcp](#recipes-fleet_systems_dhcp) &mdash; Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
   * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
   * [gerrit_hello_world](#recipes-gerrit_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
+  * [gerrit_plugins](#recipes-gerrit_plugins)
   * [git_cache_updater](#recipes-git_cache_updater) &mdash; Updates the Git Cache zip files.
   * [gsubmodd](#recipes-gsubmodd) &mdash; Runs git submodule daemon (gsubmodd) against a given source repo.
   * [gsutil_hello_world](#recipes-gsutil_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
@@ -1065,6 +1066,11 @@ Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
 Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 &mdash; **def [RunSteps](/recipes/recipes/gerrit_hello_world.py#23)(api):**
+### *recipes* / [gerrit\_plugins](/recipes/recipes/gerrit_plugins.py)
+
+[DEPS](/recipes/recipes/gerrit_plugins.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipes/gerrit_plugins.py#20)(api):**
 ### *recipes* / [git\_cache\_updater](/recipes/recipes/git_cache_updater.py)
 
 [DEPS](/recipes/recipes/git_cache_updater.py#17): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
