@@ -51,6 +51,7 @@ export function ReactAutocomplete<T>(
   return <Autocomplete
     id={label}
     autoHighlight
+    autoSelect
     filterOptions={_filterOptions(getOptionDescription)}
     filterSelectedOptions
     freeSolo
@@ -134,7 +135,9 @@ function _onChange<T, Multiple, DisableClearable, FreeSolo>(
 function _renderInput(placeholder = ''):
     (params: AutocompleteRenderInputParams) => React.ReactNode {
   return (params: AutocompleteRenderInputParams): React.ReactNode =>
-    <TextField {...params} variant="standard" size="small" placeholder={placeholder} />;
+    <TextField
+      {...params} variant="standard" size="small" placeholder={placeholder}
+    />;
 }
 
 /**
