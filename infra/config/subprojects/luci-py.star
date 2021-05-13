@@ -39,7 +39,7 @@ build.presubmit(
     name = "luci-py-try-presubmit",
     cq_group = cq_group,
     repo_name = "luci_py",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu-18.04",
     # The default 8-minute timeout is a problem for luci-py.
     # See https://crbug.com/917479 for context.
     timeout_s = 900,
@@ -47,7 +47,7 @@ build.presubmit(
 
 try_builder(
     name = "luci-py-analysis",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu-18.04",
     recipe = "tricium_infra",
     properties = {
         "gclient_config_name": "luci_py",
@@ -60,6 +60,12 @@ try_builder(
 try_builder(
     name = "luci-py-try-xenial-64",
     os = "Ubuntu-16.04",
+)
+
+try_builder(
+    name = "luci-py-try-bionic-64",
+    os = "Ubuntu-18.04",
+    experiment_percentage = 100,
 )
 
 try_builder(
