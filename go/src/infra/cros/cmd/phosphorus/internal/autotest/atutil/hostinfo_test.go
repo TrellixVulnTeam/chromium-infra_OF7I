@@ -8,6 +8,7 @@ package atutil
 import (
 	"infra/cros/internal/assert"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,6 +77,22 @@ func TestWriteHostInfoFile(t *testing.T) {
 	gotData, err := ioutil.ReadFile(tmpPath)
 	assert.NilError(t, err)
 	if diff := cmp.Diff(wantData, gotData); diff != "" {
+		t.Fatalf("unexpected diff (%s)", diff)
+	}
+}
+
+func TestProvisionURLToPkgStagingURL(t *testing.T) {
+	rawProvisionURL := "http://devServerIP/download/chromeos-image-archive/nami-release/R91-13894.0.0"
+	wantPkgStagingURL := &url.URL{
+		Scheme: "http",
+		Host:   "devServerIP",
+		Path:   "static/nami-release/R91-13894.0.0/autotest/packages",
+	}
+	gotPkgStagingURL, err := convertToPkgStagingURL(
+		rawProvisionURL, "nami-release/R91-13894.0.0")
+	assert.NilError(t, err)
+	diff := cmp.Diff(wantPkgStagingURL, gotPkgStagingURL)
+	if diff != "" {
 		t.Fatalf("unexpected diff (%s)", diff)
 	}
 }

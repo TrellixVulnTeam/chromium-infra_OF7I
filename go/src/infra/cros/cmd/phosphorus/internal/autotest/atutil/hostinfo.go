@@ -11,7 +11,9 @@ import (
 	"infra/cros/cmd/phosphorus/internal/gs"
 	"infra/cros/cmd/phosphorus/internal/tls"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -20,7 +22,7 @@ import (
 
 const (
 	crosVersionLabel = "cros-version"
-	imageCacheLabel  = "job_repo_url"
+	jobRepoURLLabel  = "job_repo_url"
 )
 
 // HostInfo is a struct providing a mapping
@@ -38,7 +40,7 @@ func HostInfoFilePath(rootDir, host string) string {
 }
 
 func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTLS, infoFileDir, dutName, crosVersion string) error {
-	errWrap := fmt.Sprintf("add %s and %s labels to host info file", imageCacheLabel, crosVersionLabel)
+	errWrap := fmt.Sprintf("add %s and %s labels to host info file", jobRepoURLLabel, crosVersionLabel)
 	infoFilePath := HostInfoFilePath(infoFileDir, dutName)
 	hostInfo, err := readHostInfoFile(infoFilePath)
 	if err != nil {
@@ -48,7 +50,7 @@ func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTL
 	if hostInfo.StableVersions == nil {
 		hostInfo.StableVersions = make(map[string]string)
 	}
-	if err := hostInfo.setImageCacheURL(ctx, bt, dutName, crosVersion); err != nil {
+	if err := hostInfo.setPackageStagingCacheURL(ctx, bt, dutName, crosVersion); err != nil {
 		return errors.Wrap(err, errWrap)
 	}
 	hostInfo.setCrosVersion(crosVersion)
@@ -59,13 +61,20 @@ func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTL
 	return nil
 }
 
-func (hi *HostInfo) setImageCacheURL(ctx context.Context, bt *tls.BackgroundTLS, dutName, crosVersion string) error {
+func (hi *HostInfo) setPackageStagingCacheURL(ctx context.Context, bt *tls.BackgroundTLS, dutName, crosVersion string) error {
 	gsImagePath := fmt.Sprintf("%s/%s", gs.ImageArchivePrefix, crosVersion)
-	repoURL, err := bt.CacheForDut(ctx, gsImagePath, dutName)
+	rawProvisioningURL, err := bt.CacheForDut(ctx, gsImagePath, dutName)
 	if err != nil {
 		return err
 	}
-	hi.Attributes[imageCacheLabel] = repoURL
+	// CacheForDut returns the dev-server URL used for OS provisioning.
+	// Downstream autoserv package staging depends on a package staging cache
+	// on the same dev-server.
+	pkgStagingURL, err := convertToPkgStagingURL(rawProvisioningURL, crosVersion)
+	if err != nil {
+		return err
+	}
+	hi.Attributes[jobRepoURLLabel] = pkgStagingURL.String()
 	return nil
 }
 
@@ -99,7 +108,17 @@ func writeHostInfoFile(infoFilePath string, hostInfo *HostInfo) error {
 		return err
 	}
 	return ioutil.WriteFile(infoFilePath, updatedData, 0)
+}
 
+// convertToPkgStagingURL takes a raw URL string and returns a URL for the
+// package staging cache of the given cros version on the same host.
+func convertToPkgStagingURL(rawURL, crosVersion string) (*url.URL, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join("static", crosVersion, "autotest/packages")
+	return u, nil
 }
 
 // LinkHostInfoFile prepares the host info store by linking the host
