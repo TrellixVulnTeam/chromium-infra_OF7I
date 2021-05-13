@@ -23,6 +23,7 @@ import (
 const (
 	crosVersionLabel = "cros-version"
 	jobRepoURLLabel  = "job_repo_url"
+	devServerPort    = "8082"
 )
 
 // HostInfo is a struct providing a mapping
@@ -117,6 +118,8 @@ func convertToPkgStagingURL(rawURL, crosVersion string) (*url.URL, error) {
 	if err != nil {
 		return nil, err
 	}
+	// u.Hostname() strips any existing port from the host.
+	u.Host = fmt.Sprintf("%s:%s", u.Hostname(), devServerPort)
 	u.Path = path.Join("static", crosVersion, "autotest/packages")
 	return u, nil
 }

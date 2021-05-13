@@ -82,10 +82,10 @@ func TestWriteHostInfoFile(t *testing.T) {
 }
 
 func TestProvisionURLToPkgStagingURL(t *testing.T) {
-	rawProvisionURL := "http://devServerIP/download/chromeos-image-archive/nami-release/R91-13894.0.0"
+	rawProvisionURL := "http://devServerIP:9999/download/chromeos-image-archive/nami-release/R91-13894.0.0"
 	wantPkgStagingURL := &url.URL{
 		Scheme: "http",
-		Host:   "devServerIP",
+		Host:   "devServerIP:8082",
 		Path:   "static/nami-release/R91-13894.0.0/autotest/packages",
 	}
 	gotPkgStagingURL, err := convertToPkgStagingURL(
