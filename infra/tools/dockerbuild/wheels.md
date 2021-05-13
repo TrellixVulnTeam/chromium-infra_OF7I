@@ -2512,7 +2512,6 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
-
 ## **gym-py3**
 
 ### 0.18.0
