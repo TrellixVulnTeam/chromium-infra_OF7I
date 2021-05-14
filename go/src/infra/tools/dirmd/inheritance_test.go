@@ -38,7 +38,7 @@ func TestReduce(t *testing.T) {
 			}
 
 			actual := input.Clone()
-			actual.Reduce()
+			So(actual.Reduce(), ShouldBeNil)
 			So(actual.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					".": input.Dirs["."], // did not change
@@ -64,7 +64,7 @@ func TestReduce(t *testing.T) {
 					"a/b": {TeamEmail: "team@example.com"},
 				},
 			}
-			m.Reduce()
+			So(m.Reduce(), ShouldBeNil)
 			So(m.Dirs["a"].GetTeamEmail(), ShouldEqual, "")
 			So(m.Dirs["a"].GetOs(), ShouldEqual, dirmdpb.OS_ANDROID)
 			So(m.Dirs, ShouldNotContainKey, "a/b")
@@ -77,7 +77,7 @@ func TestReduce(t *testing.T) {
 					"b": {TeamEmail: "team@example.com"},
 				},
 			}
-			m.Reduce()
+			So(m.Reduce(), ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					"a": {TeamEmail: "team@example.com"},

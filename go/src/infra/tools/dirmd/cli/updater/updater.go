@@ -96,7 +96,9 @@ func (u *Updater) run(ctx context.Context) error {
 	}
 
 	// Write in reduced form.
-	mapping.Reduce()
+	if err := mapping.Reduce(); err != nil {
+		return err
+	}
 	return u.writeMapping(ctx, "metadata_reduced.json", mapping, true)
 }
 

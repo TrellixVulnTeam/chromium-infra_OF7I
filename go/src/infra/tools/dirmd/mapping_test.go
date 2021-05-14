@@ -63,7 +63,7 @@ func TestComputeAll(t *testing.T) {
 					},
 				},
 			}
-			m.ComputeAll()
+			So(m.ComputeAll(), ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					".": m.Dirs["."], // did not change
@@ -87,7 +87,7 @@ func TestComputeAll(t *testing.T) {
 					"a/b": {},
 				},
 			}
-			m.ComputeAll()
+			So(m.ComputeAll(), ShouldBeNil)
 			So(m.Dirs["a/b"].TeamEmail, ShouldEqual, "team@example.com")
 		})
 
@@ -100,7 +100,7 @@ func TestComputeAll(t *testing.T) {
 			}
 
 			actual := input.Clone()
-			actual.ComputeAll()
+			So(actual.ComputeAll(), ShouldBeNil)
 			So(input.Proto(), ShouldResembleProto, input.Proto())
 		})
 	})

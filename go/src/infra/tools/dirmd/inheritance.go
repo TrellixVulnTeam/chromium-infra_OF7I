@@ -15,19 +15,22 @@ import (
 )
 
 // Compute computes metadata for the given directory key.
-func (m *Mapping) Compute(key string) *dirmdpb.Metadata {
+func (m *Mapping) Compute(key string) (*dirmdpb.Metadata, error) {
 	parent := path.Dir(key)
 	if parent == key {
-		return cloneMD(m.Dirs[key])
+		return cloneMD(m.Dirs[key]), nil
 	}
 
-	ret := m.Compute(parent)
+	ret, err := m.Compute(parent)
+	if err != nil {
+		return nil, err
+	}
 	Merge(ret, m.Dirs[key])
-	return ret
+	return ret, nil
 }
 
 // ComputeAll computes full metadata for each dir.
-func (m *Mapping) ComputeAll() {
+func (m *Mapping) ComputeAll() error {
 	// Process directories in the shorest-path to longest-path order,
 	// such that, when computing the expanded metadata for a given directory,
 	// we only need to check the nearest ancestor.
@@ -36,6 +39,7 @@ func (m *Mapping) ComputeAll() {
 		Merge(meta, m.Dirs[dir])
 		m.Dirs[dir] = meta
 	}
+	return nil
 }
 
 // nearestAncestor returns metadata of the nearest ancestor.
@@ -94,9 +98,11 @@ func Merge(dst, src *dirmdpb.Metadata) {
 }
 
 // Reduce removes all redundant information.
-func (m *Mapping) Reduce() {
+func (m *Mapping) Reduce() error {
 	// First, compute metadata for each node.
-	m.ComputeAll()
+	if err := m.ComputeAll(); err != nil {
+		return err
+	}
 
 	// Then, remove nodes that do not add any new info wrt their nearest ancestor.
 	// Process directories in the longest-path to shortest-path order,
@@ -114,6 +120,7 @@ func (m *Mapping) Reduce() {
 			delete(m.Dirs, dir)
 		}
 	}
+	return nil
 }
 
 // excludeSame mutates m in-place to clear fields that have same values as ones

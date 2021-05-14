@@ -135,12 +135,11 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 	// Finally, bring the mapping to the desired form.
 	switch form {
 	case dirmdpb.MappingForm_REDUCED:
-		r.Mapping.Reduce()
+		err = r.Mapping.Reduce()
 	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
-		r.Mapping.ComputeAll()
+		err = r.Mapping.ComputeAll()
 	}
-
-	return &r.Mapping, nil
+	return &r.Mapping, err
 }
 
 // findMetadataRoot returns the root directory of the root repo.
@@ -234,7 +233,9 @@ func ReadComputed(root string, targets ...string) (*Mapping, error) {
 		}
 	}
 
-	r.ComputeAll()
+	if err := r.ComputeAll(); err != nil {
+		return nil, err
+	}
 
 	// Filter by targets.
 	ret := NewMapping(len(targets))
