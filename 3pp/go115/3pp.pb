@@ -1,4 +1,10 @@
 create {
+  platform_re: "mac-arm64"
+  # Mac ARM64 is not supported in versions older than 1.16.
+  unsupported: true
+}
+
+create {
   source {
     script {
       name: "fetch.py"
