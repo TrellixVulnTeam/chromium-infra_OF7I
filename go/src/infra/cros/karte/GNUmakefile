@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 # IENV is the infra environment wrapper script
-IENV := $(realpath ../../../../env.py)
+# include an explicit path to the vpython interpreter because sudo cleans the PATH.
+IENV    := $(realpath ../../../../../../depot_tools/vpython) $(realpath ../../../../env.py)
 
 .PHONY: default
 default: build
