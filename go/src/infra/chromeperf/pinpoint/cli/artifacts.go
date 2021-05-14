@@ -35,6 +35,7 @@ import (
 	"go.chromium.org/luci/common/isolated"
 	"go.chromium.org/luci/common/isolatedclient"
 	"go.chromium.org/luci/common/logging"
+	"gopkg.in/yaml.v2"
 )
 
 type downloadArtifactsMixin struct {
@@ -68,12 +69,44 @@ func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, http
 	}
 }
 
+type artifactFile struct {
+	Path   string `yaml:"path"`
+	Source string `yaml:"source"`
+}
+type artifact struct {
+	Selector string         `yaml:"selector"`
+	Files    []artifactFile `yaml:"files"`
+}
+
+type changeConfig struct {
+	Commit    string     `yaml:"commit"`
+	Change    string     `yaml:"change"`
+	ExtraArgs []string   `yaml:"extra_args"`
+	Artifacts []artifact `yaml:"artifacts"`
+}
+
+type telemetryExperimentArtifactsManifest struct {
+	JobID      string       `yaml:"job_id"`
+	User       string       `yaml:"user"`
+	Config     string       `yaml:"config"`
+	Base       changeConfig `yaml:"base"`
+	Experiment changeConfig `yaml:"experiment"`
+}
+
 func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *proto.Job) error {
 	urls := make(abExperimentURLs)
-	if err := urls.fromJob(job, dam.selectArtifacts); err != nil {
+	m, err := urls.fromJob(job, dam.selectArtifacts)
+	if err != nil {
 		return errors.Annotate(err, "failed filtering urls").Err()
 	}
+	id, err := pinpoint.LegacyJobID(job.Name)
+	if err != nil {
+		return errors.Annotate(err, "failed parsing pinpoint job name").Err()
+	}
 
+	// Once we've validated the inputs, we'll proceed to downloading the
+	// individual artifacts into a temporary directory, then rename it into the
+	// destination directory.
 	tmp, err := ioutil.TempDir(os.TempDir(), "pinpoint-cli-*")
 	if err != nil {
 		return errors.Annotate(err, "failed creating temporary directory").Err()
@@ -83,9 +116,16 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	if err := downloadIsolatedURLs(ctx, isolatedclients, tmp, urls); err != nil {
 		return err
 	}
-	id, err := pinpoint.LegacyJobID(job.Name)
+
+	// At this point we'll emit the manifest file into the temporary directory,
+	// so we can preserve some of the information from the Pinpoint job, mapping
+	// the files to the relevant artifacts.
+	manifest, err := yaml.Marshal(m)
 	if err != nil {
-		return errors.Annotate(err, "failed parsing pinpoint job name").Err()
+		return errors.Annotate(err, "failed marshalling YAML for manifest").Err()
+	}
+	if err := ioutil.WriteFile(filepath.Join(tmp, "manifest.yaml"), manifest, 0600); err != nil {
+		return errors.Annotate(err, "failed writing manifest file").Err()
 	}
 	dst, err := filepath.Abs(filepath.Join(workDir, id))
 	if err != nil {
@@ -174,29 +214,14 @@ func (c *isolatedClientsCache) Get(obj *isolatedObject) *isolatedclient.Client {
 
 type abExperimentURLs map[string]string
 
-func (urls abExperimentURLs) fromJob(j *proto.Job, selector string) error {
-	for _, selector := range strings.Split(selector, ",") {
-		if err := urls.appendResult(
-			selector,
-			j.GetJobSpec().GetExperiment().GetBaseCommit(),
-			j.GetJobSpec().GetExperiment().GetBasePatch(),
-			j.GetAbExperimentResults().GetAChangeResult(),
-		); err != nil {
-			return err
-		}
-		if err := urls.appendResult(
-			selector,
-			j.GetJobSpec().GetExperiment().GetExperimentCommit(),
-			j.GetJobSpec().GetExperiment().GetExperimentPatch(),
-			j.GetAbExperimentResults().GetBChangeResult(),
-		); err != nil {
-			return err
-		}
-	}
-	return nil
+type idStruct struct {
+	commit *proto.GitilesCommit
+	change *proto.GerritChange
+	result *proto.ChangeResult
 }
 
-func (urls abExperimentURLs) appendResult(selector string, c *proto.GitilesCommit, p *proto.GerritChange, r *proto.ChangeResult) error {
+func generateResultMap(selector string, i idStruct) (abExperimentURLs, error) {
+	// TODO: Maybe preserve the raw index information instead of relying on the path in the manifest.
 	selectors := map[string]struct {
 		label string
 		key   string
@@ -204,24 +229,28 @@ func (urls abExperimentURLs) appendResult(selector string, c *proto.GitilesCommi
 		"test":  {"Test", "isolate"},
 		"build": {"Build", "isolate"},
 	}
-	s, ok := selectors[selector]
-	if !ok {
-		return errors.Reason("Unsupported selector: %s", selector).Err()
+	s, found := selectors[selector]
+	if !found {
+		return nil, errors.Reason("Unsupported selector: %s", selector).Err()
 	}
 
-	dirName := c.GetGitHash()
-	if p != nil {
-		dirName += fmt.Sprintf("+%d/%d", p.GetChange(), p.GetPatchset())
+	dirName := i.commit.GetGitHash()
+	if i.change != nil {
+		dirName += fmt.Sprintf("+%d", i.change.GetChange())
+		if i.change.Patchset > 0 {
+			dirName += fmt.Sprintf(".%d", i.change.GetPatchset())
+		}
 	}
 
-	for idx, a := range r.GetAttempts() {
+	urls := abExperimentURLs{}
+	for idx, a := range i.result.GetAttempts() {
 		for _, e := range a.GetExecutions() {
 			if e.GetLabel() == s.label {
 				for _, d := range e.GetDetails() {
 					if d.GetKey() == s.key {
-						path := filepath.Join(dirName, selector, fmt.Sprintf("%02d", idx))
+						path := filepath.Join(dirName, selector, fmt.Sprintf("%02d", idx+1))
 						if u, ok := urls[path]; ok {
-							return errors.Reason("URL %s and %s have conflicting key: %s", u, d.GetUrl(), path).Err()
+							return nil, errors.Reason("URL %s and %s have conflicting key: %s", u, d.GetUrl(), path).Err()
 						}
 						urls[path] = d.GetUrl()
 					}
@@ -229,7 +258,103 @@ func (urls abExperimentURLs) appendResult(selector string, c *proto.GitilesCommi
 			}
 		}
 	}
+	return urls, nil
+}
+
+func merge(to, from abExperimentURLs) error {
+	for k, v := range from {
+		if e, found := to[k]; found {
+			return errors.Reason("key collision found for %q (current value = %q, merging value = %q)", k, e, v).Err()
+		}
+		to[k] = v
+	}
 	return nil
+}
+
+func (urls abExperimentURLs) fromJob(j *proto.Job, selector string) (*telemetryExperimentArtifactsManifest, error) {
+	exp := j.GetJobSpec().GetExperiment()
+	res := &telemetryExperimentArtifactsManifest{
+		JobID:  j.Name,
+		User:   j.CreatedBy,
+		Config: j.JobSpec.Config,
+		Base: changeConfig{
+			Commit: j.JobSpec.GetExperiment().BaseCommit.GitHash,
+			Change: func() string {
+				if exp == nil {
+					return ""
+				}
+				if exp.GetBasePatch() == nil {
+					return ""
+				}
+				suffix := fmt.Sprintf("%d", exp.GetBasePatch().Change)
+				if p := exp.GetBasePatch().Patchset; p > 0 {
+					suffix += fmt.Sprintf(".%d", p)
+				}
+				return suffix
+			}(),
+			ExtraArgs: j.JobSpec.GetTelemetryBenchmark().GetExtraArgs(),
+		},
+		Experiment: changeConfig{
+			Commit: j.JobSpec.GetExperiment().ExperimentCommit.GitHash,
+			Change: func() string {
+				if exp == nil {
+					return ""
+				}
+				if exp.GetExperimentPatch() == nil {
+					return ""
+				}
+				suffix := fmt.Sprintf("%d", exp.GetExperimentPatch().Change)
+				if p := exp.GetExperimentPatch().Patchset; p > 0 {
+					suffix += fmt.Sprintf("/%d", p)
+				}
+				return suffix
+			}(),
+			ExtraArgs: j.JobSpec.GetTelemetryBenchmark().GetExtraArgs(),
+		},
+	}
+	for _, selector := range strings.Split(selector, ",") {
+		for _, i := range []struct {
+			change *changeConfig
+			id     idStruct
+		}{
+			// Base configuration.
+			{
+				&res.Base,
+				idStruct{
+					exp.GetBaseCommit(),
+					exp.GetBasePatch(),
+					j.GetAbExperimentResults().GetAChangeResult(),
+				},
+			},
+			// Experiment configuration.
+			{
+				&res.Experiment,
+				idStruct{
+					exp.GetExperimentCommit(),
+					exp.GetExperimentPatch(),
+					j.GetAbExperimentResults().GetBChangeResult(),
+				},
+			},
+		} {
+			m, err := generateResultMap(selector, i.id)
+
+			if err != nil {
+				return nil, err
+			}
+			err = merge(urls, m)
+			if err != nil {
+				return nil, err
+			}
+			a := artifact{
+				Selector: selector,
+			}
+			for path, source := range m {
+				a.Files = append(a.Files, artifactFile{Path: path, Source: source})
+			}
+			i.change.Artifacts = append(i.change.Artifacts, a)
+		}
+	}
+	return res, nil
 }
 
 type isolatedObject struct {
