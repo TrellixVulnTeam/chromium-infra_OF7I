@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/url"
 	"strconv"
@@ -133,7 +134,9 @@ func (s *tlwServer) exposePortUsingProxy(dutAddr, localService string) (string, 
 	// The new package  'lab subnet' can accept an IP/subnet mask and return
 	// the servers in that subnet. Then CacheForDut and ExposePortToDut can
 	// define their own logic to select one from them.
-	cachingURL, err := s.cFrontend.AssignBackend(dutAddr, "")
+
+	// Pass a random string so we can get an random proxy server.
+	cachingURL, err := s.cFrontend.AssignBackend(dutAddr, strconv.Itoa(rand.Int()))
 	if err != nil {
 		return "", 0, err
 	}
