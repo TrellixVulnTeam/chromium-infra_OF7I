@@ -10,7 +10,7 @@ from .builder import Builder
 from . import util
 from . import source
 
-from .builder import InstallCipdPythonPackage, StageWheelForPackage
+from .builder import SetupPythonPackages, StageWheelForPackage
 
 
 class MySQLPython(Builder):
@@ -59,22 +59,20 @@ class MySQLPython(Builder):
           else:
             f.write(line)
 
+      interpreter, env = SetupPythonPackages(system, wheel, tdir)
       cmd = [
-        InstallCipdPythonPackage(system, wheel, tdir), '-m', 'pip', 'wheel',
-        '--no-deps',
-        '--only-binary=:all:',
-        '--wheel-dir', tdir,
-        '.',
+          interpreter,
+          '-m',
+          'pip',
+          'wheel',
+          '--no-deps',
+          '--only-binary=:all:',
+          '--wheel-dir',
+          tdir,
+          '.',
       ]
 
-      util.check_run(
-          system,
-          dx,
-          tdir,
-          cmd,
-          cwd=build_dir,
-          env={
-            'LDFLAGS': '-lstdc++'
-          })
+      env['LDFLAGS'] = '-lstdc++'
+      util.check_run(system, dx, tdir, cmd, cwd=build_dir, env=env)
 
       StageWheelForPackage(system, tdir, wheel)

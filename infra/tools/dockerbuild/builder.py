@@ -184,25 +184,15 @@ def StageWheelForPackage(system, wheel_dir, wheel):
   shutil.copy(source_path, dst)
 
 
-def EnvForWheel(wheel):
-  """Returns any extra environment variables for building a wheel."""
-  wheel_env = wheel.plat.env.copy()
-
-  # If the wheel is python3, clear PYTHONPATH to avoid picking up
-  # the default Python (2) modules.
-  if wheel.spec.is_py3_only:
-    wheel_env['PYTHONPATH'] = ''
-  return wheel_env
-
-
 def BuildPackageFromPyPiWheel(system, wheel):
   """Builds a wheel by obtaining a matching wheel from PyPi."""
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
+    interpreter, env = SetupPythonPackages(system, wheel, tdir)
     util.check_run(
         system,
         None,
         tdir, [
-            InstallCipdPythonPackage(system, wheel, tdir),
+            interpreter,
             '-m',
             'pip',
             'download',
@@ -213,7 +203,8 @@ def BuildPackageFromPyPiWheel(system, wheel):
             '--platform=%s' % (wheel.primary_platform,),
             '%s==%s' % (wheel.spec.name, wheel.spec.version),
         ],
-        cwd=tdir)
+        cwd=tdir,
+        env=env)
 
     StageWheelForPackage(system, tdir, wheel)
 
@@ -249,18 +240,20 @@ def HostCipdPlatform():
 
   raise Exception("No CIPD platform for %s, %s" % (system, machine))
 
-def InstallCipdPythonPackage(system, wheel, base_dir):
+
+def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   PY_CIPD_VERSION_MAP = {
-    '27': 'version:2@2.7.18.chromium.34',
-    '38': 'version:2@3.8.10.chromium.16',
-    '39': 'version:2@3.9.5.chromium.16',
+      '27': 'version:2@2.7.18.chromium.35',
+      '38': 'version:2@3.8.10.chromium.17',
+      '39': 'version:2@3.9.5.chromium.17',
   }
 
-  pkg_dir = os.path.join(base_dir, 'cipd_python%s_install' % (wheel.pyversion,))
+  pkg_dir = os.path.join(
+      base_dir, 'cipd_python%s_%s_install' % (wheel.pyversion, cipd_platform))
   system.cipd.init(pkg_dir)
 
-  cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % (
-      '3' if wheel.pyversion[0] == '3' else '', HostCipdPlatform())
+  cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % ('3' if wheel.pyversion[0] == '3'
+                                               else '', cipd_platform)
   version = PY_CIPD_VERSION_MAP[wheel.pyversion]
 
   # Note that this will use the common CIPD instance cache in .dockerbuild, so
@@ -273,7 +266,50 @@ def InstallCipdPythonPackage(system, wheel, base_dir):
   interpreter = os.path.join(pkg_dir, 'bin', 'python')
   if wheel.pyversion[0] == '3':
     interpreter += '3'
-  return interpreter
+  return pkg_dir, interpreter
+
+
+def SetupPythonPackages(system, wheel, base_dir):
+  """Installs python package(s) from CIPD and sets up the build environment.
+
+  Args:
+     system (System): A System object.
+     wheel (Wheel): The Wheel object to install a build environment for.
+     base_dir (str): The top-level build directory for the wheel.
+
+  Returns: A tuple (path to the python interpreter to run,
+                    dict of environment variables to be set).
+  """
+  host_platform = HostCipdPlatform()
+  _, interpreter = _InstallCipdPythonPackage(system, host_platform, wheel,
+                                             base_dir)
+  env = dict()
+
+  # If we are cross-compiling, also install the target-platform python and set
+  # PYTHONPATH to point to it. This will ensure that we use the correct
+  # compiler and linker command lines which are generated at build time in the
+  # sysconfigdata module.
+  if host_platform != wheel.plat.cipd_platform:
+    pkg_dir, _ = _InstallCipdPythonPackage(system, wheel.plat.cipd_platform,
+                                           wheel, base_dir)
+    env['PYTHONPATH'] = '%s/lib/python%s' % (pkg_dir, '.'.join(wheel.pyversion))
+    # For python 3, we need to also set _PYTHON_SYSCONFIGDATA_NAME to point to
+    # the target-architecture sysconfig module.
+    if wheel.pyversion[0] == '3':
+      sysconfigdata_modules = glob.glob('%s/_sysconfigdata_*.py' %
+                                        env['PYTHONPATH'])
+      if len(sysconfigdata_modules) != 1:
+        raise Exception(
+            'Expected 1 sysconfigdata module in python package ' +
+            'for %s, got: [%s]',
+            (wheel.plat.cipd_platform, ','.join(sysconfigdata_modules)))
+      env['_PYTHON_SYSCONFIGDATA_NAME'] = (os.path.basename(
+          sysconfigdata_modules[0])[:-3])  # remove .py
+  else:
+    # Make sure not to pick up any extra host python modules.
+    env['PYTHONPATH'] = ''
+  return interpreter, env
+
 
 def BuildPackageFromSource(system, wheel, src, env=None):
   """Creates Python wheel from src.
@@ -294,8 +330,9 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       cmd = ['patch', '-p1', '--quiet', '-i', patch]
       subprocess.check_call(cmd, cwd=build_dir)
 
+    interpreter, extra_env = SetupPythonPackages(system, wheel, build_dir)
     cmd = [
-        InstallCipdPythonPackage(system, wheel, build_dir),
+        interpreter,
         '-m',
         'pip',
         'wheel',
@@ -306,7 +343,6 @@ def BuildPackageFromSource(system, wheel, src, env=None):
         '.',
     ]
 
-    extra_env = EnvForWheel(wheel)
     if dx.platform:
       extra_env.update({
           'host_alias': dx.platform.cross_triple,

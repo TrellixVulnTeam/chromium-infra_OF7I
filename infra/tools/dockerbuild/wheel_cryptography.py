@@ -6,7 +6,7 @@ import os
 
 from .build_types import Spec
 from .builder import (Builder, BuildPackageFromPyPiWheel, StageWheelForPackage,
-                      InstallCipdPythonPackage)
+                      SetupPythonPackages)
 
 from . import source
 from . import util
@@ -94,6 +94,7 @@ class Cryptography(Builder):
       # Dockcross containers already contain cffi installed on the system.
       # For other platforms, we run the setup.py script under vpython, so
       # we can pre-install this wheel and its dependencies.
+      env = None
       if wheel.plat.dockcross_base is None:
         if wheel.plat.pyversion == 'py2':
           py_binary = 'vpython'
@@ -110,9 +111,8 @@ class Cryptography(Builder):
             spec.write('  version: "version:%s"\n' % version)
             spec.write('>\n')
       else:
-        py_binary = dx.workrel(
-            tdir,
-            InstallCipdPythonPackage(system, wheel, tdir))
+        py_binary, env = dx.workrel(tdir,
+                                    SetupPythonPackages(system, wheel, tdir))
 
       # Build "cryptography".
       d = {
@@ -155,6 +155,7 @@ class Cryptography(Builder):
               ]),
           ],
           cwd=crypt_dir,
+          env=env,
       )
 
       StageWheelForPackage(

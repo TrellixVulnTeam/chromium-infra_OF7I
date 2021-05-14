@@ -8,7 +8,7 @@ import os
 
 from .build_types import Spec
 from .builder import BuildPackageFromPyPiWheel, StageWheelForPackage
-from .builder import EnvForWheel, InstallCipdPythonPackage
+from .builder import SetupPythonPackages
 from .wheel_wheel import SourceOrPrebuilt
 
 from . import source
@@ -84,8 +84,9 @@ class Mpi4py(SourceOrPrebuilt):
             '/usr/cross/lib',
         ])
 
+      interpreter, extra_env = SetupPythonPackages(system, wheel, tdir)
       cmd = [
-          InstallCipdPythonPackage(system, wheel, tdir),
+          interpreter,
           '-m',
           'pip',
           'wheel',
@@ -98,7 +99,6 @@ class Mpi4py(SourceOrPrebuilt):
         cmd.extend(['--global-option', opt])
       cmd.append('.')
 
-      extra_env = EnvForWheel(wheel)
       if dx.platform:
         extra_env.update({
             'host_alias': dx.platform.cross_triple,

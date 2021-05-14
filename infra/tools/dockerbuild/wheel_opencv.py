@@ -9,7 +9,7 @@ from . import util
 from . import wheel_wheel
 from .build_types import Spec
 from .builder import (Builder, StageWheelForPackage, BuildPackageFromPyPiWheel,
-                      InstallCipdPythonPackage)
+                      SetupPythonPackages)
 
 
 class OpenCV(Builder):
@@ -80,7 +80,7 @@ class OpenCV(Builder):
       system.cipd.install(virtualenv[0], virtualenv[1], venv_root)
       venv_path = os.path.join(venv_root, 'virtualenv-15.1.0')
 
-      python_interpreter = InstallCipdPythonPackage(system, wheel, tdir)
+      python_interpreter, env = SetupPythonPackages(system, wheel, tdir)
 
       # Run our build script.
       workdir = util.ensure_directory(tdir, 'workdir')
@@ -89,15 +89,16 @@ class OpenCV(Builder):
           dx,
           tdir,
           [
-            'sh',
-            script_path,
-            workdir,
-            opencv_path,
-            wheel.spec.version,
-            venv_path,
-            numpy_path,
-            python_interpreter,
+              'sh',
+              script_path,
+              workdir,
+              opencv_path,
+              wheel.spec.version,
+              venv_path,
+              numpy_path,
+              python_interpreter,
           ],
+          env=env,
       )
 
       StageWheelForPackage(
