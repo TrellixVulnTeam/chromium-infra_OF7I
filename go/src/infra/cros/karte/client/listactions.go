@@ -14,7 +14,7 @@ import (
 	"infra/cros/karte/site"
 )
 
-// The ListActions command lists all actions in Karte.
+// ListActions command lists all actions in Karte.
 var ListActions = &subcommands.Command{
 	UsageLine: `list-actions`,
 	ShortDesc: "list actions",
