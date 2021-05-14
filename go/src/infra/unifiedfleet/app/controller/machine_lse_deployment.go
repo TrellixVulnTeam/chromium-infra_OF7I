@@ -75,6 +75,7 @@ func UpdateMachineLSEDeployment(ctx context.Context, dr *ufspb.MachineLSEDeploym
 			dr.Hostname = ufsUtil.GetHostnameWithNoHostPrefix(dr.GetSerialNumber())
 		}
 
+		logging.Infof(ctx, "The deployment record to update is %#v", dr)
 		if _, err := inventory.UpdateMachineLSEDeployments(ctx, []*ufspb.MachineLSEDeployment{dr}); err != nil {
 			return errors.Annotate(err, "unable to update new deployment record: %s (%s)", dr.GetHostname(), dr.GetSerialNumber()).Err()
 		}
