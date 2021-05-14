@@ -37,14 +37,12 @@ def get_download_url(version, platform):
   targ_os, targ_arch = platform.split('-')
   ext = '.zip' if targ_os == 'windows' else '.tar.gz'
   fragment = {
-    ('mac', 'amd64'): 'darwin-x64',
-
-    ('linux', 'amd64'): 'linux-x64',
-
-    ('linux', 'armv6l'): 'linux-armv6l',
-    ('linux', 'arm64'): 'linux-arm64',
-
-    ('windows', 'amd64'): 'win-x64',
+      ('mac', 'amd64'): 'darwin-x64',
+      ('mac', 'arm64'): 'darwin-arm64',
+      ('linux', 'amd64'): 'linux-x64',
+      ('linux', 'armv6l'): 'linux-armv6l',
+      ('linux', 'arm64'): 'linux-arm64',
+      ('windows', 'amd64'): 'win-x64',
   }[(targ_os, targ_arch)]
   download_url = (
     '%(base)s/v%(version)s/node-v%(version)s-%(fragment)s%(ext)s'
