@@ -10,18 +10,48 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"infra/cros/internal/cmd"
+	"infra/cros/internal/git"
+)
+
+const (
+	depotToolsURL string = "https://chromium.googlesource.com/chromium/tools/depot_tools"
 )
 
 var (
 	// CommandRunnerImpl exists for testing purposes.
 	CommandRunnerImpl cmd.CommandRunner = cmd.RealCommandRunner{}
 )
+
+// Ensure that the repo tool is installed. Returns path of tool, cleanup and error.
+func EnsureRepoTool() (string, func(), error) {
+	path, err := exec.LookPath("repo")
+	// Repo is already on the path.
+	if err == nil {
+		return path, func() {}, nil
+	}
+
+	dir, err := ioutil.TempDir("", "depot_tools")
+	cleanup := func() {
+		os.RemoveAll(dir)
+	}
+	if err != nil {
+		return "", cleanup, err
+	}
+
+	if err := git.Clone(depotToolsURL, dir); err != nil {
+		return "", cleanup, err
+	}
+	return filepath.Join(dir, "repo"), cleanup, nil
+}
 
 type InitArgs struct {
 	// --manifest-url/-u value, if any.

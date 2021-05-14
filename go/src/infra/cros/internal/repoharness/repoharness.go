@@ -392,16 +392,22 @@ func (r *RepoHarness) Checkout(manifestProject RemoteProject, branch, manifestFi
 		return "", errors.Annotate(err, "failed to clone remote manifest project").Err()
 	}
 
+	repoPath, cleanup, err := repo.EnsureRepoTool()
+	defer cleanup()
+	if err != nil {
+		return "", errors.Annotate(err, "failed to install repo tool").Err()
+	}
+
 	initArgs := repo.InitArgs{
 		ManifestURL:    manifestRepoCheckout,
 		ManifestBranch: branch,
 		ManifestFile:   manifestFile,
 	}
 	ctx := context.Background()
-	if err := repo.Init(ctx, checkoutPath, "repo", initArgs); err != nil {
+	if err := repo.Init(ctx, checkoutPath, repoPath, initArgs); err != nil {
 		return "", errors.Annotate(err, "failed to repo init").Err()
 	}
-	if err := repo.Sync(ctx, checkoutPath, "repo"); err != nil {
+	if err := repo.Sync(ctx, checkoutPath, repoPath); err != nil {
 		return "", errors.Annotate(err, "failed to repo sync").Err()
 	}
 

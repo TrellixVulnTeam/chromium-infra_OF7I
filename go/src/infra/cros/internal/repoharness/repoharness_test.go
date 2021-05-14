@@ -335,13 +335,13 @@ func TestCheckout(t *testing.T) {
 		CommandRunners: []cmd.FakeCommandRunner{
 			{
 				ExpectedDir: expectedDir,
-				ExpectedCmd: []string{"repo", "init",
+				ExpectedCmdPartial: []string{"init",
 					"-u", filepath.Join(harness.HarnessRoot(), "manifest-repo"),
 					"-b", "main", "-m", "default.xml"},
 			},
 			{
-				ExpectedDir: expectedDir,
-				ExpectedCmd: []string{"repo", "sync"},
+				ExpectedDir:        expectedDir,
+				ExpectedCmdPartial: []string{"sync"},
 			},
 		},
 	}

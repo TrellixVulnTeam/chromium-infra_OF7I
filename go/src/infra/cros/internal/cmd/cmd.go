@@ -34,12 +34,14 @@ func (c RealCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf 
 // FakeCommandRunner does not actually run commands.
 // It is used for testing.
 type FakeCommandRunner struct {
-	Stdout      string
-	Stderr      string
-	ExpectedCmd []string
-	ExpectedDir string
-	FailCommand bool
-	FailError   string
+	Stdout string
+	Stderr string
+	// Only one of ExpectedCmd and ExpectedCmdPartial can be set.
+	ExpectedCmd        []string
+	ExpectedCmdPartial []string
+	ExpectedDir        string
+	FailCommand        bool
+	FailError          string
 }
 
 // RunCommand runs a command (not actually).
@@ -47,11 +49,19 @@ func (c FakeCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf 
 	stdoutBuf.WriteString(c.Stdout)
 	stderrBuf.WriteString(c.Stderr)
 	cmd := append([]string{name}, args...)
-	if len(c.ExpectedCmd) > 0 {
+	if len(c.ExpectedCmd) > 0 && len(c.ExpectedCmdPartial) > 0 {
+		return fmt.Errorf("ExpectedCmd and ExpectedCmdPartial cannot both be set")
+	} else if len(c.ExpectedCmd) > 0 {
 		if !reflect.DeepEqual(cmd, c.ExpectedCmd) {
 			expectedCmd := strings.Join(c.ExpectedCmd, " ")
 			actualCmd := strings.Join(cmd, " ")
 			return fmt.Errorf("wrong cmd; expected %s got %s", expectedCmd, actualCmd)
+		}
+	} else if len(c.ExpectedCmdPartial) > 0 {
+		partialStr := strings.Join(c.ExpectedCmdPartial, " ")
+		cmdStr := strings.Join(cmd, " ")
+		if !strings.Contains(cmdStr, partialStr) {
+			return fmt.Errorf("wrong cmd; %s did not contain %s", cmdStr, partialStr)
 		}
 	}
 	if c.ExpectedDir != "" {
