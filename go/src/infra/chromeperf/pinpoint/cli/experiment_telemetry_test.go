@@ -112,10 +112,18 @@ func TestBatchKickoff(t *testing.T) {
 		experiment := proto.Experiment{}
 
 		c := &fakePinpointClient{}
-		var wg sync.WaitGroup
+
+		var wg_errs sync.WaitGroup
+		wg_errs.Add(1)
 		errC := make(chan error)
+		go handleErrors(context.Background(), &wg_errs, errC)
+
+		var wg sync.WaitGroup
 		runBatchJob(&runner, &wg, errC, context.Background(), os.Stdout, c, "", batch_experiments, &experiment)
 		wg.Wait()
+		close(errC)
+		wg_errs.Wait()
+
 		expected := []startedJob{
 			{
 				Benchmark:     "desktop",
