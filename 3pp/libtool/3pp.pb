@@ -7,7 +7,7 @@ create {
     }
     unpack_archive: true
     patch_dir: "patches"
-    patch_version: "chromium.2"
+    patch_version: "chromium.3"
   }
   build {
     tool: "tools/help2man"
