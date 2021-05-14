@@ -38,18 +38,19 @@ WIZARD_TEMPLATE_PATH = 'templates/wizard.ezt'
 WIZARD_HTML_TEMPLATE = ezt.Template(WIZARD_TEMPLATE_PATH)
 
 legacy_template = """Chrome Version       : %s
-OS Version: %s
+OS Version           : %s
 URLs (if applicable) :
 Other browsers tested:
-  Add OK or FAIL after other browsers where you have tested this issue:
+  Add OK or FAIL, along with the version, after other browsers where you
+have tested this issue:
      Safari:
     Firefox:
-    IE/Edge:
+       Edge:
 
 What steps will reproduce the problem?
-1.
-2.
-3.
+(1)
+(2)
+(3)
 
 What is the expected result?
 
@@ -60,6 +61,9 @@ What happens instead%s?
 Please provide any additional information below. Attach a screenshot if
 possible.
 %s
+
+For graphics-related bugs, please copy/paste the contents of the about:gpu
+page at the end of this report.
 """
 
 DEFAULT_BUG_TEMPLATE_NAME = 'Defect%20report%20from%20user'
