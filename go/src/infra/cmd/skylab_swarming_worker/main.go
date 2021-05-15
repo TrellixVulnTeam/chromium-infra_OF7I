@@ -38,6 +38,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	luciErrors "go.chromium.org/luci/common/errors"
 	lflag "go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging/gologger"
 
@@ -139,15 +140,15 @@ func mainInner(a *args) error {
 
 	switch {
 	case a.taskName == setStateNeedsRepairTaskName:
-		i.BotInfo.HostState = dutstate.NeedsRepair
+		setStateForDUTs(i, dutstate.NeedsRepair)
 	case a.taskName == setStateReservedTaskName:
-		i.BotInfo.HostState = dutstate.Reserved
+		setStateForDUTs(i, dutstate.Reserved)
 	case a.taskName == setStateManualRepairTaskName:
-		i.BotInfo.HostState = dutstate.ManualRepair
+		setStateForDUTs(i, dutstate.ManualRepair)
 	case a.taskName == setStateNeedsReplacementTaskName:
-		i.BotInfo.HostState = dutstate.NeedsReplacement
+		setStateForDUTs(i, dutstate.NeedsReplacement)
 	case a.taskName == setStateNeedsManualRepairTaskName:
-		i.BotInfo.HostState = dutstate.NeedsManualRepair
+		setStateForDUTs(i, dutstate.NeedsManualRepair)
 	case isSupportedLuciferTask(a):
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	default:
@@ -160,12 +161,14 @@ func mainInner(a *args) error {
 	return luciferErr
 }
 
-func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writeCloser) error {
-	ta := lucifer.TaskArgs{
-		AbortSock:  filepath.Join(i.ResultsDir, "abort_sock"),
-		GCPProject: gcpProject,
-		ResultsDir: i.ResultsDir,
+func setStateForDUTs(i *harness.Info, state dutstate.State) {
+	for _, dh := range i.DUTs {
+		dh.LocalState.HostState = state
 	}
+}
+
+func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writeCloser) error {
+	var fifoPath string
 	if a.logdogAnnotationURL != "" {
 		// Set up FIFO, pipe, and goroutines like so:
 		//
@@ -174,27 +177,36 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		// lucifer -> FIFO -go-/
 		//
 		// Both the worker and Lucifer need to write to LogDog.
-		fifoPath := filepath.Join(i.ResultsDir, "logdog.fifo")
+		fifoPath = filepath.Join(i.TaskResultsDir.Path, "logdog.fifo")
 		fc, err := fifo.NewCopier(annotWriter, fifoPath)
 		if err != nil {
 			return err
 		}
 		defer fc.Close()
-		ta.LogDogFile = fifoPath
 	}
-
-	luciferErr := runLuciferTask(ctx, i, a, ta)
-	if luciferErr != nil {
-		// Attempt to parse results regardless of lucifer errors.
-		luciferErr = errors.Wrap(luciferErr, "run lucifer task")
-		log.Printf("Encountered error, continuing with result parsing anyway."+
-			"Error: %s", luciferErr)
+	var errs []error
+	for _, dh := range i.DUTs {
+		ta := lucifer.TaskArgs{
+			AbortSock:  filepath.Join(dh.ResultsDir, "abort_sock"),
+			GCPProject: gcpProject,
+			ResultsDir: dh.ResultsDir,
+			LogDogFile: fifoPath,
+		}
+		luciferErr := runLuciferTask(ctx, dh, a, ta)
+		if luciferErr != nil {
+			// Attempt to parse results regardless of lucifer errors.
+			luciferErr = errors.Wrap(luciferErr, "run lucifer task")
+			log.Printf("Encountered error on %s. Error: %s", dh.DUTName, luciferErr)
+			errs = append(errs, luciferErr)
+		}
 	}
-
 	annotations.BuildStep(annotWriter, "Epilog")
 	annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
 	annotations.StepClosed(annotWriter)
-	return luciferErr
+	if len(errs) > 0 {
+		return luciErrors.Annotate(luciErrors.MultiError(errs), "lucifer flow").Err()
+	}
+	return nil
 }
 
 func harnessOptions(a *args) []harness.Option {
@@ -232,7 +244,7 @@ func getTaskName(a *args) string {
 	}
 }
 
-func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) error {
+func runLuciferTask(ctx context.Context, dh *harness.DUTHarness, a *args, ta lucifer.TaskArgs) error {
 	if !a.deadline.IsZero() {
 		var c context.CancelFunc
 		ctx, c = context.WithDeadline(ctx, a.deadline)
@@ -240,12 +252,12 @@ func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.Ta
 	}
 	switch {
 	case isAuditTask(a):
-		return runAuditTask(ctx, i, a.actions, ta)
+		return runAuditTask(ctx, dh, a.actions, ta)
 	case isAdminTask(a):
 		n, _ := getAdminTask(a.taskName)
-		return runAdminTask(ctx, i, n, ta)
+		return runAdminTask(ctx, dh, n, ta)
 	case isDeployTask(a):
-		return runDeployTask(ctx, i, a.actions, ta)
+		return runDeployTask(ctx, dh, a.actions, ta)
 	default:
 		panic("Unsupported task type")
 	}
@@ -285,15 +297,15 @@ func isRepairTask(a *args) bool {
 }
 
 // runAdminTask runs an admin task.  name is the name of the task.
-func runAdminTask(ctx context.Context, i *harness.Info, name string, ta lucifer.TaskArgs) (err error) {
+func runAdminTask(ctx context.Context, dh *harness.DUTHarness, name string, ta lucifer.TaskArgs) (err error) {
 	r := lucifer.AdminTaskArgs{
 		TaskArgs: ta,
-		Host:     i.DUTName,
+		Host:     dh.DUTName,
 		Task:     name,
 	}
 
-	cmd := lucifer.AdminTaskCommand(i.LuciferConfig(), r)
-	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
+	cmd := lucifer.AdminTaskCommand(dh.BotInfo.LuciferConfig(), r)
+	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run admin task")
 	}
 	return nil
@@ -302,15 +314,15 @@ func runAdminTask(ctx context.Context, i *harness.Info, name string, ta lucifer.
 // runDeployTask runs a deploy task using lucifer.
 //
 // actions is a possibly empty comma separated list of deploy actions to run
-func runDeployTask(ctx context.Context, i *harness.Info, actions string, ta lucifer.TaskArgs) error {
+func runDeployTask(ctx context.Context, dh *harness.DUTHarness, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.DeployTaskArgs{
 		TaskArgs: ta,
-		Host:     i.DUTName,
+		Host:     dh.DUTName,
 		Actions:  actions,
 	}
 
-	cmd := lucifer.DeployTaskCommand(i.LuciferConfig(), r)
-	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
+	cmd := lucifer.DeployTaskCommand(dh.BotInfo.LuciferConfig(), r)
+	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run deploy task")
 	}
 	return nil
@@ -319,15 +331,15 @@ func runDeployTask(ctx context.Context, i *harness.Info, actions string, ta luci
 // runAuditTask runs an audit task using lucifer.
 //
 // actions is a possibly empty comma separated list of deploy actions to run
-func runAuditTask(ctx context.Context, i *harness.Info, actions string, ta lucifer.TaskArgs) error {
+func runAuditTask(ctx context.Context, dh *harness.DUTHarness, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.AuditTaskArgs{
 		TaskArgs: ta,
-		Host:     i.DUTName,
+		Host:     dh.DUTName,
 		Actions:  actions,
 	}
 
-	cmd := lucifer.AuditTaskCommand(i.LuciferConfig(), r)
-	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
+	cmd := lucifer.AuditTaskCommand(dh.BotInfo.LuciferConfig(), r)
+	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run audit task")
 	}
 	return nil

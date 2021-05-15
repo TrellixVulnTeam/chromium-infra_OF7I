@@ -21,7 +21,7 @@ type luciferResult struct {
 }
 
 // runLuciferCommand runs a Lucifer exec.Cmd and processes Lucifer events.
-func runLuciferCommand(ctx context.Context, cmd *exec.Cmd, i *harness.Info, abortSock string) (*luciferResult, error) {
+func runLuciferCommand(ctx context.Context, cmd *exec.Cmd, dh *harness.DUTHarness, abortSock string) (*luciferResult, error) {
 	log.Printf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	cmd.Stderr = os.Stderr
 
@@ -38,7 +38,7 @@ func runLuciferCommand(ctx context.Context, cmd *exec.Cmd, i *harness.Info, abor
 		case isHostStatus(e):
 			s := hostStateUpdates[e]
 			log.Printf("Got host event '%s', set host state to %s", e, s)
-			i.BotInfo.HostState = s
+			dh.LocalState.HostState = s
 		default:
 		}
 	}
