@@ -41,6 +41,7 @@ func application(p Params) *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			cmdValidate(),
+			cmdRead(),
 			cmdExport(),
 			cmdCompute(),
 			cmdChromiumUpdate(&p),

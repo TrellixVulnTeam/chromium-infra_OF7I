@@ -172,6 +172,29 @@ func TestRead(t *testing.T) {
 			})
 		})
 
+		Convey(`Sparse`, func() {
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_SPARSE, "testdata/root/subdir")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					rootKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+				},
+			})
+		})
+
 		Convey(`Reduced`, func() {
 			m, err := ReadMapping(ctx, dirmdpb.MappingForm_REDUCED, "testdata/root")
 			So(err, ShouldBeNil)
@@ -203,29 +226,6 @@ func TestRead(t *testing.T) {
 					},
 				},
 			})
-		})
-	})
-
-	Convey(`ReadComputed`, t, func() {
-		m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/a", "testdata/inheritance/a/b")
-		So(err, ShouldBeNil)
-		So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
-			Dirs: map[string]*dirmdpb.Metadata{
-				"a": {
-					TeamEmail: "chromium-review@chromium.org",
-					Monorail: &dirmdpb.Monorail{
-						Project:   "chromium",
-						Component: "Component",
-					},
-				},
-				"a/b": {
-					TeamEmail: "chromium-review@chromium.org",
-					Monorail: &dirmdpb.Monorail{
-						Project:   "chromium",
-						Component: "Component>Child",
-					},
-				},
-			},
 		})
 	})
 }

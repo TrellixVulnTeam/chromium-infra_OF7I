@@ -23,7 +23,10 @@ func cmdExport() *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: `export`,
 		ShortDesc: "export metadata from a directory tree",
+		Advanced:  true,
 		LongDesc: text.Doc(`
+			DEPRECATED: use "dirmd read" instead.
+
 			Export metadata from a directory tree to stdout or to a file.
 
 			The output format is JSON form of chrome.dir_metadata.Mapping protobuf

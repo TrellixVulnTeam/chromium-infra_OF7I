@@ -92,7 +92,7 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		return nil, nil
 	}
 
-	// Ensure all dir paths are absolute, for simplicity down the road.
+	// Ensure all dir paths are clean and absolute, for simplicity down the road.
 	for i, d := range dirs {
 		var err error
 		if dirs[i], err = filepath.Abs(d); err != nil {
@@ -110,36 +110,69 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		Mapping:         *NewMapping(0),
 		semReadMetadata: semaphore.NewWeighted(int64(runtime.NumCPU())),
 	}
+	r.eg, ctx = errgroup.WithContext(ctx)
+	defer r.eg.Wait()
+
 	// Find the metadata root, i.e. the root dir of the root repo.
 	if r.Root, err = findMetadataRoot(byRepoRoot); err != nil {
 		return nil, err
 	}
 
 	// Read the metadata files concurrently.
-	eg, ctx := errgroup.WithContext(ctx)
-	defer eg.Wait()
 	for repoRoot, repoDirs := range byRepoRoot {
 		repoRoot := repoRoot
-		for _, dir := range removeRedundantDirs(repoDirs...) {
-			dir := dir
-			eg.Go(func() error {
-				err := r.ReadGitFiles(ctx, repoRoot, dir, form == dirmdpb.MappingForm_FULL)
-				return errors.Annotate(err, "failed to process %q", dir).Err()
-			})
+
+		if form == dirmdpb.MappingForm_SPARSE {
+			for _, dir := range repoDirs {
+				dir := dir
+				r.eg.Go(func() error {
+					err := r.readUpMissing(ctx, dir)
+					return errors.Annotate(err, "failed to process %q", dir).Err()
+				})
+			}
+		} else {
+			repoDirs = removeRedundantDirs(repoDirs...)
+			for _, dir := range repoDirs {
+				dir := dir
+				r.eg.Go(func() error {
+					err := r.ReadGitFiles(ctx, repoRoot, dir, form == dirmdpb.MappingForm_FULL)
+					return errors.Annotate(err, "failed to process %q", dir).Err()
+				})
+			}
 		}
 	}
-	if err := eg.Wait(); err != nil {
+	if err := r.eg.Wait(); err != nil {
 		return nil, err
 	}
 
 	// Finally, bring the mapping to the desired form.
 	switch form {
+	case dirmdpb.MappingForm_SPARSE:
+		if err := r.Mapping.ComputeAll(); err != nil {
+			return nil, err
+		}
+		// Trim down the mapping.
+		ret := NewMapping(len(dirs))
+		for _, dir := range dirs {
+			key, err := r.DirKey(dir)
+			if err != nil {
+				panic(err) // Impossible: we have just used these paths above.
+			}
+			ret.Dirs[key] = r.Mapping.Dirs[key]
+		}
+		return ret, nil
+
 	case dirmdpb.MappingForm_REDUCED:
-		err = r.Mapping.Reduce()
+		if err := r.Mapping.Reduce(); err != nil {
+			return nil, err
+		}
 	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
-		err = r.Mapping.ComputeAll()
+		if err := r.Mapping.ComputeAll(); err != nil {
+			return nil, err
+		}
 	}
-	return &r.Mapping, err
+
+	return &r.Mapping, nil
 }
 
 // findMetadataRoot returns the root directory of the root repo.
@@ -218,37 +251,6 @@ func removeRedundantDirs(dirs ...string) []string {
 	return ret
 }
 
-// ReadComputed returns computed metadata for the target directories.
-// All returned metadata includes inherited metadata, starting from root.
-// The returned mapping includes entries only for targets.
-//
-// Reads metadata files only for directories that are on the node path from
-// root to each of the targets. In particular, does not necessarily read
-// the entire tree under root, so this is more efficient than ReadMapping.
-func ReadComputed(root string, targets ...string) (*Mapping, error) {
-	r := &mappingReader{Root: root}
-	for _, target := range targets {
-		if err := r.readUpMissing(target); err != nil {
-			return nil, errors.Annotate(err, "failed to read metadata for %q", target).Err()
-		}
-	}
-
-	if err := r.ComputeAll(); err != nil {
-		return nil, err
-	}
-
-	// Filter by targets.
-	ret := NewMapping(len(targets))
-	for _, target := range targets {
-		key, err := r.DirKey(target)
-		if err != nil {
-			panic(err) // Impossible: we have just used these paths above.
-		}
-		ret.Dirs[key] = r.Mapping.Dirs[key]
-	}
-	return ret, nil
-}
-
 // mappingReader reads Mapping from the file system.
 type mappingReader struct {
 	// Root is an absolute path to the metadata root directory.
@@ -260,6 +262,7 @@ type mappingReader struct {
 
 	mu              sync.Mutex
 	semReadMetadata *semaphore.Weighted
+	eg              *errgroup.Group
 }
 
 // ReadGitFiles reads metadata files-in-git under dir and adds them to r.Mapping.
@@ -274,113 +277,123 @@ func (r *mappingReader) ReadGitFiles(ctx context.Context, absRepoRoot, absTreeRo
 	}
 	keyPrefix := filepath.ToSlash(keyPrefixNative)
 
-	eg, ctx := errgroup.WithContext(ctx)
-	defer eg.Wait()
-
 	// Concurrently start `git ls-files`, read its output and read the discovered
 	// metadata files.
 
-	eg.Go(func() error {
-		cmd := exec.CommandContext(ctx, gitBinary, "-C", absRepoRoot, "ls-files", "--full-name", absTreeRoot)
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return err
-		}
-		if err := cmd.Start(); err != nil {
-			return errors.Annotate(err, "failed to start `git ls-files`").Err()
-		}
-		defer cmd.Wait() // do not exit the func until the subprocess exits.
+	cmd := exec.CommandContext(ctx, gitBinary, "-C", absRepoRoot, "ls-files", "--full-name", absTreeRoot)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return errors.Annotate(err, "failed to start `git ls-files`").Err()
+	}
+	defer cmd.Wait() // do not exit the func until the subprocess exits.
 
-		seen := stringset.New(0)
-		scan := bufio.NewScanner(stdout)
-		for scan.Scan() {
-			relFileName := scan.Text()      // slash-separated, relative to repo root
-			relDir := path.Dir(relFileName) // slash-separated, relative to repo root
-			key := path.Join(keyPrefix, relDir)
+	seen := stringset.New(0)
+	scan := bufio.NewScanner(stdout)
+	for scan.Scan() {
+		relFileName := scan.Text()      // slash-separated, relative to repo root
+		relDir := path.Dir(relFileName) // slash-separated, relative to repo root
+		key := path.Join(keyPrefix, relDir)
 
-			if preserveFileStructure {
-				// Ensure the existence of the directory is recorded even if there is no metadata.
-				r.mu.Lock()
-				if _, ok := r.Dirs[key]; !ok {
-					r.Dirs[key] = nil
-				}
-				r.mu.Unlock()
+		if preserveFileStructure {
+			// Ensure the existence of the directory is recorded even if there is no metadata.
+			r.mu.Lock()
+			if _, ok := r.Dirs[key]; !ok {
+				r.Dirs[key] = nil
 			}
-
-			if base := path.Base(relFileName); base != Filename && base != OwnersFilename {
-				// Not a metadata file.
-				continue
-			}
-			if !seen.Add(relDir) {
-				// Already seen this dir.
-				continue
-			}
-
-			// Schedule a read.
-			eg.Go(func() error {
-				if err := r.semReadMetadata.Acquire(ctx, 1); err != nil {
-					return err
-				}
-				defer r.semReadMetadata.Release(1)
-
-				absDir := filepath.Join(absRepoRoot, filepath.FromSlash(relDir))
-				switch md, err := ReadMetadata(absDir); {
-				case err != nil:
-					return errors.Annotate(err, "failed to read metadata from %q", absDir).Err()
-				case md != nil:
-					r.mu.Lock()
-					r.Dirs[key] = md
-					r.mu.Unlock()
-				}
-
-				return nil
-			})
+			r.mu.Unlock()
 		}
-		return scan.Err()
-	})
 
-	return eg.Wait()
+		if base := path.Base(relFileName); base != Filename && base != OwnersFilename {
+			// Not a metadata file.
+			continue
+		}
+		if !seen.Add(relDir) {
+			// Already seen this dir.
+			continue
+		}
+
+		absDir := filepath.Join(absRepoRoot, filepath.FromSlash(relDir))
+		r.goReadDir(ctx, absDir, key)
+	}
+	return scan.Err()
 }
 
-// readUpMissing reads metadata of directories on the node path from target to
-// root, and stops as soon as it finds a directory with metadata.
-func (r *mappingReader) readUpMissing(target string) error {
-	root := filepath.Clean(r.Root)
-	target = filepath.Clean(target)
+// goReadDir starts a goroutine with r.eg to read the metadata of the directory.
+func (r *mappingReader) goReadDir(ctx context.Context, absDir, key string) {
+	r.eg.Go(func() error {
+		if err := r.semReadMetadata.Acquire(ctx, 1); err != nil {
+			return err
+		}
+		defer r.semReadMetadata.Release(1)
 
-	for {
-		key, err := r.DirKey(target)
+		md, err := ReadMetadata(absDir)
 		switch {
 		case err != nil:
-			return err
-		case r.Dirs[key] != nil:
-			// Exit early.
+			return errors.Annotate(err, "failed to read metadata from %q", absDir).Err()
+		case md == nil:
 			return nil
 		}
 
-		switch meta, err := ReadMetadata(target); {
-		case err != nil:
-			return errors.Annotate(err, "failed to read metadata of %q", target).Err()
+		r.mu.Lock()
+		defer r.mu.Unlock()
 
-		case meta != nil:
-			if r.Dirs == nil {
-				r.Dirs = map[string]*dirmdpb.Metadata{}
-			}
-			r.Dirs[key] = meta
+		r.Dirs[key] = md
+
+		// TODO(crbug.com/1179786): add support for Metadata.imports.
+
+		return nil
+	})
+}
+
+// readUpMissing reads metadata of the specified directory and its ancestors,
+// or until it reaches a directory already present in r.Dirs.
+func (r *mappingReader) readUpMissing(ctx context.Context, dir string) error {
+	key, err := r.DirKey(dir)
+	if err != nil {
+		return err
+	}
+
+	// Compute the furthest ancestor and in a format suitable for exact-match
+	// checking.
+	// Strictly speaking it is incorrect to use r.Root, repo root should be
+	// used instead, but this would be a breaking change in Chromium.
+	// For example, src/v8/DIR_METADATA doesn't specify monorail project,
+	// so if this "bug" is fixed, then v8 would lose its monorail project.
+	// Also note that this is consistent with nearestAncestor() function behavior,
+	// which goes up the dir tree and does not stop at the git repo root.
+	// TODO(nodir): fix this.
+	upTo := filepath.Clean(normalizeDir(r.Root))
+
+	dirNormalized := filepath.Clean(normalizeDir(dir))
+	for {
+		r.mu.Lock()
+		_, seen := r.Dirs[key]
+		if !seen {
+			r.Dirs[key] = nil // mark as seen
+		}
+		r.mu.Unlock()
+		if seen {
+			return nil
 		}
 
-		if target == root {
+		r.goReadDir(ctx, dir, key)
+
+		if dirNormalized == upTo {
 			return nil
 		}
 
 		// Go up.
-		parent := filepath.Dir(target)
-		if parent == target {
-			// We have reached the root of the file system, but not `root`.
-			// This is impossible because DirKey would have failed.
-			panic("impossible")
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			panic(errors.Reason("reached the root of the file system, but not %q", upTo).Err())
 		}
-		target = parent
+		dir = parentDir
+		dirNormalized = filepath.Dir(dirNormalized)
+		// Do not call r.DirKey() again - it makes a syscall.
+		key = path.Dir(key)
 	}
 }
 

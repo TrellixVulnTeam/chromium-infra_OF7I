@@ -10,16 +10,19 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/text"
-	"go.chromium.org/luci/common/errors"
 
 	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 func cmdCompute() *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: `compute -root ROOT TARGET1 [TARGET2...]`,
 		ShortDesc: "compute metadata for the given target directories",
+		Advanced:  true,
 		LongDesc: text.Doc(`
+			DEPRECATED: use "dirmd read" instead.
+
 			Compute metadata for the given target directories.
 
 			The output format is JSON form of chrome.dir_meta.Mapping protobuf
@@ -42,10 +45,7 @@ func cmdCompute() *subcommands.Command {
 		CommandRun: func() subcommands.CommandRun {
 			r := &computeRun{}
 			r.RegisterOutputFlag()
-
-			// -root does not have a default intentionally, otherwise it is easy
-			// to run `dirmd compute` from not a repo root and not notice the problem.
-			r.Flags.StringVar(&r.root, "root", "", "Path to the root directory")
+			r.Flags.String("root", "", "Deprecated, ignored")
 			return r
 		},
 	}
@@ -53,7 +53,6 @@ func cmdCompute() *subcommands.Command {
 
 type computeRun struct {
 	baseCommandRun
-	root string
 }
 
 func (r *computeRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -62,11 +61,7 @@ func (r *computeRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (r *computeRun) run(ctx context.Context, targets []string) error {
-	if r.root == "" {
-		return errors.Reason("-root is required").Err()
-	}
-
-	mapping, err := dirmd.ReadComputed(r.root, targets...)
+	mapping, err := dirmd.ReadMapping(ctx, dirmdpb.MappingForm_SPARSE, targets...)
 	if err != nil {
 		return err
 	}

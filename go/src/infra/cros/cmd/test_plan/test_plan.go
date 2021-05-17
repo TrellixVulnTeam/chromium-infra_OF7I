@@ -11,6 +11,11 @@ import (
 	"github.com/maruel/subcommands"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	igerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/testplan"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
+
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/auth"
@@ -22,9 +27,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
-	igerrit "infra/cros/internal/gerrit"
-	"infra/cros/internal/testplan"
-	"infra/tools/dirmd"
 )
 
 var logCfg = gologger.LoggerConfig{
@@ -233,7 +235,7 @@ func (r *generateRun) run(ctx context.Context) error {
 }
 
 var cmdValidate = &subcommands.Command{
-	UsageLine: "validate -root ROOT TARGET1 [TARGET2...]",
+	UsageLine: "validate TARGET1 [TARGET2...]",
 	ShortDesc: "validate metadata files",
 	LongDesc: text.Doc(`
 		Validate metadata files.
@@ -250,14 +252,12 @@ var cmdValidate = &subcommands.Command{
 	`),
 	CommandRun: func() subcommands.CommandRun {
 		r := &validateRun{}
-		r.Flags.StringVar(&r.root, "root", "", "Path to the root directory, typically the root of the ChromeOS checkout")
 		return r
 	},
 }
 
 type validateRun struct {
 	subcommands.CommandRunBase
-	root string
 }
 
 func (r *validateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -265,11 +265,8 @@ func (r *validateRun) Run(a subcommands.Application, args []string, env subcomma
 }
 
 func (r *validateRun) run(a subcommands.Application, args []string, env subcommands.Env) error {
-	if r.root == "" {
-		return errors.New("-root is required")
-	}
-
-	mapping, err := dirmd.ReadComputed(r.root, args...)
+	ctx := cli.GetContext(a, r, env)
+	mapping, err := dirmd.ReadMapping(ctx, dirmdpb.MappingForm_SPARSE, args...)
 	if err != nil {
 		return err
 	}

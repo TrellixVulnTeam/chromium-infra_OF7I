@@ -34,6 +34,14 @@ enum MappingForm {
   // Like ORIGINAL, but each entry includes inherited metadata.
   COMPUTED = 1;
 
+  // Like COMPUTED, but the mapping contains metadata only for the explicitly
+  // specified directories. For example, if metadata was requested for
+  // directories "foo/bar" and "foo/baz", then the mapping will contain only
+  // them, and not include "foo" or "foo/bar/qux".
+  //
+  // Typically reading a sparse mapping is much faster.
+  SPARSE = 4;
+
   // Like COMPUTED, but a Dirs entry exists even if the directory does not
   // define any metadata.
   FULL = 2;
