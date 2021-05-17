@@ -138,7 +138,7 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	if err != nil {
 		return err
 	}
-	if err := gj.doDownloadArtifacts(ctx, httpClient, gj.workDir, resp); err != nil {
+	if err := gj.doDownloadArtifacts(ctx, os.Stdout, httpClient, gj.workDir, resp); err != nil {
 		return err
 	}
 	return nil
@@ -215,7 +215,7 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	if err != nil {
 		return err
 	}
-	if err := wj.doDownloadArtifacts(ctx, httpClient, wj.workDir, job); err != nil {
+	if err := wj.doDownloadArtifacts(ctx, os.Stdout, httpClient, wj.workDir, job); err != nil {
 		return err
 	}
 	return nil

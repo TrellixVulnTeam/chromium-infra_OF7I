@@ -15,9 +15,11 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -162,4 +164,33 @@ func wrapCommand(p Param, newCmd func() pinpointCommand) func() subcommands.Comm
 		cmd.RegisterFlags(p)
 		return wrappedPinpointCommand{cmd}
 	}
+}
+
+func promptRemove(w io.Writer, path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	}
+
+	// Return if it's not terminal
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return errors.Annotate(err, "failed checking stdin stat").Err()
+	}
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		return errors.Reason("path exists: %s", path).Err()
+	}
+
+	fmt.Fprintf(w, "Path %s exists, enter 'y' to force removal of the path: ", path)
+	r := bufio.NewReader(os.Stdin)
+	l, err := r.ReadString('\n')
+	if err != nil {
+		return errors.Annotate(err, "failed reading line").Err()
+	}
+	if strings.TrimSpace(l) != "y" {
+		return errors.Reason("path exists: %s", path).Err()
+	}
+	if err := os.RemoveAll(path); err != nil {
+		return errors.Annotate(err, "failed removing: %s", path).Err()
+	}
+	return nil
 }

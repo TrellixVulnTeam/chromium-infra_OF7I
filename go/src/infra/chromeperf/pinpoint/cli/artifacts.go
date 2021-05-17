@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -55,7 +56,7 @@ func (dam *downloadArtifactsMixin) RegisterFlags(flags *flag.FlagSet, userCfg us
 	`))
 }
 
-func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *proto.Job) error {
+func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, w io.Writer, httpClient *http.Client, workDir string, job *proto.Job) error {
 	if !dam.downloadArtifacts || job.GetName() == "" {
 		return nil
 	}
@@ -63,7 +64,7 @@ func (dam *downloadArtifactsMixin) doDownloadArtifacts(ctx context.Context, http
 	case *proto.JobSpec_Bisection:
 		return errors.Reason("Not implemented").Err()
 	case *proto.JobSpec_Experiment:
-		return dam.downloadExperimentArtifacts(ctx, httpClient, workDir, job)
+		return dam.downloadExperimentArtifacts(ctx, w, httpClient, workDir, job)
 	default:
 		return errors.Reason("Unsupported Job Kind").Err()
 	}
@@ -93,15 +94,23 @@ type telemetryExperimentArtifactsManifest struct {
 	Experiment changeConfig `yaml:"experiment"`
 }
 
-func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, httpClient *http.Client, workDir string, job *proto.Job) error {
+func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, w io.Writer, httpClient *http.Client, workDir string, job *proto.Job) error {
+	id, err := pinpoint.LegacyJobID(job.Name)
+	if err != nil {
+		return errors.Annotate(err, "failed parsing pinpoint job name").Err()
+	}
+	dst, err := filepath.Abs(filepath.Join(workDir, id))
+	if err != nil {
+		return errors.Annotate(err, "failed getting absolute file path from %q %q", workDir, id).Err()
+	}
+	if err := promptRemove(os.Stdout, dst); err != nil {
+		return errors.Annotate(err, "cannot download artifacts").Err()
+	}
+
 	urls := make(abExperimentURLs)
 	m, err := urls.fromJob(job, dam.selectArtifacts)
 	if err != nil {
 		return errors.Annotate(err, "failed filtering urls").Err()
-	}
-	id, err := pinpoint.LegacyJobID(job.Name)
-	if err != nil {
-		return errors.Annotate(err, "failed parsing pinpoint job name").Err()
 	}
 
 	// Once we've validated the inputs, we'll proceed to downloading the
@@ -127,14 +136,11 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	if err := ioutil.WriteFile(filepath.Join(tmp, "manifest.yaml"), manifest, 0600); err != nil {
 		return errors.Annotate(err, "failed writing manifest file").Err()
 	}
-	dst, err := filepath.Abs(filepath.Join(workDir, id))
-	if err != nil {
-		return errors.Annotate(err, "failed getting absolute file path from %q %q", workDir, id).Err()
-	}
+
 	if err := os.Rename(tmp, dst); err != nil {
 		return errors.Annotate(err, "failed renaming file from %q to %q", tmp, dst).Err()
 	}
-	logging.Infof(ctx, "Downloaded artifacts %q", dst)
+	fmt.Fprintf(w, "Downloaded all artifacts to: %q\n", dst)
 	return nil
 }
 
@@ -162,6 +168,7 @@ func downloadIsolatedURLs(ctx context.Context, clients *isolatedClientsCache, ba
 			errs <- errors.Annotate(err, "failed downloading artifacts from isolated: %s", u).Err()
 			return
 		}
+		logging.Debugf(ctx, "Downloaded artifacts from %q", u)
 		return
 	}
 	for path, u := range urls {

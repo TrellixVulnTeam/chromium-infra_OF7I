@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint/cli/render"
 	"io"
+	"os"
 	"sync"
 
 	"infra/chromeperf/pinpoint/proto"
@@ -259,7 +260,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 		errC <- err
 		return
 	}
-	if err := e.doDownloadArtifacts(ctx, httpClient, e.workDir, j); err != nil {
+	if err := e.doDownloadArtifacts(ctx, os.Stdout, httpClient, e.workDir, j); err != nil {
 		errC <- err
 		return
 	}

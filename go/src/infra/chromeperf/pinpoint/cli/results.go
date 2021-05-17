@@ -45,8 +45,9 @@ func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir strin
 	if err != nil {
 		return "", errors.Annotate(err, "failed getting absolute file path from %q %q", dstFile, filename).Err()
 	}
-	if _, err := os.Stat(dstFile); !os.IsNotExist(err) {
-		return "", errors.Reason("cannot download result to %v: that file already exists", dstFile).Err()
+
+	if err := promptRemove(os.Stdout, dstFile); err != nil {
+		return "", errors.Annotate(err, "cannot download result file").Err()
 	}
 
 	src, err := gcs.Bucket(bucket).Object(path).NewReader(ctx)
