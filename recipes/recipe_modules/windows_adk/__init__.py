@@ -18,6 +18,11 @@ PROPERTIES = {
             help='Refs to pull windows adk',
             param_name='win_adk_refs',
             kind=str,
-            default='latest',
-        ),
+            default='latest'),
+    'win_adk_winpe_refs':
+        Property(
+            help='Refs to pull win-pe add-on',
+            param_name='win_adk_winpe_refs',
+            kind=str,
+            default='latest'),
 }

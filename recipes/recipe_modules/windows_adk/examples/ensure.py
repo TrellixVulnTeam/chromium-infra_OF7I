@@ -15,5 +15,7 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (api.test('basic') + api.properties(win_adk_refs='canary') +
-         api.post_process(StepCommandRE, 'ensure windows adk present', []))
+  yield (api.test('basic') +
+         api.properties(win_adk_refs='canary', win_adk_winpe_refs='canary') +
+         api.post_process(StepCommandRE, 'ensure windows adk present', []) +
+         api.post_process(StepCommandRE, 'ensure win-pe add-on present', []))

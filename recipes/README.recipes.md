@@ -870,17 +870,21 @@ Args:
 
 [DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-#### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#14)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows ADK distributed via CIPD.
 
-&mdash; **def [ensure](/recipes/recipe_modules/windows_adk/api.py#22)(self, install=True):**
+&mdash; **def [ensure](/recipes/recipe_modules/windows_adk/api.py#24)(self, install=True):**
 
 Ensure the presence of the Windows ADK.
 
-&mdash; **def [ensure\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#31)(self, refs):**
+&mdash; **def [ensure\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#36)(self, refs):**
 
 Downloads & Installs the Windows ADK.
+
+&mdash; **def [ensure\_win\_adk\_winpe](/recipes/recipe_modules/windows_adk/api.py#45)(self, refs):**
+
+Ensures that the WinPE add-on is available.
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
