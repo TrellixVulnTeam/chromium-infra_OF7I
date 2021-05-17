@@ -32,7 +32,7 @@
       "--revision",
       "s@HEAD",
       "--refs",
-      "refs/heads/master"
+      "refs/heads/main"
     ],
     "cwd": "[CACHE]/builder/https___chromium_chromium_tools_build",
     "env": {

@@ -36,7 +36,7 @@
       "--revision",
       "infra/go/src/go.chromium.org/luci@1111111111111111111111111111111111111111",
       "--refs",
-      "refs/heads/master",
+      "refs/heads/main",
       "--refs",
       "refs/heads/master"
     ],
