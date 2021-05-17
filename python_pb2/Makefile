@@ -32,6 +32,7 @@ regenerate: $(INFRA)/cipd/protoc $(TOOLS)/protoc-gen-prpc-python
 		$(LUCI_GO)/cv/api/recipe/v1/*.proto \
 		$(LUCI_GO)/cv/api/config/v2/*.proto \
 		$(LUCI_GO)/resultdb/proto/v1/*.proto \
+		$(LUCI_GO)/scheduler/appengine/messages/config.proto  \
 		$(LUCI_GO)/server/auth/delegation/messages/*.proto  \
 		$(LUCI_GO)/swarming/proto/api/*.proto \
 		$(LUCI_GO)/tokenserver/api/*.proto  \
