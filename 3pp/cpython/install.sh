@@ -17,8 +17,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # $PATCH_VERSION.
 PY_VERSION="$_3PP_VERSION+${_3PP_PATCH_VERSION}"
 
-CPPFLAGS="-I$DEPS_PREFIX/include"
-LDFLAGS="-L$DEPS_PREFIX/lib"
+# Don't add $DEPS_PREFIX to CPPFLAGS and LDFLAGS until after we've built
+# the bootstrap python! LDFLAGS, in particular, is already in the environment
+# for dockcross containers, so these changes are picked up by the configure
+# script. The 3pp-built libraries in $DEPS_PREFIX cannot be used to build the
+# bootstrap python because we build it with shared modules, but the
+# $DEPS_PREFIX libraries are not compiled with -fPIC. Fortunately, the system
+# versions of these libraries are sufficient for running the bootstrap
+# interpreter.
 
 export CONFIG_ARGS="--host $CROSS_TRIPLE"
 
@@ -84,6 +90,9 @@ else
   # container.
   INTERP=python2
 fi
+
+CPPFLAGS="-I$DEPS_PREFIX/include"
+LDFLAGS="-L$DEPS_PREFIX/lib"
 
 # OpenSSL 1.1.1 depends on pthread, so it needs to come LAST. Python's
 # Makefile has an LDLAST to allow some ldflags to be the very last thing on
