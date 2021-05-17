@@ -17,7 +17,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +31,7 @@ func TestTokenCacheCreation(t *testing.T) {
 	t.Parallel()
 	Convey("Creates a missing cache directory", t, func() {
 		ctx := context.Background()
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
+		td, err := os.MkdirTemp(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
 		os.Setenv("PINPOINT_CACHE_DIR", td)
@@ -44,7 +43,7 @@ func TestTokenCacheCreation(t *testing.T) {
 	})
 	Convey("Stale lock file fails token cache creation", t, func() {
 		ctx := context.Background()
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
+		td, err := os.MkdirTemp(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
 		os.Setenv("PINPOINT_CACHE_DIR", td)
@@ -109,7 +108,7 @@ func TestTokenCacheFunctionality(t *testing.T) {
 	// we can respond appropriately.
 	Convey("Given a valid token cache", t, func() {
 		ctx := context.Background()
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
+		td, err := os.MkdirTemp(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
 		os.Setenv("PINPOINT_CACHE_DIR", td)

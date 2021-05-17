@@ -23,7 +23,7 @@ import (
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/proto"
 	"infra/chromeperf/pinpoint/server/convert"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -199,7 +199,7 @@ func (s *pinpointServer) GetJob(ctx context.Context, r *proto.GetJobRequest) (*p
 	case http.StatusOK:
 		break
 	default:
-		bs, _ := ioutil.ReadAll(res.Body)
+		bs, _ := io.ReadAll(res.Body)
 		grpclog.Errorf("HTTP status %s: %s", res.Status, bs)
 		return nil, status.Errorf(codes.Internal, "failed request to legacy service: %s", res.Status)
 	}

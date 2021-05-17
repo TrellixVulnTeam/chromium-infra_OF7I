@@ -17,7 +17,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -63,7 +62,7 @@ const invalidIDToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczo
 func TestTokenVerifierAndConfigFactory_EmptyCache(t *testing.T) {
 	Convey("Given an empty token cache and create a verifier and config", t, func() {
 		ctx := context.Background()
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
+		td, err := os.MkdirTemp(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
 		os.Setenv("PINPOINT_CACHE_DIR", td)

@@ -17,7 +17,7 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -93,7 +93,7 @@ func TestBugFlagParsing(t *testing.T) {
 
 func hardcodedCommandOutput(data string) writeGitCLJSON {
 	return func(intoFile string) error {
-		if err := ioutil.WriteFile(intoFile, []byte(data), 0666); err != nil {
+		if err := os.WriteFile(intoFile, []byte(data), 0666); err != nil {
 			panic(fmt.Sprintf("unexpected error while writing out fake data to %q: %v", intoFile, err))
 		}
 		return nil

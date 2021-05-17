@@ -17,7 +17,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -179,7 +178,7 @@ const (
 func guessRepositoryDefaults(writeJSON writeGitCLJSON) (gitilesHost, gerritHost, repository string, _ error) {
 	var tmpName string
 	{
-		dir, err := ioutil.TempDir("", "pinpoint_git_cl")
+		dir, err := os.MkdirTemp("", "pinpoint_git_cl")
 		if err != nil {
 			return defaultGitilesHost, defaultGerritHost, defaultRepository, err
 		}
@@ -190,7 +189,7 @@ func guessRepositoryDefaults(writeJSON writeGitCLJSON) (gitilesHost, gerritHost,
 	if err := writeJSON(tmpName); err != nil {
 		return defaultGitilesHost, defaultGerritHost, defaultRepository, err
 	}
-	bs, err := ioutil.ReadFile(tmpName)
+	bs, err := os.ReadFile(tmpName)
 	if err != nil {
 		return defaultGitilesHost, defaultGerritHost, defaultRepository, err
 	}

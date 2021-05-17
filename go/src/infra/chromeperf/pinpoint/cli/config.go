@@ -16,7 +16,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -58,7 +57,7 @@ func getUserConfig(ctx context.Context, cfgFile string, p Param) userConfig {
 	if len(cfgFile) == 0 {
 		return uc
 	}
-	bs, err := ioutil.ReadFile(cfgFile)
+	bs, err := os.ReadFile(cfgFile)
 	if os.IsNotExist(err) {
 		return uc
 	}

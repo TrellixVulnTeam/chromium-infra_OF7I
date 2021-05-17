@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,7 +55,7 @@ func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir strin
 	}
 	defer src.Close()
 
-	tmp, err := ioutil.TempFile("", filepath.Base(path))
+	tmp, err := os.CreateTemp("", filepath.Base(path))
 	if err != nil {
 		return "", err
 	}

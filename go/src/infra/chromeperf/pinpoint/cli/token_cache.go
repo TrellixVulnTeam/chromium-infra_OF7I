@@ -17,7 +17,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -41,7 +40,7 @@ type tokenCache struct {
 }
 
 func writeToTempFile(fileName string, data []byte) (string, error) {
-	f, err := ioutil.TempFile(filepath.Dir(fileName), "tmp-token-cache-*")
+	f, err := os.CreateTemp(filepath.Dir(fileName), "tmp-token-cache-*")
 	if err != nil {
 		return "", errors.Annotate(err, "failed creating temporary file").Err()
 	}
@@ -57,7 +56,7 @@ func writeToTempFile(fileName string, data []byte) (string, error) {
 }
 
 func readOrCreate(filename string) ([]byte, error) {
-	d, err := ioutil.ReadFile(filename)
+	d, err := os.ReadFile(filename)
 	if err != nil {
 		// Create the file with no contents.
 		f, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0600)

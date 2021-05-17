@@ -19,7 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
@@ -144,7 +144,7 @@ func (pm *presetsMixin) getPreset(ctx context.Context) (preset, error) {
 		return preset{}, nil
 	}
 
-	b, err := ioutil.ReadFile(pm.presetFile)
+	b, err := os.ReadFile(pm.presetFile)
 	if err != nil {
 		logging.Warningf(ctx, "failed reading preset file %q", pm.presetFile)
 		return preset{}, errors.Annotate(err, "failed reading preset file %q", pm.presetFile).Err()

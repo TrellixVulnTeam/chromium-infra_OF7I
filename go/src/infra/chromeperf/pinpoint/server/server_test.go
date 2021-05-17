@@ -18,12 +18,12 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -143,7 +143,7 @@ func TestServerService(t *testing.T) {
 
 func TestGetJob(t *testing.T) {
 	t.Parallel()
-	definedJobExperimentJSON, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
+	definedJobExperimentJSON, err := os.ReadFile("testdata/defined-job-experiment.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +215,7 @@ func TestGetJob(t *testing.T) {
 
 func TestCancelJob(t *testing.T) {
 	t.Parallel()
-	definedJobExperimentJSON, err := ioutil.ReadFile("testdata/defined-job-experiment.json")
+	definedJobExperimentJSON, err := os.ReadFile("testdata/defined-job-experiment.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,7 +279,7 @@ func TestCancelJob(t *testing.T) {
 
 func TestListJob(t *testing.T) {
 	t.Parallel()
-	listResponseJSON, err := ioutil.ReadFile("testdata/example-list-response.json")
+	listResponseJSON, err := os.ReadFile("testdata/example-list-response.json")
 	if err != nil {
 		t.Fatal(err)
 	}

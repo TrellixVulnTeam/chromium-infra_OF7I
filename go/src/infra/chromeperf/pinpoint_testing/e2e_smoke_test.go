@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,7 +86,7 @@ func startProcess(onError func(error), path string, args ...string) (cancel func
 }
 
 func setup(t *testing.T) (testPaths, error) {
-	dir, err := ioutil.TempDir("", "pinpoint_e2e_smoke_test")
+	dir, err := os.MkdirTemp("", "pinpoint_e2e_smoke_test")
 	if err != nil {
 		return testPaths{}, err
 	}

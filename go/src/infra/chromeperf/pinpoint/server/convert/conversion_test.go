@@ -5,8 +5,8 @@ package convert
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -1029,7 +1029,7 @@ func TestGerritChangeToURL(t *testing.T) {
 func TestJobToProto(t *testing.T) {
 	t.Parallel()
 	Convey("Given a defined experiment", t, func() {
-		lj, err := ioutil.ReadFile("../testdata/defined-job-experiment.json")
+		lj, err := os.ReadFile("../testdata/defined-job-experiment.json")
 		So(err, ShouldBeNil)
 		Convey("When we convert the legacy JSON", func() {
 			p, err := JobToProto(strings.NewReader(string(lj)))
@@ -1062,7 +1062,7 @@ func TestJobToProto(t *testing.T) {
 		})
 	})
 	Convey("Given an experiment with a batch id", t, func() {
-		lj, err := ioutil.ReadFile("../testdata/defined-job-experiment-with-batch-id.json")
+		lj, err := os.ReadFile("../testdata/defined-job-experiment-with-batch-id.json")
 		So(err, ShouldBeNil)
 		Convey("When we convert the legacy JSON", func() {
 			p, err := JobToProto(strings.NewReader(string(lj)))

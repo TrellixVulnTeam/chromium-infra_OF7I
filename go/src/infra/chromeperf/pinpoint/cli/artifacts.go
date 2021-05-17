@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -116,7 +115,7 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	// Once we've validated the inputs, we'll proceed to downloading the
 	// individual artifacts into a temporary directory, then rename it into the
 	// destination directory.
-	tmp, err := ioutil.TempDir(os.TempDir(), "pinpoint-cli-*")
+	tmp, err := os.MkdirTemp(os.TempDir(), "pinpoint-cli-*")
 	if err != nil {
 		return errors.Annotate(err, "failed creating temporary directory").Err()
 	}
@@ -133,7 +132,7 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	if err != nil {
 		return errors.Annotate(err, "failed marshalling YAML for manifest").Err()
 	}
-	if err := ioutil.WriteFile(filepath.Join(tmp, "manifest.yaml"), manifest, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(tmp, "manifest.yaml"), manifest, 0600); err != nil {
 		return errors.Annotate(err, "failed writing manifest file").Err()
 	}
 

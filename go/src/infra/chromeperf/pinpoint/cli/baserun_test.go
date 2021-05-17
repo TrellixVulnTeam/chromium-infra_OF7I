@@ -15,7 +15,6 @@ package cli
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,7 +26,7 @@ func TestFactorySettingFallbackCasese(t *testing.T) {
 	Convey("Given a custom PINPOINT_CACHE_DIR", t, func() {
 		ctx := context.Background()
 		baserun := &baseCommandRun{}
-		td, err := ioutil.TempDir(os.TempDir(), "pinpoint-test-*")
+		td, err := os.MkdirTemp(os.TempDir(), "pinpoint-test-*")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(td)
 		os.Setenv("PINPOINT_CACHE_DIR", td)
