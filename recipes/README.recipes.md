@@ -15,6 +15,7 @@
   * [recipe_autoroller](#recipe_modules-recipe_autoroller)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [sync_submodules](#recipe_modules-sync_submodules)
+  * [windows_adk](#recipe_modules-windows_adk)
   * [windows_sdk](#recipe_modules-windows_sdk)
   * [zip](#recipe_modules-zip)
 
@@ -62,6 +63,7 @@
   * [sync_submodules](#recipes-sync_submodules)
   * [tricium_infra](#recipes-tricium_infra)
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
+  * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
   * [zip:examples/full](#recipes-zip_examples_full)
@@ -864,6 +866,21 @@ Args:
   deps_path_prefix: path prefix used to filter out DEPS. DEPS with the
       prefix are included.
   disable_path_prefix: disable filtering out DEPS by path prefix.
+### *recipe_modules* / [windows\_adk](/recipes/recipe_modules/windows_adk)
+
+[DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+#### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#14)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+
+API for using Windows ADK distributed via CIPD.
+
+&mdash; **def [ensure](/recipes/recipe_modules/windows_adk/api.py#22)(self, install=True):**
+
+Ensure the presence of the Windows ADK.
+
+&mdash; **def [ensure\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#31)(self, refs):**
+
+Downloads & Installs the Windows ADK.
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1258,11 +1275,16 @@ direction of "True" - the worst case is we update the mirror without any new
 commits, which will generate a new synthetic commit (with a different hash
 due to a different timestamp) at the same underlying commit. Unnecessary,
 but harmless.
+### *recipes* / [windows\_adk:examples/ensure](/recipes/recipe_modules/windows_adk/examples/ensure.py)
+
+[DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#13)(api):**
 ### *recipes* / [windows\_image\_builder/offline](/recipes/recipes/windows_image_builder/offline.py)
 
-[DEPS](/recipes/recipes/windows_image_builder/offline.py#9): [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/windows_image_builder/offline.py#9): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#17)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#18)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)

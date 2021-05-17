@@ -10,6 +10,7 @@ DEPS = [
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/step',
+    'windows_adk',
 ]
 
 PROPERTIES = input_pb.Inputs
@@ -17,13 +18,17 @@ PROPERTIES = input_pb.Inputs
 def RunSteps(api, inputs):
   """This recipe runs windows offline builder for a given user config."""
   if not api.platform.is_win:
-      raise AssertionError("This recipe only runs on Windows")
+    raise AssertionError("This recipe only runs on Windows")
 
   if not inputs.config_path:
-      raise api.step.StepFailure("`config_path` is a required property")
+    raise api.step.StepFailure("`config_path` is a required property")
+
+  with api.step.nest('ensure windows adk present') as r:
+    api.windows_adk.ensure()
 
   with api.step.nest('read user config') as r:
-      r.logs['read user config'] = 'succeed'
+    r.logs['read user config'] = 'succeed'
+
 
 def GenTests(api):
 
@@ -40,11 +45,6 @@ def GenTests(api):
       ) +
       api.expect_exception('AssertionError'))
 
-  yield (
-      api.test('run_without_config_path', api.platform('win', 64)) +
-      api.properties(
-          input_pb.Inputs(
-              config_path="",
-          ),
-      ) +
-      api.post_process(post_process.StatusFailure))
+  yield (api.test('run_without_config_path', api.platform('win', 64)) +
+         api.properties(input_pb.Inputs(config_path="",),) +
+         api.post_process(post_process.StatusFailure))

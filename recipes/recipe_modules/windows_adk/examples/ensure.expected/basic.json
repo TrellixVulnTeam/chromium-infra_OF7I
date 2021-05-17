@@ -4,48 +4,33 @@
     "name": "ensure windows adk present"
   },
   {
-    "cmd": [],
-    "name": "ensure windows adk present.ensure windows adk present",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "cmd": [
-      "cipd.bat",
+      "cipd",
       "ensure",
       "-root",
-      "[START_DIR]\\cipd\\3pp",
+      "[START_DIR]/cipd/3pp",
       "-ensure-file",
-      "infra/3pp/tools/win_adk/windows-amd64 latest",
+      "infra/3pp/tools/win_adk/windows-amd64 canary",
       "-max-threads",
       "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure windows adk present.ensure_installed",
+    "name": "ensure windows adk present.ensure_installed",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-canary----------\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/win_adk/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "read user config",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@read user config@succeed@@@",
-      "@@@STEP_LOG_END@read user config@@@"
     ]
   },
   {
