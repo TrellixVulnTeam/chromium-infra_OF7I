@@ -295,8 +295,7 @@ func runBatchJob(e *experimentTelemetryRun,
 	}
 }
 
-func handleErrors(ctx context.Context, wg *sync.WaitGroup, errC chan error) {
-	defer wg.Done()
+func handleErrors(ctx context.Context, errC chan error) {
 	for err := range errC {
 		logging.Warningf(ctx, "Error: %s", err)
 	}
@@ -322,18 +321,16 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	fmt.Fprintf(a.GetOut(), "Created job batch: %s\n", batch_id)
 
 	// Start all job(s)
-	var wg_errs sync.WaitGroup
 	errC := make(chan error)
-	wg_errs.Add(1)
-	go handleErrors(ctx, &wg_errs, errC)
-
 	var wg_jobs sync.WaitGroup
 	runBatchJob(e, &wg_jobs, errC, ctx, a.GetOut(), c, batch_id,
 		batch_experiments, experiment)
-	wg_jobs.Wait()
-
-	close(errC)
-	wg_errs.Wait()
+	go func() {
+		wg_jobs.Wait()
+		close(errC)
+	}()
+	// Returns once errC is closed
+	handleErrors(ctx, errC)
 
 	return nil
 }
