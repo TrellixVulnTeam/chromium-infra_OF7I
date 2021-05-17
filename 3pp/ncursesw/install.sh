@@ -33,8 +33,8 @@ fi
 # 2) Use "toe" tool to dump the set of available profiles and groom it.
 # 3) Build library with no database support using "tic" from (1), and
 #    configure it to statically embed all of the profiles from (2).
-tic_build=$(realpath ../tic_build)
-tic_prefix=$(realpath ../tic_prefix)
+tic_build="$(realpath ..)/tic_build"
+tic_prefix="$(realpath ..)/tic_prefix"
 
 # Make tic for host
 (
