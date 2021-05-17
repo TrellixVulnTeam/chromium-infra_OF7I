@@ -485,30 +485,6 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 	return nil
 }
 
-// Native gomock.Eq does not work on protos.
-type DownloadFileRequestMatcher struct {
-	req *gitilespb.DownloadFileRequest
-}
-
-func (m DownloadFileRequestMatcher) Matches(x interface{}) bool {
-	req, ok := x.(*gitilespb.DownloadFileRequest)
-	if !ok {
-		return false
-	}
-	return m.req.GetProject() == req.GetProject() &&
-		m.req.GetPath() == req.GetPath() &&
-		m.req.GetCommittish() == req.GetCommittish()
-}
-
-func (m DownloadFileRequestMatcher) String() string {
-	return fmt.Sprintf("project: %s, path: %s, committish: %s",
-		m.req.GetProject(), m.req.GetPath(), m.req.GetCommittish())
-}
-
-func RequestEq(req *gitilespb.DownloadFileRequest) gomock.Matcher {
-	return DownloadFileRequestMatcher{req}
-}
-
 // setUpCreate creates the neccessary mocks we need to test the create-v2 function
 func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, error) {
 	r := setUp(t)
@@ -556,13 +532,13 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 
 	// Mock out calls to gerrit.DownloadFileFromGitiles.
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), RequestEq(reqManifest)).Return(
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).Return(
 		&gitilespb.DownloadFileResponse{
 			Contents: manifest,
 		},
 		nil,
 	)
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), RequestEq(reqVersionFile)).Return(
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
 		&gitilespb.DownloadFileResponse{
 			Contents: string(crosVersionFile),
 		},

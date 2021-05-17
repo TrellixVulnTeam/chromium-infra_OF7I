@@ -182,3 +182,26 @@ func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (*m
 	}
 	return &res, nil
 }
+
+// Branches returns a map of branches (to revisions) for a given repo.
+func Branches(ctx context.Context, authedClient *http.Client, host, project string) (map[string]string, error) {
+	var gc gitilespb.GitilesClient
+	var err error
+	if MockGitiles != nil {
+		gc = MockGitiles
+	} else {
+		if gc, err = gitiles.NewRESTClient(authedClient, host, true); err != nil {
+			return nil, err
+		}
+	}
+	req := &gitilespb.RefsRequest{
+		Project:  project,
+		RefsPath: "refs/heads",
+	}
+	log.Printf("fetching branches %v", req)
+	refs, err := gc.Refs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return refs.Revisions, err
+}

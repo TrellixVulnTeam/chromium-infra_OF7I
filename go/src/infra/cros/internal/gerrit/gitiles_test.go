@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"testing"
 
+	"infra/cros/internal/assert"
+
 	"github.com/golang/mock/gomock"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
@@ -111,4 +113,34 @@ yZyOACgAAA==
 	if v != "This is a linked file!\n" {
 		t.Error("Archive not unzipped correctly for dir/file3")
 	}
+}
+
+func TestBranches(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	request := &gitilespb.RefsRequest{
+		Project:  "my-project",
+		RefsPath: "refs/heads",
+	}
+	response := make(map[string]string)
+	response["refs/heads/foo"] = "deadbeef"
+	response["refs/heads/bar"] = "beefcafe"
+
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+	gitilesMock.EXPECT().Refs(gomock.Any(), RefsRequestEq(request)).Return(
+		&gitilespb.RefsResponse{
+			Revisions: response,
+		},
+		nil,
+	)
+	host := "limited-review.googlesource.com"
+	project := "my-project"
+
+	MockGitiles = gitilesMock
+	m, err := Branches(context.Background(), http.DefaultClient, host, project)
+
+	assert.NilError(t, err)
+	assert.StringsEqual(t, m["refs/heads/foo"], "deadbeef")
+	assert.StringsEqual(t, m["refs/heads/bar"], "beefcafe")
 }
