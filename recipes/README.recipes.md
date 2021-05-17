@@ -1261,20 +1261,11 @@ This recipe runs legacy analyzers for the infra repo.
 
 [DEPS](/recipes/recipes/update_submodules_mirror.py#10): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [GetSubmodules](/recipes/recipes/update_submodules_mirror.py#173)(api, deps, source_checkout_name, overlays):**
+&mdash; **def [GetSubmodules](/recipes/recipes/update_submodules_mirror.py#170)(api, deps, source_checkout_name, overlays):**
 
-&mdash; **def [RefToRemoteRef](/recipes/recipes/update_submodules_mirror.py#167)(ref):**
+&mdash; **def [RefToRemoteRef](/recipes/recipes/update_submodules_mirror.py#164)(ref):**
 
 &mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#54)(api, source_repo, target_repo, extra_submodules, refs, overlays):**
-
-&mdash; **def [ShouldGenerateNewCommit](/recipes/recipes/update_submodules_mirror.py#227)(api, target_repo, ref):**
-
-See if we can avoid running the rest of the recipe, if there's no new
-commits to incorporate into the mirror. We should be conservative in the
-direction of "True" - the worst case is we update the mirror without any new
-commits, which will generate a new synthetic commit (with a different hash
-due to a different timestamp) at the same underlying commit. Unnecessary,
-but harmless.
 ### *recipes* / [windows\_adk:examples/ensure](/recipes/recipe_modules/windows_adk/examples/ensure.py)
 
 [DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/properties][recipe_engine/recipe_modules/properties]

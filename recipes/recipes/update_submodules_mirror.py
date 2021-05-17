@@ -100,9 +100,6 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
 
   for ref in refs:
     with api.step.nest('Process ' + ref):
-      if not ShouldGenerateNewCommit(api, target_repo, ref):
-        continue
-
       api.git('checkout', RefToRemoteRef(ref))
 
       gclient_spec = ("solutions=[{"
@@ -224,50 +221,6 @@ def GetSubmodules(api, deps, source_checkout_name, overlays):
   return update_index_entries, gitmodules_entries
 
 
-def ShouldGenerateNewCommit(api, target_repo, ref):
-  """
-   See if we can avoid running the rest of the recipe, if there's no new
-   commits to incorporate into the mirror. We should be conservative in the
-   direction of "True" - the worst case is we update the mirror without any new
-   commits, which will generate a new synthetic commit (with a different hash
-   due to a different timestamp) at the same underlying commit. Unnecessary,
-   but harmless.
-  """
-  with api.step.nest('Check for new commits') as step:
-    try:
-      commits, _ = api.gitiles.log(
-          target_repo,
-          ref,
-          limit=2,
-          step_name='Find latest commit to target repo')
-    except api.step.StepFailure:
-      # gitiles gives a 404 when making a log request for an empty repo. In
-      # this case, we do need to generate a new commit. Of course there are
-      # other reasons why this step may fail, but we would rather proceed in
-      # those cases than fail in the empty repo case.
-      return True
-
-    if commits and commits[0]['author']['name'] == COMMIT_USERNAME:
-      latest_real_commit_in_target = commits[1]['commit']
-      latest_commit_in_source = api.git(
-          'rev-parse', RefToRemoteRef(ref),
-          stdout=api.raw_io.output(),
-          name='Get latest commit hash in source repo').stdout.strip()
-      if latest_real_commit_in_target == latest_commit_in_source:
-        step.presentation.step_text = 'no new commits, exiting'
-        return False
-
-      # If we get here we'll need to generate a new commit. We don't care
-      # whether DEPS has changed, since we always want to include the latest
-      # commit in the target repo.
-    else:
-      # HEAD in the target repo isn't authored by the submodules bot. This means
-      # we definitely need to generate a new commit. Either we've never run on
-      # this repo or we somehow ended up in an invalid state.
-      pass
-  return True
-
-
 fake_src_deps = """
 {
   "src/v8": {
@@ -336,11 +289,6 @@ def GenTests(api):
           # Checkout doesn't exist.
           api.raw_io.stream_output('', stream='stdout')) +
       api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          # No commits in the target repo.
-          api.json.output({'log': []})) +
-      api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
@@ -358,34 +306,6 @@ def GenTests(api):
   )
 
   yield (
-      api.test('existing_checkout_no_new_commits') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'b' * 40,
-            'author': {'name': COMMIT_USERNAME},
-            },
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Get latest commit hash in source repo',
-          api.raw_io.stream_output('a' * 40))
-  )
-
-  yield (
       api.test('existing_checkout_new_commits') +
       api.properties(
           source_repo='https://chromium.googlesource.com/chromium/src',
@@ -394,23 +314,6 @@ def GenTests(api):
       api.step_data(
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'b' * 40,
-            'author': {'name': COMMIT_USERNAME},
-            },
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Get latest commit hash in source repo',
-          api.raw_io.stream_output('c' * 40)) +
       api.step_data(
           'Process refs/heads/master.'
           'gclient evaluate DEPS',
@@ -427,33 +330,6 @@ def GenTests(api):
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
       api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
-  )
-
-  yield (
-      api.test('existing_checkout_404_from_gitiles_log') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          retcode=1) +
-      api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
@@ -467,15 +343,6 @@ def GenTests(api):
       api.step_data(
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
       api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(
@@ -497,15 +364,6 @@ def GenTests(api):
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
       api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
-      api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(
               fake_deps_with_nested_dep, stream='stdout'))
@@ -520,15 +378,6 @@ def GenTests(api):
       api.step_data(
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
       api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(
@@ -545,15 +394,6 @@ def GenTests(api):
       api.step_data(
           'Check for existing source checkout dir',
           api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          api.json.output({'log': [
-            {
-            'commit': 'a' * 40,
-            'author': {'name': 'Someone else'},
-            },
-          ]})) +
       api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
@@ -576,18 +416,8 @@ def GenTests(api):
           # Checkout doesn't exist.
           api.raw_io.stream_output('', stream='stdout')) +
       api.step_data(
-          'Process refs/heads/master.'
-          'Check for new commits.Find latest commit to target repo',
-          # No commits in the target repo.
-          api.json.output({'log': []})) +
-      api.step_data(
           'Process refs/heads/master.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
-      api.step_data(
-          'Process refs/branch-heads/4044.'
-          'Check for new commits.Find latest commit to target repo',
-          # No commits in the target repo.
-          api.json.output({'log': []})) +
       api.step_data(
           'Process refs/branch-heads/4044.gclient evaluate DEPS',
           api.raw_io.stream_output(fake_src_deps, stream='stdout'))
@@ -600,15 +430,5 @@ def GenTests(api):
          api.step_data('Check for existing source checkout dir',
                        api.raw_io.stream_output('src', stream='stdout')) +
          api.step_data(
-             'Process refs/heads/master.'
-             'Check for new commits.Find latest commit to target repo',
-             api.json.output({
-                 'log': [{
-                     'commit': 'a' * 40,
-                     'author': {
-                         'name': 'Someone else'
-                     },
-                 },]
-             })) + api.step_data(
                  'Process refs/heads/master.gclient evaluate DEPS',
                  api.raw_io.stream_output(fake_src_deps, stream='stdout')))
