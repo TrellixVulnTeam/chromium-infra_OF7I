@@ -19,6 +19,9 @@ func TestRead(t *testing.T) {
 	t.Parallel()
 
 	testDataKey := "go/src/infra/tools/dirmd/testdata"
+	dummyRepos := map[string]*dirmdpb.Repo{
+		".": {Mixins: map[string]*dirmdpb.Metadata{}},
+	}
 
 	Convey(`ReadMapping`, t, func() {
 		ctx := context.Background()
@@ -58,6 +61,7 @@ func TestRead(t *testing.T) {
 					// "subdir_with_owners/empty_subdir" is not present because it has
 					// no metadata.
 				},
+				Repos: dummyRepos,
 			})
 		})
 
@@ -91,6 +95,7 @@ func TestRead(t *testing.T) {
 					// "subdir_with_owners/empty_subdir" is not present because it has
 					// no metadata.
 				},
+				Repos: dummyRepos,
 			})
 		})
 
@@ -134,6 +139,7 @@ func TestRead(t *testing.T) {
 						},
 					},
 				},
+				Repos: dummyRepos,
 			})
 		})
 
@@ -169,6 +175,44 @@ func TestRead(t *testing.T) {
 						},
 					},
 				},
+				Repos: dummyRepos,
+			})
+		})
+
+		Convey(`Computed, with mixin`, func() {
+			mxKey := testDataKey + "/mixins"
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, "testdata/mixins")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					mxKey: {
+						TeamEmail: "team-email@chromium.org",
+					},
+					mxKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium", // from FOO_METADATA
+							Component: "bar",      // from BAR_METADATA
+						},
+					},
+				},
+				Repos: map[string]*dirmdpb.Repo{
+					".": {
+						Mixins: map[string]*dirmdpb.Metadata{
+							"//" + mxKey + "/FOO_METADATA": {
+								Monorail: &dirmdpb.Monorail{
+									Project:   "chromium",
+									Component: "foo",
+								},
+							},
+							"//" + mxKey + "/BAR_METADATA": {
+								Monorail: &dirmdpb.Monorail{
+									Component: "bar",
+								},
+							},
+						},
+					},
+				},
 			})
 		})
 
@@ -188,6 +232,41 @@ func TestRead(t *testing.T) {
 							Tags: []string{
 								"feature:read-later",
 								"feature:another-one",
+							},
+						},
+					},
+				},
+				Repos: dummyRepos,
+			})
+		})
+
+		Convey(`Sparse, with mixins`, func() {
+			mxKey := testDataKey + "/mixins"
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_SPARSE, "testdata/mixins/subdir")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					mxKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium", // from FOO_METADATA
+							Component: "bar",      // from BAR_METADATA
+						},
+					},
+				},
+				Repos: map[string]*dirmdpb.Repo{
+					".": {
+						Mixins: map[string]*dirmdpb.Metadata{
+							"//" + mxKey + "/FOO_METADATA": {
+								Monorail: &dirmdpb.Monorail{
+									Project:   "chromium",
+									Component: "foo",
+								},
+							},
+							"//" + mxKey + "/BAR_METADATA": {
+								Monorail: &dirmdpb.Monorail{
+									Component: "bar",
+								},
 							},
 						},
 					},
@@ -225,6 +304,7 @@ func TestRead(t *testing.T) {
 						},
 					},
 				},
+				Repos: dummyRepos,
 			})
 		})
 	})

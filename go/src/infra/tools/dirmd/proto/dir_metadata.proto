@@ -24,26 +24,29 @@ message Metadata {
 
   // Paths to Metadata files to import into this file.
   //
-  // A metadata file is imported AS IS, without inheritance from its
-  // ancestors. To prevent confusion, the imported file's base name may not be
-  // DIR_METADATA. Instead, the file name must entail its scope, e.g.
-  // the software component that it is describing.
+  // A mixin is imported AS IS, without inheritance from its ancestors.
+  // To prevent confusion, a mixin's base name may not be DIR_METADATA.
+  // Instead, the file name must entail its scope, e.g. the software component
+  // that it is describing.
   //
-  // Imports can be useful to reduce duplication of metadata across the repo.
+  // Mixins can be useful to reduce duplication of metadata across the repo.
   // For example in Java, implementation and tests of the same feature live in
-  // different directories. Common metadata can be placed in one file, and then
-  // DIR_METADATA files in both directories can import from that file.
+  // different directories. Common metadata can be placed in a mixin, and then
+  // imported by DIR_METADATA files in both directories.
   //
   // A path must be source-absolute, e.g. "//components/autofill/COMMON_METADATA"
   // Here the root is the root of the repository which contains the current
   // file.
   //
   // Precedence:
-  // * Imported files override values in the parent directory.
-  // * The order of imports is significant: if the same attribute is defined in
-  //   two imported files, then the later one wins.
-  // * Values defined in the importee override values in the imported files.
-  repeated string imports = 10;
+  // * Mixins override values in the parent directory.
+  // * The order of mixins is significant: if the same attribute is defined in
+  //   two mixins, then the later one wins.
+  // * Values defined in the importee override values in the mixins.
+  //
+  // Importing mixins in mixins is not supported.
+  // Only DIR_METADATA files are allowed to use this field.
+  repeated string mixins = 10;
 
   // Monorail metadata. Its component field should always map to the same
   // team_email field (see below) for every directory that it is listed in.

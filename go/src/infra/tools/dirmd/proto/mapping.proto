@@ -22,6 +22,29 @@ message Mapping {
   // The root must be known from the context where Mapping is used and is not
   // part of the this message.
   map<string, Metadata> dirs = 1;
+
+  // Repos contains information about the repositories that Mapping.dirs were
+  // read from. Repos can be used to tell which repository a given directory
+  // came from. Also it contains loaded mixins, referred to by Mapping.mixins.
+  //
+  // The map key is slash-separated path relative to the root repo.
+  // Examples:
+  // - If there is only one repo, then the only key is ".".
+  // - If the root repo is "~/chromium/src" and it contains subrepo
+  //   "~/chromium/src/v8", then Mapping.repos will have keys "." and "v8".
+  //   In this case Mapping.dirs key "foo/bar" will correspond to Repo key ".",
+  //   while "v8/baz" will correspond to Repo key "v8".
+  map<string, Repo> repos = 2;
+}
+
+// Information about the repository that metadata was read from.
+message Repo {
+  // Mixins are metadata files referred to by Metadata.mixins in Mapping.dirs.
+  // The map keys are Metadata.mixins elements, see that field comment.
+  // A valid Mapping contains a Repo.mixins entry for each
+  // Metadata.mixins entry in Mapping.dirs, for directories that reside in
+  // this repo.
+  map<string, Metadata> mixins = 2;
 }
 
 // A known form of the Mapping.
@@ -31,7 +54,10 @@ enum MappingForm {
   // The metadata of the entry does not include inherited metadata.
   ORIGINAL = 0;
 
-  // Like ORIGINAL, but each entry includes inherited metadata.
+  // Like ORIGINAL, but each entry includes inherited and mixed-in metadata.
+  //
+  // To avoid accidental double importing, Metadata.mixins field is cleared
+  // in the COMPUTED form.
   COMPUTED = 1;
 
   // Like COMPUTED, but the mapping contains metadata only for the explicitly
@@ -51,5 +77,7 @@ enum MappingForm {
   // metadata attribute in both "a" and "a/b".
   // It is also redundant to have an Dirs entry with empty metadata.
   // This is the most compact form without a dataloss.
+  //
+  // Similar to COMPUTED, Metadata.mixins field is cleared.
   REDUCED = 3;
 }

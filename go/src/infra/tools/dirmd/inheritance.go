@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"go.chromium.org/luci/common/errors"
+
 	dirmdpb "infra/tools/dirmd/proto"
 )
 
@@ -25,8 +27,7 @@ func (m *Mapping) Compute(key string) (*dirmdpb.Metadata, error) {
 	if err != nil {
 		return nil, err
 	}
-	Merge(ret, m.Dirs[key])
-	return ret, nil
+	return ret, m.apply(ret, key)
 }
 
 // ComputeAll computes full metadata for each dir.
@@ -36,9 +37,41 @@ func (m *Mapping) ComputeAll() error {
 	// we only need to check the nearest ancestor.
 	for _, dir := range m.keysByLength(true) {
 		meta := cloneMD(m.nearestAncestor(dir))
-		Merge(meta, m.Dirs[dir])
+		if err := m.apply(meta, dir); err != nil {
+			return errors.Annotate(err, "dir %q", dir).Err()
+		}
 		m.Dirs[dir] = meta
 	}
+	return nil
+}
+
+// apply updates dst with the metadata for the dir key.
+// The applied metadata includes mixins.
+// dst.Mixins are cleared.
+func (m *Mapping) apply(dst *dirmdpb.Metadata, dirKey string) error {
+	src := m.Dirs[dirKey]
+
+	// First apply mixins.
+	if len(src.GetMixins()) > 0 {
+		repo := m.repoFor(dirKey)
+		if repo == nil {
+			return errors.Reason("repo entry not found").Err()
+		}
+		for _, im := range src.Mixins {
+			imMD := repo.Mixins[im]
+			if imMD == nil {
+				return errors.Reason("mixin %q not found", im).Err()
+			}
+			Merge(dst, imMD)
+		}
+	}
+
+	// Then apply the metadata of this directory.
+	Merge(dst, src)
+
+	// Clear the mixin list after applying, to avoid accidental double importing.
+	// Do it only after merging src, otherwise it would be re-populated.
+	dst.Mixins = nil
 	return nil
 }
 
@@ -55,6 +88,23 @@ func (m *Mapping) nearestAncestor(dir string) *dirmdpb.Metadata {
 		if meta, ok := m.Dirs[dir]; ok {
 			return meta
 		}
+	}
+}
+
+// repoFor returns the Repo for the directory.
+// Returns nil if the repo is not found.
+func (m *Mapping) repoFor(dir string) *dirmdpb.Repo {
+	for {
+		if repo, ok := m.Repos[dir]; ok {
+			return repo
+		}
+
+		parent := path.Dir(dir)
+		if parent == dir {
+			// We have reached the root.
+			return nil
+		}
+		dir = parent
 	}
 }
 
@@ -85,9 +135,7 @@ func (m *Mapping) keysByLength(asc bool) []string {
 	return ret
 }
 
-// Merge merges metadata from src to dst, where dst is metadata inherited from
-// ancestors and src contains directory-specific metadata.
-// Does nothing is src is nil.
+// Merge merges metadata from src to dst. Does nothing if src is nil.
 //
 // The current implementation is just proto.Merge, but it may change in the
 // future.

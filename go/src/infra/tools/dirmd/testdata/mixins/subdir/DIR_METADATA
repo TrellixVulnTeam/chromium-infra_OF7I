@@ -1,0 +1,2 @@
+mixins: "//go/src/infra/tools/dirmd/testdata/mixins/FOO_METADATA"
+mixins: "//go/src/infra/tools/dirmd/testdata/mixins/BAR_METADATA"

@@ -49,28 +49,27 @@ func init() {
 	// error message (as opposed to a stack trace from panic).
 }
 
+// ReadFile reads metadata from a file.
+func ReadFile(fileName string) (*dirmdpb.Metadata, error) {
+	contents, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &dirmdpb.Metadata{}
+	return ret, prototext.Unmarshal(contents, ret)
+}
+
 // ReadMetadata reads metadata from a single directory.
 // See also ReadMapping.
 //
 // Returns (nil, nil) if the metadata is not defined.
 func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
-	fullPath := filepath.Join(dir, Filename)
-	contents, err := ioutil.ReadFile(fullPath)
-	switch {
-	case os.IsNotExist(err):
-		// Try the legacy file.
-		md, _, err := ReadOwners(dir)
-		return md, err
-
-	case err != nil:
-		return nil, err
+	md, err := ReadFile(filepath.Join(dir, Filename))
+	if os.IsNotExist(err) {
+		md, _, err = ReadOwners(dir)
 	}
-
-	var ret dirmdpb.Metadata
-	if err := prototext.Unmarshal(contents, &ret); err != nil {
-		return nil, errors.Annotate(err, "failed to parse %q", fullPath).Err()
-	}
-	return &ret, nil
+	return md, err
 }
 
 // ReadMapping reads all metadata from files in git in the given directories.
@@ -101,7 +100,8 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 	}
 
 	// Group all dirs by the repo root.
-	byRepoRoot, err := dirsByRepoRoot(ctx, dirs)
+	// Unlike Mapping.Repos, a mapping key is an absolute os-native file path.
+	repos, err := dirsByRepoRoot(ctx, dirs)
 	if err != nil {
 		return nil, err
 	}
@@ -114,28 +114,34 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 	defer r.eg.Wait()
 
 	// Find the metadata root, i.e. the root dir of the root repo.
-	if r.Root, err = findMetadataRoot(byRepoRoot); err != nil {
+	if r.Root, err = findMetadataRoot(repos); err != nil {
 		return nil, err
 	}
 
 	// Read the metadata files concurrently.
-	for repoRoot, repoDirs := range byRepoRoot {
-		repoRoot := repoRoot
+	for _, repo := range repos {
+		repo := repo
+
+		relRepoPath, err := filepath.Rel(r.Root, repo.absRoot)
+		if err != nil {
+			return nil, err
+		}
+		r.Repos[filepath.ToSlash(relRepoPath)] = &repo.Repo
 
 		if form == dirmdpb.MappingForm_SPARSE {
-			for _, dir := range repoDirs {
+			for _, dir := range repo.dirs {
 				dir := dir
 				r.eg.Go(func() error {
-					err := r.readUpMissing(ctx, dir)
+					err := r.readUpMissing(ctx, repo, dir)
 					return errors.Annotate(err, "failed to process %q", dir).Err()
 				})
 			}
 		} else {
-			repoDirs = removeRedundantDirs(repoDirs...)
-			for _, dir := range repoDirs {
+			repo.dirs = removeRedundantDirs(repo.dirs...)
+			for _, dir := range repo.dirs {
 				dir := dir
 				r.eg.Go(func() error {
-					err := r.ReadGitFiles(ctx, repoRoot, dir, form == dirmdpb.MappingForm_FULL)
+					err := r.ReadGitFiles(ctx, repo, dir, form == dirmdpb.MappingForm_FULL)
 					return errors.Annotate(err, "failed to process %q", dir).Err()
 				})
 			}
@@ -153,6 +159,7 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		}
 		// Trim down the mapping.
 		ret := NewMapping(len(dirs))
+		ret.Repos = r.Repos
 		for _, dir := range dirs {
 			key, err := r.DirKey(dir)
 			if err != nil {
@@ -175,10 +182,16 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 	return &r.Mapping, nil
 }
 
+type repoInfo struct {
+	dirmdpb.Repo
+	absRoot string
+	dirs    []string
+}
+
 // findMetadataRoot returns the root directory of the root repo.
-func findMetadataRoot(byRepoRoot map[string][]string) (string, error) {
-	rootSlice := make([]string, 0, len(byRepoRoot))
-	for rr := range byRepoRoot {
+func findMetadataRoot(repos map[string]*repoInfo) (string, error) {
+	rootSlice := make([]string, 0, len(repos))
+	for rr := range repos {
 		rootSlice = append(rootSlice, rr)
 	}
 	sort.Strings(rootSlice)
@@ -196,10 +209,10 @@ func findMetadataRoot(byRepoRoot map[string][]string) (string, error) {
 }
 
 // dirsByRepoRoot groups directories by the root of the git repo they reside in.
-func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string][]string, error) {
+func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string]*repoInfo, error) {
 	var mu sync.Mutex
 	// Most likely, dirs are in different repos, so allocate len(dirs) entries.
-	ret := make(map[string][]string, len(dirs))
+	ret := make(map[string]*repoInfo, len(dirs))
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, dir := range dirs {
 		dir := dir
@@ -212,8 +225,16 @@ func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string][]string, er
 			repoRoot := string(bytes.TrimSpace(stdout))
 
 			mu.Lock()
-			ret[repoRoot] = append(ret[repoRoot], dir)
-			mu.Unlock()
+			defer mu.Unlock()
+			repo := ret[repoRoot]
+			if repo == nil {
+				repo = &repoInfo{
+					Repo:    dirmdpb.Repo{Mixins: map[string]*dirmdpb.Metadata{}},
+					absRoot: repoRoot,
+				}
+				ret[repoRoot] = repo
+			}
+			repo.dirs = append(repo.dirs, dir)
 			return nil
 		})
 	}
@@ -269,9 +290,9 @@ type mappingReader struct {
 //
 // It uses "git-ls-files <dir>" to discover the files, so for example it ignores
 // files outside of the repo. See more in `git ls-files -help`.
-func (r *mappingReader) ReadGitFiles(ctx context.Context, absRepoRoot, absTreeRoot string, preserveFileStructure bool) error {
+func (r *mappingReader) ReadGitFiles(ctx context.Context, repo *repoInfo, absTreeRoot string, preserveFileStructure bool) error {
 	// First, determine the key prefix.
-	keyPrefixNative, err := filepath.Rel(r.Root, absRepoRoot)
+	keyPrefixNative, err := filepath.Rel(r.Root, repo.absRoot)
 	if err != nil {
 		return err
 	}
@@ -280,7 +301,7 @@ func (r *mappingReader) ReadGitFiles(ctx context.Context, absRepoRoot, absTreeRo
 	// Concurrently start `git ls-files`, read its output and read the discovered
 	// metadata files.
 
-	cmd := exec.CommandContext(ctx, gitBinary, "-C", absRepoRoot, "ls-files", "--full-name", absTreeRoot)
+	cmd := exec.CommandContext(ctx, gitBinary, "-C", repo.absRoot, "ls-files", "--full-name", absTreeRoot)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -315,14 +336,14 @@ func (r *mappingReader) ReadGitFiles(ctx context.Context, absRepoRoot, absTreeRo
 			continue
 		}
 
-		absDir := filepath.Join(absRepoRoot, filepath.FromSlash(relDir))
-		r.goReadDir(ctx, absDir, key)
+		absDir := filepath.Join(repo.absRoot, filepath.FromSlash(relDir))
+		r.goReadDir(ctx, repo, absDir, key)
 	}
 	return scan.Err()
 }
 
 // goReadDir starts a goroutine with r.eg to read the metadata of the directory.
-func (r *mappingReader) goReadDir(ctx context.Context, absDir, key string) {
+func (r *mappingReader) goReadDir(ctx context.Context, repo *repoInfo, absDir, key string) {
 	r.eg.Go(func() error {
 		if err := r.semReadMetadata.Acquire(ctx, 1); err != nil {
 			return err
@@ -342,7 +363,40 @@ func (r *mappingReader) goReadDir(ctx context.Context, absDir, key string) {
 
 		r.Dirs[key] = md
 
-		// TODO(crbug.com/1179786): add support for Metadata.imports.
+		// If the file imports mixins, read them too.
+		for _, mx := range md.Mixins {
+			mx := mx
+			if strings.Contains(mx, "\\") {
+				return errors.Reason(
+					"%s: mixin path %s contains back slashes; only forward slashes are allowed",
+					absDir, mx,
+				).Err()
+			}
+			if path.Base(mx) == "DIR_METADATA" {
+				return errors.Reason(
+					"%s imports a file with base name 'DIR_METADATA'; this is prohibited "+
+						"to avoid a wrong expectation that the imported file implicitly includes metadata from its ancesors",
+					absDir,
+				).Err()
+			}
+			if _, ok := repo.Mixins[mx]; !ok {
+				repo.Mixins[mx] = nil // mark as seen
+				r.eg.Go(func() error {
+					mxFileName := filepath.Join(repo.absRoot, filepath.FromSlash(strings.TrimPrefix(mx, "//")))
+					mxMd, err := ReadFile(mxFileName)
+					if err != nil {
+						return errors.Annotate(err, "failed to read %q", mxFileName).Err()
+					}
+					if len(mxMd.Mixins) != 0 {
+						return errors.Reason("%s: importing a mixin in a mixin is not supported", mxFileName).Err()
+					}
+					r.mu.Lock()
+					repo.Mixins[mx] = mxMd
+					r.mu.Unlock()
+					return nil
+				})
+			}
+		}
 
 		return nil
 	})
@@ -350,7 +404,7 @@ func (r *mappingReader) goReadDir(ctx context.Context, absDir, key string) {
 
 // readUpMissing reads metadata of the specified directory and its ancestors,
 // or until it reaches a directory already present in r.Dirs.
-func (r *mappingReader) readUpMissing(ctx context.Context, dir string) error {
+func (r *mappingReader) readUpMissing(ctx context.Context, repo *repoInfo, dir string) error {
 	key, err := r.DirKey(dir)
 	if err != nil {
 		return err
@@ -379,7 +433,7 @@ func (r *mappingReader) readUpMissing(ctx context.Context, dir string) error {
 			return nil
 		}
 
-		r.goReadDir(ctx, dir, key)
+		r.goReadDir(ctx, repo, dir, key)
 
 		if dirNormalized == upTo {
 			return nil

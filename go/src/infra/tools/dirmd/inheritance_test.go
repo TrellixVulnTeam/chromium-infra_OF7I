@@ -166,6 +166,61 @@ func TestComputeAll(t *testing.T) {
 			So(m.Dirs["a/b"].TeamEmail, ShouldEqual, "team@example.com")
 		})
 
+		Convey(`Mixins`, func() {
+			m := &Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					".": {
+						TeamEmail: "root@example.com",
+						// Will be inherited entirely.
+						Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+
+						// Will be inherited partially.
+						Monorail: &dirmdpb.Monorail{
+							Project: "chromium",
+						},
+					},
+					"a": {
+						TeamEmail: "a@chromium.org",
+						Mixins:    []string{"//FOO_METADATA", "//BAR_METADATA"},
+					},
+				},
+				Repos: map[string]*dirmdpb.Repo{
+					".": {
+						Mixins: map[string]*dirmdpb.Metadata{
+							"//FOO_METADATA": {
+								Monorail: &dirmdpb.Monorail{
+									Component: "foo",
+								},
+								Os: dirmdpb.OS_ANDROID,
+							},
+							"//BAR_METADATA": {
+								TeamEmail: "bar@chromium.org",
+								Monorail: &dirmdpb.Monorail{
+									Component: "bar",
+								},
+							},
+						},
+					},
+				},
+			}
+			So(m.ComputeAll(), ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					".": m.Dirs["."], // did not change
+					"a": {
+						TeamEmail: "a@chromium.org",
+						Wpt:       &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "bar",
+						},
+						Os: dirmdpb.OS_ANDROID,
+					},
+				},
+				Repos: m.Repos,
+			})
+		})
+
 		Convey(`No root`, func() {
 			input := &Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{

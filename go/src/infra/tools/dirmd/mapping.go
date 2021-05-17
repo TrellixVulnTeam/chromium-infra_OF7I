@@ -18,7 +18,8 @@ type Mapping dirmdpb.Mapping
 // NewMapping initializes an empty mapping.
 func NewMapping(size int) *Mapping {
 	return &Mapping{
-		Dirs: make(map[string]*dirmdpb.Metadata, size),
+		Dirs:  make(map[string]*dirmdpb.Metadata, size),
+		Repos: make(map[string]*dirmdpb.Repo, 1),
 	}
 }
 
