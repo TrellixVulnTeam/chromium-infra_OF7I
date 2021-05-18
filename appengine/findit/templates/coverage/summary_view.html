@@ -232,7 +232,7 @@
           {% else %}
             {% set entries = data.metadata.dirs + data.metadata.files %}
           {% endif %}
-        {% for datum in entries if datum.summaries[0].total %}
+        {% for datum in entries %}
           <tr data-path="{{datum.path}}">
             <td>
               {% if data_type != 'components' %}
