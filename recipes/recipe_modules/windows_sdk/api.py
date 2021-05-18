@@ -16,7 +16,7 @@ class WindowsSDKApi(recipe_api.RecipeApi):
     self._sdk_properties = sdk_properties
 
   @contextmanager
-  def __call__(self, path=None, version=None, enabled=True):
+  def __call__(self, path=None, version=None, enabled=True, bits=None):
     """Setups the SDK environment when enabled.
 
     Args:
@@ -25,6 +25,8 @@ class WindowsSDKApi(recipe_api.RecipeApi):
       version (str): CIPD instance ID, tag or ref of the SDK
         (default is set via $infra/windows_sdk.version property)
       enabled (bool): Whether the SDK should be used or not.
+      bits (int): Whether to configure for a 32- or 64-bit build.
+        Defaults to the architecture of the host.
 
     Raises:
         StepFailure or InfraFailure.
@@ -34,7 +36,8 @@ class WindowsSDKApi(recipe_api.RecipeApi):
           path or self.m.path['start_dir'].join('cipd', 'windows_sdk'),
           version or self._sdk_properties['version'])
       try:
-        with self.m.context(**self._sdk_env(sdk_dir)):
+        with self.m.context(
+            **self._sdk_env(sdk_dir, bits or self.m.platform.bits)):
           yield
       finally:
         if self.m.platform.is_win:
@@ -60,13 +63,14 @@ class WindowsSDKApi(recipe_api.RecipeApi):
       self.m.cipd.ensure(sdk_dir, pkgs)
       return sdk_dir
 
-  def _sdk_env(self, sdk_dir):
+  def _sdk_env(self, sdk_dir, bits):
     """Constructs the environment for the SDK.
 
     Returns environment and environment prefixes.
 
     Args:
       sdk_dir (path): Path to a directory containing the SDK.
+      bits (int): Whether to configure for a 32- or 64-bit build.
     """
     env = {}
     env_prefixes = {}
@@ -81,7 +85,7 @@ class WindowsSDKApi(recipe_api.RecipeApi):
     # }
     # All these environment variables need to be added to the environment
     # for the compiler and linker to work.
-    filename = 'SetEnv.%s.json' % {32: 'x86', 64: 'x64'}[self.m.platform.bits]
+    filename = 'SetEnv.%s.json' % {32: 'x86', 64: 'x64'}[bits]
     step_result = self.m.json.read(
         'read %s' % filename, sdk_dir.join('win_sdk', 'bin', filename),
         step_test_data=lambda: self.m.json.test_api.output({
