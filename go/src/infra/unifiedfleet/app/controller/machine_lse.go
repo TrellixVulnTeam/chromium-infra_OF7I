@@ -1350,16 +1350,6 @@ func validateUpdateMachineLSE(ctx context.Context, oldMachinelse *ufspb.MachineL
 		}
 	}
 
-	if oldMachinelse.GetChromeosMachineLse() != nil {
-		schedulingUnits, err := inventory.QuerySchedulingUnitByPropertyNames(ctx, map[string]string{"machinelses": oldMachinelse.GetName()}, true)
-		if err != nil {
-			return errors.Annotate(err, "failed to query SchedulingUnit for machinelses %s", oldMachinelse.GetName()).Err()
-		}
-		if len(schedulingUnits) > 0 {
-			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("DUT is associated with SchedulingUnit. Run `shivas update schedulingunit -name %s -removeduts %s` to remove association before updating the DUT.", schedulingUnits[0].GetName(), oldMachinelse.GetName()))
-		}
-	}
-
 	// validate update mask
 	return validateMachineLSEUpdateMask(machinelse, mask)
 }
