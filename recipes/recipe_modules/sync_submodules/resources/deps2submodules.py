@@ -2,6 +2,7 @@
 # Copyright 2012 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Read DEPS and use the information to update git submodules"""
 
 # CAUTION: this module has been cloned to a new version under
@@ -10,6 +11,8 @@
 # remove this old version).
 #
 # TODO(crbug/834373): do so.
+
+from __future__ import print_function
 
 import argparse
 import collections
@@ -119,9 +122,9 @@ def WriteGitmodules(submods):
         logging.warning('Skipping svn url %s', url)
         continue
 
-      print >> fh, '[submodule "%s"]' % name
-      print >> fh, '\tpath = %s' % name
-      print >> fh, '\turl = %s' % url
+      print('[submodule "%s"]' % name, file=fh)
+      print('\tpath = %s' % name, file=fh)
+      print('\turl = %s' % url, file=fh)
 
       if not sha1:
         sha1 = 'master'

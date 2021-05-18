@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import os
 import platform
@@ -69,12 +71,13 @@ def main():
   new_ctx_file = None
   if args.inherit_luci_context:
     if platform.system() != 'Linux':
-      print >> sys.stderr, '--inherit-luci-context is supported only on Linux'
+      print(
+          '--inherit-luci-context is supported only on Linux', file=sys.stderr)
       return 1
 
     cur_ctx_file = os.environ.get('LUCI_CONTEXT')
     if not cur_ctx_file:
-      print >> sys.stderr, '$LUCI_CONTEXT is not set or empty'
+      print('$LUCI_CONTEXT is not set or empty', file=sys.stderr)
       return 1
 
     # Copy the context file to make it available to Docker service.

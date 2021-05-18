@@ -17,6 +17,8 @@ Helpful links:
   http://conda.pydata.org/docs/building/meta-yaml.html#relocatable
 """
 
+from __future__ import print_function
+
 import ast
 import glob
 import os
@@ -172,7 +174,7 @@ def patch_file(path, prefix):
     fake_prefix = '/opt/fake-python-prefix'
   modified = blob.replace(prefix, fake_prefix)
   if modified != blob:
-    print 'Patching %s' % os.path.basename(path)
+    print('Patching %s' % os.path.basename(path))
     with open(path, 'wb') as f:
       f.write(modified)
     return True
@@ -181,13 +183,13 @@ def patch_file(path, prefix):
 
 def kill_file(path):
   if os.path.exists(path) or os.path.lexists(path):
-    print 'Removing %s' % os.path.basename(path)
+    print('Removing %s' % os.path.basename(path))
     os.remove(path)
 
 
 def kill_dir(path):
   if os.path.exists(path):
-    print 'Removing %s directory' % os.path.basename(path)
+    print('Removing %s directory' % os.path.basename(path))
     shutil.rmtree(path)
 
 

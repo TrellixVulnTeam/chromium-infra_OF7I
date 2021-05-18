@@ -1,9 +1,12 @@
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Standalone python script to zip a set of files. Intended to be used by 'zip'
 recipe module internally. Should not be used elsewhere.
 """
+
+from __future__ import print_function
 
 import json
 import os
@@ -85,7 +88,7 @@ def zip_with_python(root, output, entries, mode):
         return
       if archive_name is None:
         archive_name = path[len(root):]
-      print 'Adding %s' % archive_name
+      print('Adding %s' % archive_name)
       zip_file.write(path, archive_name)
 
     for entry in entries:
@@ -126,7 +129,7 @@ def main():
   # Output zip path should be an absolute path.
   assert os.path.isabs(output), output
 
-  print 'Zipping %s...' % output
+  print('Zipping %s...' % output)
   exit_code = -1
   try:
     if use_python_zip(entries):
@@ -145,7 +148,7 @@ def main():
       except:  # pylint: disable=bare-except
         pass
   if not exit_code:
-    print 'Archive size: %.1f KB' % (os.stat(output).st_size / 1024.0,)
+    print('Archive size: %.1f KB' % (os.stat(output).st_size / 1024.0,))
   return exit_code
 
 
