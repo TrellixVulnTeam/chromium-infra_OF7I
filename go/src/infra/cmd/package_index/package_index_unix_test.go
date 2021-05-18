@@ -133,7 +133,7 @@ func TestPackageIndexUnix(t *testing.T) {
 					err := clangTargets.ProcessClangTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus,
 						ip.buildConfig, ip.hashMaps, dataFileChannel, unitProtoChannel)
 					if err != nil {
-						t.Fatal(err)
+						t.Error(err)
 					}
 				}()
 			}
@@ -151,7 +151,7 @@ func TestPackageIndexUnix(t *testing.T) {
 					err := gnTargets.ProcessGnTargets(ip.ctx, ip.rootPath, ip.outDir, ip.corpus, ip.buildConfig, ip.hashMaps,
 						dataFileChannel, unitProtoChannel)
 					if err != nil {
-						t.Fatal(err)
+						t.Error(err)
 					}
 				}()
 			}
@@ -202,7 +202,7 @@ func TestPackageIndexUnix(t *testing.T) {
 			go func() {
 				err := ip.writeToKzip(kzipEntryChannel)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
 				}
 				writeWg.Done()
 			}()
