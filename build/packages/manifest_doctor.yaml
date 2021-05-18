@@ -1,0 +1,12 @@
+package: chromiumos/infra/manifest_doctor/${platform}
+description: Multi-purpose tool for manipulating ChromeOS manifests.
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+go_packages:
+  - infra/cros/cmd/manifest_doctor
+root: ../../go/bin
+data:
+  - file: manifest_doctor${exe_suffix}
+  - version_file: .versions/manifest_doctor${exe_suffix}.cipd_version
