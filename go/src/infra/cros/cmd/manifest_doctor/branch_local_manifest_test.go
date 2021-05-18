@@ -37,7 +37,17 @@ const (
 `
 )
 
-func TestBranchLocalManifests(t *testing.T) {
+var (
+	branches = []string{
+		"main",
+		"release-R89-13729.B",
+		"release-R90-13816.B",
+		"release-R91-13904.B",
+		"stabilize-13851.B",
+	}
+)
+
+func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 	config := &rh.Config{
 		Manifest: repo.Manifest{
 			Default: repo.Default{
@@ -56,24 +66,15 @@ func TestBranchLocalManifests(t *testing.T) {
 	harness := &rh.RepoHarness{}
 	err := harness.Initialize(config)
 	assert.NilError(t, err)
-	defer harness.Teardown()
 
 	remoteManifestProject := rh.GetRemoteProject(config.Manifest.Projects[0])
 	remoteFooProject := rh.GetRemoteProject(config.Manifest.Projects[1])
-	branches := []string{
-		"main",
-		"release-R89-13729.B",
-		"release-R90-13816.B",
-		"release-R91-13904.B",
-		"stabilize-13851.B",
-	}
 
 	fetchLocation := harness.Manifest().Remotes[0].Fetch
 
-	mainLocalManifest := []byte(fmt.Sprintf(localManifestXML, "main"))
 	localManifestFile := rh.File{
 		Name:     "local_manifest.xml",
-		Contents: mainLocalManifest,
+		Contents: []byte(fmt.Sprintf(localManifestXML, "main")),
 	}
 
 	for _, branch := range branches {
@@ -97,11 +98,17 @@ func TestBranchLocalManifests(t *testing.T) {
 		_, err = harness.AddFile(remoteFooProject, branch, localManifestFile)
 		assert.NilError(t, err)
 	}
+	return harness, remoteManifestProject
+}
+
+func TestBranchLocalManifests(t *testing.T) {
+	harness, remoteManifestProject := setUp(t)
+	defer harness.Teardown()
 
 	checkout, err := harness.Checkout(remoteManifestProject, "main", "default.xml")
 	assert.NilError(t, err)
 
-	assert.NilError(t, BranchLocalManifests(checkout, []string{"foo/"}, 90))
+	assert.NilError(t, BranchLocalManifests(checkout, []string{"foo/"}, 90, false))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
 	checkBranches := map[string]bool{
@@ -121,8 +128,21 @@ func TestBranchLocalManifests(t *testing.T) {
 		if branched, ok := checkBranches[branch]; branched && ok {
 			expected = fmt.Sprintf(localManifestXML, branch)
 		} else {
-			expected = string(mainLocalManifest)
+			expected = fmt.Sprintf(localManifestXML, "main")
 		}
 		assert.StringsEqual(t, string(localManifest), expected)
 	}
+}
+
+func TestBranchLocalManifestsDryRun(t *testing.T) {
+	r, remoteManifestProject := setUp(t)
+	defer r.Teardown()
+
+	assert.NilError(t, r.SnapshotRemotes())
+
+	checkout, err := r.Checkout(remoteManifestProject, "main", "default.xml")
+	assert.NilError(t, err)
+
+	assert.NilError(t, BranchLocalManifests(checkout, []string{"foo/"}, 90, true))
+	assert.NilError(t, r.AssertNoRemoteDiff())
 }

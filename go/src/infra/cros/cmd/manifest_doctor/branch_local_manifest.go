@@ -21,7 +21,7 @@ const (
 	manifestInternalProject = "manifest-internal"
 )
 
-func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Manifest) error {
+func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) error {
 	// Checkout appropriate branch of project.
 	projectPath := filepath.Join(checkout, path)
 	if !osutils.PathExists(projectPath) {
@@ -49,7 +49,6 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 
 	// If the manifest actually changed, commit and push those changes.
 	if !hasChanges {
-
 		fmt.Printf("no changes needed for project %s, branch %s\n", path, branch)
 		return nil
 	}
@@ -74,7 +73,7 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 		Remote: remotes[0],
 		Ref:    fmt.Sprintf("refs/for/%s", branch) + "%submit",
 	}
-	if err := git.PushRef(projectPath, "HEAD", remoteRef); err != nil {
+	if err := git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun)); err != nil {
 		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
 	fmt.Printf("committed changes for project %s, branch %s\n", path, branch)
@@ -83,7 +82,7 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 }
 
 // BranchLocalManifests is responsible for doing the actual work of local manifest branching.
-func BranchLocalManifests(checkout string, projects []string, minMilestone int) error {
+func BranchLocalManifests(checkout string, projects []string, minMilestone int, dryRun bool) error {
 	branches, err := branch.BranchesFromMilestone(checkout, minMilestone)
 	if err != nil {
 		return errors.Annotate(err, "BranchesFromMilestone failure").Err()
@@ -111,7 +110,7 @@ func BranchLocalManifests(checkout string, projects []string, minMilestone int) 
 		}
 
 		for _, path := range projects {
-			if err := pinLocalManifest(checkout, path, branch, referenceManifest); err != nil {
+			if err := pinLocalManifest(checkout, path, branch, referenceManifest, dryRun); err != nil {
 				errs = append(errs, err)
 			}
 		}

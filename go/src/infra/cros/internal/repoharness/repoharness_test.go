@@ -579,6 +579,24 @@ func TestSnapshot(t *testing.T) {
 	checkFooBarBaz(t, snapshotDir, bazContents)
 }
 
+func TestSnapshotRemotes(t *testing.T) {
+	config := simpleHarnessConfig
+	r := &RepoHarness{}
+	defer r.Teardown()
+	err := r.Initialize(&config)
+	assert.NilError(t, err)
+
+	assert.NilError(t, r.SnapshotRemotes())
+
+	// Check that snapshots exist.
+	for _, remote := range config.Manifest.Remotes {
+		snapshotPath, ok := r.recentRemoteSnapshots[remote.Name]
+		assert.Assert(t, ok)
+		_, err := os.Stat(snapshotPath)
+		assert.NilError(t, err)
+	}
+}
+
 func TestAssertProjectBranchEqual(t *testing.T) {
 	root, err := ioutil.TempDir("", "assert_test")
 	assert.NilError(t, err)

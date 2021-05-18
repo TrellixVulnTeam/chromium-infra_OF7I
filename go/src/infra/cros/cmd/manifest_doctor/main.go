@@ -30,6 +30,8 @@ func cmdLocalManifestBrancher() *subcommands.Command {
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
 				"Comma-separated list of project paths to consider. "+
 					"At least one project is required.")
+			b.Flags.BoolVar(&b.push, "push", false,
+				"Whether or not to push changes to the remote.")
 			return b
 		}}
 }
@@ -60,7 +62,7 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 		return 1
 	}
 
-	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone); err != nil {
+	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
 		log.Printf(err.Error())
 		return 2
 	}
@@ -74,6 +76,7 @@ type localManifestBrancher struct {
 	minMilestone         int
 	projectList          string
 	projects             []string
+	push                 bool
 }
 
 // GetApplication returns an instance of the application.

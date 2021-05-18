@@ -80,6 +80,8 @@ type RepoHarness struct {
 	harnessRoot string
 	// Path of local checkout, or empty (if does not exist).
 	localCheckout string
+	// Most recent snapshot of each remote.
+	recentRemoteSnapshots map[string]string
 }
 
 // Manifest returns the manifest associated with the harness.
@@ -504,6 +506,47 @@ func (r *RepoHarness) Snapshot(path string) (string, error) {
 		return "", err
 	}
 	return snapshotDir, nil
+}
+
+// SnapshotRemotes takes a snapshot of the current state of each remote and stores them
+// within the harness struct.
+func (r *RepoHarness) SnapshotRemotes() error {
+	// Take snapshot of each project in its current state.
+	r.recentRemoteSnapshots = make(map[string]string)
+	for _, remote := range r.Manifest().Remotes {
+		remotePath := filepath.Join(r.HarnessRoot(), remote.Name)
+		var err error
+		r.recentRemoteSnapshots[remote.Name], err = r.Snapshot(remotePath)
+		if err != nil {
+			return errors.Annotate(err, "error taking snapshot of remote %s", remote.Name).Err()
+		}
+	}
+
+	return nil
+}
+
+// GetRecentRemoteSnapshot returns the path of the most recent snapshot for a particular remote.
+func (r *RepoHarness) GetRecentRemoteSnapshot(remote string) (string, error) {
+	remoteSnapshot, ok := r.recentRemoteSnapshots[remote]
+	if !ok {
+		return "", fmt.Errorf("snapshot does not exist for remote %s", remote)
+	}
+	return remoteSnapshot, nil
+}
+
+func (r *RepoHarness) AssertNoRemoteDiff() error {
+	manifest := r.Manifest()
+	for _, remote := range manifest.Remotes {
+		remotePath := filepath.Join(r.HarnessRoot(), remote.Name)
+		remoteSnapshot, err := r.GetRecentRemoteSnapshot(remote.Name)
+		if err != nil {
+			return err
+		}
+		if err := test_util.AssertContentsEqual(remoteSnapshot, remotePath); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetRemotePath returns the path to the remote project repo.

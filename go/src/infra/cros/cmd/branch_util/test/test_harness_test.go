@@ -7,9 +7,7 @@ package test
 
 import (
 	"encoding/xml"
-	// "fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -135,24 +133,6 @@ func TestSetVersion(t *testing.T) {
 	assert.Assert(t, mv.VersionsEqual(vinfo, version))
 }
 
-func TestTakeSnapshot(t *testing.T) {
-	config := DefaultCrosHarnessConfig
-	r := &CrosRepoHarness{}
-	defer r.Teardown()
-	err := r.Initialize(&config)
-	assert.NilError(t, err)
-
-	assert.NilError(t, r.TakeSnapshot())
-
-	// Check that snapshots exist.
-	for _, remote := range config.Manifest.Remotes {
-		snapshotPath, ok := r.recentRemoteSnapshots[remote.Name]
-		assert.Assert(t, ok)
-		_, err := os.Stat(snapshotPath)
-		assert.NilError(t, err)
-	}
-}
-
 func TestAssertCrosBranches_true(t *testing.T) {
 	manifest := testManifest
 	config := &CrosRepoHarnessConfig{
@@ -213,7 +193,7 @@ func TestAssertCrosBranchFromManifest_true(t *testing.T) {
 	defer r.Teardown()
 	err := r.Initialize(config)
 	assert.NilError(t, err)
-	assert.NilError(t, r.TakeSnapshot())
+	assert.NilError(t, r.Harness.SnapshotRemotes())
 
 	crosBranchName := "mybranch"
 	// Set up CrOS branch. We create the new refs from the corresponding main refs so
@@ -239,7 +219,7 @@ func TestAssertCrosBranchFromManifest_false(t *testing.T) {
 	defer r.Teardown()
 	err := r.Initialize(config)
 	assert.NilError(t, err)
-	assert.NilError(t, r.TakeSnapshot())
+	assert.NilError(t, r.Harness.SnapshotRemotes())
 
 	crosBranchName := "mybranch"
 

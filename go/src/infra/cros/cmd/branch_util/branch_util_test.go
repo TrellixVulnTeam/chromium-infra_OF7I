@@ -407,7 +407,7 @@ func setUp(t *testing.T) *test.CrosRepoHarness {
 	addManifestFiles(t, &r, manifestProject, existingBranchName, manifestBranchedFiles)
 	addManifestFiles(t, &r, manifestInternalProject, existingBranchName, manifestInternalBranchedFiles)
 
-	assert.NilError(t, r.TakeSnapshot())
+	assert.NilError(t, r.Harness.SnapshotRemotes())
 
 	return &r
 }
@@ -447,13 +447,7 @@ func assertMinimalManifestChanges(t *testing.T, r *test.CrosRepoHarness, branch 
 }
 
 func assertNoRemoteDiff(t *testing.T, r *test.CrosRepoHarness) {
-	manifest := r.Harness.Manifest()
-	for _, remote := range manifest.Remotes {
-		remotePath := filepath.Join(r.Harness.HarnessRoot(), remote.Name)
-		remoteSnapshot, err := r.GetRecentRemoteSnapshot(remote.Name)
-		assert.NilError(t, err)
-		assert.NilError(t, testutil.AssertContentsEqual(remoteSnapshot, remotePath))
-	}
+	assert.NilError(t, r.Harness.AssertNoRemoteDiff())
 }
 
 type fakeCreateRemoteBranchesAPI struct {
@@ -737,7 +731,7 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 	// Check that no remotes change.
 	for _, remote := range manifest.Remotes {
 		remotePath := filepath.Join(r.Harness.HarnessRoot(), remote.Name)
-		remoteSnapshot, err := r.GetRecentRemoteSnapshot(remote.Name)
+		remoteSnapshot, err := r.Harness.GetRecentRemoteSnapshot(remote.Name)
 		assert.NilError(t, err)
 		assert.NilError(t, testutil.AssertContentsEqual(remoteSnapshot, remotePath))
 	}
@@ -758,7 +752,7 @@ func TestCreatExistingVersion(t *testing.T) {
 	assert.NilError(t,
 		r.Harness.CreateRemoteRef(manifestInternalProject, "release-R12-3.B", ""))
 	// Snapshot of manifestInternalProject is stale -- need to update.
-	assert.NilError(t, r.TakeSnapshot())
+	assert.NilError(t, r.Harness.SnapshotRemotes())
 
 	var stderrBuf bytes.Buffer
 	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)

@@ -90,9 +90,6 @@ type CrosRepoHarness struct {
 	Harness rh.RepoHarness
 	// Version info project information.
 	versionProject *repo.Project
-
-	// Snapshots of each remote taken after initialization.
-	recentRemoteSnapshots map[string]string
 }
 
 // CrosRepoHarnessConfig contains config for a CrosRepoHarness.
@@ -200,23 +197,6 @@ func (r *CrosRepoHarness) SetVersion(branch string, version mv.VersionInfo) erro
 	return nil
 }
 
-// TakeSnapshot takes a snapshot of the current state of each remote and stores them
-// within the harness struct.
-func (r *CrosRepoHarness) TakeSnapshot() error {
-	// Take snapshot of each project in its current state.
-	r.recentRemoteSnapshots = make(map[string]string)
-	for _, remote := range r.Harness.Manifest().Remotes {
-		remotePath := filepath.Join(r.Harness.HarnessRoot(), remote.Name)
-		var err error
-		r.recentRemoteSnapshots[remote.Name], err = r.Harness.Snapshot(remotePath)
-		if err != nil {
-			return errors.Annotate(err, "error taking snapshot of remote %s", remote.Name).Err()
-		}
-	}
-
-	return nil
-}
-
 // AssertCrosBranches asserts that remote projects have the expected chromiumos branches.
 func (r *CrosRepoHarness) AssertCrosBranches(branches []string) error {
 	manifest := r.Harness.Manifest()
@@ -285,17 +265,8 @@ func (r *CrosRepoHarness) AssertCrosBranchesMissing(branches []string) error {
 	return nil
 }
 
-// GetRecentRemoteSnapshot returns the path of the most recent snapshot for a particular remote.
-func (r *CrosRepoHarness) GetRecentRemoteSnapshot(remote string) (string, error) {
-	remoteSnapshot, ok := r.recentRemoteSnapshots[remote]
-	if !ok {
-		return "", fmt.Errorf("snapshot does not exist for remote %s", remote)
-	}
-	return remoteSnapshot, nil
-}
-
 func (r *CrosRepoHarness) getRecentProjectSnapshot(project rh.RemoteProject) (string, error) {
-	remoteSnapshot, err := r.GetRecentRemoteSnapshot(project.RemoteName)
+	remoteSnapshot, err := r.Harness.GetRecentRemoteSnapshot(project.RemoteName)
 	if err != nil {
 		return "", err
 	}
