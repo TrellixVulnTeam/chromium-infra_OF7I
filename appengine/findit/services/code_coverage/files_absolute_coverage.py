@@ -19,7 +19,8 @@ _PAGE_SIZE = 100
 # These should be ci builders.
 _SOURCE_BUILDERS = [
     'linux-code-coverage', 'win10-code-coverage', 'android-code-coverage',
-    'ios-simulator-code-coverage', 'linux-chromeos-code-coverage'
+    'ios-simulator-code-coverage', 'linux-chromeos-code-coverage',
+    'linux-lacros-code-coverage'
 ]
 
 
