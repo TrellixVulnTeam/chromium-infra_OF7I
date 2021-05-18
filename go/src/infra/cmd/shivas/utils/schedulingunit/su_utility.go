@@ -5,10 +5,12 @@
 package schedulingunit
 
 import (
+	"context"
 	"fmt"
 
 	"infra/libs/skylab/inventory/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -95,4 +97,23 @@ func SchedulingUnitBotState(su *ufspb.SchedulingUnit) map[string][]string {
 	return map[string][]string{
 		"scheduling_unit_version_index": {su.GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)},
 	}
+}
+
+// CheckIfLSEBelongsToSU checks if the DUT/Labstation belongs to a SchedulingUnit.
+//
+// User is not allowed to udpate a DUT/Labstation which belongs to a SU.
+// The DUT/Labstation needs to be removed from the SU and then updated.
+func CheckIfLSEBelongsToSU(ctx context.Context, ic ufsAPI.FleetClient, lseName string) error {
+	req := &ufsAPI.ListSchedulingUnitsRequest{
+		Filter:   fmt.Sprintf("duts=%s", lseName),
+		KeysOnly: true,
+	}
+	res, err := ic.ListSchedulingUnits(ctx, req)
+	if err != nil {
+		return err
+	}
+	if len(res.GetSchedulingUnits()) > 0 {
+		return fmt.Errorf("DUT/Labstation is associated with SchedulingUnit. Run `shivas update schedulingunit -name %s -removeduts %s` to remove association before updating the DUT/Labstation.", ufsUtil.RemovePrefix(res.GetSchedulingUnits()[0].GetName()), lseName)
+	}
+	return nil
 }

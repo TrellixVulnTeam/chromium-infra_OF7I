@@ -22,6 +22,7 @@ import (
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
+	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -433,7 +434,7 @@ func (c updateDUT) validateArgs() error {
 }
 
 // validateRequest checks if the req is valid based on the cmdline input.
-func (c *updateDUT) validateRequest(ctx context.Context, req *ufsAPI.UpdateMachineLSERequest) error {
+func (c *updateDUT) validateRequest(ctx context.Context, ic ufsAPI.FleetClient, req *ufsAPI.UpdateMachineLSERequest) error {
 	lse := req.MachineLSE
 	mask := req.UpdateMask
 	if mask == nil || len(mask.Paths) == 0 {
@@ -444,7 +445,7 @@ func (c *updateDUT) validateRequest(ctx context.Context, req *ufsAPI.UpdateMachi
 			return fmt.Errorf("Invalid update. Missing DUT name")
 		}
 	}
-	return nil
+	return suUtil.CheckIfLSEBelongsToSU(ctx, ic, lse.GetName())
 }
 
 // parseArgs reads input from the cmd line parameters and generates update dut request.
@@ -1069,7 +1070,7 @@ func (c *updateDUT) getDeployActions(ctx context.Context, ic ufsAPI.FleetClient,
 // updateDUTToUFS verifies the request and calls UpdateMachineLSE API with the given request.
 func (c *updateDUT) updateDUTToUFS(ctx context.Context, ic ufsAPI.FleetClient, req *ufsAPI.UpdateMachineLSERequest) error {
 	// Validate the update request.
-	if err := c.validateRequest(ctx, req); err != nil {
+	if err := c.validateRequest(ctx, ic, req); err != nil {
 		return err
 	}
 	// Print existing LSE before update.

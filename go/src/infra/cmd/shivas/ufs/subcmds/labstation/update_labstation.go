@@ -19,6 +19,7 @@ import (
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
+	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -248,7 +249,7 @@ func (c *updateLabstation) isDeployTaskRequired(req *ufsAPI.UpdateMachineLSERequ
 }
 
 // validateRequest checks if the req is valid based on the cmdline input.
-func (c *updateLabstation) validateRequest(ctx context.Context, req *ufsAPI.UpdateMachineLSERequest) error {
+func (c *updateLabstation) validateRequest(ctx context.Context, ic ufsAPI.FleetClient, req *ufsAPI.UpdateMachineLSERequest) error {
 	lse := req.MachineLSE
 	mask := req.UpdateMask
 	if mask == nil || len(mask.Paths) == 0 {
@@ -259,7 +260,7 @@ func (c *updateLabstation) validateRequest(ctx context.Context, req *ufsAPI.Upda
 			return fmt.Errorf("Invalid update. Missing Labstation name")
 		}
 	}
-	return nil
+	return suUtil.CheckIfLSEBelongsToSU(ctx, ic, lse.GetName())
 }
 
 // containsAnyStrings returns true if any of the inputs are included in the list.
@@ -456,7 +457,7 @@ func generateRPMWithMask(rpmHost, rpmOutlet string) (*chromeosLab.OSRPM, []strin
 // updateLabstationToUFS verifies the request and calls UpdateMachineLSE API with the given request.
 func (c *updateLabstation) updateLabstationToUFS(ctx context.Context, ic ufsAPI.FleetClient, req *ufsAPI.UpdateMachineLSERequest) error {
 	// Validate the update request.
-	if err := c.validateRequest(ctx, req); err != nil {
+	if err := c.validateRequest(ctx, ic, req); err != nil {
 		return err
 	}
 	// Print existing LSE before update.
