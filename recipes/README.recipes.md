@@ -893,7 +893,7 @@ Ensures that the WinPE add-on is available.
 
 API for using Windows SDK distributed via CIPD.
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/windows_sdk/api.py#18)(self, path=None, version=None, enabled=True, bits=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/windows_sdk/api.py#18)(self, path=None, version=None, enabled=True):**
 
 Setups the SDK environment when enabled.
 
@@ -903,8 +903,6 @@ Args:
   version (str): CIPD instance ID, tag or ref of the SDK
     (default is set via $infra/windows_sdk.version property)
   enabled (bool): Whether the SDK should be used or not.
-  bits (int): Whether to configure for a 32- or 64-bit build.
-    Defaults to the architecture of the host.
 
 Raises:
     StepFailure or InfraFailure.
@@ -1286,9 +1284,9 @@ This recipe runs legacy analyzers for the infra repo.
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#7): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_sdk/examples/full.py#20)(api, bits):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_sdk/examples/full.py#13)(api):**
 ### *recipes* / [zip:examples/full](/recipes/recipe_modules/zip/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/zip/examples/full.py#5): [zip](#recipe_modules-zip), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
