@@ -180,7 +180,8 @@ func validateUserAgent(md metadata.MD) (string, bool, error) {
 	return version[0], ok, nil
 }
 
-// This is to block older version of skylab tools from updating MachineLSE in UFS.
+// This is to block older version of skylab tool(deprecated) only from updating MachineLSE in UFS.
+// Does not block skylab_swarming_worker, skylab_local_state, shivas and other clients.
 func blockSkylabWritesToMachineLSE(info *grpc.UnaryServerInfo, userAgent string) bool {
 	if strings.Contains(userAgent, "skylab/") &&
 		(strings.Contains(info.FullMethod, "CreateMachineLSE") ||
