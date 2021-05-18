@@ -7,8 +7,10 @@
 package repo
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"regexp"
 	"sort"
 	"strings"
@@ -210,4 +212,22 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 	manifest = regexp.MustCompile(`\s+>`).ReplaceAllString(manifest, ">")
 
 	return []byte(manifest), nil
+}
+
+// UpdateManifestElementsInFile performs the same operation as UpdateManifestElements
+// but operates on a specific manifest file, handling all input/output.
+// Returns whether or not the file contents changed, and a potential error.
+func UpdateManifestElementsInFile(path string, reference *Manifest) (bool, error) {
+	data, err := LoadManifestFromFileRaw(path)
+	if err != nil {
+		return false, err
+	}
+
+	if newData, err := UpdateManifestElements(reference, data); err != nil {
+		return false, err
+	} else if err := ioutil.WriteFile(path, newData, 0644); err != nil {
+		return false, errors.Annotate(err, "failed to write manifest").Err()
+	} else {
+		return !bytes.Equal(data, newData), nil
+	}
 }

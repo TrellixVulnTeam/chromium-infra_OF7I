@@ -322,6 +322,19 @@ func TestInit_bare(t *testing.T) {
 	assert.NilError(t, Init(fakeGitRepo, true))
 }
 
+func TestGetRemotes(t *testing.T) {
+	fakeGitRepo := "repo"
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: fakeGitRepo,
+		ExpectedCmd: []string{"git", "remote"},
+		Stdout:      "origin\ncros\n",
+	}
+	remotes, err := GetRemotes(fakeGitRepo)
+	assert.NilError(t, err)
+	assert.StringArrsEqual(t, remotes, []string{"origin", "cros"})
+}
+
 func TestAddRemote(t *testing.T) {
 	fakeGitRepo := "repo"
 	remoteName := "remote"

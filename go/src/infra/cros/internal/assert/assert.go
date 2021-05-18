@@ -22,7 +22,7 @@ func Assert(t *testing.T, b bool) {
 func NilError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
-		t.Fatalf("assert failed: non-nil error %v", err)
+		t.Fatalf("assert failed: non-nil error: %v", err)
 	}
 }
 

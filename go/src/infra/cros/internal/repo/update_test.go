@@ -9,7 +9,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	assert "infra/cros/internal/assert"
+	"infra/cros/internal/assert"
+	"infra/cros/internal/osutils"
 )
 
 func TestGetSetDelAttr(t *testing.T) {
@@ -65,6 +66,52 @@ func TestUpdateManifestElements(t *testing.T) {
 	assert.NilError(t, err)
 	if string(got) != string(expected) {
 		t.Fatalf("mismatch on UpdateManifestElements(...)\ngot:%v\n\nexpected:%v\n\n", string(got), string(expected))
+	}
+}
+
+func TestUpdateManifestElementsInFile(t *testing.T) {
+	tmpFile, cleanup, err := osutils.CreateTmpCopy("test_data/update/pre.xml")
+	assert.NilError(t, err)
+	defer cleanup()
+
+	referenceManifest := &Manifest{
+		Default: Default{
+			RemoteName: "chromeos1",
+			Revision:   "456",
+		},
+		Remotes: []Remote{
+			{
+				Name:  "chromium",
+				Alias: "chromeos1",
+				Fetch: "https://chromium.org/remote",
+			},
+		},
+		Projects: []Project{
+			{
+				Name:       "baz",
+				Path:       "baz/",
+				RemoteName: "chromium1",
+			},
+			{
+				Name:       "buz1",
+				Path:       "buz/",
+				RemoteName: "google",
+			},
+		},
+	}
+
+	changed, err := UpdateManifestElementsInFile(tmpFile, referenceManifest)
+	assert.NilError(t, err)
+	assert.Assert(t, changed)
+
+	expected, err := ioutil.ReadFile("test_data/update/post.xml")
+	assert.NilError(t, err)
+
+	got, err := ioutil.ReadFile(tmpFile)
+	assert.NilError(t, err)
+
+	if string(got) != string(expected) {
+		t.Fatalf("mismatch on UpdateManifestElementsInFile(...)\ngot:%v\n\nexpected:%v\n\n", string(got), string(expected))
 	}
 }
 

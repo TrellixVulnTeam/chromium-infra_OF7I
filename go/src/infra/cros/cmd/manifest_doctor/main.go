@@ -28,7 +28,7 @@ func cmdLocalManifestBrancher() *subcommands.Command {
 				"Minimum milestone of branches to consider. Used directly "+
 					"in selecting release branches and indirectly for others.")
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
-				"Comma-separated list of project names to consider. "+
+				"Comma-separated list of project paths to consider. "+
 					"At least one project is required.")
 			return b
 		}}
@@ -58,6 +58,11 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 	if err := b.validate(); err != nil {
 		log.Printf("error validating args: %v", err)
 		return 1
+	}
+
+	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone); err != nil {
+		log.Printf(err.Error())
+		return 2
 	}
 
 	return 0

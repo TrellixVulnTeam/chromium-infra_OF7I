@@ -5,6 +5,8 @@
 package osutils
 
 import (
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -66,4 +68,30 @@ func FindInPathParents(
 		// Go up one directory.
 		currentPath += "/.."
 	}
+}
+
+// CreateTmpCopy creates a temporary copy of the given file.
+// It returns the file path, a clean up function, and a potential error.
+func CreateTmpCopy(src string) (string, func(), error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return "", nil, err
+	}
+	defer in.Close()
+
+	out, err := ioutil.TempFile("", "tmp_copy")
+	if err != nil {
+		return "", nil, err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		os.Remove(out.Name())
+		return "", nil, err
+	}
+
+	return out.Name(), func() {
+		os.Remove(out.Name())
+	}, nil
 }

@@ -160,7 +160,7 @@ func StripRefs(ref string) string {
 	// If the ref starts with ref/remotes/, then we want the part of the string
 	// that comes after the third "/".
 	// Example: refs/remotes/origin/master --> master
-	// Example: refs/remotse/origin/foo/bar --> foo/bar
+	// Example: refs/remotes/origin/foo/bar --> foo/bar
 	if strings.HasPrefix(ref, "refs/remotes/") {
 		refParts := strings.SplitN(ref, "/", 4)
 		return refParts[len(refParts)-1]
@@ -248,6 +248,19 @@ func Init(gitRepo string, bare bool) error {
 	}
 	_, err := RunGit(gitRepo, cmd)
 	return err
+}
+
+// GetRemotes returns the remotes for a repository.
+func GetRemotes(gitRepo string) ([]string, error) {
+	output, err := RunGit(gitRepo, []string{"remote"})
+	if err != nil {
+		return nil, err
+	}
+	remotes := strings.Split(strings.TrimSpace(output.Stdout), "\n")
+	for i := range remotes {
+		remotes[i] = strings.TrimSpace(remotes[i])
+	}
+	return remotes, nil
 }
 
 // AddRemote adds a remote.
