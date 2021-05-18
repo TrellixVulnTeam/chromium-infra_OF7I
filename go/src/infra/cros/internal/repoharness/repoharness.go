@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -29,6 +30,9 @@ var (
 	// CommandRunnerImpl is the command runner impl currently being used by the
 	// package. Exists for testing purposes.
 	CommandRunnerImpl cmd.CommandRunner = cmd.RealCommandRunner{}
+
+	// ForSubmitRefRegexp matches refs of the form refs/for/...%submit
+	ForSubmitRefRegexp = regexp.MustCompile(`^refs\/for\/(?P<name>.+)%submit$`)
 )
 
 // File contains information about a file.
@@ -335,6 +339,80 @@ func (r *RepoHarness) AddFiles(project RemoteProject, branch string, files []Fil
 	}
 
 	return commit, nil
+}
+
+// ProcessSubmitRefs makes sure that refs/heads/... refs accurately reflect
+// corresponding refs/for/...%submit refs, if they exist.
+func (r *RepoHarness) ProcessSubmitRefs() error {
+	temporaryBranchName := "temporary_submit_branch"
+	for _, project := range r.manifest.Projects {
+		remoteName := project.RemoteName
+		projectPath := filepath.Join(r.harnessRoot, remoteName, project.Name)
+
+		refMap, err := git.Refs(projectPath)
+		if err != nil {
+			return err
+		}
+
+		// Process each refs/for/...%submit ref.
+		for ref := range refMap {
+			match := ForSubmitRefRegexp.FindStringSubmatch(ref)
+			if match == nil {
+				continue
+			}
+
+			// Create a branch pointing to the refs/for/...%submit ref.
+			err := git.RunGitIgnoreOutput(projectPath, []string{"branch", temporaryBranchName, ref, "--force"})
+			if err != nil {
+				return err
+			}
+
+			// The remote repositories are bare git repos (as they should be),
+			// which means that we can't rebase the refs/for/...%submit ref
+			// directly onto refs/heads/.... To get around this, we create a branch
+			// (which is externally visible) on the remote, pull that into a local
+			// checkout, do the needed rebasing, and then push directly to the
+			// corresponding refs/heads/... ref.
+			tmpRepo, err := ioutil.TempDir(r.harnessRoot, "tmp-repo")
+			defer os.RemoveAll(tmpRepo)
+			if err != nil {
+				return err
+			}
+
+			remoteForRef := git.RemoteRef{
+				Remote: project.RemoteName,
+				Ref:    temporaryBranchName,
+			}
+			remoteHeadRef := git.RemoteRef{
+				Remote: project.RemoteName,
+				Ref:    match[1],
+			}
+			// Replay (using rebase) the changes in refs/for/...%submit onto
+			// refs/heads/..., and push the changes to the remote heads ref.
+			if err := git.Init(tmpRepo, false); err != nil {
+				return err
+			}
+			if err := git.AddRemote(tmpRepo, project.RemoteName, projectPath); err != nil {
+				return err
+			}
+			if err := git.CreateTrackingBranch(tmpRepo, "for", remoteForRef); err != nil {
+				return err
+			}
+			if err := git.CreateTrackingBranch(tmpRepo, "head", remoteHeadRef); err != nil {
+				return err
+			}
+			if err := git.Checkout(tmpRepo, "for"); err != nil {
+				return err
+			}
+			if err := git.RunGitIgnoreOutput(tmpRepo, []string{"rebase", "head"}); err != nil {
+				return err
+			}
+			if err := git.PushRef(tmpRepo, "for", remoteHeadRef, git.Force()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // ReadFile reads a file from a remote.

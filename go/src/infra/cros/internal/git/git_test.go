@@ -588,3 +588,25 @@ func TestNoTagsOpts(t *testing.T) {
 	}
 	assert.NilError(t, Fetch(gitRepo, remote, refspec, NoTags()))
 }
+
+func TestRefs(t *testing.T) {
+	expectedRefMap := make(map[string]string)
+	expectedRefMap["refs/for/foo%submit"] = "ab8bc0fea57e061c8467d9d672f94fe68e0fa4a4"
+	expectedRefMap["refs/heads/foo"] = "edd456bdc3bec30375592f45dca211289875aeb6"
+	expectedRefMap["refs/heads/bar"] = "ad863d57e01bfa6314a6f77d6be94a953930a840"
+	expectedRefMap["refs/heads/main"] = "9a272e399e0119a316928dc66203f73556d92de7"
+
+	CommandRunnerImpl = cmd.FakeCommandRunner{
+		ExpectedDir: "foo",
+		ExpectedCmd: []string{"git", "show-ref"},
+		Stdout: `ab8bc0fea57e061c8467d9d672f94fe68e0fa4a4 refs/for/foo%submit
+		edd456bdc3bec30375592f45dca211289875aeb6 refs/heads/foo
+		ad863d57e01bfa6314a6f77d6be94a953930a840 refs/heads/bar
+		9a272e399e0119a316928dc66203f73556d92de7 refs/heads/main
+		`,
+	}
+
+	refMap, err := Refs("foo")
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(expectedRefMap, refMap))
+}

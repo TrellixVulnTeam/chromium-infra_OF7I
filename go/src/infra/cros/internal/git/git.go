@@ -373,3 +373,22 @@ func ResolveRemoteSymbolicRef(gitRepo, remote string, ref string) (string, error
 	}
 	return "", fmt.Errorf("unable to resolve %s", ref)
 }
+
+// Refs returns all of the refs in a repository, mapped to the corresponding
+// SHAs.
+func Refs(gitRepo string) (map[string]string, error) {
+	output, err := RunGit(gitRepo, []string{"show-ref"})
+	if err != nil {
+		return nil, err
+	}
+
+	refMap := make(map[string]string)
+
+	for _, line := range strings.Split(output.Stdout, "\n") {
+		toks := strings.Fields(line)
+		if len(toks) >= 2 {
+			refMap[toks[1]] = toks[0]
+		}
+	}
+	return refMap, nil
+}

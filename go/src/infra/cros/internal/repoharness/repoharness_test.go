@@ -308,6 +308,70 @@ func TestAddFile(t *testing.T) {
 	assert.Assert(t, reflect.DeepEqual(file.Contents, fileContents))
 }
 
+func TestProcessSubmitRefs(t *testing.T) {
+	harnessConfig := simpleHarnessConfig
+	harness := &RepoHarness{}
+	defer harness.Teardown()
+	err := harness.Initialize(&harnessConfig)
+	assert.NilError(t, err)
+
+	workingManifest := harness.Manifest()
+
+	// Add the manifest file to the appropriate repository so that we can
+	// create a local checkout.
+	manifestProject, err := workingManifest.GetProjectByName("manifest")
+	assert.NilError(t, err)
+	manifestBytes, err := workingManifest.ToBytes()
+	assert.NilError(t, err)
+	manifestFile := File{Name: "default.xml", Contents: manifestBytes}
+	_, err = harness.AddFile(GetRemoteProject(*manifestProject), "main", manifestFile)
+	assert.NilError(t, err)
+
+	// Create local checkout.
+	checkout, err := harness.Checkout(GetRemoteProject(*manifestProject), "main", "default.xml")
+	assert.NilError(t, err)
+
+	// Get two different projects, foo and bar.
+	projects := []repo.Project{
+		workingManifest.Projects[0],
+		workingManifest.Projects[2],
+	}
+
+	// Create file and push to refs/for/...%submit.
+	for _, project := range projects {
+		branch := git.StripRefs(project.Revision)
+
+		fileContents := []byte(project.Name)
+		localProjectPath := filepath.Join(checkout, project.Path)
+		filePath := filepath.Join(localProjectPath, project.Name+".txt")
+		ioutil.WriteFile(filePath, fileContents, readWritePerms)
+
+		commit, err := git.CommitAll(localProjectPath, "add files")
+		assert.NilError(t, err)
+		remoteRef := git.RemoteRef{
+			Remote: manifestProject.RemoteName,
+			Ref:    "refs/for/" + branch + "%submit",
+		}
+		assert.NilError(t, git.PushRef(localProjectPath, commit, remoteRef))
+	}
+
+	assert.NilError(t, harness.ProcessSubmitRefs())
+
+	// Check that file is at refs/heads/....
+	for _, project := range projects {
+		branch := git.StripRefs(project.Revision)
+		expected := []byte(project.Name)
+
+		got, err := harness.ReadFile(
+			GetRemoteProject(project),
+			"refs/heads/"+branch,
+			project.Name+".txt")
+
+		assert.NilError(t, err)
+		assert.Assert(t, reflect.DeepEqual(expected, got))
+	}
+}
+
 func TestCheckout(t *testing.T) {
 	harnessConfig := simpleHarnessConfig
 	harness := &RepoHarness{}
