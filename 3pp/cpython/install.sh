@@ -163,10 +163,16 @@ else
   # This set of symbols was determined by trial, see:
   # - crbug.com/763792
   #
-  # We use LDFLAGS_NODIST instead of LDFLAGS so that distutils doesn't use this
-  # for building extensions. It would break the build, as gnu_version_script.txt
-  # isn't available when we build wheels. It's not necessary there anyway.
-  LDFLAGS_NODIST="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
+  # We'd like to use LDFLAGS_NODIST instead of LDFLAGS here, so that distutils
+  # doesn't use this for building extensions. It would break the build, as
+  # gnu_version_script.txt isn't available when we build wheels, and it's not
+  # necessary there anyway.
+  #
+  # But LDFLAGS_NODIST isn't available on Python 2.7, so instead we have to
+  # manually trim this from the output later on. Note: don't use a colon
+  # (':') in LDFLAGS_TO_STRIP as that's used as a delimeter later.
+  LDFLAGS_TO_STRIP="-Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
+  LDFLAGS+=" $LDFLAGS_TO_STRIP"
 
   # The "crypt" module needs to link against glibc's "crypt" function. We link
   # it statically because our docker environment uses libcrypt.so.2, which isn't
@@ -251,6 +257,18 @@ cat < "$SCRIPT_DIR/ssl_suffix.py" >> "$PREFIX/lib/python2.7/ssl.py"
 # TODO: maybe strip python executable?
 
 $INTERP `which pip_bootstrap.py` "$PREFIX"
+
+# As mentioned above, there are some LDFLAGS that we use during build, but we
+# don't want to use for building native extensions. Here we strip them from the
+# config file which distutils will read.
+if [[ $LDFLAGS_TO_STRIP ]]; then
+  sed -i 's: $LDFLAGS_TO_STRIP::g' $PREFIX/lib/python*/_sysconfigdata.py
+fi
+
+# Clear out any pre-compiled versions of this file that might persist the bad
+# LDFLAGS, just to be safe.
+rm -f $PREFIX/lib/python*/_sysconfigdata.pyc
+rm -f $PREFIX/lib/python*/_sysconfigdata.pyo
 
 # Cleanup!
 rm -rf $PREFIX/lib/*.a
