@@ -2,7 +2,7 @@ import marked from 'marked';
 import DOMPurify from 'dompurify';
 
 /** @type {Set} Projects that defaults content as Markdown content. */
-const DEFAULT_MD_PROJECTS = new Set();
+const DEFAULT_MD_PROJECTS = new Set(['monkeyrail']);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
 const BLOCKLIST = new Set();
@@ -15,13 +15,13 @@ const BLOCKLIST = new Set();
  * @return {boolean} Whether this content should be rendered as Markdown.
  */
 export const shouldRenderMarkdown = ({
-  project, author, override = false,
+  project, author, override = false, enabledProjects = DEFAULT_MD_PROJECTS
 } = {}) => {
   if (author in BLOCKLIST) {
     return false;
   } else if (override) {
     return true;
-  } else if (project in DEFAULT_MD_PROJECTS) {
+  } else if (enabledProjects.has(project)) {
     return true;
   }
   return false;

@@ -9,6 +9,8 @@ import {connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
+import {shouldRenderMarkdown, renderMarkdown} from 'shared/md-helper.js';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 
 /**
  * `<mr-comment-content>`
@@ -25,6 +27,8 @@ export class MrCommentContent extends connectStore(LitElement) {
     this.commentReferences = new Map();
     this.isDeleted = false;
     this.projectName = '';
+    this.author = '';
+    this.overrideMarkdown = false;
   }
 
   /** @override */
@@ -38,6 +42,8 @@ export class MrCommentContent extends connectStore(LitElement) {
         reflect: true,
       },
       projectName: {type: String},
+      author: {type: String},
+      overrideMarkdown: {type: Boolean},
     };
   }
 
@@ -68,6 +74,10 @@ export class MrCommentContent extends connectStore(LitElement) {
 
   /** @override */
   render() {
+    if (shouldRenderMarkdown(
+      {project: this.projectName, author: this.author, override: this.overrideMarkdown})) {
+      return html`${unsafeHTML(renderMarkdown(this.content))}`;
+    }
     const runs = autolink.markupAutolinks(
         this.content, this.commentReferences, this.projectName,
         this.revisionUrlFormat);

@@ -59,4 +59,16 @@ describe('mr-comment-content', () => {
         element.shadowRoot.textContent,
         'Some text before a go/link and more text before some bold text.');
   });
+
+  it('does render markdown', async () => {
+    element.content =
+      '### this is a header';
+    element.overrideMarkdown = true;
+
+    await element.updateComplete;
+
+    const headerText = element.shadowRoot.querySelector('h3').textContent;
+    assert.equal(headerText, 'this is a header');
+
+  })
 });

@@ -68,6 +68,7 @@ export class MrDescription extends LitElement {
       </div>
       <mr-comment-content
         .content=${selectedDescription.content}
+        .author=${selectedDescription.commenter.displayName}
       ></mr-comment-content>
       <div>
         ${(selectedDescription.attachments || []).map((attachment) => html`

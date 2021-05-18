@@ -11,6 +11,16 @@ describe('shouldRenderMarkdown', () => {
     const actual = shouldRenderMarkdown({override: true});
     assert.isTrue(actual);
   });
+
+  it('returns true for enabled projects', () => {
+    const actual = shouldRenderMarkdown({project:'astor', enabledProjects: new Set(['astor'])});
+    assert.isTrue(actual);
+  })
+
+  it('returns false for disabled projects', () => {
+    const actual = shouldRenderMarkdown({project:'hazelnut', enabledProjects: new Set(['astor'])});
+    assert.isFalse(actual);
+  })
 });
 
 describe('renderMarkdown', () => {

@@ -230,6 +230,7 @@ export class MrComment extends LitElement {
         <mr-comment-content
           ?hidden=${this.comment.descriptionNum}
           .content=${commentContent}
+          .author=${this.comment.commenter.displayName}
           ?isDeleted=${this.comment.isDeleted}
         ></mr-comment-content>
         <div ?hidden=${this.comment.descriptionNum}>

@@ -16,7 +16,7 @@
     "@testing-library/react": "^11.2.6",
     "@types/chai": "^4.2.16",
     "@types/mocha": "^8.2.2",
-    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/eslint-plugin": "^4.24.0",
     "@typescript-eslint/parser": "^4.22.1",
     "autoprefixer": "^10.2.5",
     "axe-core": "^4.1.3",
