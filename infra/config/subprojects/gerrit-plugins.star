@@ -9,13 +9,28 @@ load("//lib/infra.star", "infra")
 BASE_REPO_URL = "https://chromium.googlesource.com/infra/gerrit-plugins/"
 BUILDER_NAME = "Gerrit Plugins Tester"
 
+PLUGINS = [
+    "binary-size",
+    "buildbucket",
+    "chromium-behavior",
+    "chromium-binary-size",
+    "chromium-style",
+    "chumpdetector",
+    "code-coverage",
+    "git-numberer",
+    "landingwidget",
+    "tricium",
+]
+
 luci.cq_group(
     name = "gerrit-plugins",
-    watch = cq.refset(
-        # TODO(gavinmak): Include other plugins.
-        repo = BASE_REPO_URL + "tricium",
-        refs = ["refs/heads/main"],
-    ),
+    watch = [
+        cq.refset(
+            repo = BASE_REPO_URL + plugin,
+            refs = ["refs/heads/main"],
+        )
+        for plugin in PLUGINS
+    ],
 )
 
 luci.builder(
