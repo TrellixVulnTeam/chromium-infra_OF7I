@@ -126,7 +126,7 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		if err != nil {
 			return nil, err
 		}
-		r.Repos[filepath.ToSlash(relRepoPath)] = &repo.Repo
+		r.Repos[filepath.ToSlash(relRepoPath)] = repo.Repo
 
 		if form == dirmdpb.MappingForm_SPARSE {
 			for _, dir := range repo.dirs {
@@ -183,7 +183,7 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 }
 
 type repoInfo struct {
-	dirmdpb.Repo
+	*dirmdpb.Repo
 	absRoot string
 	dirs    []string
 }
@@ -229,7 +229,7 @@ func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string]*repoInfo, e
 			repo := ret[repoRoot]
 			if repo == nil {
 				repo = &repoInfo{
-					Repo:    dirmdpb.Repo{Mixins: map[string]*dirmdpb.Metadata{}},
+					Repo:    &dirmdpb.Repo{Mixins: map[string]*dirmdpb.Metadata{}},
 					absRoot: repoRoot,
 				}
 				ret[repoRoot] = repo
@@ -383,17 +383,17 @@ func (r *mappingReader) goReadDir(ctx context.Context, repo *repoInfo, absDir, k
 				repo.Mixins[mx] = nil // mark as seen
 				r.eg.Go(func() error {
 					mxFileName := filepath.Join(repo.absRoot, filepath.FromSlash(strings.TrimPrefix(mx, "//")))
-					mxMd, err := ReadFile(mxFileName)
-					if err != nil {
+					switch mxMd, err := ReadFile(mxFileName); {
+					case err != nil:
 						return errors.Annotate(err, "failed to read %q", mxFileName).Err()
-					}
-					if len(mxMd.Mixins) != 0 {
+					case len(mxMd.Mixins) != 0:
 						return errors.Reason("%s: importing a mixin in a mixin is not supported", mxFileName).Err()
+					default:
+						r.mu.Lock()
+						repo.Mixins[mx] = mxMd
+						r.mu.Unlock()
+						return nil
 					}
-					r.mu.Lock()
-					repo.Mixins[mx] = mxMd
-					r.mu.Unlock()
-					return nil
 				})
 			}
 		}
