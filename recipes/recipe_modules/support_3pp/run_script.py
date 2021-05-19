@@ -39,6 +39,13 @@ _DOCKERBUILD_PLATFORM = {
   'linux-amd64': 'manylinux-x64',
 }
 
+# Transform a CIPD platform to a windows_sdk target_arch.
+_WINDOWS_SDK_PLATFORM = {
+    'windows-386': 'x86',
+    'windows-amd64': 'x64',
+}
+
+
 def run_script(api, *args, **kwargs):
   """Runs a script (python or bash) with the given arguments.
 
@@ -109,7 +116,7 @@ def run_script(api, *args, **kwargs):
     if compile_platform.startswith('mac-'):
       sdk = api.osx_sdk('mac')
     if compile_platform.startswith('windows-'):
-      sdk = api.windows_sdk()
+      sdk = api.windows_sdk(target_arch=_WINDOWS_SDK_PLATFORM[compile_platform])
 
   with sdk:
     if interpreter == 'bash':
