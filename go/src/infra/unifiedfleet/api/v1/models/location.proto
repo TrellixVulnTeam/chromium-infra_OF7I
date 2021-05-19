@@ -84,4 +84,5 @@ enum Zone {
     ZONE_MTV1950_TESTING = 17; // "mtv1950" // temporary zone for testing cros assets in gTransit
     ZONE_SATLAB = 18; // "satlab" // zone for satlab duts
     ZONE_BROWSER_GOOGLER_DESK = 19; // "desk" // for browser assets given to googlers
+    ZONE_JETSTREAM_B946 = 20; // US-MTV-946-1-1E1
 }
