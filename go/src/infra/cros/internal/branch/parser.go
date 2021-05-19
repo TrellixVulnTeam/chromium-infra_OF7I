@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	cv "infra/cros/internal/chromeosversion"
 	"infra/cros/internal/git"
 	"infra/cros/internal/osutils"
 )
@@ -26,12 +27,15 @@ var (
 	branchRegexp = regexp.MustCompile(`(release|stabilize|firmware|factory)-(.*-)?(?P<vinfo>(\d+\.)+)B`)
 	// Regex for extracting milestone from branch names.
 	milestoneRegexp = regexp.MustCompile(`release-R(\d+)-.*`)
+	// Regex for extracting version information from a buildspec path, e.g.
+	// 85/13277.0.0.xml.
+	buildspecRegexp = regexp.MustCompile(`^(?P<milestone>\d+)\/(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.xml$`)
 )
 
-// extractBuildNum extracts the build number from the branch name, e.g. 13729
+// ExtractBuildNum extracts the build number from the branch name, e.g. 13729
 // from release-R89-13729.B.
 // Returns -1 if the branch name does not contain a build number.
-func extractBuildNum(branch string) int {
+func ExtractBuildNum(branch string) int {
 	match := branchRegexp.FindStringSubmatch(branch)
 	if match == nil || len(match) < 4 {
 		return -1
@@ -49,6 +53,40 @@ func extractBuildNum(branch string) int {
 	} else {
 		return buildNum
 	}
+}
+
+// ParseBuildspec returns version information for a buildspec path of the form
+// 85/13277.0.0.xml.
+func ParseBuildspec(buildspec string) (*cv.VersionInfo, error) {
+	match := buildspecRegexp.FindStringSubmatch(buildspec)
+	if match == nil || len(match) < 5 {
+		return nil, fmt.Errorf("invalid buildspec")
+	}
+	result := make(map[string]string)
+	for i, name := range buildspecRegexp.SubexpNames() {
+		if i != 0 && name != "" {
+			result[name] = match[i]
+		}
+	}
+	cmps := []int{}
+	for _, component := range []string{"milestone", "major", "minor", "patch"} {
+		cmp, ok := result[component]
+		if !ok {
+			return nil, fmt.Errorf("buildspec missing component %s", component)
+		}
+		num, err := strconv.Atoi(strings.Split(cmp, ".")[0])
+		if err != nil {
+			return nil, fmt.Errorf("bad component %s: %s", component, cmp)
+		}
+		cmps = append(cmps, num)
+	}
+
+	return &cv.VersionInfo{
+		ChromeBranch:      cmps[0],
+		BuildNumber:       cmps[1],
+		BranchBuildNumber: cmps[2],
+		PatchNumber:       cmps[3],
+	}, nil
 }
 
 func releaseBranches(branchList []string, minMilestone int) ([]string, error) {
@@ -75,7 +113,7 @@ func nonReleaseBranches(branchList []string, minBuildNumber int) []string {
 		if strings.HasPrefix(branch, "stabilize-") ||
 			strings.HasPrefix(branch, "factory-") ||
 			strings.HasPrefix(branch, "firmware-") {
-			if extractBuildNum(branch) >= minBuildNumber {
+			if ExtractBuildNum(branch) >= minBuildNumber {
 				branches = append(branches, branch)
 			}
 		}
@@ -116,7 +154,7 @@ func BranchesFromMilestone(chromeosCheckout string, minMilestone int) ([]string,
 	minBuildNum := -1
 	branches := []string{}
 	for _, branch := range releaseBranches {
-		buildNum := extractBuildNum(branch)
+		buildNum := ExtractBuildNum(branch)
 		if minBuildNum == -1 || buildNum < minBuildNum {
 			minBuildNum = buildNum
 		}

@@ -9,19 +9,39 @@ import (
 	"testing"
 
 	"infra/cros/internal/assert"
+	cv "infra/cros/internal/chromeosversion"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/git"
 )
 
 func TestExtractBuildNum(t *testing.T) {
-	assert.IntsEqual(t, extractBuildNum("release-R90-13816.B"), 13816)
-	assert.IntsEqual(t, extractBuildNum("stabilize-nocturne-10986.B"), 10986)
-	assert.IntsEqual(t, extractBuildNum("stabilize-5116.113.B"), 5116)
-	assert.IntsEqual(t, extractBuildNum("stabilize-ambassador-13597.79.B"), 13597)
-	assert.IntsEqual(t, extractBuildNum("firmware-eve-campfire-9584.131.B"), 9584)
-	assert.IntsEqual(t, extractBuildNum("factory-rammus-11289.B"), 11289)
-	assert.IntsEqual(t, extractBuildNum("main"), -1)
-	assert.IntsEqual(t, extractBuildNum("foo"), -1)
+	assert.IntsEqual(t, ExtractBuildNum("release-R90-13816.B"), 13816)
+	assert.IntsEqual(t, ExtractBuildNum("stabilize-nocturne-10986.B"), 10986)
+	assert.IntsEqual(t, ExtractBuildNum("stabilize-5116.113.B"), 5116)
+	assert.IntsEqual(t, ExtractBuildNum("stabilize-ambassador-13597.79.B"), 13597)
+	assert.IntsEqual(t, ExtractBuildNum("firmware-eve-campfire-9584.131.B"), 9584)
+	assert.IntsEqual(t, ExtractBuildNum("factory-rammus-11289.B"), 11289)
+	assert.IntsEqual(t, ExtractBuildNum("main"), -1)
+	assert.IntsEqual(t, ExtractBuildNum("foo"), -1)
+}
+
+func TestParseBuildspec(t *testing.T) {
+	expected := cv.VersionInfo{
+		ChromeBranch:      85,
+		BuildNumber:       13277,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
+	}
+
+	vinfo, err := ParseBuildspec("85/13277.0.0.xml")
+	assert.NilError(t, err)
+	assert.Assert(t, cv.VersionsEqual(expected, *vinfo))
+
+	vinfo, err = ParseBuildspec("85/13277.0.0")
+	assert.Assert(t, err != nil)
+
+	_, err = ParseBuildspec("85/13277")
+	assert.Assert(t, err != nil)
 }
 
 func TestReleaseBranches(t *testing.T) {
