@@ -166,10 +166,10 @@
       "python",
       "-u",
       "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x86.json",
       "/path/to/tmp/json"
     ],
-    "name": "read SetEnv.x64.json",
+    "name": "read SetEnv.x86.json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
@@ -205,9 +205,9 @@
       "wheel-build",
       "--upload",
       "--platform",
-      "windows-x64",
+      "windows-x86",
       "--platform",
-      "windows-x64-py3"
+      "windows-x86-py3"
     ],
     "cwd": "[CACHE]\\builder\\build_wheels\\infra",
     "env": {

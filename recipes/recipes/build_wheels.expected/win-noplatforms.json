@@ -133,106 +133,26 @@
     "name": "gclient runhooks"
   },
   {
-    "cmd": [
-      "cipd.bat",
-      "ensure",
-      "-root",
-      "[CACHE]\\windows_sdk",
-      "-ensure-file",
-      "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
-      "-max-threads",
-      "0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "infra_step": true,
-    "name": "ensure_installed",
+    "cmd": [],
+    "name": "RECIPE CRASH (Uncaught exception)",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-uploaded:2018-06\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"package\": \"chrome_internal/third_party/sdk/windows\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_EXCEPTION@@@",
+      "The recipe has crashed at point 'Uncaught exception'!",
+      "",
+      "Traceback (most recent call last):",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 59, in RunSteps",
+      "    with PlatformSdk(api, platforms), api.context(",
+      "  File \"PYTHON/lib/python2.7/contextlib.py\", in __enter__",
+      "    return self.gen.next()",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 88, in PlatformSdk",
+      "    'Must specify either 32-bit or 64-bit windows platforms.')",
+      "ValueError: Must specify either 32-bit or 64-bit windows platforms."
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
-      "/path/to/tmp/json"
-    ],
-    "name": "read SetEnv.x64.json",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      [@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"win_sdk\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"bin\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"x64\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      ]@@@",
-      "@@@STEP_LOG_LINE@json.output@    ], @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"VSINSTALLDIR\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      [@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"..\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"..\\\\\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      ]@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[CACHE]\\builder\\build_wheels\\infra\\run.py",
-      "infra.tools.dockerbuild",
-      "--root",
-      "[CLEANUP]\\.dockerbuild_tmp_1",
-      "--upload-sources",
-      "wheel-build",
-      "--upload",
-      "--platform",
-      "windows-x64",
-      "--platform",
-      "windows-x64-py3"
-    ],
-    "cwd": "[CACHE]\\builder\\build_wheels\\infra",
-    "env": {
-      "DISTUTILS_USE_SDK": "1",
-      "MSSdk": "1",
-      "VSINSTALLDIR": "[CACHE]\\windows_sdk"
+    "failure": {
+      "humanReason": "Uncaught Exception: ValueError('Must specify either 32-bit or 64-bit windows platforms.',)"
     },
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]\\windows_sdk\\win_sdk\\bin\\x64"
-      ]
-    },
-    "name": "dockerbuild"
-  },
-  {
-    "cmd": [
-      "taskkill.exe",
-      "/f",
-      "/t",
-      "/im",
-      "mspdbsrv.exe"
-    ],
-    "name": "taskkill mspdbsrv"
-  },
-  {
     "name": "$result"
   }
 ]

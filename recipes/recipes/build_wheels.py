@@ -22,7 +22,9 @@ DEPS = [
 PROPERTIES = {
     'platforms':
         Property(
-            help=('The platforms to build wheels for. If empty, builds for all '
+            help=('The platforms to build wheels for. On Windows, required to '
+                  'be set to a list of either 32-bit or 64-bit platforms. '
+                  'For other platforms, if empty, builds for all '
                   'platforms which are supported on this host.'),
             kind=List(str),
             default=(),
@@ -54,7 +56,7 @@ def RunSteps(api, platforms, dry_run):
   # DISTUTILS_USE_SDK and MSSdk are necessary for distutils to correctly locate
   # MSVC on Windows. They do nothing on other platforms, so we just set them
   # unconditionally.
-  with PlatformSdk(api), api.context(
+  with PlatformSdk(api, platforms), api.context(
       cwd=solution_path.join('infra'),
       env={
           'DISTUTILS_USE_SDK': '1',
@@ -76,10 +78,16 @@ def RunSteps(api, platforms, dry_run):
 
 
 @contextmanager
-def PlatformSdk(api):
+def PlatformSdk(api, platforms):
   sdk = None
   if api.platform.is_win:
-    sdk = api.windows_sdk()
+    is_64bit = all((p.startswith('windows-x64') for p in platforms))
+    is_32bit = all((p.startswith('windows-x86') for p in platforms))
+    if is_64bit == is_32bit:
+      raise ValueError(
+          'Must specify either 32-bit or 64-bit windows platforms.')
+    target_arch = 'x64' if is_64bit else 'x86'
+    sdk = api.windows_sdk(target_arch=target_arch)
   elif api.platform.is_mac:
     sdk = api.osx_sdk('mac')
 
@@ -92,7 +100,24 @@ def PlatformSdk(api):
 
 def GenTests(api):
   yield api.test('success')
-  yield api.test('win', api.platform('win', 64))
+  yield api.test(
+      'win',
+      api.platform('win', 64) +
+      api.properties(platforms=['windows-x64', 'windows-x64-py3']))
+  yield api.test(
+      'win-x86',
+      api.platform('win', 64) +
+      api.properties(platforms=['windows-x86', 'windows-x86-py3']))
   yield api.test('mac', api.platform(
       'mac', 64)) + api.properties(platforms=['mac-x64', 'mac-x64-cp38'])
   yield api.test('dry-run', api.properties(dry_run=True))
+
+  # Can't build 32-bit and 64-bit Windows wheels on the same invocation.
+  yield api.test(
+      'win-32and64bit',
+      api.platform('win', 64) +
+      api.properties(platforms=['windows-x64', 'windows-x86']) +
+      api.expect_exception('ValueError'))
+  # Must explicitly specify the platforms to build on Windows.
+  yield api.test('win-noplatforms',
+                 api.platform('win', 64) + api.expect_exception('ValueError'))
