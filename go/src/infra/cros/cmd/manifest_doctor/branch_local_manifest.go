@@ -4,6 +4,7 @@
 package main
 
 import (
+	gerrs "errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,13 +15,80 @@ import (
 	"infra/cros/internal/osutils"
 	"infra/cros/internal/repo"
 
+	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
+	luciflag "go.chromium.org/luci/common/flag"
 )
 
 const (
 	// Default location of manifest-internal project.
-	manifestInternalProject = "manifest-internal"
+	manifestInternalProjectPath = "manifest-internal"
 )
+
+type localManifestBrancher struct {
+	subcommands.CommandRunBase
+	chromeosCheckoutPath string
+	minMilestone         int
+	projectList          string
+	projects             []string
+	push                 bool
+}
+
+func cmdLocalManifestBrancher() *subcommands.Command {
+	return &subcommands.Command{
+		UsageLine: "branch-local-manifest --chromeos_checkout ~/chromiumos " +
+			" --min_milestone 90 --projects chromeos/project/foo,chromeos/project/bar",
+		ShortDesc: "Repair local_manifest.xml on specified non-ToT branches.",
+		CommandRun: func() subcommands.CommandRun {
+			b := &localManifestBrancher{}
+			b.Flags.StringVar(&b.chromeosCheckoutPath, "chromeos_checkout", "",
+				"Path to full ChromeOS checkout.")
+			b.Flags.IntVar(&b.minMilestone, "min_milestone", -1,
+				"Minimum milestone of branches to consider. Used directly "+
+					"in selecting release branches and indirectly for others.")
+			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
+				"Comma-separated list of project paths to consider. "+
+					"At least one project is required.")
+			b.Flags.BoolVar(&b.push, "push", false,
+				"Whether or not to push changes to the remote.")
+			return b
+		}}
+}
+
+func (b *localManifestBrancher) validate() error {
+	if b.minMilestone == -1 {
+		return fmt.Errorf("--min_milestone required")
+	}
+
+	if b.chromeosCheckoutPath == "" {
+		return fmt.Errorf("--chromeos_checkout required")
+	} else if _, err := os.Stat(b.chromeosCheckoutPath); gerrs.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("path %s does not exist", b.chromeosCheckoutPath)
+	} else if err != nil {
+		return fmt.Errorf("error validating --chromeos_checkout=%s", b.chromeosCheckoutPath)
+	}
+
+	if len(b.projects) == 0 {
+		return fmt.Errorf("at least one project is required")
+	}
+
+	return nil
+}
+
+func (b *localManifestBrancher) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	// Common setup (argument validation, logging, etc.)
+	ret := SetUp(b, a, args, env)
+	if ret != 0 {
+		return ret
+	}
+
+	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
+		LogErr(err.Error())
+		return 2
+	}
+
+	return 0
+}
 
 func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) error {
 	// Checkout appropriate branch of project.
@@ -36,7 +104,7 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 	// Repair local manifest.
 	localManifestPath := filepath.Join(projectPath, "local_manifest.xml")
 	if _, err := os.Stat(localManifestPath); os.IsNotExist(err) {
-		fmt.Printf("local_manifest.xml does not exist for project %s, branch %s, skipping...", path, branch)
+		LogOut("local_manifest.xml does not exist for project %s, branch %s, skipping...", path, branch)
 		return nil
 	}
 
@@ -55,7 +123,7 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 
 	// If the manifest actually changed, commit and push those changes.
 	if !hasChanges {
-		fmt.Printf("no changes needed for project %s, branch %s\n", path, branch)
+		LogOut("no changes needed for project %s, branch %s\n", path, branch)
 		return nil
 	}
 
@@ -83,9 +151,9 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
 	if !dryRun {
-		fmt.Printf("committed changes for project %s, branch %s\n", path, branch)
+		LogOut("committed changes for project %s, branch %s\n", path, branch)
 	} else {
-		fmt.Printf("would have committed changes (dry run) for project %s, branch %s\n", path, branch)
+		LogOut("would have committed changes (dry run) for project %s, branch %s\n", path, branch)
 	}
 
 	return nil
@@ -98,7 +166,7 @@ func BranchLocalManifests(checkout string, projects []string, minMilestone int, 
 		return errors.Annotate(err, "BranchesFromMilestone failure").Err()
 	}
 
-	manifestInternalPath := filepath.Join(checkout, manifestInternalProject)
+	manifestInternalPath := filepath.Join(checkout, manifestInternalProjectPath)
 	if !osutils.PathExists(manifestInternalPath) {
 		return fmt.Errorf("manifest-internal checkout not found at %s", manifestInternalPath)
 	}
@@ -107,7 +175,7 @@ func BranchLocalManifests(checkout string, projects []string, minMilestone int, 
 	for _, branch := range branches {
 		// Checkout appropriate branch in sentinel project.
 		if err := git.Checkout(manifestInternalPath, branch); err != nil {
-			errs = append(errs, errors.Annotate(err, "failed to checkout branch %s in %s", branch, manifestInternalProject).Err())
+			errs = append(errs, errors.Annotate(err, "failed to checkout branch %s in %s", branch, manifestInternalProjectPath).Err())
 			continue
 		}
 

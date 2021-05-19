@@ -4,97 +4,80 @@
 package main
 
 import (
-	"context"
-	"flag"
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/common/cli"
-	luciflag "go.chromium.org/luci/common/flag"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
-func cmdLocalManifestBrancher() *subcommands.Command {
-	return &subcommands.Command{
-		UsageLine: "branch-local-manifest --chromeos_checkout ~/chromiumos " +
-			" --min_milestone 90 --projects chromeos/project/foo,chromeos/project/bar",
-		ShortDesc: "Repair local_manifest.xml on specified non-ToT branches.",
-		CommandRun: func() subcommands.CommandRun {
-			b := &localManifestBrancher{}
-			b.Flags.StringVar(&b.chromeosCheckoutPath, "chromeos_checkout", "",
-				"Path to full ChromeOS checkout.")
-			b.Flags.IntVar(&b.minMilestone, "min_milestone", -1,
-				"Minimum milestone of branches to consider. Used directly "+
-					"in selecting release branches and indirectly for others.")
-			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
-				"Comma-separated list of project paths to consider. "+
-					"At least one project is required.")
-			b.Flags.BoolVar(&b.push, "push", false,
-				"Whether or not to push changes to the remote.")
-			return b
-		}}
+var (
+	// StdoutLog contains the stdout logger for this package.
+	StdoutLog *log.Logger
+	// StderrLog contains the stderr logger for this package.
+	StderrLog *log.Logger
+)
+
+// LogOut logs to stdout.
+func LogOut(format string, a ...interface{}) {
+	if StdoutLog != nil {
+		StdoutLog.Printf(format, a...)
+	}
 }
 
-func (b *localManifestBrancher) validate() error {
-	if b.minMilestone == -1 {
-		return fmt.Errorf("--min_milestone required")
+// LogErr logs to stderr.
+func LogErr(format string, a ...interface{}) {
+	if StderrLog != nil {
+		StderrLog.Printf(format, a...)
 	}
-
-	if b.chromeosCheckoutPath == "" {
-		return fmt.Errorf("--chromeos_checkout required")
-	} else if _, err := os.Stat(b.chromeosCheckoutPath); os.IsNotExist(err) {
-		return fmt.Errorf("path %s does not exist", b.chromeosCheckoutPath)
-	}
-
-	if len(b.projects) == 0 {
-		return fmt.Errorf("at least one project is required")
-	}
-
-	return nil
 }
 
-func (b *localManifestBrancher) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	flag.Parse()
+type manifestDoctorCommand interface {
+	validate() error
+}
 
-	if err := b.validate(); err != nil {
-		log.Printf("error validating args: %v", err)
+func SetUp(c manifestDoctorCommand, a subcommands.Application, args []string, env subcommands.Env) int {
+	StdoutLog = a.(*manifestDoctorApplication).stdoutLog
+	StderrLog = a.(*manifestDoctorApplication).stderrLog
+
+	// Validate flags/arguments.
+	if err := c.validate(); err != nil {
+		LogErr(err.Error())
 		return 1
-	}
-
-	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
-		log.Printf(err.Error())
-		return 2
 	}
 
 	return 0
 }
 
-type localManifestBrancher struct {
-	subcommands.CommandRunBase
-	chromeosCheckoutPath string
-	minMilestone         int
-	projectList          string
-	projects             []string
-	push                 bool
-}
-
 // GetApplication returns an instance of the application.
-func GetApplication() *cli.Application {
-	return &cli.Application{
+func GetApplication(authOpts auth.Options) *subcommands.DefaultApplication {
+	return &subcommands.DefaultApplication{
 		Name: "manifest_doctor",
-
-		Context: func(ctx context.Context) context.Context {
-			return ctx
-		},
-
 		Commands: []*subcommands.Command{
+			authcli.SubcommandInfo(authOpts, "auth-info", false),
+			authcli.SubcommandLogin(authOpts, "auth-login", false),
+			authcli.SubcommandLogout(authOpts, "auth-logout", false),
 			cmdLocalManifestBrancher(),
+			cmdProjectBuildspec(authOpts),
 		},
 	}
 }
 
+type manifestDoctorApplication struct {
+	*subcommands.DefaultApplication
+	stdoutLog *log.Logger
+	stderrLog *log.Logger
+}
+
 func main() {
-	app := GetApplication()
-	os.Exit(subcommands.Run(app, nil))
+	opts := chromeinfra.DefaultAuthOptions()
+	opts.Scopes = []string{gerrit.OAuthScope, auth.OAuthScopeEmail}
+	s := &manifestDoctorApplication{
+		GetApplication(opts),
+		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
+		log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)}
+	os.Exit(subcommands.Run(s, nil))
 }
