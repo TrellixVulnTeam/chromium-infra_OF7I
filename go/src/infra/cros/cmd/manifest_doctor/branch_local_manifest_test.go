@@ -44,6 +44,9 @@ var (
 		"release-R90-13816.B",
 		"release-R91-13904.B",
 		"stabilize-13851.B",
+		// Extra branch that we will NOT create a local_manifest.xml for, to
+		// ensure that the tool ignores such branches gracefully.
+		"stabilize-13852.B",
 	}
 )
 
@@ -95,8 +98,10 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 			assert.NilError(t, harness.CreateRemoteRef(remoteFooProject, branch, ""))
 		}
 		// Create local_manifest.xml files in appropriate branches.
-		_, err = harness.AddFile(remoteFooProject, branch, localManifestFile)
-		assert.NilError(t, err)
+		if branch != "stabilize-13852.B" {
+			_, err = harness.AddFile(remoteFooProject, branch, localManifestFile)
+			assert.NilError(t, err)
+		}
 	}
 	return harness, remoteManifestProject
 }
@@ -118,6 +123,10 @@ func TestBranchLocalManifests(t *testing.T) {
 	}
 	manifest := harness.Manifest()
 	for _, branch := range branches {
+		if branch == "stabilize-13852.B" {
+			continue
+		}
+
 		project, err := manifest.GetProjectByName("foo")
 		assert.NilError(t, err)
 

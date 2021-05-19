@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"infra/cros/internal/branch"
@@ -34,6 +35,11 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 
 	// Repair local manifest.
 	localManifestPath := filepath.Join(projectPath, "local_manifest.xml")
+	if _, err := os.Stat(localManifestPath); os.IsNotExist(err) {
+		fmt.Printf("local_manifest.xml does not exist for project %s, branch %s, skipping...", path, branch)
+		return nil
+	}
+
 	localManifest, err := repo.LoadManifestFromFile(localManifestPath)
 	if err != nil {
 		return errors.Annotate(err, "failed to load local_manifest.xml from project %s, branch %s", path, branch).Err()
@@ -76,7 +82,11 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 	if err := git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun)); err != nil {
 		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
-	fmt.Printf("committed changes for project %s, branch %s\n", path, branch)
+	if !dryRun {
+		fmt.Printf("committed changes for project %s, branch %s\n", path, branch)
+	} else {
+		fmt.Printf("would have committed changes (dry run) for project %s, branch %s\n", path, branch)
+	}
 
 	return nil
 }
