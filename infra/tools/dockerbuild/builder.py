@@ -281,6 +281,15 @@ def SetupPythonPackages(system, wheel, base_dir):
                     dict of environment variables to be set).
   """
   host_platform = HostCipdPlatform()
+
+  # Building Windows x86 on Windows x64 is a special case. In this situation,
+  # we want to directly install and run the windows-x86 python package. This
+  # is because some wheels use properties of the Python interpreter (e.g.
+  # sys.maxsize) to detect whether to build for 32-bit or 64-bit CPUs.
+  if (host_platform == 'windows-amd64' and
+      wheel.plat.cipd_platform == 'windows-386'):
+    host_platform = 'windows-386'
+
   _, interpreter = _InstallCipdPythonPackage(system, host_platform, wheel,
                                              base_dir)
   env = dict()
