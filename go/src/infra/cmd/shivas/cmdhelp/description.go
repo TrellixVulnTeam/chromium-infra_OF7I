@@ -334,17 +334,17 @@ The file may have multiple or one dut csv record.
 The header format and sequence should be: [name,asset,servo_host,servo_port,servo_serial,rpm_host,rpm_outlet,pools]
 
 Example mcsv format:
-name,asset,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
-dut-1,asset-1,servo-1,9998,servo-serial-1,DUAL_V4,rpm-1,22,QUOTA
-dut-2,,,9998,,,,,
-dut-3,asset-1,,,,,,,
-dut-4,,,,,,rpm-1,22,
+name,asset,model,board,servo_host,servo_port,servo_serial,servo_setup,rpm_host,rpm_outlet,pools
+dut-1,asset-1,,,servo-1,9998,servo-serial-1,DUAL_V4,rpm-1,22,QUOTA
+dut-2,,,,,9998,,,,,
+dut-3,asset-1,,,,,,,,,
+dut-4,,eve,eve,,,,,rpm-1,22,
 
 Example mcsv format (delete/clear support. Use - to clear a field where available):
-dut-6,,-,9998,servo-serial-1,DUAL_V4,,,
-dut-7,,,,,,-,,
-dut-8,asset-2,,,,,-,,
-dut-9,,,,,,-,,"QUOTA CQ"
+dut-6,,,,-,9998,servo-serial-1,DUAL_V4,,,
+dut-7,,,,,,,,-,,
+dut-8,asset-2,,,,,,,-,,
+dut-9,,,,,,,,-,,"QUOTA CQ"
 `
 
 	// LabstationRegistrationFileText description for json file input
