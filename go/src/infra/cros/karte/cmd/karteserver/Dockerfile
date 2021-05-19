@@ -2,10 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-# TODO(gregorynisbet): switch base container to gcr.io/distroless/static:latest
-# more info here https://github.com/GoogleContainerTools/distroless
-FROM ubuntu:focal
-COPY ./karteserver /opt/srv/karteserver
-RUN chmod a+x /opt/srv/karteserver
+# Use an empty base image
+# https://github.com/GoogleContainerTools/distroless
+FROM gcr.io/distroless/static:latest
+
+# TODO(gregorynisbet): perform the build as part of the Dockerfile.
+# The binary is built on the host. Copy it into the image.
+COPY ./karteserver ./karteserver
+
 USER nobody
-ENTRYPOINT ["/opt/srv/karteserver"]
+ENTRYPOINT ["./karteserver"]
