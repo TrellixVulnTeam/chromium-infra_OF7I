@@ -29,7 +29,8 @@ message CachingService {
   // port info of the caching service
   int32 port = 2;
   // particular subnet which the caching service serves/supports
-  string serving_subnet = 3;
+  // Deprecated. Use 'serving_subnets' instead.
+  string serving_subnet = 3 [deprecated=true];
   // ipv4 address of the primary node of the caching service
   string primary_node = 4;
   // ipv4 address of the secondary node of the caching service
@@ -41,4 +42,7 @@ message CachingService {
   // record the last update timestamp of this caching service (In UTC timezone)
   google.protobuf.Timestamp update_time = 8 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+  // Particular subnets which the caching service serves/supports. One caching
+  // service can support multiple subnets in the case of P2P network.
+  repeated string serving_subnets = 9;
 }
