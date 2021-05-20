@@ -57,10 +57,15 @@ class Cipd(object):
       return True
 
     for v in versions:
-      rc, _ = self.run('resolve', name, '-version', v)
+      rc, cmd_output = self.run('resolve', name, '-version', v)
       if not rc:
         self._exists_cache.add((name, v))
         return True
+      if 'ambiguity when resolving the tag' in cmd_output:
+        # Don't continue if we hit this unexpected condition, as we'll just
+        # keep trying to upload more instances of the package.
+        raise ValueError('Multiple instances matching tag %s for package %s.' %
+                         (v, name))
     return False
 
   def create(self, package, root):
