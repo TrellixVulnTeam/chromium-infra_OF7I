@@ -17,6 +17,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -53,6 +54,10 @@ type baseCommandRun struct {
 	initPinpointClientFactoryOnce sync.Once
 	pinpointClientFactory         *pinpointClientFactory
 	initClientFactoryErr          error
+
+	json       bool
+	jsonIndent string
+	jsonPrefix string
 }
 
 func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
@@ -62,6 +67,15 @@ func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
 	`))
 	r.Flags.StringVar(&r.workDir, "work-dir", uc.WorkDir, text.Doc(`
 		Working directory for the tool when downloading files.
+	`))
+	r.Flags.BoolVar(&r.json, "json", false, text.Doc(`
+		Optional json output format.
+	`))
+	r.Flags.StringVar(&r.jsonIndent, "json-indent", "", text.Doc(`
+		Optional indent for json output format.
+	`))
+	r.Flags.StringVar(&r.jsonPrefix, "json-prefix", "", text.Doc(`
+		Optional prefix for json output format.
 	`))
 	return uc
 }
@@ -129,6 +143,15 @@ func (r *baseCommandRun) httpClient(ctx context.Context) (*http.Client, error) {
 		return nil, err
 	}
 	return r.luciAuth.Client()
+}
+
+func (r *baseCommandRun) writeJSON(out io.Writer, data interface{}) error {
+	enc := json.NewEncoder(out)
+	enc.SetIndent(r.jsonPrefix, r.jsonIndent)
+	if err := enc.Encode(data); err != nil {
+		return errors.Annotate(err, "could not render json").Err()
+	}
+	return nil
 }
 
 type pinpointCommand interface {

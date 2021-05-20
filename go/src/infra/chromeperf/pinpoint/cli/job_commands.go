@@ -69,8 +69,14 @@ func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []s
 	if err != nil {
 		return errors.Annotate(err, "failed during ListJobs").Err()
 	}
-	if err = render.JobListText(a.GetOut(), resp.Jobs); err != nil {
-		return errors.Annotate(err, "failed rendering jobs").Err()
+	if lj.baseCommandRun.json {
+		if err = lj.baseCommandRun.writeJSON(a.GetOut(), resp.Jobs); err != nil {
+			return errors.Annotate(err, "failed rendering jobs").Err()
+		}
+	} else {
+		if err = render.JobListText(a.GetOut(), resp.Jobs); err != nil {
+			return errors.Annotate(err, "failed rendering jobs").Err()
+		}
 	}
 	return nil
 }
