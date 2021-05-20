@@ -40,7 +40,7 @@ class Cryptography(Builder):
         Spec(
             name,
             crypt_src.version,
-            universal=None,
+            universal=False,
             pyversions=pyversions,
             default=True), **kwargs)
 

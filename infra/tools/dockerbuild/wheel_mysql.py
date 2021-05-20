@@ -28,7 +28,7 @@ class MySQLPython(Builder):
         Spec(
             name,
             self._pypi_src.version,
-            universal=None,
+            universal=False,
             pyversions=None,
             default=True), **kwargs)
 

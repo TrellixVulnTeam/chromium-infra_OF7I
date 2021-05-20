@@ -88,21 +88,43 @@ class Builder(object):
   def wheel(self, system, plat):
     spec = self.spec._replace(version=self.version_fn(system))
 
-    # Make sure the Python version of the Wheel matches the platform.
-    pyversion = plat.pyversion
-    if spec.pyversions and pyversion not in spec.pyversions:
+    # Make sure the Python version of the Wheel matches the platform. Except for
+    # universal platforms, which can build wheels for any Python version.
+    if not plat.universal and (spec.pyversions and
+                               plat.pyversion not in spec.pyversions):
       # If the declared pyversions doesn't contain the version corresponding
       # to this platform, then we don't support it.
       raise PlatformNotSupported(
           ("Wheel %s specifies platform [%s] which has version [%s], but its "
            "pyversions '%r' doesn't contain this version") %
-          (spec.name, plat.name, pyversion, spec.pyversions))
+          (spec.name, plat.name, plat.pyversion, spec.pyversions))
+
+    # Make sure universal wheels are only built on universal platforms. This
+    # allows us to explicitly select which builders build universal wheels, so
+    # we have a disjoint set of wheels for each builder and hence avoid races.
+    if spec.universal and not plat.universal:
+      raise PlatformNotSupported(
+          "Wheel %s is universal, but platform [%s] is not" %
+          (spec.name, plat.name))
+    # Conversely, universal platforms can only build universal wheels.
+    if not spec.universal and plat.universal:
+      raise PlatformNotSupported(
+          "Wheel %s is not universal, but platform [%s] is" %
+          (spec.name, plat.name))
+
+    if spec.universal:
+      if spec.pyversions == ['py2']:
+        pyversion = '27'
+      else:
+        pyversion = '38'
+    else:
+      # e.g. cp27mu -> 27
+      pyversion = plat.wheel_abi[2:4]
 
     wheel = Wheel(
         spec=spec,
         plat=plat,
-        # e.g. cp27mu -> 27
-        pyversion=plat.wheel_abi[2:4],
+        pyversion=pyversion,
         filename=None,
         md_lines=self.md_data_fn())
 
@@ -126,7 +148,10 @@ class Builder(object):
       return False
     if plat.name in self._skip_plat:
       return False
-    if self.spec.pyversions and plat.pyversion not in self.spec.pyversions:
+    if not plat.universal and (self.spec.pyversions and
+                               plat.pyversion not in self.spec.pyversions):
+      return False
+    if self.spec.universal != plat.universal:
       return False
 
     return True
@@ -298,7 +323,7 @@ def SetupPythonPackages(system, wheel, base_dir):
   # PYTHONPATH to point to it. This will ensure that we use the correct
   # compiler and linker command lines which are generated at build time in the
   # sysconfigdata module.
-  if host_platform != wheel.plat.cipd_platform:
+  if not wheel.spec.universal and host_platform != wheel.plat.cipd_platform:
     pkg_dir, _ = _InstallCipdPythonPackage(system, wheel.plat.cipd_platform,
                                            wheel, base_dir)
     env['PYTHONPATH'] = '%s/lib/python%s' % (pkg_dir, '.'.join(wheel.pyversion))

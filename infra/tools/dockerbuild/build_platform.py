@@ -63,6 +63,10 @@ class Platform(
   def pyversion(self):
     return 'py2' if self.wheel_abi.startswith('cp2') else 'py3'
 
+  @property
+  def universal(self):
+    return 'any' in self.wheel_plat
+
 
 ALL = {
     p.name: p for p in (
@@ -311,43 +315,44 @@ ALL = {
             cipd_platform='windows-amd64',
             env={},
         ),
+        Platform(
+            name='universal',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='none',
+            wheel_plat=('any',),
+            dockcross_base=None,
+            openssl_target=None,
+            packaged=True,
+            cipd_platform=None,
+            env={},
+        ),
     )
 }
 NAMES = sorted(ALL.keys())
 PACKAGED = [p for p in ALL.itervalues() if p.packaged]
 ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
+UNIVERSAL = [p.name for p in ALL.itervalues() if 'universal' in p.name]
 
 
 def NativePlatforms():
+  # Every supported OS can build universal wheels.
+  plats = [ALL[u] for u in UNIVERSAL]
+
   # Identify our native platforms.
   if sys.platform == 'darwin':
     if platform.machine() == 'x86_64':
-      return [ALL['mac-x64'], ALL['mac-x64-cp38']]
+      return plats + [ALL['mac-x64'], ALL['mac-x64-cp38']]
     elif platform.machine() == 'arm64':
-      return [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
+      return plats + [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
   elif sys.platform == 'win32':
-    return [
+    return plats + [
         ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
         ALL['windows-x64-py3']
     ]
   elif sys.platform == 'linux2':
     # Linux platforms are built with docker, so Linux doesn't support any
-    # platforms natively.
-    return []
+    # non-universal platforms natively.
+    return plats
   raise ValueError('Cannot identify native image for %r-%r.' %
                    (sys.platform, platform.machine()))
-
-
-# Represents the "universal package" platform.
-UNIVERSAL = Platform(
-    name='universal',
-    manylinux_name=None,
-    cross_triple='',
-    wheel_abi='none',
-    wheel_plat=('any',),
-    dockcross_base=None,
-    openssl_target=None,
-    packaged=True,
-    cipd_platform=None,
-    env={},
-)

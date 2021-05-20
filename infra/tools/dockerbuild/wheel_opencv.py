@@ -36,7 +36,7 @@ class OpenCV(Builder):
         Spec(
             name=name,
             version=version,
-            universal=None,
+            universal=False,
             pyversions=None,
             default=True),
         arch_map=arch_map,
