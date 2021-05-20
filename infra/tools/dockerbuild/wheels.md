@@ -4415,13 +4415,13 @@ wheel: <
 
 * *universal*
 
-## **pylint-py2**
+## **pylint**
 
 ### 1.5.6-551505593fa0d9c5372b79c95e3dfe9a
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pylint-py2"
+  name: "infra/python/wheels/pylint-py2_py3"
   version: "version:1.5.6-551505593fa0d9c5372b79c95e3dfe9a"
 >
 ```
@@ -4434,7 +4434,7 @@ wheel: <
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pylint-py2"
+  name: "infra/python/wheels/pylint-py2_py3"
   version: "version:1.6.5"
 >
 ```
@@ -4446,7 +4446,7 @@ wheel: <
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pylint-py2"
+  name: "infra/python/wheels/pylint-py2_py3"
   version: "version:1.7.6"
 >
 ```
@@ -4458,7 +4458,7 @@ wheel: <
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pylint-py2"
+  name: "infra/python/wheels/pylint-py2_py3"
   version: "version:1.8.4-45a720817e4de1df2f173c7e4029e176"
 >
 ```
@@ -4471,7 +4471,7 @@ wheel: <
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/pylint-py2"
+  name: "infra/python/wheels/pylint-py2_py3"
   version: "version:1.9.5-45a720817e4de1df2f173c7e4029e176"
 >
 ```
