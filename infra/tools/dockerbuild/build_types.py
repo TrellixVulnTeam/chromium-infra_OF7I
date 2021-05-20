@@ -28,7 +28,9 @@ _Spec = collections.namedtuple(
         'pyversions',
         # default is true if this Spec should be built by default (i.e., when a
         # user doesn't manually specify Specs to build).
-        'default'))
+        'default',
+        # If set, the patch version to append to the CIPD version tag.
+        'patch_version'))
 
 
 class Spec(_Spec):
@@ -43,6 +45,8 @@ class Spec(_Spec):
       ret = '%s-%s' % (self.name, self.version)
     else:
       ret = self.name
+    if self.patch_version:
+      ret += '.%s' % self.patch_version
     if self.pyversions:
       ret += '-%s' % '.'.join(sorted(self.pyversions))
     return ret

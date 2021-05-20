@@ -13,8 +13,16 @@ from .builder import (Builder, StageWheelForPackage, BuildPackageFromPyPiWheel,
 
 
 class OpenCV(Builder):
-  def __init__(self, name, version, numpy_version, packaged=None,
-               arch_map=None, only_plat=None, skip_plat=None):
+
+  def __init__(self,
+               name,
+               version,
+               numpy_version,
+               packaged=None,
+               arch_map=None,
+               only_plat=None,
+               skip_plat=None,
+               patch_version=None):
     """Specialized wheel builder for the "OpenCV" package.
 
     Args:
@@ -28,6 +36,9 @@ class OpenCV(Builder):
       only_plat: (See Builder's "only_plat" argument.)
       skip_plat (iterable or None): If not None, this Builder will avoid
         declaring that it can build for the named platforms.
+      patch_version (str or None): If set, this string is appended to the CIPD
+          version tag, for example if set to 'chromium.1', the version tag
+          for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
     """
     self._packaged = packaged or ()
     self._numpy_version = numpy_version
@@ -38,7 +49,8 @@ class OpenCV(Builder):
             version=version,
             universal=None,
             pyversions=None,
-            default=True),
+            default=True,
+            patch_version=patch_version),
         arch_map=arch_map,
         only_plat=only_plat,
         skip_plat=skip_plat)

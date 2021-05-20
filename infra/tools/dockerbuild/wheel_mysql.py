@@ -30,7 +30,8 @@ class MySQLPython(Builder):
             self._pypi_src.version,
             universal=None,
             pyversions=None,
-            default=True), **kwargs)
+            default=True,
+            patch_version=None), **kwargs)
 
   def build_fn(self, system, wheel):
     dx = system.dockcross_image(wheel.plat)

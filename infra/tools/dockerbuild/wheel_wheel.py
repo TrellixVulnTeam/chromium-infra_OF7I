@@ -13,7 +13,12 @@ from .build_types import Spec
 
 class SourceOrPrebuilt(Builder):
 
-  def __init__(self, name, version, pyversions=None, **kwargs):
+  def __init__(self,
+               name,
+               version,
+               pyversions=None,
+               patch_version=None,
+               **kwargs):
     """General-purpose wheel builder.
 
     If the wheel is "packaged" (see arg for description), it is expected that it
@@ -26,6 +31,9 @@ class SourceOrPrebuilt(Builder):
       pyversions (iterable or None): The list of "python" wheel fields (see
           "Wheel.pyversion_str"). If None, a default Python version will be
           used.
+      patch_version (str or None): If set, this string is appended to the CIPD
+          version tag, for example if set to 'chromium.1', the version tag
+          for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
       packaged (iterable or None): The names of platforms that have this wheel
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
@@ -45,7 +53,8 @@ class SourceOrPrebuilt(Builder):
             self._pypi_src.version,
             universal=False,
             pyversions=pyversions,
-            default=True), **kwargs)
+            default=True,
+            patch_version=patch_version), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
@@ -69,7 +78,9 @@ class MultiWheel(Builder):
 
     Args:
       name (str): The name of the bundle wheel.
-      version (str): The bundle wheel version.
+      version (str): The bundle wheel version. Note there is no patch_version
+          for MultiWheels, as the bundle wheel version can be set to any value
+          we like.
       wheels (iterable): A set of embedded wheel rules to add to the bundle.
       pyversions (iterable or None): The list of "python" wheel fields (see
           "Wheel.pyversion_str"). If None, a default Python version will be
@@ -84,7 +95,8 @@ class MultiWheel(Builder):
             version,
             universal=False,
             pyversions=pyversions,
-            default=default),
+            default=default,
+            patch_version=None),
         only_plat=only_plat,
         skip_plat=skip_plat)
 
@@ -115,8 +127,12 @@ class Prebuilt(Builder):
     kwargs['only_plat'] = only_plat
     super(Prebuilt, self).__init__(
         Spec(
-            name, version, universal=False, pyversions=pyversions,
-            default=True), **kwargs)
+            name,
+            version,
+            universal=False,
+            pyversions=pyversions,
+            default=True,
+            patch_version=None), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromPyPiWheel(system, wheel)
@@ -141,6 +157,7 @@ class Universal(Builder):
             universal=True,
             pyversions=pyversions,
             default=True,
+            patch_version=None,
         ), **kwargs)
 
   def build_fn(self, system, wheel):
@@ -148,8 +165,15 @@ class Universal(Builder):
 
 
 class UniversalSource(Builder):
-  def __init__(self, name, pypi_version, pyversions=None, pypi_name=None,
-               patches=(), **kwargs):
+
+  def __init__(self,
+               name,
+               pypi_version,
+               pyversions=None,
+               pypi_name=None,
+               patches=(),
+               patch_version=None,
+               **kwargs):
     """Universal wheel version of SourceOrPrebuilt that always builds from
     source.
 
@@ -163,6 +187,9 @@ class UniversalSource(Builder):
           when translating between the CIPD package name (uses underscores) and
           the PyPi package name (may use hyphens).
       patches (tuple): Short patch names to apply to the source tree.
+      patch_version (str or None): If set, this string is appended to the CIPD
+          version tag, for example if set to 'chromium.1', the version tag
+          for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
       kwargs: Keyword arguments forwarded to Builder.
 
     Returns (Builder): A configured Builder for the specified wheel.
@@ -178,6 +205,7 @@ class UniversalSource(Builder):
             universal=True,
             pyversions=pyversions,
             default=True,
+            patch_version=patch_version,
         ), **kwargs)
 
   def build_fn(self, system, wheel):
