@@ -259,8 +259,15 @@ class ResolvedSpec(object):
       * version (str) - The symver of this package to get the CIPDSpec for.
     """
     method, source_method_pb = self.source_method
-    pkg_name = source_method_pb.pkg if method == 'cipd' else self.source_cache
-    source_version = '%s@%s' % (PACKAGE_EPOCH, version)
+    if method == 'cipd':
+      pkg_name = source_method_pb.pkg
+      # For the cipd source, we should use the given version as it is since:
+      # * cipd api relies on this to deploy the package.
+      # * cipd source will not be cached again in cipd.
+      source_version = version
+    else:
+      pkg_name = self.source_cache
+      source_version = '%s@%s' % (PACKAGE_EPOCH, version)
 
     return self._cipd_spec_pool.get(pkg_name,
                                     source_version) if pkg_name else None

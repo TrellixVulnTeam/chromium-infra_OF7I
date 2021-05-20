@@ -161,6 +161,18 @@ def resolve_latest(api, spec):
     # We don't actually run a real step here, so we can't put the 'resolved
     # version' anywhere :(. See TODO at top.
 
+    # If "latest", try to resolve it from the tag "version" of the cipd
+    # instance that has the ref "latest".
+    if version == 'latest':
+      desc = api.cipd.describe(source_method_pb.pkg, 'latest')
+      for tag in desc.tags:
+        if tag.tag.startswith('version:'):
+          version = tag.tag[len('version:'):]
+      if version == 'latest':
+        raise AssertionError(
+            'Failed to resolve the latest version for CIPD package %s' %
+            source_method_pb.pkg)
+
   elif method_name == 'url':
     version = source_method_pb.version
 

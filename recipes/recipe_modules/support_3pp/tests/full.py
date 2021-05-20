@@ -5,6 +5,8 @@
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
+from RECIPE_MODULES.infra.support_3pp.resolved_spec import PACKAGE_EPOCH
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',
@@ -252,11 +254,14 @@ def GenTests(api):
 
   pkgs_dict['dir_deps/deep_dep'] = '''
   create {
-    source { cipd {
-      pkg: "source/deep_dep"
-      default_version: "1.0.0"
-      original_download_url: "https://some.internet.example.com"
-    } }
+    source {
+      cipd {
+        pkg: "source/deep_dep"
+        default_version: "latest"
+        original_download_url: "https://some.internet.example.com"
+      }
+      patch_version: 'cr0'
+    }
   }
   upload { pkg_prefix: "deps" }
   '''
@@ -411,13 +416,37 @@ def GenTests(api):
             api.file.glob_paths([
                 pkg_repo_path % sep.join(pkg_dir.split('/'))
                 for pkg_dir, _ in pkgs
-            ])) + api.override_step_data(
-                mk_name('building tools/already_uploaded',
-                        'cipd describe 3pp/tools/already_uploaded/%s' % plat),
-                api.cipd.example_describe(
-                    '3pp/tools/already_uploaded/%s' % plat,
-                    version='version:1.5.0-rc1',
-                    test_data_tags=['version:1.5.0-rc1'])))
+            ])) +
+        api.override_step_data(
+            mk_name('building tools/already_uploaded',
+                    'cipd describe 3pp/tools/already_uploaded/%s' % plat),
+            api.cipd.example_describe(
+                '3pp/tools/already_uploaded/%s' % plat,
+                version='version:1.5.0-rc1',
+                test_data_tags=['version:1.5.0-rc1'])) +
+        api.step_data(
+          mk_name("building deps/deep_dep",
+                  "cipd describe source/deep_dep"),
+          api.cipd.example_describe(
+              'source/deep_dep',
+              version='latest',
+              test_data_tags=['version:1.2.3'])) +
+        # Make sure cipd source itself does not have epoch or patch_version
+        # in its version
+        api.post_process(
+          post_process.StepCommandContains,
+          mk_name("building deps/deep_dep",
+                  "fetch sources",
+                  "cipd pkg-fetch source/deep_dep"),
+          ['-version', 'version:1.2.3']) +
+        # Make sure package built from cipd source has epoch & patch_version
+        # in its version
+        api.post_process(
+          post_process.StepCommandContains,
+          mk_name("building deps/deep_dep",
+                  "cipd describe 3pp/deps/deep_dep/%s" % plat),
+          ['-version', 'version:%s@1.2.3.cr0' % PACKAGE_EPOCH])
+    )
 
     if plat_name != 'win':
       # posix_tool says it needs an archive unpacking.
@@ -664,6 +693,28 @@ def GenTests(api):
       + api.post_process(post_process.StepCommandRE, 'echo package_prefix',
                          ['echo', 'experimental'])
       + api.post_process(post_process.StatusSuccess)
+      + api.post_process(post_process.DropExpectation)
+  )
+
+  # test fail to resolve latest for source CIPD package
+  pkg = 'dir_deps/deep_dep'
+  yield (api.test('source-cipd-latest-failure')
+      + api.properties(GOOS='linux', GOARCH='amd64', use_new_checkout=True)
+      + api.step_data('find package specs',
+                      api.file.glob_paths(['%s/3pp.pb' % pkg]))
+      + api.step_data(
+          mk_name("load package specs", "read '%s/3pp.pb'" % pkg),
+          api.file.read_text(pkgs_dict[pkg]))
+      + api.step_data(
+          mk_name("building deps/deep_dep",
+                  "cipd describe source/deep_dep"),
+          api.cipd.example_describe(
+              'source/deep_dep',
+              version='latest',
+              test_data_tags=['non-version:1']))
+      + api.expect_exception('AssertionError')
+      + api.post_process(post_process.ResultReasonRE,
+                         'Failed to resolve the latest version')
       + api.post_process(post_process.DropExpectation)
   )
 

@@ -1246,9 +1246,9 @@ Returns:
 Normalizes a string for use in a resource label.
 ### *recipes* / [support\_3pp:tests/full](/recipes/recipe_modules/support_3pp/tests/full.py)
 
-[DEPS](/recipes/recipe_modules/support_3pp/tests/full.py#8): [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/support_3pp/tests/full.py#10): [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/support_3pp/tests/full.py#35)(api, GOOS, GOARCH, experimental, load_dupe, package_prefix, source_cache_prefix):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/support_3pp/tests/full.py#37)(api, GOOS, GOARCH, experimental, load_dupe, package_prefix, source_cache_prefix):**
 ### *recipes* / [sync\_submodules](/recipes/recipes/sync_submodules.py)
 
 [DEPS](/recipes/recipes/sync_submodules.py#7): [sync\_submodules](#recipe_modules-sync_submodules), [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]

@@ -406,6 +406,9 @@ message CipdSource {
   // (required) A symver to use when this package is built without specifying
   // a version (e.g. as a dep for some other package). This will translate
   // to the CIPD tag of `version:$default_version`.
+  //
+  // Note if the value is "latest", we will get value from the tag "version"
+  // of the cipd package with the ref "latest".
   string default_version = 2;
   // (required) The URL to the download page where we obtained this source. This
   // is required, but is not used as part of the build, it's purely for

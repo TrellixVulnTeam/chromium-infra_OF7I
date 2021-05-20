@@ -425,11 +425,14 @@
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@3pp.pb@@@@",
       "@@@STEP_LOG_LINE@3pp.pb@  create {@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@    source { cipd {@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@      pkg: \"source/deep_dep\"@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@      default_version: \"1.0.0\"@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@      original_download_url: \"https://some.internet.example.com\"@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@    } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    source {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        pkg: \"source/deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        default_version: \"latest\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      patch_version: 'cr0'@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@  upload { pkg_prefix: \"deps\" }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@  @@@",
@@ -2852,9 +2855,9 @@
     "cmd": [
       "cipd",
       "describe",
-      "3pp/deps/deep_dep/mac-amd64",
+      "source/deep_dep",
       "-version",
-      "version:2@1.0.0",
+      "latest",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2864,13 +2867,65 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
+      "_3PP_PLATFORM": "mac-amd64",
+      "_3PP_TOOL_PLATFORM": "mac-amd64"
+    },
+    "name": "building deps/deep_dep.cipd describe source/deep_dep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"source/deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"refs\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"modified_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"modified_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"latest\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"registered_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"tags\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"tag\": \"version:1.2.3\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/deps/deep_dep/mac-amd64",
+      "-version",
+      "version:2@1.2.3.cr0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "10.10",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64"
     },
     "name": "building deps/deep_dep.cipd describe 3pp/deps/deep_dep/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3.cr0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -2888,7 +2943,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.0.0"
+      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.2.3"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -2896,9 +2951,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.mkdir -p [workdir]",
@@ -2923,7 +2979,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.0.0/checkout"
+      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.2.3/checkout"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -2931,9 +2987,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.fetch sources.mkdir -p [workdir]/checkout/",
@@ -2947,7 +3004,7 @@
       "pkg-fetch",
       "source/deep_dep",
       "-version",
-      "version:2@1.0.0",
+      "version:1.2.3",
       "-out",
       "[CLEANUP]/tmp_tmp_8",
       "-json-output",
@@ -2959,17 +3016,18 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "name": "building deps/deep_dep.fetch sources.cipd pkg-fetch source/deep_dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:2@1.0.0-@@@",
+      "@@@STEP_TEXT@source/deep_dep resolved-instance_id-of-version:1.2.3---@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.0.0-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.2.3---\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/deep_dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -2994,9 +3052,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.fetch sources.ensure cipd package cache exists",
@@ -3013,7 +3072,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_8",
-      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-"
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.2.3---"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -3021,9 +3080,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.fetch sources.move fetched cipd package to cache",
@@ -3035,9 +3095,9 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-",
+      "[CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.2.3---",
       "-root",
-      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.0.0/checkout",
+      "[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.2.3/checkout",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3047,17 +3107,18 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
-    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:2@1.0.0-",
+    "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.2.3---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.0.0-\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.2.3---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -3068,7 +3129,7 @@
       "cipd",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/mac-amd64\", \"root\": \"[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.0.0/checkout\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/mac-amd64\", \"root\": \"[START_DIR]/3pp/wd/deps/deep_dep/mac-amd64/1.2.3/checkout\"}",
       "-out",
       "[CLEANUP]/tmp_tmp_9",
       "-hash-algo",
@@ -3082,9 +3143,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "name": "building deps/deep_dep.build 3pp/deps/deep_dep/mac-amd64",
     "~followup_annotations": [
@@ -3116,9 +3178,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.ensure cipd pkg cache exists",
@@ -3143,9 +3206,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.mv built cipd pkg to cache",
@@ -3176,9 +3240,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.attach provenance.Compute file hash",
@@ -3204,9 +3269,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
     "name": "building deps/deep_dep.attach provenance.Provenance manifest",
@@ -3232,9 +3298,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "name": "building deps/deep_dep.attach provenance.generate",
     "~followup_annotations": [
@@ -3255,7 +3322,7 @@
       "describe",
       "3pp/deps/deep_dep/mac-amd64",
       "-version",
-      "version:2@1.0.0",
+      "version:2@1.2.3.cr0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3265,14 +3332,15 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "name": "building deps/deep_dep.do upload.cipd describe 3pp/deps/deep_dep/mac-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@tag 'version:2@1.0.0' not found@@@",
+      "@@@STEP_TEXT@tag 'version:2@1.2.3.cr0' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -3292,7 +3360,7 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
-      "version:2@1.0.0",
+      "version:2@1.2.3.cr0",
       "-metadata-from-file",
       "provenance:[CLEANUP]/tmp_tmp_10/provenance.attestation",
       "-json-output",
@@ -3304,9 +3372,10 @@
       "GOOS": "darwin",
       "MACOSX_DEPLOYMENT_TARGET": "10.10",
       "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "mac-amd64",
       "_3PP_TOOL_PLATFORM": "mac-amd64",
-      "_3PP_VERSION": "1.0.0"
+      "_3PP_VERSION": "1.2.3"
     },
     "name": "building deps/deep_dep.do upload.register 3pp/deps/deep_dep/mac-amd64",
     "~followup_annotations": [
@@ -4895,7 +4964,7 @@
       "pkg-fetch",
       "source/posix_tool",
       "-version",
-      "version:2@1.2.0",
+      "version:1.2.0",
       "-out",
       "[CLEANUP]/tmp_tmp_17",
       "-json-output",
@@ -4914,10 +4983,10 @@
     "name": "building tools/posix_tool.fetch sources.cipd pkg-fetch source/posix_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/posix_tool resolved-instance_id-of-version:2@1.2.0-@@@",
+      "@@@STEP_TEXT@source/posix_tool resolved-instance_id-of-version:1.2.0---@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.2.0-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.2.0---\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/posix_tool\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -4961,7 +5030,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_17",
-      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-"
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -4983,7 +5052,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-",
+      "[CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
       "-root",
       "[START_DIR]/3pp/wd/tools/posix_tool/mac-amd64/1.2.0/checkout",
       "-json-output",
@@ -4999,13 +5068,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.2.0"
     },
-    "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:2@1.2.0-",
+    "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.2.0-\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.2.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -9701,7 +9770,7 @@
       "pkg-fetch",
       "source/dep",
       "-version",
-      "version:2@1.0.0",
+      "version:1.0.0",
       "-out",
       "[CLEANUP]/tmp_tmp_31",
       "-json-output",
@@ -9720,10 +9789,10 @@
     "name": "building deps/dep.fetch sources.cipd pkg-fetch source/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:2@1.0.0-@@@",
+      "@@@STEP_TEXT@source/dep resolved-instance_id-of-version:1.0.0---@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:2@1.0.0-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.0.0---\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"source/dep\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -9767,7 +9836,7 @@
       "/path/to/tmp/json",
       "move",
       "[CLEANUP]/tmp_tmp_31",
-      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-"
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -9789,7 +9858,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-",
+      "[CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
       "-root",
       "[START_DIR]/3pp/wd/deps/dep/mac-amd64/1.0.0/checkout",
       "-json-output",
@@ -9805,13 +9874,13 @@
       "_3PP_TOOL_PLATFORM": "mac-amd64",
       "_3PP_VERSION": "1.0.0"
     },
-    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:2@1.0.0-",
+    "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:2@1.0.0-\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.0.0---\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
