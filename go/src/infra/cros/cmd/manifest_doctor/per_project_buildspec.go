@@ -7,11 +7,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/data/text"
+	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/internal/branch"
+	"infra/cros/internal/gerrit"
+	mu "infra/cros/internal/manifestutil"
+	"infra/cros/internal/repo"
 )
 
 const (
@@ -87,5 +94,59 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
 func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client) error {
+	buildspecInfo, err := branch.ParseBuildspec(b.buildspec)
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	branches, err := gerrit.Branches(ctx, authedClient, chromeInternalHost, manifestInternalProject)
+	if err != nil {
+		return err
+	}
+
+	var releaseBranch string
+	for branch := range branches {
+		if strings.HasPrefix(branch, fmt.Sprintf("refs/heads/release-R%d-", buildspecInfo.ChromeBranch)) {
+			releaseBranch = branch
+			break
+		}
+	}
+	if releaseBranch == "" {
+		return fmt.Errorf("release branch for R%d was not found", buildspecInfo.ChromeBranch)
+	}
+
+	// Load the local manifest for the appropriate project/branch.
+	localManifest, err := repo.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+		b.project, releaseBranch, "local_manifest.xml")
+	if err != nil {
+		return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
+	}
+
+	// Load the internal buildspec.
+	buildspecManifest, err := repo.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+		"chromeos/manifest-versions", "HEAD", "buildspecs/"+b.buildspec)
+	if err != nil {
+		return errors.Annotate(err, "error loading buildspec manifest").Err()
+	}
+
+	// Create the project/program-specific buildspec.
+	if err := mu.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
+		switch err.(type) {
+		case mu.MissingProjectsError:
+			LogOut("Missing projects: %s", err.(mu.MissingProjectsError).MissingProjects)
+		default:
+			return err
+		}
+	}
+
+	// For now, just print the manifest to stdout.
+	output, err := localManifest.ToBytes()
+	if err != nil {
+		return err
+	}
+	LogOut("%s\n", string(output))
+
+	// TODO(b:187795796): Upload to the appropriate GS bucket.
+
 	return nil
 }

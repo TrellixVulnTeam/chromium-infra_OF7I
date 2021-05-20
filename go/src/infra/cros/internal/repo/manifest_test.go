@@ -6,6 +6,7 @@ package repo
 import (
 	"context"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -541,4 +542,65 @@ func TestLoadManifestFromFileWithIncludes(t *testing.T) {
 		projectNames[i] = project.Name
 	}
 	assert.Assert(t, util.UnorderedEqual(expectedProjectNames, projectNames))
+}
+
+func TestLoadManifestFromGitiles(t *testing.T) {
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+
+	project := "foo"
+	file := "manifest.xml"
+	branch := "refs/heads/foo"
+
+	manifestXML := `
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <default remote="chromeos" revision="123"/>
+  <remote name="chromeos" />
+
+  <project name="foo" path="foo/" />
+  <project name="bar" path="bar/" />
+</manifest>
+	`
+	expected := &Manifest{
+		Default: Default{
+			RemoteName: "chromeos",
+			Revision:   "123",
+		},
+		Remotes: []Remote{
+			{
+				Name: "chromeos",
+			},
+		},
+		Projects: []Project{
+			{
+				Name: "foo",
+				Path: "foo/",
+			},
+			{
+				Name: "bar",
+				Path: "bar/",
+			},
+		},
+	}
+
+	reqLocalManifest := &gitilespb.DownloadFileRequest{
+		Project:    project,
+		Path:       file,
+		Committish: branch,
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: manifestXML,
+		},
+		nil,
+	)
+
+	gerrit.MockGitiles = gitilesMock
+	got, err := LoadManifestFromGitiles(context.Background(), nil, "host", project, branch, file)
+	assert.NilError(t, err)
+	got.XMLName = xml.Name{}
+	assert.Assert(t, reflect.DeepEqual(got, expected))
 }

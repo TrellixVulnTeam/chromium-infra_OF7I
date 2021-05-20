@@ -352,6 +352,21 @@ func LoadManifestFromFileWithIncludes(file string) (*Manifest, error) {
 	return manifest, err
 }
 
+// LoadManifestFromGitiles loads the manifest from the specified remote location
+// using the Gitiles API.
+func LoadManifestFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (*Manifest, error) {
+	contents, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, host,
+		project, branch, file)
+	if err != nil {
+		return nil, errors.Annotate(err, "error downloading manifest").Err()
+	}
+	manifest, err := ParseManifest([]byte(contents))
+	if err != nil {
+		return nil, errors.Annotate(err, "error parsing manifest").Err()
+	}
+	return manifest, nil
+}
+
 // ResolveImplicitLinks explicitly sets remote/revision information
 // for each project in the manifest.
 func (m *Manifest) ResolveImplicitLinks() {
@@ -509,6 +524,15 @@ func (m *Manifest) GetUniqueProject(name string) (Project, error) {
 		return Project{}, fmt.Errorf("no project named %s", name)
 	}
 	return project, nil
+}
+
+// ParseManifest parses a manifest from the given byte array.
+func ParseManifest(contents []byte) (*Manifest, error) {
+	manifest := &Manifest{}
+	if err := xml.Unmarshal(contents, manifest); err != nil {
+		return nil, errors.Annotate(err, "failed to unmarshal data").Err()
+	}
+	return manifest, nil
 }
 
 // ToBytes marshals the manifest into a raw byte array.
