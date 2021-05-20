@@ -71,10 +71,7 @@ class Builder(object):
       str - The version of the wheel to upload. By default this is
       `spec.version`.
     """
-    version = self._spec.version
-    if self._spec.patch_version:
-      version += '.%s' % self._spec.patch_version
-    return version
+    return self._spec.version
 
   def md_data_fn(self):
     """Optionally overridden by the subclass.

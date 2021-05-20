@@ -19,7 +19,6 @@ class Cryptography(Builder):
                openssl_src,
                packaged=None,
                pyversions=None,
-               patch_version=None,
                **kwargs):
     """Specialized wheel builder for the "cryptography" package.
 
@@ -33,9 +32,6 @@ class Cryptography(Builder):
           generated based on standard PyPi expectations, encoded with each
           Platform's "packaged" property.
       pyversions: (See Buidler's "pyversions" argument.)
-      patch_version (str or None): If set, this string is appended to the CIPD
-          version tag, for example if set to 'chromium.1', the version tag
-          for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
     """
     self._packaged = packaged or ()
     self._crypt_src = crypt_src
@@ -46,8 +42,7 @@ class Cryptography(Builder):
             crypt_src.version,
             universal=None,
             pyversions=pyversions,
-            default=True,
-            patch_version=patch_version), **kwargs)
+            default=True), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:

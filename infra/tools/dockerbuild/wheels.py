@@ -184,13 +184,6 @@ SPECS.update({
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
-            'cffi',
-            '1.14.5',
-            packaged=(),
-            pyversions=['py2', 'py3'],
-            patch_version='chromium.1',  # Rebuild for crbug/1210346
-        ),
-        SourceOrPrebuilt(
             'coverage',
             '4.3.4',
             packaged=[
