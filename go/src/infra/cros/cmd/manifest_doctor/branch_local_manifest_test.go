@@ -17,8 +17,8 @@ import (
 const (
 	referenceManifestXML = `<?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-  <default remote="chromeos" revision="123"/>
-  <remote fetch="%[2]s" name="chromeos" />
+  <default remote="cros-internal" revision="123"/>
+  <remote fetch="%[2]s" name="cros-internal" />
 
   <project name="manifest-internal" path="manifest-internal/" revision="%[1]s" />
   <project name="foo" path="foo/" revision="%[1]s" />
@@ -29,8 +29,8 @@ const (
 	localManifestXML = `<?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <!-- LOCAL MANIFEST -->
-  <default remote="chromeos" revision="123"/>
-  <remote name="chromeos" />
+  <default remote="cros-internal" revision="123"/>
+  <remote name="cros-internal" />
 
   <project name="foo" path="foo/" revision="%s" />
 </manifest>

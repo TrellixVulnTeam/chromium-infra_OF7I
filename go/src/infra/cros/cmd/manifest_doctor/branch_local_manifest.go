@@ -97,6 +97,15 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 		return fmt.Errorf("project path %s does not exist", projectPath)
 	}
 
+	if hasBranch, err := git.RemoteHasBranch(projectPath, "cros-internal", branch); err != nil {
+		return errors.Annotate(err, "failed to ls-remote branch %s from remote for project %s", branch, path).Err()
+	} else if !hasBranch {
+		LogOut("branch %s does not exist for project %s, skipping...", branch, path)
+		return nil
+	}
+	if err := git.Fetch(projectPath, "cros-internal", branch); err != nil {
+		return errors.Annotate(err, "failed to fetch branch %s from remote for project %s", branch, path).Err()
+	}
 	if err := git.Checkout(projectPath, branch); err != nil {
 		return errors.Annotate(err, "failed to checkout branch %s for project %s", branch, path).Err()
 	}
