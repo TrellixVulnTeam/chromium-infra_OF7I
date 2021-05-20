@@ -782,9 +782,19 @@ SPECS.update({
         UniversalSource('pyftpdlib', '0.7.0'),
         UniversalSource('pyftpdlib', '1.0.0'),
         UniversalSource('pyftpdlib', '1.5.3'),
-        UniversalSource('pylint', '1.5.6', patches=('multiprocessing',)),
-        UniversalSource('pylint', '1.8.4', patches=('disable-log-spam',)),
-        UniversalSource('pylint', '1.9.5', patches=('disable-log-spam',)),
+        UniversalSource(
+            'pylint', '1.5.6', patches=(
+                'multiprocessing',), pyversions=['py2']),
+        UniversalSource(
+            'pylint',
+            '1.8.4',
+            patches=('disable-log-spam',),
+            pyversions=['py2']),
+        UniversalSource(
+            'pylint',
+            '1.9.5',
+            patches=('disable-log-spam',),
+            pyversions=['py2']),
         UniversalSource('pylint-quotes', '0.1.8'),
         UniversalSource('pyperclip', '1.8.0'),
         UniversalSource('pyrsistent', '0.16.0', pyversions=['py3']),
@@ -800,6 +810,7 @@ SPECS.update({
 # Universal. These are packages which produce universal (pure-python) wheels,
 # and are available from PyPi in wheel form (.whl) already.
 from .wheel_wheel import Universal
+# yapf: disable
 SPECS.update({
     s.spec.tag: s for s in assert_sorted('Universal', *[
         Universal('CherryPy', '14.2.0'),
@@ -989,8 +1000,8 @@ SPECS.update({
         Universal('pyasn1_modules', '0.2.8'),
         Universal('pyfakefs', '3.7.2'),
         Universal('pyglet', '1.5.0'),
-        Universal('pylint', '1.6.5'),
-        Universal('pylint', '1.7.6'),
+        Universal('pylint', '1.6.5', pyversions=['py2']),
+        Universal('pylint', '1.7.6', pyversions=['py2']),
         Universal('pylint', '2.0.1', pyversions=['py3']),
         Universal('pylint', '2.1.1', pyversions=['py3']),
         Universal('pylint', '2.2.3', pyversions=['py3']),
@@ -1079,6 +1090,7 @@ SPECS.update({
         Universal('zipp', '3.1.0', pyversions=['py3']),
     ])
 })
+# yapf: enable
 
 # Special packages.
 #
