@@ -13,7 +13,13 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+
+	"infra/cros/cmd/crosgrep/internal/swarming"
 )
+
+// maxSwarmingResults set to 10 temporarily to limit the amount of
+// time it takes queries to run.
+const maxSwarmingResults = 10
 
 // ListAllTasks is a command that lists some swarming tasks in an
 // arbitrary way.
@@ -49,10 +55,16 @@ func (c *listAllTasksCmd) Run(a subcommands.Application, args []string, env subc
 func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	logging.SetLevel(ctx, c.logLevel)
-	_, err := bigquery.NewClient(ctx, c.bqProject)
+	client, err := bigquery.NewClient(ctx, c.bqProject)
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
-	// TODO(gregorynisbet): add implementation.
+	vals, err := swarming.ExtractNValues(ctx, client, maxSwarmingResults)
+	if err != nil {
+		return errors.Annotate(err, "extracting values from query").Err()
+	}
+	for _, row := range vals {
+		fmt.Fprintf(a.GetOut(), "%#v\n", row)
+	}
 	return nil
 }
