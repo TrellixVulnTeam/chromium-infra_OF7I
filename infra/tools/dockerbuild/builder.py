@@ -323,18 +323,18 @@ def SetupPythonPackages(system, wheel, base_dir):
   env = dict()
 
   # If we are cross-compiling, also install the target-platform python and set
-  # PYTHONPATH to point to it. This will ensure that we use the correct
+  # PYTHONHOME to point to it. This will ensure that we use the correct
   # compiler and linker command lines which are generated at build time in the
   # sysconfigdata module.
   if not wheel.spec.universal and host_platform != wheel.plat.cipd_platform:
     pkg_dir, _ = _InstallCipdPythonPackage(system, wheel.plat.cipd_platform,
                                            wheel, base_dir)
-    env['PYTHONPATH'] = '%s/lib/python%s' % (pkg_dir, '.'.join(wheel.pyversion))
+    env['PYTHONHOME'] = pkg_dir
     # For python 3, we need to also set _PYTHON_SYSCONFIGDATA_NAME to point to
     # the target-architecture sysconfig module.
     if wheel.pyversion[0] == '3':
-      sysconfigdata_modules = glob.glob('%s/_sysconfigdata_*.py' %
-                                        env['PYTHONPATH'])
+      sysconfigdata_modules = glob.glob('%s/lib/python%s/_sysconfigdata_*.py' %
+                                        (pkg_dir, '.'.join(wheel.pyversion)))
       if len(sysconfigdata_modules) != 1:
         raise Exception(
             'Expected 1 sysconfigdata module in python package ' +
@@ -342,9 +342,10 @@ def SetupPythonPackages(system, wheel, base_dir):
             (wheel.plat.cipd_platform, ','.join(sysconfigdata_modules)))
       env['_PYTHON_SYSCONFIGDATA_NAME'] = (os.path.basename(
           sysconfigdata_modules[0])[:-3])  # remove .py
-  else:
-    # Make sure not to pick up any extra host python modules.
-    env['PYTHONPATH'] = ''
+
+  # Make sure not to pick up any extra host python modules.
+  env['PYTHONPATH'] = ''
+
   return interpreter, env
 
 
