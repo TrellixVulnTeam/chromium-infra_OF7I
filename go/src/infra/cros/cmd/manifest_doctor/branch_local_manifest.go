@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	gerrs "errors"
 	"fmt"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/osutils"
 	"infra/cros/internal/repo"
+	"infra/cros/internal/shared"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
@@ -158,7 +160,10 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 		Remote: remotes[0],
 		Ref:    fmt.Sprintf("refs/for/%s", branch) + "%submit",
 	}
-	if err := git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun)); err != nil {
+	pushFunc := func() error {
+		return git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun))
+	}
+	if err := shared.DoWithRetry(context.Background(), shared.LongerOpts, pushFunc); err != nil {
 		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
 	if !dryRun {
