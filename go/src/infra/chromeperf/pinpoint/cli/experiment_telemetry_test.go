@@ -113,14 +113,8 @@ func TestBatchKickoff(t *testing.T) {
 
 		c := &fakePinpointClient{}
 
-		errC := make(chan error)
-		var wg sync.WaitGroup
-		runBatchJob(&runner, &wg, errC, context.Background(), os.Stdout, c, "", batch_experiments, &experiment)
-		go func() {
-			wg.Wait()
-			close(errC)
-		}()
-		handleErrors(context.Background(), errC)
+		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "", batch_experiments, &experiment)
+		So(err, ShouldBeNil)
 
 		expected := []startedJob{
 			{
@@ -163,6 +157,7 @@ func TestBatchKickoff(t *testing.T) {
 		fmt.Printf("%s\n", c.Jobs)
 		fmt.Printf("%s\n", expected)
 		So(cmp.Equal(c.Jobs, expected, cmpopts.SortSlices(less)), ShouldBeTrue)
+		So(len(jobs), ShouldEqual, 6)
 	})
 }
 

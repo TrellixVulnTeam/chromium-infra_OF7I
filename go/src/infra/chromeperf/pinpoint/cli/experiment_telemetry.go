@@ -30,7 +30,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/sync/parallel"
 )
+
+const MaxConcurrency = 5
 
 type experimentTelemetryRun struct {
 	experimentBaseRun
@@ -201,16 +204,12 @@ func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extr
 }
 
 func scheduleTelemetryJob(e *experimentTelemetryRun,
-	wg *sync.WaitGroup,
-	errC chan error,
 	ctx context.Context,
-	o io.Writer,
 	c proto.PinpointClient,
 	batch_id string,
 	experiment *proto.Experiment,
 	bot_cfg, benchmark, measurement, story string,
-	storyTags, extraArgs []string) {
-	defer wg.Done()
+	storyTags, extraArgs []string) (*proto.Job, error) {
 	js := &proto.JobSpec{
 		BatchId:        batch_id,
 		ComparisonMode: proto.JobSpec_PERFORMANCE,
@@ -235,70 +234,110 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	}
 	j, err := c.ScheduleJob(ctx, &proto.ScheduleJobRequest{Job: js})
 	if err != nil {
-		errC <- errors.Annotate(err, "failed to ScheduleJob").Err()
-		return
+		return nil, errors.Annotate(err, "failed to ScheduleJob").Err()
 	}
 	jobURL, err := render.JobURL(j)
 	if err != nil {
-		errC <- err
-		return
+		return j, err
 	}
-	fmt.Printf("Pinpoint job scheduled: %s\n", jobURL)
+	logging.Debugf(ctx, "Pinpoint job scheduled: %s\n", jobURL)
+	return j, nil
+}
 
-	// Wait and download all jobs
-	j, err = e.waitForJob(ctx, c, j, o)
+func waitAndDownloadJob(e *experimentTelemetryRun,
+	ctx context.Context,
+	o io.Writer,
+	c proto.PinpointClient,
+	j *proto.Job) error {
+	j, err := e.waitForJob(ctx, c, j, o)
 	if err != nil {
-		errC <- err
-		return
+		return err
 	}
 	if err := e.doDownloadResults(ctx, j); err != nil {
-		errC <- err
-		return
+		return err
 	}
 	httpClient, err := e.httpClient(ctx)
 	if err != nil {
-		errC <- err
-		return
+		return err
 	}
 	if err := e.doDownloadArtifacts(ctx, os.Stdout, httpClient, e.workDir, j); err != nil {
-		errC <- err
-		return
+		return err
 	}
+	return nil
 }
 
 func runBatchJob(e *experimentTelemetryRun,
-	wg *sync.WaitGroup,
-	errC chan error,
 	ctx context.Context,
 	o io.Writer,
 	c proto.PinpointClient,
 	batch_id string,
 	batch_experiments []telemetryBatchExperiment,
-	experiment *proto.Experiment) {
-	for _, config := range batch_experiments {
-		for _, bot_config := range config.Configs {
-			for _, story := range config.Stories {
-				wg.Add(1)
-				go scheduleTelemetryJob(e, wg, errC, ctx, o, c, batch_id,
-					experiment, bot_config, config.Benchmark,
-					config.Measurement, story,
-					[]string{}, config.ExtraArgs)
-			}
-			if len(config.StoryTags) > 0 {
-				wg.Add(1)
-				go scheduleTelemetryJob(e, wg, errC, ctx, o, c, batch_id,
-					experiment, bot_config, config.Benchmark,
-					config.Measurement, "",
-					config.StoryTags, config.ExtraArgs)
+	experiment *proto.Experiment) ([]*proto.Job, error) {
+
+	var jobsMu sync.Mutex
+	jobs := []*proto.Job{}
+
+	err := parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
+		for _, config := range batch_experiments {
+			config := config
+			for _, bot_config := range config.Configs {
+				bot_config := bot_config
+				for _, story := range config.Stories {
+					story := story
+					workC <- func() error {
+						j, err := scheduleTelemetryJob(e, ctx,
+							c, batch_id, experiment, bot_config, config.Benchmark,
+							config.Measurement, story,
+							[]string{}, config.ExtraArgs)
+						if err != nil {
+							return err
+						}
+						jobsMu.Lock()
+						defer jobsMu.Unlock()
+						jobs = append(jobs, j)
+						return nil
+					}
+				}
+				if len(config.StoryTags) > 0 {
+					workC <- func() error {
+						j, err := scheduleTelemetryJob(e, ctx,
+							c, batch_id, experiment, bot_config, config.Benchmark,
+							config.Measurement, "",
+							config.StoryTags, config.ExtraArgs)
+						if err != nil {
+							return err
+						}
+						jobsMu.Lock()
+						defer jobsMu.Unlock()
+						jobs = append(jobs, j)
+						return nil
+					}
+				}
 			}
 		}
+	})
+	fmt.Fprintf(o, "Scheduled the following jobs:\n")
+	for _, j := range jobs {
+		jobURL, err := render.JobURL(j)
+		if err == nil {
+			fmt.Fprintf(o, "%s\n", jobURL)
+		}
 	}
+	return jobs, err
 }
 
-func handleErrors(ctx context.Context, errC chan error) {
-	for err := range errC {
-		logging.Warningf(ctx, "Error: %s", err)
-	}
+func waitAndDownloadBatchJob(e *experimentTelemetryRun,
+	ctx context.Context,
+	o io.Writer,
+	c proto.PinpointClient,
+	jobs []*proto.Job) error {
+	err := parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
+		for _, job := range jobs {
+			job := job
+			workC <- func() error { return waitAndDownloadJob(e, ctx, o, c, job) }
+		}
+	})
+	return err
 }
 
 func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Application, args []string) error {
@@ -319,18 +358,17 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	experiment := getExperiment(e)
 	batch_id := uuid.New().String()
 	fmt.Fprintf(a.GetOut(), "Created job batch: %s\n", batch_id)
+	defer fmt.Fprintf(a.GetOut(), "Finished actions for batch: %s\n", batch_id)
 
-	// Start all job(s)
-	errC := make(chan error)
-	var wg_jobs sync.WaitGroup
-	runBatchJob(e, &wg_jobs, errC, ctx, a.GetOut(), c, batch_id,
+	jobs, err := runBatchJob(e, ctx, a.GetOut(), c, batch_id,
 		batch_experiments, experiment)
-	go func() {
-		wg_jobs.Wait()
-		close(errC)
-	}()
-	// Returns once errC is closed
-	handleErrors(ctx, errC)
+	if err != nil {
+		return errors.Annotate(err, "Failed to start all jobs: ").Err()
+	}
+	err = waitAndDownloadBatchJob(e, ctx, a.GetOut(), c, jobs)
+	if err != nil {
+		return errors.Annotate(err, "Failed to wait and download jobs: ").Err()
+	}
 
 	return nil
 }
