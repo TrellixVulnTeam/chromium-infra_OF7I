@@ -52,8 +52,6 @@ const (
 	// metadata attribute in both "a" and "a/b".
 	// It is also redundant to have an Dirs entry with empty metadata.
 	// This is the most compact form without a dataloss.
-	//
-	// Similar to COMPUTED, Metadata.mixins field is cleared.
 	MappingForm_REDUCED MappingForm = 3
 )
 

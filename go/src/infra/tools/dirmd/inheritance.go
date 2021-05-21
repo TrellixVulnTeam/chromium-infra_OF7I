@@ -35,12 +35,51 @@ func (m *Mapping) ComputeAll() error {
 	// Process directories in the shorest-path to longest-path order,
 	// such that, when computing the expanded metadata for a given directory,
 	// we only need to check the nearest ancestor.
-	for _, dir := range m.keysByLength(true) {
+	for _, dir := range m.keysByLength() {
 		meta := cloneMD(m.nearestAncestor(dir))
 		if err := m.apply(meta, dir); err != nil {
 			return errors.Annotate(err, "dir %q", dir).Err()
 		}
 		m.Dirs[dir] = meta
+	}
+	return nil
+}
+
+// Reduce removes all redundant information.
+func (m *Mapping) Reduce() error {
+	// This function implemenation is similar to ComputeAll()'s implementation,
+	// but the redundant info is determined after mixins are applied and before
+	// metadata of the current node is added.
+	// The function maintains two mappings: computed and reduced, and both are
+	// being built simultaneously, top-bottom.
+	// In the end, m contains the reduced mapping.
+
+	// Process directories in the shorest-path to longest-path order,
+	// such that, when computing the expanded metadata for a given directory,
+	// we only need to check the nearest ancestor.
+	computed := NewMapping(len(m.Dirs))
+	for _, dir := range m.keysByLength() {
+		md := m.Dirs[dir]
+
+		// First, inherit from the ancestor and apply mixins.
+		mdComputed := cloneMD(computed.nearestAncestor(dir))
+		if err := m.applyMixins(mdComputed, md, dir); err != nil {
+			return err
+		}
+
+		// At this point mdComputed contains the inherited and mixed-in metadata.
+		// If md and mdComputed have the same value for an attribute, then it is
+		// redundant. Remove such metadata from md.
+		excludeSame(md.ProtoReflect(), mdComputed.ProtoReflect())
+		if isEmpty(md.ProtoReflect()) {
+			delete(m.Dirs, dir)
+		}
+
+		// Apply the non-redundant metadata to mdComputed, so that
+		// descendants of this dir can pick it up in the next iterations of the loop.
+		Merge(mdComputed, md)
+		mdComputed.Mixins = nil
+		computed.Dirs[dir] = mdComputed
 	}
 	return nil
 }
@@ -52,8 +91,23 @@ func (m *Mapping) apply(dst *dirmdpb.Metadata, dirKey string) error {
 	src := m.Dirs[dirKey]
 
 	// First apply mixins.
+	if err := m.applyMixins(dst, src, dirKey); err != nil {
+		return err
+	}
+
+	// Then apply the metadata of this directory.
+	Merge(dst, src)
+
+	// Clear the mixin list after applying, to avoid accidental double importing.
+	// Do it only after merging src, otherwise it would be re-populated.
+	dst.Mixins = nil
+	return nil
+}
+
+// applyMixins applies the src.Mixins to dst.
+func (m *Mapping) applyMixins(dst, src *dirmdpb.Metadata, srcDirKey string) error {
 	if len(src.GetMixins()) > 0 {
-		repo := m.repoFor(dirKey)
+		repo := m.repoFor(srcDirKey)
 		if repo == nil {
 			return errors.Reason("repo entry not found").Err()
 		}
@@ -65,13 +119,6 @@ func (m *Mapping) apply(dst *dirmdpb.Metadata, dirKey string) error {
 			Merge(dst, imMD)
 		}
 	}
-
-	// Then apply the metadata of this directory.
-	Merge(dst, src)
-
-	// Clear the mixin list after applying, to avoid accidental double importing.
-	// Do it only after merging src, otherwise it would be re-populated.
-	dst.Mixins = nil
 	return nil
 }
 
@@ -110,7 +157,7 @@ func (m *Mapping) repoFor(dir string) *dirmdpb.Repo {
 
 // keysByLength returns keys sorted by length.
 // Key "." is treated as shortest of all.
-func (m *Mapping) keysByLength(asc bool) []string {
+func (m *Mapping) keysByLength() []string {
 	ret := make([]string, 0, len(m.Dirs))
 	for k := range m.Dirs {
 		ret = append(ret, k)
@@ -123,15 +170,9 @@ func (m *Mapping) keysByLength(asc bool) []string {
 		}
 		return len(dirKey)
 	}
-	if asc {
-		sort.Slice(ret, func(i, j int) bool {
-			return sortKey(ret[i]) < sortKey(ret[j])
-		})
-	} else {
-		sort.Slice(ret, func(i, j int) bool {
-			return sortKey(ret[i]) > sortKey(ret[j])
-		})
-	}
+	sort.Slice(ret, func(i, j int) bool {
+		return sortKey(ret[i]) < sortKey(ret[j])
+	})
 	return ret
 }
 
@@ -143,32 +184,6 @@ func Merge(dst, src *dirmdpb.Metadata) {
 	if src != nil {
 		proto.Merge(dst, src)
 	}
-}
-
-// Reduce removes all redundant information.
-func (m *Mapping) Reduce() error {
-	// First, compute metadata for each node.
-	if err := m.ComputeAll(); err != nil {
-		return err
-	}
-
-	// Then, remove nodes that do not add any new info wrt their nearest ancestor.
-	// Process directories in the longest-path to shortest-path order,
-	// such that, when computing the expanded metadata for a given directory,
-	// we only need to check the nearest ancestor.
-	// The shortest-to-longest order doesn't work because we need a complete ancestor
-	// to decide which parts of the descendant are redundant, so remove data in
-	// the bottom-to-top order.
-	for _, dir := range m.keysByLength(false) {
-		meta := m.Dirs[dir]
-		if ancestor := m.nearestAncestor(dir); ancestor != nil {
-			excludeSame(meta.ProtoReflect(), ancestor.ProtoReflect())
-		}
-		if isEmpty(meta.ProtoReflect()) {
-			delete(m.Dirs, dir)
-		}
-	}
-	return nil
 }
 
 // excludeSame mutates m in-place to clear fields that have same values as ones

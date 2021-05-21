@@ -70,6 +70,63 @@ func TestReduce(t *testing.T) {
 			So(m.Dirs, ShouldNotContainKey, "a/b")
 		})
 
+		Convey(`Mixins`, func() {
+			input := &Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					".": {
+						TeamEmail: "team@example.com",
+						Wpt:       &dirmdpb.WPT{Notify: dirmdpb.Trinary_NO},
+					},
+					"a": {
+						Mixins: []string{"//mixin1"},
+					},
+					"a/b": {
+						Mixins:    []string{"//mixin2"},
+						Buganizer: &dirmdpb.Buganizer{ComponentId: 54},
+						TeamEmail: "team@example.com", // redundant
+						Wpt:       &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium", // redundant
+							Component: "Component",
+						},
+					},
+				},
+				Repos: map[string]*dirmdpb.Repo{
+					".": {
+						Mixins: map[string]*dirmdpb.Metadata{
+							"//mixin1": {
+								Monorail: &dirmdpb.Monorail{
+									Project: "chromium",
+								},
+							},
+							"//mixin2": {
+								Buganizer: &dirmdpb.Buganizer{ComponentId: 54},
+							},
+						},
+					},
+				},
+			}
+
+			actual := input.Clone()
+			So(actual.Reduce(), ShouldBeNil)
+			So(actual.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					".": input.Dirs["."], // did not change
+					"a": {
+						Mixins: []string{"//mixin1"},
+					},
+					"a/b": {
+						Mixins: []string{"//mixin2"},
+						Wpt:    &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+						Monorail: &dirmdpb.Monorail{
+							Component: "Component",
+						},
+					},
+				},
+				Repos: input.Repos,
+			})
+		})
+
 		Convey(`Nothing to reduce`, func() {
 			m := &Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{

@@ -189,7 +189,7 @@ type Metadata struct {
 	//   two mixins, then the later one wins.
 	// * Values defined in the importee override values in the mixins.
 	//
-	// Importing in mixins is not supported.
+	// Importing mixins in mixins is not supported.
 	// Only DIR_METADATA files are allowed to use this field.
 	Mixins []string `protobuf:"bytes,10,rep,name=mixins,proto3" json:"mixins,omitempty"`
 	// Monorail metadata. Its component field should always map to the same
