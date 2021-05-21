@@ -136,7 +136,9 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 		return nil
 	}
 
-	commitMsg := fmt.Sprintf("repair local_manifest.xml for branch %s", branch)
+	var commitMsg string
+	commitMsg += fmt.Sprintf("Repair local_manifest.xml for branch %s\n\n", branch)
+	commitMsg += "This CL was created by the Manifest Doctor.\n"
 	if _, err := git.CommitAll(projectPath, commitMsg); err != nil {
 		return errors.Annotate(err, "failed to commit changes for project %s, branch %s", path, branch).Err()
 	}
