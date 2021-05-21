@@ -1,0 +1,3 @@
+CrosGrep is an EXPERIMENTAL command line tool that makes it easy
+to search through swarming bigquery tables, stainless and other
+data sets.
