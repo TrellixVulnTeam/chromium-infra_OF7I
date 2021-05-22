@@ -9,4 +9,4 @@ set -o pipefail
 
 PREFIX="$1"
 
-cp -av * "$PREFIX"
+cp -av .??* * "$PREFIX"
