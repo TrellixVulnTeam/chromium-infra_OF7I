@@ -52,9 +52,7 @@ def simulation_tester(
         executable = infra.recipe("recipe_simulation"),
         properties = properties,
         dimensions = {
-            # TODO(tandrii): switch entirely to 18.04 once pool has enough of
-            # them.
-            "os": "Ubuntu-16.04|Ubuntu-18.04",
+            "os": "Ubuntu-18.04",
             "cpu": "x86-64",
             "pool": "luci.flex.ci",
         },
@@ -111,9 +109,7 @@ def led_recipes_tester(name, cq_group, repo_name):
         executable = build.recipe("led_recipes_tester"),
         properties = {"repo_name": repo_name},
         dimensions = {
-            # TODO(tandrii): switch entirely to 18.04 once pool has enough of
-            # them.
-            "os": "Ubuntu-16.04|Ubuntu-18.04",
+            "os": "Ubuntu-18.04",
             "cpu": "x86-64",
             "pool": "luci.flex.try",
         },

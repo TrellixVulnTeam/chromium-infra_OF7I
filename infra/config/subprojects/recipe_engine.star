@@ -30,8 +30,7 @@ build.presubmit(
     name = "recipes-py-try-presubmit",
     cq_group = "recipes-py",
     repo_name = "recipes_py",
-    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
-    os = "Ubuntu-16.04|Ubuntu-18.04",
+    os = "Ubuntu-18.04",
 )
 build.presubmit(
     name = "recipes-py-try-presubmit-win",
