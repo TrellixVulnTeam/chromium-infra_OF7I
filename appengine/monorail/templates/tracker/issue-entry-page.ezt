@@ -272,19 +272,18 @@
 
    </td>
    </tr>
-   <tr><td>
-     <div style="margin-top:5em">
-       Problems submitting issues?
-       <a href="#" id="new-issue-feedback-link">
-         Send feedback
-        </a>
-     </div>
-   </td></tr>
   </table>
  </form>
 </div>
 
 [include "../features/filterrules-preview.ezt"]
+
+<div style="margin-top:5em; margin-left: 8px;">
+  Problems submitting issues?
+  <a href="#" id="new-issue-feedback-link">
+    Send feedback
+  </a>
+</div>
 
 <div id="helparea"></div>
 
