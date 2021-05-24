@@ -14,8 +14,8 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// bqRow is the type of a bigquery row.
-type bqRow []bigquery.Value
+// bqRow is an alias for the type of a bigquery row.
+type bqRow = []bigquery.Value
 
 // listAllSwarmingTasks lists all the swarming tasks.
 // TODO(gregorynisbet): replace with call to library that generates queries.
