@@ -29,7 +29,11 @@ message Config {
   bool enable_lab_stateconfig_push = 13;
   // Disable use of cached ManufacturingConfig in datastore. If true,
   // GetChromeOSDeviceData will return None for ManufacturingConfig.
-  bool disable_cached_manufacturing_config = 14;
+  bool disable_cached_manufacturing_config = 14 [deprecated = true];
+  // Disable use of old cached manufacturing configs from the datastore and use
+  // configs cached from HWID server instead. If true, GetChromeOSDeviceData
+  // will return None for ManufacturingConfig.
+  bool use_cached_hwid_manufacturing_config = 15;
 }
 
 message OSNetworkConfig {
