@@ -141,9 +141,12 @@ WITH
 
 	bb_tryjobs AS (
 		SELECT id, status
-		FROM cr-buildbucket.chromium.builds
+		FROM cr-buildbucket.chromium.builds b
 		WHERE create_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) AND TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
-		  AND builder.bucket = 'try'
+			AND builder.bucket = 'try'
+			# Exclude experimental builders because they may fail for reasons
+			# unrelated to the CL, and are not required for the CL to land.
+			AND STRUCT('cq_experimental', 'true') NOT IN UNNEST(b.tags)
 	),
 
 	tryjobs_with_status AS (
