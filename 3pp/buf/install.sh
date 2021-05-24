@@ -9,11 +9,7 @@ set -o pipefail
 
 PREFIX="$1"
 
-GO111MODULE=off GOBIN='' GOROOT='' GOCACHE='' GOPATH=$(pwd) \
-  go build                    \
-  cmd/buf                     \
-  cmd/protoc-gen-buf-breaking \
-  cmd/protoc-gen-buf-lint
+go build -o ./ ./cmd/buf ./cmd/protoc-gen-buf-breaking ./cmd/protoc-gen-buf-lint
 
 cp ./buf                     "${PREFIX}"
 cp ./protoc-gen-buf-breaking "${PREFIX}"
