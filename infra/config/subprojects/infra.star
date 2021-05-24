@@ -70,13 +70,12 @@ def try_builder(
 # the fact that we have only go1.15 OSX amd64 binaries.
 
 # CI Linux.
-ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
-    "go_version_variant": "bleeding_edge",
-})
 ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM", properties = {
     "go_version_variant": "bleeding_edge",
 })
-ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
+ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True, properties = {
+    "go_version_variant": "bleeding_edge",
+})
 
 # CI OSX.
 ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True, properties = {
@@ -124,13 +123,9 @@ ci_builder(
 )
 
 # All trybots.
-# TODO(tandrii): delete this builder.
-try_builder(name = "infra-try-xenial-64", os = "Ubuntu-16.04", properties = {
-    "go_version_variant": "bleeding_edge",
-})
 try_builder(name = "infra-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "go_version_variant": "bleeding_edge",
-}, experiment_percentage = 100)
+})
 try_builder(
     name = "infra-try-xenial-arm64",
     os = "Ubuntu-16.04",
@@ -144,13 +139,11 @@ try_builder(name = "infra-try-mac", os = "Mac-10.15", properties = {
 })
 try_builder(name = "infra-try-win", os = "Windows-10")
 
-# TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
-try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04|Ubuntu-18.04", recipe = "infra_frontend_tester")
+try_builder(name = "infra-try-frontend", os = "Ubuntu-18.04", recipe = "infra_frontend_tester")
 
 try_builder(
     name = "infra-analysis",
-    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
-    os = "Ubuntu-16.04|Ubuntu-18.04",
+    os = "Ubuntu-18.04",
     recipe = "tricium_infra",
     properties = {
         "gclient_config_name": "infra",
