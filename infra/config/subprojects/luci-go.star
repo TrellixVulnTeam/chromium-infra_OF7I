@@ -71,10 +71,10 @@ def try_builder(
 # All OSX builders are testing specifically for go1.15 (aka "legacy") to reflect
 # the fact that we have only go1.15 OSX amd64 binaries.
 
-ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True, properties = {
+ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True, properties = {
     "go_version_variant": "bleeding_edge",
+    "run_integration_tests": True,
 })
-ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True, properties = {
     "go_version_variant": "legacy",
 })
@@ -86,11 +86,6 @@ ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_clos
 })
 ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
-# TODO(tandrii): delete this builder.
-try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
-    "run_integration_tests": True,
-    "go_version_variant": "bleeding_edge",
-})
 try_builder(name = "luci-go-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "run_integration_tests": True,
     "go_version_variant": "bleeding_edge",
@@ -123,8 +118,7 @@ try_builder(
 
 try_builder(
     name = "luci-go-analysis",
-    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
-    os = "Ubuntu-16.04|Ubuntu-18.04",
+    os = "Ubuntu-18.04",
     recipe = "tricium_infra",
     properties = {
         "gclient_config_name": "luci_go",
@@ -137,8 +131,7 @@ try_builder(
 
 try_builder(
     name = "luci-go-lint",
-    # TODO(tandrii): switch entirely to 18.04 once pool has enough of them.
-    os = "Ubuntu-16.04|Ubuntu-18.04",
+    os = "Ubuntu-18.04",
     properties = {
         "run_lint": True,
     },
