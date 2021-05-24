@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -14,9 +15,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 
 	"infra/cros/internal/branch"
 	"infra/cros/internal/gerrit"
+	"infra/cros/internal/gs"
 	mu "infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 )
@@ -83,17 +86,38 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 		return 3
 	}
 
-	if err := b.CreateProjectBuildspec(authedClient); err != nil {
+	gsClient, err := gs.NewProdClient(ctx, authedClient)
+	if err != nil {
 		LogErr(err.Error())
 		return 4
+	}
+
+	if err := b.CreateProjectBuildspec(authedClient, gsClient); err != nil {
+		LogErr(err.Error())
+		return 5
 	}
 
 	return 0
 }
 
+// gsPath returns the appropriate GS path for the given project/version.
+func gsPath(projectName, buildspec string) (lgs.Path, error) {
+	if strings.HasPrefix(projectName, "chromeos/project") {
+		tokens := strings.Split(projectName, "/")
+		if len(tokens) >= 4 {
+			bucket := fmt.Sprintf("chromeos-%s-%s", tokens[2], tokens[3])
+			relPath := filepath.Join("buildspecs/", buildspec)
+			return lgs.MakePath(bucket, relPath), nil
+		}
+	}
+	// TODO(b:187795796): Add support for program repos, once GS buckets are
+	// located/created.
+	return "", fmt.Errorf("unsupported project name")
+}
+
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
-func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client) error {
+func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsClient gs.Client) error {
 	buildspecInfo, err := branch.ParseBuildspec(b.buildspec)
 	if err != nil {
 		return err
@@ -133,20 +157,27 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client) err
 	if err := mu.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 		switch err.(type) {
 		case mu.MissingProjectsError:
-			LogOut("Missing projects: %s", err.(mu.MissingProjectsError).MissingProjects)
+			LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(mu.MissingProjectsError).MissingProjects)
 		default:
 			return err
 		}
 	}
 
-	// For now, just print the manifest to stdout.
-	output, err := localManifest.ToBytes()
+	localManifestRaw, err := localManifest.ToBytes()
 	if err != nil {
 		return err
 	}
-	LogOut("%s\n", string(output))
 
-	// TODO(b:187795796): Upload to the appropriate GS bucket.
+	// Upload project buildspec to appropriate GS bucket.
+	uploadPath, err := gsPath(b.project, b.buildspec)
+	if err != nil {
+		return err
+	}
+
+	if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
+		return err
+	}
+	LogOut("wrote buildspec to %s\n", string(uploadPath))
 
 	return nil
 }

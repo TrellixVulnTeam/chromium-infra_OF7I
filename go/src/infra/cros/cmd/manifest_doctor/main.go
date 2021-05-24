@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
@@ -74,7 +75,12 @@ type manifestDoctorApplication struct {
 
 func main() {
 	opts := chromeinfra.DefaultAuthOptions()
-	opts.Scopes = []string{gerrit.OAuthScope, auth.OAuthScopeEmail}
+	scopes := []string{
+		gerrit.OAuthScope,
+		auth.OAuthScopeEmail,
+	}
+	scopes = append(scopes, gs.ReadWriteScopes...)
+	opts.Scopes = scopes
 	s := &manifestDoctorApplication{
 		GetApplication(opts),
 		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),

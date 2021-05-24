@@ -1,11 +1,11 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+// +build !windows
+
 package main
 
 import (
-	"bytes"
-	"log"
 	"reflect"
 	"testing"
 
@@ -14,7 +14,7 @@ import (
 	"infra/cros/internal/repo"
 
 	"github.com/golang/mock/gomock"
-	"github.com/maruel/subcommands"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
@@ -64,6 +64,25 @@ const (
 var (
 	application = GetApplication(chromeinfra.DefaultAuthOptions())
 )
+
+type fakeGSClient struct {
+	t              *testing.T
+	expectedWrites map[string]*repo.Manifest
+}
+
+// WriteFileToGS writes the specified data to the specified gs path.
+func (f *fakeGSClient) WriteFileToGS(gsPath lgs.Path, data []byte) error {
+	expected, ok := f.expectedWrites[string(gsPath)]
+	if !ok {
+		f.t.Fatalf("unexpected write at %s", string(gsPath))
+	}
+	got, err := repo.ParseManifest(data)
+	assert.NilError(f.t, err)
+	if !reflect.DeepEqual(expected, got) {
+		f.t.Fatalf("mismatch for write at %s: expected:\n%v\ngot:\n%v\n", string(gsPath), expected, got)
+	}
+	return nil
+}
 
 func TestCreateProjectBuildspec(t *testing.T) {
 	project := "chromeos/project/galaxy/milkyway"
@@ -120,22 +139,26 @@ func TestCreateProjectBuildspec(t *testing.T) {
 
 	gerrit.MockGitiles = gitilesMock
 
-	var outputBuf bytes.Buffer
-	stdoutLog := log.New(&outputBuf, "", log.LstdFlags|log.Lmicroseconds)
-	s := &manifestDoctorApplication{application, stdoutLog, nil}
-	ret := subcommands.Run(s, []string{
-		"project-buildspec",
-		"--buildspec", buildspec,
-		"--project", project,
-	})
-	assert.Assert(t, ret == 0)
-
-	got, err := repo.ParseManifest(outputBuf.Bytes())
-	assert.NilError(t, err)
-
 	expected, err := repo.ParseManifest([]byte(pinnedLocalManifestXML))
 	assert.NilError(t, err)
+	expectedWrites := map[string]*repo.Manifest{
+		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: expected,
+	}
+	f := &fakeGSClient{
+		t:              t,
+		expectedWrites: expectedWrites,
+	}
 
-	assert.Assert(t, reflect.DeepEqual(got, expected))
+	b := projectBuildspec{
+		buildspec: buildspec,
+		project:   project,
+	}
+	assert.NilError(t, b.CreateProjectBuildspec(nil, f))
+}
 
+func TestGsPath(t *testing.T) {
+	got, err := gsPath("chromeos/project/galaxy/milkyway", "90/13811.0.0.xml")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, got.Bucket(), "chromeos-galaxy-milkyway")
+	assert.StringsEqual(t, got.Filename(), "buildspecs/90/13811.0.0.xml")
 }
