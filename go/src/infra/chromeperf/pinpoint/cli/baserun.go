@@ -23,7 +23,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -35,6 +34,8 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+	"golang.org/x/sync/singleflight"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -43,21 +44,11 @@ type baseCommandRun struct {
 	endpoint string
 	workDir  string
 
-	initTokensOnce sync.Once
-	tCache         *tokenCache
-	tlsCreds       credentials.TransportCredentials
-	initTokensErr  error
-
-	luciAuth *auth.Authenticator
-
-	// Used in method pinpointClient to lazy-init the factory.
-	initPinpointClientFactoryOnce sync.Once
-	pinpointClientFactory         *pinpointClientFactory
-	initClientFactoryErr          error
-
 	json       bool
 	jsonIndent string
 	jsonPrefix string
+
+	clientFactory clientFactory
 }
 
 func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
@@ -80,69 +71,25 @@ func (r *baseCommandRun) RegisterFlags(p Param) userConfig {
 	return uc
 }
 
-func (r *baseCommandRun) initTokens(ctx context.Context) error {
-	r.initTokensOnce.Do(func() {
-		cacheDir, found := os.LookupEnv("PINPOINT_CACHE_DIR")
-		if !found {
-			homeEnv, err := os.UserHomeDir()
-			if err != nil {
-				homeEnv = os.TempDir()
-			}
-			cacheDir = filepath.Join(homeEnv, ".cache", "pinpoint-cli")
-		}
-		if c, err := newTokenCache(ctx, cacheDir); err != nil {
-			r.initTokensErr = errors.Annotate(err, "failed to create token cache").Err()
-			return
-		} else {
-			r.tCache = c
-		}
-		r.tlsCreds = credentials.NewTLS(nil)
-
-		r.luciAuth = auth.NewAuthenticator(ctx, auth.InteractiveLogin, chromeinfra.DefaultAuthOptions())
-	})
-	return r.initTokensErr
-}
-
 func (r *baseCommandRun) pinpointClient(ctx context.Context) (proto.PinpointClient, error) {
-	if err := r.initTokens(ctx); err != nil {
-		return nil, err
-	}
-	r.initPinpointClientFactoryOnce.Do(func() {
-		// We're setting up the client factory here, so that the end commands
-		// do the connection on-demand. If we ever need to support a scripting
-		// interface where we allow multiple requests to be made by the runner
-		// concurrently, then we're good with that scenario too.
-		endpoint := r.endpoint
-		if !strings.Contains(endpoint, ":") {
-			// If there is no port specified, assume we want gRPC's default.
-			endpoint = fmt.Sprintf("%s:%d", endpoint, 443)
-		}
+	r.clientFactory.init(ctx)
 
-		// If we are connecting to a local server, heuristically guess that we want
-		// an insecure connection and return nil for all return values (which the
-		// client factory takes that as an indication to use insecure).
-		if !strings.HasPrefix(r.endpoint, "localhost:") {
-			r.pinpointClientFactory = newPinpointClientFactory(endpoint, r.tCache, r.tlsCreds)
-		} else {
-			r.pinpointClientFactory = newPinpointClientFactory(endpoint, nil, nil)
-		}
-	})
-
-	if r.initClientFactoryErr != nil {
-		return nil, r.initClientFactoryErr
+	endpoint := r.endpoint
+	if !strings.Contains(endpoint, ":") {
+		// If there is no port specified, assume we want gRPC's default.
+		endpoint = fmt.Sprintf("%s:%d", endpoint, 443)
 	}
-	c, err := r.pinpointClientFactory.Client(ctx)
+	conn, err := r.clientFactory.grpc(endpoint)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to create a Pinpoint client").Err()
+		return nil, errors.Annotate(err, "failed dial grpc").Err()
 	}
-	return c, nil
+	return proto.NewPinpointClient(conn), nil
 }
 
 func (r *baseCommandRun) httpClient(ctx context.Context) (*http.Client, error) {
-	if err := r.initTokens(ctx); err != nil {
-		return nil, err
-	}
-	return r.luciAuth.Client()
+	r.clientFactory.init(ctx)
+
+	return r.clientFactory.http()
 }
 
 func (r *baseCommandRun) writeJSON(out io.Writer, data interface{}) error {
@@ -216,4 +163,49 @@ func promptRemove(w io.Writer, path string) error {
 		return errors.Annotate(err, "failed removing: %s", path).Err()
 	}
 	return nil
+}
+
+// clientFactory encapsulates the dialing and caching of grpc
+// backends and http transports.
+type clientFactory struct {
+	tlsCreds    credentials.TransportCredentials
+	baseAuth    *auth.Authenticator
+	idTokenAuth *auth.Authenticator
+
+	grpcConns singleflight.Group
+	initOnce  sync.Once
+}
+
+func (f *clientFactory) init(ctx context.Context) {
+	f.initOnce.Do(func() {
+		f.tlsCreds = credentials.NewTLS(nil)
+
+		opts := chromeinfra.DefaultAuthOptions()
+		f.baseAuth = auth.NewAuthenticator(ctx, auth.InteractiveLogin, opts)
+
+		opts.UseIDTokens = true
+		f.idTokenAuth = auth.NewAuthenticator(ctx, auth.InteractiveLogin, opts)
+	})
+}
+
+func (f *clientFactory) grpc(endpoint string) (*grpc.ClientConn, error) {
+	conn, err, _ := f.grpcConns.Do(endpoint, func() (interface{}, error) {
+		cred, err := f.idTokenAuth.PerRPCCredentials()
+		if err != nil {
+			return nil, errors.Annotate(err, "failed get per rpc credentials from luci auth").Err()
+		}
+		return grpc.Dial(
+			endpoint,
+			grpc.WithTransportCredentials(f.tlsCreds),
+			grpc.WithPerRPCCredentials(cred),
+		)
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "failed get grpc conn").Err()
+	}
+	return conn.(*grpc.ClientConn), nil
+}
+
+func (f *clientFactory) http() (*http.Client, error) {
+	return f.baseAuth.Client()
 }

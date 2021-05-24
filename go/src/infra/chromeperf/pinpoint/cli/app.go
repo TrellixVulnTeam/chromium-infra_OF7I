@@ -38,12 +38,6 @@ func application(p Param) *cli.Application {
 			cmdConfig(p),
 			subcommands.CmdHelp,
 		},
-		EnvVars: map[string]subcommands.EnvVarDefinition{
-			"PINPOINT_CACHE_DIR": {
-				Advanced:  true,
-				ShortDesc: "Directory used for caching configs and settings.",
-			},
-		},
 	}
 }
 
