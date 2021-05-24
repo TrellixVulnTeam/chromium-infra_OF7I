@@ -21,6 +21,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
@@ -74,18 +75,28 @@ func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
 
 // ReadMapping reads all metadata from files in git in the given directories.
 //
-// Each directory must reside in a git checkout. ReadMapping reads
-// visible-to-git metadata files under the directory.
-// In particular, files outside of the repo are not read, as well as files
-// matched by .gitignore files. The set of considered files is equivalent to
-// `git ls-files <dir>`, see its documentation.
-// Note that a directory does not have to be the root of the git repo, and
-// multiple directories in the same repo are allowed.
-//
+// Each directory must reside in a git checkout.
 // One of the repos must be the root repo, while other repos must be its
-// sub-repos. In other words, all git repos referred to by the directories must
-// be subdirectories of one of the repos.
+// sub-repos. In other words, all git repos referred to by the directories
+// must be subdirectories of one of the repos.
 // The root dir of the root repo becomes the metadata root.
+//
+// Unless the form is sparse, the returned mapping includes metadata of
+// ancestors and descendants of the specified directories.
+// In the sparse form, metadata of only the specified directories is
+// returned, which is usually much faster.
+//
+// Descendants of the specified directories are discovered using
+// "git ls-files <dir>" and not FS walk.
+// This means files outside of the repo are ignored, as well as files
+// matched by .gitignore files.
+// Note that when reading ancestors of the specified directories,
+// the .gitignore files are not respected.
+// This inconsistency should not make a difference in
+// the vast majority of cases because it is confusing to have
+// git-ignored DIR_METADATA in the middle of the ancestry chain.
+// Such a case might indicate that DIR_METADATA files are used incorrectly.
+// This behavior can be changed, but it would come with a performance penalty.
 func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) (*Mapping, error) {
 	if len(dirs) == 0 {
 		return nil, nil
@@ -118,7 +129,9 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		return nil, err
 	}
 
-	// Read the metadata files concurrently.
+	// Read the metadata from the specified directories, their ancestors (for inheritance)
+	// and mixins they import.
+	var wgReadUpMissing sync.WaitGroup
 	for _, repo := range repos {
 		repo := repo
 
@@ -128,15 +141,26 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 		}
 		r.Repos[filepath.ToSlash(relRepoPath)] = repo.Repo
 
-		if form == dirmdpb.MappingForm_SPARSE {
-			for _, dir := range repo.dirs {
-				dir := dir
-				r.eg.Go(func() error {
-					err := r.readUpMissing(ctx, repo, dir)
-					return errors.Annotate(err, "failed to process %q", dir).Err()
-				})
-			}
-		} else {
+		for _, dir := range repo.dirs {
+			dir := dir
+			wgReadUpMissing.Add(1)
+			r.eg.Go(func() error {
+				defer wgReadUpMissing.Done()
+				err := r.readUpMissing(ctx, repo, dir)
+				return errors.Annotate(err, "failed to process %q", dir).Err()
+			})
+		}
+	}
+
+	// Wait for readUpMissing calls to finish before proceeding because
+	// readUpMissing assumes it is the only one populating r.Dirs.
+	wgReadUpMissing.Wait()
+
+	// If the form isn't sparse, then also read the descendants.
+	if form != dirmdpb.MappingForm_SPARSE {
+		for _, repo := range repos {
+			repo := repo
+			// Remove redundant dirs to avoid reading the same files multiple times.
 			repo.dirs = removeRedundantDirs(repo.dirs...)
 			for _, dir := range repo.dirs {
 				dir := dir
@@ -176,6 +200,13 @@ func ReadMapping(ctx context.Context, form dirmdpb.MappingForm, dirs ...string) 
 	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
 		if err := r.Mapping.ComputeAll(); err != nil {
 			return nil, err
+		}
+	}
+
+	// Clean up nils and empty entries, left mostly by readUpMissing.
+	for key, md := range r.Dirs {
+		if md == nil || proto.Equal(md, emptyMD) {
+			delete(r.Dirs, key)
 		}
 	}
 

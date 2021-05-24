@@ -70,6 +70,10 @@ func TestRead(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
+					rootKey: {
+						TeamEmail: "chromium-review@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+					},
 					rootKey + "/subdir": {
 						TeamEmail: "team-email@chromium.org",
 						// OS was not inherited
@@ -172,6 +176,34 @@ func TestRead(t *testing.T) {
 						Monorail: &dirmdpb.Monorail{
 							Project:   "chromium",
 							Component: "Some>Component",
+						},
+					},
+				},
+				Repos: dummyRepos,
+			})
+		})
+
+		Convey(`Computed, not from root`, func() {
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, "testdata/root/subdir")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					rootKey: {
+						TeamEmail: "chromium-review@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+					},
+					rootKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
 						},
 					},
 				},

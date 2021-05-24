@@ -29,10 +29,11 @@ type MappingForm int32
 
 const (
 	// The mapping represents the metadata files as is.
-	// In particular, a Dirs entry exists iff the directory defines metadata.
-	// The metadata of the entry does not include inherited metadata.
+	// The metadata messages in Mapping.Dirs does not include inherited or
+	// mixed-in metadata.
 	MappingForm_ORIGINAL MappingForm = 0
-	// Like ORIGINAL, but each entry includes inherited and mixed-in metadata.
+	// Like ORIGINAL, but each Mapping.Dirs entry includes inherited and mixed-in
+	//  metadata.
 	//
 	// To avoid accidental double importing, Metadata.mixins field is cleared
 	// in the COMPUTED form.
@@ -44,13 +45,14 @@ const (
 	//
 	// Typically reading a sparse mapping is much faster.
 	MappingForm_SPARSE MappingForm = 4
-	// Like COMPUTED, but a Dirs entry exists even if the directory does not
-	// define any metadata.
+	// Like COMPUTED, but a Mapping.Dirs entry exists even if the directory does
+	// not define its own, directory-specific metadata.
+	// This is the most verbose/redundant form.
 	MappingForm_FULL MappingForm = 2
-	// The mapping contains no redundant information.
+	// Like ORIGINAL, but all the redundant metadata is removed.
 	// For example, it is redundant to specify the same value for the same
 	// metadata attribute in both "a" and "a/b".
-	// It is also redundant to have an Dirs entry with empty metadata.
+	// It is also redundant to have a Mapping.Dirs entry with empty metadata.
 	// This is the most compact form without a dataloss.
 	MappingForm_REDUCED MappingForm = 3
 )

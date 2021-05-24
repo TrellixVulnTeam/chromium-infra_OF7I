@@ -33,22 +33,21 @@ func cmdRead() *subcommands.Command {
 			must be subdirectories of one of the repos.
 			The root dir of the root repo becomes the metadata root.
 
-			Unless -form is sparse, only visible-to-git files are considered.
-			Specifically, files outside of the repo are not read, as well as files
+			Unless -form is sparse, the output includes metadata of ancestors and
+			descendants of the specified directories.
+			In the sparse form, metadata of only the specified directories is
+			returned, which is usually much faster.
+
+			Descendants of the specified directories are discovered using
+			"git ls-files <dir>" and not FS walk.
+			This means files outside of the repo are ignored, as well as files
 			matched by .gitignore files.
-			The set of considered files is equivalent to "git ls-files <dir>".
-			Note that the directory does not have to be the root of the repo,
-			and multiple directories in the same repo are allowed.
-
-			However, if -form is sparse, then metadata is read
-			only from the specified directories and their ancestors up to the repo
-			root. This is different from other forms:
-			1) much fewer files are read, so it is faster.
-			2) git-ignored files *are* read.
-
-			The latter should not make a difference in the vast majority of cases
-			because it is confusing to have git-ignored DIR_METADATA in the middle of
-			the ancestry chain. Such a case might indicate that DIR_METADATA files are used incorrectly.
+			Note that when reading ancestors of the specified directories,
+			the .gitignore files are not respected.
+			This inconsistency should not make a difference in
+			the vast majority of cases because it is confusing to have
+			git-ignored DIR_METADATA in the middle of the ancestry chain.
+			Such a case might indicate that DIR_METADATA files are used incorrectly.
 			This behavior can be changed, but it would come with a performance penalty.
 
 			The output format is JSON form of chrome.dir_metadata.Mapping protobuf message.
@@ -60,6 +59,7 @@ func cmdRead() *subcommands.Command {
 				The form of the returned mapping.
 				Valid values: "original", "reduced", "computed", "sparse", "full".
 				See chrome.dir_meta enum MappingForm for their descriptions.
+				https://source.chromium.org/chromium/infra/infra/+/main:go/src/infra/tools/dirmd/proto/mapping.proto;l=51?q=mappingform
 			`))
 			return r
 		},
