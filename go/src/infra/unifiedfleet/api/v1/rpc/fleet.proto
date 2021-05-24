@@ -414,6 +414,9 @@ service Fleet {
 
   // Delete delete the SchedulingUnit.
   rpc DeleteSchedulingUnit(DeleteSchedulingUnitRequest) returns (google.protobuf.Empty);
+
+  // UpdateConfigBundle updates the ConfigBundle
+  rpc UpdateConfigBundle(UpdateConfigBundleRequest) returns (UpdateConfigBundleResponse);
 }
 
 message UpdateMachineLSEDeploymentRequest {
@@ -2195,4 +2198,31 @@ message DeleteSchedulingUnitRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/SchedulingUnit" }
   ];
+}
+
+message UpdateConfigBundleRequest {
+  // The ConfigBundle to update.
+  // The ConfigBundle's ID composed of `${program}-${design}-${designconfig}` is
+  // used to identify the ConfigBundle to be updated.
+  // Pattern is 'config_bundles/{config_bundle}'
+  // Proto path:
+  // go.chromium.org/chromiumos/config/proto/chromiumos/config/payload/config_bundle.proto
+  bytes config_bundle = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // OPTIONAL: The list of fields to be updated. If omitted, the whole
+  // config_bundle will be updated.
+  google.protobuf.FieldMask update_mask = 2;
+
+  // If set to true, and the ConfigBundle is not found, a new ConfigBundle will
+  // be created. In this situation, `update_mask` is ignored.
+  bool allow_missing = 3;
+}
+
+message UpdateConfigBundleResponse {
+  // Return value of UpdateConfigBundle.
+  // NOTE: bytes is returned to avoid import errors for protos in
+  // go.chromium.org. This should ideally be the ConfigBundle proto.
+  // Proto path:
+  // go.chromium.org/chromiumos/config/proto/chromiumos/config/payload/config_bundle.proto
+  bytes config_bundle = 1;
 }

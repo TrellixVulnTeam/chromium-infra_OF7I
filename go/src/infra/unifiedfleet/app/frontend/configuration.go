@@ -634,3 +634,11 @@ func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *ufsAPI.Import
 	}
 	return successStatus.Proto(), nil
 }
+
+// UpdateConfigBundle creates or updates the ConfigBundle from datastore.
+func (fs *FleetServerImpl) UpdateConfigBundle(ctx context.Context, req *ufsAPI.UpdateConfigBundleRequest) (rsp *ufsAPI.UpdateConfigBundleResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, nil
+}

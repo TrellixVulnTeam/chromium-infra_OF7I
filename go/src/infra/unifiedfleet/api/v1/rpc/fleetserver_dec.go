@@ -2186,3 +2186,20 @@ func (s *DecoratedFleet) DeleteSchedulingUnit(ctx context.Context, req *DeleteSc
 	}
 	return
 }
+
+func (s *DecoratedFleet) UpdateConfigBundle(ctx context.Context, req *UpdateConfigBundleRequest) (rsp *UpdateConfigBundleResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateConfigBundle", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateConfigBundle(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateConfigBundle", rsp, err)
+	}
+	return
+}
