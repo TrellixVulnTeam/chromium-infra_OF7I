@@ -22,6 +22,7 @@ from features import features_constants
 from framework import exceptions
 from framework import validate
 from project import project_constants
+from tracker import tracker_constants
 from proto import tracker_pb2
 
 # Constants that hold regex patterns for resource names.
@@ -78,8 +79,8 @@ STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 COMPONENT_DEF_RE = re.compile(
-    r'%s\/componentDefs\/((?P<component_id>\d+)|(?P<path>[a-zA-Z>]+))' %
-    (PROJECT_NAME_PATTERN))
+    r'%s\/componentDefs\/((?P<component_id>\d+)|(?P<path>%s))$' %
+    (PROJECT_NAME_PATTERN, tracker_constants.COMPONENT_PATH_PATTERN))
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_id}'
 APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_id}'
 

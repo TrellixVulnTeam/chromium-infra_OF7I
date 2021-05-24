@@ -65,9 +65,18 @@ JUMP_RE = re.compile(r'^\d+$')
 # Used when parsing the contents of the issue search field.
 TERM_RE = re.compile(r'[-a-zA-Z0-9._]+')
 
+# Pattern used to validate component leaf names, the parts of
+# a component path between the ">" symbols.
+COMPONENT_LEAF_PATTERN = '[a-zA-Z]([-_]?[a-zA-Z0-9])+'
+
 # Regular expression used to validate new component leaf names.
 # This should never match any string with a ">" in it.
-COMPONENT_NAME_RE = re.compile(r'^[a-zA-Z]([-_]?[a-zA-Z0-9])+$')
+COMPONENT_NAME_RE = re.compile(r'^%s$' % (COMPONENT_LEAF_PATTERN))
+
+# Pattern for matching a full component name, not just a single leaf.
+# Allows any number of repeating valid leaf names separated by ">" characters.
+COMPONENT_PATH_PATTERN = '%s(\>%s)*' % (
+    COMPONENT_LEAF_PATTERN, COMPONENT_LEAF_PATTERN)
 
 # Regular expression used to validate new field names.
 FIELD_NAME_RE = re.compile(r'^[a-zA-Z]([-_]?[a-zA-Z0-9])*$')

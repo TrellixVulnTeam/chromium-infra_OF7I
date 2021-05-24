@@ -76,7 +76,7 @@ class ResourceNameConverterTest(unittest.TestCase):
     self.component_def_1_id = self.services.config.CreateComponentDef(
         self.cnxn, self.project_1.project_id, self.component_def_1_path, '',
         False, [], [], None, 111, [])
-    self.component_def_2_path = 'Foo>Bar'
+    self.component_def_2_path = 'Foo>Bar>Hey123_I-am-valid'
     self.component_def_2_id = self.services.config.CreateComponentDef(
         self.cnxn, self.project_1.project_id, self.component_def_2_path, '',
         False, [], [], None, 111, [])
@@ -627,7 +627,7 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testIngestComponentDefNames(self):
     names = [
         'projects/proj/componentDefs/%d' % self.component_def_1_id,
-        'projects/proj/componentDefs/%s' % self.component_def_2_path.lower()
+        'projects/proj/componentDefs/%s' % self.component_def_2_path
     ]
     actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
     self.assertEqual(actual, [
@@ -660,7 +660,21 @@ class ResourceNameConverterTest(unittest.TestCase):
 
   def testIngestComponentDefNames_InvalidNames(self):
     with self.assertRaises(exceptions.InputException):
-      rnc.IngestHotlistName('projects/proj/componentDefs/not.path.or.id')
+      rnc.IngestComponentDefNames(
+          self.cnxn, ['projects/proj/componentDefs/not.path.or.id'],
+          self.services)
+
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestComponentDefNames(
+          self.cnxn, ['projects/proj/componentDefs/Foo>'], self.services)
+
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestComponentDefNames(
+          self.cnxn, ['projects/proj/componentDefs/>Bar'], self.services)
+
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestComponentDefNames(
+          self.cnxn, ['projects/proj/componentDefs/Foo>123Bar'], self.services)
 
   def testIngestComponentDefNames_CrossProject(self):
     names = [
