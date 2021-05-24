@@ -6,6 +6,7 @@ package cmds
 
 import (
 	"fmt"
+	"os"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/maruel/subcommands"
@@ -21,6 +22,9 @@ import (
 // time it takes queries to run.
 const maxSwarmingResults = 10
 
+// environment variable to use for bigquer project
+const crosgrepBqProjectEnvvar = "CROSGREP_BQ_PROJECT"
+
 // ListAllTasks is a command that lists some swarming tasks in an
 // arbitrary way.
 var ListAllTasks = &subcommands.Command{
@@ -29,7 +33,7 @@ var ListAllTasks = &subcommands.Command{
 	LongDesc:  "List all the swarming tasks.",
 	CommandRun: func() subcommands.CommandRun {
 		c := &listAllTasksCmd{}
-		c.Flags.StringVar(&c.bqProject, "bq-project", "", "BigQuery Project for use in queries")
+		c.Flags.StringVar(&c.bqProject, "bq-project", "", "BigQuery Project for use in queries, falls back to CROSGREP_BQ_PROJECT envvar")
 		c.logLevel = logging.Info
 		c.Flags.Var(&c.logLevel, "log-level", text.Doc(`
 		Log level, valid options are "debug", "info", "warning", "error". Default is "info".
@@ -44,6 +48,15 @@ type listAllTasksCmd struct {
 	bqProject string
 }
 
+// getBqProject returns the cloud project for bigquery explicitly specified on the command line
+// or taken from the CROSGREP_BQ_PROJECT environment variable if no flag is provided.
+func (c *listAllTasksCmd) getBqProject() string {
+	if c.bqProject == "" {
+		return os.Getenv(crosgrepBqProjectEnvvar)
+	}
+	return c.bqProject
+}
+
 func (c *listAllTasksCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
@@ -55,7 +68,7 @@ func (c *listAllTasksCmd) Run(a subcommands.Application, args []string, env subc
 func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	logging.SetLevel(ctx, c.logLevel)
-	client, err := bigquery.NewClient(ctx, c.bqProject)
+	client, err := bigquery.NewClient(ctx, c.getBqProject())
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
