@@ -27,7 +27,6 @@ func newApplication() *cli.Application {
 		Name:  "crosgrep",
 		Title: "The crosgrep client application",
 		Context: func(ctx context.Context) context.Context {
-			// return ctx
 			return gologger.StdConfig.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
