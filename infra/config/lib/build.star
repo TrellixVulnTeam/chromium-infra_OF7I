@@ -54,9 +54,7 @@ def presubmit(
         properties = props,
         service_account = infra.SERVICE_ACCOUNT_TRY,
         dimensions = {
-            # TODO(tandrii): switch entirely to 18.04 once pool has enough of
-            # them.
-            "os": os or "Ubuntu-16.04|Ubuntu-18.04",
+            "os": os or "Ubuntu-18.04",
             "cpu": "x86-64",
             "pool": "luci.flex.try",
         },
