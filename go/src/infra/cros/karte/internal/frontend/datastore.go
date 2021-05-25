@@ -6,30 +6,153 @@ package frontend
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	kartepb "infra/cros/karte/api"
 
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
-// GetActionEntities reads off all action entities from datastore.
-// A limit of zero means that no limit is applied.
-func GetActionEntities(ctx context.Context, limit int32) ([]*ActionEntity, error) {
-	if limit < 0 {
-		return nil, fmt.Errorf("limit cannot be negative: %d", limit)
+// ActionKind is the kind of an action
+const ActionKind = "ActionKind"
+
+// ObservationKind is the kind of an observation.
+const ObservationKind = "ObservationKind"
+
+// ActionEntity is the datastore entitiy for actions.
+type ActionEntity struct {
+	_kind string `gae:"$kind,ActionKind"`
+	ID    string `gae:"$id"`
+}
+
+// ConvertToAction converts a datastore action entity to an action proto.
+func (e *ActionEntity) ConvertToAction() *kartepb.Action {
+	return &kartepb.Action{
+		Name: e.ID,
 	}
-	query := datastore.NewQuery(ActionKind).Limit(limit)
-	if query == nil {
-		return nil, errors.New("failed to construct query")
+}
+
+// ObservationEntity is the datastore entity for observations.
+type ObservationEntity struct {
+	_kind string `gae:"$kind,ObservationKind"`
+	ID    string `gae:"$id"`
+}
+
+// ConvertToObservation converts a datastore observation entity to an observation proto.
+func (e *ObservationEntity) ConvertToObservation() *kartepb.Observation {
+	return &kartepb.Observation{}
+}
+
+// ActionEntitiesQuery is a wrapped query of action entities bearing a page token.
+type ActionEntitiesQuery struct {
+	// Token is the pagination token used by datastore.
+	Token string
+	// Query is a wrapped datastore query.
+	Query *datastore.Query
+}
+
+// Next takes a batch size and returns the next batch of action entities from a query.
+func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*ActionEntity, error) {
+	var nextToken string
+	// A rootedQuery is rooted at the position implied by the pagination token.
+	rootedQuery := q.Query
+	if q.Token != "" {
+		cursor, err := datastore.DecodeCursor(ctx, q.Token)
+		if err != nil {
+			return nil, err
+		}
+		rootedQuery = q.Query.Start(cursor)
 	}
+	rootedQuery = rootedQuery.Limit(batchSize)
 	var entities []*ActionEntity
-	if err := datastore.GetAll(ctx, query, &entities); err != nil {
+	err := datastore.Run(ctx, rootedQuery, func(ent *ActionEntity, cb datastore.CursorCB) error {
+		entities = append(entities, ent)
+		// This inequality is weak because this block must run on the last iteration
+		// when the query is successful.
+		// If the query stops early, we can assume that we have reached the end of the result set
+		// and therefore the response token should be empty.
+		if len(entities) >= int(batchSize) {
+			tok, err := cb()
+			if err != nil {
+				return err
+			}
+			nextToken = tok.String()
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
+	q.Token = nextToken
 	return entities, nil
+}
+
+// MakeAllActionEntitiesQuery makes an action entities query that starts at the position
+// implied by the given token and lists all action entities.
+func MakeAllActionEntitiesQuery(token string) *ActionEntitiesQuery {
+	return &ActionEntitiesQuery{
+		Token: token,
+		Query: datastore.NewQuery(ActionKind),
+	}
+}
+
+// ObservationEntitiesQuery is a wrapped query of action entities bearing a page token.
+type ObservationEntitiesQuery struct {
+	// Token is the pagination token used by datastore.
+	Token string
+	// Query is a wrapped datastore query.
+	Query *datastore.Query
+}
+
+// Next takes a batch size and returns the next batch of observation entities from a query.
+func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*ObservationEntity, error) {
+	var nextToken string
+	// A rootedQuery is rooted at the position implied by the pagination token.
+	rootedQuery := q.Query
+	if q.Token != "" {
+		cursor, err := datastore.DecodeCursor(ctx, q.Token)
+		if err != nil {
+			return nil, err
+		}
+		rootedQuery = q.Query.Start(cursor)
+	}
+	rootedQuery = rootedQuery.Limit(batchSize)
+	var entities []*ObservationEntity
+	err := datastore.Run(ctx, rootedQuery, func(ent *ObservationEntity, cb datastore.CursorCB) error {
+		entities = append(entities, ent)
+		// This inequality is weak because this block must run on the last iteration
+		// when the query is successful.
+		// If the query stops early, we can assume that we have reached the end of the result set
+		// and therefore the response token should be empty.
+		if len(entities) >= int(batchSize) {
+			tok, err := cb()
+			if err != nil {
+				return err
+			}
+			nextToken = tok.String()
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	q.Token = nextToken
+	return entities, nil
+}
+
+// MakeAllObservationEntitiesQuery makes an action entities query that starts at the position
+// implied by the page token and lists all action entities.
+func MakeAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
+	return &ObservationEntitiesQuery{
+		Token: token,
+		Query: datastore.NewQuery(ObservationKind),
+	}
 }
 
 // PutActionEntities writes action entities to datastore.
 func PutActionEntities(ctx context.Context, entities ...*ActionEntity) error {
+	return datastore.Put(ctx, entities)
+}
+
+// PutObservationEntities writes multiple observation entites to datastore.
+func PutObservationEntities(ctx context.Context, entities ...*ObservationEntity) error {
 	return datastore.Put(ctx, entities)
 }

@@ -8,8 +8,6 @@ import (
 	"context"
 
 	"go.chromium.org/luci/grpc/prpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
 )
@@ -25,12 +23,36 @@ func NewKarteFrontend() kartepb.KarteServer {
 
 // ListActions lists the actions that Karte knows about.
 func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListActionsRequest) (*kartepb.ListActionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "ListActions not implemented")
+	q := MakeAllActionEntitiesQuery(req.GetPageToken())
+	es, err := q.Next(ctx, req.GetPageSize())
+	if err != nil {
+		return nil, err
+	}
+	var actions []*kartepb.Action
+	for _, e := range es {
+		actions = append(actions, e.ConvertToAction())
+	}
+	return &kartepb.ListActionsResponse{
+		Actions:       actions,
+		NextPageToken: q.Token,
+	}, nil
 }
 
 // ListObservations lists the observations that Karte knows about.
-func (k *karteFrontend) ListObservations(context.Context, *kartepb.ListObservationsRequest) (*kartepb.ListObservationsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "ListObservations not implemented")
+func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListObservationsRequest) (*kartepb.ListObservationsResponse, error) {
+	q := MakeAllObservationEntitiesQuery(req.GetPageToken())
+	es, err := q.Next(ctx, req.GetPageSize())
+	if err != nil {
+		return nil, err
+	}
+	var observations []*kartepb.Observation
+	for _, e := range es {
+		observations = append(observations, e.ConvertToObservation())
+	}
+	return &kartepb.ListObservationsResponse{
+		Observations:  observations,
+		NextPageToken: q.Token,
+	}, nil
 }
 
 // InstallServices takes a Karte frontend and exposes it to a LUCI prpc.Server.

@@ -20,11 +20,11 @@ func TestListActions(t *testing.T) {
 	datastore.GetTestable(ctx).Consistent(true)
 	k := NewKarteFrontend()
 	resp, err := k.ListActions(ctx, &kartepb.ListActionsRequest{})
-	if resp != nil {
-		t.Errorf("expected resp to be nil")
+	if resp == nil {
+		t.Errorf("expected resp to not be nil")
 	}
-	if err == nil {
-		t.Errorf("expected error to not be nil")
+	if err != nil {
+		t.Errorf("expected error to be nil not %s", err)
 	}
 }
 
@@ -35,10 +35,10 @@ func TestListObservations(t *testing.T) {
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
 	resp, err := k.ListObservations(ctx, &kartepb.ListObservationsRequest{})
-	if resp != nil {
-		t.Errorf("expected resp to be nil")
+	if resp == nil {
+		t.Errorf("expected resp to not be nil")
 	}
-	if err == nil {
-		t.Errorf("expected error to not be nil")
+	if err != nil {
+		t.Errorf("expected error to be nil not %s", err)
 	}
 }
