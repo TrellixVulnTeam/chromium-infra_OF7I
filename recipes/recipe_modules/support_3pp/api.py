@@ -356,11 +356,11 @@ def _flatten_spec_pb_for_platform(orig_spec, platform):
     # through JSONPB. It's a bit dirty, but it works.
     dictified = jsonpb.MessageToDict(
       create_msg, preserving_proto_field_name=True)
-    for k, v in dictified.iteritems():
+    for k, v in dictified.items():
       if isinstance(v, dict):
         resolved_create.setdefault(k, {}).update(v)
         to_clear = set()
-        for sub_k, sub_v in resolved_create[k].iteritems():
+        for sub_k, sub_v in resolved_create[k].items():
           if isinstance(sub_v, list) and not any(val for val in sub_v):
             to_clear.add(sub_k)
         for sub_k in to_clear:
@@ -697,7 +697,7 @@ class Support3ppApi(recipe_api.RecipeApi):
     unsupported = set()
 
     explicit_build_plan = []
-    packages = packages or self._loaded_specs.keys()
+    packages = packages or list(self._loaded_specs.keys())
     platform = platform or platform_for_host(self.m)
     for pkg in packages:
       cipd_pkg_name, version = parse_name_version(pkg)

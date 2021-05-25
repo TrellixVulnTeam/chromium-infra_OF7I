@@ -13,21 +13,24 @@ def _extract_contextual_dockerbuild_env_args(api):
   # We don't want to pass the CIPD_CACHE_DIR through to dockerbuild, since it
   # refers to a path on the host machine.
   banlist = set(('CIPD_CACHE_DIR',))
+  # yapf: disable
   return [
     ('--env-prefix', k, str(v))
-    for k, vs in api.context.env_prefixes.iteritems()
+    for k, vs in api.context.env_prefixes.items()
     for v in vs
     if k not in banlist
   ] + [
     ('--env-suffix', k, str(v))
-    for k, vs in api.context.env_suffixes.iteritems()
+    for k, vs in api.context.env_suffixes.items()
     for v in vs
     if k not in banlist
   ] + [
     ('--env', k, str(v))
-    for k, v in api.context.env.iteritems()
+    for k, v in api.context.env.items()
     if k not in banlist
   ]
+  # yapf: enable
+
 
 # Dockerbuild uses different names than the CIPD platform names. This maps from
 # the CIPD platform name to the dockerbuild name.
@@ -80,7 +83,7 @@ def run_script(api, *args, **kwargs):
         'workdir argument required if compile_platform is specified')
 
   script_name = args[0].pieces[-1]
-  step_name = str(' '.join([script_name]+map(str, args[1:])))
+  step_name = str(' '.join([script_name] + list(map(str, args[1:]))))
 
   interpreter = {
     'py': 'python',

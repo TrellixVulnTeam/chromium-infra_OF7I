@@ -250,11 +250,11 @@ Returns:
 
 [DEPS](/recipes/recipe_modules/docker/__init__.py#5): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-#### **class [DockerApi](/recipes/recipe_modules/docker/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [DockerApi](/recipes/recipe_modules/docker/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 Provides steps to connect and run Docker images.
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/docker/api.py#156)(self, \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/docker/api.py#158)(self, \*args, \*\*kwargs):**
 
 Executes specified docker command.
 
@@ -266,17 +266,17 @@ Args:
       e.g. api.docker('push', 'my_image:latest').
   kwargs: arguments passed down to api.step module.
 
-&mdash; **def [ensure\_installed](/recipes/recipe_modules/docker/api.py#17)(self, \*\*kwargs):**
+&mdash; **def [ensure\_installed](/recipes/recipe_modules/docker/api.py#19)(self, \*\*kwargs):**
 
 Checks that the docker binary is in the PATH.
 
 Raises StepFailure if binary is not found.
 
-&mdash; **def [get\_version](/recipes/recipe_modules/docker/api.py#29)(self):**
+&mdash; **def [get\_version](/recipes/recipe_modules/docker/api.py#31)(self):**
 
 Returns Docker version installed or None if failed to detect.
 
-&mdash; **def [login](/recipes/recipe_modules/docker/api.py#46)(self, server='gcr.io', project='chromium-container-registry', service_account=None, step_name=None, \*\*kwargs):**
+&mdash; **def [login](/recipes/recipe_modules/docker/api.py#48)(self, server='gcr.io', project='chromium-container-registry', service_account=None, step_name=None, \*\*kwargs):**
 
 Connect to a Docker registry.
 
@@ -291,7 +291,7 @@ Args:
       associated service account.
   step_name: Override step name. Default is 'docker login'.
 
-&mdash; **def [pull](/recipes/recipe_modules/docker/api.py#88)(self, image, step_name=None):**
+&mdash; **def [pull](/recipes/recipe_modules/docker/api.py#90)(self, image, step_name=None):**
 
 Pull a docker image from a remote repository.
 
@@ -299,7 +299,7 @@ Args:
   image: Name of the image to pull.
   step_name: Override step name. Default is 'docker pull'.
 
-&mdash; **def [run](/recipes/recipe_modules/docker/api.py#104)(self, image, step_name=None, cmd_args=None, dir_mapping=None, env=None, inherit_luci_context=False, \*\*kwargs):**
+&mdash; **def [run](/recipes/recipe_modules/docker/api.py#106)(self, image, step_name=None, cmd_args=None, dir_mapping=None, env=None, inherit_luci_context=False, \*\*kwargs):**
 
 Run a command in a Docker image as the current user:group.
 

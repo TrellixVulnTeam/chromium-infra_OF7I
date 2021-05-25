@@ -87,7 +87,7 @@ def RunSteps(api, properties):
   # Wait until all builds complete.
   built = []
   fails = []
-  for fut in api.futures.iwait(futures.keys()):
+  for fut in api.futures.iwait(list(futures.keys())):
     try:
       img = fut.result()
       if img != api.cloudbuildhelper.NotUploadedImage:

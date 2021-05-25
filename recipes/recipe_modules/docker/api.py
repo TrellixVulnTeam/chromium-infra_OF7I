@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from future.utils import iteritems
+
 from recipe_engine import recipe_api
 
 
@@ -137,7 +139,7 @@ class DockerApi(recipe_api.RecipeApi):
       for host_dir, docker_dir in dir_mapping:
         args.extend(['--dir-map', host_dir, docker_dir])
 
-    for k, v in sorted((env or {}).iteritems()):
+    for k, v in iteritems(env or {}):
       args.extend(['--env', '%s=%s' % (k, v)])
 
     if inherit_luci_context:

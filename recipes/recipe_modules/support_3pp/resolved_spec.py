@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from past.builtins import cmp as past_cmp
 import re
 
 
@@ -310,4 +311,4 @@ class ResolvedSpec(object):
       return 1
 
     # Otherwise sort by #deps and package name.
-    return cmp(self._sort_tuple, other._sort_tuple)
+    return past_cmp(self._sort_tuple, other._sort_tuple)

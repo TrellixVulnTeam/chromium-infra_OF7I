@@ -37,7 +37,7 @@ def SanitizeDeps(submods, path_prefix, disable_path_prefix=False):
   won't check or strip submodule prefix.
   """
   ret = {}
-  for name, value in submods.iteritems():
+  for name, value in submods.items():
     # Strip trailing slashes, which git update-index can't handle.
     name = name.rstrip('/')
 
@@ -114,7 +114,7 @@ def WriteGitmodules(submods):
   """
   adds = collections.OrderedDict()
   with open('.gitmodules', 'w') as fh:
-    for name, value in sorted(submods.iteritems()):
+    for name, value in sorted(submods.items()):
       url = value['url']
       sha1 = value['rev']
 
@@ -198,7 +198,7 @@ def main():
 
   adds = WriteGitmodules(deps)
   RemoveObsoleteSubmodules()
-  for submod_path, submod_sha1 in adds.iteritems():
+  for submod_path, submod_sha1 in adds.items():
     subprocess.check_call([
         'git', 'update-index', '--add', '--cacheinfo', '160000', submod_sha1,
         submod_path

@@ -170,7 +170,7 @@ def RefToRemoteRef(ref):
 def GetSubmodules(api, deps, source_checkout_name, overlays):
   gitmodules_entries = []
   update_index_entries = []
-  for path, entry in deps.iteritems():
+  for path, entry in deps.items():
     url = entry['url']
     rev = entry['rev']
     if rev is None:
@@ -182,7 +182,7 @@ def GetSubmodules(api, deps, source_checkout_name, overlays):
     # Filter out deps that are nested within other deps. Submodules can't
     # represent this.
     if any(path != other_path and path.startswith(other_path + '/')
-           for other_path in deps.iterkeys()):
+           for other_path in deps.keys()):
       continue
 
     # Filter out any DEPS that point outside of the repo, as there's no way to

@@ -147,7 +147,7 @@ def resolve_latest(api, spec):
   # TODO(akashmukherjee): Get/compute hash for script method.
   elif method_name == 'script':
     script = spec.pkg_dir.join(source_method_pb.name[0])
-    args = map(str, source_method_pb.name[1:]) + ['latest']
+    args = list(map(str, source_method_pb.name[1:])) + ['latest']
     version = run_script(api,
       script, *args,
       stdout=api.raw_io.output(),
@@ -282,7 +282,7 @@ def fetch_source(api,
     }
     # Sort to make sure the packages are in order, otherwise it will produce
     # inconsistent recipe train result.
-    for pkg in sorted(unique_pkgs.itervalues()):
+    for pkg in sorted(unique_pkgs.values()):
       api.file.copytree(
         'copy package definition %s' % pkg.cipd_pkg_name,
         pkg.pkg_dir,
@@ -355,11 +355,11 @@ def _generate_download_manifest(api, spec, checkout_dir,
     script = spec.pkg_dir.join(source_method_pb.name[0])
     if source_method_pb.use_fetch_checkout_workflow:
       # version is already in env as $_3PP_VERSION
-      script_args = map(str, source_method_pb.name[1:]) + ['checkout']
+      script_args = list(map(str, source_method_pb.name[1:])) + ['checkout']
       return Manifest('script', script, checkout_dir, protocol_args=script_args)
     else:
       # version is already in env as $_3PP_VERSION
-      args = map(str, source_method_pb.name[1:]) + ['get_url']
+      args = list(map(str, source_method_pb.name[1:])) + ['get_url']
       result = run_script(
           api,
           script,

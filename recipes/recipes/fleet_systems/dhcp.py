@@ -151,7 +151,7 @@ def RunSteps(api):
 
   _PullDockerImages(api, set(host_os_map.values()))
 
-  for zone, hosts in zone_host_map.iteritems():
+  for zone, hosts in zone_host_map.items():
     # Get list of os versions in this zone, skipping hosts not in UFS output.
     os_versions_by_zone[zone] = set(
         [host_os_map[host] for host in hosts if host in host_os_map])

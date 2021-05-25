@@ -106,7 +106,7 @@ def RunSteps(api):
 
       api.buildbucket.set_buildbucket_host('%s.appspot.com' % bb_server)
       builds = []
-      for mt, (bot, pool) in bots.iteritems():
+      for mt, (bot, pool) in bots.items():
         builds.append({
             'bucket': 'luci.chromium.cron',
             'parameters': {

@@ -98,7 +98,7 @@ def get_commit_message(roll_result):
     message += NON_TRIVIAL_MESSAGE
 
   blame = []
-  for project, commits in commit_infos.iteritems():
+  for project, commits in commit_infos.items():
     blame.append('')
     blame.append('%s:' % project)
     remote = deps[project]['url']
@@ -363,7 +363,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       pass
 
     cc_list = set()
-    for dep, commits in picked_details['commit_infos'].iteritems():
+    for dep, commits in picked_details['commit_infos'].items():
       if dep_specs:
         dep_spec = dep_specs.repo_specs[dep]
         if dep_spec.autoroll_recipe_options.no_cc_authors:
