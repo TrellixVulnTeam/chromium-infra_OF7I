@@ -58,14 +58,8 @@ try_builder(
 )
 
 try_builder(
-    name = "luci-py-try-xenial-64",
-    os = "Ubuntu-16.04",
-)
-
-try_builder(
     name = "luci-py-try-bionic-64",
     os = "Ubuntu-18.04",
-    experiment_percentage = 100,
 )
 
 try_builder(

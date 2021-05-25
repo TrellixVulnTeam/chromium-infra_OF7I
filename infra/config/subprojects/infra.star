@@ -70,6 +70,7 @@ def try_builder(
 # the fact that we have only go1.15 OSX amd64 binaries.
 
 # CI Linux.
+# TODO(crbug/1213119): upgrade ARM bot & builder to 18.04.
 ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", console_category = "linux|16.04|ARM", properties = {
     "go_version_variant": "bleeding_edge",
 })
@@ -106,6 +107,7 @@ ci_builder(
 )
 
 # Builds arm64-flavored docker images for swarm_docker.
+# TODO(crbug/1213119): upgrade ARM bot & builder to 18.04.
 ci_builder(
     name = "swarm-docker-arm64-image-builder",
     os = "Ubuntu-16.04",
@@ -127,6 +129,7 @@ try_builder(name = "infra-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "go_version_variant": "bleeding_edge",
 })
 try_builder(
+    # TODO(crbug/1213119): upgrade ARM bot & builder to 18.04.
     name = "infra-try-xenial-arm64",
     os = "Ubuntu-16.04",
     cpu = "arm64",
