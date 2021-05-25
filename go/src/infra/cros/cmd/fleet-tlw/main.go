@@ -43,7 +43,7 @@ func innerMain() error {
 		return err
 	}
 
-	b := fleetTLWBuilder{proxySSHSigner: proxySSHSigner, serviceAcctJSON: *svcAcctJSONPath}
+	b := fleetTLWBuilder{ufsService: *ufsService, proxySSHSigner: proxySSHSigner, serviceAcctJSON: *svcAcctJSONPath}
 	tlw, err := b.build()
 	if err != nil {
 		return err

@@ -61,12 +61,13 @@ type wiringBuilder interface {
 }
 
 type fleetTLWBuilder struct {
+	ufsService      string
 	proxySSHSigner  ssh.Signer
 	serviceAcctJSON string
 }
 
 func (b fleetTLWBuilder) build() (wiringServer, error) {
-	return newTLWServer(b.proxySSHSigner, b.serviceAcctJSON)
+	return newTLWServer(b.ufsService, b.proxySSHSigner, b.serviceAcctJSON)
 }
 
 type sessionServer struct {
