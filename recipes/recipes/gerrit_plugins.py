@@ -23,7 +23,9 @@ def RunSteps(api):
   project_name = cl.project
   assert project_name.startswith('infra/gerrit-plugins/'), (
       'unknown project: "%s"' % project_name)
-  api.gclient.set_config('gerrit_plugins')
+  plugin = project_name[len('infra/gerrit-plugins/'):]
+  test_name = 'gerrit_plugins_%s' % plugin.replace('-', '_')
+  api.gclient.set_config(test_name)
   api.bot_update.ensure_checkout(patch_root=project_name)
 
   # Get node from CIPD.
@@ -53,12 +55,26 @@ def RunSteps(api):
       'PATH': api.path.pathsep.join([str(node_path), '%(PATH)s'])
   }
 
-  with api.context(env=env, cwd=api.path['start_dir'].join('gerrit_plugins')):
+  with api.context(env=env, cwd=api.path['start_dir'].join(test_name)):
     # TODO(gavinmak) Support typescript plugins and tests.
     api.step('npm install', ['npm', 'install'])
     api.step('run wct tests', ['npx', 'wct', '--expanded'])
 
 
 def GenTests(api):
-  yield (api.test('linux') + api.platform.name('linux') +
-         api.buildbucket.try_build(project='infra/gerrit-plugins/tricium'))
+  for plugin in (
+      'binary-size',
+      'buildbucket',
+      'chromium-behavior',
+      'chromium-binary-size',
+      'chromium-style',
+      'chumpdetector',
+      'code-coverage',
+      'git-numberer',
+      'landingwidget',
+      'tricium'):
+    yield (
+      api.test(plugin) +
+      api.platform.name('linux') +
+      api.buildbucket.try_build(project='infra/gerrit-plugins/%s' % plugin)
+    )
