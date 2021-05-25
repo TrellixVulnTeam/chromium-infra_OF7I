@@ -200,20 +200,6 @@ adhoc_builder(
     schedule = "with 10m interval",
 )
 
-adhoc_builder(
-    name = "crbug-1211469",
-    os = "Ubuntu",
-    executable = infra.recipe("gerrit_hello_world"),
-    triggered_by = [luci.gitiles_poller(
-        name = "gitiles-path-regexp",
-        bucket = "ci",
-        repo = infra.REPO_URL,
-        refs = ["refs/heads/.+"],
-        path_regexps = ["python_pb2/.+", "infra/config/.+"],
-        path_regexps_exclude = ["infra/config/recipes.cfg"],
-    )],
-)
-
 luci.notifier(
     name = "nodir-spam",
     on_success = True,
