@@ -18,10 +18,6 @@ import (
 	"infra/cros/cmd/crosgrep/internal/swarming"
 )
 
-// maxSwarmingResults set to 10 temporarily to limit the amount of
-// time it takes queries to run.
-const maxSwarmingResults = 10
-
 // environment variable to use for bigquer project
 const crosgrepBqProjectEnvvar = "CROSGREP_BQ_PROJECT"
 
@@ -72,7 +68,7 @@ func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
-	vals, err := swarming.ExtractNValues(ctx, client, maxSwarmingResults)
+	vals, err := swarming.ExtractValues(ctx, client)
 	if err != nil {
 		return errors.Annotate(err, "extracting values from query").Err()
 	}
