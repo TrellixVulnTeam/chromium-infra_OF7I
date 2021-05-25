@@ -26,8 +26,8 @@ type updateInventoryOpt struct {
 func (updateInventoryOpt) option() {}
 
 func (o updateInventoryOpt) configureDutHarness(dh *DUTHarness) {
-	dh.labelUpdater.taskName = o.name
-	dh.labelUpdater.updateLabels = true
+	dh.labelUpdater.TaskName = o.name
+	dh.labelUpdater.UpdateLabels = true
 }
 
 // UpdateInventory returns an updateInventoryOpt that enables
