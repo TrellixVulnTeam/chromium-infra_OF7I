@@ -14,43 +14,43 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 )
 
-// Borrower represents borrowing BotInfo into a HostInfo.  It is used
-// for returning any relevant Hostinfo changes back to the BotInfo.
+// Borrower represents borrowing LocalDUTState into a HostInfo.  It is used
+// for returning any relevant Hostinfo changes back to the LocalDUTState.
 type Borrower struct {
-	hostInfo *hostinfo.HostInfo
-	botInfo  *swmbot.LocalState
+	hostInfo      *hostinfo.HostInfo
+	localDUTState *swmbot.LocalDUTState
 }
 
-// BorrowBotInfo takes some info stored in the BotInfo and adds it to
-// the HostInfo.  The returned Borrower should be closed to return any
-// relevant HostInfo changes back to the BotInfo.
-func BorrowBotInfo(hi *hostinfo.HostInfo, bi *swmbot.LocalState) *Borrower {
-	for label, value := range bi.ProvisionableLabels {
+// BorrowLocalDUTState takes some info stored in the LocalDUTState and adds it to
+// the HostInfo. The returned Borrower should be closed to return any
+// relevant HostInfo changes back to the LocalDUTState.
+func BorrowLocalDUTState(hi *hostinfo.HostInfo, lds *swmbot.LocalDUTState) *Borrower {
+	for label, value := range lds.ProvisionableLabels {
 		hi.Labels = append(hi.Labels, fmt.Sprintf("%s:%s", label, value))
 	}
-	for attribute, value := range bi.ProvisionableAttributes {
+	for attribute, value := range lds.ProvisionableAttributes {
 		hi.Attributes[attribute] = value
 	}
 	return &Borrower{
-		hostInfo: hi,
-		botInfo:  bi,
+		hostInfo:      hi,
+		localDUTState: lds,
 	}
 }
 
-// Close returns any relevant Hostinfo changes back to the BotInfo.
-// Subsequent calls do nothing.  This is safe to call on a nil pointer.
+// Close returns any relevant Hostinfo changes back to the localDUTState.
+// Subsequent calls do nothing. This is safe to call on a nil pointer.
 func (b *Borrower) Close(ctx context.Context) error {
 	if b == nil {
 		return nil
 	}
-	if b.botInfo == nil {
+	if b.localDUTState == nil {
 		return nil
 	}
-	hi, bi := b.hostInfo, b.botInfo
+	hi, lds := b.hostInfo, b.localDUTState
 
 	// copy provisioning labels
 	for labelKey := range provisionableLabelKeys {
-		delete(bi.ProvisionableLabels, labelKey)
+		delete(lds.ProvisionableLabels, labelKey)
 	}
 	for _, label := range hi.Labels {
 		parts := strings.SplitN(label, ":", 2)
@@ -58,20 +58,20 @@ func (b *Borrower) Close(ctx context.Context) error {
 			continue
 		}
 		if _, ok := provisionableLabelKeys[parts[0]]; ok {
-			bi.ProvisionableLabels[parts[0]] = parts[1]
+			lds.ProvisionableLabels[parts[0]] = parts[1]
 		}
 	}
 
 	// copy provisioning attributes
 	for attrKey := range provisionableAttributeKeys {
-		delete(bi.ProvisionableAttributes, attrKey)
+		delete(lds.ProvisionableAttributes, attrKey)
 	}
 	for attribute, value := range hi.Attributes {
 		if _, ok := provisionableAttributeKeys[attribute]; ok {
-			bi.ProvisionableAttributes[attribute] = value
+			lds.ProvisionableAttributes[attribute] = value
 		}
 	}
-	b.botInfo = nil
+	b.localDUTState = nil
 	return nil
 }
 

@@ -196,7 +196,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		if luciferErr != nil {
 			// Attempt to parse results regardless of lucifer errors.
 			luciferErr = errors.Wrap(luciferErr, "run lucifer task")
-			log.Printf("Encountered error on %s. Error: %s", dh.DUTName, luciferErr)
+			log.Printf("Encountered error on %s. Error: %s", dh.DUTHostname, luciferErr)
 			errs = append(errs, luciferErr)
 		}
 	}
@@ -300,7 +300,7 @@ func isRepairTask(a *args) bool {
 func runAdminTask(ctx context.Context, dh *harness.DUTHarness, name string, ta lucifer.TaskArgs) (err error) {
 	r := lucifer.AdminTaskArgs{
 		TaskArgs: ta,
-		Host:     dh.DUTName,
+		Host:     dh.DUTHostname,
 		Task:     name,
 	}
 
@@ -317,7 +317,7 @@ func runAdminTask(ctx context.Context, dh *harness.DUTHarness, name string, ta l
 func runDeployTask(ctx context.Context, dh *harness.DUTHarness, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.DeployTaskArgs{
 		TaskArgs: ta,
-		Host:     dh.DUTName,
+		Host:     dh.DUTHostname,
 		Actions:  actions,
 	}
 
@@ -334,7 +334,7 @@ func runDeployTask(ctx context.Context, dh *harness.DUTHarness, actions string, 
 func runAuditTask(ctx context.Context, dh *harness.DUTHarness, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.AuditTaskArgs{
 		TaskArgs: ta,
-		Host:     dh.DUTName,
+		Host:     dh.DUTHostname,
 		Actions:  actions,
 	}
 

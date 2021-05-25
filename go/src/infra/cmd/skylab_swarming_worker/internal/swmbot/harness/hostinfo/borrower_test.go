@@ -19,7 +19,7 @@ func TestCopyToProvisioningData(t *testing.T) {
 	ctx := context.Background()
 	Convey("Copy values when close", t, func() {
 		Convey("Do not copy if nothing on both sides", func() {
-			bi := &swmbot.LocalState{
+			lds := &swmbot.LocalDUTState{
 				ProvisionableLabels:     make(map[string]string),
 				ProvisionableAttributes: make(map[string]string),
 			}
@@ -28,16 +28,16 @@ func TestCopyToProvisioningData(t *testing.T) {
 					Labels:     []string{},
 					Attributes: make(map[string]string),
 				},
-				botInfo: bi,
+				localDUTState: lds,
 			}
-			So(bi.ProvisionableLabels, ShouldHaveLength, 0)
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 0)
+			So(lds.ProvisionableLabels, ShouldHaveLength, 0)
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 0)
 			b.Close(ctx)
-			So(bi.ProvisionableLabels, ShouldHaveLength, 0)
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 0)
+			So(lds.ProvisionableLabels, ShouldHaveLength, 0)
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 0)
 		})
 		Convey("Set provisioning label and attributes when host-info provide info", func() {
-			bi := &swmbot.LocalState{
+			lds := &swmbot.LocalDUTState{
 				ProvisionableLabels:     make(map[string]string),
 				ProvisionableAttributes: make(map[string]string),
 			}
@@ -48,18 +48,18 @@ func TestCopyToProvisioningData(t *testing.T) {
 						"job_repo_url": "some_package_url",
 					},
 				},
-				botInfo: bi,
+				localDUTState: lds,
 			}
-			So(bi.ProvisionableLabels, ShouldHaveLength, 0)
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 0)
+			So(lds.ProvisionableLabels, ShouldHaveLength, 0)
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 0)
 			b.Close(ctx)
-			So(bi.ProvisionableLabels, ShouldHaveLength, 1)
-			So(bi.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 1)
-			So(bi.ProvisionableAttributes["job_repo_url"], ShouldEqual, "some_package_url")
+			So(lds.ProvisionableLabels, ShouldHaveLength, 1)
+			So(lds.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 1)
+			So(lds.ProvisionableAttributes["job_repo_url"], ShouldEqual, "some_package_url")
 		})
 		Convey("Update provisioning label and attributes when host-info provide info", func() {
-			bi := &swmbot.LocalState{
+			lds := &swmbot.LocalDUTState{
 				ProvisionableLabels: map[string]string{
 					"cros-something": "hello",
 					"cros-version":   "hello",
@@ -76,24 +76,24 @@ func TestCopyToProvisioningData(t *testing.T) {
 						"job_repo_url": "hi2",
 					},
 				},
-				botInfo: bi,
+				localDUTState: lds,
 			}
-			So(bi.ProvisionableLabels, ShouldHaveLength, 2)
-			So(bi.ProvisionableLabels["cros-version"], ShouldEqual, "hello")
-			So(bi.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 2)
-			So(bi.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hello")
+			So(lds.ProvisionableLabels, ShouldHaveLength, 2)
+			So(lds.ProvisionableLabels["cros-version"], ShouldEqual, "hello")
+			So(lds.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 2)
+			So(lds.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hello")
 			b.Close(ctx)
-			So(bi.ProvisionableLabels, ShouldHaveLength, 2)
-			So(bi.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
-			So(bi.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 2)
-			So(bi.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hi2")
+			So(lds.ProvisionableLabels, ShouldHaveLength, 2)
+			So(lds.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
+			So(lds.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 2)
+			So(lds.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hi2")
 		})
 		Convey("Remove provision label and attributes when host-info does not have it in scope of expected labels", func() {
-			bi := &swmbot.LocalState{
+			lds := &swmbot.LocalDUTState{
 				ProvisionableLabels: map[string]string{
 					"cros-version":   "hi",
 					"cros-something": "hello",
@@ -108,19 +108,19 @@ func TestCopyToProvisioningData(t *testing.T) {
 					Labels:     []string{},
 					Attributes: make(map[string]string),
 				},
-				botInfo: bi,
+				localDUTState: lds,
 			}
-			So(bi.ProvisionableLabels, ShouldHaveLength, 2)
-			So(bi.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
-			So(bi.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 2)
-			So(bi.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hello")
+			So(lds.ProvisionableLabels, ShouldHaveLength, 2)
+			So(lds.ProvisionableLabels["cros-version"], ShouldEqual, "hi")
+			So(lds.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 2)
+			So(lds.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes["job_repo_url"], ShouldEqual, "hello")
 			b.Close(ctx)
-			So(bi.ProvisionableLabels, ShouldHaveLength, 1)
-			So(bi.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
-			So(bi.ProvisionableAttributes, ShouldHaveLength, 1)
-			So(bi.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableLabels, ShouldHaveLength, 1)
+			So(lds.ProvisionableLabels["cros-something"], ShouldEqual, "hello")
+			So(lds.ProvisionableAttributes, ShouldHaveLength, 1)
+			So(lds.ProvisionableAttributes["attr-something"], ShouldEqual, "hello")
 		})
 	})
 }

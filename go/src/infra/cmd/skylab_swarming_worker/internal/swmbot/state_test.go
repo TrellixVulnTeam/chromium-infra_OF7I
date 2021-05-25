@@ -12,10 +12,10 @@ import (
 	"infra/cros/dutstate"
 )
 
-// Test that Dumping and Loading a BotInfo struct returns an identical struct.
+// Test that Dumping and Loading a LocalDUTState struct returns an identical struct.
 func TestMarshalAndUnmarshal(t *testing.T) {
 	t.Parallel()
-	bi := LocalState{
+	lds := LocalDUTState{
 		HostState: dutstate.Ready,
 		ProvisionableLabels: ProvisionableLabels{
 			"cros-version":        "lumpy-release/R00-0.0.0.0",
@@ -25,14 +25,14 @@ func TestMarshalAndUnmarshal(t *testing.T) {
 			"job_repo_url": "http://127.0.0.1",
 		},
 	}
-	data, err := Marshal(&bi)
+	data, err := Marshal(&lds)
 	if err != nil {
 		t.Fatalf("Error dumping dimensions: %s", err)
 	}
-	if strings.Contains(string(data), string(bi.HostState)) {
+	if strings.Contains(string(data), string(lds.HostState)) {
 		t.Fatal("Host state serialized. Field should be ignored")
 	}
-	var got LocalState
+	var got LocalDUTState
 	err = Unmarshal(data, &got)
 	if err != nil {
 		t.Fatalf("Error loading test file: %s", err)
@@ -40,29 +40,29 @@ func TestMarshalAndUnmarshal(t *testing.T) {
 	if len(got.HostState) > 0 {
 		t.Errorf("Got state %v, expected  to be empty", got.HostState)
 	}
-	bi.HostState = ""
-	if !reflect.DeepEqual(got, bi) {
-		t.Errorf("Got %v, expected %v", got, bi)
+	lds.HostState = ""
+	if !reflect.DeepEqual(got, lds) {
+		t.Errorf("Got %v, expected %v", got, lds)
 	}
 }
 
 func TestUnmarshalInitializesBotInfo(t *testing.T) {
 	t.Parallel()
-	var bi LocalState
-	data, err := Marshal(&bi)
+	var lds LocalDUTState
+	data, err := Marshal(&lds)
 	if err != nil {
 		t.Fatalf("Error dumping dimensions: %s", err)
 	}
-	err = Unmarshal(data, &bi)
+	err = Unmarshal(data, &lds)
 	if err != nil {
 		t.Fatalf("Error loading test file: %s", err)
 	}
 
-	exp := LocalState{
+	exp := LocalDUTState{
 		ProvisionableLabels:     ProvisionableLabels{},
 		ProvisionableAttributes: ProvisionableAttributes{},
 	}
-	if !reflect.DeepEqual(bi, exp) {
-		t.Errorf("Got %v, expected %v", bi, exp)
+	if !reflect.DeepEqual(lds, exp) {
+		t.Errorf("Got %v, expected %v", lds, exp)
 	}
 }

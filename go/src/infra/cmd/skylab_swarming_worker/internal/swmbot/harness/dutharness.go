@@ -23,19 +23,19 @@ import (
 	"infra/libs/skylab/autotest/hostinfo"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
-	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/botinfo"
-	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/dutinfo"
 	h_hostinfo "infra/cmd/skylab_swarming_worker/internal/swmbot/harness/hostinfo"
+	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/localdutinfo"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/resultsdir"
+	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/ufsdutinfo"
 )
 
 // DUTHarness holds information about a DUT's harness
 type DUTHarness struct {
 	BotInfo      *swmbot.Info
 	DUTID        string
-	DUTName      string
+	DUTHostname  string
 	ResultsDir   string
-	LocalState   *swmbot.LocalState
+	LocalState   *swmbot.LocalDUTState
 	labelUpdater labelUpdater
 	// err tracks errors during setup to simplify error handling logic.
 	err     error
@@ -45,7 +45,7 @@ type DUTHarness struct {
 // Close closes and flushes out the harness resources.  This is safe
 // to call multiple times.
 func (dh *DUTHarness) Close(ctx context.Context) error {
-	log.Printf("Wrapping up harness for %s", dh.DUTName)
+	log.Printf("Wrapping up harness for %s", dh.DUTHostname)
 	var errs []error
 	for n := len(dh.closers) - 1; n >= 0; n-- {
 		if err := dh.closers[n].Close(ctx); err != nil {
@@ -61,40 +61,49 @@ func (dh *DUTHarness) Close(ctx context.Context) error {
 func makeDUTHarness(b *swmbot.Info) *DUTHarness {
 	return &DUTHarness{
 		BotInfo: b,
-		DUTID:   b.DUTID,
 		labelUpdater: labelUpdater{
 			botInfo: b,
 		},
 	}
 }
 
-func (dh *DUTHarness) loadLocalState(ctx context.Context) {
+func (dh *DUTHarness) loadLocalDUTInfo(ctx context.Context) {
 	if dh.err != nil {
 		return
 	}
-	if dh.DUTName == "" {
-		dh.err = fmt.Errorf("DUT Name cannot be blank")
+	if dh.DUTHostname == "" {
+		dh.err = fmt.Errorf("DUTHostname cannot be blank")
 		return
 	}
-	bi, err := botinfo.Open(ctx, dh.BotInfo, dh.DUTName)
+	ldi, err := localdutinfo.Open(ctx, dh.BotInfo, dh.DUTHostname, dh.DUTID)
 	if err != nil {
 		dh.err = err
 		return
 	}
-	dh.closers = append(dh.closers, bi)
-	dh.LocalState = &bi.LocalState
+	dh.closers = append(dh.closers, ldi)
+	dh.LocalState = &ldi.LocalDUTState
 }
 
-func (dh *DUTHarness) loadDUTInfo(ctx context.Context) (*inventory.DeviceUnderTest, map[string]string) {
+func (dh *DUTHarness) loadUFSDUTInfo(ctx context.Context) (*inventory.DeviceUnderTest, map[string]string) {
 	if dh.err != nil {
 		return nil, nil
 	}
-	var s *dutinfo.Store
-	s, dh.err = dutinfo.Load(ctx, dh.BotInfo, dh.labelUpdater.update)
+	var s *ufsdutinfo.Store
+	if dh.DUTID != "" {
+		s, dh.err = ufsdutinfo.LoadByID(ctx, dh.BotInfo, dh.DUTID, dh.labelUpdater.update)
+	} else if dh.DUTHostname != "" {
+		s, dh.err = ufsdutinfo.LoadByHostname(ctx, dh.BotInfo, dh.DUTHostname, dh.labelUpdater.update)
+	} else {
+		dh.err = fmt.Errorf("Both DUTID and DUTHostname field is empty.")
+	}
 	if dh.err != nil {
 		return nil, nil
 	}
-	dh.DUTName = s.DUT.GetCommon().GetHostname()
+	// We overwrite both DUTHostname and DUTID based on UFS data because in
+	// single DUT tasks we don't have DUTHostname when we start, and in the
+	// scheduling_unit (multi-DUT) tasks we don't have DUTID when we start.
+	dh.DUTHostname = s.DUT.GetCommon().GetHostname()
+	dh.DUTID = s.DUT.GetCommon().GetId()
 	dh.closers = append(dh.closers, s)
 	return s.DUT, s.StableVersions
 }
@@ -108,11 +117,11 @@ func (dh *DUTHarness) makeHostInfo(d *inventory.DeviceUnderTest, stableVersion m
 	return hip.HostInfo
 }
 
-func (dh *DUTHarness) addBotInfoToHostInfo(hi *hostinfo.HostInfo) {
+func (dh *DUTHarness) addLocalStateToHostInfo(hi *hostinfo.HostInfo) {
 	if dh.err != nil {
 		return
 	}
-	hib := h_hostinfo.BorrowBotInfo(hi, dh.LocalState)
+	hib := h_hostinfo.BorrowLocalDUTState(hi, dh.LocalState)
 	dh.closers = append(dh.closers, hib)
 }
 
@@ -120,12 +129,12 @@ func (dh *DUTHarness) makeDUTResultsDir(d *resultsdir.Dir) {
 	if dh.err != nil {
 		return
 	}
-	path, err := d.OpenSubDir(dh.DUTName)
+	path, err := d.OpenSubDir(dh.DUTHostname)
 	if err != nil {
 		dh.err = err
 		return
 	}
-	log.Printf("Created results sub-directory %s", path)
+	log.Printf("Created DUT level results sub-dir %s", path)
 	dh.ResultsDir = path
 }
 
@@ -133,7 +142,7 @@ func (dh *DUTHarness) exposeHostInfo(hi *hostinfo.HostInfo) {
 	if dh.err != nil {
 		return
 	}
-	hif, err := h_hostinfo.Expose(hi, dh.ResultsDir, dh.DUTName)
+	hif, err := h_hostinfo.Expose(hi, dh.ResultsDir, dh.DUTHostname)
 	if err != nil {
 		dh.err = err
 		return

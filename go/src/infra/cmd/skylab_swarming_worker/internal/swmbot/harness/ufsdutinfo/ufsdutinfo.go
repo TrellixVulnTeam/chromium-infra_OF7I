@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package dutinfo implement loading Skylab DUT inventory info for the
+// Package ufsdutinfo implement loading Skylab DUT inventory(UFS) info for the
 // worker.
-package dutinfo
+package ufsdutinfo
 
 import (
 	"context"
@@ -61,13 +61,20 @@ func (s *Store) Close(ctx context.Context) error {
 // to the loaded DUT info.
 type UpdateFunc func(ctx context.Context, dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
 
-// Load loads the bot's DUT's info from the UFS.
-//
+// LoadByID loads the DUT's info from the UFS by ID.
 // This function returns a Store that should be closed to update the inventory
 // with any changes to the info, using a supplied UpdateFunc. If UpdateFunc is
 // nil, the inventory is not updated.
-func Load(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getDutInfoFromUFS)
+func LoadByID(ctx context.Context, b *swmbot.Info, dutID string, f UpdateFunc) (*Store, error) {
+	return load(ctx, b, &ufsAPI.GetChromeOSDeviceDataRequest{ChromeosDeviceId: dutID}, f, getDutInfoFromUFS)
+}
+
+// LoadByHostname loads the DUT's info from the UFS by hostname.
+// This function returns a Store that should be closed to update the inventory
+// with any changes to the info, using a supplied UpdateFunc. If UpdateFunc is
+// nil, the inventory is not updated.
+func LoadByHostname(ctx context.Context, b *swmbot.Info, hostname string, f UpdateFunc) (*Store, error) {
+	return load(ctx, b, &ufsAPI.GetChromeOSDeviceDataRequest{Hostname: hostname}, f, getDutInfoFromUFS)
 }
 
 type getDutInfoFuncUFS func(context.Context, ufsAPI.FleetClient, *ufsAPI.GetChromeOSDeviceDataRequest) (*ufspb.ChromeOSDeviceData, error)
@@ -98,35 +105,32 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostnam
 	return s, nil
 }
 
-func loadFromUFS(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncUFS) (*inventory.DeviceUnderTest, error) {
+func loadFromUFS(ctx context.Context, b *swmbot.Info, req *ufsAPI.GetChromeOSDeviceDataRequest, gf getDutInfoFuncUFS) (*inventory.DeviceUnderTest, error) {
 	client, err := swmbot.UFSClient(ctx, b)
 	if err != nil {
 		return nil, errors.Annotate(err, "load from UFS: initialize UFS client").Err()
 	}
-	req := ufsAPI.GetChromeOSDeviceDataRequest{
-		ChromeosDeviceId: b.DUTID,
-	}
-	resp, err := gf(ctx, client, &req)
+	resp, err := gf(ctx, client, req)
 	if err != nil {
 		return nil, errors.Annotate(err, "load from UFS").Err()
 	}
 	return resp.GetDutV1(), nil
 }
 
-func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfUFS getDutInfoFuncUFS) (*Store, error) {
+func load(ctx context.Context, b *swmbot.Info, req *ufsAPI.GetChromeOSDeviceDataRequest, uf UpdateFunc, gfUFS getDutInfoFuncUFS) (*Store, error) {
 	ctx, err := swmbot.WithSystemAccount(ctx)
 	if err != nil {
-		return nil, errors.Annotate(err, "load DUT host info").Err()
+		return nil, errors.Annotate(err, "setup system account").Err()
 	}
 	log.Printf("Loading DUT info from UFS")
-	dut, err := loadFromUFS(ctx, b, gfUFS)
+	dut, err := loadFromUFS(ctx, b, req, gfUFS)
 	if err != nil {
-		log.Printf("(not fatal) fail to load DUT from inventory V2: %s", err)
+		return nil, errors.Annotate(err, "load DUT info from UFS").Err()
 	}
 
 	c, err := swmbot.InventoryClient(ctx, b)
 	if err != nil {
-		return nil, errors.Annotate(err, "load DUT host info").Err()
+		return nil, errors.Annotate(err, "setup inventory client for stable_version").Err()
 	}
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
@@ -153,7 +157,7 @@ func getDutInfoFromUFS(ctx context.Context, c ufsAPI.FleetClient, req *ufsAPI.Ge
 		resp, err = c.GetChromeOSDeviceData(osCtx, req)
 		return err
 	}
-	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.getDutInfoFuncUFS")); err != nil {
+	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "ufsdutinfo.getDutInfoFuncUFS")); err != nil {
 		return nil, errors.Annotate(err, "retry getDutInfoFuncUFS").Err()
 	}
 	return resp, nil
@@ -169,7 +173,7 @@ func retryGetStableVersion(ctx context.Context, client fleet.InventoryClient, re
 		}
 		return nil
 	}
-	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.retryGetStableVersion")); err != nil {
+	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "ufsdutinfo.retryGetStableVersion")); err != nil {
 		return nil, errors.Annotate(err, "retry getStableVersion").Err()
 	}
 	return resp, nil

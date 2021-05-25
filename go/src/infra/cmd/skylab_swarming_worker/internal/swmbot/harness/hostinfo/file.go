@@ -27,7 +27,7 @@ type File struct {
 const hostInfoSubDir = "host_info_store"
 
 // Expose exposes the HostInfo as a file for Autotest to use.
-func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, error) {
+func Expose(hi *hostinfo.HostInfo, resultsDir string, dutHostname string) (*File, error) {
 	blob, err := hostinfo.Marshal(hi)
 	if err != nil {
 		return nil, errors.Annotate(err, "expose hostinfo").Err()
@@ -36,7 +36,7 @@ func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, er
 	if err := os.Mkdir(storeDir, 0755); err != nil {
 		return nil, errors.Annotate(err, "expose hostinfo").Err()
 	}
-	storeFile := filepath.Join(storeDir, fmt.Sprintf("%s.store", dutName))
+	storeFile := filepath.Join(storeDir, fmt.Sprintf("%s.store", dutHostname))
 	if err := ioutil.WriteFile(storeFile, blob, 0644); err != nil {
 		return nil, errors.Annotate(err, "expose hostinfo").Err()
 	}
@@ -50,7 +50,7 @@ func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, er
 		log.Printf("Expose: failed to marshalIndent hostinfo file (%#v)", err)
 		content = []byte{}
 	}
-	hostInfoStore2 := filepath.Join(storeDir, fmt.Sprintf("%s.host_info_store2", dutName))
+	hostInfoStore2 := filepath.Join(storeDir, fmt.Sprintf("%s.host_info_store2", dutHostname))
 	// NOTE(gregorynisbet): we always want to create this file, even if it has length zero due to a previous error
 	if err := ioutil.WriteFile(hostInfoStore2, content, 0o644); err != nil {
 		log.Printf("Expose: failed to write file contents to path (%s)", hostInfoStore2)
