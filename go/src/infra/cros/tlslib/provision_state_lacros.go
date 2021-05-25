@@ -95,6 +95,11 @@ func (p *provisionLacrosState) provisionLacros(ctx context.Context) error {
 		return fmt.Errorf("provisionLacros: failed to write Lacros manifest, %s", err)
 	}
 
+	// Create the component updater Lacros manifest file.
+	if err := p.writeComponentManifest(ctx); err != nil {
+		return fmt.Errorf("provisionLacros: failed to write component Lacros manifest, %s", err)
+	}
+
 	// Write the Lacros version to the latest-version file.
 	lacrosLastestVersionPath := path.Join(lacrosRootComponentPath, "latest-version")
 	if err := runCmd(p.c, fmt.Sprintf("echo -n %s > %s", p.metadata.Content.Version, lacrosLastestVersionPath)); err != nil {
@@ -218,6 +223,35 @@ func (p *provisionLacrosState) writeManifest(ctx context.Context, imageHash, tab
 	lacrosManifestPath := path.Join(p.lacrosComponentPath, "imageloader.json")
 	if err := runCmd(p.c, fmt.Sprintf("echo '%s' > %s", lacrosManifestJSON, lacrosManifestPath)); err != nil {
 		return fmt.Errorf("writeManifest: failed to write Lacros manifest json to DUT, %s", err)
+	}
+	return nil
+}
+
+// writeComponentManifest will create and write the Lacros component manifest out usable by component updater.
+func (p *provisionLacrosState) writeComponentManifest(ctx context.Context) error {
+	lacrosComponentManifestJSON, err := json.MarshalIndent(struct {
+		ManifestVersion int    `json:"manifest-version"`
+		Name            string `json:"name"`
+		Version         string `json:"version"`
+		ImageName       string `json:"imageName"`
+		Squash          bool   `json:"squash"`
+		FsType          string `json:"fsType"`
+		IsRemovable     bool   `json:"isRemovable"`
+	}{
+		ManifestVersion: 2,
+		Name:            "lacros",
+		Version:         p.metadata.Content.Version,
+		ImageName:       "image.squash",
+		Squash:          true,
+		FsType:          "squashfs",
+		IsRemovable:     false,
+	}, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeComponentManifest: failed to Marshal Lacros manifest json, %s", err)
+	}
+	lacrosComponentManifestPath := path.Join(p.lacrosComponentPath, "manifest.json")
+	if err := runCmd(p.c, fmt.Sprintf("echo '%s' > %s", lacrosComponentManifestJSON, lacrosComponentManifestPath)); err != nil {
+		return fmt.Errorf("writeComponentManifest: failed to write Lacros manifest json to DUT, %s", err)
 	}
 	return nil
 }
