@@ -13,7 +13,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
 
-	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/libs/skylab/inventory"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -182,74 +181,6 @@ func (u labelUpdater) update(ctx context.Context, dutID string, old *inventory.D
 	return nil
 }
 
-// TODO(xixuan): move it to lib.
-func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutState {
-	state := lab.DutState{
-		Id: &lab.ChromeOSDeviceID{Value: dutID},
-	}
-	p := l.GetPeripherals()
-	if p != nil {
-		state.Servo = lab.PeripheralState(p.GetServoState())
-		state.RpmState = lab.PeripheralState(p.GetRpmState())
-		if p.GetChameleon() {
-			state.Chameleon = lab.PeripheralState_WORKING
-		}
-		if p.GetAudioLoopbackDongle() {
-			state.AudioLoopbackDongle = lab.PeripheralState_WORKING
-		}
-		state.WorkingBluetoothBtpeer = p.GetWorkingBluetoothBtpeer()
-		switch l.GetCr50Phase() {
-		case inventory.SchedulableLabels_CR50_PHASE_PVT:
-			state.Cr50Phase = lab.DutState_CR50_PHASE_PVT
-		case inventory.SchedulableLabels_CR50_PHASE_PREPVT:
-			state.Cr50Phase = lab.DutState_CR50_PHASE_PREPVT
-		}
-		switch l.GetCr50RoKeyid() {
-		case "prod":
-			state.Cr50KeyEnv = lab.DutState_CR50_KEYENV_PROD
-		case "dev":
-			state.Cr50KeyEnv = lab.DutState_CR50_KEYENV_DEV
-		}
-
-		state.StorageState = lab.HardwareState(int32(p.GetStorageState()))
-		state.ServoUsbState = lab.HardwareState(int32(p.GetServoUsbState()))
-		state.BatteryState = lab.HardwareState(int32(p.GetBatteryState()))
-	}
-	return &state
-}
-
-func getMetaFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) *invV2.DutMeta {
-	attr := specs.GetAttributes()
-	dutMeta := invV2.DutMeta{
-		ChromeosDeviceId: dutID,
-	}
-	for _, kv := range attr {
-		if kv.GetKey() == "serial_number" {
-			dutMeta.SerialNumber = kv.GetValue()
-		}
-		if kv.GetKey() == "HWID" {
-			dutMeta.HwID = kv.GetValue()
-		}
-	}
-	dutMeta.DeviceSku = specs.GetLabels().GetSku()
-	return &dutMeta
-}
-
-func getLabMetaFromLabel(dutID string, l *inventory.SchedulableLabels) (labconfig *invV2.LabMeta) {
-	labMeta := invV2.LabMeta{
-		ChromeosDeviceId: dutID,
-	}
-	p := l.GetPeripherals()
-	if p != nil {
-		labMeta.ServoType = p.GetServoType()
-		labMeta.SmartUsbhub = p.GetSmartUsbhub()
-		labMeta.ServoTopology = convertServoTopology(p.GetServoTopology())
-	}
-
-	return &labMeta
-}
-
-// TODO (xixuan): will remove the above duplicated functions when UFS feature for OS lab is launched.
 func getUFSDutMetaFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) *ufspb.DutMeta {
 	attr := specs.GetAttributes()
 	dutMeta := &ufspb.DutMeta{
