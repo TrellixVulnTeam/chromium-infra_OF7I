@@ -184,6 +184,14 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		}
 		defer fc.Close()
 	}
+	//	We want to run tasks sequentially to avoid:
+	//		1.  Unexpected pressure to skylab drones as we determine drone capacity
+	//			based on # of bots.
+	//		2.  Unexpected pressure to servohost. DUTs under a scheduling unit are
+	//			likely under a same servohost due to testing locale requirement,
+	//			so doing actions that touch servo-usb(e.g. stage image) in parallel
+	//			may cause them to timeout or fail due to servo-usb or labstation
+	//			performance limitation.
 	var errs []error
 	for _, dh := range i.DUTs {
 		ta := lucifer.TaskArgs{
