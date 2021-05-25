@@ -1,8 +1,8 @@
 hash: a7387d0c34a6b459cf090acf85cd93b9c250acae420b201cc2fbea8069b1e678
-updated: 2021-05-25T13:36:26.225586581+09:00
+updated: 2021-05-25T22:37:20.652441149+09:00
 imports:
 - name: cloud.google.com/go
-  version: 825ddd692363eb2dd8cd253cc5976867e432f547
+  version: 8bd87cbfee00ee2c0509db6a0e0f8665d29b8902
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -32,7 +32,7 @@ imports:
   version: 3e385366f152e99adda5ab5e4857b1ab221ba2fe
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: f9d52cdef1c3aa8612d9c3ed7a0b65f96e55d870
+  version: f831c118b9c9e1dd3e857fbe43da7c992c91b20f
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -504,7 +504,7 @@ imports:
   version: f8bda1e9f3badef837c98cbaf4f7c335de90f266
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 98f8936a45ac344cdeb67b2e4008b5ca34947441
+  version: 874765c9672aef97f1f818f9c554f71e93452a2c
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
