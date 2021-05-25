@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"infra/cros/internal/branch"
 	"infra/cros/internal/git"
@@ -17,18 +18,29 @@ import (
 	"infra/cros/internal/repo"
 	"infra/cros/internal/shared"
 
+	"cloud.google.com/go/firestore"
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 	luciflag "go.chromium.org/luci/common/flag"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
 	// Default location of manifest-internal project.
 	manifestInternalProjectPath = "manifest-internal"
+
+	firestoreProject    = "chromeos-bot"
+	firestoreCollection = "LocalManifestBranchMetadatas"
 )
 
 type localManifestBrancher struct {
 	subcommands.CommandRunBase
+	authFlags            authcli.Flags
 	chromeosCheckoutPath string
 	minMilestone         int
 	projectList          string
@@ -36,13 +48,15 @@ type localManifestBrancher struct {
 	push                 bool
 }
 
-func cmdLocalManifestBrancher() *subcommands.Command {
+func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "branch-local-manifest --chromeos_checkout ~/chromiumos " +
 			" --min_milestone 90 --projects chromeos/project/foo,chromeos/project/bar",
 		ShortDesc: "Repair local_manifest.xml on specified non-ToT branches.",
 		CommandRun: func() subcommands.CommandRun {
 			b := &localManifestBrancher{}
+			b.authFlags = authcli.Flags{}
+			b.authFlags.Register(b.GetFlags(), authOpts)
 			b.Flags.StringVar(&b.chromeosCheckoutPath, "chromeos_checkout", "",
 				"Path to full ChromeOS checkout.")
 			b.Flags.IntVar(&b.minMilestone, "min_milestone", -1,
@@ -77,6 +91,15 @@ func (b *localManifestBrancher) validate() error {
 	return nil
 }
 
+func (b *localManifestBrancher) authToken(ctx context.Context) (oauth2.TokenSource, error) {
+	authOpts, err := b.authFlags.Options()
+	if err != nil {
+		return nil, err
+	}
+	authenticator := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts)
+	return authenticator.TokenSource()
+}
+
 func (b *localManifestBrancher) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	// Common setup (argument validation, logging, etc.)
 	ret := SetUp(b, a, args, env)
@@ -84,15 +107,28 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 		return ret
 	}
 
-	if err := BranchLocalManifests(b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
+	ctx := context.Background()
+	authToken, err := b.authToken(ctx)
+	if err != nil {
 		LogErr(err.Error())
 		return 2
+	}
+	client, err := firestore.NewClient(ctx, firestoreProject, option.WithTokenSource(authToken))
+	if err != nil {
+		LogErr(err.Error())
+		return 3
+	}
+	defer client.Close()
+
+	if err := BranchLocalManifests(ctx, client, b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
+		LogErr(err.Error())
+		return 4
 	}
 
 	return 0
 }
 
-func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) error {
+func pinLocalManifest(ctx context.Context, checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) error {
 	// Checkout appropriate branch of project.
 	projectPath := filepath.Join(checkout, path)
 	if !osutils.PathExists(projectPath) {
@@ -163,7 +199,7 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 	pushFunc := func() error {
 		return git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun))
 	}
-	if err := shared.DoWithRetry(context.Background(), shared.LongerOpts, pushFunc); err != nil {
+	if err := shared.DoWithRetry(ctx, shared.LongerOpts, pushFunc); err != nil {
 		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
 	if !dryRun {
@@ -175,8 +211,12 @@ func pinLocalManifest(checkout, path, branch string, referenceManifest *repo.Man
 	return nil
 }
 
+type localManifestBranchMetadata struct {
+	PathToPrevSHA map[string]string `firestore:"prevshas"`
+}
+
 // BranchLocalManifests is responsible for doing the actual work of local manifest branching.
-func BranchLocalManifests(checkout string, projects []string, minMilestone int, dryRun bool) error {
+func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, checkout string, projects []string, minMilestone int, dryRun bool) error {
 	branches, err := branch.BranchesFromMilestone(checkout, minMilestone)
 	if err != nil {
 		return errors.Annotate(err, "BranchesFromMilestone failure").Err()
@@ -203,9 +243,67 @@ func BranchLocalManifests(checkout string, projects []string, minMilestone int, 
 			continue
 		}
 
+		// Get SHA of reference manifest.
+		output, err := git.RunGit(manifestInternalPath, []string{"rev-parse", "HEAD"})
+		if err != nil {
+			errs = append(errs, errors.Annotate(err, "failed to rev-parse branch %s in %s", branch, manifestInternalProjectPath).Err())
+			continue
+		}
+		currentSHA := strings.TrimSpace(output.Stdout)
+
+		// Load optimization data from Firestore.
+		bm := localManifestBranchMetadata{
+			PathToPrevSHA: make(map[string]string),
+		}
+		var bmDoc *firestore.DocumentRef
+		docExists := true
+		if dsClient != nil {
+			bmDoc = dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
+			if docsnap, err := bmDoc.Get(ctx); err != nil {
+				errorCode, ok := status.FromError(err)
+				if ok && errorCode.Code() == codes.NotFound {
+					docExists = false
+					LogErr("no history for branch %s, not skipping", branch)
+				} else {
+					LogErr(errors.Annotate(err, "failed to get history, attempting all branch/project combos").Err().Error())
+				}
+			} else {
+				docsnap.DataTo(&bm)
+			}
+		}
+
 		for _, path := range projects {
-			if err := pinLocalManifest(checkout, path, branch, referenceManifest, dryRun); err != nil {
+			// If the SHA for the reference manifest hasn't changed since the last update, no need to reprocess this
+			// particular project/branch combo.
+			previousSHA, ok := bm.PathToPrevSHA[path]
+			if !ok {
+				LogErr("no history for project %s, branch %s, not skipping", path, branch)
+			} else if previousSHA == currentSHA {
+				LogOut("no change in reference manifest since last pin for project %s, branch %s, skipping...", path, branch)
+				continue
+			}
+
+			if err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
 				errs = append(errs, err)
+				continue
+			}
+
+			// Update optimization data.
+			if !dryRun {
+				bm.PathToPrevSHA[path] = currentSHA
+			}
+		}
+
+		// Write optimization data.
+		if !dryRun && dsClient != nil {
+			if docExists {
+				if _, err := bmDoc.Set(ctx, bm); err != nil {
+					LogErr(errors.Annotate(err, "failed to store optimization data for branch %s", branch).Err().Error())
+				}
+			} else {
+				if _, err := bmDoc.Create(ctx, bm); err != nil {
+					LogErr(errors.Annotate(err, "failed to store optimization data for branch %s", branch).Err().Error())
+				}
 			}
 		}
 	}

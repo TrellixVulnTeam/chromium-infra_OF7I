@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -71,7 +72,8 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 	assert.NilError(t, err)
 
 	remoteManifestProject := rh.GetRemoteProject(config.Manifest.Projects[0])
-	remoteFooProject := rh.GetRemoteProject(config.Manifest.Projects[1])
+	fooProject := config.Manifest.Projects[1]
+	remoteFooProject := rh.GetRemoteProject(fooProject)
 
 	fetchLocation := harness.Manifest().Remotes[0].Fetch
 
@@ -103,6 +105,7 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 			assert.NilError(t, err)
 		}
 	}
+
 	return harness, remoteManifestProject
 }
 
@@ -113,7 +116,8 @@ func TestBranchLocalManifests(t *testing.T) {
 	checkout, err := harness.Checkout(remoteManifestProject, "main", "default.xml")
 	assert.NilError(t, err)
 
-	assert.NilError(t, BranchLocalManifests(checkout, []string{"foo/"}, 90, false))
+	ctx := context.Background()
+	assert.NilError(t, BranchLocalManifests(ctx, nil, checkout, []string{"foo/"}, 90, false))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
 	checkBranches := map[string]bool{
@@ -152,6 +156,7 @@ func TestBranchLocalManifestsDryRun(t *testing.T) {
 	checkout, err := r.Checkout(remoteManifestProject, "main", "default.xml")
 	assert.NilError(t, err)
 
-	assert.NilError(t, BranchLocalManifests(checkout, []string{"foo/"}, 90, true))
+	ctx := context.Background()
+	assert.NilError(t, BranchLocalManifests(ctx, nil, checkout, []string{"foo/"}, 90, true))
 	assert.NilError(t, r.AssertNoRemoteDiff())
 }

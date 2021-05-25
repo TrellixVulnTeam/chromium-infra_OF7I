@@ -61,7 +61,7 @@ func GetApplication(authOpts auth.Options) *subcommands.DefaultApplication {
 			authcli.SubcommandInfo(authOpts, "auth-info", false),
 			authcli.SubcommandLogin(authOpts, "auth-login", false),
 			authcli.SubcommandLogout(authOpts, "auth-logout", false),
-			cmdLocalManifestBrancher(),
+			cmdLocalManifestBrancher(authOpts),
 			cmdProjectBuildspec(authOpts),
 		},
 	}
@@ -78,6 +78,7 @@ func main() {
 	scopes := []string{
 		gerrit.OAuthScope,
 		auth.OAuthScopeEmail,
+		"https://www.googleapis.com/auth/datastore",
 	}
 	scopes = append(scopes, gs.ReadWriteScopes...)
 	opts.Scopes = scopes
