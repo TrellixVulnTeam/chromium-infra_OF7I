@@ -13,6 +13,7 @@ import (
 func Generate(
 	ctx context.Context, changeRevs []*gerrit.ChangeRev,
 	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	dutAttributeList *testpb.DutAttributeList,
 ) ([]*testpb.CoverageRule, error) {
 	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
 	if err != nil {
@@ -42,7 +43,7 @@ func Generate(
 	logging.Debugf(ctx, "merged SourceTestPlan: %q", mergedSourceTestPlan)
 
 	outputs, err := generateOutputs(
-		ctx, mergedSourceTestPlan, buildSummaryList,
+		ctx, mergedSourceTestPlan, buildSummaryList, dutAttributeList,
 	)
 	if err != nil {
 		return nil, err

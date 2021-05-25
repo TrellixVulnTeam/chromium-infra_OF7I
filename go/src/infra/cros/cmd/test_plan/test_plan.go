@@ -165,6 +165,28 @@ func getBuildSummaryList(
 	return buildSummaryList, nil
 }
 
+func getDutAttributeList(
+	ctx context.Context, authedClient *http.Client,
+) (*testpb.DutAttributeList, error) {
+	dutAttributeListStr, err := igerrit.DownloadFileFromGitiles(
+		ctx, authedClient,
+		"chrome-internal.googlesource.com",
+		"chromeos/config-internal",
+		"HEAD",
+		"dut_attributes/generated/dut_attributes.jsonproto",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	dutAttributeList := &testpb.DutAttributeList{}
+	if err = unmarshalProtojson([]byte(dutAttributeListStr), dutAttributeList); err != nil {
+		return nil, err
+	}
+
+	return dutAttributeList, nil
+}
+
 // writeRules writes a newline-delimited json file containing rules to outPath.
 func writeRules(rules []*testpb.CoverageRule, outPath string) error {
 	outFile, err := os.Create(outPath)
@@ -226,7 +248,16 @@ func (r *generateRun) run(ctx context.Context) error {
 
 	logging.Debugf(ctx, "fetched %d BuildSummaries", len(buildSummaryList.Values))
 
-	rules, err := testplan.Generate(ctx, changeRevs, buildSummaryList)
+	logging.Infof(ctx, "fetching dut attributes")
+
+	dutAttributeList, err := getDutAttributeList(ctx, authedClient)
+	if err != nil {
+		return err
+	}
+
+	logging.Debugf(ctx, "fetched dut attributes:\n%s", dutAttributeList)
+
+	rules, err := testplan.Generate(ctx, changeRevs, buildSummaryList, dutAttributeList)
 	if err != nil {
 		return err
 	}

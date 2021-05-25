@@ -280,6 +280,31 @@ func fingerprintCoverageRule(sourceTestPlan *plan.SourceTestPlan) *testpb.Covera
 	}
 }
 
+// checkDutAttributesValid checks that the ids of all attributes in rules are in
+// dutAttributeList.
+func checkDutAttributesValid(rules []*testpb.CoverageRule, dutAttributeList *testpb.DutAttributeList) error {
+	validAttributes := stringset.New(0)
+
+	for _, dutAttribute := range dutAttributeList.DutAttributes {
+		validAttributes.Add(dutAttribute.Id.Value)
+	}
+
+	invalidAttributes := []string{}
+	for _, rule := range rules {
+		for _, criterion := range rule.DutCriteria {
+			if !validAttributes.Has(criterion.AttributeId.Value) {
+				invalidAttributes = append(invalidAttributes, criterion.AttributeId.Value)
+			}
+		}
+	}
+
+	if len(invalidAttributes) > 0 {
+		return fmt.Errorf("CoverageRule contains invalid DutAttributes: %q", invalidAttributes)
+	}
+
+	return nil
+}
+
 // typeName is a convenience function for the FullName of m.
 func typeName(m proto.Message) protoreflect.FullName {
 	return proto.MessageReflect(m).Descriptor().FullName()
@@ -291,6 +316,7 @@ func generateOutputs(
 	ctx context.Context,
 	sourceTestPlan *plan.SourceTestPlan,
 	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
+	dutAttributeList *testpb.DutAttributeList,
 ) ([]*testpb.CoverageRule, error) {
 	coverageRules := []*testpb.CoverageRule{}
 
@@ -338,6 +364,10 @@ func generateOutputs(
 
 	if unimplementedReq != nil {
 		return nil, fmt.Errorf("unimplemented requirement %q", unimplementedReq.Name())
+	}
+
+	if err := checkDutAttributesValid(coverageRules, dutAttributeList); err != nil {
+		return nil, err
 	}
 
 	return coverageRules, nil

@@ -64,7 +64,20 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	rules, err := Generate(ctx, changeRevs, buildSummaryList)
+	dutAttributeList := &testpb.DutAttributeList{
+		DutAttributes: []*testpb.DutAttribute{
+			{
+				Id:        &testpb.DutAttribute_Id{Value: "fingerprint_location"},
+				FieldPath: "design_list.configs.hardware_features.fingerprint.location",
+			},
+			{
+				Id:        &testpb.DutAttribute_Id{Value: "system_build_target"},
+				FieldPath: "software_configs.system_build_target.portage_build_target.overlay_name",
+			},
+		},
+	}
+
+	rules, err := Generate(ctx, changeRevs, buildSummaryList, dutAttributeList)
 
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
