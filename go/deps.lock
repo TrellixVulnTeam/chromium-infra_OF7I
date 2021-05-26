@@ -14,6 +14,11 @@ imports:
 - name: contrib.go.opencensus.io/exporter/stackdriver
   version: bf9def01a2ac8fcdbc1e3fdc20162799b682e02d
   repo: https://chromium.googlesource.com/external/github.com/census-ecosystem/opencensus-go-exporter-stackdriver.git
+- name: github.com/aclements/go-moremath
+  version: f10218a38794e5bdebc62889bae58d4d8a458de8
+  repo: https://chromium.googlesource.com/external/github.com/aclements/go-moremath.git
+  subpackages:
+  - stats
 - name: github.com/andygrunwald/go-gerrit
   version: eab0848cd2113260ca04470861df78b43a60bdfe
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
@@ -519,6 +524,11 @@ imports:
 - name: golang.org/x/xerrors
   version: 5ec99f83aff198f5fbd629d6c8d8eb38a04218ca
   repo: https://go.googlesource.com/xerrors.git
+- name: gonum.org/v1/gonum
+  version: 85aaeceabc3dd1dbef08a30c0992482c4a68dd8f
+  repo: https://chromium.googlesource.com/external/github.com/gonum/gonum.git
+  subpackages:
+  - stat
 - name: google.golang.org/api
   version: 9f7b7f8b7e64e69f1244dd1fb2f1b970720200c5
   repo: https://chromium.googlesource.com/external/github.com/google/google-api-go-client.git

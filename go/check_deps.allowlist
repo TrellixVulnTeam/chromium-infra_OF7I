@@ -71,6 +71,7 @@ github.com/xtgo/set
 github.com/yosuke-furukawa/json5/encoding/json5
 github.com/bmatcuk/doublestar
 github.com/otiai10/copy
+github.com/aclements/go-moremath
 
 # Other stuff
 contrib.go.opencensus.io/exporter
@@ -78,3 +79,4 @@ go.opencensus.io/exporter
 go.opencensus.io/plugin/ocgrpc
 go.opencensus.io/trace
 howett.net/plist
+gonum.org/v1/gonum

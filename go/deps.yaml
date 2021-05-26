@@ -582,3 +582,13 @@ import:
   repo: https://chromium.googlesource.com/external/github.com/google/tink.git
   subpackages:
   - go
+- package: gonum.org/v1/gonum
+  version: upstream/v0.9.1
+  repo: https://chromium.googlesource.com/external/github.com/gonum/gonum.git
+  subpackages:
+  - stat
+- package: github.com/aclements/go-moremath
+  version: upstream/master
+  repo: https://chromium.googlesource.com/external/github.com/aclements/go-moremath.git
+  subpackages:
+  - stats
