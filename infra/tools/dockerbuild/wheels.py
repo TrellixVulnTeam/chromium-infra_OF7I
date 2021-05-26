@@ -229,7 +229,7 @@ SPECS.update({
             'crcmod',
             '1.7',
             packaged=(),
-            pyversions=['py2'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'gevent',
