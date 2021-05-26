@@ -128,68 +128,71 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 	return 0
 }
 
-func pinLocalManifest(ctx context.Context, checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) error {
+// pinLocalManifest returns whether or not local_manifest.xml in the specified
+// the project/branch is up to date (false if the file does not exist), and
+// a potential error.
+func pinLocalManifest(ctx context.Context, checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) (bool, error) {
 	// Checkout appropriate branch of project.
 	projectPath := filepath.Join(checkout, path)
 	if !osutils.PathExists(projectPath) {
-		return fmt.Errorf("project path %s does not exist", projectPath)
+		return false, fmt.Errorf("project path %s does not exist", projectPath)
 	}
 
 	if hasBranch, err := git.RemoteHasBranch(projectPath, "cros-internal", branch); err != nil {
-		return errors.Annotate(err, "failed to ls-remote branch %s from remote for project %s", branch, path).Err()
+		return false, errors.Annotate(err, "failed to ls-remote branch %s from remote for project %s", branch, path).Err()
 	} else if !hasBranch {
 		LogOut("branch %s does not exist for project %s, skipping...", branch, path)
-		return nil
+		return false, nil
 	}
 	if err := git.Fetch(projectPath, "cros-internal", branch); err != nil {
-		return errors.Annotate(err, "failed to fetch branch %s from remote for project %s", branch, path).Err()
+		return false, errors.Annotate(err, "failed to fetch branch %s from remote for project %s", branch, path).Err()
 	}
 	if err := git.Checkout(projectPath, branch); err != nil {
-		return errors.Annotate(err, "failed to checkout branch %s for project %s", branch, path).Err()
+		return false, errors.Annotate(err, "failed to checkout branch %s for project %s", branch, path).Err()
 	}
 
 	// Repair local manifest.
 	localManifestPath := filepath.Join(projectPath, "local_manifest.xml")
 	if _, err := os.Stat(localManifestPath); os.IsNotExist(err) {
 		LogOut("local_manifest.xml does not exist for project %s, branch %s, skipping...", path, branch)
-		return nil
+		return false, nil
 	}
 
 	localManifest, err := repo.LoadManifestFromFile(localManifestPath)
 	if err != nil {
-		return errors.Annotate(err, "failed to load local_manifest.xml from project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "failed to load local_manifest.xml from project %s, branch %s", path, branch).Err()
 	}
 
 	if err := manifestutil.PinManifestFromManifest(&localManifest, referenceManifest); err != nil {
-		return errors.Annotate(err, "failed to pin local_manifest.xml from reference manifest for project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "failed to pin local_manifest.xml from reference manifest for project %s, branch %s", path, branch).Err()
 	}
 	hasChanges, err := repo.UpdateManifestElementsInFile(localManifestPath, &localManifest)
 	if err != nil {
-		return errors.Annotate(err, "failed to write changes to local_manifest.xml for project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "failed to write changes to local_manifest.xml for project %s, branch %s", path, branch).Err()
 	}
 
 	// If the manifest actually changed, commit and push those changes.
 	if !hasChanges {
 		LogOut("no changes needed for project %s, branch %s\n", path, branch)
-		return nil
+		return true, nil
 	}
 
 	var commitMsg string
 	commitMsg += fmt.Sprintf("Repair local_manifest.xml for branch %s\n\n", branch)
 	commitMsg += "This CL was created by the Manifest Doctor.\n"
 	if _, err := git.CommitAll(projectPath, commitMsg); err != nil {
-		return errors.Annotate(err, "failed to commit changes for project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "failed to commit changes for project %s, branch %s", path, branch).Err()
 	}
 
 	remotes, err := git.GetRemotes(projectPath)
 	if err != nil {
-		return errors.Annotate(err, "failed to get remotes for checkout of project %s", path).Err()
+		return false, errors.Annotate(err, "failed to get remotes for checkout of project %s", path).Err()
 	}
 	if len(remotes) > 1 {
-		return fmt.Errorf("project %s has more than one remote, don't know which to push to", path)
+		return false, fmt.Errorf("project %s has more than one remote, don't know which to push to", path)
 	}
 	if len(remotes) == 0 {
-		return fmt.Errorf("project %s has no remotes", path)
+		return false, fmt.Errorf("project %s has no remotes", path)
 	}
 
 	remoteRef := git.RemoteRef{
@@ -200,7 +203,7 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 		return git.PushRef(projectPath, "HEAD", remoteRef, git.DryRunIf(dryRun))
 	}
 	if err := shared.DoWithRetry(ctx, shared.LongerOpts, pushFunc); err != nil {
-		return errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "failed to push/upload changes for project %s, branch %s", path, branch).Err()
 	}
 	if !dryRun {
 		LogOut("committed changes for project %s, branch %s\n", path, branch)
@@ -208,7 +211,7 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 		LogOut("would have committed changes (dry run) for project %s, branch %s\n", path, branch)
 	}
 
-	return nil
+	return true, nil
 }
 
 type localManifestBranchMetadata struct {
@@ -283,13 +286,11 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 				continue
 			}
 
-			if err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
+			if didWork, err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
 				errs = append(errs, err)
 				continue
-			}
-
-			// Update optimization data.
-			if !dryRun {
+			} else if !dryRun && didWork {
+				// Update optimization data.
 				bm.PathToPrevSHA[path] = currentSHA
 			}
 		}
