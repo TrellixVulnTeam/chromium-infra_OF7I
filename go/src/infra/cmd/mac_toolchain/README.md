@@ -45,9 +45,15 @@ Since this is a standard Go package, you can also install it by running `go
 install` in this folder. See the [`infra/go/README.md`](../../../../README.md) file
 for the Go setup.
 
-## Installing an Xcode package
+## Working with Xcode packages
+
+### Installing an Xcode package
 
     mac_toolchain install -xcode-version XXXX -output-dir /path/to/root
+
+Add `-kind mac` or `-kind ios` argument to install a package for mac or ios
+tasks. iOS kind has iOS SDK and default iOS runtime installed additionally. If
+not specified, the tool installs a mac kind.
 
 This will install the requested version of `Xcode.app` in the `/path/to/root`
 folder.  Run `mac_toolchain help install` for more information.
@@ -58,7 +64,7 @@ _Note:_ to access the Xcode packages, you may need to run:
 
 or pass the appropriate `-service-account-json` argument to `cipd ensure`.
 
-## Creating a new Xcode package
+### Creating a new Xcode package
 
 Download the Xcode zip file from your Apple's Developer account, unpack it, and
 point the script at the resulting `Xcode.app`.
@@ -71,16 +77,71 @@ upload and tag them properly. Run `mac_toolchain help upload` for more options.
 The upload command is meant to be run manually, and it will upload many GB of
 data. Be patient.
 
-### Debugging packages
+## Working with iOS runtime packages
 
-To debug the packages locally, run:
+mac_toolchain uploads the default iOS runtime and the rest of Xcode to different
+CIPD packages. It's also able to download an Xcode package without any iOS
+runtime bundled.
+
+This is useful when we want to assemble an Xcode with it's core program and the
+only runtime needed for iOS test tasks in infra.
+
+Runtime related features are added at around mid 2021. Design and related
+changes were tracked in crbug.com/1191260.
+
+### Runtime types
+
+Two types of iOS runtimes are stored in CIPD path
+`infra_internal/ios/xcode/ios_runtime`, distinguished through different
+combinations of tags and refs:
+
+- `manually_uploaded` type: Uploaded with `mac_toolchain upload-runtime`
+ command.
+
+- `xcode_default` type: Uploaded when uploading an Xcode. Packages of this type
+are labeled with both runtime version & Xcode version.
+
+### Installing a runtime
+
+Use `mac_toolchain install-runtime`. Either or both runtime version and Xcode
+version are accepted as input. Please read `mac_toolchain help install-runtime`
+to learn the logic of choosing an appropriate runtime with given input
+combinations.
+
+### Creating a runtime package
+
+When uploading an Xcode, the runtime bundled in the Xcode version is uploaded
+automatically as an `xcode_default` package.
+
+Use `mac_toolchain upload-runtime` to upload a `manually_uploaded` runtime
+package. It's recommended to only use this command on the official runtimes
+downloaded through Xcode to system library
+`/Library/Developer/CoreSimulator/Profiles/Runtimes/`.
+
+### Installing an Xcode package without runtime
+
+Use following command to download an Xcode package without runtime
+
+```
+mac_toolchain install -kind ios -xcode-version SOME_VERSION -output-dir path/to/Xcode.app -with-runtime=False
+```
+
+This is specifically used in iOS tester machines across chromium infra where
+mac_toolchain is invoked to download Xcode. iOS test runner further downloads
+the requested runtime in task and assembles a full Xcode package with runtime
+from multiple packages downloaded (or read from cache).
+
+## Debugging packages
+
+To debug the packages locally (for e.g. uploading an Xcode), run:
 
     mac_toolchain package -output-dir path/to/dir -xcode-path /path/to/Xcode.app
 
-This will drop `mac.cipd` and `ios.cipd` files in `path/to/out` directory and
-will not try to upload the packages to CIPD server.
+This will drop `mac.cipd`, `ios.cipd`, `ios_runtime.cipd` files in `path/to/out`
+directory and will not try to upload the packages to CIPD server.
 
 You can then install Xcode from these local packages with:
 
     cipd pkg-deploy -root path/to/Xcode.app path/to/out/mac.cipd
     cipd pkg-deploy -root path/to/Xcode.app path/to/out/ios.cipd
+    cipd pkg-deploy -root path/to/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes path/to/out/ios_runtime.cipd
