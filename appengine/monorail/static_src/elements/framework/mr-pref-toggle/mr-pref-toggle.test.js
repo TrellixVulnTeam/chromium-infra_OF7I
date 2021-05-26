@@ -4,14 +4,17 @@
 
 import 'sinon';
 import {assert} from 'chai';
-import {MrCodeFontToggle} from './mr-code-font-toggle.js';
+import {MrPrefToggle} from './mr-pref-toggle.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
 
-describe('mr-code-font-toggle', () => {
+describe('mr-pref-toggle', () => {
   beforeEach(() => {
-    element = document.createElement('mr-code-font-toggle');
+    element = document.createElement('mr-pref-toggle');
+    element.label = "Code";
+    element.title = "Code font"
+    element.prefName = "code_font";
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call').returns(Promise.resolve({}));
   });
@@ -22,7 +25,7 @@ describe('mr-code-font-toggle', () => {
   });
 
   it('initializes', () => {
-    assert.instanceOf(element, MrCodeFontToggle);
+    assert.instanceOf(element, MrPrefToggle);
   });
 
   it('toggling font does not save when user is not logged in', async () => {
@@ -32,8 +35,7 @@ describe('mr-code-font-toggle', () => {
     await element.updateComplete;
 
     const chopsToggle = element.shadowRoot.querySelector('chops-toggle');
-
-    chopsToggle.click(); // Toggle it on.
+    chopsToggle.click();
     await element.updateComplete;
 
     sinon.assert.notCalled(prpcClient.call);

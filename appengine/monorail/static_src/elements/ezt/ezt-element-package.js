@@ -16,7 +16,7 @@ import 'elements/chops/chops-timestamp/chops-timestamp.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/issue-list/mr-chart/mr-chart.js';
 import 'elements/issue-detail/mr-flipper/mr-flipper.js';
-import 'elements/framework/mr-code-font-toggle/mr-code-font-toggle.js';
+import 'elements/framework/mr-pref-toggle/mr-pref-toggle.js';
 import 'elements/ezt/ezt-show-columns-connector.js';
 import 'elements/ezt/ezt-app-base.js';
 

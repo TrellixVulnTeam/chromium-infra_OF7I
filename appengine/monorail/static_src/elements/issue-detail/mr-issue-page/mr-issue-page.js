@@ -301,7 +301,7 @@ export class MrIssuePage extends connectStore(LitElement) {
     this.issue = {};
     this.issueRef = {};
     this.issuePermissions = [];
-    this.pref = {};
+    this.prefs = {};
     this.codeFont = false;
   }
 

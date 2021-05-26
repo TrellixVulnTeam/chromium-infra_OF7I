@@ -129,6 +129,25 @@ describe('mr-issue-header', () => {
     assert.isUndefined(findOptionWithText(element._issueOptions,
         'Edit issue description'));
   });
+
+  it('markdown toggle renders on enabled projects', async () => {
+    element.projectName = 'monkeyrail';
+
+    await element.updateComplete;
+
+    const chopsToggles = element.shadowRoot.querySelectorAll('mr-pref-toggle');
+    assert.equal(chopsToggles.length, 2);
+
+  });
+
+  it('markdown toggle does not render on disabled projects', async () => {
+    element.projectName = 'moneyrail';
+
+    await element.updateComplete;
+
+    const chopsToggles = element.shadowRoot.querySelectorAll('mr-pref-toggle');
+    assert.equal(chopsToggles.length, 1);
+  });
 });
 
 function findOptionWithText(issueOptions, text) {

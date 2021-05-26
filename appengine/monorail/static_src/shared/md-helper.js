@@ -2,7 +2,7 @@ import marked from 'marked';
 import DOMPurify from 'dompurify';
 
 /** @type {Set} Projects that defaults content as Markdown content. */
-const DEFAULT_MD_PROJECTS = new Set(['monkeyrail']);
+export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail']);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
 const BLOCKLIST = new Set();

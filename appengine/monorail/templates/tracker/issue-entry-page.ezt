@@ -500,8 +500,7 @@ $("star").addEventListener("click", function (event) {
     _TKR_toggleStarLocal($("star"), "star_input");
 });
 
-  const mrCodeFontToggle = document.createElement('mr-code-font-toggle');
-  mrCodeFontToggle.title = 'code font';
+  const mrCodeFontToggle = document.createElement('mr-pref-toggle');
   mrCodeFontToggle.style = 'float:right; margin: 3px;';
   [if-any code_font]
     mrCodeFontToggle.initialValue = true;
@@ -509,6 +508,9 @@ $("star").addEventListener("click", function (event) {
   [if-any logged_in_user]
     mrCodeFontToggle.userDisplayName = "[logged_in_user.email]";
   [end]
+  mrCodeFontToggle.label = "Code";
+  mrCodeFontToggle.title = "Code font";
+  mrCodeFontToggle.prefName = "code_font";
   $('mr-code-font-toggle-slot').appendChild(mrCodeFontToggle);
   mrCodeFontToggle.fetchPrefs();
   mrCodeFontToggle.addEventListener('font-toggle', function(e) {

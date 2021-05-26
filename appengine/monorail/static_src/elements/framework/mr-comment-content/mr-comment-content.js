@@ -8,6 +8,7 @@ import {autolink} from 'autolink.js';
 import {connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
+import * as userV0 from 'reducers/userV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {shouldRenderMarkdown, renderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
@@ -29,6 +30,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     this.projectName = '';
     this.author = '';
     this.overrideMarkdown = false;
+    this.prefs = {};
   }
 
   /** @override */
@@ -44,6 +46,7 @@ export class MrCommentContent extends connectStore(LitElement) {
       projectName: {type: String},
       author: {type: String},
       overrideMarkdown: {type: Boolean},
+      prefs: {type: Object},
     };
   }
 
@@ -74,7 +77,7 @@ export class MrCommentContent extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (shouldRenderMarkdown(
+    if (this._renderMarkdown && shouldRenderMarkdown(
       {project: this.projectName, author: this.author, override: this.overrideMarkdown})) {
       return html`${unsafeHTML(renderMarkdown(this.content))}`;
     }
@@ -102,12 +105,19 @@ export class MrCommentContent extends connectStore(LitElement) {
     return html`${templates}`;
   }
 
+  get _renderMarkdown() {
+    const {prefs} = this;
+    if (!prefs) return true;
+    return prefs.get('render_markdown') !== 'false';
+  }
+
   /** @override */
   stateChanged(state) {
     this.commentReferences = issueV0.commentReferences(state);
     this.projectName = issueV0.viewedIssueRef(state).projectName;
     this.revisionUrlFormat =
       projectV0.viewedPresentationConfig(state).revisionUrlFormat;
+    this.prefs = userV0.prefs(state);
   }
 }
 customElements.define('mr-comment-content', MrCommentContent);

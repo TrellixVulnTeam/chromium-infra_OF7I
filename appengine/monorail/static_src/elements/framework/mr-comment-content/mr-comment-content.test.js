@@ -61,14 +61,23 @@ describe('mr-comment-content', () => {
   });
 
   it('does render markdown', async () => {
-    element.content =
-      '### this is a header';
+    element.content = '### this is a header';
     element.overrideMarkdown = true;
 
     await element.updateComplete;
 
     const headerText = element.shadowRoot.querySelector('h3').textContent;
     assert.equal(headerText, 'this is a header');
+  });
 
-  })
+  it('does not render markdown when prefs are set to false', async () => {
+    element.prefs = new Map([['render_markdown', 'false']]);
+    element.overrideMarkdown = true;
+    element.content = '### this is a header';
+
+    await element.updateComplete;
+
+    const commentText = element.shadowRoot.textContent;
+    assert.equal(commentText, '### this is a header');
+  });
 });

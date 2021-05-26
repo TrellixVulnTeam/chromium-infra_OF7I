@@ -9,23 +9,25 @@ import * as userV0 from 'reducers/userV0.js';
 import 'elements/chops/chops-toggle/chops-toggle.js';
 
 /**
- * `<mr-code-font-toggle>`
+ * `<mr-pref-toggle>`
  *
- * Code font toggle button for the issue detail page.  Pressing it
- * causes issue description and comment text to switch to monospace
- * font and the setting is saved in the user's preferences.
+ * Toggle button for any user pref, including code font and
+ * rendering markdown.  For our purposes, pressing it causes
+ * issue description and comment text to switch either to
+ * monospace font or to render in markdown and the setting
+ * is saved in the user's preferences.
  */
-export class MrCodeFontToggle extends connectStore(LitElement) {
+export class MrPrefToggle extends connectStore(LitElement) {
   /** @override */
   render() {
     return html`
-      <chops-toggle
-        ?checked=${this._codeFont}
-        ?disabled=${this._prefsInFlight}
-        @checked-change=${this._toggleFont}
-        title="Code font"
-       >Code</chops-toggle>
-    `;
+        <chops-toggle
+          ?checked=${this._checked}
+          ?disabled=${this._prefsInFlight}
+          @checked-change=${this._togglePref}
+          title=${this.title}
+        >${this.label}</chops-toggle>
+      `;
   }
 
   /** @override */
@@ -35,6 +37,9 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
       userDisplayName: {type: String},
       initialValue: {type: Boolean},
       _prefsInFlight: {type: Boolean},
+      label: {type: String},
+      title: {type: String},
+      prefName: {type: String},
     };
   }
 
@@ -50,6 +55,9 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     super();
     this.initialValue = false;
     this.userDisplayName = '';
+    this.label = '';
+    this.title = '';
+    this.prefName = '';
   }
 
   // Used by the legacy EZT page to interact with Redux.
@@ -57,10 +65,10 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     store.dispatch(userV0.fetchPrefs());
   }
 
-  get _codeFont() {
+  get _checked() {
     const {prefs, initialValue} = this;
     if (!prefs) return initialValue;
-    return prefs.get('code_font') === 'true';
+    return prefs.get(this.prefName) === 'true';
   }
 
   /**
@@ -69,12 +77,12 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
    * @fires CustomEvent#font-toggle
    * @private
    */
-  _toggleFont(e) {
+  _togglePref(e) {
     const checked = e.detail.checked;
     this.dispatchEvent(new CustomEvent('font-toggle', {detail: {checked}}));
 
-    const newPrefs = [{name: 'code_font', value: '' + checked}];
+    const newPrefs = [{name: this.prefName, value: '' + checked}];
     store.dispatch(userV0.setPrefs(newPrefs, !!this.userDisplayName));
   }
 }
-customElements.define('mr-code-font-toggle', MrCodeFontToggle);
+customElements.define('mr-pref-toggle', MrPrefToggle);

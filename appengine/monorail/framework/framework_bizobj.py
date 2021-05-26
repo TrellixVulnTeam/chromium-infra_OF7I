@@ -408,6 +408,7 @@ def IsValidHotlistName(s):
 
 USER_PREF_DEFS = {
   'code_font': re.compile('(true|false)'),
+  'render_markdown': re.compile('(true|false)'),
 
   # The are for dismissible cues.  True means the user has dismissed them.
   'privacy_click_through': re.compile('(true|false)'),

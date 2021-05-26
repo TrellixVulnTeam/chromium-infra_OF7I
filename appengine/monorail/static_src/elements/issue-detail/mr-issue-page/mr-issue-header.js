@@ -15,12 +15,13 @@ import {userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
-import 'elements/framework/mr-code-font-toggle/mr-code-font-toggle.js';
+import 'elements/framework/mr-pref-toggle/mr-pref-toggle.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
   ISSUE_FLAGSPAM_PERMISSION} from 'shared/consts/permissions.js';
 import {issueToIssueRef} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import {DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
 
 const DELETE_ISSUE_CONFIRMATION_NOTICE = `\
 Normally, you would just close issues by setting their status to a closed value.
@@ -64,6 +65,9 @@ export class MrIssueHeader extends connectStore(LitElement) {
           padding-left: 8px;
           margin-left: 4px;
           font-size: var(--chops-main-font-size);
+        }
+        mr-pref-toggle {
+          margin-right: 2px;
         }
         .issue-actions {
           min-width: fit-content;
@@ -136,6 +140,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
   render() {
     const reporterIsMember = userIsMember(
         this.issue.reporterRef, this.issue.projectName, this.usersProjects);
+    const markdownEnabled = DEFAULT_MD_PROJECTS.has(this.projectName);
     return html`
       <div class="main-text-outer">
         <div class="main-text">
@@ -160,9 +165,19 @@ export class MrIssueHeader extends connectStore(LitElement) {
       <div class="issue-actions">
         <div>
           <mr-crbug-link .issue=${this.issue}></mr-crbug-link>
-          <mr-code-font-toggle
+          <mr-pref-toggle
             .userDisplayName=${this.userDisplayName}
-          ></mr-code-font-toggle>
+            label="Code"
+            title="Code font"
+            prefName="code_font"
+          ></mr-pref-toggle>
+          ${markdownEnabled ? html`
+            <mr-pref-toggle
+              .userDisplayName=${this.userDisplayName}
+              label="Markdown"
+              title="Render in markdown"
+              prefName="render_markdown"
+            ></mr-pref-toggle> ` : ''}
         </div>
         ${this._issueOptions.length ? html`
           <mr-dropdown
@@ -184,6 +199,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
       issuePermissions: {type: Object},
       isRestricted: {type: Boolean},
       projectTemplates: {type: Array},
+      projectName: {type: String},
       usersProjects: {type: Object},
       _action: {type: String},
       _targetProjectError: {type: String},
@@ -195,6 +211,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     super();
     this.issuePermissions = [];
     this.projectTemplates = [];
+    this.projectName = '';
     this.issue = {};
     this.usersProjects = new Map();
     this.isRestricted = false;
@@ -205,6 +222,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     this.issue = issueV0.viewedIssue(state);
     this.issuePermissions = issueV0.permissions(state);
     this.projectTemplates = projectV0.viewedTemplates(state);
+    this.projectName = projectV0.viewedProjectName(state);
     this.usersProjects = userV0.projectsPerUser(state);
 
     const restrictions = issueV0.restrictions(state);
