@@ -10,9 +10,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	gerrs "errors"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -78,6 +80,24 @@ func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, hos
 		return "", err
 	}
 	return contents.Contents, err
+}
+
+// DownloadFileFromGitiles downloads a file from Gitiles to a specified path.
+func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Client, host, project, ref, path, saveToPath string) error {
+	contents, err := DownloadFileFromGitiles(ctx, authedClient, host, project, ref, path)
+	if err != nil {
+		return err
+	}
+
+	// Use existing file mode if the file already exists.
+	fileMode := os.FileMode(int(0644))
+	if fileData, err := os.Stat(saveToPath); err != nil && !gerrs.Is(err, os.ErrNotExist) {
+		return err
+	} else if fileData != nil {
+		fileMode = fileData.Mode()
+	}
+
+	return os.WriteFile(saveToPath, []byte(contents), fileMode)
 }
 
 func obtainGitilesBytes(ctx context.Context, gc gitilespb.GitilesClient, project string, ref string) ([]byte, error) {
