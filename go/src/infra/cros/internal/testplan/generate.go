@@ -44,6 +44,12 @@ func Generate(
 		logging.Infof(ctx, "found %d relevant SourceTestPlans", len(sourceTestPlans))
 	} else {
 		logging.Infof(ctx, "using given SourceTestPlans")
+
+		for _, plan := range sourceTestPlans {
+			if len(plan.PathRegexps) > 0 || len(plan.PathRegexpExcludes) > 0 {
+				return nil, errors.New("SourceTestPlans passed directly to generate should not set path_regexps")
+			}
+		}
 	}
 
 	for _, plan := range sourceTestPlans {

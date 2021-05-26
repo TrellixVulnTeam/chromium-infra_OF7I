@@ -238,37 +238,65 @@ func TestGenerateWithPlans(t *testing.T) {
 	}
 }
 
-func TestGenerateWithPlansAndChangeRevs(t *testing.T) {
+func TestGenerateErrors(t *testing.T) {
 	ctx := context.Background()
 
-	sourceTestPlans := []*plan.SourceTestPlan{
+	tests := []struct {
+		name            string
+		sourceTestPlans []*plan.SourceTestPlan
+		changeRevs      []*gerrit.ChangeRev
+	}{
 		{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_HARDWARE,
+			name: "changeRevs and plans non-empty",
+			sourceTestPlans: []*plan.SourceTestPlan{
+				{
+					EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+						plan.SourceTestPlan_HARDWARE,
+					},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					},
+					TestTagExcludes: []string{"flaky"},
+				},
 			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			changeRevs: []*gerrit.ChangeRev{
+				{
+					ChangeRevKey: gerrit.ChangeRevKey{
+						Host:      "chromium-review.googlesource.com",
+						ChangeNum: 123,
+					},
+					Project: "chromium/testprojectA",
+					Ref:     "refs/changes/23/123/5",
+					Files: []string{
+						"go/src/infra/cros/internal/testplan/testdata/a/b/test1.txt",
+						"go/src/infra/cros/internal/testplan/testdata/a/b/test2.txt",
+					},
+				},
 			},
-			TestTagExcludes: []string{"flaky"},
+		},
+		{
+			name: "plans has paths set",
+			sourceTestPlans: []*plan.SourceTestPlan{
+				{
+					EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+						plan.SourceTestPlan_HARDWARE,
+					},
+					Requirements: &plan.SourceTestPlan_Requirements{
+						KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+					},
+					TestTagExcludes: []string{"flaky"},
+					PathRegexps:     []string{"a/b/c"},
+				},
+			},
+			changeRevs: nil,
 		},
 	}
 
-	changeRevs := []*gerrit.ChangeRev{
-		{
-			ChangeRevKey: gerrit.ChangeRevKey{
-				Host:      "chromium-review.googlesource.com",
-				ChangeNum: 123,
-			},
-			Project: "chromium/testprojectA",
-			Ref:     "refs/changes/23/123/5",
-			Files: []string{
-				"go/src/infra/cros/internal/testplan/testdata/a/b/test1.txt",
-				"go/src/infra/cros/internal/testplan/testdata/a/b/test2.txt",
-			},
-		},
-	}
-
-	if _, err := Generate(ctx, changeRevs, sourceTestPlans, buildSummaryList, dutAttributeList); err == nil {
-		t.Error("Expected Generate to return error when changeRevs and sourceTestPlans are non-empty.")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := Generate(ctx, test.changeRevs, test.sourceTestPlans, buildSummaryList, dutAttributeList); err == nil {
+				t.Error("Expected error from Generate")
+			}
+		})
 	}
 }
