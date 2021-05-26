@@ -1,0 +1,12 @@
+package: chromiumos/infra/setup_project/${platform}
+description: Tool for project setup for partners
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+go_packages:
+  - infra/cros/cmd/setup_project
+root: ../../go/bin
+data:
+  - file: setup_project${exe_suffix}
+  - version_file: .versions/setup_project${exe_suffix}.cipd_version
