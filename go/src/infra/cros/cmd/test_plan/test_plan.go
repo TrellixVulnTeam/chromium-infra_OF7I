@@ -11,13 +11,9 @@ import (
 	"github.com/maruel/subcommands"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	igerrit "infra/cros/internal/gerrit"
-	"infra/cros/internal/testplan"
-	"infra/tools/dirmd"
-	dirmdpb "infra/tools/dirmd/proto"
-
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	testpb "go.chromium.org/chromiumos/config/go/test/api"
+	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
@@ -27,6 +23,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+	igerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/testplan"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 var logCfg = gologger.LoggerConfig{
@@ -61,23 +61,28 @@ func app(authOpts auth.Options) *cli.Application {
 
 func cmdGenerate(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "generate -cl CL1 [-cl CL2] -out OUTPUT",
+		UsageLine: "generate (-cl CL1 [-cl CL2] | -plan PLAN1 [-plan PLAN2]) -out OUTPUT",
 		ShortDesc: "generate a test plan",
 		LongDesc: text.Doc(`
 		Generate a test plan.
 
-		Computes test config from "DIR_METADATA" files and generates a test plan
-		based on the files the patchsets are touching.
+		Computes test config from "DIR_METADATA" files or SourceTestPlan text
+		protos and generates a test plan.
 	`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &generateRun{}
 			r.authFlags = authcli.Flags{}
 			r.authFlags.Register(r.GetFlags(), authOpts)
 			r.Flags.Var(luciflag.StringSlice(&r.cls), "cl", text.Doc(`
-			CL URL for the patchsets being tested. Must be specified at least once.
+			CL URL for the patchsets being tested. Must be specified at least once
+			if "plan" is not specified.
 
 			Example: https://chromium-review.googlesource.com/c/chromiumos/platform2/+/123456
 		`))
+			r.Flags.Var(luciflag.StringSlice(&r.planPaths), "plan", text.Doc(`
+			Text proto file with a SourceTestPlan to use. Must be specified at least
+			once if "cl" is not specified.
+			`))
 			r.Flags.StringVar(&r.out, "out", "", "Path to the output test plan")
 
 			r.logLevel = logging.Info
@@ -94,6 +99,7 @@ type generateRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	cls       []string
+	planPaths []string
 	out       string
 	logLevel  logging.Level
 }
@@ -211,13 +217,25 @@ func writeRules(rules []*testpb.CoverageRule, outPath string) error {
 	return nil
 }
 
-func (r *generateRun) run(ctx context.Context) error {
-	if len(r.cls) == 0 {
-		return errors.New("-cl must be specified at least once")
+func (r *generateRun) validateFlags() error {
+	if len(r.cls) == 0 && len(r.planPaths) == 0 {
+		return errors.New("-cl or -plan must be specified at least once")
+	}
+
+	if len(r.cls) > 0 && len(r.planPaths) > 0 {
+		return errors.New("-cl and -plan cannot both be specified")
 	}
 
 	if r.out == "" {
 		return errors.New("-out is required")
+	}
+
+	return nil
+}
+
+func (r *generateRun) run(ctx context.Context) error {
+	if err := r.validateFlags(); err != nil {
+		return err
 	}
 
 	ctx = logging.SetLevel(ctx, r.logLevel)
@@ -232,11 +250,33 @@ func (r *generateRun) run(ctx context.Context) error {
 		return err
 	}
 
-	logging.Infof(ctx, "fetching metadata for CLs")
+	var changeRevs []*igerrit.ChangeRev
 
-	changeRevs, err := getChangeRevs(ctx, authedClient, r.cls)
-	if err != nil {
-		return err
+	var plans []*plan.SourceTestPlan
+
+	if len(r.cls) > 0 {
+		logging.Infof(ctx, "fetching metadata for CLs")
+
+		changeRevs, err = getChangeRevs(ctx, authedClient, r.cls)
+		if err != nil {
+			return err
+		}
+	} else {
+		logging.Infof(ctx, "reading plan text protos")
+
+		for _, planPath := range r.planPaths {
+			fileBytes, err := os.ReadFile(planPath)
+			if err != nil {
+				return err
+			}
+
+			plan := &plan.SourceTestPlan{}
+			if err := protov1.UnmarshalText(string(fileBytes), plan); err != nil {
+				return err
+			}
+
+			plans = append(plans, plan)
+		}
 	}
 
 	logging.Infof(ctx, "fetching build metadata")
@@ -257,7 +297,9 @@ func (r *generateRun) run(ctx context.Context) error {
 
 	logging.Debugf(ctx, "fetched dut attributes:\n%s", dutAttributeList)
 
-	rules, err := testplan.Generate(ctx, changeRevs, buildSummaryList, dutAttributeList)
+	rules, err := testplan.Generate(
+		ctx, changeRevs, plans, buildSummaryList, dutAttributeList,
+	)
 	if err != nil {
 		return err
 	}

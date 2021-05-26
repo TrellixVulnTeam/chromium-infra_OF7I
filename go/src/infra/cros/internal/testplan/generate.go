@@ -2,6 +2,7 @@ package testplan
 
 import (
 	"context"
+	"errors"
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	testpb "go.chromium.org/chromiumos/config/go/test/api"
@@ -10,28 +11,40 @@ import (
 	"infra/cros/internal/gerrit"
 )
 
+// Generate computes CoverageRules based on ChangeRevs or SourceTestPlans.
+//
+// Exactly one of changeRevs and sourceTestPlans must be non-empty.
+// buildSummaryList and dutAttributeList must be non-nil.
 func Generate(
-	ctx context.Context, changeRevs []*gerrit.ChangeRev,
+	ctx context.Context, changeRevs []*gerrit.ChangeRev, sourceTestPlans []*plan.SourceTestPlan,
 	buildSummaryList *buildpb.SystemImage_BuildSummaryList,
 	dutAttributeList *testpb.DutAttributeList,
 ) ([]*testpb.CoverageRule, error) {
-	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
-	if err != nil {
-		return nil, err
+	if len(changeRevs) > 0 && len(sourceTestPlans) > 0 {
+		return nil, errors.New("change revs and source test plans should not both be passed to generate")
 	}
 
-	var sourceTestPlans []*plan.SourceTestPlan
+	if len(changeRevs) > 0 {
+		logging.Infof(ctx, "calculating SourceTestPlans based on ChangeRevs")
 
-	for _, pmi := range projectMappingInfos {
-		relevantSTPs, err := relevantSourceTestPlans(ctx, pmi.Mapping, pmi.AffectedFiles)
+		projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
 		if err != nil {
 			return nil, err
 		}
 
-		sourceTestPlans = append(sourceTestPlans, relevantSTPs...)
-	}
+		for _, pmi := range projectMappingInfos {
+			relevantSTPs, err := relevantSourceTestPlans(ctx, pmi.Mapping, pmi.AffectedFiles)
+			if err != nil {
+				return nil, err
+			}
 
-	logging.Infof(ctx, "found %d relevant SourceTestPlans", len(sourceTestPlans))
+			sourceTestPlans = append(sourceTestPlans, relevantSTPs...)
+		}
+
+		logging.Infof(ctx, "found %d relevant SourceTestPlans", len(sourceTestPlans))
+	} else {
+		logging.Infof(ctx, "using given SourceTestPlans")
+	}
 
 	for _, plan := range sourceTestPlans {
 		logging.Debugf(ctx, "relevant SourceTestPlan: %q", plan)

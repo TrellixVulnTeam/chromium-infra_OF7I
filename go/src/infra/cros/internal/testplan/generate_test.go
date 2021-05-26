@@ -9,6 +9,7 @@ import (
 
 	buildpb "go.chromium.org/chromiumos/config/go/build/api"
 	testpb "go.chromium.org/chromiumos/config/go/test/api"
+	"go.chromium.org/chromiumos/config/go/test/plan"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
@@ -77,7 +78,9 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	rules, err := Generate(ctx, changeRevs, buildSummaryList, dutAttributeList)
+	var sourceTestPlans []*plan.SourceTestPlan
+
+	rules, err := Generate(ctx, changeRevs, sourceTestPlans, buildSummaryList, dutAttributeList)
 
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
@@ -134,5 +137,138 @@ func TestGenerate(t *testing.T) {
 		cmpopts.EquateEmpty(),
 	); diff != "" {
 		t.Errorf("generate returned unexpected diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestGenerateWithPlans(t *testing.T) {
+	ctx := context.Background()
+
+	buildSummaryList := &buildpb.SystemImage_BuildSummaryList{
+		Values: []*buildpb.SystemImage_BuildSummary{
+			buildSummary("project1", "4.14", "chipsetA", "P"),
+			buildSummary("project2", "4.14", "chipsetB", "R"),
+			buildSummary("project3", "5.4", "chipsetA", ""),
+		},
+	}
+
+	dutAttributeList := &testpb.DutAttributeList{
+		DutAttributes: []*testpb.DutAttribute{
+			{
+				Id:        &testpb.DutAttribute_Id{Value: "fingerprint_location"},
+				FieldPath: "design_list.configs.hardware_features.fingerprint.location",
+			},
+			{
+				Id:        &testpb.DutAttribute_Id{Value: "system_build_target"},
+				FieldPath: "software_configs.system_build_target.portage_build_target.overlay_name",
+			},
+		},
+	}
+
+	sourceTestPlans := []*plan.SourceTestPlan{
+		{
+			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+				plan.SourceTestPlan_HARDWARE,
+			},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			},
+			TestTagExcludes: []string{"flaky"},
+		},
+	}
+
+	var changeRevs []*gerrit.ChangeRev
+
+	rules, err := Generate(ctx, changeRevs, sourceTestPlans, buildSummaryList, dutAttributeList)
+
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	expectedRules := []*testpb.CoverageRule{
+		{
+			Name: "kernel:4.14",
+			DutCriteria: []*testpb.DutCriterion{
+				{
+					AttributeId: &testpb.DutAttribute_Id{
+						Value: "system_build_target",
+					},
+					Values: []string{"project1", "project2"},
+				},
+			},
+			TestSuites: []*testpb.TestSuite{
+				{
+					TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+						TagExcludes: []string{"flaky"},
+					},
+				},
+			},
+		},
+		{
+			Name: "kernel:5.4",
+			DutCriteria: []*testpb.DutCriterion{
+				{
+					AttributeId: &testpb.DutAttribute_Id{
+						Value: "system_build_target",
+					},
+					Values: []string{"project3"},
+				},
+			},
+			TestSuites: []*testpb.TestSuite{
+				{
+					TestCaseTagCriteria: &testpb.TestSuite_TestCaseTagCriteria{
+						TagExcludes: []string{"flaky"},
+					},
+				},
+			},
+		},
+	}
+
+	if diff := cmp.Diff(
+		expectedRules,
+		rules,
+		cmpopts.SortSlices(func(i, j *testpb.CoverageRule) bool {
+			return i.Name < j.Name
+		}),
+		cmpopts.SortSlices(func(i, j string) bool {
+			return i < j
+		}),
+		cmpopts.EquateEmpty(),
+	); diff != "" {
+		t.Errorf("generate returned unexpected diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestGenerateWithPlansAndChangeRevs(t *testing.T) {
+	ctx := context.Background()
+
+	sourceTestPlans := []*plan.SourceTestPlan{
+		{
+			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
+				plan.SourceTestPlan_HARDWARE,
+			},
+			Requirements: &plan.SourceTestPlan_Requirements{
+				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			},
+			TestTagExcludes: []string{"flaky"},
+		},
+	}
+
+	changeRevs := []*gerrit.ChangeRev{
+		{
+			ChangeRevKey: gerrit.ChangeRevKey{
+				Host:      "chromium-review.googlesource.com",
+				ChangeNum: 123,
+			},
+			Project: "chromium/testprojectA",
+			Ref:     "refs/changes/23/123/5",
+			Files: []string{
+				"go/src/infra/cros/internal/testplan/testdata/a/b/test1.txt",
+				"go/src/infra/cros/internal/testplan/testdata/a/b/test2.txt",
+			},
+		},
+	}
+
+	if _, err := Generate(ctx, changeRevs, sourceTestPlans, buildSummaryList, dutAttributeList); err == nil {
+		t.Error("Expected Generate to return error when changeRevs and sourceTestPlans are non-empty.")
 	}
 }
