@@ -1,0 +1,9 @@
+name: chromeperf/alert_groups
+extends: ../../base.yaml
+
+contextdir: ../../../../go/src/infra/chromeperf/alert_groups_server/docker
+deterministic: true
+
+build:
+  - go_binary: infra/chromeperf/alert_groups_server
+    dest: ${contextdir}/bin/alert_groups_server
