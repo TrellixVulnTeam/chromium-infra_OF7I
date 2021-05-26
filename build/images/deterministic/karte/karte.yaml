@@ -1,0 +1,16 @@
+name: karte/karte-service
+extends: ../../base.yaml
+
+dockerfile: ../../../../go/src/infra/cros/karte/cmd/karteserver/Dockerfile
+deterministic: true
+
+build:
+  # desugars into command: go build infra/cros/karte/cmd/karteserver
+  # rooted at the directory containing:
+  #
+  #   - infra
+  #   - go.chromium.org
+  #
+  - go_binary: infra/cros/karte/cmd/karteserver
+    # ContextDir defaults to the directory with Dockerfile
+    dest: ${contextdir}/karteserver
