@@ -5,6 +5,8 @@
 package tlw
 
 import (
+	"context"
+
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 
@@ -21,13 +23,13 @@ func NewTLW(ufs, csa string) Access {
 }
 
 // Ping the device related to resource name.
-func (c *tlwClient) Ping(resourceName string) (bool, error) {
+func (c *tlwClient) Ping(ctx context.Context, resourceName string) (bool, error) {
 	// return Ping(resourceName)
 	return true, nil
 }
 
 // Execute command on the device related to resource name.
-func (c *tlwClient) Run(resourceName, command string) *RunResult {
+func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *RunResult {
 	return &RunResult{
 		Command:  command,
 		ExitCode: 1,
@@ -38,7 +40,7 @@ func (c *tlwClient) Run(resourceName, command string) *RunResult {
 
 // Execute command on servo related to resource name.
 // Commands will be run against servod on servo-host.
-func (c *tlwClient) CallServod(resourceName, command string) *tls.CallServoResponse {
+func (c *tlwClient) CallServod(ctx context.Context, resourceName, command string) *tls.CallServoResponse {
 	return &tls.CallServoResponse{
 		Value: &xmlrpc.Value{
 			ScalarOneof: &xmlrpc.Value_String_{
@@ -50,27 +52,27 @@ func (c *tlwClient) CallServod(resourceName, command string) *tls.CallServoRespo
 }
 
 // Copy file to destination device from local.
-func (c *tlwClient) CopyFileTo(req *CopyRequest) error {
+func (c *tlwClient) CopyFileTo(ctx context.Context, req *CopyRequest) error {
 	return status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Copy file from destination device to local.
-func (c *tlwClient) CopyFileFrom(req *CopyRequest) error {
+func (c *tlwClient) CopyFileFrom(ctx context.Context, req *CopyRequest) error {
 	return status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Copy directory to destination device from local, recursively.
-func (c *tlwClient) CopyDirectoryTo(req *CopyRequest) error {
+func (c *tlwClient) CopyDirectoryTo(ctx context.Context, req *CopyRequest) error {
 	return status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Copy directory from destination device to local, recursively.
-func (c *tlwClient) CopyDirectoryFrom(req *CopyRequest) error {
+func (c *tlwClient) CopyDirectoryFrom(ctx context.Context, req *CopyRequest) error {
 	return status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Manage power supply for requested.
-func (c *tlwClient) SetPowerSupply(req *SetPowerSupplyRequest) *SetPowerSupplyResponse {
+func (c *tlwClient) SetPowerSupply(ctx context.Context, req *SetPowerSupplyRequest) *SetPowerSupplyResponse {
 	return &SetPowerSupplyResponse{
 		Status: PowerSupplyResponseStatusError,
 		// Error details
@@ -79,16 +81,16 @@ func (c *tlwClient) SetPowerSupply(req *SetPowerSupplyRequest) *SetPowerSupplyRe
 }
 
 // Provide list of resources names related to target unit.
-func (c *tlwClient) ListResourcesForUnit(unitName string) ([]string, error) {
+func (c *tlwClient) ListResourcesForUnit(ctx context.Context, unitName string) ([]string, error) {
 	return nil, status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Get DUT info per requested resource name from inventory.
-func (c *tlwClient) GetDut(resourceName string) *tls.Dut {
-	return nil
+func (c *tlwClient) GetDut(ctx context.Context, resourceName string) (*Dut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "Not implemented")
 }
 
 // Update DUT info into inventory.
-func (c *tlwClient) UpdateDut(dut *tls.Dut) error {
+func (c *tlwClient) UpdateDut(ctx context.Context, dut *Dut) error {
 	return status.Errorf(codes.Unimplemented, "Not implemented")
 }

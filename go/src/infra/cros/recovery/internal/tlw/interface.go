@@ -6,6 +6,8 @@
 package tlw
 
 import (
+	"context"
+
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 )
 
@@ -17,29 +19,29 @@ import (
 // 	Resource Name: TestDevice256, CustomApV3.0
 type Access interface {
 	// Ping the device related to resource name.
-	Ping(resourceName string) (bool, error)
+	Ping(ctx context.Context, resourceName string) (bool, error)
 	// Execute command on the device related to resource name.
-	Run(resourceName, command string) *RunResult
+	Run(ctx context.Context, resourceName, command string) *RunResult
 	// Execute command on servo related to resource name.
 	// Commands will be run against servod on servo-host.
-	CallServod(resourceName, command string) *tls.CallServoResponse
+	CallServod(ctx context.Context, resourceName, command string) *tls.CallServoResponse
 	// Copy file to destination device from local.
-	CopyFileTo(req *CopyRequest) error
+	CopyFileTo(ctx context.Context, req *CopyRequest) error
 	// Copy file from destination device to local.
-	CopyFileFrom(req *CopyRequest) error
+	CopyFileFrom(ctx context.Context, req *CopyRequest) error
 	// Copy directory to destination device from local, recursively.
-	CopyDirectoryTo(req *CopyRequest) error
+	CopyDirectoryTo(ctx context.Context, req *CopyRequest) error
 	// Copy directory from destination device to local, recursively.
-	CopyDirectoryFrom(req *CopyRequest) error
+	CopyDirectoryFrom(ctx context.Context, req *CopyRequest) error
 	// Manage power supply for requested.
-	SetPowerSupply(req *SetPowerSupplyRequest) *SetPowerSupplyResponse
+	SetPowerSupply(ctx context.Context, req *SetPowerSupplyRequest) *SetPowerSupplyResponse
 	// Provide list of resources names related to target unit.
 	// All test and task scheduling against the target unit which can link to 1 or more resources.
-	ListResourcesForUnit(unitName string) ([]string, error)
+	ListResourcesForUnit(ctx context.Context, unitName string) ([]string, error)
 	// Get DUT info per requested resource name from inventory.
-	GetDut(resourceName string) *tls.Dut
+	GetDut(ctx context.Context, resourceName string) (*Dut, error)
 	// Update DUT info into inventory.
-	UpdateDut(dut *tls.Dut) error
+	UpdateDut(ctx context.Context, dut *Dut) error
 }
 
 // RunResult represents result of executed command.
@@ -57,7 +59,7 @@ type RunResult struct {
 	Stderr string
 }
 
-// CopyRequest represent data to perform copy data from/to resource.
+// CopyRequest represents data to perform copy data from/to resource.
 type CopyRequest struct {
 	// Resource name
 	Resource string
@@ -88,7 +90,7 @@ type SetPowerSupplyRequest struct {
 	State PowerSupplyAction
 }
 
-// PowerSupplyStatus represent response status from attempt to changes state of power supplier.
+// PowerSupplyStatus represents response status from attempt to changes state of power supplier.
 type PowerSupplyResponseStatus int
 
 const (
@@ -108,4 +110,181 @@ type SetPowerSupplyResponse struct {
 	Status PowerSupplyResponseStatus
 	// Error details
 	Reason string
+}
+
+// DUTSetupType describes different DUT setups.
+type DUTSetupType string
+
+const (
+	DUTSetupTypeDefault DUTSetupType = "Default"
+	// Special setup of servo-host represented as labstation.
+	DUTSetupTypeLabstation DUTSetupType = "Labstation"
+	// Special setup for routers.
+	DUTSetupTypeJetstream DUTSetupType = "Jetstream"
+)
+
+// PowerSupplyType describes different power supply types for a DUT.
+type PowerSupplyType string
+
+const (
+	PowerSupplyTypeUnspecified PowerSupplyType = "Unspecified"
+	// Primary power source of the devices is wall-power. Devices does not have a battery.
+	PowerSupplyTypeACOnly PowerSupplyType = "ACOnly"
+	// Primary power source of the devices is battery. Devices still connected to wall-power to charge it.
+	PowerSupplyTypeBattery PowerSupplyType = "Battery"
+)
+
+// Dut holds info about setup used as testbed.
+type Dut struct {
+	// Name is the resource name for the DUT.
+	Name string
+	// Board name of the DUT.
+	Board string
+	// Model name of the DUT.
+	Model string
+	// Hardware identifier.
+	Hwid string
+	// Serial number of the DUT.
+	SerialNumber string
+	// SetupType describes the setup of the DUT, which affects how it is verified/repaired.
+	SetupType DUTSetupType
+	// PowerSupplyType describes the DUT's power supply type.
+	PowerSupplyType PowerSupplyType
+	// Physical parts of DUT.
+	// Internal storage info.
+	Storage *DutStorage
+	// Battery info (if applicable).
+	Battery *DutBattery
+}
+
+// HardwareState describes the state of hardware components.
+type HardwareState string
+
+const (
+	// Keep for all unknown state by default.
+	HardwareStateUnknown HardwareState = "UNKNOWN"
+	// Hardware is in good shape and pass all verifiers.
+	HardwareStateNormal HardwareState = "NORMAL"
+	// Hardware is still good but close to became bad.
+	// Example: DUT storage when usage reached 98% usage limit.
+	HardwareStateAcceptable HardwareState = "ACCEPTABLE"
+	// Hardware is broken, bad or reached limit when it has to be replaced.
+	HardwareStateNeedReplacement HardwareState = "NEED_REPLACEMENT"
+	// Hardware expected to be present but not detected.
+	HardwareStateNotDetected HardwareState = "NOT_DETECTED"
+)
+
+// StorageType describes which type or storage used on the DUT.
+type StorageType string
+
+const (
+	StorageTypeUnspecified StorageType = "Unspecified"
+	StorageTypeSSD         StorageType = "SSD"
+	StorageTypeHDD         StorageType = "HDD"
+	StorageTypeMMC         StorageType = "MMC"
+	StorageTypeNVME        StorageType = "NVME"
+	StorageTypeUFS         StorageType = "UFS"
+)
+
+// DutStorage holds info about internal storage of the DUT.
+type DutStorage struct {
+	// State of the component.
+	State HardwareState
+	// Type of storage used on device.
+	Type StorageType
+}
+
+// DutBattery holds info about battery of the DUT.
+type DutBattery struct {
+	// State of the component.
+	State HardwareState
+}
+
+// ServoHost holds info about host to manage servod services and verify connected servo devices.
+// Example: labstation, servo-host container.
+type ServoHost struct {
+	// Name is the resource name.
+	Name string
+	// State of the USB-key connected to the servo.
+	UsbkeyState HardwareState
+	// Servo device specified for this DUT.
+	Servo *Servo
+	// Port user on the host to run servod daemon. Expected value between 9900 and 9999.
+	ServodPort int
+}
+
+// ServoState describes the state of setup/communication issue related to servo functionality provided by servo.
+type ServoState string
+
+const (
+	ServoStateUnspecified ServoState = "UNSPECIFIED"
+	// Device and software on it is working as expected.
+	ServoStateWorking ServoState = "WORKING"
+	// Configuration for device is not provided.
+	ServoStateMissingConfig ServoState = "MISSING_CONFIG"
+	// Configuration contains incorrect information.
+	ServoStateWrongConfig ServoState = "WRONG_CONFIG"
+	// Device is not connected/plugged.
+	ServoStateNotConnected ServoState = "NOT_CONNECTED"
+	// Device is not reachable over ssh.
+	ServoStateNoSSH ServoState = "NO_SSH"
+	// Device is broken or not working as expected. the state used if no specified state for the issue.
+	ServoStateBroken ServoState = "BROKEN"
+	// Device cannot be repaired or required manual attention to fix/replace it.
+	ServoStateNeedReplacement ServoState = "NEED_REPLACEMENT"
+	// Cr50 console missing or unresponsive.
+	ServoStateCr50ConsoleMissing ServoState = "CR50_CONSOLE_MISSING"
+	// Servod daemon cannot start on servo-host because cr50 testlab not enabled.
+	ServoStateCCDTestlabIssue ServoState = "CCD_TESTLAB_ISSUE"
+	// Servod daemon cannot start on servo-host.
+	ServoStateServodIssue ServoState = "SERVOD_ISSUE"
+	// Device lid is not open.
+	ServoStateLidOpenIssue ServoState = "LID_OPEN_FAILED"
+	// The ribbon cable between servo and DUT is broken or not connected.
+	ServoStateBadRibbonCable ServoState = "BAD_RIBBON_CABLE"
+	// The EC on the DUT has issue.
+	ServoStateECBroken ServoState = "EC_BROKEN"
+	// Servo is not connected to the DUT.
+	ServoStateDUTNotConnected ServoState = "DUT_NOT_CONNECTED"
+	// Some component in servo-topology missed or not detected.
+	ServoStateTopologyIssue ServoState = "TOPOLOGY_ISSUE"
+	// SBU voltage issues effect CR50 detection.
+	ServoStateSBULowVoltage ServoState = "SBU_LOW_VOLTAGE"
+	// CR50 SBU voltage detected but device was not enumerated.
+	ServoStateCr50NotEnumerated ServoState = "CR50_NOT_ENUMERATED"
+	// Servo serial mismatch, when servo not detected and another serial detected on previous used port.
+	ServoStateServoSerialMismatch ServoState = "SERVO_SERIAL_MISMATCH"
+	// Issue to connect to servod by XMLRPC proxy.
+	ServoStateServodProxyIssue ServoState = "SERVOD_PROXY_ISSUE"
+	// Issue related to servo-host. Timeout to start servod or issue with detecting devices.
+	ServoStateServoHostIssue ServoState = "SERVO_HOST_ISSUE"
+	// Issue related to servo_updater on the servo-host.
+	ServoStateServoUpdaterIssue ServoState = "SERVO_UPDATER_ISSUE"
+)
+
+// ServoFirmwareChannel describes the state of setup/communication issue related to servo functionality provided by servo.
+type ServoFirmwareChannel string
+
+const (
+	// Default channel.
+	// Servo firmware from Stable channel.
+	ServoFirmwareChannelStable ServoFirmwareChannel = "stable"
+	// The previous Servo firmware from Stable channel.
+	ServoFirmwareChannelPrev ServoFirmwareChannel = "prev"
+	// Servo firmware from Dev channel.
+	ServoFirmwareChannelDev ServoFirmwareChannel = "dev"
+	// Servo firmware from Alpha channel.
+	ServoFirmwareChannelAlpha ServoFirmwareChannel = "alpha"
+)
+
+type Servo struct {
+	// State of the servo.
+	State ServoState
+	// Serial number of the root servo device.
+	SerialNumber string
+	// Channel of firmware used on servo devices.
+	FirmwareChannel ServoFirmwareChannel
+	// Self representation of servo-setup by servod.
+	// Example: servo_v4_with_servo_micro, servo_v4_with_ccd_cr50.
+	Type string
 }
