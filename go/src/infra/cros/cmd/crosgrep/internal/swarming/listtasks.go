@@ -31,22 +31,90 @@ const swarmingTasksLimit = 10000
 //
 // Sample query for [1621881767, 1621881769, 1234]:
 //
-// SELECT bot.bot_id, task_id, UNIX_SECONDS(end_time),
-// FROM `chromeos-swarming`.swarming.task_results_summary
+//
+// SELECT
+//   bot.bot_id,
+//   task_id,
+//   UNIX_SECONDS(end_time),
+//   (SELECT ARRAY_TO_STRING(values, ",") FROM TRS.bot.dimensions WHERE key = "label-model" LIMIT 1)
+//     AS model,
+// FROM `chromeos-swarming`.swarming.task_results_summary AS TRS
 // WHERE
 //   REGEXP_CONTAINS(bot.bot_id, r'^(?i)crossk[-]')
-//     AND 1621881767 <= UNIX_SECONDS(end_time)
-//     AND 1621881769  > UNIX_SECONDS(end_time)
-//     LIMIT 1234
-//
+//   AND 1621881767 <= UNIX_SECONDS(end_time)
+//   AND 1621881769  > UNIX_SECONDS(end_time)
+// LIMIT 1234
+
 const listSwarmingTasksInRangePattern = "" +
-	"SELECT bot.bot_id, task_id, UNIX_SECONDS(end_time),\n" +
-	"FROM `chromeos-swarming`.swarming.task_results_summary\n" +
+	"SELECT\n" +
+	"  bot.bot_id,\n" +
+	"  task_id,\n" +
+	"  UNIX_SECONDS(end_time),\n" +
+	"  (SELECT ARRAY_TO_STRING(values, ',') FROM TRS.bot.dimensions WHERE key = 'label-model' LIMIT 1) AS model,\n" +
+	"FROM `chromeos-swarming`.swarming.task_results_summary AS TRS\n" +
 	"WHERE\n" +
-	"    REGEXP_CONTAINS(bot.bot_id, r'^(?i)crossk[-]')\n" +
-	"    AND %d <= UNIX_SECONDS(end_time)" +
-	"    AND %d  > UNIX_SECONDS(end_time)" +
-	"LIMIT %d\n"
+	"  REGEXP_CONTAINS(bot.bot_id, r'^(?i)crossk[-]')\n" +
+	"  AND %d <= UNIX_SECONDS(end_time)\n" +
+	"  AND %d  > UNIX_SECONDS(end_time)\n" +
+	"LIMIT %d\n" +
+	""
+
+func formatListSwarmingTasksInRange(start int64, stop int64, limit int) string {
+	return fmt.Sprintf(listSwarmingTasksInRangePattern, start, stop, limit)
+}
+
+// This is the pattern for a query that grabs a number of rows corresponding
+// to swarming tasks out of bigquery.
+//
+// Free vars in order: [%d epoch_time_start, %d epoch_time_end, %s model, %d limit]
+//
+// Note that the interval is closed at the beginning and open at the end
+//
+// Sample query for [1621881767, 1621881769, "FAKE-MODEL", 1234]:
+//
+//
+// SELECT
+//   bot.bot_id,
+//   task_id,
+//   UNIX_SECONDS(end_time),
+//   (SELECT ARRAY_TO_STRING(values, ",") FROM TRS.bot.dimensions WHERE key = "label-model" LIMIT 1)
+//     AS model,
+// FROM `chromeos-swarming`.swarming.task_results_summary AS TRS
+// WHERE
+//   REGEXP_CONTAINS(bot.bot_id, r'^(?i)crossk[-]')
+//   AND 1621881767 <= UNIX_SECONDS(end_time)
+//   AND 1621881769  > UNIX_SECONDS(end_time)
+//   AND (
+//     SELECT SUM(IF("FAKE-MODEL" IN UNNEST(values), 1, 0))
+//     FROM TRS.bot.dimensions
+//     WHERE key = 'label-model'
+//     LIMIT 1
+//   ) > 0
+// LIMIT 1234
+
+const listSwarmingTasksWithModelInRangePattern = "" +
+	"SELECT\n" +
+	"  bot.bot_id,\n" +
+	"  task_id,\n" +
+	"  UNIX_SECONDS(end_time),\n" +
+	"  (SELECT ARRAY_TO_STRING(values, ',') FROM TRS.bot.dimensions WHERE key = 'label-model' LIMIT 1) AS model,\n" +
+	"FROM `chromeos-swarming`.swarming.task_results_summary AS TRS\n" +
+	"WHERE\n" +
+	"  REGEXP_CONTAINS(bot.bot_id, r'^(?i)crossk[-]')\n" +
+	"  AND %d <= UNIX_SECONDS(end_time)\n" +
+	"  AND %d  > UNIX_SECONDS(end_time)\n" +
+	"  AND (\n" +
+	"    SELECT SUM(IF(%q IN UNNEST(values), 1, 0))\n" +
+	"    FROM TRS.bot.dimensions\n" +
+	"    WHERE key = 'label-model'\n" +
+	"    LIMIT 1\n" +
+	"  ) > 0\n" +
+	"LIMIT %d\n" +
+	""
+
+func formatListSwarmingTasksWithModelInRange(start int64, stop int64, model string, limit int) string {
+	return fmt.Sprintf(listSwarmingTasksWithModelInRangePattern, start, stop, model, limit)
+}
 
 // MakeSwarmingTasksInRangeQuery makes a list of all swarming tasks in a particular time range
 // up to a specified limit.
@@ -54,8 +122,9 @@ const listSwarmingTasksInRangePattern = "" +
 // limit:      limit on the number of tasks to return
 // rangeStart: the time to begin the search
 // rangeStop:  the time to end the search
+// model:      the model to search
 //
-func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64) string {
+func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64, model string) string {
 	if limit == 0 {
 		limit = swarmingTasksLimit
 	}
@@ -69,9 +138,10 @@ func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64)
 	if rangeStop == 0 {
 		rangeStop = time.Now().Unix() + 1
 	}
-	// Make sure that the variables below are provided in the correct order for the pattern.
-	// If the query changes, the order of its "free variables" may change as well.
-	return fmt.Sprintf(listSwarmingTasksInRangePattern, rangeStart, rangeStop, limit)
+	if model == "" {
+		return formatListSwarmingTasksInRange(rangeStart, rangeStop, limit)
+	}
+	return formatListSwarmingTasksWithModelInRange(rangeStart, rangeStop, model, limit)
 }
 
 // getRowIterator returns a row iterator from a sql query.
@@ -83,22 +153,22 @@ func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*
 }
 
 // getSwarmingTasks gets a list of swarming tasks in an arbitrary manner.
-func getSwarmingTasks(ctx context.Context, client *bigquery.Client) (*bigquery.RowIterator, error) {
+func getSwarmingTasks(ctx context.Context, client *bigquery.Client, model string) (*bigquery.RowIterator, error) {
 	logging.Debugf(ctx, "GetSwarmingTasks\n")
 	if client == nil {
 		panic("client cannot be nil")
 	}
-	it, err := getRowIterator(ctx, client, MakeSwarmingTasksInRangeQuery(0, 0, 0))
+	it, err := getRowIterator(ctx, client, MakeSwarmingTasksInRangeQuery(0, 0, 0, model))
 	return it, errors.Annotate(err, "get iterator").Err()
 }
 
 // ExtractValues extracts all the values from a sql query result set.
-func ExtractValues(ctx context.Context, client *bigquery.Client) ([]bqRow, error) {
+func ExtractValues(ctx context.Context, client *bigquery.Client, model string) ([]bqRow, error) {
 	if client == nil {
 		panic("client cannot be nil")
 	}
 	var out []bqRow
-	it, err := getSwarmingTasks(ctx, client)
+	it, err := getSwarmingTasks(ctx, client, model)
 	if err != nil {
 		return nil, errors.Annotate(err, "getting tasks").Err()
 	}

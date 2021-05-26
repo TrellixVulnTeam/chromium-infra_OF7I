@@ -34,6 +34,7 @@ var ListAllTasks = &subcommands.Command{
 		c.Flags.Var(&c.logLevel, "log-level", text.Doc(`
 		Log level, valid options are "debug", "info", "warning", "error". Default is "info".
 		`))
+		c.Flags.StringVar(&c.model, "model", "", "The model to search.")
 		return c
 	},
 }
@@ -42,6 +43,7 @@ type listAllTasksCmd struct {
 	subcommands.CommandRunBase
 	logLevel  logging.Level
 	bqProject string
+	model     string
 }
 
 // getBqProject returns the cloud project for bigquery explicitly specified on the command line
@@ -53,7 +55,7 @@ func (c *listAllTasksCmd) getBqProject() string {
 	return c.bqProject
 }
 
-func (c *listAllTasksCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c listAllTasksCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 		return 1
@@ -68,7 +70,7 @@ func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
-	vals, err := swarming.ExtractValues(ctx, client)
+	vals, err := swarming.ExtractValues(ctx, client, c.model)
 	if err != nil {
 		return errors.Annotate(err, "extracting values from query").Err()
 	}
