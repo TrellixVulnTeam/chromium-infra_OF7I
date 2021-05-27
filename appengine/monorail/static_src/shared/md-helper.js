@@ -5,7 +5,13 @@ import DOMPurify from 'dompurify';
 export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail']);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
-const BLOCKLIST = new Set();
+const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
+                          'sheriff-o-matic@appspot.gserviceaccount.com',
+                          'sheriff-o-matic-staging@appspot.gserviceaccount.com',
+                          'bugdroid1@chromium.org',
+                          'bugdroid@chops-service-accounts.iam.gserviceaccount.com',
+                          'gitwatcher-staging.google.com@appspot.gserviceaccount.com',
+                          'gitwatcher.google.com@appspot.gserviceaccount.com']);
 
 /**
  * Determines whether content should be rendered as Markdown.
