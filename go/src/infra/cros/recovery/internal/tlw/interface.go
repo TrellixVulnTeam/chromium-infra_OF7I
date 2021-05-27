@@ -116,22 +116,22 @@ type SetPowerSupplyResponse struct {
 type DUTSetupType string
 
 const (
-	DUTSetupTypeDefault DUTSetupType = "Default"
+	DUTSetupTypeDefault DUTSetupType = "DEFAULT"
 	// Special setup of servo-host represented as labstation.
-	DUTSetupTypeLabstation DUTSetupType = "Labstation"
+	DUTSetupTypeLabstation DUTSetupType = "LABSTATION"
 	// Special setup for routers.
-	DUTSetupTypeJetstream DUTSetupType = "Jetstream"
+	DUTSetupTypeJetstream DUTSetupType = "JETSTREAM"
 )
 
 // PowerSupplyType describes different power supply types for a DUT.
 type PowerSupplyType string
 
 const (
-	PowerSupplyTypeUnspecified PowerSupplyType = "Unspecified"
+	PowerSupplyTypeUnspecified PowerSupplyType = "UNSPECIFIED"
 	// Primary power source of the devices is wall-power. Devices does not have a battery.
-	PowerSupplyTypeACOnly PowerSupplyType = "ACOnly"
+	PowerSupplyTypeACOnly PowerSupplyType = "AC_ONLY"
 	// Primary power source of the devices is battery. Devices still connected to wall-power to charge it.
-	PowerSupplyTypeBattery PowerSupplyType = "Battery"
+	PowerSupplyTypeBattery PowerSupplyType = "BATTERY"
 )
 
 // Dut holds info about setup used as testbed.
@@ -155,6 +155,8 @@ type Dut struct {
 	Storage *DutStorage
 	// Battery info (if applicable).
 	Battery *DutBattery
+	// RPMOutlet of the DUT setup.
+	RPMOutlet *RPMOutlet
 }
 
 // HardwareState describes the state of hardware components.
@@ -178,7 +180,7 @@ const (
 type StorageType string
 
 const (
-	StorageTypeUnspecified StorageType = "Unspecified"
+	StorageTypeUnspecified StorageType = "UNSPECIFIED"
 	StorageTypeSSD         StorageType = "SSD"
 	StorageTypeHDD         StorageType = "HDD"
 	StorageTypeMMC         StorageType = "MMC"
@@ -287,4 +289,25 @@ type Servo struct {
 	// Self representation of servo-setup by servod.
 	// Example: servo_v4_with_servo_micro, servo_v4_with_ccd_cr50.
 	Type string
+}
+
+// RPMState describes the state of RPM outlet.
+type RPMState string
+
+const (
+	RPMStateUnspecified RPMState = "UNSPECIFIED"
+	// Configuration for RPM outlet missed which block from execution the actions.
+	RPMStateMissingConfig RPMState = "MISSING_CONFIG"
+	// Configuration for RPM outlet provided but does not working which can be several reasons.
+	RPMStateWrongConfig RPMState = "WRONG_CONFIG"
+	// RPM outlet can successfully perform the actions.
+	RPMStateWorking RPMState = "WORKING"
+)
+
+// RPMOutlet is wall-power source for DUT which allow us perfrom action to do OFF/ON/CYCLE on it.
+type RPMOutlet struct {
+	// Name is the resource name.
+	Name string
+	// State of the component.
+	State RPMState
 }
