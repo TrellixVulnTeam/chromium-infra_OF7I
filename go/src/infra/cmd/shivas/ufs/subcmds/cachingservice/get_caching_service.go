@@ -49,7 +49,7 @@ Gets the CachingService and prints the output in the user-specified format.`,
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
-		c.Flags.Var(flag.StringSlice(&c.subnets), "subnet", "Name(s) of a subnet to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.subnets), "subnets", "Name(s) of a subnet to filter by. Can be specified multiple times.")
 		return c
 	},
 }

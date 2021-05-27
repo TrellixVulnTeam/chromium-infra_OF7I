@@ -1711,7 +1711,7 @@ Adds a CachingService by reading a JSON file input.
 shivas add cachingService -f CachingService.csv
 Adds a CachingService by reading a MCSV file input.
 
-shivas add cachingService -name {name} -port {portnumber} -subnet {subnet} -primary {primary ipv4} -state {state}
+shivas add cachingService -name {name} -port {portnumber} -subnets "subnet1,subnet2" -primary {primary ipv4} -state {state}
 Adds a CachingService by specifying several attributes directly.`
 
 	// UpdateCachingServiceLongDesc long description for UpdateCachingServiceCmd
@@ -1733,7 +1733,10 @@ Example CachingService:
 {
 	"name": "127.0.0.23",
 	"port": 23456,
-	"serving_subnet": "127.0.0.23/16",
+	"serving_subnets": [
+		"127.0.0.0/16",
+		"127.1.0.0/16"
+	],
 	"primary_node": "1.1.1.1",
 	"secondary_node": "2.2.2.2",
 	"state": "STATE_SERVING",
@@ -1742,11 +1745,11 @@ Example CachingService:
 
 [MCSV Mode]
 The file may have multiple or one CachingService csv record
-The header format and sequence should be: [name,port,subnet,primary,secondary,state,desc]
+The header format and sequence should be: [name,port,subnets,primary,secondary,state,desc]
 Example mcsv format:
-name,port,subnet,primary,secondary,state,desc
-127.23.45.56,5555,127.23.45.56/56,1.1.1.1,2.2.2.2,serving,cas1
-45.23.21.22,6666,45.23.21.22/56,1.1.1.1,2.2.2.2,serving,cas2
+name,port,subnets,primary,secondary,state,desc
+127.23.45.56,5555,127.23.45.56/16,1.1.1.1,2.2.2.2,serving,cas1
+45.23.21.22,6666,45.23.21.22/16 45.24.0.0/16,1.1.1.1,2.2.2.2,serving,cas2
 
 The protobuf definition of CachingService is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/caching_service.proto`
@@ -1760,7 +1763,10 @@ Example CachingService:
 {
 	"name": "127.0.0.23",
 	"port": 23456,
-	"serving_subnet": "127.0.0.23/16",
+	"serving_subnets": [
+		"127.0.0.0/16",
+		"127.1.0.0/16"
+	],
 	"primary_node": "1.1.1.1",
 	"secondary_node": "2.2.2.2",
 	"state": "STATE_SERVING",

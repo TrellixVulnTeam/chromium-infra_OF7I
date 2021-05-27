@@ -36,7 +36,8 @@ var UpdateCachingServiceCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.name, "name", "", "name of the CachingService")
 		c.Flags.IntVar(&c.port, "port", defaultCachingServicePort, "port number of the CachingService. "+"To set it to default port 8082, enter -1('-port -1').")
-		c.Flags.StringVar(&c.subnet, "subnet", "", "subnet which this CachingService serves/supports. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(utils.CSVString(&c.subnets), "subnets", "append/clear comma separated subnet list which this CachingService serves/supports. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(utils.CSVString(&c.removeSubnets), "subnets-to-remove", "remove comma separated subnet list.")
 		c.Flags.StringVar(&c.primary, "primary", "", "primary node ip of the CachingService. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.secondary, "secondary", "", "secondary node ip of the CachingService. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
@@ -53,13 +54,14 @@ type updateCachingService struct {
 
 	newSpecsFile string
 
-	name        string
-	port        int
-	subnet      string
-	primary     string
-	secondary   string
-	state       string
-	description string
+	name          string
+	port          int
+	subnets       []string
+	removeSubnets []string
+	primary       string
+	secondary     string
+	state         string
+	description   string
 }
 
 func (c *updateCachingService) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -104,12 +106,13 @@ func (c *updateCachingService) innerRun(a subcommands.Application, args []string
 	res, err := ic.UpdateCachingService(ctx, &ufsAPI.UpdateCachingServiceRequest{
 		CachingService: &cs,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"port":      "port",
-			"subnet":    "serving_subnet",
-			"primary":   "primary_node",
-			"secondary": "secondary_node",
-			"state":     "state",
-			"desc":      "description",
+			"port":              "port",
+			"subnets":           "serving_subnets",
+			"subnets-to-remove": "serving_subnets.remove",
+			"primary":           "primary_node",
+			"secondary":         "secondary_node",
+			"state":             "state",
+			"desc":              "description",
 		}),
 	})
 	if err != nil {
@@ -129,10 +132,12 @@ func (c *updateCachingService) parseArgs(cs *ufspb.CachingService) {
 	} else {
 		cs.Port = int32(c.port)
 	}
-	if c.subnet == utils.ClearFieldValue {
-		cs.ServingSubnet = ""
+	if len(c.removeSubnets) > 0 {
+		cs.ServingSubnets = c.removeSubnets
+	} else if ufsUtil.ContainsAnyStrings(c.subnets, utils.ClearFieldValue) {
+		cs.ServingSubnets = nil
 	} else {
-		cs.ServingSubnet = c.subnet
+		cs.ServingSubnets = c.subnets
 	}
 	if c.primary == utils.ClearFieldValue {
 		cs.PrimaryNode = ""
@@ -160,8 +165,11 @@ func (c *updateCachingService) validateArgs() error {
 		if c.port != defaultCachingServicePort {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-port' cannot be specified at the same time.")
 		}
-		if c.subnet != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-subnet' cannot be specified at the same time.")
+		if len(c.subnets) != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-subnets' cannot be specified at the same time.")
+		}
+		if len(c.removeSubnets) != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-subnets-to-remove' cannot be specified at the same time.")
 		}
 		if c.primary != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-primary' cannot be specified at the same time.")
@@ -180,7 +188,10 @@ func (c *updateCachingService) validateArgs() error {
 		if c.name == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if c.subnet == "" && c.port == defaultCachingServicePort && c.description == "" && c.primary == "" && c.secondary == "" && c.state == "" {
+		if len(c.subnets) != 0 && len(c.removeSubnets) != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-subnets' and '-subnets-to-remove' cannot be specified at the same time.")
+		}
+		if len(c.subnets) == 0 && c.port == defaultCachingServicePort && c.description == "" && c.primary == "" && c.secondary == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

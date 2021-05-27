@@ -7,6 +7,7 @@ package cachingservice
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -40,7 +41,7 @@ var AddCachingServiceCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.name, "name", "", "name of the CachingService")
 		c.Flags.IntVar(&c.port, "port", defaultCachingServicePort, "port number of the CachingService")
-		c.Flags.StringVar(&c.subnet, "subnet", "", "subnet which this CachingService serves/supports")
+		c.Flags.Var(utils.CSVString(&c.subnets), "subnets", "comma separated subnet list which this CachingService serves/supports")
 		c.Flags.StringVar(&c.primary, "primary", "", "primary node ip of the CachingService")
 		c.Flags.StringVar(&c.secondary, "secondary", "", "secondary node ip of the CachingService")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
@@ -59,7 +60,7 @@ type addCachingService struct {
 
 	name        string
 	port        int
-	subnet      string
+	subnets     []string
 	primary     string
 	secondary   string
 	state       string
@@ -69,7 +70,7 @@ type addCachingService struct {
 var mcsvFields = []string{
 	"name",
 	"port",
-	"subnet",
+	"subnets",
 	"primary",
 	"secondary",
 	"state",
@@ -141,7 +142,7 @@ func (c *addCachingService) innerRun(a subcommands.Application, args []string, e
 func (c *addCachingService) parseArgs(cs *ufspb.CachingService) {
 	cs.Name = c.name
 	cs.Port = int32(c.port)
-	cs.ServingSubnet = c.subnet
+	cs.ServingSubnets = c.subnets
 	cs.PrimaryNode = c.primary
 	cs.SecondaryNode = c.secondary
 	cs.State = ufsUtil.ToUFSState(c.state)
@@ -156,8 +157,8 @@ func (c *addCachingService) validateArgs() error {
 		if c.port != defaultCachingServicePort {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-port' cannot be specified at the same time.")
 		}
-		if c.subnet != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-subnet' cannot be specified at the same time.")
+		if len(c.subnets) != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-subnets' cannot be specified at the same time.")
 		}
 		if c.primary != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-primary' cannot be specified at the same time.")
@@ -223,8 +224,8 @@ func (c *addCachingService) parseMCSV() ([]*ufspb.CachingService, error) {
 					return nil, fmt.Errorf("Error in line %d.\nFailed to parse port %s", i, value)
 				}
 				cs.Port = int32(port)
-			case "subnet":
-				cs.ServingSubnet = value
+			case "subnets":
+				cs.ServingSubnets = strings.Fields(value)
 			case "primary":
 				if !ufsAPI.Ipv4Regex.MatchString(value) {
 					return nil, fmt.Errorf("Error in line %d.\nFailed to parse primary(must be an ipv4 address) %s", i, value)
