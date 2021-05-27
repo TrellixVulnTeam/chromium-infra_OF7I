@@ -168,6 +168,9 @@ func getChangeWithLabelDetails(ctx context.Context, rc *RelevantCommit, cs *Clie
 	cls, _, err := cs.gerrit.ChangeQuery(ctx, gerrit.ChangeQueryParams{
 		Query: fmt.Sprintf("commit:%s", rc.CommitHash),
 		Options: []string{
+			// Fetch full account details including emails, so we can compare
+			// the change owner's email with robot emails.
+			"DETAILED_ACCOUNTS",
 			"DETAILED_LABELS",
 		},
 	})
