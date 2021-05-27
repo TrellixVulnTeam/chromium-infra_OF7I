@@ -165,6 +165,21 @@ class TestPython(unittest.TestCase):
         'Failed to import openssl libraries (return code %d). output:\n%s' %
         (proc.returncode, stdout))
 
+  def test_no_version_script_in_sysconfig(self):
+    # On Linux, we use a linker version script to restrict the exported
+    # symbols. Verify that this has not leaked into the build flags that
+    # will be used by Python wheels.
+    script = ('import sysconfig\n'
+              'for k, v in sysconfig.get_config_vars().iteritems():\n'
+              '  if isinstance(v, str):\n'
+              '    assert "version-script" not in v, (\n'
+              '      "Found unexpected version-script in %s: %s" % (k, v))')
+    proc = subprocess.Popen([self.python, '-c', script],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    stdout, _ = proc.communicate()
+    self.assertEqual(proc.returncode, 0, stdout)
+
 
 if __name__ == '__main__':
   platform = os.environ['_3PP_PLATFORM']

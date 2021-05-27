@@ -262,7 +262,7 @@ $INTERP `which pip_bootstrap.py` "$PREFIX"
 # don't want to use for building native extensions. Here we strip them from the
 # config file which distutils will read.
 if [[ $LDFLAGS_TO_STRIP ]]; then
-  sed -i 's: $LDFLAGS_TO_STRIP::g' $PREFIX/lib/python*/_sysconfigdata.py
+  sed -i "s: $LDFLAGS_TO_STRIP::g" $PREFIX/lib/python*/_sysconfigdata.py
 fi
 
 # Clear out any pre-compiled versions of this file that might persist the bad
