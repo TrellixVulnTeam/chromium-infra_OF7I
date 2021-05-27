@@ -32,6 +32,13 @@ var (
 	MockGitiles gitilespb.GitilesClient
 )
 
+func getGitilesClient(authedClient *http.Client, host string, auth bool) (gitilespb.GitilesClient, error) {
+	if MockGitiles != nil {
+		return MockGitiles, nil
+	}
+	return gitiles.NewRESTClient(authedClient, host, true)
+}
+
 // FetchFilesFromGitiles fetches file contents from gitiles.
 //
 // project is the git project to fetch from.
@@ -41,14 +48,9 @@ var (
 // fetchFilesFromGitiles returns a map from path in the git project to the
 // contents of the file at that path for each requested path.
 func FetchFilesFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref string, paths []string) (*map[string]string, error) {
-	var gc gitilespb.GitilesClient
-	var err error
-	if MockGitiles != nil {
-		gc = MockGitiles
-	} else {
-		if gc, err = gitiles.NewRESTClient(authedClient, host, true); err != nil {
-			return nil, err
-		}
+	gc, err := getGitilesClient(authedClient, host, true)
+	if err != nil {
+		return nil, err
 	}
 	contents, err := obtainGitilesBytes(ctx, gc, project, ref)
 	if err != nil {
@@ -59,14 +61,9 @@ func FetchFilesFromGitiles(ctx context.Context, authedClient *http.Client, host,
 
 // DownloadFileFromGitiles downloads a file from Gitiles.
 func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref, path string) (string, error) {
-	var gc gitilespb.GitilesClient
-	var err error
-	if MockGitiles != nil {
-		gc = MockGitiles
-	} else {
-		if gc, err = gitiles.NewRESTClient(authedClient, host, true); err != nil {
-			return "", err
-		}
+	gc, err := getGitilesClient(authedClient, host, true)
+	if err != nil {
+		return "", err
 	}
 	req := &gitilespb.DownloadFileRequest{
 		Project:    project,
@@ -205,23 +202,31 @@ func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (*m
 
 // Branches returns a map of branches (to revisions) for a given repo.
 func Branches(ctx context.Context, authedClient *http.Client, host, project string) (map[string]string, error) {
-	var gc gitilespb.GitilesClient
-	var err error
-	if MockGitiles != nil {
-		gc = MockGitiles
-	} else {
-		if gc, err = gitiles.NewRESTClient(authedClient, host, true); err != nil {
-			return nil, err
-		}
+	gc, err := getGitilesClient(authedClient, host, true)
+	if err != nil {
+		return nil, err
 	}
 	req := &gitilespb.RefsRequest{
 		Project:  project,
 		RefsPath: "refs/heads",
 	}
-	log.Printf("fetching branches %v", req)
 	refs, err := gc.Refs(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	return refs.Revisions, err
+}
+
+// Projects returns a list of projects for a given host.
+func Projects(ctx context.Context, authedClient *http.Client, host string) ([]string, error) {
+	gc, err := getGitilesClient(authedClient, host, true)
+	if err != nil {
+		return nil, err
+	}
+	req := &gitilespb.ProjectsRequest{}
+	resp, err := gc.Projects(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetProjects(), err
 }

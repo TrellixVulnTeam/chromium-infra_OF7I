@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"infra/cros/internal/assert"
@@ -143,4 +144,25 @@ func TestBranches(t *testing.T) {
 	assert.NilError(t, err)
 	assert.StringsEqual(t, m["refs/heads/foo"], "deadbeef")
 	assert.StringsEqual(t, m["refs/heads/bar"], "beefcafe")
+}
+func TestProjects(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	projects := []string{"foo", "bar"}
+
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+	gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
+		&gitilespb.ProjectsResponse{
+			Projects: projects,
+		},
+		nil,
+	)
+	host := "limited-review.googlesource.com"
+
+	MockGitiles = gitilesMock
+	got, err := Projects(context.Background(), http.DefaultClient, host)
+
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(got, projects))
 }

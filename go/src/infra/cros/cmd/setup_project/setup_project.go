@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	gitiles "infra/cros/internal/gerrit"
 
@@ -53,14 +54,15 @@ type setupProject struct {
 	chromeosCheckoutPath string
 	program              string
 	project              string
+	allProjects          bool
 	localManifestBranch  string
 	chipset              string
 }
 
 func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "setup-project --chromeosCheckoutPath=/usr/.../chromiumos " +
-			"--program=galaxy --project=milkyway",
+		UsageLine: "setup-project --checkout=/usr/.../chromiumos " +
+			"--program=galaxy {--project=milkyway|--all_projects}",
 		ShortDesc: "Syncs a ChromiumOS checkout using local_manifests from the specified project.",
 		CommandRun: func() subcommands.CommandRun {
 			b := &setupProject{}
@@ -72,6 +74,8 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 				"Program the project belongs to.")
 			b.Flags.StringVar(&b.project, "project", "",
 				"Project to sync to.")
+			b.Flags.BoolVar(&b.allProjects, "all_projects", false,
+				"If specified, will include all projects under the specified program.")
 			b.Flags.StringVar(&b.localManifestBranch, "branch", "main",
 				"Sync the project from the local manifest at the given branch.")
 			b.Flags.StringVar(&b.chipset, "chipset", "",
@@ -89,11 +93,11 @@ func (b *setupProject) validate() error {
 		return fmt.Errorf("error validating --chromeos_checkout=%s", b.chromeosCheckoutPath)
 	}
 
-	if b.program == "" {
-		return fmt.Errorf("--program required")
+	if b.project == "" && !b.allProjects {
+		return fmt.Errorf("--project or --all_projects required")
 	}
-	if b.project == "" {
-		return fmt.Errorf("--project required")
+	if b.program != "" && b.allProjects {
+		return fmt.Errorf("--program and --all_projects cannot both be set")
 	}
 
 	return nil
@@ -134,6 +138,22 @@ type localManifest struct {
 	downloadTo string
 }
 
+func projectsInProgram(ctx context.Context, authedClient *http.Client, program string) ([]string, error) {
+	projects, err := gitiles.Projects(ctx, authedClient, chromeInternalHost)
+	if err != nil {
+		return nil, err
+	}
+
+	programProjects := []string{}
+	for _, project := range projects {
+		prefix := fmt.Sprintf("chromeos/project/%s/", program)
+		if strings.HasPrefix(project, prefix) {
+			programProjects = append(programProjects, strings.TrimPrefix(project, prefix))
+		}
+	}
+	return programProjects, nil
+}
+
 func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
@@ -148,12 +168,29 @@ func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Clie
 			path:       "local_manifest.xml",
 			downloadTo: fmt.Sprintf("%s_program.xml", b.program),
 		},
-		{
-			project:    fmt.Sprintf("chromeos/project/%s/%s", b.program, b.project),
+	}
+
+	var projects []string
+	if b.allProjects {
+		var err error
+		projects, err = projectsInProgram(ctx, authedClient, b.program)
+		if err != nil {
+			return errors.Annotate(err, "error getting all projects for program %s", b.program).Err()
+		}
+	} else if b.project != "" {
+		projects = []string{b.project}
+	}
+
+	if len(projects) == 0 {
+		return fmt.Errorf("no projects found")
+	}
+	for _, project := range projects {
+		files = append(files, localManifest{
+			project:    fmt.Sprintf("chromeos/project/%s/%s", b.program, project),
 			branch:     b.localManifestBranch,
 			path:       "local_manifest.xml",
-			downloadTo: fmt.Sprintf("%s_project.xml", b.project),
-		},
+			downloadTo: fmt.Sprintf("%s_project.xml", project),
+		})
 	}
 
 	if b.chipset != "" {
