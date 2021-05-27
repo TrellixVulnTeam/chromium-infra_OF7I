@@ -16,6 +16,8 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"infra/cros/internal/branch"
 	"infra/cros/internal/gerrit"
@@ -25,6 +27,7 @@ import (
 )
 
 const (
+	chromeExternalHost      = "chromium.googlesource.com"
 	chromeInternalHost      = "chrome-internal.googlesource.com"
 	manifestInternalProject = "chromeos/manifest-internal"
 )
@@ -144,6 +147,20 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 		b.project, releaseBranch, "local_manifest.xml")
 	if err != nil {
 		return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
+	}
+
+	publicBuildspecPath := "full/buildspecs/" + b.buildspec
+	_, err = gerrit.DownloadFileFromGitiles(ctx, authedClient, chromeExternalHost,
+		"chromiumos/manifest-versions", "HEAD", publicBuildspecPath)
+	if err != nil {
+		errorCode, ok := status.FromError(err)
+		if ok && errorCode.Code() == codes.NotFound {
+			publicBuildspecURL := fmt.Sprintf("%s/chromiumos/manifest-versions/%s", chromeExternalHost, publicBuildspecPath)
+			LogErr("Warning: A public buildspec does not exist at %s, so this "+
+				"buildspec will not be all that useful to partners.", publicBuildspecURL)
+		}
+		// Otherwise, ignore the error, as this check isn't critical to the overall
+		// success of the invocation.
 	}
 
 	// Load the internal buildspec.

@@ -123,6 +123,20 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		nil,
 	)
 
+	// Mock external buildspec file request.
+	reqExternalBuildspec := &gitilespb.DownloadFileRequest{
+		Project:    "chromiumos/manifest-versions",
+		Path:       "full/buildspecs/" + buildspec,
+		Committish: "HEAD",
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: "",
+		},
+		nil,
+	)
+
 	// Mock buildspec file request.
 	reqBuildspecs := &gitilespb.DownloadFileRequest{
 		Project:    "chromeos/manifest-versions",
