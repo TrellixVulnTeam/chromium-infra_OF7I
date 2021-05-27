@@ -460,6 +460,12 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'psutil',
+            '5.8.0',
+            packaged=[],
+            pyversions=['py2', 'py3'],
+        ),
+        SourceOrPrebuilt(
             'pyasn',
             '1.6.0b1',
             packaged=(),
