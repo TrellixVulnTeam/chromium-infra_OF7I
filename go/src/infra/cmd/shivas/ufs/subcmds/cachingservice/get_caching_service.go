@@ -111,7 +111,7 @@ func (c *getCachingService) innerRun(a subcommands.Application, args []string, e
 func (c *getCachingService) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
-	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.SubnetFilterName, c.subnets)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.SubnetsFilterName, c.subnets)...)
 	return filters
 }
 

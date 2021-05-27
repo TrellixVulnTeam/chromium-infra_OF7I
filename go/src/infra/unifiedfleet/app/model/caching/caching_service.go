@@ -26,10 +26,13 @@ const CachingServiceKind string = "CachingService"
 
 // CSEntity is a datastore entity that tracks a platform.
 type CSEntity struct {
-	_kind  string `gae:"$kind,CachingService"`
-	ID     string `gae:"$id"`
-	State  string `gae:"state"`
-	Subnet string `gae:"subnet"`
+	_kind string `gae:"$kind,CachingService"`
+	ID    string `gae:"$id"`
+	State string `gae:"state"`
+	// b/188491698: The field of Subnet has been deprecated. Use 'Subnets'
+	// instead.
+	Subnet  string   `gae:"subnet"`
+	Subnets []string `gae:"subnets"`
 	// ufspb.CachingService cannot be directly used as it contains pointer.
 	CachingService []byte `gae:",noindex"`
 }
@@ -55,7 +58,7 @@ func newCSEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 	return &CSEntity{
 		ID:             p.GetName(),
 		State:          p.GetState().String(),
-		Subnet:         p.GetServingSubnet(),
+		Subnets:        p.GetServingSubnets(),
 		CachingService: cs,
 	}, nil
 }
@@ -194,10 +197,10 @@ func GetCachingServiceIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.StateFilterName:
 		field = "state"
-	case util.SubnetFilterName:
-		field = "subnet"
+	case util.SubnetsFilterName:
+		field = "subnets"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for CachingService are state/subnet", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for CachingService are state/subnets", input)
 	}
 	return field, nil
 }

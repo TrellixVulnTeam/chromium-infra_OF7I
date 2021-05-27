@@ -136,6 +136,14 @@ func processCachingServiceUpdateMask(ctx context.Context, oldCs *ufspb.CachingSe
 			oldCs.Port = cs.GetPort()
 		case "serving_subnet":
 			oldCs.ServingSubnet = cs.GetServingSubnet()
+		case "serving_subnets":
+			oldCs.ServingSubnets = mergeTags(oldCs.GetServingSubnets(), cs.GetServingSubnets())
+		case "serving_subnets.remove":
+			oldSubnets := oldCs.GetServingSubnets()
+			for _, s := range cs.GetServingSubnets() {
+				oldSubnets = ufsUtil.RemoveStringEntry(oldSubnets, s)
+			}
+			oldCs.ServingSubnets = oldSubnets
 		case "primary_node":
 			oldCs.PrimaryNode = cs.GetPrimaryNode()
 		case "secondary_node":
@@ -178,6 +186,8 @@ func validateCachingServiceUpdateMask(ctx context.Context, cs *ufspb.CachingServ
 				return status.Error(codes.InvalidArgument, "validateCachingServiceUpdateMask - update_time cannot be updated, it is a output only field")
 			case "port":
 			case "serving_subnet":
+			case "serving_subnets":
+			case "serving_subnets.remove":
 			case "primary_node":
 			case "secondary_node":
 			case "state":

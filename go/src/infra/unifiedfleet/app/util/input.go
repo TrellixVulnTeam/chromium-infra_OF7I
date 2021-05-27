@@ -119,7 +119,7 @@ var (
 	DeviceTypeFilterName           string = "devicetype"
 	PhaseFilterName                string = "phase"
 	AssetTypeFilterName            string = "assettype"
-	SubnetFilterName               string = "subnet"
+	SubnetsFilterName              string = "subnets"
 	PoolsFilterName                string = "pools"
 	DeploymentIdentifierFilterName string = "deploymentidentifier"
 	DeploymentEnvFilterName        string = "deploymentenv"
