@@ -27,6 +27,9 @@ service AlertGroups {
     //   * for each source AlertGroup:
     //     * update the destination to include the grouped Anomaly instances
     //     * delete the source AlertGroup
+
+    // NOTE: An upstream project depends on this API, please contact
+    // webrtc-infra@google.com if making not backwards compatible changes.
     rpc MergeAlertGroups (MergeAlertGroupsRequest) returns (AlertGroup) {
         option (google.api.http) = {
             post: "/v1/merge_anomalies"
