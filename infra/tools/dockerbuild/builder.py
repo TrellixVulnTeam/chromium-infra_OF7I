@@ -271,7 +271,7 @@ def HostCipdPlatform():
 
 def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   PY_CIPD_VERSION_MAP = {
-      '27': 'version:2@2.7.18.chromium.36',
+      '27': 'version:2@2.7.18.chromium.35',
       '38': 'version:2@3.8.10.chromium.17',
       '39': 'version:2@3.9.5.chromium.17',
   }
