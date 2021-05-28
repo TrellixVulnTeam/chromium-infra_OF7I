@@ -25,6 +25,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SyncStatus int32
+
+const (
+	SyncStatus_UNSPECIFIED         SyncStatus = 0
+	SyncStatus_SYNC_STATUS_FAILURE SyncStatus = 1
+	SyncStatus_SYNC_STATUS_SUCCESS SyncStatus = 2
+	SyncStatus_SYNC_STATUS_NO_OP   SyncStatus = 3
+)
+
+// Enum value maps for SyncStatus.
+var (
+	SyncStatus_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "SYNC_STATUS_FAILURE",
+		2: "SYNC_STATUS_SUCCESS",
+		3: "SYNC_STATUS_NO_OP",
+	}
+	SyncStatus_value = map[string]int32{
+		"UNSPECIFIED":         0,
+		"SYNC_STATUS_FAILURE": 1,
+		"SYNC_STATUS_SUCCESS": 2,
+		"SYNC_STATUS_NO_OP":   3,
+	}
+)
+
+func (x SyncStatus) Enum() *SyncStatus {
+	p := new(SyncStatus)
+	*p = x
+	return p
+}
+
+func (x SyncStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SyncStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_enumTypes[0].Descriptor()
+}
+
+func (SyncStatus) Type() protoreflect.EnumType {
+	return &file_infra_appengine_depot_tools_metrics_schema_schema_proto_enumTypes[0]
+}
+
+func (x SyncStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SyncStatus.Descriptor instead.
+func (SyncStatus) EnumDescriptor() ([]byte, []int) {
+	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{0}
+}
+
 // HttpRequest stores information on the HTTP requests made by the command.
 type HttpRequest struct {
 	state         protoimpl.MessageState
@@ -213,6 +265,92 @@ func (x *SubCommand) GetExitCode() int64 {
 	return 0
 }
 
+// GitDependency stores information about the git dependencies for the current
+// project.
+type GitDependency struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The path where this dependency was synced, relative to gclient root.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The url for the dependency.
+	Url string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	// The revision the dependency was synced to.
+	Revision string `protobuf:"bytes,3,opt,name=revision,proto3" json:"revision,omitempty"`
+	// Time to sync dependency to revision in seconds.
+	ExecutionTime float64 `protobuf:"fixed64,4,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
+	// Whether we failed to sync the dependency to the desired revision.
+	SyncStatus SyncStatus `protobuf:"varint,5,opt,name=sync_status,json=syncStatus,proto3,enum=schema.SyncStatus" json:"sync_status,omitempty"`
+}
+
+func (x *GitDependency) Reset() {
+	*x = GitDependency{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GitDependency) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GitDependency) ProtoMessage() {}
+
+func (x *GitDependency) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GitDependency.ProtoReflect.Descriptor instead.
+func (*GitDependency) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GitDependency) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *GitDependency) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *GitDependency) GetRevision() string {
+	if x != nil {
+		return x.Revision
+	}
+	return ""
+}
+
+func (x *GitDependency) GetExecutionTime() float64 {
+	if x != nil {
+		return x.ExecutionTime
+	}
+	return 0
+}
+
+func (x *GitDependency) GetSyncStatus() SyncStatus {
+	if x != nil {
+		return x.SyncStatus
+	}
+	return SyncStatus_UNSPECIFIED
+}
+
 // BotMetrics stores information about the bot environment from which the
 // command was executed.
 type BotMetrics struct {
@@ -229,7 +367,7 @@ type BotMetrics struct {
 func (x *BotMetrics) Reset() {
 	*x = BotMetrics{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[2]
+		mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -242,7 +380,7 @@ func (x *BotMetrics) String() string {
 func (*BotMetrics) ProtoMessage() {}
 
 func (x *BotMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[2]
+	mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -255,7 +393,7 @@ func (x *BotMetrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BotMetrics.ProtoReflect.Descriptor instead.
 func (*BotMetrics) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{2}
+	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BotMetrics) GetBuildId() int64 {
@@ -318,14 +456,15 @@ type Metrics struct {
 	PythonVersion string `protobuf:"bytes,13,opt,name=python_version,json=pythonVersion,proto3" json:"python_version,omitempty"`
 	// The git version the command used. Must match the |gitVersionRegex| defined
 	// in metrics/constants.go.
-	GitVersion string      `protobuf:"bytes,14,opt,name=git_version,json=gitVersion,proto3" json:"git_version,omitempty"`
-	BotMetrics *BotMetrics `protobuf:"bytes,15,opt,name=bot_metrics,json=botMetrics,proto3" json:"bot_metrics,omitempty"`
+	GitVersion string           `protobuf:"bytes,14,opt,name=git_version,json=gitVersion,proto3" json:"git_version,omitempty"`
+	BotMetrics *BotMetrics      `protobuf:"bytes,15,opt,name=bot_metrics,json=botMetrics,proto3" json:"bot_metrics,omitempty"`
+	GitDeps    []*GitDependency `protobuf:"bytes,16,rep,name=git_deps,json=gitDeps,proto3" json:"git_deps,omitempty"`
 }
 
 func (x *Metrics) Reset() {
 	*x = Metrics{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[3]
+		mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -338,7 +477,7 @@ func (x *Metrics) String() string {
 func (*Metrics) ProtoMessage() {}
 
 func (x *Metrics) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[3]
+	mi := &file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +490,7 @@ func (x *Metrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metrics.ProtoReflect.Descriptor instead.
 func (*Metrics) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{3}
+	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Metrics) GetMetricsVersion() int64 {
@@ -459,6 +598,13 @@ func (x *Metrics) GetBotMetrics() *BotMetrics {
 	return nil
 }
 
+func (x *Metrics) GetGitDeps() []*GitDependency {
+	if x != nil {
+		return x.GitDeps
+	}
+	return nil
+}
+
 var File_infra_appengine_depot_tools_metrics_schema_schema_proto protoreflect.FileDescriptor
 
 var file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDesc = []byte{
@@ -488,13 +634,24 @@ var file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDesc = []byt
 	0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
 	0x01, 0x52, 0x0d, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x69, 0x6d, 0x65,
 	0x12, 0x1b, 0x0a, 0x09, 0x65, 0x78, 0x69, 0x74, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x03, 0x52, 0x08, 0x65, 0x78, 0x69, 0x74, 0x43, 0x6f, 0x64, 0x65, 0x22, 0x5c, 0x0a,
+	0x01, 0x28, 0x03, 0x52, 0x08, 0x65, 0x78, 0x69, 0x74, 0x43, 0x6f, 0x64, 0x65, 0x22, 0xad, 0x01,
+	0x0a, 0x0d, 0x47, 0x69, 0x74, 0x44, 0x65, 0x70, 0x65, 0x6e, 0x64, 0x65, 0x6e, 0x63, 0x79, 0x12,
+	0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70,
+	0x61, 0x74, 0x68, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x75, 0x72, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x76, 0x69, 0x73, 0x69, 0x6f,
+	0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x76, 0x69, 0x73, 0x69, 0x6f,
+	0x6e, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x74,
+	0x69, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0d, 0x65, 0x78, 0x65, 0x63, 0x75,
+	0x74, 0x69, 0x6f, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x33, 0x0a, 0x0b, 0x73, 0x79, 0x6e, 0x63,
+	0x5f, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x12, 0x2e,
+	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x53, 0x79, 0x6e, 0x63, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x52, 0x0a, 0x73, 0x79, 0x6e, 0x63, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x5c, 0x0a,
 	0x0a, 0x42, 0x6f, 0x74, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x62,
 	0x75, 0x69, 0x6c, 0x64, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x62,
 	0x75, 0x69, 0x6c, 0x64, 0x49, 0x64, 0x12, 0x33, 0x0a, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65,
 	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x62,
 	0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x76, 0x32, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72,
-	0x49, 0x44, 0x52, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x22, 0xbb, 0x04, 0x0a, 0x07,
+	0x49, 0x44, 0x52, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x22, 0xed, 0x04, 0x0a, 0x07,
 	0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12, 0x27, 0x0a, 0x0f, 0x6d, 0x65, 0x74, 0x72, 0x69,
 	0x63, 0x73, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
 	0x52, 0x0e, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,
@@ -530,11 +687,20 @@ var file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDesc = []byt
 	0x73, 0x69, 0x6f, 0x6e, 0x12, 0x33, 0x0a, 0x0b, 0x62, 0x6f, 0x74, 0x5f, 0x6d, 0x65, 0x74, 0x72,
 	0x69, 0x63, 0x73, 0x18, 0x0f, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x73, 0x63, 0x68, 0x65,
 	0x6d, 0x61, 0x2e, 0x42, 0x6f, 0x74, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x52, 0x0a, 0x62,
-	0x6f, 0x74, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x33, 0x5a, 0x31, 0x69, 0x6e, 0x66,
-	0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x64, 0x65, 0x70,
-	0x6f, 0x74, 0x5f, 0x74, 0x6f, 0x6f, 0x6c, 0x73, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73,
-	0x2f, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x3b, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x74, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12, 0x30, 0x0a, 0x08, 0x67, 0x69, 0x74,
+	0x5f, 0x64, 0x65, 0x70, 0x73, 0x18, 0x10, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x73, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x2e, 0x47, 0x69, 0x74, 0x44, 0x65, 0x70, 0x65, 0x6e, 0x64, 0x65, 0x6e,
+	0x63, 0x79, 0x52, 0x07, 0x67, 0x69, 0x74, 0x44, 0x65, 0x70, 0x73, 0x2a, 0x66, 0x0a, 0x0a, 0x53,
+	0x79, 0x6e, 0x63, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0f, 0x0a, 0x0b, 0x55, 0x4e, 0x53,
+	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x53, 0x59,
+	0x4e, 0x43, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x46, 0x41, 0x49, 0x4c, 0x55, 0x52,
+	0x45, 0x10, 0x01, 0x12, 0x17, 0x0a, 0x13, 0x53, 0x59, 0x4e, 0x43, 0x5f, 0x53, 0x54, 0x41, 0x54,
+	0x55, 0x53, 0x5f, 0x53, 0x55, 0x43, 0x43, 0x45, 0x53, 0x53, 0x10, 0x02, 0x12, 0x15, 0x0a, 0x11,
+	0x53, 0x59, 0x4e, 0x43, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x4e, 0x4f, 0x5f, 0x4f,
+	0x50, 0x10, 0x03, 0x42, 0x33, 0x5a, 0x31, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70,
+	0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x64, 0x65, 0x70, 0x6f, 0x74, 0x5f, 0x74, 0x6f, 0x6f,
+	0x6c, 0x73, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x2f, 0x73, 0x63, 0x68, 0x65, 0x6d,
+	0x61, 0x3b, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -549,24 +715,29 @@ func file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescGZIP() 
 	return file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDescData
 }
 
-var file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_infra_appengine_depot_tools_metrics_schema_schema_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_infra_appengine_depot_tools_metrics_schema_schema_proto_goTypes = []interface{}{
-	(*HttpRequest)(nil),     // 0: schema.HttpRequest
-	(*SubCommand)(nil),      // 1: schema.SubCommand
-	(*BotMetrics)(nil),      // 2: schema.BotMetrics
-	(*Metrics)(nil),         // 3: schema.Metrics
-	(*proto.BuilderID)(nil), // 4: buildbucket.v2.BuilderID
+	(SyncStatus)(0),         // 0: schema.SyncStatus
+	(*HttpRequest)(nil),     // 1: schema.HttpRequest
+	(*SubCommand)(nil),      // 2: schema.SubCommand
+	(*GitDependency)(nil),   // 3: schema.GitDependency
+	(*BotMetrics)(nil),      // 4: schema.BotMetrics
+	(*Metrics)(nil),         // 5: schema.Metrics
+	(*proto.BuilderID)(nil), // 6: buildbucket.v2.BuilderID
 }
 var file_infra_appengine_depot_tools_metrics_schema_schema_proto_depIdxs = []int32{
-	4, // 0: schema.BotMetrics.builder:type_name -> buildbucket.v2.BuilderID
-	1, // 1: schema.Metrics.sub_commands:type_name -> schema.SubCommand
-	0, // 2: schema.Metrics.http_requests:type_name -> schema.HttpRequest
-	2, // 3: schema.Metrics.bot_metrics:type_name -> schema.BotMetrics
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0, // 0: schema.GitDependency.sync_status:type_name -> schema.SyncStatus
+	6, // 1: schema.BotMetrics.builder:type_name -> buildbucket.v2.BuilderID
+	2, // 2: schema.Metrics.sub_commands:type_name -> schema.SubCommand
+	1, // 3: schema.Metrics.http_requests:type_name -> schema.HttpRequest
+	4, // 4: schema.Metrics.bot_metrics:type_name -> schema.BotMetrics
+	3, // 5: schema.Metrics.git_deps:type_name -> schema.GitDependency
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_depot_tools_metrics_schema_schema_proto_init() }
@@ -600,7 +771,7 @@ func file_infra_appengine_depot_tools_metrics_schema_schema_proto_init() {
 			}
 		}
 		file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BotMetrics); i {
+			switch v := v.(*GitDependency); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -612,6 +783,18 @@ func file_infra_appengine_depot_tools_metrics_schema_schema_proto_init() {
 			}
 		}
 		file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BotMetrics); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Metrics); i {
 			case 0:
 				return &v.state
@@ -629,13 +812,14 @@ func file_infra_appengine_depot_tools_metrics_schema_schema_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_depot_tools_metrics_schema_schema_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_infra_appengine_depot_tools_metrics_schema_schema_proto_goTypes,
 		DependencyIndexes: file_infra_appengine_depot_tools_metrics_schema_schema_proto_depIdxs,
+		EnumInfos:         file_infra_appengine_depot_tools_metrics_schema_schema_proto_enumTypes,
 		MessageInfos:      file_infra_appengine_depot_tools_metrics_schema_schema_proto_msgTypes,
 	}.Build()
 	File_infra_appengine_depot_tools_metrics_schema_schema_proto = out.File

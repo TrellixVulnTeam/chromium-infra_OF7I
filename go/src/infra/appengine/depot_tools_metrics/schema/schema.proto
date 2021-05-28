@@ -63,6 +63,32 @@ message SubCommand {
   int64 exit_code = 4;
 }
 
+enum SyncStatus {
+  UNSPECIFIED = 0;
+  SYNC_STATUS_FAILURE = 1;
+  SYNC_STATUS_SUCCESS = 2;
+  SYNC_STATUS_NO_OP = 3;
+}
+
+// GitDependency stores information about the git dependencies for the current
+// project.
+message GitDependency {
+  // The path where this dependency was synced, relative to gclient root.
+  string path = 1;
+
+  // The url for the dependency.
+  string url = 2;
+
+  // The revision the dependency was synced to.
+  string revision = 3;
+
+  // Time to sync dependency to revision in seconds.
+  double execution_time = 4;
+
+  // Whether we failed to sync the dependency to the desired revision.
+  SyncStatus sync_status = 5;
+}
+
 // BotMetrics stores information about the bot environment from which the
 // command was executed.
 message BotMetrics {
@@ -130,4 +156,6 @@ message Metrics {
   string git_version = 14;
 
   BotMetrics bot_metrics = 15;
+
+  repeated GitDependency git_deps = 16;
 }
