@@ -416,13 +416,27 @@ wheel: <
 
 * *universal*
 
-## **aenum**
+## **aenum-py2**
 
 ### 2.1.2
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/aenum-py2_py3"
+  name: "infra/python/wheels/aenum-py2"
+  version: "version:2.1.2"
+>
+```
+
+
+* *universal*
+
+## **aenum-py3**
+
+### 2.1.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/aenum-py3"
   version: "version:2.1.2"
 >
 ```
@@ -828,13 +842,27 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
-## **beautifulsoup4**
+## **beautifulsoup4-py2**
 
 ### 4.9.0
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/beautifulsoup4-py2_py3"
+  name: "infra/python/wheels/beautifulsoup4-py2"
+  version: "version:4.9.0"
+>
+```
+
+
+* *universal*
+
+## **beautifulsoup4-py3**
+
+### 4.9.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/beautifulsoup4-py3"
   version: "version:4.9.0"
 >
 ```
@@ -856,13 +884,27 @@ wheel: <
 
 * *universal*
 
-## **blessings**
+## **blessings-py2**
 
 ### 1.7
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/blessings-py2_py3"
+  name: "infra/python/wheels/blessings-py2"
+  version: "version:1.7"
+>
+```
+
+
+* *universal*
+
+## **blessings-py3**
+
+### 1.7
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/blessings-py3"
   version: "version:1.7"
 >
 ```
@@ -1726,13 +1768,27 @@ wheel: <
 
 * *universal*
 
-## **futures**
+## **futures-py2**
 
 ### 3.1.1
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/futures-py2_py3"
+  name: "infra/python/wheels/futures-py2"
+  version: "version:3.1.1"
+>
+```
+
+
+* *universal*
+
+## **futures-py3**
+
+### 3.1.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/futures-py3"
   version: "version:3.1.1"
 >
 ```
@@ -2794,13 +2850,13 @@ wheel: <
 
 * *universal*
 
-## **iso8601**
+## **iso8601-py2**
 
 ### 0.1.12
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/iso8601-py2_py3"
+  name: "infra/python/wheels/iso8601-py2"
   version: "version:0.1.12"
 >
 ```
@@ -2808,13 +2864,27 @@ wheel: <
 
 * *universal*
 
-## **isort**
+## **iso8601-py3**
+
+### 0.1.12
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/iso8601-py3"
+  version: "version:0.1.12"
+>
+```
+
+
+* *universal*
+
+## **isort-py2**
 
 ### 4.3.4
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/isort-py2_py3"
+  name: "infra/python/wheels/isort-py2"
   version: "version:4.3.4"
 >
 ```
@@ -2823,6 +2893,18 @@ wheel: <
 * *universal*
 
 ## **isort-py3**
+
+### 4.3.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/isort-py3"
+  version: "version:4.3.4"
+>
+```
+
+
+* *universal*
 
 ### 5.8.0
 
@@ -3064,13 +3146,27 @@ wheel: <
 
 * *universal*
 
-## **more-itertools**
+## **more-itertools-py2**
 
 ### 4.1.0
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/more-itertools-py2_py3"
+  name: "infra/python/wheels/more-itertools-py2"
+  version: "version:4.1.0"
+>
+```
+
+
+* *universal*
+
+## **more-itertools-py3**
+
+### 4.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/more-itertools-py3"
   version: "version:4.1.0"
 >
 ```
@@ -3338,13 +3434,27 @@ wheel: <
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 
-## **nose**
+## **nose-py2**
 
 ### 1.3.7
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/nose-py2_py3"
+  name: "infra/python/wheels/nose-py2"
+  version: "version:1.3.7"
+>
+```
+
+
+* *universal*
+
+## **nose-py3**
+
+### 1.3.7
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/nose-py3"
   version: "version:1.3.7"
 >
 ```
@@ -3882,18 +3992,6 @@ wheel: <
 
 ## **pluggy**
 
-### 0.6.0
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/pluggy-py2_py3"
-  version: "version:0.6.0"
->
-```
-
-
-* *universal*
-
 ### 0.7.1
 
 ```protobuf
@@ -3918,6 +4016,20 @@ wheel: <
 
 * *universal*
 
+## **pluggy-py2**
+
+### 0.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pluggy-py2"
+  version: "version:0.6.0"
+>
+```
+
+
+* *universal*
+
 ## **pluggy-py3**
 
 ### 0.13.1
@@ -3926,6 +4038,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pluggy-py3"
   version: "version:0.13.1"
+>
+```
+
+
+* *universal*
+
+### 0.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pluggy-py3"
+  version: "version:0.6.0"
 >
 ```
 
@@ -5792,13 +5916,13 @@ wheel: <
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 
-## **typing**
+## **typing-py2**
 
 ### 3.6.4
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/typing-py2_py3"
+  name: "infra/python/wheels/typing-py2"
   version: "version:3.6.4"
 >
 ```

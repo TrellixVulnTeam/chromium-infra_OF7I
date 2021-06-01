@@ -5,6 +5,7 @@
 import glob
 import os
 import platform
+import re
 import shutil
 import subprocess
 
@@ -200,7 +201,7 @@ class Builder(object):
 
 def StageWheelForPackage(system, wheel_dir, wheel):
   """Finds the single wheel in wheel_dir and copies it to the filename indicated
-  by wheel.filename.
+  by wheel.filename. Returns the name of the wheel we found.
   """
   # Find the wheel in "wheel_dir". We scan expecting exactly one wheel.
   wheels = glob.glob(os.path.join(wheel_dir, '*.whl'))
@@ -210,6 +211,8 @@ def StageWheelForPackage(system, wheel_dir, wheel):
   source_path = wheels[0]
   util.LOGGER.debug('Identified source wheel: %s', source_path)
   shutil.copy(source_path, dst)
+
+  return os.path.basename(source_path)
 
 
 def BuildPackageFromPyPiWheel(system, wheel):
@@ -234,7 +237,26 @@ def BuildPackageFromPyPiWheel(system, wheel):
         cwd=tdir,
         env=env)
 
-    StageWheelForPackage(system, tdir, wheel)
+    wheel_name = StageWheelForPackage(system, tdir, wheel)
+
+    # In some cases, there are universal wheels with separate wheels for
+    # Python 2 and Python 3, rather than one which supports both at once. This
+    # seems to be fairly rare, so for now we'll just issue an error if that
+    # happens, and split such wheels into two 'Universal's.
+    # TODO: We only do this check for prebuilt universal wheels, but we might
+    # want to expand this and be stricter in other cases too.
+    if wheel.spec.universal:
+      supported_versions = set(re.findall(r'py\d', wheel_name))
+      required_versions = set(wheel.spec.pyversions or ['py2', 'py3'])
+      if not required_versions.issubset(supported_versions):
+        raise Exception(
+            'Wheel %s requires [%s], but wheel %s only supports [%s]' % (
+                wheel.spec.name,
+                ', '.join(sorted(required_versions)),
+                wheel_name,
+                ', '.join(sorted(supported_versions)),
+            ))
+
 
 def HostCipdPlatform():
   """Return the CIPD platform for the host system.
@@ -369,6 +391,9 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       subprocess.check_call(cmd, cwd=build_dir)
 
     interpreter, extra_env = SetupPythonPackages(system, wheel, build_dir)
+    # TODO: Perhaps we should pass --build-option --universal for universal
+    # py2.py3 wheels, to ensure the filename is right even if the wheel
+    # setup.cfg isn't configured correctly.
     cmd = [
         interpreter,
         '-m',
