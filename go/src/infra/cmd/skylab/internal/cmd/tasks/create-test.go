@@ -23,8 +23,10 @@ import (
 // CreateTest subcommand: create a test task.
 var CreateTest = &subcommands.Command{
 	UsageLine: `create-test [FLAGS...] TEST_NAME [TEST_NAME...]`,
-	ShortDesc: "create a test task",
-	LongDesc: `Create a test task.
+	ShortDesc: "create a test task [DEPRECATED--please use crosfleet (go/crosfleet-cli)]",
+	LongDesc: `[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+Create a test task.
 
 You must supply -board, -image, and -pool.
 

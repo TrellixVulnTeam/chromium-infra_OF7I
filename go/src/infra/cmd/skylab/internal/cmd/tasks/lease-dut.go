@@ -44,8 +44,10 @@ const (
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
 	UsageLine: "lease-dut HOST\n\tskylab lease-dut -model MODEL",
-	ShortDesc: "lease DUT for debugging",
-	LongDesc: `Lease DUT for debugging.
+	ShortDesc: "lease DUT for debugging [DEPRECATED--please use crosfleet (go/crosfleet-cli)]",
+	LongDesc: `[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+Lease DUT for debugging.
 
 This subcommand's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,

@@ -24,7 +24,9 @@ import (
 var CreateTestPlan = &subcommands.Command{
 	UsageLine: `create-testplan [FLAGS...]`,
 	ShortDesc: "create a testplan task",
-	LongDesc: `Create a testplan task.
+	LongDesc: `Create a testplan task. [DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
 
 This command is more general than create-test or create-suite. The supplied
 testplan should conform to the TestPlan proto as defined here:

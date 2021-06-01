@@ -24,8 +24,10 @@ import (
 // CreateSuite subcommand: create a suite task.
 var CreateSuite = &subcommands.Command{
 	UsageLine: "create-suite [FLAGS...] SUITE_NAME",
-	ShortDesc: "create a suite task",
-	LongDesc: `Create a suite task, with the given suite name.
+	ShortDesc: "create a suite task [DEPRECATED--please use crosfleet (go/crosfleet-cli)]",
+	LongDesc: `[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+Create a suite task, with the given suite name.
 
 You must supply -board, -image, and -pool.
 

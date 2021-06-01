@@ -4,3 +4,5 @@
 
 This is the command line tool for interacting with Chrome OS Test
 Infrastructure's Skylab system.
+
+*DEPRECATED--please use crosfleet (go/crosfleet-cli)*

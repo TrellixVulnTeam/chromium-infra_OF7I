@@ -24,8 +24,10 @@ import (
 // ReleaseDuts subcommand: Release a DUT previously leased via LeaseDuts.
 var ReleaseDuts = &subcommands.Command{
 	UsageLine: "release-duts HOST [HOST...]",
-	ShortDesc: "release DUTs which are previously leased via lease-dut",
-	LongDesc: `release DUTs which are previously leased via lease-dut.
+	ShortDesc: "release DUTs which are previously leased via lease-dut [DEPRECATED--please use crosfleet (go/crosfleet-cli)]",
+	LongDesc: `[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+release DUTs which are previously leased via lease-dut.
 
 This subcommand's behavior is subject to change without notice.
 Do not build automation around this subcommand.`,

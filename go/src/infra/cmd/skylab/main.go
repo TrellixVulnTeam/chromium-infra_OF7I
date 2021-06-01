@@ -25,7 +25,9 @@ import (
 func getApplication() *cli.Application {
 	return &cli.Application{
 		Name: "skylab",
-		Title: `Universal tool for Chrome OS Infra Skylab
+		Title: `[DEPRECATED; please use crosfleet (go/crosfleet-cli)]
+
+Universal tool for Chrome OS Infra Skylab
 
 Tool uses a default RPC retry strategy with five attempts and exponential backoff.
 Full documentation http://go/skylab-cli`,

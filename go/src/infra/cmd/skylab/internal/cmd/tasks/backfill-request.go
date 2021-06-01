@@ -32,8 +32,10 @@ import (
 // request.
 var BackfillRequest = &subcommands.Command{
 	UsageLine: `backfill-request [FLAGS...]`,
-	ShortDesc: "backfill unsuccessful results for a previous request",
-	LongDesc: `Backfill unsuccessful results for a previous request.
+	ShortDesc: "backfill unsuccessful results for a previous request [DEPRECATED--please use crosfleet (go/crosfleet-cli)]",
+	LongDesc: `[DEPRECATED--please use crosfleet (go/crosfleet-cli)]
+
+Backfill unsuccessful results for a previous request.
 
 This command creates a new cros_test_platform request to backfill results from
 unsuccessful (expired, timed out, or failed) tasks from a previous build.
