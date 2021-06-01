@@ -9,10 +9,14 @@ import 'elements/framework/mr-error/mr-error.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {commentListToDescriptionList} from 'shared/convertersV0.js';
+import {DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
+import {renderMarkdown} from 'shared/md-helper.js';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 
 
 /**
@@ -22,6 +26,12 @@ import {commentListToDescriptionList} from 'shared/convertersV0.js';
  *
  */
 export class MrEditDescription extends connectStore(LitElement) {
+  /** @override */
+  constructor() {
+    super();
+    this._editedDescription = '';
+  }
+
   /** @override */
   static get styles() {
     return [
@@ -42,9 +52,18 @@ export class MrEditDescription extends connectStore(LitElement) {
           margin: 0.5em 0;
         }
         .content {
-          padding: 0.5em 0;
+          padding: 0.5em 0.5em;
           width: 100%;
           box-sizing: border-box;
+        }
+        .markdown_preview {
+          padding: 0.25em 1em;
+          color: var(--chops-gray-800);
+          background-color: var(--chops-gray-200);
+          border-radius: 10px;
+          margin: 0px 0px 10px;
+          max-height: 40vh;
+          overflow: auto;
         }
         .edit-controls {
           display: flex;
@@ -57,6 +76,7 @@ export class MrEditDescription extends connectStore(LitElement) {
 
   /** @override */
   render() {
+    const markdownEnabled = DEFAULT_MD_PROJECTS.has(this.projectName);
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
@@ -71,6 +91,10 @@ export class MrEditDescription extends connectStore(LitElement) {
           @change=${this._setEditedDescription}
           .value=${this._editedDescription}
         ></textarea>
+        ${markdownEnabled ? html`
+          <div class="markdown_preview">
+            ${unsafeHTML(renderMarkdown(this._editedDescription))}
+          </div>`: ''}
         <h3 class="medium-heading">
           Add attachments
         </h3>
@@ -120,6 +144,7 @@ export class MrEditDescription extends connectStore(LitElement) {
       commentsByApproval: {type: Array},
       issueRef: {type: Object},
       fieldName: {type: String},
+      projectName: {type: String},
       _attachmentError: {type: String},
       _attachments: {type: Array},
       _boldLines: {type: Array},
@@ -134,6 +159,7 @@ export class MrEditDescription extends connectStore(LitElement) {
   stateChanged(state) {
     this.commentsByApproval = issueV0.commentsByApprovalName(state);
     this.issueRef = issueV0.viewedIssueRef(state);
+    this.projectName = projectV0.viewedProjectName(state);
   }
 
   async open(e) {

@@ -104,4 +104,24 @@ describe('mr-edit-description', () => {
     await element.updateComplete;
     assert.isFalse(element._sendEmail);
   });
+
+  it('renders valid markdown description with preview class', async () => {
+    element.projectName = 'monkeyrail';
+    element.reset();
+
+    await element.updateComplete;
+
+    const previewMarkdown = element.shadowRoot.querySelector('.markdown_preview');
+    assert.isNotNull(previewMarkdown);
+  });
+
+  it('does not show preview when markdown is disabled', async () => {
+    element.projectName = 'disabled_project';
+    element.reset();
+
+    await element.updateComplete;
+
+    const previewMarkdown = element.shadowRoot.querySelector('.markdown_preview');
+    assert.isNull(previewMarkdown);
+  });
 });
