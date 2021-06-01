@@ -44,7 +44,10 @@ echo "Starting $SWARM_ZIP"
 # allows the signal trapping to actually work.
 # Test out python3 on a single host on dev.
 # TODO(crbug.com/1012230): Move all bots to python3.
-if [[ "$(hostname -s)" =~ "build1-h9--device"[1-4] ]]; then
+# chromium-swarm-dev: build1-h9, build20-b4, build244-m4, build248-m4
+# chromium-swarm: build2-h9
+# chrome-swarming: build22-h7
+if [[ "$(hostname -s)" =~ build("1-h9"|"20-b4"|"244-m4"|"248-m4"|"2-h9"|"22-h7")"--device"[1-4] ]]; then
   py_bin="/usr/bin/python3"
 else
   py_bin="/usr/bin/python"
