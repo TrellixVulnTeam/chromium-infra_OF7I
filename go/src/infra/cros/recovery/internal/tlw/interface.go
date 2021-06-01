@@ -155,6 +155,8 @@ type Dut struct {
 	Storage *DutStorage
 	// Battery info (if applicable).
 	Battery *DutBattery
+	// ServoHost of the DUT setup.
+	ServoHost *ServoHost
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
 }
