@@ -9,7 +9,7 @@ import {connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
+import {SHARED_STYLES, MD_STYLES} from 'shared/shared-styles.js';
 import {shouldRenderMarkdown, renderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 
@@ -54,6 +54,7 @@ export class MrCommentContent extends connectStore(LitElement) {
   static get styles() {
     return [
       SHARED_STYLES,
+      MD_STYLES,
       css`
         :host {
           word-break: break-word;
@@ -79,7 +80,10 @@ export class MrCommentContent extends connectStore(LitElement) {
   render() {
     if (this._renderMarkdown && shouldRenderMarkdown(
       {project: this.projectName, author: this.author, override: this.overrideMarkdown})) {
-      return html`${unsafeHTML(renderMarkdown(this.content))}`;
+      return html`
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        ${unsafeHTML(renderMarkdown(this.content))}
+        `;
     }
     const runs = autolink.markupAutolinks(
         this.content, this.commentReferences, this.projectName,
