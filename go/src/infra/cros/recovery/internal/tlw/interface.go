@@ -19,7 +19,7 @@ import (
 // 	Resource Name: TestDevice256, CustomApV3.0
 type Access interface {
 	// Ping the device related to resource name.
-	Ping(ctx context.Context, resourceName string) (bool, error)
+	Ping(ctx context.Context, resourceName string) error
 	// Execute command on the device related to resource name.
 	Run(ctx context.Context, resourceName, command string) *RunResult
 	// Execute command on servo related to resource name.

@@ -23,9 +23,8 @@ func NewTLW(ufs, csa string) Access {
 }
 
 // Ping the device related to resource name.
-func (c *tlwClient) Ping(ctx context.Context, resourceName string) (bool, error) {
-	// return Ping(resourceName)
-	return true, nil
+func (c *tlwClient) Ping(ctx context.Context, resourceName string) error {
+	return nil
 }
 
 // Execute command on the device related to resource name.
