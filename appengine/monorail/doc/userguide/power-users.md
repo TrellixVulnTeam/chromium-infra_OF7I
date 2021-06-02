@@ -60,7 +60,7 @@ Those fields are:
 
 * `description=` initial issue description
 
-* `labels=` a comma-separated list of labels
+* `labels=` a comma-separated list of labels (e.g., Type-Bug, Pri-2)
 
 * `owner=` email address of the initial issue owner
 
