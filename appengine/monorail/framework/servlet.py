@@ -265,8 +265,8 @@ class Servlet(webapp2.RequestHandler):
       self.ratelimiter.CheckEnd(self.request, time.time(), handler_start_time)
 
     total_processing_time = time.time() - handler_start_time
-    logging.warn('Processed request in %d ms',
-                 int(total_processing_time * 1000))
+    logging.info(
+        'Processed request in %d ms', int(total_processing_time * 1000))
 
     end_count0, end_count1, end_count2 = gc.get_count()
     logging.info('gc counts: %d %d %d', end_count0, end_count1, end_count2)
