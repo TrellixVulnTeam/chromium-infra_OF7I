@@ -33,7 +33,7 @@ PROPERTIES = {
             'to add to the mirror repo.'),
     'refs':
         Property(
-            default=['refs/heads/master'],
+            default=['refs/heads/main'],
             help='A list of refs for which submodules should be added.'),
     'overlays':
         Property(
@@ -118,7 +118,7 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
 
       for item in extra_submodules:
         path, url = item.split('=')
-        deps[path] = {'url': url, 'rev': 'master'}
+        deps[path] = {'url': url, 'rev': 'main'}
 
       update_index_entries, gitmodules_entries = GetSubmodules(
           api, deps, source_checkout_name, overlays)
@@ -154,7 +154,7 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
           name='git push ' + ref)
 
   api.git('push', '-o', 'nokeycheck', target_repo,
-          'refs/remotes/origin/master:refs/heads/master-original')
+          'refs/remotes/origin/main:refs/heads/main-original')
 
   # You can't use --all and --tags at the same time for some reason.
   # --mirror pushes both, but it also pushes remotes, which we don't want.
@@ -250,7 +250,7 @@ fake_deps_with_symbolic_ref = """
 {
   "src/v8": {
     "url": "https://chromium.googlesource.com/v8/v8.git",
-    "rev": "origin/master"
+    "rev": "origin/main"
   }
 }
 """
@@ -278,20 +278,15 @@ fake_deps_with_trailing_slash = """
 """
 
 def GenTests(api):
-  yield (
-      api.test('first_time_running') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          # Checkout doesn't exist.
-          api.raw_io.stream_output('', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
-  )
+  yield (api.test('first_time_running') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror') +
+         api.step_data(
+             'Check for existing source checkout dir',
+             # Checkout doesn't exist.
+             api.raw_io.stream_output('', stream='stdout')) + api.step_data(
+                 'Process refs/heads/main.gclient evaluate DEPS',
+                 api.raw_io.stream_output(fake_src_deps, stream='stdout')))
 
   yield (
       api.test('existing_checkout_git_dir') +
@@ -305,130 +300,95 @@ def GenTests(api):
       api.step_data('git fetch', retcode=128)
   )
 
-  yield (
-      api.test('existing_checkout_new_commits') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.'
-          'gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
-  )
-
-  yield (
-      api.test('existing_checkout_latest_commit_not_by_bot') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
-  )
-
-  yield (
-      api.test('ref_that_needs_resolving') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(
-              fake_deps_with_symbolic_ref, stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.git ls-remote',
-          api.raw_io.stream_output(
-              '91c13923c1d136dc688527fa39583ef61a3277f7\trefs/heads/master',
-              stream='stdout'))
-  )
-
-  yield (
-      api.test('nested_deps') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(
-              fake_deps_with_nested_dep, stream='stdout'))
-  )
-
-  yield (
-      api.test('trailing_slash') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(
-              fake_deps_with_trailing_slash, stream='stdout'))
-  )
-
-  yield (
-      api.test('extra_submodule') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
-          extra_submodules=['src/extra=https://extra.googlesource.com/extra']
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.git ls-remote',
-          api.raw_io.stream_output(
-              'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\trefs/heads/master',
-              stream='stdout'))
-  )
-
-  yield (
-      api.test('extra_branches') +
-      api.properties(
-          source_repo='https://chromium.googlesource.com/chromium/src',
-          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
-          refs=['refs/heads/master', 'refs/branch-heads/4044'],
-      ) +
-      api.step_data(
-          'Check for existing source checkout dir',
-          # Checkout doesn't exist.
-          api.raw_io.stream_output('', stream='stdout')) +
-      api.step_data(
-          'Process refs/heads/master.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
-      api.step_data(
-          'Process refs/branch-heads/4044.gclient evaluate DEPS',
-          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
-  )
-
-  yield (api.test('overlays') + api.properties(
+  yield (api.test('existing_checkout_new_commits') + api.properties(
       source_repo='https://chromium.googlesource.com/chromium/src',
-      target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
-      overlays=['tooling']) +
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror') +
+         api.step_data('Check for existing source checkout dir',
+                       api.raw_io.stream_output('src', stream='stdout')) +
+         api.step_data('Process refs/heads/main.'
+                       'gclient evaluate DEPS',
+                       api.raw_io.stream_output(fake_src_deps,
+                                                stream='stdout')))
+
+  yield (
+      api.test('existing_checkout_latest_commit_not_by_bot') + api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror')
+      + api.step_data('Check for existing source checkout dir',
+                      api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data('Process refs/heads/main.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')))
+
+  yield (api.test('ref_that_needs_resolving') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror') +
          api.step_data('Check for existing source checkout dir',
                        api.raw_io.stream_output('src', stream='stdout')) +
          api.step_data(
-                 'Process refs/heads/master.gclient evaluate DEPS',
-                 api.raw_io.stream_output(fake_src_deps, stream='stdout')))
+             'Process refs/heads/main.gclient evaluate DEPS',
+             api.raw_io.stream_output(
+                 fake_deps_with_symbolic_ref, stream='stdout')) +
+         api.step_data(
+             'Process refs/heads/main.git ls-remote',
+             api.raw_io.stream_output(
+                 '91c13923c1d136dc688527fa39583ef61a3277f7\trefs/heads/main',
+                 stream='stdout')))
+
+  yield (api.test('nested_deps') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror') +
+         api.step_data('Check for existing source checkout dir',
+                       api.raw_io.stream_output('src', stream='stdout')) +
+         api.step_data(
+             'Process refs/heads/main.gclient evaluate DEPS',
+             api.raw_io.stream_output(
+                 fake_deps_with_nested_dep, stream='stdout')))
+
+  yield (api.test('trailing_slash') + api.properties(
+      source_repo='https://chromium.googlesource.com/chromium/src',
+      target_repo='https://chromium.googlesource.com/codesearch/src_mirror') +
+         api.step_data('Check for existing source checkout dir',
+                       api.raw_io.stream_output('src', stream='stdout')) +
+         api.step_data(
+             'Process refs/heads/main.gclient evaluate DEPS',
+             api.raw_io.stream_output(
+                 fake_deps_with_trailing_slash, stream='stdout')))
+
+  yield (
+      api.test('extra_submodule') + api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+          extra_submodules=['src/extra=https://extra.googlesource.com/extra']) +
+      api.step_data('Check for existing source checkout dir',
+                    api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data('Process refs/heads/main.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/main.git ls-remote',
+          api.raw_io.stream_output(
+              'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\trefs/heads/main',
+              stream='stdout')))
+
+  yield (
+      api.test('extra_branches') + api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+          refs=['refs/heads/main', 'refs/branch-heads/4044'],
+      ) + api.step_data(
+          'Check for existing source checkout dir',
+          # Checkout doesn't exist.
+          api.raw_io.stream_output('', stream='stdout')) +
+      api.step_data('Process refs/heads/main.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data('Process refs/branch-heads/4044.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')))
+
+  yield (
+      api.test('overlays') + api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+          overlays=['tooling']) +
+      api.step_data('Check for existing source checkout dir',
+                    api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data('Process refs/heads/main.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')))

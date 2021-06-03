@@ -189,7 +189,7 @@ update_submodules_mirror(
     target_repo = "https://chromium.googlesource.com/codesearch/chromium/src",
     extra_submodules = ["src/out=https://chromium.googlesource.com/chromium/src/out"],
     refs = [
-        "refs/heads/master",
+        "refs/heads/main",
         "refs/branch-heads/4044",  # M81
         "refs/branch-heads/4103",  # M83
     ],

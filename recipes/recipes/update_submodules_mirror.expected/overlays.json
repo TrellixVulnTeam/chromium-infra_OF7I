@@ -44,17 +44,17 @@
   },
   {
     "cmd": [],
-    "name": "Process refs/heads/master"
+    "name": "Process refs/heads/main"
   },
   {
     "cmd": [
       "git",
       "checkout",
-      "refs/remotes/origin/master"
+      "refs/remotes/origin/main"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.git checkout",
+    "name": "Process refs/heads/main.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -79,7 +79,7 @@
       ]
     },
     "infra_step": true,
-    "name": "Process refs/heads/master.gclient evaluate DEPS",
+    "name": "Process refs/heads/main.gclient evaluate DEPS",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -98,7 +98,7 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.Add gitlinks",
+    "name": "Process refs/heads/main.Add gitlinks",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -115,7 +115,7 @@
       "[CACHE]/codesearch_update_submodules_mirror/src/.gitmodules"
     ],
     "infra_step": true,
-    "name": "Process refs/heads/master.Write .gitmodules file",
+    "name": "Process refs/heads/main.Write .gitmodules file",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"v8\"]@@@",
@@ -138,7 +138,7 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.git add",
+    "name": "Process refs/heads/main.git add",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -156,7 +156,7 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.git commit",
+    "name": "Process refs/heads/main.git commit",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -168,13 +168,13 @@
       "-o",
       "nokeycheck",
       "https://chromium.googlesource.com/codesearch/src_mirror",
-      "HEAD:refs/heads/master",
+      "HEAD:refs/heads/main",
       "--push-option=skip-validation",
       "--force"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.git push refs/heads/master",
+    "name": "Process refs/heads/main.git push refs/heads/main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -186,7 +186,7 @@
       "-o",
       "nokeycheck",
       "https://chromium.googlesource.com/codesearch/src_mirror",
-      "refs/remotes/origin/master:refs/heads/master-original"
+      "refs/remotes/origin/main:refs/heads/main-original"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
