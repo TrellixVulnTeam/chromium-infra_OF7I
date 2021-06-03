@@ -32,6 +32,7 @@ func TestDefaultGitRetryRegexps(t *testing.T) {
 			`Connection timed out`,
 			`repository cannot accept new pushes; contact support`,
 			`Service Temporarily Unavailable`,
+			`The service is currently unavailable`,
 			`Connection refused`,
 			`connection refused`, // Ignore case.
 			`The requested URL returned error: 598`,

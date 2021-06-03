@@ -55,6 +55,9 @@ var defaultGitRetryRegexpSource = []string{
 	// crbug.com/535306
 	`Service Temporarily Unavailable`,
 
+	// fxbug.dev/78001
+	`The service is currently unavailable`,
+
 	// crbug.com/675262
 	`Connection refused`,
 
