@@ -162,6 +162,12 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 			}
 			v.Set("base_patch", basePatchURL)
 		}
+		if jk.Experiment.Alpha != 0 {
+			v.Set("alpha", strconv.FormatFloat(jk.Experiment.Alpha, 'f', -1, 64))
+		}
+		if jk.Experiment.MeasurementRegex != "" {
+			v.Set("measurement_regex", jk.Experiment.MeasurementRegex)
+		}
 	}
 
 	// Process the benchmark arguments.
@@ -431,6 +437,16 @@ func addExperimentDetails(l *jsonJob, j *proto.Job) errors.MultiError {
 			Change:   p.cl,
 			Patchset: p.patchSet,
 		}
+	}
+	if alphaStr, found := l.Arguments["alpha"]; found {
+		if alpha, err := strconv.ParseFloat(alphaStr, 64); err != nil {
+			errs = append(errs, err)
+		} else {
+			experiment.Alpha = alpha
+		}
+	}
+	if filter, found := l.Arguments["measurement_regex"]; found {
+		experiment.MeasurementRegex = filter
 	}
 
 	// Now we go through the state objects, and convert those one by one to the

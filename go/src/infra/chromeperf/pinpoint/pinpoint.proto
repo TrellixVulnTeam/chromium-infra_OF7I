@@ -207,6 +207,13 @@ message Experiment {
   // instead.
   GitilesCommit experiment_commit = 3;
   GerritChange experiment_patch = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // The alpha and histogram_filter are used for deciding whether the
+  // experiment is statistic significante enough as a difference. We check the
+  // alpah_value on filtered histograms
+  // https://en.wikipedia.org/wiki/Statistical_significance
+  double alpha = 5;
+  string measurement_regex = 6;
 }
 
 message MonorailIssue {
