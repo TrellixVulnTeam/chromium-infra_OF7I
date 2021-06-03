@@ -6,8 +6,7 @@
 arch=$(uname -m)
 if [[ $arch == *"aarch64"* ]]; then
   # Add packages required to run femu in linux-arm64 docker image.
-  # TODO(1162314): Remove llvm package after migration to new SDK symbolizer.
-  arch_packages="google-perftools libatomic1 libgl1-mesa-glx libpcre2-16-0 llvm"
+  arch_packages="google-perftools libatomic1 libgl1-mesa-glx libpcre2-16-0"
   kvm_packages="libvirt-daemon-system libvirt-clients virtinst"
   arch_suffix="_arm64"
   arch_build_options="--memory=8g"
