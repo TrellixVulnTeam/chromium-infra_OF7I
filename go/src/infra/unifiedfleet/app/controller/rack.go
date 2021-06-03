@@ -515,7 +515,11 @@ func validateDeleteRack(ctx context.Context, rack *ufspb.Rack) error {
 	if err != nil {
 		return err
 	}
-	if len(racklses) > 0 || len(machines) > 0 {
+	assets, err := registration.QueryAssetByPropertyName(ctx, "rack", rack.GetName(), true)
+	if err != nil {
+		return err
+	}
+	if len(racklses) > 0 || len(machines) > 0 || len(assets) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("Rack %s cannot be deleted because there are other resources which are referring this Rack.", rack.GetName()))
 		if len(racklses) > 0 {
@@ -528,6 +532,12 @@ func validateDeleteRack(ctx context.Context, rack *ufspb.Rack) error {
 			errorMsg.WriteString(fmt.Sprintf("\nMachines referring to the Rack:\n"))
 			for _, machine := range machines {
 				errorMsg.WriteString(machine.Name + ", ")
+			}
+		}
+		if len(assets) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nAssets referring to the Rack:\n"))
+			for _, asset := range assets {
+				errorMsg.WriteString(asset.Name + ", ")
 			}
 		}
 		logging.Errorf(ctx, errorMsg.String())

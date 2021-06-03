@@ -243,3 +243,186 @@ func TestGetAllAssets(t *testing.T) {
 		})
 	})
 }
+
+func TestQueryAssetByPropertyName(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	// Add some assets to the database to test
+	assets := []*ufspb.Asset{
+		{
+			Name:  "A1",
+			Type:  ufspb.AssetType_DUT,
+			Model: "test",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				Rack: "chromeos6-row1-rack1",
+			},
+			Info: &ufspb.AssetInfo{
+				Model:       "test",
+				BuildTarget: "notest",
+				Phase:       "14",
+			},
+			Tags: []string{"dut", "no-battery"},
+		},
+		{
+			Name:  "B1",
+			Type:  ufspb.AssetType_LABSTATION,
+			Model: "labtest",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				Rack: "chromeos6-row1-rack1",
+			},
+			Info: &ufspb.AssetInfo{
+				Model:       "labtest",
+				BuildTarget: "labnotest",
+				Phase:       "15",
+			},
+			Tags: []string{"labstation", "pending decommission"},
+		},
+		{
+			Name: "S1",
+			Type: ufspb.AssetType_SERVO,
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS6,
+				Rack: "chromeos6-row1-rack1",
+			},
+			Tags: []string{"servo v4", "stable"},
+		},
+		{
+			Name:  "A2",
+			Type:  ufspb.AssetType_DUT,
+			Model: "test",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS2,
+				Rack: "chromeos2-row2-rack1",
+			},
+			Info: &ufspb.AssetInfo{
+				Model:       "test",
+				BuildTarget: "notest",
+				Phase:       "14",
+			},
+			Tags: []string{"dut", "no-battery"},
+		},
+		{
+			Name:  "B2",
+			Type:  ufspb.AssetType_LABSTATION,
+			Model: "labtest",
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS2,
+				Rack: "chromeos2-row2-rack1",
+			},
+			Info: &ufspb.AssetInfo{
+				Model:       "labtest",
+				BuildTarget: "labnotest",
+				Phase:       "15",
+			},
+			Tags: []string{"labstation", "pending decommission"},
+		},
+		{
+			Name: "S2",
+			Type: ufspb.AssetType_SERVO,
+			Location: &ufspb.Location{
+				Zone: ufspb.Zone_ZONE_CHROMEOS2,
+				Rack: "chromeo2-row2-rack1",
+			},
+			Tags: []string{"servo v4", "stable"},
+		},
+	}
+	for _, asset := range assets {
+		CreateAsset(ctx, asset)
+	}
+	Convey("QueryAssetByPropertyName", t, func() {
+		Convey("QueryAssetByPropertyName - NotFound", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "rack", "chromeosπ-rowk-rackh", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("QueryAssetByPropertyName - type; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "type", "LABSTATION", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "B1")
+			So(resp[1].Name, ShouldEqual, "B2")
+		})
+		Convey("QueryAssetByPropertyName - zone; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "zone", "ZONE_CHROMEOS6", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 3)
+			So(resp[0].Name, ShouldEqual, "A1")
+			So(resp[1].Name, ShouldEqual, "B1")
+			So(resp[2].Name, ShouldEqual, "S1")
+		})
+		Convey("QueryAssetByPropertyName - phase; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "phase", "14", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "A1")
+			So(resp[1].Name, ShouldEqual, "A2")
+		})
+		Convey("QueryAssetByPropertyName - tags; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "tags", "servo v4", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "S1")
+			So(resp[1].Name, ShouldEqual, "S2")
+		})
+		Convey("QueryAssetByPropertyName - model; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "model", "test", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "A1")
+			So(resp[1].Name, ShouldEqual, "A2")
+		})
+		Convey("QueryAssetByPropertyName - build_target; keys only", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "build_target", "labnotest", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "B1")
+			So(resp[1].Name, ShouldEqual, "B2")
+		})
+		Convey("QueryAssetByPropertyName - type", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "type", "LABSTATION", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0].Name, ShouldEqual, "B1")
+			So(resp[1].Name, ShouldEqual, "B2")
+		})
+		Convey("QueryAssetByPropertyName - zone", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "zone", "ZONE_CHROMEOS6", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 3)
+			So(resp[0], ShouldResembleProto, assets[0]) // DUT A1
+			So(resp[1], ShouldResembleProto, assets[1]) // Labstation B1
+			So(resp[2], ShouldResembleProto, assets[2]) // Servo S1
+		})
+		Convey("QueryAssetByPropertyName - phase", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "phase", "14", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0], ShouldResembleProto, assets[0]) // DUT A1
+			So(resp[1], ShouldResembleProto, assets[3]) // DUT A2
+		})
+		Convey("QueryAssetByPropertyName - tags", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "tags", "servo v4", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0], ShouldResembleProto, assets[2]) // Servo S1
+			So(resp[1], ShouldResembleProto, assets[5]) // Servo S2
+		})
+		Convey("QueryAssetByPropertyName - model", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "model", "test", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0], ShouldResembleProto, assets[0]) // DUT A1
+			So(resp[1], ShouldResembleProto, assets[3]) // DUT A2
+		})
+		Convey("QueryAssetByPropertyName - build_target", func() {
+			resp, err := QueryAssetByPropertyName(ctx, "build_target", "labnotest", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			So(resp[0], ShouldResembleProto, assets[1]) // Labstation B1
+			So(resp[1], ShouldResembleProto, assets[4]) // Labstation B2
+		})
+	})
+}

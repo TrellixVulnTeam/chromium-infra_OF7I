@@ -195,6 +195,37 @@ func BatchUpdateAssets(ctx context.Context, assets []*ufspb.Asset) ([]*ufspb.Ass
 	return nil, err
 }
 
+// QueryAssetByPropertyName queries Asset Entity in the datastore
+// If keysOnly is true, then only key field is populated in returned assets
+func QueryAssetByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Asset, error) {
+	q := datastore.NewQuery(AssetKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*AssetEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Debugf(ctx, "No assets found for the query: %s", id)
+		return nil, nil
+	}
+	assets := make([]*ufspb.Asset, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			assets = append(assets, &ufspb.Asset{
+				Name: entity.Name,
+			})
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			assets = append(assets, pm.(*ufspb.Asset))
+		}
+	}
+	return assets, nil
+}
+
 // GetAssetIndexedFieldName returns the index name
 func GetAssetIndexedFieldName(input string) (string, error) {
 	var field string
