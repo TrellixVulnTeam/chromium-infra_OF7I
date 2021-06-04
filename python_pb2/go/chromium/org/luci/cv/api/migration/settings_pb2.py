@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xc4\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x32\n\x0buse_cv_runs\x18\x03 \x01(\x0b\x32\x1d.migration.Settings.UseCVRuns\x12\x30\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigration\x1a]\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x04 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a\x43\n\tUseCVRuns\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\t\"+\n\rPSSAMigration\x12\x1a\n\x12projects_blocklist\x18\x01 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xc8\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x32\n\x0buse_cv_runs\x18\x03 \x01(\x0b\x32\x1d.migration.Settings.UseCVRuns\x12\x34\n\x0epssa_migration\x18\x02 \x01(\x0b\x32\x18.migration.PSSAMigrationB\x02\x18\x01\x1a]\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x04 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a\x43\n\tUseCVRuns\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\t\"/\n\rPSSAMigration\x12\x1e\n\x12projects_blocklist\x18\x01 \x03(\tB\x02\x18\x01\x42\x33Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -73,8 +73,8 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=230,
-  serialized_end=323,
+  serialized_start=234,
+  serialized_end=327,
 )
 
 _SETTINGS_USECVRUNS = _descriptor.Descriptor(
@@ -111,8 +111,8 @@ _SETTINGS_USECVRUNS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=325,
-  serialized_end=392,
+  serialized_start=329,
+  serialized_end=396,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -143,7 +143,7 @@ _SETTINGS = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -157,7 +157,7 @@ _SETTINGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=392,
+  serialized_end=396,
 )
 
 
@@ -175,7 +175,7 @@ _PSSAMIGRATION = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -188,8 +188,8 @@ _PSSAMIGRATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=394,
-  serialized_end=437,
+  serialized_start=398,
+  serialized_end=445,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
@@ -233,4 +233,6 @@ _sym_db.RegisterMessage(PSSAMigration)
 
 
 DESCRIPTOR._options = None
+_SETTINGS.fields_by_name['pssa_migration']._options = None
+_PSSAMIGRATION.fields_by_name['projects_blocklist']._options = None
 # @@protoc_insertion_point(module_scope)
