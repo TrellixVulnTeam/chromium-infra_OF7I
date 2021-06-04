@@ -265,6 +265,8 @@ class FileCoverageData(ndb.Model):
   builder = ndb.StringProperty(indexed=True, required=False)
 
   # Coverage data for a single file.
+  # Json structure corresponds to File proto at
+  # https://chromium.googlesource.com/infra/infra/+/refs/heads/main/appengine/findit/model/proto/code_coverage.proto
   data = ndb.JsonProperty(indexed=False, compressed=True, required=True)
 
   @classmethod
