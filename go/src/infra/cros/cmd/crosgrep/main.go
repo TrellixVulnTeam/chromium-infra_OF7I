@@ -31,6 +31,7 @@ func newApplication() *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			cmds.ListAllTasks,
+			cmds.BrokenBy,
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),

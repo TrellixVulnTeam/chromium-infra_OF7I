@@ -7,6 +7,7 @@ package swarming
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -18,7 +19,7 @@ import (
 // bqRow is an alias for the type of a bigquery row.
 type bqRow = []bigquery.Value
 
-// getRowIterator returns a row iterator from a sql query.
+// GetRowIterator returns a row iterator from a sql query.
 func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
 	logging.Debugf(ctx, "GetRowIterator %20s\n", strings.ReplaceAll(sql, "\n", "\t"))
 	q := client.Query(sql)
@@ -44,4 +45,12 @@ func templateToString(tmpl *template.Template, input interface{}) (string, error
 		return "", err
 	}
 	return out.String(), nil
+}
+
+// toBotName adds a crossk- prefix if one does not already exist.
+func toBotName(s string) string {
+	if strings.HasPrefix(s, "crossk-") {
+		return s
+	}
+	return fmt.Sprintf("crossk-%s", s)
 }

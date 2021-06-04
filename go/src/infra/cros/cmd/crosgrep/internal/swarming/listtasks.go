@@ -54,7 +54,7 @@ func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64,
 	return sql, nil
 }
 
-// getSwarmingTasks gets a list of swarming tasks in an arbitrary manner.
+// GetSwarmingTasks gets a list of swarming tasks in an arbitrary manner.
 func getSwarmingTasks(ctx context.Context, client *bigquery.Client, model string) (*bigquery.RowIterator, error) {
 	logging.Debugf(ctx, "GetSwarmingTasks\n")
 	if client == nil {
