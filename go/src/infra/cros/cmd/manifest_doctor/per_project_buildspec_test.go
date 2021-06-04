@@ -85,7 +85,8 @@ func (f *fakeGSClient) WriteFileToGS(gsPath lgs.Path, data []byte) error {
 }
 
 func TestCreateProjectBuildspec(t *testing.T) {
-	project := "chromeos/project/galaxy/milkyway"
+	program := "galaxy"
+	project := "milkyway"
 	buildspec := "90/13811.0.0.xml"
 	releaseBranch := "refs/heads/release-R90-13816.B"
 
@@ -110,23 +111,29 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	)
 
 	// Mock tip-of-branch (releaseBranch) manifest file request.
-	reqLocalManifest := &gitilespb.DownloadFileRequest{
-		Project:    project,
-		Path:       "local_manifest.xml",
-		Committish: releaseBranch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
+	projects := []string{
+		"chromeos/program/" + program,
+		"chromeos/project/" + program + "/" + project,
 	}
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: unpinnedLocalManifestXML,
-		},
-		nil,
-	)
+	for _, project := range projects {
+		reqLocalManifest := &gitilespb.DownloadFileRequest{
+			Project:    project,
+			Path:       "local_manifest.xml",
+			Committish: releaseBranch,
+			Format:     gitilespb.DownloadFileRequest_TEXT,
+		}
+		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+			&gitilespb.DownloadFileResponse{
+				Contents: unpinnedLocalManifestXML,
+			},
+			nil,
+		)
+	}
 
 	// Mock external buildspec file request.
 	reqExternalBuildspec := &gitilespb.DownloadFileRequest{
 		Project:    "chromiumos/manifest-versions",
-		Path:       "full/buildspecs/" + buildspec,
+		Path:       "buildspecs/" + buildspec,
 		Committish: "HEAD",
 		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
@@ -156,6 +163,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	expected, err := repo.ParseManifest([]byte(pinnedLocalManifestXML))
 	assert.NilError(t, err)
 	expectedWrites := map[string]*repo.Manifest{
+		"gs://chromeos-galaxy/buildspecs/" + buildspec:          expected,
 		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: expected,
 	}
 	f := &fakeGSClient{
@@ -165,14 +173,8 @@ func TestCreateProjectBuildspec(t *testing.T) {
 
 	b := projectBuildspec{
 		buildspec: buildspec,
+		program:   program,
 		project:   project,
 	}
 	assert.NilError(t, b.CreateProjectBuildspec(nil, f))
-}
-
-func TestGsPath(t *testing.T) {
-	got, err := gsPath("chromeos/project/galaxy/milkyway", "90/13811.0.0.xml")
-	assert.NilError(t, err)
-	assert.StringsEqual(t, got.Bucket(), "chromeos-galaxy-milkyway")
-	assert.StringsEqual(t, got.Filename(), "buildspecs/90/13811.0.0.xml")
 }

@@ -35,12 +35,13 @@ type projectBuildspec struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	buildspec string
+	program   string
 	project   string
 }
 
 func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "project-buildspec --buildspec=85/13277.0.0.xml --project_name=chromeos/project/galaxy/milkyway",
+		UsageLine: "project-buildspec --buildspec=85/13277.0.0.xml --program=galaxy --project=milkyway",
 		ShortDesc: "Create a project-specific buildspec for a specific project/program and version",
 		CommandRun: func() subcommands.CommandRun {
 			b := &projectBuildspec{}
@@ -51,8 +52,14 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 				Path to manifest within manifest-versions repo, relative to
 				https://chrome-internal.googlesource.com/chromeos/manifest-versions/+/HEAD/buildspecs/
 				e.g. 85/13277.0.0.xml`))
+			b.Flags.StringVar(&b.program, "program", "",
+				text.Doc(`
+				Name of the program to create the program-specific buildspec for.
+				If the specified program does not have a local_manifest, no program-specific
+				buildspec will be created.
+				`))
 			b.Flags.StringVar(&b.project, "project", "",
-				"Name of the project/program to create the project-specific buildspec for")
+				"Name of the project to create the project-specific buildspec for")
 			return b
 		}}
 }
@@ -62,6 +69,9 @@ func (b *projectBuildspec) validate() error {
 		return fmt.Errorf("--buildspec required")
 	}
 
+	if b.program == "" {
+		return fmt.Errorf("--program required")
+	}
 	if b.project == "" {
 		return fmt.Errorf("--project required")
 	}
@@ -102,19 +112,16 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 	return 0
 }
 
-// gsPath returns the appropriate GS path for the given project/version.
-func gsPath(projectName, buildspec string) (lgs.Path, error) {
-	if strings.HasPrefix(projectName, "chromeos/project") {
-		tokens := strings.Split(projectName, "/")
-		if len(tokens) >= 4 {
-			bucket := fmt.Sprintf("chromeos-%s-%s", tokens[2], tokens[3])
-			relPath := filepath.Join("buildspecs/", buildspec)
-			return lgs.MakePath(bucket, relPath), nil
-		}
-	}
-	// TODO(b:187795796): Add support for program repos, once GS buckets are
-	// located/created.
-	return "", fmt.Errorf("unsupported project name")
+// gsProjectPath returns the appropriate GS path for the given project/version.
+func gsProjectPath(program, project, buildspec string) lgs.Path {
+	relPath := filepath.Join("buildspecs/", buildspec)
+	return lgs.MakePath(fmt.Sprintf("chromeos-%s-%s", program, project), relPath)
+}
+
+// gsProgramPath returns the appropriate GS path for the given program/version.
+func gsProgramPath(program, buildspec string) lgs.Path {
+	relPath := filepath.Join("buildspecs/", buildspec)
+	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
 }
 
 // CreateProjectBuildspec creates a project/program-specific buildspec as
@@ -141,14 +148,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 		return fmt.Errorf("release branch for R%d was not found", buildspecInfo.ChromeBranch)
 	}
 
-	// Load the local manifest for the appropriate project/branch.
-	localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
-		b.project, releaseBranch, "local_manifest.xml")
-	if err != nil {
-		return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
-	}
-
-	publicBuildspecPath := "full/buildspecs/" + b.buildspec
+	publicBuildspecPath := "buildspecs/" + b.buildspec
 	_, err = gerrit.DownloadFileFromGitiles(ctx, authedClient, chromeExternalHost,
 		"chromiumos/manifest-versions", "HEAD", publicBuildspecPath)
 	if err != nil {
@@ -169,31 +169,40 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 		return errors.Annotate(err, "error loading buildspec manifest").Err()
 	}
 
-	// Create the project/program-specific buildspec.
-	if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
-		switch err.(type) {
-		case manifestutil.MissingProjectsError:
-			LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(manifestutil.MissingProjectsError).MissingProjects)
-		default:
+	programProject := "chromeos/program/" + b.program
+	projectProject := "chromeos/project/" + b.program + "/" + b.project
+	projects := map[string]lgs.Path{
+		programProject: gsProgramPath(b.program, b.buildspec),
+		projectProject: gsProjectPath(b.program, b.project, b.buildspec),
+	}
+	for project, uploadPath := range projects {
+		// Load the local manifest for the appropriate project/branch.
+		localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+			project, releaseBranch, "local_manifest.xml")
+		if err != nil {
+			return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
+		}
+		// Create the project/program-specific buildspec.
+		if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
+			switch err.(type) {
+			case manifestutil.MissingProjectsError:
+				LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(manifestutil.MissingProjectsError).MissingProjects)
+			default:
+				return err
+			}
+		}
+
+		localManifestRaw, err := localManifest.ToBytes()
+		if err != nil {
 			return err
 		}
-	}
 
-	localManifestRaw, err := localManifest.ToBytes()
-	if err != nil {
-		return err
+		// Upload project buildspec to appropriate GS bucket.
+		if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
+			return err
+		}
+		LogOut("wrote buildspec to %s\n", string(uploadPath))
 	}
-
-	// Upload project buildspec to appropriate GS bucket.
-	uploadPath, err := gsPath(b.project, b.buildspec)
-	if err != nil {
-		return err
-	}
-
-	if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
-		return err
-	}
-	LogOut("wrote buildspec to %s\n", string(uploadPath))
 
 	return nil
 }
