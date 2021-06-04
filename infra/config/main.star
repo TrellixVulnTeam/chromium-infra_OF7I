@@ -96,8 +96,7 @@ luci.project(
 # Per-service tweaks.
 luci.logdog(
     gs_bucket = "chromium-luci-logdog",
-    cloud_logging_project = "luci-logdog",
-    use_global_logdog_account = True,
+    cloud_logging_project = "chrome-infra-logs",
 )
 luci.milo(
     logo = "https://storage.googleapis.com/chrome-infra-public/logo/chrome-infra-logo-200x200.png",
