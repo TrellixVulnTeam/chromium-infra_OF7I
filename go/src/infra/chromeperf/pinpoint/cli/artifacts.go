@@ -46,8 +46,8 @@ type downloadArtifactsMixin struct {
 func (dam *downloadArtifactsMixin) RegisterFlags(flags *flag.FlagSet, userCfg userConfig) {
 	flags.BoolVar(&dam.downloadArtifacts, "download-artifacts", userCfg.DownloadArtifacts, text.Doc(`
 		If set, artifacts are downloaded to the -work-dir.  Note that files
-		will NOT be overwritten if they exist already (an error will be
-		printed).  Override default from user configuration file.
+		will be overwritten if they exist already.
+		Override default from user configuration file.
 	`))
 	flags.StringVar(&dam.selectArtifacts, "select-artifacts", userCfg.SelectArtifacts, text.Doc(`
 		Ignored unless -download-artifacts is set; if set, only selected artifacts
@@ -102,7 +102,7 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 	if err != nil {
 		return errors.Annotate(err, "failed getting absolute file path from %q %q", workDir, id).Err()
 	}
-	if err := promptRemove(os.Stdout, dst); err != nil {
+	if err := removeExisting(dst); err != nil {
 		return errors.Annotate(err, "cannot download artifacts").Err()
 	}
 

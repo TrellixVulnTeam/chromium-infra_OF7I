@@ -45,7 +45,7 @@ func downloadResultsToDir(ctx context.Context, gcs *storage.Client, dstDir strin
 		return "", errors.Annotate(err, "failed getting absolute file path from %q %q", dstFile, filename).Err()
 	}
 
-	if err := promptRemove(os.Stdout, dstFile); err != nil {
+	if err := removeExisting(dstFile); err != nil {
 		return "", errors.Annotate(err, "cannot download result file").Err()
 	}
 
@@ -87,8 +87,8 @@ type downloadResultsMixin struct {
 func (drm *downloadResultsMixin) RegisterFlags(flags *flag.FlagSet, userCfg userConfig) {
 	flags.BoolVar(&drm.downloadResults, "download-results", userCfg.DownloadResults, text.Doc(`
 		If set, results are downloaded to the -results-dir.  Note that files
-		will NOT be overwritten if they exist already (an error will be
-		printed).  Override default from user configuration file.
+		will be overwritten if they exist already.
+		Override default from user configuration file.
 	`))
 	flags.StringVar(&drm.resultsDir, "results-dir", userCfg.ResultsDir, text.Doc(`
 		Ignored unless -download-results is set; the directory to store
