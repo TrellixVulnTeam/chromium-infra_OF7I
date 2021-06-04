@@ -6,7 +6,6 @@ package swarming
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -14,9 +13,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/api/iterator"
 )
-
-// bqRow is an alias for the type of a bigquery row.
-type bqRow = []bigquery.Value
 
 // Limit on the number of swarming tasks that can be retrieved by a single query.
 const swarmingTasksLimit = 10000
@@ -56,14 +52,6 @@ func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64,
 		return "", err
 	}
 	return sql, nil
-}
-
-// getRowIterator returns a row iterator from a sql query.
-func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
-	logging.Debugf(ctx, "GetRowIterator %20s\n", strings.ReplaceAll(sql, "\n", "\t"))
-	q := client.Query(sql)
-	it, err := q.Read(ctx)
-	return it, errors.Annotate(err, "get iterator").Err()
 }
 
 // getSwarmingTasks gets a list of swarming tasks in an arbitrary manner.
