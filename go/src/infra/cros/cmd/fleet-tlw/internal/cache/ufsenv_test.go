@@ -28,14 +28,44 @@ func (c fakeUFSClient) ListCachingServices(context.Context, *ufsapi.ListCachingS
 	}, nil
 }
 
+func TestSubnets_multipleSubnets(t *testing.T) {
+	t.Parallel()
+	c := &fakeUFSClient{services: []*ufsmodels.CachingService{
+		{
+			Name:           "cachingservice/1.1.1.1",
+			Port:           8001,
+			ServingSubnets: []string{"1.1.1.0/24", "1.1.2.0/24"},
+			State:          ufsmodels.State_STATE_SERVING,
+		},
+	}}
+	env, err := NewUFSEnv(c)
+	if err != nil {
+		t.Fatalf("NewUFSEnv(fakeClient) failed: %s", err)
+	}
+	want := []Subnet{
+		{
+			IPNet:    &net.IPNet{IP: net.IPv4(1, 1, 1, 0), Mask: net.CIDRMask(24, 32)},
+			Backends: []string{"http://1.1.1.1:8001"},
+		},
+		{
+			IPNet:    &net.IPNet{IP: net.IPv4(1, 1, 2, 0), Mask: net.CIDRMask(24, 32)},
+			Backends: []string{"http://1.1.1.1:8001"},
+		},
+	}
+	got := env.Subnets()
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Subnets() returned unexpected diff (-want +got):\n%s", diff)
+	}
+
+}
 func TestSubnets_refresh(t *testing.T) {
 	t.Parallel()
 	c := &fakeUFSClient{services: []*ufsmodels.CachingService{
 		{
-			Name:          "cachingservice/1.1.1.1",
-			Port:          8001,
-			ServingSubnet: "1.1.1.1/24",
-			State:         ufsmodels.State_STATE_SERVING,
+			Name:           "cachingservice/1.1.1.1",
+			Port:           8001,
+			ServingSubnets: []string{"1.1.1.1/24"},
+			State:          ufsmodels.State_STATE_SERVING,
 		},
 	}}
 	env, err := NewUFSEnv(c)
@@ -54,10 +84,10 @@ func TestSubnets_refresh(t *testing.T) {
 	})
 	t.Run("expired data will be updated", func(t *testing.T) {
 		c.services = []*ufsmodels.CachingService{{
-			Name:          "cachingservice/2.2.2.2",
-			Port:          8002,
-			ServingSubnet: "2.2.2.2/24",
-			State:         ufsmodels.State_STATE_SERVING,
+			Name:           "cachingservice/2.2.2.2",
+			Port:           8002,
+			ServingSubnets: []string{"2.2.2.2/24"},
+			State:          ufsmodels.State_STATE_SERVING,
 		}}
 		t.Run("Subnets won't change when not expired", func(t *testing.T) {
 			got := env.Subnets()
