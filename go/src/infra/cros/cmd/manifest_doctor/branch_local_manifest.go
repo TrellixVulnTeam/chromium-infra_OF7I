@@ -158,15 +158,15 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 		return false, nil
 	}
 
-	localManifest, err := repo.LoadManifestFromFile(localManifestPath)
+	localManifest, err := manifestutil.LoadManifestFromFile(localManifestPath)
 	if err != nil {
 		return false, errors.Annotate(err, "failed to load local_manifest.xml from project %s, branch %s", path, branch).Err()
 	}
 
-	if err := manifestutil.PinManifestFromManifest(&localManifest, referenceManifest); err != nil {
+	if err := manifestutil.PinManifestFromManifest(localManifest, referenceManifest); err != nil {
 		return false, errors.Annotate(err, "failed to pin local_manifest.xml from reference manifest for project %s, branch %s", path, branch).Err()
 	}
-	hasChanges, err := repo.UpdateManifestElementsInFile(localManifestPath, &localManifest)
+	hasChanges, err := manifestutil.UpdateManifestElementsInFile(localManifestPath, localManifest)
 	if err != nil {
 		return false, errors.Annotate(err, "failed to write changes to local_manifest.xml for project %s, branch %s", path, branch).Err()
 	}
@@ -240,7 +240,7 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 
 		// Read reference manifest.
 		referencePath := filepath.Join(manifestInternalPath, "default.xml")
-		referenceManifest, err := repo.LoadManifestFromFileWithIncludes(referencePath)
+		referenceManifest, err := manifestutil.LoadManifestFromFileWithIncludes(referencePath)
 		if err != nil {
 			errs = append(errs, errors.Annotate(err, "failed to load reference manifest for branch %s", branch).Err())
 			continue

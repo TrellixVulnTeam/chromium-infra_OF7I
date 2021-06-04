@@ -7,19 +7,11 @@
 package repo
 
 import (
-	"context"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"net/http"
-	"path/filepath"
 	"regexp"
-	"strings"
 
-	"infra/cros/internal/gerrit"
-
-	bbproto "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -90,6 +82,35 @@ type CopyFile struct {
 type RepoHooks struct {
 	EnabledList string `xml:"enabled-list,attr,omitempty"`
 	InProject   string `xml:"in-project,attr,omitempty"`
+}
+
+func (e *Default) AttrMap() map[string]string {
+	return map[string]string{
+		"remote":   e.RemoteName,
+		"revision": e.Revision,
+		"sync-j":   e.SyncJ,
+	}
+}
+
+func (e *Remote) AttrMap() map[string]string {
+	return map[string]string{
+		"fetch":    e.Fetch,
+		"name":     e.Name,
+		"revision": e.Revision,
+		"alias":    e.Alias,
+	}
+}
+
+func (e *Project) AttrMap() map[string]string {
+	return map[string]string{
+		"path":     e.Path,
+		"name":     e.Name,
+		"revision": e.Revision,
+		"upstream": e.Upstream,
+		"remote":   e.RemoteName,
+		"groups":   e.Groups,
+		"sync-c":   e.SyncC,
+	}
 }
 
 // GitName returns the git name of the remote, which
@@ -316,57 +337,6 @@ func (p *Project) GetAnnotation(name string) (string, bool) {
 	return "", false
 }
 
-// LoadManifestFromFile loads the manifest at the given file into a
-// Manifest struct.
-func LoadManifestFromFile(file string) (Manifest, error) {
-	manifestMap, err := LoadManifestTree(file)
-	if err != nil {
-		return Manifest{}, err
-	}
-	manifest, exists := manifestMap[filepath.Base(file)]
-	if !exists {
-		return Manifest{}, fmt.Errorf("failed to read %s", file)
-	}
-	return *manifest, nil
-}
-
-// LoadManifestFromFileRaw loads the manifest at the given file and returns
-// the file contents as a byte array.
-func LoadManifestFromFileRaw(file string) ([]byte, error) {
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to open and read %s", file).Err()
-	}
-	// We don't ResolveImplicitLinks or otherwise do anything else in this function (as it returns "raw" data).
-	return data, nil
-}
-
-// LoadManifestFromFileWithIncludes loads the manifest at the given files but also
-// calls MergeManifests to resolve includes.
-func LoadManifestFromFileWithIncludes(file string) (*Manifest, error) {
-	manifestMap, err := LoadManifestTree(file)
-	if err != nil {
-		return nil, err
-	}
-	manifest, err := MergeManifests(filepath.Base(file), &manifestMap)
-	return manifest, err
-}
-
-// LoadManifestFromGitiles loads the manifest from the specified remote location
-// using the Gitiles API.
-func LoadManifestFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (*Manifest, error) {
-	contents, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, host,
-		project, branch, file)
-	if err != nil {
-		return nil, errors.Annotate(err, "error downloading manifest").Err()
-	}
-	manifest, err := ParseManifest([]byte(contents))
-	if err != nil {
-		return nil, errors.Annotate(err, "error parsing manifest").Err()
-	}
-	return manifest, nil
-}
-
 // ResolveImplicitLinks explicitly sets remote/revision information
 // for each project in the manifest.
 func (m *Manifest) ResolveImplicitLinks() {
@@ -390,119 +360,6 @@ func (m *Manifest) ResolveImplicitLinks() {
 		}
 		m.Projects[i] = project
 	}
-}
-
-// LoadManifestTree loads the manifest at the given file path into
-// a Manifest struct. It also loads all included manifests.
-// Returns a map mapping manifest filenames to file contents.
-func LoadManifestTree(file string) (map[string]*Manifest, error) {
-	results := make(map[string]*Manifest)
-
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to open and read %s", file).Err()
-	}
-	manifest := &Manifest{}
-	if err = xml.Unmarshal(data, manifest); err != nil {
-		return nil, errors.Annotate(err, "failed to unmarshal %s", file).Err()
-	}
-	manifest.XMLName = xml.Name{}
-	results[filepath.Base(file)] = manifest
-
-	// Recursively fetch manifests listed in "include" elements.
-	for _, incl := range manifest.Includes {
-		// Include paths are relative to the manifest location.
-		inclPath := filepath.Join(filepath.Dir(file), incl.Name)
-		subResults, err := LoadManifestTree(inclPath)
-		if err != nil {
-			return nil, err
-		}
-		for k, v := range subResults {
-			results[filepath.Join(filepath.Dir(incl.Name), k)] = v
-		}
-	}
-	return results, nil
-}
-
-func fetchManifestRecursive(ctx context.Context, authedClient *http.Client, gc *bbproto.GitilesCommit, file string) (map[string]*Manifest, error) {
-	results := make(map[string]*Manifest)
-	log.Printf("Fetching manifest file %s at revision '%s'", file, gc.Id)
-	files, err := gerrit.FetchFilesFromGitiles(
-		ctx,
-		authedClient,
-		gc.Host,
-		gc.Project,
-		gc.Id,
-		[]string{file})
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to fetch %s", file).Err()
-	}
-	manifest := &Manifest{}
-	if err = xml.Unmarshal([]byte((*files)[file]), manifest); err != nil {
-		return nil, errors.Annotate(err, "failed to unmarshal %s", file).Err()
-	}
-	manifest.XMLName = xml.Name{}
-	results[file] = manifest
-	// Recursively fetch manifests listed in "include" elements.
-	for _, incl := range manifest.Includes {
-		subResults, err := fetchManifestRecursive(ctx, authedClient, gc, incl.Name)
-		if err != nil {
-			return nil, err
-		}
-		for k, v := range subResults {
-			results[k] = v
-		}
-	}
-	return results, nil
-}
-
-// GetRepoToRemoteBranchToSourceRootFromManifests constructs a Gerrit project to path
-// mapping by fetching manifest XML files from Gitiles.
-func GetRepoToRemoteBranchToSourceRootFromManifests(ctx context.Context, authedClient *http.Client, gc *bbproto.GitilesCommit) (map[string]map[string]string, error) {
-	manifests, err := fetchManifestRecursive(ctx, authedClient, gc, rootXML)
-	if err != nil {
-		return nil, err
-	}
-	repoToSourceRoot := getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests)
-	log.Printf("Found %d repo to source root mappings from manifest files", len(repoToSourceRoot))
-	return repoToSourceRoot, nil
-}
-
-// GetRepoToRemoteBranchToSourceRootFromManifestFile constructs a Gerrit project to path
-// mapping by reading manifests from the specified root manifest file.
-func GetRepoToRemoteBranchToSourceRootFromManifestFile(file string) (map[string]map[string]string, error) {
-	manifests, err := LoadManifestTree(file)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to load local manifest %s", file).Err()
-	}
-	repoToSourceRoot := getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests)
-	log.Printf("Found %d repo to source root mappings from manifest files", len(repoToSourceRoot))
-	return repoToSourceRoot, nil
-}
-
-func getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests map[string]*Manifest) map[string]map[string]string {
-	repoToSourceRoot := make(map[string]map[string]string)
-	for _, m := range manifests {
-		for _, p := range m.Projects {
-			if _, found := repoToSourceRoot[p.Name]; !found {
-				repoToSourceRoot[p.Name] = make(map[string]string)
-			}
-			branch := p.Upstream
-			if branch == "" {
-				branch = "refs/heads/master"
-			}
-			if !strings.HasPrefix(branch, "refs/heads/") {
-				branch = "refs/heads/" + branch
-			}
-
-			if oldPath, found := repoToSourceRoot[p.Name][branch]; found {
-				log.Printf("Source root for (%s, %s) is currently %s, overwriting with %s", p.Name, branch, oldPath, p.Path)
-			}
-
-			repoToSourceRoot[p.Name][branch] = p.Path
-		}
-	}
-	return repoToSourceRoot
 }
 
 // GetUniqueProject returns the unique project with the given name

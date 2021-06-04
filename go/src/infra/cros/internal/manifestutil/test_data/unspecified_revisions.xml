@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <include name="bar.xml" />
+  <default remote="chromeos" revision="123"/>
+  <remote fetch="https://chromium.org/remote" name="chromium"/>
+  <project name="baz" path="baz/"/>
+</manifest>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <default remote="chromeos" revision="123"/>
+  <remote fetch="https://chromium.org/remote" name="chromium" alias="chromeos"/>
+  <remote fetch="https://google.com/remote" name="google" revision="125"/>
+  <project name="foo" path="bar/" remote="chromium"/>
+  <project name="foo" path="baz/" remote="chromium"/>
+  <project name="foo" path="buz/" remote="chromium"/>
+</manifest>

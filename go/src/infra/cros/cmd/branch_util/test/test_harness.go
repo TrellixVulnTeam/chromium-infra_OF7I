@@ -17,6 +17,7 @@ import (
 
 	mv "infra/cros/internal/chromeosversion"
 	"infra/cros/internal/git"
+	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 	rh "infra/cros/internal/repoharness"
 
@@ -500,17 +501,17 @@ func (r *CrosRepoHarness) AssertManifestProjectRepaired(
 
 	for _, file := range manifestFiles {
 		filePath := filepath.Join(tmpDir, file)
-		manifest, err := repo.LoadManifestFromFile(filePath)
+		manifest, err := manifestutil.LoadManifestFromFile(filePath)
 		if err != nil {
 			return errors.Annotate(err, "failed to load manifest file %s", file).Err()
 		}
 		// Have to resolve implicit links to set the appropriate remote for each
 		// project so that the asserts work.
 		manifest.ResolveImplicitLinks()
-		if err = AssertNoDefaultRevisions(manifest); err != nil {
+		if err = AssertNoDefaultRevisions(*manifest); err != nil {
 			return errors.Annotate(err, "manifest %s has error", file).Err()
 		}
-		if err = r.AssertProjectRevisionsMatchBranch(manifest, branch, ""); err != nil {
+		if err = r.AssertProjectRevisionsMatchBranch(*manifest, branch, ""); err != nil {
 			return errors.Annotate(err, "manifest %s has error", file).Err()
 		}
 	}

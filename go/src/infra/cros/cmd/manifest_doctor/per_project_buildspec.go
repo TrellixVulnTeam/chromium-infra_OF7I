@@ -22,8 +22,7 @@ import (
 	"infra/cros/internal/branch"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
-	mu "infra/cros/internal/manifestutil"
-	"infra/cros/internal/repo"
+	"infra/cros/internal/manifestutil"
 )
 
 const (
@@ -143,7 +142,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 	}
 
 	// Load the local manifest for the appropriate project/branch.
-	localManifest, err := repo.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+	localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
 		b.project, releaseBranch, "local_manifest.xml")
 	if err != nil {
 		return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
@@ -164,17 +163,17 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 	}
 
 	// Load the internal buildspec.
-	buildspecManifest, err := repo.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+	buildspecManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
 		"chromeos/manifest-versions", "HEAD", "buildspecs/"+b.buildspec)
 	if err != nil {
 		return errors.Annotate(err, "error loading buildspec manifest").Err()
 	}
 
 	// Create the project/program-specific buildspec.
-	if err := mu.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
+	if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 		switch err.(type) {
-		case mu.MissingProjectsError:
-			LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(mu.MissingProjectsError).MissingProjects)
+		case manifestutil.MissingProjectsError:
+			LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(manifestutil.MissingProjectsError).MissingProjects)
 		default:
 			return err
 		}

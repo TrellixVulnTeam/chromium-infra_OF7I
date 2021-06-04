@@ -2,9 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package repo contains functions for interacting with manifests and the
-// repo tool.
-package repo
+package manifestutil
 
 import (
 	"bytes"
@@ -14,6 +12,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"infra/cros/internal/repo"
 
 	"go.chromium.org/luci/common/errors"
 )
@@ -59,10 +59,10 @@ func setAttr(tag, attr, value string) string {
 
 // Given a Project struct, find the corresponding start tag in
 // a raw XML file. Empty string indicates no match.
-func findProjectTag(project *Project, rawManifest string) string {
+func findProjectTag(project *repo.Project, rawManifest string) string {
 	projectRegexp := regexp.MustCompile(fmt.Sprintf(tagRegexpTempate, "project"))
 	for _, tag := range projectRegexp.FindAllString(rawManifest, -1) {
-		p := &Project{}
+		p := &repo.Project{}
 
 		// If tag is not a singleton, add empty end tag for unmarshalling purposes.
 		var err error
@@ -82,35 +82,6 @@ func findProjectTag(project *Project, rawManifest string) string {
 		}
 	}
 	return ""
-}
-
-func (e *Default) attrMap() map[string]string {
-	return map[string]string{
-		"remote":   e.RemoteName,
-		"revision": e.Revision,
-		"sync-j":   e.SyncJ,
-	}
-}
-
-func (e *Remote) attrMap() map[string]string {
-	return map[string]string{
-		"fetch":    e.Fetch,
-		"name":     e.Name,
-		"revision": e.Revision,
-		"alias":    e.Alias,
-	}
-}
-
-func (e *Project) attrMap() map[string]string {
-	return map[string]string{
-		"path":     e.Path,
-		"name":     e.Name,
-		"revision": e.Revision,
-		"upstream": e.Upstream,
-		"remote":   e.RemoteName,
-		"groups":   e.Groups,
-		"sync-c":   e.SyncC,
-	}
 }
 
 func updateElement(manifest, elt string, attrs map[string]string) string {
@@ -153,13 +124,13 @@ func updateElement(manifest, elt string, attrs map[string]string) string {
 // The function will return an error if there is more than one <default> element
 // in the raw manifest. The function will also return an error if elements in
 // the reference manifest do not exist in the raw manifest.
-func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, error) {
+func UpdateManifestElements(reference *repo.Manifest, rawManifest []byte) ([]byte, error) {
 	manifest := string(rawManifest)
 
 	// We use xml.Unmarshal to avoid the complexities of a
 	// truly exhaustive regex, which would need to include logic for <annotation> tags nested
 	// within a <project> tag (which are needed to determine the project type).
-	parsedManifest := Manifest{}
+	parsedManifest := repo.Manifest{}
 	err := xml.Unmarshal(rawManifest, &parsedManifest)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to unmarshal manifest").Err()
@@ -172,7 +143,7 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 	if len(defaultTags) > 1 {
 		return nil, fmt.Errorf("manifest has more than one <default> tag")
 	} else if len(defaultTags) == 1 {
-		manifest = updateElement(manifest, defaultTags[0], reference.Default.attrMap())
+		manifest = updateElement(manifest, defaultTags[0], reference.Default.AttrMap())
 	} else {
 		if reference.Default.RemoteName != "" || reference.Default.Revision != "" || reference.Default.SyncJ != "" {
 			return nil, fmt.Errorf("reference contained default(s), manifest did not")
@@ -186,7 +157,7 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 	for _, remoteTag := range remoteTags {
 		remoteName := getAttr(remoteTag, "name")
 		if referenceRemote := reference.GetRemoteByName(remoteName); referenceRemote != nil {
-			manifest = updateElement(manifest, remoteTag, referenceRemote.attrMap())
+			manifest = updateElement(manifest, remoteTag, referenceRemote.AttrMap())
 			usedRemotes += 1
 		}
 	}
@@ -200,7 +171,7 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 		projectTag := findProjectTag(&project, manifest)
 		projectPath := getAttr(projectTag, "path")
 		if referenceProject, _ := reference.GetProjectByPath(projectPath); referenceProject != nil {
-			manifest = updateElement(manifest, projectTag, referenceProject.attrMap())
+			manifest = updateElement(manifest, projectTag, referenceProject.AttrMap())
 			usedProjects += 1
 		}
 	}
@@ -217,7 +188,7 @@ func UpdateManifestElements(reference *Manifest, rawManifest []byte) ([]byte, er
 // UpdateManifestElementsInFile performs the same operation as UpdateManifestElements
 // but operates on a specific manifest file, handling all input/output.
 // Returns whether or not the file contents changed, and a potential error.
-func UpdateManifestElementsInFile(path string, reference *Manifest) (bool, error) {
+func UpdateManifestElementsInFile(path string, reference *repo.Manifest) (bool, error) {
 	data, err := LoadManifestFromFileRaw(path)
 	if err != nil {
 		return false, err

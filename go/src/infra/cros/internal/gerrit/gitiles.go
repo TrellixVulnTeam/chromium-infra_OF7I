@@ -12,7 +12,6 @@ import (
 	"context"
 	gerrs "errors"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -71,7 +70,6 @@ func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, hos
 		Committish: ref,
 		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
-	log.Printf("downloading file %v", req)
 	contents, err := gc.DownloadFile(ctx, req)
 	if err != nil {
 		return "", err
@@ -112,12 +110,10 @@ func obtainGitilesBytes(ctx context.Context, gc gitilespb.GitilesClient, project
 			Ref:     ref,
 			Format:  gitilespb.ArchiveRequest_GZIP,
 		}
-		log.Printf("about to fetch %v", req)
 		a, err := gc.Archive(innerCtx, req)
 		if err != nil {
 			return errors.Annotate(err, "obtain gitiles archive").Err()
 		}
-		logging.Debugf(ctx, "Gitiles archive %+v size: %d", req, len(a.Contents))
 		ch <- a
 		return nil
 	})

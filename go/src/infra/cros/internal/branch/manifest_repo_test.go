@@ -15,6 +15,7 @@ import (
 	"infra/cros/internal/assert"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/git"
+	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 )
 
@@ -123,8 +124,8 @@ func TestRepairManifest_success(t *testing.T) {
 
 func TestRepairManifestsOnDisk(t *testing.T) {
 	// Use actual repo implementations
-	loadManifestFromFileRaw = repo.LoadManifestFromFileRaw
-	loadManifestTree = repo.LoadManifestTree
+	loadManifestFromFileRaw = manifestutil.LoadManifestFromFileRaw
+	loadManifestTree = manifestutil.LoadManifestTreeFromFile
 
 	defaultManifest := repo.Manifest{
 		Includes: []repo.Include{
@@ -201,7 +202,7 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	err = manifestRepo.RepairManifestsOnDisk(branchMap)
 	assert.NilError(t, err)
 	// Read repaired manifests from disk, check expectations.
-	defaultManifestMap, err := repo.LoadManifestTree(manifestPath["default.xml"])
+	defaultManifestMap, err := manifestutil.LoadManifestTreeFromFile(manifestPath["default.xml"])
 
 	assert.NilError(t, err)
 	assert.Assert(t,
@@ -209,7 +210,7 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	assert.Assert(t,
 		reflect.DeepEqual(defaultManifest, *defaultManifestMap["default.xml"]))
 
-	officialManifestMap, err := repo.LoadManifestTree(manifestPath["official.xml"])
+	officialManifestMap, err := manifestutil.LoadManifestTreeFromFile(manifestPath["official.xml"])
 	assert.NilError(t, err)
 	assert.Assert(t,
 		reflect.DeepEqual(officialManifest, *officialManifestMap["official.xml"]))

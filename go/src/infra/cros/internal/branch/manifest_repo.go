@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"infra/cros/internal/git"
+	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 
 	"go.chromium.org/luci/common/errors"
@@ -33,8 +34,8 @@ const (
 	tagRegexpTempate   = "<%s[^(<>)]*>"
 )
 
-var loadManifestFromFileRaw = repo.LoadManifestFromFileRaw
-var loadManifestTree = repo.LoadManifestTree
+var loadManifestFromFileRaw = manifestutil.LoadManifestFromFileRaw
+var loadManifestTree = manifestutil.LoadManifestTreeFromFile
 
 func (m *ManifestRepo) gitRevision(project repo.Project) (string, error) {
 	if git.IsSHA(project.Revision) {
@@ -185,7 +186,7 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 		manifest.Projects[i] = project
 	}
 
-	return repo.UpdateManifestElements(&manifest, manifestData)
+	return manifestutil.UpdateManifestElements(&manifest, manifestData)
 }
 
 // listManifests finds all manifests included directly or indirectly by root

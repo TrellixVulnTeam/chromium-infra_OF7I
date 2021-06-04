@@ -15,7 +15,7 @@ import (
 
 	"infra/cros/internal/generator"
 	igerrit "infra/cros/internal/gerrit"
-	"infra/cros/internal/repo"
+	"infra/cros/internal/manifestutil"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -114,7 +114,7 @@ func (c *getTestPlanRun) Run(a subcommands.Application, args []string, env subco
 		}
 	} else {
 		log.Printf("Reading local manifest from %s", c.manifestFile)
-		repoToSrcRootMap, err := repo.GetRepoToRemoteBranchToSourceRootFromManifestFile(c.manifestFile)
+		repoToSrcRootMap, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromFile(c.manifestFile)
 		if err != nil {
 			log.Print(err)
 			return 9
@@ -322,7 +322,7 @@ func (c *getTestPlanRun) getRepoToSourceRoot(gc *bbproto.GitilesCommit) (*map[st
 		log.Print("No manifest commit provided. Using 'snapshot' instead.")
 		gc.Id = "snapshot"
 	}
-	repoToRemoteBranchToSrcRoot, err := repo.GetRepoToRemoteBranchToSourceRootFromManifests(ctx, authedClient, gc)
+	repoToRemoteBranchToSrcRoot, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromGitiles(ctx, authedClient, gc)
 	if err != nil {
 		return nil, fmt.Errorf("Error with repo tool call\n%v", err)
 	}

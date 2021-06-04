@@ -5,10 +5,21 @@
 package manifestutil
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
 
 	"infra/cros/internal/repo"
+
+	bbproto "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/common/errors"
+)
+
+const (
+	// Name of the root XML file to seek in manifest-internal.
+	rootXML = "default.xml"
 )
 
 type MissingProjectsError struct {
@@ -41,4 +52,57 @@ func PinManifestFromManifest(manifest, reference *repo.Manifest) error {
 		}
 	}
 	return nil
+}
+
+func fetchManifestRecursive(ctx context.Context, authedClient *http.Client, gc *bbproto.GitilesCommit, file string) (map[string]*repo.Manifest, error) {
+	return LoadManifestTreeFromGitiles(ctx, authedClient, gc.Host, gc.Project, gc.Id, file)
+}
+
+// GetRepoToRemoteBranchToSourceRootFromGitiles constructs a Gerrit project to path
+// mapping by fetching manifest XML files from Gitiles.
+func GetRepoToRemoteBranchToSourceRootFromGitiles(ctx context.Context, authedClient *http.Client, gc *bbproto.GitilesCommit) (map[string]map[string]string, error) {
+	manifests, err := LoadManifestTreeFromGitiles(ctx, authedClient, gc.Host, gc.Project, gc.Id, rootXML)
+	if err != nil {
+		return nil, err
+	}
+	repoToSourceRoot := getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests)
+	log.Printf("Found %d repo to source root mappings from manifest files", len(repoToSourceRoot))
+	return repoToSourceRoot, nil
+}
+
+// GetRepoToRemoteBranchToSourceRootFromFile constructs a Gerrit project to path
+// mapping by reading manifests from the specified root manifest file.
+func GetRepoToRemoteBranchToSourceRootFromFile(file string) (map[string]map[string]string, error) {
+	manifests, err := LoadManifestTreeFromFile(file)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to load local manifest %s", file).Err()
+	}
+	repoToSourceRoot := getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests)
+	log.Printf("Found %d repo to source root mappings from manifest files", len(repoToSourceRoot))
+	return repoToSourceRoot, nil
+}
+
+func getRepoToRemoteBranchToSourceRootFromLoadedManifests(manifests map[string]*repo.Manifest) map[string]map[string]string {
+	repoToSourceRoot := make(map[string]map[string]string)
+	for _, m := range manifests {
+		for _, p := range m.Projects {
+			if _, found := repoToSourceRoot[p.Name]; !found {
+				repoToSourceRoot[p.Name] = make(map[string]string)
+			}
+			branch := p.Upstream
+			if branch == "" {
+				branch = "refs/heads/master"
+			}
+			if !strings.HasPrefix(branch, "refs/heads/") {
+				branch = "refs/heads/" + branch
+			}
+
+			if oldPath, found := repoToSourceRoot[p.Name][branch]; found {
+				log.Printf("Source root for (%s, %s) is currently %s, overwriting with %s", p.Name, branch, oldPath, p.Path)
+			}
+
+			repoToSourceRoot[p.Name][branch] = p.Path
+		}
+	}
+	return repoToSourceRoot
 }

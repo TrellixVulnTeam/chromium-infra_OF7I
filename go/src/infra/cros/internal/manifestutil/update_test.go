@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 // +build linux
 
-package repo
+package manifestutil
 
 import (
 	"io/ioutil"
@@ -11,6 +11,7 @@ import (
 
 	"infra/cros/internal/assert"
 	"infra/cros/internal/osutils"
+	"infra/cros/internal/repo"
 )
 
 func TestGetSetDelAttr(t *testing.T) {
@@ -33,19 +34,19 @@ func TestUpdateManifestElements(t *testing.T) {
 	input, err := ioutil.ReadFile("test_data/update/pre.xml")
 	assert.NilError(t, err)
 
-	referenceManifest := &Manifest{
-		Default: Default{
+	referenceManifest := &repo.Manifest{
+		Default: repo.Default{
 			RemoteName: "chromeos1",
 			Revision:   "456",
 		},
-		Remotes: []Remote{
+		Remotes: []repo.Remote{
 			{
 				Name:  "chromium",
 				Alias: "chromeos1",
 				Fetch: "https://chromium.org/remote",
 			},
 		},
-		Projects: []Project{
+		Projects: []repo.Project{
 			{
 				Name:       "baz",
 				Path:       "baz/",
@@ -74,19 +75,19 @@ func TestUpdateManifestElementsInFile(t *testing.T) {
 	assert.NilError(t, err)
 	defer cleanup()
 
-	referenceManifest := &Manifest{
-		Default: Default{
+	referenceManifest := &repo.Manifest{
+		Default: repo.Default{
 			RemoteName: "chromeos1",
 			Revision:   "456",
 		},
-		Remotes: []Remote{
+		Remotes: []repo.Remote{
 			{
 				Name:  "chromium",
 				Alias: "chromeos1",
 				Fetch: "https://chromium.org/remote",
 			},
 		},
-		Projects: []Project{
+		Projects: []repo.Project{
 			{
 				Name:       "baz",
 				Path:       "baz/",
@@ -119,8 +120,8 @@ func TestUpdateManifestElements_extraneous(t *testing.T) {
 	input, err := ioutil.ReadFile("test_data/update/pre.xml")
 	assert.NilError(t, err)
 
-	referenceManifest := &Manifest{
-		Remotes: []Remote{
+	referenceManifest := &repo.Manifest{
+		Remotes: []repo.Remote{
 			{
 				Name: "extraneous",
 			},
@@ -130,8 +131,8 @@ func TestUpdateManifestElements_extraneous(t *testing.T) {
 	_, err = UpdateManifestElements(referenceManifest, input)
 	assert.ErrorContains(t, err, "contained remote(s)")
 
-	referenceManifest = &Manifest{
-		Projects: []Project{
+	referenceManifest = &repo.Manifest{
+		Projects: []repo.Project{
 			{
 				Path: "extraneous/",
 			},
@@ -143,8 +144,8 @@ func TestUpdateManifestElements_extraneous(t *testing.T) {
 
 	input, err = ioutil.ReadFile("test_data/update/no_default.xml")
 	assert.NilError(t, err)
-	referenceManifest = &Manifest{
-		Default: Default{
+	referenceManifest = &repo.Manifest{
+		Default: repo.Default{
 			RemoteName: "foo",
 			Revision:   "bar",
 		},
