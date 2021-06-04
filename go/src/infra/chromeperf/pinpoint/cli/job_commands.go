@@ -21,14 +21,62 @@ import (
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/render"
 	"infra/chromeperf/pinpoint/proto"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/sync/parallel"
 	"google.golang.org/protobuf/encoding/prototext"
 )
+
+const MaxConcurrency = 5
+
+func waitAndDownloadJob(br *baseCommandRun,
+	wj waitForJobMixin,
+	drm downloadResultsMixin,
+	dam downloadArtifactsMixin,
+	ctx context.Context,
+	o io.Writer,
+	c proto.PinpointClient,
+	j *proto.Job) error {
+	j, err := wj.waitForJob(ctx, c, j, o)
+	if err != nil {
+		return err
+	}
+	if err := drm.doDownloadResults(ctx, j); err != nil {
+		return err
+	}
+	httpClient, err := br.httpClient(ctx)
+	if err != nil {
+		return err
+	}
+	if err := dam.doDownloadArtifacts(ctx, os.Stdout, httpClient, br.workDir, j); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitAndDownloadJobList(br *baseCommandRun,
+	wj waitForJobMixin,
+	drm downloadResultsMixin,
+	dam downloadArtifactsMixin,
+	ctx context.Context,
+	o io.Writer,
+	c proto.PinpointClient,
+	jobs []*proto.Job) error {
+	err := parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
+		for _, job := range jobs {
+			job := job
+			workC <- func() error {
+				return waitAndDownloadJob(br, wj, drm, dam, ctx, o, c, job)
+			}
+		}
+	})
+	return err
+}
 
 type listJobs struct {
 	baseCommandRun
@@ -125,29 +173,16 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	}
 
 	req := &proto.GetJobRequest{Name: pinpoint.LegacyJobName(gj.name)}
-	resp, err := c.GetJob(ctx, req)
+	j, err := c.GetJob(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during GetJob").Err()
 	}
-	out := prototext.MarshalOptions{Multiline: true}.Format(resp)
+	out := prototext.MarshalOptions{Multiline: true}.Format(j)
 	fmt.Println(out)
 
-	resp, err = gj.waitForJob(ctx, c, resp, a.GetOut())
-	if err != nil {
-		return err
-	}
-
-	if err := gj.doDownloadResults(ctx, resp); err != nil {
-		return err
-	}
-	httpClient, err := gj.httpClient(ctx)
-	if err != nil {
-		return err
-	}
-	if err := gj.doDownloadArtifacts(ctx, os.Stdout, httpClient, gj.workDir, resp); err != nil {
-		return err
-	}
-	return nil
+	return waitAndDownloadJobList(&gj.baseCommandRun,
+		gj.waitForJobMixin, gj.downloadResultsMixin,
+		gj.downloadArtifactsMixin, ctx, a.GetOut(), c, []*proto.Job{j})
 }
 
 type waitJob struct {
@@ -199,32 +234,19 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	}
 
 	req := &proto.GetJobRequest{Name: pinpoint.LegacyJobName(wj.name)}
-	resp, err := c.GetJob(ctx, req)
+	j, err := c.GetJob(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during GetJob").Err()
 	}
 
 	// Force `wait` to true because we're always meant to wait with wait-job.
-	w := &waitForJobMixin{
+	w := waitForJobMixin{
 		wait:  true,
 		quiet: wj.quiet,
 	}
-	job, err := w.waitForJob(ctx, c, resp, a.GetOut())
-	if err != nil {
-		return err
-	}
-
-	if err := wj.doDownloadResults(ctx, job); err != nil {
-		return err
-	}
-	httpClient, err := wj.httpClient(ctx)
-	if err != nil {
-		return err
-	}
-	if err := wj.doDownloadArtifacts(ctx, os.Stdout, httpClient, wj.workDir, job); err != nil {
-		return err
-	}
-	return nil
+	return waitAndDownloadJobList(&wj.baseCommandRun,
+		w, wj.downloadResultsMixin,
+		wj.downloadArtifactsMixin, ctx, a.GetOut(), c, []*proto.Job{j})
 }
 
 type cancelJob struct {

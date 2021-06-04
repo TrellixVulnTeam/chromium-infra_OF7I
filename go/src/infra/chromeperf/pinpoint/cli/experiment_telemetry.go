@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint/cli/render"
 	"io"
-	"os"
 	"sync"
 
 	"infra/chromeperf/pinpoint/proto"
@@ -32,8 +31,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/sync/parallel"
 )
-
-const MaxConcurrency = 5
 
 type experimentTelemetryRun struct {
 	experimentBaseRun
@@ -244,28 +241,6 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	return j, nil
 }
 
-func waitAndDownloadJob(e *experimentTelemetryRun,
-	ctx context.Context,
-	o io.Writer,
-	c proto.PinpointClient,
-	j *proto.Job) error {
-	j, err := e.waitForJob(ctx, c, j, o)
-	if err != nil {
-		return err
-	}
-	if err := e.doDownloadResults(ctx, j); err != nil {
-		return err
-	}
-	httpClient, err := e.httpClient(ctx)
-	if err != nil {
-		return err
-	}
-	if err := e.doDownloadArtifacts(ctx, os.Stdout, httpClient, e.workDir, j); err != nil {
-		return err
-	}
-	return nil
-}
-
 func runBatchJob(e *experimentTelemetryRun,
 	ctx context.Context,
 	o io.Writer,
@@ -326,20 +301,6 @@ func runBatchJob(e *experimentTelemetryRun,
 	return jobs, err
 }
 
-func waitAndDownloadBatchJob(e *experimentTelemetryRun,
-	ctx context.Context,
-	o io.Writer,
-	c proto.PinpointClient,
-	jobs []*proto.Job) error {
-	err := parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
-		for _, job := range jobs {
-			job := job
-			workC <- func() error { return waitAndDownloadJob(e, ctx, o, c, job) }
-		}
-	})
-	return err
-}
-
 func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	c, err := e.pinpointClient(ctx)
 	if err != nil {
@@ -365,7 +326,10 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	if err != nil {
 		return errors.Annotate(err, "Failed to start all jobs: ").Err()
 	}
-	err = waitAndDownloadBatchJob(e, ctx, a.GetOut(), c, jobs)
+
+	err = waitAndDownloadJobList(&e.baseCommandRun,
+		e.waitForJobMixin, e.downloadResultsMixin,
+		e.downloadArtifactsMixin, ctx, a.GetOut(), c, jobs)
 	if err != nil {
 		return errors.Annotate(err, "Failed to wait and download jobs: ").Err()
 	}
