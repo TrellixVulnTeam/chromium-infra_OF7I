@@ -42,12 +42,9 @@ su -c "/usr/bin/curl -sSLOJ $SWARM_URL" chrome-bot
 echo "Starting $SWARM_ZIP"
 # Run the swarming bot in the background, and immediately wait for it. This
 # allows the signal trapping to actually work.
-# Test out python3 on a single host on dev.
+# Test out python3 on device{1, 2, 3}.
 # TODO(crbug.com/1012230): Move all bots to python3.
-# chromium-swarm-dev: build1-h9, build20-b4, build244-m4, build248-m4
-# chromium-swarm: build2-h9
-# chrome-swarming: build22-h7
-if [[ "$(hostname -s)" =~ build("1-h9"|"20-b4"|"244-m4"|"248-m4"|"2-h9"|"22-h7")"--device"[1-4] ]]; then
+if [[ "$(hostname -s)" =~ "--device"[1-3] ]]; then
   py_bin="/usr/bin/python3"
 else
   py_bin="/usr/bin/python"
