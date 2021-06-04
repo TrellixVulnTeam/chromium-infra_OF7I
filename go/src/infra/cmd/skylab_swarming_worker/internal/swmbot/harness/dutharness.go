@@ -69,7 +69,7 @@ func (dh *DUTHarness) loadLocalDUTInfo(ctx context.Context) {
 		dh.err = fmt.Errorf("DUTHostname cannot be blank")
 		return
 	}
-	ldi, err := localdutinfo.Open(ctx, dh.BotInfo, dh.DUTHostname, dh.DUTID)
+	ldi, err := localdutinfo.Open(ctx, dh.BotInfo, dh.DUTHostname)
 	if err != nil {
 		dh.err = err
 		return

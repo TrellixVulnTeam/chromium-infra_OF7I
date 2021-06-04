@@ -25,7 +25,6 @@ type Store struct {
 	swmbot.LocalDUTState
 	bot         *swmbot.Info
 	dutHostname string
-	dutID       string
 }
 
 // Close writes the LocalDUTState back to disk.  This method does nothing on
@@ -41,11 +40,7 @@ func (s *Store) Close(ctx context.Context) error {
 	if err != nil {
 		return errors.Annotate(err, "close localdutinfo").Err()
 	}
-	// Write DUT state into two files: one by DUT name, one by DUT ID.
-	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
-	if err := ioutil.WriteFile(localDUTInfoFilePath(s.bot, s.dutID), data, 0666); err != nil {
-		return errors.Annotate(err, "close localdutinfo").Err()
-	}
+	// Write DUT state into a local file named by DUT's hostname.
 	if err := ioutil.WriteFile(localDUTInfoFilePath(s.bot, s.dutHostname), data, 0666); err != nil {
 		return errors.Annotate(err, "close localdutinfo").Err()
 	}
@@ -63,8 +58,8 @@ func (s *Store) Close(ctx context.Context) error {
 
 // Open loads the LocalDUTInfo for the DUT. The LocalDUTInfo should be closed
 // afterward to write it back.
-func Open(ctx context.Context, b *swmbot.Info, dutHostname string, dutID string) (*Store, error) {
-	s := Store{bot: b, dutHostname: dutHostname, dutID: dutID}
+func Open(ctx context.Context, b *swmbot.Info, dutHostname string) (*Store, error) {
+	s := Store{bot: b, dutHostname: dutHostname}
 	if err := s.retrieveLocalState(); err != nil {
 		return nil, errors.Annotate(err, "retrieve local state").Err()
 	}
@@ -81,8 +76,8 @@ func Open(ctx context.Context, b *swmbot.Info, dutHostname string, dutID string)
 }
 
 // localDUTInfoFilePath returns the path for caching dimensions for the given DUT.
-func localDUTInfoFilePath(b *swmbot.Info, fileID string) string {
-	return filepath.Join(localDUTInfoDirPath(b), fmt.Sprintf("%s.json", fileID))
+func localDUTInfoFilePath(b *swmbot.Info, fileName string) string {
+	return filepath.Join(localDUTInfoDirPath(b), fmt.Sprintf("%s.json", fileName))
 }
 
 // localDUTInfoDirPath returns the path to the cache directory for the given DUT.
