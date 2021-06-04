@@ -98,13 +98,11 @@ func (e *ufsEnv) fetchCachingSubnets() ([]Subnet, error) {
 		if state := s.GetState(); state != ufsmodels.State_STATE_SERVING {
 			continue
 		}
-		svc, subnets, err := extractBackendInfo(s)
+		svc, subnet, err := extractBackendInfo(s)
 		if err != nil {
 			return nil, err
 		}
-		for _, s := range subnets {
-			m[s] = append(m[s], svc)
-		}
+		m[subnet] = append(m[subnet], svc)
 	}
 	for k, v := range m {
 		_, ipNet, err := net.ParseCIDR(k)
@@ -119,17 +117,17 @@ func (e *ufsEnv) fetchCachingSubnets() ([]Subnet, error) {
 }
 
 // extractBackendInfo extracts the caching service name (http://host:port) and
-// the serving subnets from the data structure returned by UFS.
-func extractBackendInfo(s *ufsmodels.CachingService) (name string, subnets []string, err error) {
+// the serving subnet from the data structure returned by UFS.
+func extractBackendInfo(s *ufsmodels.CachingService) (name, subnet string, err error) {
 	// The name returned has a prefix of "cachingservice/".
 	nameParts := strings.Split(s.GetName(), "/")
 	if len(nameParts) != 2 {
-		return "", nil, fmt.Errorf("extract cache backend info: wrong format service name: %q", s.GetName())
+		return "", "", fmt.Errorf("extract cache backend info: wrong format service name: %q", s.GetName())
 	}
 	port := strconv.Itoa(int(s.GetPort()))
 	name = fmt.Sprintf("http://%s", net.JoinHostPort(nameParts[1], port))
-	subnets = s.GetServingSubnets()
-	return name, subnets, nil
+	subnet = s.GetServingSubnet()
+	return name, subnet, nil
 }
 
 func fetchCachingServicesFromUFS(ctx context.Context, c ufsapi.FleetClient) ([]*ufsmodels.CachingService, error) {
