@@ -5,8 +5,14 @@
 from recipe_engine import post_process
 
 from PB.recipes.infra.windows_image_builder import input as input_pb
+from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
 DEPS = [
+    'depot_tools/bot_update',
+    'depot_tools/gclient',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/step',
@@ -23,12 +29,23 @@ def RunSteps(api, inputs):
   if not inputs.config_path:
     raise api.step.StepFailure("`config_path` is a required property")
 
-  with api.step.nest('ensure windows adk present') as r:
+  with api.step.nest('ensure windows adk present'):
     api.windows_adk.ensure()
 
-  with api.step.nest('read user config') as r:
-    r.logs['read user config'] = 'succeed'
-
+  builder_named_cache = api.path['cache'].join('builder')
+  with api.step.nest('read user config'):
+    # download the configs repo
+    api.gclient.set_config('infradata_config')
+    api.gclient.c.solutions[0].revision = 'origin/main'
+    with api.context(cwd=builder_named_cache):
+      api.bot_update.ensure_checkout()
+      api.gclient.runhooks()
+      # split the string on '/' as luci scheduler passes a unix path and this
+      # recipe is expected to run on windows ('\')
+      cfg_path = builder_named_cache.join('infra-data-config',
+                                          *inputs.config_path.split('/'))
+      api.file.read_proto(name='Reading '+inputs.config_path, source=cfg_path,
+                          msg_class=wib.Image, codec='TEXTPB')
 
 def GenTests(api):
 

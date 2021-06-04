@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipes.infra.windows_image_builder;
+package recipes.infra.windows_image_builder.windows_image_builder;
 
 // Image properties recognized by 'infra/windows_image_builder' recipe.
 message Image {
