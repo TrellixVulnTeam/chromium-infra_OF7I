@@ -26,7 +26,8 @@ import sys
 import bootstrap
 
 # Make sure we picked up the correct bootstrap file.
-want = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bootstrap.py'))
+want = os.path.realpath(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), 'bootstrap.py')))
 # Allow `bootstrap.__file__` to be a .py or .pyc file.
 if os.path.abspath(bootstrap.__file__) not in (want, want + 'c'):
   raise AssertionError(
