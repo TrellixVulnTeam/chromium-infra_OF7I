@@ -27,9 +27,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type metricNameKey string
+type expNameKey string
+
 const (
-	baseLabel = "base"
-	expLabel  = "exp"
+	baseLabel expNameKey = "base"
+	expLabel  expNameKey = "exp"
 )
 
 func loadManifest(m string) (*telemetryExperimentArtifactsManifest, error) {
@@ -45,7 +48,6 @@ func loadManifest(m string) (*telemetryExperimentArtifactsManifest, error) {
 }
 
 type measurementSummary struct {
-	Label  string  `yaml:"label"`
 	Min    float64 `yaml:"min"`
 	Median float64 `yaml:"median"`
 	Mean   float64 `yaml:"mean"`
@@ -57,22 +59,20 @@ type measurementSummary struct {
 }
 
 type statTestSummary struct {
-	Label  string  `yaml:"label"`
 	Mean   float64 `yaml:"mean"`
 	Stddev float64 `yaml:"stddev"`
 }
 
 type measurementReport struct {
-	Metric          string               `yaml:"metric"`
-	StatTestSummary []statTestSummary    `yaml:"stat-test-summary"`
-	PValue          float64              `yaml:"p-value"`
-	Measurements    []measurementSummary `yaml:"measurements"`
+	StatTestSummary map[expNameKey]statTestSummary    `yaml:"stat-test-summary"` // map[base or exp]
+	PValue          float64                           `yaml:"p-value"`
+	Measurements    map[expNameKey]measurementSummary `yaml:"measurements"` // map[base or exp]
 }
 
 type experimentReport struct {
-	OverallPValue float64             `yaml:"overall-p-value"`
-	Alpha         float64             `yaml:"alpha"`
-	Reports       []measurementReport `yaml:"reports"`
+	OverallPValue float64                             `yaml:"overall-p-value"`
+	Alpha         float64                             `yaml:"alpha"`
+	Reports       map[metricNameKey]measurementReport `yaml:"reports"` // map[metric_name]
 }
 
 func loadAndMergeHistograms(config *changeConfig, rootDir string) ([]*histograms.Histogram, error) {
@@ -113,15 +113,17 @@ func loadAndMergeHistograms(config *changeConfig, rootDir string) ([]*histograms
 }
 
 func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir string) (*experimentReport, error) {
-	r := &experimentReport{}
+	r := &experimentReport{
+		Reports: make(map[metricNameKey]measurementReport),
+	}
 
 	// First thing we do is load up the data from the files referred to by the
 	// manifest. In the end we'll have a structure which contains the
 	// measurements/samples from all the histograms associated with the manifest
 	// grouped by whether they're from the base or the experiment commit.
-	data := make(map[string]map[string]*histograms.Histogram)
+	data := make(map[metricNameKey]map[expNameKey]*histograms.Histogram) // map[metric_name][baseOrExp]
 	for _, c := range []struct {
-		label  string
+		label  expNameKey
 		config *changeConfig
 	}{
 		{baseLabel, &manifest.Base},
@@ -150,9 +152,10 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 		// We can then place this "inside-out" from the histogram name in the
 		// outer map key, and the label in the inner map key.
 		for n, h := range hm {
+			n := metricNameKey(n)
 			m, found := data[n]
 			if !found {
-				data[n] = make(map[string]*histograms.Histogram)
+				data[n] = make(map[expNameKey]*histograms.Histogram)
 				m = data[n]
 			}
 			m[c.label] = h
@@ -183,8 +186,9 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 	pvs := []float64{}
 	for m, v := range data {
 		mr := measurementReport{
-			Metric: m,
-			PValue: 0,
+			StatTestSummary: make(map[expNameKey]statTestSummary),
+			PValue:          0,
+			Measurements:    make(map[expNameKey]measurementSummary),
 		}
 		as := []float64{}
 		bs := []float64{}
@@ -209,7 +213,6 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 			}
 
 			ms := measurementSummary{
-				Label:  l,
 				Min:    minS,
 				Median: stat.Quantile(0.5, stat.Empirical, h.SampleValues, nil),
 				Mean:   stat.Mean(h.SampleValues, nil),
@@ -219,7 +222,7 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 				Max:    maxS,
 				Count:  len(h.SampleValues),
 			}
-			mr.Measurements = append(mr.Measurements, ms)
+			mr.Measurements[l] = ms
 		}
 		// TODO: Use the unit information to determine whether to use a
 		// one-tail or two-tail test.
@@ -230,7 +233,7 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 			mr.PValue = mwur.P
 			pvs = append(pvs, mwur.P)
 		}
-		r.Reports = append(r.Reports, mr)
+		r.Reports[m] = mr
 	}
 
 	// We'll use the harmonic mean of the p-values to determine whether overall
