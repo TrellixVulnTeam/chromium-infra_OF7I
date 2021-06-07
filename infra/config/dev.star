@@ -84,7 +84,6 @@ luci.project(
 luci.logdog(
     gs_bucket = "chromium-luci-logdog",
     cloud_logging_project = "luci-logdog-dev",
-    use_global_logdog_account = True,
 )
 
 luci.bucket(name = "ci")
