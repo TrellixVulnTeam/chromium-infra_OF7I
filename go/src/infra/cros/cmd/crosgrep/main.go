@@ -21,7 +21,7 @@ import (
 	"infra/cros/karte/site"
 )
 
-// newApplication returns an application object for the crosgrep command line client.
+// NewApplication returns an application object for the crosgrep command line client.
 func newApplication() *cli.Application {
 	return &cli.Application{
 		Name:  "crosgrep",
@@ -39,7 +39,7 @@ func newApplication() *cli.Application {
 	}
 }
 
-// main is the main entrypoint to the application.
+// Main is the main entrypoint to the application.
 func main() {
 	mathrand.SeedRandomly()
 	os.Exit(subcommands.Run(newApplication(), nil))
