@@ -12,7 +12,7 @@ import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
+import {SHARED_STYLES, MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
 import {commentListToDescriptionList} from 'shared/convertersV0.js';
 import {DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
 import {renderMarkdown} from 'shared/md-helper.js';
@@ -36,6 +36,7 @@ export class MrEditDescription extends connectStore(LitElement) {
   static get styles() {
     return [
       SHARED_STYLES,
+      MD_PREVIEW_STYLES,
       css`
         chops-dialog {
           --chops-dialog-width: 800px;
@@ -55,15 +56,6 @@ export class MrEditDescription extends connectStore(LitElement) {
           padding: 0.5em 0.5em;
           width: 100%;
           box-sizing: border-box;
-        }
-        .markdown_preview {
-          padding: 0.25em 1em;
-          color: var(--chops-gray-800);
-          background-color: var(--chops-gray-200);
-          border-radius: 10px;
-          margin: 0px 0px 10px;
-          max-height: 40vh;
-          overflow: auto;
         }
         .edit-controls {
           display: flex;
@@ -92,7 +84,7 @@ export class MrEditDescription extends connectStore(LitElement) {
           .value=${this._editedDescription}
         ></textarea>
         ${markdownEnabled ? html`
-          <div class="markdown_preview">
+          <div class="markdown-preview preview-height-description">
             ${unsafeHTML(renderMarkdown(this._editedDescription))}
           </div>`: ''}
         <h3 class="medium-heading">

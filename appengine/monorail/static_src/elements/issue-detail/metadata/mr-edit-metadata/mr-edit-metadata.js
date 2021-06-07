@@ -28,6 +28,7 @@ import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
 import * as projectV0 from 'reducers/projectV0.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import '../mr-edit-field/mr-edit-field.js';
 import '../mr-edit-field/mr-edit-status.js';
@@ -37,6 +38,9 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
 } from 'shared/consts/permissions.js';
 import {fieldDefsWithGroup, fieldDefsWithoutGroup, valuesForField,
   HARDCODED_FIELD_GROUPS} from 'shared/metadata-helpers.js';
+import {renderMarkdown, DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
+import {MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
 
 
 const DEBOUNCED_PRESUBMIT_TIME_OUT = 400;
@@ -53,6 +57,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
   render() {
     return html`
       <style>
+        ${MD_PREVIEW_STYLES}
         mr-edit-metadata {
           display: block;
           font-size: var(--chops-main-font-size);
@@ -178,6 +183,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
           @keyup=${this._processChanges}
           aria-label="Comment"
         ></textarea>
+        ${(this._renderMarkdown & DEFAULT_MD_PROJECTS.has(this.projectName))
+           ? html`
+          <div class="markdown-preview preview-height-comment">
+            ${unsafeHTML(renderMarkdown(this.getCommentContent()))}
+          </div>`: ''}
         <mr-upload
           ?hidden=${this.disableAttachments}
           @change=${this._processChanges}
@@ -629,6 +639,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       saving: {type: Boolean},
       isDirty: {type: Boolean},
       _debouncedProcessChanges: {type: Object},
+      prefs: {type: Object},
     };
   }
 
@@ -646,6 +657,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.presubmitDebounceTimeOut = DEBOUNCED_PRESUBMIT_TIME_OUT;
     this.saving = false;
     this.isDirty = false;
+    this.prefs = {};
   }
 
   /** @override */
@@ -656,6 +668,12 @@ export class MrEditMetadata extends connectStore(LitElement) {
   /** @override */
   firstUpdated() {
     this.hasRendered = true;
+  }
+
+  get _renderMarkdown() {
+    const {prefs} = this;
+    if (!prefs) return true;
+    return prefs.get('render_markdown') !== 'false';
   }
 
   get disabled() {
@@ -748,6 +766,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     // Access boolean value from allStarredIssues
     const starredIssues = issueV0.starredIssues(state);
     this.isStarred = starredIssues.has(issueRefToString(this.issueRef));
+    this.prefs = userV0.prefs(state);
   }
 
   /** @override */
@@ -855,6 +874,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * @return {string}
    */
   getCommentContent() {
+    if (!this.querySelector('#commentText')) {
+      return '';
+    }
     return this.querySelector('#commentText').value;
   }
 

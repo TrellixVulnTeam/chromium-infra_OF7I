@@ -149,3 +149,21 @@ export const MD_STYLES = css`
     color: var(--chops-field-error-color);
   }
 `;
+
+export const MD_PREVIEW_STYLES = css`
+  .markdown-preview {
+    padding: 0.25em 1em;
+    color: var(--chops-gray-800);
+    background-color: var(--chops-gray-200);
+    border-radius: 10px;
+    margin: 0px 0px 10px;
+    overflow: auto;
+  }
+  .preview-height-description {
+    max-height: 40vh;
+  }
+  .preview-height-comment {
+    min-height: 5vh;
+    max-height: 15vh;
+  }
+`;

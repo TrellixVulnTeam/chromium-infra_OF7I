@@ -922,4 +922,22 @@ describe('mr-edit-metadata', () => {
       'someone@example.com',
     ]);
   });
+
+  it('renders valid markdown description with preview class', async () => {
+    element.prefs = new Map([['render_markdown', 'true']]);
+
+    await element.updateComplete;
+
+    const previewMarkdown = element.querySelector('.markdown_preview');
+    assert.isNotNull(previewMarkdown);
+  });
+
+  it('does not show preview when markdown is disabled', async () => {
+    element.prefs = new Map([['render_markdown', 'false']]);
+
+    await element.updateComplete;
+
+    const previewMarkdown = element.querySelector('.markdown_preview');
+    assert.isNull(previewMarkdown);
+  });
 });
