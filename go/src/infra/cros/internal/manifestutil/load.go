@@ -11,11 +11,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"regexp"
 
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/repo"
 
 	"go.chromium.org/luci/common/errors"
+)
+
+var (
+	xmlFileRegex = regexp.MustCompile(`.*\.xml$`)
 )
 
 func loadManifestTree(file string, getFile func(file string) ([]byte, error), recur bool) (map[string]*repo.Manifest, error) {
@@ -76,15 +81,7 @@ func loadManifestFromFile(file string, mergeManifests bool) (*repo.Manifest, err
 }
 
 func loadManifestFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string, mergeManifests bool) (*repo.Manifest, error) {
-	getFile := func(f string) ([]byte, error) {
-		path := filepath.Join(filepath.Dir(file), f)
-		data, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, host, project, branch, f)
-		if err != nil {
-			return nil, errors.Annotate(err, "failed to open and read %s", path).Err()
-		}
-		return []byte(data), nil
-	}
-
+	getFile := loadFromGitilesInnerFunc(ctx, authedClient, host, project, branch, file)
 	return loadManifest(file, getFile, mergeManifests)
 }
 
@@ -125,19 +122,30 @@ func LoadManifestFromFileRaw(file string) ([]byte, error) {
 	return data, nil
 }
 
-// LoadManifestTree loads the manifest from the specified remote location into
-// a Manifest struct. It also loads all included manifests.
-// Returns a map mapping manifest filenames to file contents.
-func LoadManifestTreeFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
-	getFile := func(f string) ([]byte, error) {
+func loadFromGitilesInnerFunc(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
+	return func(f string) ([]byte, error) {
 		path := filepath.Join(filepath.Dir(file), f)
 		data, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, host, project, branch, f)
 		if err != nil {
 			return nil, errors.Annotate(err, "failed to open and read %s", path).Err()
 		}
+		// If the manifest file just contains another file name, it's a symlink
+		// and we need to follow it.
+		for xmlFileRegex.MatchString(data) {
+			data, err = gerrit.DownloadFileFromGitiles(ctx, authedClient, host, project, branch, data)
+			if err != nil {
+				return nil, errors.Annotate(err, "failed to open and read %s", path).Err()
+			}
+		}
 		return []byte(data), nil
 	}
+}
 
+// LoadManifestTree loads the manifest from the specified remote location into
+// a Manifest struct. It also loads all included manifests.
+// Returns a map mapping manifest filenames to file contents.
+func LoadManifestTreeFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
+	getFile := loadFromGitilesInnerFunc(ctx, authedClient, host, project, branch, file)
 	return loadManifestTree(file, getFile, true)
 }
 

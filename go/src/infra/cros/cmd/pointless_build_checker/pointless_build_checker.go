@@ -170,17 +170,17 @@ func (c *checkBuild) fetchConfigFromGitiles() (*testplans_pb.BuildIrrelevanceCfg
 	if err != nil {
 		return nil, err
 	}
-	m, err := igerrit.FetchFilesFromGitiles(ctx, authedClient,
+	configData, err := igerrit.DownloadFileFromGitiles(ctx, authedClient,
 		"chrome-internal.googlesource.com",
 		"chromeos/infra/config",
 		"main",
-		[]string{buildIrrelevanceConfigPath})
+		buildIrrelevanceConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	buildIrrelevanceConfig := &testplans_pb.BuildIrrelevanceCfg{}
-	if err := proto.Unmarshal([]byte((*m)[buildIrrelevanceConfigPath]), buildIrrelevanceConfig); err != nil {
-		return nil, fmt.Errorf("Couldn't decode %s as a BuildIrrelevanceCfg\n%v", (*m)[buildIrrelevanceConfigPath], err)
+	if err := proto.Unmarshal([]byte(configData), buildIrrelevanceConfig); err != nil {
+		return nil, fmt.Errorf("Couldn't decode %s as a BuildIrrelevanceCfg\n%v", configData, err)
 	}
 	log.Printf("Fetched config from Gitiles:\n%s\n", proto.MarshalTextString(buildIrrelevanceConfig))
 	return buildIrrelevanceConfig, nil

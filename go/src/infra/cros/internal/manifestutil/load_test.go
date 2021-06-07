@@ -301,3 +301,78 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 	assert.NilError(t, err)
 	assert.NilError(t, ManifestMapEq(gotMap, expected))
 }
+
+func TestLoadManifestFromGitiles_symlink(t *testing.T) {
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+
+	project := "foo"
+	branch := "refs/heads/foo"
+
+	manifestXML := `
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <default remote="chromeos" revision="123"/>
+  <remote name="chromeos" />
+  <project name="foo" path="foo/" />
+</manifest>
+	`
+	reqSymlink := &gitilespb.DownloadFileRequest{
+		Project:    project,
+		Path:       "default.xml",
+		Committish: branch,
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqSymlink)).AnyTimes().Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: "snapshot.xml",
+		},
+		nil,
+	)
+	reqManifest := &gitilespb.DownloadFileRequest{
+		Project:    project,
+		Path:       "snapshot.xml",
+		Committish: branch,
+		Format:     gitilespb.DownloadFileRequest_TEXT,
+	}
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).AnyTimes().Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: manifestXML,
+		},
+		nil,
+	)
+
+	expected := map[string]*repo.Manifest{
+		"default.xml": {
+			Default: repo.Default{
+				RemoteName: "chromeos",
+				Revision:   "123",
+			},
+			Remotes: []repo.Remote{
+				{
+					Name: "chromeos",
+				},
+			},
+			Projects: []repo.Project{
+				{
+					Name: "foo",
+					Path: "foo/",
+				},
+			},
+		},
+	}
+	gerrit.MockGitiles = gitilesMock
+	ctx := context.Background()
+
+	// Test LoadManifestFromGitiles
+	got, err := LoadManifestFromGitiles(ctx, nil, "host", project, branch, "default.xml")
+	assert.NilError(t, err)
+	assert.Assert(t, ManifestEq(got, expected["default.xml"]))
+
+	// Test LoadManifestTreeFromGitiles
+	gotMap, err := LoadManifestTreeFromGitiles(ctx, nil, "host", project, branch, "default.xml")
+	assert.NilError(t, err)
+	assert.NilError(t, ManifestMapEq(gotMap, expected))
+
+}
