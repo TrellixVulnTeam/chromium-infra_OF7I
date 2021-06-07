@@ -35,10 +35,17 @@ PROPERTIES = {
             kind=bool,
             default=False,
         ),
+    'rebuild':
+        Property(
+            help=("If true, build all wheels regardless of whether they're "
+                  "already in CIPD"),
+            kind=bool,
+            default=False,
+        ),
 }
 
 
-def RunSteps(api, platforms, dry_run):
+def RunSteps(api, platforms, dry_run, rebuild):
   solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
   with api.context(cwd=solution_path):
@@ -72,6 +79,9 @@ def RunSteps(api, platforms, dry_run):
     args.append('wheel-build')
     if not dry_run:
       args.append('--upload')
+
+    if rebuild:
+      args.append('--rebuild')
 
     api.python('dockerbuild', solution_path.join('infra', 'run.py'),
                args + platform_args)
@@ -121,3 +131,5 @@ def GenTests(api):
   # Must explicitly specify the platforms to build on Windows.
   yield api.test('win-noplatforms',
                  api.platform('win', 64) + api.expect_exception('ValueError'))
+
+  yield api.test('trybot config', api.properties(dry_run=True, rebuild=True))

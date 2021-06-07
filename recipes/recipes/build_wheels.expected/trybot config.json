@@ -3,13 +3,13 @@
     "cmd": [
       "vpython",
       "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]\\builder\\build_wheels"
+      "[CACHE]/builder/build_wheels"
     ],
     "infra_step": true,
     "name": "init cache if it doesn't exist"
@@ -18,12 +18,12 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "RECIPE_REPO[depot_tools]/gclient.py",
       "config",
       "--spec",
-      "cache_dir = '[CACHE]\\\\git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]"
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]"
     ],
-    "cwd": "[CACHE]\\builder\\build_wheels",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -37,11 +37,11 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "RECIPE_REPO[depot_tools]/gclient.py",
       "sync",
       "--verbose",
       "--nohooks",
-      "-j2",
+      "-j8",
       "--reset",
       "--force",
       "--upstream",
@@ -54,7 +54,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[CACHE]\\builder\\build_wheels",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -79,14 +79,14 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "RECIPE_REPO[depot_tools]/gclient.py",
       "recurse",
       "git",
       "config",
       "user.name",
       "local_bot"
     ],
-    "cwd": "[CACHE]\\builder\\build_wheels",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -100,14 +100,14 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "RECIPE_REPO[depot_tools]/gclient.py",
       "recurse",
       "git",
       "config",
       "user.email",
       "local_bot@example.com"
     ],
-    "cwd": "[CACHE]\\builder\\build_wheels",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -121,10 +121,10 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[CACHE]\\builder\\build_wheels",
+    "cwd": "[CACHE]/builder/build_wheels",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -133,26 +133,24 @@
     "name": "gclient runhooks"
   },
   {
-    "cmd": [],
-    "name": "RECIPE CRASH (Uncaught exception)",
-    "~followup_annotations": [
-      "@@@STEP_EXCEPTION@@@",
-      "The recipe has crashed at point 'Uncaught exception'!",
-      "",
-      "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 66, in RunSteps",
-      "    with PlatformSdk(api, platforms), api.context(",
-      "  File \"PYTHON/lib/python2.7/contextlib.py\", in __enter__",
-      "    return self.gen.next()",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 98, in PlatformSdk",
-      "    'Must specify either 32-bit or 64-bit windows platforms.')",
-      "ValueError: Must specify either 32-bit or 64-bit windows platforms."
-    ]
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/build_wheels/infra/run.py",
+      "infra.tools.dockerbuild",
+      "--root",
+      "[CLEANUP]/.dockerbuild_tmp_1",
+      "wheel-build",
+      "--rebuild"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "name": "dockerbuild"
   },
   {
-    "failure": {
-      "humanReason": "Uncaught Exception: ValueError('Must specify either 32-bit or 64-bit windows platforms.',)"
-    },
     "name": "$result"
   }
 ]

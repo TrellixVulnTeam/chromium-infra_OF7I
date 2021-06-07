@@ -140,11 +140,11 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 59, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 66, in RunSteps",
       "    with PlatformSdk(api, platforms), api.context(",
       "  File \"PYTHON/lib/python2.7/contextlib.py\", in __enter__",
       "    return self.gen.next()",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 88, in PlatformSdk",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 98, in PlatformSdk",
       "    'Must specify either 32-bit or 64-bit windows platforms.')",
       "ValueError: Must specify either 32-bit or 64-bit windows platforms."
     ]
