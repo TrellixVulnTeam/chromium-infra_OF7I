@@ -31,42 +31,8 @@ type TasksQueryParams struct {
 	BuildBucketSafetyMargin int64
 }
 
-// This is the pattern for a query that grabs a number of rows corresponding
-// to swarming tasks out of bigquery.
-//
-// Note that the interval is closed at the beginning and open at the end
-//
-// Sample query for [1621881767, 1621881769, 15000, 1234, "FAKE-MODEL"]:
-//
-//
-// SELECT
-//   TRS.bot.bot_id,
-//   BUILDS.id AS bbid,
-//   TRS.task_id,
-//   UNIX_SECONDS(TRS.end_time),
-//   (SELECT ARRAY_TO_STRING(values, ",") FROM TRS.bot.dimensions WHERE key = "label-model" LIMIT 1)
-//     AS model,
-// FROM `chromeos-swarming`.swarming.task_results_summary AS TRS
-//   LEFT OUTER JOIN
-//     `cr-buildbucket.chromeos.builds` AS BUILDS
-//     ON TRS.task_id = BUILDS.infra.swarming.task_id
-// WHERE
-//   REGEXP_CONTAINS(TRS.bot.bot_id, r'^(?i)crossk[-]')
-//   AND 1621881767 <= UNIX_SECONDS(TRS.end_time)
-//   AND 1621881769  > UNIX_SECONDS(TRS.end_time)
-//   AND 1621881767 <= UNIX_SECONDS(BUILDS.end_time) + 15000
-//   AND 1621881769  > UNIX_SECONDS(BUILDS.end_time) - 15000
-//   AND (
-//     ("FAKE-MODEL" = '') OR
-//     (
-//       SELECT SUM(IF("FAKE-MODEL" IN UNNEST(values), 1, 0))
-//       FROM TRS.bot.dimensions
-//       WHERE key = 'label-model'
-//       LIMIT 1
-//     ) > 0
-//  )
-// LIMIT 1234
-
+// TmplTasksQuery is a SQL template that extracts information about swarming tasks
+// and their corresponding buildbucket tasks.
 var tmplTasksQuery = templateOrPanic(
 	"tasksQuery",
 	tmplPreamble+
@@ -74,8 +40,9 @@ var tmplTasksQuery = templateOrPanic(
 SELECT
   TRS.bot.bot_id,
   BUILDS.id AS bbid,
+  JSON_EXTRACT_SCALAR(BUILDS.output.properties, r"$.compressed_result") AS bb_output_properties,
   TRS.task_id,
-  UNIX_SECONDS(TRS.end_time),
+  UNIX_SECONDS(TRS.end_time) AS end_time,
   (SELECT ARRAY_TO_STRING(values, ",") FROM TRS.bot.dimensions WHERE key = "label-model" LIMIT 1)
     AS model,
 FROM {{$tick}}chromeos-swarming.swarming.task_results_summary{{$tick}} AS TRS
