@@ -9,6 +9,7 @@ After modifying this file execute it ('./main.star') to regenerate the configs.
 This is also enforced by PRESUBMIT.py script.
 
 Includes CI configs for the following subprojects:
+  * 3PP.
   * Codesearch.
   * Gsubtreed crons.
   * WPT autoroller crons.
@@ -181,6 +182,7 @@ led.users(
 # Per-subproject resources. They may refer to the shared resources defined
 # above by name.
 
+exec("//subprojects/3pp.star")
 exec("//subprojects/build.star")
 exec("//subprojects/codesearch.star")
 exec("//subprojects/depot_tools.star")
