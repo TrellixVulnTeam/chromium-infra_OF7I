@@ -13,8 +13,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
 	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/logdog/client/butler"
 	"go.chromium.org/luci/logdog/client/butler/output"
 	"go.chromium.org/luci/logdog/client/butler/output/logdog"
@@ -36,20 +36,20 @@ func New(ctx context.Context, o *Options) (c *Client, err error) {
 
 	ctx, err = lucictx.SwitchLocalAccount(ctx, "system")
 	if err != nil {
-		return nil, errors.Wrap(err, "switch LUCI local account")
+		return nil, errors.Annotate(err, "switch LUCI local account").Err()
 	}
 
 	// output
 	a := newAuthenticator(ctx)
 	c.output, err = newOutput(ctx, o, a)
 	if err != nil {
-		return nil, errors.Wrap(err, "make logdog output")
+		return nil, errors.Annotate(err, "make logdog output").Err()
 	}
 
 	// butler
 	c.butler, err = newButler(ctx, o, c.output)
 	if err != nil {
-		return nil, errors.Wrap(err, "make butler")
+		return nil, errors.Annotate(err, "make butler").Err()
 	}
 
 	// annotee processor

@@ -37,8 +37,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	luciErrors "go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/errors"
 	lflag "go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging/gologger"
 
@@ -152,7 +151,7 @@ func mainInner(a *args) error {
 	case isSupportedLuciferTask(a):
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	default:
-		luciferErr = errors.New("skylab_swarming_worker failed to recognize task type")
+		luciferErr = errors.Reason("skylab_swarming_worker failed to recognize task type").Err()
 	}
 
 	if err := i.Close(ctx); err != nil {
@@ -203,7 +202,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		luciferErr := runLuciferTask(ctx, dh, a, ta)
 		if luciferErr != nil {
 			// Attempt to parse results regardless of lucifer errors.
-			luciferErr = errors.Wrap(luciferErr, "run lucifer task")
+			luciferErr = errors.Annotate(luciferErr, "run lucifer task").Err()
 			log.Printf("Encountered error on %s. Error: %s", dh.DUTHostname, luciferErr)
 			errs = append(errs, luciferErr)
 		}
@@ -212,7 +211,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 	annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
 	annotations.StepClosed(annotWriter)
 	if len(errs) > 0 {
-		return luciErrors.Annotate(luciErrors.MultiError(errs), "lucifer flow").Err()
+		return errors.Annotate(errors.MultiError(errs), "lucifer flow").Err()
 	}
 	return nil
 }
@@ -314,7 +313,7 @@ func runAdminTask(ctx context.Context, dh *harness.DUTHarness, name string, ta l
 
 	cmd := lucifer.AdminTaskCommand(dh.BotInfo.LuciferConfig(), r)
 	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
-		return errors.Wrap(err, "run admin task")
+		return errors.Annotate(err, "run admin task").Err()
 	}
 	return nil
 }
@@ -331,7 +330,7 @@ func runDeployTask(ctx context.Context, dh *harness.DUTHarness, actions string, 
 
 	cmd := lucifer.DeployTaskCommand(dh.BotInfo.LuciferConfig(), r)
 	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
-		return errors.Wrap(err, "run deploy task")
+		return errors.Annotate(err, "run deploy task").Err()
 	}
 	return nil
 }
@@ -348,7 +347,7 @@ func runAuditTask(ctx context.Context, dh *harness.DUTHarness, actions string, t
 
 	cmd := lucifer.AuditTaskCommand(dh.BotInfo.LuciferConfig(), r)
 	if _, err := runLuciferCommand(ctx, cmd, dh, r.AbortSock); err != nil {
-		return errors.Wrap(err, "run audit task")
+		return errors.Annotate(err, "run audit task").Err()
 	}
 	return nil
 }

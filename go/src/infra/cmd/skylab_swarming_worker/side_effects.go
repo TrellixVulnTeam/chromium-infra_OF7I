@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/pkg/errors"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/side_effects"
+	"go.chromium.org/luci/common/errors"
+
 	"infra/cmd/skylab_swarming_worker/internal/annotations"
 	"infra/libs/skylab/sideeffects"
 )
@@ -37,10 +38,10 @@ func parseSideEffectsConfig(content string, logdogOutput io.Writer) (sec *side_e
 	var c side_effects.Config
 	u := jsonpb.Unmarshaler{AllowUnknownFields: true}
 	if err := u.Unmarshal(strings.NewReader(content), &c); err != nil {
-		return nil, errors.Wrap(err, "parse side_effects.Config")
+		return nil, errors.Annotate(err, "parse side_effects.Config").Err()
 	}
 	if err := sideeffects.ValidateConfig(&c); err != nil {
-		return nil, errors.Wrap(err, "parse side_effects.Config")
+		return nil, errors.Annotate(err, "parse side_effects.Config").Err()
 	}
 	return &c, nil
 }
@@ -62,7 +63,7 @@ func dropSideEffectsConfig(sec *side_effects.Config, dir string, logdogOutput io
 
 	fmt.Fprintf(logdogOutput, "Writing side_effects.Config to %s", dir)
 	if err := sideeffects.WriteConfigToDisk(dir, sec); err != nil {
-		return errors.Wrap(err, "drop side_effects.Config")
+		return errors.Annotate(err, "drop side_effects.Config").Err()
 	}
 	return nil
 }

@@ -8,7 +8,6 @@ package ufsdutinfo
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/golang/protobuf/proto"
@@ -84,7 +83,7 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostnam
 	log.Printf("getStableVersion: hostname (%s)", hostname)
 	if hostname == "" {
 		log.Printf("getStableVersion: failed validation for hostname")
-		return nil, fmt.Errorf("getStableVersion: hostname cannot be \"\"")
+		return nil, errors.Reason("getStableVersion: hostname cannot be \"\"").Err()
 	}
 	req := &fleet.GetStableVersionRequest{
 		Hostname: hostname,

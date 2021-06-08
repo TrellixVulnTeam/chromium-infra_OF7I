@@ -53,7 +53,7 @@ func (d *Dir) Close(ctx context.Context) error {
 // The path is relative to the results directory.
 func (d *Dir) OpenSubDir(path string) (string, error) {
 	if filepath.IsAbs(path) {
-		return "", fmt.Errorf("Cannot OpenSubDir for an absolute path.")
+		return "", errors.Reason("Cannot OpenSubDir for an absolute path.").Err()
 	}
 	subDir := filepath.Join(d.Path, path)
 	if err := os.MkdirAll(subDir, 0755); err != nil {

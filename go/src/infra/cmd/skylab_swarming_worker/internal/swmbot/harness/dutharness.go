@@ -6,7 +6,6 @@ package harness
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"go.chromium.org/luci/common/errors"
@@ -66,7 +65,7 @@ func (dh *DUTHarness) loadLocalDUTInfo(ctx context.Context) {
 		return
 	}
 	if dh.DUTHostname == "" {
-		dh.err = fmt.Errorf("DUTHostname cannot be blank")
+		dh.err = errors.Reason("DUTHostname cannot be blank").Err()
 		return
 	}
 	ldi, err := localdutinfo.Open(ctx, dh.BotInfo, dh.DUTHostname)
@@ -88,7 +87,7 @@ func (dh *DUTHarness) loadUFSDUTInfo(ctx context.Context) (*inventory.DeviceUnde
 	} else if dh.DUTHostname != "" {
 		s, dh.err = ufsdutinfo.LoadByHostname(ctx, dh.BotInfo, dh.DUTHostname, dh.labelUpdater.Update)
 	} else {
-		dh.err = fmt.Errorf("Both DUTID and DUTHostname field is empty.")
+		dh.err = errors.Reason("Both DUTID and DUTHostname field is empty.").Err()
 	}
 	if dh.err != nil {
 		return nil, nil
