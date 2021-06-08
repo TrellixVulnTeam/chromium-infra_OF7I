@@ -198,3 +198,20 @@ luci.cq_tryjob_verifier(
     builder = "infra-internal:try/chrome_release Roll Tester (infra)",
     cq_group = "infra",
 )
+
+# Tryjobs for 3pp wheel builders.
+def wheel_tryjob(builder):
+    luci.cq_tryjob_verifier(
+        builder = builder,
+        cq_group = "infra",
+        location_regexp = [
+            ".+/[+]/infra/tools/dockerbuild/.+",
+            ".+/[+]/recipes/recipes/build_wheels.py",
+        ],
+    )
+
+wheel_tryjob("infra-internal:try/Linux wheel builder")
+wheel_tryjob("infra-internal:try/Mac wheel builder")
+wheel_tryjob("infra-internal:try/Mac ARM64 wheel builder")
+wheel_tryjob("infra-internal:try/Windows-x64 wheel builder")
+wheel_tryjob("infra-internal:try/Windows-x86 wheel builder")
