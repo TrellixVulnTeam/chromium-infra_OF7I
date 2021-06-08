@@ -1077,6 +1077,7 @@ SPECS.update({
         Universal('six', '1.14.0'),
         Universal('six', '1.15.0'),
         Universal('smmap2', '2.0.3'),
+        Universal('sortedcontainers', '2.4.0', pyversions=['py3']),
         Universal('soupsieve', '1.9.5'),
         Universal('tempora', '1.11'),
         Universal('tensorboard', '2.5.0', pyversions=['py3']),
