@@ -14,6 +14,8 @@ import Chip from '@material-ui/core/Chip';
 import TextField from '@material-ui/core/TextField';
 import {Value} from '@material-ui/core/useAutocomplete';
 
+export const MAX_AUTOCOMPLETE_OPTIONS = 100;
+
 interface AutocompleteProps<T> {
   label: string;
   options: T[];
@@ -51,9 +53,8 @@ export function ReactAutocomplete<T>(
   return <Autocomplete
     id={label}
     autoHighlight
-    autoSelect
     filterOptions={_filterOptions(getOptionDescription)}
-    filterSelectedOptions
+    filterSelectedOptions={multiple}
     freeSolo
     getOptionLabel={getOptionLabel}
     multiple={multiple}
@@ -78,12 +79,15 @@ function _filterOptions<T>(getOptionDescription: (option: T) => string) {
     options: T[],
     {inputValue, getOptionLabel}: FilterOptionsState<T>
   ): T[] => {
+    if (!inputValue.length) {
+      return [];
+    }
     const regex = _matchRegex(inputValue);
     const predicate = (option: T) => {
       return getOptionLabel(option).match(regex) ||
         getOptionDescription(option).match(regex);
     }
-    return options.filter(predicate);
+    return options.filter(predicate).slice(0, MAX_AUTOCOMPLETE_OPTIONS);
   }
 }
 

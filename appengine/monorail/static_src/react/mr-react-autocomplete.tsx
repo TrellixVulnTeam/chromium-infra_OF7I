@@ -71,8 +71,6 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   updated(changedProperties: Map<string | number | symbol, unknown>): void {
     super.updated(changedProperties);
 
-    const options = this._options();
-
     const theme = createMuiTheme({
       palette: {
         primary: {
@@ -85,7 +83,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
     const element = <ThemeProvider theme={theme}>
       <ReactAutocomplete
         label={this.label}
-        options={options}
+        options={this._options()}
         value={this.value}
         fixedValues={this.fixedValues}
         multiple={this.multiple}

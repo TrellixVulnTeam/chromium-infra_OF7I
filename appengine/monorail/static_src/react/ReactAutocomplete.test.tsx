@@ -6,7 +6,8 @@ import React from 'react';
 import sinon from 'sinon';
 import {fireEvent, render} from '@testing-library/react';
 
-import {ReactAutocomplete} from './ReactAutocomplete.tsx';
+import {ReactAutocomplete, MAX_AUTOCOMPLETE_OPTIONS}
+  from './ReactAutocomplete.tsx';
 
 describe.only('ReactAutocomplete', () => {
   it('renders', async () => {
@@ -26,6 +27,50 @@ describe.only('ReactAutocomplete', () => {
     if (!input) return;
 
     assert.strictEqual(input?.placeholder, 'penguins');
+  });
+
+  it('filterOptions empty input value', async () => {
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={['option 1 label']}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    assert.strictEqual(input?.value, '');
+
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    assert.strictEqual(input?.value, '');
+  });
+
+  it('filterOptions truncates values', async () => {
+    const options = [];
+
+    // a0@test.com, a1@test.com, a2@test.com, ...
+    for (let i = 0; i <= MAX_AUTOCOMPLETE_OPTIONS; i++) {
+      options.push(`a${i}@test.com`);
+    }
+
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={options}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    fireEvent.change(input, {target: {value: 'a'}});
+
+    const results = document.querySelectorAll('.autocomplete-option');
+
+    assert.equal(results.length, MAX_AUTOCOMPLETE_OPTIONS);
+
+    // Clean up autocomplete dropdown from the DOM for the next test.
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
   });
 
   it('filterOptions label matching', async () => {
