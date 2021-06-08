@@ -62,7 +62,7 @@ USING
   UNION ALL SELECT date, 'P90' AS metric, builder, max_start_time, total[OFFSET(90)] AS value FROM stats_grouped
   UNION ALL SELECT date, 'P50 Runtime' AS metric, builder, max_start_time, runtime[OFFSET(50)] AS value FROM stats_grouped
   UNION ALL SELECT date, 'P90 Runtime' AS metric, builder, max_start_time, runtime[OFFSET(90)] AS value FROM stats_grouped
-  UNION ALL SELECT date, 'P50 Pending' AS metric, builder, max_start_time, pending[OFFSET(90)] AS value FROM stats_grouped
+  UNION ALL SELECT date, 'P50 Pending' AS metric, builder, max_start_time, pending[OFFSET(50)] AS value FROM stats_grouped
   UNION ALL SELECT date, 'P90 Pending' AS metric, builder, max_start_time, pending[OFFSET(90)] AS value FROM stats_grouped
   UNION ALL SELECT date, 'Count' AS metric, builder, max_start_time, cnt AS value FROM stats_grouped
   ) S
