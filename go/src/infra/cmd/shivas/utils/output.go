@@ -72,7 +72,7 @@ var (
 	ZoneTitle                 = []string{"Name", "EnumName", "Department"}
 	StateTitle                = []string{"Name", "EnumName", "Description"}
 	AssetTitle                = []string{"Asset Name", "Zone", "Rack", "Barcode", "Serial Number", "Hardware ID", "Model", "AssetType", "MacAddress", "SKU", "Phase", "Build Target", "Realm", "UpdateTime"}
-	CachingServiceTitle       = []string{"CachingService Name", "Port", "Subnet[Deprecated]", "Subnets", "Primary", "Secondary", "State", "Description", "UpdateTime"}
+	CachingServiceTitle       = []string{"CachingService Name", "Port", "Subnets", "Primary", "Secondary", "State", "Description", "UpdateTime"}
 	SchedulingUnitTitle       = []string{"SchedulingUnit Name", "DUTs", "Pools", "Type", "Description", "UpdateTime"}
 )
 
@@ -1607,7 +1607,6 @@ func cachingServiceOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.Name),
 		fmt.Sprintf("%d", m.GetPort()),
-		m.GetServingSubnet(),
 		strSlicesToStr(m.GetServingSubnets()),
 		m.GetPrimaryNode(),
 		m.GetSecondaryNode(),
