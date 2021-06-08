@@ -8,6 +8,8 @@ import (
 	"context"
 
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
 )
@@ -19,6 +21,12 @@ type karteFrontend struct{}
 // NewKarteFrontend produces a new Karte frontend.
 func NewKarteFrontend() kartepb.KarteServer {
 	return &karteFrontend{}
+}
+
+// CreateAction creates an action and then returns the just-created action.
+// TODO(gregorynisbet): Replace CreateAction with a real implementation.
+func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateActionRequest) (*kartepb.Action, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
 // ListActions lists the actions that Karte knows about.

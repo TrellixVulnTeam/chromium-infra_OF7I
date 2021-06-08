@@ -13,6 +13,19 @@ import (
 	kartepb "infra/cros/karte/api"
 )
 
+// TestCreateAction makes sure that CreateAction fails because it isn't
+// implemented yet.
+func TestCreateAction(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	k := NewKarteFrontend()
+	_, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{})
+	if err == nil {
+		t.Error("expected CreateAction to fail")
+	}
+}
+
 // TestListActions tests that ListActions errors.
 func TestListActions(t *testing.T) {
 	t.Parallel()
