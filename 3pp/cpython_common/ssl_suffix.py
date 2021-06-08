@@ -1,4 +1,3 @@
-
 # Copyright 2018 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -16,6 +15,8 @@
 
 import sys as _ssl_suffix_sys
 import os as _ssl_suffix_os
+import threading as _ssl_suffix_threading
+
 
 def _darwin_synthesize_cert_pem():
   import io
@@ -49,6 +50,7 @@ def _darwin_synthesize_cert_pem():
 
   errSecItemNotFound = -25300
 
+  kwargs = dict()
   to_release = []
   try:
     lst = c_void_p(0)
@@ -99,11 +101,11 @@ def _darwin_synthesize_cert_pem():
     result = SEC.SecItemCopyMatching(query, byref(items))
     if result == errSecItemNotFound:
       _ssl_suffix_sys.stderr.write('found zero certs in System Keychain\n')
-      return
+      return kwargs
     elif result != 0:
       _ssl_suffix_sys.stderr.write(
         'failed to find certs in System Keychain: OSStatus(%r)' % result)
-      return
+      return kwargs
     to_release.append(items)
 
     # Now we've got all the certs in DER encoding. Since we want to be able to
@@ -122,13 +124,17 @@ def _darwin_synthesize_cert_pem():
       # pylint: disable=undefined-variable
       cert_pem.write(DER_cert_to_PEM_cert(buf))
 
-    return cert_pem.getvalue()
+    kwargs['cadata'] = cert_pem.getvalue()
+    return kwargs
   finally:
     for itm in reversed(to_release):
       CF.CFRelease(itm)
 
 
-def _linux_find_load_verify_locations_kwargs():
+# _ssl_suffix_os is deleted at the end of this file to keep the module
+# namespace clean. Capture it as a function parameter so that we can use
+# it later when called.
+def _linux_find_load_verify_locations_kwargs(ssl_suffix_os=_ssl_suffix_os):
   kwargs = {}
 
   # Borrowed from
@@ -143,7 +149,7 @@ def _linux_find_load_verify_locations_kwargs():
     '/etc/ssl/cert.pem',                                 # Alpine Linux
   ]
   for fname in ca_files:
-    if _ssl_suffix_os.path.isfile(fname):
+    if ssl_suffix_os.path.isfile(fname):
       kwargs['cafile'] = fname
       break
 
@@ -159,7 +165,7 @@ def _linux_find_load_verify_locations_kwargs():
     '/var/ssl/certs',               # AIX
   ]
   for dname in ca_paths:
-    if _ssl_suffix_os.path.isdir(dname):
+    if ssl_suffix_os.path.isdir(dname):
       kwargs['capath'] = dname
       break
 
@@ -167,7 +173,7 @@ def _linux_find_load_verify_locations_kwargs():
 
 
 def _override_set_default_verify_paths():
-  kwargs = {}
+  init_func = None
 
   if _ssl_suffix_sys.platform.startswith('darwin'):
     # On OS X, we can use the Security.framework to obtain all the certs
@@ -175,7 +181,7 @@ def _override_set_default_verify_paths():
     #
     # If you install new certs in the various keychains, you'll need to restart
     # the python process... but that seems like a fair tradeoff to make.
-    kwargs = {'cadata': _darwin_synthesize_cert_pem()}
+    init_func = _darwin_synthesize_cert_pem
 
   elif _ssl_suffix_sys.platform.startswith('linux'):
     # On linux we have an easier job; we search well-known locations for
@@ -185,18 +191,40 @@ def _override_set_default_verify_paths():
     # set_default_verify_paths to load from that location.
     #
     # We look for a cert.pem as well as a 'certs' folder.
-    kwargs = _linux_find_load_verify_locations_kwargs()
+    init_func = _linux_find_load_verify_locations_kwargs
 
-  # Now we override set_default_verify_paths.
-  if kwargs:
-    # DER_cert_to_PEM_cert is a symbol inside of ssl.py
-    # pylint: disable=undefined-variable
-    SSLContext.set_default_verify_paths = (
-        lambda self: self.load_verify_locations(**kwargs))
+  # Now we override set_default_verify_paths. The initialization function is
+  # called lazily, since (1) it can be slow, and (2) on Mac, it may do things
+  # like spawn threads, which are not desirable to do at import time.
+  if init_func:
+    kwargs_slot = [None]  # reference to cached value of init_func()
+    old_set_default_verify_paths = SSLContext.set_default_verify_paths
+    init_lock = _ssl_suffix_threading.Lock()
+
+    # _ssl_suffix_sys is deleted at the end of this file to keep the module
+    # namespace clean. Capture it as a function parameter so that we can use
+    # it later when called.
+    def _set_default_verify_paths(self, ssl_suffix_sys=_ssl_suffix_sys):
+      with init_lock:
+        kwargs = kwargs_slot[0]
+        if kwargs is None:
+          kwargs = init_func()
+          kwargs_slot[0] = kwargs
+          if not kwargs:
+            ssl_suffix_sys.stderr.write("WARNING: no system SSL certs found. "
+                                        "SSL verification may fail.\n")
+      if not kwargs:
+        # Initialization failed, call the default implementation.
+        old_set_default_verify_paths(self)
+        return
+      self.load_verify_locations(**kwargs)
+
+    SSLContext.set_default_verify_paths = _set_default_verify_paths
   else:
     _ssl_suffix_sys.stderr.write(
-        "WARNING: no system SSL certs found. SSL verification may fail.\n"
-    )
+        "WARNING: no system SSL cert implementation for %s. "
+        "SSL verification may fail.\n" % _ssl_suffix_sys.platform)
+
 
 _override_set_default_verify_paths()
 del _darwin_synthesize_cert_pem
@@ -204,3 +232,4 @@ del _linux_find_load_verify_locations_kwargs
 del _override_set_default_verify_paths
 del _ssl_suffix_sys
 del _ssl_suffix_os
+del _ssl_suffix_threading
