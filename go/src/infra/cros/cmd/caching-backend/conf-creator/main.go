@@ -30,6 +30,7 @@ var (
 	serviceAccountJSONPath   = flag.String("service-account", "/creds/service_accounts/artifacts-downloader-service-account.json", "Path to the service account JSON key file.")
 	ufsService               = flag.String("ufs-host", "ufs.api.cr.dev", "Host of the UFS service.")
 	cacheSizeInGB            = flag.Uint("nginx-cache-size", 750, "The size of nginx cache in GB.")
+	nginxWorkerCount         = flag.Uint("nginx-worker-count", 0, "The nginx worker processes configuration (use '0' for 'auto'). (default 0)")
 	gsaServerCount           = flag.Uint("gsa-server-count", 1, "The number of upstream gs_archive_server instances to be added in nginx-conf.")
 	gsaInitialPort           = flag.Uint("gsa-initial-port", 18000, "The port number for the first instance of the gs_archive_server in nginx.conf. Port number will increase by 1 for all subsequent entries.")
 	keepalivedInterface      = flag.String("keepalived-interface", "bond0", "The interface keepalived listens on.")
@@ -75,6 +76,7 @@ func innerMain() error {
 	}
 	vip := nodeVirtualIP(service)
 	n := nginxConfData{
+		WorkerCount: *nginxWorkerCount,
 		// TODO(sanikak): Define types to make the unit clearer.
 		// E.g.  type gigabyte int.
 		CacheSizeInGB:  int(*cacheSizeInGB),

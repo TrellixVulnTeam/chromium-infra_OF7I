@@ -37,7 +37,7 @@ vrrp_instance CacheServer {
 const nginxTemplate = `# This file is generated. DO NOT EDIT.
 
 user www-data;
-worker_processes auto;
+worker_processes {{ if .WorkerCount }}{{ .WorkerCount }}{{ else }}auto{{ end }};
 worker_rlimit_nofile 1024;
 
 pid        /var/run/nginx.pid;

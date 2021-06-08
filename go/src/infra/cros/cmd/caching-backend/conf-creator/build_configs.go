@@ -26,6 +26,7 @@ const (
 type nginxConfData struct {
 	UpstreamHost   string
 	VirtualIP      string
+	WorkerCount    uint
 	CacheSizeInGB  int
 	GSAServerCount int
 	GSAInitialPort int
