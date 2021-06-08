@@ -41,7 +41,8 @@ type Info struct {
 //   AUTOTEST_DIR: Path to the autotest checkout on server.
 //   LUCIFER_TOOLS_DIR: Path to the lucifer installation.
 //   PARSER_PATH: Path to the autotest_status_parser installation.
-//   SKYLAB_DUT_ID: Swarming dut_id dimension that belongs to this bot.
+//   FLEET_RESOURCE_NAME: The name to locate a fleet resource, for now we
+//                        use swarming dut_id dimension for this purpose.
 //   SWARMING_SERVICE: Swarming service host, e.g. https://foo.appspot.com.
 //   FLEET_MULTIDUTS_FLAG: Indicates if the bot is hosting a Scheduling Unit.
 //
@@ -52,7 +53,7 @@ func GetInfo() *Info {
 	info := &Info{
 		AdminService:     os.Getenv("ADMIN_SERVICE"),
 		AutotestPath:     os.Getenv("AUTOTEST_DIR"),
-		BotDUTID:         os.Getenv("SKYLAB_DUT_ID"),
+		BotDUTID:         os.Getenv("FLEET_RESOURCE_NAME"),
 		InventoryService: os.Getenv("INVENTORY_SERVICE"),
 		UFSService:       os.Getenv("UFS_SERVICE"),
 		LuciferBinDir:    os.Getenv("LUCIFER_TOOLS_DIR"),
