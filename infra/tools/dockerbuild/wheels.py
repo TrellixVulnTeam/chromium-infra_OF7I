@@ -1151,7 +1151,7 @@ _OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS = [
     'mac-x64',
     'windows-x86',
     'windows-x64',
-],
+]
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'CryptographyPyPI',
