@@ -89,6 +89,27 @@ message GitDependency {
   SyncStatus sync_status = 5;
 }
 
+// Hook stores information about hooks run as part of gclient.
+message Hook {
+  // The command that was executed.
+  string action = 1;
+
+  // The name of the hook.
+  string name = 2;
+
+  // The directory where to execute the hook.
+  string cwd = 3;
+
+  // Conditional string. The hook is run if it evaluates to true.
+  string condition = 4;
+
+  // Time it took to execute the hook.
+  double execution_time = 5;
+
+  // The exit code of the hook.
+  int64 exit_code = 6;
+}
+
 // BotMetrics stores information about the bot environment from which the
 // command was executed.
 message BotMetrics {
@@ -155,7 +176,12 @@ message Metrics {
   // in metrics/constants.go.
   string git_version = 14;
 
+  // Metrics specific to commands run on bots.
   BotMetrics bot_metrics = 15;
 
+  // The dependencies listed in DEPS that were synced by this command.
   repeated GitDependency git_deps = 16;
+
+  // The hooks listed in DEPS that were executed by this command.
+  repeated Hook hooks = 17;
 }
