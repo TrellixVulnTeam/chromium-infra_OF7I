@@ -12,7 +12,7 @@ def cron(name, recipe, execution_timeout = None):
         bucket = "cron",
         executable = build.recipe(recipe),
         dimensions = {
-            "os": "Ubuntu-16.04",
+            "os": "Ubuntu-18.04",
             "cpu": "x86-64",
             "pool": "luci.infra.cron",
         },
