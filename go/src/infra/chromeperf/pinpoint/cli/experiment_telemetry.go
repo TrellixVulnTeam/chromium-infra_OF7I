@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"infra/chromeperf/pinpoint/cli/render"
 	"io"
+	"os"
+	"path"
 	"sync"
 
 	"infra/chromeperf/pinpoint/proto"
@@ -249,10 +251,16 @@ func runBatchJob(e *experimentTelemetryRun,
 	batch_experiments []telemetryBatchExperiment,
 	experiment *proto.Experiment) ([]*proto.Job, error) {
 
+	outfile, err := os.Create(path.Join(e.baseCommandRun.workDir, batch_id+".txt"))
+	if err != nil {
+		return nil, err
+	}
+	defer outfile.Close()
+
 	var jobsMu sync.Mutex
 	jobs := []*proto.Job{}
 
-	err := parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
+	err = parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
 		for _, config := range batch_experiments {
 			config := config
 			for _, bot_config := range config.Configs {
@@ -296,6 +304,10 @@ func runBatchJob(e *experimentTelemetryRun,
 		jobURL, err := render.JobURL(j)
 		if err == nil {
 			fmt.Fprintf(o, "%s\n", jobURL)
+		}
+		jobID, err := render.JobID(j)
+		if err == nil {
+			outfile.WriteString(jobID + "\n")
 		}
 	}
 	return jobs, err

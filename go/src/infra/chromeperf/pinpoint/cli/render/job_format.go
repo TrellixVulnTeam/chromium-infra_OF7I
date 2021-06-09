@@ -28,12 +28,10 @@ var (
 )
 
 func JobURL(j *proto.Job) (string, error) {
-	// FIXME: Handle new URL formats when they're ready.
 	return legacyJobURL(j)
 }
 
-func legacyJobURL(j *proto.Job) (string, error) {
-	// Require that j has a Name.
+func JobID(j *proto.Job) (string, error) {
 	if len(j.Name) == 0 {
 		return "", errors.Reason("invalid job, the Name field is required").Err()
 	}
@@ -41,7 +39,15 @@ func legacyJobURL(j *proto.Job) (string, error) {
 	if m == nil {
 		return "", errors.Reason("unsupported job id format: %s", j.Name).Err()
 	}
-	return legacyURL(m[legacyJobIDIdx]), nil
+	return m[legacyJobIDIdx], nil
+}
+
+func legacyJobURL(j *proto.Job) (string, error) {
+	id, err := JobID(j)
+	if err != nil {
+		return "", err
+	}
+	return legacyURL(id), nil
 }
 
 func legacyURL(jobName string) string {

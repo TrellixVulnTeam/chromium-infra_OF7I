@@ -44,6 +44,11 @@ func TestJobRenderingLegacyURL(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(u, ShouldEqual, "https://pinpoint-dot-chromeperf.appspot.com/job/1234567")
 			})
+			Convey("Then we can generate a ID for the job", func() {
+				u, err := JobID(j)
+				So(err, ShouldBeNil)
+				So(u, ShouldEqual, "1234567")
+			})
 		})
 		Convey("When the legacy service does not have a trailing /", func() {
 			j.Name = "jobs/legacy-1234"
@@ -51,6 +56,11 @@ func TestJobRenderingLegacyURL(t *testing.T) {
 				u, err := legacyJobURL(j)
 				So(err, ShouldBeNil)
 				So(u, ShouldEqual, "https://pinpoint-dot-chromeperf.appspot.com/job/1234")
+			})
+			Convey("Then we can generate a valid ID for the job", func() {
+				u, err := JobID(j)
+				So(err, ShouldBeNil)
+				So(u, ShouldEqual, "1234")
 			})
 		})
 		Convey("When we have a non-legacy ID", func() {

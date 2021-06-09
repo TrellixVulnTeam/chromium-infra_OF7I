@@ -18,7 +18,9 @@ import (
 	"context"
 	"fmt"
 	"infra/chromeperf/pinpoint/proto"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -113,7 +115,10 @@ func TestBatchKickoff(t *testing.T) {
 
 		c := &fakePinpointClient{}
 
-		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "", batch_experiments, &experiment)
+		var err error
+		runner.baseCommandRun.workDir, err = ioutil.TempDir("", "tmp")
+		So(err, ShouldBeNil)
+		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "batch", batch_experiments, &experiment)
 		So(err, ShouldBeNil)
 
 		expected := []startedJob{
@@ -158,6 +163,14 @@ func TestBatchKickoff(t *testing.T) {
 		fmt.Printf("%s\n", expected)
 		So(cmp.Equal(c.Jobs, expected, cmpopts.SortSlices(less)), ShouldBeTrue)
 		So(len(jobs), ShouldEqual, 6)
+
+		// Check the jobs file
+		jobs_filename := filepath.Join(runner.baseCommandRun.workDir, "batch.txt")
+		_, err = os.Stat(jobs_filename)
+		So(err, ShouldBeNil)
+		content, err := ioutil.ReadFile(jobs_filename)
+		So(err, ShouldBeNil)
+		So(cmp.Equal(string(content), "4242\n4242\n4242\n4242\n4242\n4242\n"), ShouldBeTrue)
 	})
 }
 
