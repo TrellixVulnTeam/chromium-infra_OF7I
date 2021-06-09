@@ -323,6 +323,9 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	if err != nil {
 		return errors.Annotate(err, "unable to load preset").Err()
 	}
+	if e.presetsMixin.presetName != "" && p.TelemetryExperiment == nil && p.TelemetryBatchExperiment == nil {
+		return fmt.Errorf("Preset must be a telemetry_batch_experiment or telemetry_experiment")
+	}
 
 	batch_experiments, err := getTelemetryBatchExperiment(e, ctx, p)
 	if err != nil {

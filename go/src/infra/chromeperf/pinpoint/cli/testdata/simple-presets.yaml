@@ -38,3 +38,17 @@ presets:
       - <<: *batch_anchor_example
         configs:
           - android-pixel2-perf
+  summary_report:
+    batch_summary_report_spec:
+      loading.desktop:
+        metrics:
+          - name: largestContentfulPaint
+          - name: timeToFirstContentfulPaint
+          - name: overallCumulativeLayoutShift
+          - name: totalBlockingTime
+      loading.mobile:
+        metrics:
+          - name: largestContentfulPaint
+          - name: timeToFirstContentfulPaint
+          - name: overallCumulativeLayoutShift
+          - name: totalBlockingTime

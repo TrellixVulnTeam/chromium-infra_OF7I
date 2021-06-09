@@ -15,6 +15,7 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -38,6 +39,10 @@ func TestLoadPresets(t *testing.T) {
 			})
 			Convey("And we can find the \"complex\" preset", func() {
 				_, err := pd.GetPreset("complex")
+				So(err, ShouldBeNil)
+			})
+			Convey("And we can find the \"summary_report\" preset", func() {
+				_, err := pd.GetPreset("summary_report")
 				So(err, ShouldBeNil)
 			})
 
@@ -79,6 +84,15 @@ func TestLoadPresets(t *testing.T) {
 				So(err, ShouldBeError, "at least one config should be defined for each benchmark")
 			})
 		})
+	})
+
+	Convey("Given an unparseable yaml file", t, func() {
+		pm := presetsMixin{
+			presetFile: "testdata/invalid-yaml.yaml",
+			presetName: "preset",
+		}
+		_, err := pm.getPreset(context.Background())
+		So(err, ShouldBeError)
 	})
 
 }

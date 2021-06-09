@@ -27,6 +27,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type batchSummaryReportMetric struct {
+	Name string `yaml:"name"`
+}
+
+type batchSummaryReportSpec struct {
+	Metrics *[]batchSummaryReportMetric `yaml:"metrics"`
+}
+
 type telemetryExperimentJobSpec struct {
 	Config         string `yaml:"config"`
 	StorySelection struct {
@@ -49,8 +57,9 @@ type telemetryBatchExperiment struct {
 }
 
 type preset struct {
-	TelemetryBatchExperiment *[]telemetryBatchExperiment `yaml:"telemetry_batch_experiment,omitempty"`
-	TelemetryExperiment      *telemetryExperimentJobSpec `yaml:"telemetry_experiment,omitempty"`
+	BatchSummaryReportSpec   *map[string]batchSummaryReportSpec `yaml:"batch_summary_report_spec,omitempty"`
+	TelemetryBatchExperiment *[]telemetryBatchExperiment        `yaml:"telemetry_batch_experiment,omitempty"`
+	TelemetryExperiment      *telemetryExperimentJobSpec        `yaml:"telemetry_experiment,omitempty"`
 }
 
 type presetDb struct {
@@ -69,6 +78,48 @@ func (p *presetNotFoundError) Error() string {
 	return fmt.Sprintf("preset not found: %q", p.name)
 }
 
+func validateTelemetryJobPreset(p preset) error {
+	if p.TelemetryExperiment == nil && p.TelemetryBatchExperiment == nil {
+		return nil
+	}
+	if p.TelemetryExperiment != nil && p.TelemetryBatchExperiment != nil {
+		return fmt.Errorf("exactly one experiment type should be defined")
+	} else if p.TelemetryExperiment != nil {
+		if (len(p.TelemetryExperiment.StorySelection.Story) > 0 &&
+			len(p.TelemetryExperiment.StorySelection.StoryTags) > 0) ||
+			(len(p.TelemetryExperiment.StorySelection.Story) == 0 &&
+				len(p.TelemetryExperiment.StorySelection.StoryTags) == 0) {
+			return fmt.Errorf(text.Doc(`
+				telemetry experiments must only have exactly one of story or
+				story_tags in story_selection
+			`))
+		}
+		if len(p.TelemetryExperiment.Config) == 0 {
+			return fmt.Errorf(text.Doc(`
+				telemetry experiments must have a non-empty config
+			`))
+		}
+	} else if p.TelemetryBatchExperiment != nil {
+		for i := range *p.TelemetryBatchExperiment {
+			if len((*p.TelemetryBatchExperiment)[i].Stories) == 0 &&
+				len((*p.TelemetryBatchExperiment)[i].StoryTags) == 0 {
+				return fmt.Errorf("at least one story or story tag should be defined for each benchmark")
+			}
+			if len((*p.TelemetryBatchExperiment)[i].Configs) == 0 {
+				return fmt.Errorf("at least one config should be defined for each benchmark")
+			}
+		}
+	}
+	return nil
+}
+
+func validateBatchSummaryPreset(p preset) error {
+	if p.BatchSummaryReportSpec == nil {
+		return nil
+	}
+	return nil // All states are valid, so far.
+}
+
 func (pdb *presetDb) GetPreset(pName string) (preset, error) {
 	p, found := pdb.Presets[pName]
 	if !found {
@@ -77,32 +128,13 @@ func (pdb *presetDb) GetPreset(pName string) (preset, error) {
 
 	// We need to validate that the preset is well-formed.  We're doing this
 	// late because we don't want to stop forward progress at loading time.
-	if (p.TelemetryExperiment == nil && p.TelemetryBatchExperiment == nil) || (p.TelemetryExperiment != nil && p.TelemetryBatchExperiment != nil) {
-		return p, fmt.Errorf("exactly one experiment type should be defined")
-	} else if p.TelemetryExperiment != nil {
-		if (len(p.TelemetryExperiment.StorySelection.Story) > 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) > 0) || (len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0) {
-			return p, fmt.Errorf(text.Doc(`
-				telemetry experiments must only have exactly one of story or
-				story_tags in story_selection
-			`))
-		}
-		if len(p.TelemetryExperiment.StorySelection.Story) == 0 && len(p.TelemetryExperiment.StorySelection.StoryTags) == 0 {
-			return p, fmt.Errorf("telemetry experiments must have exactly one of ")
-		}
-		if len(p.TelemetryExperiment.Config) == 0 {
-			return p, fmt.Errorf(text.Doc(`
-				telemetry experiments must have a non-empty config
-			`))
-		}
-	} else if p.TelemetryBatchExperiment != nil {
-		for i := range *p.TelemetryBatchExperiment {
-			if len((*p.TelemetryBatchExperiment)[i].Stories) == 0 && len((*p.TelemetryBatchExperiment)[i].StoryTags) == 0 {
-				return p, fmt.Errorf("at least one story or story tag should be defined for each benchmark")
-			}
-			if len((*p.TelemetryBatchExperiment)[i].Configs) == 0 {
-				return p, fmt.Errorf("at least one config should be defined for each benchmark")
-			}
-		}
+	e := validateTelemetryJobPreset(p)
+	if e != nil {
+		return p, e
+	}
+	e = validateBatchSummaryPreset(p)
+	if e != nil {
+		return p, e
 	}
 
 	return p, nil
