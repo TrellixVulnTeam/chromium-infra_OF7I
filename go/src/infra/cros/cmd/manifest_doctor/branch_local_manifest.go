@@ -128,6 +128,47 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 	return 0
 }
 
+type projectInfo struct {
+	name string
+	path string
+}
+
+var readFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string) (localManifestBranchMetadata, bool) {
+	bm := localManifestBranchMetadata{
+		PathToPrevSHA: make(map[string]string),
+	}
+	docExists := true
+	bmDoc := dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
+	if docsnap, err := bmDoc.Get(ctx); err != nil {
+		// If we know the failure is because the data doesn't exist, we can
+		// still proceed.
+		errorCode, ok := status.FromError(err)
+		if ok && (errorCode.Code() == codes.NotFound) {
+			docExists = false
+			LogErr("no history for branch %s, not skipping", branch)
+		} else {
+			LogErr(errors.Annotate(err, "failed to get history, attempting all branch/project combos").Err().Error())
+		}
+	} else {
+		// If sucessful, parse the data.
+		docsnap.DataTo(&bm)
+	}
+	return bm, docExists
+}
+
+var writeFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string, docExists bool, bm localManifestBranchMetadata) {
+	bmDoc := dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
+	if docExists {
+		if _, err := bmDoc.Set(ctx, bm); err != nil {
+			LogErr(errors.Annotate(err, "failed to store optimization data for branch %s", branch).Err().Error())
+		}
+	} else {
+		if _, err := bmDoc.Create(ctx, bm); err != nil {
+			LogErr(errors.Annotate(err, "failed to store optimization data for branch %s", branch).Err().Error())
+		}
+	}
+}
+
 // pinLocalManifest returns whether or not local_manifest.xml in the specified
 // the project/branch is up to date (false if the file does not exist), and
 // a potential error.
@@ -262,26 +303,8 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 		}
 		currentSHA := strings.TrimSpace(output.Stdout)
 
-		// Load optimization data from Firestore.
-		bm := localManifestBranchMetadata{
-			PathToPrevSHA: make(map[string]string),
-		}
-		var bmDoc *firestore.DocumentRef
-		docExists := true
-		if dsClient != nil {
-			bmDoc = dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
-			if docsnap, err := bmDoc.Get(ctx); err != nil {
-				errorCode, ok := status.FromError(err)
-				if ok && errorCode.Code() == codes.NotFound {
-					docExists = false
-					LogErr("%s: no history for branch, not skipping", branch)
-				} else {
-					LogErr(errors.Annotate(err, "failed to get history, attempting all branch/project combos").Err().Error())
-				}
-			} else {
-				docsnap.DataTo(&bm)
-			}
-		}
+		// Read optimization data from Firestore.
+		bm, docExists := readFirestoreData(ctx, dsClient, branch)
 
 		for _, path := range projects {
 			// If the SHA for the reference manifest hasn't changed since the last update, no need to reprocess this
@@ -305,16 +328,8 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 		}
 
 		// Write optimization data.
-		if !dryRun && dsClient != nil {
-			if docExists {
-				if _, err := bmDoc.Set(ctx, bm); err != nil {
-					LogErr(errors.Annotate(err, "%s: failed to store optimization data", branch).Err().Error())
-				}
-			} else {
-				if _, err := bmDoc.Create(ctx, bm); err != nil {
-					LogErr(errors.Annotate(err, "%s: failed to store optimization data", branch).Err().Error())
-				}
-			}
+		if !dryRun {
+			writeFirestoreData(ctx, dsClient, branch, docExists, bm)
 		}
 	}
 	if len(errs) == 0 {

@@ -8,11 +8,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"infra/cros/internal/assert"
+	"infra/cros/internal/gerrit"
 	"infra/cros/internal/repo"
 	rh "infra/cros/internal/repoharness"
+
+	"cloud.google.com/go/firestore"
+	"github.com/golang/mock/gomock"
+	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
 
 const (
@@ -39,7 +45,8 @@ const (
 )
 
 var (
-	branches = []string{
+	ignoreBranch = "stabilize-13852.B"
+	branches     = []string{
 		"main",
 		"release-R89-13729.B",
 		"release-R90-13816.B",
@@ -47,7 +54,7 @@ var (
 		"stabilize-13851.B",
 		// Extra branch that we will NOT create a local_manifest.xml for, to
 		// ensure that the tool ignores such branches gracefully.
-		"stabilize-13852.B",
+		ignoreBranch,
 	}
 )
 
@@ -82,6 +89,12 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 		Contents: []byte(fmt.Sprintf(localManifestXML, "main")),
 	}
 
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+	gerrit.MockGitiles = gitilesMock
+
+	branchSHAs := make(map[string]string)
 	for _, branch := range branches {
 		// Create appropriate branches and files in our sentinel repository,
 		// manifest-internal.
@@ -92,7 +105,7 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 			Name:     "default.xml",
 			Contents: []byte(fmt.Sprintf(referenceManifestXML, branch, fetchLocation)),
 		}
-		_, err := harness.AddFile(remoteManifestProject, branch, referenceManifest)
+		branchSHAs[branch], err = harness.AddFile(remoteManifestProject, branch, referenceManifest)
 		assert.NilError(t, err)
 
 		// Create corresponding branches in project directories.
@@ -100,10 +113,33 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 			assert.NilError(t, harness.CreateRemoteRef(remoteFooProject, branch, ""))
 		}
 		// Create local_manifest.xml files in appropriate branches.
-		if branch != "stabilize-13852.B" {
+		if branch != ignoreBranch {
 			_, err = harness.AddFile(remoteFooProject, branch, localManifestFile)
 			assert.NilError(t, err)
 		}
+	}
+
+	// Mock readFirestoreData and writeFirestoreData
+	readFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string) (localManifestBranchMetadata, bool) {
+		// Set SHA to something out of bounds for our mocked gitiles call to force updates.
+		bm := localManifestBranchMetadata{
+			PathToPrevSHA: map[string]string{
+				fooProject.Path: "-1",
+			},
+		}
+		return bm, true
+	}
+	writeFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string, docExists bool, bm localManifestBranchMetadata) {
+		expectedSHA := "-1"
+		if branch != ignoreBranch {
+			expectedSHA = branchSHAs[branch]
+		}
+		expected := localManifestBranchMetadata{
+			PathToPrevSHA: map[string]string{
+				fooProject.Path: expectedSHA,
+			},
+		}
+		assert.Assert(t, reflect.DeepEqual(expected, bm))
 	}
 
 	return harness, remoteManifestProject
