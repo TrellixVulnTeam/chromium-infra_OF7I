@@ -18,8 +18,8 @@ import (
 	"infra/cros/cmd/crosgrep/internal/swarming"
 )
 
-// environment variable to use for bigquer project
-const crosgrepBqProjectEnvvar = "CROSGREP_BQ_PROJECT"
+// CrosgrepBQProjectEnvvar is a variable to use for bigquery project.
+const crosgrepBQProjectEnvvar = "CROSGREP_BQ_PROJECT"
 
 // ListAllTasks is a command that lists some swarming tasks in an
 // arbitrary way.
@@ -39,6 +39,7 @@ var ListAllTasks = &subcommands.Command{
 	},
 }
 
+// ListAllTasksCmd is a command that lists all tasks.
 type listAllTasksCmd struct {
 	subcommands.CommandRunBase
 	logLevel  logging.Level
@@ -46,15 +47,16 @@ type listAllTasksCmd struct {
 	model     string
 }
 
-// getBqProject returns the cloud project for bigquery explicitly specified on the command line
+// GetBQProject returns the cloud project for bigquery explicitly specified on the command line
 // or taken from the CROSGREP_BQ_PROJECT environment variable if no flag is provided.
-func (c *listAllTasksCmd) getBqProject() string {
+func (c *listAllTasksCmd) getBQProject() string {
 	if c.bqProject == "" {
-		return os.Getenv(crosgrepBqProjectEnvvar)
+		return os.Getenv(crosgrepBQProjectEnvvar)
 	}
 	return c.bqProject
 }
 
+// Run is the main entrypoint for the search command.
 func (c listAllTasksCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
@@ -63,10 +65,11 @@ func (c listAllTasksCmd) Run(a subcommands.Application, args []string, env subco
 	return 0
 }
 
+// InnerRun is the implementation of the search command.
 func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	logging.SetLevel(ctx, c.logLevel)
-	client, err := bigquery.NewClient(ctx, c.getBqProject())
+	client, err := bigquery.NewClient(ctx, c.getBQProject())
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}

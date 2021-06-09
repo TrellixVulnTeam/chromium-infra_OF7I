@@ -16,10 +16,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// BqRow is an alias for the type of a bigquery row.
+// BQRow is an alias for the type of a bigquery row.
 // We use a map for a bqRow instead of a []bigquery.Value so that
 // individual records with a result set retain the name of the column.
-type bqRow = map[string]bigquery.Value
+type bqRow = []bigquery.Value
 
 // GetRowIterator returns a row iterator from a sql query.
 func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {

@@ -25,7 +25,7 @@ type BrokenByParams struct {
 	EndTime   int64
 }
 
-// tmplBrokenBy is a SQL query that shows the last task to run successfully on a given hostname and when it ended.
+// TmplBrokenBy is a SQL query that shows the last task to run successfully on a given hostname and when it ended.
 var tmplBrokenBy = templateOrPanic(
 	"brokenBy",
 	tmplPreamble+

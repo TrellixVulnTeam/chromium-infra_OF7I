@@ -46,11 +46,11 @@ type brokenByCmd struct {
 	botID     string
 }
 
-// GetBqProject returns the cloud project for bigquery explicitly specified on the command line
+// GetBQProject returns the cloud project for bigquery explicitly specified on the command line
 // or taken from the CROSGREP_BQ_PROJECT environment variable if no flag is provided.
-func (c *brokenByCmd) getBqProject() string {
+func (c *brokenByCmd) getBQProject() string {
 	if c.bqProject == "" {
-		return os.Getenv(crosgrepBqProjectEnvvar)
+		return os.Getenv(crosgrepBQProjectEnvvar)
 	}
 	return c.bqProject
 }
@@ -68,7 +68,7 @@ func (c *brokenByCmd) Run(a subcommands.Application, args []string, env subcomma
 func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	logging.SetLevel(ctx, c.logLevel)
-	client, err := bigquery.NewClient(ctx, c.getBqProject())
+	client, err := bigquery.NewClient(ctx, c.getBQProject())
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}

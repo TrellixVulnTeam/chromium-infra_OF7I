@@ -14,7 +14,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// Limit on the number of swarming tasks that can be retrieved by a single query.
+// SwarmingTasksLimit is the limit on the number of swarming tasks that can be retrieved by a single query.
 const swarmingTasksLimit = 10000
 
 // MakeSwarmingTasksInRangeQuery makes a list of all swarming tasks in a particular time range

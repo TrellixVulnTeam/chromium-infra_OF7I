@@ -4,7 +4,7 @@
 
 package swarming
 
-// buildBucketSafetyMarginSeconds is the number of seconds to back off.
+// BuildBucketSafetyMarginSeconds is the number of seconds to back off.
 // In our queries, the time range applies to the end_time of the swarming task and
 // not the buildbucket task. Therefore, in order to make sure that we don't miss
 // any entries for buildbucket associated with swarming records, we use a fixed
