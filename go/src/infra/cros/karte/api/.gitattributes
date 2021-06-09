@@ -1,0 +1,3 @@
+# We treat generated go files as binary.
+*.pb.go         binary
+pb.discovery.go binary
