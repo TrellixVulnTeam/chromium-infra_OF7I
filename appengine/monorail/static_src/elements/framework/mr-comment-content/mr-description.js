@@ -34,13 +34,13 @@ export class MrDescription extends LitElement {
   }
 
   /** @override */
-  update(changedProperties) {
+  updated(changedProperties) {
+    super.updated(changedProperties);
+
     if (changedProperties.has('descriptionList')) {
       if (!this.descriptionList || !this.descriptionList.length) return;
       this.selectedIndex = this.descriptionList.length - 1;
     }
-
-    super.update(changedProperties);
   }
 
   /** @override */
@@ -54,8 +54,7 @@ export class MrDescription extends LitElement {
 
   /** @override */
   render() {
-    const selectedDescription =
-      (this.descriptionList || [])[this.selectedIndex] || {};
+    const selectedDescription = this.selectedDescription;
 
     return html`
       <div class="select-container">
@@ -82,6 +81,18 @@ export class MrDescription extends LitElement {
         `)}
       </div>
     `;
+  }
+
+  /**
+   * Getter for the currently viewed description.
+   * @return {Comment} The description object.
+   */
+  get selectedDescription() {
+    const descriptions = this.descriptionList || [];
+    const index = Math.max(
+      Math.min(this.selectedIndex, descriptions.length - 1),
+      0);
+    return descriptions[index] || {};
   }
 
   /**
