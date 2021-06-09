@@ -153,7 +153,7 @@ describe('ReactAutocomplete', () => {
     sinon.assert.calledOnce(onChangeStub);
   });
 
-  it('onChange preserves fixed values', async () => {
+  it('onChange excludes fixed values', async () => {
     const onChangeStub = sinon.stub();
 
     const {container} = render(<ReactAutocomplete
@@ -171,8 +171,7 @@ describe('ReactAutocomplete', () => {
     fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 
-    sinon.assert.calledWith(onChangeStub, sinon.match.any,
-        ['immortal penguin']);
+    sinon.assert.calledWith(onChangeStub, sinon.match.any, []);
   });
 
   it('_renderOption highlights matching text', async () => {

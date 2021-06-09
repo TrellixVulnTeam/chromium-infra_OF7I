@@ -120,10 +120,7 @@ function _onChange<T, Multiple, DisableClearable, FreeSolo>(
   ): void => {
     // Ensure that fixed values can't be removed.
     if (multiple) {
-      newValue = [
-        ...fixedValues,
-        ...newValue.filter((option: T) => fixedValues.indexOf(option) === -1),
-      ];
+      newValue = newValue.filter((option: T) => !fixedValues.includes(option));
     }
 
     // Propagate onChange callback.
