@@ -6,9 +6,11 @@ import {assert} from 'chai';
 import {MrEditDescription} from './mr-edit-description.js';
 
 let element;
+
 describe('mr-edit-description', () => {
   beforeEach(() => {
     element = document.createElement('mr-edit-description');
+
     document.body.appendChild(element);
     element.commentsByApproval = new Map([
       ['', [
@@ -111,7 +113,7 @@ describe('mr-edit-description', () => {
 
     await element.updateComplete;
 
-    const previewMarkdown = element.shadowRoot.querySelector('.markdown_preview');
+    const previewMarkdown = element.shadowRoot.querySelector('.markdown-preview');
     assert.isNotNull(previewMarkdown);
   });
 
@@ -121,7 +123,7 @@ describe('mr-edit-description', () => {
 
     await element.updateComplete;
 
-    const previewMarkdown = element.shadowRoot.querySelector('.markdown_preview');
+    const previewMarkdown = element.shadowRoot.querySelector('.markdown-preview');
     assert.isNull(previewMarkdown);
   });
 });

@@ -925,19 +925,21 @@ describe('mr-edit-metadata', () => {
 
   it('renders valid markdown description with preview class', async () => {
     element.prefs = new Map([['render_markdown', 'true']]);
+    element.projectName = 'monkeyrail';
 
     await element.updateComplete;
 
-    const previewMarkdown = element.querySelector('.markdown_preview');
+    const previewMarkdown = element.querySelector('.markdown-preview');
     assert.isNotNull(previewMarkdown);
   });
 
   it('does not show preview when markdown is disabled', async () => {
     element.prefs = new Map([['render_markdown', 'false']]);
+    element.projectName = 'monkeyrail';
 
     await element.updateComplete;
 
-    const previewMarkdown = element.querySelector('.markdown_preview');
+    const previewMarkdown = element.querySelector('.markdown-preview');
     assert.isNull(previewMarkdown);
   });
 });

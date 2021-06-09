@@ -67,6 +67,10 @@ describe('mr-comment', () => {
       localId: 1,
       projectName: 'test',
       sequenceNum: 2,
+      commenter: {
+        displayName: 'user@example.com',
+        userId: '12345',
+      },
     };
 
     await element.updateComplete;
@@ -86,6 +90,10 @@ describe('mr-comment', () => {
           newOrDeltaValue: '-2 3',
         },
       ],
+      commenter: {
+        displayName: 'user@example.com',
+        userId: '12345',
+      },
     };
 
     await element.updateComplete;
@@ -110,6 +118,10 @@ describe('mr-comment', () => {
           newOrDeltaValue: '-2 3',
         },
       ],
+      commenter: {
+        displayName: 'user@example.com',
+        userId: '12345',
+      },
     };
 
     await element.updateComplete;
@@ -134,6 +146,10 @@ describe('mr-comment', () => {
           newOrDeltaValue: '-2 3',
         },
       ],
+      commenter: {
+        displayName: 'user@example.com',
+        userId: '12345',
+      },
     };
 
     await element.updateComplete;

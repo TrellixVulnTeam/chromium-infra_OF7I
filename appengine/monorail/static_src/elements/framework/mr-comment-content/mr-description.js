@@ -34,13 +34,13 @@ export class MrDescription extends LitElement {
   }
 
   /** @override */
-  updated(changedProperties) {
-    super.updated(changedProperties);
-
+  update(changedProperties) {
     if (changedProperties.has('descriptionList')) {
       if (!this.descriptionList || !this.descriptionList.length) return;
       this.selectedIndex = this.descriptionList.length - 1;
     }
+
+    super.update(changedProperties);
   }
 
   /** @override */

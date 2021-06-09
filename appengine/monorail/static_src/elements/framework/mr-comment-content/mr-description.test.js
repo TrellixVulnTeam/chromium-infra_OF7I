@@ -65,7 +65,7 @@ describe('mr-description', () => {
   it('selector still renders when one description is deleted', async () => {
     element.descriptionList = [
       {content: 'Hello world', commenter: {displayName: 'name@email.com'}},
-      {isDeleted: true},
+      {isDeleted: true, commenter: {displayName: 'name@email.com'}},
     ];
 
     await element.updateComplete;

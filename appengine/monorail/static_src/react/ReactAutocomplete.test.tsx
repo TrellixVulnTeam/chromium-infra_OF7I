@@ -9,7 +9,7 @@ import {fireEvent, render} from '@testing-library/react';
 import {ReactAutocomplete, MAX_AUTOCOMPLETE_OPTIONS}
   from './ReactAutocomplete.tsx';
 
-describe.only('ReactAutocomplete', () => {
+describe('ReactAutocomplete', () => {
   it('renders', async () => {
     const {container} = render(<ReactAutocomplete label="cool" options={[]} />);
 
