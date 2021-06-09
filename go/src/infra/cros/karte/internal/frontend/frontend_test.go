@@ -26,6 +26,19 @@ func TestCreateAction(t *testing.T) {
 	}
 }
 
+// TestCreateObservation makes sure that that CreateObservation fails because
+// it isn't implemented.
+func TestCreateObservation(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	k := NewKarteFrontend()
+	_, err := k.CreateObservation(ctx, &kartepb.CreateObservationRequest{})
+	if err == nil {
+		t.Error("expected Create Observation to fail")
+	}
+}
+
 // TestListActions tests that ListActions errors.
 func TestListActions(t *testing.T) {
 	t.Parallel()

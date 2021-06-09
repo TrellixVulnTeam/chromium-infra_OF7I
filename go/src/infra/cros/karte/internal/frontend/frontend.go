@@ -29,6 +29,12 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
+// CreateObservation creates an observation and then returns the just-created observation.
+// TODO(gregorynisbet): Replace CreateObservation with a real implementation.
+func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.CreateObservationRequest) (*kartepb.Observation, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
+}
+
 // ListActions lists the actions that Karte knows about.
 func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListActionsRequest) (*kartepb.ListActionsResponse, error) {
 	q := MakeAllActionEntitiesQuery(req.GetPageToken())

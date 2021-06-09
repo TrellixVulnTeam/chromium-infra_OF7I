@@ -23,6 +23,16 @@ service Karte {
     };
   }
 
+  // CreateObservation creates an observation and returns the observation
+  // that was just created.
+  // This API is based on https://google.aip.dev/133.
+  rpc CreateObservation(CreateObservationRequest) returns (Observation) {
+    option (google.api.http) = {
+      post: "/v1/observations"
+      body: "observation"
+    };
+  }
+
   // ListActions lists all the actions that Karte knows about.
   // The order in which the actions are returned is undefined.
   rpc ListActions(ListActionsRequest) returns (ListActionsResponse) {
@@ -44,6 +54,10 @@ service Karte {
 // CreateActionRequest creates a single action.
 // TODO(gregorynisbet): Make the action request non-empty.
 message CreateActionRequest {}
+
+// CreateObservationRequest creates a single action.
+// TODO(gregorynisbet): Make the observation request non-empty.
+message CreateObservationRequest {}
 
 // ListActionsRequest takes a page size and a token indicating where to start.
 message ListActionsRequest {
