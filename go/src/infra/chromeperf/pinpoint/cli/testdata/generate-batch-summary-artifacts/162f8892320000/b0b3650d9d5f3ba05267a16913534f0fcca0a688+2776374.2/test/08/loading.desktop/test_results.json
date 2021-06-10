@@ -1,0 +1,36 @@
+{
+    "interrupted": false,
+    "num_failures_by_type": {
+        "PASS": 1
+    },
+    "path_delimiter": "/",
+    "seconds_since_epoch": 1622852680.251132,
+    "tests": {
+        "loading.desktop": {
+            "Yandex_cold": {
+                "actual": "PASS",
+                "artifacts": {
+                    "logs.txt": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T002440_10697/loading.desktop/Yandex_cold/retry_0/logs.txt"
+                    ],
+                    "trace.html": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T002440_10697/loading.desktop/Yandex_cold/retry_0/trace.html"
+                    ],
+                    "trace/telemetry/tmp4wQADw.pb": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T002440_10697/loading.desktop/Yandex_cold/retry_0/trace/telemetry/tmp4wQADw.pb"
+                    ],
+                    "trace/traceEvents/tmptEesOO.pb.gz": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T002440_10697/loading.desktop/Yandex_cold/retry_0/trace/traceEvents/tmptEesOO.pb.gz"
+                    ]
+                },
+                "expected": "PASS",
+                "is_unexpected": false,
+                "time": 37.1916589451,
+                "times": [
+                    37.1916589451
+                ]
+            }
+        }
+    },
+    "version": 3
+}

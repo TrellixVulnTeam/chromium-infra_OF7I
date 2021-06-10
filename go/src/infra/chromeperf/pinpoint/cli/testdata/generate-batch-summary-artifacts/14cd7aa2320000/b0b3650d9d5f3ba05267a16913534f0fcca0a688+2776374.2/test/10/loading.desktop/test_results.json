@@ -1,0 +1,36 @@
+{
+    "interrupted": false,
+    "num_failures_by_type": {
+        "PASS": 1
+    },
+    "path_delimiter": "/",
+    "seconds_since_epoch": 1622862437.6815,
+    "tests": {
+        "loading.desktop": {
+            "Naver_warm": {
+                "actual": "PASS",
+                "artifacts": {
+                    "logs.txt": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T030717_1712/loading.desktop/Naver_warm/retry_0/logs.txt"
+                    ],
+                    "trace.html": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T030717_1712/loading.desktop/Naver_warm/retry_0/trace.html"
+                    ],
+                    "trace/telemetry/tmp1oi8Wc.pb": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T030717_1712/loading.desktop/Naver_warm/retry_0/trace/telemetry/tmp1oi8Wc.pb"
+                    ],
+                    "trace/traceEvents/tmpYS5bjz.pb.gz": [
+                        "gs://chrome-telemetry-output/exp_chromium_b0b3650_136663d_20210605T030717_1712/loading.desktop/Naver_warm/retry_0/trace/traceEvents/tmpYS5bjz.pb.gz"
+                    ]
+                },
+                "expected": "PASS",
+                "is_unexpected": false,
+                "time": 59.5257801056,
+                "times": [
+                    59.5257801056
+                ]
+            }
+        }
+    },
+    "version": 3
+}

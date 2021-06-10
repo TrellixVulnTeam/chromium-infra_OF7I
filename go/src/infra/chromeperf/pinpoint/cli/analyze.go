@@ -16,8 +16,11 @@ package cli
 
 import (
 	"infra/chromeperf/histograms"
+	"infra/chromeperf/pinpoint/cli/render"
+	"infra/chromeperf/pinpoint/proto"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 
@@ -35,7 +38,20 @@ const (
 	expLabel  expNameKey = "exp"
 )
 
-func loadManifest(m string) (*telemetryExperimentArtifactsManifest, error) {
+func loadManifestFromJob(baseDir string, j *proto.Job) (*telemetryExperimentArtifactsManifest, error) {
+	jobId, err := render.JobID(j)
+	if err != nil {
+		return nil, err
+	}
+	jobDir := path.Join(baseDir, jobId)
+	manifest, err := loadManifestFromPath(path.Join(jobDir, "manifest.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	return manifest, nil
+}
+
+func loadManifestFromPath(m string) (*telemetryExperimentArtifactsManifest, error) {
 	a := &telemetryExperimentArtifactsManifest{}
 	d, err := os.ReadFile(m)
 	if err != nil {
@@ -240,6 +256,9 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 	// we can detect a difference between the base and experiment. For more
 	// explanations on why we're using this instead of the Fisher's method, see
 	// https://en.wikipedia.org/wiki/Harmonic_mean_p-value.
-	r.OverallPValue = stat.HarmonicMean(pvs, nil)
+	r.OverallPValue = math.NaN()
+	if len(pvs) > 0 {
+		r.OverallPValue = stat.HarmonicMean(pvs, nil)
+	}
 	return r, nil
 }

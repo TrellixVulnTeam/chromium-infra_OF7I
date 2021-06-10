@@ -31,6 +31,7 @@ func application(p Param) *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			cmdTelemetryExperiment(p),
+			cmdGenerateBatchSummary(p),
 			cmdListJobs(p),
 			cmdGetJob(p),
 			cmdWaitJob(p),

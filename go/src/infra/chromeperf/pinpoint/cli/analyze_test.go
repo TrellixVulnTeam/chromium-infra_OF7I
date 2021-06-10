@@ -27,7 +27,7 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 	// TODO: add more fine-grained unit tests for processing in-memory data
 	// structures without requiring files
 	Convey("Given a telemetry experiment manifest with known significant differences", t, func() {
-		m, err := loadManifest("testdata/sample-experiment-artifacts/manifest.yaml")
+		m, err := loadManifestFromPath("testdata/sample-experiment-artifacts/manifest.yaml")
 		So(err, ShouldBeNil)
 		Convey("When we analyze the artifacts", func() {
 			rootDir, err := filepath.Abs("testdata/sample-experiment-artifacts")
