@@ -64,7 +64,6 @@
 		<option value="OS-Chrome" [is os_name "ChromeOS"]selected="selected"[end]>ChromeOS</option>
 		<option value="OS-Android" [is os_name "Android"]selected="selected"[end]>Android</option>
 		<option value="OS-iOS" [is os_name "iOS"]selected="selected"[end]>iOS</option>
-		<option value="Cr-ChromeFrame" [is os_name "chromeframe"]selected="selected"[end]>ChromeFrame</option>
 	      </select>
 	      <b>Version:</b>
 	      <input size="20" name="osversion" id="osversion" value="[os_version]"
@@ -86,13 +85,6 @@
 		     aria-label="Platform"><br>
 	      Please open a new tab, visit "chrome://version",
 	      and copy the "Platform" line to here.
-            </td>
-	  </tr>
-	  <tr>
-	    <th>Flash version:</th>
-	    <td>
-	      <input size="30" name="flashversion" id="flashversion" value=""
-		     aria-label="flash version">
             </td>
 	  </tr>
 	</table>
@@ -359,7 +351,6 @@
 
   <div id="debug"></div>
 
-  <script type="text/javascript" src="static/js/flash_detect.js?version=[format "url"][app_version][end]"></script>
   <script type="text/javascript" src="static/js/wizard.js?version=[format "url"][app_version][end]"></script>
 
 

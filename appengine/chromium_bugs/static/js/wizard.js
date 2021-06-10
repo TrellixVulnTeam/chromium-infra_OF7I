@@ -16,14 +16,6 @@ function guessChannel(json_data) {
 }
 
 
-function getFlashVersion() {
-    if (FlashDetect) {
-        var flash_version = FlashDetect.raw;
-        $("flashversion").value = flash_version;
-    }
-}
-
-
 function goStep(step_num, opt_focus_id) {
     window.history.pushState(step_num, "Step " + step_num);
     showStep(step_num, opt_focus_id);
@@ -144,11 +136,9 @@ var originalDescriptionParts = [
     "Is it a problem with a plugin? $PLUGIN $WHICH_PLUGIN",
     "about:sync contents: $ABOUT_SYNC",
     "Did this work before? $WORKED_BEFORE $WHEN_WORKED",
-    "Is it a problem with Flash or HTML5? $FLASH_OR_HTML5",
     "Does this work in other browsers? $WORKS_OTHERS\n $WORKS_WHICH",
     ("Chrome version: $CHROMEVERSION  Channel: $CHANNEL\n" +
-     "OS Version: $OSVERSION\n"  +
-     "Flash Version: $FLASHVERSION"),
+     "OS Version: $OSVERSION\n"),
     "Contents of chrome://gpu: \n$CHROME_GPU",
     "$OTHER_COMMENTS"
     ];
@@ -357,7 +347,6 @@ function checkSubmit() {
     $("submit_button").disabled = (disabled ? "disabled" : "");
 }
 
-getFlashVersion();
 exposePlatformLine();
 window.setInterval(checkSubmit, 700);
 
