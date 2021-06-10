@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"infra/cros/internal/branch"
 	"infra/cros/internal/git"
@@ -46,6 +47,7 @@ type localManifestBrancher struct {
 	projectList          string
 	projects             []string
 	push                 bool
+	workerCount          int
 }
 
 func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
@@ -67,6 +69,7 @@ func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
 					"At least one project is required.")
 			b.Flags.BoolVar(&b.push, "push", false,
 				"Whether or not to push changes to the remote.")
+			b.Flags.IntVar(&b.workerCount, "j", 1, "Number of jobs to run for parallel operations.")
 			return b
 		}}
 }
@@ -120,7 +123,7 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 	}
 	defer client.Close()
 
-	if err := BranchLocalManifests(ctx, client, b.chromeosCheckoutPath, b.projects, b.minMilestone, !b.push); err != nil {
+	if err := b.BranchLocalManifests(ctx, client); err != nil {
 		LogErr(err.Error())
 		return 4
 	}
@@ -207,7 +210,7 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 	}
 
 	if err := manifestutil.PinManifestFromManifest(localManifest, referenceManifest); err != nil {
-		return false, errors.Annotate(err, "failed to pin local_manifest.xml from reference manifest for project %s, branch %s", path, branch).Err()
+		return false, errors.Annotate(err, "%s: failed to pin local_manifest.xml from reference manifest", logPrefix).Err()
 	}
 	hasChanges, err := manifestutil.UpdateManifestElementsInFile(localManifestPath, localManifest)
 	if err != nil {
@@ -262,7 +265,12 @@ type localManifestBranchMetadata struct {
 }
 
 // BranchLocalManifests is responsible for doing the actual work of local manifest branching.
-func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, checkout string, projects []string, minMilestone int, dryRun bool) error {
+func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, dsClient *firestore.Client) error {
+	checkout := b.chromeosCheckoutPath
+	projects := b.projects
+	minMilestone := b.minMilestone
+	dryRun := !b.push
+
 	branches, err := branch.BranchesFromMilestone(checkout, minMilestone)
 	if err != nil {
 		return errors.Annotate(err, "BranchesFromMilestone failure").Err()
@@ -306,7 +314,10 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 		// Read optimization data from Firestore.
 		bm, docExists := readFirestoreData(ctx, dsClient, branch)
 
+		var wg sync.WaitGroup
+		toProcess := make(chan string, len(projects))
 		for _, path := range projects {
+
 			// If the SHA for the reference manifest hasn't changed since the last update, no need to reprocess this
 			// particular project/branch combo.
 			previousSHA, ok := bm.PathToPrevSHA[path]
@@ -316,16 +327,36 @@ func BranchLocalManifests(ctx context.Context, dsClient *firestore.Client, check
 				LogOut("%s, %s: no change in reference manifest since last pin, skipping...", branch, path)
 				continue
 			}
-
-			if didWork, err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
-				LogOut("%s", err.Error())
-				errs = append(errs, err)
-				continue
-			} else if !dryRun && didWork {
-				// Update optimization data.
-				bm.PathToPrevSHA[path] = currentSHA
-			}
+			toProcess <- path
+			wg.Add(1)
 		}
+		close(toProcess)
+
+		optUpdates := &sync.Map{}
+		for i := 1; i <= b.workerCount; i++ {
+			go func(workerId int) {
+				for path := range toProcess {
+					if didWork, err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
+						LogErr("error: %s", err.Error())
+						errs = append(errs, err)
+						wg.Done()
+						continue
+					} else if !dryRun && didWork {
+						// Update optimization data.
+						optUpdates.Store(path, currentSHA)
+					}
+					wg.Done()
+				}
+			}(i)
+		}
+		wg.Wait()
+
+		// Process optimization updates (can't do inline because map is not
+		// thread-safe).
+		optUpdates.Range(func(key, value interface{}) bool {
+			bm.PathToPrevSHA[key.(string)] = value.(string)
+			return true
+		})
 
 		// Write optimization data.
 		if !dryRun {

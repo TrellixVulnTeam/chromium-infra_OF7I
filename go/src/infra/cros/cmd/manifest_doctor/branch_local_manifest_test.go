@@ -30,6 +30,7 @@ const (
   <project name="manifest-internal" path="manifest-internal/" revision="%[1]s" />
   <project name="foo" path="foo/" revision="%[1]s" />
   <project name="bar" path="bar/" revision="%[1]s" />
+  <project name="bar" path="baz/" revision="%[1]s" />
 </manifest>
 `
 
@@ -39,7 +40,8 @@ const (
   <default remote="cros-internal" revision="123"/>
   <remote name="cros-internal" />
 
-  <project name="foo" path="foo/" revision="%s" />
+  <project name="foo" path="foo/" revision="%[1]s" />
+  <project name="bar" path="bar/" revision="%[1]s" />
 </manifest>
 `
 )
@@ -71,6 +73,7 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 				{Path: "manifest-internal/", Name: "manifest-internal"},
 				{Path: "foo/", Name: "foo"},
 				{Path: "bar/", Name: "bar"},
+				{Path: "baz/", Name: "baz"},
 			},
 		},
 	}
@@ -79,8 +82,11 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 	assert.NilError(t, err)
 
 	remoteManifestProject := rh.GetRemoteProject(config.Manifest.Projects[0])
-	fooProject := config.Manifest.Projects[1]
-	remoteFooProject := rh.GetRemoteProject(fooProject)
+	// foo and bar
+	projects := []repo.Project{
+		config.Manifest.Projects[1],
+		config.Manifest.Projects[2],
+	}
 
 	fetchLocation := harness.Manifest().Remotes[0].Fetch
 
@@ -108,14 +114,17 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 		branchSHAs[branch], err = harness.AddFile(remoteManifestProject, branch, referenceManifest)
 		assert.NilError(t, err)
 
-		// Create corresponding branches in project directories.
-		if branch != "main" {
-			assert.NilError(t, harness.CreateRemoteRef(remoteFooProject, branch, ""))
-		}
-		// Create local_manifest.xml files in appropriate branches.
-		if branch != ignoreBranch {
-			_, err = harness.AddFile(remoteFooProject, branch, localManifestFile)
-			assert.NilError(t, err)
+		for _, project := range projects {
+			remoteProject := rh.GetRemoteProject(project)
+			// Create corresponding branches in project directories.
+			if branch != "main" {
+				assert.NilError(t, harness.CreateRemoteRef(remoteProject, branch, ""))
+			}
+			// Create local_manifest.xml files in appropriate branches.
+			if branch != ignoreBranch {
+				_, err = harness.AddFile(remoteProject, branch, localManifestFile)
+				assert.NilError(t, err)
+			}
 		}
 	}
 
@@ -124,7 +133,8 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 		// Set SHA to something out of bounds for our mocked gitiles call to force updates.
 		bm := localManifestBranchMetadata{
 			PathToPrevSHA: map[string]string{
-				fooProject.Path: "-1",
+				projects[0].Path: "-1",
+				projects[1].Path: "-1",
 			},
 		}
 		return bm, true
@@ -136,7 +146,8 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 		}
 		expected := localManifestBranchMetadata{
 			PathToPrevSHA: map[string]string{
-				fooProject.Path: expectedSHA,
+				projects[0].Path: expectedSHA,
+				projects[1].Path: expectedSHA,
 			},
 		}
 		assert.Assert(t, reflect.DeepEqual(expected, bm))
@@ -153,7 +164,14 @@ func TestBranchLocalManifests(t *testing.T) {
 	assert.NilError(t, err)
 
 	ctx := context.Background()
-	assert.NilError(t, BranchLocalManifests(ctx, nil, checkout, []string{"foo/"}, 90, false))
+	b := localManifestBrancher{
+		chromeosCheckoutPath: checkout,
+		projects:             []string{"foo/", "bar/"},
+		minMilestone:         90,
+		push:                 true,
+		workerCount:          2,
+	}
+	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
 	checkBranches := map[string]bool{
@@ -193,6 +211,13 @@ func TestBranchLocalManifestsDryRun(t *testing.T) {
 	assert.NilError(t, err)
 
 	ctx := context.Background()
-	assert.NilError(t, BranchLocalManifests(ctx, nil, checkout, []string{"foo/"}, 90, true))
+	b := localManifestBrancher{
+		chromeosCheckoutPath: checkout,
+		projects:             []string{"foo/"},
+		minMilestone:         90,
+		push:                 false,
+		workerCount:          1,
+	}
+	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
 	assert.NilError(t, r.AssertNoRemoteDiff())
 }
