@@ -50,7 +50,7 @@
       "--with_tags",
       "--delete_unversioned_trees",
       "--revision",
-      "infra@origin/master",
+      "infra@origin/main",
       "--output-json",
       "/path/to/tmp/json"
     ],

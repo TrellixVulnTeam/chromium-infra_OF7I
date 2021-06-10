@@ -11,6 +11,8 @@ DEPS = [
     'depot_tools/gclient',
     'depot_tools/windows_sdk',
     'depot_tools/osx_sdk',
+    'depot_tools/tryserver',
+    'recipe_engine/buildbucket',
     'recipe_engine/context',
     'recipe_engine/file',
     'recipe_engine/path',
@@ -48,9 +50,14 @@ PROPERTIES = {
 def RunSteps(api, platforms, dry_run, rebuild):
   solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
+
+  ref = 'origin/main'
+  if api.tryserver.is_tryserver:
+    ref = api.tryserver.gerrit_change_fetch_ref
+
   with api.context(cwd=solution_path):
     api.gclient.set_config('infra')
-    api.gclient.c.solutions[0].revision = 'origin/master'
+    api.gclient.c.solutions[0].revision = ref
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
@@ -132,4 +139,8 @@ def GenTests(api):
   yield api.test('win-noplatforms',
                  api.platform('win', 64) + api.expect_exception('ValueError'))
 
-  yield api.test('trybot config', api.properties(dry_run=True, rebuild=True))
+  yield api.test(
+      'trybot config',
+      api.properties(dry_run=True, rebuild=True) +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo'))
