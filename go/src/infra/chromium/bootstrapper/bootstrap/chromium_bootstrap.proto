@@ -1,0 +1,29 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// The protos describing the properties controlling the chromium_bootstrap
+// recipe module
+
+syntax = "proto3";
+
+package chromium.bootstrapper.chromium_bootstrap;
+
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
+
+option go_package = "infra/chromium/bootstrapper/bootstrap";
+
+// The input properties consumed by the chromium_bootstrap recipe module
+//
+// These will be set by the bootstrapper binary to communicate information about
+// the bootstrap operation that occurred. This enables the bootstrapped
+// executable to operate in a manner consistent with the bootstrapping process.
+message ChromiumBootstrapModuleProperties {
+
+  // Any commits that were accessed by the bootstrapper binary
+  //
+  // Since the properties should be versioned along with the code, this will
+  // enable the bootstrapped executable to check out the same version of the
+  // code that the properties were retrieved from.
+  repeated buildbucket.v2.GitilesCommit commits = 1;
+}

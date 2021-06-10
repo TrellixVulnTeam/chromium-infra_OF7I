@@ -1,0 +1,90 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// The protos describing the properties controlling the bootstrapper binary
+
+syntax = "proto3";
+
+package chromium.bootstrapper.bootstrap;
+
+option go_package = "infra/chromium/bootstrapper/bootstrap";
+
+// A reference to a gitiles repository that will be accessed as part of the
+// bootstrap process
+message GitilesRepo {
+  // Required, the gitiles host containing the repository
+  string host = 1;
+  // Required, the name of the repo on the host
+  string project = 2;
+}
+
+// A reference to a CIPD package instance that will be accessed as part
+// of the bootstrap process
+message CipdPackage {
+  // Required, the name of the bundle
+  string name = 1;
+  // Required, the version of the bundle
+  string version = 2;
+}
+
+// The input properties consumed by the bootstrapper binary
+message BootstrapProperties {
+  // A project where the builder property files are retrieved from a specified
+  // repository
+  message TopLevelProject {
+    // Required, the gitiles URL of the repository containing the builder
+    // property files
+    GitilesRepo repo = 1;
+
+    // Required, the ref of the repository to find the property files on
+    //
+    // If no gitiles input or gerrit change is present on the buildbucket build
+    // proto, this is the ref that the builder property files will be retrieved
+    // from.
+    //
+    // If a gitiles input or gerrit change is present on the buildbucket build
+    // proto, this ref will be ignored (this allows for the flexibility to run
+    // trunk try builders against canary branches).
+    string ref = 2;
+  }
+
+  // A project where the builder property files are retrieved from a repository
+  // whose revision is determined by the DEPS of another repository
+  message DependencyProject {
+    // Required, the gitiles repo that contains the DEPS file that will
+    // determine the revision of the config repository to retrieve the builder
+    // property files from
+    GitilesRepo top_level_repo = 1;
+    // Required, the ref of the top-level repository to get the DEPS file from
+    //
+    // If no gitiles input or gerrit change is present, this is the ref that the
+    // DEPS file will be checked out from.
+    //
+    // If a gitiles input or gerrit change is present on the buildbucket build
+    // proto, this ref will be ignored (this allows for the flexibility to run
+    // trunk try builders against canary branches).
+    string top_level_ref = 2;
+
+    // Required, the gitiles repo containing the builder property files
+    GitilesRepo config_repo = 3;
+    // Required, the path that the config repository is checked out to
+    string config_repo_path = 4;
+  }
+
+  // Details to find the repo and revision containing the builder property
+  // files, one of the fields MUST be set
+  oneof config_project {
+    TopLevelProject top_level_project = 1;
+    DependencyProject dependency_project = 2;
+  }
+
+  // Required, the path to the properties file, relative to the root of
+  // the config repo
+  string properties_file = 3;
+
+  // Required, the CIPD package containing the recipe to execute
+  CipdPackage recipe_package = 4;
+  // Required, the name of the recipe to execute
+  string recipe = 5;
+}
