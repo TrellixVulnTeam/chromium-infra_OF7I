@@ -29,7 +29,6 @@ export class MrCommentContent extends connectStore(LitElement) {
     this.isDeleted = false;
     this.projectName = '';
     this.author = '';
-    this.overrideMarkdown = false;
     this.prefs = {};
   }
 
@@ -45,7 +44,6 @@ export class MrCommentContent extends connectStore(LitElement) {
       },
       projectName: {type: String},
       author: {type: String},
-      overrideMarkdown: {type: Boolean},
       prefs: {type: Object},
     };
   }
@@ -78,8 +76,8 @@ export class MrCommentContent extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (this._renderMarkdown && shouldRenderMarkdown(
-      {project: this.projectName, author: this.author, override: this.overrideMarkdown})) {
+    if (shouldRenderMarkdown({project: this.projectName, author: this.author,
+          enabled: this._renderMarkdown})) {
       return html`
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         ${unsafeHTML(renderMarkdown(this.content))}
@@ -109,6 +107,10 @@ export class MrCommentContent extends connectStore(LitElement) {
     return html`${templates}`;
   }
 
+  /**
+   * Helper to get state of Markdown rendering.
+   * @return {boolean} Whether to render Markdown.
+   */
   get _renderMarkdown() {
     const {prefs} = this;
     if (!prefs) return true;

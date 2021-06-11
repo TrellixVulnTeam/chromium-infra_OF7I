@@ -7,20 +7,23 @@ describe('shouldRenderMarkdown', () => {
     assert.isFalse(actual);
   });
 
-  it('can be overriden to true', () => {
-    const actual = shouldRenderMarkdown({override: true});
+  it('returns true for enabled projects', () => {
+    const actual = shouldRenderMarkdown({project:'astor',
+      enabledProjects: new Set(['astor'])});
     assert.isTrue(actual);
   });
 
-  it('returns true for enabled projects', () => {
-    const actual = shouldRenderMarkdown({project:'astor', enabledProjects: new Set(['astor'])});
-    assert.isTrue(actual);
-  })
-
   it('returns false for disabled projects', () => {
-    const actual = shouldRenderMarkdown({project:'hazelnut', enabledProjects: new Set(['astor'])});
+    const actual = shouldRenderMarkdown({project:'hazelnut',
+      enabledProjects: new Set(['astor'])});
     assert.isFalse(actual);
-  })
+  });
+
+  it('user pref can disable markdown', () => {
+    const actual = shouldRenderMarkdown({project:'astor',
+      enabledProjects: new Set(['astor']), enabled: false});
+    assert.isFalse(actual);
+  });
 });
 
 describe('renderMarkdown', () => {

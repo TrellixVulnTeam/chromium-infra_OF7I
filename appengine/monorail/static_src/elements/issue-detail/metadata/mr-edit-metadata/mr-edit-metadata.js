@@ -38,7 +38,7 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
 } from 'shared/consts/permissions.js';
 import {fieldDefsWithGroup, fieldDefsWithoutGroup, valuesForField,
   HARDCODED_FIELD_GROUPS} from 'shared/metadata-helpers.js';
-import {renderMarkdown, DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
+import {renderMarkdown, shouldRenderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
 
@@ -183,7 +183,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
           @keyup=${this._processChanges}
           aria-label="Comment"
         ></textarea>
-        ${(this._renderMarkdown & DEFAULT_MD_PROJECTS.has(this.projectName))
+        ${(this._renderMarkdown)
            ? html`
           <div class="markdown-preview preview-height-comment">
             ${unsafeHTML(renderMarkdown(this.getCommentContent()))}
@@ -670,18 +670,30 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.hasRendered = true;
   }
 
+  /**
+   * Getter for checking if the user has Markdown enabled.
+   * @return {boolean} Whether Markdown preview should be rendered or not.
+   */
   get _renderMarkdown() {
+    if (!this.getCommentContent()) {
+      return false;
+    }
     const {prefs} = this;
-    if (!prefs) return true;
-    return prefs.get('render_markdown') !== 'false';
+    const enabled = prefs ? prefs.get('render_markdown') !== 'false' : true;
+    return shouldRenderMarkdown({project: this.projectName, enabled});
   }
 
+  /**
+   * @return {boolean} Whether the "Save changes" button is disabled.
+   */
   get disabled() {
     return !this.isDirty || this.saving;
   }
 
-  // Set isDirty to a property instead of only using a getter to cause
-  // lit-element to re-render when dirty state change.
+  /**
+   * Set isDirty to a property instead of only using a getter to cause
+   * lit-element to re-render when dirty state change.
+   */
   _updateIsDirty() {
     if (!this.hasRendered) return;
 

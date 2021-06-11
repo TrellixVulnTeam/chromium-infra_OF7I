@@ -17,16 +17,16 @@ const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
  * Determines whether content should be rendered as Markdown.
  * @param {string} options.project Project this content belongs to.
  * @param {number} options.author User who authored this content.
- * @param {boolean} options.override Per-issue override to force Markdown.
+ * @param {boolean} options.enabled Per-user setting for enabling Markdown.
  * @return {boolean} Whether this content should be rendered as Markdown.
  */
 export const shouldRenderMarkdown = ({
-  project, author, override = false, enabledProjects = DEFAULT_MD_PROJECTS
+  project, author, enabled = true, enabledProjects = DEFAULT_MD_PROJECTS
 } = {}) => {
   if (author in BLOCKLIST) {
     return false;
-  } else if (override) {
-    return true;
+  } else if (!enabled) {
+    return false;
   } else if (enabledProjects.has(project)) {
     return true;
   }

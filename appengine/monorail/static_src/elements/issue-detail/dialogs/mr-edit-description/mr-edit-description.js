@@ -10,12 +10,12 @@ import {fieldTypes} from 'shared/issue-fields.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
+import * as userV0 from 'reducers/userV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES, MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
 import {commentListToDescriptionList} from 'shared/convertersV0.js';
-import {DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
-import {renderMarkdown} from 'shared/md-helper.js';
+import {renderMarkdown, shouldRenderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 
 
@@ -68,7 +68,6 @@ export class MrEditDescription extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    const markdownEnabled = DEFAULT_MD_PROJECTS.has(this.projectName);
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
@@ -83,7 +82,7 @@ export class MrEditDescription extends connectStore(LitElement) {
           @change=${this._setEditedDescription}
           .value=${this._editedDescription}
         ></textarea>
-        ${markdownEnabled ? html`
+        ${this._renderMarkdown ? html`
           <div class="markdown-preview preview-height-description">
             ${unsafeHTML(renderMarkdown(this._editedDescription))}
           </div>`: ''}
@@ -144,6 +143,7 @@ export class MrEditDescription extends connectStore(LitElement) {
       _title: {type: String},
       _keptAttachmentIds: {type: Object},
       _sendEmail: {type: Boolean},
+      _prefs: {type: Object},
     };
   }
 
@@ -152,8 +152,13 @@ export class MrEditDescription extends connectStore(LitElement) {
     this.commentsByApproval = issueV0.commentsByApprovalName(state);
     this.issueRef = issueV0.viewedIssueRef(state);
     this.projectName = projectV0.viewedProjectName(state);
+    this._prefs = userV0.prefs(state);
   }
 
+  /**
+   * Public function to open the issue description editing dialog.
+   * @param {Event} e
+   */
   async open(e) {
     await this.updateComplete;
     this.shadowRoot.querySelector('chops-dialog').open();
@@ -161,6 +166,9 @@ export class MrEditDescription extends connectStore(LitElement) {
     this.reset();
   }
 
+  /**
+   * Resets edit form.
+   */
   async reset() {
     await this.updateComplete;
     this._attachmentError = '';
@@ -184,11 +192,17 @@ export class MrEditDescription extends connectStore(LitElement) {
     this._sendEmail = true;
   }
 
+  /**
+   * Cancels in-flight edit data.
+   */
   async cancel() {
     await this.updateComplete;
     this.shadowRoot.querySelector('chops-dialog').close();
   }
 
+  /**
+   * Sends the user's edit to Monorail's backend to be saved.
+   */
   async save() {
     const commentContent = this._markupNewContent();
     const sendEmail = this._sendEmail;
@@ -225,11 +239,30 @@ export class MrEditDescription extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Getter for checking if the user has Markdown enabled.
+   * @return {boolean} Whether Markdown preview should be rendered or not.
+   */
+   get _renderMarkdown() {
+    const prefs = this._prefs;
+    const enabled = prefs ? prefs.get('render_markdown') !== 'false' : true;
+    return shouldRenderMarkdown({project: this.projectName, enabled});
+  }
+
+  /**
+   * Event handler for keeping <mr-edit-description>'s copy of
+   * _editedDescription in sync.
+   * @param {Event} e
+   */
   _setEditedDescription(e) {
     const target = e.target;
     this._editedDescription = target.value;
   }
 
+  /**
+   * Event handler for keeping attachment state in sync.
+   * @param {Event} e
+   */
   _keptAttachmentIdsChanged(e) {
     e.target.checked = e.detail.checked;
     const attachmentId = Number.parseInt(e.target.dataset.attachmentId);
@@ -293,6 +326,10 @@ export class MrEditDescription extends connectStore(LitElement) {
     return markedLines.join('\n');
   }
 
+  /**
+   * Event handler for keeping email state in sync.
+   * @param {Event} e
+   */
   _setSendEmail(e) {
     this._sendEmail = e.detail.checked;
   }
