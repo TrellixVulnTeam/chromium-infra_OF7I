@@ -68,17 +68,13 @@ func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env sub
 	ctx = logging.SetContextVerbosity(ctx, c.verbose)
 	client, err := bigquery.NewClient(ctx, c.getBQProject())
 	if err != nil {
-		return errors.Annotate(err, "getting bigquery client").Err()
+		return errors.Annotate(err, "broken-by: getting bigquery client").Err()
 	}
 	it, err := queries.RunBrokenBy(
 		ctx,
 		client,
 		&queries.BrokenByParams{
 			BotID: c.botID,
-			// TODO(gregorynisbet): Replace the placeholder value with a value from the command line.
-			StartTime: 0,
-			// TODO(gregorynisbet): Replace the placeholder value with a value from the command line.
-			EndTime: 0,
 		},
 	)
 	if err != nil {
@@ -91,7 +87,7 @@ func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env sub
 			break
 		}
 		if err != nil {
-			return errors.Annotate(err, "extracting item from result set").Err()
+			return errors.Annotate(err, "broken-by: extracting item from result set").Err()
 		}
 		fmt.Fprintf(a.GetOut(), "%#v\n", item)
 	}
