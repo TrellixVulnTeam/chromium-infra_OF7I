@@ -22,6 +22,7 @@ class OpenCV(Builder):
                arch_map=None,
                only_plat=None,
                skip_plat=None,
+               default=True,
                patch_version=None):
     """Specialized wheel builder for the "OpenCV" package.
 
@@ -49,7 +50,7 @@ class OpenCV(Builder):
             version=version,
             universal=False,
             pyversions=None,
-            default=True,
+            default=default,
             patch_version=patch_version),
         arch_map=arch_map,
         only_plat=only_plat,

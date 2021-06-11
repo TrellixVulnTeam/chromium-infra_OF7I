@@ -19,6 +19,7 @@ class Cryptography(Builder):
                openssl_src,
                packaged=None,
                pyversions=None,
+               default=True,
                patch_version=None,
                **kwargs):
     """Specialized wheel builder for the "cryptography" package.
@@ -46,7 +47,7 @@ class Cryptography(Builder):
             crypt_src.version,
             universal=False,
             pyversions=pyversions,
-            default=True,
+            default=default,
             patch_version=patch_version), **kwargs)
 
   def build_fn(self, system, wheel):

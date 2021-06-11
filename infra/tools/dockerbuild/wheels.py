@@ -364,6 +364,9 @@ SPECS.update({
             },
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             pyversions=['py2'],
+            # This wheel currently doesn't build at HEAD.
+            # TODO(crbug.com/1218659): Get it working again.
+            default=False,
         ),
         SourceOrPrebuilt(
             'numpy',
@@ -1128,7 +1131,12 @@ SPECS.update({
             'opencv_python',
             '2.4.13.2',
             '1.11.3',
-            only_plat=['manylinux-x64']),
+            only_plat=['manylinux-x64'],
+            # This wheel currently doesn't build at HEAD.
+            # TODO(crbug.com/1218659): Get it working again.
+            default=False),
+        # TODO: 'packaged' and 'only_plat' are identical for this wheel, so it
+        # may as well just be a 'Prebuilt'.
         OpenCV(
             'opencv_python',
             '3.2.0.7',
@@ -1160,7 +1168,10 @@ SPECS.update({
             '2.0.3',
             openssl='1.1.0f',
             packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS,
-            skip_plat=['mac-arm64']),
+            skip_plat=['mac-arm64'],
+            # This wheel currently doesn't build at HEAD.
+            # TODO(crbug.com/1218659): Get it working again.
+            default=False),
         CryptographyPyPI(
             'cryptography',
             '2.6.1',
@@ -1170,7 +1181,10 @@ SPECS.update({
                 'mac-arm64', 'mac-x64-cp38', 'mac-arm64-cp38',
                 'linux-arm64-py3', 'windows-x86-py3', 'windows-x64-py3'
             ],
-            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS),
+            packaged=_OLD_CRYPTOGRAPHY_PACKAGED_PLATFORMS,
+            # This wheel currently doesn't build at HEAD.
+            # TODO(crbug.com/1218659): Get it working again.
+            default=False),
         CryptographyPyPI(
             'cryptography',
             '2.9.2',
@@ -1401,6 +1415,9 @@ SPECS.update({
                 ]
             ]),
             only_plat=['mac-x64'],
+            # This wheel currently doesn't build at HEAD.
+            # TODO(crbug.com/1218659): Get it working again.
+            default=False,
         ),
         # List cultivated from "pyobjc-6.2.2"'s "setup.py" as a superset of
         # available packages.

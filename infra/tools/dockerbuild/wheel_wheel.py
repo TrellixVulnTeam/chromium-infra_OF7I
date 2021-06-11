@@ -17,6 +17,7 @@ class SourceOrPrebuilt(Builder):
                name,
                version,
                pyversions=None,
+               default=True,
                patch_version=None,
                **kwargs):
     """General-purpose wheel builder.
@@ -53,7 +54,7 @@ class SourceOrPrebuilt(Builder):
             self._pypi_src.version,
             universal=False,
             pyversions=pyversions,
-            default=True,
+            default=default,
             patch_version=patch_version), **kwargs)
 
   def build_fn(self, system, wheel):
