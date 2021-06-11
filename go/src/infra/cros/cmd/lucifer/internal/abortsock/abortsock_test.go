@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -79,5 +80,28 @@ func TestClosingSocket(t *testing.T) {
 	}
 	if ctx.Err() != context.Canceled {
 		t.Errorf("Not canceled after we closed socket")
+	}
+}
+
+// Test that opening fails if the path is too long.
+func TestOpenSocketPathTooLong(t *testing.T) {
+	t.Parallel()
+	path := strings.Repeat("a", 1+socketPathLimit)
+	abortSock, err := Open(path)
+	if abortSock != nil {
+		t.Errorf("unexpected non-nil abortSock %#v", abortSock)
+	}
+	if err == nil {
+		t.Errorf("expected err to not be nil")
+	}
+}
+
+// Test that aborting a socket fails if the path is too long.
+func TestAbortSocketPathTooLong(t *testing.T) {
+	t.Parallel()
+	path := strings.Repeat("a", 1+socketPathLimit)
+	err := Abort(path)
+	if err == nil {
+		t.Errorf("expected err to not be nil")
 	}
 }
