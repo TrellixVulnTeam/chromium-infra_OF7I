@@ -1471,6 +1471,7 @@ class ServeCodeCoverageData(BaseHandler):
       entities = query.fetch(limit=1)
       report = entities[0]
       revision = report.gitiles_commit.revision
+      ref = report.gitiles_commit.ref
     else:
       report = PostsubmitReport.Get(
           server_host=host,
