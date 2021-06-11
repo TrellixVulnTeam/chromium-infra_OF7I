@@ -13,21 +13,14 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
+
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 )
 
 // BQRow is an alias for the type of a bigquery row.
 // We use a map for a bqRow instead of a []bigquery.Value so that
 // individual records with a result set retain the name of the column.
 type bqRow = []bigquery.Value
-
-// GetRowIterator returns a row iterator from a sql query.
-func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
-	logging.Debugf(ctx, "GetRowIterator %20s\n", strings.ReplaceAll(sql, "\n", "\t"))
-	q := client.Query(sql)
-	it, err := q.Read(ctx)
-	return it, errors.Annotate(err, "get iterator").Err()
-}
 
 // TmplPreamble contains definitions that will be used in SQL templates such as `
 // A literal ` cannot appear in a raw string.
@@ -47,6 +40,14 @@ func templateToString(tmpl *template.Template, input interface{}) (string, error
 		return "", err
 	}
 	return out.String(), nil
+}
+
+// GetRowIterator returns a row iterator from a sql query.
+func getRowIterator(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
+	logging.Debugf(ctx, "GetRowIterator %s\n", strings.ReplaceAll(sql, "\n", "\t"))
+	q := client.Query(sql)
+	it, err := q.Read(ctx)
+	return it, errors.Annotate(err, "get iterator").Err()
 }
 
 // ToBotName adds a crossk- prefix if one does not already exist.

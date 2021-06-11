@@ -8,14 +8,12 @@ package main
 // or analyze their contents.
 
 import (
-	"context"
 	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
-	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cros/cmd/crosgrep/internal/cmds"
 	"infra/cros/karte/site"
@@ -26,9 +24,6 @@ func newApplication() *cli.Application {
 	return &cli.Application{
 		Name:  "crosgrep",
 		Title: "The crosgrep client application",
-		Context: func(ctx context.Context) context.Context {
-			return gologger.StdConfig.Use(ctx)
-		},
 		Commands: []*subcommands.Command{
 			cmds.ListAllTasks,
 			cmds.BrokenBy,

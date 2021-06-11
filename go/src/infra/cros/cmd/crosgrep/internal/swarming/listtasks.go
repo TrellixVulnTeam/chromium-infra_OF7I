@@ -10,8 +10,9 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 	"google.golang.org/api/iterator"
+
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 )
 
 // SwarmingTasksLimit is the limit on the number of swarming tasks that can be retrieved by a single query.
@@ -61,6 +62,7 @@ func getSwarmingTasks(ctx context.Context, client *bigquery.Client, model string
 		panic("client cannot be nil")
 	}
 	sql, err := MakeSwarmingTasksInRangeQuery(0, 0, 0, model)
+	logging.Debugf(ctx, "%s\n", sql)
 	if err != nil {
 		return nil, errors.Annotate(err, "make query").Err()
 	}

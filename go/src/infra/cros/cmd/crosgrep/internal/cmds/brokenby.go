@@ -11,11 +11,10 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/cmd/crosgrep/internal/swarming"
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 )
 
 // BrokenBy is a command that identifies the last successful task to run
@@ -29,19 +28,17 @@ var BrokenBy = &subcommands.Command{
 	CommandRun: func() subcommands.CommandRun {
 		c := &brokenByCmd{}
 		c.Flags.StringVar(&c.bqProject, "bq-project", "", "BigQuery Project for use in queries, falls back to CROSGREP_BQ_PROJECT envvar")
-		c.logLevel = logging.Info
-		c.Flags.Var(&c.logLevel, "log-level", text.Doc(`
-		Log level, valid options are "debug", "info", "warning", "error". Default is "info".
-		`))
+		c.Flags.BoolVar(&c.verbose, "verbose", false, `Set the verbosity of diagnostic messages.`)
 		c.Flags.StringVar(&c.botID, "bot-id", "", "The bot ID to search for.")
 		return c
 	},
 }
 
 // BrokenByCmd is the command that searches for the last successful task to run on a device.
+// TODO(gregorynisbet): Create common subcommand base internal to crosgrep.
 type brokenByCmd struct {
 	subcommands.CommandRunBase
-	logLevel  logging.Level
+	verbose   bool
 	bqProject string
 	botID     string
 }
@@ -67,7 +64,7 @@ func (c *brokenByCmd) Run(a subcommands.Application, args []string, env subcomma
 // InnerRun is the main implementation of the broken-by command.
 func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	logging.SetLevel(ctx, c.logLevel)
+	ctx = logging.SetContextVerbosity(ctx, c.verbose)
 	client, err := bigquery.NewClient(ctx, c.getBQProject())
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
