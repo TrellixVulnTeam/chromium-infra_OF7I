@@ -12,9 +12,10 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/api/iterator"
 
-	"infra/cros/cmd/crosgrep/internal/swarming"
 	"infra/cros/cmd/crosgrep/internal/swarming/logging"
+	"infra/cros/cmd/crosgrep/internal/swarming/queries"
 )
 
 // BrokenBy is a command that identifies the last successful task to run
@@ -69,12 +70,30 @@ func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
-	vals, err := swarming.GetBrokenBy(ctx, client, c.botID, 0, 0)
+	it, err := queries.RunBrokenBy(
+		ctx,
+		client,
+		&queries.BrokenByParams{
+			BotID: c.botID,
+			// TODO(gregorynisbet): Replace the placeholder value with a value from the command line.
+			StartTime: 0,
+			// TODO(gregorynisbet): Replace the placeholder value with a value from the command line.
+			EndTime: 0,
+		},
+	)
 	if err != nil {
-		return errors.Annotate(err, "extracting values from query").Err()
+		return errors.Annotate(err, "get result set").Err()
 	}
-	for _, row := range vals {
-		fmt.Fprintf(a.GetOut(), "%#v\n", row)
+	for {
+		var item map[string]bigquery.Value
+		err := it.Next(&item)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return errors.Annotate(err, "extracting item from result set").Err()
+		}
+		fmt.Fprintf(a.GetOut(), "%#v\n", item)
 	}
 	return nil
 }
