@@ -1,6 +1,6 @@
 # Rubber-Stamper
 
-[go/rubber-stamper-user-guide](go/rubber-stamper-user-guide)
+[go/rubber-stamper-user-guide](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/appengine/rubber-stamper/README.md)
 
 Rubber-Stamper provides a security-sensitive bot which can provide timely
 second-eyes code review by verifying the safety of CLs that it is asked to
