@@ -13,12 +13,8 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// DefaultOffsetFromPresent is the amount of time that we look into the past
-// for a possible task by default.
-// We set it to ten days in seconds.
-const defaultOffsetFromPresent = -10 * 24 * 3600
-
-// BrokenByParams are all the parameters necessary to determine which task broke a DUT when
+// BrokenByParams holds all the parameters necessary to construct a query
+// to determine which task broke a DUT.
 type BrokenByParams struct {
 	BotID     string
 	StartTime int64
@@ -64,11 +60,14 @@ func GetBrokenBy(ctx context.Context, client *bigquery.Client, botID string, ran
 		return nil, errors.New("GetBrokenBy: empty botID")
 	}
 	botID = toBotName(botID)
+	now := time.Now().Unix()
 	if rangeStart == 0 {
-		rangeStart = time.Now().Unix() + defaultOffsetFromPresent
+		// By default, look ten days before the present.
+		rangeStart = now - 10*24*3600
 	}
 	if rangeStop == 0 {
-		rangeStop = time.Now().Unix() + 1
+		// By default, look one second after the present.
+		rangeStop = now + 1
 	}
 	sql, err := templateToString(
 		tmplBrokenBy,

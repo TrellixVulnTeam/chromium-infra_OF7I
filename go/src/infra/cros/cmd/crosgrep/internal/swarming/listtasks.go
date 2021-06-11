@@ -16,7 +16,7 @@ import (
 )
 
 // SwarmingTasksLimit is the limit on the number of swarming tasks that can be retrieved by a single query.
-const swarmingTasksLimit = 10000
+const SwarmingTasksLimit = 10000
 
 // MakeSwarmingTasksInRangeQuery makes a list of all swarming tasks in a particular time range
 // up to a specified limit.
@@ -28,7 +28,7 @@ const swarmingTasksLimit = 10000
 //
 func MakeSwarmingTasksInRangeQuery(limit int, rangeStart int64, rangeStop int64, model string) (string, error) {
 	if limit == 0 {
-		limit = swarmingTasksLimit
+		limit = SwarmingTasksLimit
 	}
 	// Default start time is one hour before the present.
 	if rangeStart == 0 {

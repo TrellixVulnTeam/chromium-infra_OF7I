@@ -34,3 +34,15 @@ func RunSQL(ctx context.Context, client *bigquery.Client, sql string) (*bigquery
 	it, err := query.Read(ctx)
 	return it, err
 }
+
+// MustExpandTick takes a string containing {{$tick}} instead of ` and replaces occurrences of
+// {{$tick}} with `. In the event that the string is malformed as a text/template, MustExpandTick
+// will panic. This function is intended to be used with strings that are compile-time constants.
+func MustExpandTick(body string) string {
+	template := MustMakeTemplate("", "{{$tick := \"`\"}}"+body)
+	out := &bytes.Buffer{}
+	if err := template.Execute(out, nil); err != nil {
+		panic(err.Error())
+	}
+	return out.String()
+}
