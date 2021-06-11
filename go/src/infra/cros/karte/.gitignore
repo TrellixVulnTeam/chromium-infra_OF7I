@@ -1,3 +1,5 @@
 # ignore binary artifacts
+/karte
+/karteserver
 /cmd/karte/karte
 /cmd/karteserver/karteserver
