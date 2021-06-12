@@ -10,12 +10,14 @@ import (
 	"regexp"
 	"strings"
 
+	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/util"
+
+	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	ufspb "infra/unifiedfleet/api/v1/models"
-	"infra/unifiedfleet/app/util"
 )
 
 // Error messages for input validation
@@ -1332,6 +1334,21 @@ func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name
 	}
 	if !IDRegex.MatchString(util.RemovePrefix(name)) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateConfigBundleRequest.
+func (r *UpdateConfigBundleRequest) Validate() error {
+	var cb payload.ConfigBundle
+	if err := proto.Unmarshal(r.ConfigBundle, &cb); err != nil {
+		return err
+	}
+	if cb.GetDesignList()[0].GetProgramId().GetValue() == "" {
+		return status.Errorf(codes.InvalidArgument, "cannot update a ConfigBundle with empty program id")
+	}
+	if cb.GetDesignList()[0].GetId().GetValue() == "" {
+		return status.Errorf(codes.InvalidArgument, "cannot update a ConfigBundle with empty design id")
 	}
 	return nil
 }

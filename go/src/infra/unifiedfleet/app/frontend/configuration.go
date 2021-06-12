@@ -640,5 +640,22 @@ func (fs *FleetServerImpl) UpdateConfigBundle(ctx context.Context, req *ufsAPI.U
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, nil
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	// TODO (b/186663540): Implement field mask for partial updates.
+	// Set allow_missing to true at all times to ensure upsert.
+	if req.AllowMissing == false {
+		logging.Infof(ctx, "UpdateConfigBundle: default to true to ensure upsert of any missing ConfigBundles")
+	}
+	if req.UpdateMask != nil {
+		logging.Infof(ctx, "UpdateConfigBundle: partial updates are not currently supported; the ConfigBundle will be fully updated")
+	}
+	cb, err := controller.UpdateConfigBundle(ctx, req.ConfigBundle, nil, true)
+	if err != nil {
+		return nil, err
+	}
+	return &ufsAPI.UpdateConfigBundleResponse{
+		ConfigBundle: cb,
+	}, err
 }

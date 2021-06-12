@@ -8,12 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
-	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
-	"google.golang.org/genproto/googleapis/rpc/code"
-	"google.golang.org/grpc/status"
-
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
@@ -22,6 +16,18 @@ import (
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
+	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/chromiumos/config/go/api"
+	"go.chromium.org/chromiumos/config/go/payload"
+	. "go.chromium.org/luci/common/testing/assertions"
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
+	"google.golang.org/genproto/googleapis/rpc/code"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 var localPlatforms = []*crimsonconfig.Platform{
@@ -58,6 +64,22 @@ func mockRackLSEPrototype(id string) *ufspb.RackLSEPrototype {
 func mockVlan(id string) *ufspb.Vlan {
 	return &ufspb.Vlan{
 		Name: util.AddPrefix(util.VlanCollection, id),
+	}
+}
+
+func mockConfigBundle(id string, programId string, name string) *payload.ConfigBundle {
+	return &payload.ConfigBundle{
+		DesignList: []*api.Design{
+			{
+				Id: &api.DesignId{
+					Value: id,
+				},
+				ProgramId: &api.ProgramId{
+					Value: programId,
+				},
+				Name: name,
+			},
+		},
 	}
 }
 
@@ -1491,4 +1513,97 @@ func getReturnedPlatformNames(res datastore.OpResults) []string {
 		gets[i] = r.Data.(*ufspb.ChromePlatform).GetName()
 	}
 	return gets
+}
+
+func TestUpdateConfigBundle(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	t.Run("update non-existent ConfigBundle", func(t *testing.T) {
+		cb1 := mockConfigBundle("design1", "program1", "name1")
+		cb1Bytes, err := proto.Marshal(cb1)
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+		want := &ufsAPI.UpdateConfigBundleResponse{
+			ConfigBundle: cb1Bytes,
+		}
+
+		got, err := tf.Fleet.UpdateConfigBundle(tf.C, &ufsAPI.UpdateConfigBundleRequest{
+			ConfigBundle: cb1Bytes,
+			UpdateMask:   nil,
+			AllowMissing: true,
+		})
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("UpdateConfigBundle returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("update existent ConfigBundle", func(t *testing.T) {
+		cb2 := mockConfigBundle("design2", "program2", "name2")
+		cb2Bytes, err := proto.Marshal(cb2)
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+
+		_, _ = tf.Fleet.UpdateConfigBundle(tf.C, &ufsAPI.UpdateConfigBundleRequest{
+			ConfigBundle: cb2Bytes,
+			UpdateMask:   nil,
+			AllowMissing: true,
+		})
+
+		// Update cb2
+		cb2update := mockConfigBundle("design2", "program2", "name2update")
+		cb2updateBytes, err := proto.Marshal(cb2update)
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+		want := &ufsAPI.UpdateConfigBundleResponse{
+			ConfigBundle: cb2updateBytes,
+		}
+
+		got, err := tf.Fleet.UpdateConfigBundle(tf.C, &ufsAPI.UpdateConfigBundleRequest{
+			ConfigBundle: cb2updateBytes,
+			UpdateMask:   nil,
+			AllowMissing: true,
+		})
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("UpdateConfigBundle returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("update existent ConfigBundle", func(t *testing.T) {
+		cb3 := mockConfigBundle("", "", "")
+		cb3Bytes, err := proto.Marshal(cb3)
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+
+		got, err := tf.Fleet.UpdateConfigBundle(tf.C, &ufsAPI.UpdateConfigBundleRequest{
+			ConfigBundle: cb3Bytes,
+			UpdateMask:   nil,
+			AllowMissing: true,
+		})
+		if err == nil {
+			t.Errorf("UpdateConfigBundle succeeded with empty IDs")
+		}
+		if c := status.Code(err); c != codes.InvalidArgument {
+			t.Errorf("Unexpected error when calling GetConfigBundle: %s", err)
+		}
+
+		var respNil *ufsAPI.UpdateConfigBundleResponse = nil
+		if diff := cmp.Diff(respNil, got); diff != "" {
+			t.Errorf("UpdateConfigBundle returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
 }
