@@ -90,6 +90,10 @@ LIMIT 1
 // ensure that we always find the buildbucket task associated with a swarming task.
 const buildBucketSafetyMarginSeconds = 15000
 
+// SwarmingTasksLimit is a reasonable upper limit on the number of
+// swarming tasks returned by a find task query.
+const swarmingTasksLimit = 10000
+
 // TaskQueryParams are all the params necessary to construct a task query
 type TaskQueryParams struct {
 	Model                   string
@@ -110,15 +114,10 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 		params.EndTime = time.Now().Unix() + 1
 	}
 	if params.Limit == 0 {
-		// 10000 is a reasonable limit on the number of swarming tasks.
-		// TODO(gregorynisbet): Replace with constant.
-		params.Limit = 10000
+		params.Limit = swarmingTasksLimit
 	}
 	if params.BuildBucketSafetyMargin == 0 {
-		// 15000 seconds is the default safety margin that we use for buildbucket
-		// tasks.
-		// TODO(gregorynisbet): Replace with constant.
-		params.BuildBucketSafetyMargin = 15000
+		params.BuildBucketSafetyMargin = buildBucketSafetyMarginSeconds
 	}
 	sql, err := query.InstantiateSQLQuery(ctx, brokenByTemplate, params)
 	if err != nil {
