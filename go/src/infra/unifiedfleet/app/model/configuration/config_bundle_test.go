@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func mockConfigBundle(id string, programId string, name string) *payload.ConfigBundle {
@@ -78,6 +79,50 @@ func TestUpdateConfigBundle(t *testing.T) {
 		var cbNil *payload.ConfigBundle = nil
 		if diff := cmp.Diff(cbNil, got); diff != "" {
 			t.Errorf("UpdateConfigBundle returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+}
+
+func TestGetConfigBundle(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	t.Run("get ConfigBundle by existing ID", func(t *testing.T) {
+		want := mockConfigBundle("design1", "program1", "name1")
+		_, err := UpdateConfigBundle(ctx, want)
+		if err != nil {
+			t.Fatalf("UpdateConfigBundle failed: %s", err)
+		}
+
+		got, err := GetConfigBundle(ctx, "program1-design1")
+		if err != nil {
+			t.Fatalf("GetConfigBundle failed: %s", err)
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("GetConfigBundle returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("get ConfigBundle by non-existent ID", func(t *testing.T) {
+		id := "program2-design2"
+		_, err := GetConfigBundle(ctx, id)
+		if err == nil {
+			t.Errorf("GetConfigBundle succeeded with non-existent ID: %s", id)
+		}
+		if c := status.Code(err); c != codes.NotFound {
+			t.Errorf("Unexpected error when calling GetConfigBundle: %s", err)
+		}
+	})
+
+	t.Run("get ConfigBundle by invalid ID", func(t *testing.T) {
+		id := "program3-design3-extraid3"
+		_, err := GetConfigBundle(ctx, id)
+		if err == nil {
+			t.Errorf("GetConfigBundle succeeded with invalid ID: %s", id)
+		}
+		if c := status.Code(err); c != codes.InvalidArgument {
+			t.Errorf("Unexpected error when calling GetConfigBundle: %s", err)
 		}
 	})
 }
