@@ -42,7 +42,7 @@ func (e *ConfigBundleEntity) GetProto() (proto.Message, error) {
 	return p, nil
 }
 
-func generateCBEntityId(cb *payload.ConfigBundle) (string, error) {
+func GenerateCBEntityId(cb *payload.ConfigBundle) (string, error) {
 	if len(cb.GetDesignList()) == 0 {
 		return "", errors.Reason("Empty ConfigBundle DesignList").Err()
 	}
@@ -69,7 +69,7 @@ func newConfigBundleEntity(ctx context.Context, pm proto.Message) (cbEntity ufsd
 	}()
 	p := pm.(*payload.ConfigBundle)
 
-	id, err := generateCBEntityId(p)
+	id, err := GenerateCBEntityId(p)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to generate ConfigBundle entity id: %s", err)
 		return nil, err
