@@ -99,8 +99,8 @@ type TaskQueryParams struct {
 	BuildBucketSafetyMargin int64
 }
 
-// RunTasksQuery takes a bigquery client and parameters and returns a result set.
-func RunTasksQuery(ctx context.Context, client *bigquery.Client, params *TaskQueryParams) (*bigquery.RowIterator, error) {
+// RunTaskQuery takes a bigquery client and parameters and returns a result set.
+func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQueryParams) (*bigquery.RowIterator, error) {
 	// Params.Model may be empty or non-empty. A non-empty model means that all
 	// models are permitted.
 	if params.StartTime == 0 {
