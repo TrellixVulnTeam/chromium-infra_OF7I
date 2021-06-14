@@ -193,6 +193,45 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "performing configuration"
+  },
+  {
+    "cmd": [],
+    "name": "performing configuration.execute config ",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "performing configuration.execute config .offline winpe customization ",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for amd64 in [CACHE]\\WinPEImage",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "powershell",
+      "-Command",
+      "RECIPE_MODULE[infra::windows_scripts_executor]\\resources\\WindowsPowerShell\\Scripts\\Invoke-PowerShell.ps1 -Command 'RECIPE_MODULE[infra::windows_scripts_executor]\\resources\\WindowsPowerShell\\Scripts\\Copy-PE.ps1 -WinPeArch amd64 -Destination [CACHE]\\WinPEImage'"
+    ],
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for amd64 in [CACHE]\\WinPEImage.Exec powershell",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@4@@@",
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

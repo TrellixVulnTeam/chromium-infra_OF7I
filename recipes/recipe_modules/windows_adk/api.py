@@ -48,3 +48,18 @@ class WindowsADKApi(recipe_api.RecipeApi):
     ensure_file.add_package(WIN_ADK_WINPE_PACKAGE, refs)
     cipd_dir = self.m.path['start_dir'].join('cipd', '3pp')
     self.m.cipd.ensure(cipd_dir, ensure_file)
+
+  def execute_config(self, config):
+    """Executes the user config."""
+    with self.m.step.nest('execute config ' + config.name):
+      wpec = config.offline_winpe_customization
+      if wpec:
+        with self.m.step.nest('offline winpe customization ' + wpec.name):
+          for action in wpec.offline_customization:
+            with self.m.step.nest('performing action ' + action.name):
+              self.perform_winpe_action()
+
+  def perform_winpe_action(self):
+    """Executes the scripts to perform the required action."""
+    # TODO(anushruth): Call scripts to perform the action.
+    return

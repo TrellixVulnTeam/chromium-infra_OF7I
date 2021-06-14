@@ -28,13 +28,13 @@
 
 [cmdletbinding()]
 param (
-  [paramter(mandatory)]
+  [Parameter(mandatory)]
   [String]$DiskImage,
 
-  [paramter(mandatory)]
+  [Parameter(mandatory)]
   [String]$SourceFile,
 
-  [paramter(mandatory)]
+  [Parameter(mandatory)]
   [String]$ImageDestinationPath,
 
   [String]$ImageType,
@@ -42,7 +42,8 @@ param (
   [switch]$Force
 )
 
-Import-Module -Name 'WindowsImageManagement' -ErrorAction Stop | Out-Null
+$windows_image_management = "$PSScriptRoot\..\Modules\WindowsImageManagement"
+Import-Module -Name $windows_image_management -ErrorAction Stop | Out-Null
 
 $params = @{
   'DiskImage' = $DiskImage

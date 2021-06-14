@@ -25,7 +25,9 @@ param (
   [String]$Destination
 )
 
-Import-Module -Name 'WindowsImageManagement' -ErrorAction Stop | Out-Null
+$windows_image_management = "$PSScriptRoot\..\Modules\WindowsImageManagement"
+
+Import-Module -Name $windows_image_management -ErrorAction Stop | Out-Null
 
 $params = @{
   'WinPeArch' = $WinPeArch

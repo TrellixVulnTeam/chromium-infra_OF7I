@@ -17,6 +17,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/step',
     'windows_adk',
+    'windows_scripts_executor',
 ]
 
 PROPERTIES = input_pb.Inputs
@@ -33,6 +34,7 @@ def RunSteps(api, inputs):
     api.windows_adk.ensure()
 
   builder_named_cache = api.path['cache'].join('builder')
+  config = None
   with api.step.nest('read user config'):
     # download the configs repo
     api.gclient.set_config('infradata_config')
@@ -44,8 +46,15 @@ def RunSteps(api, inputs):
       # recipe is expected to run on windows ('\')
       cfg_path = builder_named_cache.join('infra-data-config',
                                           *inputs.config_path.split('/'))
-      api.file.read_proto(name='Reading '+inputs.config_path, source=cfg_path,
-                          msg_class=wib.Image, codec='TEXTPB')
+      config = api.file.read_proto(
+          name='Reading ' + inputs.config_path,
+          source=cfg_path,
+          msg_class=wib.Image,
+          codec='TEXTPB')
+
+  with api.step.nest('performing configuration'):
+    api.windows_scripts_executor.execute_wib_config(config)
+
 
 def GenTests(api):
 
