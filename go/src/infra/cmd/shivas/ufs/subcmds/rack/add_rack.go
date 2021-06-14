@@ -110,11 +110,13 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 				return err
 			}
 		} else {
-			if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
+			r := &ufspb.Rack{}
+			if err := utils.ParseJSONFile(c.newSpecsFile, r); err != nil {
 				return err
 			}
-			ufsZone := rackRegistrationReq.GetRack().GetLocation().GetZone()
-			rackRegistrationReq.GetRack().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
+			ufsZone := r.GetLocation().GetZone()
+			r.Realm = ufsUtil.ToUFSRealm(ufsZone.String())
+			rackRegistrationReq.Rack = r
 		}
 	} else {
 		c.parseArgs(&rackRegistrationReq)
