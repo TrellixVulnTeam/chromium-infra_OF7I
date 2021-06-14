@@ -8,7 +8,7 @@ package tlw
 import (
 	"context"
 
-	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 )
 
 // Access represent TLW level to access to the devices and inventory.
@@ -18,30 +18,32 @@ import (
 // 	Hostname: lab1-row1-rack1-device1, lab1-row1-rack1-ap1
 // 	Resource Name: TestDevice256, CustomApV3.0
 type Access interface {
-	// Ping the device related to resource name.
-	Ping(ctx context.Context, resourceName string) error
-	// Execute command on the device related to resource name.
+	// Ping performs ping by resource name.
+	Ping(ctx context.Context, resourceName string, count int) error
+	// Run executes command on device by SSH related to resource name.
 	Run(ctx context.Context, resourceName, command string) *RunResult
-	// Execute command on servo related to resource name.
+	// CallServod executes a command on servod related to resource name.
 	// Commands will be run against servod on servo-host.
-	CallServod(ctx context.Context, resourceName, command string) *tls.CallServoResponse
-	// Copy file to destination device from local.
+	CallServod(ctx context.Context, req *CallServoRequest) *CallServoResponse
+	// CopyFileTo copies file to destination device from local.
 	CopyFileTo(ctx context.Context, req *CopyRequest) error
-	// Copy file from destination device to local.
+	// CopyFileFrom copies file from destination device to local.
 	CopyFileFrom(ctx context.Context, req *CopyRequest) error
-	// Copy directory to destination device from local, recursively.
+	// CopyDirectoryTo copies directory to destination device from local, recursively.
 	CopyDirectoryTo(ctx context.Context, req *CopyRequest) error
-	// Copy directory from destination device to local, recursively.
+	// CopyDirectoryFrom copies directory from destination device to local, recursively.
 	CopyDirectoryFrom(ctx context.Context, req *CopyRequest) error
-	// Manage power supply for requested.
+	// SetPowerSupply manages power supply for requested.
 	SetPowerSupply(ctx context.Context, req *SetPowerSupplyRequest) *SetPowerSupplyResponse
-	// Provide list of resources names related to target unit.
+	// ListResourcesForUnit provides list of resources names related to target unit.
 	// All test and task scheduling against the target unit which can link to 1 or more resources.
 	ListResourcesForUnit(ctx context.Context, unitName string) ([]string, error)
-	// Get DUT info per requested resource name from inventory.
+	// GetDut provides DUT info per requested resource name from inventory.
 	GetDut(ctx context.Context, resourceName string) (*Dut, error)
-	// Update DUT info into inventory.
+	// UpdateDut updates DUT info into inventory.
 	UpdateDut(ctx context.Context, dut *Dut) error
+	// Close closes all used resources.
+	Close() error
 }
 
 // RunResult represents result of executed command.
@@ -104,12 +106,47 @@ const (
 	PowerSupplyResponseStatusError
 )
 
-// SetPowerSupplyResponse represents data to perform state change for power supplier.
+// SetPowerSupplyResponse represents data result from performing state change for power supplier.
 type SetPowerSupplyResponse struct {
 	// New state.
 	Status PowerSupplyResponseStatus
 	// Error details
 	Reason string
+}
+
+// ServodMethod represents types of methods supporting by servod daemon.
+// Examples:
+//   get: to read data need to pass method:`get`, command:`lid_open`.
+//   set: to update state need to pass method:`set`, command:`lid_open`, value:`no`.
+type ServodMethod string
+
+const (
+	// Reading data by servod daemon.
+	// Example: ec_board, lid_open.
+	ServodMethodGet ServodMethod = "get"
+	// Set methods used to set values or call methods with providing paramenter.
+	// Example: power_state:reset, lid_open:no.
+	ServodMethodSet ServodMethod = "set"
+)
+
+// ServodOption represents options to start servod.
+type ServodOptions struct {
+	// Use recovery mode when start servod
+	RecoveryMode bool
+}
+
+// CallServoRequest represents data to run command on servod.
+type CallServoRequest struct {
+	Resource string
+	Method   ServodMethod
+	Args     []*xmlrpc.Value
+	Options  *ServodOptions
+}
+
+// CallServoResponse represents result data from running command on servod.
+type CallServoResponse struct {
+	Value *xmlrpc.Value
+	Fault bool
 }
 
 // DUTSetupType describes different DUT setups.
@@ -215,6 +252,8 @@ type ServoHost struct {
 	Servo *Servo
 	// Port user on the host to run servod daemon. Expected value between 9900 and 9999.
 	ServodPort int
+	// Smart USB-hub is present on setup.
+	SmartUsbhubPresent bool
 }
 
 // ServoState describes the state of setup/communication issue related to servo functionality provided by servo.
