@@ -9,6 +9,7 @@ import {MrEditIssue, allowRemovedRestrictions} from './mr-edit-issue.js';
 import {clientLoggerFake} from 'shared/test/fakes.js';
 
 let element;
+let clock;
 
 describe('mr-edit-issue', () => {
   beforeEach(() => {
@@ -17,11 +18,14 @@ describe('mr-edit-issue', () => {
     sinon.stub(prpcClient, 'call');
 
     element.clientLogger = clientLoggerFake();
+    clock = sinon.useFakeTimers();
   });
 
   afterEach(() => {
     document.body.removeChild(element);
     prpcClient.call.restore();
+
+    clock.restore();
   });
 
   it('initializes', () => {
@@ -198,6 +202,9 @@ describe('mr-edit-issue', () => {
       },
     }));
 
+    // Wait for debouncer.
+    clock.tick(element.presubmitDebounceTimeOut + 1);
+
     sinon.assert.calledWith(prpcClient.call, 'monorail.Issues',
         'PresubmitIssue',
         {issueDelta: {summary: 'Summary'}, issueRef: {}});
@@ -215,6 +222,9 @@ describe('mr-edit-issue', () => {
       },
     }));
 
+    // Wait for debouncer.
+    clock.tick(element.presubmitDebounceTimeOut + 1);
+
     sinon.assert.calledWith(prpcClient.call, 'monorail.Issues',
         'PresubmitIssue',
         {issueDelta: {}, issueRef: {}});
@@ -225,6 +235,32 @@ describe('mr-edit-issue', () => {
     element._presubmitIssue({});
 
     sinon.assert.notCalled(prpcClient.call);
+  });
+
+  it('editing form runs _presubmitIssue debounced', async () => {
+    sinon.stub(element, '_presubmitIssue');
+
+    await element.updateComplete;
+
+    // User makes some changes.
+    const comment = element.querySelector('#commentText');
+    comment.value = 'Value';
+    comment.dispatchEvent(new Event('keyup'));
+
+    clock.tick(5);
+
+    // User makes more changes before debouncer timeout is done.
+    comment.value = 'more changes';
+    comment.dispatchEvent(new Event('keyup'));
+
+    clock.tick(10);
+
+    sinon.assert.notCalled(element._presubmitIssue);
+
+    // Wait for debouncer.
+    clock.tick(element.presubmitDebounceTimeOut + 1);
+
+    sinon.assert.calledOnce(element._presubmitIssue);
   });
 });
 

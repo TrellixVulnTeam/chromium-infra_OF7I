@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html} from 'lit-element';
+import debounce from 'debounce';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
@@ -13,6 +14,8 @@ import './mr-edit-metadata.js';
 import 'shared/typedef.js';
 
 import ClientLogger from 'monitoring/client-logger.js';
+
+const DEBOUNCED_PRESUBMIT_TIME_OUT = 400;
 
 /**
  * `<mr-edit-issue>`
@@ -119,11 +122,24 @@ export class MrEditIssue extends connectStore(LitElement) {
 
     this.clientLogger = new ClientLogger('issues');
     this.updateError = '';
+
+    this.presubmitDebounceTimeOut = DEBOUNCED_PRESUBMIT_TIME_OUT;
   }
 
   /** @override */
   createRenderRoot() {
     return this;
+  }
+
+  /** @override */
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    // Prevent debounced logic from running after the component has been
+    // removed from the UI.
+    if (this._debouncedPresubmit) {
+      this._debouncedPresubmit.clear();
+    }
   }
 
   /** @override */
@@ -272,6 +288,11 @@ export class MrEditIssue extends connectStore(LitElement) {
    * @param {string} commentContent Text the user is inputting for a comment.
    */
   _presubmitIssue(issueDelta, commentContent) {
+    // Don't run this functionality if the element has disconnected. Important
+    // for preventing debounced code from running after an element no longer
+    // exists.
+    if (!this.isConnected) return;
+
     if (Object.keys(issueDelta).length || commentContent) {
       // TODO(crbug.com/monorail/8638): Make filter rules actually process
       // the text for comments on the backend.
@@ -285,7 +306,13 @@ export class MrEditIssue extends connectStore(LitElement) {
    */
   _onChange(evt) {
     const {delta, commentContent} = evt.detail;
-    this._presubmitIssue(delta, commentContent);
+
+    if (!this._debouncedPresubmit) {
+      this._debouncedPresubmit = debounce(
+          (delta, commentContent) => this._presubmitIssue(delta, commentContent),
+          this.presubmitDebounceTimeOut);
+    }
+    this._debouncedPresubmit(delta, commentContent);
   }
 
   /**

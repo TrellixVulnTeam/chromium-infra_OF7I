@@ -4,8 +4,6 @@
 
 import {LitElement, html} from 'lit-element';
 
-import debounce from 'debounce';
-
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/framework/mr-upload/mr-upload.js';
 import 'elements/framework/mr-star/mr-issue-star.js';
@@ -42,8 +40,6 @@ import {renderMarkdown, shouldRenderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
 
-
-const DEBOUNCED_PRESUBMIT_TIME_OUT = 400;
 
 
 /**
@@ -638,7 +634,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
       fieldGroups: {type: Object},
       saving: {type: Boolean},
       isDirty: {type: Boolean},
-      _debouncedProcessChanges: {type: Object},
       prefs: {type: Object},
     };
   }
@@ -654,7 +649,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.fieldGroups = HARDCODED_FIELD_GROUPS;
 
     this._permissions = {};
-    this.presubmitDebounceTimeOut = DEBOUNCED_PRESUBMIT_TIME_OUT;
     this.saving = false;
     this.isDirty = false;
     this.prefs = {};
@@ -784,10 +778,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
   /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
-
-    if (this._debouncedProcessChanges) {
-      this._debouncedProcessChanges.clear();
-    }
 
     store.dispatch(ui.reportDirtyForm(this.formName, false));
   }
@@ -1054,22 +1044,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
       if (NON_EDITING_KEY_EVENTS.has(e.key)) return;
     }
     this._updateIsDirty();
-
-    if (!this._debouncedProcessChanges) {
-      this._debouncedProcessChanges = debounce(() => this._runProcessChanges(),
-          this.presubmitDebounceTimeOut);
-    }
-    this._debouncedProcessChanges();
-  }
-
-  /**
-   * Non-debounced version of _processChanges
-   * @fires CustomEvent#change
-   * @private
-   */
-  _runProcessChanges() {
-    // Don't run this functionality if the element has disconnected.
-    if (!this.isConnected) return;
 
     store.dispatch(ui.reportDirtyForm(this.formName, this.isDirty));
 

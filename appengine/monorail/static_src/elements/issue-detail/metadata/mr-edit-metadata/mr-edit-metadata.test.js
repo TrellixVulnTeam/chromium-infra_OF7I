@@ -13,7 +13,6 @@ import {FIELD_DEF_VALUE_EDIT} from 'reducers/permissions.js';
 import {store, resetState} from 'reducers/base.js';
 
 let element;
-let clock;
 
 describe('mr-edit-metadata', () => {
   beforeEach(() => {
@@ -24,14 +23,11 @@ describe('mr-edit-metadata', () => {
     element.issuePermissions = [ISSUE_EDIT_PERMISSION];
 
     sinon.stub(store, 'dispatch');
-    clock = sinon.useFakeTimers();
   });
 
   afterEach(() => {
     document.body.removeChild(element);
     store.dispatch.restore();
-
-    clock.restore();
   });
 
   it('initializes', () => {
@@ -124,13 +120,13 @@ describe('mr-edit-metadata', () => {
     document.body.appendChild(element);
   });
 
-  it('_runProcessChanges fires change event', async () => {
+  it('_processChanges fires change event', async () => {
     await element.updateComplete;
 
     const changeStub = sinon.stub();
     element.addEventListener('change', changeStub);
 
-    element._runProcessChanges();
+    element._processChanges();
 
     sinon.assert.calledOnce(changeStub);
   });
@@ -165,45 +161,13 @@ describe('mr-edit-metadata', () => {
     comment.value = 'Value';
     comment.dispatchEvent(new Event('keyup'));
 
-    // Wait for debouncer.
-    clock.tick(element.presubmitDebounceTimeOut + 1);
-
     assert.isTrue(element.isDirty);
 
     // User undoes the changes.
     comment.value = '';
     comment.dispatchEvent(new Event('keyup'));
 
-    // Wait for debouncer.
-    clock.tick(element.presubmitDebounceTimeOut + 1);
-
     assert.isFalse(element.isDirty);
-  });
-
-  it('editing form runs _runProcessChanges debounced', async () => {
-    sinon.stub(element, '_runProcessChanges');
-
-    await element.updateComplete;
-
-    // User makes some changes.
-    const comment = element.querySelector('#commentText');
-    comment.value = 'Value';
-    comment.dispatchEvent(new Event('keyup'));
-
-    clock.tick(5);
-
-    // User makes more changes before debouncer timeout is done.
-    comment.value = 'more changes';
-    comment.dispatchEvent(new Event('keyup'));
-
-    clock.tick(10);
-
-    sinon.assert.notCalled(element._runProcessChanges);
-
-    // Wait for debouncer.
-    clock.tick(element.presubmitDebounceTimeOut + 1);
-
-    sinon.assert.calledOnce(element._runProcessChanges);
   });
 
   it('reseting form disables save button', async () => {
