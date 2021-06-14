@@ -52,7 +52,7 @@ export function ReactAutocomplete<T>(
   value = value || (multiple ? [] : '');
   return <Autocomplete
     id={label}
-    autoHighlight
+    autoSelect
     filterOptions={_filterOptions(getOptionDescription)}
     filterSelectedOptions={multiple}
     freeSolo
@@ -87,7 +87,12 @@ function _filterOptions<T>(getOptionDescription: (option: T) => string) {
       return getOptionLabel(option).match(regex) ||
         getOptionDescription(option).match(regex);
     }
-    return options.filter(predicate).slice(0, MAX_AUTOCOMPLETE_OPTIONS);
+    options = options.filter(predicate).slice(0, MAX_AUTOCOMPLETE_OPTIONS);
+    if (!options.includes(inputValue)) {
+      // Include the option the user typed as a value, so they can select it.
+      options.push(inputValue);
+    }
+    return options;
   }
 }
 

@@ -9,6 +9,15 @@ import {fireEvent, render} from '@testing-library/react';
 import {ReactAutocomplete, MAX_AUTOCOMPLETE_OPTIONS}
   from './ReactAutocomplete.tsx';
 
+/**
+ * Cleans autocomplete dropdown from the DOM for the next test.
+ * @param input The autocomplete element to remove the dropdown for.
+ */
+const cleanAutocomplete = (input: ReactAutocomplete) => {
+  fireEvent.change(input, {target: {value: ''}});
+  fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+};
+
 describe('ReactAutocomplete', () => {
   it('renders', async () => {
     const {container} = render(<ReactAutocomplete label="cool" options={[]} />);
@@ -66,7 +75,7 @@ describe('ReactAutocomplete', () => {
 
     const results = document.querySelectorAll('.autocomplete-option');
 
-    assert.equal(results.length, MAX_AUTOCOMPLETE_OPTIONS);
+    assert.equal(results.length, MAX_AUTOCOMPLETE_OPTIONS + 1);
 
     // Clean up autocomplete dropdown from the DOM for the next test.
     fireEvent.change(input, {target: {value: ''}});
@@ -88,7 +97,9 @@ describe('ReactAutocomplete', () => {
     fireEvent.change(input, {target: {value: 'lab'}});
     assert.strictEqual(input?.value, 'lab');
 
+    fireEvent.keyDown(input, {key: 'ArrowDown', code: 'ArrowDown'});
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+
     assert.strictEqual(input?.value, 'option 1 label');
   });
 
@@ -108,6 +119,7 @@ describe('ReactAutocomplete', () => {
     fireEvent.change(input, {target: {value: 'app'}});
     assert.strictEqual(input?.value, 'app');
 
+    fireEvent.keyDown(input, {key: 'ArrowDown', code: 'ArrowDown'});
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
     assert.strictEqual(input?.value, 'lol');
   });
@@ -174,6 +186,50 @@ describe('ReactAutocomplete', () => {
     sinon.assert.calledWith(onChangeStub, sinon.match.any, []);
   });
 
+  it('_renderOption shows user input', async () => {
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={['cute@owl.com']}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    fireEvent.change(input, {target: {value: 'ow'}});
+
+    const options = document.querySelectorAll('.autocomplete-option');
+
+    // Options: cute@owl.com, ow
+    assert.equal(options.length, 2);
+
+    assert.equal(options[1].textContent, 'ow');
+
+    cleanAutocomplete(input);
+  });
+
+  it('_renderOption hides duplicate user input', async () => {
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={['cute@owl.com']}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    fireEvent.change(input, {target: {value: 'cute@owl.com'}});
+
+    const options = document.querySelectorAll('.autocomplete-option');
+
+    // Options: cute@owl.com
+    assert.equal(options.length, 1);
+
+    assert.equal(options[0].textContent, 'cute@owl.com');
+
+    cleanAutocomplete(input);
+  });
+
   it('_renderOption highlights matching text', async () => {
     const {container} = render(<ReactAutocomplete
       label="cool"
@@ -196,9 +252,7 @@ describe('ReactAutocomplete', () => {
     assert.equal(option?.querySelectorAll('span').length, 1);
     assert.equal(option?.querySelectorAll('strong').length, 1);
 
-    // Clean up autocomplete dropdown from the DOM for the next test.
-    fireEvent.change(input, {target: {value: ''}});
-    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    cleanAutocomplete(input);
   });
 
   it('_renderOption highlights matching description', async () => {
@@ -223,9 +277,7 @@ describe('ReactAutocomplete', () => {
     assert.equal(option?.querySelectorAll('span').length, 2);
     assert.equal(option?.querySelectorAll('strong').length, 1);
 
-    // Clean up autocomplete dropdown from the DOM for the next test.
-    fireEvent.change(input, {target: {value: ''}});
-    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    cleanAutocomplete(input);
   });
 
   it('_renderTags disables fixedValues', async () => {
