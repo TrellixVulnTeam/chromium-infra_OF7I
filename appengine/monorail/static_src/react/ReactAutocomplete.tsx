@@ -50,6 +50,7 @@ export function ReactAutocomplete<T>(
   }: AutocompleteProps<T>
 ): React.ReactNode {
   value = value || (multiple ? [] : '');
+
   return <Autocomplete
     id={label}
     autoSelect
@@ -59,6 +60,7 @@ export function ReactAutocomplete<T>(
     getOptionLabel={getOptionLabel}
     multiple={multiple}
     onChange={_onChange(fixedValues, multiple, onChange)}
+    onKeyDown={_onKeyDown}
     options={options}
     renderInput={_renderInput(placeholder)}
     renderOption={_renderOption(getOptionDescription, getOptionLabel)}
@@ -130,6 +132,18 @@ function _onChange<T, Multiple, DisableClearable, FreeSolo>(
 
     // Propagate onChange callback.
     onChange(event, newValue, reason, details);
+  }
+}
+
+/**
+ * Custom keydown handler.
+ * @param e Keyboard event.
+ */
+function _onKeyDown(e: React.KeyboardEvent) {
+  // Convert spaces to Enter events to allow users to type space to create new
+  // chips.
+  if (e.key === ' ') {
+    e.key = 'Enter';
   }
 }
 

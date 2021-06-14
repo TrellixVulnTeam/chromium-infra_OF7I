@@ -163,6 +163,8 @@ describe('ReactAutocomplete', () => {
 
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
     sinon.assert.calledOnce(onChangeStub);
+
+    assert.equal(onChangeStub.getCall(0).args[1], 'foobar');
   });
 
   it('onChange excludes fixed values', async () => {
@@ -184,6 +186,31 @@ describe('ReactAutocomplete', () => {
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 
     sinon.assert.calledWith(onChangeStub, sinon.match.any, []);
+  });
+
+  it('pressing space creates new chips', async () => {
+    const onChangeStub = sinon.stub();
+
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={['cute owl']}
+      multiple={true}
+      onChange={onChangeStub}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    sinon.assert.notCalled(onChangeStub);
+
+    fireEvent.change(input, {target: {value: 'foobar'}});
+    sinon.assert.notCalled(onChangeStub);
+
+    fireEvent.keyDown(input, {key: ' ', code: 'Space'});
+    sinon.assert.calledOnce(onChangeStub);
+
+    assert.deepEqual(onChangeStub.getCall(0).args[1], ['foobar']);
   });
 
   it('_renderOption shows user input', async () => {
