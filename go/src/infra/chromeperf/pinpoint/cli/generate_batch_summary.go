@@ -24,6 +24,7 @@ import (
 	"infra/chromeperf/pinpoint/cli/render"
 	"infra/chromeperf/pinpoint/proto"
 	"io"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,6 +36,8 @@ import (
 )
 
 const gerritBaseUrl = "https://chromium-review.googlesource.com/q/"
+
+var nan = fmt.Sprintf("%f", math.NaN())
 
 type generateBatchSummary struct {
 	baseCommandRun
@@ -264,6 +267,11 @@ func (e *generateBatchSummary) generateABCSV(
 	return nil
 }
 
+// Generates one CSV per benchmark with the following format:
+// (<benchmark name>.csv)
+//    ,          ,      ,     , Metric0   ,           ,     , Metric 1  ,           , ...
+// URL, DeviceCfg, Story, pval, Median (A), Median (B), pval, Median (A), Median (B), ...
+// ...
 func (e *generateBatchSummary) generateBenchmarkCSVs(resultsDir string, p preset, experimentResults map[string][]experimentResult) error {
 	for b, storyResults := range experimentResults {
 		_, found := (*p.BatchSummaryReportSpec)[b]
@@ -303,10 +311,65 @@ func (e *generateBatchSummary) generateBenchmarkCSVs(resultsDir string, p preset
 					line = append(line, fmt.Sprintf("%.5f", report.Measurements[baseLabel].Median))
 					line = append(line, fmt.Sprintf("%.5f", report.Measurements[expLabel].Median))
 				} else {
-					line = append(line, []string{"???", "???", "???"}...)
+					line = append(line, []string{nan, nan, nan}...)
 				}
 			}
 			outcsv.Write(line)
+		}
+		outcsv.Flush()
+	}
+	return nil
+}
+
+func floatsToStrings(floats []float64) []string {
+	var strings []string
+	for _, f := range floats {
+		strings = append(strings, fmt.Sprintf("%f", f))
+	}
+	return strings
+}
+
+// Generates a single CSV with the following format:
+// URL, Benchmark, DeviceCfg, Story, Metric, pval, median (A), median (B), values (A), values (B)
+// ...
+// Raw A and B values are semicolon separated
+func (e *generateBatchSummary) generateRawCSV(resultsDir string, p preset, experimentResults map[string][]experimentResult) error {
+	outfilePath := path.Join(resultsDir, "raw.csv")
+	fmt.Println("Generating report " + outfilePath)
+	outfile, err := os.Create(outfilePath)
+	if err != nil {
+		return err
+	}
+	defer outfile.Close()
+	outcsv := csv.NewWriter(outfile)
+
+	line := []string{"URL", "Benchmark", "Cfg", "Story", "Metric",
+		"pval", "Median (A)", "Median (B)", "Raw (A)", "Raw (B)"}
+	outcsv.Write(line)
+
+	for b, storyResults := range experimentResults {
+		_, found := (*p.BatchSummaryReportSpec)[b]
+		if !found {
+			fmt.Printf("Preset does not define metrics for benchmark " + b)
+			continue
+		}
+		metrics := (*p.BatchSummaryReportSpec)[b].Metrics
+
+		for _, result := range storyResults {
+			for _, m := range *metrics {
+				line = []string{result.URL, b, result.Cfg, result.Story, m.Name}
+				report, found := result.Report.Reports[metricNameKey(m.Name)]
+				if found {
+					line = append(line, fmt.Sprintf("%.6f", report.PValue))
+					line = append(line, fmt.Sprintf("%.5f", report.Measurements[baseLabel].Median))
+					line = append(line, fmt.Sprintf("%.5f", report.Measurements[expLabel].Median))
+					line = append(line, strings.Join(floatsToStrings(report.Measurements[baseLabel].Raw), ";"))
+					line = append(line, strings.Join(floatsToStrings(report.Measurements[expLabel].Raw), ";"))
+				} else {
+					line = append(line, []string{nan, nan, nan, nan, nan}...)
+				}
+				outcsv.Write(line)
+			}
 		}
 		outcsv.Flush()
 	}
@@ -335,6 +398,10 @@ func (e *generateBatchSummary) analyzeArtifactsAndGenerateCSVs(outputDir string,
 		return err
 	}
 	err = e.generateBenchmarkCSVs(resultsDir, p, experimentResults)
+	if err != nil {
+		return err
+	}
+	err = e.generateRawCSV(resultsDir, p, experimentResults)
 	if err != nil {
 		return err
 	}

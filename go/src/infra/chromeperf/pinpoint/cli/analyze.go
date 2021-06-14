@@ -64,14 +64,15 @@ func loadManifestFromPath(m string) (*telemetryExperimentArtifactsManifest, erro
 }
 
 type measurementSummary struct {
-	Min    float64 `yaml:"min"`
-	Median float64 `yaml:"median"`
-	Mean   float64 `yaml:"mean"`
-	Stddev float64 `yaml:"stddev"`
-	Pct90  float64 `yaml:"pct90"`
-	Pct99  float64 `yaml:"pct99"`
-	Max    float64 `yaml:"max"`
-	Count  int     `yaml:"count"`
+	Min    float64   `yaml:"min"`
+	Median float64   `yaml:"median"`
+	Mean   float64   `yaml:"mean"`
+	Stddev float64   `yaml:"stddev"`
+	Pct90  float64   `yaml:"pct90"`
+	Pct99  float64   `yaml:"pct99"`
+	Max    float64   `yaml:"max"`
+	Count  int       `yaml:"count"`
+	Raw    []float64 `yaml:"raw"`
 }
 
 type statTestSummary struct {
@@ -237,6 +238,7 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 				Pct99:  stat.Quantile(0.99, stat.Empirical, h.SampleValues, nil),
 				Max:    maxS,
 				Count:  len(h.SampleValues),
+				Raw:    h.SampleValues,
 			}
 			mr.Measurements[l] = ms
 		}
