@@ -36,8 +36,9 @@ import (
 
 // Where to look for service account JSON creds if not provided via CLI.
 const (
-	defaultServiceAccountPosix = "/creds/service_accounts/service-account-cloudtail.json"
-	defaultServiceAccountWin   = "C:\\creds\\service_accounts\\service-account-cloudtail.json"
+	defaultServiceAccountNewMac = "/opt/creds/service_accounts/service-account-cloudtail.json"
+	defaultServiceAccountPosix  = "/creds/service_accounts/service-account-cloudtail.json"
+	defaultServiceAccountWin    = "C:\\creds\\service_accounts\\service-account-cloudtail.json"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,11 +184,14 @@ func (opts *commonOptions) processFlags(ctx context.Context) (context.Context, s
 // defaultServiceAccountJSON returns path to a default service account
 // credentials file if it exists.
 func defaultServiceAccountJSONPath() string {
-	path := ""
-	if runtime.GOOS == "windows" {
+	path := defaultServiceAccountPosix
+	switch runtime.GOOS {
+	case "windows":
 		path = defaultServiceAccountWin
-	} else {
-		path = defaultServiceAccountPosix
+	case "darwin":
+		if _, err := os.Stat(defaultServiceAccountNewMac); err == nil {
+			path = defaultServiceAccountNewMac
+		}
 	}
 	// Ensure its readable by opening it.
 	f, err := os.Open(path)
