@@ -17,16 +17,18 @@ The following YAML keys are supported:
 
 | Key | Type | Description |
 |-----|------|-------------|
+| `analyze_experiment` | `bool` | Whether to perform statistical analysis on the differences between the base and experimental configurations. |
+| `check_experiment` | `bool` | Whether to return a non-zero command status if we can detect a statistically significant difference between the base and experimental configurations. |
+| `download_artifacts` | `bool` | Whether to download the artifacts of jobs when getting or starting them. |
+| `download_results` | `bool` | Whether to download the results of jobs when getting or starting them. |
 | `endpoint` | `string` | The fully qualified domain name of the gRPC service to connect to. |
+| `open_results` | `bool` | Whether to open the downloaded results with the default web browser. |
+| `presets_file` | `string` | The default file hosting presets. Learn more about presets at [job-presets.md](job-presets.md) |
+| `quiet` | `bool` | Whether to suppress progress output. |
+| `results_dir` | `string` | The default directory where results should be downloaded (overrides the work_dir. |
+| `select_artifacts` | `string` | Which artifacts will be downloaded by default. |
 | `wait` | `bool` | Whether to always wait for scheduled or retrieved jobs to finish. |
 | `work_dir` | `string` | The default directory where files should be downloaded (overrides the default `/tmp` or equivalent directory in non-Unix platforms). |
-| `download_results` | `bool` | Whether to download the results of jobs when getting or starting them. |
-| `open_results` | `bool` | Whether to open the downloaded results with the default web browser. |
-| `results_dir` | `string` | The default directory where results should be downloaded (overrides the work_dir. |
-| `download_artifacts` | `bool` | Whether to download the artifacts of jobs when getting or starting them. |
-| `select_artifacts` | `string` | Which artifacts will be downloaded by default. |
-| `quiet` | `bool` | Whether to suppress progress output. |
-| `presets_file` | `string` | The default file hosting presets. Learn more about presets at [job-presets.md](job-presets.md) |
 
 ## Querying configuration
 
