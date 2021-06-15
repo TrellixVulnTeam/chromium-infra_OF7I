@@ -97,7 +97,6 @@ describe('ReactAutocomplete', () => {
     fireEvent.change(input, {target: {value: 'lab'}});
     assert.strictEqual(input?.value, 'lab');
 
-    fireEvent.keyDown(input, {key: 'ArrowDown', code: 'ArrowDown'});
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 
     assert.strictEqual(input?.value, 'option 1 label');
@@ -119,7 +118,6 @@ describe('ReactAutocomplete', () => {
     fireEvent.change(input, {target: {value: 'app'}});
     assert.strictEqual(input?.value, 'app');
 
-    fireEvent.keyDown(input, {key: 'ArrowDown', code: 'ArrowDown'});
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
     assert.strictEqual(input?.value, 'lol');
   });

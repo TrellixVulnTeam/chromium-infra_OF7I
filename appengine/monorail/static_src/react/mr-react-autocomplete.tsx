@@ -118,7 +118,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
         const component = this._components.get(option);
         return component && component.docstring || '';
       } case 'label': {
-        const label = this._labels.get(option);
+        const label = this._labels.get(option.toLowerCase());
         return label && label.docstring || '';
       } default: {
         return '';

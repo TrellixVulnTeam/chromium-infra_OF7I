@@ -49,7 +49,7 @@ describe('mr-react-autocomplete', () => {
   it('_getOptionDescription with label vocabulary gets docstring', () => {
     element.vocabularyName = 'label';
     element._components = new Map([['Infra>UI', {docstring: 'Test docs'}]]);
-    element._labels = new Map([['M-84', {docstring: 'Test label docs'}]]);
+    element._labels = new Map([['m-84', {docstring: 'Test label docs'}]]);
 
     assert.equal(element._getOptionDescription('Infra>UI'), '');
     assert.equal(element._getOptionDescription('M-84'), 'Test label docs');

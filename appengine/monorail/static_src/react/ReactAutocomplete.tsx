@@ -53,6 +53,7 @@ export function ReactAutocomplete<T>(
 
   return <Autocomplete
     id={label}
+    autoHighlight
     autoSelect
     filterOptions={_filterOptions(getOptionDescription)}
     filterSelectedOptions={multiple}
@@ -212,7 +213,7 @@ function _renderOption<T>(
         {optionTemplate}
       </span>
       {description &&
-        <span style={{display: 'inline-block'}}>
+        <span style={{display: 'inline-block', paddingLeft: '8px'}}>
           {descriptionTemplate}
         </span>
       }
