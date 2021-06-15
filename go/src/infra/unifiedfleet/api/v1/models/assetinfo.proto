@@ -27,6 +27,7 @@ message AssetInfo {
   string phase = 10;
   // User not allowed to update this field. SSW will update this field.
   string hwid = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string gpn = 12;
 }
 
 message AssetInfoRequest {
