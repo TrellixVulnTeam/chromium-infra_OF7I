@@ -51,11 +51,3 @@ func LegacyJobID(jobName string) (string, error) {
 	}
 	return legacyID, nil
 }
-
-func ExtractJobID(id string) (string, error) {
-	li, err := LegacyJobID(LegacyJobName(id))
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimPrefix(li, legacyPrefix), nil
-}

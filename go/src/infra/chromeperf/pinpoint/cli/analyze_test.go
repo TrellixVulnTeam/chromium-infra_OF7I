@@ -14,11 +14,8 @@
 package cli
 
 import (
-	"context"
-	"infra/chromeperf/pinpoint/proto"
 	"math"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -30,10 +27,10 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 	// TODO: add more fine-grained unit tests for processing in-memory data
 	// structures without requiring files
 	Convey("Given a telemetry experiment manifest with known significant differences", t, func() {
-		m, err := loadManifestFromPath("testdata/11ac8128320000/manifest.yaml")
+		m, err := loadManifestFromPath("testdata/sample-experiment-artifacts/manifest.yaml")
 		So(err, ShouldBeNil)
 		Convey("When we analyze the artifacts", func() {
-			rootDir, err := filepath.Abs("testdata/11ac8128320000")
+			rootDir, err := filepath.Abs("testdata/sample-experiment-artifacts")
 			So(err, ShouldBeNil)
 			r, err := analyzeExperiment(m, rootDir)
 			So(err, ShouldBeNil)
@@ -65,31 +62,6 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 				So(nan, ShouldNotEqual, 0)
 				So(withStats, ShouldNotEqual, 0)
 				So(nan+withStats, ShouldEqual, len(r.Reports))
-			})
-		})
-		Convey("When we use the mixin to analyze the artifacts", func() {
-			m := &analyzeExperimentMixin{analyzeExperiment: true}
-			ctx := context.Background()
-			// This is the minimal Job definition that's associated with the
-			// manifest/artifacts in the test data.
-			j := &proto.Job{
-				Name: "jobs/legacy-11ac8128320000",
-				JobSpec: &proto.JobSpec{
-					JobKind: &proto.JobSpec_Experiment{
-						Experiment: &proto.Experiment{},
-					},
-					Arguments: &proto.JobSpec_TelemetryBenchmark{
-						TelemetryBenchmark: &proto.TelemetryBenchmark{},
-					},
-				},
-			}
-			wd, err := filepath.Abs("testdata")
-			So(err, ShouldBeNil)
-			var sw strings.Builder
-			err = m.doAnalyzeExperiment(ctx, &sw, wd, j)
-			So(err, ShouldBeNil)
-			Convey("Then we find the overall p-value", func() {
-				So(sw.String(), ShouldContainSubstring, "overall-p-value")
 			})
 		})
 	})

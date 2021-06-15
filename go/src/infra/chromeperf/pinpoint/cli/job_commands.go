@@ -38,7 +38,6 @@ func waitAndDownloadJob(br *baseCommandRun,
 	wj waitForJobMixin,
 	drm downloadResultsMixin,
 	dam downloadArtifactsMixin,
-	aem analyzeExperimentMixin,
 	ctx context.Context,
 	o io.Writer,
 	c proto.PinpointClient,
@@ -57,9 +56,6 @@ func waitAndDownloadJob(br *baseCommandRun,
 	if err := dam.doDownloadArtifacts(ctx, os.Stdout, httpClient, br.workDir, j); err != nil {
 		return err
 	}
-	if err := aem.doAnalyzeExperiment(ctx, os.Stdout, br.workDir, j); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -67,7 +63,6 @@ func waitAndDownloadJobList(br *baseCommandRun,
 	wj waitForJobMixin,
 	drm downloadResultsMixin,
 	dam downloadArtifactsMixin,
-	aem analyzeExperimentMixin,
 	ctx context.Context,
 	o io.Writer,
 	c proto.PinpointClient,
@@ -76,7 +71,7 @@ func waitAndDownloadJobList(br *baseCommandRun,
 		for _, job := range jobs {
 			job := job
 			workC <- func() error {
-				return waitAndDownloadJob(br, wj, drm, dam, aem, ctx, o, c, job)
+				return waitAndDownloadJob(br, wj, drm, dam, ctx, o, c, job)
 			}
 		}
 	})
@@ -139,7 +134,6 @@ type getJob struct {
 	waitForJobMixin
 	downloadResultsMixin
 	downloadArtifactsMixin
-	analyzeExperimentMixin
 	name string
 }
 
@@ -161,7 +155,6 @@ func (gj *getJob) RegisterFlags(p Param) {
 	uc := gj.baseCommandRun.RegisterFlags(p)
 	gj.downloadResultsMixin.RegisterFlags(&gj.Flags, uc)
 	gj.downloadArtifactsMixin.RegisterFlags(&gj.Flags, uc)
-	gj.analyzeExperimentMixin.RegisterFlags(&gj.Flags, uc)
 
 	gj.Flags.StringVar(&gj.name, "name", "", text.Doc(`
 		Required; the name of the job to get information about.
@@ -188,15 +181,14 @@ func (gj *getJob) Run(ctx context.Context, a subcommands.Application, args []str
 	fmt.Println(out)
 
 	return waitAndDownloadJobList(&gj.baseCommandRun,
-		gj.waitForJobMixin, gj.downloadResultsMixin, gj.downloadArtifactsMixin,
-		gj.analyzeExperimentMixin, ctx, a.GetOut(), c, []*proto.Job{j})
+		gj.waitForJobMixin, gj.downloadResultsMixin,
+		gj.downloadArtifactsMixin, ctx, a.GetOut(), c, []*proto.Job{j})
 }
 
 type waitJob struct {
 	baseCommandRun
 	downloadResultsMixin
 	downloadArtifactsMixin
-	analyzeExperimentMixin
 	quiet bool
 	name  string
 }
@@ -222,7 +214,6 @@ func (wj *waitJob) RegisterFlags(p Param) {
 	uc := wj.baseCommandRun.RegisterFlags(p)
 	wj.downloadResultsMixin.RegisterFlags(&wj.Flags, uc)
 	wj.downloadArtifactsMixin.RegisterFlags(&wj.Flags, uc)
-	wj.analyzeExperimentMixin.RegisterFlags(&wj.Flags, uc)
 	wj.Flags.StringVar(&wj.name, "name", "", text.Doc(`
 		Required; the name of the job to poll.
 		Example: "-name=XXXXXXXXXXXXXX"
@@ -255,8 +246,7 @@ func (wj *waitJob) Run(ctx context.Context, a subcommands.Application, args []st
 	}
 	return waitAndDownloadJobList(&wj.baseCommandRun,
 		w, wj.downloadResultsMixin,
-		wj.downloadArtifactsMixin,
-		wj.analyzeExperimentMixin, ctx, a.GetOut(), c, []*proto.Job{j})
+		wj.downloadArtifactsMixin, ctx, a.GetOut(), c, []*proto.Job{j})
 }
 
 type cancelJob struct {

@@ -344,7 +344,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 
 	err = waitAndDownloadJobList(&e.baseCommandRun,
 		e.waitForJobMixin, e.downloadResultsMixin,
-		e.downloadArtifactsMixin, e.analyzeExperimentMixin, ctx, a.GetOut(), c, jobs)
+		e.downloadArtifactsMixin, ctx, a.GetOut(), c, jobs)
 	if err != nil {
 		return errors.Annotate(err, "Failed to wait and download jobs: ").Err()
 	}
