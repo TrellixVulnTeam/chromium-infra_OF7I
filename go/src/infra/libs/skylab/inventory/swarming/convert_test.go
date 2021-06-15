@@ -47,7 +47,118 @@ peripherals: {
   stylus: true
   servo: true
   servo_state: 1
+  servo_topology: {
+	main: {
+		type: "servo_v4"
+	}
+	children: {
+		type: "ccd_cr50"
+	}
+  }
   servo_type: ""
+  servo_usb_state: 3
+  smart_usbhub: false
+  mimo: true
+  huddly: true
+  conductive: true
+  chameleon_type: 3
+  chameleon_type: 5
+  chameleon: true
+  camerabox: true
+  camerabox_facing: 1
+  camerabox_light: 1
+  audio_loopback_dongle: true
+  audio_cable: true
+  audio_box: true
+  audio_board: true
+  router_802_11ax: true
+  working_bluetooth_btpeer: 3
+}
+os_type: 2
+model: "modelval"
+sku: "skuval"
+hwid_sku: "eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB"
+brand: "HOMH"
+ec_type: 1
+cr50_ro_keyid: "a"
+cr50_ro_version: "11.12.13"
+cr50_rw_keyid: "b"
+cr50_rw_version: "21.22.23"
+cr50_phase: 2
+cts_cpu: 1
+cts_cpu: 2
+cts_abi: 1
+cts_abi: 2
+critical_pools: 1
+critical_pools: 2
+capabilities {
+  webcam: true
+  video_acceleration: 6
+  video_acceleration: 8
+  touchpad: true
+  touchscreen: true
+  telephony: "telephonyval"
+  storage: "storageval"
+  power: "powerval"
+  modem: "modemval"
+  lucidsleep: true
+  hotwording: true
+  internal_display: true
+  graphics: "graphicsval"
+  gpu_family: "gpufamilyval"
+  flashrom: true
+  fingerprint: true
+  detachablebase: true
+  carrier: 2
+  bluetooth: true
+  atrus: true
+}
+board: "boardval"
+arc: true
+licenses: {
+  type: 2
+  identifier: ""
+}
+licenses: {
+  type: 1
+  identifier: ""
+}
+`
+
+// revertedFullTextProto does not contain servo_topology as we only use it to
+// derive servo component. We are not exposing servo topology at the moment
+// so we are omitting the reverters for servo topology and component.
+const revertedFullTextProto = `
+variant: "somevariant"
+test_coverage_hints {
+  usb_detect: true
+  use_lid: true
+  test_usbprinting: true
+  test_usbaudio: true
+  test_hdmiaudio: true
+  test_audiojack: true
+  recovery_test: true
+  meet_app: true
+  hangout_app: true
+  chromesign: true
+  chaos_nightly: true
+  chaos_dut: true
+}
+self_serve_pools: "poolval"
+reference_design: "reef"
+wifi_chip: "wireless_xxxx"
+hwid_component: [
+	"cellular/fake_cellular"
+]
+platform: "platformval"
+phase: 8
+peripherals: {
+  wificell: true
+  stylus: true
+  servo: true
+  servo_state: 1
+  servo_type: ""
+  servo_usb_state: 3
   smart_usbhub: false
   mimo: true
   huddly: true
@@ -169,6 +280,8 @@ var fullDimensions = Dimensions{
 	"label-touchscreen":      {"True"},
 	"label-servo":            {"True"},
 	"label-servo_state":      {"WORKING"},
+	"label-servo_component":  {"servo_v4", "ccd_cr50"},
+	"label-servo_usb_state":  {"NEED_REPLACEMENT"},
 	"label-sku":              {"skuval"},
 	"label-brand":            {"HOMH"},
 	"label-router_802_11ax":  {"True"},
@@ -304,7 +417,7 @@ func TestRevertServoStateInCaseEffect(t *testing.T) {
 func TestRevertFull(t *testing.T) {
 	t.Parallel()
 	var want inventory.SchedulableLabels
-	if err := proto.UnmarshalText(fullTextProto, &want); err != nil {
+	if err := proto.UnmarshalText(revertedFullTextProto, &want); err != nil {
 		t.Fatalf("Error unmarshalling example text: %s", err)
 	}
 	got := Revert(cloneDimensions(fullDimensions))

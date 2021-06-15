@@ -101,6 +101,16 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
+	// No reverter needed for these as these are extracted as part of Servo Topology.
+	if servoTopology := p.GetServoTopology(); servoTopology != nil {
+		if servoTopologyMain := servoTopology.GetMain(); servoTopologyMain != nil {
+			labels = append(labels, fmt.Sprintf("servo_component:%s", servoTopologyMain.GetType()))
+		}
+		for _, v := range servoTopology.GetChildren() {
+			labels = append(labels, fmt.Sprintf("servo_component:%s", v.GetType()))
+		}
+	}
+
 	if rpmState := p.GetRpmState(); rpmState != inventory.PeripheralState_UNKNOWN {
 		if labRpmState, ok := lab.PeripheralState_name[int32(rpmState)]; ok {
 			lv := "rpm_state:" + labRpmState

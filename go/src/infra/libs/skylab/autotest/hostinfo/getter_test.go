@@ -47,6 +47,8 @@ const fullResponse = `{
 		"servo_state:WORKING",
 		"servo_type:servo_v4_with_ccd_cr50",
 		"servo_topology:eyJtYWluIjp7InR5cGUiOiJzZXJ2b192NCIsInN5c2ZzX3Byb2R1Y3QiOiJTZXJ2byBWNCIsInNlcmlhbCI6IkZBS0UtU0VSVk8tU0VSSUFMIiwidXNiX2h1Yl9wb3J0IjoiRkFLRS1TRVJWTy1VU0ItSFVCLVBPUlQifSwiY2hpbGRyZW4iOlt7InR5cGUiOiJjY2RfY3I1MCIsInN5c2ZzX3Byb2R1Y3QiOiJDcjUwIiwic2VyaWFsIjoiRkFLRS1UT1BPTE9HWS1JVEVNIiwidXNiX2h1Yl9wb3J0IjoiRkFLRS1VU0ItSFVCLVBPUlQifV19",
+		"servo_component:servo_v4",
+		"servo_component:ccd_cr50",
 		"servo_usb_state:NORMAL",
 		"storage_state:NORMAL",
 		"pool:faft-test"
