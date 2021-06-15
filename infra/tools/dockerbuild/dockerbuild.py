@@ -11,6 +11,7 @@ with warnings.catch_warnings():
 
 import argparse
 import distutils.version
+import json
 import os
 import re
 import sys
@@ -235,6 +236,16 @@ def _main_wheel_dump(args, system):
     args.output.close()
 
 
+def _main_wheel_json(_, system):
+  all_wheels = []
+  for build in wheels.SPECS.itervalues():
+    for plat in build_platform.ALL.itervalues():
+      if build.supported(plat):
+        all_wheels.append(build.wheel(system, plat)._asdict())
+
+  json.dump(all_wheels, sys.stdout)
+
+
 def _main_run(args, system):
   plat = build_platform.ALL[args.platform]
   builder = dockcross.Builder(system)
@@ -355,6 +366,11 @@ def add_argparse_options(parser):
       type=argparse.FileType('w'), default=markdown.DEFAULT_PATH,
       help='Path to write the markdown file.')
   subparser.set_defaults(func=_main_wheel_dump)
+
+  # Subcommand: wheel-json
+  subparser = subparsers.add_parser(
+      'wheel-json', help='Dumps a JSON file detailing the generated wheels')
+  subparser.set_defaults(func=_main_wheel_json)
 
   # Subcommand: run
   subparser = subparsers.add_parser('run',
