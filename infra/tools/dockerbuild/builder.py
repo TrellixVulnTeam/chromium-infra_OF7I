@@ -298,20 +298,28 @@ def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
       '39': 'version:2@3.9.5.chromium.19',
   }
 
-  pkg_dir = os.path.join(
-      base_dir, 'cipd_python%s_%s_install' % (wheel.pyversion, cipd_platform))
-  system.cipd.init(pkg_dir)
+  package_ident = 'py_%s_%s' % (wheel.pyversion, cipd_platform)
+  common_dir = os.path.join(system.root, 'cipd_python', package_ident)
 
-  cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % ('3' if wheel.pyversion[0] == '3'
-                                               else '', cipd_platform)
-  version = PY_CIPD_VERSION_MAP[wheel.pyversion]
+  if not os.path.exists(common_dir):
+    os.makedirs(common_dir)
+    system.cipd.init(common_dir)
 
-  # Note that this will use the common CIPD instance cache in .dockerbuild, so
-  # it will only download CPython once per run. It does however need to
-  # extract the package, which takes a second or two. It could be worth
-  # extracting to a common location and copying or symlinking into the temporary
-  # workdir to save some time.
-  system.cipd.install(cipd_pkg, version, pkg_dir)
+    cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % (
+        '3' if wheel.pyversion[0] == '3' else '', cipd_platform)
+    version = PY_CIPD_VERSION_MAP[wheel.pyversion]
+    system.cipd.install(cipd_pkg, version, common_dir)
+
+  # For docker builds, we need the Python interpreter in the base working dir
+  # for this particular build. Ideally we'd just mount the cipd_python directory
+  # and avoid this copy, but that would require a lot of plumbing. We'll live
+  # with it for now.
+  if wheel.plat.dockcross_base:
+    pkg_dir = os.path.join(
+        base_dir, 'cipd_python_%s_%s' % (wheel.pyversion, cipd_platform))
+    shutil.copytree(common_dir, pkg_dir)
+  else:
+    pkg_dir = common_dir
 
   interpreter = os.path.join(pkg_dir, 'bin', 'python')
   if wheel.pyversion[0] == '3':
