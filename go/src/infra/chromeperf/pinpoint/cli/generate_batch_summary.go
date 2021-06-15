@@ -28,6 +28,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -129,8 +130,11 @@ func (e *generateBatchSummary) waitAndDownloadJobArtifacts(ctx context.Context, 
 		downloadArtifacts: true,
 		selectArtifacts:   "test",
 	}
+	ae := analyzeExperimentMixin{
+		analyzeExperiment: false,
+	}
 	return waitAndDownloadJobList(&e.baseCommandRun,
-		w, dr, da, ctx, o, c, jobs)
+		w, dr, da, ae, ctx, o, c, jobs)
 }
 
 // Returns baseChangeConfig, expChangeConfig, error
@@ -151,7 +155,7 @@ func loadOutput(config *changeConfig, rootDir string) (*output.Output, error) {
 			continue
 		}
 		for _, f := range a.Files {
-			dir := filepath.Join(rootDir, f.Path)
+			dir := filepath.Join(rootDir, filepath.FromSlash(f.Path))
 			if err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 				if d.IsDir() {
 					return nil
@@ -347,7 +351,15 @@ func (e *generateBatchSummary) generateRawCSV(resultsDir string, p preset, exper
 		"pval", "Median (A)", "Median (B)", "Raw (A)", "Raw (B)"}
 	outcsv.Write(line)
 
-	for b, storyResults := range experimentResults {
+	benchmarkKeys := []string{}
+	for b := range experimentResults {
+		benchmarkKeys = append(benchmarkKeys, b)
+	}
+	sort.Strings(benchmarkKeys)
+
+	for _, b := range benchmarkKeys {
+		storyResults := experimentResults[b]
+
 		_, found := (*p.BatchSummaryReportSpec)[b]
 		if !found {
 			fmt.Printf("Preset does not define metrics for benchmark " + b)

@@ -29,30 +29,34 @@ import (
 // userConfig defines a type that represents some user-configured defaults for
 // flags that are common to the Pinpoint CLI.
 type userConfig struct {
+	AnalyzeExperiment bool   `yaml:"analyze_experiment,omitempty"`
+	CheckExperiment   bool   `yaml:"check_experiment,omitempty"`
+	DownloadArtifacts bool   `yaml:"download_artifacts,omitempty"`
+	DownloadResults   bool   `yaml:"download_results,omitempty"`
 	Endpoint          string `yaml:"endpoint,omitempty"`
+	OpenResults       bool   `yaml:"open_results,omitempty"`
+	PresetsFile       string `yaml:"presets_file,omitempty"`
+	Quiet             bool   `yaml:"quiet,omitempty"`
+	ResultsDir        string `yaml:"results_dir,omitempty"`
+	SelectArtifacts   string `yaml:"select_artifacts,omitempty"`
 	Wait              bool   `yaml:"wait,omitempty"`
 	WorkDir           string `yaml:"work_dir,omitempty"`
-	DownloadResults   bool   `yaml:"download_results,omitempty"`
-	OpenResults       bool   `yaml:"open_results,omitempty"`
-	ResultsDir        string `yaml:"results_dir,omitempty"`
-	DownloadArtifacts bool   `yaml:"download_artifacts,omitempty"`
-	SelectArtifacts   string `yaml:"select_artifacts,omitempty"`
-	Quiet             bool   `yaml:"quiet,omitempty"`
-	PresetsFile       string `yaml:"presets_file,omitempty"`
 }
 
 func getUserConfig(ctx context.Context, cfgFile string, p Param) userConfig {
 	uc := userConfig{
+		AnalyzeExperiment: false,
+		CheckExperiment:   false,
+		DownloadArtifacts: false,
+		DownloadResults:   false,
 		Endpoint:          p.DefaultServiceDomain,
+		OpenResults:       false,
+		PresetsFile:       ".pinpoint-presets.yaml",
+		Quiet:             false,
+		ResultsDir:        os.TempDir(),
+		SelectArtifacts:   "test",
 		Wait:              false,
 		WorkDir:           os.TempDir(),
-		DownloadResults:   false,
-		OpenResults:       false,
-		ResultsDir:        os.TempDir(),
-		DownloadArtifacts: false,
-		SelectArtifacts:   "test",
-		Quiet:             false,
-		PresetsFile:       ".pinpoint-presets.yaml",
 	}
 	if len(cfgFile) == 0 {
 		return uc
@@ -112,6 +116,8 @@ func (cr *configRun) RegisterFlags(p Param) {
 const cfgTempl = `Pinpoint CLI Configuration
 (source: {{.Source}})
 {{with .Cfg}}
+--analyze-experiment={{.AnalyzeExperiment}}
+--check-experiment={{.CheckExperiment}}
 --download-artifacts={{.DownloadArtifacts}}
 --download-results={{.DownloadResults}}
 --endpoint={{.Endpoint}}
@@ -173,37 +179,9 @@ func cmdConfig(p Param) *subcommands.Command {
 
 			SUPPORTED OPTIONS
 
-			The tool supports the following user default configuration options:
-
-			- endpoint: The gRPC endpoint to use, instead of the hard-coded
-			default.
-
-			- wait: Controls whether to always wait for scheduled jobs to
-			complete or when getting the state of a job.
-
-			- work_dir: Overrides the default temporary directory used for
-			downloading files.
-
-			- download_results: Controls whether to always download results
-			when getting the state of a job.
-
-			- open_results: Controls whether to attempt to open downloaded
-			results with a browser.
-
-			- results_dir: Overrides the default temporary directory when
-			downloading results.
-
-			- download_artifacts: Controls whether to always download artifacts
-			when getting the state of a job.
-
-			- select_artifacts: Controls which artifacts will be downloaded by
-			default.
-
-			- quiet: When true sets the -quiet flag to default to true for
-			commands that support this option.
-
-			- preset_file: Sets the default location for presets to use when
-			scheduling Pinpoint jobs.
+			See
+			https://source.chromium.org/chromium/infra/infra/+/main:go/src/infra/chromeperf/doc/pinpoint/cli/user-configs.md
+			for more information.
 		`, filepath.Join(cfgDir, "pinpoint", "config.yaml"))),
 		CommandRun: wrapCommand(p, func() pinpointCommand {
 			return &configRun{params: p}
