@@ -304,6 +304,17 @@ SPECS.update({
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
+            'grpcio',
+            '1.34.1',
+            skip_plat=[
+                'manylinux-x64-py3.9',
+                'linux-arm64-py3',
+                # grpcio does not yet support Mac ARM64, but work is underway.
+                # See https://github.com/grpc/grpc/issues/24002
+                'mac-arm64-cp38',
+            ],
+            pyversions=['py3']),
+        SourceOrPrebuilt(
             'grpcio-tools',
             '1.32.0',
             skip_plat=[
@@ -638,6 +649,11 @@ SPECS.update({
             ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
         ),
         Prebuilt(
+            'h5py',
+            '3.1.0',
+            ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
+        ),
+        Prebuilt(
             'lxml',
             '4.2.5',
             ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
@@ -679,8 +695,10 @@ SPECS.update({
         Prebuilt(
             'pillow',
             '8.2.0',
-            ['manylinux-x64-py3', 'manylinux-x64-py3.9',
-             'mac-x64-cp38', 'windows-x64-py3'],
+            [
+                'manylinux-x64-py3', 'manylinux-x64-py3.9', 'mac-x64-cp38',
+                'windows-x64-py3'
+            ],
         ),
         Prebuilt('pynacl', '1.2.1', ['manylinux-x64', 'mac-x64']),
         Prebuilt(
@@ -724,13 +742,21 @@ SPECS.update({
         Prebuilt(
             'scipy',
             '1.6.2',
-            ['manylinux-x64-py3', 'manylinux-x64-py3.9',
-             'mac-x64-cp38', 'windows-x64-py3'],
+            [
+                'manylinux-x64-py3', 'manylinux-x64-py3.9', 'mac-x64-cp38',
+                'windows-x64-py3'
+            ],
             pyversions=['py3'],
         ),
         Prebuilt(
             'tensorflow',
             '2.4.1',
+            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            pyversions=['py3'],
+        ),
+        Prebuilt(
+            'tensorflow',
+            '2.5.0',
             ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
@@ -906,6 +932,7 @@ SPECS.update({
         Universal('futures', '3.1.1', pyversions=['py2']),
         Universal('futures', '3.1.1', pyversions=['py3']),
         Universal('gast', '0.3.3'),
+        Universal('gast', '0.4.0', pyversions=['py3']),
         Universal('gin-config', '0.4.0'),
         Universal('gitdb2', '2.0.3'),
         Universal('google-api-core', '0.1.1'),
@@ -1087,6 +1114,7 @@ SPECS.update({
         Universal('tensorboard-data-server', '0.6.0', pyversions=['py3']),
         Universal('tensorboard-plugin-wit', '1.8.0', pyversions=['py3']),
         Universal('tensorflow-estimator', '2.4.0'),
+        Universal('tensorflow-estimator', '2.5.0'),
         Universal('tensorflow-probability', '0.12.2'),
         Universal('tf-agents', '0.7.1', pyversions=['py3']),
         Universal('toml', '0.10.1', pyversions=['py3']),

@@ -1810,6 +1810,18 @@ wheel: <
 
 * *universal*
 
+### 0.4.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/gast-py2_py3"
+  version: "version:0.4.0"
+>
+```
+
+
+* *universal*
+
 ## **gevent**
 
 ### 1.4.0
@@ -2566,6 +2578,21 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+### 1.34.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpcio/${vpython_platform}"
+  version: "version:1.34.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ### 1.4.0
 
 ```protobuf
@@ -2626,6 +2653,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/h5py/${vpython_platform}"
   version: "version:2.10.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
+### 3.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/h5py/${vpython_platform}"
+  version: "version:3.1.0"
 >
 ```
 
@@ -5854,6 +5895,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+### 2.5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow/${vpython_platform}"
+  version: "version:2.5.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **tensorflow-estimator**
 
 ### 2.4.0
@@ -5862,6 +5917,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/tensorflow-estimator-py2_py3"
   version: "version:2.4.0"
+>
+```
+
+
+* *universal*
+
+### 2.5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-estimator-py2_py3"
+  version: "version:2.5.0"
 >
 ```
 
