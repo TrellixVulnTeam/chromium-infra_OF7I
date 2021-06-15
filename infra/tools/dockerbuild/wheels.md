@@ -1810,11 +1810,13 @@ wheel: <
 
 * *universal*
 
+## **gast-py3**
+
 ### 0.4.0
 
 ```protobuf
 wheel: <
-  name: "infra/python/wheels/gast-py2_py3"
+  name: "infra/python/wheels/gast-py3"
   version: "version:0.4.0"
 >
 ```

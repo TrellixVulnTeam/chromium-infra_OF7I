@@ -107,8 +107,8 @@ def _main_wheel_build(args, system):
     for plat in platforms:
       try:
         w = build.wheel(system, plat)
-      except PlatformNotSupported:
-        util.LOGGER.warning('Not supported on: %s', plat.name)
+      except PlatformNotSupported as e:
+        util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
         continue
       package = w.cipd_package(git_revision)
       if package in seen:
@@ -130,8 +130,8 @@ def _main_wheel_build(args, system):
         pkg_path = build.build(w, system, rebuild=args.rebuild)
         if not pkg_path:
           continue
-      except PlatformNotSupported:
-        util.LOGGER.warning('Not supported on: %s', plat.name)
+      except PlatformNotSupported as e:
+        util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
         continue
       util.LOGGER.info('Finished wheel for package: %s', package.name)
 

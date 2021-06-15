@@ -104,7 +104,10 @@ class MultiWheel(Builder):
   def build_fn(self, system, wheel):
     sub_wheels = []
     for w in self._wheels:
-      sub_wheel = w.wheel(system, wheel.plat)
+      subwheel_plat = (
+          build_platform.ALL[build_platform.UNIVERSAL[0]]
+          if w.spec.universal else wheel.plat)
+      sub_wheel = w.wheel(system, subwheel_plat)
       util.LOGGER.info('Building sub-wheel: %s', sub_wheel)
       # Any time the MultiWheel is built, rebuild all the subwheels.
       sub_wheels += w.build_wheel(sub_wheel, system, rebuild=True)
