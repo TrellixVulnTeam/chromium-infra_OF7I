@@ -77,7 +77,10 @@ func newDevCfgEntity(msg proto.Message) (cfg2datastore.EntityInterface, error) {
 // UpdateDatastore updates the datastore cache for all device config data.
 func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project, committish, path string) error {
 	var allCfgs device.AllConfigs
-	cfg2datastore.DownloadCfgProto(ctx, client, project, committish, path, &allCfgs)
+	err := cfg2datastore.DownloadCfgProto(ctx, client, project, committish, path, &allCfgs)
+	if err != nil {
+		return errors.Annotate(err, "UpdateDatastore - %s:%s:%s", project, committish, path).Err()
+	}
 	cfgs := make([]proto.Message, len(allCfgs.GetConfigs()))
 	for i, c := range allCfgs.GetConfigs() {
 		cfgs[i] = c
