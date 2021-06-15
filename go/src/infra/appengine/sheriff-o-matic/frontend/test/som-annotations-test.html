@@ -514,6 +514,118 @@ See go/bugatrooper for instructions and bug templates
       );
     });
 
+    test('save bug with https://b.corp.google.com', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'https://b.corp.google.com/issues/12345678';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
+          bugs: [{
+            id: '12345678',
+            projectId: 'b',
+          }]
+        }
+      );
+    });
+
+    test('save bug with b.corp.google.com', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'b.corp.google.com/issues/12345678';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
+          bugs: [{
+            id: '12345678',
+            projectId: 'b',
+          }]
+        }
+      );
+    });
+
+    test('save bug with b/', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'b/12345678';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
+          bugs: [{
+            id: '12345678',
+            projectId: 'b',
+          }]
+        }
+      );
+    });
+
+    test('save bug with b:', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'b:12345678';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
+          bugs: [{
+            id: '12345678',
+            projectId: 'b',
+          }]
+        }
+      );
+    });
+
     test('save bug with shorthand', function () {
       let sendStub = sinon.stub(element, 'sendAnnotation');
       sendStub.onCall(0).returns({

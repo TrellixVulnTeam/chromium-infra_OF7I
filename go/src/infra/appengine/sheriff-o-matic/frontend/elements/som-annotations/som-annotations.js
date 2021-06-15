@@ -9,7 +9,7 @@ const DefaultSnoozeTimes = {
 const ONE_MIN_MS = 1000 * 60;
 
 // TODO(yuanzhi) Consider construct this list from a monorail query.
-const MONORAIL_PROJECTS = ['chromium',
+const MONORAIL_PROJECTS = ['b', 'chromium',
   'fuchsia', 'gn', 'monorail', 'v8', 'webrtc', 'angleproject'];
 
 class SomAnnotations extends Polymer.mixinBehaviors([
@@ -465,6 +465,10 @@ See go/bugatrooper for instructions and bug templates
         case 'bugs.chromium.org':
           // Parse url path for project
           projectName = this._getProjectNameFromUrl(_url);
+          break;
+        case 'b':
+        case 'b.corp.google.com':
+          projectName = 'b';
           break;
         default:
           projectName = 'chromium';

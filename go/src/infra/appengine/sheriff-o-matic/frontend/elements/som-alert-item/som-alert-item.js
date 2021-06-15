@@ -197,6 +197,10 @@ class SomAlertItem extends Polymer.mixinBehaviors(
     return alert && !!alert.grouped;
   }
 
+  _isBuganizer(bug) {
+    return bug.projectId === 'b';
+  }
+
   _linkBug(evt) {
     this.dispatchEvent(new CustomEvent('link-bug', {
       bubbles: true,
