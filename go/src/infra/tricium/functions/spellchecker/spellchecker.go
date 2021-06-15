@@ -37,6 +37,7 @@ const (
 	commentsJSONPath = "comment_formats.json"
 	dictPath         = "dictionary.txt"
 	minWordLength    = 4
+	maxWordLength    = 39
 )
 
 // state is the comment processing state machine.
@@ -368,6 +369,12 @@ func analyzeWords(commentWord, stopPattern string,
 
 		// Check if the word is in the ignore list (even if camelcased).
 		if inSlice(strings.ToLower(wordToCheck), ignoredWords) {
+			continue
+		}
+
+		// Very long "words" with no whitespace are usually not text, they
+		// may be hex or base64, and are a source of false positives.
+		if len(wordToCheck) > maxWordLength {
 			continue
 		}
 

@@ -179,6 +179,13 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		So(results.Comments, ShouldBeEmpty)
 	})
 
+	Convey("Very long words with no whitespace are not checked", t, func() {
+		fileContent := ("wTichQtCwYkKxWiyhQCAJGBBUXYWYExmapleFTich")
+		results := &tricium.Data_Results{}
+		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
+		So(results.Comments, ShouldBeEmpty)
+	})
+
 	Convey("Words with non-ASCII characters are not split up", t, func() {
 		fileContent := "... François ..."
 		// Example from crbug.com/996242.
