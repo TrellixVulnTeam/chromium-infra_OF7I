@@ -14,8 +14,10 @@ import "google/api/resource.proto";
 // running a command on a DUT or resetting the servo attached to a
 // DUT.
 //
-// Next Tag: 2
+// Next Tag: 4
 message Action {
+  reserved 2;
+  reserved "action_type";
   option (google.api.resource) = {
     type: "karte.appspot.com/Action"
     pattern: "actions/{action}"
@@ -25,8 +27,8 @@ message Action {
   // automatically when a new action is created.
   string name = 1;
 
-  // An action_kind is a coarse-grained type of an action, such as
+  // A kind is a coarse-grained type of an action, such as
   // ssh-attempt. New action_kinds will be created frequently so this field
   // is a string; see https://google.aip.dev/126 for details.
-  string action_kind = 2;
+  string kind = 3;
 };
