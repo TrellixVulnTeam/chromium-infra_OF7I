@@ -172,8 +172,8 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		So(results.Comments, ShouldBeEmpty)
 	})
 
-	Convey("Very short words are not checked", t, func() {
-		fileContent := "// wi aks yuo aa qst abt ths adn tht"
+	Convey("Very short words are not checked, including in camel case", t, func() {
+		fileContent := ("wiAksYuo aa qstAbt ThsAdn tht Ue WihyFo AcnOtFof")
 		results := &tricium.Data_Results{}
 		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
 		So(results.Comments, ShouldBeEmpty)

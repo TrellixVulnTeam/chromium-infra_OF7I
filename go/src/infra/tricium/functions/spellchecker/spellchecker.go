@@ -371,14 +371,15 @@ func analyzeWords(commentWord, stopPattern string,
 			continue
 		}
 
-		// Very short words are more likely to be false positives.
-		if len(wordToCheck) < minWordLength {
-			continue
-		}
-
 		// Split at uppercase letters to handle camel cased words.
 		for _, currentWordSegment := range splitCamelCase(wordToCheck) {
 			word := currentWordSegment.word
+
+			// Very short words are more likely to be false positives.
+			if len(word) < minWordLength {
+				continue
+			}
+
 			if fixes, ok := dict[strings.ToLower(word)]; ok && !inSlice(word, ignoredWords) {
 				if c := buildMisspellingComment(word, fixes,
 					startIdx+wordToCheckSplit.startIndex+currentWordSegment.startIndex, lineno, path); c != nil {
