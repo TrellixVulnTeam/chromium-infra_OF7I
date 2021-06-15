@@ -14,7 +14,7 @@ import (
 	"google.golang.org/api/iterator"
 
 	"infra/cros/cmd/crosgrep/internal/base"
-	"infra/cros/cmd/crosgrep/internal/swarming/queries"
+	"infra/cros/cmd/crosgrep/internal/swarming/query"
 )
 
 // BrokenBy is a command that identifies the last successful task to run
@@ -56,10 +56,10 @@ func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return errors.Annotate(err, "broken-by: getting bigquery client").Err()
 	}
-	it, err := queries.RunBrokenBy(
+	it, err := query.RunBrokenBy(
 		ctx,
 		client,
-		&queries.BrokenByParams{
+		&query.BrokenByParams{
 			BotID: c.botID,
 		},
 	)

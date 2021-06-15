@@ -15,7 +15,7 @@ import (
 
 	"infra/cros/cmd/crosgrep/internal/base"
 	"infra/cros/cmd/crosgrep/internal/swarming/logging"
-	"infra/cros/cmd/crosgrep/internal/swarming/queries"
+	"infra/cros/cmd/crosgrep/internal/swarming/query"
 )
 
 // ListAllTasks is a command that lists some swarming tasks for the past hour.
@@ -55,10 +55,10 @@ func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env
 	if err != nil {
 		return errors.Annotate(err, "getting bigquery client").Err()
 	}
-	it, err := queries.RunTaskQuery(
+	it, err := query.RunTaskQuery(
 		ctx,
 		client,
-		&queries.TaskQueryParams{
+		&query.TaskQueryParams{
 			Model: c.model,
 		},
 	)

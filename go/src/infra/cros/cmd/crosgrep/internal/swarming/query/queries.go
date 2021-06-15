@@ -2,13 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package queries
+package query
 
 import (
 	"context"
 	"time"
-
-	"infra/cros/cmd/crosgrep/internal/swarming/query"
 
 	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/common/errors"
@@ -33,11 +31,11 @@ func RunBrokenBy(ctx context.Context, client *bigquery.Client, params *BrokenByP
 	if params.EndTime == 0 {
 		params.EndTime = now + 1
 	}
-	sql, err := query.InstantiateSQLQuery(ctx, brokenByTemplate, params)
+	sql, err := InstantiateSQLQuery(ctx, brokenByTemplate, params)
 	if err != nil {
 		return nil, err
 	}
-	it, err := query.RunSQL(ctx, client, sql)
+	it, err := RunSQL(ctx, client, sql)
 	if err != nil {
 		return nil, errors.Annotate(err, "run broken by").Err()
 	}
@@ -45,7 +43,7 @@ func RunBrokenBy(ctx context.Context, client *bigquery.Client, params *BrokenByP
 }
 
 // BrokenByTemplate is a fixed query that finds the last successful task to execute on a given host.
-var brokenByTemplate = query.MustMakeTemplate(
+var brokenByTemplate = MustMakeTemplate(
 	"brokenBy",
 	`
 SELECT
@@ -119,11 +117,11 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 	if params.BuildBucketSafetyMargin == 0 {
 		params.BuildBucketSafetyMargin = buildBucketSafetyMarginSeconds
 	}
-	sql, err := query.InstantiateSQLQuery(ctx, brokenByTemplate, params)
+	sql, err := InstantiateSQLQuery(ctx, brokenByTemplate, params)
 	if err != nil {
 		return nil, err
 	}
-	it, err := query.RunSQL(ctx, client, sql)
+	it, err := RunSQL(ctx, client, sql)
 	if err != nil {
 		return nil, errors.Annotate(err, "run tasks query").Err()
 	}
@@ -132,7 +130,7 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 
 // TaskQueryTemplate is a query factory based on a SQL template that extracts information about swarming tasks
 // and their corresponding buildbucket tasks.
-var taskQueryTemplate = query.MustMakeTemplate(
+var taskQueryTemplate = MustMakeTemplate(
 	"taskQuery",
 	`
 SELECT

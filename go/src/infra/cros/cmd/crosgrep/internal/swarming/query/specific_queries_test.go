@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package queries
+package query
 
 import (
 	"context"
-	"infra/cros/cmd/crosgrep/internal/swarming/query"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,7 +13,7 @@ import (
 
 func TestBrokenBy(t *testing.T) {
 	bg := context.Background()
-	expected := query.MustExpandTick(`
+	expected := MustExpandTick(`
 SELECT
   TRS.bot.bot_id,
   BUILDS.id AS bbid,
@@ -37,7 +36,7 @@ WHERE
 ORDER BY TRS.end_time DESC
 LIMIT 1
 `)
-	actual, err := query.InstantiateSQLQuery(
+	actual, err := InstantiateSQLQuery(
 		bg,
 		brokenByTemplate,
 		&BrokenByParams{
@@ -56,7 +55,7 @@ LIMIT 1
 
 func TestRunTasksQuery(t *testing.T) {
 	bg := context.Background()
-	expected := query.MustExpandTick(`
+	expected := MustExpandTick(`
 SELECT
   TRS.bot.bot_id,
   BUILDS.id AS bbid,
@@ -86,7 +85,7 @@ WHERE
  )
 LIMIT 10000
 `)
-	actual, err := query.InstantiateSQLQuery(
+	actual, err := InstantiateSQLQuery(
 		bg,
 		taskQueryTemplate,
 		&TaskQueryParams{
