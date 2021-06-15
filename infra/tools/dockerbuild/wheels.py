@@ -1254,6 +1254,44 @@ SPECS.update({
                 'mac-arm64-cp38',
             ],
         ),
+        MultiWheel(
+            'pathos',
+            '0.2.7.chromium.4',
+            ([
+                Universal('dill', '0.3.3'),
+                Universal('klepto', '0.2.0'),
+                Mpi4py(
+                    'mpi4py',
+                    '3.0.3',
+                    'version:3.4.1.chromium.4',
+                    packaged=[
+                        'windows-x86',
+                        'windows-x86-py3',
+                        'windows-x64',
+                        'windows-x64-py3',
+                    ],
+                ),
+                SourceOrPrebuilt(
+                    'multiprocess',
+                    '0.70.11.1',
+                    packaged=[],
+                    pyversions=['py2', 'py3'],
+                ),
+                Universal('pathos', '0.2.7'),
+                Universal('pox', '0.2.9'),
+                Universal('ppft', '1.6.6.4', pyversions=['py2', 'py3']),
+                Universal('pyina', '0.2.4'),
+            ]),
+            # No 3pp builders for these platforms, so cannot build mpi4py.
+            skip_plat=[
+                'linux-armv6',
+                'linux-mipsel',
+                'linux-mips',
+                'linux-mips64',
+                'mac-arm64',
+                'mac-arm64-cp38',
+            ],
+        ),
         # List cultivated from "pyobjc-2.5.1"'s "setup.py" as a superset of
         # available packages.
         #

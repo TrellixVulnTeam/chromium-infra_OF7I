@@ -3844,6 +3844,29 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
+### 0.2.7.chromium.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pathos/${vpython_platform}"
+  version: "version:0.2.7.chromium.4"
+>
+```
+
+
+* *linux-arm64*
+* *linux-arm64-py3*
+* *mac-x64*
+* *mac-x64-cp38*
+* *manylinux-x64*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *manylinux-x64-ucs2*
+* *windows-x64*
+* *windows-x64-py3*
+* *windows-x86*
+* *windows-x86-py3*
+
 ## **pbr**
 
 ### 3.0.0
