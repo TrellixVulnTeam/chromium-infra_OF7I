@@ -4,6 +4,8 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
+import {fireEvent} from '@testing-library/react';
+
 import {MrEditMetadata} from './mr-edit-metadata.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
   ISSUE_EDIT_STATUS_PERMISSION, ISSUE_EDIT_OWNER_PERMISSION,
@@ -32,6 +34,40 @@ describe('mr-edit-metadata', () => {
 
   it('initializes', () => {
     assert.instanceOf(element, MrEditMetadata);
+  });
+
+  describe('updated sets initial values', () => {
+    it('updates owner', async () => {
+      element.ownerName = 'goose@bird.org';
+      await element.updateComplete;
+
+      assert.equal(element._values.owner, 'goose@bird.org');
+    });
+
+    it('updates cc', async () => {
+      element.cc = [
+        {displayName: 'initial-cc@bird.org', userId: '1234'},
+      ];
+      await element.updateComplete;
+
+      assert.deepEqual(element._values.cc, ['initial-cc@bird.org']);
+    });
+
+    it('updates components', async () => {
+      element.components = [{path: 'Hello>World'}];
+
+      await element.updateComplete;
+
+      assert.deepEqual(element._values.components, ['Hello>World']);
+    });
+
+    it('updates labels', async () => {
+      element.labelNames = ['test-label'];
+
+      await element.updateComplete;
+
+      assert.deepEqual(element._values.labels, ['test-label']);
+    });
   });
 
   describe('saves edit form', () => {
@@ -212,7 +248,8 @@ describe('mr-edit-metadata', () => {
     assert.isFalse(element.disabled);
   });
 
-  it('delta empty when no changes', () => {
+  it('delta empty when no changes', async () => {
+    await element.updateComplete;
     assert.deepEqual(element.delta, {});
   });
 
@@ -243,7 +280,7 @@ describe('mr-edit-metadata', () => {
     assert.equal(element.sendEmail, true);
   });
 
-  it('changing status produces delta change', async () => {
+  it('changing status produces delta change (lit-element)', async () => {
     element.statuses = [
       {'status': 'New'},
       {'status': 'Old'},
@@ -261,6 +298,39 @@ describe('mr-edit-metadata', () => {
     assert.deepEqual(element.delta, {
       status: 'Old',
     });
+  });
+
+  it('changing owner produces delta change (React)', async () => {
+    element.ownerName = 'initial-owner@bird.org';
+    await element.updateComplete;
+
+    const input = element.querySelector('#ownerInput');
+    fireEvent.change(input, {target: {value: 'new-owner@bird.org'}});
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    await element.updateComplete;
+
+    const expected = {ownerRef: {displayName: 'new-owner@bird.org'}};
+    assert.deepEqual(element.delta, expected);
+  });
+
+  it('adding CC produces delta change (React)', async () => {
+    element.cc = [
+      {displayName: 'initial-cc@bird.org', userId: '1234'},
+    ];
+
+    await element.updateComplete;
+
+    const input = element.querySelector('#ccInput');
+    fireEvent.change(input, {target: {value: 'another@bird.org'}});
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+
+    await element.updateComplete;
+
+    const expected = {
+      ccRefsAdd: [{displayName: 'another@bird.org'}],
+      ccRefsRemove: [{displayName: 'initial-cc@bird.org'}],
+    };
+    assert.deepEqual(element.delta, expected);
   });
 
   it('invalid status throws', async () => {
@@ -350,13 +420,19 @@ describe('mr-edit-metadata', () => {
   it('cannot set invalid emails', async () => {
     await element.updateComplete;
 
-    element.querySelector('#ccInput').setValue(['invalid!email']);
+    const ccInput = element.querySelector('#ccInput');
+    fireEvent.change(ccInput, {target: {value: 'invalid!email'}});
+    fireEvent.keyDown(ccInput, {key: 'Enter', code: 'Enter'});
+
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
         `Invalid email address: invalid!email`);
 
-    element.querySelector('#ownerInput').setValue('invalid!email2');
+    const input = element.querySelector('#ownerInput');
+    fireEvent.change(input, {target: {value: 'invalid!email2'}});
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
@@ -712,11 +788,11 @@ describe('mr-edit-metadata', () => {
     element.isApproval = false;
     element.issuePermissions = [ISSUE_EDIT_PERMISSION];
 
+    element.components = [];
+
     await element.updateComplete;
 
-    const compInput = element.querySelector('#componentsInput');
-
-    compInput.setValue(['Hello>World']);
+    element._values.components = ['Hello>World'];
 
     await element.updateComplete;
 
@@ -726,7 +802,7 @@ describe('mr-edit-metadata', () => {
       ],
     });
 
-    compInput.setValue(['Hello>World', 'Test', 'Multi']);
+    element._values.components = ['Hello>World', 'Test', 'Multi'];
 
     await element.updateComplete;
 
@@ -738,10 +814,32 @@ describe('mr-edit-metadata', () => {
       ],
     });
 
-    compInput.setValue([]);
+    element._values.components = [];
+
     await element.updateComplete;
 
     assert.deepEqual(element.delta, {});
+  });
+
+  it('removing components produces delta', async () => {
+    await element.updateComplete;
+
+    element.isApproval = false;
+    element.issuePermissions = [ISSUE_EDIT_PERMISSION];
+
+    element.components = [{path: 'Hello>World'}];
+
+    await element.updateComplete;
+
+    element._values.components = [];
+
+    await element.updateComplete;
+
+    assert.deepEqual(element.delta, {
+      compRefsRemove: [
+        {path: 'Hello>World'},
+      ],
+    });
   });
 
   it('approver input appears when user has privileges', async () => {
@@ -753,6 +851,37 @@ describe('mr-edit-metadata', () => {
 
     assert.isNotNull(element.querySelector('#approversInput'));
   });
+
+  it('reset sets controlled values to default', async () => {
+    element.ownerName = 'burb@bird.com';
+    element.cc = [
+      {displayName: 'flamingo@bird.com', userId: '1234'},
+      {displayName: 'penguin@bird.com', userId: '5678'},
+    ];
+    element.labelNames = ['chickadee-chirp'];
+    element.components = [{path: 'Bird>Penguin'}];
+
+    // Update cycle is needed because <mr-edit-metadata> initializes
+    // this.values in updated().
+    await element.updateComplete;
+
+    const initialValues = {
+      owner: 'burb@bird.com',
+      cc: ['flamingo@bird.com', 'penguin@bird.com'],
+      components: ['Bird>Penguin'],
+      labels: ['chickadee-chirp'],
+    };
+
+    assert.deepEqual(element._values, initialValues);
+
+    element._values = {
+      owner: 'newburb@hello.com',
+      cc: ['noburbs@wings.com'],
+    };
+    element.reset();
+
+    assert.deepEqual(element._values, initialValues);
+  })
 
   it('reset empties form values', async () => {
     element.fieldDefs = [
@@ -788,6 +917,18 @@ describe('mr-edit-metadata', () => {
     assert.lengthOf(element.querySelector('#testFieldInput').value, 0);
     assert.lengthOf(element.querySelector('#fakeFieldInput').value, 0);
     assert.lengthOf(uploader.files, 0);
+  });
+
+  it('reset results in empty delta', async () => {
+    element.ownerName = 'goose@bird.org';
+    await element.updateComplete;
+
+    element._values.owner = 'penguin@bird.org';
+    const expected = {ownerRef: {displayName: 'penguin@bird.org'}};
+    assert.deepEqual(element.delta, expected);
+
+    await element.reset();
+    assert.deepEqual(element.delta, {});
   });
 
   it('edit issue permissions', async () => {
@@ -880,8 +1021,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    const actualValues = element.querySelector('#ccInput').values;
-    assert.deepEqual(actualValues, [
+    assert.deepEqual(element._values.cc, [
       'test@example.com',
       'someone@example.com',
     ]);

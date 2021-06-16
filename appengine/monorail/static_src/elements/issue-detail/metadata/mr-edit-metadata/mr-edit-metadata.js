@@ -12,6 +12,7 @@ import 'elements/chops/chops-chip/chops-chip.js';
 import 'elements/framework/mr-error/mr-error.js';
 import 'elements/framework/mr-warning/mr-warning.js';
 import 'elements/help/mr-cue/mr-cue.js';
+import 'react/mr-react-autocomplete.tsx';
 import {cueNames} from 'elements/help/mr-cue/cue-helpers.js';
 import {store, connectStore} from 'reducers/base.js';
 import {UserInputError} from 'shared/errors.js';
@@ -21,7 +22,7 @@ import {displayNameToUserRef, labelStringToRef, componentStringToRef,
   issueRefToString, issueRefsToStrings, filteredUserDisplayNames,
   valueToFieldValue, fieldDefToName,
 } from 'shared/convertersV0.js';
-import {isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
+import {arrayDifference, isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
@@ -384,15 +385,13 @@ export class MrEditMetadata extends connectStore(LitElement) {
         ` : ''}
         Owner:
       </label>
-      <mr-edit-field
-        id="ownerInput"
-        .name=${'Owner'}
-        .type=${'USER_TYPE'}
-        .initialValues=${this.ownerName ? [this.ownerName] : []}
-        .acType=${'owner'}
+      <mr-react-autocomplete
+        label="ownerInput"
+        vocabularyName="owner"
         .placeholder=${ownerPresubmit.placeholder}
-        @change=${this._processChanges}
-      ></mr-edit-field>
+        .value=${this._values.owner}
+        .onChange=${this._onChange.bind(this, 'owner')}
+      ></mr-react-autocomplete>
     `;
   }
 
@@ -403,16 +402,14 @@ export class MrEditMetadata extends connectStore(LitElement) {
   _renderCC() {
     return html`
       <label for="ccInput" @click=${this._clickLabelForCustomInput}>CC:</label>
-      <mr-edit-field
-        id="ccInput"
-        .name=${'CC'}
-        .type=${'USER_TYPE'}
-        .initialValues=${this._ccNames}
-        .derivedValues=${this._derivedCCs}
-        .acType=${'member'}
-        @change=${this._processChanges}
-        multi
-      ></mr-edit-field>
+      <mr-react-autocomplete
+        label="ccInput"
+        vocabularyName="member"
+        .multiple=${true}
+        .fixedValues=${this._derivedCCs}
+        .value=${this._values.cc}
+        .onChange=${this._onChange.bind(this, 'cc')}
+      ></mr-react-autocomplete>
     `;
   }
 
@@ -426,15 +423,13 @@ export class MrEditMetadata extends connectStore(LitElement) {
         for="componentsInput"
         @click=${this._clickLabelForCustomInput}
       >Components:</label>
-      <mr-edit-field
-        id="componentsInput"
-        .name=${'component'}
-        .type=${'STR_TYPE'}
-        .initialValues=${componentRefsToStrings(this.components)}
-        .acType=${'component'}
-        @change=${this._processChanges}
-        multi
-      ></mr-edit-field>
+      <mr-react-autocomplete
+        label="componentsInput"
+        vocabularyName="component"
+        .multiple=${true}
+        .value=${this._values.components}
+        .onChange=${this._onChange.bind(this, 'components')}
+      ></mr-react-autocomplete>
     `;
   }
 
@@ -528,15 +523,14 @@ export class MrEditMetadata extends connectStore(LitElement) {
   _renderLabels() {
     return html`
       <label for="labelsInput" @click=${this._clickLabelForCustomInput}>Labels:</label>
-      <mr-edit-field
-        id="labelsInput"
-        .acType=${'label'}
-        .initialValues=${this.labelNames}
-        .derivedValues=${this.derivedLabels}
-        .name=${'labels'}
-        @change=${this._processChanges}
-        multi
-      ></mr-edit-field>
+      <mr-react-autocomplete
+        label="labelsInput"
+        vocabularyName="label"
+        .multiple=${true}
+        .fixedValues=${this.derivedLabels}
+        .value=${this._values.labels}
+        .onChange=${this._onChange.bind(this, 'labels')}
+      ></mr-react-autocomplete>
     `;
   }
 
@@ -632,9 +626,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
       issueType: {type: String},
       optionsPerEnumField: {type: String},
       fieldGroups: {type: Object},
+      prefs: {type: Object},
       saving: {type: Boolean},
       isDirty: {type: Boolean},
-      prefs: {type: Object},
+      _values: {type: Object},
+      _initialValues: {type: Object},
     };
   }
 
@@ -652,6 +648,8 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.saving = false;
     this.isDirty = false;
     this.prefs = {};
+    this._values = {};
+    this._initialValues = {};
   }
 
   /** @override */
@@ -662,6 +660,20 @@ export class MrEditMetadata extends connectStore(LitElement) {
   /** @override */
   firstUpdated() {
     this.hasRendered = true;
+  }
+
+  /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('ownerName') || changedProperties.has('cc')
+        || changedProperties.has('components')
+        || changedProperties.has('labels')) {
+      this._initialValues.owner = this.ownerName;
+      this._initialValues.cc = this._ccNames;
+      this._initialValues.components = componentRefsToStrings(this.components);
+      this._initialValues.labels = this.labelNames;
+
+      this._values = {...this._initialValues};
+    }
   }
 
   /**
@@ -730,6 +742,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
       issuePermissions.includes(ISSUE_EDIT_CC_PERMISSION);
   }
 
+  /**
+   * @return {Array<string>}
+   */
   get _ccNames() {
     const users = this.cc || [];
     return filteredUserDisplayNames(users.filter((u) => !u.isDerived));
@@ -785,6 +800,8 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * Resets the edit form values to their default values.
    */
   reset() {
+    this._values = {...this._initialValues};
+
     const form = this.querySelector('#editForm');
     if (!form) return;
 
@@ -930,7 +947,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * @return {IssueDelta}
    */
   _getDelta() {
-    const result = {};
+    let result = {};
 
     const {projectName, localId} = this.issueRef;
 
@@ -948,8 +965,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
 
     if (this.isApproval) {
       if (this._canEditIssue && this.hasApproverPrivileges) {
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'approvers', 'approverRefs', displayNameToUserRef);
+        result = {
+          ...result,
+          ...this._changedValuesDom(
+            'approvers', 'approverRefs', displayNameToUserRef),
+        };
       }
     } else {
       // TODO(zhangtiff): Consider representing baked-in fields such as owner,
@@ -965,19 +985,26 @@ export class MrEditMetadata extends connectStore(LitElement) {
         }
       }
 
-      if (this._canEditOwner) {
-        const ownerInput = this.querySelector('#ownerInput');
-        if (ownerInput) {
-          const newOwner = ownerInput.value;
-          if (newOwner !== this.ownerName) {
-            result.ownerRef = displayNameToUserRef(newOwner);
-          }
-        }
+      if (this._values.owner !== this.ownerName) {
+        result.ownerRef = displayNameToUserRef(this._values.owner);
       }
 
-      if (this._canEditCC) {
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'cc', 'ccRefs', displayNameToUserRef);
+      result = {
+        ...result,
+        ...this._changedValuesControlled(
+          'cc', 'ccRefs', displayNameToUserRef),
+      }
+
+      result = {
+        ...result,
+        ...this._changedValuesControlled(
+          'components', 'compRefs', componentStringToRef),
+      }
+
+      result = {
+        ...result,
+        ...this._changedValuesControlled(
+          'labels', 'labelRefs', labelStringToRef),
       }
 
       if (this._canEditIssue) {
@@ -985,25 +1012,38 @@ export class MrEditMetadata extends connectStore(LitElement) {
           issueStringToBlockingRef({projectName, localId}, refString);
         const blockerRemoveFn = (refString) =>
           issueStringToRef(refString, projectName);
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'labels', 'labelRefs', labelStringToRef);
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'components', 'compRefs', componentStringToRef);
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'blockedOn', 'blockedOnRefs',
-            blockerAddFn, blockerRemoveFn);
-        this._updateDeltaWithAddedAndRemoved(
-            result, 'blocking', 'blockingRefs',
-            blockerAddFn, blockerRemoveFn);
+        result = {
+          ...result,
+          ...this._changedValuesDom(
+            'blockedOn', 'blockedOnRefs', blockerAddFn, blockerRemoveFn),
+        };
+        result = {
+          ...result,
+          ...this._changedValuesDom(
+            'blocking', 'blockingRefs', blockerAddFn, blockerRemoveFn),
+        };
       }
     }
 
     if (this._canEditIssue) {
       const fieldDefs = this.fieldDefs || [];
       fieldDefs.forEach(({fieldRef}) => {
-        this._updateDeltaWithAddedAndRemoved(
-            result, fieldRef.fieldName, 'fieldVals',
+        const {fieldValsAdd = [], fieldValsRemove = []} =
+          this._changedValuesDom(fieldRef.fieldName, 'fieldVals',
             valueToFieldValue.bind(null, fieldRef));
+
+        // Because multiple custom fields share the same "fieldVals" key in
+        // delta, we hav to make sure to concatenate updated delta values with
+        // old delta values.
+        if (fieldValsAdd.length) {
+          result.fieldValsAdd = [...(result.fieldValsAdd || []),
+            ...fieldValsAdd];
+        }
+
+        if (fieldValsRemove.length) {
+          result.fieldValsRemove = [...(result.fieldValsRemove || []),
+            ...fieldValsRemove];
+        }
       });
     }
 
@@ -1011,33 +1051,94 @@ export class MrEditMetadata extends connectStore(LitElement) {
   }
 
   /**
-   * Helper function for adding values for a single field to a delta.
-   * @param {IssueDelta} delta A delta Object that's edited in place.
-   * @param {string} fieldName Name of the field being edited.
-   * @param {string} key The key in the delta Object that changes will be
+   * Computes delta values for a controlled input.
+   * @param {string} fieldName The key in the values property to retrieve data.
+   *   from.
+   * @param {string} responseKey The key in the delta Object that changes will be
    *   saved in.
    * @param {function(string): any} addFn A function to specify how to format
    *   the message for a given added field.
    * @param {function(string): any} removeFn A function to specify how to format
    *   the message for a given removed field.
+   * @return {Object} delta fragment for added and removed values.
    */
-  _updateDeltaWithAddedAndRemoved(delta, fieldName, key, addFn, removeFn) {
+  _changedValuesControlled(fieldName, responseKey, addFn, removeFn) {
+    const values = this._values[fieldName];
+    const initialValues = this._initialValues[fieldName];
+
+    const valuesAdd = arrayDifference(values, initialValues, equalsIgnoreCase);
+    const valuesRemove =
+      arrayDifference(initialValues, values, equalsIgnoreCase);
+
+    return this._changedValues(valuesAdd, valuesRemove, responseKey, addFn, removeFn);
+  }
+
+  /**
+   * Gets changes values when reading from a legacy <mr-edit-field> element.
+   * @param {string} fieldName Name of the form input we're checking values on.
+   * @param {string} responseKey The key in the delta Object that changes will be
+   *   saved in.
+   * @param {function(string): any} addFn A function to specify how to format
+   *   the message for a given added field.
+   * @param {function(string): any} removeFn A function to specify how to format
+   *   the message for a given removed field.
+   * @return {Object} delta fragment for added and removed values.
+   */
+  _changedValuesDom(fieldName, responseKey, addFn, removeFn) {
     const input = this.querySelector(`#${fieldName}Input`);
     if (!input) return;
 
     const valuesAdd = input.getValuesAdded();
-    if (valuesAdd && valuesAdd.length) {
-      delta[key + 'Add'] = (delta[key + 'Add'] || []).concat(
-          valuesAdd.map(addFn));
-    }
-
     const valuesRemove = input.getValuesRemoved();
-    if (valuesRemove && valuesRemove.length) {
-      delta[key + 'Remove'] = (delta[key + 'Remove'] || []).concat(
-          valuesRemove.map(removeFn || addFn));
-    }
+
+    return this._changedValues(valuesAdd, valuesRemove, responseKey, addFn, removeFn);
   }
 
+  /**
+   * Shared helper function for computing added and removed values for a
+   * single field in a delta.
+   * @param {Array<string>} valuesAdd The added values. For example, new CCed
+   *   users.
+   * @param {Array<string>} valuesRemove Values that were removed in this edit.
+   * @param {string} responseKey The key in the delta Object that changes will be
+   *   saved in.
+   * @param {function(string): any} addFn A function to specify how to format
+   *   the message for a given added field.
+   * @param {function(string): any} removeFn A function to specify how to format
+   *   the message for a given removed field.
+   * @return {Object} delta fragment for added and removed values.
+   */
+  _changedValues(valuesAdd, valuesRemove, responseKey, addFn, removeFn) {
+    const delta = {};
+
+    if (valuesAdd && valuesAdd.length) {
+      delta[responseKey + 'Add'] = valuesAdd.map(addFn);
+    }
+
+    if (valuesRemove && valuesRemove.length) {
+      delta[responseKey + 'Remove'] = valuesRemove.map(removeFn || addFn);
+    }
+
+    return delta;
+  }
+
+  /**
+   * Generic onChange handler to be bound to each form field.
+   * @param {string} key Unique name for the form field we're binding this
+   *   handler to. For example, 'owner', 'cc', or the name of a custom field.
+   * @param {Event} event
+   * @param {string} value The new form value.
+   * @param {*} _reason
+   */
+  _onChange(key, event, value, _reason) {
+    this._values = {...this._values, [key]: value};
+    this._processChanges(event);
+  }
+
+  /**
+   * Event handler for running filter rules presubmit logic.
+   * @param {Event} e
+   */
   _processChanges(e) {
     if (e instanceof KeyboardEvent) {
       if (NON_EDITING_KEY_EVENTS.has(e.key)) return;

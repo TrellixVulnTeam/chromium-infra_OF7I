@@ -22,14 +22,15 @@ function TKR_install_ac() {
     }
     if (input.id.startsWith('cmd')) return TKR_quickEditStore;
     if (input.id.startsWith('labelPrefix')) return TKR_labelPrefixStore;
-    if (input.id.startsWith('label')) return TKR_labelStore;
-    if (input.dataset.acType === 'label') return TKR_labelMultiStore;
-    if (input.id.startsWith('component') || input.dataset.acType === 'component') return TKR_componentListStore;
+    if (input.id.startsWith('label') && input.id != 'labelsInput') return TKR_labelStore;
+    if (input.dataset.acType === 'label' && input.id != 'labelsInput') return TKR_labelMultiStore;
+    if ((input.id.startsWith('component') || input.dataset.acType === 'component')
+      && input.id != 'componentsInput') return TKR_componentListStore;
     if (input.id.startsWith('status')) return TKR_statusStore;
     if (input.id.startsWith('member') || input.dataset.acType === 'member') return TKR_memberListStore;
 
     if (input.id == 'admin_names_editor') return TKR_memberListStore;
-    if (input.id.startsWith('owner')) return TKR_ownerStore;
+    if (input.id.startsWith('owner') && input.id != 'ownerInput') return TKR_ownerStore;
     if (input.name == 'needs_perm' || input.name == 'grants_perm') {
       return TKR_customPermissionsStore;
     }
