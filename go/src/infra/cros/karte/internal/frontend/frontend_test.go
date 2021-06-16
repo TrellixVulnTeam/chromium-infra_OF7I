@@ -51,8 +51,8 @@ func TestCreateObservation(t *testing.T) {
 	}
 }
 
-// TestListActions tests that ListActions errors.
-func TestListActions(t *testing.T) {
+// TestListActionsSmokeTest tests that ListActions does not error.
+func TestListActionsSmokeTest(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
@@ -61,8 +61,40 @@ func TestListActions(t *testing.T) {
 	if resp == nil {
 		t.Errorf("expected resp to not be nil")
 	}
+	if len(resp.GetActions()) != 0 {
+		t.Errorf("expected actions to be trivial")
+	}
 	if err != nil {
 		t.Errorf("expected error to be nil not %s", err)
+	}
+}
+
+// TestListActions tests that ListActions errors.
+func TestListActions(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	if err := PutActionEntities(
+		ctx,
+		&ActionEntity{
+			ID: "aaaa",
+		},
+	); err != nil {
+		t.Error(err)
+	}
+	k := NewKarteFrontend()
+	resp, err := k.ListActions(ctx, &kartepb.ListActionsRequest{})
+	if err != nil {
+		t.Errorf("expected error to be nil not %s", err)
+	}
+	if resp == nil {
+		t.Errorf("expected resp to not be nil")
+	}
+	if resp.GetActions() == nil {
+		t.Errorf("expected actions to not be nil")
+	}
+	if len(resp.GetActions()) != 1 {
+		t.Errorf("expected len(actions) to be 1 not %d", len(resp.GetActions()))
 	}
 }
 

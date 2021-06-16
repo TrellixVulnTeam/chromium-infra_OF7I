@@ -8,8 +8,12 @@ import (
 	"context"
 	kartepb "infra/cros/karte/api"
 
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 )
+
+// DefaultBatchSize is the default size of a batch for a datastore query.
+const defaultBatchSize = 1000
 
 // ActionKind is the kind of an action
 const ActionKind = "ActionKind"
@@ -51,6 +55,12 @@ type ActionEntitiesQuery struct {
 
 // Next takes a batch size and returns the next batch of action entities from a query.
 func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*ActionEntity, error) {
+	// TODO(gregorynisbet): Consider rejecting defaulted batch sizes instead of
+	// applying a default.
+	if batchSize == 0 {
+		batchSize = defaultBatchSize
+		logging.Debugf(ctx, "applied default batch size %d\n", defaultBatchSize)
+	}
 	var nextToken string
 	// A rootedQuery is rooted at the position implied by the pagination token.
 	rootedQuery := q.Query
@@ -104,6 +114,12 @@ type ObservationEntitiesQuery struct {
 
 // Next takes a batch size and returns the next batch of observation entities from a query.
 func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*ObservationEntity, error) {
+	// TODO(gregorynisbet): Consider rejecting defaulted batch sizes instead of
+	// applying a default.
+	if batchSize == 0 {
+		batchSize = defaultBatchSize
+		logging.Debugf(ctx, "applied default batch size %d\n", defaultBatchSize)
+	}
 	var nextToken string
 	// A rootedQuery is rooted at the position implied by the pagination token.
 	rootedQuery := q.Query
