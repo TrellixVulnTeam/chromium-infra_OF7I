@@ -55,7 +55,7 @@ http {
   log_format main '$remote_addr - $remote_user [$time_iso8601] "$request" '
                   '$status $body_bytes_sent "$upstream_http_content_length" '
                   '$request_time "$http_referer" '
-                  '"$http_user_agent" "$http_x_forwarded_for" $sent_http_x_cache';
+                  '"$http_user_agent" "$http_x_forwarded_for" $upstream_cache_status';
   proxy_cache_path  /var/cache/nginx levels=1:2 keys_zone=google-storage:80m
                     max_size={{ .CacheSizeInGB }}g inactive=720h;
   # gs_cache upstream definition.
@@ -77,7 +77,7 @@ http {
     listen *:8888;
     server_name           gs-cache;
     add_header            'Cache-Control' 'public, max-age=3153600';
-    add_header            'X-Cache' '$upstream_cache_status';
+    add_header            '{{ if .UpstreamHost }}X-Cache-Primary{{ else }}X-Cache-Secondary{{ end }}' '$upstream_cache_status';
     index  index.html index.htm index.php;
     access_log            /var/log/nginx/gs-cache.access.log main;
     error_log             /var/log/nginx/gs-cache.error.log;
