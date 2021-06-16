@@ -30,7 +30,7 @@ describe('mr-click-throughs', () => {
     const state = {userV0: {currentUser:
       {prefs: new Map(), prefsLoaded: false}}};
     element.stateChanged(state);
-    assert.deepEqual(element.prefs, new Map());
+    assert.deepEqual(element.prefs, new Map([['render_markdown', false]]));
     assert.isFalse(element.prefsLoaded);
   });
 
@@ -47,7 +47,7 @@ describe('mr-click-throughs', () => {
   it('signed in user sees no privacy dialog if dismissal pref set', () => {
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
-    element.prefs = new Map([['privacy_click_through', 'true']]);
+    element.prefs = new Map([['privacy_click_through', true]]);
     assert.isFalse(element._showPrivacyDialog);
   });
 
@@ -71,7 +71,7 @@ describe('mr-click-throughs', () => {
   it('signed in user sees no corp mode dialog if dismissal pref set', () => {
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
-    element.prefs = new Map([['corp_mode_click_through', 'true']]);
+    element.prefs = new Map([['corp_mode_click_through', true]]);
     assert.isFalse(element._showCorpModeDialog);
   });
 
@@ -85,7 +85,7 @@ describe('mr-click-throughs', () => {
   it('corp user sees corp mode dialog if dismissal pref missing', () => {
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
     assert.isTrue(element._showCorpModeDialog);
   });
 
@@ -93,14 +93,14 @@ describe('mr-click-throughs', () => {
     window.CS_env = {projectIsRestricted: true};
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
     assert.isFalse(element._showCorpModeDialog);
   });
 
   it('corp user sees corp mode dialog with no RVG warning', async () => {
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
 
     await element.updateComplete;
     assert.notInclude(element.shadowRoot.innerHTML, 'altered');
@@ -110,8 +110,8 @@ describe('mr-click-throughs', () => {
     element.userDisplayName = 'user@example.com';
     element.prefsLoaded = true;
     element.prefs = new Map([
-      ['public_issue_notice', 'true'],
-      ['restrict_new_issues', 'true'],
+      ['public_issue_notice', true],
+      ['restrict_new_issues', true],
     ]);
 
     await element.updateComplete;

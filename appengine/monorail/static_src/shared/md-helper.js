@@ -1,8 +1,11 @@
 import marked from 'marked';
 import DOMPurify from 'dompurify';
 
-/** @type {Set} Projects that defaults content as Markdown content. */
-export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail']);
+/** @type {Set} Projects that default Markdown rendering to true. */
+export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail']);
+
+/** @type {Set} Projects that allow users to opt into Markdown rendering. */
+export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS]);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
 const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
@@ -17,17 +20,18 @@ const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
  * Determines whether content should be rendered as Markdown.
  * @param {string} options.project Project this content belongs to.
  * @param {number} options.author User who authored this content.
- * @param {boolean} options.enabled Per-user setting for enabling Markdown.
+ * @param {boolean} options.enabled Per-issue override to force Markdown.
+ * @param {Array<string>} options.availableProjects List of opted in projects.
  * @return {boolean} Whether this content should be rendered as Markdown.
  */
 export const shouldRenderMarkdown = ({
-  project, author, enabled = true, enabledProjects = DEFAULT_MD_PROJECTS
+  project, author, enabled = true, availableProjects = AVAILABLE_MD_PROJECTS
 } = {}) => {
   if (author in BLOCKLIST) {
     return false;
   } else if (!enabled) {
     return false;
-  } else if (enabledProjects.has(project)) {
+  } else if (availableProjects.has(project)) {
     return true;
   }
   return false;

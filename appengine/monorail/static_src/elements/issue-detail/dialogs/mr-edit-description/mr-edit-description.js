@@ -244,8 +244,7 @@ export class MrEditDescription extends connectStore(LitElement) {
    * @return {boolean} Whether Markdown preview should be rendered or not.
    */
    get _renderMarkdown() {
-    const prefs = this._prefs;
-    const enabled = prefs ? prefs.get('render_markdown') !== 'false' : true;
+    const enabled = this._prefs.get('render_markdown');
     return shouldRenderMarkdown({project: this.projectName, enabled});
   }
 

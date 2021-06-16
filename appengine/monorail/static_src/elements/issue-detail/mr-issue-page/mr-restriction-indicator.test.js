@@ -36,12 +36,12 @@ describe('mr-restriction-indicator', () => {
 
     assert.isTrue(element.hasAttribute('hidden'));
 
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
     await element.updateComplete;
 
     assert.isFalse(element.hasAttribute('hidden'));
 
-    element.prefs = new Map([['public_issue_notice', 'false']]);
+    element.prefs = new Map([['public_issue_notice', false]]);
     await element.updateComplete;
 
     assert.isTrue(element.hasAttribute('hidden'));
@@ -56,7 +56,7 @@ describe('mr-restriction-indicator', () => {
     // In that case, the lock icon is shown, plus a warning icon and the
     // public issue notice.
     element.restrictions = new Map([['edit', ['Google']]]);
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
     await element.updateComplete;
 
     assert.isFalse(element.hasAttribute('hidden'));
@@ -117,7 +117,7 @@ describe('mr-restriction-indicator', () => {
     assert.equal(element._restrictionText, '');
     assert.include(element.shadowRoot.textContent, '');
 
-    element.prefs = new Map([['public_issue_notice', 'true']]);
+    element.prefs = new Map([['public_issue_notice', true]]);
 
     await element.updateComplete;
 

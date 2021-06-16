@@ -101,7 +101,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
         restriction labels, the issue reporter, owner,
         and Cc&apos;d users may always view the issue.</p>
 
-        ${this.prefs.get('restrict_new_issues') === 'true' ? html`
+        ${this.prefs.get('restrict_new_issues') ? html`
           <p>Your account is a member of a user group that indicates that
           you may have access to confidential information.  To help prevent
           leaks when working in public projects, the issue tracker UX has
@@ -131,33 +131,51 @@ export class MrClickThroughs extends connectStore(LitElement) {
     this.prefsLoaded = userV0.currentUser(state).prefsLoaded;
   }
 
+  /**
+   * Checks whether the user should see a dialogue telling them about
+   * Monorail's privacy settings.
+   */
   get _showPrivacyDialog() {
     if (!this.userDisplayName) return false;
     if (!this.prefsLoaded) return false;
     if (!this.prefs) return false;
-    if (this.prefs.get('privacy_click_through') === 'true') return false;
+    if (this.prefs.get('privacy_click_through')) return false;
     return true;
   }
 
-  dismissPrivacyDialog() {
-    this.dismissCue('privacy_click_through');
-  }
-
+  /**
+   * Computes whether the user should see the dialog telling them about corp mode.
+   */
   get _showCorpModeDialog() {
     // TODO(jrobbins): Replace this with a API call that gets the project.
     if (window.CS_env.projectIsRestricted) return false;
     if (!this.userDisplayName) return false;
     if (!this.prefsLoaded) return false;
     if (!this.prefs) return false;
-    if (this.prefs.get('public_issue_notice') !== 'true') return false;
-    if (this.prefs.get('corp_mode_click_through') === 'true') return false;
+    if (!this.prefs.get('public_issue_notice')) return false;
+    if (this.prefs.get('corp_mode_click_through')) return false;
     return true;
   }
 
+  /**
+   * Event handler for dismissing Monorail's privacy notice.
+   */
+  dismissPrivacyDialog() {
+    this.dismissCue('privacy_click_through');
+  }
+
+  /**
+   * Event handler for dismissing corp mode.
+   */
   dismissCorpModeDialog() {
     this.dismissCue('corp_mode_click_through');
   }
 
+  /**
+   * Dispatches a Redux action to tell Monorail's backend that the user
+   * clicked through a particular cue.
+   * @param {string} pref The pref to set to true.
+   */
   dismissCue(pref) {
     const newPrefs = [{name: pref, value: 'true'}];
     store.dispatch(userV0.setPrefs(newPrefs, !!this.userDisplayName));

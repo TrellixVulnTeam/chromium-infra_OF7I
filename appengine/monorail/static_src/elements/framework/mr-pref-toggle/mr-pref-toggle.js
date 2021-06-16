@@ -68,7 +68,7 @@ export class MrPrefToggle extends connectStore(LitElement) {
   get _checked() {
     const {prefs, initialValue} = this;
     if (!prefs) return initialValue;
-    return prefs.get(this.prefName) === 'true';
+    return prefs.get(this.prefName);
   }
 
   /**

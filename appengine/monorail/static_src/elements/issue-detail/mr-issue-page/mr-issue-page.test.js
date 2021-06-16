@@ -143,12 +143,12 @@ describe('mr-issue-page', () => {
 
     assert.isFalse(element.hasAttribute('codeFont'));
 
-    element.prefs = new Map([['code_font', 'true']]);
+    element.prefs = new Map([['code_font', true]]);
     await element.updateComplete;
 
     assert.isTrue(element.hasAttribute('codeFont'));
 
-    element.prefs = new Map([['code_font', 'false']]);
+    element.prefs = new Map([['code_font', false]]);
     await element.updateComplete;
 
     assert.isFalse(element.hasAttribute('codeFont'));

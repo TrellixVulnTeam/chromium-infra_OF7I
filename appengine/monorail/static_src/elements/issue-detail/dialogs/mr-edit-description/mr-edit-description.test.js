@@ -109,7 +109,7 @@ describe('mr-edit-description', () => {
 
   it('renders valid markdown description with preview class', async () => {
     element.projectName = 'monkeyrail';
-    element.prefs = new Map([['render_markdown', 'true']]);
+    element._prefs = new Map([['render_markdown', true]]);
     element.reset();
 
     element._editedDescription = '# h1';
@@ -125,7 +125,7 @@ describe('mr-edit-description', () => {
 
   it('does not show preview when markdown is disabled', async () => {
     element.projectName = 'disabled_project';
-    element.prefs = new Map([['render_markdown', 'true']]);
+    element._prefs = new Map([['render_markdown', true]]);
     element.reset();
 
     await element.updateComplete;

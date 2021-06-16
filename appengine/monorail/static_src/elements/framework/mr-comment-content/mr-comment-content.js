@@ -114,7 +114,7 @@ export class MrCommentContent extends connectStore(LitElement) {
   get _renderMarkdown() {
     const {prefs} = this;
     if (!prefs) return true;
-    return prefs.get('render_markdown') !== 'false';
+    return prefs.get('render_markdown');
   }
 
   /** @override */

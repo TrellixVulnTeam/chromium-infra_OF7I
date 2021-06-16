@@ -9,6 +9,8 @@ import {prpcClient} from 'prpc-client-instance.js';
 import {objectToMap} from 'shared/helpers.js';
 import {userRefToId, userToUserRef} from 'shared/convertersV0.js';
 import loadGapi, {fetchGapiEmail} from 'shared/gapi-loader.js';
+import {DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
+import {viewedProjectName} from 'reducers/projectV0.js';
 
 // Actions
 const FETCH_START = 'userV0/FETCH_START';
@@ -38,6 +40,16 @@ const GAPI_LOGIN_FAILURE = 'GAPI_LOGIN_FAILURE';
 const GAPI_LOGOUT_START = 'GAPI_LOGOUT_START';
 export const GAPI_LOGOUT_SUCCESS = 'GAPI_LOGOUT_SUCCESS';
 const GAPI_LOGOUT_FAILURE = 'GAPI_LOGOUT_FAILURE';
+
+
+// Monorial UserPrefs are stored as plain strings in Monorail's backend.
+// We want boolean preferences to be converted into booleans for convenience.
+// Currently, there are no user prefs in Monorail that are NOT booleans, so
+// we default to converting all user prefs to booleans unless otherwise
+// specified.
+// See: https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/framework/framework_bizobj.py;l=409
+const NON_BOOLEAN_PREFS = new Set(['test_non_bool']);
+
 
 /* State Shape
 {
@@ -164,7 +176,20 @@ export const isLoggedIn = createSelector(
 export const userRef = createSelector(
     currentUser, (user) => userToUserRef(user));
 export const prefs = createSelector(
-    currentUser, (user) => objectToMap(user.prefs));
+    currentUser, viewedProjectName, (user, projectName = '') => {
+      const prefs = {
+        // Make Markdown default to true for projects who have opted in.
+        render_markdown: DEFAULT_MD_PROJECTS.has(projectName),
+        ...user.prefs
+      };
+      for (let prefName of Object.keys(prefs)) {
+        if (!NON_BOOLEAN_PREFS.has(prefName)) {
+          // Monorail user preferences are stored as strings.
+          prefs[prefName] = prefs[prefName] === 'true';
+        }
+      }
+      return objectToMap(prefs);
+    });
 
 const _usersById = (state) => state.userV0.usersById || {};
 export const usersById = createSelector(_usersById,
@@ -267,6 +292,10 @@ export const fetchHotlists = (userRef) => async (dispatch) => {
   };
 };
 
+/**
+ * Fetches user preferences for the logged in user.
+ * @return {function(function): Promise<void>}
+ */
 export const fetchPrefs = () => async (dispatch) => {
   dispatch({type: FETCH_PREFS_START});
 

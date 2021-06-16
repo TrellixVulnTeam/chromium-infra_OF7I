@@ -672,8 +672,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     if (!this.getCommentContent()) {
       return false;
     }
-    const {prefs} = this;
-    const enabled = prefs ? prefs.get('render_markdown') !== 'false' : true;
+    const enabled = this.prefs.get('render_markdown');
     return shouldRenderMarkdown({project: this.projectName, enabled});
   }
 

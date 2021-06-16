@@ -128,22 +128,36 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
     super.update(changedProperties);
   }
 
+  /**
+   * Checks if the user should see a corp mode warning about an issue being
+   * public.
+   * @return {string}
+   */
   get _warningText() {
     const {restrictions, prefs} = this;
     if (!prefs) return '';
     if (!restrictions) return '';
     if ('view' in restrictions && restrictions['view'].length) return '';
-    if (prefs.get('public_issue_notice') === 'true') {
+    if (prefs.get('public_issue_notice')) {
       return 'Public issue: Please do not post confidential information.';
     }
     return '';
   }
 
+  /**
+   * Gets either corp mode or restricted issue text depending on which
+   * is relevant to the issue.
+   * @return {string}
+   */
   get _combinedText() {
     if (this._warningText) return this._warningText;
     return this._restrictionText;
   }
 
+  /**
+   * Computes the text to show users on a restricted issue.
+   * @return {string}
+   */
   get _restrictionText() {
     const {restrictions} = this;
     if (!restrictions) return;

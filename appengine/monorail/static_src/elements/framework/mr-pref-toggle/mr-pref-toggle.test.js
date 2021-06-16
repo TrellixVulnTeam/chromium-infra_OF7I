@@ -12,9 +12,9 @@ let element;
 describe('mr-pref-toggle', () => {
   beforeEach(() => {
     element = document.createElement('mr-pref-toggle');
-    element.label = "Code";
-    element.title = "Code font"
-    element.prefName = "code_font";
+    element.label = 'Code';
+    element.title = 'Code font';
+    element.prefName = 'code_font';
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call').returns(Promise.resolve({}));
   });
@@ -28,7 +28,7 @@ describe('mr-pref-toggle', () => {
     assert.instanceOf(element, MrPrefToggle);
   });
 
-  it('toggling font does not save when user is not logged in', async () => {
+  it('toggling does not save when user is not logged in', async () => {
     element.userDisplayName = undefined;
     element.prefs = new Map([]);
 
@@ -40,12 +40,12 @@ describe('mr-pref-toggle', () => {
 
     sinon.assert.notCalled(prpcClient.call);
 
-    assert.deepEqual(element.prefs, new Map([['code_font', 'true']]));
+    assert.isTrue(element.prefs.get('code_font'));
   });
 
-  it('toggling font to true saves result', async () => {
+  it('toggling to true saves result', async () => {
     element.userDisplayName = 'test@example.com';
-    element.prefs = new Map([['code_font', 'false']]);
+    element.prefs = new Map([['code_font', false]]);
 
     await element.updateComplete;
 
@@ -60,12 +60,12 @@ describe('mr-pref-toggle', () => {
         'SetUserPrefs',
         {prefs: [{name: 'code_font', value: 'true'}]});
 
-    assert.deepEqual(element.prefs, new Map([['code_font', 'true']]));
+    assert.isTrue(element.prefs.get('code_font'));
   });
 
-  it('toggling font to false saves result', async () => {
+  it('toggling to false saves result', async () => {
     element.userDisplayName = 'test@example.com';
-    element.prefs = new Map([['code_font', 'true']]);
+    element.prefs = new Map([['code_font', true]]);
 
     await element.updateComplete;
 
@@ -80,6 +80,6 @@ describe('mr-pref-toggle', () => {
         'SetUserPrefs',
         {prefs: [{name: 'code_font', value: 'false'}]});
 
-    assert.deepEqual(element.prefs, new Map([['code_font', 'false']]));
+    assert.isFalse(element.prefs.get('code_font'));
   });
 });

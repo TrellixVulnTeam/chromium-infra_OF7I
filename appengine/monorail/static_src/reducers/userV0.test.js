@@ -169,12 +169,13 @@ describe('userV0', () => {
     it('prefs', () => {
       const state = wrapCurrentUser({prefs: {
         testPref: 'true',
-        anotherPref: 'hello-world',
+        test_non_bool: 'hello-world',
       }});
 
       assert.deepEqual(userV0.prefs(state), new Map([
-        ['testPref', 'true'],
-        ['anotherPref', 'hello-world'],
+        ['render_markdown', false],
+        ['testPref', true],
+        ['test_non_bool', 'hello-world'],
       ]));
     });
 

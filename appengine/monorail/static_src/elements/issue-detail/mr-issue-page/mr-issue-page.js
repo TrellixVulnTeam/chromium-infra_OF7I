@@ -327,7 +327,7 @@ export class MrIssuePage extends connectStore(LitElement) {
   /** @override */
   update(changedProperties) {
     if (changedProperties.has('prefs')) {
-      this.codeFont = this.prefs.get('code_font') === 'true';
+      this.codeFont = !!this.prefs.get('code_font');
     }
     if (changedProperties.has('fetchIssueError') &&
       !this.userDisplayName && this.fetchIssueError &&

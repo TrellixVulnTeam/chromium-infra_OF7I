@@ -61,6 +61,7 @@ describe('mr-comment-content', () => {
   });
 
   it('does render markdown', async () => {
+    element.prefs = new Map([['render_markdown', true]]);
     element.content = '### this is a header';
     element.projectName = 'monkeyrail';
 
@@ -71,7 +72,7 @@ describe('mr-comment-content', () => {
   });
 
   it('does not render markdown when prefs are set to false', async () => {
-    element.prefs = new Map([['render_markdown', 'false']]);
+    element.prefs = new Map([['render_markdown', false]]);
     element.projectName = 'monkeyrail';
     element.content = '### this is a header';
 

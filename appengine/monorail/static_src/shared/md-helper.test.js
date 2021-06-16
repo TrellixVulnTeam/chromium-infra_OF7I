@@ -9,13 +9,13 @@ describe('shouldRenderMarkdown', () => {
 
   it('returns true for enabled projects', () => {
     const actual = shouldRenderMarkdown({project:'astor',
-      enabledProjects: new Set(['astor'])});
+      availableProjects: new Set(['astor'])});
     assert.isTrue(actual);
   });
 
   it('returns false for disabled projects', () => {
     const actual = shouldRenderMarkdown({project:'hazelnut',
-      enabledProjects: new Set(['astor'])});
+      availableProjects: new Set(['astor'])});
     assert.isFalse(actual);
   });
 

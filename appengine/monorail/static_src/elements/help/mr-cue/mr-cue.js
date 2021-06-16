@@ -264,7 +264,7 @@ export class MrCue extends connectStore(LitElement) {
    * @return {boolean} Whether the cue was dismissed or not.
    */
   alreadyDismissed(pref) {
-    return this.prefs && this.prefs.get(pref) === 'true';
+    return this.prefs && this.prefs.get(pref);
   }
 
   /**

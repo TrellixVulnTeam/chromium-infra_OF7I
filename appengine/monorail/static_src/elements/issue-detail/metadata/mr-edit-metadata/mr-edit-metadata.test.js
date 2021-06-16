@@ -887,12 +887,16 @@ describe('mr-edit-metadata', () => {
     ]);
   });
 
-  it('renders valid markdown description with preview class', async () => {
-    element.prefs = new Map([['render_markdown', 'true']]);
+  it('renders valid markdown description with preview', async () => {
+    await element.updateComplete;
+
+    element.prefs = new Map([['render_markdown', true]]);
     element.projectName = 'monkeyrail';
     sinon.stub(element, 'getCommentContent').returns('# h1');
 
     await element.updateComplete;
+
+    assert.isTrue(element._renderMarkdown);
 
     const previewMarkdown = element.querySelector('.markdown-preview');
     assert.isNotNull(previewMarkdown);
@@ -902,7 +906,7 @@ describe('mr-edit-metadata', () => {
   });
 
   it('does not show preview when markdown is disabled', async () => {
-    element.prefs = new Map([['render_markdown', 'false']]);
+    element.prefs = new Map([['render_markdown', false]]);
     element.projectName = 'monkeyrail';
     sinon.stub(element, 'getCommentContent').returns('# h1');
 
@@ -913,7 +917,7 @@ describe('mr-edit-metadata', () => {
   });
 
   it('does not show preview when no input', async () => {
-    element.prefs = new Map([['render_markdown', 'true']]);
+    element.prefs = new Map([['render_markdown', true]]);
     element.projectName = 'monkeyrail';
     sinon.stub(element, 'getCommentContent').returns('');
 

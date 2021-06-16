@@ -32,7 +32,7 @@ describe('mr-cue', () => {
       userV0: {currentUser: {prefs: new Map(), prefsLoaded: false}},
     }, {});
     element.stateChanged(state);
-    assert.deepEqual(element.prefs, new Map());
+    assert.deepEqual(element.prefs, new Map([['render_markdown', false]]));
     assert.isFalse(element.prefsLoaded);
   });
 
@@ -44,7 +44,7 @@ describe('mr-cue', () => {
   it('cue is hidden if user already dismissed it', () => {
     element.prefsLoaded = true;
     element.cuePrefName = 'code_of_conduct';
-    element.prefs = new Map([['code_of_conduct', 'true']]);
+    element.prefs = new Map([['code_of_conduct', true]]);
     assert.isTrue(element.hidden);
   });
 
