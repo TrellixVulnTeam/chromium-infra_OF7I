@@ -151,6 +151,7 @@ export const MD_STYLES = css`
 `;
 
 export const MD_PREVIEW_STYLES = css`
+  ${MD_STYLES}
   .markdown-preview {
     padding: 0.25em 1em;
     color: var(--chops-gray-800);
