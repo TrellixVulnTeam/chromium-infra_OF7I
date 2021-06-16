@@ -7,22 +7,34 @@ package frontend
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	kartepb "infra/cros/karte/api"
 )
 
-// TestCreateAction makes sure that CreateAction fails because it isn't
-// implemented yet.
+// TestCreateAction makes sure that CreateAction returns the action it created.
 func TestCreateAction(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
 	k := NewKarteFrontend()
-	_, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{})
-	if err == nil {
-		t.Error("expected CreateAction to fail")
+	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
+		Action: &kartepb.Action{
+			Kind: "ssh-attempt",
+		},
+	})
+	expected := &kartepb.Action{
+		Name: "",
+		Kind: "ssh-attempt",
+	}
+	if err != nil {
+		t.Error(err)
+	}
+	if diff := cmp.Diff(expected, resp, protocmp.Transform()); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 }
 

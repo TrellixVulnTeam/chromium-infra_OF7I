@@ -7,6 +7,7 @@ syntax = "proto3";
 package karte;
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "infra/cros/karte/api/action.proto";
 import "infra/cros/karte/api/observation.proto";
 
@@ -52,8 +53,12 @@ service Karte {
 }
 
 // CreateActionRequest creates a single action.
-// TODO(gregorynisbet): Make the action request non-empty.
-message CreateActionRequest {}
+message CreateActionRequest {
+  // An action is the action record being created.
+  Action action = 1 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
 
 // CreateObservationRequest creates a single action.
 // TODO(gregorynisbet): Make the observation request non-empty.

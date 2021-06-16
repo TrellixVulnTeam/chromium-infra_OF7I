@@ -24,9 +24,9 @@ func NewKarteFrontend() kartepb.KarteServer {
 }
 
 // CreateAction creates an action and then returns the just-created action.
-// TODO(gregorynisbet): Replace CreateAction with a real implementation.
+// TODO(gregorynisbet): Change CreateAction so it stores things in datastore.
 func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateActionRequest) (*kartepb.Action, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	return req.GetAction(), nil
 }
 
 // CreateObservation creates an observation and then returns the just-created observation.
