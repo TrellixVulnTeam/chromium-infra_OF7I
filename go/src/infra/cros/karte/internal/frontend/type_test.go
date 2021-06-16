@@ -13,6 +13,7 @@ import (
 	kartepb "infra/cros/karte/api"
 )
 
+// TestConvertActionEntity tests that an action entity can be converted to an action.
 func TestConvertActionEntity(t *testing.T) {
 	t.Parallel()
 	entity := &ActionEntity{

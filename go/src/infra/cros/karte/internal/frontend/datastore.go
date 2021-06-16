@@ -8,6 +8,7 @@ import (
 	"context"
 	kartepb "infra/cros/karte/api"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 )
@@ -161,6 +162,16 @@ func MakeAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
 		Token: token,
 		Query: datastore.NewQuery(ObservationKind),
 	}
+}
+
+// ConvertActionToActionEntity takes an action and converts it to an action entity.
+func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
+	if action == nil {
+		return nil, errors.New("action cannot be nil")
+	}
+	return &ActionEntity{
+		ID: action.GetName(),
+	}, nil
 }
 
 // PutActionEntities writes action entities to datastore.

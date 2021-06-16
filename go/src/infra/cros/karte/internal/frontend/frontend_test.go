@@ -15,7 +15,7 @@ import (
 	kartepb "infra/cros/karte/api"
 )
 
-// TestCreateAction makes sure that CreateAction returns the action it created.
+// TestCreateAction makes sure that CreateAction returns the action it created and that the action is present in datastore.
 func TestCreateAction(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
@@ -35,6 +35,18 @@ func TestCreateAction(t *testing.T) {
 	}
 	if diff := cmp.Diff(expected, resp, protocmp.Transform()); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+	// Here we inspect the contents of datastore.
+	datastoreActionEntities, err := MakeAllActionEntitiesQuery("").Next(ctx, 0)
+	if datastoreActionEntities == nil {
+		t.Errorf("action entities should not be nil")
+	}
+	switch len(datastoreActionEntities) {
+	case 0:
+		t.Errorf("datastore should not be empty")
+	case 1:
+	default:
+		t.Errorf("datastore should not have more than 1 item")
 	}
 }
 

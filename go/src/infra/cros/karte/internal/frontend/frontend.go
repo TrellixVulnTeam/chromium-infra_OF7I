@@ -7,6 +7,7 @@ package frontend
 import (
 	"context"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,9 +24,21 @@ func NewKarteFrontend() kartepb.KarteServer {
 	return &karteFrontend{}
 }
 
-// CreateAction creates an action and then returns the just-created action.
-// TODO(gregorynisbet): Change CreateAction so it stores things in datastore.
+// CreateAction creates an action, stores it in datastore, and then returns the just-created action.
 func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateActionRequest) (*kartepb.Action, error) {
+	if req == nil {
+		return nil, errors.New("request cannot be nil")
+	}
+	if req.GetAction() == nil {
+		return nil, errors.New("cannot create nil action")
+	}
+	actionEntity, err := ConvertActionToActionEntity(req.GetAction())
+	if err != nil {
+		return nil, err
+	}
+	if err := PutActionEntities(ctx, actionEntity); err != nil {
+		return nil, errors.Annotate(err, "writing ation to datastore").Err()
+	}
 	return req.GetAction(), nil
 }
 
