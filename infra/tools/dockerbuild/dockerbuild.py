@@ -241,7 +241,10 @@ def _main_wheel_json(_, system):
   for build in wheels.SPECS.itervalues():
     for plat in build_platform.ALL.itervalues():
       if build.supported(plat):
-        all_wheels.append(build.wheel(system, plat)._asdict())
+        w = build.wheel(system, plat)._asdict()
+        w['spec'] = w['spec']._asdict()
+        w['plat'] = w['plat']._asdict()
+        all_wheels.append(w)
 
   json.dump(all_wheels, sys.stdout)
 
