@@ -28,15 +28,24 @@ import (
 func TestJobRenderingLegacyURL(t *testing.T) {
 	Convey("Given a Job proto", t, func() {
 		j := &proto.Job{
-			Name:               "",
-			State:              0,
-			CreatedBy:          "",
-			CreateTime:         timestamppb.New(time.Now().Add(-time.Hour)),
-			LastUpdateTime:     timestamppb.Now(),
-			JobSpec:            &proto.JobSpec{},
+			Name:           "",
+			State:          0,
+			CreatedBy:      "",
+			CreateTime:     timestamppb.New(time.Now().Add(-time.Hour)),
+			LastUpdateTime: timestamppb.Now(),
+			JobSpec: &proto.JobSpec{
+				MonorailIssue: &proto.MonorailIssue{
+					Project: "chromium",
+					IssueId: 1234,
+				},
+			},
 			CancellationReason: "",
 			Results:            nil,
 		}
+		Convey("When we have a monorail issue", func() {
+			s := renderMonorailIssue(j)
+			So(s, ShouldEqual, "https://bugs.chromium.org/p/chromium/issues/detail?id=1234")
+		})
 		Convey("When we have a legacy ID", func() {
 			j.Name = "jobs/legacy-1234567"
 			Convey("Then we can generate a URL for the job", func() {

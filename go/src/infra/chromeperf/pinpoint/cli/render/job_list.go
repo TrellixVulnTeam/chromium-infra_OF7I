@@ -14,6 +14,7 @@
 package render
 
 import (
+	"fmt"
 	"infra/chromeperf/pinpoint/proto"
 	"io"
 	"text/template"
@@ -26,6 +27,7 @@ import (
 const (
 	jobsTmpl = `{{range .}}{{renderCreateTime .}}:  {{renderJobKind .}} ({{renderState .}}) [{{.JobSpec.Config}}] by {{.CreatedBy}}
   {{JobURL .}}
+  Issue {{renderMonorailIssue .}}
 {{end}}
 `
 )
@@ -53,12 +55,20 @@ func renderState(j *proto.Job) string {
 	return j.State.String()
 }
 
+func renderMonorailIssue(j *proto.Job) string {
+	if j.JobSpec.MonorailIssue != nil {
+		return fmt.Sprintf("https://bugs.chromium.org/p/%s/issues/detail?id=%d", j.JobSpec.MonorailIssue.Project, j.JobSpec.MonorailIssue.IssueId)
+	}
+	return ""
+}
+
 var listTmpl = template.Must(template.New("Jobs").Funcs(
 	template.FuncMap{
-		"renderCreateTime": renderCreateTime,
-		"renderJobKind":    renderJobKind,
-		"renderState":      renderState,
-		"JobURL":           JobURL,
+		"renderCreateTime":    renderCreateTime,
+		"renderJobKind":       renderJobKind,
+		"renderState":         renderState,
+		"renderMonorailIssue": renderMonorailIssue,
+		"JobURL":              JobURL,
 	},
 ).Parse(jobsTmpl))
 
