@@ -1,3 +1,6 @@
+# vpython spec proto:
+# https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/vpython/api/vpython/spec.proto
+python_version: "3.8"
 wheel: <
   name: "infra/python/wheels/pyyaml-py3"
   version: "version:5.3.1"
