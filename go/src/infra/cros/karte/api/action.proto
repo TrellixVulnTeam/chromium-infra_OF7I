@@ -17,7 +17,7 @@ import "google/api/resource.proto";
 // Next Tag: 4
 message Action {
   reserved 2;
-  reserved "action_type";
+  reserved "action_kind";
   option (google.api.resource) = {
     type: "karte.appspot.com/Action"
     pattern: "actions/{action}"
