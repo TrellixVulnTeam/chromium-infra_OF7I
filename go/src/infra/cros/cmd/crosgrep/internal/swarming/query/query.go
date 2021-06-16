@@ -14,12 +14,12 @@ import (
 
 // MustMakeTemplate takes the name of a template and the body and produces a template.
 // In the event of an error it panics. Templates are not intended to be created dynamically.
-func MustMakeTemplate(name string, body string) *template.Template {
+func mustMakeTemplate(name string, body string) *template.Template {
 	return template.Must(template.New(name).Parse("{{$tick := \"`\"}}" + body))
 }
 
 // InstantiateSQLQuery takes a template, a normalizer function, and a bundle of parameters and// creates a SQL query as a string.
-func InstantiateSQLQuery(ctx context.Context, template *template.Template, params interface{}) (string, error) {
+func instantiateSQLQuery(ctx context.Context, template *template.Template, params interface{}) (string, error) {
 	var out bytes.Buffer
 	if err := template.Execute(&out, params); err != nil {
 		return "", err
@@ -38,8 +38,8 @@ func RunSQL(ctx context.Context, client *bigquery.Client, sql string) (*bigquery
 // MustExpandTick takes a string containing {{$tick}} instead of ` and replaces occurrences of
 // {{$tick}} with `. In the event that the string is malformed as a text/template, MustExpandTick
 // will panic. This function is intended to be used with strings that are compile-time constants.
-func MustExpandTick(body string) string {
-	template := MustMakeTemplate("", "{{$tick := \"`\"}}"+body)
+func mustExpandTick(body string) string {
+	template := mustMakeTemplate("", "{{$tick := \"`\"}}"+body)
 	out := &bytes.Buffer{}
 	if err := template.Execute(out, nil); err != nil {
 		panic(err.Error())

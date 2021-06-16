@@ -31,7 +31,7 @@ func RunBrokenBy(ctx context.Context, client *bigquery.Client, params *BrokenByP
 	if params.EndTime == 0 {
 		params.EndTime = now + 1
 	}
-	sql, err := InstantiateSQLQuery(ctx, brokenByTemplate, params)
+	sql, err := instantiateSQLQuery(ctx, brokenByTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func RunBrokenBy(ctx context.Context, client *bigquery.Client, params *BrokenByP
 }
 
 // BrokenByTemplate is a fixed query that finds the last successful task to execute on a given host.
-var brokenByTemplate = MustMakeTemplate(
+var brokenByTemplate = mustMakeTemplate(
 	"brokenBy",
 	`
 SELECT
@@ -117,7 +117,7 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 	if params.BuildBucketSafetyMargin == 0 {
 		params.BuildBucketSafetyMargin = buildBucketSafetyMarginSeconds
 	}
-	sql, err := InstantiateSQLQuery(ctx, brokenByTemplate, params)
+	sql, err := instantiateSQLQuery(ctx, brokenByTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 
 // TaskQueryTemplate is a query factory based on a SQL template that extracts information about swarming tasks
 // and their corresponding buildbucket tasks.
-var taskQueryTemplate = MustMakeTemplate(
+var taskQueryTemplate = mustMakeTemplate(
 	"taskQuery",
 	`
 SELECT

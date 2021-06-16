@@ -15,9 +15,9 @@ import (
 // query works for replacing a digit.
 func TestInstantiateSQLQueryWithoutNormalizer(t *testing.T) {
 	bg := context.Background()
-	sql, err := InstantiateSQLQuery(
+	sql, err := instantiateSQLQuery(
 		bg,
-		MustMakeTemplate(
+		mustMakeTemplate(
 			"name",
 			`f({{.Var | printf "%d"}})`,
 		),

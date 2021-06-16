@@ -13,7 +13,7 @@ import (
 
 func TestBrokenBy(t *testing.T) {
 	bg := context.Background()
-	expected := MustExpandTick(`
+	expected := mustExpandTick(`
 SELECT
   TRS.bot.bot_id,
   BUILDS.id AS bbid,
@@ -36,7 +36,7 @@ WHERE
 ORDER BY TRS.end_time DESC
 LIMIT 1
 `)
-	actual, err := InstantiateSQLQuery(
+	actual, err := instantiateSQLQuery(
 		bg,
 		brokenByTemplate,
 		&BrokenByParams{
@@ -55,7 +55,7 @@ LIMIT 1
 
 func TestRunTasksQuery(t *testing.T) {
 	bg := context.Background()
-	expected := MustExpandTick(`
+	expected := mustExpandTick(`
 SELECT
   TRS.bot.bot_id,
   BUILDS.id AS bbid,
@@ -85,7 +85,7 @@ WHERE
  )
 LIMIT 10000
 `)
-	actual, err := InstantiateSQLQuery(
+	actual, err := instantiateSQLQuery(
 		bg,
 		taskQueryTemplate,
 		&TaskQueryParams{
