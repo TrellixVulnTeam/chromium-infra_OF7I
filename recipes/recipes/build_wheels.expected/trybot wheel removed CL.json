@@ -192,21 +192,111 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/builder/build_wheels/infra/run.py",
-      "infra.tools.dockerbuild",
-      "--root",
-      "[CLEANUP]/.dockerbuild_tmp_1",
-      "wheel-build",
-      "--rebuild"
+      "git",
+      "-c",
+      "core.quotePath=false",
+      "diff",
+      "--name-only",
+      "HEAD~"
     ],
     "cwd": "[CACHE]/builder/build_wheels/infra",
     "env": {
       "DISTUTILS_USE_SDK": "1",
       "MSSdk": "1"
     },
-    "name": "dockerbuild"
+    "infra_step": true,
+    "name": "git diff to find changed files"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/build_wheels/infra/run.py",
+      "infra.tools.dockerbuild",
+      "wheel-json"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "name": "compute new wheels.json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "infra_step": true,
+    "name": "git rev-parse"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "infra_step": true,
+    "name": "git checkout previous revision"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/build_wheels/infra/run.py",
+      "infra.tools.dockerbuild",
+      "wheel-json"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "name": "compute old wheels.json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"spec\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"name\": \"old-wheel\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"patch_version\": null, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"pyversions\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"py3\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      ], @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"version\": \"3.2.0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      ""
+    ],
+    "cwd": "[CACHE]/builder/build_wheels/infra",
+    "env": {
+      "DISTUTILS_USE_SDK": "1",
+      "MSSdk": "1"
+    },
+    "infra_step": true,
+    "name": "git checkout back to HEAD"
   },
   {
     "name": "$result"

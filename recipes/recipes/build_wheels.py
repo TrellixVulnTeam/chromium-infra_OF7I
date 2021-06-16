@@ -9,16 +9,19 @@ from recipe_engine.config import List
 
 DEPS = [
     'depot_tools/gclient',
+    'depot_tools/git',
     'depot_tools/windows_sdk',
     'depot_tools/osx_sdk',
     'depot_tools/tryserver',
     'recipe_engine/buildbucket',
     'recipe_engine/context',
     'recipe_engine/file',
+    'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/python',
+    'recipe_engine/raw_io',
 ]
 
 PROPERTIES = {
@@ -61,12 +64,6 @@ def RunSteps(api, platforms, dry_run, rebuild):
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
-  temp_path = api.path.mkdtemp('.dockerbuild')
-
-  platform_args = []
-  for p in platforms:
-    platform_args.extend(['--platform', p])
-
   # DISTUTILS_USE_SDK and MSSdk are necessary for distutils to correctly locate
   # MSVC on Windows. They do nothing on other platforms, so we just set them
   # unconditionally.
@@ -76,6 +73,48 @@ def RunSteps(api, platforms, dry_run, rebuild):
           'DISTUTILS_USE_SDK': '1',
           'MSSdk': '1',
       }):
+    wheels = None
+    if api.tryserver.is_tryserver:
+      files = api.git(
+          '-c',
+          'core.quotePath=false',
+          'diff',
+          '--name-only',
+          'HEAD~',
+          name='git diff to find changed files',
+          stdout=api.raw_io.output()).stdout.split()
+      assert (files != [])
+      # Avoid rebuilding everything if only the wheel specs have changed.
+      if all(api.path.basename(p) in {'wheels.py', 'wheels.md'} for p in files):
+        run_wheel_json = lambda step_name: \
+          api.python(step_name, solution_path.join('infra', 'run.py'),
+                     ['infra.tools.dockerbuild', 'wheel-json'],
+                     stdout=api.json.output()).stdout
+
+        new_wheels = run_wheel_json('compute new wheels.json')
+
+        patch_commit = api.git(
+            'rev-parse', 'HEAD', stdout=api.raw_io.output()).stdout.strip()
+        api.git('checkout', 'HEAD~', name='git checkout previous revision')
+
+        old_wheels = run_wheel_json('compute old wheels.json')
+
+        api.git('checkout', patch_commit, name='git checkout back to HEAD')
+
+        wheels = []
+        for wheel in new_wheels:
+          if wheel not in old_wheels:
+            spec = wheel['spec']
+
+            # Compute the tag in the same way as in dockerbuild's Spec.tag
+            tag = '%s-%s' % (spec['name'], spec['version'])
+            if spec['patch_version']:
+              tag += '.' + spec['patch_version']
+            if spec['pyversions']:
+              tag += '-' + '.'.join(sorted(spec['pyversions']))
+            wheels.append(tag)
+
+    temp_path = api.path.mkdtemp('.dockerbuild')
     args = [
         'infra.tools.dockerbuild',
         '--root',
@@ -90,8 +129,20 @@ def RunSteps(api, platforms, dry_run, rebuild):
     if rebuild:
       args.append('--rebuild')
 
-    api.python('dockerbuild', solution_path.join('infra', 'run.py'),
-               args + platform_args)
+    for p in platforms:
+      args.extend(['--platform', p])
+
+    if wheels is not None:
+      # If this is a wheel config-only change, but there are no new or changed
+      # wheels, then don't bother running dockerbuild. This is the case if
+      # there's a non-functional change in wheels.py, or if we removed wheels.
+      if wheels == []:
+        return
+
+      for wheel in wheels:
+        args.extend(['--wheel', wheel])
+
+    api.python('dockerbuild', solution_path.join('infra', 'run.py'), args)
 
 
 @contextmanager
@@ -140,7 +191,60 @@ def GenTests(api):
                  api.platform('win', 64) + api.expect_exception('ValueError'))
 
   yield api.test(
-      'trybot config',
+      'trybot non-wheels file CL',
       api.properties(dry_run=True, rebuild=True) +
       api.buildbucket.try_build('infra') +
-      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo'))
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.override_step_data(
+          'git diff to find changed files',
+          stdout=api.raw_io.output('infra/tools/dockerbuild/wheel_wheel.py')))
+
+  yield api.test(
+      'trybot wheels only CL',
+      api.properties(dry_run=True, rebuild=True) +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.override_step_data(
+          'git diff to find changed files',
+          stdout=api.raw_io.output('infra/tools/dockerbuild/wheels.py')) +
+      api.override_step_data(
+          'compute old wheels.json',
+          stdout=api.json.output([{
+              "spec": {
+                  "name": "old-wheel",
+                  "patch_version": None,
+                  "pyversions": ["py3"],
+                  "version": "3.2.0"
+              }
+          }])) +
+      api.override_step_data(
+          'compute new wheels.json',
+          stdout=api.json.output([{
+              "spec": {
+                  "name": "entirely-new",
+                  "patch_version": 'chromium.1',
+                  "pyversions": ["py3"],
+                  "version": "3.3.0"
+              }
+          }])))
+
+  yield api.test(
+      'trybot wheel removed CL',
+      api.properties(dry_run=True, rebuild=True) +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.override_step_data(
+          'git diff to find changed files',
+          stdout=api.raw_io.output('infra/tools/dockerbuild/wheels.py')) +
+      api.override_step_data(
+          'compute old wheels.json',
+          stdout=api.json.output([{
+              "spec": {
+                  "name": "old-wheel",
+                  "patch_version": None,
+                  "pyversions": ["py3"],
+                  "version": "3.2.0"
+              }
+          }])) +
+      api.override_step_data(
+              'compute new wheels.json', stdout=api.json.output([])))
