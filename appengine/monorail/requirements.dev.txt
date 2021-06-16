@@ -1,18 +1,17 @@
 # Python 2 packages needed for dev_appserver.py. During deployment, these
 # packages are built into App Engine and included by declaring them in app.yaml.
 # https://cloud.google.com/appengine/docs/standard/python/tools/using-libraries-python-27#local_development
+# All packages must be at least 3 weeks old, crbug.com/1117193#c5
+# For hash-checking mode, all nested dependencies must be included.
 
 # For binary dependencies, we'll have to provide one for each platform. We're targeting:
 # * Python: cp27m, but prefer cp27mu (CPython 2.7)
 # * OS: macosx_10_* and manylinux*
 # * Architecture: x86_64
-# All packages must be at least 3 weeks old, crbug.com/1117193#c5
 
-# Uploaded Nov 21, 2019
 mysqlclient==1.4.6 --hash=sha256:f3fdaa9a38752a3b214a6fe79d7cae3653731a53e577821f9187e67cbecb2e16
 
 # Required by grpc-google-iam-v1 <-- google-cloud-tasks
-# Uploaded August 5, 2020
 # first sha is for cp27m-macosx_10_9_x86
 # second sha is for cp27mu-manylinux2010_x86
 # third sha is for cp27m-manylinux2010_x86
@@ -21,12 +20,5 @@ grpcio==1.31.0 --hash=sha256:e8c3264b0fd728aadf3f0324471843f65bd3b38872bdab2a477
                --hash=sha256:58d7121f48cb94535a4cedcce32921d0d0a78563c7372a143dedeec196d1c637
 
 # Required by google-cloud-tasks
-# Uploaded Jul 29, 2020
 protobuf==3.12.4 --hash=sha256:3d59825cba9447e8f4fcacc1f3c892cafd28b964e152629b3f420a2fb5918b5a \
                  --hash=sha256:6009f3ebe761fad319b52199a49f1efa7a3729302947a78a3f5ea8e7e89e3ac2
-
-# Uploaded May 21, 2020
-six==1.15.0 --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced
-
-# Uploaded Mar 10, 2020
-enum34==1.1.10 --hash=sha256:a98a201d6de3f2ab3db284e70a33b0f896fbf35f8086594e8c9e74b909058d53

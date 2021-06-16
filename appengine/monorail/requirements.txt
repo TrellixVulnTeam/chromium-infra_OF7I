@@ -1,8 +1,6 @@
 # Python 3 packages.
-# This file may need to also include all nested dependencies
+# All packages must be at least 3 weeks old, crbug.com/1117193#c5
+# For hash-checking mode, all nested dependencies must be included.
 
-# Uploaded July 2, 2020
-mysqlclient==2.0.1 --hash=sha256:fb2f75aea14722390d2d8ddf384ad99da708c707a96656210a7be8af20a2c5e5
-
-# Uploaded Feb 24, 2020
 google-cloud-tasks==1.5.0 --hash=sha256:36aa16f0c52aa9a292b1f919d2582725731e9760393c9ca98ce599c68cbf9996
+mysqlclient==2.0.1 --hash=sha256:fb2f75aea14722390d2d8ddf384ad99da708c707a96656210a7be8af20a2c5e5
