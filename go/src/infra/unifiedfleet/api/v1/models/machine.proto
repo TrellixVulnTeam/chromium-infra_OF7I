@@ -116,6 +116,8 @@ message ChromeOSMachine {
     // The manufacturing ID for a given DUT
     // User not allowed to update this field. SSW will update this field.
     string hwid = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+    // GPN stands for Google Part Number, unique identifier for the device
+    string gpn = 11;
 }
 
 // ChromeOSDeviceType refers to the different types of
