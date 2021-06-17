@@ -26,6 +26,7 @@
   * [build_from_tarball](#recipes-build_from_tarball)
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
   * [build_wheels](#recipes-build_wheels)
+  * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) &mdash; This recipe verifies importing of chromium bootstrap protos.
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
@@ -1058,6 +1059,14 @@ To build a new package for all platforms:
 &emsp; **@contextmanager**<br>&mdash; **def [PlatformSdk](/recipes/recipes/build_wheels.py#148)(api, platforms):**
 
 &mdash; **def [RunSteps](/recipes/recipes/build_wheels.py#53)(api, platforms, dry_run, rebuild):**
+### *recipes* / [chromium\_bootstrap/test](/recipes/recipes/chromium_bootstrap/test.py)
+
+This recipe verifies importing of chromium bootstrap protos.
+
+The protos are exported via a symlink in
+//recipe/recipe_proto/infra/chromium.
+
+&mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#14)(api):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
