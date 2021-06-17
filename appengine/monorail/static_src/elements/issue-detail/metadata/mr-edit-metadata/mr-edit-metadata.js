@@ -390,7 +390,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         vocabularyName="owner"
         .placeholder=${ownerPresubmit.placeholder}
         .value=${this._values.owner}
-        .onChange=${this._onChange.bind(this, 'owner')}
+        .onChange=${this._changeHandlers.owner}
       ></mr-react-autocomplete>
     `;
   }
@@ -408,7 +408,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         .multiple=${true}
         .fixedValues=${this._derivedCCs}
         .value=${this._values.cc}
-        .onChange=${this._onChange.bind(this, 'cc')}
+        .onChange=${this._changeHandlers.cc}
       ></mr-react-autocomplete>
     `;
   }
@@ -428,7 +428,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         vocabularyName="component"
         .multiple=${true}
         .value=${this._values.components}
-        .onChange=${this._onChange.bind(this, 'components')}
+        .onChange=${this._changeHandlers.components}
       ></mr-react-autocomplete>
     `;
   }
@@ -529,7 +529,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         .multiple=${true}
         .fixedValues=${this.derivedLabels}
         .value=${this._values.labels}
-        .onChange=${this._onChange.bind(this, 'labels')}
+        .onChange=${this._changeHandlers.labels}
       ></mr-react-autocomplete>
     `;
   }
@@ -650,6 +650,13 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.prefs = {};
     this._values = {};
     this._initialValues = {};
+
+    this._changeHandlers = {
+      owner: this._onChange.bind(this, 'owner'),
+      cc: this._onChange.bind(this, 'cc'),
+      components: this._onChange.bind(this, 'components'),
+      labels: this._onChange.bind(this, 'labels'),
+    };
   }
 
   /** @override */

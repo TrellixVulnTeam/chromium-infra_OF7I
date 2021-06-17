@@ -5,6 +5,7 @@
 import {LitElement, property, internalProperty} from 'lit-element';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import deepEqual from 'deep-equal';
 
 import {AutocompleteChangeDetails, AutocompleteChangeReason}
   from '@material-ui/core/Autocomplete';
@@ -38,9 +39,13 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
 
   // Optional properties passed in from the parent element.
   /** The value (or values, if `multiple === true`). */
-  @property() value?: string | string[] = undefined;
+  @property({
+    hasChanged: (oldVal, newVal) => !deepEqual(oldVal, newVal),
+  }) value?: string | string[] = undefined;
   /** Values that show up as disabled chips. */
-  @property() fixedValues: string[] = [];
+  @property({
+    hasChanged: (oldVal, newVal) => !deepEqual(oldVal, newVal),
+  }) fixedValues: string[] = [];
   /** True for chip input that takes multiple values, false for single input. */
   @property() multiple: boolean = false;
   /** Placeholder for the form input. */

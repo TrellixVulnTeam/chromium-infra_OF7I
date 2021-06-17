@@ -36,6 +36,22 @@ describe('mr-react-autocomplete', () => {
     assert.equal(input?.value, 'Penguin Island');
   });
 
+  it('does not update on new copies of the same values', async () => {
+    element.fixedValues = ['test'];
+    element.value = ['hah'];
+
+    sinon.spy(element, 'updated');
+
+    await element.updateComplete;
+    sinon.assert.calledOnce(element.updated);
+
+    element.fixedValues = ['test'];
+    element.value = ['hah'];
+
+    await element.updateComplete;
+    sinon.assert.calledOnce(element.updated);
+  });
+
   it('_getOptionDescription with component vocabulary gets docstring', () => {
     element.vocabularyName = 'component';
     element._components = new Map([['Infra>UI', {docstring: 'Test docs'}]]);
