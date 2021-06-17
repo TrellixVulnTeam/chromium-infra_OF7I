@@ -208,12 +208,14 @@ function _renderOption<T>(
     return <li
       {...props}
       className={`${props.className} autocomplete-option`}
+      style={{display: 'flex', flexDirection: 'row', wordWrap: 'break-word'}}
     >
-      <span style={{display: 'inline-block', minWidth: '30%'}}>
+      <span style={{display: 'block', width: (description ? '40%' : '100%')}}>
         {optionTemplate}
       </span>
       {description &&
-        <span style={{display: 'inline-block', paddingLeft: '8px'}}>
+        <span style={{display: 'block', boxSizing: 'border-box',
+            paddingLeft: '8px', width: '60%'}}>
           {descriptionTemplate}
         </span>
       }
