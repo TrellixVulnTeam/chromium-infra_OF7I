@@ -14,6 +14,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
@@ -310,7 +311,7 @@ func validateUpdateLabstation(ctx context.Context, oldLabstation, labstation *uf
 // renameLabstation renames the labstation with the given name. Use inside a transaction
 func renameLabstation(ctx context.Context, oldName, newName string, lse *ufspb.MachineLSE, machine *ufspb.Machine) (*ufspb.MachineLSE, error) {
 	//Get all the duts referencing the old labstation
-	dutMachinelses, err := inventory.RangedQueryMachineLSEByPropertyName(ctx, "servo_id", oldName, nil, false)
+	dutMachinelses, err := getDUTsConnectedToLabstation(ctx, oldName)
 	if err != nil {
 		return nil, err
 	}
@@ -353,6 +354,29 @@ func renameLabstation(ctx context.Context, oldName, newName string, lse *ufspb.M
 		return nil, errors.Annotate(err, "Failed to save history").Err()
 	}
 	return lse, nil
+}
+
+// getDUTsConnectedToLabstation returns a list of DUTs whose servo hostname is the given labstation
+func getDUTsConnectedToLabstation(ctx context.Context, labstation string) ([]*ufspb.MachineLSE, error) {
+	// As the DUTs are indexed by servo_id which is a concatenation of
+	// <host><port> strings we do a ranged query for everything greater
+	// than or equal to <labstation>9000 (min port) and less than or equal
+	// to <labstation>9999 (max port)
+	dutMachinelses, err := inventory.RangedQueryMachineLSEByPropertyName(ctx,
+		"servo_id", ufsds.GetServoID(labstation, servoPortMin),
+		ufsds.GetServoID(labstation, servoPortMax), false)
+	if err != nil {
+		return nil, errors.Annotate(err, "getDUTsConnectedToLabstation - %s", labstation).Err()
+	}
+	duts := make([]*ufspb.MachineLSE, 0, len(dutMachinelses))
+	for _, d := range dutMachinelses {
+		// Filter out the DUTs connected to the labstation as the ranged query might include unexpected duts.
+		shost := d.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoHostname
+		if shost == labstation {
+			duts = append(duts, d)
+		}
+	}
+	return duts, nil
 }
 
 // validateRenameLabstation checks if we have the correct permissions to update the duts connected to the labstation.
