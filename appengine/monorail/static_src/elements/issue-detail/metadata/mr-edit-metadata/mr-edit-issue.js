@@ -284,10 +284,10 @@ export class MrEditIssue extends connectStore(LitElement) {
   /**
    * Dispatches an action against the server to run "issue presubmit", a feature
    * that warns the user about issue changes that violate configured rules.
-   * @param {Object} issueDelta Changes currently present in the edit form.
+   * @param {Object=} issueDelta Changes currently present in the edit form.
    * @param {string} commentContent Text the user is inputting for a comment.
    */
-  _presubmitIssue(issueDelta, commentContent) {
+  _presubmitIssue(issueDelta = {}, commentContent) {
     // Don't run this functionality if the element has disconnected. Important
     // for preventing debounced code from running after an element no longer
     // exists.
@@ -305,7 +305,7 @@ export class MrEditIssue extends connectStore(LitElement) {
    * @param {CustomEvent} evt
    */
   _onChange(evt) {
-    const {delta, commentContent} = evt.detail;
+    const {delta, commentContent} = evt.detail || {};
 
     if (!this._debouncedPresubmit) {
       this._debouncedPresubmit = debounce(
