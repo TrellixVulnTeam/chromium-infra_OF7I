@@ -58,7 +58,8 @@ def main(argv):
   add_logging_options(parser)
   args = parser.parse_args(argv)
 
-  logging.basicConfig(level=args.log_level)
+  logging.basicConfig(
+      level=args.log_level, format='%(asctime)s:%(levelname)s: %(message)s')
 
   dockerbuild.run(args)
   return 0
