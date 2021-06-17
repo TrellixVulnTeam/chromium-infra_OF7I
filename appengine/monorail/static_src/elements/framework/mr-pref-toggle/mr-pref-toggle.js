@@ -6,7 +6,9 @@ import {LitElement, html} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-toggle/chops-toggle.js';
+import {logEvent} from 'monitoring/client-logger.js';
 
 /**
  * `<mr-pref-toggle>`
@@ -48,6 +50,7 @@ export class MrPrefToggle extends connectStore(LitElement) {
     this.prefs = userV0.prefs(state);
     this._prefsInFlight = userV0.requests(state).fetchPrefs.requesting ||
       userV0.requests(state).setPrefs.requesting;
+    this._projectName = projectV0.viewedProjectName(state);
   }
 
   /** @override */
@@ -58,6 +61,7 @@ export class MrPrefToggle extends connectStore(LitElement) {
     this.label = '';
     this.title = '';
     this.prefName = '';
+    this._projectName = '';
   }
 
   // Used by the legacy EZT page to interact with Redux.
@@ -83,6 +87,8 @@ export class MrPrefToggle extends connectStore(LitElement) {
 
     const newPrefs = [{name: this.prefName, value: '' + checked}];
     store.dispatch(userV0.setPrefs(newPrefs, !!this.userDisplayName));
+
+    logEvent('mr-pref-toggle', `${this.prefName}: ${checked}`, this._projectName);
   }
 }
 customElements.define('mr-pref-toggle', MrPrefToggle);

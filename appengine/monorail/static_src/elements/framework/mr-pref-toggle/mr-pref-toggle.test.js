@@ -17,6 +17,7 @@ describe('mr-pref-toggle', () => {
     element.prefName = 'code_font';
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call').returns(Promise.resolve({}));
+    window.ga = sinon.stub();
   });
 
   afterEach(() => {

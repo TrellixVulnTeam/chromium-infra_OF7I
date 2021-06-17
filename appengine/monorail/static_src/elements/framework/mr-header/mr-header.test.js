@@ -19,6 +19,8 @@ describe('mr-header', () => {
   beforeEach(() => {
     element = document.createElement('mr-header');
     document.body.appendChild(element);
+
+    window.ga = sinon.stub();
   });
 
   afterEach(() => {
