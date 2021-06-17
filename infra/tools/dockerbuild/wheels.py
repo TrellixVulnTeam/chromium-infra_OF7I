@@ -989,6 +989,7 @@ SPECS.update({
         Universal('json5', '0.6.0'),
         Universal('jsonlines', '1.2.0'),
         Universal('jsonschema', '3.2.0'),  # py2 + py3
+        Universal('keras-nightly', '2.5.0.dev2021032900', pyversions=['py3']),
         Universal('keyring', '18.0.1'),
         Universal('macholib', '1.11'),
         Universal('mccabe', '0.6.1'),
