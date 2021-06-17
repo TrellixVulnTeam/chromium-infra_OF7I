@@ -919,6 +919,13 @@ func appendServoEntryToLabstation(ctx context.Context, servo *chromeosLab.Servo,
 		return errors.Annotate(err, "appendServoEntryToLabstation - Cannot add servo to labstation").Err()
 	}
 	existingServos := labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	for i, s := range existingServos {
+		if s.GetServoSerial() == servo.GetServoSerial() {
+			// Replace the servo entry if it exists
+			existingServos[i] = s
+			return nil
+		}
+	}
 	existingServos = append(existingServos, servo)
 	labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = existingServos
 	return nil
@@ -941,11 +948,30 @@ func validateServoForLabstation(ctx context.Context, servo *chromeosLab.Servo, l
 	for _, s := range labstation.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos() {
 		// Check if servo already exists on the labstation.
 		if s.GetServoSerial() == servo.GetServoSerial() {
-			return status.Errorf(codes.FailedPrecondition, "Servo serial %s already exists on %s", s.GetServoSerial(), labstation.GetHostname())
+			// Verify that such a DUT actually exists
+			dut, err := GetDUTConnectedToServo(ctx, s)
+			if err != nil {
+				// Return error
+				return errors.Annotate(err, "validateServoForLabstation - (%s:%d %s) serial conflict",
+					s.GetServoHostname(), s.GetServoPort(), s.GetServoSerial()).Err()
+			}
+			if dut != nil {
+				// Return error that the servo is connected to DUT
+				return status.Errorf(codes.FailedPrecondition, "Servo serial %s exists is connected to %s",
+					s.GetServoSerial(), dut.GetHostname())
+			}
 		}
 		// Check if servo port is available
 		if s.GetServoPort() == servo.GetServoPort() {
-			return status.Errorf(codes.FailedPrecondition, "Servo port %v is in use on %s", s.GetServoPort(), labstation.GetHostname())
+			dut, err := GetDUTConnectedToServo(ctx, s)
+			if err != nil {
+				// Return error
+				return errors.Annotate(err, "validateServoForLabstation - (%s:%d %s) port conflict",
+					servo.GetServoHostname(), servo.GetServoPort(), servo.GetServoSerial()).Err()
+			}
+			if dut != nil {
+				return status.Errorf(codes.FailedPrecondition, "Servo port %v is in use by %s", s.GetServoPort(), dut.GetHostname())
+			}
 		}
 	}
 	return nil

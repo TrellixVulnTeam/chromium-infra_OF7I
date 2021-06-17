@@ -1113,7 +1113,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Maskless update.
 			_, err = UpdateDUT(ctx, dut2, nil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Servo serial serial-1 already exists on labstation-6")
+			So(err.Error(), ShouldContainSubstring, "Servo serial serial-1 exists")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-9")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -2321,6 +2321,87 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 3)
 			s, err = state.GetStateRecord(ctx, "hosts/dut-35")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+		Convey("UpdateDUT - Replace bad servo with good one", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-36", "machine-71", "labstation-32", "machine-72")
+			dut2, err := GetMachineLSE(ctx, "dut-36")
+			So(err, ShouldBeNil)
+			dut2.UpdateTime = nil
+			// Delete the labstation
+			err = inventory.DeleteMachineLSE(ctx, "labstation-32")
+			So(err, ShouldBeNil)
+			// Create another valid labstation
+			labstation1 := mockLabstation("labstation-33", "machine-72")
+			_, err = CreateMachineLSE(ctx, labstation1, nil)
+			So(err, ShouldBeNil)
+			// Update servo on DUT to point to new labstation
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = &chromeosLab.Servo{
+				ServoHostname: "labstation-33",
+				ServoPort:     int32(9990),
+				ServoSerial:   "serial-2",
+			}
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname", "dut.servo.port", "dut.servo.serial"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-36")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify that the changes were recorded by the history.
+			So(changes[1].NewValue, ShouldEqual, "labstation-33")
+			So(changes[1].OldValue, ShouldEqual, "labstation-32")
+			So(changes[2].NewValue, ShouldEqual, "9990")
+			So(changes[2].OldValue, ShouldEqual, "9999")
+			So(changes[3].NewValue, ShouldEqual, "serial-2")
+			So(changes[3].OldValue, ShouldEqual, "serial-1")
+			// Two snapshots, one at registration another at update
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-36")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-36")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+		})
+		Convey("UpdateDUT - Replace servo on misconfigured labstation (serial conflict)", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-37", "machine-81", "labstation-34", "machine82")
+			dut2, err := GetMachineLSE(ctx, "dut-37")
+			So(err, ShouldBeNil)
+			servo := dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+			// Misconfigure labstation by deleting servo entry in DUT but not labstation
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = nil
+			_, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{dut2})
+			So(err, ShouldBeNil)
+			// Add the same servo back (serial number conflict on labstation)
+			servo.ServoPort = int32(9977)
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = servo
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname", "dut.servo.port", "dut.servo.serial"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			dut2.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-37")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 4)
+			// Verify that the changes were recorded by the history.
+			So(changes[1].NewValue, ShouldEqual, "labstation-34")
+			So(changes[1].OldValue, ShouldEqual, "")
+			So(changes[2].NewValue, ShouldEqual, "9977")
+			So(changes[2].OldValue, ShouldEqual, "0")
+			So(changes[3].NewValue, ShouldEqual, "serial-1")
+			So(changes[3].OldValue, ShouldEqual, "")
+			// Two snapshots, one at registration another at update
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-37")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-37")
 			So(err, ShouldBeNil)
 			// State should be unchanged.
 			So(s.GetState(), ShouldEqual, dut2.GetResourceState())

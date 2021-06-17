@@ -25,6 +25,7 @@ import (
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
@@ -218,33 +219,35 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		if servoUpdated && oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) {
 			// Remove the servo from the labstation
 			oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
-			if err != nil {
+			if err != nil && !util.IsNotFoundError(err) {
+				// Avoid returning error if we don't find the labstation
 				return err
 			}
+			if oldLabstationMachinelse != nil {
+				// Copy for logging history
+				oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
+				hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
 
-			// Copy for logging history
-			oldLabstationMachineLseCopy := proto.Clone(oldLabstationMachinelse).(*ufspb.MachineLSE)
-			hcOldLabstation := getHostHistoryClient(oldLabstationMachinelse)
-
-			// Remove servo from labstation
-			if err := removeServoEntryFromLabstation(ctx, oldServo, oldLabstationMachineLseCopy); err != nil {
-				return err
-			}
-
-			// Log servo removal
-			hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelse, oldLabstationMachineLseCopy)
-
-			// Updating on the same labstation. Don't save the lse yet
-			if newServo != nil && newServo.GetServoHostname() == oldServo.GetServoHostname() {
-				// If we are updating on the same labstation, avoid updating yet
-				newLabstationMachinelse = oldLabstationMachineLseCopy
-				hcNewLabstation = hcOldLabstation
-			} else {
-				// Record labstation changes
-				if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+				// Remove servo from labstation
+				if err := removeServoEntryFromLabstation(ctx, oldServo, oldLabstationMachineLseCopy); err != nil {
 					return err
 				}
-				machinelses = append(machinelses, oldLabstationMachineLseCopy)
+
+				// Log servo removal
+				hcOldLabstation.LogMachineLSEChanges(oldLabstationMachinelse, oldLabstationMachineLseCopy)
+
+				// Updating on the same labstation. Don't save the lse yet
+				if newServo != nil && newServo.GetServoHostname() == oldServo.GetServoHostname() {
+					// If we are updating on the same labstation, avoid updating yet
+					newLabstationMachinelse = oldLabstationMachineLseCopy
+					hcNewLabstation = hcOldLabstation
+				} else {
+					// Record labstation changes
+					if err := hcOldLabstation.SaveChangeEvents(ctx); err != nil {
+						return err
+					}
+					machinelses = append(machinelses, oldLabstationMachineLseCopy)
+				}
 			}
 		}
 
@@ -960,4 +963,21 @@ func validateRenameDUT(ctx context.Context, oldName, newName string, lse *ufspb.
 		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("DUT %s is associated with SchedulingUnit %s. It's not possible to rename this at the moment", oldName, schedulingUnits[0].GetName()))
 	}
 	return nil
+}
+
+// GetDUTConnectedToServo returns machineLSE of DUT connected to the servo
+func GetDUTConnectedToServo(ctx context.Context, servo *chromeosLab.Servo) (*ufspb.MachineLSE, error) {
+	servoID := ufsds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
+	dut, err := inventory.QueryMachineLSEByPropertyName(ctx, "servo_id", servoID, false)
+	if err != nil {
+		return nil, err
+	}
+	// Return dut if we have one
+	if len(dut) == 1 {
+		return dut[0], nil
+	}
+	if len(dut) > 1 {
+		return nil, status.Errorf(codes.Internal, "Misconfigured DUTs. Muiltple DUTS(%d) found with same servo config", len(dut))
+	}
+	return nil, nil
 }
