@@ -124,7 +124,7 @@ func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQuer
 	if params.BuildBucketSafetyMargin == 0 {
 		params.BuildBucketSafetyMargin = buildBucketSafetyMarginSeconds
 	}
-	sql, err := instantiateSQLQuery(ctx, brokenByTemplate, params)
+	sql, err := instantiateSQLQuery(ctx, taskQueryTemplate, params)
 	if err != nil {
 		return nil, err
 	}
