@@ -46,7 +46,7 @@ func (r *singleRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 // generateTestResults converts test results from results file to sinkpb.TestResult.
-func (r *singleRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult, error) {
+func (r *singleRun) generateTestResults(ctx context.Context, _ []byte) ([]*sinkpb.TestResult, error) {
 	f, err := os.Open(r.resultFile)
 	if err != nil {
 		return nil, errors.Annotate(err, "open result file").Err()

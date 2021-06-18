@@ -35,11 +35,12 @@ type baseRun struct {
 	artifactDir string
 	resultFile  string
 
-	sinkCtx *lucictx.ResultSink
-	sinkC   sinkpb.SinkClient
+	sinkCtx       *lucictx.ResultSink
+	sinkC         sinkpb.SinkClient
+	captureOutput bool
 }
 
-type converter func(ctx context.Context) ([]*sinkpb.TestResult, error)
+type converter func(ctx context.Context, data []byte) ([]*sinkpb.TestResult, error)
 
 func (r *baseRun) RegisterGlobalFlags() {
 	r.Flags.StringVar(&r.artifactDir, "artifact-directory", "", text.Doc(`
@@ -74,8 +75,8 @@ func (r *baseRun) initSinkClient(ctx context.Context) (err error) {
 }
 
 // runTestCmd waits for test cmd to complete.
-func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
-	// Kill the subprocess if is asked to stop.
+func (r *baseRun) runTestCmd(ctx context.Context, args []string) (output []byte, err error) {
+
 	// Subprocess exiting will unblock result_uploader and will stop soon.
 	cmdCtx, cancelCmd := context.WithCancel(ctx)
 	defer cancelCmd()
@@ -86,7 +87,9 @@ func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
 
 	cmd := exec.CommandContext(cmdCtx, args[0], args[1:]...)
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
+	if !r.captureOutput {
+		cmd.Stdout = os.Stdout
+	}
 	cmd.Stderr = os.Stderr
 
 	// Launch the command w/o the result_sink section in lucictx, in case the test
@@ -94,15 +97,20 @@ func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
 	// the test binary shouldn't be able to talk to the local SinkServer directly.
 	exported, err := lucictx.Export(lucictx.SetResultSink(cmdCtx, nil))
 	if err != nil {
-		return errors.Annotate(err, "failed to export a luci-context w/o result-sink").Err()
+		return nil, errors.Annotate(err, "failed to export a luci-context w/o result-sink").Err()
 	}
 	defer exported.Close()
 	exported.SetInCmd(cmd)
 
-	if err := cmd.Start(); err != nil {
-		return errors.Annotate(err, "cmd.start").Err()
+	if r.captureOutput {
+		return cmd.Output()
 	}
-	return cmd.Wait()
+
+	if err := cmd.Start(); err != nil {
+		return nil, errors.Annotate(err, "cmd.start").Err()
+	}
+
+	return nil, cmd.Wait()
 }
 
 func (r *baseRun) done(err error) int {
@@ -118,13 +126,13 @@ func (r *baseRun) run(ctx context.Context, args []string, f converter) (ret int)
 		return r.done(err)
 	}
 
-	err := r.runTestCmd(ctx, args)
+	out, err := r.runTestCmd(ctx, args)
 	ec, ok := exitcode.Get(err)
 	if !ok {
 		return r.done(errors.Annotate(err, "test command failed").Err())
 	}
 
-	trs, err := f(ctx)
+	trs, err := f(ctx, out)
 	switch {
 	case err != nil:
 		return r.done(err)

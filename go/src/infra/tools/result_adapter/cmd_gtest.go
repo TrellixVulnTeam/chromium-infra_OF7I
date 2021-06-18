@@ -47,7 +47,7 @@ func (r *gtestRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 // generateTestResults converts test results from results file to sinkpb.TestResult.
-func (r *gtestRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult, error) {
+func (r *gtestRun) generateTestResults(ctx context.Context, _ []byte) ([]*sinkpb.TestResult, error) {
 	f, err := os.Open(r.resultFile)
 	if err != nil {
 		return nil, errors.Annotate(err, "open result file").Err()

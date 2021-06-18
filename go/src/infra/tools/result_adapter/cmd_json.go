@@ -62,7 +62,7 @@ func (r *jsonRun) validate() (err error) {
 }
 
 // generateTestResults converts test results from results file to sinkpb.TestResult.
-func (r *jsonRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult, error) {
+func (r *jsonRun) generateTestResults(ctx context.Context, _ []byte) ([]*sinkpb.TestResult, error) {
 	// Get artifacts.
 	normPathToFullPath, err := r.processArtifacts()
 	if err != nil {
