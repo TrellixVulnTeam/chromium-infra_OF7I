@@ -18,7 +18,8 @@ func mustMakeTemplate(name string, body string) *template.Template {
 	return template.Must(template.New(name).Parse("{{$tick := \"`\"}}" + body))
 }
 
-// InstantiateSQLQuery takes a template, a normalizer function, and a bundle of parameters and// creates a SQL query as a string.
+// InstantiateSQLQuery takes a template, a normalizer function, and a bundle of parameters and
+// creates a SQL query as a string.
 func instantiateSQLQuery(ctx context.Context, template *template.Template, params interface{}) (string, error) {
 	var out bytes.Buffer
 	if err := template.Execute(&out, params); err != nil {
@@ -27,7 +28,7 @@ func instantiateSQLQuery(ctx context.Context, template *template.Template, param
 	return out.String(), nil
 }
 
-// RunSQL takes a bigquery client and a sql query and returns an iterator over
+// RunSQL takes a Bigquery Client and a sql query and returns an iterator over
 // the result set.
 func RunSQL(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
 	query := client.Query(sql)

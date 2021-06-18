@@ -26,8 +26,9 @@ func newApplication() *cli.Application {
 		Title: "The crosgrep client application",
 		Commands: []*subcommands.Command{
 			subcommands.Section("Queries"),
-			cmds.ListAllTasks,
 			cmds.BrokenBy,
+			cmds.ListAllTasks,
+			cmds.RandTask,
 			subcommands.Section("Auth"),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),

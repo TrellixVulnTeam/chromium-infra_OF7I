@@ -19,13 +19,15 @@ type BrokenByParams struct {
 	EndTime   int64
 }
 
-// RunBrokenBy takes a bigquery client and parameters and returns a result set.
+// RunBrokenBy takes a BigQuery client and parameters and returns a result set.
 func RunBrokenBy(ctx context.Context, client *bigquery.Client, params *BrokenByParams) (*bigquery.RowIterator, error) {
 	now := time.Now().Unix()
 	if params.BotID == "" {
 		return nil, errors.New("BotID cannot be empty")
 	}
 	if params.StartTime == 0 {
+		// Set the default search range to one hour before the present. This choice
+		// empirically leads to fast queries.
 		params.StartTime = now - 3600
 	}
 	if params.EndTime == 0 {
@@ -94,18 +96,23 @@ const swarmingTasksLimit = 10000
 
 // TaskQueryParams are all the params necessary to construct a task query
 type TaskQueryParams struct {
-	Model                   string
-	StartTime               int64
-	EndTime                 int64
-	Limit                   int
+	// Params.Model may be empty or non-empty. An empty string as the model means that all
+	// models are permitted.
+	Model     string
+	StartTime int64
+	EndTime   int64
+	Limit     int
+	// BuildBucketSafetyMargin is the number of seconds to look before and after
+	// the given time range in order to be sure to include all buildbucket records.
+	// For more details, see the documentation for buildBucketSafetyMarginSeconds.
 	BuildBucketSafetyMargin int64
 }
 
-// RunTaskQuery takes a bigquery client and parameters and returns a result set.
+// RunTaskQuery takes a BigQuery client and parameters and returns a result set.
 func RunTaskQuery(ctx context.Context, client *bigquery.Client, params *TaskQueryParams) (*bigquery.RowIterator, error) {
-	// Params.Model may be empty or non-empty. A non-empty model means that all
-	// models are permitted.
 	if params.StartTime == 0 {
+		// Set the default search range to one hour before the present. This choice
+		// empirically leads to fast queries.
 		params.StartTime = time.Now().Unix() - 3600
 	}
 	if params.EndTime == 0 {
@@ -163,3 +170,57 @@ WHERE
 LIMIT {{.Limit | printf "%d"}}
 `,
 )
+
+var randTaskTemplate = mustMakeTemplate(
+	"randTask",
+	`
+SELECT
+  TRS.task_id AS task_id,
+  TRS.request.name AS name,
+  TRS.exit_code AS exit_code,
+FROM {{$tick}}chromeos-swarming.swarming.task_results_summary{{$tick}} AS TRS
+  WHERE {{.StartTime | printf "%d"}} <= UNIX_SECONDS(TRS.end_time)
+  AND {{.EndTime | printf "%d"}}  > UNIX_SECONDS(TRS.end_time)
+ORDER BY RAND()
+LIMIT 1
+`,
+)
+
+// RandTaskParams are all the params necessary to fetch a random task.
+type RandTaskParams struct {
+	Model                   string
+	StartTime               int64
+	EndTime                 int64
+	Limit                   int
+	BuildBucketSafetyMargin int64
+}
+
+// RunRandTaskQuery takes a BigQuery client and parameters and returns a randomly chosen task
+// fitting the requirements, its request name and its exit status.
+func RunRandTaskQuery(ctx context.Context, client *bigquery.Client, params *RandTaskParams) (*bigquery.RowIterator, error) {
+	// Params.Model may be empty or non-empty. A non-empty model means that all
+	// models are permitted.
+	if params.StartTime == 0 {
+		// Set the default search range to one hour before the present. This choice
+		// empirically leads to fast queries.
+		params.StartTime = time.Now().Unix() - 3600
+	}
+	if params.EndTime == 0 {
+		params.EndTime = time.Now().Unix() + 1
+	}
+	if params.Limit == 0 {
+		params.Limit = swarmingTasksLimit
+	}
+	if params.BuildBucketSafetyMargin == 0 {
+		params.BuildBucketSafetyMargin = buildBucketSafetyMarginSeconds
+	}
+	sql, err := instantiateSQLQuery(ctx, randTaskTemplate, params)
+	if err != nil {
+		return nil, err
+	}
+	it, err := RunSQL(ctx, client, sql)
+	if err != nil {
+		return nil, errors.Annotate(err, "run tasks query").Err()
+	}
+	return it, nil
+}

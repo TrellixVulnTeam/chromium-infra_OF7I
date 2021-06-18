@@ -5,6 +5,7 @@
 package cmds
 
 import (
+	"context"
 	"fmt"
 
 	"cloud.google.com/go/bigquery"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/api/iterator"
 
 	"infra/cros/cmd/crosgrep/internal/base"
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 	"infra/cros/cmd/crosgrep/internal/swarming/query"
 )
 
@@ -42,16 +44,16 @@ type brokenByCmd struct {
 
 // Run parses arguments and runs a command.
 func (c *brokenByCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
+	ctx := cli.GetContext(a, c, env)
+	if err := c.innerRun(ctx, a, args, env); err != nil {
+		logging.Errorf(ctx, "%s: %s\n", a.GetName(), err)
 		return 1
 	}
 	return 0
 }
 
 // InnerRun is the main implementation of the broken-by command.
-func (c *brokenByCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	ctx := cli.GetContext(a, c, env)
+func (c *brokenByCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	client, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
 		return errors.Annotate(err, "broken-by: getting bigquery client").Err()

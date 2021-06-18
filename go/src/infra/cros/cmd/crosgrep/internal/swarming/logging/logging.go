@@ -84,3 +84,8 @@ func writef(ctx context.Context, level int, fmtString string, args ...interface{
 func Debugf(ctx context.Context, fmtString string, args ...interface{}) (int, error) {
 	return writef(ctx, debugLevel, fmtString, args...)
 }
+
+// Errorf writes a message at the error level.
+func Errorf(ctx context.Context, fmtString string, args ...interface{}) (int, error) {
+	return writef(ctx, errorLevel, fmtString, args...)
+}

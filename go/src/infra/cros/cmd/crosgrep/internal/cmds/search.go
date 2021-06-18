@@ -53,7 +53,7 @@ func (c *listAllTasksCmd) innerRun(a subcommands.Application, args []string, env
 	ctx = logging.SetContextVerbosity(ctx, c.Verbose())
 	client, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
-		return errors.Annotate(err, "getting bigquery client").Err()
+		return errors.Annotate(err, "getting BigQuery client").Err()
 	}
 	it, err := query.RunTaskQuery(
 		ctx,
