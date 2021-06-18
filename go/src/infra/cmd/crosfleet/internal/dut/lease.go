@@ -87,6 +87,15 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 	if err != nil {
 		return err
 	}
+	c.printer.WriteTextStderr("Verifying the provided DUT dimensions...")
+	duts, err := countBotsWithDims(ctx, swarmingService, botDims)
+	if err != nil {
+		return err
+	}
+	if duts.Count == 0 {
+		return fmt.Errorf("no matching DUTs found; please double-check the provided DUT dimensions")
+	}
+	c.printer.WriteTextStderr("Found %d DUT(s) (%d busy) matching the provided DUT dimensions", duts.Count, duts.Busy)
 	buildProps := map[string]interface{}{
 		"lease_length_minutes": c.durationMins,
 	}

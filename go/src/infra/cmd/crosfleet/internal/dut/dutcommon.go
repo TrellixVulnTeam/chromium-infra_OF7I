@@ -65,6 +65,16 @@ func hostnameToBotID(ctx context.Context, swarmingService *swarmingapi.Service, 
 	return bots[0].BotId, nil
 }
 
+// countBotsWithDims returns the number of Swarming bots satisfying the given
+// Swarming dimensions.
+func countBotsWithDims(ctx context.Context, s *swarmingapi.Service, dimsMap map[string]string) (*swarmingapi.SwarmingRpcsBotsCount, error) {
+	var dims []string
+	for key, val := range dimsMap {
+		dims = append(dims, fmt.Sprintf("%s:%s", key, val))
+	}
+	return s.Bots.Count().Context(ctx).Dimensions(dims...).Do()
+}
+
 // correctedHostname checks the given hostname for common errors when entering a
 // DUT hostname, and returns a corrected hostname.
 func correctedHostname(hostname string) string {
