@@ -168,6 +168,7 @@ func (hc *HistoryClient) LogAssetInfoChanges(resName string, oldInfo, newInfo *u
 	hc.changes = append(hc.changes, logCommon(resName, "asset.info.ethernet_mac_address", oldInfo.GetEthernetMacAddress(), newInfo.GetEthernetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resName, "asset.info.sku", oldInfo.GetSku(), newInfo.GetSku())...)
 	hc.changes = append(hc.changes, logCommon(resName, "asset.info.phase", oldInfo.GetPhase(), newInfo.GetPhase())...)
+	hc.changes = append(hc.changes, logCommon(resName, "asset.info.gpn", oldInfo.GetGpn(), newInfo.GetGpn())...)
 }
 
 // LogMachineChanges logs the change of the given machine.

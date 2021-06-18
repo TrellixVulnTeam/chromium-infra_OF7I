@@ -227,7 +227,7 @@ func addMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
 		return err
 	}
 	machine := CreateMachineFromAsset(asset)
-	hc := getMachineHistoryClient(machine)
+	hc := GetMachineHistoryClient(machine)
 	if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 		return errors.Annotate(err, "unable to create machine").Err()
 	}
@@ -265,7 +265,7 @@ func updateMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
 	}
 	// Copy for logging
 	oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
-	hc := getMachineHistoryClient(machine)
+	hc := GetMachineHistoryClient(machine)
 	//update the machine from the asset
 	if err := updateMachineFromAsset(ctx, machine, asset, hc); err != nil {
 		return err
@@ -280,7 +280,7 @@ func updateMachineHelper(ctx context.Context, asset *ufspb.Asset) error {
 // deleteMachineHelper deletes a machine. If the machine is not found it return nil.
 // This should be run inside a transaction.
 func deleteMachineHelper(ctx context.Context, id string) error {
-	hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
+	hc := GetMachineHistoryClient(&ufspb.Machine{Name: id})
 	machine, err := registration.GetMachine(ctx, id)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
@@ -569,11 +569,8 @@ func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
 		BuildTarget:    asset.GetInfo().GetBuildTarget(),
 		Model:          asset.GetInfo().GetModel(),
 		GoogleCodeName: asset.GetInfo().GetGoogleCodeName(),
-		MacAddress:     asset.GetInfo().GetEthernetMacAddress(),
-		Sku:            asset.GetInfo().GetSku(),
-		Phase:          asset.GetInfo().GetPhase(),
 		CostCenter:     asset.GetInfo().GetCostCenter(),
-		Hwid:           asset.GetInfo().GetHwid(),
+		Gpn:            asset.GetInfo().GetGpn(),
 	}
 	switch asset.GetType() {
 	case ufspb.AssetType_DUT:

@@ -32,7 +32,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 	nics := machine.GetChromeBrowserMachine().GetNicObjects()
 	drac := machine.GetChromeBrowserMachine().GetDracObject()
 	f := func(ctx context.Context) error {
-		hc := getMachineHistoryClient(machine)
+		hc := GetMachineHistoryClient(machine)
 		// Validate input
 		if err := validateMachineRegistration(ctx, machine); err != nil {
 			return errors.Annotate(err, "validation failed").Err()
@@ -113,7 +113,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 	var oldMachine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
-		hc := getMachineHistoryClient(machine)
+		hc := GetMachineHistoryClient(machine)
 
 		// Get the existing/old machine
 		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
@@ -249,7 +249,7 @@ func UpdateDutMeta(ctx context.Context, meta *ufspb.DutMeta) error {
 		if err != nil {
 			return err
 		}
-		hc := getMachineHistoryClient(machine)
+		hc := GetMachineHistoryClient(machine)
 
 		osMachine := machine.GetChromeosMachine()
 		if osMachine == nil {
@@ -549,7 +549,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 		if err := registration.DeleteMachine(ctx, id); err != nil {
 			return err
 		}
-		hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
+		hc := GetMachineHistoryClient(&ufspb.Machine{Name: id})
 		hc.stUdt.deleteStateHelper(ctx)
 		hc.LogMachineChanges(&ufspb.Machine{Name: id}, nil)
 		return hc.SaveChangeEvents(ctx)
@@ -633,7 +633,7 @@ func renameMachineInner(ctx context.Context, oldMachineName, newMachineName stri
 
 	// Copy for logging
 	oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
-	hc := getMachineHistoryClient(oldMachineCopy)
+	hc := GetMachineHistoryClient(oldMachineCopy)
 
 	if err = renameMachineHelper(ctx, oldMachineName, newMachineName, hc); err != nil {
 		return
@@ -661,7 +661,7 @@ func renameMachineInner(ctx context.Context, oldMachineName, newMachineName stri
 	if err != nil {
 		return
 	}
-	newHc := getMachineHistoryClient(machine)
+	newHc := GetMachineHistoryClient(machine)
 	newHc.stUdt.replaceStateHelper(ctx, util.AddPrefix(util.MachineCollection, oldMachineName))
 	err = newHc.SaveChangeEvents(ctx)
 	return
@@ -719,7 +719,7 @@ func renameMachineHelper(ctx context.Context, oldMachineName, newMachineName str
 // This will preserve data integrity in the system.
 func ReplaceMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachine *ufspb.Machine) (*ufspb.Machine, error) {
 	f := func(ctx context.Context) error {
-		hc := getMachineHistoryClient(newMachine)
+		hc := GetMachineHistoryClient(newMachine)
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.Name, false)
 		if err != nil {
 			return err
@@ -1048,7 +1048,7 @@ func validateRenameMachine(ctx context.Context, oldMachine *ufspb.Machine, newMa
 	return nil
 }
 
-func getMachineHistoryClient(m *ufspb.Machine) *HistoryClient {
+func GetMachineHistoryClient(m *ufspb.Machine) *HistoryClient {
 	return &HistoryClient{
 		stUdt: &stateUpdater{
 			ResourceName: util.AddPrefix(util.MachineCollection, m.Name),
