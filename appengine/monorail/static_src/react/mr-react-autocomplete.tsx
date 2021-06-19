@@ -77,6 +77,13 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
     super.updated(changedProperties);
 
     const theme = createMuiTheme({
+      components: {
+        MuiChip: {
+          styleOverrides: {
+            root: {fontSize: 13},
+          },
+        },
+      },
       palette: {
         primary: {
           // Same as var(--chops-primary-accent-color).
