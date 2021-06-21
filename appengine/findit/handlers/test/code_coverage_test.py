@@ -24,8 +24,6 @@ from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services.code_coverage import files_absolute_coverage
 from services.code_coverage import per_cl_metrics
-from services import bigquery_helper
-from services import test_tag_util
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 
@@ -564,15 +562,6 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(expected_entity.based_on, fetched_entities[0].based_on)
 
 
-  @mock.patch.object(
-      test_tag_util,
-      'GetChromiumDirectoryToComponentMapping',
-      return_value={'dir': 'comp'})
-  @mock.patch.object(
-      test_tag_util,
-      'GetChromiumDirectoryToTeamMapping',
-      return_value={'dir': 'team'})
-  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value=True)
   @mock.patch.object(code_coverage.ProcessCodeCoverageData,
                      '_FetchAndSaveFileIfNecessary')
   @mock.patch.object(code_coverage, '_RetrieveChromeManifest')

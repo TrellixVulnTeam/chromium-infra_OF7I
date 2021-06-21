@@ -459,40 +459,6 @@ def _GetFileContentFromGitiles(report, file_path,
   return repo.GetSource(relative_file_path, revision)
 
 
-def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
-                       mimic_builder_name, component, team, actual_data_type):
-  """Create a bigquery row containing coverage data.
-
-  Returns a dict whose keys are column names and values are column values
-  corresponding to the schema of the code coverage bigquery tables. This is
-  suitable for passing to bigquery APIs.
-  """
-  row = {
-      'project': commit.project,
-      'builder': mimic_builder_name,
-      'bucket': builder.bucket,
-      'host': commit.host,
-      'ref': commit.ref,
-      'commit': commit.id,
-      'commit_timestamp': commit_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f%z'),
-      'path': path,
-  }
-
-  if actual_data_type == 'dirs':
-    row['component'] = component
-    row['team'] = team
-
-  for metric in summaries:
-    if metric['name'] == 'line':
-      row['line_covered'] = metric['covered']
-      row['line_total'] = metric['total']
-    elif metric['name'] == 'branch':
-      row['branch_covered'] = metric['covered']
-      row['branch_total'] = metric['total']
-
-  return row
-
-
 def _IsReportSuspicious(report):
   """Returns True if the newly generated report is suspicious to be incorrect.
 
@@ -606,8 +572,6 @@ class ProcessCodeCoverageData(BaseHandler):
         visible=False)
     report.put()
 
-    component_bq_rows = []
-    directory_bq_rows = []
     # Save the file-level, directory-level and line-level coverage data.
     for data_type in ('dirs', 'components', 'files', 'file_shards'):
       sub_data = data.get(data_type)
@@ -647,8 +611,6 @@ class ProcessCodeCoverageData(BaseHandler):
       total = 0
 
       component_summaries = []
-      comp_map = test_tag_util.GetChromiumDirectoryToComponentMapping()
-      team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
       for dataset in data_iterator:
         for group_data in dataset:
           if actual_data_type == 'components':
@@ -683,29 +645,10 @@ class ProcessCodeCoverageData(BaseHandler):
                 bucket=builder.bucket,
                 builder=mimic_builder_name,
                 data=group_data)
-
-            path = group_data['path']
-            bq_row = _CreateBigqueryRow(
-                commit, change_log.committer.time, builder, group_data['path'],
-                group_data['summaries'], mimic_builder_name,
-                comp_map.get(path[2:len(path) - 1], ""),
-                team_mapping.get(path[2:len(path) - 1], ""), actual_data_type)
-            if actual_data_type == 'dirs':
-              directory_bq_rows.append(bq_row)
-            else:
-              component_bq_rows.append(bq_row)
-
           entities.append(coverage_data)
           entities, total = FlushEntries(entities, total, last=False)
         del dataset  # Explicitly release memory.
       FlushEntries(entities, total, last=True)
-
-      if directory_bq_rows:
-        bq.ReportRowsToBigquery(directory_bq_rows, 'findit-for-me',
-                                'code_coverage_summaries', 'directories')
-      if component_bq_rows:
-        bq.ReportRowsToBigquery(component_bq_rows, 'findit-for-me',
-                                'code_coverage_summaries', 'components')
 
       if component_summaries:
         component_summaries.sort(key=lambda x: x['path'])
