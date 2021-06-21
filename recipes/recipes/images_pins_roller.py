@@ -64,7 +64,7 @@ def _send_cl(api, root, updated, tbrs, commit):
         '--bypass-hooks',  # don't have full checkout to run hooks locally
         '--force',         # skip asking for description, we already set it
     ] + [
-        '--tbrs=%s' % tbr for tbr in tbrs
+        '--reviewers=%s' % tbr for tbr in tbrs
     ] + (['--set-bot-commit', '--use-commit-queue'] if commit else []))
 
     # Put a link to the uploaded CL.
