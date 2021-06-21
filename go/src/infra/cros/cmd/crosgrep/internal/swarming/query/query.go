@@ -10,6 +10,8 @@ import (
 	"text/template"
 
 	"cloud.google.com/go/bigquery"
+
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 )
 
 // MustMakeTemplate takes the name of a template and the body and produces a template.
@@ -31,6 +33,7 @@ func instantiateSQLQuery(ctx context.Context, template *template.Template, param
 // RunSQL takes a Bigquery Client and a sql query and returns an iterator over
 // the result set.
 func RunSQL(ctx context.Context, client *bigquery.Client, sql string) (*bigquery.RowIterator, error) {
+	logging.Debugf(ctx, "Running SQL query: %s\n", sql)
 	query := client.Query(sql)
 	it, err := query.Read(ctx)
 	return it, err
