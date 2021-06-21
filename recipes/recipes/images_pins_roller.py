@@ -65,7 +65,7 @@ def _send_cl(api, root, updated, tbrs, commit):
         '--force',         # skip asking for description, we already set it
     ] + [
         '--tbrs=%s' % tbr for tbr in tbrs
-    ] + (['--use-commit-queue'] if commit else []))
+    ] + (['--set-bot-commit', '--use-commit-queue'] if commit else []))
 
     # Put a link to the uploaded CL.
     issue_step = api.git_cl(

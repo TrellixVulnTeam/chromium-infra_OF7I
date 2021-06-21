@@ -308,6 +308,7 @@
       "--force",
       "--tbrs=a@example.com",
       "--tbrs=b@example.com",
+      "--set-bot-commit",
       "--use-commit-queue",
       "--message-file",
       "[images] Roll pinned docker image tags.\n\nUpdated pins:\n  * some_image:tag"
