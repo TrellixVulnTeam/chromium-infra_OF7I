@@ -98,6 +98,7 @@ var dutAttributeList = &testpb.DutAttributeList{
 }
 
 func TestGenerateOutputs(t *testing.T) {
+	t.Skipf("Temporarily disabled, see https://crbug.com/1222066")
 	tests := []struct {
 		name     string
 		input    *plan.SourceTestPlan
