@@ -12,10 +12,10 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 	"google.golang.org/api/iterator"
 
 	"infra/cros/cmd/crosgrep/internal/base"
+	"infra/cros/cmd/crosgrep/internal/swarming/logging"
 	"infra/cros/cmd/crosgrep/internal/swarming/query"
 )
 
@@ -39,6 +39,7 @@ type randTaskCmd struct {
 // Run parses arguments and runs a command.
 func (c *randTaskCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
+	ctx = logging.SetContextVerbosity(ctx, c.Verbose())
 	if err := c.innerRun(ctx, a, args, env); err != nil {
 		logging.Errorf(ctx, "%s: %s\n", a.GetName(), err)
 		return 1
