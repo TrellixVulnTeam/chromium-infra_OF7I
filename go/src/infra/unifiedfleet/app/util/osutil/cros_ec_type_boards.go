@@ -22,6 +22,7 @@ var crosEcTypeBoards = []string{
 	"flapjack",
 	"glados",
 	"grunt",
+	"guybrush",
 	"hatch",
 	"jacuzzi",
 	"kalista",
