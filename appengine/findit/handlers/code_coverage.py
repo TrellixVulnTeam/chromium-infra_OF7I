@@ -1547,6 +1547,22 @@ class ServeCodeCoverageData(BaseHandler):
             builder=builder)
 
     def _GetLineToData(report, path, metadata):
+      """Returns coverage data per line in a file.
+
+      Returns a list of tuples, sorted by line number, where the first
+      element of tuple represents the line number and the second element is a
+      dict with following structure
+
+      {
+        'line': (str) Contains the whole text of the line.
+        'count': (int) Execution count of the line.
+        'regions': (list) Present only if a line is partially covered. This is
+                the output of _SplitLineIntoRegions().
+        'is_partially_covered': (bool) True if a line can be split into
+                regions of covered/uncovered blocks. False otherwise.
+      }
+
+      """
       line_to_data = collections.defaultdict(dict)
       if metadata.get('revision', ''):
         gs_path = _ComposeSourceFileGsPath(report, path, metadata['revision'])
