@@ -16,6 +16,13 @@ RUN /bin/bash -c "\
     ln -s $$CPP-4.9 $$CPP; \
   fi"
 
+# Remove an undesirable file from dockcross on manylinux. This script is
+# executed on startup, and chown's a bunch of stuff in /opt/python to the
+# executing user. This doesn't seem to be necessary as we're only reading these
+# files and they're already world-readable. Furthermore, it massively slows
+# down startup, taking it from ~1s to as much as ~30s. So we just remove it.
+RUN rm -f /dockcross/pre_exec.sh
+
 # Setup cross-compile parameters.
 #
 # Link "lib64" to "lib" in our cross-compile environment so we only have to care
@@ -26,7 +33,6 @@ ENV \
   PKG_CONFIG_PATH=$${CROSS_PREFIX}/lib/pkgconfig
 RUN \
   mkdir -p $${CROSS_PREFIX}/bin/ && \
-  mkdir -p $${CROSS_PREFIX}/lib/python2.7/site-packages/ && \
   mkdir -p $${CROSS_PREFIX}/include/ && \
   ln -s $${CROSS_PREFIX}/lib $${CROSS_PREFIX}/lib64
 # Edit the $CMAKE_TOOLCHAIN_FILE to add $CROSS_PREFIX and `.` to allow local
@@ -63,7 +69,6 @@ RUN ARCHIVE_PATH=$$(basename ${perl5_relpath}) \
 
 # Build libraries for the cross-compiled environment.
 #
-# - libffi: Our cross-compiled Python needs to link against this.
 # - zlib: Useful for cross-compiled environments.
 # - ncurses: Used for MySQL client library
 WORKDIR $${SETUP_ROOT}/x-lib
@@ -73,15 +78,13 @@ COPY ${resources_relpath}/install-02-cross-lib.sh ./
 COPY ${zlib_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${zlib_relpath}) NO_HOST=1 ./install-02-cross-lib.sh
 
-COPY ${libffi_relpath} ./
-RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) ./install-02-cross-lib.sh
-
 COPY ${resources_relpath}/install-02-ncurses.sh ${ncurses_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${ncurses_relpath}) ./install-02-ncurses.sh
 
 RUN rm -rf $${SETUP_ROOT}/x-lib
 
 # Build+install cross-compiled MySQL, needed by "MySQL-python" package.
+# TODO: Can this be removed now that we use the CIPD Python package?
 WORKDIR $${SETUP_ROOT}/mysql
 COPY \
   ${resources_relpath}/install-05-mysql.sh \

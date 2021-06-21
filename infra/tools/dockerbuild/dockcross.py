@@ -39,7 +39,7 @@ def _docker_image_exists(system, identifier):
 class Builder(object):
 
   # Tag used for pushed Docker images.
-  DOCKER_IMAGE_TAG = 'v1.4.11'
+  DOCKER_IMAGE_TAG = 'v1.4.12'
 
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
@@ -54,18 +54,9 @@ class Builder(object):
       'dockcross_base',
       'resources_relpath',
       'cross_prefix',
-      'cross_python_prefix',
-      'python27_relpath',
-      'python27_unicode',
-      'python3_relpath',
       'perl5_relpath',
-      'get_pip_relpath',
-      'libffi_relpath',
-      'libffi_lib_dir',
-      'cffi_relpath',
       'zlib_relpath',
       'ncurses_relpath',
-      'distutilscross_relpath',
       'boost_relpath',
       'mysql_relpath',
   ))
@@ -76,11 +67,7 @@ class Builder(object):
 
   @staticmethod
   def _gen_dockerfile(template):
-    if template.python27_relpath:
-      template_file = 'Dockerfile.template'
-    else:
-      template_file = 'Dockerfile-py3.template'
-    with open(util.resource_path(template_file), 'r') as fd:
+    with open(util.resource_path('Dockerfile.template'), 'r') as fd:
       dockerfile = string.Template(fd.read())
     return dockerfile.safe_substitute(template._asdict())
 
@@ -123,47 +110,20 @@ class Builder(object):
       src = repo.ensure(SOURCES[src_name], src_dir, unpack=False)
       return rp(src)
 
-    py3_only = dx.platform.wheel_abi.startswith("cp3")
-    python_relpath = None if py3_only else ensure_src('python')
-    python3_relpath = ensure_src('python3')
     perl_relpath = ensure_src('perl')
-    libffi_relpath = ensure_src('libffi')
-    cffi_relpath = ensure_src('cffi')
     zlib_relpath = ensure_src('zlib')
     mysql_relpath = ensure_src('mysql')
     boost_relpath = ensure_src('boost')
     ncurses_relpath = ensure_src('ncurses')
-    distutilscross_relpath = ensure_src('distutilscross')
-    get_pip_relpath = ensure_src('get-pip')
-
-    ucs4 = not dx.platform.wheel_abi or dx.platform.wheel_abi.endswith('mu')
-
-    # ManyLinux base images come with multiple Pythons installed. Choose which
-    # one to use, if configured.
-    cross_prefix = '/usr/cross'
-    if dx.platform.manylinux_name:
-      cross_python_prefix = '/opt/python/%s' % (dx.platform.manylinux_name,)
-    else:
-      # Use the cross-compile Python that we built.
-      cross_python_prefix = cross_prefix
 
     return self._Template(
         image_id=dx.identifier,
         dockcross_base=base_image.internal_id,
         resources_relpath=rp(resources),
-        cross_prefix=cross_prefix,
-        cross_python_prefix=cross_python_prefix,
-        python27_relpath=python_relpath,
-        python27_unicode='ucs4' if ucs4 else 'ucs2',
-        python3_relpath=python3_relpath,
+        cross_prefix='/usr/cross',
         perl5_relpath=perl_relpath,
-        get_pip_relpath=get_pip_relpath,
-        libffi_relpath=libffi_relpath,
-        libffi_lib_dir='libffi-%s' % (SOURCES['libffi'].version,),
-        cffi_relpath=cffi_relpath,
         zlib_relpath=zlib_relpath,
         ncurses_relpath=ncurses_relpath,
-        distutilscross_relpath=distutilscross_relpath,
         boost_relpath=boost_relpath,
         mysql_relpath=mysql_relpath,
     )
@@ -384,25 +344,10 @@ def NativeImage(system, plat):
 
 # Sources used for Builder Docker image construction.
 SOURCES = {
-    'python': source.remote_archive(
-        name='python',
-        version='2.7.13',
-        url='https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz',
-    ),
-    'python3': source.remote_archive(
-        name='python3',
-        version='3.8.5',
-        url='https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz',
-    ),
     'perl': source.remote_archive(
         name='perl',
         version='5.24.1',
         url='http://www.cpan.org/src/5.0/perl-5.24.1.tar.gz',
-    ),
-    'get-pip': source.remote_file(
-        name='get-pip',
-        version='20.1.1',
-        url='https://bootstrap.pypa.io/get-pip.py',
     ),
     'zlib': source.remote_file(
         name='zlib',
@@ -410,12 +355,6 @@ SOURCES = {
         url='https://downloads.sourceforge.net/project/libpng/zlib/1.2.11/'
         'zlib-1.2.11.tar.gz',
     ),
-    'libffi': source.remote_archive(
-        name='libffi',
-        version='3.2.1',
-        url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
-    ),
-    'cffi': source.pypi_sdist('cffi', '1.14.0'),
     'mysql': source.remote_archive(
         name='mysql',
         version='5.7.21',
@@ -432,5 +371,4 @@ SOURCES = {
         version='6.1',
         url='http://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz',
     ),
-    'distutilscross': source.pypi_sdist('distutilscross', '0.1'),
 }
