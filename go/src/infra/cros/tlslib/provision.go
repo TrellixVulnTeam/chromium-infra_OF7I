@@ -87,6 +87,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
 	if builderPath != p.targetBuilderPath {
+		t := time.Now()
 		if err := p.provisionOS(ctx); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
@@ -94,7 +95,9 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
+		log.Printf("provision: time to provision OS took %v", time.Since(t))
 
+		t = time.Now()
 		if !req.GetPreserveStateful() {
 			if err := p.wipeStateful(ctx); err != nil {
 				setError(newOperationError(
@@ -117,7 +120,9 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			}
 			defer disconnect()
 		}
+		log.Printf("provision: time to wipe stateful took %v", time.Since(t))
 
+		t = time.Now()
 		if err := p.provisionStateful(ctx); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
@@ -125,6 +130,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
+		log.Printf("provision: time to provision stateful took %v", time.Since(t))
 
 		// After a reboot, need a new client connection.
 		sshCtx, cancel := context.WithTimeout(ctx, 300*time.Second)
@@ -140,6 +146,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		}
 		defer disconnect()
 
+		t = time.Now()
 		if err := p.verifyOSProvision(); err != nil {
 			setError(newOperationError(
 				codes.Aborted,
@@ -147,6 +154,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
+		log.Printf("provision: time to verify provision took %v", time.Since(t))
 	} else {
 		log.Printf("provision: Operation=%s skipped as DUT is already on builder path %s", opName, builderPath)
 	}

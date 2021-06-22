@@ -73,7 +73,7 @@ func (p *provisionState) connect(ctx context.Context, addr string) (func(), erro
 func (p *provisionState) provisionOS(ctx context.Context) error {
 	r, err := getRootDev(p.c)
 	if err != nil {
-		return fmt.Errorf("installPartitions: failed to get root device from DUT, %s", err)
+		return fmt.Errorf("provisionOS: failed to get root device from DUT, %s", err)
 	}
 
 	stopSystemDaemons(p.c)
