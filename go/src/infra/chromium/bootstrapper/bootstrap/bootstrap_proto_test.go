@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -22,8 +23,9 @@ func TestMultierror(t *testing.T) {
 				errors.New("foo error"),
 			}}
 
-			So(m.Error(), ShouldContainSubstring, "1 error occurred")
-			So(m.Error(), ShouldContainSubstring, "foo error")
+			So(m, ShouldErrLike,
+				"1 error occurred",
+				"foo error")
 		})
 
 		Convey("reports all contained errors", func() {
@@ -33,10 +35,11 @@ func TestMultierror(t *testing.T) {
 				errors.New("baz error"),
 			}}
 
-			So(m.Error(), ShouldContainSubstring, "3 errors occurred")
-			So(m.Error(), ShouldContainSubstring, "foo error")
-			So(m.Error(), ShouldContainSubstring, "bar error")
-			So(m.Error(), ShouldContainSubstring, "baz error")
+			So(m, ShouldErrLike,
+				"3 errors occurred",
+				"foo error",
+				"bar error",
+				"baz error")
 		})
 
 	})
@@ -78,8 +81,7 @@ func TestValidate(t *testing.T) {
 
 				err := validate(x, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "failure to validate $test")
+				So(err, ShouldErrLike, "failure to validate $test")
 
 			})
 
@@ -90,8 +92,7 @@ func TestValidate(t *testing.T) {
 
 				err := validate(x, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "failure to validate ${}")
+				So(err, ShouldErrLike, "failure to validate ${}")
 			})
 
 			Convey("with ${} in format string replaced with updated validation context in nested validate call", func() {
@@ -104,8 +105,7 @@ func TestValidate(t *testing.T) {
 
 				err := validate(y, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "failure to validate $test.x")
+				So(err, ShouldErrLike, "failure to validate $test.x")
 			})
 
 		})
@@ -131,11 +131,11 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 			err := validate(props, "$test")
 
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "none of the config_project fields in $test is set")
-			So(err.Error(), ShouldContainSubstring, "$test.properties_file is not set")
-			So(err.Error(), ShouldContainSubstring, "$test.recipe_package is not set")
-			So(err.Error(), ShouldContainSubstring, "$test.recipe is not set")
+			So(err, ShouldErrLike,
+				"none of the config_project fields in $test is set",
+				"$test.properties_file is not set",
+				"$test.recipe_package is not set",
+				"$test.recipe is not set")
 		})
 
 		Convey("fails for unset required fields in recipe_package", func() {
@@ -145,9 +145,9 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 			err := validate(props, "$test")
 
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "$test.recipe_package.name is not set")
-			So(err.Error(), ShouldContainSubstring, "$test.recipe_package.version is not set")
+			So(err, ShouldErrLike,
+				"$test.recipe_package.name is not set",
+				"$test.recipe_package.version is not set")
 		})
 
 		Convey("with a top level project", func() {
@@ -159,9 +159,9 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 				err := validate(props, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "$test.top_level_project.repo is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.top_level_project.ref is not set")
+				So(err, ShouldErrLike,
+					"$test.top_level_project.repo is not set",
+					"$test.top_level_project.ref is not set")
 			})
 
 			Convey("fails for unset required fields in top_level_project.repo", func() {
@@ -173,9 +173,9 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 				err := validate(props, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "$test.top_level_project.repo.host is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.top_level_project.repo.project is not set")
+				So(err, ShouldErrLike,
+					"$test.top_level_project.repo.host is not set",
+					"$test.top_level_project.repo.project is not set")
 			})
 
 			Convey("succeeds for valid properties", func() {
@@ -210,11 +210,11 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 				err := validate(props, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.top_level_repo is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.top_level_ref is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.config_repo is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.config_repo_path is not set")
+				So(err, ShouldErrLike,
+					"$test.dependency_project.top_level_repo is not set",
+					"$test.dependency_project.top_level_ref is not set",
+					"$test.dependency_project.config_repo is not set",
+					"$test.dependency_project.config_repo_path is not set")
 			})
 
 			Convey("fails for unset required fields in dependency_project.top_level_repo", func() {
@@ -226,9 +226,9 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 				err := validate(props, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.top_level_repo.host is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.top_level_repo.project is not set")
+				So(err, ShouldErrLike,
+					"$test.dependency_project.top_level_repo.host is not set",
+					"$test.dependency_project.top_level_repo.project is not set")
 			})
 
 			Convey("fails for unset required fields in dependency_project.config_repo", func() {
@@ -240,9 +240,9 @@ func TestBootstrapProtoValidation(t *testing.T) {
 
 				err := validate(props, "$test")
 
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.config_repo.host is not set")
-				So(err.Error(), ShouldContainSubstring, "$test.dependency_project.config_repo.project is not set")
+				So(err, ShouldErrLike,
+					"$test.dependency_project.config_repo.host is not set",
+					"$test.dependency_project.config_repo.project is not set")
 			})
 
 			Convey("succeeds for valid properties", func() {
