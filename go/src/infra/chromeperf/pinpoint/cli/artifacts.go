@@ -196,6 +196,7 @@ func downloadIsolatedURLs(ctx context.Context, clients *isolatedClientsCache, ba
 type isolatedClientsCache struct {
 	httpclient *http.Client
 	clients    map[string]*isolatedclient.Client
+	mu         sync.Mutex
 }
 
 func newIsolatedClientsCache(client *http.Client) *isolatedClientsCache {
@@ -206,6 +207,8 @@ func newIsolatedClientsCache(client *http.Client) *isolatedClientsCache {
 }
 
 func (c *isolatedClientsCache) Get(obj *isolatedObject) *isolatedclient.Client {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if clt, ok := c.clients[obj.clientKey()]; ok {
 		return clt
 	}
