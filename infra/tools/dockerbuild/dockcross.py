@@ -39,7 +39,7 @@ def _docker_image_exists(system, identifier):
 class Builder(object):
 
   # Tag used for pushed Docker images.
-  DOCKER_IMAGE_TAG = 'v1.4.12'
+  DOCKER_IMAGE_TAG = 'v1.4.13'
 
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
@@ -56,6 +56,7 @@ class Builder(object):
       'cross_prefix',
       'perl5_relpath',
       'zlib_relpath',
+      'libffi_relpath',
       'ncurses_relpath',
       'boost_relpath',
       'mysql_relpath',
@@ -112,6 +113,7 @@ class Builder(object):
 
     perl_relpath = ensure_src('perl')
     zlib_relpath = ensure_src('zlib')
+    libffi_relpath = ensure_src('libffi')
     mysql_relpath = ensure_src('mysql')
     boost_relpath = ensure_src('boost')
     ncurses_relpath = ensure_src('ncurses')
@@ -123,6 +125,7 @@ class Builder(object):
         cross_prefix='/usr/cross',
         perl5_relpath=perl_relpath,
         zlib_relpath=zlib_relpath,
+        libffi_relpath=libffi_relpath,
         ncurses_relpath=ncurses_relpath,
         boost_relpath=boost_relpath,
         mysql_relpath=mysql_relpath,
@@ -354,6 +357,11 @@ SOURCES = {
         version='1.2.11',
         url='https://downloads.sourceforge.net/project/libpng/zlib/1.2.11/'
         'zlib-1.2.11.tar.gz',
+    ),
+    'libffi': source.remote_archive(
+        name='libffi',
+        version='3.2.1',
+        url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
     ),
     'mysql': source.remote_archive(
         name='mysql',

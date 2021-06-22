@@ -70,6 +70,9 @@ RUN ARCHIVE_PATH=$$(basename ${perl5_relpath}) \
 # Build libraries for the cross-compiled environment.
 #
 # - zlib: Useful for cross-compiled environments.
+# - libffi: Used by the cffi Python package.
+#    (TODO: We should probably download and use the 3PP libffi package instead
+#           of baking it into the image)
 # - ncurses: Used for MySQL client library
 WORKDIR $${SETUP_ROOT}/x-lib
 COPY ${resources_relpath}/install-02-cross-lib.sh ./
@@ -77,6 +80,9 @@ COPY ${resources_relpath}/install-02-cross-lib.sh ./
 # These can be slow, so split them up so Docker can do its cachey magick.
 COPY ${zlib_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${zlib_relpath}) NO_HOST=1 ./install-02-cross-lib.sh
+
+COPY ${libffi_relpath} ./
+RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) ./install-02-cross-lib.sh
 
 COPY ${resources_relpath}/install-02-ncurses.sh ${ncurses_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${ncurses_relpath}) ./install-02-ncurses.sh
