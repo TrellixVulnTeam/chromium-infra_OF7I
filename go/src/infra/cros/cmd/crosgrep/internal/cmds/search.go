@@ -32,7 +32,6 @@ var ListAllTasks = &subcommands.Command{
 }
 
 // ListAllTasksCmd is a command object that contains the values of command line arguments.
-// TODO(gregorynisbet): Create common subcommand base internal to crosgrep.
 type listAllTasksCmd struct {
 	base.Command
 	model string
