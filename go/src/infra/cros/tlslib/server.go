@@ -130,6 +130,7 @@ func (s *Server) cacheForDut(ctx context.Context, url, dutName string) (string, 
 		return "", fmt.Errorf("cacheForDut: unexpected response from CacheForDut, %v", a)
 	}
 
+	log.Printf("cacheForDut: the cache URL for %q is %q", url, resp.GetUrl())
 	return resp.GetUrl(), nil
 }
 
