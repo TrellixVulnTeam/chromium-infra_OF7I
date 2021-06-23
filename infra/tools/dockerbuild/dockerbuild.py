@@ -118,8 +118,7 @@ def _main_wheel_build(args, system):
       # Figure out the unique version id for this wheel build.
       buildid = build.version_fn(system)
       version_tag = 'version:%s' % (buildid,)
-      cipd_exists = system.cipd.exists(package.name, version_tag)
-      if cipd_exists and not args.rebuild:
+      if not args.rebuild and system.cipd.exists(package.name, version_tag):
         util.LOGGER.info('Package [%s] with buildid [%s] already exists.',
             package, buildid)
         continue
@@ -135,11 +134,14 @@ def _main_wheel_build(args, system):
         continue
       util.LOGGER.info('Finished wheel for package: %s', package.name)
 
-      dryrun = not args.upload or cipd_exists
-      if cipd_exists:
+      dryrun = True
+      if not args.upload:
+        util.LOGGER.info('--upload not passed, not uploading package')
+      elif system.cipd.exists(package.name, version_tag):
         util.LOGGER.info('CIPD package already exists; ignoring --upload.')
       else:
         util.LOGGER.info('Uploading CIPD package for: %s', package)
+        dryrun = False
 
       # When we register it, we want to attach all tags.
       system.cipd.register_package(pkg_path, package.tags, dryrun=dryrun)
