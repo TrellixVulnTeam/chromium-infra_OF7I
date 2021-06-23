@@ -85,6 +85,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
         },
       },
       palette: {
+        action: {disabledOpacity: 0.6},
         primary: {
           // Same as var(--chops-primary-accent-color).
           main: '#1976d2',

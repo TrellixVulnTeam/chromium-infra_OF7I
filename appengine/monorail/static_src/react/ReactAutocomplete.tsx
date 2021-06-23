@@ -10,7 +10,7 @@ import Autocomplete, {
   AutocompleteRenderGetTagProps, AutocompleteRenderInputParams,
   AutocompleteRenderOptionState,
 } from '@material-ui/core/Autocomplete';
-import Chip from '@material-ui/core/Chip';
+import Chip, {ChipProps} from '@material-ui/core/Chip';
 import TextField from '@material-ui/core/TextField';
 import {Value} from '@material-ui/core/useAutocomplete';
 
@@ -239,12 +239,18 @@ function _renderTags<T>(
     getTagProps: AutocompleteRenderGetTagProps
   ): React.ReactNode => {
     return value.map((option, index) => {
+      const props: ChipProps = {...getTagProps({index})};
+      const disabled = fixedValues.includes(option);
+      if (disabled) {
+        delete props.onDelete;
+      }
+
       const label = getOptionLabel(option);
       return <Chip
-        {...getTagProps({index})}
+        {...props}
         key={label}
         label={label}
-        disabled={fixedValues.includes(option)}
+        disabled={disabled}
         size="small"
       />;
     });
