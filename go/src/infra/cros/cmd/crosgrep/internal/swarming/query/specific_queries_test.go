@@ -103,3 +103,36 @@ LIMIT 10000
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 }
+
+// TestRunStatusLogQuery tests that the status log query expands correctly.
+func TestRunStatusLogQuery(t *testing.T) {
+	t.Parallel()
+	bg := context.Background()
+	expected := mustExpandTick(`
+SELECT
+  BUILDS.infra.swarming.task_id AS swarming_id,
+  BUILDS.id AS bbid,
+  JSON_EXTRACT_SCALAR(BUILDS.output.properties, r"$.compressed_result") AS bb_output_properties,
+FROM
+  {{$tick}}cr-buildbucket.chromeos.builds{{$tick}} AS BUILDS
+WHERE
+  (
+    BUILDS.infra.swarming.task_id = "AAAAA"
+    OR "" = "AAAAA"
+  )
+LIMIT 1
+`)
+	actual, err := instantiateSQLQuery(
+		bg,
+		GetStatusLogQuery,
+		&GetStatusLogParams{
+			SwarmingTaskID: "AAAAA",
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+}

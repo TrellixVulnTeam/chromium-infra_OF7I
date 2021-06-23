@@ -29,6 +29,7 @@ func newApplication() *cli.Application {
 			cmds.BrokenBy,
 			cmds.ListAllTasks,
 			cmds.RandTask,
+			cmds.StatusLog,
 			subcommands.Section("Auth"),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),

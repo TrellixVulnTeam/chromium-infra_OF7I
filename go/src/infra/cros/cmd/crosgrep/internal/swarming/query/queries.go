@@ -224,3 +224,46 @@ func RunRandTaskQuery(ctx context.Context, client *bigquery.Client, params *Rand
 	}
 	return it, nil
 }
+
+// GetStatusLogParams are all the params necessary to construct a query to get the status
+// logs for a single swarming task.
+type GetStatusLogParams struct {
+	SwarmingTaskID string
+}
+
+// GetStatusLogQuery is a query that gets the buildbucket ID and result proto for a single
+// swarming task.
+// We do not need to join the task_results_summary table because the table of buildbucket builds
+// already contains the swarming ID.
+// In the event that no swarming task ID is specified, yield the status log query for an arbitrary
+// swarming query.
+var GetStatusLogQuery = mustMakeTemplate(
+	"getStatusLog",
+	`
+SELECT
+  BUILDS.infra.swarming.task_id AS swarming_id,
+  BUILDS.id AS bbid,
+  JSON_EXTRACT_SCALAR(BUILDS.output.properties, r"$.compressed_result") AS bb_output_properties,
+FROM
+  {{$tick}}cr-buildbucket.chromeos.builds{{$tick}} AS BUILDS
+WHERE
+  (
+    BUILDS.infra.swarming.task_id = {{.SwarmingTaskID | printf "%q"}}
+    OR "" = {{.SwarmingTaskID | printf "%q"}}
+  )
+LIMIT 1
+`,
+)
+
+// RunStatusLogQuery takes a bigquery client and parameters and returns a result set.
+func RunStatusLogQuery(ctx context.Context, client *bigquery.Client, params *GetStatusLogParams) (*bigquery.RowIterator, error) {
+	sql, err := instantiateSQLQuery(ctx, GetStatusLogQuery, params)
+	if err != nil {
+		return nil, err
+	}
+	it, err := RunSQL(ctx, client, sql)
+	if err != nil {
+		return nil, errors.Annotate(err, "run tasks query").Err()
+	}
+	return it, nil
+}
