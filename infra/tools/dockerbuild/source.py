@@ -142,22 +142,34 @@ class Repository(object):
 
     # If the package doesn't exist, or if we are forcing a download, create a
     # local package.
-    cipd_exists = self._system.cipd.exists(package.name, package.tags[0])
-
     have_package = False
     if os.path.isfile(package_path):
       # Package file is on disk, reuse unless we're forcing a download.
       if not self._force_download:
         have_package = True
 
+    # By default, assume the cached source package exists and try to download
+    # it. If this produces an error we infer that it doesn't exist and go create
+    # and upload it. This saves a call to CIPD compared to making an explicit
+    # check up-front.
+    cipd_exists = True
     if not have_package:
-      # We need to acquire the package. If it doesn't exist remotely, or if
-      # we're forcing a download, build it from source.
+      # Don't even try downloading it if force_download is set.
+      if not self._force_download:
+        try:
+          self._system.cipd.fetch_package(package.name, package.tags[0],
+                                          package_path)
+        except self._system.SubcommandError as e:
+          # The CIPD command line tool returns 1 for all errors, so we're forced
+          # to just check its stdout.
+          if e.returncode == 1 and 'no such tag' in e.output:
+            cipd_exists = False
+          else:
+            raise
+
       if not cipd_exists or self._force_download:
         self._create_cipd_package(package, src, package_path)
-      else:
-        self._system.cipd.fetch_package(package.name, package.tags[0],
-                                        package_path)
+
       have_package = True
 
     # We must have acquired the package at "package_path" by now.
