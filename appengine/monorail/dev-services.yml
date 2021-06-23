@@ -28,6 +28,7 @@ services:
       --queue projects/monorail-staging/locations/us-central1/queues/default
       --queue projects/monorail-staging/locations/us-central1/queues/notifications
       --queue projects/monorail-staging/locations/us-central1/queues/outboundemail
+      --queue projects/monorail-staging/locations/us-central1/queues/recomputederivedfields
       --queue projects/monorail-staging/locations/us-central1/queues/spamexport
       --queue projects/monorail-staging/locations/us-central1/queues/wipeoutsendusers
       --queue projects/monorail-staging/locations/us-central1/queues/wipeoutdeleteusers
