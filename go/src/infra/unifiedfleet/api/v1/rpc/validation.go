@@ -1183,21 +1183,17 @@ func (r *ListMachineLSEDeploymentsRequest) Validate() error {
 
 // Validate validates input requests of CreateCachingService.
 func (r *CreateCachingServiceRequest) Validate() error {
-	if r.CachingService == nil {
+	switch {
+	case r.CachingService == nil:
 		return status.Errorf(codes.InvalidArgument, NilEntity)
-	}
-	id := strings.TrimSpace(r.CachingServiceId)
-	if id == "" {
+	case strings.TrimSpace(r.CachingServiceId) == "":
 		return status.Errorf(codes.InvalidArgument, EmptyID)
-	}
-	if !Ipv4Regex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "name"))
-	}
-	if r.GetCachingService().GetPrimaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
-		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
-	}
-	if r.GetCachingService().GetSecondaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
-		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
+	case len(r.GetCachingService().GetServingSubnets()) == 0:
+		return status.Error(codes.InvalidArgument, "Empty serving subnets.")
+	case r.GetCachingService().GetPrimaryNode() == "":
+		return status.Errorf(codes.InvalidArgument, "Empty primary node name.")
+	case r.GetCachingService().GetSecondaryNode() == "":
+		return status.Errorf(codes.InvalidArgument, "Empty secondary node name.")
 	}
 	return nil
 }

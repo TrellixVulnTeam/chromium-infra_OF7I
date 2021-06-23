@@ -34,6 +34,7 @@ func TestCreateCachingService(t *testing.T) {
 			cs := mockCachingService("")
 			cs.PrimaryNode = "127.0.0.2"
 			cs.SecondaryNode = "127.0.0.3"
+			cs.ServingSubnets = []string{"1.1.1.0/24"}
 			req := &ufsAPI.CreateCachingServiceRequest{
 				CachingService:   cs,
 				CachingServiceId: "127.0.0.1",
@@ -55,6 +56,7 @@ func TestCreateCachingService(t *testing.T) {
 
 		Convey("Create new CachingService without cachingServiceId", func() {
 			cs := mockCachingService("")
+			cs.ServingSubnets = []string{"1.1.1.0/24"}
 			req := &ufsAPI.CreateCachingServiceRequest{
 				CachingService: cs,
 			}
@@ -63,39 +65,44 @@ func TestCreateCachingService(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
-		Convey("Create new CachingService with invalid ipv4", func() {
+		Convey("Create new CachingService with empty primary node", func() {
 			cs := mockCachingService("")
+			cs.PrimaryNode = ""
+			cs.ServingSubnets = []string{"1.1.1.0/24"}
 			req := &ufsAPI.CreateCachingServiceRequest{
 				CachingService:   cs,
-				CachingServiceId: "127.5.6.5666",
+				CachingServiceId: "id",
 			}
 			_, err := tf.Fleet.CreateCachingService(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "name"))
+			So(err.Error(), ShouldContainSubstring, "Empty primary node name.")
 		})
 
-		Convey("Create new CachingService with invalid primary node", func() {
+		Convey("Create new CachingService with empty secondary node", func() {
 			cs := mockCachingService("")
-			cs.PrimaryNode = "127.0.0.856"
+			cs.PrimaryNode = "primary-node-name"
+			cs.SecondaryNode = ""
+			cs.ServingSubnets = []string{"1.1.1.0/24"}
 			req := &ufsAPI.CreateCachingServiceRequest{
 				CachingService:   cs,
-				CachingServiceId: "132.0.0.1",
+				CachingServiceId: "id",
 			}
 			_, err := tf.Fleet.CreateCachingService(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "primaryNode"))
+			So(err.Error(), ShouldContainSubstring, "Empty secondary node name.")
 		})
 
-		Convey("Create new CachingService with invalid secondary node", func() {
+		Convey("Create new CachingService with empty subnets", func() {
 			cs := mockCachingService("")
-			cs.SecondaryNode = "127.0.0.856"
+			cs.PrimaryNode = "primary-node-name"
+			cs.SecondaryNode = "secondary-node-name"
 			req := &ufsAPI.CreateCachingServiceRequest{
 				CachingService:   cs,
-				CachingServiceId: "133.0.0.1",
+				CachingServiceId: "id",
 			}
 			_, err := tf.Fleet.CreateCachingService(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "secondaryNode"))
+			So(err.Error(), ShouldContainSubstring, "Empty serving subnets.")
 		})
 	})
 }
