@@ -162,7 +162,8 @@ class Repository(object):
         except self._system.SubcommandError as e:
           # The CIPD command line tool returns 1 for all errors, so we're forced
           # to just check its stdout.
-          if e.returncode == 1 and 'no such tag' in e.output:
+          if e.returncode == 1 and ('no such tag' in e.output or
+                                    'no such package' in e.output):
             cipd_exists = False
           else:
             raise
