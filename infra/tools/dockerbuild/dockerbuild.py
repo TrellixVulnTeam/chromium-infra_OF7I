@@ -103,7 +103,6 @@ def _main_wheel_build(args, system):
   for spec_name in specs:
     build = wheels.SPECS[spec_name]
 
-    seen = set()
     for plat in platforms:
       try:
         w = build.wheel(system, plat)
@@ -111,9 +110,6 @@ def _main_wheel_build(args, system):
         util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
         continue
       package = w.cipd_package(git_revision)
-      if package in seen:
-        continue
-      seen.add(package)
 
       # Figure out the unique version id for this wheel build.
       buildid = build.version_fn(system)
