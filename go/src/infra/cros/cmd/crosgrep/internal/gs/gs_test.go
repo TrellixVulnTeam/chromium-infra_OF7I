@@ -9,8 +9,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// TestGetReader tests reading a string out of a file.
-func TestGetReader(t *testing.T) {
+// TestGetReaderDefaultValue tests that the correct default value is provided.
+func TestGetReaderDefaultValue(t *testing.T) {
+	t.Parallel()
 	f := &fakeGSClient{
 		content: "b",
 	}
@@ -26,7 +27,30 @@ func TestGetReader(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	if f.contentPrefixLength != 1024*1024 {
-		t.Errorf("unexpected contentPrefixLength %d", f.contentPrefixLength)
+		t.Errorf("expected contentPrefixLength to be default value, not %d", f.contentPrefixLength)
+	}
+}
+
+// TestGetReaderNonDefaultValue tests that a non-default value is honored.
+func TestGetReaderNonDefaultValue(t *testing.T) {
+	t.Parallel()
+	var length int64 = 1
+	f := &fakeGSClient{
+		content: "b",
+	}
+	reader, err := GetReader(
+		f,
+		"a",
+		length,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if diff := cmp.Diff("b", readString(reader)); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+	if f.contentPrefixLength != length {
+		t.Errorf("unexpected contentPrefixLength: %d (wanted %d)", f.contentPrefixLength, length)
 	}
 }
 
