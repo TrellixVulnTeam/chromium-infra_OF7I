@@ -137,12 +137,13 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         else:
           cwd = self.path.join('infra_internal' if internal else 'infra')
           with self.m.context(cwd=cwd, env={'CHROME_HEADLESS': '1'}):
-            result = self.m.git(
-                'number', rev,
-                name='get commit label',
-                stdout=self.m.raw_io.output(),
-                step_test_data=(
-                    lambda: self.m.raw_io.test_api.stream_output('11112\n')))
+            with self.m.depot_tools.on_path():
+              result = self.m.git(
+                  'number', rev,
+                  name='get commit label',
+                  stdout=self.m.raw_io.output(),
+                  step_test_data=(
+                      lambda: self.m.raw_io.test_api.stream_output('11112\n')))
           cp_num = int(result.stdout.strip())
 
         return '%d-%s' % (cp_num, rev[:7])

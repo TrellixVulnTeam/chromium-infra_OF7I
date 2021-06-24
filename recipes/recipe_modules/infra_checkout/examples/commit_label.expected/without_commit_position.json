@@ -93,6 +93,14 @@
     "env": {
       "CHROME_HEADLESS": "1"
     },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
     "infra_step": true,
     "name": "get commit label"
   },

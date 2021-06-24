@@ -15,6 +15,7 @@ DEPS = [
     'recipe_engine/step',
 
     'depot_tools/bot_update',
+    'depot_tools/depot_tools',
     'depot_tools/gclient',
     'depot_tools/git',
     'depot_tools/presubmit',
