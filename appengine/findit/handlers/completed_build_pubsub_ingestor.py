@@ -155,10 +155,11 @@ def _IngestProto(build_id):
   patches = build.input.gerrit_changes
 
   # Convert the Struct to standard dict, to use .get, .iteritems etc.
-  properties = json_format.MessageToDict(build.output.properties)
+  input_properties = json_format.MessageToDict(build.input.properties)
+  output_properties = json_format.MessageToDict(build.output.properties)
 
   swarm_hashes_properties = {}
-  for k, v in properties.iteritems():
+  for k, v in output_properties.iteritems():
     if _PROP_NAME_REGEX.match(k):
       swarm_hashes_properties[k] = v
 
@@ -169,9 +170,13 @@ def _IngestProto(build_id):
   # TODO(https://crbug.com/1109276) Once all builders use builder_group
   # property, do not check the mastername property
   master_name = (
-      properties.get('target_builder_group') or
-      properties.get('target_mastername') or properties.get('builder_group') or
-      properties.get('mastername'))
+      output_properties.get('target_builder_group') or
+      input_properties.get('target_builder_group') or
+      output_properties.get('target_mastername') or
+      input_properties.get('target_mastername') or
+      output_properties.get('builder_group') or
+      input_properties.get('builder_group') or
+      output_properties.get('mastername') or input_properties.get('mastername'))
   if not master_name:
     logging.error('Build %d does not have expected "mastername" property',
                   build_id)
@@ -179,16 +184,17 @@ def _IngestProto(build_id):
 
   luci_project = build.builder.project
   luci_bucket = build.builder.bucket
-  luci_builder = properties.get('target_buildername') or build.builder.builder
+  luci_builder = output_properties.get(
+      'target_buildername') or build.builder.builder
 
   if commit.host:
     gitiles_host = commit.host
     gitiles_project = commit.project
-    gitiles_ref = commit.ref or 'refs/heads/master'
+    gitiles_ref = commit.ref or 'refs/heads/main'
   else:
     # Non-ci build, use 'repository' property instead to get base revision
     # information.
-    repo_url = urlparse.urlparse(properties.get('repository', ''))
+    repo_url = urlparse.urlparse(output_properties.get('repository', ''))
     gitiles_host = repo_url.hostname or ''
     gitiles_project = repo_url.path or ''
 
@@ -198,7 +204,7 @@ def _IngestProto(build_id):
       gitiles_project = gitiles_project[1:]
     if gitiles_project.endswith('.git'):  # pragma: no branch
       gitiles_project = gitiles_project[:-len('.git')]
-    gitiles_ref = properties.get('gitiles_ref', 'refs/heads/master')
+    gitiles_ref = output_properties.get('gitiles_ref', 'refs/heads/master')
 
   gerrit_patch = None
   if len(patches) > 0:
@@ -224,7 +230,7 @@ def _IngestProto(build_id):
               target_name=target_name,
               isolated_hash=isolated_hash,
               commit_position=commit_position,
-              revision=properties.get('got_revision')))
+              revision=output_properties.get('got_revision')))
   result = [key.pairs() for key in ndb.put_multi(entities)]
   return {'data': {'created_rows': result}}
 
@@ -241,23 +247,30 @@ def _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name, build_id,
 
   assert build_id
   build = GetV2Build(
-      build_id, fields=FieldMask(paths=['id', 'number', 'output.properties']))
+      build_id,
+      fields=FieldMask(
+          paths=['id', 'number', 'output.properties', 'input.properties']))
 
   # Sanity check.
   assert build, 'Failed to download build for {}.'.format(build_id)
   assert build_id == build.id, (
-    'Build id {} is different from the requested id {}.'.format(
-      build.id, build_id))
+      'Build id {} is different from the requested id {}.'.format(
+          build.id, build_id))
   assert build.number, 'No build_number for chromium build {}'.format(build_id)
 
   # Converts the Struct to standard dict, to use .get, .iteritems etc.
-  properties = json_format.MessageToDict(build.output.properties)
+  input_properties = json_format.MessageToDict(build.input.properties)
+  output_properties = json_format.MessageToDict(build.output.properties)
   # TODO(https://crbug.com/1109276) Once all builders use builder_group
   # property, do not check the mastername property
   master_name = (
-      properties.get('target_builder_group') or
-      properties.get('target_mastername') or properties.get('builder_group') or
-      properties.get('mastername'))
+      output_properties.get('target_builder_group') or
+      input_properties.get('target_builder_group') or
+      output_properties.get('target_mastername') or
+      input_properties.get('target_mastername') or
+      output_properties.get('builder_group') or
+      input_properties.get('builder_group') or
+      output_properties.get('mastername') or input_properties.get('mastername'))
   if not master_name:
     logging.error('Build %d does not have expected "mastername" property',
                   build_id)
