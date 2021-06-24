@@ -9,7 +9,6 @@ from PB.recipes.infra import gae_tarball_uploader as pb
 
 DEPS = [
     'recipe_engine/buildbucket',
-    'recipe_engine/commit_position',
     'recipe_engine/futures',
     'recipe_engine/json',
     'recipe_engine/path',
@@ -125,18 +124,11 @@ def _checkout(api, project):
       gclient_config_name=conf,
       internal=internal,
       go_version_variant='bleeding_edge')
-  rev = co.bot_update_step.presentation.properties['got_revision']
-  cp = co.bot_update_step.presentation.properties['got_revision_cp']
-
-  cp_ref, cp_num = api.commit_position.parse(cp)
-  if cp_ref != 'refs/heads/master':  # pragma: no cover
-    raise recipe_api.InfraFailure(
-        'Only refs/heads/master commits are supported for now, got %r' % cp_ref)
 
   return co, Metadata(
       repo_url=repo_url,
-      revision=rev,
-      canonical_tag='%d-%s' % (cp_num, rev[:7]))
+      revision=co.bot_update_step.presentation.properties['got_revision'],
+      canonical_tag=co.get_commit_label())
 
 
 def _roll_built_tarballs(api, spec, tarballs, meta):

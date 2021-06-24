@@ -45,6 +45,7 @@
   * [images_builder](#recipes-images_builder)
   * [images_pins_roller](#recipes-images_pins_roller)
   * [infra_checkout:examples/ci](#recipes-infra_checkout_examples_ci)
+  * [infra_checkout:examples/commit_label](#recipes-infra_checkout_examples_commit_label)
   * [infra_checkout:examples/try](#recipes-infra_checkout_examples_try)
   * [infra_cipd:examples/usage](#recipes-infra_cipd_examples_usage)
   * [infra_continuous](#recipes-infra_continuous)
@@ -322,7 +323,7 @@ Args:
       docker host. Read more https://docs.docker.com/network/host/.
 ### *recipe_modules* / [infra\_checkout](/recipes/recipe_modules/infra_checkout)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 #### **class [InfraCheckoutApi](/recipes/recipe_modules/infra_checkout/api.py#9)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1124,9 +1125,9 @@ Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
 &mdash; **def [RunSteps](/recipes/recipes/fleet_systems/dhcp.py#124)(api):**
 ### *recipes* / [gae\_tarball\_uploader](/recipes/recipes/gae_tarball_uploader.py)
 
-[DEPS](/recipes/recipes/gae_tarball_uploader.py#10): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/gae_tarball_uploader.py#10): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#36)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#35)(api, properties):**
 ### *recipes* / [gerrit\_hello\_world](/recipes/recipes/gerrit_hello_world.py)
 
 [DEPS](/recipes/recipes/gerrit_hello_world.py#8): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1166,9 +1167,9 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 &mdash; **def [RunSteps](/recipes/recipes/gsutil_hello_world.py#19)(api):**
 ### *recipes* / [images\_builder](/recipes/recipes/images_builder.py)
 
-[DEPS](/recipes/recipes/images_builder.py#10): [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/images_builder.py#10): [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#42)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#41)(api, properties):**
 ### *recipes* / [images\_pins\_roller](/recipes/recipes/images_pins_roller.py)
 
 [DEPS](/recipes/recipes/images_pins_roller.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
@@ -1179,6 +1180,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipe_modules/infra_checkout/examples/ci.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/ci.py#17)(api):**
+### *recipes* / [infra\_checkout:examples/commit\_label](/recipes/recipe_modules/infra_checkout/examples/commit_label.py)
+
+[DEPS](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#16)(api):**
 ### *recipes* / [infra\_checkout:examples/try](/recipes/recipe_modules/infra_checkout/examples/try.py)
 
 [DEPS](/recipes/recipe_modules/infra_checkout/examples/try.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]

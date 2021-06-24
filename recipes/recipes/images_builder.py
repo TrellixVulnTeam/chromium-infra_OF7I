@@ -9,7 +9,6 @@ from PB.recipes.infra import images_builder as images_builder_pb
 
 DEPS = [
     'recipe_engine/buildbucket',
-    'recipe_engine/commit_position',
     'recipe_engine/futures',
     'recipe_engine/json',
     'recipe_engine/path',
@@ -153,24 +152,18 @@ def _checkout_committed(api, mode, project):
       gclient_config_name=conf,
       internal=internal,
       go_version_variant=GO_VERSION_VARIANT)
-  rev = co.bot_update_step.presentation.properties['got_revision']
-  cp = co.bot_update_step.presentation.properties['got_revision_cp']
-
-  cp_ref, cp_num = api.commit_position.parse(cp)
-  if cp_ref not in [
-      'refs/heads/master', 'refs/heads/main']:  # pragma: no cover
-    raise recipe_api.InfraFailure(
-        'Only refs/heads/main or refs/heads/main commits are '
-        'supported for now, got %r' % cp_ref)
 
   canonical_tag = None
   if mode == PROPERTIES.MODE_CI:
-    canonical_tag = 'ci-%s-%d-%s' % (_date(api), cp_num, rev[:7])
+    # E.g. "ci-2021.06.23-41861-d008a93".
+    canonical_tag = 'ci-%s-%s' % (_date(api), co.get_commit_label())
   elif mode == PROPERTIES.MODE_TS:
+    # E.g. "ts-2021.06.23-113234"
     canonical_tag = 'ts-%s-%d' % (_date(api), api.buildbucket.build.number)
   else:
     raise AssertionError('Impossible')  # pragma: no cover
 
+  rev = co.bot_update_step.presentation.properties['got_revision']
   return co, Metadata(
       canonical_tag=canonical_tag,
       labels={

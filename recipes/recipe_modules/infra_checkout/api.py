@@ -117,6 +117,36 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
               name='commit git patch')
         self._committed = True
 
+      def get_commit_label(self):
+        """Computes "<number>-<revision>" string identifying this commit.
+
+        Either uses `Cr-Commit-Position` footer, if available, or falls back
+        to `git number <rev>`.
+
+        This label is used as part of Docker label name for images produced
+        based on this checked out commit.
+
+        Returns:
+          A string.
+        """
+        props = self.bot_update_step.presentation.properties
+        rev = props['got_revision']
+
+        if 'got_revision_cp' in props:
+          _, cp_num = self.m.commit_position.parse(props['got_revision_cp'])
+        else:
+          cwd = self.path.join('infra_internal' if internal else 'infra')
+          with self.m.context(cwd=cwd, env={'CHROME_HEADLESS': '1'}):
+            result = self.m.git(
+                'number', rev,
+                name='get commit label',
+                stdout=self.m.raw_io.output(),
+                step_test_data=(
+                    lambda: self.m.raw_io.test_api.stream_output('11112\n')))
+          cp_num = int(result.stdout.strip())
+
+        return '%d-%s' % (cp_num, rev[:7])
+
       def get_changed_files(self):
         """Lists files changed in the patch.
 
