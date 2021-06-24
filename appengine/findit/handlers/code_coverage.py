@@ -212,20 +212,20 @@ def _MakePlatformSelect(luci_project, host, project, ref, revision, path,
     result['params']['path'] = path
   for platform, report in _GetSameOrMostRecentReportForEachPlatform(
       luci_project, host, project, ref, revision).iteritems():
-    value = platform
-    if report.gitiles_commit.revision == revision:
-      # If the same revision is available in the target platform, append it to
-      # the platform name s.t. the form can populate this revision field before
-      # submission.
-      value = '%s#%s' % (platform, revision)
-    result['options'].append({
-        'value':
-            value,
+    option = {
+        'platform':
+            platform,
         'ui_name':
             _GetPostsubmitPlatformInfoMap(luci_project)[platform]['ui_name'],
         'selected':
             platform == current_platform,
-    })
+    }
+    if report.gitiles_commit.revision == revision:
+      # If the same revision is available in the target platform, add it to the
+      # option s.t. the form can populate this revision field before
+      # submission.
+      option['revision'] = revision
+    result['options'].append(option)
   result['options'].sort(key=lambda x: x['ui_name'])
   return result
 

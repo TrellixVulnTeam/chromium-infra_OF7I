@@ -125,7 +125,7 @@
           Platform:
           <select id="platform_select" name="platform" onchange="switchPlatform()">
           {% for option in platform_select.options %}
-            <option value="{{option.value}}" {% if option.selected %}selected="selected" {% endif %}>{{option.ui_name}}</option>
+            <option value="{{option.platform}}" {% if option.selected %}selected="selected" {% endif %}>{{option.ui_name}}</option>
           {% endfor %}
           </select>
           View:

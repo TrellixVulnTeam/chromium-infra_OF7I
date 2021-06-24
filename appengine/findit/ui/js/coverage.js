@@ -13,14 +13,11 @@ function switchPlatform() { // eslint-disable-line no-unused-vars
   const form = document.getElementById('platform_select_form');
   const select = document.getElementById('platform_select');
   const option = select.options[select.selectedIndex];
-  if (option.value.indexOf('#') > -1) {
-    const platform = option.value.split('#')[0];
-    const revision = option.value.split('#')[1];
-    option.value = platform;
+  if ('revision' in option) {
     const revisionField = document.createElement('input');
     revisionField.setAttribute('type', 'hidden');
     revisionField.setAttribute('name', 'revision');
-    revisionField.setAttribute('value', revision);
+    revisionField.setAttribute('value', option.revision);
     form.appendChild(revisionField);
   }
   form.submit();
