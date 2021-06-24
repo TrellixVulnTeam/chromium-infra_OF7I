@@ -325,18 +325,8 @@ func (e *generateBatchSummary) generateBenchmarkCSVs(resultsDir string, p preset
 	return nil
 }
 
-func floatsToStrings(floats []float64) []string {
-	var strings []string
-	for _, f := range floats {
-		strings = append(strings, fmt.Sprintf("%f", f))
-	}
-	return strings
-}
-
-// Generates a single CSV with the following format:
-// URL, Benchmark, DeviceCfg, Story, Metric, pval, median (A), median (B), values (A), values (B)
-// ...
-// Raw A and B values are semicolon separated
+// Generates a single CSV with the following format (no header):
+// URL, AorB, Benchmark, DeviceCfg, Story, Metric, Value
 func (e *generateBatchSummary) generateRawCSV(resultsDir string, p preset, experimentResults map[string][]experimentResult) error {
 	outfilePath := path.Join(resultsDir, "raw.csv")
 	fmt.Println("Generating report " + outfilePath)
@@ -347,9 +337,8 @@ func (e *generateBatchSummary) generateRawCSV(resultsDir string, p preset, exper
 	defer outfile.Close()
 	outcsv := csv.NewWriter(outfile)
 
-	line := []string{"URL", "Benchmark", "Cfg", "Story", "Metric",
-		"pval", "Median (A)", "Median (B)", "Raw (A)", "Raw (B)"}
-	outcsv.Write(line)
+	outcsv.Write([]string{"URL", "AorB", "Benchmark", "Cfg", "Story",
+		"Metric", "Value"})
 
 	benchmarkKeys := []string{}
 	for b := range experimentResults {
@@ -369,18 +358,19 @@ func (e *generateBatchSummary) generateRawCSV(resultsDir string, p preset, exper
 
 		for _, result := range storyResults {
 			for _, m := range *metrics {
-				line = []string{result.URL, b, result.Cfg, result.Story, m.Name}
+
 				report, found := result.Report.Reports[metricNameKey(m.Name)]
 				if found {
-					line = append(line, fmt.Sprintf("%.6f", report.PValue))
-					line = append(line, fmt.Sprintf("%.5f", report.Measurements[baseLabel].Median))
-					line = append(line, fmt.Sprintf("%.5f", report.Measurements[expLabel].Median))
-					line = append(line, strings.Join(floatsToStrings(report.Measurements[baseLabel].Raw), ";"))
-					line = append(line, strings.Join(floatsToStrings(report.Measurements[expLabel].Raw), ";"))
-				} else {
-					line = append(line, []string{nan, nan, nan, nan, nan}...)
+					info := []string{result.URL, "A", b, result.Cfg, result.Story, m.Name}
+					for _, val := range report.Measurements[baseLabel].Raw {
+						outcsv.Write(append(info, fmt.Sprintf("%f", val)))
+					}
+
+					info = []string{result.URL, "B", b, result.Cfg, result.Story, m.Name}
+					for _, val := range report.Measurements[expLabel].Raw {
+						outcsv.Write(append(info, fmt.Sprintf("%f", val)))
+					}
 				}
-				outcsv.Write(line)
 			}
 		}
 		outcsv.Flush()
