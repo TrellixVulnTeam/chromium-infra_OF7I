@@ -218,7 +218,8 @@ def _main_wheel_build(args, system):
     for version_tag, refs in version_refs.items():
       util.LOGGER.info('Setting %s refs %s to point to tag %s',
           package_name, refs, version_tag)
-      system.cipd.set_refs(package_name, version_tag, refs, dryrun=dryrun)
+      system.cipd.set_refs(
+          package_name, version_tag, refs, dryrun=not args.upload)
 
 
 def _main_wheel_dump(args, system):
