@@ -78,24 +78,3 @@ luci.cq_tryjob_verifier(
     builder = "infra-internal:try/chrome_release Roll Tester (depot_tools)",
     cq_group = "depot_tools",
 )
-
-# CI builder that uploads depot_tools.zip to Google Storage.
-#
-# TODO(crbug.com/940149): Move to the prod pool.
-luci.builder(
-    name = "depot_tools zip uploader",
-    bucket = "ci",
-    executable = infra.recipe("depot_tools_builder"),
-    dimensions = {
-        "os": "Ubuntu-18.04",
-        "cpu": "x86-64",
-        "pool": "luci.flex.ci",
-    },
-    service_account = "infra-ci-depot-tools-uploader@chops-service-accounts.iam.gserviceaccount.com",
-    build_numbers = True,
-    triggered_by = ["depot_tools-gitiles-trigger"],
-)
-luci.console_view_entry(
-    builder = "depot_tools zip uploader",
-    console_view = "depot_tools",
-)
