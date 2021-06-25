@@ -697,6 +697,141 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
             builder_name='linux-code-coverage_unit')
     ], fetched_summary_coverage_data)
 
+  @mock.patch.object(code_coverage.ProcessCodeCoverageData,
+                     '_FetchAndSaveFileIfNecessary')
+  @mock.patch.object(code_coverage, '_RetrieveChromeManifest')
+  @mock.patch.object(code_coverage.CachedGitilesRepository, 'GetChangeLog')
+  @mock.patch.object(code_coverage, '_IsFileAvailableInGs')
+  @mock.patch.object(code_coverage, '_GetValidatedData')
+  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testProcessFullRepoData_ReferencedCoverage(
+      self, mocked_is_request_from_appself, mocked_get_build,
+      mocked_get_validated_data, mocked_is_file_available_in_gs,
+      mocked_get_change_log, mocked_retrieve_manifest, mocked_fetch_file, *_):
+    # Mock buildbucket v2 API.
+    build = mock.Mock()
+    build.builder.project = 'chrome'
+    build.builder.bucket = 'coverage'
+    build.builder.builder = 'linux-code-coverage'
+    build.output.properties.items.return_value = [
+        ('coverage_is_presubmit', False),
+        ('coverage_gs_bucket', 'code-coverage-data'),
+        ('coverage_metadata_gs_paths', [
+            'postsubmit/chromium.googlesource.com/chromium/src/'
+            'aaaaa/coverage/linux-code-coverage/123456789/metadata',
+        ]), ('mimic_builder_names', ['linux-code-coverage'])
+    ]
+    build.input.gitiles_commit = mock.Mock(
+        host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/master',
+        id='aaaaa')
+    mocked_get_build.return_value = build
+
+    # Mock Gitiles API to get change log.
+    change_log = mock.Mock()
+    change_log.committer.time = datetime(2018, 1, 1)
+    mocked_get_change_log.return_value = change_log
+
+    # Mock retrieve manifest.
+    manifest = _CreateSampleManifest()
+    mocked_retrieve_manifest.return_value = manifest
+
+    # Mock get validated data from cloud storage for both all.json and file
+    # shard json.
+    all_coverage_data = {
+        'dirs': [{
+            'path': '//dir/',
+            'dirs': [],
+            'files': [{
+                'path': '//dir/test.cc',
+                'name': 'test.cc',
+                'summaries': _CreateSampleCoverageSummaryMetric()
+            }],
+            'summaries': _CreateSampleCoverageSummaryMetric()
+        }],
+        'file_shards': ['file_coverage/files1.json.gz'],
+        'summaries':
+            _CreateSampleCoverageSummaryMetric(),
+        'components': [{
+            'path': 'Component>Test',
+            'dirs': [{
+                'path': '//dir/',
+                'name': 'dir/',
+                'summaries': _CreateSampleCoverageSummaryMetric()
+            }],
+            'summaries': _CreateSampleCoverageSummaryMetric()
+        }],
+    }
+
+    file_shard_coverage_data = {
+        'files': [{
+            'path':
+                '//dir/test.cc',
+            'revision':
+                'bbbbb',
+            'lines': [{
+                'count': 100,
+                'last': 2,
+                'first': 1
+            }],
+            'timestamp':
+                '140000',
+            'uncovered_blocks': [{
+                'line': 1,
+                'ranges': [{
+                    'first': 1,
+                    'last': 2
+                }]
+            }]
+        }]
+    }
+
+    mocked_is_file_available_in_gs.return_value = True
+    mocked_get_validated_data.side_effect = [
+        all_coverage_data, file_shard_coverage_data, all_coverage_data,
+        file_shard_coverage_data
+    ]
+
+    request_url = '/coverage/task/process-data/build/123456789'
+    response = self.test_app.post(request_url)
+    self.assertEqual(200, response.status_int)
+    mocked_is_request_from_appself.assert_called()
+
+    fetched_reports = PostsubmitReport.query().fetch()
+    self.assertEqual(2, len(fetched_reports))
+    self.assertEqual(_CreateSamplePostsubmitReport(), fetched_reports[0])
+    self.assertEqual(
+        _CreateSamplePostsubmitReport(
+            builder_name='linux-code-coverage_referenced'), fetched_reports[1])
+    mocked_fetch_file.assert_called_with(
+        _CreateSamplePostsubmitReport(
+            builder_name='linux-code-coverage_referenced'), '//dir/test.cc',
+        'bbbbb')
+
+    fetched_file_coverage_data = FileCoverageData.query().fetch()
+    self.assertEqual(2, len(fetched_file_coverage_data))
+    self.assertEqual(_CreateSampleFileCoverageData(),
+                     fetched_file_coverage_data[0])
+    self.assertEqual(
+        _CreateSampleFileCoverageData(
+            builder_name='linux-code-coverage_referenced'),
+        fetched_file_coverage_data[1])
+
+    fetched_summary_coverage_data = SummaryCoverageData.query().fetch()
+    self.assertListEqual([
+        _CreateSampleRootComponentCoverageData(),
+        _CreateSampleRootComponentCoverageData(
+            builder_name='linux-code-coverage_referenced'),
+        _CreateSampleComponentCoverageData(),
+        _CreateSampleComponentCoverageData(
+            builder_name='linux-code-coverage_referenced'),
+        _CreateSampleDirectoryCoverageData(),
+        _CreateSampleDirectoryCoverageData(
+            builder_name='linux-code-coverage_referenced')
+    ], fetched_summary_coverage_data)
+
 
 class ServeCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
