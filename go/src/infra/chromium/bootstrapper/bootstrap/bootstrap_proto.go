@@ -87,15 +87,6 @@ func (x *GitilesRepo) validate(v *validator) {
 	}
 }
 
-func (x *CipdPackage) validate(v *validator) {
-	if x.Name == "" {
-		v.errorf("${}.name is not set")
-	}
-	if x.Version == "" {
-		v.errorf("${}.version is not set")
-	}
-}
-
 func (x *BootstrapProperties) validate(v *validator) {
 	switch config := x.ConfigProject.(type) {
 	case *BootstrapProperties_TopLevelProject_:
@@ -113,13 +104,18 @@ func (x *BootstrapProperties) validate(v *validator) {
 	if x.PropertiesFile == "" {
 		v.errorf("${}.properties_file is not set")
 	}
-	if x.RecipePackage == nil {
-		v.errorf("${}.recipe_package is not set")
+	if x.Exe == nil {
+		v.errorf("${}.exe is not set")
 	} else {
-		v.validate(x.RecipePackage, "recipe_package")
-	}
-	if x.Recipe == "" {
-		v.errorf("${}.recipe is not set")
+		if x.Exe.CipdPackage == "" {
+			v.errorf("${}.exe.cipd_package is not set")
+		}
+		if x.Exe.CipdVersion == "" {
+			v.errorf("${}.exe.cipd_version is not set")
+		}
+		if len(x.Exe.Cmd) == 0 {
+			v.errorf("${}.exe.cmd is not set")
+		}
 	}
 }
 

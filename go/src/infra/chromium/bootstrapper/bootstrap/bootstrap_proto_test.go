@@ -134,20 +134,20 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			So(err, ShouldErrLike,
 				"none of the config_project fields in $test is set",
 				"$test.properties_file is not set",
-				"$test.recipe_package is not set",
-				"$test.recipe is not set")
+				"$test.exe is not set")
 		})
 
-		Convey("fails for unset required fields in recipe_package", func() {
+		Convey("fails for unset required fields in exe", func() {
 			props := createBootstrapProperties([]byte(`{
-				"recipe_package": {}
+				"exe": {}
 			}`))
 
 			err := validate(props, "$test")
 
 			So(err, ShouldErrLike,
-				"$test.recipe_package.name is not set",
-				"$test.recipe_package.version is not set")
+				"$test.exe.cipd_package is not set",
+				"$test.exe.cipd_version is not set",
+				"$test.exe.cmd is not set")
 		})
 
 		Convey("with a top level project", func() {
@@ -188,11 +188,11 @@ func TestBootstrapProtoValidation(t *testing.T) {
 							"ref": "refs/heads/top-level"
 						},
 						"properties_file": "infra/config/bucket/builder/properties.textpb",
-						"recipe_package": {
-							"name": "chromium/tools/build",
-							"version": "refs/head/main"
-						},
-						"recipe": "chromium"
+						"exe": {
+							"cipd_package": "fake-package",
+							"cipd_version": "fake-version",
+							"cmd": ["fake-cmd"]
+						}
 					}`))
 
 				err := validate(props, "$test")
@@ -260,11 +260,11 @@ func TestBootstrapProtoValidation(t *testing.T) {
 							"config_repo_path": "path/to/dependency"
 						},
 						"properties_file": "infra/config/generated/builders/bucket/builder/properties.textpb",
-						"recipe_package": {
-							"name": "chromium/tools/build",
-							"version": "refs/head/main"
-						},
-						"recipe": "chromium"
+						"exe": {
+							"cipd_package": "fake-package",
+							"cipd_version": "fake-version",
+							"cmd": ["fake-cmd"]
+						}
 					}`))
 
 				err := validate(props, "$test")

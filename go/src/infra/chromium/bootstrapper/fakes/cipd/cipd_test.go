@@ -6,7 +6,7 @@ package cipd
 
 import (
 	"context"
-	"infra/chromium/bootstrapper/recipe"
+	bscipd "infra/chromium/bootstrapper/cipd"
 	"path/filepath"
 	"testing"
 
@@ -15,8 +15,6 @@ import (
 	"go.chromium.org/luci/cipd/common"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/common/testing/testfs"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func collect(cipdRoot, subdir string) map[string]string {
@@ -100,17 +98,12 @@ func TestCipdClient(t *testing.T) {
 				"fake-subdir": common.PinSlice{common.Pin{PackageName: "fake-package", InstanceID: "fake-instance-id"}},
 			}
 
-			Convey("produces valid infra/config/recipes.cfg by default", func() {
+			Convey("succeeds by default", func() {
 				client, _ := Factory(nil)(ctx, cipdRoot)
 
 				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, 0, false)
 
 				So(err, ShouldBeNil)
-				layout := collect(cipdRoot, "fake-subdir")
-				So(layout, ShouldHaveLength, 1)
-				So(layout, ShouldContainKey, "infra/config/recipes.cfg")
-				recipesCfg := &structpb.Struct{}
-				So(protojson.Unmarshal([]byte(layout["infra/config/recipes.cfg"]), recipesCfg), ShouldBeNil)
 			})
 
 			Convey("fails for a nil package", func() {
@@ -175,15 +168,15 @@ func TestIntegration(t *testing.T) {
 
 		cipdRoot := t.TempDir()
 
-		ctx := recipe.UseCipdClientFactory(ctx, Factory(nil))
+		ctx := bscipd.UseCipdClientFactory(ctx, Factory(nil))
 
 		Convey("succeeds when calling SetupRecipe", func() {
-			client, err := recipe.NewClient(ctx, cipdRoot)
+			client, err := bscipd.NewClient(ctx, cipdRoot)
 			if err != nil {
 				panic(err)
 			}
 
-			recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
+			recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
 
 			So(err, ShouldBeNil)
 			So(recipesPyPath, ShouldNotBeEmpty)

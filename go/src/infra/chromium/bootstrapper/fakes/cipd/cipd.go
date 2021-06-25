@@ -7,7 +7,7 @@ package cipd
 import (
 	"context"
 	"fmt"
-	"infra/chromium/bootstrapper/recipe"
+	bscipd "infra/chromium/bootstrapper/cipd"
 	"path/filepath"
 
 	"go.chromium.org/luci/cipd/client/cipd"
@@ -51,8 +51,8 @@ type Client struct {
 // package names to the Package instances containing the fake data for the
 // package. Missing keys will have a default Package. A nil value indicates that
 // the given package is not the name of a package.
-func Factory(packages map[string]*Package) recipe.CipdClientFactory {
-	return func(ctx context.Context, cipdRoot string) (recipe.CipdClient, error) {
+func Factory(packages map[string]*Package) bscipd.CipdClientFactory {
+	return func(ctx context.Context, cipdRoot string) (bscipd.CipdClient, error) {
 		return &Client{cipdRoot: cipdRoot, packages: packages}, nil
 	}
 }
@@ -111,9 +111,6 @@ func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceByS
 		contents := instance.Contents
 		if contents == nil {
 			contents = map[string]string{}
-		}
-		if _, ok := contents["infra/config/recipes.cfg"]; !ok {
-			contents["infra/config/recipes.cfg"] = "{}"
 		}
 		if err := testfs.Build(recipeRoot, contents); err != nil {
 			panic(err)

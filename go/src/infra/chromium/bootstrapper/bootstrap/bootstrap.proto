@@ -10,6 +10,8 @@ package chromium.bootstrapper.bootstrap;
 
 option go_package = "infra/chromium/bootstrapper/bootstrap";
 
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
+
 // A reference to a gitiles repository that will be accessed as part of the
 // bootstrap process
 message GitilesRepo {
@@ -17,15 +19,6 @@ message GitilesRepo {
   string host = 1;
   // Required, the name of the repo on the host
   string project = 2;
-}
-
-// A reference to a CIPD package instance that will be accessed as part
-// of the bootstrap process
-message CipdPackage {
-  // Required, the name of the bundle
-  string name = 1;
-  // Required, the version of the bundle
-  string version = 2;
 }
 
 // The input properties consumed by the bootstrapper binary
@@ -83,8 +76,6 @@ message BootstrapProperties {
   // the config repo
   string properties_file = 3;
 
-  // Required, the CIPD package containing the recipe to execute
-  CipdPackage recipe_package = 4;
-  // Required, the name of the recipe to execute
-  string recipe = 5;
+  // Required, the executable to bootstrap
+  buildbucket.v2.Executable exe = 4;
 }

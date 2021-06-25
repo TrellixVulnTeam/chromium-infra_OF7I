@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package recipe
+package cipd
 
 import (
 	"context"
@@ -94,7 +94,7 @@ func TestClient(t *testing.T) {
 
 		})
 
-		Convey("SetupRecipe", func() {
+		Convey("DownloadPackage", func() {
 
 			cipdRoot := t.TempDir()
 
@@ -107,13 +107,13 @@ func TestClient(t *testing.T) {
 				ctx := UseCipdClientFactory(ctx, factory)
 				client, _ := NewClient(ctx, cipdRoot)
 
-				recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
+				recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
 
 				So(err, ShouldErrLike, "test ResolveVersion failure")
 				So(recipesPyPath, ShouldBeEmpty)
 			})
 
-			Convey("fails if fetching and deploying instance fails", func() {
+			Convey("fails if ensuring package fails", func() {
 				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
 					return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error) {
 						return nil, errors.New("test EnsurePackages failure")
@@ -122,58 +122,21 @@ func TestClient(t *testing.T) {
 				ctx := UseCipdClientFactory(ctx, factory)
 				client, _ := NewClient(ctx, cipdRoot)
 
-				recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
+				recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
 
 				So(err, ShouldErrLike, "test EnsurePackages failure")
 				So(recipesPyPath, ShouldBeEmpty)
 			})
 
-			Convey("fails if reading recipes.cfg fails", func() {
-				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return &fakeCipdClient{}, nil
-				}
-				ctx := UseCipdClientFactory(ctx, factory)
+			Convey("returns path to deployed package", func() {
+
+				ctx := UseCipdClientFactory(ctx, factoryForRecipesCfg("{}"))
 				client, _ := NewClient(ctx, cipdRoot)
 
-				recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
+				packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
 
-				So(err, ShouldErrLike, "could not read recipes.cfg")
-				So(recipesPyPath, ShouldBeEmpty)
-			})
-
-			Convey("fails if unmarshalling recipes.cfg fails", func() {
-				ctx := UseCipdClientFactory(ctx, factoryForRecipesCfg("invalid-recipes.cfg"))
-				client, _ := NewClient(ctx, cipdRoot)
-
-				recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
-
-				So(err, ShouldErrLike, "invalid value")
-				So(recipesPyPath, ShouldBeEmpty)
-			})
-
-			Convey("returns path to recipes.py", func() {
-
-				Convey("with default recipe path", func() {
-					ctx := UseCipdClientFactory(ctx, factoryForRecipesCfg("{}"))
-					client, _ := NewClient(ctx, cipdRoot)
-
-					recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
-
-					So(err, ShouldBeNil)
-					So(recipesPyPath, ShouldEqual, filepath.Join(cipdRoot, "fake-package", "recipes.py"))
-				})
-
-				Convey("with explicit recipes path", func() {
-					ctx := UseCipdClientFactory(ctx, factoryForRecipesCfg(`{
-						"recipes_path": "recipes"
-					}`))
-					client, _ := NewClient(ctx, cipdRoot)
-
-					recipesPyPath, err := client.SetupRecipe(ctx, "fake-package", "fake-version")
-
-					So(err, ShouldBeNil)
-					So(recipesPyPath, ShouldEqual, filepath.Join(cipdRoot, "fake-package", "recipes", "recipes.py"))
-				})
+				So(err, ShouldBeNil)
+				So(packagePath, ShouldEqual, filepath.Join(cipdRoot, "fake-package"))
 
 			})
 
