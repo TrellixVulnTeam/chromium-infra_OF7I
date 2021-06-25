@@ -480,6 +480,12 @@ SPECS.update({
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
+            'pyahocorasick',
+            '1.4.1',
+            packaged=(),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'pyasn',
             '1.6.0b1',
             packaged=(),
@@ -1085,6 +1091,7 @@ SPECS.update({
         Universal('pytest-xdist', '1.31.0'),
         Universal('python-dateutil', '2.7.3'),
         Universal('python-dateutil', '2.8.1'),
+        Universal('python-magic', '0.4.24'),
         Universal('pytz', '2018.4'),
         Universal('pytz', '2021.1'),
         Universal('pywinauto', '0.6.8'),

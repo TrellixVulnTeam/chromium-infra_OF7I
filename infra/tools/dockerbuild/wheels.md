@@ -4456,6 +4456,26 @@ wheel: <
 
 * *universal*
 
+## **pyahocorasick**
+
+### 1.4.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyahocorasick/${vpython_platform}"
+  version: "version:1.4.1"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **pyasn**
 
 ### 1.6.0b1
@@ -5241,6 +5261,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/python-dateutil-py2_py3"
   version: "version:2.8.1"
+>
+```
+
+
+* *universal*
+
+## **python-magic**
+
+### 0.4.24
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/python-magic-py2_py3"
+  version: "version:0.4.24"
 >
 ```
 
