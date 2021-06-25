@@ -73,6 +73,9 @@ github.com/bmatcuk/doublestar
 github.com/otiai10/copy
 github.com/aclements/go-moremath
 
+# Kubernetes related packages
+k8s.io/
+
 # Other stuff
 contrib.go.opencensus.io/exporter
 go.opencensus.io/exporter
