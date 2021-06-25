@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"infra/chromeperf/pinpoint"
+	"infra/chromeperf/pinpoint/cli/identify"
 	"infra/chromeperf/pinpoint/proto"
 
 	"go.chromium.org/luci/client/downloader"
@@ -216,6 +217,7 @@ func (c *isolatedClientsCache) Get(obj *isolatedObject) *isolatedclient.Client {
 		obj.host,
 		isolatedclient.WithNamespace(obj.namespace),
 		isolatedclient.WithAuthClient(c.httpclient),
+		isolatedclient.WithUserAgent(identify.UserAgent),
 	)
 	c.clients[obj.clientKey()] = clt
 	return clt
