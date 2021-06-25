@@ -28,6 +28,7 @@ func newApplication() *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			client.ListActions,
+			client.CheckServer,
 		},
 	}
 }
