@@ -1,12 +1,10 @@
 create {
   # We are currently building this package only for linux platform.
   platform_re: "linux-.*"
-}
 
-create {
   source {
     git {
-      repo: "https://github.com/GoogleCloudPlatform/protoc-gen-bq-schema"
+      repo: "https://github.com/googlecloudplatform/protoc-gen-bq-schema"
       tag_pattern: "v%s"
     }
   }
@@ -14,4 +12,4 @@ create {
   build { tool: "tools/go" }
 }
 
-upload { pkg_prefix: "go/github.com/GoogleCloudPlatform/protoc-gen-bq-schema" }
+upload { pkg_prefix: "go/github.com/googlecloudplatform/protoc-gen-bq-schema" }
