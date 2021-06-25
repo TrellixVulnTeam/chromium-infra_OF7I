@@ -5,11 +5,12 @@
 package client
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/karte/site"
 )
@@ -45,5 +46,19 @@ func (c *checkServerRun) Run(a subcommands.Application, args []string, env subco
 
 // InnerRun runs the check-server command and returns a go-level error.
 func (c *checkServerRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	return errors.New("not yet implemented")
+	// TODO(gregorynisbet): Replace hardcoded Karte server with arguments.
+	resp, err := http.Get("http://localhost:8800/hello-world")
+	if err != nil {
+		return errors.Annotate(err, "get request").Err()
+	}
+	switch resp.StatusCode {
+	case 200:
+		fmt.Fprintf(a.GetOut(), "200\n")
+		return nil
+	}
+	_, err = fmt.Fprintf(a.GetOut(), "%#v", resp)
+	if err != nil {
+		return errors.Annotate(err, "printing HTTP response").Err()
+	}
+	return fmt.Errorf("check-server: bad status code %d", resp.StatusCode)
 }
