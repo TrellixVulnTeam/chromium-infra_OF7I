@@ -630,11 +630,9 @@ import:
   repo: https://chromium.googlesource.com/external/github.com/kubernetes/utils.git
   subpackages:
   - integer
-- package: sigs.k8s.io/structured-merge-diff
+- package: sigs.k8s.io/structured-merge-diff/v3
   version: upstream/v3.0.0
   repo: https://chromium.googlesource.com/external/github.com/kubernetes-sigs/structured-merge-diff.git
-  subpackages:
-  - v3/value
 - package: sigs.k8s.io/yaml
   repo: https://chromium.googlesource.com/external/github.com/kubernetes-sigs/yaml.git
   version: upstream/master

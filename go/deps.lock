@@ -1,5 +1,5 @@
-hash: 59ef9a4b57d17060a025828d0dcf7b1bef5c347801b51634ee7ed48a54931537
-updated: 2021-06-24T16:38:55.633487062-07:00
+hash: c56816af3e46d94631871549c61edf03559d3f54230b721273c2512d3d551faa
+updated: 2021-06-24T18:46:07.615166-07:00
 imports:
 - name: cloud.google.com/go
   version: 267787eb245d9307cf78304c1ce34bdfb2aaf5ab
@@ -636,11 +636,9 @@ imports:
   repo: https://chromium.googlesource.com/external/github.com/kubernetes/utils.git
   subpackages:
   - integer
-- name: sigs.k8s.io/structured-merge-diff
+- name: sigs.k8s.io/structured-merge-diff/v3
   version: 877aee05330847a873a1a8998b40e12a1e0fde25
   repo: https://chromium.googlesource.com/external/github.com/kubernetes-sigs/structured-merge-diff.git
-  subpackages:
-  - v3/value
 - name: sigs.k8s.io/yaml
   version: 11e43d4a8b9271a822a950dbf9b6ff15fe00fafc
   repo: https://chromium.googlesource.com/external/github.com/kubernetes-sigs/yaml.git
