@@ -647,9 +647,9 @@ func ToCableType(cableType string) chromeosLab.CableType {
 
 // StrToFacing refers a map between a string to a Facing map.
 var StrToFacing = map[string]string{
-	"unkwnown": "FACING_UNKNOWN",
-	"back":     "FACING_BACK",
-	"front":    "FACING_FRONT",
+	"unknown": "FACING_UNKNOWN",
+	"back":    "FACING_BACK",
+	"front":   "FACING_FRONT",
 }
 
 // IsFacing checks if a string refers to a valid Facing.
@@ -679,9 +679,9 @@ func ToFacing(facing string) chromeosLab.Camerabox_Facing {
 
 // StrToLight refers a map between a string to a Light map.
 var StrToLight = map[string]string{
-	"unkwnown": "LIGHT_UNKNOWN",
-	"led":      "LIGHT_LED",
-	"noled":    "LIGHT_NOLED",
+	"unknown": "LIGHT_UNKNOWN",
+	"led":     "LIGHT_LED",
+	"noled":   "LIGHT_NOLED",
 }
 
 // IsLight checks if a string refers to a valid Light.
