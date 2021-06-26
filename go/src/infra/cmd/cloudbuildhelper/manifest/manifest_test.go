@@ -196,6 +196,7 @@ func TestExtends(t *testing.T) {
 					"base": {
 						Storage:  "gs://base-storage",
 						Registry: "base-registry",
+						Notify:   []string{"base"},
 					},
 				},
 				Build: []*BuildStep{
@@ -216,6 +217,7 @@ func TestExtends(t *testing.T) {
 							Project: "mid-project",
 							Docker:  "mid-docker",
 						},
+						Notify: []string{"mid"},
 					},
 				},
 				Build: []*BuildStep{
@@ -236,6 +238,7 @@ func TestExtends(t *testing.T) {
 						CloudBuild: CloudBuildConfig{
 							Docker: "leaf-docker",
 						},
+						Notify: []string{"leaf"},
 					},
 				},
 				Build: []*BuildStep{
@@ -264,6 +267,7 @@ func TestExtends(t *testing.T) {
 					"base": {
 						Storage:  "gs://base-storage",
 						Registry: "base-registry",
+						Notify:   []string{"base"},
 					},
 					"mid": {
 						Storage:  "gs://mid-storage",
@@ -272,6 +276,7 @@ func TestExtends(t *testing.T) {
 							Project: "mid-project",
 							Docker:  "leaf-docker",
 						},
+						Notify: []string{"leaf", "mid"},
 					},
 				},
 			})

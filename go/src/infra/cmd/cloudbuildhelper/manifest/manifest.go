@@ -18,6 +18,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -176,6 +177,14 @@ type Infra struct {
 
 	// CloudBuild contains configuration of Cloud Build infrastructure.
 	CloudBuild CloudBuildConfig `yaml:"cloudbuild"`
+
+	// Notify indicates what downstream services to notify once the image is
+	// built.
+	//
+	// It is not interpreted by cloudbuildhelper itself, just passed as is to
+	// the JSON output of `build` command. Callers (usually the images_builder
+	// recipe) know meaning of this field.
+	Notify []string `yaml:"notify"`
 }
 
 // rebaseOnTop implements "extends" logic.
@@ -183,6 +192,7 @@ func (i *Infra) rebaseOnTop(b Infra) {
 	setIfEmpty(&i.Storage, b.Storage)
 	setIfEmpty(&i.Registry, b.Registry)
 	i.CloudBuild.rebaseOnTop(b.CloudBuild)
+	i.Notify = mergeStringSets(i.Notify, b.Notify)
 }
 
 // CloudBuildConfig contains configuration of Cloud Build infrastructure.
@@ -546,6 +556,17 @@ func setIfEmpty(a *string, b string) {
 	if *a == "" {
 		*a = b
 	}
+}
+
+func mergeStringSets(a, b []string) []string {
+	ss := stringset.New(len(a) + len(b))
+	for _, s := range a {
+		ss.Add(s)
+	}
+	for _, s := range b {
+		ss.Add(s)
+	}
+	return ss.ToSortedSlice()
 }
 
 // validateName validates "name" field in the manifest.

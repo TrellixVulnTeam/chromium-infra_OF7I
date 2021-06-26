@@ -85,6 +85,7 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
+				Notify:       []string{"notify-a", "notify-b"},
 			})
 			So(err, ShouldBeNil)
 
@@ -95,6 +96,7 @@ func TestBuild(t *testing.T) {
 
 			// Used Cloud Build.
 			So(res, ShouldResemble, buildResult{
+				Name: testTargetName,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -102,6 +104,7 @@ func TestBuild(t *testing.T) {
 					BuildID:      "b1",
 				},
 				ViewBuildURL: testLogURL,
+				Notify:       []string{"notify-a", "notify-b"},
 			})
 
 			// Tagged it with canonical tag.
@@ -142,6 +145,7 @@ func TestBuild(t *testing.T) {
 
 				// Reused the existing image.
 				So(res, ShouldResemble, buildResult{
+					Name: testTargetName,
 					Image: &imageRef{
 						Image:        testImageName,
 						Digest:       testDigest,
@@ -199,6 +203,7 @@ func TestBuild(t *testing.T) {
 
 				// Built the new image.
 				So(res, ShouldResemble, buildResult{
+					Name: testTargetName,
 					Image: &imageRef{
 						Image:        testImageName,
 						Digest:       "sha256:new-totally-legit-hash",
@@ -283,6 +288,7 @@ func TestBuild(t *testing.T) {
 
 			// Used Cloud Build.
 			So(res, ShouldResemble, buildResult{
+				Name: testTargetName,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -303,6 +309,7 @@ func TestBuild(t *testing.T) {
 			res, err = runBuild(ctx, params)
 			So(err, ShouldBeNil)
 			So(res, ShouldResemble, buildResult{
+				Name: testTargetName,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -334,7 +341,10 @@ func TestBuild(t *testing.T) {
 			So(obj.String(), ShouldEqual, testTarballURL+"#1") // uploaded the first gen
 
 			// Did NOT produce any image, but have a link to the build.
-			So(res, ShouldResemble, buildResult{ViewBuildURL: testLogURL})
+			So(res, ShouldResemble, buildResult{
+				Name:         testTargetName,
+				ViewBuildURL: testLogURL,
+			})
 		})
 
 		Convey("Cloud Build build failure", func() {
