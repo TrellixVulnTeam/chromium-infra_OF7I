@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"io"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/luci/common/errors"
@@ -35,4 +36,36 @@ func UnmarshalBBRecord(encodedData string) (*skylab_test_runner.Result, error) {
 		return nil, errors.Annotate(err, "query::UnmarshalBBRecord: unmarshal proto").Err()
 	}
 	return &result, nil
+}
+
+// BBRecordMarshaler marshals buildbucket records as JSON with a four-space indent.
+var bbRecordMarshaler = &jsonpb.Marshaler{
+	Indent: "    ",
+}
+
+// JSONEncodeBBRecord takes a Skylab test runner result and encodes it as JSON.
+func JSONEncodeBBRecord(res *skylab_test_runner.Result) (string, error) {
+	msg, err := bbRecordMarshaler.MarshalToString(res)
+	if err != nil {
+		return "", err
+	}
+	return msg, nil
+}
+
+// ExtractGSURL is a convenience method that extracts the Google storage root URL
+// from a skylab test runner result.
+func ExtractGSURL(res *skylab_test_runner.Result) (string, error) {
+	if res == nil {
+		return "", errors.New("ExtractGSUrl: res cannot be nil")
+	}
+	return res.GetLogData().GetGsUrl(), nil
+}
+
+// ExtractStainlessURL is a convenience method that extracts the Stainless URL
+// from a skylab test runner result.
+func ExtractStainlessURL(res *skylab_test_runner.Result) (string, error) {
+	if res == nil {
+		return "", errors.New("ExtractGSUrl: res cannot be nil")
+	}
+	return res.GetLogData().GetStainlessUrl(), nil
 }

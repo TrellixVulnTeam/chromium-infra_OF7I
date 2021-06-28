@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/bigquery"
+	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
@@ -53,13 +54,17 @@ func (c *statusLogCmd) Run(a subcommands.Application, args []string, env subcomm
 func (c *statusLogCmd) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	ctx = logging.SetContextVerbosity(ctx, c.Verbose())
-	client, err := bigquery.NewClient(ctx, c.GetBQProject())
+	bqClient, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
-		return errors.Annotate(err, "status-log: getting bigquery client").Err()
+		return errors.Annotate(err, "status-log: getting BigQuery client").Err()
+	}
+	_, err = storage.NewClient(ctx)
+	if err != nil {
+		return errors.Annotate(err, "status-log: getting Google Storage client").Err()
 	}
 	it, err := query.RunStatusLogQuery(
 		ctx,
-		client,
+		bqClient,
 		&query.GetStatusLogParams{
 			SwarmingTaskID: c.taskID,
 		},
@@ -84,12 +89,20 @@ func (c *statusLogCmd) innerRun(a subcommands.Application, args []string, env su
 		if !ok {
 			return errors.New("status-log: bb_output_properties field is not string")
 		}
-		val, err := query.UnmarshalBBRecord(encodedRecord)
+		parsed, err := query.UnmarshalBBRecord(encodedRecord)
 		if err != nil {
 			return errors.Annotate(err, "status-log: extracting record").Err()
 		}
-		item["bb_output_properties"] = val
+		item["bb_output_properties"] = parsed
+		// TODO(gregorynisbet): Replace this print with a better strategy for printing records
+		// to users is an easily readable way.
 		fmt.Fprintf(a.GetOut(), "%#v\n", item)
+		jsonEncoded, err := query.JSONEncodeBBRecord(parsed)
+		if err != nil {
+			return err
+		}
+		item["bb_output_properties"] = jsonEncoded
+		fmt.Fprintf(a.GetOut(), "%s\n", jsonEncoded)
 	}
 	return nil
 }
