@@ -65,7 +65,7 @@ func (c *statusLogCmd) innerRun(a subcommands.Application, args []string, env su
 		},
 	)
 	if err != nil {
-		return errors.Annotate(err, "getting result set").Err()
+		return errors.Annotate(err, "status-log: getting result set").Err()
 	}
 	for {
 		var item map[string]bigquery.Value
@@ -76,6 +76,19 @@ func (c *statusLogCmd) innerRun(a subcommands.Application, args []string, env su
 		if err != nil {
 			return errors.Annotate(err, "status-log: extracting item from result set").Err()
 		}
+		record, ok := item["bb_output_properties"]
+		if !ok {
+			return errors.New("status-log: bb_output_properties field not present")
+		}
+		encodedRecord, ok := record.(string)
+		if !ok {
+			return errors.New("status-log: bb_output_properties field is not string")
+		}
+		val, err := query.UnmarshalBBRecord(encodedRecord)
+		if err != nil {
+			return errors.Annotate(err, "status-log: extracting record").Err()
+		}
+		item["bb_output_properties"] = val
 		fmt.Fprintf(a.GetOut(), "%#v\n", item)
 	}
 	return nil
