@@ -7,8 +7,6 @@ from recipe_engine.recipe_api import Property
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
-# TODO(anushruth): Remove invoker dependency once it's resolved
-INVOKER = 'Invoke-PowerShell.ps1'
 COPYPE = 'Copy-PE.ps1'
 ADDFILE = 'Add-FileToDiskImage.ps1'
 
@@ -21,7 +19,6 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._scripts = self.resource('WindowsPowerShell\Scripts')
     self._copype = self._scripts.join(COPYPE)
     self._addfile = self._scripts.join(ADDFILE)
-    self._invoker = self._scripts.join(INVOKER)
     self._workdir = ''
 
   def execute_wib_config(self, config):
@@ -67,8 +64,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     """Generate the powershell command."""
     # Invoke the powershell command
     cmd = ['powershell', '-Command']
-    # Append script and args. Needs to be enclosed in quotes.
-    invoker = str(self._invoker) + ' -Command \'' + str(
-        command) + ' ' + ' '.join(args) + '\''
+    # Append script and args.
+    invoker = str(command) + ' ' + ' '.join(args)
     cmd.append(invoker)
     return cmd

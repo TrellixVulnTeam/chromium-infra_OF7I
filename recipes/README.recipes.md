@@ -902,27 +902,27 @@ Executes the scripts to perform the required action.
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#14)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#54)(self, command, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#51)(self, command, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#27)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#24)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [gen\_ps\_script\_cmd](/recipes/recipe_modules/windows_scripts_executor/api.py#66)(self, command, \*args):**
+&mdash; **def [gen\_ps\_script\_cmd](/recipes/recipe_modules/windows_scripts_executor/api.py#63)(self, command, \*args):**
 
 Generate the powershell command.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#47)(self, arch, dest):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#44)(self, arch, dest):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#41)(self, action):**
+&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#38)(self, action):**
 
 Performs the given action
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)

@@ -28,13 +28,10 @@
 
 [cmdletbinding()]
 param (
-  [Parameter(mandatory)]
   [String]$DiskImage,
 
-  [Parameter(mandatory)]
   [String]$SourceFile,
 
-  [Parameter(mandatory)]
   [String]$ImageDestinationPath,
 
   [String]$ImageType,
@@ -42,21 +39,61 @@ param (
   [switch]$Force
 )
 
-$windows_image_management = "$PSScriptRoot\..\Modules\WindowsImageManagement"
-Import-Module -Name $windows_image_management -ErrorAction Stop | Out-Null
-
-$params = @{
-  'DiskImage' = $DiskImage
-  'SourceFile' = $SourceFile
-  'ImageDestinationPath' = $ImageDestinationPath
-  'Force' = $Force
-  'InformationAction' = $InformationPreference
-  'Verbose' = $VerbosePreference
-  'ErrorAction' = 'Stop'
+$invoke_obj = @{
+  'Success' = $true
+  'Output' = ''
+  'ErrorInfo' = @{
+    'Message' = ''
+    'Line' = ''
+    'PositionMessage' = ''
+  }
 }
 
-if ('ImageType' -in $PSBoundParameters.keys) {
-  $params.Add('ImageType', $ImageType)
-}
+try {
+  #region Check for params
+  if ('DiskImage' -notin $PSBoundParameters.keys) {
+    throw 'DiskImage is a required Parameter'
+  }
 
-Copy-FileToDiskImage @params
+  if ('SourceFile' -notin $PSBoundParameters.keys) {
+    throw 'SourceFile is a required Parameter'
+  }
+
+  if ('ImageDestinationPath' -notin $PSBoundParameters.keys) {
+    throw 'ImageDestinationPath is a required Parameter'
+  }
+  #endregion Check for params
+
+  $windows_image_management = "$PSScriptRoot\..\Modules\WindowsImageManagement"
+  Import-Module -Name $windows_image_management -ErrorAction Stop | Out-Null
+
+  $params = @{
+    'DiskImage' = $DiskImage
+    'SourceFile' = $SourceFile
+    'ImageDestinationPath' = $ImageDestinationPath
+    'Force' = $Force
+    'InformationAction' = $InformationPreference
+    'Verbose' = $VerbosePreference
+    'ErrorAction' = 'Stop'
+  }
+
+  if ('ImageType' -in $PSBoundParameters.keys) {
+    $params.Add('ImageType', $ImageType)
+  }
+
+  $invoke_obj.Output = Copy-FileToDiskImage @params
+
+  Write-Information 'Convert to JSON else throw terminating error'
+  $json = $invoke_obj | ConvertTo-Json -Compress -Depth 100 -ErrorAction Stop
+
+} catch {
+  $invoke_obj.Success = $false
+  $invoke_obj.ErrorInfo.Message = $_.Exception.Message
+  $invoke_obj.ErrorInfo.Line = $_.Exception.CommandInvocation.Line
+  $invoke_obj.ErrorInfo.PositionMessage = $_.Exception.CommandInvocation.PositionMessage
+  $json = $invoke_obj | ConvertTo-Json -Compress -Depth 100
+
+} finally {
+  Write-Information 'Write json result to stdout'
+  $json
+}

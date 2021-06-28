@@ -32,9 +32,18 @@ function Copy-PE {
   $FWFILESROOT = "$env:OSCDImgRoot\..\..\$WinPeArch\Oscdimg"
   $WIMSOURCEPATH= "$SOURCE\en-us\winpe.wim"
 
+  if (-not (Test-Path $env:WinPERoot)) {
+    throw "Failed to find WinPERoot dir at $env:WinPERoot"
+  }
+
   Write-Information 'Check for source material directories'
   if (-not (Test-Path $SOURCE)) {
-    throw "The following processor architecture was not found: $WinPeArch"
+    $msg = "Failed to find source dir: $SOURCE`n" +
+      "WinPERoot: $env:WinPERoot`n" +
+      "WinPEArch: $WinPEArch`n" +
+      "WinPERoot contents:`n" +
+      (Get-Childitem -Path $env:WinPERoot).fullname
+    throw $message
   }
 
   if (-not (Test-Path $FWFILESROOT)) {
