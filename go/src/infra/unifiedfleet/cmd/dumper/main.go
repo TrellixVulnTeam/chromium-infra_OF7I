@@ -16,6 +16,7 @@ import (
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/dumper"
 	"infra/unifiedfleet/app/external"
+	"infra/unifiedfleet/app/frontend"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -46,6 +47,7 @@ func main() {
 		}
 		srv.Context = dumper.Use(srv.Context, client)
 		srv.Context = dumper.UseProject(srv.Context, srv.Options.CloudProject)
+		frontend.InstallCronServices(srv.PRPC)
 		dumper.InitServer(srv, dumper.Options{})
 		return nil
 	})
