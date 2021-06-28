@@ -1,0 +1,15 @@
+package: infra/chromium/bootstrapper/${platform}
+description: The chromium bootstrapper bootstraps builder properties from a file
+platforms:
+  - linux-amd64
+  - linux-arm64
+  - mac-amd64
+  - mac-arm64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - infra/chromium/bootstrapper
+root: ../../go/bin
+data:
+  - file: bootstrapper${exe_suffix}
+  - version_file: .versions/bootstrapper${exe_suffix}.cipd_version
