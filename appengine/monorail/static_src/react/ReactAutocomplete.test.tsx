@@ -75,7 +75,7 @@ describe('ReactAutocomplete', () => {
 
     const results = document.querySelectorAll('.autocomplete-option');
 
-    assert.equal(results.length, MAX_AUTOCOMPLETE_OPTIONS + 1);
+    assert.equal(results.length, MAX_AUTOCOMPLETE_OPTIONS);
 
     // Clean up autocomplete dropdown from the DOM for the next test.
     fireEvent.change(input, {target: {value: ''}});
@@ -225,10 +225,9 @@ describe('ReactAutocomplete', () => {
 
     const options = document.querySelectorAll('.autocomplete-option');
 
-    // Options: cute@owl.com, ow
-    assert.equal(options.length, 2);
-
-    assert.equal(options[1].textContent, 'ow');
+    // Options: cute@owl.com
+    assert.deepEqual(options.length, 1);
+    assert.equal(options[0].textContent, 'cute@owl.com');
 
     cleanAutocomplete(input);
   });
