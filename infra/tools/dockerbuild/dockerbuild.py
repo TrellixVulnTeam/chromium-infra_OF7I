@@ -10,6 +10,7 @@ with warnings.catch_warnings():
   import cryptography
 
 import argparse
+import base64
 import distutils.version
 import json
 import os
@@ -269,8 +270,8 @@ def _main_run(args, system):
   env = {}
   affixes = {}
   for var, value in args.env:
-    env['DOCKERBUILD_SET_'+var] = (
-      value.replace(args.workdir, '/work/').encode('base64').strip())
+    env['DOCKERBUILD_SET_' + var] = base64.b64encode(
+        value.replace(args.workdir, '/work/'))
   for var, value in args.env_prefix:
     affixes.setdefault('DOCKERBUILD_PREPEND_'+var, []).append(
       value.replace(args.workdir, '/work/'))
@@ -278,7 +279,7 @@ def _main_run(args, system):
     affixes.setdefault('DOCKERBUILD_APPEND_'+var, []).append(
       value.replace(args.workdir, '/work/'))
   for k, vals in affixes.iteritems():
-    env[k] = ':'.join(vals).encode('base64').strip()
+    env[k] = base64.b64encode(':'.join(vals))
 
   retcode, _ = dx.run(args.workdir, dx_args, stdout=sys.stdout,
                       stderr=sys.stderr, cwd=args.cwd, env=env)
