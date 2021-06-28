@@ -78,6 +78,16 @@
           {% endfor %}
           <input type="hidden" name="list_reports" value="true"></input>
           </select>
+          Type:
+          <select id = "test_suite_type_select" name = "test_suite_type" onchange="switchPlatform()">
+            {% if test_suite_type == "any"%}
+              <option value = "any" selected="selected">All Tests</option>
+              <option value = "unit" >Unit Tests only</option>
+            {% else %}
+              <option value = "any">All Tests</option>
+              <option value = "unit" selected="selected">Unit Tests only</option>
+            {% endif %}
+          </select>
         </form>
       <table>
         <thead>

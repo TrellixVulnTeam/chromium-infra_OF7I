@@ -61,8 +61,7 @@ def _CreateSampleManifest():
   ]
 
 
-def _CreateSamplePostsubmitReport(manifest=None,
-                                  builder_name='linux-code-coverage'):
+def _CreateSamplePostsubmitReport(manifest=None, builder='linux-code-coverage'):
   """Returns a sample PostsubmitReport for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -71,10 +70,10 @@ def _CreateSamplePostsubmitReport(manifest=None,
   return PostsubmitReport.Create(
       server_host='chromium.googlesource.com',
       project='chromium/src',
-      ref='refs/heads/master',
+      ref='refs/heads/main',
       revision='aaaaa',
       bucket='coverage',
-      builder=builder_name,
+      builder=builder,
       commit_timestamp=datetime(2018, 1, 1),
       manifest=manifest,
       summary_metrics=_CreateSampleCoverageSummaryMetric(),
@@ -82,7 +81,7 @@ def _CreateSamplePostsubmitReport(manifest=None,
       visible=True)
 
 
-def _CreateSampleDirectoryCoverageData(builder_name='linux-code-coverage'):
+def _CreateSampleDirectoryCoverageData(builder='linux-code-coverage'):
   """Returns a sample directory SummaryCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -90,12 +89,12 @@ def _CreateSampleDirectoryCoverageData(builder_name='linux-code-coverage'):
   return SummaryCoverageData.Create(
       server_host='chromium.googlesource.com',
       project='chromium/src',
-      ref='refs/heads/master',
+      ref='refs/heads/main',
       revision='aaaaa',
       data_type='dirs',
       path='//dir/',
       bucket='coverage',
-      builder=builder_name,
+      builder=builder,
       data={
           'dirs': [],
           'path':
@@ -110,7 +109,7 @@ def _CreateSampleDirectoryCoverageData(builder_name='linux-code-coverage'):
       })
 
 
-def _CreateSampleComponentCoverageData(builder_name='linux-code-coverage'):
+def _CreateSampleComponentCoverageData(builder='linux-code-coverage'):
   """Returns a sample component SummaryCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -118,12 +117,12 @@ def _CreateSampleComponentCoverageData(builder_name='linux-code-coverage'):
   return SummaryCoverageData.Create(
       server_host='chromium.googlesource.com',
       project='chromium/src',
-      ref='refs/heads/master',
+      ref='refs/heads/main',
       revision='aaaaa',
       data_type='components',
       path='Component>Test',
       bucket='coverage',
-      builder=builder_name,
+      builder=builder,
       data={
           'dirs': [{
               'path': '//dir/',
@@ -135,7 +134,7 @@ def _CreateSampleComponentCoverageData(builder_name='linux-code-coverage'):
       })
 
 
-def _CreateSampleRootComponentCoverageData(builder_name='linux-code-coverage'):
+def _CreateSampleRootComponentCoverageData(builder='linux-code-coverage'):
   """Returns a sample component SummaryCoverageData for >> for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -143,12 +142,12 @@ def _CreateSampleRootComponentCoverageData(builder_name='linux-code-coverage'):
   return SummaryCoverageData.Create(
       server_host='chromium.googlesource.com',
       project='chromium/src',
-      ref='refs/heads/master',
+      ref='refs/heads/main',
       revision='aaaaa',
       data_type='components',
       path='>>',
       bucket='coverage',
-      builder=builder_name,
+      builder=builder,
       data={
           'dirs': [{
               'path': 'Component>Test',
@@ -159,7 +158,7 @@ def _CreateSampleRootComponentCoverageData(builder_name='linux-code-coverage'):
       })
 
 
-def _CreateSampleFileCoverageData(builder_name='linux-code-coverage'):
+def _CreateSampleFileCoverageData(builder='linux-code-coverage'):
   """Returns a sample FileCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -167,11 +166,11 @@ def _CreateSampleFileCoverageData(builder_name='linux-code-coverage'):
   return FileCoverageData.Create(
       server_host='chromium.googlesource.com',
       project='chromium/src',
-      ref='refs/heads/master',
+      ref='refs/heads/main',
       revision='aaaaa',
       path='//dir/test.cc',
       bucket='coverage',
-      builder=builder_name,
+      builder=builder,
       data={
           'path': '//dir/test.cc',
           'revision': 'bbbbb',
@@ -204,7 +203,7 @@ class FetchSourceFileTest(WaterfallTestCase):
         'code_coverage_settings', {
             'allowed_gitiles_configs': {
                 'chromium.googlesource.com': {
-                    'chromium/src': ['refs/heads/master',]
+                    'chromium/src': ['refs/heads/main',]
                 }
             },
         })
@@ -593,7 +592,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     build.input.gitiles_commit = mock.Mock(
         host='chromium.googlesource.com',
         project='chromium/src',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         id='aaaaa')
     mocked_get_build.return_value = build
 
@@ -670,10 +669,10 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(2, len(fetched_reports))
     self.assertEqual(_CreateSamplePostsubmitReport(), fetched_reports[0])
     self.assertEqual(
-        _CreateSamplePostsubmitReport(builder_name='linux-code-coverage_unit'),
+        _CreateSamplePostsubmitReport(builder='linux-code-coverage_unit'),
         fetched_reports[1])
     mocked_fetch_file.assert_called_with(
-        _CreateSamplePostsubmitReport(builder_name='linux-code-coverage_unit'),
+        _CreateSamplePostsubmitReport(builder='linux-code-coverage_unit'),
         '//dir/test.cc', 'bbbbb')
 
     fetched_file_coverage_data = FileCoverageData.query().fetch()
@@ -681,20 +680,18 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(_CreateSampleFileCoverageData(),
                      fetched_file_coverage_data[0])
     self.assertEqual(
-        _CreateSampleFileCoverageData(builder_name='linux-code-coverage_unit'),
+        _CreateSampleFileCoverageData(builder='linux-code-coverage_unit'),
         fetched_file_coverage_data[1])
 
     fetched_summary_coverage_data = SummaryCoverageData.query().fetch()
     self.assertListEqual([
         _CreateSampleRootComponentCoverageData(),
         _CreateSampleRootComponentCoverageData(
-            builder_name='linux-code-coverage_unit'),
+            builder='linux-code-coverage_unit'),
         _CreateSampleComponentCoverageData(),
-        _CreateSampleComponentCoverageData(
-            builder_name='linux-code-coverage_unit'),
+        _CreateSampleComponentCoverageData(builder='linux-code-coverage_unit'),
         _CreateSampleDirectoryCoverageData(),
-        _CreateSampleDirectoryCoverageData(
-            builder_name='linux-code-coverage_unit')
+        _CreateSampleDirectoryCoverageData(builder='linux-code-coverage_unit')
     ], fetched_summary_coverage_data)
 
   @mock.patch.object(code_coverage.ProcessCodeCoverageData,
@@ -725,7 +722,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     build.input.gitiles_commit = mock.Mock(
         host='chromium.googlesource.com',
         project='chromium/src',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         id='aaaaa')
     mocked_get_build.return_value = build
 
@@ -803,33 +800,31 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(2, len(fetched_reports))
     self.assertEqual(_CreateSamplePostsubmitReport(), fetched_reports[0])
     self.assertEqual(
-        _CreateSamplePostsubmitReport(
-            builder_name='linux-code-coverage_referenced'), fetched_reports[1])
+        _CreateSamplePostsubmitReport(builder='linux-code-coverage_referenced'),
+        fetched_reports[1])
     mocked_fetch_file.assert_called_with(
-        _CreateSamplePostsubmitReport(
-            builder_name='linux-code-coverage_referenced'), '//dir/test.cc',
-        'bbbbb')
+        _CreateSamplePostsubmitReport(builder='linux-code-coverage_referenced'),
+        '//dir/test.cc', 'bbbbb')
 
     fetched_file_coverage_data = FileCoverageData.query().fetch()
     self.assertEqual(2, len(fetched_file_coverage_data))
     self.assertEqual(_CreateSampleFileCoverageData(),
                      fetched_file_coverage_data[0])
     self.assertEqual(
-        _CreateSampleFileCoverageData(
-            builder_name='linux-code-coverage_referenced'),
+        _CreateSampleFileCoverageData(builder='linux-code-coverage_referenced'),
         fetched_file_coverage_data[1])
 
     fetched_summary_coverage_data = SummaryCoverageData.query().fetch()
     self.assertListEqual([
         _CreateSampleRootComponentCoverageData(),
         _CreateSampleRootComponentCoverageData(
-            builder_name='linux-code-coverage_referenced'),
+            builder='linux-code-coverage_referenced'),
         _CreateSampleComponentCoverageData(),
         _CreateSampleComponentCoverageData(
-            builder_name='linux-code-coverage_referenced'),
+            builder='linux-code-coverage_referenced'),
         _CreateSampleDirectoryCoverageData(),
         _CreateSampleDirectoryCoverageData(
-            builder_name='linux-code-coverage_referenced')
+            builder='linux-code-coverage_referenced')
     ], fetched_summary_coverage_data)
 
 
@@ -850,7 +845,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
             'serve_presubmit_coverage_data': True,
             'allowed_gitiles_configs': {
                 'chromium.googlesource.com': {
-                    'chromium/src': ['refs/heads/master',]
+                    'chromium/src': ['refs/heads/main',]
                 }
             },
             'postsubmit_platform_info_map': {
@@ -867,7 +862,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                 'chromium': {
                     'host': 'chromium.googlesource.com',
                     'project': 'chromium/src',
-                    'ref': 'refs/heads/master',
+                    'ref': 'refs/heads/main',
                     'platform': 'linux',
                 },
             },
@@ -1278,7 +1273,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
     host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     platform = 'linux'
 
     report = _CreateSamplePostsubmitReport()
@@ -1302,7 +1297,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
     host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = 'aaaaa'
     path = '//dir/'
     platform = 'linux'
@@ -1324,7 +1319,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
     host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = 'aaaaa'
     path = 'Component>Test'
     platform = 'linux'
@@ -1341,6 +1336,30 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
+  def testServeFullRepo_UnitTestsOnly(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = 'aaaaa'
+    path = '//dir/'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(builder='linux-code-coverage_unit')
+    report.put()
+
+    dir_coverage_data = _CreateSampleDirectoryCoverageData(
+        builder='linux-code-coverage_unit')
+    dir_coverage_data.put()
+
+    request_url = (
+        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '&path=%s&platform=%s&test_suite_type=unit') % (
+            host, project, ref, revision, path, platform)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
   @mock.patch.object(code_coverage, '_GetFileContentFromGs')
   def testServeFullRepoFileView(self, mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
@@ -1348,7 +1367,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
     host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = 'aaaaa'
     path = '//dir/test.cc'
     platform = 'linux'
@@ -1381,7 +1400,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s') % (
                        'chromium.googlesource.com', 'chromium/src',
-                       'refs/heads/master', 'aaaaa', '//dir/test.cc', 'linux')
+                       'refs/heads/main', 'aaaaa', '//dir/test.cc', 'linux')
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
@@ -1560,7 +1579,7 @@ class UpdatePostsubmitReportTest(WaterfallTestCase):
     project = 'chromium/src'
     luci_project = 'chromium'
     platform = 'linux'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = '99999'
     coverage_config = self.GetUnitTestConfigSettings(
     ).code_coverage_settings.get('postsubmit_platform_info_map',

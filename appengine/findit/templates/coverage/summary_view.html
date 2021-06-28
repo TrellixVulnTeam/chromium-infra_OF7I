@@ -128,7 +128,17 @@
             <option value="{{option.platform}}" {% if option.selected %}selected="selected" {% endif %}>{{option.ui_name}}</option>
           {% endfor %}
           </select>
-          View:
+          Type:
+          <select id = "test_suite_type_select" name = "test_suite_type" onchange="switchPlatform()">
+            {% if test_suite_type == "any"%}
+              <option value = "any" selected="selected">All Tests</option>
+              <option value = "unit" >Unit Tests only</option>
+            {% else %}
+              <option value = "any">All Tests</option>
+              <option value = "unit" selected="selected">Unit Tests only</option>
+            {% endif %}
+          </select>
+          Split:
           <select id="view_select" name="path" onchange="switchPlatform()">
           {% if data_type == 'components' %}
             <option value="{{path}}" selected="selected">By Component</option>

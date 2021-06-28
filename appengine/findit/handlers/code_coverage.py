@@ -1295,7 +1295,8 @@ class ServeCodeCoverageData(BaseHandler):
     return _ServeLines(entity.data)
 
   def _ServeProjectViewCoverageData(self, luci_project, host, project, ref,
-                                    revision, platform, bucket, builder):
+                                    revision, platform, bucket, builder,
+                                    test_suite_type):
     """Serves coverage data for the project view."""
     cursor = self.request.get('cursor', None)
     page_size = int(self.request.get('page_size', 100))
@@ -1347,6 +1348,8 @@ class ServeCodeCoverageData(BaseHandler):
                 data,
             'data_type':
                 'project',
+            'test_suite_type':
+                test_suite_type,
             'platform_select':
                 _MakePlatformSelect(luci_project, host, project, ref, revision,
                                     None, platform),
@@ -1388,6 +1391,7 @@ class ServeCodeCoverageData(BaseHandler):
     platform = self.request.get('platform', default_config['platform'])
     list_reports = self.request.get('list_reports', "False").lower() == 'true'
     path = self.request.get('path')
+    test_suite_type = self.request.get('test_suite_type', 'any')
 
     logging.info('host=%s', host)
     logging.info('project=%s', project)
@@ -1408,12 +1412,14 @@ class ServeCodeCoverageData(BaseHandler):
                                      400)
     bucket = platform_info_map[platform]['bucket']
     builder = platform_info_map[platform]['builder']
+    if test_suite_type == 'unit':
+      builder += '_unit'
     warning = platform_info_map[platform].get('warning')
 
     if list_reports:
       return self._ServeProjectViewCoverageData(luci_project, host, project,
                                                 ref, revision, platform, bucket,
-                                                builder)
+                                                builder, test_suite_type)
 
     # Get latest report if revision not specified
     if not revision:
@@ -1600,6 +1606,8 @@ class ServeCodeCoverageData(BaseHandler):
                 data,
             'data_type':
                 data_type,
+            'test_suite_type':
+                test_suite_type,
             'path_parts':
                 path_parts,
             'platform_select':
