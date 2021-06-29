@@ -8,10 +8,12 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"runtime/debug"
 
 	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cipd"
@@ -21,6 +23,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
+	logdogbootstrap "go.chromium.org/luci/logdog/client/butlerlib/bootstrap"
+	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
+	"go.chromium.org/luci/luciexe"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 )
@@ -106,12 +111,54 @@ func execute(ctx context.Context) error {
 	return cmd.Run()
 }
 
+func reportBootstrapFailure(ctx context.Context, summary string) error {
+	bootstrap, err := logdogbootstrap.Get()
+	if err != nil {
+		return err
+	}
+	stream, err := bootstrap.Client.NewDatagramStream(
+		ctx,
+		luciexe.BuildProtoStreamSuffix,
+		streamclient.WithContentType(luciexe.BuildProtoContentType),
+	)
+	if err != nil {
+		return err
+	}
+	build := &buildbucketpb.Build{}
+	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", summary)
+	build.Status = buildbucketpb.Status_INFRA_FAILURE
+	outputData, err := proto.Marshal(build)
+	if err != nil {
+		return errors.Annotate(err, "failed to marshal output build.proto").Err()
+	}
+	return stream.WriteDatagram(outputData)
+}
+
 func main() {
 	ctx := context.Background()
 	ctx = gologger.StdConfig.Use(ctx)
 
+	defer func() {
+		if r := recover(); r != nil {
+			err := reportBootstrapFailure(ctx, fmt.Sprintf("encountered panic: %s: %s", r, debug.Stack()))
+			if err != nil {
+				logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap panic").Err().Error())
+			}
+			os.Exit(1)
+		}
+	}()
+
 	if err := execute(ctx); err != nil {
 		logging.Errorf(ctx, err.Error())
+		// An ExitError indicates that we were able to bootstrap the
+		// executable and that it failed, so it should have populated
+		// the build proto with steps and a result
+		if _, ok := err.(*exec.ExitError); !ok {
+			err := reportBootstrapFailure(ctx, err.Error())
+			if err != nil {
+				logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
+			}
+		}
 		os.Exit(1)
 	}
 }

@@ -81,7 +81,7 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 	}
 
 	if err := b.populateCommitId(ctx, gitilesClient, configCommit); err != nil {
-		return nil, errors.Annotate(err, "failed to resolve ID for config commit: <%s>", configCommit.String()).Err()
+		return nil, errors.Annotate(err, "failed to resolve ID for config commit: {%s}", configCommit.String()).Err()
 	}
 	modProperties.Commits = append(modProperties.Commits, configCommit)
 
@@ -92,12 +92,12 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 
 	properties := &structpb.Struct{}
 	if err := protojson.Unmarshal([]byte(contents), properties); err != nil {
-		return nil, errors.Annotate(err, "failed to unmarshall builder properties file: <%s>", contents).Err()
+		return nil, errors.Annotate(err, "failed to unmarshall builder properties file: {%s}", contents).Err()
 	}
 	if err := exe.WriteProperties(properties, map[string]interface{}{
 		"$build/chromium_bootstrap": modProperties,
 	}); err != nil {
-		return nil, errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: <%s>", modProperties.String()).Err()
+		return nil, errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: {%s}", modProperties.String()).Err()
 	}
 
 	return properties, nil
