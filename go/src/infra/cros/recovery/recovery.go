@@ -11,6 +11,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/config"
+	"infra/cros/recovery/internal/plan/execs"
 	"infra/cros/recovery/tlw"
 )
 
@@ -29,26 +31,51 @@ func Run(ctx context.Context, in *Input) error {
 	if err != nil {
 		return errors.Annotate(err, "run recovery").Err()
 	}
-	// TODO(otabek@): Add implementation to load config
-	for _, resource := range resources {
-		log.Printf("Run recovery %q: started", resource)
+	// Keep track of fail to run resources.
+	var errs []error
+	for ir, resource := range resources {
+		log.Printf("Resource %q: started", resource)
 		dut, err := in.Access.GetDut(ctx, resource)
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
-		log.Printf("Run recovery %q: received DUT %q info", resource, dut.Name)
-		// Local testing changes per CL
-		// TODO(otabek@): Delete in next CLs
-		if err := in.Access.Ping(ctx, dut.Name, 1); err != nil {
-			return errors.Annotate(err, "run recovery %q: ping fail", resource).Err()
-		}
-		if r := in.Access.Run(ctx, dut.Name, "cat /etc/lsb-release"); r.ExitCode != 0 {
-			return errors.Reason("run recovery %q: SSH check failed", resource).Err()
-		}
+		log.Printf("Resource %q: received DUT %q info", resource, dut.Name)
 		// TODO(otabek@): Generate list of plans based task name and DUT info.
+		plans, err := config.LoadPlans([]string{"simple_plan"})
+		if err != nil {
+			return errors.Annotate(err, "run recovery %q", dut.Name).Err()
+		}
+		// Creating one run argument for each resource.
+		ea := &execs.RunArgs{
+			DUT:    dut,
+			Access: in.Access,
+		}
+		for ip, p := range plans {
+			if err := p.Run(ctx, ea); err != nil {
+				log.Printf("Plan %q: fail. Error: %s", p.Name, err)
+				if p.AllowFail {
+					if ip == len(plans)-1 {
+						log.Printf("Ignore error as plan %q is allowed to fail.", p.Name)
+					} else {
+						log.Printf("Continue to next plan as %q is allowed to fail.", p.Name)
+					}
+				} else {
+					errs = append(errs, err)
+					log.Printf("Resource %q: finished with error: %s.", dut.Name, err)
+					if ir != len(resources)-1 {
+						log.Printf("Continue to the next resource.")
+					}
+					break
+				}
+			}
+		}
+		log.Printf("Resource %q: finished successfully.", dut.Name)
 	}
-	// TODO(otabek@): Add logic to update DUTs info to inventory.
-	return errors.Reason("not implemented").Err()
+	// TODO(otabek@): Add logic to update DUT's info to inventory.
+	if len(errs) > 0 {
+		return errors.Annotate(errors.MultiError(errs), "run recovery").Err()
+	}
+	return nil
 }
 
 // Input provides input arguments for recovery process.
